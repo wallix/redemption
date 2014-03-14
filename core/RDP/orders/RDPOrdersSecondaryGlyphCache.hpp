@@ -225,9 +225,6 @@ class RDPGlyphCache {
         this->str(buffer, 1024);
         printf("%s", buffer);
     }
-
-
 };
-
 
 #endif

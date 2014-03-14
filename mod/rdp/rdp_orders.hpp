@@ -147,6 +147,7 @@ public:
 
         this->recv_bmp_cache_count++;
 
+        REDASSERT(bmp.bmp);
         this->bmp_cache->put(bmp.id, bmp.idx, bmp.bmp);
         if (this->verbose & 64) {
             LOG( LOG_ERR
@@ -235,6 +236,8 @@ public:
                 switch (header.type) {
                 case TS_CACHE_BITMAP_COMPRESSED:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
+                case TS_CACHE_BITMAP_COMPRESSED_REV2:
+                case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
                     this->process_bmpcache(bpp, stream, drawing_order.control_flags, header);
                     break;
                 case TS_CACHE_COLOR_TABLE:
@@ -243,18 +246,10 @@ public:
                 case TS_CACHE_GLYPH:
                     this->process_fontcache(stream, header.flags, mod);
                     break;
-                case TS_CACHE_BITMAP_COMPRESSED_REV2:
-                    LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)"
-                       , header.type);
-                  break;
-                case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
-                    LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)"
-                       , header.type);
-                  break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV3:
                     LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)"
                        , header.type);
-                  break;
+                    break;
                 default:
                     LOG(LOG_ERR, "unsupported SECONDARY ORDER (%d)", header.type);
                     /* error, unknown order */

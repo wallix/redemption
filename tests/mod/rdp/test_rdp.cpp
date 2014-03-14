@@ -88,31 +88,31 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
     }
 
     try {
-        ModRDPParams mod_rdp_param( "xavier"
-                                  , "SecureLinux"
-                                  , "10.10.47.175"
-                                  , "10.10.9.161"
-                                  , 7
-                                  , verbose
-                                  );
-        mod_rdp_param.enable_tls                      = false;
-        mod_rdp_param.enable_nla                      = false;
-        //mod_rdp_param.enable_krb                      = false;
-        //mod_rdp_param.enable_clipboard                = true;
-        mod_rdp_param.enable_fastpath                 = false;
-        //mod_rdp_param.enable_mem3blt                  = true;
-        //mod_rdp_param.enable_bitmap_update            = false;
-        mod_rdp_param.enable_new_pointer              = false;
-        //mod_rdp_param.rdp_compression                 = 0;
-        //mod_rdp_param.error_message                   = NULL;
-        //mod_rdp_param.disconnect_on_logon_user_change = false;
-        //mod_rdp_param.open_session_timeout            = 0;
-        //mod_rdp_param.certificate_change_action       = 0;
-        //mod_rdp_param.extra_orders                    = "";
+        ModRDPParams mod_rdp_params( "xavier"
+                                   , "SecureLinux"
+                                   , "10.10.47.175"
+                                   , "10.10.9.161"
+                                   , 7
+                                   , verbose
+                                   );
+        mod_rdp_params.enable_tls                      = false;
+        mod_rdp_params.enable_nla                      = false;
+        //mod_rdp_params.enable_krb                      = false;
+        //mod_rdp_params.enable_clipboard                = true;
+        mod_rdp_params.enable_fastpath                 = false;
+        //mod_rdp_params.enable_mem3blt                  = true;
+        //mod_rdp_params.enable_bitmap_update            = false;
+        mod_rdp_params.enable_new_pointer              = false;
+        //mod_rdp_params.rdp_compression                 = 0;
+        //mod_rdp_params.error_message                   = NULL;
+        //mod_rdp_params.disconnect_on_logon_user_change = false;
+        //mod_rdp_params.open_session_timeout            = 0;
+        //mod_rdp_params.certificate_change_action       = 0;
+        //mod_rdp_params.extra_orders                    = "";
 
         // To always get the same client random, in tests
         LCGRandom gen(0);
-        struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_param);
+        struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -176,31 +176,31 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    ModRDPParams mod_rdp_param( "administrateur@qa"
-                              , "S3cur3!1nux"
-                              , "10.10.46.78"
-                              , "10.10.9.161"
-                              , 2
-                              , 0
-                              );
-    mod_rdp_param.enable_tls                      = false;
-    mod_rdp_param.enable_nla                      = false;
-    //mod_rdp_param.enable_krb                      = false;
-    //mod_rdp_param.enable_clipboard                = true;
-    mod_rdp_param.enable_fastpath                 = false;
-    mod_rdp_param.enable_mem3blt                  = false;
-    mod_rdp_param.enable_bitmap_update            = true;
-    mod_rdp_param.enable_new_pointer              = false;
-    //mod_rdp_param.rdp_compression                 = 0;
-    //mod_rdp_param.error_message                   = NULL;
-    //mod_rdp_param.disconnect_on_logon_user_change = false;
-    //mod_rdp_param.open_session_timeout            = 0;
-    //mod_rdp_param.certificate_change_action       = 0;
-    //mod_rdp_param.extra_orders                    = "";
+    ModRDPParams mod_rdp_params( "administrateur@qa"
+                               , "S3cur3!1nux"
+                               , "10.10.46.78"
+                               , "10.10.9.161"
+                               , 2
+                               , 0
+                               );
+    mod_rdp_params.enable_tls                      = false;
+    mod_rdp_params.enable_nla                      = false;
+    //mod_rdp_params.enable_krb                      = false;
+    //mod_rdp_params.enable_clipboard                = true;
+    mod_rdp_params.enable_fastpath                 = false;
+    mod_rdp_params.enable_mem3blt                  = false;
+    mod_rdp_params.enable_bitmap_update            = true;
+    mod_rdp_params.enable_new_pointer              = false;
+    //mod_rdp_params.rdp_compression                 = 0;
+    //mod_rdp_params.error_message                   = NULL;
+    //mod_rdp_params.disconnect_on_logon_user_change = false;
+    //mod_rdp_params.open_session_timeout            = 0;
+    //mod_rdp_params.certificate_change_action       = 0;
+    //mod_rdp_params.extra_orders                    = "";
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_param);
+    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -255,31 +255,31 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    ModRDPParams mod_rdp_param( "administrateur"
-                              , "SecureLinux"
-                              , "10.10.47.205"
-                              , "0.0.0.0"
-                              , 2
-                              , 511
-                              );
-    mod_rdp_param.enable_tls                      = false;
-    mod_rdp_param.enable_nla                      = false;
-    //mod_rdp_param.enable_krb                      = false;
-    //mod_rdp_param.enable_clipboard                = true;
-    mod_rdp_param.enable_fastpath                 = false;
-    //mod_rdp_param.enable_mem3blt                  = true;
-    //mod_rdp_param.enable_bitmap_update            = false;
-    mod_rdp_param.enable_new_pointer              = false;
-    //mod_rdp_param.rdp_compression                 = 0;
-    //mod_rdp_param.error_message                   = NULL;
-    //mod_rdp_param.disconnect_on_logon_user_change = false;
-    //mod_rdp_param.open_session_timeout            = 0;
-    //mod_rdp_param.certificate_change_action       = 0;
-    //mod_rdp_param.extra_orders                    = "";
+    ModRDPParams mod_rdp_params( "administrateur"
+                               , "SecureLinux"
+                               , "10.10.47.205"
+                               , "0.0.0.0"
+                               , 2
+                               , 511
+                               );
+    mod_rdp_params.enable_tls                      = false;
+    mod_rdp_params.enable_nla                      = false;
+    //mod_rdp_params.enable_krb                      = false;
+    //mod_rdp_params.enable_clipboard                = true;
+    mod_rdp_params.enable_fastpath                 = false;
+    //mod_rdp_params.enable_mem3blt                  = true;
+    //mod_rdp_params.enable_bitmap_update            = false;
+    mod_rdp_params.enable_new_pointer              = false;
+    //mod_rdp_params.rdp_compression                 = 0;
+    //mod_rdp_params.error_message                   = NULL;
+    //mod_rdp_params.disconnect_on_logon_user_change = false;
+    //mod_rdp_params.open_session_timeout            = 0;
+    //mod_rdp_params.certificate_change_action       = 0;
+    //mod_rdp_params.extra_orders                    = "";
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_param);
+    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -341,31 +341,31 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    ModRDPParams mod_rdp_param( "administrateur"
-                              , "SecureLinux"
-                              , "10.10.47.39"
-                              , "0.0.0.0"
-                              , 2
-                              , 0
-                              );
-    mod_rdp_param.enable_tls                      = false;
-    mod_rdp_param.enable_nla                      = false;
-    //mod_rdp_param.enable_krb                      = false;
-    //mod_rdp_param.enable_clipboard                = true;
-    mod_rdp_param.enable_fastpath                 = false;
-    //mod_rdp_param.enable_mem3blt                  = true;
-    //mod_rdp_param.enable_bitmap_update            = false;
-    mod_rdp_param.enable_new_pointer              = false;
-    //mod_rdp_param.rdp_compression                 = 0;
-    //mod_rdp_param.error_message                   = NULL;
-    //mod_rdp_param.disconnect_on_logon_user_change = false;
-    //mod_rdp_param.open_session_timeout            = 0;
-    //mod_rdp_param.certificate_change_action       = 0;
-    //mod_rdp_param.extra_orders                    = "";
+    ModRDPParams mod_rdp_params( "administrateur"
+                               , "SecureLinux"
+                               , "10.10.47.39"
+                               , "0.0.0.0"
+                               , 2
+                               , 0
+                               );
+    mod_rdp_params.enable_tls                      = false;
+    mod_rdp_params.enable_nla                      = false;
+    //mod_rdp_params.enable_krb                      = false;
+    //mod_rdp_params.enable_clipboard                = true;
+    mod_rdp_params.enable_fastpath                 = false;
+    //mod_rdp_params.enable_mem3blt                  = true;
+    //mod_rdp_params.enable_bitmap_update            = false;
+    mod_rdp_params.enable_new_pointer              = false;
+    //mod_rdp_params.rdp_compression                 = 0;
+    //mod_rdp_params.error_message                   = NULL;
+    //mod_rdp_params.disconnect_on_logon_user_change = false;
+    //mod_rdp_params.open_session_timeout            = 0;
+    //mod_rdp_params.certificate_change_action       = 0;
+    //mod_rdp_params.extra_orders                    = "";
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_param);
+    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -387,7 +387,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 //        if (count == 20){
 //            front.dump_png("trace_w2000_20_");
 //        }
-          mod->draw_event(time(NULL));
+        mod->draw_event(time(NULL));
     }
 
 //    front.dump_png("trace_w2000_");

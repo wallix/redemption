@@ -681,34 +681,37 @@ public:
 
                     this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
 
-                    ModRDPParams mod_rdp_param( this->ini.globals.target_user.get_cstr()
-                                              , this->ini.context.target_password.get_cstr()
-                                              , this->ini.globals.target_device.get_cstr()
-                                              , "0.0.0.0"   // client ip is silenced
-                                              , this->front.keymap.key_flags
-                                              , this->ini.debug.mod_rdp
-                                              );
-                    //mod_rdp_param.enable_tls                      = true;
-                    mod_rdp_param.enable_nla                      = this->ini.mod_rdp.enable_nla;
-                    mod_rdp_param.enable_krb                      = this->ini.mod_rdp.enable_kerberos;
-                    mod_rdp_param.enable_clipboard                = this->ini.client.clipboard.get();
-                    //mod_rdp_param.enable_fastpath                 = true;
-                    //mod_rdp_param.enable_mem3blt                  = true;
-                    mod_rdp_param.enable_bitmap_update            = this->ini.globals.enable_bitmap_update;
-                    //mod_rdp_param.enable_new_pointer              = true;
-                    mod_rdp_param.acl                             = acl;
-                    mod_rdp_param.auth_channel                    = this->ini.globals.auth_channel;
-                    mod_rdp_param.alternate_shell                 = this->ini.globals.alternate_shell.get_cstr();
-                    mod_rdp_param.shell_working_directory         = this->ini.globals.shell_working_directory.get_cstr();
-                    mod_rdp_param.rdp_compression                 = this->ini.mod_rdp.rdp_compression;
-                    mod_rdp_param.error_message                   = &this->ini.context.auth_error_message;
-                    mod_rdp_param.disconnect_on_logon_user_change = this->ini.mod_rdp.disconnect_on_logon_user_change;
-                    mod_rdp_param.open_session_timeout            = this->ini.mod_rdp.open_session_timeout;
-                    mod_rdp_param.certificate_change_action       = this->ini.mod_rdp.certificate_change_action;
-                    mod_rdp_param.extra_orders                    = this->ini.mod_rdp.extra_orders.c_str();
+                    ModRDPParams mod_rdp_params( this->ini.globals.target_user.get_cstr()
+                                               , this->ini.context.target_password.get_cstr()
+                                               , this->ini.globals.target_device.get_cstr()
+                                               , "0.0.0.0"   // client ip is silenced
+                                               , this->front.keymap.key_flags
+                                               , this->ini.debug.mod_rdp
+                                               );
+                    //mod_rdp_params.enable_tls                          = true;
+                    mod_rdp_params.enable_nla                          = this->ini.mod_rdp.enable_nla;
+                    mod_rdp_params.enable_krb                          = this->ini.mod_rdp.enable_kerberos;
+                    mod_rdp_params.enable_clipboard                    = this->ini.client.clipboard.get();
+                    //mod_rdp_params.enable_fastpath                     = true;
+                    //mod_rdp_params.enable_mem3blt                      = true;
+                    mod_rdp_params.enable_bitmap_update                = this->ini.globals.enable_bitmap_update;
+                    //mod_rdp_params.enable_new_pointer                  = true;
+                    mod_rdp_params.acl                                 = acl;
+                    mod_rdp_params.auth_channel                        = this->ini.globals.auth_channel;
+                    mod_rdp_params.alternate_shell                     = this->ini.globals.alternate_shell.get_cstr();
+                    mod_rdp_params.shell_working_directory             = this->ini.globals.shell_working_directory.get_cstr();
+                    mod_rdp_params.rdp_compression                     = this->ini.mod_rdp.rdp_compression;
+                    mod_rdp_params.error_message                       = &this->ini.context.auth_error_message;
+                    mod_rdp_params.disconnect_on_logon_user_change     = this->ini.mod_rdp.disconnect_on_logon_user_change;
+                    mod_rdp_params.open_session_timeout                = this->ini.mod_rdp.open_session_timeout;
+                    mod_rdp_params.certificate_change_action           = this->ini.mod_rdp.certificate_change_action;
+                    mod_rdp_params.enable_persistent_disk_bitmap_cache = this->ini.mod_rdp.persistent_disk_bitmap_cache;
+                    mod_rdp_params.enable_cache_waiting_list           = this->ini.mod_rdp.cache_waiting_list;
+
+                    mod_rdp_params.extra_orders                    = this->ini.mod_rdp.extra_orders.c_str();
 
                     UdevRandom gen;
-                    this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_param);
+                    this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
                     this->mod->event.st = t;
 
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));

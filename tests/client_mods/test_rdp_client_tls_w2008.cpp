@@ -34,7 +34,6 @@
 
 #include "stream.hpp"
 #include "transport.hpp"
-//#include "sockettransport.hpp"
 #include "testtransport.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/mcs.hpp"
@@ -89,31 +88,31 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
-    ModRDPParams mod_rdp_param( "administrateur@qa"
-                              , "S3cur3!1nux"
-                              , "192.168.1.50"
-                              , "192.168.1.100"
-                              , 7
-                              , 511
-                              );
-    //mod_rdp_param.enable_tls                      = true;
-    mod_rdp_param.enable_nla                      = false;
-    //mod_rdp_param.enable_krb                      = false;
-    //mod_rdp_param.enable_clipboard                = true;
-    mod_rdp_param.enable_fastpath                 = false;
-    mod_rdp_param.enable_mem3blt                  = false;
-    //mod_rdp_param.enable_bitmap_update            = false;
-    mod_rdp_param.enable_new_pointer              = false;
-    //mod_rdp_param.rdp_compression                 = 0;
-    //mod_rdp_param.error_message                   = NULL;
-    //mod_rdp_param.disconnect_on_logon_user_change = false;
-    //mod_rdp_param.open_session_timeout            = 0;
-    //mod_rdp_param.certificate_change_action       = 0;
-    //mod_rdp_param.extra_orders                    = "";
+    ModRDPParams mod_rdp_params( "administrateur@qa"
+                               , "S3cur3!1nux"
+                               , "192.168.1.50"
+                               , "192.168.1.100"
+                               , 7
+                               , 511
+                               );
+    //mod_rdp_params.enable_tls                      = true;
+    mod_rdp_params.enable_nla                      = false;
+    //mod_rdp_params.enable_krb                      = false;
+    //mod_rdp_params.enable_clipboard                = true;
+    mod_rdp_params.enable_fastpath                 = false;
+    mod_rdp_params.enable_mem3blt                  = false;
+    //mod_rdp_params.enable_bitmap_update            = false;
+    mod_rdp_params.enable_new_pointer              = false;
+    //mod_rdp_params.rdp_compression                 = 0;
+    //mod_rdp_params.error_message                   = NULL;
+    //mod_rdp_params.disconnect_on_logon_user_change = false;
+    //mod_rdp_params.open_session_timeout            = 0;
+    //mod_rdp_params.certificate_change_action       = 0;
+    //mod_rdp_params.extra_orders                    = "";
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_param);
+    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

@@ -60,7 +60,7 @@ struct ModRDPParams {
     const char * extra_orders;
 
     bool enable_persistent_disk_bitmap_cache;
-    bool ebable_cache_waiting_list;
+    bool enable_cache_waiting_list;
 
     uint32_t verbose;
 
@@ -109,7 +109,7 @@ struct ModRDPParams {
         , extra_orders("")
 
         , enable_persistent_disk_bitmap_cache(false)
-        , ebable_cache_waiting_list(false)
+        , enable_cache_waiting_list(false)
 
         , verbose(verbose)
     {}
@@ -182,7 +182,7 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams enable_persistent_disk_bitmap_cache=%s", (this->enable_persistent_disk_bitmap_cache ? "yes" : "no"));
         LOG(LOG_INFO,
-            "ModRDPParams ebable_cache_waiting_list=%s",           (this->ebable_cache_waiting_list ? "yes" : "no"));
+            "ModRDPParams enable_cache_waiting_list=%s",           (this->enable_cache_waiting_list ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams verbose=0x%08X",                      this->verbose);
