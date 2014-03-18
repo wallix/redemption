@@ -195,9 +195,11 @@ static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset) {
     REDASSERT((copy_offset != offset_cache[0]) && (copy_offset != offset_cache[1]) &&
         (copy_offset != offset_cache[2]) && (copy_offset != offset_cache[3]))
 
-    *((uint32_t*)(offset_cache+2)) <<= 16;
-    *((uint32_t*)(offset_cache+2)) |=  (*((uint32_t*)offset_cache) >> 16);
-    *((uint32_t*)offset_cache)     =   (*((uint32_t*)offset_cache) << 16) | copy_offset;
+    *(offset_cache+3) = *(offset_cache+2);
+    *(offset_cache+2) = *(offset_cache+1);
+    *(offset_cache+1) = *offset_cache;
+    *offset_cache = copy_offset;
+
 }
 
 static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex) {
@@ -1033,3 +1035,4 @@ public:
 };  // struct rdp_mppc_60_enc
 
 #endif  // #ifndef _REDEMPTION_CORE_RDP_MPPC_60_HPP_
+
