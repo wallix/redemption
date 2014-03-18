@@ -945,8 +945,8 @@ class RDPBmpCache {
     {
         using namespace RDP;
         TODO(" DO NOT USE : not implemented  we do not know yet how to manage persistant bitmap storage");
-        LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)"
-           , header.type);
+        //LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)"
+        //   , header.type);
 
         uint16_t extraFlags = header.flags;
         this->id            =   extraFlags & 0x0007;
@@ -1081,8 +1081,8 @@ class RDPBmpCache {
     {
         using namespace RDP;
         TODO(" DO NOT USE : not implemented  we do not know yet how to manage persistant bitmap storage");
-        LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)"
-           , header.type);
+        //LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)"
+        //   , header.type);
 
         uint16_t extraFlags = header.flags;
         this->id            =   extraFlags & 0x0007;
