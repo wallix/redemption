@@ -34,13 +34,16 @@ private:
         uint8_t  version;
         uint32_t cache_offset[BmpCache::MAXIMUM_NUMBER_OF_CACHES];
 
-        PersistentDiskBitmapCacheFileHeader()
-            : version(CURRENT_VERSION)
-        {
+        PersistentDiskBitmapCacheFileHeader() {
+            ::memset(this, 0, sizeof(PersistentDiskBitmapCacheFileHeader));
+
             ::memcpy(this->magic, "PDBC", sizeof(this->magic));
 
-            for (unsigned i = 0; i < BmpCache::MAXIMUM_NUMBER_OF_CACHES; i++)
+            this->version = CURRENT_VERSION;
+
+            for (unsigned i = 0; i < BmpCache::MAXIMUM_NUMBER_OF_CACHES; i++) {
                 this->cache_offset[i] = INVALID_CACHE_OFFSET;
+            }
         }
     };
 
@@ -194,7 +197,7 @@ private:
                 || (::read(fd, &original_bpp,     sizeof(original_bpp    )) != sizeof(original_bpp    ))
                 || (::read(fd, &cx,               sizeof(cx              )) != sizeof(cx              ))
                 || (::read(fd, &cy,               sizeof(cy              )) != sizeof(cy              ))
-                || (::read(fd, &original_palette, sizeof(original_palette)) != sizeof(original_palette))
+                || ((original_bpp == 8) && (::read(fd, &original_palette, sizeof(original_palette)) != sizeof(original_palette)))
                 || (::read(fd, &bmp_size,         sizeof(bmp_size        )) != sizeof(bmp_size        ))
                 || (::read(fd, data_bitmap,              bmp_size         ) !=        bmp_size         )
                ) {
@@ -355,7 +358,7 @@ private:
                     || (::write(fd, &bmp->original_bpp,     sizeof(bmp->original_bpp    )) == -1)
                     || (::write(fd, &bmp->cx,               sizeof(bmp->cx              )) == -1)
                     || (::write(fd, &bmp->cy,               sizeof(bmp->cy              )) == -1)
-                    || (::write(fd, &bmp->original_palette, sizeof(bmp->original_palette)) == -1)
+                    || ((bmp->original_bpp == 8) && (::write(fd, &bmp->original_palette, sizeof(bmp->original_palette)) == -1))
                     || (::write(fd, &bmp_size,              sizeof(bmp_size             )) == -1)
                     || (::write(fd, bmp_data,               bmp_size                     ) == -1)
                    ) {

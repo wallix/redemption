@@ -25,6 +25,7 @@
 
 #include "bitmap.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "fileutils.hpp"
 
 enum {
@@ -238,6 +239,11 @@ struct BmpCache {
 
         void put(uint8_t id, uint16_t idx, const Bitmap * const bmp) {
             REDASSERT((id & IN_WAIT_LIST) == 0);
+            if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
+                // Last bitmap cache entry is used by waiting list.
+                //LOG(LOG_INFO, "BmpCache: Put bitmap to waiting list.");
+                idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
+            }
             if (this->cache[id][idx]) {
                 this->finders[id].remove(this->sha1[id][idx], this->cache[id][idx]->cx,
                     this->cache[id][idx]->cy);
@@ -257,7 +263,11 @@ struct BmpCache {
         const Bitmap * get(uint8_t id, uint16_t idx) {
             if (id & IN_WAIT_LIST)
                 return this->cache[MAXIMUM_NUMBER_OF_CACHES][idx];
-
+            if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
+                // Last bitmap cache entry is used by waiting list.
+                //LOG(LOG_INFO, "BmpCache: Get bitmap from waiting list.");
+                idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
+            }
             return this->cache[id][idx];
         }
 
@@ -374,6 +384,10 @@ struct BmpCache {
                     (this->cache_4_entries ? this->cache_4_size : 0));
                 REDASSERT(0);
                 throw Error(ERR_BITMAP_CACHE_TOO_BIG);
+            }
+            if (persistent && this->use_waiting_list) {
+                // Last bitmap cache entry is used by waiting list.
+                entries--;
             }
 
             uint8_t   id     = id_real;
