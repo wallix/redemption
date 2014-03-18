@@ -596,12 +596,13 @@ public:
     }
 
     void save_persistent_disk_bitmap_cache() const {
-        const char * client_persistent_path = PERSISTENT_PATH "/client";
+        if (!this->ini->client.persistent_disk_bitmap_cache)
+            return;
 
-        char filename[2048];
         // Generates the name of file.
+        char filename[2048];
         ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            client_persistent_path, this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
+            PERSISTENT_PATH "/client", this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
         filename[sizeof(filename) - 1] = '\0';
 
         BmpCachePersister::save_all_to_disk(*this->bmp_cache, filename);
@@ -655,6 +656,7 @@ public:
 
         // reset outgoing orders and reset caches
         delete this->bmp_cache_persister;
+        this->bmp_cache_persister = NULL;
         if (this->bmp_cache) {
             this->save_persistent_disk_bitmap_cache();
             delete this->bmp_cache;
@@ -680,12 +682,15 @@ public:
                         this->client_info.cache5_size,
                         this->client_info.cache5_persistent/*, 8192*/);
 
-        char cache_file_name[2048];
-        // Generates the name of file.
-        ::snprintf(cache_file_name, sizeof(cache_file_name) - 1, "%s/PDBC-%s-%d",
-            PERSISTENT_PATH "/client", this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
-        cache_file_name[sizeof(cache_file_name) - 1] = '\0';
-        this->bmp_cache_persister = new BmpCachePersister(*this->bmp_cache, cache_file_name);
+        if (this->ini->client.persistent_disk_bitmap_cache) {
+            // Generates the name of file.
+            char cache_file_name[2048];
+            ::snprintf(cache_file_name, sizeof(cache_file_name) - 1, "%s/PDBC-%s-%d",
+                PERSISTENT_PATH "/client", this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
+            cache_file_name[sizeof(cache_file_name) - 1] = '\0';
+
+            this->bmp_cache_persister = new BmpCachePersister(*this->bmp_cache, cache_file_name);
+        }
 
         delete this->orders;
         this->orders = new GraphicsUpdatePDU(
@@ -3970,7 +3975,7 @@ public:
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
 
-            {
+            if (this->ini->client.persistent_disk_bitmap_cache) {
                 RDP::PersistentKeyListPDUData pklpdud;
 
                 pklpdud.receive(sdata_in.payload);
