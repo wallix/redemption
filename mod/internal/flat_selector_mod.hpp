@@ -94,11 +94,13 @@ public:
     virtual void notify(Widget2* widget, notify_event_t event)
     {
         if (NOTIFY_CANCEL == event) {
+            this->ini.context.authenticated.set(false);
             this->ini.context_ask(AUTHID_AUTH_USER);
             this->ini.context_ask(AUTHID_PASSWORD);
-            this->ini.context_ask(AUTHID_TARGET_USER);
-            this->ini.context_ask(AUTHID_TARGET_DEVICE);
-            this->ini.context_ask(AUTHID_SELECTOR);
+            // this->ini.context_ask(AUTHID_TARGET_USER);
+            // this->ini.context_ask(AUTHID_TARGET_DEVICE);
+            // this->ini.context_ask(AUTHID_SELECTOR);
+            this->ini.context.selector.set(false);
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
         }

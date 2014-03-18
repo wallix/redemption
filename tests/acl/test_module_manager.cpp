@@ -54,9 +54,9 @@ BOOST_AUTO_TEST_CASE(TestModuleManagerNextMod)
     res = mm.next_module();
     BOOST_CHECK(res == MODULE_INTERNAL_WIDGET2_SELECTOR);
 
-    ini.globals.target_user.ask();
+    ini.context.password.ask();
     res = mm.next_module();
-    BOOST_CHECK(res == MODULE_INTERNAL_WIDGET2_LOGIN);
+    BOOST_CHECK_EQUAL(res, (int)MODULE_INTERNAL_WIDGET2_LOGIN);
 
     ini.globals.auth_user.set_from_cstr("user");
     ini.context.password.set_from_cstr("securepassword");

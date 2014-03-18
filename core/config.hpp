@@ -254,6 +254,7 @@ typedef enum
 
         AUTHID_AUTHENTICATION_CHALLENGE,
 
+        AUTHID_MODULE,
         AUTHID_TICKET,
         AUTHID_COMMENT,
 
@@ -354,6 +355,7 @@ typedef enum
 #define STRAUTHID_REAL_TARGET_DEVICE       "real_target_device"
 
 #define STRAUTHID_AUTHENTICATION_CHALLENGE "authentication_challenge"
+#define STRAUTHID_MODULE                   "module"
 #define STRAUTHID_TICKET                   "ticket"
 #define STRAUTHID_COMMENT                  "comment"
 #define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS        "disable_tsk_switch_shortcuts"
@@ -458,6 +460,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_AUTHENTICATION_CHALLENGE,
 
+    STRAUTHID_MODULE,
     STRAUTHID_TICKET,
     STRAUTHID_COMMENT,
 
@@ -772,6 +775,8 @@ struct Inifile : public FieldObserver {
 
         StringField        ticket;                   // AUTHID_TICKET //
         StringField        comment;                  // AUTHID_COMMENT //
+
+        StringField        module;
     } context;
 
     Theme theme;
@@ -1169,8 +1174,13 @@ public:
         this->context.authentication_challenge.ask();
         this->context.authentication_challenge.attach_ini(this, AUTHID_AUTHENTICATION_CHALLENGE);
 
+        this->to_send_set.insert(AUTHID_MODULE);
         this->to_send_set.insert(AUTHID_TICKET);
         this->to_send_set.insert(AUTHID_COMMENT);
+
+        this->context.module.set_from_cstr("close");
+        this->context.module.attach_ini(this, AUTHID_MODULE);
+        this->context.module.use();
 
         this->context.ticket.set_from_cstr("");
         this->context.ticket.attach_ini(this, AUTHID_TICKET);

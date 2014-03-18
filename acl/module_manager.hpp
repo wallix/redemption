@@ -46,6 +46,18 @@
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
 
+#define STRMODULE_LOGIN       "login"
+#define STRMODULE_SELECTOR    "selector"
+#define STRMODULE_CONFIRM     "confirm"
+#define STRMODULE_CHALLENGE   "challenge"
+#define STRMODULE_VALID       "valid"
+#define STRMODULE_TRANSITORY  "transitory"
+#define STRMODULE_CLOSE       "close"
+#define STRMODULE_CONNECTION  "connection"
+#define STRMODULE_MESSAGE     "message"
+#define STRMODULE_RDP         "RDP"
+#define STRMODULE_VNC         "VNC"
+
 enum {
     MODULE_EXIT,
     MODULE_WAITING,
@@ -89,7 +101,7 @@ public:
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module, time_t now, auth_api * acl) = 0;
     virtual int next_module() = 0;
-    virtual int get_mod_from_protocol() = 0;
+    // virtual int get_mod_from_protocol() = 0;
     virtual void invoke_close_box(const char * auth_error_message,
                                   BackEvent_t & signal, time_t now) {
         this->last_module = true;
@@ -141,7 +153,7 @@ public:
         this->new_mod(MODULE_INTERNAL_CLOSE, now, NULL);
         signal = BACK_EVENT_NONE;
     }
-
+    /*
     int get_mod_from_protocol() {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::get_mod_from_protocol");
@@ -163,20 +175,6 @@ public:
                 LOG(LOG_INFO, "auth::get_mod_from_protocol RDP");
             }
             res = MODULE_RDP;
-        }
-        else if (this->connected && 0 == strncasecmp(protocol, "RDP", 4) &&
-            !((mod_rdp *)this->mod)->end_session_reason.is_empty() &&
-            !strncmp(((mod_rdp *)this->mod)->end_session_reason.c_str(), "CONNECTION_FAILED", 17)
-            ) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol RDP (connected)");
-            }
-
-            this->remove_mod();
-            this->connected = false;
-
-            this->ini.context.target_protocol.set_from_acl("_TRANSITORY");
-            res = MODULE_TRANSITORY;
         }
         else if (!this->connected && 0 == strncasecmp(protocol, "APP", 4)) {
             if (this->verbose & 0x4) {
@@ -300,69 +298,60 @@ public:
         }
         return res;
     }
-
+    */
     int next_module() {
         LOG(LOG_INFO, "----------> ACL next_module <--------");
-        // Display or accept message is priority
-        if (this->ini.context_is_asked(AUTHID_DISPLAY_MESSAGE)) {
-            LOG(LOG_INFO, "==================> MODULE_DISPLAY");
-            return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
-        }
-        // AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER known, but acl asked to show confirmation message
-        else if (this->ini.context_is_asked(AUTHID_ACCEPT_MESSAGE)) {
-            LOG(LOG_INFO, "=================> MODULE_ACCEPT");
-            return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
-        }
-        // Challenge received
-        else if (!this->ini.context_is_asked(AUTHID_AUTHENTICATION_CHALLENGE)) {
-            LOG(LOG_INFO, "===============> MODULE_DIALOG_CHALLENGE");
-            return MODULE_INTERNAL_DIALOG_CHALLENGE;
-        }
-        else if (this->ini.context_is_asked(AUTHID_AUTH_USER)
-            ||  this->ini.context_is_asked(AUTHID_PASSWORD)) {
-            LOG(LOG_INFO, "===========> MODULE_LOGIN");
-            return MODULE_INTERNAL_WIDGET2_LOGIN;
-        }
-        // Selector Target device and Target user contains list or possible targets
-        else if (!this->ini.context_is_asked(AUTHID_SELECTOR)
-                 &&   this->ini.context_get_bool(AUTHID_SELECTOR)
-                 &&  !this->ini.context_is_asked(AUTHID_TARGET_DEVICE)
-                 &&  !this->ini.context_is_asked(AUTHID_TARGET_USER)) {
-            LOG(LOG_INFO, "===============> MODULE_SELECTOR");
-            return MODULE_INTERNAL_WIDGET2_SELECTOR;
-        }
-        // Target User or Device asked and not in selector : back to login
-        else if (this->ini.context_is_asked(AUTHID_TARGET_DEVICE)
-                 ||  this->ini.context_is_asked(AUTHID_TARGET_USER)) {
-            LOG(LOG_INFO, "===============> MODULE_LOGIN (2)");
-            return MODULE_INTERNAL_WIDGET2_LOGIN;
-        }
-        else if (this->ini.context_is_asked(AUTHID_TARGET_PASSWORD)){
-            LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
-            return MODULE_TRANSITORY;
-        }
-        // Authenticated = true, means we have : AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER, TARGET_PASSWORD
-        // proceed with connection.
-        else if (this->ini.context.authenticated.get()) {
-            //                record_video = this->ini.globals.movie.get();
-            //                keep_alive = true;
+        const char * module_cstr = this->ini.context.module.get_cstr();
+
+        if (this->connected) {
+            LOG(LOG_INFO, "===========> MODULE_CLOSE");
             if (this->ini.context.auth_error_message.is_empty()) {
                 this->ini.context.auth_error_message.copy_c_str(TR("end_connection", this->ini));
             }
-            LOG(LOG_INFO, "=================> MODULE_FROM_PROTOCOL");
-            return this->get_mod_from_protocol();
-        }
-        // User authentication rejected : close message
-        else {
-            if (!this->ini.context.rejected.get().is_empty()) {
-                this->ini.context.auth_error_message.copy_str(this->ini.context.rejected.get());
-            }
-            // if (this->ini.context.auth_error_message.is_empty()) {
-            //     this->ini.context.auth_error_message.copy_c_str("Authentifier service failed");
-            // }
-            LOG(LOG_INFO, "MODULE_INTERNAL_CLOSE");
             return MODULE_INTERNAL_CLOSE;
         }
+        if (!strcmp(module_cstr, STRMODULE_LOGIN)) {
+            LOG(LOG_INFO, "===========> MODULE_LOGIN");
+            return MODULE_INTERNAL_WIDGET2_LOGIN;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_SELECTOR)) {
+            LOG(LOG_INFO, "===============> MODULE_SELECTOR");
+            return MODULE_INTERNAL_WIDGET2_SELECTOR;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_CONFIRM)) {
+            LOG(LOG_INFO, "===============> MODULE_DIALOG_CONFIRM");
+            return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_CHALLENGE)) {
+            LOG(LOG_INFO, "===========> MODULE_DIALOG_CHALLENGE");
+            return MODULE_INTERNAL_DIALOG_CHALLENGE;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_VALID)) {
+            LOG(LOG_INFO, "===========> MODULE_DIALOG_VALID");
+            return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_TRANSITORY)) {
+            LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
+            return MODULE_TRANSITORY;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_CLOSE)) {
+            LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE");
+            return MODULE_INTERNAL_CLOSE;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_RDP)) {
+            LOG(LOG_INFO, "===========> MODULE_RDP");
+            return MODULE_RDP;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_VNC)) {
+            LOG(LOG_INFO, "===========> MODULE_VNC");
+            return MODULE_VNC;
+        }
+        // else if (!strcmp(module_cstr, STRMODULE_CONNECTION)) {
+        //     LOG(LOG_INFO, "===========> MODULE_CONNECTION");
+        //     return this->get_mod_from_protocol();
+        // }
+        LOG(LOG_INFO, "===========> UNKNOWN MODULE");
+        return MODULE_INTERNAL_CLOSE;
     }
 
 };

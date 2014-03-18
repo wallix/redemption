@@ -76,6 +76,7 @@ class Sesman():
 
         self._full_user_device_account = u'Unknown'
 
+        self.shared[u'module']                  = u'login'
         self.shared[u'selector_group_filter']   = u''
         self.shared[u'selector_device_filter']  = u''
         self.shared[u'selector_proto_filter']   = u''
@@ -237,8 +238,9 @@ class Sesman():
         _status = False
         data_to_send = ({ u'message' : TR(u'valid_authorisation')
                        , u'password': u'x509'
+                       , u'module' : u'confirm'
                        , u'display_message': MAGICASK
-                       , u'accept_message': u''
+                       # , u'accept_message': u''
                       })
 
         self.send_data(data_to_send)
@@ -262,8 +264,9 @@ class Sesman():
         #TODO: we should not have to care about target login or device to display messages
         # we should be able to send messages before or after defining target seamlessly
         data_to_send.update({ u'proto_dest'    : u'INTERNAL'
-                            , u'display_message': MAGICASK
-                            , u'accept_message': u''
+                            , u'module'        : u'confirm'
+                            # , u'display_message': MAGICASK
+                            # , u'accept_message': u''
                             })
 
         self.send_data(data_to_send)
@@ -276,8 +279,9 @@ class Sesman():
 
     def interactive_accept_message(self, data_to_send):
         data_to_send.update({ u'proto_dest'    : u'INTERNAL'
-                            , u'accept_message': MAGICASK
-                            , u'display_message': u''
+                            , u'module'        : u'valid'
+                            # , u'accept_message': MAGICASK
+                            # , u'display_message': u''
                             })
         self.send_data(data_to_send)
 
@@ -333,10 +337,7 @@ class Sesman():
 
         try:
             #Check if X509 Authentication is active
-            tdevice = target_device
-            if tdevice == MAGICASK:
-                tdevice = None
-            if self.engine.is_x509_connected(wab_login, self.shared.get(u'ip_client'), self.shared.get(u'proxy_type'), tdevice):
+            if self.engine.is_x509_connected(wab_login, self.shared.get(u'ip_client'), self.shared.get(u'proxy_type'), None if target_device == MAGICASK else target_device):
                 # Prompt the user in proxy window
                  # Wait for confirmation from GUI (or timeout)
                 if not (self.interactive_ask_x509_connection() and self.engine.x509_authenticate()):
@@ -432,6 +433,7 @@ class Sesman():
                                , u'target_login'            : target_login
                                , u'target_device'           : target_device
                                , u'proto_dest'              : proto_dest
+                               , u'module'                  : u'transitory'
                                }
                 self.send_data(data_to_send)
                 _status = True
@@ -485,12 +487,12 @@ class Sesman():
                                            , u'selector'                : u"True"
                                            , u'ip_client'               : self.shared.get(u'ip_client')
                                            , u'proxy_type'              : self.shared.get(u'proxy_type')
-                                           , u'authenticated'           : u"True"
                                            , u'selector_number_of_pages': u"0"
                                            # No lines sent, reset filters
                                            , u'selector_group_filter'   : u""
                                            , u'selector_device_filter'  : u""
                                            , u'selector_proto_filter'   : u""
+                                           , u'module'                  : u'selector'
                                            }
 
                         else:
@@ -521,12 +523,12 @@ class Sesman():
                                            , u'selector'                : u'True'
                                            , u'ip_client'               : self.shared.get(u'ip_client')
                                            , u'proxy_type'              : self.shared.get(u'proxy_type')
-                                           , u'authenticated'           : u'True'
                                            , u'selector_number_of_pages': "%s" % _number_of_pages
                                            , u'selector_current_page'   : "%s" % (_current_page + 1)
                                            , u'selector_group_filter'   : self.shared.get(u'selector_group_filter')
                                            , u'selector_device_filter'  : self.shared.get(u'selector_device_filter')
                                            , u'selector_proto_filter'   : self.shared.get(u'selector_proto_filter')
+                                           , u'module'                  : u'selector'
                                            }
 
                         self.send_data(data_to_send)
@@ -536,7 +538,8 @@ class Sesman():
                         if self.shared.get(u'login') == MAGICASK:
                             self.send_data({
                                   u'login': MAGICASK
-                                , u'selector_lines_per_page' : u'0'})
+                                , u'selector_lines_per_page' : u'0'
+                                , u'module'                  : u'login'})
                             Logger().info(u"Logout")
                             return None, u"Logout"
 
@@ -557,6 +560,7 @@ class Sesman():
                 elif len(services) == 1:
                     s = services[0]
                     data_to_send = {}
+                    data_to_send[u'module'] = u'transitory'
                     if s[2] == u'APP':
                         data_to_send[u'target_login'] = '@'.join(s[1].split('@')[:-1])
                         data_to_send[u'target_device'] = s[4]
@@ -682,8 +686,9 @@ class Sesman():
 
             if _status is None and self.engine.challenge:
                 # submit challenge:
-                data_to_send = { u'authentication_challenge' : self.engine.challenge.promptEcho,
-                                 u'message' : cut_message(self.engine.challenge.message)
+                data_to_send = { u'authentication_challenge' : self.engine.challenge.promptEcho
+                               , u'message' : cut_message(self.engine.challenge.message)
+                               , u'module' : u'challenge'
                                  }
                 self.send_data(data_to_send)
                 continue
@@ -695,7 +700,9 @@ class Sesman():
                     (mundane(self.shared.get(u'login')) , mundane(self.shared.get(u'ip_client')), tries)
                 )
 
-                data_to_send = {u'login': self.shared.get(u'login'), u'password': MAGICASK}
+                data_to_send = { u'login': self.shared.get(u'login')
+                               , u'password': MAGICASK
+                               , u'module' : u'login'}
                 self.send_data(data_to_send)
                 continue
 
@@ -794,7 +801,8 @@ class Sesman():
                                 {u'message': TR(u'session_closed_at %s') % selected_target.deconnection_time}
                                 )
 
-            proto = 'RDP' if self.shared.get(u'proto_dest') != 'VNC' else 'VNC'
+            proto = u'RDP' if self.shared.get(u'proto_dest') != u'VNC' else u'VNC'
+            kv[u'module'] = proto
             kv[u'device_redirection'] = SESMANCONF[proto][u'device_redirection']
             kv[u'clipboard'] = SESMANCONF[proto][u'clipboard']
             kv[u'mode_console'] = u"allow"
@@ -890,8 +898,10 @@ class Sesman():
                         ###########
                         # SEND KV #
                         ###########
+
                         self.send_data(kv)
 
+                        self.shared
                         Logger().info(u"Added connection to active WAB services")
 
                         # Looping on keepalived socket
