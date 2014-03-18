@@ -25,6 +25,7 @@
 
 #include "bitmap.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "fileutils.hpp"
 
 enum {
@@ -59,7 +60,6 @@ struct BmpCache {
     uint16_t cache_4_size;
     bool     cache_4_persistent;
 
-    private:
     const Bitmap * cache [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
     uint32_t       stamps[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
     uint8_t        sha1  [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES][20];
@@ -239,6 +239,11 @@ struct BmpCache {
 
         void put(uint8_t id, uint16_t idx, const Bitmap * const bmp) {
             REDASSERT((id & IN_WAIT_LIST) == 0);
+            if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
+                // Last bitmap cache entry is used by waiting list.
+                //LOG(LOG_INFO, "BmpCache: Put bitmap to waiting list.");
+                idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
+            }
             if (this->cache[id][idx]) {
                 this->finders[id].remove(this->sha1[id][idx], this->cache[id][idx]->cx,
                     this->cache[id][idx]->cy);
@@ -258,7 +263,11 @@ struct BmpCache {
         const Bitmap * get(uint8_t id, uint16_t idx) {
             if (id & IN_WAIT_LIST)
                 return this->cache[MAXIMUM_NUMBER_OF_CACHES][idx];
-
+            if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
+                // Last bitmap cache entry is used by waiting list.
+                //LOG(LOG_INFO, "BmpCache: Get bitmap from waiting list.");
+                idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
+            }
             return this->cache[id][idx];
         }
 
@@ -376,6 +385,10 @@ struct BmpCache {
                 REDASSERT(0);
                 throw Error(ERR_BITMAP_CACHE_TOO_BIG);
             }
+            if (persistent && this->use_waiting_list) {
+                // Last bitmap cache entry is used by waiting list.
+                entries--;
+            }
 
             uint8_t   id     = id_real;
             Finder  & finder = this->finders[id];
@@ -482,138 +495,6 @@ struct BmpCache {
             //}
             return (BITMAP_ADDED_TO_CACHE << 24) | (id << 16) | oldest_cidx;
         }
-
-        void load_from_disk(const char * persistent_path, uint8_t cache_id,
-            RDP::BitmapCachePersistentListEntry * entries, uint8_t number_of_entries,
-            uint16_t first_entry_index)
-        {
-            char filename[2048];
-
-            // ensures the directory exists
-            if (recursive_create_directory(persistent_path, S_IRWXU | S_IRWXG, 0) != 0) {
-                LOG(LOG_ERR, "BmpCache: Failed to create client persistent directory - \"%s\"",
-                    persistent_path);
-                throw Error(ERR_BITMAP_CACHE_PERSISTENT, 0);
-            }
-
-            if (this->verbose & 512) {
-                LOG(LOG_INFO, "BmpCache: first_entry_index=%u", first_entry_index);
-            }
-
-            uint16_t cache_index = first_entry_index;
-
-            const uint8_t * sig = reinterpret_cast<const uint8_t *>(entries);
-            for (uint8_t entry_index = 0;
-                 (entry_index < number_of_entries) && (cache_index < MAXIMUM_NUMBER_OF_CACHE_ENTRIES);
-                 entry_index++, sig += sizeof(RDP::BitmapCachePersistentListEntry), cache_index++) {
-                REDASSERT(!this->cache[cache_id][cache_index]);
-
-                // generates the name of file
-                snprintf(filename, sizeof(filename) - 1, "%s/%02X%02X%02X%02X%02X%02X%02X%02X",
-                    persistent_path, sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
-                filename[sizeof(filename) - 1] = '\0';
-                if (this->verbose & 512) {
-                    LOG(LOG_INFO, "BmpCache: Load from disk cache, filename=\"%s\"", filename);
-                }
-
-                FILE * fd = ::fopen(filename, "r");
-                if (!fd) {
-                    if (this->verbose & 1024) {
-                        LOG(LOG_INFO, "BmpCache: Persistent disk bitmap file \"%s\" does not exist",
-                            filename);
-                    }
-                    continue;
-                }
-                uint8_t    original_bpp;
-                uint16_t   cx, cy;
-                BGRPalette original_palette;
-                uint32_t   bmp_size;
-                uint8_t    data_bitmap[65536];
-                if ((::fread(&original_bpp,     1, sizeof(original_bpp),     fd) != sizeof(original_bpp    )) ||
-                    (::fread(&cx,               1, sizeof(cx),               fd) != sizeof(cx              )) ||
-                    (::fread(&cy,               1, sizeof(cy),               fd) != sizeof(cy              )) ||
-                    (::fread(&original_palette, 1, sizeof(original_palette), fd) != sizeof(original_palette)) ||
-                    (::fread(&bmp_size,         1, sizeof(bmp_size),         fd) != sizeof(bmp_size        )) ||
-                    (::fread(data_bitmap,       1, bmp_size,                 fd) != bmp_size               )) {
-                    LOG(LOG_ERR, "BmpCache: Failed to load persistent disk bitmap file - \"%s\"", filename);
-                    continue;
-                }
-                ::fclose(fd);
-
-                Bitmap * bmp = new Bitmap(this->bpp, original_bpp, &original_palette, cx, cy, data_bitmap, bmp_size);
-
-                this->put(cache_id, cache_index, bmp);
-                if (this->verbose & 512) {
-                    LOG(LOG_INFO,
-                        "BmpCache: Load from disk cache, cache_id=%u cache_index=%u cx=%u cy=%u size=%u",
-                        cache_id, cache_index, bmp->cx, bmp->cy, bmp->bmp_size);
-                }
-            }
-        }
-
-        void save_all_to_disk(const char * persistent_path) {
-                 if ((this->number_of_cache > 0) && this->cache_0_persistent) {
-                this->save_to_disk(persistent_path, 0);
-            }
-            else if ((this->number_of_cache > 1) && this->cache_1_persistent) {
-                this->save_to_disk(persistent_path, 1);
-            }
-            else if ((this->number_of_cache > 2) && this->cache_2_persistent) {
-                this->save_to_disk(persistent_path, 2);
-            }
-            else if ((this->number_of_cache > 3) && this->cache_3_persistent) {
-                this->save_to_disk(persistent_path, 3);
-            }
-            else if ((this->number_of_cache > 4) && this->cache_4_persistent) {
-                this->save_to_disk(persistent_path, 4);
-            }
-        }
-
-        void save_to_disk(const char * persistent_path, uint8_t cache_id) const {
-            char filename[2048];
-
-            // ensures the directory exists
-            if (recursive_create_directory(persistent_path, S_IRWXU | S_IRWXG, 0) != 0) {
-                LOG(LOG_ERR, "Failed to create client persistent directory: %s", persistent_path);
-                throw Error(ERR_BITMAP_CACHE_PERSISTENT, 0);
-            }
-
-            for (uint16_t cache_index = 0; cache_index < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cache_index++) {
-                if (this->cache[cache_id][cache_index]) {
-                    const Bitmap  * bmp = this->cache[cache_id][cache_index];
-                    const uint8_t * sig = this->sha1[cache_id][cache_index];
-
-                    // generates the name of file
-                    snprintf(filename, sizeof(filename) - 1, "%s/%02X%02X%02X%02X%02X%02X%02X%02X",
-                        persistent_path, sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
-                    filename[sizeof(filename) - 1] = '\0';
-
-                    int fd = ::open(filename, O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
-                    if (fd == -1) {
-                        if (this->verbose & 1024) {
-                            LOG(LOG_INFO, "BmpCache: persistent disk bitmap file file is not opened, cache_id=%u cache_index=%u cx=%u cy=%u size=%u filename=\"%s\"",
-                                cache_id, cache_index, bmp->cx, bmp->cy, bmp->bmp_size, filename);
-                        }
-                        continue;
-                    }
-                    if (this->verbose & 512) {
-                        LOG(LOG_INFO,
-                            "BmpCache: Write to disk cache, cache_id=%u cache_index=%u cx=%u cy=%u size=%u filename=\"%s\"",
-                            cache_id, cache_index, bmp->cx, bmp->cy, bmp->bmp_size, filename);
-                    }
-                    int write_result;
-                    write_result = ::write(fd, &bmp->original_bpp, sizeof(bmp->original_bpp));
-                    write_result = ::write(fd, &bmp->cx, sizeof(bmp->cx));
-                    write_result = ::write(fd, &bmp->cy, sizeof(bmp->cy));
-                    write_result = ::write(fd, &bmp->original_palette, sizeof(bmp->original_palette));
-                    uint32_t bmp_size = bmp->bmp_size;
-                    write_result = ::write(fd, &bmp_size, sizeof(bmp_size));
-                    void * bmp_data = bmp->data_bitmap.get();
-                    write_result = ::write(fd, bmp_data, bmp->bmp_size);
-(void)write_result;
-                    ::close(fd);
-                }
-            }
-        }
 };
+
 #endif

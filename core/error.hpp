@@ -281,7 +281,11 @@ enum {
     ERR_NLA_AUTHENTICATION_FAILED = 23000,
 
     ERR_TRM_UNKNOWN_CHUNK_TYPE = 24000,
-    ERR_TRM_CHANNEL_NAME_TOO_LONG
+    ERR_TRM_CHANNEL_NAME_TOO_LONG,
+
+    /* Persistent Disk Bitmap Cache. */
+    ERR_PDBC_LOAD = 24100,
+    ERR_PDBC_SAVE
 };
 
 class Error {
