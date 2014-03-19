@@ -76,7 +76,6 @@ public:
 
     void ask_page()
     {
-        this->ini.context_ask(AUTHID_SELECTOR);
     	this->ini.context.selector_current_page.set((uint32_t)this->current_page);
         this->ini.context_set_value(AUTHID_SELECTOR_GROUP_FILTER,
                                     this->selector.filter_device.get_text());
@@ -94,12 +93,8 @@ public:
     virtual void notify(Widget2* widget, notify_event_t event)
     {
         if (NOTIFY_CANCEL == event) {
-            this->ini.context.authenticated.set(false);
             this->ini.context_ask(AUTHID_AUTH_USER);
             this->ini.context_ask(AUTHID_PASSWORD);
-            // this->ini.context_ask(AUTHID_TARGET_USER);
-            // this->ini.context_ask(AUTHID_TARGET_DEVICE);
-            // this->ini.context_ask(AUTHID_SELECTOR);
             this->ini.context.selector.set(false);
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
@@ -194,7 +189,8 @@ public:
         char * targets   = const_cast<char *>(this->ini.globals.target_device.get_cstr());
         char * protocols = const_cast<char *>(this->ini.context.target_protocol.get_cstr());
         char * endtimes  = const_cast<char *>(this->ini.context.end_time.get_cstr());
-        for (unsigned index = 0 ; index < this->ini.context.selector_lines_per_page.get(); index++) {
+        for (unsigned index = 0; index < this->ini.context.selector_lines_per_page.get();
+             index++) {
             size_t size_groups = proceed_item(groups, '\x01');
             if (!size_groups)
                 break;
@@ -237,6 +233,7 @@ public:
         if (this->selector.selector_lines.labels.empty()) {
             this->selector.selector_lines.tab_flag = Widget2::IGNORE_TAB;
             this->selector.selector_lines.focus_flag = Widget2::IGNORE_FOCUS;
+            this->selector.add_device("", TR("no_results", this->ini), "", "");
         } else {
             this->selector.fit_columns();
             this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;
@@ -244,6 +241,7 @@ public:
             this->selector.selector_lines.set_current_index(0);
             this->selector.set_widget_focus(&this->selector.selector_lines);
         }
+
     }
 
     static inline size_t proceed_item(const char * list, char sep = ' ')

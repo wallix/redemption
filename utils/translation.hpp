@@ -82,6 +82,7 @@ private:
         fr_map["close_inactivity"] = "Fermeture sur inactivité";
         fr_map["acl_fail"] = "Echec du service d'authentification";
         fr_map["comment"] = "Commentaire";
+        fr_map["no_results"] = "Aucun résultat";
     }
     void build_en_map() {
         en_map["login"] = "Login";
@@ -127,6 +128,7 @@ private:
         en_map["close_inactivity"] = "Connection closed on inactivity";
         en_map["acl_fail"] = "Authentifier service failed";
         en_map["comment"] = "Comment";
+        en_map["no_results"] = "No results found";
     }
 
     Translation()

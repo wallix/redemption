@@ -484,7 +484,7 @@ class Sesman():
                                            , u'target_device'           : target_device
                                            , u'proto_dest'              : proto_dest
                                            , u'end_time'                : u""
-                                           , u'selector'                : u"True"
+                                           # , u'selector'                : u"True"
                                            , u'ip_client'               : self.shared.get(u'ip_client')
                                            , u'proxy_type'              : self.shared.get(u'proxy_type')
                                            , u'selector_number_of_pages': u"0"
@@ -520,10 +520,10 @@ class Sesman():
                                            , u'target_device'           : target_device
                                            , u'proto_dest'              : proto_dest
                                            , u'end_time'                : u";".join(all_end_time)
-                                           , u'selector'                : u'True'
+                                           # , u'selector'                : u'True'
                                            , u'ip_client'               : self.shared.get(u'ip_client')
                                            , u'proxy_type'              : self.shared.get(u'proxy_type')
-                                           , u'selector_number_of_pages': "%s" % _number_of_pages
+                                           , u'selector_number_of_pages': "%s" % max(_number_of_pages, _current_page + 1)
                                            , u'selector_current_page'   : "%s" % (_current_page + 1)
                                            , u'selector_group_filter'   : self.shared.get(u'selector_group_filter')
                                            , u'selector_device_filter'  : self.shared.get(u'selector_device_filter')
@@ -766,7 +766,7 @@ class Sesman():
             kv[u'timezone'] = str(altzone if daylight else timezone)
 
             if _status:
-                kv[u'authenticated'] = u'True'
+                # kv[u'authenticated'] = u'True'
 
                 # register signal
                 signal.signal(signal.SIGUSR1, self.kill_handler)
@@ -887,8 +887,8 @@ class Sesman():
                              , u'target_login': u""
                              , u'target_password': u""
                              , u'target_device': u""
-                             , u'authenticated': u'False'
-                             , u'selector': u"undefined"
+                             # , u'authenticated': u'False'
+                             # , u'selector': u"undefined"
                              , u'rejected': _error
                              }
 

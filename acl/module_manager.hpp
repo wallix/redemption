@@ -204,10 +204,6 @@ public:
             LOG(LOG_INFO, "===========> MODULE_VNC");
             return MODULE_VNC;
         }
-        // else if (!strcmp(module_cstr, STRMODULE_CONNECTION)) {
-        //     LOG(LOG_INFO, "===========> MODULE_CONNECTION");
-        //     return this->get_mod_from_protocol();
-        // }
         LOG(LOG_INFO, "===========> UNKNOWN MODULE");
         return MODULE_INTERNAL_CLOSE;
     }
