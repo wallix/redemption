@@ -348,6 +348,7 @@ private:
             for (size_t i = 0; i < this->labels.size(); ++i) {
                 delete this->labels[i];
             }
+            this->rect.cy = 0;
             this->labels.clear();
             this->current_index = -1u;
         }
@@ -365,6 +366,9 @@ private:
 
         void set_current_index(uint idx)
         {
+            if (this->focus_flag == Widget2::IGNORE_FOCUS) {
+                return;
+            }
             if (idx != this->current_index) {
                 uint previous_index = this->current_index;
                 this->current_index = idx;

@@ -235,6 +235,7 @@ public:
         if (this->selector.selector_lines.labels.empty()) {
             this->selector.selector_lines.tab_flag = Widget2::IGNORE_TAB;
             this->selector.selector_lines.focus_flag = Widget2::IGNORE_FOCUS;
+            this->selector.add_device("", TR("no_results", this->ini), "", "");
         } else {
             this->selector.fit_columns();
             this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;

@@ -522,7 +522,7 @@ class Sesman():
                                            , u'ip_client'               : self.shared.get(u'ip_client')
                                            , u'proxy_type'              : self.shared.get(u'proxy_type')
                                            , u'authenticated'           : u'True'
-                                           , u'selector_number_of_pages': "%s" % _number_of_pages
+                                           , u'selector_number_of_pages': "%s" % max(_number_of_pages, _current_page + 1)
                                            , u'selector_current_page'   : "%s" % (_current_page + 1)
                                            , u'selector_group_filter'   : self.shared.get(u'selector_group_filter')
                                            , u'selector_device_filter'  : self.shared.get(u'selector_device_filter')
