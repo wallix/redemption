@@ -226,12 +226,12 @@ public:
         long enddate = this->ini->context.end_date_cnx.get();
         if (enddate != 0 && (now > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
+            const char * message = "Session is out of allowed timeframe";
             if (this->ini) {
-                mm.invoke_close_box(TR("session_out_time", *(this->ini)), signal, now);
+                message = TR("session_out_time", *(this->ini));
             }
-            else {
-                mm.invoke_close_box("Session is out of allowed timeframe", signal, now);
-            }
+            mm.invoke_close_box(message, signal, now);
+
             return true;
         }
 

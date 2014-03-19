@@ -163,7 +163,8 @@ public:
              !strcmp(module_cstr, STRMODULE_VNC))) {
             LOG(LOG_INFO, "===========> MODULE_CLOSE");
             if (this->ini.context.auth_error_message.is_empty()) {
-                this->ini.context.auth_error_message.copy_c_str(TR("end_connection", this->ini));
+                this->ini.context.auth_error_message.copy_c_str(TR("end_connection",
+                                                                   this->ini));
             }
             return MODULE_INTERNAL_CLOSE;
         }

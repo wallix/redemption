@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     ini.debug.auth = 255;
 
     MMIni mm(ini);
-    mm.connected = true;
+
     char outdata[] =
         // Time: 10011
            "\x00\x00\x01\xA1"
@@ -92,13 +92,14 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 //    exit(0);
 
     char indata[] =
-        "\x00\x00\x00\x7c"
+        "\x00\x00\x00\x87"
         "login\ntoto\n"
         "password\ntotopass\n"
         "target_device\nwin\n"
         "target_login\nuser\n"
         "target_password\nwhoknows\n"
         "proto_dest\nRDP\n"
+        "module\nRDP\n"
         "authenticated\nTrue\n"
 
     ;
@@ -139,7 +140,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     ini.debug.auth = 255;
 
     MMIni mm(ini);
-    mm.connected = true;
 
     char outdata[] =
         // Time 10011
@@ -192,13 +192,14 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 //    exit(0);
 
     char indata[] =
-        "\x00\x00\x00\x7c"
+        "\x00\x00\x00\x87"
         "login\ntoto\n"
         "password\ntotopass\n"
         "target_device\nwin\n"
         "target_login\nuser\n"
         "target_password\nwhoknows\n"
         "proto_dest\nRDP\n"
+        "module\nRDP\n"
         "authenticated\nTrue\n"
 
         // Time 10045
