@@ -190,7 +190,7 @@ struct mod_rdp : public mod_api {
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : mod_api(info.width, info.height)
+        : mod_api(info.width - (info.width % 4), info.height)
         , front(front)
         , use_rdp5(1)
         , keylayout(info.keylayout)

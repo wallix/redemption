@@ -159,6 +159,7 @@ public:
     rdp_mppc_enc_match_finder * mppc_enc_match_finder;
 
     auth_api * authentifier;
+    bool       auth_info_sent;
 
     Front ( Transport * trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -203,6 +204,7 @@ public:
         , mppc_enc(NULL)
         , mppc_enc_match_finder(NULL)
         , authentifier(NULL)
+        , auth_info_sent(false)
     {
         // init TLS
         // --------------------------------------------------------
@@ -3932,20 +3934,25 @@ public:
                 this->ini->context.opt_width.set(this->client_info.width);
                 this->ini->context.opt_height.set(this->client_info.height);
                 this->ini->context.opt_bpp.set(this->client_info.bpp);
-                char username_a_domain[512];
-                const char * username;
-                if (this->client_info.domain[0] &&
-                    !strchr(this->client_info.username, '@') &&
-                    !strchr(this->client_info.username, '\\')) {
-                    snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->client_info.username, this->client_info.domain);
-                    username = username_a_domain;
-                }
-                else {
-                    username = this->client_info.username;
-                }
-                this->ini->parse_username(username);
-                if (this->client_info.password[0]) {
-                    this->ini->context_set_value(AUTHID_PASSWORD, this->client_info.password);
+
+                if (!this->auth_info_sent) {
+                    char         username_a_domain[512];
+                    const char * username;
+                    if (this->client_info.domain[0] &&
+                        !strchr(this->client_info.username, '@') &&
+                        !strchr(this->client_info.username, '\\')) {
+                        snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->client_info.username, this->client_info.domain);
+                        username = username_a_domain;
+                    }
+                    else {
+                        username = this->client_info.username;
+                    }
+                    this->ini->parse_username(username);
+                    if (this->client_info.password[0]) {
+                        this->ini->context_set_value(AUTHID_PASSWORD, this->client_info.password);
+                    }
+
+                    this->auth_info_sent = true;
                 }
             }
         }
