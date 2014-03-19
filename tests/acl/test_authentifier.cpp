@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     ini.debug.auth = 255;
 
     MMIni mm(ini);
-
+    mm.connected = true;
     char outdata[] =
         // Time: 10011
            "\x00\x00\x01\xA1"
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     ini.debug.auth = 255;
 
     MMIni mm(ini);
-
+    mm.connected = true;
 
     char outdata[] =
         // Time 10011

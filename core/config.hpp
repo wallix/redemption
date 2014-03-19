@@ -1178,7 +1178,7 @@ public:
         this->to_send_set.insert(AUTHID_TICKET);
         this->to_send_set.insert(AUTHID_COMMENT);
 
-        this->context.module.set_from_cstr("close");
+        this->context.module.set_from_cstr("login");
         this->context.module.attach_ini(this, AUTHID_MODULE);
         this->context.module.use();
 

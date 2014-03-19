@@ -208,8 +208,8 @@ public:
 
 public:
     bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
-//        LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
-//            (unsigned)now, static_cast<unsigned>(signal));
+       // LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
+       //     (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {
             // here, mm.last_module should be false only when we are in login box
             mm.mod->event.reset();
@@ -311,8 +311,7 @@ public:
                 }
                 catch (Error & e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                        this->ini->context.target_protocol.set_from_cstr(
-                            "_TRANSITORY");
+                        this->ini->context.module.set_from_cstr("transitory");
 
                         signal = BACK_EVENT_NEXT;
 
