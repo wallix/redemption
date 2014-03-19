@@ -11,3 +11,5 @@ tools/sesman/sesmanworker/password.py
 tools/sesman/sesmanworker/*.pyc
 [#]*[#]
 .\#*
+password.py
+password.pyc
