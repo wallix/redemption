@@ -1024,7 +1024,6 @@ BOOST_AUTO_TEST_CASE(TestMemblt2)
     };
 
     memcpy(palette, raw_palette, sizeof(palette));
-    init_palette332(palette);
 
     Bitmap * bmp = new Bitmap(8, 8, &palette, 64, 22, raw_bitmap, sizeof(raw_bitmap), true);
 

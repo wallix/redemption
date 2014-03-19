@@ -242,11 +242,11 @@ class SslHMAC_Md5
 class Sign
 {
     SslSha1 sha1;
-    const uint8_t * const & key;
+    const uint8_t * const key;
     size_t key_size;
 
     public:
-    Sign(const uint8_t * const & key, size_t key_size)
+    Sign(const uint8_t * const key, size_t key_size)
         : key(key)
         , key_size(key_size)
     {

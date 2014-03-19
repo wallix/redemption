@@ -25,6 +25,7 @@
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYBMPCACHE_HPP_
 
 #include "log.hpp"
+#include "RDPOrdersCommon.hpp"
 
 /* RDP bitmap cache (version 2) constants */
 enum {
@@ -944,9 +945,6 @@ class RDPBmpCache {
         const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
     {
         using namespace RDP;
-        TODO(" DO NOT USE : not implemented  we do not know yet how to manage persistant bitmap storage");
-        LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)"
-           , header.type);
 
         uint16_t extraFlags = header.flags;
         this->id            =   extraFlags & 0x0007;
@@ -966,12 +964,11 @@ class RDPBmpCache {
                 bpp = 32;
             break;
             default:
-                LOG(LOG_ERR, "RDPBmpCache::receive_compressed_v2: Unsupported bitsPerPixelId(0x%X)", cbr2_bpp);
+                LOG(LOG_ERR, "RDPBmpCache::receive_raw_v2: Unsupported bitsPerPixelId(0x%X)", cbr2_bpp);
                 throw Error(ERR_RDP_PROTOCOL);
             break;
         }
         uint8_t cbr2_flags  = ((extraFlags & 0xFF80) >> 7);
-
         //LOG(LOG_INFO, "cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
 
         if (cbr2_flags & CBR2_PERSISTENT_KEY_PRESENT) {
@@ -1080,9 +1077,6 @@ class RDPBmpCache {
         const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
     {
         using namespace RDP;
-        TODO(" DO NOT USE : not implemented  we do not know yet how to manage persistant bitmap storage");
-        LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)"
-           , header.type);
 
         uint16_t extraFlags = header.flags;
         this->id            =   extraFlags & 0x0007;
@@ -1107,7 +1101,6 @@ class RDPBmpCache {
             break;
         }
         uint8_t cbr2_flags  = ((extraFlags & 0xFF80) >> 7);
-
         //LOG(LOG_INFO, "cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
 
         if (cbr2_flags & CBR2_PERSISTENT_KEY_PRESENT) {
