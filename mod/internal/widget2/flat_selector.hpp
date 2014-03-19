@@ -348,6 +348,7 @@ private:
             for (size_t i = 0; i < this->labels.size(); ++i) {
                 delete this->labels[i];
             }
+            this->rect.cy = 0;
             this->labels.clear();
             this->current_index = -1u;
         }
