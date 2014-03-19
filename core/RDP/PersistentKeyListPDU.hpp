@@ -315,7 +315,7 @@ struct PersistentKeyListPDUData {
         unsigned int count = std::min<uint32_t>( this->numEntriesCache0 + this->numEntriesCache1 +
                                                  this->numEntriesCache2 + this->numEntriesCache3 +
                                                  this->numEntriesCache4
-                                               , PersistentKeyListPDUData::MAXIMUM_ENCAPSULATED_BITMAP_KEYS);
+                                               , MAXIMUM_ENCAPSULATED_BITMAP_KEYS);
 
         expected = count * 8; /* count * (Key1(4) + Key2(4)) */
         if (!stream.in_check_rem(expected)) {
@@ -349,7 +349,7 @@ struct PersistentKeyListPDUData {
         for (uint32_t i = 0,
                       c = std::min<uint32_t>(this->numEntriesCache0 + this->numEntriesCache1 + this->numEntriesCache2 +
                                                  this->numEntriesCache3 + this->numEntriesCache4,
-                                             PersistentKeyListPDUData::MAXIMUM_ENCAPSULATED_BITMAP_KEYS);
+                                             MAXIMUM_ENCAPSULATED_BITMAP_KEYS);
              i < c; i++) {
             stream.out_uint32_le(this->entries[i].Key1);
             stream.out_uint32_le(this->entries[i].Key2);
@@ -371,7 +371,7 @@ struct PersistentKeyListPDUData {
         for (uint32_t i = 0,
                       c = std::min<uint32_t>(this->numEntriesCache0 + this->numEntriesCache1 + this->numEntriesCache2 +
                                                  this->numEntriesCache3 + this->numEntriesCache4,
-                                             PersistentKeyListPDUData::MAXIMUM_ENCAPSULATED_BITMAP_KEYS);
+                                             MAXIMUM_ENCAPSULATED_BITMAP_KEYS);
              i < c; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");
