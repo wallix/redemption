@@ -995,6 +995,16 @@ class RDPBmpCache {
         TODO("Support of flag CBR2_DO_NOT_CACHE");
 
         const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
+        if (this->verbose & 0x8000) {
+            LOG(LOG_INFO,
+                "Uncompressed bitmap v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
+            LOG(LOG_INFO, "Palette");
+            hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+            LOG(LOG_INFO, "Bitmap");
+            hexdump_d(bitmapDataStream, bitmapLength);
+            LOG(LOG_INFO, "");
+        }
         this->bmp = new Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
             bitmapDataStream, bitmapLength, false);
 
@@ -1066,7 +1076,18 @@ class RDPBmpCache {
         // (including up to three bytes of padding, as necessary).
 
         TODO(" some error may occur inside bitmap (memory allocation  file load  decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection  as we can't do much to repair such problems).");
-        this->bmp = new Bitmap(session_color_depth, bpp, &palette, width, height, stream.in_uint8p(bufsize), bufsize);
+        const uint8_t * buf = stream.in_uint8p(bufsize);
+        if (this->verbose & 0x8000) {
+            LOG(LOG_INFO,
+                "Uncompressed bitmap v1: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                session_color_depth, bpp, width, height, bufsize);
+            LOG(LOG_INFO, "Palette");
+            hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+            LOG(LOG_INFO, "Bitmap");
+            hexdump_d(buf, bufsize);
+            LOG(LOG_INFO, "");
+        }
+        this->bmp = new Bitmap(session_color_depth, bpp, &palette, width, height, buf, bufsize);
 
         if (bufsize != this->bmp->bmp_size){
             LOG(LOG_WARNING, "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");
@@ -1130,7 +1151,7 @@ class RDPBmpCache {
             const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
             if (this->verbose & 0x8000) {
                 LOG(LOG_INFO,
-                    "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                    "Compressed bitmap v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                     session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
                 LOG(LOG_INFO, "Palette");
                 hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
@@ -1152,7 +1173,7 @@ class RDPBmpCache {
 
             if (this->verbose & 0x8000) {
                 LOG(LOG_INFO,
-                    "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                    "Compressed bitmap v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                     session_color_depth, bpp, bitmapWidth, bitmapWidth, cbCompMainBodySize);
                 LOG(LOG_INFO, "Palette");
                 hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
@@ -1206,7 +1227,7 @@ class RDPBmpCache {
 
             if (this->verbose & 0x8000) {
                 LOG(LOG_INFO,
-                    "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                    "Compressed bitmap v1: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                     session_color_depth, bpp, width, height, size);
                 LOG(LOG_INFO, "Palette");
                 hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
