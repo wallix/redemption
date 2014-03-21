@@ -42,7 +42,7 @@ constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
 constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
 constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
 constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
-constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/rdpproxy/persistent ] ;
+constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
 
 rule defines ( properties * )
 {
