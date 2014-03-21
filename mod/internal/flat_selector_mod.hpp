@@ -132,7 +132,7 @@ public:
             }
             else if (widget == &this->selector.current_page) {
                 int page = atoi(this->selector.current_page.get_text());
-                if (page != this->current_page && page <= this->number_page) {
+                if (page != this->current_page) {
                     this->current_page = page;
                     this->ask_page();
                 }

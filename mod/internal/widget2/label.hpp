@@ -30,6 +30,7 @@ public:
     static const size_t buffer_size = 256;
 
     char buffer[buffer_size];
+    int initial_x_text;
     int x_text;
     int y_text;
     int bg_color;
@@ -45,6 +46,7 @@ public:
                 int group_id, int fgcolor, int bgcolor,
                 int xtext = 0, int ytext = 0)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
+    , initial_x_text(x_text)
     , x_text(xtext)
     , y_text(ytext)
     , bg_color(bgcolor)

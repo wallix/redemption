@@ -35,6 +35,11 @@ public:
                  focus_color, edit_position, xtext, ytext)
     {}
 
+    virtual void set_text(const char * text) {
+        this->label.x_text = this->label.initial_x_text;
+        WidgetEdit::set_text(text);
+    }
+
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
         if (keymap->nb_kevent_available() && keymap->top_kevent() == Keymap2::KEVENT_KEY){
