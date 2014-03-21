@@ -52,18 +52,30 @@ class SslSha1
     public:
     SslSha1()
     {
-        SHA1_Init(&this->sha1);
+        int res = 0;
+        res = SHA1_Init(&this->sha1);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_SHA1_INIT_FAILED);
+        }
     }
 
     void update(const uint8_t * const data,  size_t data_size)
     {
-        SHA1_Update(&this->sha1, data, data_size);
+        int res = 0;
+        res = SHA1_Update(&this->sha1, data, data_size);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_SHA1_UPDATE_FAILED);
+        }
     }
 
     void final(uint8_t * out_data, size_t out_data_size)
     {
         assert(SHA_DIGEST_LENGTH == out_data_size);
-        SHA1_Final(out_data, &this->sha1);
+        int res = 0;
+        res = SHA1_Final(out_data, &this->sha1);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_SHA1_FINAL_FAILED);
+        }
     }
 };
 
@@ -213,7 +225,11 @@ class SslHMAC_Md5
     SslHMAC_Md5(const uint8_t * const key, size_t key_size)
     {
         HMAC_CTX_init(&this->hmac);
-        HMAC_Init_ex(&this->hmac, key, key_size, EVP_md5(), NULL);
+        int res = 0;
+        res = HMAC_Init_ex(&this->hmac, key, key_size, EVP_md5(), NULL);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+        }
     }
 
     ~SslHMAC_Md5()
@@ -223,19 +239,30 @@ class SslHMAC_Md5
 
     void update(const uint8_t * const data, size_t data_size)
     {
-        HMAC_Update(&this->hmac, data, data_size);
+        int res = 0;
+        res = HMAC_Update(&this->hmac, data, data_size);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+        }
     }
 
     void final(uint8_t * out_data, size_t out_data_size)
     {
         unsigned int len = 0;
+        int res = 0;
         if (MD5_DIGEST_LENGTH > out_data_size){
             uint8_t tmp[MD5_DIGEST_LENGTH];
-            HMAC_Final(&this->hmac, tmp, &len);
+            res = HMAC_Final(&this->hmac, tmp, &len);
+            if (res == 0) {
+                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+            }
             memcpy(out_data, tmp, out_data_size);
             return;
         }
-        HMAC_Final(&this->hmac, out_data, &len);
+        res = HMAC_Final(&this->hmac, out_data, &len);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }
     }
 };
 
