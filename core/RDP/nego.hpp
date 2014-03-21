@@ -80,9 +80,10 @@ struct RdpNego
 
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
     bool test;
+    const uint32_t verbose;
 
     RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla,
-            const char * target_device, const char krb)
+            const char * target_device, const char krb, const uint32_t verbose = 0)
     : flags(0)
     , tls(nla || tls)
     , nla(nla)
@@ -94,6 +95,7 @@ struct RdpNego
     , trans(socket_trans)
     , target_device(target_device)
     , test(false)
+    , verbose(verbose)
     {
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP
@@ -298,7 +300,8 @@ struct RdpNego
                 rdpCredssp credssp(*this->trans, this->user,
                                    this->domain, this->password,
                                    this->hostname, this->target_device,
-                                   this->krb, this->restricted_admin_mode);
+                                   this->krb, this->restricted_admin_mode,
+                                   this->verbose);
                 if (this->test) {
                     credssp.hardcodedtests = true;
                 }

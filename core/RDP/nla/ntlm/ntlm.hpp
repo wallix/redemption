@@ -168,6 +168,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
 
+            context->verbose = Reserved2;
             // context->init();
             context->server = false;
             if (Reserved1 == 1) {

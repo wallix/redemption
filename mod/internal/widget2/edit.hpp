@@ -435,7 +435,7 @@ public:
                         this->update_draw_cursor(Rect(
                             this->dx() + pxtmp + this->label.x_text + 1,
                             this->dy() + this->label.y_text + 1,
-                            this->w_text - pxtmp,
+                            this->w_text - pxtmp + 1,
                             this->h_text
                         ));
                     }
