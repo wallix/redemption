@@ -212,12 +212,13 @@ class SslHMAC_Md5
     public:
     SslHMAC_Md5(const uint8_t * const key, size_t key_size)
     {
-        HMAC_Init(&this->hmac, key, key_size, EVP_md5());
+        HMAC_CTX_init(&this->hmac);
+        HMAC_Init_ex(&this->hmac, key, key_size, EVP_md5(), NULL);
     }
 
     ~SslHMAC_Md5()
     {
-        HMAC_cleanup(&this->hmac);
+        HMAC_CTX_cleanup(&this->hmac);
     }
 
     void update(const uint8_t * const data, size_t data_size)

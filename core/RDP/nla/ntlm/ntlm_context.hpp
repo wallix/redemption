@@ -378,10 +378,12 @@ struct NTLMContext {
         BStream & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.Buffer;
         // BStream AvPairsStream;
         // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
+        uint8_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Compute response: AvPairs size %d", AvPairsStream.size());
+            LOG(LOG_INFO, "NTLMContext Compute response: temp size %d", temp_size);
         }
-        uint8_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
+
         uint8_t * temp = new uint8_t[temp_size];
         memset(temp, 0, temp_size);
         temp[0] = 0x01;
