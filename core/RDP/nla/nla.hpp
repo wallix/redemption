@@ -57,6 +57,7 @@ struct rdpCredssp
     SecInterface sec_interface;
 
     const char * target_device;
+    const uint32_t verbose;
 
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
     bool hardcodedtests;
@@ -68,7 +69,8 @@ struct rdpCredssp
                uint8_t * hostname,
                const char * target_device,
                const bool krb,
-               const bool restricted_admin_mode)
+               const bool restricted_admin_mode,
+               const uint32_t verbose = 0)
         : send_seq_num(0)
         , recv_seq_num(0)
         , trans(transport)
@@ -79,6 +81,7 @@ struct rdpCredssp
         , RestrictedAdminMode(restricted_admin_mode)
         , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
         , target_device(target_device)
+        , verbose(verbose)
         , hardcodedtests(false)
     {
         this->SspiModule.init(0);
@@ -556,7 +559,7 @@ struct rdpCredssp
                                                             SECURITY_NATIVE_DREP,
                                                             (have_input_buffer) ?
                                                             &input_buffer_desc : NULL,
-                                                            0, &this->context,
+                                                            this->verbose, &this->context,
                                                             &output_buffer_desc,
                                                             &pfContextAttr,
                                                             &expiration);
