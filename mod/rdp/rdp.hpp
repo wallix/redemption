@@ -215,7 +215,7 @@ struct mod_rdp : public mod_api {
         , auth_channel_state(0) // 0 means unused
         , acl(mod_rdp_params.acl)
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
-              , mod_rdp_params.enable_nla, mod_rdp_params.target_device, mod_rdp_params.enable_krb)
+                , mod_rdp_params.enable_nla, mod_rdp_params.target_device, mod_rdp_params.enable_krb, mod_rdp_params.verbose)
         , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
         , enable_clipboard(mod_rdp_params.enable_clipboard)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
@@ -433,7 +433,7 @@ struct mod_rdp : public mod_api {
             free(this->lic_layer_license_data);
         }
 
-        if (this->verbose) {
+        if (this->verbose & 1) {
             LOG(LOG_INFO, "~mod_rdp(): Recv bmp cache count  = %llu",
                 this->orders.recv_bmp_cache_count);
             LOG(LOG_INFO, "~mod_rdp(): Recv order count      = %llu",
@@ -565,7 +565,7 @@ struct mod_rdp : public mod_api {
 
         // Clipboard is unavailable and is a Clipboard PDU
         if (!this->enable_clipboard && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
-            if (this->verbose) {
+            if (this->verbose & 1) {
                 LOG(LOG_INFO, "mod_rdp clipboard PDU");
             }
 
@@ -578,7 +578,7 @@ struct mod_rdp : public mod_api {
             uint16_t msgType = chunk.in_uint16_le();
 
             if (msgType == RDPECLIP::CB_FORMAT_LIST) {
-                if (this->verbose) {
+                if (this->verbose & 1) {
                     LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                 }
 
@@ -773,7 +773,7 @@ struct mod_rdp : public mod_api {
                             if (this->nego.tls){
                                 cs_core.serverSelectedProtocol = this->nego.selected_protocol;
                             }
-                            if (this->verbose) {
+                            if (this->verbose & 1) {
                                 cs_core.log("Sending to Server");
                             }
                             cs_core.emit(stream);
@@ -796,13 +796,13 @@ struct mod_rdp : public mod_api {
                                     cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
                                 }
                             }
-                            if (this->verbose) {
+                            if (this->verbose & 1) {
                                 cs_cluster.log("Sending to server");
                             }
                             cs_cluster.emit(stream);
                             // ------------------------------------------------------------
                             GCC::UserData::CSSecurity cs_security;
-                            if (this->verbose) {
+                            if (this->verbose & 1) {
                                 cs_security.log("Sending to server");
                             }
                             cs_security.emit(stream);
@@ -847,7 +847,7 @@ struct mod_rdp : public mod_api {
                                     this->mod_channel_list.push_back(def);
                                 }
 
-                                if (this->verbose) {
+                                if (this->verbose & 1) {
                                     cs_net.log("Sending to server");
                                 }
                                 cs_net.emit(stream);
@@ -892,7 +892,7 @@ struct mod_rdp : public mod_api {
                                 {
                                     GCC::UserData::SCCore sc_core;
                                     sc_core.recv(f.payload);
-                                    if (this->verbose) {
+                                    if (this->verbose & 1) {
                                         sc_core.log("Received from server");
                                     }
                                     if (0x0080001 == sc_core.version){ // can't use rdp5
@@ -904,7 +904,7 @@ struct mod_rdp : public mod_api {
                                 {
                                     GCC::UserData::SCSecurity sc_sec1;
                                     sc_sec1.recv(f.payload);
-                                    if (this->verbose) {
+                                    if (this->verbose & 1) {
                                         sc_sec1.log("Received from server");
                                     }
 
@@ -1040,7 +1040,7 @@ struct mod_rdp : public mod_api {
                                         }
                                         this->mod_channel_list.set_chanid(index, sc_net.channelDefArray[index].id);
                                     }
-                                    if (this->verbose) {
+                                    if (this->verbose & 1) {
                                         sc_net.log("Received from server");
                                     }
                                 }
@@ -1732,14 +1732,14 @@ struct mod_rdp : public mod_api {
 
                                 TODO("RZ: Don't reject clipboard update, this can block rdesktop.");
 
-                                if (this->verbose) {
+                                if (this->verbose & 1) {
                                     LOG(LOG_INFO, "mod_rdp clipboard PDU");
                                 }
 
                                 uint16_t msgType = sec.payload.in_uint16_le();
 
                                 if (msgType == RDPECLIP::CB_FORMAT_LIST) {
-                                    if (this->verbose) {
+                                    if (this->verbose & 1) {
                                         LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                                     }
 
@@ -2162,7 +2162,7 @@ struct mod_rdp : public mod_api {
         if (this->enable_transparent_mode) {
             this->front.retrieve_client_capability_set(general_caps);
         }
-        if (this->verbose) {
+        if (this->verbose & 1) {
             general_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(general_caps);
@@ -2179,7 +2179,7 @@ struct mod_rdp : public mod_api {
         if (this->enable_transparent_mode) {
             this->front.retrieve_client_capability_set(bitmap_caps);
         }
-        if (this->verbose) {
+        if (this->verbose & 1) {
             bitmap_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(bitmap_caps);
@@ -2238,7 +2238,7 @@ struct mod_rdp : public mod_api {
             order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX] = 0;
             order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX] = 0;
         }
-        if (this->verbose) {
+        if (this->verbose & 1) {
             order_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(order_caps);
@@ -2272,13 +2272,13 @@ struct mod_rdp : public mod_api {
         }
 
         if (use_bitmapcache_rev2) {
-            if (this->verbose) {
+            if (this->verbose & 1) {
                 bmpcache2_caps.log("Sending to server");
             }
             confirm_active_pdu.emit_capability_set(bmpcache2_caps);
         }
         else {
-            if (this->verbose) {
+            if (this->verbose & 1) {
                 bmpcache_caps.log("Sending to server");
             }
             confirm_active_pdu.emit_capability_set(bmpcache_caps);
@@ -2295,19 +2295,19 @@ struct mod_rdp : public mod_api {
 
 
         ColorCacheCaps colorcache_caps;
-        if (this->verbose) {
+        if (this->verbose & 1) {
             colorcache_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(colorcache_caps);
 
         ActivationCaps activation_caps;
-        if (this->verbose) {
+        if (this->verbose & 1) {
             activation_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(activation_caps);
 
         ControlCaps control_caps;
-        if (this->verbose) {
+        if (this->verbose & 1) {
             control_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(control_caps);
@@ -2319,37 +2319,37 @@ struct mod_rdp : public mod_api {
             pointer_caps.colorPointerCacheSize = 20;
             pointer_caps.len                   = 8;
         }
-        if (this->verbose) {
+        if (this->verbose & 1) {
             pointer_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(pointer_caps);
 
         ShareCaps share_caps;
-        if (this->verbose) {
+        if (this->verbose & 1) {
             share_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(share_caps);
 
         InputCaps input_caps;
-        if (this->verbose) {
+        if (this->verbose & 1) {
             input_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(input_caps);
 
         SoundCaps sound_caps;
-        if (this->verbose) {
+        if (this->verbose & 1) {
             sound_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(sound_caps);
 
         FontCaps font_caps;
-        if (this->verbose) {
+        if (this->verbose & 1) {
             font_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(font_caps);
 
         GlyphSupportCaps glyphsupport_caps;
-        if (this->verbose) {
+        if (this->verbose & 1) {
             glyphsupport_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(glyphsupport_caps);
@@ -3702,7 +3702,7 @@ struct mod_rdp : public mod_api {
                 {
                     GeneralCaps general_caps;
                     general_caps.recv(stream, capset_length);
-                    if (this->verbose) {
+                    if (this->verbose & 1) {
                         general_caps.log("Received from server");
                     }
                     if (output_file)
@@ -3715,7 +3715,7 @@ struct mod_rdp : public mod_api {
                 {
                     BitmapCaps bitmap_caps;
                     bitmap_caps.recv(stream, capset_length);
-                    if (this->verbose) {
+                    if (this->verbose & 1) {
                         bitmap_caps.log("Received from server");
                     }
                     if (output_file)
@@ -3742,7 +3742,7 @@ struct mod_rdp : public mod_api {
                 {
                     OrderCaps order_caps;
                     order_caps.recv(stream, capset_length);
-                    if (this->verbose) {
+                    if (this->verbose & 1) {
                         order_caps.log("Received from server");
                     }
                     if (output_file)
@@ -3755,7 +3755,7 @@ struct mod_rdp : public mod_api {
                 {
                     InputCaps input_caps;
                     input_caps.recv(stream, capset_length);
-                    if (this->verbose) {
+                    if (this->verbose & 1) {
                         input_caps.log("Received from server");
                     }
 
@@ -4674,13 +4674,13 @@ public:
             infoPacket.flags |= ((this->rdp_compression - 1) << 9);
         }
 
-        if (this->verbose) {
+        if (this->verbose & 1) {
             infoPacket.log("Sending to server: ");
         }
         infoPacket.emit(stream);
         stream.mark_end();
 
-        if (this->verbose) {
+        if (this->verbose & 1) {
             infoPacket.log("Preparing sec header ");
         }
         BStream sec_header(256);
@@ -4688,7 +4688,7 @@ public:
         SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel);
         stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
-        if (this->verbose) {
+        if (this->verbose & 1) {
             infoPacket.log("Send data request");
         }
         this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, stream);
