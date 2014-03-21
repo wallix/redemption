@@ -356,6 +356,21 @@ struct PersistentKeyListPDUData {
         }
     }
 
+    void reset() {
+        this->numEntriesCache0   = 0;
+        this->numEntriesCache1   = 0;
+        this->numEntriesCache2   = 0;
+        this->numEntriesCache3   = 0;
+        this->numEntriesCache4   = 0;
+        this->totalEntriesCache0 = 0;
+        this->totalEntriesCache1 = 0;
+        this->totalEntriesCache2 = 0;
+        this->totalEntriesCache3 = 0;
+        this->totalEntriesCache4 = 0;
+        this->bBitMask           = 0;
+        ::memset(entries, 0, sizeof(entries));
+    }
+
     void log(int level, const char * message) const {
         char   buffer[2048];
         size_t sz = sizeof(buffer);
