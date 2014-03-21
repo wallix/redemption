@@ -111,20 +111,10 @@ public:
 
         try
         {
-            if ((this->bmp_cache.number_of_cache > 0) && (this->bmp_cache.cache_0_persistent)) {
-                this->load_from_disk(fd, cache_file_header, 0);
-            }
-            if ((this->bmp_cache.number_of_cache > 1) && (this->bmp_cache.cache_1_persistent)) {
-                this->load_from_disk(fd, cache_file_header, 1);
-            }
-            if ((this->bmp_cache.number_of_cache > 2) && (this->bmp_cache.cache_2_persistent)) {
-                this->load_from_disk(fd, cache_file_header, 2);
-            }
-            if ((this->bmp_cache.number_of_cache > 3) && (this->bmp_cache.cache_3_persistent)) {
-                this->load_from_disk(fd, cache_file_header, 3);
-            }
-            if ((this->bmp_cache.number_of_cache > 4) && (this->bmp_cache.cache_4_persistent)) {
-                this->load_from_disk(fd, cache_file_header, 4);
+            for (uint8_t cache_id = 0; cache_id < this->bmp_cache.number_of_cache; cache_id++) {
+                if (this->bmp_cache.cache_persistent[cache_id]) {
+                    this->load_from_disk(fd, cache_file_header, cache_id);
+                }
             }
         }
         catch (...) {
@@ -136,10 +126,10 @@ public:
     }
 
     void process_key_list( uint8_t cache_id, RDP::BitmapCachePersistentListEntry * entries
-                         , uint8_t number_of_entries, uint16_t max_number_of_entries
-                         , uint16_t first_entry_index) {
-             uint16_t   cache_index = first_entry_index;
-        const uint8_t * sig         = reinterpret_cast<const uint8_t *>(entries);
+                         , uint8_t number_of_entries, uint16_t first_entry_index) {
+             uint16_t   max_number_of_entries = this->bmp_cache.cache_entries[cache_id];
+             uint16_t   cache_index           = first_entry_index;
+        const uint8_t * sig                   = reinterpret_cast<const uint8_t *>(entries);
         for (uint8_t entry_index = 0;
              (entry_index < number_of_entries) && (cache_index < max_number_of_entries);
              entry_index++, cache_index++, sig += sizeof(RDP::BitmapCachePersistentListEntry)) {
@@ -220,6 +210,101 @@ private:
     }
 
 public:
+    static void load_all_from_disk(BmpCache & bmp_cache, const char * filename) {
+        int fd = ::open(filename, O_RDONLY);
+        if (fd == -1) {
+            return;
+        }
+
+        PersistentDiskBitmapCacheFileHeader cache_file_header;
+
+        if (::read(fd, &cache_file_header, sizeof(cache_file_header)) != sizeof(cache_file_header)) {
+            LOG( LOG_ERR, "BmpCachePersister: failed to read from file. filename=\"%s\""
+               , filename);
+            throw Error(ERR_PDBC_LOAD);
+        }
+        //LOG( LOG_INFO, "BmpCachePersister: magic=\"%c%c%c%c\""
+        //   , cache_file_header.magic[0], cache_file_header.magic[1], cache_file_header.magic[2]
+        //   , cache_file_header.magic[3]);
+        //LOG( LOG_INFO, "BmpCachePersister: version=%u", cache_file_header.version);
+        //LOG( LOG_INFO, "BmpCachePersister: cache_0_offset=%u", cache_file_header.cache_offset[0]);
+        //LOG( LOG_INFO, "BmpCachePersister: cache_1_offset=%u", cache_file_header.cache_offset[1]);
+        //LOG( LOG_INFO, "BmpCachePersister: cache_2_offset=%u", cache_file_header.cache_offset[2]);
+        //LOG( LOG_INFO, "BmpCachePersister: cache_3_offset=%u", cache_file_header.cache_offset[3]);
+        //LOG( LOG_INFO, "BmpCachePersister: cache_4_offset=%u", cache_file_header.cache_offset[4]);
+
+        if (::memcmp(cache_file_header.magic, "PDBC", sizeof(cache_file_header.magic))) {
+            LOG( LOG_ERR, "BmpCachePersister: \"%s\" is not a persistent bitmap cache file."
+               , filename);
+            throw Error(ERR_PDBC_LOAD);
+        }
+
+        if (cache_file_header.version != CURRENT_VERSION) {
+            LOG( LOG_ERR, "BmpCachePersister: Unsupported persistent bitmap cache file version(%u)."
+               , cache_file_header.version);
+            throw Error(ERR_PDBC_LOAD);
+        }
+
+        try
+        {
+            for (uint8_t cache_id = 0; cache_id < bmp_cache.number_of_cache; cache_id++) {
+                if (bmp_cache.cache_persistent[cache_id] &&
+                    (cache_file_header.cache_offset[cache_id] != INVALID_CACHE_OFFSET)) {
+                    load_cache_from_disk(fd, bmp_cache, cache_file_header.cache_offset[cache_id], cache_id);
+                }
+            }
+        }
+        catch (...) {
+            ::close(fd);
+            throw;
+        }
+
+        ::close(fd);
+    }
+
+    static void load_cache_from_disk( int fd, BmpCache & bmp_cache, uint32_t cache_offset
+                                    , uint8_t cache_id) {
+        if (::lseek(fd, cache_offset, SEEK_SET) == -1) {
+            LOG( LOG_ERR
+               , "BmpCachePersister: failed to reposition file read offset.");
+            throw Error(ERR_PDBC_LOAD);
+        }
+
+        PersistentDiskBitmapCacheHeader cache_header;
+
+        if (::read(fd, &cache_header, sizeof(cache_header)) != sizeof(cache_header)) {
+            LOG(LOG_ERR, "BmpCachePersister: failed to read from file.");
+            throw Error(ERR_PDBC_LOAD);
+        }
+        LOG( LOG_INFO, "BmpCachePersister: bitmap_count=%u", cache_header.bitmap_count);
+
+        for (uint16_t i = 0; i < cache_header.bitmap_count; i++) {
+            uint8_t    sig[8];
+            uint8_t    original_bpp;
+            uint16_t   cx, cy;
+            BGRPalette original_palette;
+            uint16_t   bmp_size;
+            uint8_t    data_bitmap[65536];
+
+            if (   (::read(fd, sig,               sizeof(sig             )) != sizeof(sig             ))
+                || (::read(fd, &original_bpp,     sizeof(original_bpp    )) != sizeof(original_bpp    ))
+                || (::read(fd, &cx,               sizeof(cx              )) != sizeof(cx              ))
+                || (::read(fd, &cy,               sizeof(cy              )) != sizeof(cy              ))
+                || ((original_bpp == 8) && (::read(fd, &original_palette, sizeof(original_palette)) != sizeof(original_palette)))
+                || (::read(fd, &bmp_size,         sizeof(bmp_size        )) != sizeof(bmp_size        ))
+                || (::read(fd, data_bitmap,              bmp_size         ) !=        bmp_size         )
+               ) {
+                LOG(LOG_ERR, "BmpCachePersister: failed to read from file.");
+                throw Error(ERR_PDBC_LOAD);
+            }
+
+            Bitmap * bmp = new Bitmap( bmp_cache.bpp, original_bpp
+                                     , &original_palette, cx, cy, data_bitmap, bmp_size);
+
+            bmp_cache.put(cache_id, i, bmp);
+        }
+    }
+
     static void save_all_to_disk( const BmpCache & bmp_cache, const char * filename_final) {
         char persistent_path[1024];
         char persistent_basename[1024];
@@ -272,25 +357,11 @@ public:
 
         try
         {
-            if ((bmp_cache.number_of_cache > 0) && bmp_cache.cache_0_persistent) {
-                cache_file_header.cache_offset[0] = ::lseek(fd, 0, SEEK_CUR);
-                save_to_disk(bmp_cache, bmp_cache.cache_0_entries, fd, 0);
-            }
-            if ((bmp_cache.number_of_cache > 1) && bmp_cache.cache_1_persistent) {
-                cache_file_header.cache_offset[1] = ::lseek(fd, 0, SEEK_CUR);
-                save_to_disk(bmp_cache, bmp_cache.cache_1_entries, fd, 1);
-            }
-            if ((bmp_cache.number_of_cache > 2) && bmp_cache.cache_2_persistent) {
-                cache_file_header.cache_offset[2] = ::lseek(fd, 0, SEEK_CUR);
-                save_to_disk(bmp_cache, bmp_cache.cache_2_entries, fd, 2);
-            }
-            if ((bmp_cache.number_of_cache > 3) && bmp_cache.cache_3_persistent) {
-                cache_file_header.cache_offset[3] = ::lseek(fd, 0, SEEK_CUR);
-                save_to_disk(bmp_cache, bmp_cache.cache_3_entries, fd, 3);
-            }
-            if ((bmp_cache.number_of_cache > 4) && bmp_cache.cache_4_persistent) {
-                cache_file_header.cache_offset[4] = ::lseek(fd, 0, SEEK_CUR);
-                save_to_disk(bmp_cache, bmp_cache.cache_4_entries, fd, 4);
+            for (uint8_t cache_id = 0; cache_id < bmp_cache.number_of_cache; cache_id++) {
+                if (bmp_cache.cache_persistent[cache_id]) {
+                    cache_file_header.cache_offset[cache_id] = ::lseek(fd, 0, SEEK_CUR);
+                    save_to_disk(bmp_cache, cache_id, fd);
+                }
             }
         }
         catch (...)
@@ -330,8 +401,7 @@ public:
     }
 
 private:
-    static void save_to_disk(const BmpCache & bmp_cache, uint16_t cache_entries, int fd, uint8_t cache_id) {
-
+    static void save_to_disk(const BmpCache & bmp_cache, uint8_t cache_id, int fd) {
         PersistentDiskBitmapCacheHeader cache_header;
 
         off_t cache_start_offset = ::lseek(fd, 0, SEEK_CUR);
@@ -347,7 +417,7 @@ private:
             throw Error(ERR_PDBC_SAVE);
         }
 
-        for (uint16_t cache_index = 0; cache_index < cache_entries; cache_index++) {
+        for (uint16_t cache_index = 0; cache_index < bmp_cache.cache_entries[cache_id]; cache_index++) {
             if (bmp_cache.cache[cache_id][cache_index]) {
                 const Bitmap   * bmp      = bmp_cache.cache[cache_id][cache_index];
                 const uint8_t  * sig      = bmp_cache.sha1[cache_id][cache_index];

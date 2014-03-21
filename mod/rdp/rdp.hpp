@@ -194,7 +194,8 @@ struct mod_rdp : public mod_api {
         , front(front)
         , use_rdp5(1)
         , keylayout(info.keylayout)
-        , orders(mod_rdp_params.verbose)
+        , orders( mod_rdp_params.target_device, mod_rdp_params.enable_persistent_disk_bitmap_cache
+                , mod_rdp_params.verbose)
         , share_id(0)
         , userid(0)
         , version(0)
@@ -3819,65 +3820,106 @@ struct mod_rdp : public mod_api {
        we don't save the bitmap key list attached with rdp_bmpcache2 capability
        message so we can't develop this function yet */
 
-    void send_persistent_key_list() throw(Error) {
-        if (!this->enable_transparent_mode || !this->persistent_key_list_transport) {
+    void send_persistent_key_list_pdu(BStream & pdu_data_stream) throw(Error) {
+        BStream persistent_key_list_stream(65535);
+
+        ShareData sdata(persistent_key_list_stream);
+        sdata.emit_begin(PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, this->share_id, RDP::STREAM_MED);
+
+        // Payload
+        persistent_key_list_stream.out_copy_bytes(pdu_data_stream);
+
+        sdata.emit_end();
+
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, persistent_key_list_stream.size());
+
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(persistent_key_list_stream);
+        target_stream.mark_end();
+
+        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+    }
+
+    void send_persistent_key_list_regular() throw(Error) {
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_regular");
+        }
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_regular done");
+        }
+
+        uint16_t totalEntriesCache[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 0, 0, 0, 0, 0 };
+
+        for (uint8_t cache_id = 0; cache_id < this->orders.bmp_cache->number_of_cache; cache_id++) {
+            if (this->orders.bmp_cache->cache_persistent[cache_id]) {
+                for (; this->orders.bmp_cache->cache[cache_id][totalEntriesCache[cache_id]]; totalEntriesCache[cache_id]++);
+            }
+        }
+
+        RDP::PersistentKeyListPDUData pklpdu;
+        uint8_t                       number_of_entries       = 0;
+        uint16_t                      total_number_of_entries = totalEntriesCache[0] + totalEntriesCache[1] + totalEntriesCache[2] +
+                                                                totalEntriesCache[3] + totalEntriesCache[4];
+
+        if (!total_number_of_entries) {
+            return;
+        }
+
+        for (uint8_t cache_id = 0; cache_id < this->orders.bmp_cache->number_of_cache; cache_id++) {
+            if ((cache_id == 0) && (number_of_entries == 0)) {
+                pklpdu.bBitMask |= RDP::PERSIST_FIRST_PDU;
+            }
+
+            if (!this->orders.bmp_cache->cache_persistent[cache_id]) {
+                continue;
+            }
+
+            
+        }
+    }
+
+    void send_persistent_key_list_transparent() throw(Error) {
+        if (!this->persistent_key_list_transport) {
             return;
         }
 
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list");
+            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_transparent");
         }
 
-        BStream persistent_key_list_stream(65535);
+        BStream pdu_data_stream(65535);
 
         bool bContinue = true;
         while (bContinue) {
             try
             {
-                persistent_key_list_stream.reset();
+                pdu_data_stream.reset();
 
-                this->persistent_key_list_transport->recv(&persistent_key_list_stream.end, 2/*pdu_size(2)*/);
+                this->persistent_key_list_transport->recv(&pdu_data_stream.end, 2/*pdu_size(2)*/);
 
-                uint16_t pdu_size = persistent_key_list_stream.in_uint16_le();
+                uint16_t pdu_size = pdu_data_stream.in_uint16_le();
 
 
-                persistent_key_list_stream.reset();
+                pdu_data_stream.reset();
 
-                ShareData sdata(persistent_key_list_stream);
-                sdata.emit_begin(PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, this->share_id, RDP::STREAM_MED);
-
-                // Payload
-                persistent_key_list_stream.mark_end();
-
-                uint8_t * pdu_start_pos = persistent_key_list_stream.end;
-
-                this->persistent_key_list_transport->recv(&persistent_key_list_stream.end, pdu_size);
+                this->persistent_key_list_transport->recv(&pdu_data_stream.end, pdu_size);
 
                 if (this->verbose & 1) {
-                    FixedSizeStream pdu_stream(pdu_start_pos, persistent_key_list_stream.end - pdu_start_pos);
+                    SubStream stream(pdu_data_stream);
                     RDP::PersistentKeyListPDUData pklpdu;
-                    pklpdu.receive(pdu_stream);
+                    pklpdu.receive(stream);
                     pklpdu.log(LOG_INFO, "Send to server");
                 }
 
-                // Packet trailer
-                persistent_key_list_stream.p = persistent_key_list_stream.end;
-                sdata.emit_end();
-
-                BStream sctrl_header(256);
-                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, persistent_key_list_stream.size());
-
-                HStream target_stream(1024, 65536);
-                target_stream.out_copy_bytes(sctrl_header);
-                target_stream.out_copy_bytes(persistent_key_list_stream);
-                target_stream.mark_end();
-
-                this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+                this->send_persistent_key_list_pdu(pdu_data_stream);
             }
             catch (Error e)
             {
                 if (e.id != ERR_TRANSPORT_READ_FAILED) {
-                    LOG(LOG_ERR, "mod_rdp::send_persistent_key_list: error=%u", e.id);
+                    LOG(LOG_ERR, "mod_rdp::send_persistent_key_list_transparent: error=%u", e.id);
                     throw;
                 }
 
@@ -3886,7 +3928,16 @@ struct mod_rdp : public mod_api {
         }
 
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list done");
+            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_transparent done");
+        }
+    }
+
+    void send_persistent_key_list() throw(Error) {
+        if (this->enable_transparent_mode) {
+            this->send_persistent_key_list_transparent();
+        }
+        else {
+            this->send_persistent_key_list_regular();
         }
     }
 

@@ -45,6 +45,7 @@
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
+#include "RDP/caches/bmpcachepersister.hpp"
 
 /* orders */
 struct rdp_orders {
@@ -75,7 +76,10 @@ struct rdp_orders {
     size_t recv_bmp_cache_count;
     size_t recv_order_count;
 
-    rdp_orders(uint32_t verbose)
+    redemption::string target_device;
+    bool               enable_persistent_disk_bitmap_cache;
+
+    rdp_orders(const char * target_device, bool enable_persistent_disk_bitmap_cache, uint32_t verbose)
             : common(RDP::PATBLT, Rect(0, 0, 1, 1))
             , memblt(0, Rect(), 0, 0, 0, 0)
             , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
@@ -89,7 +93,9 @@ struct rdp_orders {
             , bmp_cache(NULL)
             , verbose(verbose)
             , recv_bmp_cache_count(0)
-            , recv_order_count(0) {
+            , recv_order_count(0)
+            , target_device(target_device)
+            , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache) {
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
         memset(this->global_palette, 0, sizeof(this->global_palette));
     }
@@ -117,8 +123,22 @@ struct rdp_orders {
 
     ~rdp_orders() {
         if (this->bmp_cache) {
+            this->save_persistent_disk_bitmap_cache();
             delete this->bmp_cache;
         }
+    }
+
+    void save_persistent_disk_bitmap_cache() const {
+        if (!this->enable_persistent_disk_bitmap_cache)
+            return;
+
+        // Generates the name of file.
+        char filename[2048];
+        ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
+            PERSISTENT_PATH "/mod_rdp", this->target_device.c_str(), this->bmp_cache->bpp);
+        filename[sizeof(filename) - 1] = '\0';
+
+        BmpCachePersister::save_all_to_disk(*this->bmp_cache, filename);
     }
 
     void create_cache_bitmap(const uint8_t bpp,
@@ -127,12 +147,23 @@ struct rdp_orders {
         uint16_t big_entries, uint16_t big_size, bool big_persistent)
     {
         if (this->bmp_cache) {
+            this->save_persistent_disk_bitmap_cache();
             delete this->bmp_cache;
             this->bmp_cache = NULL;
         }
 
         this->bmp_cache = new BmpCache(bpp, 3, false, small_entries, small_size, small_persistent,
             medium_entries, medium_size, medium_persistent, big_entries, big_size, big_persistent);
+
+        if (this->enable_persistent_disk_bitmap_cache) {
+            // Generates the name of file.
+            char filename[2048];
+            ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
+                PERSISTENT_PATH "/mod_rdp", this->target_device.c_str(), this->bmp_cache->bpp);
+            filename[sizeof(filename) - 1] = '\0';
+
+            BmpCachePersister::load_all_from_disk(*this->bmp_cache, filename);
+        }
     }
 
 public:
