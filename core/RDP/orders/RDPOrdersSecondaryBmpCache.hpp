@@ -458,15 +458,17 @@ class RDPBmpCache {
     const    Bitmap * bmp;
     bool     persistent;
     bool     do_not_cache;
+    uint32_t key1;
+    uint32_t key2;
     uint32_t verbose;
 
     RDPBmpCache(const Bitmap * bmp, int id, int idx, bool persistent, bool do_not_cache, int verbose = 0)
         : id(id), idx(idx), bmp(bmp), persistent(persistent), do_not_cache(do_not_cache),
-          verbose(verbose) {
+          key1(0), key2(0), verbose(verbose) {
     }
 
     RDPBmpCache(int verbose = 0)
-        : id(0), idx(0), bmp(NULL), persistent(false), do_not_cache(false), verbose(verbose) {
+        : id(0), idx(0), bmp(NULL), persistent(false), do_not_cache(false), key1(0), key2(0), verbose(verbose) {
     }
 
     ~RDPBmpCache() {
@@ -786,7 +788,7 @@ class RDPBmpCache {
         if (this->persistent) {
             union {
                 uint8_t  sig_8[20];
-                uint32_t sig_32[5];
+                uint32_t sig_32[2];
             } sig;
             this->bmp->compute_sha1(sig.sig_8);
             uint32_t * Key1 = sig.sig_32;
@@ -841,7 +843,7 @@ class RDPBmpCache {
         if (this->persistent) {
             union {
                 uint8_t  sig_8[20];
-                uint32_t sig_32[5];
+                uint32_t sig_32[2];
             } sig;
             this->bmp->compute_sha1(sig.sig_8);
             uint32_t * Key1 = sig.sig_32;
@@ -972,10 +974,8 @@ class RDPBmpCache {
         //LOG(LOG_INFO, "cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
 
         if (cbr2_flags & CBR2_PERSISTENT_KEY_PRESENT) {
-            uint32_t key1 = stream.in_uint32_le();
-(void)key1;
-            uint32_t key2 = stream.in_uint32_le();
-(void)key2;
+            this->key1 = stream.in_uint32_le();
+            this->key2 = stream.in_uint32_le();
         }
 
         uint16_t bitmapWidth  = stream.in_2BUE();
@@ -1125,10 +1125,8 @@ class RDPBmpCache {
         //LOG(LOG_INFO, "cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
 
         if (cbr2_flags & CBR2_PERSISTENT_KEY_PRESENT) {
-            uint32_t key1 = stream.in_uint32_le();
-(void)key1;
-            uint32_t key2 = stream.in_uint32_le();
-(void)key2;
+            this->key1 = stream.in_uint32_le();
+            this->key2 = stream.in_uint32_le();
         }
 
         uint16_t bitmapWidth  = stream.in_2BUE();
@@ -1275,8 +1273,6 @@ class RDPBmpCache {
         this->str(buffer, 1024);
         printf("%s", buffer);
     }
-
 };
-
 
 #endif

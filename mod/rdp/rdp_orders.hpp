@@ -138,7 +138,7 @@ struct rdp_orders {
             PERSISTENT_PATH "/mod_rdp", this->target_device.c_str(), this->bmp_cache->bpp);
         filename[sizeof(filename) - 1] = '\0';
 
-        BmpCachePersister::save_all_to_disk(*this->bmp_cache, filename);
+        BmpCachePersister::save_all_to_disk(*this->bmp_cache, filename, this->verbose);
     }
 
     void create_cache_bitmap(const uint8_t bpp,
@@ -153,7 +153,8 @@ struct rdp_orders {
         }
 
         this->bmp_cache = new BmpCache(bpp, 3, false, small_entries, small_size, small_persistent,
-            medium_entries, medium_size, medium_persistent, big_entries, big_size, big_persistent);
+            medium_entries, medium_size, medium_persistent, big_entries, big_size, big_persistent,
+            0, 0, false, 0, 0, false, this->verbose);
 
         if (this->enable_persistent_disk_bitmap_cache) {
             // Generates the name of file.
@@ -179,7 +180,7 @@ public:
         this->recv_bmp_cache_count++;
 
         REDASSERT(bmp.bmp);
-        this->bmp_cache->put(bmp.id, bmp.idx, bmp.bmp);
+        this->bmp_cache->put(bmp.id, bmp.idx, bmp.bmp, bmp.key1, bmp.key2);
         if (this->verbose & 64) {
             LOG( LOG_ERR
                , "rdp_orders_process_bmpcache bitmap id=%u idx=%u cx=%u cy=%u bmp_size=%u original_bpp=%u bpp=%u"

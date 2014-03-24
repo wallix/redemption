@@ -1800,14 +1800,14 @@ struct mod_rdp : public mod_api {
                                         if (this->verbose & 1){
                                             LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
                                         }
-                                        //                            this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
+                                        //this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
                                         this->connection_finalization_state = WAITING_CTL_COOPERATE;
                                         break;
                                     case WAITING_CTL_COOPERATE:
                                         if (this->verbose & 1){
                                             LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
                                         }
-                                        //                            this->check_data_pdu(PDUTYPE2_CONTROL);
+                                        //this->check_data_pdu(PDUTYPE2_CONTROL);
                                         this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                                         break;
                                     case WAITING_GRANT_CONTROL_COOPERATE:
@@ -1821,7 +1821,7 @@ struct mod_rdp : public mod_api {
                                         if (this->verbose & 1){
                                             LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
                                         }
-                                        //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
+                                        //this->check_data_pdu(PDUTYPE2_FONTMAP);
                                         this->connection_finalization_state = UP_AND_RUNNING;
 
                                         // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -1944,6 +1944,8 @@ struct mod_rdp : public mod_api {
                                              LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
                                         }
 
+                                        this->orders.reset();
+
     // 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
     // ==========================================================
 
@@ -1994,7 +1996,9 @@ struct mod_rdp : public mod_api {
                                         /* Including RDP 5.0 capabilities */
                                         if (this->use_rdp5){
                                             LOG(LOG_INFO, "use rdp5");
-                                            this->send_persistent_key_list();
+                                            if (this->enable_persistent_disk_bitmap_cache) {
+                                                this->send_persistent_key_list();
+                                            }
                                             this->send_fonts(3);
                                         }
                                         else{
@@ -2015,7 +2019,7 @@ struct mod_rdp : public mod_api {
                                                 " change client resolution to match server resolution");
                                             throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
                                         }
-                                        this->orders.reset();
+//                                        this->orders.reset();
                                         this->connection_finalization_state = WAITING_SYNCHRONIZE;
                                     }
                                     break;
@@ -3847,10 +3851,6 @@ struct mod_rdp : public mod_api {
             LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_regular");
         }
 
-        if (this->verbose & 1) {
-            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_regular done");
-        }
-
         uint16_t totalEntriesCache[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 0, 0, 0, 0, 0 };
 
         for (uint8_t cache_id = 0; cache_id < this->orders.bmp_cache->number_of_cache; cache_id++) {
@@ -3858,26 +3858,60 @@ struct mod_rdp : public mod_api {
                 for (; this->orders.bmp_cache->cache[cache_id][totalEntriesCache[cache_id]]; totalEntriesCache[cache_id]++);
             }
         }
+        //LOG(LOG_INFO, "totalEntriesCache0=%u totalEntriesCache1=%u totalEntriesCache2=%u totalEntriesCache3=%u totalEntriesCache4=%u",
+        //    totalEntriesCache[0], totalEntriesCache[1], totalEntriesCache[2], totalEntriesCache[3], totalEntriesCache[4]);
 
-        RDP::PersistentKeyListPDUData pklpdu;
-        uint8_t                       number_of_entries       = 0;
-        uint16_t                      total_number_of_entries = totalEntriesCache[0] + totalEntriesCache[1] + totalEntriesCache[2] +
-                                                                totalEntriesCache[3] + totalEntriesCache[4];
+        uint16_t total_number_of_entries = totalEntriesCache[0] + totalEntriesCache[1] + totalEntriesCache[2] +
+                                           totalEntriesCache[3] + totalEntriesCache[4];
+        if (total_number_of_entries > 0) {
+            RDP::PersistentKeyListPDUData pklpdu;
+            pklpdu.bBitMask |= RDP::PERSIST_FIRST_PDU;
 
-        if (!total_number_of_entries) {
-            return;
+            uint16_t number_of_entries     = 0;
+            uint8_t  pdu_number_of_entries = 0;
+            for (uint8_t cache_id = 0; cache_id < this->orders.bmp_cache->number_of_cache; cache_id++) {
+                if (!this->orders.bmp_cache->cache_persistent[cache_id]) {
+                    continue;
+                }
+
+                for (uint16_t cache_index = 0; this->orders.bmp_cache->cache[cache_id][cache_index]; cache_index++) {
+                    pklpdu.entries[pdu_number_of_entries].Key1 = this->orders.bmp_cache->sig[cache_id][cache_index].sig_32[0];
+                    pklpdu.entries[pdu_number_of_entries].Key2 = this->orders.bmp_cache->sig[cache_id][cache_index].sig_32[1];
+
+                    pklpdu.number_entries_cache[cache_id]++;
+                    number_of_entries++;
+                    pdu_number_of_entries++;
+
+                    if ((pdu_number_of_entries == RDP::PersistentKeyListPDUData::MAXIMUM_ENCAPSULATED_BITMAP_KEYS) ||
+                        (number_of_entries == total_number_of_entries))
+                    {
+                        if (number_of_entries == total_number_of_entries) {
+                            pklpdu.bBitMask |= RDP::PERSIST_LAST_PDU;
+                        }
+                        pklpdu.totalEntriesCache0 = totalEntriesCache[0];
+                        pklpdu.totalEntriesCache1 = totalEntriesCache[1];
+                        pklpdu.totalEntriesCache2 = totalEntriesCache[2];
+                        pklpdu.totalEntriesCache3 = totalEntriesCache[3];
+                        pklpdu.totalEntriesCache4 = totalEntriesCache[4];
+
+                        //pklpdu.log(LOG_INFO, "Send to server");
+
+                        BStream pdu_data_stream(65535);
+                        pklpdu.emit(pdu_data_stream);
+                        pdu_data_stream.mark_end();
+
+                        this->send_persistent_key_list_pdu(pdu_data_stream);
+
+                        pklpdu.reset();
+
+                        pdu_number_of_entries = 0;
+                    }
+                }
+            }
         }
 
-        for (uint8_t cache_id = 0; cache_id < this->orders.bmp_cache->number_of_cache; cache_id++) {
-            if ((cache_id == 0) && (number_of_entries == 0)) {
-                pklpdu.bBitMask |= RDP::PERSIST_FIRST_PDU;
-            }
-
-            if (!this->orders.bmp_cache->cache_persistent[cache_id]) {
-                continue;
-            }
-
-            
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_regular done");
         }
     }
 

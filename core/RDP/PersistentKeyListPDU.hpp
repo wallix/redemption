@@ -21,6 +21,7 @@
 #ifndef _REDEMPTION_CORE_RDP_PERSISTENTKEYLISTPDU_HPP_
 #define _REDEMPTION_CORE_RDP_PERSISTENTKEYLISTPDU_HPP_
 
+ #include "caches/bmpcache.hpp"
 
 namespace RDP {
 
@@ -256,26 +257,28 @@ struct BitmapCachePersistentListEntry {
 struct PersistentKeyListPDUData {
     static const size_t MAXIMUM_ENCAPSULATED_BITMAP_KEYS = 169;
 
-    uint16_t numEntriesCache0;
-    uint16_t numEntriesCache1;
-    uint16_t numEntriesCache2;
-    uint16_t numEntriesCache3;
-    uint16_t numEntriesCache4;
-    uint16_t totalEntriesCache0;
-    uint16_t totalEntriesCache1;
-    uint16_t totalEntriesCache2;
-    uint16_t totalEntriesCache3;
-    uint16_t totalEntriesCache4;
-    uint8_t  bBitMask;
+    uint16_t number_entries_cache[5];
+
+    uint16_t & numEntriesCache0;
+    uint16_t & numEntriesCache1;
+    uint16_t & numEntriesCache2;
+    uint16_t & numEntriesCache3;
+    uint16_t & numEntriesCache4;
+    uint16_t   totalEntriesCache0;
+    uint16_t   totalEntriesCache1;
+    uint16_t   totalEntriesCache2;
+    uint16_t   totalEntriesCache3;
+    uint16_t   totalEntriesCache4;
+    uint8_t    bBitMask;
 
     BitmapCachePersistentListEntry entries[MAXIMUM_ENCAPSULATED_BITMAP_KEYS];
 
     PersistentKeyListPDUData()
-    : numEntriesCache0(0)
-    , numEntriesCache1(0)
-    , numEntriesCache2(0)
-    , numEntriesCache3(0)
-    , numEntriesCache4(0)
+    : numEntriesCache0(number_entries_cache[0])
+    , numEntriesCache1(number_entries_cache[1])
+    , numEntriesCache2(number_entries_cache[2])
+    , numEntriesCache3(number_entries_cache[3])
+    , numEntriesCache4(number_entries_cache[4])
     , totalEntriesCache0(0)
     , totalEntriesCache1(0)
     , totalEntriesCache2(0)
@@ -283,6 +286,7 @@ struct PersistentKeyListPDUData {
     , totalEntriesCache4(0)
     , bBitMask(0)
     {
+        ::memset(number_entries_cache, 0, sizeof(number_entries_cache));
         ::memset(entries, 0, sizeof(entries));
     }
 
@@ -344,7 +348,7 @@ struct PersistentKeyListPDUData {
         stream.out_uint16_le(this->totalEntriesCache4);
         stream.out_uint8(this->bBitMask);
 
-        stream.out_skip_bytes(3);    // Pad2(1) + Pad3(2)
+        stream.out_clear_bytes(3);  // Pad2(1) + Pad3(2)
 
         for (uint32_t i = 0,
                       c = std::min<uint32_t>(this->numEntriesCache0 + this->numEntriesCache1 + this->numEntriesCache2 +

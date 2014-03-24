@@ -3205,7 +3205,9 @@ public:
                     this->use_bitmapcache_rev2 = true;
 
                     this->client_bmpcache2_caps.recv(stream, capset_length);
-                    this->client_bmpcache2_caps.log("Receiving from client");
+                    if (this->verbose) {
+                        this->client_bmpcache2_caps.log("Receiving from client");
+                    }
 
                     TODO("We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2")
                     this->client_info.number_of_cache = this->client_bmpcache2_caps.numCellCaches;
@@ -3986,7 +3988,9 @@ public:
                 RDP::PersistentKeyListPDUData pklpdud;
 
                 pklpdud.receive(sdata_in.payload);
-                pklpdud.log(LOG_INFO, "Receiving from client");
+                if (this->verbose & 8){
+                    pklpdud.log(LOG_INFO, "Receiving from client");
+                }
 
                 static uint16_t cache_entry_index[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 0, 0, 0, 0, 0 };
 

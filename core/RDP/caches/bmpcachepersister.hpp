@@ -72,9 +72,12 @@ private:
 
     BmpCache & bmp_cache;
 
+    uint32_t verbose;
+
 public:
-    BmpCachePersister( BmpCache & bmp_cache, const char * filename)
-    : bmp_cache(bmp_cache) {
+    BmpCachePersister( BmpCache & bmp_cache, const char * filename, uint32_t verbose = 0)
+    : bmp_cache(bmp_cache)
+    , verbose(verbose) {
         int fd = ::open(filename, O_RDONLY);
         if (fd == -1) {
             return;
@@ -144,7 +147,7 @@ public:
             if (it != this->bmp_map[cache_id].end()) {
                 //LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key);
 
-                this->bmp_cache.put(cache_id, cache_index, it->second.bmp);
+                this->bmp_cache.put(cache_id, cache_index, it->second.bmp, entries->Key1, entries->Key2);
                 it->second.bmp = NULL;
 
                 this->bmp_map[cache_id].erase(it);
@@ -173,7 +176,9 @@ private:
             LOG(LOG_ERR, "BmpCachePersister: failed to read from file.");
             throw Error(ERR_PDBC_LOAD);
         }
-        LOG( LOG_INFO, "BmpCachePersister: bitmap_count=%u", cache_header.bitmap_count);
+        if (verbose & 1) {
+            LOG(LOG_INFO, "BmpCachePersister: bitmap_count=%u", cache_header.bitmap_count);
+        }
 
         for (uint16_t i = 0; i < cache_header.bitmap_count; i++) {
             uint8_t    sig[8];
@@ -279,14 +284,17 @@ public:
         LOG( LOG_INFO, "BmpCachePersister: bitmap_count=%u", cache_header.bitmap_count);
 
         for (uint16_t i = 0; i < cache_header.bitmap_count; i++) {
-            uint8_t    sig[8];
+            union {
+                uint8_t  sig_8[8];
+                uint32_t sig_32[2];
+            } sig;
             uint8_t    original_bpp;
             uint16_t   cx, cy;
             BGRPalette original_palette;
             uint16_t   bmp_size;
             uint8_t    data_bitmap[65536];
 
-            if (   (::read(fd, sig,               sizeof(sig             )) != sizeof(sig             ))
+            if (   (::read(fd, sig.sig_8,         sizeof(sig.sig_8       )) != sizeof(sig.sig_8       ))
                 || (::read(fd, &original_bpp,     sizeof(original_bpp    )) != sizeof(original_bpp    ))
                 || (::read(fd, &cx,               sizeof(cx              )) != sizeof(cx              ))
                 || (::read(fd, &cy,               sizeof(cy              )) != sizeof(cy              ))
@@ -301,11 +309,15 @@ public:
             Bitmap * bmp = new Bitmap( bmp_cache.bpp, original_bpp
                                      , &original_palette, cx, cy, data_bitmap, bmp_size);
 
-            bmp_cache.put(cache_id, i, bmp);
+            bmp_cache.put(cache_id, i, bmp, sig.sig_32[0], sig.sig_32[1]);
         }
     }
 
-    static void save_all_to_disk( const BmpCache & bmp_cache, const char * filename_final) {
+    static void save_all_to_disk(const BmpCache & bmp_cache, const char * filename_final, uint32_t verbose = 0) {
+        if (verbose & 1) {
+            bmp_cache.log();
+        }
+
         char persistent_path[1024];
         char persistent_basename[1024];
         char persistent_extension[256];
@@ -420,7 +432,7 @@ private:
         for (uint16_t cache_index = 0; cache_index < bmp_cache.cache_entries[cache_id]; cache_index++) {
             if (bmp_cache.cache[cache_id][cache_index]) {
                 const Bitmap   * bmp      = bmp_cache.cache[cache_id][cache_index];
-                const uint8_t  * sig      = bmp_cache.sha1[cache_id][cache_index];
+                const uint8_t  * sig      = bmp_cache.sig[cache_id][cache_index].sig_8;
                 const uint16_t   bmp_size = bmp->bmp_size;
                 const void     * bmp_data = bmp->data_bitmap.get();
 
