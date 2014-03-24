@@ -130,24 +130,28 @@ public:
 
     void process_key_list( uint8_t cache_id, RDP::BitmapCachePersistentListEntry * entries
                          , uint8_t number_of_entries, uint16_t first_entry_index) {
-             uint16_t   max_number_of_entries = this->bmp_cache.cache_entries[cache_id];
-             uint16_t   cache_index           = first_entry_index;
-        const uint8_t * sig                   = reinterpret_cast<const uint8_t *>(entries);
+              uint16_t   max_number_of_entries = this->bmp_cache.cache_entries[cache_id];
+              uint16_t   cache_index           = first_entry_index;
+        const union Sig {
+            uint8_t  sig_8[8];
+            uint32_t sig_32[2];
+        }              * sig                   = reinterpret_cast<const union Sig *>(entries);
         for (uint8_t entry_index = 0;
              (entry_index < number_of_entries) && (cache_index < max_number_of_entries);
-             entry_index++, cache_index++, sig += sizeof(RDP::BitmapCachePersistentListEntry)) {
+             entry_index++, cache_index++, sig++) {
             REDASSERT(!this->bmp_cache.cache[cache_id][cache_index]);
 
             char key[20];
 
             snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
-                    , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+                    , sig->sig_32[0], sig->sig_32[1], sig->sig_32[2], sig->sig_32[3]
+                    , sig->sig_32[4], sig->sig_32[5], sig->sig_32[6], sig->sig_32[7]);
 
             container_type::iterator it = this->bmp_map[cache_id].find(key);
             if (it != this->bmp_map[cache_id].end()) {
                 //LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key);
 
-                this->bmp_cache.put(cache_id, cache_index, it->second.bmp, entries->Key1, entries->Key2);
+                this->bmp_cache.put(cache_id, cache_index, it->second.bmp, sig->sig_32[0], sig->sig_32[1]);
                 it->second.bmp = NULL;
 
                 this->bmp_map[cache_id].erase(it);
@@ -205,8 +209,12 @@ private:
             snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
                     , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
 
-            //LOG( LOG_INFO, "BmpCachePersister: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-            //   , key, original_bpp, cx, cy, bmp_size);
+            if (verbose & 1) {
+                LOG( LOG_INFO, "BmpCachePersister: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
+                   , key, original_bpp, cx, cy, bmp_size);
+            }
+
+            REDASSERT(this->bmp_map[cache_id][key].bmp == NULL);
 
             this->bmp_map[cache_id][key].bmp = new Bitmap( this->bmp_cache.bpp, original_bpp
                                                          , &original_palette, cx, cy, data_bitmap
@@ -372,7 +380,7 @@ public:
             for (uint8_t cache_id = 0; cache_id < bmp_cache.number_of_cache; cache_id++) {
                 if (bmp_cache.cache_persistent[cache_id]) {
                     cache_file_header.cache_offset[cache_id] = ::lseek(fd, 0, SEEK_CUR);
-                    save_to_disk(bmp_cache, cache_id, fd);
+                    save_to_disk(bmp_cache, cache_id, fd, verbose);
                 }
             }
         }
@@ -413,7 +421,7 @@ public:
     }
 
 private:
-    static void save_to_disk(const BmpCache & bmp_cache, uint8_t cache_id, int fd) {
+    static void save_to_disk(const BmpCache & bmp_cache, uint8_t cache_id, int fd, uint32_t verbose) {
         PersistentDiskBitmapCacheHeader cache_header;
 
         off_t cache_start_offset = ::lseek(fd, 0, SEEK_CUR);
@@ -435,6 +443,16 @@ private:
                 const uint8_t  * sig      = bmp_cache.sig[cache_id][cache_index].sig_8;
                 const uint16_t   bmp_size = bmp->bmp_size;
                 const void     * bmp_data = bmp->data_bitmap.get();
+
+                char key[20];
+
+                snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
+                        , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+
+                if (verbose & 1) {
+                    LOG( LOG_INFO, "BmpCachePersister: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
+                       , key, bmp->original_bpp, bmp->cx, bmp->cy, bmp_size);
+                }
 
                 if (   (::write(fd, sig,                    8                            ) == -1)
                     || (::write(fd, &bmp->original_bpp,     sizeof(bmp->original_bpp    )) == -1)
