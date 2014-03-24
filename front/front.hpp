@@ -607,7 +607,7 @@ public:
             PERSISTENT_PATH "/client", this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
         filename[sizeof(filename) - 1] = '\0';
 
-        BmpCachePersister::save_all_to_disk(*this->bmp_cache, filename);
+        BmpCachePersister::save_all_to_disk(*this->bmp_cache, filename, this->verbose);
     }
 
     virtual void reset(){
@@ -691,7 +691,8 @@ public:
                 PERSISTENT_PATH "/client", this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
             cache_file_name[sizeof(cache_file_name) - 1] = '\0';
 
-            this->bmp_cache_persister = new BmpCachePersister(*this->bmp_cache, cache_file_name);
+            this->bmp_cache_persister = new BmpCachePersister( *this->bmp_cache, cache_file_name
+                                                             , this->verbose);
         }
 
         delete this->orders;
@@ -3496,7 +3497,7 @@ public:
         this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
-            LOG(LOG_INFO, "send_control action=%u", action);
+            LOG(LOG_INFO, "send_control done. action=%u", action);
         }
     }
 
@@ -3558,7 +3559,7 @@ public:
         this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
-            LOG(LOG_INFO, "send_fontmap");
+            LOG(LOG_INFO, "send_fontmap done");
         }
     }
 
