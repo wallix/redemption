@@ -25,9 +25,11 @@
 
 #include <string.h>
 
+#include "infiletransport.hpp"
 #include "log.hpp"
-#include "stream.hpp"
 #include "mod_api.hpp"
+#include "outfiletransport.hpp"
+#include "stream.hpp"
 
 #include "RDP/protocol.hpp"
 
@@ -132,13 +134,59 @@ struct rdp_orders {
         if (!this->enable_persistent_disk_bitmap_cache)
             return;
 
+        const char * persistent_path = PERSISTENT_PATH "/mod_rdp";
+
+        // Ensures that the directory exists.
+        if (::recursive_create_directory( persistent_path, S_IRWXU | S_IRWXG, 0) != 0) {
+            LOG( LOG_ERR
+               , "rdp_orders::save_persistent_disk_bitmap_cache: failed to create directory \"%s\"."
+               , persistent_path);
+            throw Error(ERR_BITMAP_CACHE_PERSISTENT, 0);
+        }
+
         // Generates the name of file.
         char filename[2048];
         ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            PERSISTENT_PATH "/mod_rdp", this->target_device.c_str(), this->bmp_cache->bpp);
+            persistent_path, this->target_device.c_str(), this->bmp_cache->bpp);
         filename[sizeof(filename) - 1] = '\0';
 
-        BmpCachePersister::save_all_to_disk(*this->bmp_cache, filename, this->verbose);
+        char filename_temporary[2048];
+        ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
+            persistent_path, this->target_device.c_str(), this->bmp_cache->bpp);
+        filename_temporary[sizeof(filename_temporary) - 1] = '\0';
+
+        int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
+        if (fd == -1) {
+            LOG( LOG_ERR
+               , "rdp_orders::save_persistent_disk_bitmap_cache: "
+                 "failed to open (temporary) file for writing. filename=\"%s\""
+               , filename_temporary);
+            throw Error(ERR_PDBC_SAVE);
+        }
+
+        try
+        {
+            OutFileTransport oft(fd);
+
+            BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, this->verbose);
+        }
+        catch (...)
+        {
+            ::close(fd);
+            ::unlink(filename_temporary);
+            throw;
+        }
+
+        ::close(fd);
+
+        if (::rename(filename_temporary, filename) == -1) {
+            LOG( LOG_ERR
+               , "rdp_orders::save_persistent_disk_bitmap_cache: failed to rename the (temporary) file. "
+                 "old_filename=\"%s\" new_filename=\"%s\""
+               , filename_temporary, filename);
+            throw Error(ERR_PDBC_SAVE);
+            ::unlink(filename_temporary);
+        }
     }
 
     void create_cache_bitmap(const uint8_t bpp,
@@ -163,7 +211,25 @@ struct rdp_orders {
                 PERSISTENT_PATH "/mod_rdp", this->target_device.c_str(), this->bmp_cache->bpp);
             filename[sizeof(filename) - 1] = '\0';
 
-            BmpCachePersister::load_all_from_disk(*this->bmp_cache, filename);
+            int fd = ::open(filename, O_RDONLY);
+            if (fd == -1) {
+                return;
+            }
+
+            InFileTransport ift(fd);
+
+            try {
+                if (this->verbose & 1) {
+                    LOG(LOG_INFO, "rdp_orders::create_cache_bitmap: filename=\"%s\"", filename);
+                }
+                BmpCachePersister::load_all_from_disk(*this->bmp_cache, ift, filename, this->verbose);
+            }
+            catch (...) {
+                ::close(fd);
+                throw;
+            }
+
+            ::close(fd);
         }
     }
 

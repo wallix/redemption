@@ -64,6 +64,8 @@
 #include "colors.hpp"
 #include "bitfu.hpp"
 #include "confdescriptor.hpp"
+#include "infiletransport.hpp"
+#include "outfiletransport.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/capabilities.hpp"
@@ -601,13 +603,59 @@ public:
         if (!this->ini->client.persistent_disk_bitmap_cache)
             return;
 
+        const char * persistent_path = PERSISTENT_PATH "/client";
+
+        // Ensures that the directory exists.
+        if (::recursive_create_directory(persistent_path, S_IRWXU | S_IRWXG, 0) != 0) {
+            LOG( LOG_ERR
+               , "front::save_persistent_disk_bitmap_cache: failed to create directory \"%s\"."
+               , persistent_path);
+            throw Error(ERR_BITMAP_CACHE_PERSISTENT, 0);
+        }
+
         // Generates the name of file.
         char filename[2048];
         ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            PERSISTENT_PATH "/client", this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
+            persistent_path, this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
         filename[sizeof(filename) - 1] = '\0';
 
-        BmpCachePersister::save_all_to_disk(*this->bmp_cache, filename, this->verbose);
+        char filename_temporary[2048];
+        ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
+            persistent_path, this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
+        filename_temporary[sizeof(filename_temporary) - 1] = '\0';
+
+        int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
+        if (fd == -1) {
+            LOG( LOG_ERR
+               , "front::save_persistent_disk_bitmap_cache: "
+                 "failed to open (temporary) file for writing. filename=\"%s\""
+               , filename_temporary);
+            throw Error(ERR_PDBC_SAVE);
+        }
+
+        try
+        {
+            OutFileTransport oft(fd);
+
+            BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, this->verbose);
+        }
+        catch (...)
+        {
+            ::close(fd);
+            ::unlink(filename_temporary);
+            throw;
+        }
+
+        ::close(fd);
+
+        if (::rename(filename_temporary, filename) == -1) {
+            LOG( LOG_ERR
+               , "front::save_persistent_disk_bitmap_cache: failed to rename the (temporary) file. "
+                 "old_filename=\"%s\" new_filename=\"%s\""
+               , filename_temporary, filename);
+            throw Error(ERR_PDBC_SAVE);
+            ::unlink(filename_temporary);
+        }
     }
 
     virtual void reset(){
@@ -686,13 +734,24 @@ public:
 
         if (this->ini->client.persistent_disk_bitmap_cache) {
             // Generates the name of file.
-            char cache_file_name[2048];
-            ::snprintf(cache_file_name, sizeof(cache_file_name) - 1, "%s/PDBC-%s-%d",
+            char cache_filename[2048];
+            ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
                 PERSISTENT_PATH "/client", this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
-            cache_file_name[sizeof(cache_file_name) - 1] = '\0';
+            cache_filename[sizeof(cache_filename) - 1] = '\0';
 
-            this->bmp_cache_persister = new BmpCachePersister( *this->bmp_cache, cache_file_name
-                                                             , this->verbose);
+            int fd = ::open(cache_filename, O_RDONLY);
+            if (fd != -1) {
+                try {
+                    InFileTransport ift(fd);
+
+                    this->bmp_cache_persister = new BmpCachePersister( *this->bmp_cache, ift, cache_filename
+                                                                     , this->verbose);
+                }
+                catch (...) {
+                    ::close(fd);
+                    throw;
+                }
+            }
         }
 
         delete this->orders;
@@ -3985,7 +4044,8 @@ public:
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
 
-            if (this->ini->client.persistent_disk_bitmap_cache) {
+            if (this->ini->client.persistent_disk_bitmap_cache &&
+                this->bmp_cache_persister) {
                 RDP::PersistentKeyListPDUData pklpdud;
 
                 pklpdud.receive(sdata_in.payload);
@@ -4042,6 +4102,11 @@ public:
                         , pdu_size_offset);
 
                     this->persistent_key_list_transport->send(persistent_key_list_stream);
+                }
+
+                if (pklpdud.bBitMask & RDP::PERSIST_LAST_PDU) {
+                    delete this->bmp_cache_persister;
+                    this->bmp_cache_persister = NULL;
                 }
             }
 
