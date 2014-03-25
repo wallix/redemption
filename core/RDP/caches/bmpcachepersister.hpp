@@ -22,6 +22,7 @@
 #define _REDEMPTION_CORE_RDP_CACHES_BMPCACHEPERSISTER_HPP_
 
 #include "bmpcache.hpp"
+#include "transport.hpp"
 
 class BmpCachePersister
 {
