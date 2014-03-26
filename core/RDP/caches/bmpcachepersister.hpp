@@ -105,7 +105,7 @@ public:
 
             container_type::iterator it = this->bmp_map[cache_id].find(key);
             if (it != this->bmp_map[cache_id].end()) {
-                if (this->verbose & 1) {
+                if (this->verbose & 0x100000) {
                     LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key);
                 }
 
@@ -128,7 +128,9 @@ private:
         t.recv(&stream.end, 2);
 
         uint16_t bitmap_count = stream.in_uint16_le();
-        LOG(LOG_INFO, "BmpCachePersister::load_from_disk: bitmap_count=%u", bitmap_count);
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "BmpCachePersister::load_from_disk: bitmap_count=%u", bitmap_count);
+        }
 
         for (uint16_t i = 0; i < bitmap_count; i++) {
             t.recv(&stream.end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
@@ -164,7 +166,7 @@ private:
                 snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
                         , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
 
-                if (verbose & 1) {
+                if (this->verbose & 0x100000) {
                     LOG( LOG_INFO, "BmpCachePersister::load_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
                        , key, original_bpp, cx, cy, bmp_size);
                 }
@@ -219,7 +221,9 @@ public:
         t.recv(&stream.end, 2);
 
         uint16_t bitmap_count = stream.in_uint16_le();
-        LOG(LOG_INFO, "BmpCachePersister::load_cache_from_disk: bitmap_count=%u", bitmap_count);
+        if (verbose & 1) {
+            LOG(LOG_INFO, "BmpCachePersister::load_cache_from_disk: bitmap_count=%u", bitmap_count);
+        }
 
         for (uint16_t i = 0; i < bitmap_count; i++) {
             t.recv(&stream.end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
@@ -261,8 +265,11 @@ public:
                             , sig.sig_8[0], sig.sig_8[1], sig.sig_8[2], sig.sig_8[3]
                             , sig.sig_8[4], sig.sig_8[5], sig.sig_8[6], sig.sig_8[7]);
 
-                    LOG( LOG_INFO, "BmpCachePersister::load_cache_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                       , key, original_bpp, cx, cy, bmp_size);
+                    if (verbose & 0x100000) {
+                        LOG( LOG_INFO
+                           , "BmpCachePersister::load_cache_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
+                           , key, original_bpp, cx, cy, bmp_size);
+                    }
                 }
 
                 Bitmap * bmp = new Bitmap( bmp_cache.bpp, original_bpp
@@ -326,7 +333,7 @@ private:
                 snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
                         , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
 
-                if (verbose & 1) {
+                if (verbose & 0x100000) {
                     LOG( LOG_INFO, "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
                        , key, bmp->original_bpp, bmp->cx, bmp->cy, bmp_size);
                 }
