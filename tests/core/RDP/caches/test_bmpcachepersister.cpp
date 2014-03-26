@@ -23,8 +23,8 @@
 #define BOOST_TEST_MODULE TestBmpCachePersister
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
 #include "RDP/caches/bmpcachepersister.hpp"
@@ -350,9 +350,12 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister1)
 
     BOOST_CHECK((bmp_cache.sig[cache_id][0].sig_32[0] == 0x99E1C40C) && (bmp_cache.sig[cache_id][0].sig_32[1] == 0x17C187AF));
     BOOST_CHECK((bmp_cache.sig[cache_id][1].sig_32[0] == 0x03E8896E) && (bmp_cache.sig[cache_id][1].sig_32[1] == 0x5C267FC8));
-    BOOST_CHECK((bmp_cache.sig[cache_id][2].sig_32[0] == 0x63D8DC64) && (bmp_cache.sig[cache_id][2].sig_32[1] == 0x0A888EF6));
 
-    BOOST_CHECK(!bmp_cache.cache[cache_id][3]);
+    BOOST_CHECK(!bmp_cache.cache[cache_id][2]);
+
+    BOOST_CHECK((bmp_cache.sig[cache_id][3].sig_32[0] == 0x63D8DC64) && (bmp_cache.sig[cache_id][3].sig_32[1] == 0x0A888EF6));
+
+    BOOST_CHECK(!bmp_cache.cache[cache_id][4]);
 }
 
 BOOST_AUTO_TEST_CASE(TestBmpCachePersister2)
