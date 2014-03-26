@@ -633,27 +633,23 @@ public:
             throw Error(ERR_PDBC_SAVE);
         }
 
-        try
-        {
+        try {
             OutFileTransport oft(fd);
 
             BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, this->verbose);
-        }
-        catch (...)
-        {
+
             ::close(fd);
-            ::unlink(filename_temporary);
-            throw;
+
+            if (::rename(filename_temporary, filename) == -1) {
+                LOG( LOG_WARNING
+                   , "front::save_persistent_disk_bitmap_cache: failed to rename the (temporary) file. "
+                     "old_filename=\"%s\" new_filename=\"%s\""
+                   , filename_temporary, filename);
+                ::unlink(filename_temporary);
+            }
         }
-
-        ::close(fd);
-
-        if (::rename(filename_temporary, filename) == -1) {
-            LOG( LOG_ERR
-               , "front::save_persistent_disk_bitmap_cache: failed to rename the (temporary) file. "
-                 "old_filename=\"%s\" new_filename=\"%s\""
-               , filename_temporary, filename);
-            throw Error(ERR_PDBC_SAVE);
+        catch (...) {
+            ::close(fd);
             ::unlink(filename_temporary);
         }
     }
@@ -747,9 +743,11 @@ public:
                     this->bmp_cache_persister = new BmpCachePersister( *this->bmp_cache, ift, cache_filename
                                                                      , this->verbose);
                 }
-                catch (...) {
+                catch (const Error & e) {
                     ::close(fd);
-                    throw;
+                    if (e.id != ERR_PDBC_LOAD) {
+                        throw;
+                    }
                 }
             }
         }

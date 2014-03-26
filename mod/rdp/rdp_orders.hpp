@@ -169,22 +169,20 @@ struct rdp_orders {
             OutFileTransport oft(fd);
 
             BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, this->verbose);
+
+            ::close(fd);
+
+            if (::rename(filename_temporary, filename) == -1) {
+                LOG( LOG_WARNING
+                   , "rdp_orders::save_persistent_disk_bitmap_cache: failed to rename the (temporary) file. "
+                     "old_filename=\"%s\" new_filename=\"%s\""
+                   , filename_temporary, filename);
+                ::unlink(filename_temporary);
+            }
         }
         catch (...)
         {
             ::close(fd);
-            ::unlink(filename_temporary);
-            throw;
-        }
-
-        ::close(fd);
-
-        if (::rename(filename_temporary, filename) == -1) {
-            LOG( LOG_ERR
-               , "rdp_orders::save_persistent_disk_bitmap_cache: failed to rename the (temporary) file. "
-                 "old_filename=\"%s\" new_filename=\"%s\""
-               , filename_temporary, filename);
-            throw Error(ERR_PDBC_SAVE);
             ::unlink(filename_temporary);
         }
     }
@@ -225,8 +223,6 @@ struct rdp_orders {
                 BmpCachePersister::load_all_from_disk(*this->bmp_cache, ift, filename, this->verbose);
             }
             catch (...) {
-                ::close(fd);
-                throw;
             }
 
             ::close(fd);
