@@ -64,6 +64,8 @@
 #include "colors.hpp"
 #include "bitfu.hpp"
 #include "confdescriptor.hpp"
+#include "infiletransport.hpp"
+#include "outfiletransport.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/capabilities.hpp"
@@ -159,6 +161,7 @@ public:
     rdp_mppc_enc_match_finder * mppc_enc_match_finder;
 
     auth_api * authentifier;
+    bool       auth_info_sent;
 
     Front ( Transport * trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -203,6 +206,7 @@ public:
         , mppc_enc(NULL)
         , mppc_enc_match_finder(NULL)
         , authentifier(NULL)
+        , auth_info_sent(false)
     {
         // init TLS
         // --------------------------------------------------------
@@ -599,13 +603,55 @@ public:
         if (!this->ini->client.persistent_disk_bitmap_cache)
             return;
 
+        const char * persistent_path = PERSISTENT_PATH "/client";
+
+        // Ensures that the directory exists.
+        if (::recursive_create_directory(persistent_path, S_IRWXU | S_IRWXG, 0) != 0) {
+            LOG( LOG_ERR
+               , "front::save_persistent_disk_bitmap_cache: failed to create directory \"%s\"."
+               , persistent_path);
+            throw Error(ERR_BITMAP_CACHE_PERSISTENT, 0);
+        }
+
         // Generates the name of file.
         char filename[2048];
         ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            PERSISTENT_PATH "/client", this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
+            persistent_path, this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
         filename[sizeof(filename) - 1] = '\0';
 
-        BmpCachePersister::save_all_to_disk(*this->bmp_cache, filename);
+        char filename_temporary[2048];
+        ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
+            persistent_path, this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
+        filename_temporary[sizeof(filename_temporary) - 1] = '\0';
+
+        int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
+        if (fd == -1) {
+            LOG( LOG_ERR
+               , "front::save_persistent_disk_bitmap_cache: "
+                 "failed to open (temporary) file for writing. filename=\"%s\""
+               , filename_temporary);
+            throw Error(ERR_PDBC_SAVE);
+        }
+
+        try {
+            OutFileTransport oft(fd);
+
+            BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, this->verbose);
+
+            ::close(fd);
+
+            if (::rename(filename_temporary, filename) == -1) {
+                LOG( LOG_WARNING
+                   , "front::save_persistent_disk_bitmap_cache: failed to rename the (temporary) file. "
+                     "old_filename=\"%s\" new_filename=\"%s\""
+                   , filename_temporary, filename);
+                ::unlink(filename_temporary);
+            }
+        }
+        catch (...) {
+            ::close(fd);
+            ::unlink(filename_temporary);
+        }
     }
 
     virtual void reset(){
@@ -684,12 +730,26 @@ public:
 
         if (this->ini->client.persistent_disk_bitmap_cache) {
             // Generates the name of file.
-            char cache_file_name[2048];
-            ::snprintf(cache_file_name, sizeof(cache_file_name) - 1, "%s/PDBC-%s-%d",
+            char cache_filename[2048];
+            ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
                 PERSISTENT_PATH "/client", this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
-            cache_file_name[sizeof(cache_file_name) - 1] = '\0';
+            cache_filename[sizeof(cache_filename) - 1] = '\0';
 
-            this->bmp_cache_persister = new BmpCachePersister(*this->bmp_cache, cache_file_name);
+            int fd = ::open(cache_filename, O_RDONLY);
+            if (fd != -1) {
+                try {
+                    InFileTransport ift(fd);
+
+                    this->bmp_cache_persister = new BmpCachePersister( *this->bmp_cache, ift, cache_filename
+                                                                     , this->verbose);
+                }
+                catch (const Error & e) {
+                    ::close(fd);
+                    if (e.id != ERR_PDBC_LOAD) {
+                        throw;
+                    }
+                }
+            }
         }
 
         delete this->orders;
@@ -3203,7 +3263,9 @@ public:
                     this->use_bitmapcache_rev2 = true;
 
                     this->client_bmpcache2_caps.recv(stream, capset_length);
-                    this->client_bmpcache2_caps.log("Receiving from client");
+                    if (this->verbose) {
+                        this->client_bmpcache2_caps.log("Receiving from client");
+                    }
 
                     TODO("We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2")
                     this->client_info.number_of_cache = this->client_bmpcache2_caps.numCellCaches;
@@ -3492,7 +3554,7 @@ public:
         this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
-            LOG(LOG_INFO, "send_control action=%u", action);
+            LOG(LOG_INFO, "send_control done. action=%u", action);
         }
     }
 
@@ -3554,7 +3616,7 @@ public:
         this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
-            LOG(LOG_INFO, "send_fontmap");
+            LOG(LOG_INFO, "send_fontmap done");
         }
     }
 
@@ -3932,20 +3994,25 @@ public:
                 this->ini->context.opt_width.set(this->client_info.width);
                 this->ini->context.opt_height.set(this->client_info.height);
                 this->ini->context.opt_bpp.set(this->client_info.bpp);
-                char username_a_domain[512];
-                const char * username;
-                if (this->client_info.domain[0] &&
-                    !strchr(this->client_info.username, '@') &&
-                    !strchr(this->client_info.username, '\\')) {
-                    snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->client_info.username, this->client_info.domain);
-                    username = username_a_domain;
-                }
-                else {
-                    username = this->client_info.username;
-                }
-                this->ini->parse_username(username);
-                if (this->client_info.password[0]) {
-                    this->ini->context_set_value(AUTHID_PASSWORD, this->client_info.password);
+
+                if (!this->auth_info_sent) {
+                    char         username_a_domain[512];
+                    const char * username;
+                    if (this->client_info.domain[0] &&
+                        !strchr(this->client_info.username, '@') &&
+                        !strchr(this->client_info.username, '\\')) {
+                        snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->client_info.username, this->client_info.domain);
+                        username = username_a_domain;
+                    }
+                    else {
+                        username = this->client_info.username;
+                    }
+                    this->ini->parse_username(username);
+                    if (this->client_info.password[0]) {
+                        this->ini->context_set_value(AUTHID_PASSWORD, this->client_info.password);
+                    }
+
+                    this->auth_info_sent = true;
                 }
             }
         }
@@ -3975,49 +4042,48 @@ public:
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
 
-            if (this->ini->client.persistent_disk_bitmap_cache) {
+            if (this->ini->client.persistent_disk_bitmap_cache &&
+                this->bmp_cache_persister) {
                 RDP::PersistentKeyListPDUData pklpdud;
 
                 pklpdud.receive(sdata_in.payload);
-                pklpdud.log(LOG_INFO, "Receiving from client");
+                if (this->verbose & 8){
+                    pklpdud.log(LOG_INFO, "Receiving from client");
+                }
 
-                static uint16_t cache_0_entry_index = 0;
-                static uint16_t cache_1_entry_index = 0;
-                static uint16_t cache_2_entry_index = 0;
-                static uint16_t cache_3_entry_index = 0;
-                static uint16_t cache_4_entry_index = 0;
+                static uint16_t cache_entry_index[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 0, 0, 0, 0, 0 };
 
                 RDP::BitmapCachePersistentListEntry * entries = pklpdud.entries;
 
                 if (pklpdud.numEntriesCache0) {
-                    this->bmp_cache_persister->process_key_list(0, entries, pklpdud.numEntriesCache0,
-                            this->bmp_cache->cache_0_entries, cache_0_entry_index);
-                    entries             += pklpdud.numEntriesCache0;
-                    cache_0_entry_index += pklpdud.numEntriesCache0;
+                    this->bmp_cache_persister->process_key_list( 0, entries, pklpdud.numEntriesCache0
+                                                               , cache_entry_index[0]);
+                    entries              += pklpdud.numEntriesCache0;
+                    cache_entry_index[0] += pklpdud.numEntriesCache0;
                 }
                 if (pklpdud.numEntriesCache1) {
-                    this->bmp_cache_persister->process_key_list(1, entries, pklpdud.numEntriesCache1,
-                            this->bmp_cache->cache_1_entries, cache_1_entry_index);
-                    entries             += pklpdud.numEntriesCache1;
-                    cache_1_entry_index += pklpdud.numEntriesCache1;
+                    this->bmp_cache_persister->process_key_list( 1, entries, pklpdud.numEntriesCache1
+                                                               , cache_entry_index[1]);
+                    entries              += pklpdud.numEntriesCache1;
+                    cache_entry_index[1] += pklpdud.numEntriesCache1;
                 }
                 if (pklpdud.numEntriesCache2) {
-                    this->bmp_cache_persister->process_key_list(2, entries, pklpdud.numEntriesCache2,
-                            this->bmp_cache->cache_2_entries, cache_2_entry_index);
-                    entries             += pklpdud.numEntriesCache2;
-                    cache_2_entry_index += pklpdud.numEntriesCache2;
+                    this->bmp_cache_persister->process_key_list( 2, entries, pklpdud.numEntriesCache2
+                                                               , cache_entry_index[2]);
+                    entries              += pklpdud.numEntriesCache2;
+                    cache_entry_index[2] += pklpdud.numEntriesCache2;
                 }
                 if (pklpdud.numEntriesCache3) {
-                    this->bmp_cache_persister->process_key_list(3, entries, pklpdud.numEntriesCache3,
-                            this->bmp_cache->cache_3_entries, cache_3_entry_index);
-                    entries             += pklpdud.numEntriesCache3;
-                    cache_3_entry_index += pklpdud.numEntriesCache3;
+                    this->bmp_cache_persister->process_key_list( 3, entries, pklpdud.numEntriesCache3
+                                                               , cache_entry_index[3]);
+                    entries              += pklpdud.numEntriesCache3;
+                    cache_entry_index[3] += pklpdud.numEntriesCache3;
                 }
                 if (pklpdud.numEntriesCache4) {
-                    this->bmp_cache_persister->process_key_list(4, entries, pklpdud.numEntriesCache4,
-                            this->bmp_cache->cache_4_entries, cache_4_entry_index);
-                    entries             += pklpdud.numEntriesCache4;
-                    cache_4_entry_index += pklpdud.numEntriesCache4;
+                    this->bmp_cache_persister->process_key_list( 4, entries, pklpdud.numEntriesCache4
+                                                               , cache_entry_index[4]);
+                    entries              += pklpdud.numEntriesCache4;
+                    cache_entry_index[4] += pklpdud.numEntriesCache4;
                 }
 
                 if (this->persistent_key_list_transport) {
@@ -4034,6 +4100,11 @@ public:
                         , pdu_size_offset);
 
                     this->persistent_key_list_transport->send(persistent_key_list_stream);
+                }
+
+                if (pklpdud.bBitMask & RDP::PERSIST_LAST_PDU) {
+                    delete this->bmp_cache_persister;
+                    this->bmp_cache_persister = NULL;
                 }
             }
 

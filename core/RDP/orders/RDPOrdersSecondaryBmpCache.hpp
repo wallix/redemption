@@ -458,15 +458,17 @@ class RDPBmpCache {
     const    Bitmap * bmp;
     bool     persistent;
     bool     do_not_cache;
+    uint32_t key1;
+    uint32_t key2;
     uint32_t verbose;
 
     RDPBmpCache(const Bitmap * bmp, int id, int idx, bool persistent, bool do_not_cache, int verbose = 0)
         : id(id), idx(idx), bmp(bmp), persistent(persistent), do_not_cache(do_not_cache),
-          verbose(verbose) {
+          key1(0), key2(0), verbose(verbose) {
     }
 
     RDPBmpCache(int verbose = 0)
-        : id(0), idx(0), bmp(NULL), persistent(false), do_not_cache(false), verbose(verbose) {
+        : id(0), idx(0), bmp(NULL), persistent(false), do_not_cache(false), key1(0), key2(0), verbose(verbose) {
     }
 
     ~RDPBmpCache() {
@@ -786,7 +788,7 @@ class RDPBmpCache {
         if (this->persistent) {
             union {
                 uint8_t  sig_8[20];
-                uint32_t sig_32[5];
+                uint32_t sig_32[2];
             } sig;
             this->bmp->compute_sha1(sig.sig_8);
             uint32_t * Key1 = sig.sig_32;
@@ -841,7 +843,7 @@ class RDPBmpCache {
         if (this->persistent) {
             union {
                 uint8_t  sig_8[20];
-                uint32_t sig_32[5];
+                uint32_t sig_32[2];
             } sig;
             this->bmp->compute_sha1(sig.sig_8);
             uint32_t * Key1 = sig.sig_32;
@@ -972,10 +974,8 @@ class RDPBmpCache {
         //LOG(LOG_INFO, "cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
 
         if (cbr2_flags & CBR2_PERSISTENT_KEY_PRESENT) {
-            uint32_t key1 = stream.in_uint32_le();
-(void)key1;
-            uint32_t key2 = stream.in_uint32_le();
-(void)key2;
+            this->key1 = stream.in_uint32_le();
+            this->key2 = stream.in_uint32_le();
         }
 
         uint16_t bitmapWidth  = stream.in_2BUE();
@@ -995,6 +995,16 @@ class RDPBmpCache {
         TODO("Support of flag CBR2_DO_NOT_CACHE");
 
         const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
+        if (this->verbose & 0x8000) {
+            LOG(LOG_INFO,
+                "Uncompressed bitmap v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
+            LOG(LOG_INFO, "Palette");
+            hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+            LOG(LOG_INFO, "Bitmap");
+            hexdump_d(bitmapDataStream, bitmapLength);
+            LOG(LOG_INFO, "");
+        }
         this->bmp = new Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
             bitmapDataStream, bitmapLength, false);
 
@@ -1066,7 +1076,18 @@ class RDPBmpCache {
         // (including up to three bytes of padding, as necessary).
 
         TODO(" some error may occur inside bitmap (memory allocation  file load  decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection  as we can't do much to repair such problems).");
-        this->bmp = new Bitmap(session_color_depth, bpp, &palette, width, height, stream.in_uint8p(bufsize), bufsize);
+        const uint8_t * buf = stream.in_uint8p(bufsize);
+        if (this->verbose & 0x8000) {
+            LOG(LOG_INFO,
+                "Uncompressed bitmap v1: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                session_color_depth, bpp, width, height, bufsize);
+            LOG(LOG_INFO, "Palette");
+            hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+            LOG(LOG_INFO, "Bitmap");
+            hexdump_d(buf, bufsize);
+            LOG(LOG_INFO, "");
+        }
+        this->bmp = new Bitmap(session_color_depth, bpp, &palette, width, height, buf, bufsize);
 
         if (bufsize != this->bmp->bmp_size){
             LOG(LOG_WARNING, "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");
@@ -1104,10 +1125,8 @@ class RDPBmpCache {
         //LOG(LOG_INFO, "cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
 
         if (cbr2_flags & CBR2_PERSISTENT_KEY_PRESENT) {
-            uint32_t key1 = stream.in_uint32_le();
-(void)key1;
-            uint32_t key2 = stream.in_uint32_le();
-(void)key2;
+            this->key1 = stream.in_uint32_le();
+            this->key2 = stream.in_uint32_le();
         }
 
         uint16_t bitmapWidth  = stream.in_2BUE();
@@ -1130,7 +1149,7 @@ class RDPBmpCache {
             const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
             if (this->verbose & 0x8000) {
                 LOG(LOG_INFO,
-                    "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                    "Compressed bitmap v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                     session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
                 LOG(LOG_INFO, "Palette");
                 hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
@@ -1152,7 +1171,7 @@ class RDPBmpCache {
 
             if (this->verbose & 0x8000) {
                 LOG(LOG_INFO,
-                    "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                    "Compressed bitmap v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                     session_color_depth, bpp, bitmapWidth, bitmapWidth, cbCompMainBodySize);
                 LOG(LOG_INFO, "Palette");
                 hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
@@ -1206,7 +1225,7 @@ class RDPBmpCache {
 
             if (this->verbose & 0x8000) {
                 LOG(LOG_INFO,
-                    "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                    "Compressed bitmap v1: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                     session_color_depth, bpp, width, height, size);
                 LOG(LOG_INFO, "Palette");
                 hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
@@ -1254,8 +1273,6 @@ class RDPBmpCache {
         this->str(buffer, 1024);
         printf("%s", buffer);
     }
-
 };
-
 
 #endif

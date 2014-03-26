@@ -80,9 +80,10 @@ struct RdpNego
 
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
     bool test;
+    const uint32_t verbose;
 
     RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla,
-            const char * target_device, const char krb)
+            const char * target_device, const char krb, const uint32_t verbose = 0)
     : flags(0)
     , tls(nla || tls)
     , nla(nla)
@@ -94,6 +95,7 @@ struct RdpNego
     , trans(socket_trans)
     , target_device(target_device)
     , test(false)
+    , verbose(verbose)
     {
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP
@@ -298,28 +300,48 @@ struct RdpNego
                 rdpCredssp credssp(*this->trans, this->user,
                                    this->domain, this->password,
                                    this->hostname, this->target_device,
-                                   this->krb, this->restricted_admin_mode);
+                                   this->krb, this->restricted_admin_mode,
+                                   this->verbose);
                 if (this->test) {
                     credssp.hardcodedtests = true;
                 }
-                int res = credssp.credssp_client_authenticate();
+                int res = 0;
+                bool fallback = false;
+                try {
+                    res = credssp.credssp_client_authenticate();
+                }
+                catch (Error & e) {
+                    if ((e.id == ERR_TRANSPORT_NO_MORE_DATA) ||
+                        (e.id == ERR_TRANSPORT_WRITE_FAILED)) {
+                        LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed");
+                        res = 1;
+                        fallback = true;
+                    }
+                    else {
+                        LOG(LOG_ERR, "Unknown Exception thrown");
+                        throw e;
+                    }
+                }
                 if (res != 1) {
                     LOG(LOG_ERR, "NLA/CREDSSP Authentication Failed");
                     throw Error(ERR_NLA_AUTHENTICATION_FAILED);
                 }
-                this->state = NEGO_STATE_FINAL;
-            }
-            else {
-                LOG(LOG_INFO, "Can't activate NLA, falling back to SSL only");
-                this->nla = false;
-                this->trans->disconnect();
-                if (!this->trans->connect()){
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                else if (!fallback) {
+                    this->state = NEGO_STATE_FINAL;
+                    return;
                 }
-                this->send_negotiation_request();
-                this->state = NEGO_STATE_TLS;
-                this->enabled_protocols = RdpNego::PROTOCOL_TLS | RdpNego::PROTOCOL_RDP;
             }
+            LOG(LOG_INFO, "Can't activate NLA");
+            this->nla = false;
+            this->trans->disconnect();
+            if (!this->trans->connect()){
+                LOG(LOG_ERR, "Failed to fallback to SSL only");
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
+            }
+            LOG(LOG_INFO, "falling back to SSL only");
+            this->send_negotiation_request();
+            this->state = NEGO_STATE_TLS;
+            this->enabled_protocols = RdpNego::PROTOCOL_TLS | RdpNego::PROTOCOL_RDP;
         }
         else if (this->tls) {
             if (x224.rdp_neg_type == X224::RDP_NEG_RSP

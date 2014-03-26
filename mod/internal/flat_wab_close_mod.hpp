@@ -77,6 +77,10 @@ public:
         , showtimer(showtimer)
     {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
+        BGRPalette palette;
+        init_palette332(palette);
+        this->front.set_mod_palette(palette);
+
         this->screen.add_widget(&this->close_widget);
         this->close_widget.set_widget_focus(&this->close_widget.cancel);
         this->screen.set_widget_focus(&this->close_widget);

@@ -126,16 +126,18 @@ public:
     }
 
     virtual ~SocketTransport(){
+        if (!this->sck_closed){
+            this->disconnect();
+        }
         if (this->allocated_ssl) {
 //            SSL_shutdown(this->allocated_ssl);
             SSL_free(this->allocated_ssl);
+            this->allocated_ssl = NULL;
         }
 
-        if (this->allocated_ctx)
+        if (this->allocated_ctx) {
             SSL_CTX_free(this->allocated_ctx);
-
-        if (!this->sck_closed){
-            this->disconnect();
+            this->allocated_ctx = NULL;
         }
 
         if (verbose) {
@@ -1091,7 +1093,18 @@ public:
     void disconnect(){
         rio_clear(&this->rio);
         LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
-        TODO("add code to disconnect TLS if needed");
+        // Disconnect tls if needed
+        if (this->tls) {
+            if (this->allocated_ssl) {
+                SSL_free(this->allocated_ssl);
+                this->allocated_ssl = NULL;
+            }
+            if (this->allocated_ctx) {
+                SSL_CTX_free(this->allocated_ctx);
+                this->allocated_ctx = NULL;
+            }
+            this->tls = false;
+        }
         shutdown(this->sck, 2);
         close(this->sck);
         this->sck = 0;

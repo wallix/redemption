@@ -42,7 +42,7 @@ constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
 constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
 constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
 constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
-constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/rdpproxy/persistent ] ;
+constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
 
 rule defines ( properties * )
 {
@@ -388,6 +388,7 @@ unit-test test_listen : tests/core/test_listen.cpp libboost_unit_test : <variant
 unit-test test_mainloop : tests/core/test_mainloop.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bmpcache : tests/core/RDP/caches/test_bmpcache.cpp crypto dl libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister.cpp openssl cryptofile dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_brushcache : tests/core/RDP/caches/test_brushcache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_fontcache : tests/core/RDP/caches/test_fontcache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

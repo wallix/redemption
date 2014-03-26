@@ -203,31 +203,6 @@ public:
         stream.out_copy_bytes(serialized,strlen(serialized));
     }
 
-    void send(authid_to_send_t * list, size_t len)
-    {
-        try {
-            BStream stream(8192);
-            stream.out_uint32_be(0);
-
-            for (unsigned i = 0; i < len; ++i) {
-                if (list[i].tosend){
-                    this->out_item(stream, list[i].field_id);
-                }
-            }
-            stream.mark_end();
-            int total_length = stream.get_offset();
-            if (this->verbose & 0x40){
-                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
-            }
-            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
-            this->auth_trans.send(stream.get_data(), total_length);
-        } catch (Error e) {
-            this->ini->context.authenticated.set(false);
-            this->ini->context.rejected.set_from_cstr(TR("acl_fail", *(this->ini)));
-            // this->ini->context.rejected.set_from_cstr("Authentifier service failed");
-        }
-    }
-
     class OutItemFunctor {
         BStream & stream;
         AclSerializer * acl;
@@ -248,7 +223,7 @@ public:
     };
 
     //void send_new(std::set<Inifile::BaseField *>& list)
-    void send_new(Inifile::SetField & list)
+    void send(Inifile::SetField & list)
     {
         try {
             BStream stream(8192);
@@ -271,14 +246,14 @@ public:
         }
     }
 
-    void ask_next_module_remote() {
+    void send_acl_data() {
         Inifile::SetField list = this->ini->get_changed_set();
         //std::set<Inifile::BaseField *> list = this->ini->get_changed_set();
         if (this->verbose & 0x01){
             LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %u",list.size());
         }
         if (!list.empty())
-            this->send_new(list);
+            this->send(list);
         this->ini->reset();
     }
 };
