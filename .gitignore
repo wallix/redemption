@@ -1,10 +1,9 @@
 .gitignore
-.kdev4
+*.kdev4
 bin
 build
 coverage.summary
 coverage
-redemption_public.kdev4
 tools/coverage.summary
 tools/sesman/logger.pyc
 tools/sesman/sesmanworker/password.py
@@ -12,4 +11,5 @@ tools/sesman/sesmanworker/*.pyc
 [#]*[#]
 .\#*
 password.py
-password.pyc
+*.pyc
+/debian

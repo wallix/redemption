@@ -1,0 +1,3 @@
+$ETC_PREFIX/*
+$PREFIX/bin/*
+$PREFIX/share/rdpproxy/*
