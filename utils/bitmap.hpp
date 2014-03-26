@@ -2127,6 +2127,13 @@ public:
     void compute_sha1(uint8_t (&sig)[20]) const
     {
         SslSha1 sha1;
+        if (this->original_bpp == 8) {
+            sha1.update(reinterpret_cast<const uint8_t *>(this->original_palette),
+                sizeof(this->original_palette));
+        }
+        sha1.update(&this->original_bpp, sizeof(this->original_bpp));
+        sha1.update(reinterpret_cast<const uint8_t *>(&this->cx), sizeof(this->cx));
+        sha1.update(reinterpret_cast<const uint8_t *>(&this->cy), sizeof(this->cy));
         uint16_t rowsize = static_cast<uint16_t>(this->cx * nbbytes(this->original_bpp));
         for (size_t y = 0; y < static_cast<size_t>(this->cy); y++){
             sha1.update(this->data_bitmap.get() + y * rowsize, rowsize);

@@ -44,25 +44,17 @@ struct BmpCache {
     uint8_t number_of_cache;
     bool    use_waiting_list;
 
-    uint16_t cache_0_entries;
-    uint16_t cache_0_size;
-    bool     cache_0_persistent;
-    uint16_t cache_1_entries;
-    uint16_t cache_1_size;
-    bool     cache_1_persistent;
-    uint16_t cache_2_entries;
-    uint16_t cache_2_size;
-    bool     cache_2_persistent;
-    uint16_t cache_3_entries;
-    uint16_t cache_3_size;
-    bool     cache_3_persistent;
-    uint16_t cache_4_entries;
-    uint16_t cache_4_size;
-    bool     cache_4_persistent;
+    uint16_t cache_entries[MAXIMUM_NUMBER_OF_CACHES];
+    uint16_t cache_size[MAXIMUM_NUMBER_OF_CACHES];
+    bool     cache_persistent[MAXIMUM_NUMBER_OF_CACHES];
 
     const Bitmap * cache [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
     uint32_t       stamps[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
     uint8_t        sha1  [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES][20];
+    union {
+        uint8_t  sig_8[8];
+        uint32_t sig_32[2];
+    }              sig   [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
 
     // Map based bitmap finder.
     class Finder {
@@ -158,39 +150,39 @@ struct BmpCache {
             : bpp(bpp)
             , number_of_cache(number_of_cache)
             , use_waiting_list(use_waiting_list)
-            , cache_0_entries   (cache_0_entries)
-            , cache_0_size      (cache_0_size)
-            , cache_0_persistent(cache_0_persistent)
-            , cache_1_entries   (cache_1_entries)
-            , cache_1_size      (cache_1_size)
-            , cache_1_persistent(cache_1_persistent)
-            , cache_2_entries   (cache_2_entries)
-            , cache_2_size      (cache_2_size)
-            , cache_2_persistent(cache_2_persistent)
-            , cache_3_entries   (cache_3_entries)
-            , cache_3_size      (cache_3_size)
-            , cache_3_persistent(cache_3_persistent)
-            , cache_4_entries   (cache_4_entries)
-            , cache_4_size      (cache_4_size)
-            , cache_4_persistent(cache_4_persistent)
             , stamp(0)
             , verbose(verbose)
             , finding_counter(0)
             , found_counter(0)
             , not_found_counter(0)
-
         {
+            this->cache_entries   [0] = cache_0_entries;
+            this->cache_size      [0] = cache_0_size;
+            this->cache_persistent[0] = cache_0_persistent;
+            this->cache_entries   [1] = cache_1_entries;
+            this->cache_size      [1] = cache_1_size;
+            this->cache_persistent[1] = cache_1_persistent;
+            this->cache_entries   [2] = cache_2_entries;
+            this->cache_size      [2] = cache_2_size;
+            this->cache_persistent[2] = cache_2_persistent;
+            this->cache_entries   [3] = cache_3_entries;
+            this->cache_size      [3] = cache_3_size;
+            this->cache_persistent[3] = cache_3_persistent;
+            this->cache_entries   [4] = cache_4_entries;
+            this->cache_size      [4] = cache_4_size;
+            this->cache_persistent[4] = cache_4_persistent;
+
             if (this->verbose) {
                 LOG( LOG_INFO
                    , "BmpCache: bpp=%u number_of_cache=%u use_waiting_list=%s "
                      "cache_0(%u, %u, %s) cache_1(%u, %u, %s) cache_2(%u, %u, %s) "
                      "cache_3(%u, %u, %s) cache_4(%u, %u, %s)"
                    , this->bpp, this->number_of_cache, (this->use_waiting_list ? "yes" : "no")
-                   , this->cache_0_entries, this->cache_0_size, (cache_0_persistent ? "yes" : "no")
-                   , this->cache_1_entries, this->cache_1_size, (cache_1_persistent ? "yes" : "no")
-                   , this->cache_2_entries, this->cache_2_size, (cache_2_persistent ? "yes" : "no")
-                   , this->cache_3_entries, this->cache_3_size, (cache_3_persistent ? "yes" : "no")
-                   , this->cache_4_entries, this->cache_4_size, (cache_4_persistent ? "yes" : "no")
+                   , this->cache_entries[0], this->cache_size[0], (cache_persistent[0] ? "yes" : "no")
+                   , this->cache_entries[1], this->cache_size[1], (cache_persistent[1] ? "yes" : "no")
+                   , this->cache_entries[2], this->cache_size[2], (cache_persistent[2] ? "yes" : "no")
+                   , this->cache_entries[3], this->cache_size[3], (cache_persistent[3] ? "yes" : "no")
+                   , this->cache_entries[4], this->cache_size[4], (cache_persistent[4] ? "yes" : "no")
                    );
             }
 
@@ -199,6 +191,7 @@ struct BmpCache {
                     MAXIMUM_NUMBER_OF_CACHES);
                 throw Error(ERR_RDP_PROTOCOL);
             }
+
             this->reset_values();
         }
 
@@ -226,6 +219,7 @@ struct BmpCache {
                     this->cache[cid][cidx]  = NULL;
                     this->stamps[cid][cidx] = 0;
                     bzero(this->sha1[cid][cidx], sizeof(this->sha1[cid][cidx]));
+                    bzero(this->sig[cid][cidx].sig_8, sizeof(this->sig[cid][cidx].sig_8));
                 }
                 this->finders[cid].clear();
             }
@@ -237,7 +231,7 @@ struct BmpCache {
             this->reset_values();
         }
 
-        void put(uint8_t id, uint16_t idx, const Bitmap * const bmp) {
+        void put(uint8_t id, uint16_t idx, const Bitmap * const bmp, uint32_t key1, uint32_t key2) {
             REDASSERT((id & IN_WAIT_LIST) == 0);
             if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
                 // Last bitmap cache entry is used by waiting list.
@@ -249,9 +243,15 @@ struct BmpCache {
                     this->cache[id][idx]->cy);
                 delete this->cache[id][idx];
             }
-            this->cache[id][idx]  = bmp;
-            this->stamps[id][idx] = ++this->stamp;
+            this->cache[id][idx]         = bmp;
+            this->stamps[id][idx]        = ++this->stamp;
             bmp->compute_sha1(this->sha1[id][idx]);
+            if (this->cache_persistent[id]) {
+                REDASSERT(key1 && key2);
+                this->sig[id][idx].sig_32[0] = key1;
+                this->sig[id][idx].sig_32[1] = key2;
+            }
+            REDASSERT(this->cache_persistent[id] || (!key1 && !key2));
             this->finders[id].add(this->sha1[id][idx], bmp->cx, bmp->cy, bmp, idx);
         }
 
@@ -277,12 +277,14 @@ struct BmpCache {
         }
 
         bool is_cache_persistent(uint8_t id) {
+            if (id < MAXIMUM_NUMBER_OF_CACHES)
             switch (id) {
-                case 0:                        return this->cache_0_persistent;
-                case 1:                        return this->cache_1_persistent;
-                case 2:                        return this->cache_2_persistent;
-                case 3:                        return this->cache_3_persistent;
-                case 4:                        return this->cache_4_persistent;
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                    return this->cache_persistent[id];
                 // Wait list.
                 case MAXIMUM_NUMBER_OF_CACHES: return true;
             }
@@ -292,11 +294,11 @@ struct BmpCache {
             return false;
         }
 
-        inline uint16_t get_cache_usage(uint8_t cache_id, uint16_t max_cache_entries) {
+        inline uint16_t get_cache_usage(uint8_t cache_id) const {
             REDASSERT((cache_id & IN_WAIT_LIST) == 0);
 
             uint16_t cache_entries = 0;
-            for (unsigned cache_index = 0; cache_index < max_cache_entries; cache_index++) {
+            for (unsigned cache_index = 0; cache_index < this->cache_entries[cache_id]; cache_index++) {
                 if (this->cache[cache_id][cache_index]) {
                     cache_entries++;
                 }
@@ -305,16 +307,16 @@ struct BmpCache {
             return cache_entries;
         }
 
-        void log() {
+        void log() const {
             LOG( LOG_INFO
                , "BmpCache: total=%u found=%u not_found=%u "
-                 "(0=>%u, %u) (1=>%u, %u) (2=>%u, %u) (3=>%u, %u) (4=>%u, %u)"
+                 "(0=>%u, %u%s) (1=>%u, %u%s) (2=>%u, %u%s) (3=>%u, %u%s) (4=>%u, %u%s)"
                , this->finding_counter, this->found_counter, this->not_found_counter
-               , get_cache_usage(0, this->cache_0_entries), this->cache_0_entries
-               , get_cache_usage(1, this->cache_1_entries), this->cache_1_entries
-               , get_cache_usage(2, this->cache_2_entries), this->cache_2_entries
-               , get_cache_usage(3, this->cache_3_entries), this->cache_3_entries
-               , get_cache_usage(4, this->cache_4_entries), this->cache_4_entries);
+               , get_cache_usage(0), this->cache_entries[0], (this->cache_persistent[0] ? ", persistent" : "")
+               , get_cache_usage(1), this->cache_entries[1], (this->cache_persistent[1] ? ", persistent" : "")
+               , get_cache_usage(2), this->cache_entries[2], (this->cache_persistent[2] ? ", persistent" : "")
+               , get_cache_usage(3), this->cache_entries[3], (this->cache_persistent[3] ? ", persistent" : "")
+               , get_cache_usage(4), this->cache_entries[4], (this->cache_persistent[4] ? ", persistent" : ""));
         }
 
         TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap");
@@ -352,39 +354,26 @@ struct BmpCache {
             bool       persistent = false;
             uint32_t   bmp_size   = bmp->bmp_size;
 
-                   if (this->cache_0_entries && (bmp_size <= this->cache_0_size)) {
-                entries    = this->cache_0_entries;
-                id_real    = 0;
-                persistent = this->cache_0_persistent;
-            } else if (this->cache_1_entries && (bmp_size <= this->cache_1_size)) {
-                entries    = this->cache_1_entries;
-                id_real    = 1;
-                persistent = this->cache_1_persistent;
-            } else if (this->cache_2_entries && (bmp_size <= this->cache_2_size)) {
-                entries    = this->cache_2_entries;
-                id_real    = 2;
-                persistent = this->cache_2_persistent;
-            } else if (this->cache_3_entries && (bmp_size <= this->cache_3_size)) {
-                entries    = this->cache_3_entries;
-                id_real    = 3;
-                persistent = this->cache_3_persistent;
-            } else if (this->cache_4_entries && (bmp_size <= this->cache_4_size)) {
-                entries    = this->cache_4_entries;
-                id_real    = 4;
-                persistent = this->cache_4_persistent;
+            for (id_real = 0; id_real < MAXIMUM_NUMBER_OF_CACHES; id_real++) {
+                if (this->cache_entries[id_real] && (bmp_size <= this->cache_size[id_real])) {
+                    break;
+                }
             }
-            else {
+
+            if (id_real == MAXIMUM_NUMBER_OF_CACHES) {
                 LOG(LOG_ERR,
                     "BmpCache: bitmap size(%u) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u",
                     bmp_size,
-                    (this->cache_0_entries ? this->cache_0_size : 0),
-                    (this->cache_1_entries ? this->cache_1_size : 0),
-                    (this->cache_2_entries ? this->cache_2_size : 0),
-                    (this->cache_3_entries ? this->cache_3_size : 0),
-                    (this->cache_4_entries ? this->cache_4_size : 0));
+                    (this->cache_entries[0] ? this->cache_size[0] : 0),
+                    (this->cache_entries[1] ? this->cache_size[1] : 0),
+                    (this->cache_entries[2] ? this->cache_size[2] : 0),
+                    (this->cache_entries[3] ? this->cache_size[3] : 0),
+                    (this->cache_entries[4] ? this->cache_size[4] : 0));
                 REDASSERT(0);
                 throw Error(ERR_BITMAP_CACHE_TOO_BIG);
             }
+            entries    = this->cache_entries[id_real];
+            persistent = this->cache_persistent[id_real];
             if (persistent && this->use_waiting_list) {
                 // Last bitmap cache entry is used by waiting list.
                 entries--;
@@ -480,6 +469,9 @@ struct BmpCache {
             }
             this->cache [id_real][oldest_cidx] = bmp;
             this->stamps[id_real][oldest_cidx] = ++this->stamp;
+            if (id_real == id) {
+                ::memcpy(this->sig[id_real][oldest_cidx].sig_8, bmp_sha1, sizeof(this->sig[id_real][oldest_cidx].sig_8));
+            }
             ::memcpy(this->sha1[id_real][oldest_cidx], bmp_sha1, 20);
             this->finders[id_real].add(bmp_sha1, bmp->cx, bmp->cy, bmp, oldest_cidx);
             // Generating source code for unit test.
