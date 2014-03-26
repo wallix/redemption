@@ -297,6 +297,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
     memcpy(palette, raw_palette_2, sizeof(palette));
     bmp = new Bitmap(8, 8, &palette, 64, 64, raw_bitmap_2, sizeof(raw_bitmap_2), true);
     result = bmp_cache.cache_bitmap(*bmp);
+(void)result;
     delete bmp;
 
     //LogTransport t;
