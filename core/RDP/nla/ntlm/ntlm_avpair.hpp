@@ -155,7 +155,7 @@ struct NtlmAvPair {
     // }
 
     void print() {
-	fprintf(stderr, "\tAvId: 0x%02X, AvLen : %u, \n", this->AvId, this->AvLen);
+	LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", this->AvId, this->AvLen);
         this->Value.print();
     }
 };
@@ -253,7 +253,7 @@ struct NtlmAvPairList {
     }
 
     void print() {
-	fprintf(stderr, "Av Pair List : %zu elements {\n", this->length());
+	LOG(LOG_INFO, "Av Pair List : %zu elements {", this->length());
 
         for (int i = 0; i < AV_ID_MAX; i++) {
             if (this->list[i]) {
@@ -261,7 +261,7 @@ struct NtlmAvPairList {
             }
         }
 
-	fprintf(stderr, "}\n");
+	LOG(LOG_INFO, "}");
     }
 
 
