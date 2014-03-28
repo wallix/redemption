@@ -138,8 +138,13 @@ public:
             this->ini.context.auth_error_message.copy_c_str(auth_error_message);
         }
         this->remove_mod();
-        this->new_mod(MODULE_INTERNAL_CLOSE, now, NULL);
-        signal = BACK_EVENT_NONE;
+        if (this->ini.globals.enable_close_box) {
+            this->new_mod(MODULE_INTERNAL_CLOSE, now, NULL);
+            signal = BACK_EVENT_NONE;
+        }
+        else {
+            signal = BACK_EVENT_STOP;
+        }
     }
 
     int get_mod_from_protocol() {
@@ -689,7 +694,12 @@ public:
                                                , this->ini.debug.mod_rdp
                                                );
                     //mod_rdp_params.enable_tls                          = true;
-                    mod_rdp_params.enable_nla                          = this->ini.mod_rdp.enable_nla;
+                    if (!mod_rdp_params.target_password[0]) {
+                        mod_rdp_params.enable_nla                      = false;
+                    }
+                    else {
+                        mod_rdp_params.enable_nla                      = this->ini.mod_rdp.enable_nla;
+                    }
                     mod_rdp_params.enable_krb                          = this->ini.mod_rdp.enable_kerberos;
                     mod_rdp_params.enable_clipboard                    = this->ini.client.clipboard.get();
                     //mod_rdp_params.enable_fastpath                     = true;

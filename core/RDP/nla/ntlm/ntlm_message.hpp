@@ -248,12 +248,12 @@ struct NtlmVersion {
     }
 
     void print() {
-	fprintf(stderr, "VERSION = {\n");
-	fprintf(stderr, "\tProductMajorVersion: %d\n", this->ProductMajorVersion);
-	fprintf(stderr, "\tProductMinorVersion: %d\n", this->ProductMinorVersion);
-	fprintf(stderr, "\tProductBuild: %d\n", this->ProductBuild);
-	fprintf(stderr, "\tNTLMRevisionCurrent: 0x%02X\n", this->NtlmRevisionCurrent);
-	fprintf(stderr, "}\n");
+	LOG(LOG_INFO, "VERSION = {");
+	LOG(LOG_INFO, "\tProductMajorVersion: %d", this->ProductMajorVersion);
+	LOG(LOG_INFO, "\tProductMinorVersion: %d", this->ProductMinorVersion);
+	LOG(LOG_INFO, "\tProductBuild: %d", this->ProductBuild);
+	LOG(LOG_INFO, "\tNTLMRevisionCurrent: 0x%02X", this->NtlmRevisionCurrent);
+	LOG(LOG_INFO, "}\n");
     }
 };
 
@@ -499,16 +499,16 @@ struct NtlmNegotiateFlags {
 	int i;
 	const char* str;
 
-	fprintf(stderr, "negotiateFlags \"0x%08X\"{\n", this->flags);
+	LOG(LOG_INFO, "negotiateFlags \"0x%08X\"{", this->flags);
 
 	for (i = 31; i >= 0; i--) {
             if ((this->flags >> i) & 1) {
                 str = NTLM_NEGOTIATE_STRINGS[(31 - i)];
-                fprintf(stderr, "\t%s (%d),\n", str, (31 - i));
+                LOG(LOG_INFO, "\t%s (%d),", str, (31 - i));
             }
         }
 
-	fprintf(stderr, "}\n");
+	LOG(LOG_INFO, "}");
     }
 
 };
