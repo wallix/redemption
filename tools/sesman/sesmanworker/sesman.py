@@ -661,7 +661,7 @@ class Sesman():
 
                         _status, _error = self.interactive_accept_message(data_to_send)
                     else:
-                        _status, _error = True, u''
+                        self.send_data(data_to_send)
 
         except Exception, e:
             if DEBUG:
