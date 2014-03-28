@@ -198,6 +198,7 @@ private:
             , target_w(target_w)
             , protocol_w(protocol_w)
             , closetime_w(closetime_w)
+            , col(COLUMN_UNKNOWN)
             , labels()
             , over_index(-1u)
             , click_interval()

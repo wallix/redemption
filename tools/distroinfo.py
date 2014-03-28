@@ -42,7 +42,8 @@ def get_distro():
                 '12.04': ('Precise', 'Pangolin'),
                 '12.10': ('Quantal', 'Quetzal'),
                 '13.04': ('Raring', 'Ringtail'),
-                '13.10': ('Saucy', 'Salamander')
+                '13.10': ('Saucy', 'Salamander'),
+                '14.04': ('Trusty', 'Tahr')
             }
             name = codenames[version][0].lower()
     else:

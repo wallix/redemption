@@ -373,8 +373,8 @@ public:
     }
 
     void ask_acl() {
-        LOG(LOG_INFO, "Ask next module remote\n");
-        this->acl_serial.ask_next_module_remote();
+        LOG(LOG_INFO, "Ask acl\n");
+        this->acl_serial.send_acl_data();
     }
 
     virtual void set_auth_channel_target(const char * target)

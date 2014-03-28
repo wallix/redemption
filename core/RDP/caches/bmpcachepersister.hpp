@@ -22,36 +22,12 @@
 #define _REDEMPTION_CORE_RDP_CACHES_BMPCACHEPERSISTER_HPP_
 
 #include "bmpcache.hpp"
+#include "transport.hpp"
 
 class BmpCachePersister
 {
 private:
-    static const uint8_t  CURRENT_VERSION      = 1;
-    static const uint32_t INVALID_CACHE_OFFSET = 0xFFFFFFFF;
-
-    struct PersistentDiskBitmapCacheFileHeader {
-        char     magic[4];
-        uint8_t  version;
-        uint32_t cache_offset[BmpCache::MAXIMUM_NUMBER_OF_CACHES];
-
-        PersistentDiskBitmapCacheFileHeader() {
-            ::memset(this, 0, sizeof(PersistentDiskBitmapCacheFileHeader));
-
-            ::memcpy(this->magic, "PDBC", sizeof(this->magic));
-
-            this->version = CURRENT_VERSION;
-
-            for (unsigned i = 0; i < BmpCache::MAXIMUM_NUMBER_OF_CACHES; i++) {
-                this->cache_offset[i] = INVALID_CACHE_OFFSET;
-            }
-        }
-    };
-
-    struct PersistentDiskBitmapCacheHeader {
-        uint32_t bitmap_count;
-
-        PersistentDiskBitmapCacheHeader() : bitmap_count(0) {}
-    };
+    static const uint8_t CURRENT_VERSION = 1;
 
     struct map_value {
         const Bitmap * bmp;
@@ -72,323 +48,309 @@ private:
 
     BmpCache & bmp_cache;
 
+    uint32_t verbose;
+
 public:
-    BmpCachePersister( BmpCache & bmp_cache, const char * filename)
-    : bmp_cache(bmp_cache) {
-        int fd = ::open(filename, O_RDONLY);
-        if (fd == -1) {
-            return;
-        }
+    BmpCachePersister(BmpCache & bmp_cache, Transport & t, const char * filename, uint32_t verbose = 0)
+    : bmp_cache(bmp_cache)
+    , verbose(verbose) {
+        BStream stream(16);
 
-        PersistentDiskBitmapCacheFileHeader cache_file_header;
+        t.recv(&stream.end, 5);  /* magic(4) + version(1) */
 
-        if (::read(fd, &cache_file_header, sizeof(cache_file_header)) != sizeof(cache_file_header)) {
-            LOG( LOG_ERR, "BmpCachePersister: failed to read from file. filename=\"%s\""
-               , filename);
-            throw Error(ERR_PDBC_LOAD);
-        }
+        const uint8_t * magic   = stream.in_uint8p(4);  /* magic(4) */
+              uint8_t   version = stream.in_uint8();
+
         //LOG( LOG_INFO, "BmpCachePersister: magic=\"%c%c%c%c\""
-        //   , cache_file_header.magic[0], cache_file_header.magic[1], cache_file_header.magic[2]
-        //   , cache_file_header.magic[3]);
-        //LOG( LOG_INFO, "BmpCachePersister: version=%u", cache_file_header.version);
-        //LOG( LOG_INFO, "BmpCachePersister: cache_0_offset=%u", cache_file_header.cache_offset[0]);
-        //LOG( LOG_INFO, "BmpCachePersister: cache_1_offset=%u", cache_file_header.cache_offset[1]);
-        //LOG( LOG_INFO, "BmpCachePersister: cache_2_offset=%u", cache_file_header.cache_offset[2]);
-        //LOG( LOG_INFO, "BmpCachePersister: cache_3_offset=%u", cache_file_header.cache_offset[3]);
-        //LOG( LOG_INFO, "BmpCachePersister: cache_4_offset=%u", cache_file_header.cache_offset[4]);
+        //   , magic[0], magic[1], magic[2], magic[3]);
+        //LOG( LOG_INFO, "BmpCachePersister: version=%u", version);
 
-        if (::memcmp(cache_file_header.magic, "PDBC", sizeof(cache_file_header.magic))) {
-            LOG( LOG_ERR, "BmpCachePersister: \"%s\" is not a persistent bitmap cache file."
+        if (::memcmp(magic, "PDBC", 4)) {
+            LOG( LOG_ERR
+               , "BmpCachePersister::BmpCachePersister: File is not a persistent bitmap cache file. filename=\"%s\""
                , filename);
             throw Error(ERR_PDBC_LOAD);
         }
 
-        if (cache_file_header.version != CURRENT_VERSION) {
-            LOG( LOG_ERR, "BmpCachePersister: Unsupported persistent bitmap cache file version(%u)."
-               , cache_file_header.version);
+        if (version != CURRENT_VERSION) {
+            LOG( LOG_ERR
+               , "BmpCachePersister::BmpCachePersister: Unsupported persistent bitmap cache file version(%u). filename=\"%s\""
+               , version, filename);
             throw Error(ERR_PDBC_LOAD);
         }
 
-        try
-        {
-            if ((this->bmp_cache.number_of_cache > 0) && (this->bmp_cache.cache_0_persistent)) {
-                this->load_from_disk(fd, cache_file_header, 0);
-            }
-            if ((this->bmp_cache.number_of_cache > 1) && (this->bmp_cache.cache_1_persistent)) {
-                this->load_from_disk(fd, cache_file_header, 1);
-            }
-            if ((this->bmp_cache.number_of_cache > 2) && (this->bmp_cache.cache_2_persistent)) {
-                this->load_from_disk(fd, cache_file_header, 2);
-            }
-            if ((this->bmp_cache.number_of_cache > 3) && (this->bmp_cache.cache_3_persistent)) {
-                this->load_from_disk(fd, cache_file_header, 3);
-            }
-            if ((this->bmp_cache.number_of_cache > 4) && (this->bmp_cache.cache_4_persistent)) {
-                this->load_from_disk(fd, cache_file_header, 4);
-            }
+        for (uint8_t cache_id = 0; cache_id < this->bmp_cache.number_of_cache; cache_id++) {
+            this->load_from_disk(t, filename, cache_id);
         }
-        catch (...) {
-            ::close(fd);
-            throw;
-        }
-
-        ::close(fd);
     }
 
     void process_key_list( uint8_t cache_id, RDP::BitmapCachePersistentListEntry * entries
-                         , uint8_t number_of_entries, uint16_t max_number_of_entries
-                         , uint16_t first_entry_index) {
-             uint16_t   cache_index = first_entry_index;
-        const uint8_t * sig         = reinterpret_cast<const uint8_t *>(entries);
+                         , uint8_t number_of_entries, uint16_t first_entry_index) {
+              uint16_t   max_number_of_entries = this->bmp_cache.cache_entries[cache_id];
+              uint16_t   cache_index           = first_entry_index;
+        const union Sig {
+            uint8_t  sig_8[8];
+            uint32_t sig_32[2];
+        }              * sig                   = reinterpret_cast<const union Sig *>(entries);
         for (uint8_t entry_index = 0;
              (entry_index < number_of_entries) && (cache_index < max_number_of_entries);
-             entry_index++, cache_index++, sig += sizeof(RDP::BitmapCachePersistentListEntry)) {
+             entry_index++, cache_index++, sig++) {
             REDASSERT(!this->bmp_cache.cache[cache_id][cache_index]);
 
             char key[20];
 
             snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
-                    , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+                    , sig->sig_8[0], sig->sig_8[1], sig->sig_8[2], sig->sig_8[3]
+                    , sig->sig_8[4], sig->sig_8[5], sig->sig_8[6], sig->sig_8[7]);
 
             container_type::iterator it = this->bmp_map[cache_id].find(key);
             if (it != this->bmp_map[cache_id].end()) {
-                //LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key);
+                if (this->verbose & 0x100000) {
+                    LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key);
+                }
 
-                this->bmp_cache.put(cache_id, cache_index, it->second.bmp);
+                if (this->bmp_cache.cache_entries[cache_id] > cache_index) {
+                    this->bmp_cache.put(cache_id, cache_index, it->second.bmp, sig->sig_32[0], sig->sig_32[1]);
+                }
+
                 it->second.bmp = NULL;
-
                 this->bmp_map[cache_id].erase(it);
             }
-            //else {
-            //    LOG(LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key);
-            //}
+            else if (this->verbose & 0x100000) {
+                LOG(LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key);
+            }
         }
     }
 
 private:
-    void load_from_disk( int fd, const PersistentDiskBitmapCacheFileHeader & cache_file_header
-                       , uint8_t cache_id) {
-        if (cache_file_header.cache_offset[cache_id] == INVALID_CACHE_OFFSET)
-            return;
+    void load_from_disk(Transport & t, const char * filename, uint8_t cache_id) {
+        BStream stream(65536);
+        t.recv(&stream.end, 2);
 
-        if (::lseek(fd, cache_file_header.cache_offset[cache_id], SEEK_SET) == -1) {
-            LOG( LOG_ERR
-               , "BmpCachePersister: failed to reposition file read offset.");
-            throw Error(ERR_PDBC_LOAD);
+        uint16_t bitmap_count = stream.in_uint16_le();
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "BmpCachePersister::load_from_disk: bitmap_count=%u", bitmap_count);
         }
 
-        PersistentDiskBitmapCacheHeader cache_header;
+        for (uint16_t i = 0; i < bitmap_count; i++) {
+            t.recv(&stream.end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
 
-        if (::read(fd, &cache_header, sizeof(cache_header)) != sizeof(cache_header)) {
-            LOG(LOG_ERR, "BmpCachePersister: failed to read from file.");
-            throw Error(ERR_PDBC_LOAD);
-        }
-        LOG( LOG_INFO, "BmpCachePersister: bitmap_count=%u", cache_header.bitmap_count);
+            uint8_t sig[8];
 
-        for (uint16_t i = 0; i < cache_header.bitmap_count; i++) {
-            uint8_t    sig[8];
-            uint8_t    original_bpp;
-            uint16_t   cx, cy;
+            stream.in_copy_bytes(sig, 8); // sig(8);
+
+            uint8_t  original_bpp = stream.in_uint8();
+            REDASSERT((original_bpp == 8) || (original_bpp == 15) || (original_bpp == 16) ||
+                (original_bpp == 24) || (original_bpp == 32));
+            uint16_t cx           = stream.in_uint16_le();
+            uint16_t cy           = stream.in_uint16_le();
+
             BGRPalette original_palette;
-            uint16_t   bmp_size;
-            uint8_t    data_bitmap[65536];
+            if (original_bpp == 8) {
+                t.recv(&stream.end, sizeof(original_palette));
 
-            if (   (::read(fd, sig,               sizeof(sig             )) != sizeof(sig             ))
-                || (::read(fd, &original_bpp,     sizeof(original_bpp    )) != sizeof(original_bpp    ))
-                || (::read(fd, &cx,               sizeof(cx              )) != sizeof(cx              ))
-                || (::read(fd, &cy,               sizeof(cy              )) != sizeof(cy              ))
-                || ((original_bpp == 8) && (::read(fd, &original_palette, sizeof(original_palette)) != sizeof(original_palette)))
-                || (::read(fd, &bmp_size,         sizeof(bmp_size        )) != sizeof(bmp_size        ))
-                || (::read(fd, data_bitmap,              bmp_size         ) !=        bmp_size         )
-               ) {
-                LOG(LOG_ERR, "BmpCachePersister: failed to read from file.");
-                throw Error(ERR_PDBC_LOAD);
+                stream.in_copy_bytes(reinterpret_cast<uint8_t *>(original_palette), sizeof(original_palette));
             }
 
-            char key[20];
+            uint16_t bmp_size;
+            t.recv(&stream.end, sizeof(bmp_size));
+            bmp_size = stream.in_uint16_le();
 
-            snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
-                    , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+            stream.reset();
 
-            //LOG( LOG_INFO, "BmpCachePersister: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-            //   , key, original_bpp, cx, cy, bmp_size);
+            t.recv(&stream.end, bmp_size);
 
-            this->bmp_map[cache_id][key].bmp = new Bitmap( this->bmp_cache.bpp, original_bpp
-                                                         , &original_palette, cx, cy, data_bitmap
-                                                         , bmp_size);
+            if (bmp_cache.cache_persistent[cache_id]) {
+                char key[20];
+
+                snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
+                        , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+
+                if (this->verbose & 0x100000) {
+                    LOG( LOG_INFO, "BmpCachePersister::load_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
+                       , key, original_bpp, cx, cy, bmp_size);
+                }
+
+                REDASSERT(this->bmp_map[cache_id][key].bmp == NULL);
+
+                this->bmp_map[cache_id][key].bmp = new Bitmap( this->bmp_cache.bpp, original_bpp
+                                                             , &original_palette, cx, cy, stream.get_data()
+                                                             , bmp_size);
+            }
+
+            stream.reset();
         }
     }
 
 public:
-    static void save_all_to_disk( const BmpCache & bmp_cache, const char * filename_final) {
-        char persistent_path[1024];
-        char persistent_basename[1024];
-        char persistent_extension[256];
+    static void load_all_from_disk( BmpCache & bmp_cache, Transport & t, const char * filename
+                                  , uint32_t verbose = 0) {
+        BStream stream(16);
 
-        ::strcpy(persistent_path, PERSISTENT_PATH "/");
-        ::strcpy(persistent_basename, "redemption");
-        ::strcpy(persistent_extension, "");
+        t.recv(&stream.end, 5);  /* magic(4) + version(1) */
 
-        if (!::canonical_path( filename_final
-                             , persistent_path, sizeof(persistent_path)
-                             , persistent_basename, sizeof(persistent_basename)
-                             , persistent_extension, sizeof(persistent_extension))) {
-            LOG(LOG_ERR, "BmpCachePersister: buffer overflowed, path too long. filename=\"%s\"",
-                filename_final);
-            throw Error(ERR_BITMAP_CACHE_PERSISTENT, 0);
-        }
+        const uint8_t * magic   = stream.in_uint8p(4);  /* magic(4) */
+              uint8_t   version = stream.in_uint8();
 
-        // Ensures that the directory exists.
-        if (::recursive_create_directory(persistent_path, S_IRWXU | S_IRWXG, 0) != 0) {
-            LOG(LOG_ERR, "BmpCachePersister: failed to create directory \"%s\".", persistent_path);
-            throw Error(ERR_BITMAP_CACHE_PERSISTENT, 0);
-        }
+        //LOG( LOG_INFO, "BmpCachePersister: magic=\"%c%c%c%c\""
+        //   , magic[0], magic[1], magic[2], magic[3]);
+        //LOG( LOG_INFO, "BmpCachePersister: version=%u", version);
 
-        char filename_temporary[2048];
-
-        // Generates the name of temporary file.
-        ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/%s-XXXXXX.tmp",
-            persistent_path, persistent_basename);
-        filename_temporary[sizeof(filename_temporary) - 1] = '\0';
-
-        int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
-        if (fd == -1) {
+        if (::memcmp(magic, "PDBC", 4)) {
             LOG( LOG_ERR
-               , "BmpCachePersister: failed to open (temporary) file for writing. filename=\"%s\""
-               , filename_temporary);
-            throw Error(ERR_PDBC_SAVE);
+               , "BmpCachePersister::load_all_from_disk: File is not a persistent bitmap cache file. filename=\"%s\""
+               , filename);
+            throw Error(ERR_PDBC_LOAD);
         }
 
-        PersistentDiskBitmapCacheFileHeader cache_file_header;
-
-        if (::lseek(fd, sizeof(cache_file_header), SEEK_SET) == -1) {
+        if (version != CURRENT_VERSION) {
             LOG( LOG_ERR
-               , "BmpCachePersister: failed to reposition file write offset. filename=\"%s\""
-               , filename_temporary);
-            ::close(fd);
-            ::unlink(filename_temporary);
-            throw Error(ERR_PDBC_SAVE);
+               , "BmpCachePersister::load_all_from_disk: Unsupported persistent bitmap cache file version(%u). filename=\"%s\""
+               , version, filename);
+            throw Error(ERR_PDBC_LOAD);
         }
 
-        try
-        {
-            if ((bmp_cache.number_of_cache > 0) && bmp_cache.cache_0_persistent) {
-                cache_file_header.cache_offset[0] = ::lseek(fd, 0, SEEK_CUR);
-                save_to_disk(bmp_cache, bmp_cache.cache_0_entries, fd, 0);
-            }
-            if ((bmp_cache.number_of_cache > 1) && bmp_cache.cache_1_persistent) {
-                cache_file_header.cache_offset[1] = ::lseek(fd, 0, SEEK_CUR);
-                save_to_disk(bmp_cache, bmp_cache.cache_1_entries, fd, 1);
-            }
-            if ((bmp_cache.number_of_cache > 2) && bmp_cache.cache_2_persistent) {
-                cache_file_header.cache_offset[2] = ::lseek(fd, 0, SEEK_CUR);
-                save_to_disk(bmp_cache, bmp_cache.cache_2_entries, fd, 2);
-            }
-            if ((bmp_cache.number_of_cache > 3) && bmp_cache.cache_3_persistent) {
-                cache_file_header.cache_offset[3] = ::lseek(fd, 0, SEEK_CUR);
-                save_to_disk(bmp_cache, bmp_cache.cache_3_entries, fd, 3);
-            }
-            if ((bmp_cache.number_of_cache > 4) && bmp_cache.cache_4_persistent) {
-                cache_file_header.cache_offset[4] = ::lseek(fd, 0, SEEK_CUR);
-                save_to_disk(bmp_cache, bmp_cache.cache_4_entries, fd, 4);
-            }
+        for (uint8_t cache_id = 0; cache_id < bmp_cache.number_of_cache; cache_id++) {
+            load_cache_from_disk(bmp_cache, t, filename, cache_id, verbose);
         }
-        catch (...)
-        {
-            ::close(fd);
-            ::unlink(filename_temporary);
-            throw;
+    }
+
+    static void load_cache_from_disk( BmpCache & bmp_cache, Transport & t, const char * filename
+                                    , uint8_t cache_id, uint32_t verbose) {
+        BStream stream(65536);
+        t.recv(&stream.end, 2);
+
+        uint16_t bitmap_count = stream.in_uint16_le();
+        if (verbose & 1) {
+            LOG(LOG_INFO, "BmpCachePersister::load_cache_from_disk: bitmap_count=%u", bitmap_count);
         }
 
-        if (::lseek(fd, 0, SEEK_SET) == -1) {
-            LOG( LOG_ERR
-               , "BmpCachePersister: failed to reposition file write offset. filename=\"%s\""
-               , filename_temporary);
-            ::close(fd);
-            ::unlink(filename_temporary);
-            throw Error(ERR_PDBC_SAVE);
+        for (uint16_t i = 0; i < bitmap_count; i++) {
+            t.recv(&stream.end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
+
+            union {
+                uint8_t  sig_8[8];
+                uint32_t sig_32[2];
+            } sig;
+
+            stream.in_copy_bytes(sig.sig_8, 8); // sig(8);
+
+            uint8_t  original_bpp = stream.in_uint8();
+            REDASSERT((original_bpp == 8) || (original_bpp == 15) || (original_bpp == 16) ||
+                (original_bpp == 24) || (original_bpp == 32));
+            uint16_t cx           = stream.in_uint16_le();
+            uint16_t cy           = stream.in_uint16_le();
+
+            BGRPalette original_palette;
+            if (original_bpp == 8) {
+                t.recv(&stream.end, sizeof(original_palette));
+
+                stream.in_copy_bytes(reinterpret_cast<uint8_t *>(original_palette), sizeof(original_palette));
+            }
+
+            uint16_t bmp_size;
+            t.recv(&stream.end, sizeof(bmp_size));
+            bmp_size = stream.in_uint16_le();
+
+            stream.reset();
+
+            t.recv(&stream.end, bmp_size);
+
+            if ((bmp_cache.cache_persistent[cache_id]) &&
+                (i < bmp_cache.cache_entries[cache_id])) {
+                if (verbose & 1) {
+                    char key[20];
+
+                    snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
+                            , sig.sig_8[0], sig.sig_8[1], sig.sig_8[2], sig.sig_8[3]
+                            , sig.sig_8[4], sig.sig_8[5], sig.sig_8[6], sig.sig_8[7]);
+
+                    if (verbose & 0x100000) {
+                        LOG( LOG_INFO
+                           , "BmpCachePersister::load_cache_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
+                           , key, original_bpp, cx, cy, bmp_size);
+                    }
+                }
+
+                Bitmap * bmp = new Bitmap( bmp_cache.bpp, original_bpp
+                                         , &original_palette, cx, cy, stream.get_data(), stream.size());
+
+                bmp_cache.put(cache_id, i, bmp, sig.sig_32[0], sig.sig_32[1]);
+            }
+
+            stream.reset();
+        }
+    }
+
+    static void save_all_to_disk(const BmpCache & bmp_cache, Transport & t, uint32_t verbose = 0) {
+        if (verbose & 1) {
+            bmp_cache.log();
         }
 
-        if (::write(fd, &cache_file_header, sizeof(cache_file_header)) == -1) {
-            LOG( LOG_ERR, "BmpCachePersister: failed to write to file. filename=\"%s\""
-               , filename_temporary);
-            ::close(fd);
-            ::unlink(filename_temporary);
-            throw Error(ERR_PDBC_SAVE);
-        }
+        BStream stream(128);
 
-        ::close(fd);
+        stream.out_copy_bytes("PDBC", 4);  // Magic(4)
+        stream.out_uint8(CURRENT_VERSION);
+        stream.mark_end();
 
-        if (::rename(filename_temporary, filename_final) == -1) {
-            LOG( LOG_ERR
-               , "BmpCachePersister: failed to rename the (temporary) file. "
-                 "old_filename=\"%s\" new_filename=\"%s\""
-               , filename_temporary, filename_final);
-            throw Error(ERR_PDBC_SAVE);
-            ::unlink(filename_temporary);
+        t.send(stream);
+
+        for (uint8_t cache_id = 0; cache_id < bmp_cache.number_of_cache; cache_id++) {
+            save_to_disk(bmp_cache, cache_id, t, verbose);
         }
     }
 
 private:
-    static void save_to_disk(const BmpCache & bmp_cache, uint16_t cache_entries, int fd, uint8_t cache_id) {
-
-        PersistentDiskBitmapCacheHeader cache_header;
-
-        off_t cache_start_offset = ::lseek(fd, 0, SEEK_CUR);
-        if (cache_start_offset == -1) {
-            LOG( LOG_ERR
-               , "BmpCachePersister: failed to retrieve file write offset.");
-            throw Error(ERR_PDBC_SAVE);
-        }
-
-        if (::lseek(fd, sizeof(cache_header), SEEK_CUR) == -1) {
-            LOG( LOG_ERR
-               , "BmpCachePersister: failed to reposition file write offset.");
-            throw Error(ERR_PDBC_SAVE);
-        }
-
-        for (uint16_t cache_index = 0; cache_index < cache_entries; cache_index++) {
-            if (bmp_cache.cache[cache_id][cache_index]) {
-                const Bitmap   * bmp      = bmp_cache.cache[cache_id][cache_index];
-                const uint8_t  * sig      = bmp_cache.sha1[cache_id][cache_index];
-                const uint16_t   bmp_size = bmp->bmp_size;
-                const void     * bmp_data = bmp->data_bitmap.get();
-
-                if (   (::write(fd, sig,                    8                            ) == -1)
-                    || (::write(fd, &bmp->original_bpp,     sizeof(bmp->original_bpp    )) == -1)
-                    || (::write(fd, &bmp->cx,               sizeof(bmp->cx              )) == -1)
-                    || (::write(fd, &bmp->cy,               sizeof(bmp->cy              )) == -1)
-                    || ((bmp->original_bpp == 8) && (::write(fd, &bmp->original_palette, sizeof(bmp->original_palette)) == -1))
-                    || (::write(fd, &bmp_size,              sizeof(bmp_size             )) == -1)
-                    || (::write(fd, bmp_data,               bmp_size                     ) == -1)
-                   ) {
-                    LOG(LOG_ERR, "BmpCachePersister: failed to write to file.");
-                    throw Error(ERR_PDBC_SAVE);
+    static void save_to_disk(const BmpCache & bmp_cache, uint8_t cache_id, Transport & t, uint32_t verbose) {
+        uint16_t bitmap_count = 0;
+        if (bmp_cache.cache_persistent[cache_id]) {
+            for (uint16_t cache_index = 0; cache_index < bmp_cache.cache_entries[cache_id]; cache_index++) {
+                if (bmp_cache.cache[cache_id][cache_index]) {
+                    bitmap_count++;
                 }
-                cache_header.bitmap_count++;
             }
         }
-        off_t cache_end_offset = ::lseek(fd, 0, SEEK_CUR);
-        if (cache_end_offset == -1) {
-            LOG( LOG_ERR
-               , "BmpCachePersister: failed to retrieve file write offset.");
-            throw Error(ERR_PDBC_SAVE);
+
+        BStream stream(65535);
+        stream.out_uint16_le(bitmap_count);
+        stream.mark_end();
+        t.send(stream);
+        if (!bitmap_count) {
+            return;
         }
 
-        if (::lseek(fd, cache_start_offset, SEEK_SET) == -1) {
-            LOG( LOG_ERR
-               , "BmpCachePersister: failed to reposition file write offset.");
-            throw Error(ERR_PDBC_SAVE);
-        }
-        if (::write(fd, &cache_header, sizeof(cache_header)) == -1) {
-            LOG(LOG_ERR, "BmpCachePersister: failed to write to file.");
-            throw Error(ERR_PDBC_SAVE);
-        }
+        for (uint16_t cache_index = 0; cache_index < bmp_cache.cache_entries[cache_id]; cache_index++) {
+            if (bmp_cache.cache[cache_id][cache_index]) {
+                stream.reset();
 
-        if (::lseek(fd, cache_end_offset, SEEK_SET) == -1) {
-            LOG( LOG_ERR
-               , "BmpCachePersister: failed to reposition file write offset.");
-            throw Error(ERR_PDBC_SAVE);
+                const Bitmap   * bmp      = bmp_cache.cache[cache_id][cache_index];
+                const uint8_t  * sig      = bmp_cache.sig[cache_id][cache_index].sig_8;
+                const uint16_t   bmp_size = bmp->bmp_size;
+                const uint8_t  * bmp_data = bmp->data_bitmap.get();
+
+                char key[20];
+
+                snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
+                        , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+
+                if (verbose & 0x100000) {
+                    LOG( LOG_INFO, "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
+                       , key, bmp->original_bpp, bmp->cx, bmp->cy, bmp_size);
+                }
+
+                stream.out_copy_bytes(sig, 8);
+                stream.out_uint8(bmp->original_bpp);
+                stream.out_uint16_le(bmp->cx);
+                stream.out_uint16_le(bmp->cy);
+                if (bmp->original_bpp == 8) {
+                    stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(bmp->original_palette), sizeof(bmp->original_palette));
+                }
+                stream.out_uint16_le(bmp_size);
+                stream.mark_end();
+                t.send(stream);
+
+                t.send(bmp_data, bmp_size);
+            }
         }
     }
 };

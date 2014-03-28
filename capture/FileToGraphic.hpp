@@ -310,7 +310,7 @@ struct FileToGraphic
                     if (this->verbose > 32){
                         cmd.log(LOG_INFO);
                     }
-                    this->bmp_cache->put(cmd.id, cmd.idx, cmd.bmp);
+                    this->bmp_cache->put(cmd.id, cmd.idx, cmd.bmp, cmd.key1, cmd.key2);
                 }
                 break;
                 case TS_CACHE_COLOR_TABLE:

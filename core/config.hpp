@@ -93,7 +93,7 @@ TODO("move CERTIF_PATH to configuration (still used in sockettransport)");
 #endif
 
 #if !defined(PERSISTENT_PATH)
-#define PERSISTENT_PATH "/var/rdpproxy/persistent"
+#define PERSISTENT_PATH "/var/lib/redemption/cache"
 #endif
 
 #if !defined(RECORD_TMP_PATH)
@@ -537,6 +537,7 @@ struct Inifile : public FieldObserver {
         StringField movie_path;               // AUTHID_OPT_MOVIE_PATH //
         StringField video_quality;            // AUTHID_VIDEO_QUALITY //
         bool        enable_bitmap_update;
+        bool        enable_close_box;
         // END globals
 
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
@@ -885,6 +886,7 @@ public:
         TODO("this could be some kind of enumeration");
         this->globals.video_quality.set_from_cstr("medium");
         this->globals.enable_bitmap_update = false;
+        this->globals.enable_close_box = true;
 
         pathncpy(this->globals.persistent_path, PERSISTENT_PATH, sizeof(this->globals.persistent_path));
         // End Init globals
@@ -1315,6 +1317,9 @@ public:
             }
             else if (0 == strcmp(key, "enable_bitmap_update")) {
                 this->globals.enable_bitmap_update = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "enable_close_box")) {
+                this->globals.enable_close_box = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "persistent_path")) {
                 pathncpy(this->globals.persistent_path, value, sizeof(this->globals.persistent_path));
