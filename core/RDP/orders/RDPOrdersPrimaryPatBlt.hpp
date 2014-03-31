@@ -1045,8 +1045,8 @@ class RDPPatBlt {
              && (this->brush.org_y == other.brush.org_y)
              && (this->brush.style == other.brush.style)
              && (this->brush.hatch == other.brush.hatch)
-             && ((this->brush.style != 0x03)
-                || (0 == memcmp(this->brush.extra, other.brush.extra, 7)))
+             && (   (this->brush.style != 0x03)
+                 || (0 == memcmp(this->brush.extra, other.brush.extra, 7)))
              ;
     }
 

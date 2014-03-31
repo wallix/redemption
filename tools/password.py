@@ -9,4 +9,3 @@ PASSWORD5 = 'XXXpass$1$wordXXX'
 PASSWORD6 = 'XXXpass1wordXXX'
 PASSWORD7 = 'XXXpass!wordXXX'
 PASSWORD8 = 'XXXpassXXXwordXXX'
-

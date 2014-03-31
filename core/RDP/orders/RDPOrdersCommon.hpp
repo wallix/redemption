@@ -200,6 +200,113 @@ struct RDPBrush {
 
 namespace RDP {
 
+// [MS-RDPEGDI] - 2.2.2.2.1.1.1.3 Two-Byte Header Variable Field
+//  (VARIABLE2_FIELD)
+// =============================================================
+// The VARIABLE2_FIELD structure is used to encode a variable-length byte-
+//  stream that holds a maximum of 32,767 bytes. This structure is always
+//  situated at the end of an order.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |             cbData            |       rgbData (variable)      |
+// +-------------------------------+-------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// cbData (2 bytes): A 16-bit, unsigned integer. The number of bytes present
+//  in the rgbData field.
+
+// rgbData (variable): Variable-length, binary data. The size of this data,
+//  in bytes, is given by the cbData field.
+
+// [MS-RDPEGDI] - 2.2.2.2.1.1.1.5 Delta-Encoded Rectangles
+//  (DELTA_RECTS_FIELD)
+// =======================================================
+// The DELTA_RECTS_FIELD structure is used to encode a series of rectangles.
+//  Each rectangle is encoded as a (left, top, width, height) quadruple with
+//  the left and top components of each quadruple containing the delta from
+//  the left and top components of the previous rectangle; the first
+//  rectangle in the series is implicitly assumed to be (0, 0, 0, 0). The
+//  number of rectangles is order-dependent and not specified by any field
+//  within the DELTA_RECTS_FIELD structure. Instead, a separate field within
+//  the order that contains the DELTA_RECTS_FIELD structure MUST be used to
+//  specify the number of rectangles (this field SHOULD be placed immediately
+//  before the DELTA_RECTS_FIELD structure in the order encoding). The
+//  maximum number of rectangles that can be encoded by this structure is 45.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                      zeroBits (variable)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |               deltaEncodedRectangles (variable)               |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// zeroBits (variable): A variable-length byte field. The zeroBits field is
+//  used to indicate the absence of a left, top, width, or height component.
+//  The size, in bytes, of the zeroBits field is given by ceil(NumRects / 2)
+//  where NumRects is the number of rectangles being encoded. Each rectangle
+//  in the series requires four zero-bits (two rectangles per byte) to
+//  indicate whether a left, top, width, or height component is zero (and not
+//  present), starting with the most significant bits, so that for the first
+//  rectangle the left-zero flag is set at (zeroBits[0] & 0x80), the top-zero
+//  flag is set at (zeroBits[0] & 0x40), the width-zero flag is set at
+//  (zeroBits[0] & 0x20), and the height-zero flag is set at (zeroBits[0] &
+//  0x10).
+
+// deltaEncodedRectangles (variable): A variable-length byte field. The
+//  deltaEncodedRectangles field contains a series of (left, top, width,
+//  height) quadruples with the left and top components in each quadruple
+//  specifying the delta from the left and top components of the previous
+//  rectangle in the series; the first rectangle in the series is implicitly
+//  assumed to be (0, 0, 0, 0).
+
+//  Assume there are two rectangles specified in (left, top, right, bottom)
+//   quadruples:
+
+//   1: (L1, T1, R1, B1)
+//   2: (L2, T2, R2, B2)
+
+//  Assuming Rectangle 1 is the first in the series, and by using the (left,
+//   top, width, height) quadruple encoding scheme, these two rectangles
+//   would be specified as:
+
+//   1: (L1, T1, R1 - L1, B1 - T1)
+//   2: (L2 - L1, T2 - T1, R2 - L2, B2 - T2)
+
+//  The presence of the left, top, width, or height component for a given
+//   quadruple is dictated by the individual bits of the zeroBits field. If
+//   the zero bit is set for a given left, top, width, or height component,
+//   its value is unchanged from the previous corresponding left, top, width,
+//   or height value in the series (a delta of zero), and no data is
+//   provided. If the zero bit is not set for a left, right, width, or height
+//   component, its value is encoded in a packed signed format:
+
+//   * If the high bit (0x80) is not set in the first encoding byte, the
+//     field is 1 byte long and is encoded as a signed delta in the lower 7
+//     bits of the byte.
+
+//   * If the high bit of the first encoding byte is set, the lower 7 bits of
+//     the first byte and the 8 bits of the next byte are concatenated (the
+//     first byte containing the high order bits) to create a 15-bit signed
+//     delta value.
+
+struct DeltaEncodedRectangle {
+    int16_t leftDelta;
+    int16_t topDelta;
+    int16_t width;
+    int16_t height;
+};
+
+
     // control byte
     // ------------
     enum {
@@ -223,6 +330,7 @@ namespace RDP {
         MEMBLT          = 13,
         MEM3BLT         = 14,
         MULTIDSTBLT     = 15,
+        MULTIPATBLT     = 16,
         MULTIOPAQUERECT = 18,
         POLYGONSC       = 20,
         POLYGONCB       = 21,
@@ -641,6 +749,7 @@ private:
             case POLYGONCB:
             case ELLIPSECB:
             case MULTIOPAQUERECT:
+            case MULTIPATBLT:
                 size = 2;
                 break;
             case RECT:
@@ -749,6 +858,7 @@ public:
         case ELLIPSECB:
         case POLYGONCB:
         case MULTIOPAQUERECT:
+        case MULTIPATBLT:
             size = 2;
             break;
         case RECT:
@@ -785,6 +895,9 @@ public:
             break;
         case MULTIOPAQUERECT:
             assert(!(header.fields & ~0x1FF));
+            break;
+        case MULTIPATBLT:
+            assert(!(header.fields & ~0x3FFF));
             break;
         case PATBLT:
             assert(!(header.fields & ~0xFFF));
