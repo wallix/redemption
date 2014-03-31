@@ -87,34 +87,44 @@ def copy_and_replace(src, dst, old, new):
 def parse_template(filename, distro):
   out = ''
   stateif = False
+  stateelse = False
   addtext = True
   rgx_distro = re.compile("\s+%s\s+" % distro)
   rgx_ifdist = re.compile("^\s*@ifdist\s+")
-  rgx_enddist = re.compile("^\s*@enddist\s*")
+  rgx_else = re.compile("^\s*@else\s*")
+  rgx_enddist = re.compile("^\s*@enddist\s*$")
   rgx_elifdist = re.compile("^\s*@elifdist\s+")
   with open(filename) as f:
     for l in f:
       m = re.search(rgx_ifdist, l)
       if m:
-        if stateif:
+        if stateif or stateelse:
           raise Exception("recursive ifdist not implmented")
         addtext = re.search(rgx_distro, l[m.end()-1:]) != None
         stateif = True
       else:
-        m = re.search(rgx_elifdist, l)
+        m = re.search(rgx_else, l)
         if m:
-          if not stateif:
-            raise Exception("elifdist without ifdist")
-          addtext = re.search(rgx_distro, l[m.end()-1:]) != None
+          if not stateif or stateelse:
+            raise Exception("else without ifdist")
+          addtext = not addtext
+          stateelse = True
+          stateif = False
         else:
-          m = re.search(rgx_enddist, l)
+          m = re.search(rgx_elifdist, l)
           if m:
-            if not stateif:
-              raise Exception("enddist without ifdist")
-            addtext = True
-            stateif = False
-          elif addtext:
-            out += l
+            if not stateif or stateelse:
+              raise Exception("elifdist without ifdist")
+            addtext = re.search(rgx_distro, l[m.end()-1:]) != None
+          else:
+            m = re.search(rgx_enddist, l)
+            if m:
+              if not stateif and not stateelse:
+                raise Exception("enddist without ifdist")
+              addtext = True
+              stateif = False
+            elif addtext:
+              out += l
   if stateif:
     raise Exception("ifdist without enddist")
   return out
@@ -126,8 +136,7 @@ try:
                          stderr = subprocess.STDOUT
                         ).communicate()[0]
   if res:
-    #raise Exception('Your repository has uncommited changes:\n%sPlease commit before packaging.' % (res))
-    pass
+    raise Exception('Your repository has uncommited changes:\n%sPlease commit before packaging.' % (res))
 
   out = readall("main/version.hpp")
   out = re.sub('#\s*define\sVERSION\s".*"', '#define VERSION "%s"' % tag, out, 1)

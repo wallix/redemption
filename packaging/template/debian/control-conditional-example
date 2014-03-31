@@ -1,5 +1,7 @@
-ifdist ubuntu debian
+@ifdist ubuntu debian
 Build-Depends: ...
-elifdist maya
+@elifdist maya
 Build-Depends: ...
-enddist
+@else
+Build-Depends: ...
+@enddist
