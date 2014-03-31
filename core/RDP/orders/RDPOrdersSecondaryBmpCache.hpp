@@ -992,7 +992,7 @@ class RDPBmpCache {
         //   , bitmapWidth, bitmapHeight, bitmapLength);
 
         this->idx = stream.in_2BUE();
-        LOG(LOG_INFO, "RDPBmpCache::receive_raw_v2: cache_id=%u cacheIndex=%u", this->id, this->idx);
+        //LOG(LOG_INFO, "RDPBmpCache::receive_raw_v2: cache_id=%u cacheIndex=%u", this->id, this->idx);
 
         const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
         if (this->verbose & 0x8000) {
