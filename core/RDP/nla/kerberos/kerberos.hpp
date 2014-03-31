@@ -47,18 +47,30 @@ struct KERBEROSContext {
     OM_uint32 actual_flag;
     gss_OID actual_mech;
     gss_cred_id_t deleg_cred;
-
+    int count;
     KERBEROSContext()
         : gss_ctx(GSS_C_NO_CONTEXT)
+        , target_name(GSS_C_NO_NAME)
         , deleg_cred(GSS_C_NO_CREDENTIAL)
+        , count(0)
     {}
 
     virtual ~KERBEROSContext() {
         OM_uint32 major_status, minor_status;
+        if (this->target_name != GSS_C_NO_NAME) {
+            gss_release_name(&minor_status, &this->target_name);
+            this->target_name = GSS_C_NO_NAME;
+        }
         if (this->gss_ctx != GSS_C_NO_CONTEXT) {
             major_status = gss_delete_sec_context(&minor_status, &this->gss_ctx,
                                                   GSS_C_NO_BUFFER);
             (void) major_status;
+            this->gss_ctx = GSS_C_NO_CONTEXT;
+        }
+        if (this->deleg_cred != GSS_C_NO_CREDENTIAL) {
+            major_status = gss_release_cred(&minor_status, &this->deleg_cred);
+            (void) major_status;
+            this->deleg_cred = GSS_C_NO_CREDENTIAL;
         }
     }
 };
@@ -186,13 +198,11 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         output.length = strlen((const char*)output.value) + 1;
         LOG(LOG_INFO, "GSS IMPORT NAME : %s", output.value);
         major_status = gss_import_name(&minor_status, &output, type, name);
-
+        gss_release_buffer(&minor_status, &output);
         if (GSS_ERROR(major_status)) {
             LOG(LOG_ERR, "Failed to create service principal name");
             return false;
         }
-
-        gss_release_buffer(&minor_status, &output);
 
         return true;
     }
@@ -620,15 +630,16 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         major_status = gss_indicate_mechs(&minor_status, &mech_set);
         if (!mech_set)
             return false;
-
         if (GSS_ERROR(major_status)) {
             this->report_error(GSS_C_GSS_CODE, "Failed to get available mechs on system",
                                major_status, minor_status);
+            gss_release_oid_set(&minor_status, &mech_set);
             return false;
         }
 
         gss_test_oid_set_member(&minor_status, mech, mech_set, &mech_found);
 
+        gss_release_oid_set(&minor_status, &mech_set);
         if (GSS_ERROR(major_status)) {
             this->report_error(GSS_C_GSS_CODE, "Failed to match mechanism in set",
                                   major_status, minor_status);
