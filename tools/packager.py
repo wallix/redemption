@@ -4,6 +4,7 @@
 import getopt
 import sys
 import distroinfo
+import subprocess
 import shutil
 import os
 import datetime
@@ -55,11 +56,25 @@ try:
 except:
   pass
 
+def readall(filename):
+  with open(filename) as f:
+    return f.read()
+
+def writeall(filename, s):
+  with open(filename, "w+") as f:
+    f.write(s)
+
 try:
-  with open("main/version.hpp") as f:
-    out = f.read()
-  with open("main/version.hpp", "w") as f:
-    f.write(re.sub('#\s*define\sVERSION\s".*"', '#define VERSION "%s"' % tag, out, 1))
+  res = subprocess.Popen(["git", "diff", "--shortstat"],
+                         stdout = subprocess.PIPE,
+                         stderr = subprocess.STDOUT
+                        ).communicate()[0]
+  if res:
+    raise Exception('Your repository has uncommited changes:\n%sPlease commit before packaging.' % (res))
+
+  out = readall("main/version.hpp")
+  out = re.sub('#\s*define\sVERSION\s".*"', '#define VERSION "%s"' % tag, out, 1)
+  writeall("main/version.hpp", out)
 
   status = os.system("git tag %s" % tag)
   if status:
@@ -70,17 +85,16 @@ try:
   distro, distro_release, distro_codename = distroinfo.get_distro();
   packagetemp = "packaging/template/debian"
 
-  with open("debian/redemption.install", "w+") as f:
-    f.write("%s/*\n%s/bin/*\n%s/share/rdpproxy/*" % (etc_prefix, prefix, prefix))
+  writeall("debian/redemption.install",
+           "%s/*\n%s/bin/*\n%s/share/rdpproxy/*" % (etc_prefix, prefix, prefix))
 
   env = 'PREFIX="%s"\nETC_PREFIX="%s"\nCERT_PREFIX="%s"' % (prefix, etc_prefix, cert_prefix)
 
   for fname in ["redemption.postinst", "rules"]:
-    with open("%s/%s" % (packagetemp, fname), "r") as fin:
+    with open("%s/%s" % (packagetemp, fname), "r") as f:
       if debug and fname == "rules":
         env += "\nBJAM_EXTRA_INSTALL=debug"
-      with open("debian/%s" % fname, "w+") as fout:
-        fout.write(fin.read().replace('%setenv', env))
+      writeall("debian/%s" % fname, f.read().replace('%setenv', env))
 
   if not 'EDITOR' in os.environ:
     os.environ['EDITOR'] = 'nano'
@@ -94,18 +108,15 @@ try:
   changelog += "\n\n -- cgrosjean <cgrosjean at wallix.com>  "
   changelog += datetime.datetime.today().strftime("%a, %d %b %Y %H:%M:%S +0200")
   changelog += "\n\n"
-
-  with open("%s/changelog" % packagetemp, "r") as f:
-    changelog += f.read()
-  with open("%s/changelog" % packagetemp, "w") as f:
-    f.write(changelog)
+  changelog += readall("%s/changelog" % packagetemp)
+  writeall("%s/changelog" % packagetemp, changelog)
 
   target = ''
   if distro == 'ubuntu':
     target += '+'
     target += distro_codename
-  with open("debian/changelog", "w+") as f:
-    f.write(changelog.replace('%target_name', target).replace('%pkg_distribution', package_distribution))
+  writeall("debian/changelog",
+           changelog.replace('%target_name', target).replace('%pkg_distribution', package_distribution))
 
   shutil.copy("%s/compat" % packagetemp, "debian/compat")
   shutil.copy("%s/control" % packagetemp, "debian/control")
