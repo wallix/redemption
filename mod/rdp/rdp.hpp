@@ -949,7 +949,7 @@ struct mod_rdp : public mod_api {
 
                                             uint32_t cert_len = sc_sec1.x509.cert[certcount - 1].len;
                                             X509 *cert =  sc_sec1.x509.cert[certcount - 1].cert;
-(void)cert_len;
+                                            (void)cert_len;
 
                                             TODO("CGR: Currently, we don't use the CA Certificate, we should"
                                                  "*) Verify the server certificate (server_cert) with the CA certificate."
@@ -976,7 +976,7 @@ struct mod_rdp : public mod_api {
                                             }
 
                                             TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
-                                            RSA * server_public_key = RSAPublicKey_dup((RSA *) epk->pkey.ptr);
+                                            RSA * server_public_key = EVP_PKEY_get1_RSA(epk);
                                             EVP_PKEY_free(epk);
                                             this->server_public_key_len = RSA_size(server_public_key);
 

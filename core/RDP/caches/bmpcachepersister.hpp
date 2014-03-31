@@ -51,6 +51,7 @@ private:
     uint32_t verbose;
 
 public:
+    // Preloads bitmap from file to be used later with Client Persistent Key List PDUs.
     BmpCachePersister(BmpCache & bmp_cache, Transport & t, const char * filename, uint32_t verbose = 0)
     : bmp_cache(bmp_cache)
     , verbose(verbose) {
@@ -67,23 +68,88 @@ public:
 
         if (::memcmp(magic, "PDBC", 4)) {
             LOG( LOG_ERR
-               , "BmpCachePersister::BmpCachePersister: File is not a persistent bitmap cache file. filename=\"%s\""
+               , "BmpCachePersister::BmpCachePersister: "
+                 "File is not a persistent bitmap cache file. filename=\"%s\""
                , filename);
             throw Error(ERR_PDBC_LOAD);
         }
 
         if (version != CURRENT_VERSION) {
             LOG( LOG_ERR
-               , "BmpCachePersister::BmpCachePersister: Unsupported persistent bitmap cache file version(%u). filename=\"%s\""
+               , "BmpCachePersister::BmpCachePersister: "
+                 "Unsupported persistent bitmap cache file version(%u). filename=\"%s\""
                , version, filename);
             throw Error(ERR_PDBC_LOAD);
         }
 
         for (uint8_t cache_id = 0; cache_id < this->bmp_cache.number_of_cache; cache_id++) {
-            this->load_from_disk(t, filename, cache_id);
+            this->preload_from_disk(t, filename, version, cache_id);
         }
     }
 
+private:
+    void preload_from_disk(Transport & t, const char * filename, uint8_t version, uint8_t cache_id) {
+        BStream stream(65536);
+        t.recv(&stream.end, 2);
+
+        uint16_t bitmap_count = stream.in_uint16_le();
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "BmpCachePersister::preload_from_disk: bitmap_count=%u", bitmap_count);
+        }
+
+        for (uint16_t i = 0; i < bitmap_count; i++) {
+            t.recv(&stream.end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
+
+            uint8_t sig[8];
+
+            stream.in_copy_bytes(sig, 8); // sig(8);
+
+            uint8_t  original_bpp = stream.in_uint8();
+            REDASSERT((original_bpp == 8) || (original_bpp == 15) || (original_bpp == 16) ||
+                (original_bpp == 24) || (original_bpp == 32));
+            uint16_t cx           = stream.in_uint16_le();
+            uint16_t cy           = stream.in_uint16_le();
+
+            BGRPalette original_palette;
+            if (original_bpp == 8) {
+                t.recv(&stream.end, sizeof(original_palette));
+
+                stream.in_copy_bytes(reinterpret_cast<uint8_t *>(original_palette), sizeof(original_palette));
+            }
+
+            uint16_t bmp_size;
+            t.recv(&stream.end, sizeof(bmp_size));
+            bmp_size = stream.in_uint16_le();
+
+            stream.reset();
+
+            t.recv(&stream.end, bmp_size);
+
+            if (bmp_cache.cache_persistent[cache_id]) {
+                char key[20];
+
+                snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
+                        , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+
+                if (this->verbose & 0x100000) {
+                    LOG( LOG_INFO
+                       , "BmpCachePersister::preload_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
+                       , key, original_bpp, cx, cy, bmp_size);
+                }
+
+                REDASSERT(this->bmp_map[cache_id][key].bmp == NULL);
+
+                this->bmp_map[cache_id][key].bmp = new Bitmap( this->bmp_cache.bpp, original_bpp
+                                                             , &original_palette, cx, cy, stream.get_data()
+                                                             , bmp_size);
+            }
+
+            stream.reset();
+        }
+    }
+
+public:
+    // Places bitmaps of Persistent Key List into the cache.
     void process_key_list( uint8_t cache_id, RDP::BitmapCachePersistentListEntry * entries
                          , uint8_t number_of_entries, uint16_t first_entry_index) {
               uint16_t   max_number_of_entries = this->bmp_cache.cache_entries[cache_id];
@@ -122,67 +188,7 @@ public:
         }
     }
 
-private:
-    void load_from_disk(Transport & t, const char * filename, uint8_t cache_id) {
-        BStream stream(65536);
-        t.recv(&stream.end, 2);
-
-        uint16_t bitmap_count = stream.in_uint16_le();
-        if (this->verbose & 1) {
-            LOG(LOG_INFO, "BmpCachePersister::load_from_disk: bitmap_count=%u", bitmap_count);
-        }
-
-        for (uint16_t i = 0; i < bitmap_count; i++) {
-            t.recv(&stream.end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
-
-            uint8_t sig[8];
-
-            stream.in_copy_bytes(sig, 8); // sig(8);
-
-            uint8_t  original_bpp = stream.in_uint8();
-            REDASSERT((original_bpp == 8) || (original_bpp == 15) || (original_bpp == 16) ||
-                (original_bpp == 24) || (original_bpp == 32));
-            uint16_t cx           = stream.in_uint16_le();
-            uint16_t cy           = stream.in_uint16_le();
-
-            BGRPalette original_palette;
-            if (original_bpp == 8) {
-                t.recv(&stream.end, sizeof(original_palette));
-
-                stream.in_copy_bytes(reinterpret_cast<uint8_t *>(original_palette), sizeof(original_palette));
-            }
-
-            uint16_t bmp_size;
-            t.recv(&stream.end, sizeof(bmp_size));
-            bmp_size = stream.in_uint16_le();
-
-            stream.reset();
-
-            t.recv(&stream.end, bmp_size);
-
-            if (bmp_cache.cache_persistent[cache_id]) {
-                char key[20];
-
-                snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
-                        , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
-
-                if (this->verbose & 0x100000) {
-                    LOG( LOG_INFO, "BmpCachePersister::load_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                       , key, original_bpp, cx, cy, bmp_size);
-                }
-
-                REDASSERT(this->bmp_map[cache_id][key].bmp == NULL);
-
-                this->bmp_map[cache_id][key].bmp = new Bitmap( this->bmp_cache.bpp, original_bpp
-                                                             , &original_palette, cx, cy, stream.get_data()
-                                                             , bmp_size);
-            }
-
-            stream.reset();
-        }
-    }
-
-public:
+    // Loads bitmap from file to be placed immediately into the cache.
     static void load_all_from_disk( BmpCache & bmp_cache, Transport & t, const char * filename
                                   , uint32_t verbose = 0) {
         BStream stream(16);
@@ -198,31 +204,34 @@ public:
 
         if (::memcmp(magic, "PDBC", 4)) {
             LOG( LOG_ERR
-               , "BmpCachePersister::load_all_from_disk: File is not a persistent bitmap cache file. filename=\"%s\""
+               , "BmpCachePersister::load_all_from_disk: "
+                 "File is not a persistent bitmap cache file. filename=\"%s\""
                , filename);
             throw Error(ERR_PDBC_LOAD);
         }
 
         if (version != CURRENT_VERSION) {
             LOG( LOG_ERR
-               , "BmpCachePersister::load_all_from_disk: Unsupported persistent bitmap cache file version(%u). filename=\"%s\""
+               , "BmpCachePersister::load_all_from_disk: "
+                 "Unsupported persistent bitmap cache file version(%u). filename=\"%s\""
                , version, filename);
             throw Error(ERR_PDBC_LOAD);
         }
 
         for (uint8_t cache_id = 0; cache_id < bmp_cache.number_of_cache; cache_id++) {
-            load_cache_from_disk(bmp_cache, t, filename, cache_id, verbose);
+            load_from_disk(bmp_cache, t, filename, cache_id, version, verbose);
         }
     }
 
-    static void load_cache_from_disk( BmpCache & bmp_cache, Transport & t, const char * filename
-                                    , uint8_t cache_id, uint32_t verbose) {
+private:
+    static void load_from_disk( BmpCache & bmp_cache, Transport & t, const char * filename
+                              , uint8_t cache_id, uint8_t version, uint32_t verbose) {
         BStream stream(65536);
         t.recv(&stream.end, 2);
 
         uint16_t bitmap_count = stream.in_uint16_le();
         if (verbose & 1) {
-            LOG(LOG_INFO, "BmpCachePersister::load_cache_from_disk: bitmap_count=%u", bitmap_count);
+            LOG(LOG_INFO, "BmpCachePersister::load_from_disk: bitmap_count=%u", bitmap_count);
         }
 
         for (uint16_t i = 0; i < bitmap_count; i++) {
@@ -267,7 +276,7 @@ public:
 
                     if (verbose & 0x100000) {
                         LOG( LOG_INFO
-                           , "BmpCachePersister::load_cache_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
+                           , "BmpCachePersister::load_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
                            , key, original_bpp, cx, cy, bmp_size);
                     }
                 }
@@ -282,6 +291,8 @@ public:
         }
     }
 
+public:
+    // Saves content of cache to file.
     static void save_all_to_disk(const BmpCache & bmp_cache, Transport & t, uint32_t verbose = 0) {
         if (verbose & 1) {
             bmp_cache.log();
@@ -334,7 +345,8 @@ private:
                         , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
 
                 if (verbose & 0x100000) {
-                    LOG( LOG_INFO, "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
+                    LOG( LOG_INFO
+                       , "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
                        , key, bmp->original_bpp, bmp->cx, bmp->cy, bmp_size);
                 }
 
@@ -343,7 +355,8 @@ private:
                 stream.out_uint16_le(bmp->cx);
                 stream.out_uint16_le(bmp->cy);
                 if (bmp->original_bpp == 8) {
-                    stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(bmp->original_palette), sizeof(bmp->original_palette));
+                    stream.out_copy_bytes( reinterpret_cast<const uint8_t *>(bmp->original_palette)
+                                         , sizeof(bmp->original_palette));
                 }
                 stream.out_uint16_le(bmp_size);
                 stream.mark_end();

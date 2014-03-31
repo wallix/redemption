@@ -138,8 +138,13 @@ public:
             this->ini.context.auth_error_message.copy_c_str(auth_error_message);
         }
         this->remove_mod();
-        this->new_mod(MODULE_INTERNAL_CLOSE, now, NULL);
-        signal = BACK_EVENT_NONE;
+        if (this->ini.globals.enable_close_box) {
+            this->new_mod(MODULE_INTERNAL_CLOSE, now, NULL);
+            signal = BACK_EVENT_NONE;
+        }
+        else {
+            signal = BACK_EVENT_STOP;
+        }
     }
 
     int get_mod_from_protocol() {
