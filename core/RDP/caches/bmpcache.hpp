@@ -374,7 +374,7 @@ struct BmpCache {
             }
             entries    = this->cache_entries[id_real];
             persistent = this->cache_persistent[id_real];
-            if (persistent && this->use_waiting_list) {
+            if (this->use_waiting_list) {
                 // Last bitmap cache entry is used by waiting list.
                 entries--;
             }
