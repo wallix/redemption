@@ -11,12 +11,14 @@ import datetime
 import re
 
 def usage():
-  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--debug] --tag version" % sys.argv[0])
+  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--not-entry-changelog] [--force-distro name] [--force--distro-codename name] [--debug] --tag version" % sys.argv[0])
 
 try:
   opts, args = getopt.getopt(sys.argv[1:], "h",
                              ["help", "package-distribution=", "tag=",
-                              "prefix=", "etc-prefix=", "cert-prefix=", "debug"])
+                              "prefix=", "etc-prefix=", "cert-prefix=",
+                              "not-entry-changelog", "force-distro=",
+                              "force--distro-codename=", "debug"])
 except getopt.GetoptError as err:
   print(str(err))
   usage()
@@ -28,6 +30,9 @@ etc_prefix = '/etc/rdpproxy'
 cert_prefix = '/etc/rdpproxy/cert'
 package_distribution = 'unstable'
 debug = False
+entry_changelog = True
+force_distro = None
+force_distro_codename = None
 
 for o,a in opts:
   if o in ("-h", "--help"):
@@ -43,6 +48,12 @@ for o,a in opts:
     etc_prefix = a
   elif o == "--cert-prefix":
     cert_prefix = a
+  elif o == "--not-entry-changelog":
+    entry_changelog = False
+  elif o == "--force-distro":
+    force_distro = a
+  elif o == "--force--distro-codename":
+    force_distro_codename = a
   elif o == "--debug":
     debug = True
 
@@ -82,7 +93,13 @@ try:
 
   os.mkdir("debian", 0766)
 
-  distro, distro_release, distro_codename = distroinfo.get_distro();
+  if force_distro == None or (force_distro == 'ubuntu' and force_distro_codename == None):
+    distro, distro_release, distro_codename = distroinfo.get_distro()
+  if force_distro != None:
+    distro = force_distro
+  if force_distro_codename != None:
+    distro_codename = force_distro_codename
+
   packagetemp = "packaging/template/debian"
 
   writeall("debian/redemption.install",
@@ -96,20 +113,23 @@ try:
         env += "\nBJAM_EXTRA_INSTALL=debug"
       writeall("debian/%s" % fname, f.read().replace('%setenv', env))
 
-  if not 'EDITOR' in os.environ:
-    os.environ['EDITOR'] = 'nano'
-  os.system("%s /tmp/redemption.changelog.tmp" % os.environ['EDITOR'])
-  changelog = "redemption (%s%%target_name) %%pkg_distribution; urgency=low\n\n" % tag
-  with open("/tmp/redemption.changelog.tmp", "r") as f:
-    for line in f:
-      if len(line) and line != "\n":
-        changelog += "  * "
-        changelog += line
-  changelog += "\n\n -- cgrosjean <cgrosjean at wallix.com>  "
-  changelog += datetime.datetime.today().strftime("%a, %d %b %Y %H:%M:%S +0200")
-  changelog += "\n\n"
+  changelog = ""
+  if entry_changelog:
+    if not 'EDITOR' in os.environ:
+      os.environ['EDITOR'] = 'nano'
+    os.system("%s /tmp/redemption.changelog.tmp" % os.environ['EDITOR'])
+    changelog = "redemption (%s%%target_name) %%pkg_distribution; urgency=low\n\n" % tag
+    with open("/tmp/redemption.changelog.tmp", "r") as f:
+      for line in f:
+        if len(line) and line != "\n":
+          changelog += "  * "
+          changelog += line
+    changelog += "\n\n -- cgrosjean <cgrosjean at wallix.com>  "
+    changelog += datetime.datetime.today().strftime("%a, %d %b %Y %H:%M:%S +0200")
+    changelog += "\n\n"
   changelog += readall("%s/changelog" % packagetemp)
-  writeall("%s/changelog" % packagetemp, changelog)
+  if entry_changelog:
+    writeall("%s/changelog" % packagetemp, changelog)
 
   target = ''
   if distro == 'ubuntu':
