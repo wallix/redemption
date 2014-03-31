@@ -598,7 +598,7 @@ struct FileToGraphic
 
                 if (this->info_version <= 3) {
                     this->info_number_of_cache  = 3;
-                    this->info_use_waiting_list = true;
+                    this->info_use_waiting_list = false;
 
                     this->info_cache_0_persistent = false;
                     this->info_cache_1_persistent = false;
