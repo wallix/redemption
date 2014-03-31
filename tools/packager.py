@@ -11,14 +11,15 @@ import datetime
 import re
 
 def usage():
-  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--not-entry-changelog] [--force-distro name] [--force--distro-codename name] [--debug] --tag version" % sys.argv[0])
+  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--not-entry-changelog] [--force-distro name] [--force-distro-codename name] [--not-buildpackage] [--debug] --tag version" % sys.argv[0])
 
 try:
   opts, args = getopt.getopt(sys.argv[1:], "h",
                              ["help", "package-distribution=", "tag=",
                               "prefix=", "etc-prefix=", "cert-prefix=",
-                              "not-entry-changelog", "force-distro=",
-                              "force--distro-codename=", "debug"])
+                              "not-entry-changelog", "not-buildpackage",
+                              "force-distro=", "force-distro-codename=",
+                              "debug"])
 except getopt.GetoptError as err:
   print(str(err))
   usage()
@@ -33,6 +34,7 @@ debug = False
 entry_changelog = True
 force_distro = None
 force_distro_codename = None
+buildpackage = True
 
 for o,a in opts:
   if o in ("-h", "--help"):
@@ -52,8 +54,10 @@ for o,a in opts:
     entry_changelog = False
   elif o == "--force-distro":
     force_distro = a
-  elif o == "--force--distro-codename":
+  elif o == "--force-distro-codename":
     force_distro_codename = a
+  elif o == "--not-buildpackage":
+    buildpackage = False
   elif o == "--debug":
     debug = True
 
@@ -75,13 +79,55 @@ def writeall(filename, s):
   with open(filename, "w+") as f:
     f.write(s)
 
+def copy_and_replace(src, dst, old, new):
+  out = readall(src)
+  out = out.replace(old, new)
+  writeall(dst, out)
+
+def parse_template(filename, distro):
+  out = ''
+  stateif = False
+  addtext = True
+  rgx_distro = re.compile("\s+%s\s+" % distro)
+  rgx_ifdist = re.compile("^\s*@ifdist\s+")
+  rgx_enddist = re.compile("^\s*@enddist\s*")
+  rgx_elifdist = re.compile("^\s*@elifdist\s+")
+  with open(filename) as f:
+    for l in f:
+      m = re.search(rgx_ifdist, l)
+      if m:
+        if stateif:
+          raise Exception("recursive ifdist not implmented")
+        addtext = re.search(rgx_distro, l[m.end()-1:]) != None
+        stateif = True
+      else:
+        m = re.search(rgx_elifdist, l)
+        if m:
+          if not stateif:
+            raise Exception("elifdist without ifdist")
+          addtext = re.search(rgx_distro, l[m.end()-1:]) != None
+        else:
+          m = re.search(rgx_enddist, l)
+          if m:
+            if not stateif:
+              raise Exception("enddist without ifdist")
+            addtext = True
+            stateif = False
+          elif addtext:
+            out += l
+  if stateif:
+    raise Exception("ifdist without enddist")
+  return out
+
+
 try:
   res = subprocess.Popen(["git", "diff", "--shortstat"],
                          stdout = subprocess.PIPE,
                          stderr = subprocess.STDOUT
                         ).communicate()[0]
   if res:
-    raise Exception('Your repository has uncommited changes:\n%sPlease commit before packaging.' % (res))
+    #raise Exception('Your repository has uncommited changes:\n%sPlease commit before packaging.' % (res))
+    pass
 
   out = readall("main/version.hpp")
   out = re.sub('#\s*define\sVERSION\s".*"', '#define VERSION "%s"' % tag, out, 1)
@@ -107,11 +153,11 @@ try:
 
   env = 'PREFIX="%s"\nETC_PREFIX="%s"\nCERT_PREFIX="%s"' % (prefix, etc_prefix, cert_prefix)
 
-  for fname in ["redemption.postinst", "rules"]:
-    with open("%s/%s" % (packagetemp, fname), "r") as f:
-      if debug and fname == "rules":
-        env += "\nBJAM_EXTRA_INSTALL=debug"
-      writeall("debian/%s" % fname, f.read().replace('%setenv', env))
+  copy_and_replace("%s/redemption.postinst" % packagetemp, "debian/redemption.postinst", '%setenv', env)
+
+  if debug:
+    env += "\nBJAM_EXTRA_INSTALL=debug"
+  copy_and_replace("%s/rules" % packagetemp, "debian/rules", '%setenv', env)
 
   changelog = ""
   if entry_changelog:
@@ -138,11 +184,15 @@ try:
   writeall("debian/changelog",
            changelog.replace('%target_name', target).replace('%pkg_distribution', package_distribution))
 
+  out = parse_template("%s/control" % packagetemp, distro)
+  writeall("debian/control", out.replace('%REDEMPTION_VERSION', tag))
+
   shutil.copy("%s/compat" % packagetemp, "debian/compat")
-  shutil.copy("%s/control" % packagetemp, "debian/control")
   shutil.copy("docs/copyright", "debian/copyright")
 
-  exit(os.system("dpkg-buildpackage -b -tc -us -uc -r"))
+  if buildpackage:
+    exit(os.system("dpkg-buildpackage -b -tc -us -uc -r"))
+  exit(0)
 except Exception, e:
   print "Build failed: %s" % e
   exit(-1)
