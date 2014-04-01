@@ -55,6 +55,7 @@ struct FileToGraphic
     RDPDestBlt         destblt;
     RDPMultiDstBlt     multidstblt;
     RDPMultiOpaqueRect multiopaquerect;
+    RDP::RDPMultiPatBlt     multipatblt;
     RDPPatBlt          patblt;
     RDPScrBlt          scrblt;
     RDPOpaqueRect      opaquerect;
@@ -104,6 +105,7 @@ struct FileToGraphic
     bool polyline_support;
     bool multidstblt_support;
     bool multiopaquerect_support;
+    bool multipatblt_support;
 
     uint16_t info_version;
     uint16_t info_width;
@@ -135,6 +137,8 @@ struct FileToGraphic
         , common(RDP::PATBLT, Rect(0, 0, 1, 1))
         , destblt(Rect(), 0)
         , multidstblt()
+        , multiopaquerect()
+        , multipatblt()
         , patblt(Rect(), 0, 0, 0, RDPBrush())
         , scrblt(Rect(), 0, 0, 0)
         , opaquerect(Rect(), 0)
@@ -166,6 +170,7 @@ struct FileToGraphic
         , polyline_support(false)
         , multidstblt_support(false)
         , multiopaquerect_support(false)
+        , multipatblt_support(false)
         , info_version(0)
         , info_width(0)
         , info_height(0)
@@ -385,6 +390,15 @@ struct FileToGraphic
                         this->consumers[i]->draw(this->multiopaquerect, clip);
                     }
                     break;
+                case RDP::MULTIPATBLT:
+                    this->multipatblt.receive(this->stream, header);
+                    if (this->verbose > 32){
+                        this->multipatblt.log(LOG_INFO, clip);
+                    }
+                    for (size_t i = 0; i < this->nbconsumers ; i++) {
+                        this->consumers[i]->draw(this->multipatblt, clip);
+                    }
+                    break;
                 case RDP::PATBLT:
                     this->patblt.receive(this->stream, header);
                     if (this->verbose > 32){
@@ -586,6 +600,7 @@ struct FileToGraphic
                 this->polyline_support            = (this->info_version > 2);
                 this->multidstblt_support         = (this->info_version > 3);
                 this->multiopaquerect_support     = (this->info_version > 3);
+                this->multipatblt_support         = (this->info_version > 3);
                 this->info_width                  = this->stream.in_uint16_le();
                 this->info_height                 = this->stream.in_uint16_le();
                 this->info_bpp                    = this->stream.in_uint16_le();
@@ -809,6 +824,29 @@ struct FileToGraphic
                         this->multiopaquerect.deltaEncodedRectangles[i].topDelta  = this->stream.in_sint16_le();
                         this->multiopaquerect.deltaEncodedRectangles[i].width     = this->stream.in_sint16_le();
                         this->multiopaquerect.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
+                    }
+                }
+
+                // RDPMultiPatBlt multipatblt;
+                if (this->multipatblt_support) {
+                    this->multipatblt.nLeftRect  = this->stream.in_sint16_le();
+                    this->multipatblt.nTopRect   = this->stream.in_sint16_le();
+                    this->multipatblt.nWidth     = this->stream.in_uint16_le();
+                    this->multipatblt.nHeight    = this->stream.in_uint16_le();
+                    this->multipatblt.bRop       = this->stream.in_uint8();
+                    this->multipatblt.BackColor  = this->stream.in_uint32_le();
+                    this->multipatblt.ForeColor  = this->stream.in_uint32_le();
+                    this->multipatblt.BrushOrgX  = this->stream.in_uint8();
+                    this->multipatblt.BrushOrgY  = this->stream.in_uint8();
+                    this->multipatblt.BrushStyle = this->stream.in_uint8();
+                    this->multipatblt.BrushHatch = this->stream.in_uint8();
+                    this->stream.in_copy_bytes(this->multipatblt.BrushExtra, 7);
+                    this->multipatblt.nDeltaEntries = this->stream.in_uint8();
+                    for (uint8_t i = 0; i < this->multipatblt.nDeltaEntries; i++) {
+                        this->multipatblt.deltaEncodedRectangles[i].leftDelta = this->stream.in_sint16_le();
+                        this->multipatblt.deltaEncodedRectangles[i].topDelta  = this->stream.in_sint16_le();
+                        this->multipatblt.deltaEncodedRectangles[i].width     = this->stream.in_sint16_le();
+                        this->multipatblt.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
                     }
                 }
             break;

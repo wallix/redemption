@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 
     BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)sq_outfilename_filesize(&(trans.seq), 0));
     sq_outfilename_unlink(&(trans.seq), 0);
-    BOOST_CHECK_EQUAL(static_cast<unsigned>(3322), (unsigned)sq_outfilename_filesize(&(trans.seq), 1));
+    BOOST_CHECK_EQUAL(static_cast<unsigned>(3351), (unsigned)sq_outfilename_filesize(&(trans.seq), 1));
     sq_outfilename_unlink(&(trans.seq), 1);
 }
 

@@ -9,6 +9,8 @@ libboost-test-dev
 libboost-program-options-dev
 libssl-dev
 locales
+libkrb5-dev
+libgssglue-dev
 
 Optionally :
 python
