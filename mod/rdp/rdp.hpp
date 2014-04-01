@@ -178,6 +178,7 @@ struct mod_rdp : public mod_api {
     bool enable_ellipsecb;
     bool enable_multidstblt;
     bool enable_multiopaquerect;
+    bool enable_multipatblt;
 
     TransparentRecorder * transparent_recorder;
     Transport           * persistent_key_list_transport;
@@ -242,6 +243,7 @@ struct mod_rdp : public mod_api {
         , enable_ellipsecb(false)
         , enable_multidstblt(false)
         , enable_multiopaquerect(false)
+        , enable_multipatblt(false)
         , transparent_recorder(NULL)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
@@ -470,6 +472,12 @@ struct mod_rdp : public mod_api {
                     LOG(LOG_INFO, "RDP Extra orders=MultiOpaqueRect");
                 }
                 this->enable_multiopaquerect = true;
+                break;
+            case RDP::MULTIPATBLT:
+                if (verbose) {
+                    LOG(LOG_INFO, "RDP Extra orders=MultiPatBlt");
+                }
+                this->enable_multipatblt = true;
                 break;
             case RDP::POLYGONSC:
                 if (verbose) {
@@ -2193,22 +2201,22 @@ struct mod_rdp : public mod_api {
         order_caps.numberFonts                                   = 0x147;
         order_caps.orderFlags                                    = 0x2a;
         order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = (this->enable_multidstblt ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = (this->enable_multidstblt     ? 1 : 0);
         order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]    = (this->enable_multiopaquerect ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX]        = (this->enable_multipatblt     ? 1 : 0);
         order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
-//order_caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->enable_mem3blt ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->enable_mem3blt         ? 1 : 0);
         order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 0;
         order_caps.orderSupport[UnusedIndex3]                    = 1;
         order_caps.orderSupport[UnusedIndex5]                    = 1;
-        order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]         = (this->enable_polygonsc ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]         = (this->enable_polygoncb ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]         = (this->enable_polygonsc       ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]         = (this->enable_polygoncb       ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline        ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc       ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb       ? 1 : 0);
         order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
 
         order_caps.textFlags                                     = 0x06a1;
@@ -2225,17 +2233,17 @@ struct mod_rdp : public mod_api {
 
         // intersect with client order capabilities
         // which may not be supported by clients.
-        this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX, order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_MULTIOPAQUERECT_INDEX, order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX,     order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX,
-                                         order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_POLYGON_SC_INDEX, order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_POLYGON_CB_INDEX, order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX,   order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_ELLIPSE_SC_INDEX, order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_ELLIPSE_CB_INDEX, order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_INDEX_INDEX,      order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX,        order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_MULTIOPAQUERECT_INDEX,    order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_MULTIPATBLT_INDEX,        order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX,            order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_POLYGON_SC_INDEX,         order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_POLYGON_CB_INDEX,         order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX,           order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_ELLIPSE_SC_INDEX,         order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_ELLIPSE_CB_INDEX,         order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_INDEX_INDEX,              order_caps.orderSupport);
 
         // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
         //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
@@ -4825,6 +4833,10 @@ public:
     }
 
     virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
         this->front.draw(cmd, clip);
     }
 

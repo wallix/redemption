@@ -31,6 +31,7 @@
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
@@ -121,7 +122,8 @@ public:
 
     void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
     {
-        const Rect clip_drawable_cmd_intersect = clip.intersect(this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+        const Rect clip_drawable_cmd_intersect = clip.intersect(
+            this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
 
         Rect cmd_rect(0, 0, 0, 0);
 
@@ -137,7 +139,8 @@ public:
 
     void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip)
     {
-        const Rect clip_drawable_cmd_intersect = clip.intersect(this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+        const Rect clip_drawable_cmd_intersect = clip.intersect(
+            this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
 
         Rect cmd_rect(0, 0, 0, 0);
 
@@ -149,6 +152,38 @@ public:
             const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
             const uint32_t color = this->RGBtoBGR(cmd._Color);
             this->drawable.opaquerect(trect, color);
+        }
+    }
+
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip)
+    {
+        const Rect clip_drawable_cmd_intersect = clip.intersect(
+            this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+
+        Rect cmd_rect(0, 0, 0, 0);
+
+        for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
+            cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
+            cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
+            cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
+            cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
+            const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
+            TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
+            if ((cmd.bRop == 0xF0) && (cmd.BrushStyle == 0x03))
+            {
+                uint8_t brush_data[8];
+                memcpy(brush_data, cmd.BrushExtra, 7);
+                brush_data[7] = cmd.BrushHatch;
+
+                const uint32_t BackColor = this->RGBtoBGR(cmd.BackColor);
+                const uint32_t ForeColor = this->RGBtoBGR(cmd.ForeColor);
+                this->drawable.patblt_ex(trect, cmd.bRop, BackColor, ForeColor, brush_data);
+            }
+            else
+            {
+                const uint32_t color = this->RGBtoBGR(cmd.BackColor);
+                this->drawable.patblt(trect, cmd.bRop, color);
+            }
         }
     }
 

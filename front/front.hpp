@@ -4272,6 +4272,32 @@ public:
         }
     }
 
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
+            this->send_global_palette();
+
+            const BGRColor back_color24 = color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette);
+            const BGRColor fore_color24 = color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette);
+
+            RDP::RDPMultiPatBlt new_cmd = cmd;
+            if (this->client_info.bpp != this->mod_bpp){
+                new_cmd.BackColor= color_encode(back_color24, this->client_info.bpp);
+                new_cmd.ForeColor= color_encode(fore_color24, this->client_info.bpp);
+                // this may change the brush add send it to to remote cache
+            }
+            this->cache_brush(new_cmd.brush);
+            this->orders->draw(new_cmd, clip);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
+                RDP::RDPMultiPatBlt new_cmd24 = cmd;
+                new_cmd24.BackColor = back_color24;
+                new_cmd24.ForeColor = fore_color24;
+                this->capture->draw(new_cmd24, clip);
+            }
+        }
+    }
+
     void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){

@@ -34,6 +34,7 @@
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
@@ -61,6 +62,7 @@ struct RDPGraphicDevice {
     virtual void draw(const RDPDestBlt         & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPMultiDstBlt     & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPPatBlt          & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPMemBlt          & cmd, const Rect & clip, const Bitmap & bmp) = 0;
     virtual void draw(const RDPMem3Blt         & cmd, const Rect & clip, const Bitmap & bmp) = 0;

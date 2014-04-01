@@ -105,6 +105,10 @@ public:
         this->front.draw(cmd, clip);
     }
 
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->front.draw(cmd, clip);
