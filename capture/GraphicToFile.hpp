@@ -279,7 +279,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void send_save_state_chunk()
     {
-        BStream payload(2048);
+        BStream payload(4096);
         // RDPOrderCommon common;
         payload.out_uint8(this->common.order);
         payload.out_uint16_le(this->common.clip.x);
@@ -292,7 +292,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.out_uint16_le(this->destblt.rect.cx);
         payload.out_uint16_le(this->destblt.rect.cy);
         payload.out_uint8(this->destblt.rop);
-        // RDPDestBlt destblt;
+        // RDPPatBlt patblt;
         payload.out_uint16_le(this->patblt.rect.x);
         payload.out_uint16_le(this->patblt.rect.y);
         payload.out_uint16_le(this->patblt.rect.cx);
@@ -426,6 +426,26 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             payload.out_sint16_le(this->multiopaquerect.deltaEncodedRectangles[i].width);
             payload.out_sint16_le(this->multiopaquerect.deltaEncodedRectangles[i].height);
         }
+        // RDPMultiPatBlt multipatblt;
+        payload.out_sint16_le(this->multipatblt.nLeftRect);
+        payload.out_sint16_le(this->multipatblt.nTopRect);
+        payload.out_uint16_le(this->multipatblt.nWidth);
+        payload.out_uint16_le(this->multipatblt.nHeight);
+        payload.out_uint8(this->multipatblt.bRop);
+        payload.out_uint32_le(this->multipatblt.BackColor);
+        payload.out_uint32_le(this->multipatblt.ForeColor);
+        payload.out_uint8(this->multipatblt.BrushOrgX);
+        payload.out_uint8(this->multipatblt.BrushOrgY);
+        payload.out_uint8(this->multipatblt.BrushStyle);
+        payload.out_uint8(this->multipatblt.BrushHatch);
+        payload.out_copy_bytes(this->multipatblt.BrushExtra, 7);
+        payload.out_uint8(this->multipatblt.nDeltaEntries);
+        for (uint8_t i = 0; i < this->multipatblt.nDeltaEntries; i++) {
+            payload.out_sint16_le(this->multipatblt.deltaEncodedRectangles[i].leftDelta);
+            payload.out_sint16_le(this->multipatblt.deltaEncodedRectangles[i].topDelta);
+            payload.out_sint16_le(this->multipatblt.deltaEncodedRectangles[i].width);
+            payload.out_sint16_le(this->multipatblt.deltaEncodedRectangles[i].height);
+        }
 
         //------------------------------ missing variable length ---------------
         payload.mark_end();
@@ -538,6 +558,12 @@ public:
     }
 
     virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip)
+    {
+        this->drawable.draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
+    }
+
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip)
     {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);

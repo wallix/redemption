@@ -164,7 +164,7 @@ const char expected_reset_rect_wrm[] =
 
            // save orders cache
 /* 0000 */ "\x02\x10"
-/* 0000 */ "\xE4\x01"                         //.data length
+/* 0000 */ "\x01\x02"                         //.data length
 /* 0000 */ "\x00\x00\x01\x00"
 
 /* 0000 */ "\x0a\x00\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00" //................
@@ -200,6 +200,9 @@ const char expected_reset_rect_wrm[] =
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // MultiDstBlt
 
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // MultiOpaqueRect
+
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // MultiOpaqueRect
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
            "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x000000003BAA0C40 = 1001000000

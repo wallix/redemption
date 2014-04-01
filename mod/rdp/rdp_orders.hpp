@@ -61,6 +61,7 @@ struct rdp_orders {
     RDPDestBlt         destblt;
     RDPMultiDstBlt     multidstblt;
     RDPMultiOpaqueRect multiopaquerect;
+    RDP::RDPMultiPatBlt multipatblt;
     RDPPatBlt          patblt;
     RDPLineTo          lineto;
     RDPGlyphIndex      glyph_index;
@@ -111,10 +112,14 @@ struct rdp_orders {
         this->opaquerect  = RDPOpaqueRect(Rect(), 0);
         this->scrblt      = RDPScrBlt(Rect(), 0, 0, 0);
         this->destblt     = RDPDestBlt(Rect(), 0);
+        this->multidstblt     = RDPMultiDstBlt();
+        this->multiopaquerect = RDPMultiOpaqueRect();
+        this->multipatblt     = RDP::RDPMultiPatBlt();
         this->patblt      = RDPPatBlt(Rect(), 0, 0, 0, RDPBrush());
         this->lineto      = RDPLineTo(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
         this->glyph_index = RDPGlyphIndex( 0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1)
                                          , RDPBrush(), 0, 0, 0, (uint8_t *)"");
+        this->polyline        = RDPPolyline();
 
         if (this->bmp_cache) {
             this->bmp_cache->reset();
@@ -377,6 +382,11 @@ public:
                     this->multiopaquerect.receive(stream, header);
                     mod->draw(this->multiopaquerect, cmd_clip);
                     //this->multiopaquerect.log(LOG_INFO, cmd_clip);
+                    break;
+                case MULTIPATBLT:
+                    this->multipatblt.receive(stream, header);
+                    mod->draw(this->multipatblt, cmd_clip);
+                    //this->multipatblt.log(LOG_INFO, cmd_clip);
                     break;
                 case PATBLT:
                     this->patblt.receive(stream, header);

@@ -48,7 +48,9 @@ private:
     RDPOpaqueRect      opaquerect;
     RDPMemBlt          memblt;
     RDPMem3Blt         mem3blt;
+    RDPMultiDstBlt     multidstblt;
     RDPMultiOpaqueRect multiopaquerect;
+    RDP::RDPMultiPatBlt multipatblt;
     RDPPolyline        polyline;
 
     struct Statistic {
@@ -67,7 +69,9 @@ private:
         uint32_t opaquerect_count;
         uint32_t memblt_count;
         uint32_t mem3blt_count;
+        uint32_t multidstblt_count;
         uint32_t multiopaquerect_count;
+        uint32_t multipatblt_count;
         uint32_t polyline_count;
 
         Statistic()
@@ -84,7 +88,9 @@ private:
         , opaquerect_count(0)
         , memblt_count(0)
         , mem3blt_count(0)
+        , multidstblt_count(0)
         , multiopaquerect_count(0)
+        , multipatblt_count(0)
         , polyline_count(0)
         {}
     } statistic;
@@ -96,6 +102,7 @@ public:
     virtual void draw(const RDPDestBlt         & cmd, const Rect & clip) { REDASSERT(false); }
     virtual void draw(const RDPMultiDstBlt     & cmd, const Rect & clip) { REDASSERT(false); }
     virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) { REDASSERT(false); }
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) { REDASSERT(false); }
     virtual void draw(const RDPPatBlt          & cmd, const Rect & clip) { REDASSERT(false); }
     virtual void draw(const RDPMemBlt          & cmd, const Rect & clip, const Bitmap & bmp) { REDASSERT(false); }
     virtual void draw(const RDPMem3Blt         & cmd, const Rect & clip, const Bitmap & bmp) { REDASSERT(false); }
@@ -327,11 +334,25 @@ public:
                         this->opaquerect.receive(stream, pri_ord_h);
                         this->statistic.opaquerect_count++;
                     break;
+/*
+                    case RDP::MULTIDSTBLT:
+                        LOG(LOG_INFO, "process_orders: Received TS_ENC_MULTIDSTBLT_ORDER(0x%X)", this->common.order);
+                        this->multidstblt.receive(stream, pri_ord_h);
+                        this->statistic.multidstblt_count++;
+                    break;
+*/
                     case RDP::MULTIOPAQUERECT:
                         LOG(LOG_INFO, "process_orders: Received TS_ENC_MULTIOPAQUERECT_ORDER(0x%X)", this->common.order);
                         this->multiopaquerect.receive(stream, pri_ord_h);
                         this->statistic.multiopaquerect_count++;
                     break;
+/*
+                    case RDP::MULTIPATBLT:
+                        LOG(LOG_INFO, "process_orders: Received TS_ENC_MULTIPATBLT_ORDER(0x%X)", this->common.order);
+                        this->multipatblt.receive(stream, pri_ord_h);
+                        this->statistic.multipatblt_count++;
+                    break;
+*/
                     case RDP::POLYLINE:
                         LOG(LOG_INFO, "process_orders: Received TS_ENC_POLYLINE_ORDER(0x%X)", this->common.order);
                         this->polyline.receive(stream, pri_ord_h);
@@ -356,7 +377,9 @@ public:
     , opaquerect(Rect(), 0)
     , memblt(0, Rect(), 0, 0, 0, 0)
     , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
+    , multidstblt()
     , multiopaquerect()
+    , multipatblt()
     , polyline() {
         InitializeVirtualChannelList();
     }
@@ -401,7 +424,9 @@ public:
         LOG(LOG_INFO, "opaquerect count=%u",      this->statistic.opaquerect_count);
         LOG(LOG_INFO, "memblt count=%u",          this->statistic.memblt_count);
         LOG(LOG_INFO, "mem3blt count=%u",         this->statistic.mem3blt_count);
+        LOG(LOG_INFO, "multidstblt count=%u",     this->statistic.multidstblt_count);
         LOG(LOG_INFO, "multiopaquerect count=%u", this->statistic.multiopaquerect_count);
+        LOG(LOG_INFO, "multipatblt count=%u",     this->statistic.multipatblt_count);
         LOG(LOG_INFO, "polyline count=%u",        this->statistic.polyline_count);
         LOG(LOG_INFO, "****************************************");
     }

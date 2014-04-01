@@ -21,8 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYLINE_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYLINE_HPP_
 
-// 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
-// =========================================
+// [MS-RDPEGDI] - 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
+// ========================================================
 // The COORD_FIELD structure is used to describe a value in the range -32768
 //  to 32767.
 
@@ -48,8 +48,9 @@
 //   the current value. The 2-byte format is simply the full value of the
 //   field that MUST replace the previous value.
 
-// 2.2.2.2.1.1.1.2 One-Byte Header Variable Field (VARIABLE1_FIELD)
-// ================================================================
+// [MS-RDPEGDI] - 2.2.2.2.1.1.1.2 One-Byte Header Variable Field
+//  (VARIABLE1_FIELD)
+// =============================================================
 // TheVARIABLE1_FIELD structure is used to encode a variable-length byte-
 //  stream that will hold a maximum of 255 bytes. This structure is always
 //  situated at the end of an order.
@@ -69,8 +70,8 @@
 // rgbData (variable): Variable-length, binary data. The size of this data,
 //  in bytes, is given by the cbData field.
 
-// 2.2.2.2.1.1.1.4 Delta-Encoded Points (DELTA_PTS_FIELD)
-// ======================================================
+// [MS-RDPEGDI] - 2.2.2.2.1.1.1.4 Delta-Encoded Points (DELTA_PTS_FIELD)
+// =====================================================================
 // The DELTA_PTS_FIELD structure is used to encode a series of points. Each
 //  point is expressed as an X and Y delta from the previous point in the
 //  series (the first X and Y deltas are relative to a base point that MUST
@@ -125,8 +126,8 @@
 //     first byte containing the high-order bits) to create a 15-bit signed
 //     delta value.
 
-// 2.2.2.2.1.1.2.18 Polyline (POLYLINE_ORDER)
-// ==========================================
+// [MS-RDPEGDI] - 2.2.2.2.1.1.2.18 Polyline (POLYLINE_ORDER)
+// =========================================================
 // The Polyline Primary Drawing Order encodes a solid color polyline
 //  consisting of two or more vertices connected by straight lines.
 

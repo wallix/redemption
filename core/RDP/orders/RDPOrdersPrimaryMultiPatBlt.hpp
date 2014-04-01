@@ -208,6 +208,18 @@ public:
         }
     }
 
+    RDPMultiPatBlt & operator=(const RDPMultiPatBlt & other) {
+        this->rect          = other.rect;
+        this->bRop          = other.bRop;
+        this->BackColor     = other.BackColor;
+        this->ForeColor     = other.ForeColor;
+        this->brush         = other.brush;
+        this->nDeltaEntries = other.nDeltaEntries;
+        ::memcpy(this->deltaEncodedRectangles, other.deltaEncodedRectangles, sizeof(DeltaEncodedRectangle) * this->nDeltaEntries);
+
+        return *this;
+    }
+
     bool operator==(const RDPMultiPatBlt & other) const {
         return (this->rect          == other.rect)
             && (this->bRop          == other.bRop)
@@ -408,7 +420,7 @@ public:
                 this->deltaEncodedRectangles[i].width     = (!(zeroBit & 0x20) ? rgbData.in_DEP() : 0);
                 this->deltaEncodedRectangles[i].height    = (!(zeroBit & 0x10) ? rgbData.in_DEP() : 0);
 
-                //LOG(LOG_INFO, "RDPMultiDstBlt::receive: delta rectangle=(%d, %d, %d, %d)",
+                //LOG(LOG_INFO, "RDPMultiPatBlt::receive: delta rectangle=(%d, %d, %d, %d)",
                 //    this->deltaEncodedRectangles[i].leftDelta, this->deltaEncodedRectangles[i].topDelta,
                 //    this->deltaEncodedRectangles[i].width, this->deltaEncodedRectangles[i].height);
 
