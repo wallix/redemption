@@ -274,6 +274,7 @@ public:
     }
 
     ~Front(){
+        ERR_free_strings();
         if (this->mppc_enc) {
             delete this->mppc_enc;
         }
