@@ -21,8 +21,10 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIDSTBLT_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIDSTBLT_HPP_
 
-// 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
-// =========================================
+#include "RDPOrdersCommon.hpp"
+
+// [MS-RDPEGDI] - 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
+// ========================================================
 // The COORD_FIELD structure is used to describe a value in the range -32768
 //  to 32767.
 
@@ -48,105 +50,8 @@
 //   the current value. The 2-byte format is simply the full value of the
 //   field that MUST replace the previous value.
 
-// 2.2.2.2.1.1.1.3 Two-Byte Header Variable Field (VARIABLE2_FIELD)
-// ================================================================
-// The VARIABLE2_FIELD structure is used to encode a variable-length byte-
-//  stream that holds a maximum of 32,767 bytes. This structure is always
-//  situated at the end of an order.
-
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |             cbData            |       rgbData (variable)      |
-// +-------------------------------+-------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-
-// cbData (2 bytes): A 16-bit, unsigned integer. The number of bytes present
-//  in the rgbData field.
-
-// rgbData (variable): Variable-length, binary data. The size of this data,
-//  in bytes, is given by the cbData field.
-
-// 2.2.2.2.1.1.1.5 Delta-Encoded Rectangles (DELTA_RECTS_FIELD)
-// ============================================================
-// The DELTA_RECTS_FIELD structure is used to encode a series of rectangles.
-//  Each rectangle is encoded as a (left, top, width, height) quadruple with
-//  the left and top components of each quadruple containing the delta from
-//  the left and top components of the previous rectangle; the first
-//  rectangle in the series is implicitly assumed to be (0, 0, 0, 0). The
-//  number of rectangles is order-dependent and not specified by any field
-//  within the DELTA_RECTS_FIELD structure. Instead, a separate field within
-//  the order that contains the DELTA_RECTS_FIELD structure MUST be used to
-//  specify the number of rectangles (this field SHOULD be placed immediately
-//  before the DELTA_RECTS_FIELD structure in the order encoding). The
-//  maximum number of rectangles that can be encoded by this structure is 45.
-
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |                      zeroBits (variable)                      |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |               deltaEncodedRectangles (variable)               |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-
-// zeroBits (variable): A variable-length byte field. The zeroBits field is
-//  used to indicate the absence of a left, top, width, or height component.
-//  The size, in bytes, of the zeroBits field is given by ceil(NumRects / 2)
-//  where NumRects is the number of rectangles being encoded. Each rectangle
-//  in the series requires four zero-bits (two rectangles per byte) to
-//  indicate whether a left, top, width, or height component is zero (and not
-//  present), starting with the most significant bits, so that for the first
-//  rectangle the left-zero flag is set at (zeroBits[0] & 0x80), the top-zero
-//  flag is set at (zeroBits[0] & 0x40), the width-zero flag is set at
-//  (zeroBits[0] & 0x20), and the height-zero flag is set at (zeroBits[0] &
-//  0x10).
-
-// deltaEncodedRectangles (variable): A variable-length byte field. The
-//  deltaEncodedRectangles field contains a series of (left, top, width,
-//  height) quadruples with the left and top components in each quadruple
-//  specifying the delta from the left and top components of the previous
-//  rectangle in the series; the first rectangle in the series is implicitly
-//  assumed to be (0, 0, 0, 0).
-
-//  Assume there are two rectangles specified in (left, top, right, bottom)
-//   quadruples:
-
-//   1: (L1, T1, R1, B1)
-//   2: (L2, T2, R2, B2)
-
-//  Assuming Rectangle 1 is the first in the series, and by using the (left,
-//   top, width, height) quadruple encoding scheme, these two rectangles
-//   would be specified as:
-
-//   1: (L1, T1, R1 - L1, B1 - T1)
-//   2: (L2 - L1, T2 - T1, R2 - L2, B2 - T2)
-
-//  The presence of the left, top, width, or height component for a given
-//   quadruple is dictated by the individual bits of the zeroBits field. If
-//   the zero bit is set for a given left, top, width, or height component,
-//   its value is unchanged from the previous corresponding left, top, width,
-//   or height value in the series (a delta of zero), and no data is
-//   provided. If the zero bit is not set for a left, right, width, or height
-//   component, its value is encoded in a packed signed format:
-
-//   * If the high bit (0x80) is not set in the first encoding byte, the
-//     field is 1 byte long and is encoded as a signed delta in the lower 7
-//     bits of the byte.
-
-//   * If the high bit of the first encoding byte is set, the lower 7 bits of
-//     the first byte and the 8 bits of the next byte are concatenated (the
-//     first byte containing the high order bits) to create a 15-bit signed
-//     delta value.
-
-// 2.2.2.2.1.1.2.2 MultiDstBlt (MULTI_DSTBLT_ORDER)
-// ================================================
+// [MS-RDPEGDI] - 2.2.2.2.1.1.2.2 MultiDstBlt (MULTI_DSTBLT_ORDER)
+// ===============================================================
 // The MultiDstBlt Primary Drawing Order is used to paint multiple rectangles
 //  by using a destination-only raster operation.
 
@@ -208,12 +113,7 @@ public:
     uint8_t bRop;
     uint8_t nDeltaEntries;
 
-    struct DeltaEncodedRectangle {
-        int16_t leftDelta;
-        int16_t topDelta;
-        int16_t width;
-        int16_t height;
-    } deltaEncodedRectangles[45];
+    struct RDP::DeltaEncodedRectangle deltaEncodedRectangles[45];
 
     static const uint8_t id(void) {
         return RDP::MULTIDSTBLT;
@@ -247,17 +147,19 @@ public:
     }
 
     bool operator==(const RDPMultiDstBlt & other) const {
-        return  (this->nLeftRect     == other.nLeftRect)
-             && (this->nTopRect      == other.nTopRect)
-             && (this->nWidth        == other.nWidth)
-             && (this->nHeight       == other.nHeight)
-             && (this->bRop          == other.bRop)
-             && (this->nDeltaEntries == other.nDeltaEntries)
-             && !memcmp(this->deltaEncodedRectangles, other.deltaEncodedRectangles, sizeof(DeltaEncodedRectangle) * this->nDeltaEntries)
-             ;
+        return (this->nLeftRect     == other.nLeftRect)
+            && (this->nTopRect      == other.nTopRect)
+            && (this->nWidth        == other.nWidth)
+            && (this->nHeight       == other.nHeight)
+            && (this->bRop          == other.bRop)
+            && (this->nDeltaEntries == other.nDeltaEntries)
+            && !memcmp( this->deltaEncodedRectangles, other.deltaEncodedRectangles
+                      , sizeof(RDP::DeltaEncodedRectangle) * this->nDeltaEntries)
+            ;
     }
 
-    void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiDstBlt & oldcmd) const {
+    void emit( Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
+             , const RDPMultiDstBlt & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
         int16_t nLeftRect = 0;
@@ -294,7 +196,7 @@ public:
               | (
                  (this->nDeltaEntries != oldcmd.nDeltaEntries) ||
                  memcmp(this->deltaEncodedRectangles, oldcmd.deltaEncodedRectangles,
-                        this->nDeltaEntries * sizeof(DeltaEncodedRectangle))
+                        this->nDeltaEntries * sizeof(RDP::DeltaEncodedRectangle))
                                                             ) * 0x0040
               ;
 
@@ -359,7 +261,7 @@ public:
     }   // void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiDstBlt & oldcmd) const
 
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
-        // LOG(LOG_INFO, "RDPMultiDstBlt::receive: header fields=0x%02X", header.fields);
+        //LOG(LOG_INFO, "RDPMultiDstBlt::receive: header fields=0x%02X", header.fields);
 
         header.receive_coord(stream, 0x0001, this->nLeftRect);
         header.receive_coord(stream, 0x0002, this->nTopRect);
@@ -376,14 +278,14 @@ public:
 
         if (header.fields & 0x0040) {
             uint16_t cbData = stream.in_uint16_le();
-            // LOG(LOG_INFO, "cbData=%d", cbData);
+            //LOG(LOG_INFO, "cbData=%d", cbData);
 
             SubStream rgbData(stream, stream.get_offset(), cbData);
             stream.in_skip_bytes(cbData);
-            // hexdump_d(rgbData.p, rgbData.size());
+            //hexdump_d(rgbData.p, rgbData.size());
 
             uint8_t zeroBitsSize = ((this->nDeltaEntries + 1) / 2);
-            // LOG(LOG_INFO, "zeroBitsSize=%d", zeroBitsSize);
+            //LOG(LOG_INFO, "zeroBitsSize=%d", zeroBitsSize);
 
             SubStream zeroBits(rgbData, rgbData.get_offset(), zeroBitsSize);
             rgbData.in_skip_bytes(zeroBitsSize);
@@ -397,7 +299,7 @@ public:
 
                 if (!m2) {
                     zeroBit = zeroBits.in_uint8();
-                    // LOG(LOG_INFO, "0x%02X", zeroBit);
+                    //LOG(LOG_INFO, "0x%02X", zeroBit);
                 }
 
                 this->deltaEncodedRectangles[i].leftDelta = (!(zeroBit & 0x80) ? rgbData.in_DEP() : 0);
@@ -405,11 +307,9 @@ public:
                 this->deltaEncodedRectangles[i].width     = (!(zeroBit & 0x20) ? rgbData.in_DEP() : 0);
                 this->deltaEncodedRectangles[i].height    = (!(zeroBit & 0x10) ? rgbData.in_DEP() : 0);
 
-/*
-                LOG(LOG_INFO, "RDPMultiDstBlt::receive: delta rectangle=(%d, %d, %d, %d)",
-                    this->deltaEncodedRectangles[i].leftDelta, this->deltaEncodedRectangles[i].topDelta,
-                    this->deltaEncodedRectangles[i].width, this->deltaEncodedRectangles[i].height);
-*/
+                //LOG(LOG_INFO, "RDPMultiDstBlt::receive: delta rectangle=(%d, %d, %d, %d)",
+                //    this->deltaEncodedRectangles[i].leftDelta, this->deltaEncodedRectangles[i].topDelta,
+                //    this->deltaEncodedRectangles[i].width, this->deltaEncodedRectangles[i].height);
 
                 zeroBit <<= 4;
             }

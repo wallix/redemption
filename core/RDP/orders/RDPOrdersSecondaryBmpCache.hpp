@@ -971,7 +971,7 @@ class RDPBmpCache {
             break;
         }
         uint8_t cbr2_flags  = ((extraFlags & 0xFF80) >> 7);
-        //LOG(LOG_INFO, "cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
+        //LOG(LOG_INFO, "RDPBmpCache::receive_raw_v2: cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
 
         if (cbr2_flags & CBR2_PERSISTENT_KEY_PRESENT) {
             this->key1 = stream.in_uint32_le();
@@ -988,16 +988,16 @@ class RDPBmpCache {
         }
 
         uint32_t bitmapLength = stream.in_4BUE();
-        //LOG(LOG_INFO, "bitmapWidth=%u bitmapHeight=%u bitmapLength=%u", bitmapWidth, bitmapHeight, bitmapLength);
+        //LOG( LOG_INFO, "RDPBmpCache::receive_raw_v2: bitmapWidth=%u bitmapHeight=%u bitmapLength=%u"
+        //   , bitmapWidth, bitmapHeight, bitmapLength);
 
         this->idx = stream.in_2BUE();
-        //LOG(LOG_INFO, "cache_id=%u cacheIndex=%u", this->id, this->idx);
-        TODO("Support of flag CBR2_DO_NOT_CACHE");
+        //LOG(LOG_INFO, "RDPBmpCache::receive_raw_v2: cache_id=%u cacheIndex=%u", this->id, this->idx);
 
         const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
         if (this->verbose & 0x8000) {
             LOG(LOG_INFO,
-                "Uncompressed bitmap v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                "RDPBmpCache::receive_raw_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                 session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
             LOG(LOG_INFO, "Palette");
             hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
@@ -1009,7 +1009,9 @@ class RDPBmpCache {
             bitmapDataStream, bitmapLength, false);
 
         if (bitmapLength != this->bmp->bmp_size){
-            LOG(LOG_WARNING, "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");
+            LOG( LOG_WARNING
+               , "RDPBmpCache::receive_raw_v2: "
+                 "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");
         }
     }
 
@@ -1122,7 +1124,7 @@ class RDPBmpCache {
             break;
         }
         uint8_t cbr2_flags  = ((extraFlags & 0xFF80) >> 7);
-        //LOG(LOG_INFO, "cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
+        //LOG(LOG_INFO, "RDPBmpCache::receive_compressed_v2: cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
 
         if (cbr2_flags & CBR2_PERSISTENT_KEY_PRESENT) {
             this->key1 = stream.in_uint32_le();
@@ -1139,17 +1141,17 @@ class RDPBmpCache {
         }
 
         uint32_t bitmapLength = stream.in_4BUE();
-        //LOG(LOG_INFO, "bitmapWidth=%u bitmapHeight=%u bitmapLength=%u", bitmapWidth, bitmapHeight, bitmapLength);
+        //LOG( LOG_INFO, "RDPBmpCache::receive_compressed_v2: bitmapWidth=%u bitmapHeight=%u bitmapLength=%u"
+        //   , bitmapWidth, bitmapHeight, bitmapLength);
 
         this->idx = stream.in_2BUE();
-        //LOG(LOG_INFO, "cache_id=%u cacheIndex=%u", this->id, this->idx);
-        TODO("Support of flag CBR2_DO_NOT_CACHE");
+        //LOG(LOG_INFO, "RDPBmpCache::receive_compressed_v2: cache_id=%u cacheIndex=%u", this->id, this->idx);
 
         if (cbr2_flags & CBR2_NO_BITMAP_COMPRESSION_HDR) {
             const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
             if (this->verbose & 0x8000) {
                 LOG(LOG_INFO,
-                    "Compressed bitmap v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                    "CRDPBmpCache::receive_compressed_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                     session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
                 LOG(LOG_INFO, "Palette");
                 hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
@@ -1171,7 +1173,7 @@ class RDPBmpCache {
 
             if (this->verbose & 0x8000) {
                 LOG(LOG_INFO,
-                    "Compressed bitmap v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                    "RDPBmpCache::receive_compressed_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                     session_color_depth, bpp, bitmapWidth, bitmapWidth, cbCompMainBodySize);
                 LOG(LOG_INFO, "Palette");
                 hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
@@ -1182,10 +1184,14 @@ class RDPBmpCache {
             this->bmp = new Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
                 bitmapDataStream, cbCompMainBodySize, true);
             if (cbScanWidth != (this->bmp->bmp_size / this->bmp->cy)){
-                LOG(LOG_WARNING, "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");
+                LOG( LOG_WARNING
+                   , "RDPBmpCache::receive_compressed_v2: "
+                     "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");
             }
             if (cbUncompressedSize != this->bmp->bmp_size){
-                LOG(LOG_WARNING, "broadcasted final_size should be the same as bmp size computed from cx, cy, bpp and alignment rules");
+                LOG( LOG_WARNING
+                   , "RDPBmpCache::receive_compressed_v2: "
+                     "broadcasted final_size should be the same as bmp size computed from cx, cy, bpp and alignment rules");
             }
         }
     }

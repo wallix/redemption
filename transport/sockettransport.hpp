@@ -398,7 +398,7 @@ public:
             exit(0);
         }
 
-        ret=PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+        ret = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
         BIO_free(bio);
         if(SSL_CTX_set_tmp_dh(ctx, ret)<0)
         {
@@ -406,7 +406,7 @@ public:
             ERR_print_errors(bio_err);
             exit(0);
         }
-
+        DH_free(ret);
         // SSL_new() creates a new SSL structure which is needed to hold the data for a TLS/SSL
         // connection. The new structure inherits the settings of the underlying context ctx:
         // - connection method (SSLv2/v3/TLSv1),
@@ -441,6 +441,7 @@ public:
         }
         this->tls = true;
 
+        BIO_free(bio_err);
         LOG(LOG_INFO, "RIO *::enable_server_tls() done");
         return;
     }
