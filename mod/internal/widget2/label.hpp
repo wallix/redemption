@@ -46,7 +46,7 @@ public:
                 int group_id, int fgcolor, int bgcolor,
                 int xtext = 0, int ytext = 0)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
-    , initial_x_text(x_text)
+    , initial_x_text(xtext)
     , x_text(xtext)
     , y_text(ytext)
     , bg_color(bgcolor)

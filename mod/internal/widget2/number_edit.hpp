@@ -37,7 +37,7 @@ public:
 
     virtual void set_text(const char * text) {
         this->label.x_text = this->label.initial_x_text;
-        WidgetEdit::set_text(text);
+        this->WidgetEdit::set_text(text);
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
