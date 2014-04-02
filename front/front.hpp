@@ -4299,6 +4299,17 @@ public:
         }
     }
 
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
+            this->orders->draw(cmd, clip);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
+                this->capture->draw(cmd, clip);
+            }
+        }
+    }
+
     void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){

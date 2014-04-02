@@ -56,6 +56,7 @@ struct FileToGraphic
     RDPMultiDstBlt     multidstblt;
     RDPMultiOpaqueRect multiopaquerect;
     RDP::RDPMultiPatBlt     multipatblt;
+    RDP::RDPMultiScrBlt     multiscrblt;
     RDPPatBlt          patblt;
     RDPScrBlt          scrblt;
     RDPOpaqueRect      opaquerect;
@@ -106,6 +107,7 @@ struct FileToGraphic
     bool multidstblt_support;
     bool multiopaquerect_support;
     bool multipatblt_support;
+    bool multiscrblt_support;
 
     uint16_t info_version;
     uint16_t info_width;
@@ -139,6 +141,7 @@ struct FileToGraphic
         , multidstblt()
         , multiopaquerect()
         , multipatblt()
+        , multiscrblt()
         , patblt(Rect(), 0, 0, 0, RDPBrush())
         , scrblt(Rect(), 0, 0, 0)
         , opaquerect(Rect(), 0)
@@ -171,6 +174,7 @@ struct FileToGraphic
         , multidstblt_support(false)
         , multiopaquerect_support(false)
         , multipatblt_support(false)
+        , multiscrblt_support(false)
         , info_version(0)
         , info_width(0)
         , info_height(0)
@@ -399,6 +403,15 @@ struct FileToGraphic
                         this->consumers[i]->draw(this->multipatblt, clip);
                     }
                     break;
+                case RDP::MULTISCRBLT:
+                    this->multiscrblt.receive(this->stream, header);
+                    if (this->verbose > 32){
+                        this->multiscrblt.log(LOG_INFO, clip);
+                    }
+                    for (size_t i = 0; i < this->nbconsumers ; i++) {
+                        this->consumers[i]->draw(this->multiscrblt, clip);
+                    }
+                    break;
                 case RDP::PATBLT:
                     this->patblt.receive(this->stream, header);
                     if (this->verbose > 32){
@@ -601,6 +614,7 @@ struct FileToGraphic
                 this->multidstblt_support         = (this->info_version > 3);
                 this->multiopaquerect_support     = (this->info_version > 3);
                 this->multipatblt_support         = (this->info_version > 3);
+                this->multiscrblt_support         = (this->info_version > 3);
                 this->info_width                  = this->stream.in_uint16_le();
                 this->info_height                 = this->stream.in_uint16_le();
                 this->info_bpp                    = this->stream.in_uint16_le();
@@ -847,6 +861,24 @@ struct FileToGraphic
                         this->multipatblt.deltaEncodedRectangles[i].topDelta  = this->stream.in_sint16_le();
                         this->multipatblt.deltaEncodedRectangles[i].width     = this->stream.in_sint16_le();
                         this->multipatblt.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
+                    }
+                }
+
+                // RDPMultiScrBlt multiscrblt;
+                if (this->multiscrblt_support) {
+                    this->multiscrblt.nLeftRect  = this->stream.in_sint16_le();
+                    this->multiscrblt.nTopRect   = this->stream.in_sint16_le();
+                    this->multiscrblt.nWidth     = this->stream.in_uint16_le();
+                    this->multiscrblt.nHeight    = this->stream.in_uint16_le();
+                    this->multiscrblt.bRop       = this->stream.in_uint8();
+                    this->multiscrblt.nXSrc      = this->stream.in_sint16_le();
+                    this->multiscrblt.nYSrc      = this->stream.in_sint16_le();
+                    this->multiscrblt.nDeltaEntries = this->stream.in_uint8();
+                    for (uint8_t i = 0; i < this->multiscrblt.nDeltaEntries; i++) {
+                        this->multiscrblt.deltaEncodedRectangles[i].leftDelta = this->stream.in_sint16_le();
+                        this->multiscrblt.deltaEncodedRectangles[i].topDelta  = this->stream.in_sint16_le();
+                        this->multiscrblt.deltaEncodedRectangles[i].width     = this->stream.in_sint16_le();
+                        this->multiscrblt.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
                     }
                 }
             break;

@@ -179,6 +179,7 @@ struct mod_rdp : public mod_api {
     bool enable_multidstblt;
     bool enable_multiopaquerect;
     bool enable_multipatblt;
+    bool enable_multiscrblt;
 
     TransparentRecorder * transparent_recorder;
     Transport           * persistent_key_list_transport;
@@ -244,6 +245,7 @@ struct mod_rdp : public mod_api {
         , enable_multidstblt(false)
         , enable_multiopaquerect(false)
         , enable_multipatblt(false)
+        , enable_multiscrblt(false)
         , transparent_recorder(NULL)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
@@ -478,6 +480,12 @@ struct mod_rdp : public mod_api {
                     LOG(LOG_INFO, "RDP Extra orders=MultiPatBlt");
                 }
                 this->enable_multipatblt = true;
+                break;
+            case RDP::MULTISCRBLT:
+                if (verbose) {
+                    LOG(LOG_INFO, "RDP Extra orders=MultiScrBlt");
+                }
+                this->enable_multiscrblt = true;
                 break;
             case RDP::POLYGONSC:
                 if (verbose) {
@@ -2204,6 +2212,7 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = (this->enable_multidstblt     ? 1 : 0);
         order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]    = (this->enable_multiopaquerect ? 1 : 0);
         order_caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX]        = (this->enable_multipatblt     ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX]        = (this->enable_multiscrblt     ? 1 : 0);
         order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
@@ -2236,6 +2245,7 @@ struct mod_rdp : public mod_api {
         this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX,        order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTIOPAQUERECT_INDEX,    order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTIPATBLT_INDEX,        order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_MULTISCRBLT_INDEX,        order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX,            order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX, order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_POLYGON_SC_INDEX,         order_caps.orderSupport);
@@ -4837,6 +4847,10 @@ public:
     }
 
     virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
         this->front.draw(cmd, clip);
     }
 
