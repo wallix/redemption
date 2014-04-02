@@ -233,7 +233,7 @@ public:
         header.emit_coord(stream, 0x0020, this->nXSrc, oldcmd.nXSrc);
         header.emit_coord(stream, 0x0040, this->nYSrc, oldcmd.nYSrc);
 
-        if (header.fields & 0x0800) { stream.out_uint8(this->nDeltaEntries); }
+        if (header.fields & 0x0080) { stream.out_uint8(this->nDeltaEntries); }
 
         if (header.fields & 0x0100) {
             uint32_t offset_cbData = stream.get_offset();
@@ -346,7 +346,7 @@ public:
         lg += common.str(buffer + lg, sz - lg, true);
         lg += snprintf( buffer + lg, sz - lg
                       , "MultiSrcBlt(nLeftRect=%d nTopRect=%d nWidth=%d nHeight=%d bRop=0x%02X "
-                        "nXSrc=%x nXSrc=%x "
+                        "nXSrc=%d nXSrc=%d "
                         "nDeltaEntries=%d "
                         "CodedDeltaList=("
                       , this->nLeftRect, this->nTopRect, this->nWidth, this->nHeight, this->bRop
