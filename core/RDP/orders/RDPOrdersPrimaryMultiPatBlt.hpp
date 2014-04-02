@@ -23,8 +23,8 @@
 
 namespace RDP {
 
-// // [MS-RDPEGDI] - 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
-// ===========================================================
+// [MS-RDPEGDI] - 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
+// ========================================================
 // The COORD_FIELD structure is used to describe a value in the range -32768
 //  to 32767.
 
@@ -69,7 +69,7 @@ namespace RDP {
 // |      nLeftRect (variable)     |      nTopRect (variable)      |
 // +-------------------------------+-------------------------------+
 // |       nWidth (variable)       |       nHeight (variable)      |
-// +-------------------------------+-------------------------------+
+// +---------------+---------------+-------------------------------+
 // |bRop (optional)|              BackColor (optional)             |
 // +---------------+-------------------------------+---------------+
 // |              ForeColor (optional)             |   BrushOrgX   |
@@ -84,7 +84,7 @@ namespace RDP {
 // |                               |   (optional)  |   (variable)  |
 // +-------------------------------+---------------+---------------+
 // |                              ...                              |
-// +-------------------------------+---------------+---------------+
+// +---------------------------------------------------------------+
 
 // nLeftRect (variable): The left coordinate of the destination rectangle
 //  specified by using a Coord Field (section 2.2.2.2.1.1.1.1).
@@ -293,23 +293,23 @@ public:
 
         common.emit(stream, header, oldcommon);
 
-        header.emit_rect(stream, 0x01, this->rect, oldcmd.rect);
+        header.emit_rect(stream, 0x0001, this->rect, oldcmd.rect);
 
-        if (header.fields & 0x10) {
+        if (header.fields & 0x0010) {
             stream.out_uint8(this->bRop);
         }
-        if (header.fields & 0x20) {
+        if (header.fields & 0x0020) {
             stream.out_uint8(this->BackColor);
             stream.out_uint8(this->BackColor >> 8);
             stream.out_uint8(this->BackColor >> 16);
         }
-        if (header.fields & 0x40) {
+        if (header.fields & 0x0040) {
             stream.out_uint8(this->ForeColor);
             stream.out_uint8(this->ForeColor >> 8);
             stream.out_uint8(this->ForeColor >> 16);
         }
 
-        header.emit_brush(stream, 0x80, this->brush, oldcmd.brush);
+        header.emit_brush(stream, 0x0080, this->brush, oldcmd.brush);
 
         if (header.fields & 0x1000) { stream.out_uint8(this->nDeltaEntries); }
 
@@ -365,25 +365,25 @@ public:
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
         //LOG(LOG_INFO, "RDPMultiPatBlt::receive: header fields=0x%02X", header.fields);
 
-        header.receive_rect(stream, 0x01, this->rect);
+        header.receive_rect(stream, 0x0001, this->rect);
 
-        if (header.fields & 0x10) {
+        if (header.fields & 0x0010) {
             this->bRop = stream.in_uint8();
         }
-        if (header.fields & 0x20) {
+        if (header.fields & 0x0020) {
             uint8_t r = stream.in_uint8();
             uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
             this->BackColor = r + (g << 8) + (b << 16);
         }
-        if (header.fields & 0x40) {
+        if (header.fields & 0x0040) {
             uint8_t r = stream.in_uint8();
             uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
             this->ForeColor = r + (g << 8) + (b << 16);
         }
 
-        header.receive_brush(stream, 0x080, this->brush);
+        header.receive_brush(stream, 0x0080, this->brush);
 
         if (header.fields & 0x1000) {
             this->nDeltaEntries = stream.in_uint8();
