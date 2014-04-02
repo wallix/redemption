@@ -195,8 +195,8 @@ public:
 
         Rect cmd_rect(0, 0, 0, 0);
 
-        const signed int deltax = cmd.srcx - cmd.rect.x;
-        const signed int deltay = cmd.srcy - cmd.rect.y;
+        const signed int deltax = cmd.nXSrc - cmd.rect.x;
+        const signed int deltay = cmd.nYSrc - cmd.rect.y;
 
         for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
             cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
