@@ -178,7 +178,7 @@ class RDPMem3Blt {
     }
 
     RDPMem3Blt( uint16_t cache_id
-              , Rect rect
+              , const Rect & rect
               , uint8_t rop
               , uint16_t srcx
               , uint16_t srcy

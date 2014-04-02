@@ -104,7 +104,7 @@ class RDPMemBlt {
         return RDP::MEMBLT;
     }
 
-    RDPMemBlt(uint16_t cache_id, Rect rect, uint8_t rop, uint16_t srcx, uint16_t srcy, uint16_t cache_idx) :
+    RDPMemBlt(uint16_t cache_id, const Rect & rect, uint8_t rop, uint16_t srcx, uint16_t srcy, uint16_t cache_idx) :
         cache_id(cache_id),
         rect(rect),
         rop(rop),

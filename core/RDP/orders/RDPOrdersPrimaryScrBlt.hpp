@@ -143,7 +143,7 @@ class RDPScrBlt {
         return RDP::SCREENBLT;
     }
 
-    RDPScrBlt(Rect rect, uint8_t rop, uint16_t srcx, uint16_t srcy) :
+    RDPScrBlt(const Rect & rect, uint8_t rop, uint16_t srcx, uint16_t srcy) :
         rect(rect), rop(rop), srcx(srcx), srcy(srcy)
         {}
 

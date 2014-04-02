@@ -721,7 +721,7 @@ class RDPOrderCommon {
     uint8_t order;
     Rect clip;
 
-    RDPOrderCommon(int order, Rect clip) :
+    RDPOrderCommon(int order, const Rect & clip) :
         order(order), clip(clip)
     {
     }
