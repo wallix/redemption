@@ -133,7 +133,14 @@ class Sesman():
             SESMANCONF.language = self.language
 
             data[u'language'] = SESMANCONF.language
+            if self.shared.get(u'password') == MAGICASK:
+                data[u'password'] = u''
             data.update(translations())
+        else:
+            if self.shared.get(u'password') == MAGICASK:
+                data[u'password'] = u''
+                Logger().info(u"Update password")
+            data.update({})
 
 
         # replace MAGICASK with ASK and send data on the wire
@@ -218,7 +225,15 @@ class Sesman():
 
     def parse_username(self, wab_login, target_login, target_device, proto_dest):
 
-        level_0_items       = wab_login.split(u':')
+        if ((SESMANCONF[u'sesman'][u'use_default_login'].strip() == u'2')
+        and len(SESMANCONF[u'sesman'][u'default_login'].strip())):
+            target_login = wab_login
+            wab_login = SESMANCONF[u'sesman'][u'default_login'].strip()
+            target_device = self.shared.get(u'ip_target')
+            proto_dest = u'RDP'
+            return True, "", wab_login, target_login, target_device, proto_dest
+
+        level_0_items = wab_login.split(u':')
         if len(level_0_items) > 1:
             if len(level_0_items) > 3:
                 Logger().info(u"username parse error %s" % wab_login)
@@ -329,7 +344,7 @@ class Sesman():
         if not _status:
             return None, TR(u"Invalid user, try again")
 
-        Logger().info(u"Continue with authentication (%s)" % self.shared.get(u'login'))
+        Logger().info(u"Continue with authentication (%s) -> %s" % (self.shared.get(u'login'), wab_login))
 
         try:
             #Check if X509 Authentication is active
@@ -341,7 +356,7 @@ class Sesman():
                  # Wait for confirmation from GUI (or timeout)
                 if not (self.interactive_ask_x509_connection() and self.engine.x509_authenticate()):
                     return False, TR(u"x509 browser authentication not validated by user")
-            elif SESMANCONF[u'sesman'][u'auth_mode_vmware_view'].lower() == u'true':
+            elif SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
                 # Passthrough Authentification
                 if not self.engine.passthrough_authenticate(
                         wab_login,
@@ -423,7 +438,7 @@ class Sesman():
         while _status is None:
 
             if (target_device and target_device != MAGICASK
-            and target_login  and target_login  != MAGICASK):
+            and (target_login or SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true') and target_login != MAGICASK):
                 self._full_user_device_account = u"%s@%s:%s" % ( target_login
                                                                , target_device
                                                                , wab_login
@@ -660,6 +675,7 @@ class Sesman():
                         data_to_send[u'message'] = cut_message(message)
 
                         _status, _error = self.interactive_accept_message(data_to_send)
+                        Logger().info(u"Session interactive")
                     else:
                         self.send_data(data_to_send)
 
@@ -760,6 +776,7 @@ class Sesman():
 
             if _status:
                 kv[u'authenticated'] = u'True'
+                kv['password'] = 'pass'
 
                 # register signal
                 signal.signal(signal.SIGUSR1, self.kill_handler)
@@ -824,15 +841,24 @@ class Sesman():
                     self.cn = selected_target.resource.device.cn
 
                 kv[u'target_device'] = physical_target.resource.device.host
-                kv[u'target_login'] = physical_target.account.login
+                if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() != u'true':
+                    kv[u'target_login'] = physical_target.account.login
 
                 release_reason = u''
 
                 try:
-                    if SESMANCONF[u'sesman'][u'auth_mode_vmware_view'].lower() == u'true':
-                        password_of_target = self.shared.get(u'password')
+                    Logger().info("auth_mode_passthrough=%s" % SESMANCONF[u'sesman'][u'auth_mode_passthrough'])
+
+                    if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
+                        if self.shared.get(u'password') == MAGICASK:
+                            password_of_target = u''
+                        else:
+                            password_of_target = self.shared.get(u'password')
+                        #Logger().info("auth_mode_passthrough target_password=%s" % password_of_target)
+                        kv[u'password'] = u'password'
                     else:
                         password_of_target = self.engine.get_target_password(physical_target)
+
                     kv[u'target_password'] = password_of_target
                     if not password_of_target:
                         kv[u'target_password'] = u''

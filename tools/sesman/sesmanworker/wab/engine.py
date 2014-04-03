@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from sesmanconf import TR
+from sesmanconf import TR, SESMANCONF, translations
 
 from wabengine.common.exception import AuthenticationFailed
 from wabengine.common.exception import AuthenticationChallenged
@@ -242,6 +243,7 @@ class Engine(object):
 #            Logger().info("%r" % rrr)
 
     def get_selected_target(self, target_device, target_login, target_protocol):
+        #Logger().info("%s@%s:%s" % (target_device, target_login, target_protocol))
         selected_target = None
         for r in self.rights:
             if r.resource.application:
@@ -252,12 +254,21 @@ class Engine(object):
                 if target_protocol != u'APP':
                     continue
             else:
-                if target_device != r.resource.device.cn:
-                    continue
-                if target_login != r.account.login:
-                    continue
-                if target_protocol != r.resource.service.cn:
-                    continue
+                #Logger().info("%s@%s:%s host=%s" % (r.account.login, r.resource.device.cn, r.resource.service.cn, r.resource.device.host))
+                if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
+                    if target_device != r.resource.device.host:
+                        continue
+                    #Allow any user
+                    if target_protocol != r.resource.service.cn:
+                        continue
+                else:
+                    if target_device != r.resource.device.cn:
+                        continue
+                    if target_login != r.account.login:
+                        continue
+                    if target_protocol != r.resource.service.cn:
+                        continue
+            #Logger().info("Found %s@%s:%s" % (r.account.login, r.resource.device.cn, r.resource.service.cn))
             selected_target = r
             break
 
