@@ -1006,7 +1006,7 @@ struct InfoPacket {
          }
     } // END FUNCT : recv()
 
-    void log(const char * msg){
+    void log(const char * msg, uint32_t password_printing_mode){
         LOG(LOG_INFO, "%s InfoPacket", msg);
         LOG(LOG_INFO, "InfoPacket::CodePage %u", this->CodePage);
         LOG(LOG_INFO, "InfoPacket::flags %#x", this->flags);
@@ -1036,7 +1036,8 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::cbWorkingDir %u", this->cbWorkingDir);
         LOG(LOG_INFO, "InfoPacket::Domain %s", this->Domain);
         LOG(LOG_INFO, "InfoPacket::UserName %s", this->UserName);
-        LOG(LOG_INFO, "InfoPacket::Password %s", (this->Password[0] ? "<hidden>" : "<null>"));
+        LOG(LOG_INFO, "InfoPacket::Password %s", ::get_printable_password(reinterpret_cast<char *>(this->Password), password_printing_mode));
+
         LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);
         LOG(LOG_INFO, "InfoPacket::WorkingDir %s", this->WorkingDir);
         if (!this->rdp5_support){ return; }

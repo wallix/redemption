@@ -147,6 +147,17 @@ static inline void ask_string(const char * str, char buffer[], bool & flag)
     }
 }
 
+static inline const char * get_printable_password(const char * password, uint32_t printing_mode) {
+    switch (printing_mode) {
+        case 1:
+            return ((*password) ? "<hidden>" : "<null>");
+        case 2:
+            return password;
+        default:
+            return "<hidden>";
+    }
+}
+
 struct IniAccounts {
     char accountname[255];
     char username[255]; // should use string
@@ -679,6 +690,7 @@ struct Inifile : public FieldObserver {
         uint32_t mod_xup;
         uint32_t widget;
         uint32_t input;
+        uint32_t password;
 
         uint32_t pass_dialog_box;
         int log_type;
@@ -1024,6 +1036,7 @@ public:
         this->debug.mod_xup           = 0;
         this->debug.widget            = 0;
         this->debug.input             = 0;
+        this->debug.password          = 0;
 
         this->debug.log_type          = 2; // syslog by default
         this->debug.log_file_path[0]  = 0;
@@ -1606,6 +1619,9 @@ public:
             }
             else if (0 == strcmp(key, "input")) {
                 this->debug.input             = ulong_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "password")) {
+                this->debug.password             = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "log_type")) {
                 this->debug.log_type = logtype_from_cstr(value);

@@ -159,6 +159,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.password);
     // log file
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
@@ -420,6 +421,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.password);
     // log file
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
@@ -694,6 +696,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.password);
     // log
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
@@ -810,6 +813,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "key1=FFEEDDCCBBAA99887766554433221100FFEEDDCCBBAA99887766554433221100\n"
                           "\n"
                           "[debug]\n"
+                          "password=1\n"
                           "log_type=file\n"
                           "log_file_path=/var/log/redemption.log\n"
                           "[translation]\n"
@@ -939,6 +943,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.debug.input);
+    BOOST_CHECK_EQUAL(1,                                ini.debug.password);
     // log
     BOOST_CHECK_EQUAL(3,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string("/var/log/redemption.log"),
@@ -1162,6 +1167,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.password);
     // log
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
@@ -1360,6 +1366,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.password);
     // log
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
@@ -1546,6 +1553,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.password);
     // log
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
@@ -1609,6 +1617,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "[client]\n"
                            "bitmap_compression=no\n"
                            "[debug]\n"
+                           "password=3\n"
                            "log_type=encryptedfile\n"
                            );
     cfg_loader.cparse(ini, oss2);
@@ -1720,6 +1729,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.debug.input);
+    BOOST_CHECK_EQUAL(3,                                ini.debug.password);
     // log
     BOOST_CHECK_EQUAL(4,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
@@ -1893,6 +1903,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.password);
     // log
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
@@ -2066,6 +2077,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.password);
 
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
@@ -2228,6 +2240,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.password);
     // log
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
@@ -2830,14 +2843,14 @@ BOOST_AUTO_TEST_CASE(TestConfigFieldAuthid)
     char tmp[256];
     BOOST_CHECK_EQUAL(AUTHID_SELECTOR,          ini.get_field_list().at(AUTHID_SELECTOR)->get_authid());
     BOOST_CHECK_EQUAL(std::string("login\nASK\n"),
-                      std::string(ini.globals.auth_user.get_serialized(tmp,sizeof(tmp))));
+                      std::string(ini.globals.auth_user.get_serialized(tmp, sizeof(tmp), ini.debug.password)));
     ini.globals.auth_user.set_from_cstr("someuser");
     BOOST_CHECK_EQUAL(std::string("login\n!someuser\n"),
-                      std::string(ini.globals.auth_user.get_serialized(tmp,sizeof(tmp))));
+                      std::string(ini.globals.auth_user.get_serialized(tmp, sizeof(tmp), ini.debug.password)));
 
     ini.context.authchannel_target.set_from_cstr("TEST_TARGET");
     BOOST_CHECK_EQUAL(std::string("auth_channel_target\n!TEST_TARGET\n"),
-                      std::string(ini.context.authchannel_target.get_serialized(tmp,sizeof(tmp))));
+                      std::string(ini.context.authchannel_target.get_serialized(tmp, sizeof(tmp), ini.debug.password)));
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigFieldGetValue)

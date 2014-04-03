@@ -2000,6 +2000,7 @@ public:
                                                 , ini->client.performance_flags_default
                                                 , ini->client.performance_flags_force_present
                                                 , ini->client.performance_flags_force_not_present
+                                                , ini->debug.password
                                                 , (this->verbose & 128)
                                                 );
 

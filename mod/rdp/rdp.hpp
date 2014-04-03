@@ -186,6 +186,8 @@ struct mod_rdp : public mod_api {
 
     //uint64_t total_data_received;
 
+    const uint32_t password_printing_mode;
+
     mod_rdp( Transport * trans
            , struct FrontAPI & front
            , const ClientInfo & info
@@ -249,6 +251,7 @@ struct mod_rdp : public mod_api {
         , transparent_recorder(NULL)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
+        , password_printing_mode(mod_rdp_params.password_printing_mode)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -4779,13 +4782,13 @@ public:
         }
 
         if (this->verbose & 1) {
-            infoPacket.log("Sending to server: ");
+            infoPacket.log("Sending to server: ", this->password_printing_mode);
         }
         infoPacket.emit(stream);
         stream.mark_end();
 
         if (this->verbose & 1) {
-            infoPacket.log("Preparing sec header ");
+            infoPacket.log("Preparing sec header ", this->password_printing_mode);
         }
         BStream sec_header(256);
 
@@ -4793,7 +4796,7 @@ public:
         stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
         if (this->verbose & 1) {
-            infoPacket.log("Send data request");
+            infoPacket.log("Send data request", this->password_printing_mode);
         }
         this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, stream);
 
