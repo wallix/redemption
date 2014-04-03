@@ -717,6 +717,7 @@ public:
                     mod_rdp_params.certificate_change_action           = this->ini.mod_rdp.certificate_change_action;
                     mod_rdp_params.enable_persistent_disk_bitmap_cache = this->ini.mod_rdp.persistent_disk_bitmap_cache;
                     mod_rdp_params.enable_cache_waiting_list           = this->ini.mod_rdp.cache_waiting_list;
+                    mod_rdp_params.password_printing_mode              = this->ini.debug.password;
 
                     mod_rdp_params.extra_orders                    = this->ini.mod_rdp.extra_orders.c_str();
 
