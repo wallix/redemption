@@ -82,7 +82,8 @@ private:
         }
         else {
             this->ini.context_set_value((this->dialog_widget.cancel
-                                         ? AUTHID_ACCEPT_MESSAGE : AUTHID_DISPLAY_MESSAGE),
+                                         ? AUTHID_ACCEPT_MESSAGE
+                                         : AUTHID_DISPLAY_MESSAGE),
                                         "True");
         }
         this->event.signal = BACK_EVENT_NEXT;
@@ -93,13 +94,9 @@ private:
     void refused()
     {
         if (!this->dialog_widget.challenge) {
-        // if (this->dialog_widget.challenge) {
-        //     // this->ini.context_ask(AUTHID_AUTH_USER);
-        //     this->ini.context_ask(AUTHID_PASSWORD);
-        // }
-        // else {
             this->ini.context_set_value((this->dialog_widget.cancel
-                                         ? AUTHID_ACCEPT_MESSAGE : AUTHID_DISPLAY_MESSAGE),
+                                         ? AUTHID_ACCEPT_MESSAGE
+                                         : AUTHID_DISPLAY_MESSAGE),
                                         "False");
         }
         this->event.signal = BACK_EVENT_NEXT;

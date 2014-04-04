@@ -280,8 +280,8 @@ class Sesman():
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
         #TODO: we should not have to care about target login or device to display messages
         # we should be able to send messages before or after defining target seamlessly
-        data_to_send.update({ u'proto_dest'    : u'INTERNAL'
-                            , u'module'        : u'confirm'
+        data_to_send.update({ u'module'        : u'confirm'
+                            # , u'proto_dest'    : u'INTERNAL'
                             # , u'display_message': MAGICASK
                             # , u'accept_message': u''
                             })
@@ -295,8 +295,8 @@ class Sesman():
         return _status, _error
 
     def interactive_accept_message(self, data_to_send):
-        data_to_send.update({ u'proto_dest'    : u'INTERNAL'
-                            , u'module'        : u'valid'
+        data_to_send.update({ u'module'        : u'valid'
+                            # , u'proto_dest'    : u'INTERNAL'
                             # , u'accept_message': MAGICASK
                             # , u'display_message': u''
                             })
@@ -312,7 +312,8 @@ class Sesman():
     def interactive_close(self, target, message):
         data_to_send = { u'error_message'  : message
                        , u'trans_ok'       : u'OK'
-                       , u'proto_dest'     : u'INTERNAL'
+                       , u'module'         : u'close'
+                       # , u'proto_dest'     : u'INTERNAL'
                        , u'target_device'  : u'close:%s' % target
                        , u'target_login'   : self.shared.get(u'target_login')
                        , u'target_password': u'Default'
