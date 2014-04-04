@@ -147,12 +147,13 @@ struct ClientInfo {
                            , uint32_t performance_flags_default
                            , uint32_t performance_flags_force_present
                            , uint32_t performance_flags_force_not_present
+                           , uint32_t password_printing_mode
                            , bool verbose
                            ) throw (Error)
     {
         this->infoPacket.recv(stream);
         if (verbose) {
-            this->infoPacket.log("Receiving from client");
+            this->infoPacket.log("Receiving from client", password_printing_mode);
         }
 
         memcpy(this->domain, this->infoPacket.Domain, sizeof(this->infoPacket.Domain));
@@ -163,7 +164,7 @@ struct ClientInfo {
         else{
             if (verbose){
                 LOG(LOG_INFO, "client info: logon password %s ignored",
-                    (this->password[0] ? "<hidden>" : "<null>"));
+                    ::get_printable_password(this->password, password_printing_mode));
             }
         }
         memcpy(this->program, this->infoPacket.AlternateShell, sizeof(this->infoPacket.AlternateShell));

@@ -130,6 +130,7 @@ struct RDPSerializer : public RDPGraphicDevice
     RDPMultiDstBlt     multidstblt;
     RDPMultiOpaqueRect multiopaquerect;
     RDP::RDPMultiPatBlt multipatblt;
+    RDP::RDPMultiScrBlt multiscrblt;
     RDPPatBlt          patblt;
     RDPScrBlt          scrblt;
     RDPOpaqueRect      opaquerect;
@@ -303,6 +304,17 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->multipatblt);
         this->common      = newcommon;
         this->multipatblt = cmd;
+        if (this->ini.debug.primary_orders) {
+            cmd.log(LOG_INFO, common.clip);
+        }
+    }
+
+    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+        this->reserve_order(399 * 2);
+        RDPOrderCommon newcommon(RDP::MULTISCRBLT, clip);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->multiscrblt);
+        this->common      = newcommon;
+        this->multiscrblt = cmd;
         if (this->ini.debug.primary_orders) {
             cmd.log(LOG_INFO, common.clip);
         }

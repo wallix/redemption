@@ -69,6 +69,7 @@ struct null_mod : public mod_api {
     virtual void draw(const RDPMultiDstBlt     & cmd, const Rect & clip) {}
     virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {}
     virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {}
+    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {}
     virtual void draw(const RDPPatBlt          & cmd, const Rect & clip) {}
     virtual void draw(const RDPMemBlt          & cmd, const Rect & clip, const Bitmap & bmp) {}
     virtual void draw(const RDPMem3Blt         & cmd, const Rect & clip, const Bitmap & bmp) {}
