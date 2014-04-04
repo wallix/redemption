@@ -311,14 +311,16 @@ public:
                 }
                 catch (Error & e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                        this->ini->context.module.set_from_cstr("transitory");
-
-                        signal = BACK_EVENT_NEXT;
-
-                        this->remote_answer = false;
                         this->report("CONNECTION_FAILED",
                             "Failed to connect to remote TCP host.");
-
+                        if (this->ini) {
+                            mm.invoke_close_box(TR("target_fail", *(this->ini)),
+                                                signal, now);
+                        }
+                        else {
+                            mm.invoke_close_box("Failed to connect to remote TCP host.",
+                                                signal, now);
+                        }
                         return true;
                     }
                     else {

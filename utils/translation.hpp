@@ -81,6 +81,7 @@ private:
         fr_map["miss_keepalive"] = "Absence de réponse de Keepalive de l'ACL";
         fr_map["close_inactivity"] = "Fermeture sur inactivité";
         fr_map["acl_fail"] = "Echec du service d'authentification";
+        fr_map["target_fail"] = "Echec de la connexion à la cible distante";
         fr_map["comment"] = "Commentaire";
         fr_map["no_results"] = "Aucun résultat";
     }
@@ -127,6 +128,7 @@ private:
         en_map["miss_keepalive"] = "Missed keepalive from ACL";
         en_map["close_inactivity"] = "Connection closed on inactivity";
         en_map["acl_fail"] = "Authentifier service failed";
+        en_map["target_fail"] = "Failed to connect to remote TCP host";
         en_map["comment"] = "Comment";
         en_map["no_results"] = "No results found";
     }
