@@ -102,13 +102,12 @@ public:
                 }
 
                 target_port = ntohs(localAddress.s4.sin_port);
-                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
+//                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
+                strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
+
+                LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
 
                 if (ini.globals.enable_ip_transparent) {
-                    strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
-
-                    LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
-
                     int fd = open("/proc/net/ip_conntrack", O_RDONLY);
                     // source and dest are inverted because we get the information we want from reply path rule
                     int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip), 1);
@@ -125,9 +124,9 @@ public:
                         LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", this->gid, strerror(errno));
                         _exit(1);
                     }
-                }
 
-                LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, real_target_ip, target_port);
+                    LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, real_target_ip, target_port);
+                }
 
                 int nodelay = 1;
                 if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
@@ -150,7 +149,8 @@ public:
                     // Launch session
                     LOG(LOG_INFO, "New session on %u (pid=%u) from %s to %s", (unsigned)sck, (unsigned)child_pid, source_ip, real_target_ip);
                     ini.context_set_value(AUTHID_HOST, source_ip);
-                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
+//                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
+                    ini.context_set_value(AUTHID_TARGET, target_ip);
                     if (ini.globals.enable_ip_transparent
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                         ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, real_target_ip);

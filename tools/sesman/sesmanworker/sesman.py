@@ -229,7 +229,9 @@ class Sesman():
         and len(SESMANCONF[u'sesman'][u'default_login'].strip())):
             target_login = wab_login
             wab_login = SESMANCONF[u'sesman'][u'default_login'].strip()
-            target_device = self.shared.get(u'ip_target')
+            Logger().info(u'ip_target="%s" real_target_device="%s"' % (self.shared.get(u'ip_target'), self.shared.get(u'real_target_device')))
+#            target_device = self.shared.get(u'ip_target')
+            target_device = self.shared.get(u'real_target_device')
             proto_dest = u'RDP'
             return True, "", wab_login, target_login, target_device, proto_dest
 
