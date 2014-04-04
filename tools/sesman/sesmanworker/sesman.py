@@ -825,7 +825,7 @@ class Sesman():
                                 )
 
             proto = u'RDP' if self.shared.get(u'proto_dest') != u'VNC' else u'VNC'
-            kv[u'module'] = proto
+            kv[u'module'] = self.shared.get(u'proto_dest')
             kv[u'device_redirection'] = SESMANCONF[proto][u'device_redirection']
             kv[u'clipboard'] = SESMANCONF[proto][u'clipboard']
             kv[u'mode_console'] = u"allow"

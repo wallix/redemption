@@ -57,6 +57,7 @@
 #define STRMODULE_MESSAGE     "message"
 #define STRMODULE_RDP         "RDP"
 #define STRMODULE_VNC         "VNC"
+#define STRMODULE_INTERNAL    "INTERNAL"
 
 enum {
     MODULE_EXIT,
@@ -208,6 +209,43 @@ public:
         else if (!strcmp(module_cstr, STRMODULE_VNC)) {
             LOG(LOG_INFO, "===========> MODULE_VNC");
             return MODULE_VNC;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_INTERNAL)) {
+            LOG(LOG_INFO, "===========> MODULE_INTERNAL");
+            int res = MODULE_EXIT;
+            const char * target = this->ini.globals.target_device.get_cstr();
+            if (0 == strcmp(target, "bouncer2")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "==========> INTERNAL bouncer2");
+                }
+                res = MODULE_INTERNAL_BOUNCER2;
+            }
+            else if (0 == strncmp(target, "autotest", 8)) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "==========> INTERNAL test");
+                }
+                const char * user = this->ini.globals.target_user.get_cstr();
+                size_t len_user = strlen(user);
+                strncpy(this->ini.context.movie, user, sizeof(this->ini.context.movie));
+                this->ini.context.movie[sizeof(this->ini.context.movie) - 1] = 0;
+                if (0 != strcmp(".mwrm", user + len_user - 5)) {
+                    strcpy(this->ini.context.movie + len_user, ".mwrm");
+                }
+                res = MODULE_INTERNAL_TEST;
+            }
+            else if (0 == strcmp(target, "widget2_message")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_message");
+                }
+                res = MODULE_INTERNAL_WIDGET2_MESSAGE;
+            }
+            else {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "==========> INTERNAL card");
+                }
+                res = MODULE_INTERNAL_CARD;
+            }
+            return res;
         }
         LOG(LOG_INFO, "===========> UNKNOWN MODULE");
         return MODULE_INTERNAL_CLOSE;
