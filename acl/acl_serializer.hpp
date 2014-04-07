@@ -117,7 +117,7 @@ public:
                                          9 ) == 0) ||
                             (strncasecmp("target_password", reinterpret_cast<const char*>(keyword),
                                          16) == 0)) {
-                            display_val = ((*val) ? "<hidden>" : "<null>");
+                            display_val = ::get_printable_password(val, this->ini->debug.password);
                         }
                         LOG(LOG_INFO, "receiving '%s'='%s'", keyword, display_val);
                     }
@@ -185,7 +185,7 @@ public:
 
             if ((strncasecmp("password", static_cast<const char*>(key), 8) == 0)
                 ||(strncasecmp("target_password", static_cast<const char*>(key), 15) == 0)){
-                display_val = ((*val) ? "<hidden>" : "<null>");
+                display_val = ::get_printable_password(val, this->ini->debug.password);
             }
             LOG(LOG_INFO, "sending (from authid) %s=%s", key, display_val);
             stream.out_copy_bytes(key, strlen(key));
@@ -198,7 +198,7 @@ public:
     void out_item_new(Stream & stream, Inifile::BaseField * bfield)
     {
         char tmp[65536];
-        const char * serialized = bfield->get_serialized(tmp, sizeof(tmp));
+        const char * serialized = bfield->get_serialized(tmp, sizeof(tmp), this->ini->debug.password);
         bfield->use();
         stream.out_copy_bytes(serialized,strlen(serialized));
     }

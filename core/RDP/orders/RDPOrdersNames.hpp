@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    New RDP Orders Coder / Decoder : Common parts and constants
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSNAMES_HPP_
@@ -27,6 +26,7 @@
 #include "RDP/orders/RDPOrdersCommon.hpp"
 
 namespace RDP {
+
     static const char * ordernames[28] = {
         "DESTBLT",
         "PATBLT",
@@ -44,20 +44,20 @@ namespace RDP {
         "MEMBLT",
         "MEM3BLT",
         "MULTIDSTBLT",
-        "ORDER16",
-        "ORDER17",
+        "MULTIPATBLT",
+        "MULTISCRBLT",
         "MULTIOPAQUERECT",
         "ORDER19",
-        "ORDER20",
-        "ORDER21",
+        "POLYGONSC",
+        "POLYGONCB",
         "POLYLINE",
         "ORDER23",
         "ORDER24",
-        "ORDER25",
-        "ORDER26",
+        "ELLIPSESC",
+        "ELLIPSECB",
         "GLYPHINDEX"
     };
 
-} /* namespace */
+} /* namespace RDP */
 
 #endif

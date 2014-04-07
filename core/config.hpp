@@ -147,6 +147,17 @@ static inline void ask_string(const char * str, char buffer[], bool & flag)
     }
 }
 
+static inline const char * get_printable_password(const char * password, uint32_t printing_mode) {
+    switch (printing_mode) {
+        case 1:
+            return ((*password) ? "<hidden>" : "<null>");
+        case 2:
+            return password;
+        default:
+            return "<hidden>";
+    }
+}
+
 struct IniAccounts {
     char accountname[255];
     char username[255]; // should use string
@@ -254,6 +265,7 @@ typedef enum
 
         AUTHID_AUTHENTICATION_CHALLENGE,
 
+        AUTHID_MODULE,
         AUTHID_TICKET,
         AUTHID_COMMENT,
 
@@ -354,6 +366,7 @@ typedef enum
 #define STRAUTHID_REAL_TARGET_DEVICE       "real_target_device"
 
 #define STRAUTHID_AUTHENTICATION_CHALLENGE "authentication_challenge"
+#define STRAUTHID_MODULE                   "module"
 #define STRAUTHID_TICKET                   "ticket"
 #define STRAUTHID_COMMENT                  "comment"
 #define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS        "disable_tsk_switch_shortcuts"
@@ -458,6 +471,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_AUTHENTICATION_CHALLENGE,
 
+    STRAUTHID_MODULE,
     STRAUTHID_TICKET,
     STRAUTHID_COMMENT,
 
@@ -679,6 +693,7 @@ struct Inifile : public FieldObserver {
         uint32_t mod_xup;
         uint32_t widget;
         uint32_t input;
+        uint32_t password;
 
         uint32_t pass_dialog_box;
         int log_type;
@@ -773,6 +788,8 @@ struct Inifile : public FieldObserver {
 
         StringField        ticket;                   // AUTHID_TICKET //
         StringField        comment;                  // AUTHID_COMMENT //
+
+        StringField        module;
     } context;
 
     Theme theme;
@@ -1024,6 +1041,7 @@ public:
         this->debug.mod_xup           = 0;
         this->debug.widget            = 0;
         this->debug.input             = 0;
+        this->debug.password          = 0;
 
         this->debug.log_type          = 2; // syslog by default
         this->debug.log_file_path[0]  = 0;
@@ -1171,8 +1189,13 @@ public:
         this->context.authentication_challenge.ask();
         this->context.authentication_challenge.attach_ini(this, AUTHID_AUTHENTICATION_CHALLENGE);
 
+        this->to_send_set.insert(AUTHID_MODULE);
         this->to_send_set.insert(AUTHID_TICKET);
         this->to_send_set.insert(AUTHID_COMMENT);
+
+        this->context.module.set_from_cstr("login");
+        this->context.module.attach_ini(this, AUTHID_MODULE);
+        this->context.module.use();
 
         this->context.ticket.set_from_cstr("");
         this->context.ticket.attach_ini(this, AUTHID_TICKET);
@@ -1607,6 +1630,9 @@ public:
             else if (0 == strcmp(key, "input")) {
                 this->debug.input             = ulong_from_cstr(value);
             }
+            else if (0 == strcmp(key, "password")) {
+                this->debug.password             = ulong_from_cstr(value);
+            }
             else if (0 == strcmp(key, "log_type")) {
                 this->debug.log_type = logtype_from_cstr(value);
             }
@@ -1671,6 +1697,7 @@ public:
         else if (0 == strcmp(context, "internal_mod")) {
             if (0 == strcmp(key, "load_theme")) {
                 if (value) {
+                    LOG(LOG_INFO, "LOAD_THEME: %s", value);
                     char theme_path[1024] = {};
                     snprintf(theme_path, 1024, CFG_PATH "/themes/%s/" THEME_INI, value);
                     theme_path[sizeof(theme_path) - 1] = 0;

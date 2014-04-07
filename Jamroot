@@ -605,3 +605,6 @@ unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp krb5 gss
 
 
 unit-test test_gap_buffer : tests/utils/test_gap_buffer.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+
+# unit-test test_column : tests/mod/internal/widget2/test_column.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+

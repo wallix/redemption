@@ -76,7 +76,6 @@ public:
 
     void ask_page()
     {
-        this->ini.context_ask(AUTHID_SELECTOR);
     	this->ini.context.selector_current_page.set((uint32_t)this->current_page);
         this->ini.context_set_value(AUTHID_SELECTOR_GROUP_FILTER,
                                     this->selector.filter_device.get_text());
@@ -96,9 +95,7 @@ public:
         if (NOTIFY_CANCEL == event) {
             this->ini.context_ask(AUTHID_AUTH_USER);
             this->ini.context_ask(AUTHID_PASSWORD);
-            this->ini.context_ask(AUTHID_TARGET_USER);
-            this->ini.context_ask(AUTHID_TARGET_DEVICE);
-            this->ini.context_ask(AUTHID_SELECTOR);
+            this->ini.context.selector.set(false);
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
         }
@@ -135,7 +132,7 @@ public:
             }
             else if (widget == &this->selector.current_page) {
                 int page = atoi(this->selector.current_page.get_text());
-                if (page != this->current_page && page <= this->number_page) {
+                if (page != this->current_page) {
                     this->current_page = page;
                     this->ask_page();
                 }
@@ -192,7 +189,8 @@ public:
         char * targets   = const_cast<char *>(this->ini.globals.target_device.get_cstr());
         char * protocols = const_cast<char *>(this->ini.context.target_protocol.get_cstr());
         char * endtimes  = const_cast<char *>(this->ini.context.end_time.get_cstr());
-        for (unsigned index = 0 ; index < this->ini.context.selector_lines_per_page.get(); index++) {
+        for (unsigned index = 0; index < this->ini.context.selector_lines_per_page.get();
+             index++) {
             size_t size_groups = proceed_item(groups, '\x01');
             if (!size_groups)
                 break;
@@ -243,6 +241,7 @@ public:
             this->selector.selector_lines.set_current_index(0);
             this->selector.set_widget_focus(&this->selector.selector_lines);
         }
+
     }
 
     static inline size_t proceed_item(const char * list, char sep = ' ')

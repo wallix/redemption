@@ -32,6 +32,7 @@
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
@@ -184,6 +185,28 @@ public:
                 const uint32_t color = this->RGBtoBGR(cmd.BackColor);
                 this->drawable.patblt(trect, cmd.bRop, color);
             }
+        }
+    }
+
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip)
+    {
+        const Rect clip_drawable_cmd_intersect = clip.intersect(
+            this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+
+        Rect cmd_rect(0, 0, 0, 0);
+
+        const signed int deltax = cmd.nXSrc - cmd.rect.x;
+        const signed int deltay = cmd.nYSrc - cmd.rect.y;
+
+        for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
+            cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
+            cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
+            cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
+            cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
+            // Destination rectangle : drect
+            const Rect drect = clip_drawable_cmd_intersect.intersect(cmd_rect);
+            // adding delta move dest to source
+            this->drawable.scrblt(drect.x + deltax, drect.y + deltay, drect, cmd.bRop);
         }
     }
 

@@ -274,6 +274,7 @@ public:
     }
 
     ~Front(){
+        ERR_free_strings();
         if (this->mppc_enc) {
             delete this->mppc_enc;
         }
@@ -1999,6 +2000,7 @@ public:
                                                 , ini->client.performance_flags_default
                                                 , ini->client.performance_flags_force_present
                                                 , ini->client.performance_flags_force_not_present
+                                                , ini->debug.password
                                                 , (this->verbose & 128)
                                                 );
 
@@ -4294,6 +4296,17 @@ public:
                 new_cmd24.BackColor = back_color24;
                 new_cmd24.ForeColor = fore_color24;
                 this->capture->draw(new_cmd24, clip);
+            }
+        }
+    }
+
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
+            this->orders->draw(cmd, clip);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
+                this->capture->draw(cmd, clip);
             }
         }
     }

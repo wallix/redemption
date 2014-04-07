@@ -46,6 +46,19 @@
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
 
+#define STRMODULE_LOGIN       "login"
+#define STRMODULE_SELECTOR    "selector"
+#define STRMODULE_CONFIRM     "confirm"
+#define STRMODULE_CHALLENGE   "challenge"
+#define STRMODULE_VALID       "valid"
+#define STRMODULE_TRANSITORY  "transitory"
+#define STRMODULE_CLOSE       "close"
+#define STRMODULE_CONNECTION  "connection"
+#define STRMODULE_MESSAGE     "message"
+#define STRMODULE_RDP         "RDP"
+#define STRMODULE_VNC         "VNC"
+#define STRMODULE_INTERNAL    "INTERNAL"
+
 enum {
     MODULE_EXIT,
     MODULE_WAITING,
@@ -89,7 +102,7 @@ public:
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module, time_t now, auth_api * acl) = 0;
     virtual int next_module() = 0;
-    virtual int get_mod_from_protocol() = 0;
+    // virtual int get_mod_from_protocol() = 0;
     virtual void invoke_close_box(const char * auth_error_message,
                                   BackEvent_t & signal, time_t now) {
         this->last_module = true;
@@ -147,80 +160,69 @@ public:
         }
     }
 
-    int get_mod_from_protocol() {
-        if (this->verbose & 0x10) {
-            LOG(LOG_INFO, "auth::get_mod_from_protocol");
-        }
-        // Initialy, it no protocol known and get_value should provide "ASK".
-        const char * protocol = this->ini.context.target_protocol.get_value();
-        if (this->verbose & 0x10) {
-            LOG(LOG_INFO, "auth::get_mod_from_protocol protocol=\"%s\"", protocol);
-        }
-        if (ini.globals.internal_domain) {
-            const char * target = this->ini.globals.target_device.get_cstr();
-            if (0 == strncmp(target, "autotest", 8)) {
-                protocol = "INTERNAL";
-            }
-        }
-        int res = MODULE_EXIT;
-        if (!this->connected && 0 == strncasecmp(protocol, "RDP", 4)) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol RDP");
-            }
-            res = MODULE_RDP;
-        }
-        else if (this->connected && 0 == strncasecmp(protocol, "RDP", 4) &&
-            !((mod_rdp *)this->mod)->end_session_reason.is_empty() &&
-            !strncmp(((mod_rdp *)this->mod)->end_session_reason.c_str(), "CONNECTION_FAILED", 17)
-            ) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol RDP (connected)");
-            }
+    int next_module() {
+        LOG(LOG_INFO, "----------> ACL next_module <--------");
+        const char * module_cstr = this->ini.context.module.get_cstr();
 
-            this->remove_mod();
-            this->connected = false;
-
-            this->ini.context.target_protocol.set_from_acl("_TRANSITORY");
-            res = MODULE_TRANSITORY;
-        }
-        else if (!this->connected && 0 == strncasecmp(protocol, "APP", 4)) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol APPLICATION");
+        if (this->connected &&
+            (!strcmp(module_cstr, STRMODULE_RDP) ||
+             !strcmp(module_cstr, STRMODULE_VNC))) {
+            LOG(LOG_INFO, "===========> MODULE_CLOSE");
+            if (this->ini.context.auth_error_message.is_empty()) {
+                this->ini.context.auth_error_message.copy_c_str(TR("end_connection",
+                                                                   this->ini));
             }
-            res = MODULE_RDP;
+            return MODULE_INTERNAL_CLOSE;
         }
-        else if (!this->connected && 0 == strncasecmp(protocol, "VNC", 4)) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol VNC");
-            }
-            res = MODULE_VNC;
+        if (!strcmp(module_cstr, STRMODULE_LOGIN)) {
+            LOG(LOG_INFO, "===========> MODULE_LOGIN");
+            return MODULE_INTERNAL_WIDGET2_LOGIN;
         }
-        else if (!this->connected && 0 == strncasecmp(protocol, "XUP", 4)) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol XUP");
-            }
-            res = MODULE_XUP;
+        else if (!strcmp(module_cstr, STRMODULE_SELECTOR)) {
+            LOG(LOG_INFO, "===============> MODULE_SELECTOR");
+            return MODULE_INTERNAL_WIDGET2_SELECTOR;
         }
-        else if (!this->connected && 0 == strncasecmp(protocol, "_TRANSITORY", 11)) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol _TRANSITORY");
-            }
-            res = MODULE_TRANSITORY;
+        else if (!strcmp(module_cstr, STRMODULE_CONFIRM)) {
+            LOG(LOG_INFO, "===============> MODULE_DIALOG_CONFIRM");
+            return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
         }
-        else if (strncasecmp(protocol, "INTERNAL", 8) == 0) {
+        else if (!strcmp(module_cstr, STRMODULE_CHALLENGE)) {
+            LOG(LOG_INFO, "===========> MODULE_DIALOG_CHALLENGE");
+            return MODULE_INTERNAL_DIALOG_CHALLENGE;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_VALID)) {
+            LOG(LOG_INFO, "===========> MODULE_DIALOG_VALID");
+            return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_TRANSITORY)) {
+            LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
+            return MODULE_TRANSITORY;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_CLOSE)) {
+            LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE");
+            return MODULE_INTERNAL_CLOSE;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_RDP)) {
+            LOG(LOG_INFO, "===========> MODULE_RDP");
+            return MODULE_RDP;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_VNC)) {
+            LOG(LOG_INFO, "===========> MODULE_VNC");
+            return MODULE_VNC;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_INTERNAL)) {
+            LOG(LOG_INFO, "===========> MODULE_INTERNAL");
+            int res = MODULE_EXIT;
             const char * target = this->ini.globals.target_device.get_cstr();
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL");
-            }
             if (0 == strcmp(target, "bouncer2")) {
                 if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL bouncer2");
+                    LOG(LOG_INFO, "==========> INTERNAL bouncer2");
                 }
                 res = MODULE_INTERNAL_BOUNCER2;
             }
             else if (0 == strncmp(target, "autotest", 8)) {
                 if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
+                    LOG(LOG_INFO, "==========> INTERNAL test");
                 }
                 const char * user = this->ini.globals.target_user.get_cstr();
                 size_t len_user = strlen(user);
@@ -231,143 +233,22 @@ public:
                 }
                 res = MODULE_INTERNAL_TEST;
             }
-            else if (0 == strcmp(target, "selector")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL selector");
-                }
-                res = MODULE_INTERNAL_WIDGET2_SELECTOR;
-            }
-            else if (0 == strcmp(target, "login")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_LOGIN;
-            }
-            else if (0 == strcmp(target, "rwl")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_RWL;
-            }
-            else if (0 == strncmp(target, "close", 5) || 0 == strncmp(target, "widget2_close", 13)) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
-                }
-                const char * separator_position = strchr(target, ':');
-                if (separator_position)
-                {
-                    this->ini.globals.target_device.set_from_acl(separator_position + 1);
-                }
-
-                res = MODULE_INTERNAL_CLOSE;
-            }
-            else if (0 == strcmp(target, "widget2_dialog")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_dialog");
-                }
-                res = MODULE_INTERNAL_WIDGET2_DIALOG;
-            }
             else if (0 == strcmp(target, "widget2_message")) {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_message");
                 }
                 res = MODULE_INTERNAL_WIDGET2_MESSAGE;
             }
-            else if (0 == strcmp(target, "widget2_login")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_LOGIN;
-            }
-            else if (0 == strcmp(target, "widget2_rwl")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL rwl_login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_RWL;
-            }
             else {
                 if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL card");
+                    LOG(LOG_INFO, "==========> INTERNAL card");
                 }
                 res = MODULE_INTERNAL_CARD;
             }
+            return res;
         }
-        else if (this->connected) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
-            }
-            res = MODULE_INTERNAL_CLOSE;
-        }
-        else {
-            LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
-                protocol[0], protocol[1], protocol[2], protocol[3]);
-            res = MODULE_EXIT;
-        }
-        return res;
-    }
-
-    int next_module() {
-        LOG(LOG_INFO, "----------> ACL next_module <--------");
-        // Display or accept message is priority
-        if (this->ini.context_is_asked(AUTHID_DISPLAY_MESSAGE)) {
-            LOG(LOG_INFO, "==================> MODULE_DISPLAY");
-            return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
-        }
-        // AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER known, but acl asked to show confirmation message
-        else if (this->ini.context_is_asked(AUTHID_ACCEPT_MESSAGE)) {
-            LOG(LOG_INFO, "=================> MODULE_ACCEPT");
-            return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
-        }
-        // Challenge received
-        else if (!this->ini.context_is_asked(AUTHID_AUTHENTICATION_CHALLENGE)) {
-            LOG(LOG_INFO, "===============> MODULE_DIALOG_CHALLENGE");
-            return MODULE_INTERNAL_DIALOG_CHALLENGE;
-        }
-        else if (this->ini.context_is_asked(AUTHID_AUTH_USER)
-            ||  this->ini.context_is_asked(AUTHID_PASSWORD)) {
-            LOG(LOG_INFO, "===========> MODULE_LOGIN");
-            return MODULE_INTERNAL_WIDGET2_LOGIN;
-        }
-        // Selector Target device and Target user contains list or possible targets
-        else if (!this->ini.context_is_asked(AUTHID_SELECTOR)
-                 &&   this->ini.context_get_bool(AUTHID_SELECTOR)
-                 &&  !this->ini.context_is_asked(AUTHID_TARGET_DEVICE)
-                 &&  !this->ini.context_is_asked(AUTHID_TARGET_USER)) {
-            LOG(LOG_INFO, "===============> MODULE_SELECTOR");
-            return MODULE_INTERNAL_WIDGET2_SELECTOR;
-        }
-        // Target User or Device asked and not in selector : back to login
-        else if (this->ini.context_is_asked(AUTHID_TARGET_DEVICE)
-                 ||  this->ini.context_is_asked(AUTHID_TARGET_USER)) {
-            LOG(LOG_INFO, "===============> MODULE_LOGIN (2)");
-            return MODULE_INTERNAL_WIDGET2_LOGIN;
-        }
-        else if (this->ini.context_is_asked(AUTHID_TARGET_PASSWORD)){
-            LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
-            return MODULE_TRANSITORY;
-        }
-        // Authenticated = true, means we have : AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER, TARGET_PASSWORD
-        // proceed with connection.
-        else if (this->ini.context.authenticated.get()) {
-            //                record_video = this->ini.globals.movie.get();
-            //                keep_alive = true;
-            if (this->ini.context.auth_error_message.is_empty()) {
-                this->ini.context.auth_error_message.copy_c_str(TR("end_connection", this->ini));
-            }
-            LOG(LOG_INFO, "=================> MODULE_FROM_PROTOCOL");
-            return this->get_mod_from_protocol();
-        }
-        // User authentication rejected : close message
-        else {
-            if (!this->ini.context.rejected.get().is_empty()) {
-                this->ini.context.auth_error_message.copy_str(this->ini.context.rejected.get());
-            }
-            // if (this->ini.context.auth_error_message.is_empty()) {
-            //     this->ini.context.auth_error_message.copy_c_str("Authentifier service failed");
-            // }
-            LOG(LOG_INFO, "MODULE_INTERNAL_CLOSE");
-            return MODULE_INTERNAL_CLOSE;
-        }
+        LOG(LOG_INFO, "===========> UNKNOWN MODULE");
+        return MODULE_INTERNAL_CLOSE;
     }
 
 };
@@ -717,6 +598,7 @@ public:
                     mod_rdp_params.certificate_change_action           = this->ini.mod_rdp.certificate_change_action;
                     mod_rdp_params.enable_persistent_disk_bitmap_cache = this->ini.mod_rdp.persistent_disk_bitmap_cache;
                     mod_rdp_params.enable_cache_waiting_list           = this->ini.mod_rdp.cache_waiting_list;
+                    mod_rdp_params.password_printing_mode              = this->ini.debug.password;
 
                     mod_rdp_params.extra_orders                    = this->ini.mod_rdp.extra_orders.c_str();
 

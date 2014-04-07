@@ -107,9 +107,9 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         sq_init_outfilename(&wrm_seq, SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "capture", ".wrm", groupid);
         BOOST_CHECK_EQUAL(static_cast<unsigned>(1625), static_cast<unsigned>(sq_outfilename_filesize(&wrm_seq, 0)));
         sq_outfilename_unlink(&wrm_seq, 0);
-        BOOST_CHECK_EQUAL(static_cast<unsigned>(3473), static_cast<unsigned>(sq_outfilename_filesize(&wrm_seq, 1)));
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(3487), static_cast<unsigned>(sq_outfilename_filesize(&wrm_seq, 1)));
         sq_outfilename_unlink(&wrm_seq, 1);
-        BOOST_CHECK_EQUAL(static_cast<unsigned>(3449), static_cast<unsigned>(sq_outfilename_filesize(&wrm_seq, 2)));
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(3463), static_cast<unsigned>(sq_outfilename_filesize(&wrm_seq, 2)));
         sq_outfilename_unlink(&wrm_seq, 2);
         // The destruction of capture object will finalize the metafile content
     }

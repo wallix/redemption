@@ -156,7 +156,7 @@ struct FieldObserver : public ConfigurationHolder {
 
         virtual const char* get_value() = 0;
 
-        const char* get_serialized(char * buff, size_t size) {
+        const char* get_serialized(char * buff, size_t size, uint32_t password_printing_mode) {
             const char * key = string_from_authid(this->authid);
             int n;
             if (this->is_asked()) {
@@ -169,7 +169,7 @@ struct FieldObserver : public ConfigurationHolder {
                 n = snprintf(buff, size, "%s\n!%s\n", key, val);
                 if ((strncasecmp("password", static_cast<const char*>(key), 8) == 0)
                     ||(strncasecmp("target_password", static_cast<const char*>(key), 15) == 0)){
-                    display_val = ((*val) ? "<hidden>" : "<null>");
+                    display_val = get_printable_password(val, password_printing_mode);
                 }
                 LOG(LOG_INFO, "sending %s=%s", key, display_val);
             }

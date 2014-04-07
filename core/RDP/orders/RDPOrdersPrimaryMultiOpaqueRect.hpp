@@ -23,8 +23,8 @@
 
 #include "RDPOrdersCommon.hpp"
 
-// // [MS-RDPEGDI] - 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
-// ===========================================================
+// [MS-RDPEGDI] - 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
+// ========================================================
 // The COORD_FIELD structure is used to describe a value in the range -32768
 //  to 32767.
 

@@ -331,6 +331,7 @@ struct DeltaEncodedRectangle {
         MEM3BLT         = 14,
         MULTIDSTBLT     = 15,
         MULTIPATBLT     = 16,
+        MULTISCRBLT     = 17,
         MULTIOPAQUERECT = 18,
         POLYGONSC       = 20,
         POLYGONCB       = 21,
@@ -720,7 +721,7 @@ class RDPOrderCommon {
     uint8_t order;
     Rect clip;
 
-    RDPOrderCommon(int order, Rect clip) :
+    RDPOrderCommon(int order, const Rect & clip) :
         order(order), clip(clip)
     {
     }
@@ -750,6 +751,7 @@ private:
             case ELLIPSECB:
             case MULTIOPAQUERECT:
             case MULTIPATBLT:
+            case MULTISCRBLT:
                 size = 2;
                 break;
             case RECT:
@@ -859,6 +861,7 @@ public:
         case POLYGONCB:
         case MULTIOPAQUERECT:
         case MULTIPATBLT:
+        case MULTISCRBLT:
             size = 2;
             break;
         case RECT:
@@ -899,6 +902,9 @@ public:
         case MULTIPATBLT:
             assert(!(header.fields & ~0x3FFF));
             break;
+        case MULTISCRBLT:
+            assert(!(header.fields & ~0x1FF));
+            break;
         case PATBLT:
             assert(!(header.fields & ~0xFFF));
             break;
@@ -917,6 +923,7 @@ public:
             assert(!(header.fields & ~0x1FF));
             break;
         case MEM3BLT:
+            assert(!(header.fields & ~0xFFFF));
             break;
         case GLYPHINDEX:
             assert(!(header.fields & ~0x3FFFFF));

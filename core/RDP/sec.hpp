@@ -820,6 +820,9 @@ enum {
                         hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
                     }
                 }
+                else {
+                    this->payload.resize(stream, stream.in_remain());
+                }
             }
         }
     };

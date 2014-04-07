@@ -18,8 +18,10 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIPATBLT_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIPATBLT_HPP_
+#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTISCRBLT_HPP_
+#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTISCRBLT_HPP_
+
+#include "RDPOrdersCommon.hpp"
 
 namespace RDP {
 
@@ -50,17 +52,17 @@ namespace RDP {
 //   the current value. The 2-byte format is simply the full value of the
 //   field that MUST replace the previous value.
 
-// [MS-RDPEGDI] - 2.2.2.2.1.1.2.4 MultiPatBlt (MULTI_PATBLT_ORDER)
+// [MS-RDPEGDI] - 2.2.2.2.1.1.2.8 MultiScrBlt (MULTI_SCRBLT_ORDER)
 // ===============================================================
+// The MultiScrBlt Primary Drawing Order is used to perform multiple
+//  bit-block transfers from source regions to destination regions of the
+//  screen.
 
-// The MultiPatBlt Primary Drawing Order is used to paint multiple rectangles
-//  by using a specified brush and three-way raster operation.
-
-//  Encoding order number: 16 (0x10)
-//  Negotiation order number: 16 (0x10)
-//  Number of fields: 14
-//  Number of field encoding bytes: 2
-//  Maximum encoded field length: 412 bytes
+// Encoding order number: 17 (0x11)
+// Negotiation order number: 17 (0x11)
+// Number of fields: 9
+// Number of field encoding bytes: 2
+// Maximum encoded field length: 399 bytes
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -69,20 +71,13 @@ namespace RDP {
 // |      nLeftRect (variable)     |      nTopRect (variable)      |
 // +-------------------------------+-------------------------------+
 // |       nWidth (variable)       |       nHeight (variable)      |
+// +---------------+---------------+---------------+---------------+
+// |      bRop     |        nXSrc (variable)       |     nYSrc     |
+// |   (optional)  |                               |   (variable)  |
+// +---------------+---------------+---------------+---------------+
+// |      ...      | nDeltaEntries |   CodedDeltaList (variable)   |
+// |               |   (optional)  |                               |
 // +---------------+---------------+-------------------------------+
-// |bRop (optional)|              BackColor (optional)             |
-// +---------------+-------------------------------+---------------+
-// |              ForeColor (optional)             |   BrushOrgX   |
-// |                                               |   (optional)  |
-// +---------------+---------------+---------------+---------------+
-// |   BrushOrgY   |   BrushStyle  |   BrushHatch  |   BrushExtra  |
-// |   (optional)  |   (optional)  |   (optional)  |   (optional)  |
-// +---------------+---------------+---------------+---------------+
-// |                              ...                              |
-// +-------------------------------+---------------+---------------+
-// |              ...              | nDeltaEntries | CodedDeltaList|
-// |                               |   (optional)  |   (variable)  |
-// +-------------------------------+---------------+---------------+
 // |                              ...                              |
 // +---------------------------------------------------------------+
 
@@ -93,40 +88,24 @@ namespace RDP {
 //  specified by using a Coord Field (section 2.2.2.2.1.1.1.1).
 
 // nWidth (variable): The width of the destination rectangle specified by
-//  using a Coord Field (section 2.2.2.2.1.1.1.1).
+//  using a Coord Field (see section 2.2.2.2.1.1.1.1).
 
 // nHeight (variable): The height of the destination rectangle specified by
 //  using a Coord Field (section 2.2.2.2.1.1.1.1).
 
 // bRop (1 byte): The index of the ternary raster operation to perform (see
-//  section 2.2.2.2.1.1.1.7).
+//  section 2.2.2.2.1.1.1.7). The resultant ROP3 operation MUST only depend
+//  on the destination and source bits. (There MUST NOT be any dependence on
+//  pattern bits.)
 
-// BackColor (3 bytes): The background color described by using a Generic
-//  Color (section 2.2.2.2.1.1.1.8) structure.
+// nXSrc (variable): The x-coordinate of the source rectangle specified by
+//  using a Coord Field (section 2.2.2.2.1.1.1.1).
 
-// ForeColor (3 bytes): The foreground color described by using a Generic
-//  Color (section 2.2.2.2.1.1.1.8) structure.
+// nYSrc (variable): The y-coordinate of the source rectangle specified by
+//  using a Coord Field (section 2.2.2.2.1.1.1.1).
 
-// BrushOrgX (1 byte): An 8-bit, signed integer. The x-coordinate of the
-//  point where the top leftmost pixel of a brush pattern MUST be anchored.
-
-// BrushOrgY (1 byte): An 8-bit, signed integer. The y-coordinate of the
-//  point where the top leftmost pixel of a brush pattern MUST be anchored.
-
-// BrushStyle (1 byte): An 8-bit, unsigned integer. The contents and format
-//  of this field are the same as the BrushStyle field of the PatBlt (section
-//  2.2.2.2.1.1.2.3) Primary Drawing Order.
-
-// BrushHatch (1 byte): An 8-bit, unsigned integer. The contents and format
-//  of this field are the same as the BrushHatch field of the PatBlt (section
-//  2.2.2.2.1.1.2.3) Primary Drawing Order.
-
-// BrushExtra (7 bytes): The contents and format of this field are the same
-//  as the BrushExtra field of the PatBlt (section 2.2.2.2.1.1.2.3) Primary
-//  Drawing Order.
-
-// nDeltaEntries (1 byte): An 8-bit, unsigned integer. The number of bounding
-//  rectangles described by the CodedDeltaList field.
+// nDeltaEntries (1 byte): An 8-bit, unsigned integer. The number of
+//  bounding rectangles described by the CodedDeltaList field.
 
 // CodedDeltaList (variable): A Two-Byte Header Variable Field (section
 //  2.2.2.2.1.1.1.3) structure that encapsulates a Delta-Encoded Rectangles
@@ -135,10 +114,7 @@ namespace RDP {
 //  Delta-Encoded Rectangles structure is specified by the nDeltaEntries
 //  field.
 
-#include "RDPOrdersCommon.hpp"
-#include "rect.hpp"
-
-class RDPMultiPatBlt {
+class RDPMultiScrBlt {
 public:
     Rect       rect;
     int16_t  & nLeftRect;
@@ -146,58 +122,40 @@ public:
     uint16_t & nWidth;
     uint16_t & nHeight;
     uint8_t    bRop;
-    uint32_t   BackColor;
-    uint32_t   ForeColor;
-    RDPBrush   brush;
-    int8_t   & BrushOrgX;
-    int8_t   & BrushOrgY;
-    uint8_t  & BrushStyle;
-    uint8_t  & BrushHatch;
-    uint8_t  (&BrushExtra)[7];
+    int16_t    nXSrc;
+    int16_t    nYSrc;
     uint8_t    nDeltaEntries;
 
     struct DeltaEncodedRectangle deltaEncodedRectangles[45];
 
     static const uint8_t id(void)
     {
-        return RDP::MULTIPATBLT;
+        return RDP::MULTISCRBLT;
     }
 
-    RDPMultiPatBlt()
+    RDPMultiScrBlt()
     : rect(0, 0, 0, 0)
     , nLeftRect(rect.x)
     , nTopRect(rect.y)
     , nWidth(rect.cx)
     , nHeight(rect.cy)
     , bRop(0)
-    , BackColor(0)
-    , ForeColor(0)
-    , brush(0, 0, 0, 0)
-    , BrushOrgX(brush.org_x)
-    , BrushOrgY(brush.org_y)
-    , BrushStyle(brush.style)
-    , BrushHatch(brush.hatch)
-    , BrushExtra(brush.extra)
+    , nXSrc(0)
+    , nYSrc(0)
     , nDeltaEntries(0) {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
     }
 
-    RDPMultiPatBlt( const Rect & _rect, uint8_t bRop, uint32_t BackColor, uint32_t ForeColor, const RDPBrush & _brush
-                  , uint8_t nDeltaEntries, Stream & deltaEncodedRectangles)
+    RDPMultiScrBlt( const Rect & _rect, uint8_t bRop, int16_t nXSrc, int16_t nYSrc, uint8_t nDeltaEntries
+                  , Stream & deltaEncodedRectangles)
     : rect(_rect)
     , nLeftRect(rect.x)
     , nTopRect(rect.y)
     , nWidth(rect.cx)
     , nHeight(rect.cy)
     , bRop(bRop)
-    , BackColor(BackColor)
-    , ForeColor(ForeColor)
-    , brush(_brush)
-    , BrushOrgX(brush.org_x)
-    , BrushOrgY(brush.org_y)
-    , BrushStyle(brush.style)
-    , BrushHatch(brush.hatch)
-    , BrushExtra(brush.extra)
+    , nXSrc(nXSrc)
+    , nYSrc(nYSrc)
     , nDeltaEntries(0) {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
         for (int i = 0; i < this->nDeltaEntries; i++) {
@@ -208,58 +166,36 @@ public:
         }
     }
 
-    RDPMultiPatBlt & operator=(const RDPMultiPatBlt & other) {
+    RDPMultiScrBlt & operator=(const RDPMultiScrBlt & other) {
         this->rect          = other.rect;
         this->bRop          = other.bRop;
-        this->BackColor     = other.BackColor;
-        this->ForeColor     = other.ForeColor;
-        this->brush         = other.brush;
+        this->nXSrc         = other.nXSrc;
+        this->nYSrc         = other.nYSrc;
         this->nDeltaEntries = other.nDeltaEntries;
         ::memcpy(this->deltaEncodedRectangles, other.deltaEncodedRectangles, sizeof(DeltaEncodedRectangle) * this->nDeltaEntries);
 
         return *this;
     }
 
-    bool operator==(const RDPMultiPatBlt & other) const {
-        return (this->rect          == other.rect)
-            && (this->bRop          == other.bRop)
-            && (this->BackColor     == other.BackColor)
-            && (this->ForeColor     == other.ForeColor)
-            && (this->brush.org_x   == other.brush.org_x)
-            && (this->brush.org_y   == other.brush.org_y)
-            && (this->brush.style   == other.brush.style)
-            && (this->brush.hatch   == other.brush.hatch)
-            && (   (this->brush.style != 0x03)
-                || (0 == memcmp(this->brush.extra, other.brush.extra, 7)))
-            && (this->nDeltaEntries == other.nDeltaEntries)
-            && !memcmp(this->deltaEncodedRectangles, other.deltaEncodedRectangles, sizeof(DeltaEncodedRectangle) * this->nDeltaEntries)
-            ;
-    }
-
     void emit( Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
-             , const RDPMultiPatBlt & oldcmd) const {
+             , const RDPMultiScrBlt & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
         if (!common.clip.contains(this->rect)){
             header.control |= BOUNDS;
         }
 
-        // MultiPatBlt fields bytes (2 byte)
+        // MultiScrBlt fields bytes (2 byte)
         // =================================
         // 0x0001: nLeftRect
         // 0x0002: nTopRect
         // 0x0004: nWidth
         // 0x0008: nHeight
         // 0x0010: bRop
-        // 0x0020: BackColor
-        // 0x0040: ForeColor
-        // 0x0080: BrushOrgX
-        // 0x0100: BrushOrgY
-        // 0x0200: BrushStyle
-        // 0x0400: BrushHatch
-        // 0x0800: BrushExtra
-        // 0x1000: nDeltaEntries
-        // 0x2000: CodedDeltaList
+        // 0x0020: nXSrc
+        // 0x0040: nYSrc
+        // 0x0080: nDeltaEntries
+        // 0x0100: CodedDeltaList
 
         DeltaRect dr(this->rect, oldcmd.rect);
 
@@ -275,20 +211,15 @@ public:
                       | (dr.dheight          != 0                   ) * 0x0008
 
                       | (this->bRop          != oldcmd.bRop         ) * 0x0010
-                      | (this->BackColor     != oldcmd.BackColor    ) * 0x0020
-                      | (this->ForeColor     != oldcmd.ForeColor    ) * 0x0040
+                      | (this->nXSrc         != oldcmd.nXSrc        ) * 0x0020
+                      | (this->nYSrc         != oldcmd.nYSrc        ) * 0x0040
 
-                      | (this->brush.org_x   != oldcmd.brush.org_x  ) * 0x0080
-                      | (this->brush.org_y   != oldcmd.brush.org_y  ) * 0x0100
-                      | (this->brush.style   != oldcmd.brush.style  ) * 0x0200
-                      | (this->brush.hatch   != oldcmd.brush.hatch  ) * 0x0400
-                      | (::memcmp(this->brush.extra, oldcmd.brush.extra, 7) != 0) * 0x0800
-                      | (this->nDeltaEntries != oldcmd.nDeltaEntries) * 0x1000
+                      | (this->nDeltaEntries != oldcmd.nDeltaEntries) * 0x0080
                       | (
                          (this->nDeltaEntries != oldcmd.nDeltaEntries) ||
                          memcmp(this->deltaEncodedRectangles, oldcmd.deltaEncodedRectangles,
                                 this->nDeltaEntries * sizeof(RDP::DeltaEncodedRectangle))
-                                                                    ) * 0x2000
+                                                                    ) * 0x0100
                       ;
 
         common.emit(stream, header, oldcommon);
@@ -298,22 +229,13 @@ public:
         if (header.fields & 0x0010) {
             stream.out_uint8(this->bRop);
         }
-        if (header.fields & 0x0020) {
-            stream.out_uint8(this->BackColor);
-            stream.out_uint8(this->BackColor >> 8);
-            stream.out_uint8(this->BackColor >> 16);
-        }
-        if (header.fields & 0x0040) {
-            stream.out_uint8(this->ForeColor);
-            stream.out_uint8(this->ForeColor >> 8);
-            stream.out_uint8(this->ForeColor >> 16);
-        }
 
-        header.emit_brush(stream, 0x0080, this->brush, oldcmd.brush);
+        header.emit_coord(stream, 0x0020, this->nXSrc, oldcmd.nXSrc);
+        header.emit_coord(stream, 0x0040, this->nYSrc, oldcmd.nYSrc);
 
-        if (header.fields & 0x1000) { stream.out_uint8(this->nDeltaEntries); }
+        if (header.fields & 0x0080) { stream.out_uint8(this->nDeltaEntries); }
 
-        if (header.fields & 0x2000) {
+        if (header.fields & 0x0100) {
             uint32_t offset_cbData = stream.get_offset();
             stream.out_clear_bytes(2);
 
@@ -360,36 +282,26 @@ public:
 
             stream.set_out_uint16_le(stream.get_offset() - offset_cbData - 2, offset_cbData);
         }
-    }   // void emit( Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiPatBlt & oldcmd) const
+    }   // void emit( Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiScrBlt & oldcmd) const
 
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
-        //LOG(LOG_INFO, "RDPMultiPatBlt::receive: header fields=0x%02X", header.fields);
+        //LOG(LOG_INFO, "RDPMultiScrBlt::receive: header fields=0x%02X", header.fields);
 
         header.receive_rect(stream, 0x0001, this->rect);
 
         if (header.fields & 0x0010) {
             this->bRop = stream.in_uint8();
         }
-        if (header.fields & 0x0020) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->BackColor = r + (g << 8) + (b << 16);
-        }
-        if (header.fields & 0x0040) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->ForeColor = r + (g << 8) + (b << 16);
-        }
 
-        header.receive_brush(stream, 0x0080, this->brush);
+        header.receive_coord(stream, 0x0020, this->nXSrc);
+        header.receive_coord(stream, 0x0040, this->nYSrc);
 
-        if (header.fields & 0x1000) {
+
+        if (header.fields & 0x0080) {
             this->nDeltaEntries = stream.in_uint8();
         }
 
-        if (header.fields & 0x2000) {
+        if (header.fields & 0x0100) {
             uint16_t cbData = stream.in_uint16_le();
             //LOG(LOG_INFO, "cbData=%d", cbData);
 
@@ -420,7 +332,7 @@ public:
                 this->deltaEncodedRectangles[i].width     = (!(zeroBit & 0x20) ? rgbData.in_DEP() : 0);
                 this->deltaEncodedRectangles[i].height    = (!(zeroBit & 0x10) ? rgbData.in_DEP() : 0);
 
-                //LOG(LOG_INFO, "RDPMultiPatBlt::receive: delta rectangle=(%d, %d, %d, %d)",
+                //LOG(LOG_INFO, "RDPMultiScrBlt::receive: delta rectangle=(%d, %d, %d, %d)",
                 //    this->deltaEncodedRectangles[i].leftDelta, this->deltaEncodedRectangles[i].topDelta,
                 //    this->deltaEncodedRectangles[i].width, this->deltaEncodedRectangles[i].height);
 
@@ -433,17 +345,12 @@ public:
         size_t lg = 0;
         lg += common.str(buffer + lg, sz - lg, true);
         lg += snprintf( buffer + lg, sz - lg
-                      , "MultiPatBlt(nLeftRect=%d nTopRect=%d nWidth=%d nHeight=%d bRop=0x%02X "
-                        "BackColor=%x ForeColor=%x "
-                        "BrushOrgX=%d BrushOrgY=%d BrushStyle=%u BrushHatch=%u "
-                        "BrushExtra=[%.2x %.2x %.2x %.2x %.2x %.2x %.2x] "
+                      , "MultiSrcBlt(nLeftRect=%d nTopRect=%d nWidth=%d nHeight=%d bRop=0x%02X "
+                        "nXSrc=%d nXSrc=%d "
                         "nDeltaEntries=%d "
                         "CodedDeltaList=("
                       , this->nLeftRect, this->nTopRect, this->nWidth, this->nHeight, this->bRop
-                      , this->BackColor, this->ForeColor
-                      , this->BrushOrgX, this->BrushOrgY, this->BrushStyle, this->BrushHatch
-                      , this->BrushExtra[0], this->BrushExtra[1], this->BrushExtra[2], this->BrushExtra[3]
-                      , this->BrushExtra[4], this->BrushExtra[5], this->BrushExtra[6]
+                      , this->nXSrc, this->nYSrc
                       , this->nDeltaEntries);
         for (uint8_t i = 0; i < this->nDeltaEntries; i++) {
             if (i) {
@@ -473,8 +380,8 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         printf("%s", buffer);
     }
-};  // class RDPMultiPatBlt
+};  // class RDPMultiScrBlt
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIPATBLT_HPP_
+#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTISCRBLT_HPP_

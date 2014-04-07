@@ -67,7 +67,9 @@ class SesmanConfig(object):
             , u'x509_authenticated'    : u'localhost'
             , u'record_warning'        : u'True'
             , u'DEBUG'                 : u'False'
-            , u'auth_mode_vmware_view' : u'False'
+            , u'auth_mode_passthrough' : u'False'
+            , u'use_default_login'     : u'0'
+            , u'default_login'         : u''
             }
         , u'fr':
             { u'login'                  : u"Login"

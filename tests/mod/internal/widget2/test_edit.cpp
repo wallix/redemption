@@ -80,6 +80,10 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
+    virtual void draw(const RDP::RDPMultiScrBlt &, const Rect &) {
+        BOOST_CHECK(false);
+    }
+
     virtual void draw(const RDPPatBlt& cmd, const Rect& rect)
     {
         this->gd.draw(cmd, rect);

@@ -276,6 +276,15 @@ public:
         }
     }
 
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+        if (this->capture_wrm) {
+            this->pnc->draw(cmd, clip);
+        }
+        else if (this->capture_drawable) {
+            this->drawable->draw(cmd, clip);
+        }
+    }
+
     void draw(const RDPPatBlt & cmd, const Rect &clip) {
         if (this->capture_wrm) {
             this->pnc->draw(cmd, clip);

@@ -208,9 +208,8 @@ public:
 
 public:
     bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
-//        LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
-//            (unsigned)now, static_cast<unsigned>(signal));
-
+       // LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
+       //     (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {
             // here, mm.last_module should be false only when we are in login box
             mm.mod->event.reset();
@@ -227,12 +226,12 @@ public:
         long enddate = this->ini->context.end_date_cnx.get();
         if (enddate != 0 && (now > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
+            const char * message = "Session is out of allowed timeframe";
             if (this->ini) {
-                mm.invoke_close_box(TR("session_out_time", *(this->ini)), signal, now);
+                message = TR("session_out_time", *(this->ini));
             }
-            else {
-                mm.invoke_close_box("Session is out of allowed timeframe", signal, now);
-            }
+            mm.invoke_close_box(message, signal, now);
+
             return true;
         }
 
@@ -312,15 +311,16 @@ public:
                 }
                 catch (Error & e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                        this->ini->context.target_protocol.set_from_cstr(
-                            "_TRANSITORY");
-
-                        signal = BACK_EVENT_NEXT;
-
-                        this->remote_answer = false;
                         this->report("CONNECTION_FAILED",
                             "Failed to connect to remote TCP host.");
-
+                        if (this->ini) {
+                            mm.invoke_close_box(TR("target_fail", *(this->ini)),
+                                                signal, now);
+                        }
+                        else {
+                            mm.invoke_close_box("Failed to connect to remote TCP host.",
+                                                signal, now);
+                        }
                         return true;
                     }
                     else {

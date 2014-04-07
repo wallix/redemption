@@ -115,9 +115,9 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
     BOOST_CHECK_EQUAL(static_cast<unsigned>(490438),  static_cast<unsigned>(sq_outfilename_filesize(&(out_wrm_trans.seq), 0)));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 0);
-    BOOST_CHECK_EQUAL(static_cast<unsigned>(1247480), static_cast<unsigned>(sq_outfilename_filesize(&(out_wrm_trans.seq), 1)));
+    BOOST_CHECK_EQUAL(static_cast<unsigned>(1247494), static_cast<unsigned>(sq_outfilename_filesize(&(out_wrm_trans.seq), 1)));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 1);
-    BOOST_CHECK_EQUAL(static_cast<unsigned>(363516),  static_cast<unsigned>(sq_outfilename_filesize(&(out_wrm_trans.seq), 2)));
+    BOOST_CHECK_EQUAL(static_cast<unsigned>(363530),  static_cast<unsigned>(sq_outfilename_filesize(&(out_wrm_trans.seq), 2)));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 2);
 }
 

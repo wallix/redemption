@@ -47,18 +47,17 @@ struct KERBEROSContext {
     OM_uint32 actual_flag;
     gss_OID actual_mech;
     gss_cred_id_t deleg_cred;
-    int count;
     KERBEROSContext()
         : gss_ctx(GSS_C_NO_CONTEXT)
         , target_name(GSS_C_NO_NAME)
         , deleg_cred(GSS_C_NO_CREDENTIAL)
-        , count(0)
     {}
 
     virtual ~KERBEROSContext() {
         OM_uint32 major_status, minor_status;
         if (this->target_name != GSS_C_NO_NAME) {
-            gss_release_name(&minor_status, &this->target_name);
+            major_status = gss_release_name(&minor_status, &this->target_name);
+            (void) major_status;
             this->target_name = GSS_C_NO_NAME;
         }
         if (this->gss_ctx != GSS_C_NO_CONTEXT) {
@@ -198,12 +197,11 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         output.length = strlen((const char*)output.value) + 1;
         LOG(LOG_INFO, "GSS IMPORT NAME : %s", output.value);
         major_status = gss_import_name(&minor_status, &output, type, name);
-        gss_release_buffer(&minor_status, &output);
+        free(output.value);
         if (GSS_ERROR(major_status)) {
             LOG(LOG_ERR, "Failed to create service principal name");
             return false;
         }
-
         return true;
     }
 
@@ -249,7 +247,6 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         // else {
         //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
         // }
-
 
         // Token Buffer
 	gss_buffer_desc input_tok, output_tok;

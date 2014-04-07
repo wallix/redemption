@@ -446,6 +446,21 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             payload.out_sint16_le(this->multipatblt.deltaEncodedRectangles[i].width);
             payload.out_sint16_le(this->multipatblt.deltaEncodedRectangles[i].height);
         }
+        // RDPMultiScrBlt multiscrblt;
+        payload.out_sint16_le(this->multiscrblt.nLeftRect);
+        payload.out_sint16_le(this->multiscrblt.nTopRect);
+        payload.out_uint16_le(this->multiscrblt.nWidth);
+        payload.out_uint16_le(this->multiscrblt.nHeight);
+        payload.out_uint8(this->multiscrblt.bRop);
+        payload.out_sint16_le(this->multiscrblt.nXSrc);
+        payload.out_sint16_le(this->multiscrblt.nYSrc);
+        payload.out_uint8(this->multiscrblt.nDeltaEntries);
+        for (uint8_t i = 0; i < this->multiscrblt.nDeltaEntries; i++) {
+            payload.out_sint16_le(this->multiscrblt.deltaEncodedRectangles[i].leftDelta);
+            payload.out_sint16_le(this->multiscrblt.deltaEncodedRectangles[i].topDelta);
+            payload.out_sint16_le(this->multiscrblt.deltaEncodedRectangles[i].width);
+            payload.out_sint16_le(this->multiscrblt.deltaEncodedRectangles[i].height);
+        }
 
         //------------------------------ missing variable length ---------------
         payload.mark_end();
@@ -564,6 +579,12 @@ public:
     }
 
     virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip)
+    {
+        this->drawable.draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
+    }
+
+    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip)
     {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);

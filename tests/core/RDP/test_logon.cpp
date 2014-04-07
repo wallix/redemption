@@ -29,6 +29,7 @@
 #define LOGNULL
 #include "log.hpp"
 
+#include "config.hpp"
 #include "RDP/logon.hpp"
 
 
