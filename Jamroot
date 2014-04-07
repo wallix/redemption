@@ -122,7 +122,7 @@ project redemption
 #     <cxxflags>-Wredundant-decls
 #     <cxxflags>-Winline
 #     <cxxflags>-Wdouble-promotion
-#     <cxxflags>-Winit-self
+    <cxxflags>-Winit-self
 #     <cxxflags>-Wcast-qual
 #     <cxxflags>-Woverloaded-virtual
     <cxxflags>-fpie

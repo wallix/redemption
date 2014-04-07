@@ -84,51 +84,84 @@ def copy_and_replace(src, dst, old, new):
   out = out.replace(old, new)
   writeall(dst, out)
 
-def parse_template(filename, distro):
+rgx_split = re.compile("\s+")
+rgx_if = re.compile("^\s*@if\s+")
+rgx_else = re.compile("^\s*@else\s*")
+rgx_endif = re.compile("^\s*@endif\s*$")
+rgx_elif = re.compile("^\s*@elif\s+")
+
+def _test_condition(filename, num, l, vars):
+  a = re.split(rgx_split, l)
+  if len(a) >= 2:
+    idx = 0;
+    if not a[0]:
+      idx = 1
+    if a[idx] == 'not':
+      test = False
+      idx += 1
+    else:
+      test = True
+    if idx:
+      a = a[idx:]
+  if len(a) < 2 or not a[1]:
+    raise Exception("conditional error in '%s' at line %s" % (filename, num))
+  if not a[0] in vars:
+    raise Exception("test '%s' unknow in '%s' at line %s" % (a[0], filename, num))
+  x = vars[a[0]]
+  return (x and x in a[1:]) == test
+
+
+def _parse_template(filename, num, f, vars, rec = 0, stateif = False, addtext = True):
   out = ''
-  stateif = False
   stateelse = False
-  addtext = True
-  rgx_distro = re.compile("\s+%s\s+" % distro)
-  rgx_ifdist = re.compile("^\s*@ifdist\s+")
-  rgx_else = re.compile("^\s*@else\s*")
-  rgx_enddist = re.compile("^\s*@enddist\s*$")
-  rgx_elifdist = re.compile("^\s*@elifdist\s+")
-  with open(filename) as f:
-    for l in f:
-      m = re.search(rgx_ifdist, l)
-      if m:
-        if stateif or stateelse:
-          raise Exception("recursive ifdist not implmented")
-        addtext = re.search(rgx_distro, l[m.end()-1:]) != None
-        stateif = True
+  for l in f:
+    num += 1
+    m = re.search(rgx_if, l)
+    if m:
+      cond = _test_condition(filename, num, l[m.end()-1:], vars)
+      if stateif or stateelse:
+        num,ret = _parse_template(filename, num, f, vars, rec+1, True, cond)
+        out += ret
       else:
-        m = re.search(rgx_else, l)
+        stateif = True
+        addtext = cond
+    else:
+      m = re.search(rgx_else, l)
+      if m:
+        if not stateif or stateelse:
+          raise Exception("else without if in '%s' at line %s" % (filename, num))
+        addtext = not addtext
+        stateelse = True
+        stateif = False
+      else:
+        m = re.search(rgx_elif, l)
         if m:
           if not stateif or stateelse:
-            raise Exception("else without ifdist")
-          addtext = not addtext
-          stateelse = True
-          stateif = False
+            raise Exception("elif without if in '%s' at line %s" % (filename, num))
+          addtext = _test_condition(filename, num, l[m.end()-1:], vars)
         else:
-          m = re.search(rgx_elifdist, l)
+          m = re.search(rgx_endif, l)
           if m:
-            if not stateif or stateelse:
-              raise Exception("elifdist without ifdist")
-            addtext = re.search(rgx_distro, l[m.end()-1:]) != None
-          else:
-            m = re.search(rgx_enddist, l)
-            if m:
-              if not stateif and not stateelse:
-                raise Exception("enddist without ifdist")
-              addtext = True
-              stateif = False
-            elif addtext:
-              out += l
-  if stateif:
-    raise Exception("ifdist without enddist")
-  return out
+            if not stateif and not stateelse:
+              raise Exception("endif without if in '%s' at line %s" % (filename, num))
+            if rec:
+              return num,out
+            addtext = True
+            stateelse = False
+            stateif = False
+          elif addtext:
+            out += l
+  if stateif or stateelse:
+    raise Exception("if without endif in '%s' at line %s" % (filename, num))
+  return num,out
 
+
+def parse_template(filename, distro, codename, arch):
+  vars = {'dist': distro, 'codename':codename, 'arch': arch}
+  with open(filename) as f:
+    num,out = _parse_template(filename, 0, f, vars)
+    return out
+  return ''
 
 try:
   res = subprocess.Popen(["git", "diff", "--shortstat"],
@@ -136,15 +169,11 @@ try:
                          stderr = subprocess.STDOUT
                         ).communicate()[0]
   if res:
-    raise Exception('Your repository has uncommited changes:\n%sPlease commit before packaging.' % (res))
+    raise Exception('your repository has uncommited changes:\n%sPlease commit before packaging.' % (res))
 
   out = readall("main/version.hpp")
   out = re.sub('#\s*define\sVERSION\s".*"', '#define VERSION "%s"' % tag, out, 1)
   writeall("main/version.hpp", out)
-
-  status = os.system("git tag %s" % tag)
-  if status:
-    exit(status)
 
   os.mkdir("debian", 0766)
 
@@ -193,11 +222,15 @@ try:
   writeall("debian/changelog",
            changelog.replace('%target_name', target).replace('%pkg_distribution', package_distribution))
 
-  out = parse_template("%s/control" % packagetemp, distro)
+  out = parse_template("%s/control" % packagetemp, distro, distro_codename, distroinfo.get_arch())
   writeall("debian/control", out.replace('%REDEMPTION_VERSION', tag))
 
   shutil.copy("%s/compat" % packagetemp, "debian/compat")
   shutil.copy("docs/copyright", "debian/copyright")
+
+  status = os.system("git tag %s" % tag)
+  if status:
+    exit(status)
 
   if buildpackage:
     exit(os.system("dpkg-buildpackage -b -tc -us -uc -r"))
