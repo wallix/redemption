@@ -97,6 +97,12 @@ public:
                                         );
     }
 
+    virtual Dimension get_optimal_dim() {
+        int w, h;
+        this->drawable.text_metrics(this->buffer, w, h);
+        return Dimension(w, h);
+    }
+
     bool shift_text(int pos_x) {
         bool res = true;
         if (pos_x + this->x_text > this->cx() - 4) {

@@ -224,6 +224,10 @@ public:
         }
     }
 
+    virtual Dimension get_optimal_dim() {
+        return Dimension(0, 0);
+    }
+
     ///Return x position in it's screen
     int16_t dx() const
     {
