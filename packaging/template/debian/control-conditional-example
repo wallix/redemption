@@ -1,7 +1,30 @@
-@ifdist ubuntu debian
+<test>  ::= dist | codename | arch
+<names> ::= ({ \w+ })
+<expr>  ::= [ not ] <test> <names>
+<if>    ::= @if <expr>
+<elif>  ::= @elif <expr>
+<else>  ::= @else
+<endif> ::= @endif
+<stmt>  ::= <if>
+  [ text ]
+[ ({ <elif>
+    [ text ]
+}) ]
+[ <else>
+    [ text ]
+]
+<endif>
+
+
+example:
+
+@if dist ubuntu debian
 Build-Depends: ...
-@elifdist maya
+@elif dist maya
+Build-Depends: ...
+@else
+@if not arch i386
 Build-Depends: ...
 @else
 Build-Depends: ...
-@enddist
+@end
