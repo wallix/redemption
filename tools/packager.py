@@ -11,15 +11,15 @@ import datetime
 import re
 
 def usage():
-  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--not-entry-changelog] [--force-distro name] [--force-distro-codename name] [--not-buildpackage] [--debug] --tag version" % sys.argv[0])
+  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--no-entry-changelog] [--force-distro name] [--force-distro-codename name] [--no-buildpackage] [--no-commit] [--no-tag] [--debug] --tag version" % sys.argv[0])
 
 try:
   opts, args = getopt.getopt(sys.argv[1:], "h",
                              ["help", "package-distribution=", "tag=",
                               "prefix=", "etc-prefix=", "cert-prefix=",
-                              "not-entry-changelog", "not-buildpackage",
+                              "no-entry-changelog", "no-buildpackage",
                               "force-distro=", "force-distro-codename=",
-                              "debug"])
+                              "no-commit", "no-tag", "debug"])
 except getopt.GetoptError as err:
   print(str(err))
   usage()
@@ -35,6 +35,8 @@ entry_changelog = True
 force_distro = None
 force_distro_codename = None
 buildpackage = True
+git_commit = True
+git_tag = True
 
 for o,a in opts:
   if o in ("-h", "--help"):
@@ -50,14 +52,18 @@ for o,a in opts:
     etc_prefix = a
   elif o == "--cert-prefix":
     cert_prefix = a
-  elif o == "--not-entry-changelog":
+  elif o == "--no-entry-changelog":
     entry_changelog = False
   elif o == "--force-distro":
     force_distro = a
   elif o == "--force-distro-codename":
     force_distro_codename = a
-  elif o == "--not-buildpackage":
+  elif o == "--no-buildpackage":
     buildpackage = False
+  elif o == "--no-commit":
+    git_commit = False
+  elif o == "--no-tag":
+    git_tag = False
   elif o == "--debug":
     debug = True
 
@@ -171,10 +177,6 @@ try:
   if res:
     raise Exception('your repository has uncommited changes:\n%sPlease commit before packaging.' % (res))
 
-  out = readall("main/version.hpp")
-  out = re.sub('#\s*define\sVERSION\s".*"', '#define VERSION "%s"' % tag, out, 1)
-  writeall("main/version.hpp", out)
-
   os.mkdir("debian", 0766)
 
   if force_distro == None or (force_distro == 'ubuntu' and force_distro_codename == None):
@@ -228,9 +230,19 @@ try:
   shutil.copy("%s/compat" % packagetemp, "debian/compat")
   shutil.copy("docs/copyright", "debian/copyright")
 
-  status = os.system("git tag %s" % tag)
-  if status:
-    exit(status)
+  out = readall("main/version.hpp")
+  out = re.sub('#\s*define\sVERSION\s".*"', '#define VERSION "%s"' % tag, out, 1)
+  writeall("main/version.hpp", out)
+
+  if git_commit:
+    status = os.system("git commit -am 'Version %s'" % tag)
+    if status:
+      exit(status)
+
+    if git_tag:
+      status = os.system("git tag %s" % tag)
+      if status:
+        exit(status)
 
   if buildpackage:
     exit(os.system("dpkg-buildpackage -b -tc -us -uc -r"))
