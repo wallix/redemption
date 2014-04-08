@@ -7,9 +7,9 @@
 <endif> ::= @endif
 <stmt>  ::= <if>
   [ text ]
-[ ({ <elif> })
+[ ({ <elif>
     [ text ]
-]
+}) ]
 [ <else>
     [ text ]
 ]

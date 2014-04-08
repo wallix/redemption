@@ -11,7 +11,7 @@ import datetime
 import re
 
 def usage():
-  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--no-entry-changelog] [--force-distro name] [--force-distro-codename name] [--no-buildpackage] [--no-commit] [--no-tag] [--debug] --tag version" % sys.argv[0])
+  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--no-entry-changelog] [--force-distro name] [--force-distro-codename name] [--no-buildpackage] [--no-git-commit] [--no-git-tag] [--debug] --tag version" % sys.argv[0])
 
 try:
   opts, args = getopt.getopt(sys.argv[1:], "h",
@@ -19,7 +19,7 @@ try:
                               "prefix=", "etc-prefix=", "cert-prefix=",
                               "no-entry-changelog", "no-buildpackage",
                               "force-distro=", "force-distro-codename=",
-                              "no-commit", "no-tag", "debug"])
+                              "no-git-commit", "no-git-tag", "debug"])
 except getopt.GetoptError as err:
   print(str(err))
   usage()
@@ -60,9 +60,9 @@ for o,a in opts:
     force_distro_codename = a
   elif o == "--no-buildpackage":
     buildpackage = False
-  elif o == "--no-commit":
+  elif o == "--no-git-commit":
     git_commit = False
-  elif o == "--no-tag":
+  elif o == "--no-git-tag":
     git_tag = False
   elif o == "--debug":
     debug = True
