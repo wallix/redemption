@@ -40,7 +40,7 @@ class Engine(object):
             Logger().info("Engine password_expiration_date failed: (((%s)))" % traceback.format_exc(e))
         return False, 0
 
-    def is_x509_connected(self, wab_login, ip_client, proxy_type, target):
+    def is_x509_connected(self, wab_login, ip_client, proxy_type, target, server_ip):
         """
         Ask if we are authentifying using x509
         (and ask user by opening confirmation popup if we are,
@@ -48,7 +48,7 @@ class Engine(object):
         """
         try:
             from wabx509 import AuthX509
-            self.auth_x509 = AuthX509(wab_login, ip_client, proxy_type, target)
+            self.auth_x509 = AuthX509(wab_login, ip_client, proxy_type, target, server_ip)
             result = self.auth_x509.is_connected()
             return result
         except Exception, e:
@@ -69,12 +69,12 @@ class Engine(object):
             Logger().info("Engine x509_authenticate failed: (((%s)))" % traceback.format_exc(e))
         return False
 
-    def password_authenticate(self, wab_login, ip_client, password):
+    def password_authenticate(self, wab_login, ip_client, password, server_ip):
         try:
             from wabengine.client.sync_client import SynClient
             self.client = SynClient('localhost', 'tcp:8803')
             self.wabengine = self.client.authenticate(wab_login, password,
-                                                      ip_client, self.challenge)
+                                                      ip_client, self.challenge, False, server_ip)
             self.challenge = None
             if self.wabengine is not None:
                 self.user = self.wabengine.who_am_i()
@@ -90,12 +90,12 @@ class Engine(object):
             Logger().info("Engine password_authenticate failed: (((%s)))" % traceback.format_exc(e))
         return False
 
-    def passthrough_authenticate(self, wab_login, ip_client):
+    def passthrough_authenticate(self, wab_login, ip_client, server_ip):
         try:
             from wabengine.client.sync_client import SynClient
             self.client = SynClient('localhost', 'tcp:8803')
             self.wabengine = self.client.authenticate_gssapi(wab_login, "realm",
-                                                             ip_client)
+                                                             ip_client, server_ip)
             self.challenge = None
             if self.wabengine is not None:
                 self.user = self.wabengine.who_am_i()

@@ -1690,7 +1690,7 @@ class Engine(object):
         #return false or number of days
         return False, 0
 
-    def is_x509_connected(self, wab_login, ip_client, proxy_type, target):
+    def is_x509_connected(self, wab_login, ip_client, proxy_type, target, server_ip):
         """
         Ask if we are authentifying using x509
         (and ask user by opening confirmation popup if we are,
@@ -1717,7 +1717,7 @@ class Engine(object):
             self.wab_login = None
         return False
 
-    def password_authenticate(self, wab_login, ip_client, password):
+    def password_authenticate(self, wab_login, ip_client, password, server_ip):
         print ('password_authenticate(%s %s %s)' % (wab_login, ip_client, password))
         res = False
         try:
@@ -1733,7 +1733,7 @@ class Engine(object):
             pass
         return res
 
-    def passthrough_authenticate(self, wab_login, ip_client):
+    def passthrough_authenticate(self, wab_login, ip_client, server_ip):
         print ('passthrough_authenticate(%s %s)' % (wab_login, ip_client))
         try:
             if self.config_users[self.wab_login]['passthrough_authenticate']:
