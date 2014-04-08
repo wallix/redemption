@@ -72,7 +72,7 @@ private:
             "Dans la zone de saisie mot de passe,<br>"
             "entrez le mot de passe du compte.<br>"
             "<br>"
-            "Les deux champs sont sensibles à la case.<br>"
+            "Les deux champs sont sensibles à la casse.<br>"
             "<br>"
             "Contactez votre administrateur système en<br>"
             "cas de problème pour vous connecter.";

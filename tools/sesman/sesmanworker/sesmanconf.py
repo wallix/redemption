@@ -111,7 +111,7 @@ class SesmanConfig(object):
                  +u"Dans la zone de saisie mot de passe,<br>"
                  +u"entrez le mot de passe du compte.<br>"
                  +u"<br>"
-                 +u"Les deux champs sont sensibles à la case.<br>"
+                 +u"Les deux champs sont sensibles à la casse.<br>"
                  +u"<br>"
                  +u"Contactez votre administrateur système en<br>"
                  +u"cas de problème pour vous connecter."

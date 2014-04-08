@@ -37,6 +37,7 @@ enum EventType {
     TEXT_CHANGED,
     WIDGET_SUBMIT,
     WIDGET_CANCEL,
+    SELECTION_CHANGED
 };
 
 enum NotifyEventType {
@@ -81,6 +82,7 @@ public:
     int focus_flag;
     int pointer_flag;
     bool has_focus;
+    int notify_value;
 
 public:
     Widget2(DrawApi & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0)
@@ -97,6 +99,7 @@ public:
     , focus_flag(NORMAL_FOCUS)
     , pointer_flag(NORMAL_POINTER)
     , has_focus(false)
+    , notify_value(0)
     {
     }
 
