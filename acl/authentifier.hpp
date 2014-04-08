@@ -147,6 +147,14 @@ public:
         }
     }
 
+    void set_timeout(uint32_t max_tick, time_t now, Transport & trans) {
+        uint32_t timeout = max_tick?30*max_tick:10;
+        LOG(LOG_INFO, "Session User inactivity : set timeout to %u seconds", timeout);
+        this->last_activity_time = now;
+        this->last_total_received = trans.total_received;
+        this->inactivity_timeout = timeout;
+    }
+
     bool check(time_t now, Transport & trans) {
         if (trans.total_received == this->last_total_received) {
             if (now > this->last_activity_time + this->inactivity_timeout) {
