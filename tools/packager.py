@@ -11,7 +11,7 @@ import datetime
 import re
 
 def usage():
-  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--no-entry-changelog] [--force-distro name] [--force-distro-codename name] [--no-buildpackage] [--no-commit] [--no-tag] [--debug] --tag version" % sys.argv[0])
+  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--no-entry-changelog] [--force-distro name] [--force-distro-codename name] [--no-buildpackage] [--no-git-commit] [--no-git-tag] [--debug] --tag version" % sys.argv[0])
 
 try:
   opts, args = getopt.getopt(sys.argv[1:], "h",
@@ -19,7 +19,7 @@ try:
                               "prefix=", "etc-prefix=", "cert-prefix=",
                               "no-entry-changelog", "no-buildpackage",
                               "force-distro=", "force-distro-codename=",
-                              "no-commit", "no-tag", "debug"])
+                              "no-git-commit", "no-git-tag", "debug"])
 except getopt.GetoptError as err:
   print(str(err))
   usage()
@@ -60,9 +60,9 @@ for o,a in opts:
     force_distro_codename = a
   elif o == "--no-buildpackage":
     buildpackage = False
-  elif o == "--no-commit":
+  elif o == "--no-git-commit":
     git_commit = False
-  elif o == "--no-tag":
+  elif o == "--no-git-tag":
     git_tag = False
   elif o == "--debug":
     debug = True
@@ -109,8 +109,17 @@ def _test_condition(filename, num, l, vars):
       test = True
     if idx:
       a = a[idx:]
+
   if len(a) < 2 or not a[1]:
     raise Exception("conditional error in '%s' at line %s" % (filename, num))
+
+  if a[0] in ['version-less', 'version-or-less']:
+    if not (len(a) == 2 or (len(a) == 3 and a[2] == '')):
+      raise Exception("%s too many argument in '%s' at line %s" % (a[0], filename, num))
+    if a[0] == 'version-less':
+      return (vars['version'] < float(a[1])) == test
+    return (vars['version'] <= float(a[1])) == test
+  
   if not a[0] in vars:
     raise Exception("test '%s' unknow in '%s' at line %s" % (a[0], filename, num))
   x = vars[a[0]]
@@ -162,8 +171,8 @@ def _parse_template(filename, num, f, vars, rec = 0, stateif = False, addtext = 
   return num,out
 
 
-def parse_template(filename, distro, codename, arch):
-  vars = {'dist': distro, 'codename':codename, 'arch': arch}
+def parse_template(filename, distro, codename, version, arch):
+  vars = {'dist': distro, 'codename':codename, 'version': float(version), 'arch': arch}
   with open(filename) as f:
     num,out = _parse_template(filename, 0, f, vars)
     return out
@@ -179,8 +188,7 @@ try:
 
   os.mkdir("debian", 0766)
 
-  if force_distro == None or (force_distro == 'ubuntu' and force_distro_codename == None):
-    distro, distro_release, distro_codename = distroinfo.get_distro()
+  distro, distro_release, distro_codename = distroinfo.get_distro()
   if force_distro != None:
     distro = force_distro
   if force_distro_codename != None:
@@ -224,7 +232,8 @@ try:
   writeall("debian/changelog",
            changelog.replace('%target_name', target).replace('%pkg_distribution', package_distribution))
 
-  out = parse_template("%s/control" % packagetemp, distro, distro_codename, distroinfo.get_arch())
+  out = parse_template("%s/control" % packagetemp,
+                       distro, distro_codename, distro_release, distroinfo.get_arch())
   writeall("debian/control", out.replace('%REDEMPTION_VERSION', tag))
 
   shutil.copy("%s/compat" % packagetemp, "debian/compat")

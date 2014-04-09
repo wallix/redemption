@@ -1,15 +1,16 @@
-<test>  ::= dist | codename | arch
+<test>  ::= dist | codename | version | arch
+<cmp>   ::= version-less | version-or-less
 <names> ::= ({ \w+ })
-<expr>  ::= [ not ] <test> <names>
+<expr>  ::= [ not ] ( <test> <names> | <cmp> <floatnumber> )
 <if>    ::= @if <expr>
 <elif>  ::= @elif <expr>
 <else>  ::= @else
 <endif> ::= @endif
 <stmt>  ::= <if>
   [ text ]
-[ ({ <elif> })
+[ ({ <elif>
     [ text ]
-]
+}) ]
 [ <else>
     [ text ]
 ]

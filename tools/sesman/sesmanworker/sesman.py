@@ -225,7 +225,6 @@ class Sesman():
         return _status, _error
 
     def parse_username(self, wab_login, target_login, target_device, proto_dest):
-
         if ((SESMANCONF[u'sesman'][u'use_default_login'].strip() == u'2')
         and len(SESMANCONF[u'sesman'][u'default_login'].strip())):
             target_login = wab_login
@@ -355,7 +354,12 @@ class Sesman():
 
         try:
             #Check if X509 Authentication is active
-            if self.engine.is_x509_connected(wab_login, self.shared.get(u'ip_client'), self.shared.get(u'proxy_type'), None if target_device == MAGICASK else target_device):
+            if self.engine.is_x509_connected(
+                        wab_login,
+                        self.shared.get(u'ip_client'),
+                        self.shared.get(u'proxy_type'),
+                        None if target_device == MAGICASK else target_device,
+                        self.shared.get(u'ip_target')):
                 # Prompt the user in proxy window
                  # Wait for confirmation from GUI (or timeout)
                 if not (self.interactive_ask_x509_connection() and self.engine.x509_authenticate()):
@@ -364,7 +368,8 @@ class Sesman():
                 # Passthrough Authentification
                 if not self.engine.passthrough_authenticate(
                         wab_login,
-                        self.shared.get(u'ip_client')):
+                        self.shared.get(u'ip_client'),
+                        self.shared.get(u'ip_target')):
                     self.engine.challenge = None
                     return None, TR(u"passthrough_auth_failed_wab %s") % wab_login
             else:
@@ -373,7 +378,8 @@ class Sesman():
                     or not self.engine.password_authenticate(
                         wab_login,
                         self.shared.get(u'ip_client'),
-                        self.shared.get(u'password'))):
+                        self.shared.get(u'password'),
+                        self.shared.get(u'ip_target'))):
                     if self.shared.get(u'password') == MAGICASK:
                         self.engine.challenge = None
                     return None, TR(u"auth_failed_wab %s") % wab_login
