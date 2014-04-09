@@ -206,6 +206,14 @@ public:
         this->rect.y = y;
     }
 
+    virtual void set_wh(int16_t w, int16_t h)
+    {
+        this->rect.cx = w;
+        this->rect.cy = h;
+    }
+
+    virtual void set_color(uint32_t bg_color, uint32_t fg_color) {}
+
     virtual void focus()
     {
         if (!this->has_focus){

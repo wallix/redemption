@@ -612,4 +612,6 @@ unit-test test_linelayout : tests/mod/internal/widget2/test_linelayout.cpp crypt
 
 unit-test test_stacklayout : tests/mod/internal/widget2/test_stacklayout.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
+unit-test test_grid : tests/mod/internal/widget2/test_grid.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
 

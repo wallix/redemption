@@ -16,59 +16,196 @@
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2014
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
-
 */
 
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_GRID_HPP_
 #define _REDEMPTION_MOD_INTERNAL_WIDGET_GRID_HPP_
+
 #include "log.hpp"
+#include "widget.hpp"
 
 static const size_t GRID_NB_COLUMN_MAX = 10;
 static const size_t GRID_NB_LINES_MAX = 50;
 
-enum ResizeStrategy {
-    STRATEGY_OPTIMAL,
-    STRATEGY_REST,
-}
+enum SizingStrategy {
+    STRATEGY_OPTIMAL, // Use minimal, optimal and maximal triplet to determinate the width of a column.
+    STRATEGY_WEIGHT,
+};
+
+enum SizingStrategyInfo {
+    INFO_STRATEGY = 0,
+    INFO_MAX = 1,
+    INFO_WEIGHT = 1,
+    INFO_MIN = 2,
+
+    INFO_TOTAL = 3
+};
 
 struct WidgetGrid : public Widget2 {
     Widget2 * widgets[GRID_NB_COLUMN_MAX][GRID_NB_LINES_MAX];
-    void * meta[GRID_NB_COLUMN_MAX][GRID_NB_LINES_MAX];
-    uint16_t min_max[GRID_NB_COLUMN_MAX][3]
+    void * meta_data[GRID_NB_COLUMN_MAX][GRID_NB_LINES_MAX];
+    uint16_t sizing_strategy[GRID_NB_COLUMN_MAX][INFO_TOTAL];
     size_t nb_cols;
+private:
+    uint16_t column_width[GRID_NB_COLUMN_MAX];
+    uint16_t line_height[GRID_NB_LINES_MAX];
 
-    WidgetGrid(DrawApi & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, size_t nb_columns, int group_id = 0)
+public:
+    uint32_t bg_color_1;
+    uint32_t fg_color_1;
+
+    uint32_t bg_color_2;
+    uint32_t fg_color_2;
+
+    uint32_t bg_color_focus;
+    uint32_t fg_color_focus;
+
+    uint32_t bg_color_selection;
+    uint32_t fg_color_selection;
+
+    uint16_t border;
+
+    WidgetGrid(DrawApi & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, size_t nb_columns,
+               uint32_t bg_color_1, uint32_t fg_color_1, uint32_t bg_color_2, uint32_t fg_color_2,
+               uint32_t bg_color_focus, uint32_t fg_color_focus, uint32_t bg_color_selection, uint32_t fg_color_selection,
+               uint16_t border = 0, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , widgets()
-        , meta()
-        , min_max()
+        , meta_data()
+        , sizing_strategy()
         , nb_cols(nb_columns)
+        , column_width()
+        , line_height()
+        , bg_color_1(bg_color_1)
+        , fg_color_1(fg_color_1)
+        , bg_color_2(bg_color_2)
+        , fg_color_2(fg_color_2)
+        , bg_color_focus(bg_color_focus)
+        , fg_color_focus(fg_color_focus)
+        , bg_color_selection(bg_color_selection)
+        , fg_color_selection(fg_color_selection)
+        , border(border)
     {
         REDASSERT(nb_columns <= GRID_NB_COLUMN_MAX);
     }
 
-    ~Grid() {
+    virtual ~WidgetGrid() {
     }
 
-
-    virtual void draw(Rect & clip) {
-
+    void clear() {
+        for (size_t col = 0; col < this->nb_cols; col++) {
+            for (size_t line = 1; line < GRID_NB_LINES_MAX; line++) {
+                this->widgets[col][line] = NULL;
+                this->meta_data[col][line] = NULL;
+            }
+        }
     }
 
-    Widget2 * set_widget(size_t line_index, size_t column_index, Widget2 * w,
-                         const void * meta_data = NULL) {
-        REDASSERT(column_index <= this->nb_cols);
-        REDASSERT(line_index <= GRID_NB_LINES_MAX);
-        Widget2 * res = this->widgets[column_index][line_index];
-        this->widgets[column_index][line_index] = w;
-        this->meta_data[column_index][line_index] = meta_data;
-        return res;
+private:
+    void compute_dimension() {
+        memset(this->column_width, 0, sizeof(this->column_width));
+        memset(this->line_height, 0, sizeof(this->line_height));
+
+        for (unsigned line_index = 0; line_index < GRID_NB_LINES_MAX; line_index++) {
+            bool line_empty = true;
+            for (unsigned column_index = 0; column_index < this->nb_cols; column_index++) {
+                Widget2 * w = this->widgets[column_index][line_index];
+                if (!w) {
+                    continue;
+                }
+                line_empty = false;
+
+                Dimension dim = w->get_optimal_dim();
+                if (this->sizing_strategy[column_index][INFO_STRATEGY] == STRATEGY_OPTIMAL) {
+                    if (this->column_width[column_index] < dim.w) {
+                        this->column_width[column_index] = dim.w;
+                    }
+                }
+
+                if (this->line_height[line_index] < dim.h) {
+                    this->line_height[line_index] = dim.h;
+                }
+            }
+
+            if (line_empty) {
+                break;
+            }
+        }
+
+        uint16_t used_width         = 0;
+        uint16_t total_weight       = 0;
+        uint16_t total_border_width = 0;
+        for (unsigned column_index = 0; column_index < this->nb_cols; column_index++) {
+            if (this->sizing_strategy[column_index][INFO_STRATEGY] == STRATEGY_OPTIMAL) {
+                if (this->column_width[column_index] < this->sizing_strategy[column_index][INFO_MIN]) {
+                    this->column_width[column_index] = this->sizing_strategy[column_index][INFO_MIN];
+                }
+                else if (this->column_width[column_index] > this->sizing_strategy[column_index][INFO_MAX]) {
+                    this->column_width[column_index] = this->sizing_strategy[column_index][INFO_MAX];
+                }
+
+                used_width += this->column_width[column_index];
+                total_border_width += (this->column_width[column_index] ? this->border * 2 : 0);
+            }
+            else {
+                total_weight += this->sizing_strategy[column_index][INFO_WEIGHT];
+                total_border_width += (this->sizing_strategy[column_index][INFO_WEIGHT] ? this->border * 2 : 0);
+            }
+        }
+
+        if (!total_weight) {
+            total_weight = 1;
+        }
+
+        uint16_t unused_width = this->rect.cx - total_border_width - used_width;
+        for (unsigned column_index = 0; column_index < this->nb_cols; column_index++) {
+            if (this->sizing_strategy[column_index][INFO_STRATEGY] == STRATEGY_WEIGHT) {
+                this->column_width[column_index] = this->sizing_strategy[column_index][INFO_WEIGHT] * unused_width / total_weight;
+            }
+        }
     }
-    Widget2 * get_widget(size_t line_index, size_t column_index, Widget2 * w,
-                         const void * meta_data = NULL) {
-        REDASSERT(column_index <= this->nb_cols);
-        REDASSERT(line_index <= GRID_NB_LINES_MAX);
-        return this->widgets[column_index][line_index];
+
+public:
+    virtual void draw(const Rect & clip) {
+        this->compute_dimension();
+
+        bool odd = true;
+        uint16_t y = this->rect.y + this->border;
+        for (unsigned line_index = 0; line_index < GRID_NB_LINES_MAX; line_index++) {
+            if (!this->line_height[line_index]) {
+                break;
+            }
+
+            uint32_t bg_color;
+            uint32_t fg_color;
+
+            bg_color = (odd ? this->bg_color_1 : this->bg_color_2);
+            fg_color = (odd ? this->fg_color_1 : this->fg_color_2);
+
+            uint16_t x = this->rect.x + this->border;
+
+            Rect rectLine(this->rect.x, y - this->border, this->rect.cx, this->line_height[line_index] + this->border * 2);
+            this->drawable.draw(RDPOpaqueRect(rectLine, bg_color), clip);
+
+            for (unsigned column_index = 0; column_index < this->nb_cols; column_index++) {
+
+                Widget2 * w = this->widgets[column_index][line_index];
+                Rect rectCell(x, y, this->column_width[column_index], this->line_height[line_index]);
+                if (w) {
+                    w->set_xy(rectCell.x, rectCell.y);
+                    w->set_wh(rectCell.cx, rectCell.cy);
+
+                    w->set_color(bg_color, fg_color);
+                    w->draw(clip.intersect(rectCell));
+                }
+
+                x += this->column_width[column_index] + this->border * 2;
+            }
+
+            y += this->line_height[line_index] + this->border * 2;
+
+            odd = !odd;
+        }
     }
 
     void * get_meta_data(size_t line_index, size_t column_index) {
@@ -76,29 +213,50 @@ struct WidgetGrid : public Widget2 {
         REDASSERT(line_index <= GRID_NB_LINES_MAX);
         return this->meta_data[column_index][line_index];
     }
+    void * set_meta_data(size_t line_index, size_t column_index, void * meta_data) {
+        REDASSERT(column_index <= this->nb_cols);
+        REDASSERT(line_index <= GRID_NB_LINES_MAX);
+        void * res = this->meta_data[column_index][line_index];
+        this->meta_data[column_index][line_index] = meta_data;
+        return res;
+    }
 
-    void clear() {
-        for (size_t col = 0; col < this->nb_cols; col++) {
-            for (size_t line = 1; entry < GRID_NB_LINES_MAX; line++) {
-                this->widgets[col][entry] = NULL;
-                this->meta[col][entry] = NULL;
-            }
-        }
+    Widget2 * get_widget(size_t line_index, size_t column_index) {
+        REDASSERT(column_index <= this->nb_cols);
+        REDASSERT(line_index <= GRID_NB_LINES_MAX);
+        return this->widgets[column_index][line_index];
+    }
+    Widget2 * set_widget(size_t line_index, size_t column_index, Widget2 * w,
+                         void * meta_data = NULL) {
+        REDASSERT(column_index <= this->nb_cols);
+        REDASSERT(line_index <= GRID_NB_LINES_MAX);
+        Widget2 * res = this->widgets[column_index][line_index];
+        this->widgets[column_index][line_index] = w;
+        this->meta_data[column_index][line_index] = meta_data;
+        return res;
     }
 
     void print() {
-        size_t entries = 0;
-        for(entries = 0; entries < GRID_NB_LINES_MAX; entries++) {
-            printf("line %lu :\n", entries);
-            for(size_t j = 0; j < this->nb_cols; j++) {
-                Widget2 * w = this->widgets[j][entries];
+        size_t line = 0;
+        for(line = 0; line < GRID_NB_LINES_MAX; line++) {
+            printf("line %lu :\n", line);
+            for(size_t col = 0; col < this->nb_cols; col++) {
+                Widget2 * w = this->widgets[col][line];
                 printf("%s, ", w?"*":".");
             }
             printf("\n");
-            printf("end line %lu\n", entries);
+            printf("end line %lu\n", line);
         }
     }
 
+    void set_sizing_strategy(size_t column_index, SizingStrategy sizing_strategy, uint16_t max_or_weight, uint16_t min = 0) {
+        REDASSERT(column_index <= this->nb_cols);
+        REDASSERT((sizing_strategy == STRATEGY_OPTIMAL) || (min == 0));
+
+        this->sizing_strategy[column_index][INFO_STRATEGY] = sizing_strategy;
+        this->sizing_strategy[column_index][INFO_MAX]      = max_or_weight;
+        this->sizing_strategy[column_index][INFO_MIN]      = min;
+    }
 };
 
 #endif

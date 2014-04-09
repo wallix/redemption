@@ -196,6 +196,12 @@ public:
             }
         }
     }
+
+    virtual Dimension get_optimal_dim() {
+        int w, h;
+        this->drawable.text_metrics(this->label.buffer, w, h);
+        return Dimension(w + 2*this->label.x_text + 4, h + 2*this->label.y_text + 4);
+    }
 };
 
 #endif

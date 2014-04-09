@@ -33,8 +33,8 @@ public:
     int initial_x_text;
     int x_text;
     int y_text;
-    int bg_color;
-    int fg_color;
+    uint32_t bg_color;
+    uint32_t fg_color;
     bool auto_resize;
 
     int w_border;
@@ -43,7 +43,7 @@ public:
 public:
     WidgetLabel(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
                 NotifyApi* notifier, const char * text, bool auto_resize,
-                int group_id, int fgcolor, int bgcolor,
+                int group_id, uint32_t fgcolor, uint32_t bgcolor,
                 int xtext = 0, int ytext = 0)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , initial_x_text(xtext)
@@ -117,6 +117,10 @@ public:
         return res;
     }
 
+    virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
+        this->bg_color = bg_color;
+        this->fg_color = fg_color;
+    }
 };
 
 #endif
