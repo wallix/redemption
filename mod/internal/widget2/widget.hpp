@@ -212,7 +212,8 @@ public:
         this->rect.cy = h;
     }
 
-    virtual void set_color(uint32_t bg_color, uint32_t fg_color) {}
+    virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
+    }
 
     virtual void focus()
     {

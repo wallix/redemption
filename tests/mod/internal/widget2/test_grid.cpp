@@ -24,8 +24,8 @@
 #define BOOST_TEST_MODULE TestWidgetGrid
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include "internal/widget2/label.hpp"
@@ -60,8 +60,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     bool auto_resize = true;
     int16_t x = 10;
     int16_t y = 10;
-    int xtext = 4;
-    int ytext = 1;
+    // int xtext = 4;
+    // int ytext = 1;
 
     const uint16_t line_number   = 5;
     const uint16_t column_number = 4;
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
          "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
          "these possibilities (and others) are supported in RDPGlyphIndex")
     WidgetGrid wgrid(drawable, Rect(x, y, 640, 480), parent, notifier, column_number,
-        PALE_BLUE, BLACK, LIGHT_BLUE, BLACK, WHITE, WINBLUE, WHITE, MEDIUM_BLUE,
+        PALE_BLUE, BLACK, LIGHT_BLUE, BLACK, WINBLUE, WHITE, MEDIUM_BLUE, WHITE,
         grid_border, id);
 
     wgrid.set_sizing_strategy(0, STRATEGY_OPTIMAL, 30, 100);
@@ -99,6 +99,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
         }
     }
 
+    wgrid.selection_index = 2;
 
     // ask to widget to redraw at it's current position
     wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
@@ -106,7 +107,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "grid.png");
+    // wgrid.draw_line(2, Rect(0 + wgrid.dx(),
+    //                                 0 + wgrid.dy(),
+    //                                 wgrid.cx(),
+    //                                 wgrid.cy()));
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "grid.png");
 
 
     wgrid.clear();
@@ -117,8 +123,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa7\x3c\x8c\xf0\xdd\x7a\xb6\x70\xfc\x54"
-        "\x03\xe3\xf3\xba\xc4\xa8\xf1\x9f\x87\x0e")){
+        "\x8f\xff\x23\xa2\xa0\x8d\x48\x5b\x01\xaf"
+        "\x75\x4a\xb3\xe5\xc9\xd4\xea\x51\x40\x3c")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

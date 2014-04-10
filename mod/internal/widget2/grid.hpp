@@ -46,6 +46,8 @@ struct WidgetGrid : public Widget2 {
     void * meta_data[GRID_NB_COLUMN_MAX][GRID_NB_LINES_MAX];
     uint16_t sizing_strategy[GRID_NB_COLUMN_MAX][INFO_TOTAL];
     size_t nb_cols;
+    size_t nb_lines;
+
 private:
     uint16_t column_width[GRID_NB_COLUMN_MAX];
     uint16_t line_height[GRID_NB_LINES_MAX];
@@ -65,6 +67,30 @@ public:
 
     uint16_t border;
 
+    uint16_t selection_index;
+
+    bool need_rearrange;
+
+    struct difftimer {
+        uint64_t t;
+
+        difftimer(uint64_t start = 0)
+            : t(start)
+        {}
+
+        uint64_t tick()
+        {
+            uint64_t ret = this->t;
+            this->t = ustime();
+            return this->t - ret;
+        }
+
+        void update()
+        {
+            this->t = ustime();
+        }
+    } click_interval;
+
     WidgetGrid(DrawApi & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, size_t nb_columns,
                uint32_t bg_color_1, uint32_t fg_color_1, uint32_t bg_color_2, uint32_t fg_color_2,
                uint32_t bg_color_focus, uint32_t fg_color_focus, uint32_t bg_color_selection, uint32_t fg_color_selection,
@@ -74,6 +100,7 @@ public:
         , meta_data()
         , sizing_strategy()
         , nb_cols(nb_columns)
+        , nb_lines(0)
         , column_width()
         , line_height()
         , bg_color_1(bg_color_1)
@@ -85,6 +112,9 @@ public:
         , bg_color_selection(bg_color_selection)
         , fg_color_selection(fg_color_selection)
         , border(border)
+        , selection_index(static_cast<uint16_t>(-1u))
+        , need_rearrange(false)
+        , click_interval()
     {
         REDASSERT(nb_columns <= GRID_NB_COLUMN_MAX);
     }
@@ -106,7 +136,8 @@ private:
         memset(this->column_width, 0, sizeof(this->column_width));
         memset(this->line_height, 0, sizeof(this->line_height));
 
-        for (unsigned line_index = 0; line_index < GRID_NB_LINES_MAX; line_index++) {
+        unsigned line_index = 0;
+        for (; line_index < GRID_NB_LINES_MAX; line_index++) {
             bool line_empty = true;
             for (unsigned column_index = 0; column_index < this->nb_cols; column_index++) {
                 Widget2 * w = this->widgets[column_index][line_index];
@@ -131,6 +162,8 @@ private:
                 break;
             }
         }
+
+        this->nb_lines = line_index;
 
         uint16_t used_width         = 0;
         uint16_t total_weight       = 0;
@@ -167,44 +200,68 @@ private:
 
 public:
     virtual void draw(const Rect & clip) {
-        this->compute_dimension();
+        if (this->need_rearrange) {
+            this->compute_dimension();
 
-        bool odd = true;
-        uint16_t y = this->rect.y + this->border;
-        for (unsigned line_index = 0; line_index < GRID_NB_LINES_MAX; line_index++) {
-            if (!this->line_height[line_index]) {
-                break;
-            }
+            this->need_rearrange = false;
+        }
 
-            uint32_t bg_color;
-            uint32_t fg_color;
+        for (unsigned line_index = 0; line_index < this->nb_lines; line_index++) {
+            this->draw_line(line_index, clip);
+        }
+    }
 
+    void draw_line(uint16_t line_index, const Rect & clip) {
+        if (this->need_rearrange) {
+            this->compute_dimension();
+
+            this->need_rearrange = false;
+        }
+
+        bool odd = line_index & 1;
+
+        uint16_t y = this->rect.y;
+        for (uint16_t l_index = 0, l_count = std::min<uint16_t>(line_index, this->nb_lines);
+             l_index < l_count; l_index++) {
+            y += this->line_height[l_index] + this->border * 2;
+        }
+
+        uint32_t bg_color;
+        uint32_t fg_color;
+
+        if (this->selection_index == line_index) {
+            bg_color = (this->has_focus ? this->bg_color_focus : this->bg_color_selection);
+            fg_color = (this->has_focus ? this->fg_color_focus : this->fg_color_selection);
+        }
+        else {
             bg_color = (odd ? this->bg_color_1 : this->bg_color_2);
             fg_color = (odd ? this->fg_color_1 : this->fg_color_2);
+        }
 
-            uint16_t x = this->rect.x + this->border;
+        uint16_t x = this->rect.x;
 
-            Rect rectLine(this->rect.x, y - this->border, this->rect.cx, this->line_height[line_index] + this->border * 2);
-            this->drawable.draw(RDPOpaqueRect(rectLine, bg_color), clip);
+        Rect rectLine(x, y, this->rect.cx, this->line_height[line_index] + this->border * 2);
+        this->drawable.draw(RDPOpaqueRect(rectLine, bg_color), clip);
 
-            for (unsigned column_index = 0; column_index < this->nb_cols; column_index++) {
+        x += this->border;
+        y += this->border;
 
-                Widget2 * w = this->widgets[column_index][line_index];
-                Rect rectCell(x, y, this->column_width[column_index], this->line_height[line_index]);
-                if (w) {
-                    w->set_xy(rectCell.x, rectCell.y);
-                    w->set_wh(rectCell.cx, rectCell.cy);
+        for (unsigned column_index = 0; column_index < this->nb_cols; column_index++) {
+            Widget2 * w = this->widgets[column_index][line_index];
+            Rect rectCell(x, y, this->column_width[column_index], this->line_height[line_index]);
+            if (w) {
+                w->set_xy(rectCell.x, rectCell.y);
+                w->set_wh(rectCell.cx, rectCell.cy);
 
-                    w->set_color(bg_color, fg_color);
-                    w->draw(clip.intersect(rectCell));
+                w->set_color(bg_color, fg_color);
+
+                Rect finalRect = clip.intersect(rectCell);
+                if (!finalRect.isempty()) {
+                    w->draw(finalRect);
                 }
-
-                x += this->column_width[column_index] + this->border * 2;
             }
 
-            y += this->line_height[line_index] + this->border * 2;
-
-            odd = !odd;
+            x += this->column_width[column_index] + this->border * 2;
         }
     }
 
@@ -233,20 +290,9 @@ public:
         Widget2 * res = this->widgets[column_index][line_index];
         this->widgets[column_index][line_index] = w;
         this->meta_data[column_index][line_index] = meta_data;
-        return res;
-    }
 
-    void print() {
-        size_t line = 0;
-        for(line = 0; line < GRID_NB_LINES_MAX; line++) {
-            printf("line %lu :\n", line);
-            for(size_t col = 0; col < this->nb_cols; col++) {
-                Widget2 * w = this->widgets[col][line];
-                printf("%s, ", w?"*":".");
-            }
-            printf("\n");
-            printf("end line %lu\n", line);
-        }
+        this->need_rearrange = true;
+        return res;
     }
 
     void set_sizing_strategy(size_t column_index, SizingStrategy sizing_strategy, uint16_t max_or_weight, uint16_t min = 0) {
@@ -256,6 +302,73 @@ public:
         this->sizing_strategy[column_index][INFO_STRATEGY] = sizing_strategy;
         this->sizing_strategy[column_index][INFO_MAX]      = max_or_weight;
         this->sizing_strategy[column_index][INFO_MIN]      = min;
+
+        this->need_rearrange = true;
+    }
+
+    virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
+    {
+        if (this->need_rearrange) {
+            this->compute_dimension();
+
+            this->need_rearrange = false;
+        }
+
+
+        for (unsigned line_index = 0; line_index < this->nb_lines; line_index++) {
+            bool empty_line = true;
+            for (unsigned column_index = 0; column_index < this->nb_cols; column_index++) {
+                if (this->widgets[column_index][line_index]) {
+                    empty_line = false;
+
+                    if (this->widgets[column_index][line_index]->rect.contains_pt(x, y)) {
+                        return this->widgets[column_index][line_index];
+                    }
+                }
+            }
+
+            if (empty_line) {
+                break;
+            }
+        }
+        return NULL;
+    }
+
+    void set_selected_index(uint16_t line_index) {
+    }
+
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+    {
+        if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+            if (this->need_rearrange) {
+                this->compute_dimension();
+
+                this->need_rearrange = false;
+            }
+
+            uint16_t y = this->rect.y;
+            for (uint16_t line_index = 0; line_index < this->nb_lines; line_index++) {
+                y += this->line_height[line_index] + this->border * 2;
+                uint16_t x = this->rect.x;
+
+                Rect rectLine(x, y, this->rect.cx, this->line_height[line_index] + this->border * 2);
+
+                if (rectLine.contains_pt(x, y)) {
+                    if (line_index != this->selection_index) {
+                        this->click_interval.update();
+                        this->set_selected_index(line_index);
+                    }
+                    else {
+                        if (this->click_interval.tick() <= 700000LL) {
+                            this->send_notify(NOTIFY_SUBMIT);
+                            return ;
+                        }
+                    }
+                }
+            }
+        }
+
+        Widget2::rdp_input_mouse(device_flags, x, y, keymap);
     }
 };
 
