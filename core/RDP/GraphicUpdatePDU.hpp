@@ -238,7 +238,6 @@ protected:
             }
             this->stream_orders.set_out_uint16_le(this->order_count, this->offset_order_count);
 
-            this->fastpath_support = false;
             if (this->fastpath_support == false) {
                 if (this->ini.debug.primary_orders > 3){
                     LOG(LOG_INFO, "GraphicsUpdatePDU::flush_orders:slow-path");
