@@ -48,7 +48,11 @@ class Engine(object):
         """
         try:
             from wabx509 import AuthX509
-            self.auth_x509 = AuthX509(wab_login, ip_client, proxy_type, target, server_ip)
+            self.auth_x509 = AuthX509(username = wab_login,
+                                      ip = ip_client,
+                                      requestor = proxy_type,
+                                      target = target,
+                                      server_ip = server_ip)
             result = self.auth_x509.is_connected()
             return result
         except Exception, e:
@@ -73,8 +77,11 @@ class Engine(object):
         try:
             from wabengine.client.sync_client import SynClient
             self.client = SynClient('localhost', 'tcp:8803')
-            self.wabengine = self.client.authenticate(wab_login, password,
-                                                      ip_client, self.challenge, False, server_ip)
+            self.wabengine = self.client.authenticate(username = wab_login,
+                                                      password = password,
+                                                      ip_source = ip_client,
+                                                      challenge = self.challenge,
+                                                      server_ip = server_ip)
             self.challenge = None
             if self.wabengine is not None:
                 self.user = self.wabengine.who_am_i()
@@ -94,8 +101,10 @@ class Engine(object):
         try:
             from wabengine.client.sync_client import SynClient
             self.client = SynClient('localhost', 'tcp:8803')
-            self.wabengine = self.client.authenticate_gssapi(wab_login, "realm",
-                                                             ip_client, server_ip)
+            self.wabengine = self.client.authenticate_gssapi(username = wab_login,
+                                                             realm = "realm",
+                                                             ip_source = ip_client,
+                                                             server_ip = server_ip)
             self.challenge = None
             if self.wabengine is not None:
                 self.user = self.wabengine.who_am_i()

@@ -940,7 +940,6 @@ class Sesman():
 
                         self.send_data(kv)
 
-                        self.shared
                         Logger().info(u"Added connection to active WAB services")
 
                         # Looping on keepalived socket
