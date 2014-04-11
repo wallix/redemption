@@ -74,10 +74,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
         PALE_BLUE, BLACK, LIGHT_BLUE, BLACK, WINBLUE, WHITE, MEDIUM_BLUE, WHITE,
         grid_border, id);
 
-    wgrid.set_sizing_strategy(0, STRATEGY_OPTIMAL, 30, 100);
-    wgrid.set_sizing_strategy(1, STRATEGY_OPTIMAL, 30, 100);
-    wgrid.set_sizing_strategy(2, STRATEGY_WEIGHT, 30);
-    wgrid.set_sizing_strategy(3, STRATEGY_OPTIMAL, 30, 100);
+    wgrid.set_sizing_strategy(0, STRATEGY_OPTIMAL, 400, 100);
+    wgrid.set_sizing_strategy(1, STRATEGY_OPTIMAL, 200, 100);
+    wgrid.set_sizing_strategy(2, STRATEGY_WEIGHT, 100);
+    wgrid.set_sizing_strategy(3, STRATEGY_OPTIMAL, 200, 100);
 
     Widget2  * widgetTable[128] = { 0 };
     uint16_t   widget_count     = 0;
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
         }
     }
 
-    wgrid.selection_index = 2;
+    wgrid.set_selection(2, static_cast<uint16_t>(-1));
 
     // ask to widget to redraw at it's current position
     wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
@@ -107,25 +107,81 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    // wgrid.draw_line(2, Rect(0 + wgrid.dx(),
-    //                                 0 + wgrid.dy(),
-    //                                 wgrid.cx(),
-    //                                 wgrid.cy()));
-
     drawable.save_to_png(OUTPUT_FILE_PATH "grid.png");
-
-
-    wgrid.clear();
-
-    for (Widget2 ** w = widgetTable; *w; w++) {
-        delete (*w);
-    }
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
         "\x8f\xff\x23\xa2\xa0\x8d\x48\x5b\x01\xaf"
         "\x75\x4a\xb3\xe5\xc9\xd4\xea\x51\x40\x3c")){
         BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+    wgrid.set_selection(4, static_cast<uint16_t>(-1));
+
+    // ask to widget to redraw at it's current position
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
+                                    0 + wgrid.dy(),
+                                    wgrid.cx(),
+                                    wgrid.cy()));
+    drawable.save_to_png(OUTPUT_FILE_PATH "grid2.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xbe\x9a\xd2\x18\x8f\xcb\x93\x89\x66\x99"
+        "\x83\xd2\x94\x07\x62\x47\x05\x97\xdc\x43")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+    uint16_t mouse_x = wgrid.dx() + 50;
+    uint16_t mouse_y = widgetTable[5]->dy();
+
+    wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, mouse_x, mouse_y, 0);
+    wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1, mouse_x, mouse_y, 0);
+    // ask to widget to redraw at it's current position
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
+                                    0 + wgrid.dy(),
+                                    wgrid.cx(),
+                                    wgrid.cy()));
+    //drawable.draw(RDPOpaqueRect(Rect(mouse_x, mouse_y, 2, 2), PINK), wgrid.rect);
+    drawable.save_to_png(OUTPUT_FILE_PATH "grid3.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x76\x3d\xfa\x50\x19\xb6\x85\xbf\x42\xfe"
+        "\xab\x1b\x95\xc8\xe4\xaa\x84\x61\xe6\x8d")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+    Keymap2 keymap;
+    keymap.init_layout(0x040C);
+
+    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
+    wgrid.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    wgrid.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    wgrid.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    wgrid.rdp_input_scancode(0,0,0,0, &keymap);
+
+    // ask to widget to redraw at it's current position
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
+                                    0 + wgrid.dy(),
+                                    wgrid.cx(),
+                                    wgrid.cy()));
+    drawable.save_to_png(OUTPUT_FILE_PATH "grid4.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x28\x09\xe5\x69\x1d\x26\xe3\xb9\x1a\xa7"
+        "\xef\x44\x5b\x2f\xad\xc9\x27\xf7\x56\xa4")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    wgrid.clear();
+
+    for (Widget2 ** w = widgetTable; *w; w++) {
+        delete (*w);
     }
 }
 
