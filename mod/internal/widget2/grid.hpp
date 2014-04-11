@@ -262,6 +262,12 @@ public:
         }
     }
 
+    uint16_t get_column_width(uint16_t column_index) {
+        REDASSERT(column_index < this->nb_columns);
+
+        return this->column_width[column_index];
+    }
+
     void * get_meta_data(uint16_t row_index, uint16_t column_index) {
         REDASSERT(column_index <= this->nb_columns);
         REDASSERT(row_index <= GRID_NB_ROWS_MAX);
