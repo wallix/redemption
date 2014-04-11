@@ -579,39 +579,6 @@ BOOST_AUTO_TEST_CASE(TestSetters)
 
 }
 
-BOOST_AUTO_TEST_CASE(TestWrittersReaders)
-{
-    NTLMContext context_write;
-    context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
-    context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-
-    NTLMContext context_read;
-    context_read.server = true;
-    SEC_STATUS status;
-    SecBuffer nego;
-    status = context_write.write_negotiate(&nego);
-    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
-    BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_CHALLENGE);
-    status = context_read.read_negotiate(&nego);
-    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
-    BOOST_CHECK_EQUAL(context_read.state, NTLM_STATE_CHALLENGE);
-
-
-    SecBuffer chal;
-    status = context_write.write_challenge(&chal);
-    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
-    BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_AUTHENTICATE);
-    status = context_read.read_challenge(&chal);
-    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
-    BOOST_CHECK_EQUAL(context_read.state, NTLM_STATE_AUTHENTICATE);
-
-    SecBuffer auth;
-    status = context_write.write_authenticate(&auth);
-    BOOST_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
-    BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_FINAL);
-    status = context_read.read_authenticate(&auth);
-    BOOST_CHECK_EQUAL(status, SEC_E_LOGON_DENIED);
-}
 
 BOOST_AUTO_TEST_CASE(TestOutputs)
 {
@@ -674,4 +641,38 @@ BOOST_AUTO_TEST_CASE(TestOutputs)
     hexdump_c(ccd_f, sizeof(ccd_f) - 1);
 
 
+}
+
+BOOST_AUTO_TEST_CASE(TestWrittersReaders)
+{
+    NTLMContext context_write;
+    context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
+    context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
+
+    NTLMContext context_read;
+    context_read.server = true;
+    SEC_STATUS status;
+    SecBuffer nego;
+    status = context_write.write_negotiate(&nego);
+    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_CHALLENGE);
+    status = context_read.read_negotiate(&nego);
+    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    BOOST_CHECK_EQUAL(context_read.state, NTLM_STATE_CHALLENGE);
+
+
+    SecBuffer chal;
+    status = context_write.write_challenge(&chal);
+    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_AUTHENTICATE);
+    status = context_read.read_challenge(&chal);
+    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    BOOST_CHECK_EQUAL(context_read.state, NTLM_STATE_AUTHENTICATE);
+
+    SecBuffer auth;
+    status = context_write.write_authenticate(&auth);
+    BOOST_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
+    BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_FINAL);
+    status = context_read.read_authenticate(&auth);
+    BOOST_CHECK_EQUAL(status, SEC_E_LOGON_DENIED);
 }
