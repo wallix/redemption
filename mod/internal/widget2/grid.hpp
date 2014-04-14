@@ -36,15 +36,15 @@ enum SizingStrategy {
 
 enum SizingStrategyInfo {
 //    INFO_STRATEGY = 0,
-    INFO_MAX = 1,
+    INFO_MAX = 0,
 //    INFO_WEIGHT = 1,
-    INFO_MIN = 2,
+    INFO_MIN = 1,
 
     INFO_TOTAL = 2
 };
 
 struct WidgetGrid : public Widget2 {
-private:
+
     Widget2  * widgets[GRID_NB_COLUMNS_MAX][GRID_NB_ROWS_MAX];
     void     * meta_data[GRID_NB_COLUMNS_MAX][GRID_NB_ROWS_MAX];
     uint16_t   sizing_strategy[GRID_NB_COLUMNS_MAX][INFO_TOTAL];
@@ -92,9 +92,12 @@ private:
     } click_interval;
 
 public:
-    WidgetGrid(DrawApi & drawable, const Rect & rect, Widget2 & parent, NotifyApi * notifier, uint16_t nb_columns,
-               uint32_t bg_color_1, uint32_t fg_color_1, uint32_t bg_color_2, uint32_t fg_color_2,
-               uint32_t bg_color_focus, uint32_t fg_color_focus, uint32_t bg_color_selection, uint32_t fg_color_selection,
+    WidgetGrid(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+               NotifyApi * notifier, uint16_t nb_columns,
+               uint32_t bg_color_1, uint32_t fg_color_1,
+               uint32_t bg_color_2, uint32_t fg_color_2,
+               uint32_t bg_color_focus, uint32_t fg_color_focus,
+               uint32_t bg_color_selection, uint32_t fg_color_selection,
                uint16_t border = 0, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , widgets()
@@ -330,8 +333,7 @@ public:
         return res;
     }
 
-    void set_sizing_strategy(uint16_t column_index, /*SizingStrategy sizing_strategy, uint16_t max_or_weight, */
-                             uint16_t min, uint16_t max) {
+    void set_sizing_strategy(uint16_t column_index, uint16_t min, uint16_t max) {
         REDASSERT(column_index <= this->nb_columns);
 //        REDASSERT((sizing_strategy != STRATEGY_OPTIMAL) || (max_or_weight >= min));
         REDASSERT((max >= min));
