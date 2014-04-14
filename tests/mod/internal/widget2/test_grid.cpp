@@ -74,10 +74,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
         PALE_BLUE, BLACK, LIGHT_BLUE, BLACK, WINBLUE, WHITE, MEDIUM_BLUE, WHITE,
         grid_border, id);
 
-    wgrid.set_sizing_strategy(0, STRATEGY_OPTIMAL, 400, 100);
-    wgrid.set_sizing_strategy(1, STRATEGY_OPTIMAL, 200, 100);
-    wgrid.set_sizing_strategy(2, STRATEGY_WEIGHT, 100);
-    wgrid.set_sizing_strategy(3, STRATEGY_OPTIMAL, 200, 100);
+    wgrid.set_sizing_strategy(0, 50, 150);
+    wgrid.set_sizing_strategy(1, 150, 800);
+    wgrid.set_sizing_strategy(2, 50, 150);
+    wgrid.set_sizing_strategy(3, 50, 100);
 
     Widget2  * widgetTable[128] = { 0 };
     uint16_t   widget_count     = 0;
@@ -111,8 +111,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x8f\xff\x23\xa2\xa0\x8d\x48\x5b\x01\xaf"
-        "\x75\x4a\xb3\xe5\xc9\xd4\xea\x51\x40\x3c")){
+        "\x9b\xe8\xa8\xa8\xbc\xc8\x02\xcd\x86\x66"
+        "\xc2\x95\xf1\x72\x6f\xa6\x90\xaa\x0c\x14")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -127,8 +127,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     drawable.save_to_png(OUTPUT_FILE_PATH "grid2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xbe\x9a\xd2\x18\x8f\xcb\x93\x89\x66\x99"
-        "\x83\xd2\x94\x07\x62\x47\x05\x97\xdc\x43")){
+        "\xab\x0a\x20\x61\xf0\x19\x4e\xed\x5c\x00"
+        "\x2c\xa2\x93\xe1\x1b\x52\x2e\x86\x77\x6c")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -147,8 +147,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     drawable.save_to_png(OUTPUT_FILE_PATH "grid3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x76\x3d\xfa\x50\x19\xb6\x85\xbf\x42\xfe"
-        "\xab\x1b\x95\xc8\xe4\xaa\x84\x61\xe6\x8d")){
+        "\xfc\xdd\x77\xb9\x39\x8b\x2f\x60\x3c\xc1"
+        "\x2b\xc6\xc0\x27\x98\x68\x5e\xf6\xce\x28")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -173,8 +173,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     drawable.save_to_png(OUTPUT_FILE_PATH "grid4.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x28\x09\xe5\x69\x1d\x26\xe3\xb9\x1a\xa7"
-        "\xef\x44\x5b\x2f\xad\xc9\x27\xf7\x56\xa4")){
+        "\x1e\x89\xac\x24\x17\xd0\x7b\x53\x17\x1f"
+        "\xb1\x3d\xbe\x19\x30\x83\x06\x1b\x32\xdf")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 

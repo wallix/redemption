@@ -27,18 +27,20 @@
 static const uint16_t GRID_NB_COLUMNS_MAX = 10;
 static const uint16_t GRID_NB_ROWS_MAX    = 50;
 
+/*
 enum SizingStrategy {
     STRATEGY_OPTIMAL, // Use minimal, optimal and maximal triplet to determinate the width of a column.
     STRATEGY_WEIGHT,
 };
+*/
 
 enum SizingStrategyInfo {
-    INFO_STRATEGY = 0,
+//    INFO_STRATEGY = 0,
     INFO_MAX = 1,
-    INFO_WEIGHT = 1,
+//    INFO_WEIGHT = 1,
     INFO_MIN = 2,
 
-    INFO_TOTAL = 3
+    INFO_TOTAL = 2
 };
 
 struct WidgetGrid : public Widget2 {
@@ -135,6 +137,8 @@ private:
         memset(this->column_width, 0, sizeof(this->column_width));
         memset(this->row_height, 0, sizeof(this->row_height));
 
+        uint16_t column_width_optimal[GRID_NB_COLUMNS_MAX] = { 0 };
+
         uint16_t row_index = 0;
         for (; row_index < GRID_NB_ROWS_MAX; row_index++) {
             bool row_empty = true;
@@ -146,11 +150,12 @@ private:
                 row_empty = false;
 
                 Dimension dim = w->get_optimal_dim();
-                if (this->sizing_strategy[column_index][INFO_STRATEGY] == STRATEGY_OPTIMAL) {
-                    if (this->column_width[column_index] < dim.w) {
-                        this->column_width[column_index] = dim.w;
-                    }
+                if (column_width_optimal[column_index] < dim.w) {
+                    column_width_optimal[column_index] = dim.w;
                 }
+                // if (this->column_width[column_index] < dim.w) {
+                //     this->column_width[column_index] = dim.w;
+                // }
 
                 if (this->row_height[row_index] < dim.h) {
                     this->row_height[row_index] = dim.h;
@@ -163,35 +168,62 @@ private:
         }
         this->nb_rows = row_index;
 
-        uint16_t used_width         = 0;
-        uint16_t total_border_width = 0;
-        uint16_t total_weight       = 0;
-        for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
-            if (this->sizing_strategy[column_index][INFO_STRATEGY] == STRATEGY_OPTIMAL) {
-                if (this->column_width[column_index] < this->sizing_strategy[column_index][INFO_MIN]) {
-                    this->column_width[column_index] = this->sizing_strategy[column_index][INFO_MIN];
-                }
-                else if (this->column_width[column_index] > this->sizing_strategy[column_index][INFO_MAX]) {
-                    this->column_width[column_index] = this->sizing_strategy[column_index][INFO_MAX];
-                }
 
-                used_width += this->column_width[column_index];
-                total_border_width += (this->column_width[column_index] ? this->border * 2 : 0);
-            }
-            else {
-                total_weight += this->sizing_strategy[column_index][INFO_WEIGHT];
-                total_border_width += (this->sizing_strategy[column_index][INFO_WEIGHT] ? this->border * 2 : 0);
+        TODO("Optiomize this");
+        uint16_t unsatisfied_column_count = 0;
+        // min
+        int16_t unused_width = static_cast<int16_t>(this->rect.cx - this->border * 2 * this->nb_columns);
+        for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
+            this->column_width[column_index] = this->sizing_strategy[column_index][INFO_MIN];
+            unused_width -= static_cast<int16_t>(this->sizing_strategy[column_index][INFO_MIN]);
+
+            if (this->column_width[column_index] < std::min(column_width_optimal[column_index], this->sizing_strategy[column_index][INFO_MAX])) {
+                unsatisfied_column_count++;
             }
         }
+        // optimal
+        while ((unused_width > 0) && (unsatisfied_column_count > 0)) {
+            uint16_t part = unused_width / unsatisfied_column_count;
+            if (!part) {
+                break;
+            }
+            unsatisfied_column_count = 0;
+            for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
+                uint16_t optimal_max = std::min(column_width_optimal[column_index], this->sizing_strategy[column_index][INFO_MAX]);
+                if (this->column_width[column_index] < optimal_max) {
+                    uint16_t ajusted_part = std::min<uint16_t>(part, optimal_max - this->column_width[column_index]);
+                    this->column_width[column_index] += ajusted_part;
+                    unused_width -= ajusted_part;
 
-        if (!total_weight) {
-            total_weight = 1;
+                    if (this->column_width[column_index] < optimal_max) {
+                        unsatisfied_column_count++;
+                    }
+                }
+            }
         }
-
-        uint16_t unused_width = this->rect.cx - total_border_width - used_width;
+        // max
+        unsatisfied_column_count = 0;
         for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
-            if (this->sizing_strategy[column_index][INFO_STRATEGY] == STRATEGY_WEIGHT) {
-                this->column_width[column_index] = this->sizing_strategy[column_index][INFO_WEIGHT] * unused_width / total_weight;
+            if (this->column_width[column_index] < this->sizing_strategy[column_index][INFO_MAX]) {
+                unsatisfied_column_count++;
+            }
+        }
+        while ((unused_width > 0) && (unsatisfied_column_count > 0)) {
+            uint16_t part = unused_width / unsatisfied_column_count;
+            if (!part) {
+                break;
+            }
+            unsatisfied_column_count = 0;
+            for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
+                if (this->column_width[column_index] < this->sizing_strategy[column_index][INFO_MAX]) {
+                    uint16_t ajusted_part = std::min<uint16_t>(part, this->sizing_strategy[column_index][INFO_MAX] - this->column_width[column_index]);
+                    this->column_width[column_index] += ajusted_part;
+                    unused_width -= ajusted_part;
+
+                    if (this->column_width[column_index] < this->sizing_strategy[column_index][INFO_MAX]) {
+                        unsatisfied_column_count++;
+                    }
+                }
             }
         }
     }
@@ -298,15 +330,15 @@ public:
         return res;
     }
 
-    void set_sizing_strategy(uint16_t column_index, SizingStrategy sizing_strategy, uint16_t max_or_weight,
-                             uint16_t min = 0) {
+    void set_sizing_strategy(uint16_t column_index, /*SizingStrategy sizing_strategy, uint16_t max_or_weight, */
+                             uint16_t min, uint16_t max) {
         REDASSERT(column_index <= this->nb_columns);
-        REDASSERT((sizing_strategy == STRATEGY_OPTIMAL) || (min == 0));
-        REDASSERT((sizing_strategy != STRATEGY_OPTIMAL) || (max_or_weight >= min));
+//        REDASSERT((sizing_strategy != STRATEGY_OPTIMAL) || (max_or_weight >= min));
+        REDASSERT((max >= min));
 
-        this->sizing_strategy[column_index][INFO_STRATEGY] = sizing_strategy;
-        this->sizing_strategy[column_index][INFO_MAX]      = max_or_weight;
-        this->sizing_strategy[column_index][INFO_MIN]      = min;
+//        this->sizing_strategy[column_index][INFO_STRATEGY] = sizing_strategy;
+        this->sizing_strategy[column_index][INFO_MIN] = min;
+        this->sizing_strategy[column_index][INFO_MAX] = max;
 
         this->need_rearrange = true;
     }
