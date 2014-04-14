@@ -97,11 +97,11 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "labelgrid.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "labelgrid.png");
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x9b\xe8\xa8\xa8\xbc\xc8\x02\xcd\x86\x66"
-        "\xc2\x95\xf1\x72\x6f\xa6\x90\xaa\x0c\x14")){
+                   "\x47\x86\xd6\xd2\x1d\x47\xa2\x4e\xcf\x7b"
+                   "\x3f\xce\x8f\x0b\x25\x8b\xf7\x3b\xcf\x01")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -112,10 +112,10 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "labelgrid2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "labelgrid2.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x9b\xe8\xa8\xa8\xbc\xc8\x02\xcd\x86\x66"
-        "\xc2\x95\xf1\x72\x6f\xa6\x90\xaa\x0c\x14")){
+                   "\x0f\xf6\x9f\xa5\xfb\x38\x4c\xb4\x8e\x66"
+                   "\x8e\x6d\x99\x64\x4e\x3c\x9c\x7b\xb6\xca")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
