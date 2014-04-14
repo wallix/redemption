@@ -47,7 +47,7 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
+BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
 {
     TestDraw drawable(800, 600);
 
@@ -70,14 +70,16 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
          "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
          "these possibilities (and others) are supported in RDPGlyphIndex")
-    WidgetGrid wgrid(drawable, Rect(x, y, 640, 480), parent, notifier, column_number,
+    WidgetGrid wgrid(drawable, Rect(x, y, 640, 480), parent, notifier, line_number, column_number,
         PALE_BLUE, BLACK, LIGHT_BLUE, BLACK, WINBLUE, WHITE, MEDIUM_BLUE, WHITE,
         grid_border, id);
 
+/*
     wgrid.set_sizing_strategy(0, 50, 150);
     wgrid.set_sizing_strategy(1, 150, 800);
     wgrid.set_sizing_strategy(2, 50, 150);
     wgrid.set_sizing_strategy(3, 50, 100);
+*/
 
     Widget2  * widgetTable[128] = { 0 };
     uint16_t   widget_count     = 0;
@@ -98,6 +100,16 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
             widget_count++;
         }
     }
+
+    ColumnWidthStrategy column_width_strategies[] = {
+        { 50, 150 }, { 150, 800 }, { 50, 150 }, { 50, 100 }
+    };
+
+    uint16_t row_height[GRID_NB_ROWS_MAX]      = { 0 };
+    uint16_t column_width[GRID_NB_COLUMNS_MAX] = { 0 };
+
+    compute_format(wgrid, column_width_strategies, row_height, column_width);
+    apply_format(wgrid, row_height, column_width);
 
     wgrid.set_selection(2, static_cast<uint16_t>(-1));
 

@@ -27,51 +27,38 @@
 static const uint16_t GRID_NB_COLUMNS_MAX = 10;
 static const uint16_t GRID_NB_ROWS_MAX    = 50;
 
-/*
-enum SizingStrategy {
-    STRATEGY_OPTIMAL, // Use minimal, optimal and maximal triplet to determinate the width of a column.
-    STRATEGY_WEIGHT,
-};
-*/
-
-enum SizingStrategyInfo {
-//    INFO_STRATEGY = 0,
-    INFO_MAX = 0,
-//    INFO_WEIGHT = 1,
-    INFO_MIN = 1,
-
-    INFO_TOTAL = 2
-};
 
 struct WidgetGrid : public Widget2 {
-
+protected:
     Widget2  * widgets[GRID_NB_COLUMNS_MAX][GRID_NB_ROWS_MAX];
     void     * meta_data[GRID_NB_COLUMNS_MAX][GRID_NB_ROWS_MAX];
-    uint16_t   sizing_strategy[GRID_NB_COLUMNS_MAX][INFO_TOTAL];
 
-    uint16_t nb_columns;
     uint16_t nb_rows;
 
+public:
+    const uint16_t nb_columns;
+
+protected:
     uint16_t column_width[GRID_NB_COLUMNS_MAX];
     uint16_t row_height[GRID_NB_ROWS_MAX];
 
-    uint32_t bg_color_1;    // Odd
-    uint32_t fg_color_1;
+public:
+    const uint32_t bg_color_1;    // Odd
+    const uint32_t fg_color_1;
 
-    uint32_t bg_color_2;    // Even
-    uint32_t fg_color_2;
+    const uint32_t bg_color_2;    // Even
+    const uint32_t fg_color_2;
 
-    uint32_t bg_color_focus;
-    uint32_t fg_color_focus;
+    const uint32_t bg_color_focus;
+    const uint32_t fg_color_focus;
 
-    uint32_t bg_color_selection;
-    uint32_t fg_color_selection;
+    const uint32_t bg_color_selection;
+    const uint32_t fg_color_selection;
 
-    uint16_t border;    // Width and height of cell's border.
+    const uint16_t border;    // Width and height of cell's border.
 
+protected:
     uint16_t selection_y;   // Index of seleted row.
-
-    bool need_rearrange;
 
     struct difftimer {
         uint64_t t;
@@ -93,7 +80,7 @@ struct WidgetGrid : public Widget2 {
 
 public:
     WidgetGrid(DrawApi & drawable, const Rect & rect, Widget2 & parent,
-               NotifyApi * notifier, uint16_t nb_columns,
+               NotifyApi * notifier, uint16_t nb_rows, uint16_t nb_columns,
                uint32_t bg_color_1, uint32_t fg_color_1,
                uint32_t bg_color_2, uint32_t fg_color_2,
                uint32_t bg_color_focus, uint32_t fg_color_focus,
@@ -102,9 +89,8 @@ public:
         : Widget2(drawable, rect, parent, notifier, group_id)
         , widgets()
         , meta_data()
-        , sizing_strategy()
+        , nb_rows(nb_rows)
         , nb_columns(nb_columns)
-        , nb_rows(0)
         , column_width()
         , row_height()
         , bg_color_1(bg_color_1)
@@ -117,7 +103,6 @@ public:
         , fg_color_selection(fg_color_selection)
         , border(border)
         , selection_y(static_cast<uint16_t>(-1u))
-        , need_rearrange(false)
         , click_interval()
     {
         REDASSERT(nb_columns <= GRID_NB_COLUMNS_MAX);
@@ -135,122 +120,14 @@ public:
         }
     }
 
-private:
-    void do_rearrange() {
-        memset(this->column_width, 0, sizeof(this->column_width));
-        memset(this->row_height, 0, sizeof(this->row_height));
 
-        uint16_t column_width_optimal[GRID_NB_COLUMNS_MAX] = { 0 };
-
-        uint16_t row_index = 0;
-        for (; row_index < GRID_NB_ROWS_MAX; row_index++) {
-            bool row_empty = true;
-            for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
-                Widget2 * w = this->widgets[column_index][row_index];
-                if (!w) {
-                    continue;
-                }
-                row_empty = false;
-
-                Dimension dim = w->get_optimal_dim();
-                if (column_width_optimal[column_index] < dim.w) {
-                    column_width_optimal[column_index] = dim.w;
-                }
-                // if (this->column_width[column_index] < dim.w) {
-                //     this->column_width[column_index] = dim.w;
-                // }
-
-                if (this->row_height[row_index] < dim.h) {
-                    this->row_height[row_index] = dim.h;
-                }
-            }
-
-            if (row_empty) {
-                break;
-            }
-        }
-        this->nb_rows = row_index;
-
-
-        TODO("Optiomize this");
-        uint16_t unsatisfied_column_count = 0;
-        // min
-        int16_t unused_width = static_cast<int16_t>(this->rect.cx - this->border * 2 * this->nb_columns);
-        for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
-            this->column_width[column_index] = this->sizing_strategy[column_index][INFO_MIN];
-            unused_width -= static_cast<int16_t>(this->sizing_strategy[column_index][INFO_MIN]);
-
-            if (this->column_width[column_index] < std::min(column_width_optimal[column_index], this->sizing_strategy[column_index][INFO_MAX])) {
-                unsatisfied_column_count++;
-            }
-        }
-        // optimal
-        while ((unused_width > 0) && (unsatisfied_column_count > 0)) {
-            uint16_t part = unused_width / unsatisfied_column_count;
-            if (!part) {
-                break;
-            }
-            unsatisfied_column_count = 0;
-            for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
-                uint16_t optimal_max = std::min(column_width_optimal[column_index], this->sizing_strategy[column_index][INFO_MAX]);
-                if (this->column_width[column_index] < optimal_max) {
-                    uint16_t ajusted_part = std::min<uint16_t>(part, optimal_max - this->column_width[column_index]);
-                    this->column_width[column_index] += ajusted_part;
-                    unused_width -= ajusted_part;
-
-                    if (this->column_width[column_index] < optimal_max) {
-                        unsatisfied_column_count++;
-                    }
-                }
-            }
-        }
-        // max
-        unsatisfied_column_count = 0;
-        for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
-            if (this->column_width[column_index] < this->sizing_strategy[column_index][INFO_MAX]) {
-                unsatisfied_column_count++;
-            }
-        }
-        while ((unused_width > 0) && (unsatisfied_column_count > 0)) {
-            uint16_t part = unused_width / unsatisfied_column_count;
-            if (!part) {
-                break;
-            }
-            unsatisfied_column_count = 0;
-            for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
-                if (this->column_width[column_index] < this->sizing_strategy[column_index][INFO_MAX]) {
-                    uint16_t ajusted_part = std::min<uint16_t>(part, this->sizing_strategy[column_index][INFO_MAX] - this->column_width[column_index]);
-                    this->column_width[column_index] += ajusted_part;
-                    unused_width -= ajusted_part;
-
-                    if (this->column_width[column_index] < this->sizing_strategy[column_index][INFO_MAX]) {
-                        unsatisfied_column_count++;
-                    }
-                }
-            }
-        }
-    }
-
-public:
     virtual void draw(const Rect & clip) {
-        if (this->need_rearrange) {
-            this->do_rearrange();
-
-            this->need_rearrange = false;
-        }
-
         for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
             this->draw_row(row_index, clip);
         }
     }
 
     void draw_row(uint16_t row_index, const Rect & clip) {
-        if (this->need_rearrange) {
-            this->do_rearrange();
-
-            this->need_rearrange = false;
-        }
-
         bool odd = row_index & 1;
 
         uint32_t bg_color;
@@ -297,13 +174,18 @@ public:
         }
     }
 
-    uint16_t get_column_width(uint16_t column_index) {
+    uint16_t get_column_width(uint16_t column_index) const {
         REDASSERT(column_index < this->nb_columns);
 
         return this->column_width[column_index];
     }
+    void set_column_width(uint16_t column_index, uint16_t width) {
+        REDASSERT(column_index < this->nb_columns);
 
-    void * get_meta_data(uint16_t row_index, uint16_t column_index) {
+        this->column_width[column_index] = width;
+    }
+
+    void * get_meta_data(uint16_t row_index, uint16_t column_index) const {
         REDASSERT(column_index <= this->nb_columns);
         REDASSERT(row_index <= GRID_NB_ROWS_MAX);
         return this->meta_data[column_index][row_index];
@@ -316,7 +198,29 @@ public:
         return res;
     }
 
-    Widget2 * get_widget(uint16_t row_index, uint16_t column_index) {
+    uint16_t get_nb_rows() const {
+        return this->nb_rows;
+    }
+    uint16_t set_nb_rows(uint16_t nb_rows) {
+        REDASSERT(nb_rows < GRID_NB_ROWS_MAX);
+
+        uint16_t old_nb_rows = this->nb_rows;
+        this->nb_rows = nb_rows;
+        return old_nb_rows;
+    }
+
+    uint16_t get_row_height(uint16_t row_index) const {
+        REDASSERT(row_index < this->nb_rows);
+
+        return this->row_height[row_index];
+    }
+    void set_row_height(uint16_t row_index, uint16_t height) {
+        REDASSERT(row_index < this->nb_rows);
+
+        this->row_height[row_index] = height;
+    }
+
+    Widget2 * get_widget(uint16_t row_index, uint16_t column_index) const {
         REDASSERT(column_index <= this->nb_columns);
         REDASSERT(row_index <= GRID_NB_ROWS_MAX);
         return this->widgets[column_index][row_index];
@@ -329,29 +233,10 @@ public:
         this->widgets[column_index][row_index]   = w;
         this->meta_data[column_index][row_index] = meta_data;
 
-        this->need_rearrange = true;
         return res;
     }
 
-    void set_sizing_strategy(uint16_t column_index, uint16_t min, uint16_t max) {
-        REDASSERT(column_index <= this->nb_columns);
-//        REDASSERT((sizing_strategy != STRATEGY_OPTIMAL) || (max_or_weight >= min));
-        REDASSERT((max >= min));
-
-//        this->sizing_strategy[column_index][INFO_STRATEGY] = sizing_strategy;
-        this->sizing_strategy[column_index][INFO_MIN] = min;
-        this->sizing_strategy[column_index][INFO_MAX] = max;
-
-        this->need_rearrange = true;
-    }
-
     virtual Widget2 * widget_at_pos(int16_t x, int16_t y) {
-        if (this->need_rearrange) {
-            this->do_rearrange();
-
-            this->need_rearrange = false;
-        }
-
         for (unsigned row_index = 0; row_index < this->nb_rows; row_index++) {
             bool empty_row = true;
             for (unsigned column_index = 0; column_index < this->nb_columns; column_index++) {
@@ -372,7 +257,7 @@ public:
         return NULL;
     }
 
-    void get_selection(uint16_t & row_index, uint16_t & column_index) {
+    void get_selection(uint16_t & row_index, uint16_t & column_index) const {
         row_index    = selection_y;
         column_index = static_cast<uint16_t>(-1);
     }
@@ -397,12 +282,6 @@ public:
     virtual void rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Keymap2 * keymap)
     {
         if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
-            if (this->need_rearrange) {
-                this->do_rearrange();
-
-                this->need_rearrange = false;
-            }
-
             uint16_t y = this->rect.y;
             for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
                 uint16_t x = this->rect.x;
@@ -430,12 +309,6 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2 * keymap) {
         if (keymap->nb_kevent_available() > 0) {
-            if (this->need_rearrange) {
-                this->do_rearrange();
-
-                this->need_rearrange = false;
-            }
-
             switch (keymap->top_kevent()) {
                 case Keymap2::KEVENT_LEFT_ARROW:
                 case Keymap2::KEVENT_UP_ARROW:
@@ -478,5 +351,102 @@ public:
         }
     }
 };
+
+struct ColumnWidthStrategy {
+    uint16_t min;
+    uint16_t max;
+};
+
+void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strategies, uint16_t * row_height, uint16_t * column_width) {
+    uint16_t column_width_optimal[GRID_NB_COLUMNS_MAX] = { 0 };
+
+    for (uint16_t row_index = 0; row_index < grid.get_nb_rows(); row_index++) {
+        for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
+            Widget2 * w = grid.get_widget(row_index, column_index);
+            if (!w) {
+                continue;
+            }
+
+            Dimension dim = w->get_optimal_dim();
+            if (column_width_optimal[column_index] < dim.w) {
+                column_width_optimal[column_index] = dim.w;
+            }
+
+            if (row_height[row_index] < dim.h) {
+                row_height[row_index] = dim.h;
+            }
+        }
+    }
+
+
+    TODO("Optiomize this");
+    uint16_t unsatisfied_column_count = 0;
+    // min
+    uint16_t unused_width = static_cast<int16_t>(grid.rect.cx - grid.border * 2 * grid.nb_columns);
+    for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
+        column_width[column_index] = column_width_strategies[column_index].min;
+        unused_width -= static_cast<int16_t>(column_width_strategies[column_index].min);
+
+        if (column_width[column_index] < std::min(column_width_optimal[column_index], column_width_strategies[column_index].max)) {
+            unsatisfied_column_count++;
+        }
+    }
+    // optimal
+    while ((unused_width > 0) && (unsatisfied_column_count > 0)) {
+        const uint16_t part = unused_width / unsatisfied_column_count;
+        if (!part) {
+            break;
+        }
+        unsatisfied_column_count = 0;
+        for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
+            uint16_t optimal_max = std::min(column_width_optimal[column_index], column_width_strategies[column_index].max);
+            if (column_width[column_index] < optimal_max) {
+                uint16_t ajusted_part = std::min<uint16_t>(part, optimal_max - column_width[column_index]);
+                column_width[column_index] += ajusted_part;
+                unused_width -= ajusted_part;
+
+                if (column_width[column_index] < optimal_max) {
+                    unsatisfied_column_count++;
+                }
+            }
+        }
+    }
+    // max
+    unsatisfied_column_count = 0;
+    for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
+        if (column_width[column_index] < column_width_strategies[column_index].max) {
+            unsatisfied_column_count++;
+        }
+    }
+    while ((unused_width > 0) && (unsatisfied_column_count > 0)) {
+        const uint16_t part = unused_width / unsatisfied_column_count;
+        if (!part) {
+            break;
+        }
+        unsatisfied_column_count = 0;
+        for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
+            if (column_width[column_index] < column_width_strategies[column_index].max) {
+                uint16_t ajusted_part = std::min<uint16_t>(part, column_width_strategies[column_index].max - column_width[column_index]);
+                column_width[column_index] += ajusted_part;
+                unused_width -= ajusted_part;
+
+                if (column_width[column_index] < column_width_strategies[column_index].max) {
+                    unsatisfied_column_count++;
+                }
+            }
+        }
+    }
+}
+
+void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_width) {
+    for (uint16_t row_index = 0; row_index < grid.get_nb_rows(); row_index++) {
+        grid.set_row_height(row_index, row_height[row_index]);
+    }
+    for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
+        grid.set_column_width(column_index, column_width[column_index]);
+    }
+}
+
+
 
 #endif
