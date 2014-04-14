@@ -119,7 +119,7 @@ def _test_condition(filename, num, l, vars):
     if a[0] == 'version-less':
       return (vars['version'] < float(a[1])) == test
     return (vars['version'] <= float(a[1])) == test
-  
+
   if not a[0] in vars:
     raise Exception("test '%s' unknow in '%s' at line %s" % (a[0], filename, num))
   x = vars[a[0]]
