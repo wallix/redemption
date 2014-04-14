@@ -111,7 +111,7 @@ public:
     virtual ~WidgetGrid() {
     }
 
-    void clear() {
+    virtual void clear() {
         for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
             for (uint16_t row_index = 1; row_index < GRID_NB_ROWS_MAX; row_index++) {
                 this->widgets[column_index][row_index]   = NULL;
@@ -261,7 +261,7 @@ public:
         row_index    = selection_y;
         column_index = static_cast<uint16_t>(-1);
     }
-    void set_selection(uint16_t row_index, uint16_t column_index) {
+    void set_selection(uint16_t row_index, uint16_t column_index = static_cast<uint16_t>(-1)) {
         if (this->focus_flag == Widget2::IGNORE_FOCUS) {
             return;
         }
