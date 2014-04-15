@@ -275,8 +275,7 @@ public:
             this->protocol_label.rect.x = offset;
             this->protocol_label.rect.y = this->target_group_label.rect.y;
             this->filter_protocol.set_edit_x(this->protocol_label.dx());
-            this->filter_protocol.set_edit_cx(this->protocol_label.cx() -
-                                              SEPARATOR_SPACE);
+            this->filter_protocol.set_edit_cx(this->protocol_label.cx());
             this->filter_protocol.set_edit_y(this->protocol_label.ly() +
                                              SEPARATOR_SPACE);
             offset += this->protocol_label.rect.cx;
