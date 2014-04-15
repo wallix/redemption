@@ -119,12 +119,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "grid.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "grid.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x9b\xe8\xa8\xa8\xbc\xc8\x02\xcd\x86\x66"
-        "\xc2\x95\xf1\x72\x6f\xa6\x90\xaa\x0c\x14")){
+                   "\x2a\xf7\x98\x91\x72\xf3\x92\xa8\xe7\xea"
+                   "\x19\xd1\x08\xd0\xad\xc3\xa9\xf6\x1d\x0e")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -136,11 +136,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
                                     0 + wgrid.dy(),
                                     wgrid.cx(),
                                     wgrid.cy()));
-    //drawable.save_to_png(OUTPUT_FILE_PATH "grid2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "grid2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xab\x0a\x20\x61\xf0\x19\x4e\xed\x5c\x00"
-        "\x2c\xa2\x93\xe1\x1b\x52\x2e\x86\x77\x6c")){
+                   "\xa7\xac\x1a\x53\x16\xcd\x94\x37\x79\xf2"
+                   "\x32\x79\x6f\x97\x3f\xbc\xdd\xdf\x19\xba")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -156,11 +156,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
     //drawable.draw(RDPOpaqueRect(Rect(mouse_x, mouse_y, 2, 2), PINK), wgrid.rect);
-    //drawable.save_to_png(OUTPUT_FILE_PATH "grid3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "grid3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xfc\xdd\x77\xb9\x39\x8b\x2f\x60\x3c\xc1"
-        "\x2b\xc6\xc0\x27\x98\x68\x5e\xf6\xce\x28")){
+                   "\x88\x41\x4b\xd2\xae\xb6\xa9\x2e\xaa\xfe"
+                   "\x5e\x6a\xee\xca\x61\x86\x70\x2a\x66\x82")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -182,11 +182,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
                                     0 + wgrid.dy(),
                                     wgrid.cx(),
                                     wgrid.cy()));
-    //drawable.save_to_png(OUTPUT_FILE_PATH "grid4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "grid4.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x1e\x89\xac\x24\x17\xd0\x7b\x53\x17\x1f"
-        "\xb1\x3d\xbe\x19\x30\x83\x06\x1b\x32\xdf")){
+                   "\xac\xee\x6f\x23\xb1\x8e\x59\x31\x8f\x6a"
+                   "\xce\x7c\xf3\x43\x77\xd3\x5d\xcb\xb3\x1d")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 

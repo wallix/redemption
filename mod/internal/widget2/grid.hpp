@@ -333,6 +333,12 @@ public:
                 y += this->row_height[row_index] + this->border * 2;
             }
         }
+        else if (device_flags == MOUSE_FLAG_MOVE) {
+            Widget2 * wid = this->widget_at_pos(mouse_x, mouse_y);
+            if (wid) {
+                wid->rdp_input_mouse(device_flags, mouse_x, mouse_y, keymap);
+            }
+        }
 
         Widget2::rdp_input_mouse(device_flags, mouse_x, mouse_y, keymap);
     }
@@ -399,7 +405,7 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
 
             Dimension dim = w->get_optimal_dim();
             if (column_width_optimal[column_index] < dim.w) {
-                column_width_optimal[column_index] = dim.w;
+                column_width_optimal[column_index] = dim.w + 2;
             }
 
             if (row_height[row_index] < dim.h) {

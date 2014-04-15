@@ -36,6 +36,7 @@ public:
     uint32_t bg_color;
     uint32_t fg_color;
     bool auto_resize;
+    bool tool;
 
     int w_border;
     int h_border;
@@ -52,6 +53,7 @@ public:
     , bg_color(bgcolor)
     , fg_color(fgcolor)
     , auto_resize(auto_resize)
+    , tool(false)
     , w_border(x_text)
     , h_border(y_text)
     {
@@ -121,6 +123,20 @@ public:
         this->bg_color = bg_color;
         this->fg_color = fg_color;
     }
+
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {
+        if (this->tool) {
+            if (device_flags == MOUSE_FLAG_MOVE) {
+                int w = 0;
+                int h = 0;
+                this->drawable.text_metrics(this->buffer, w, h);
+                if (w > this->rect.cx) {
+                    this->show_tooltip(this, this->buffer, x, y);
+                }
+            }
+        }
+    }
+
 };
 
 #endif

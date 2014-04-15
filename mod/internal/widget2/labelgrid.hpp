@@ -75,11 +75,13 @@ struct WidgetLabelGrid : public WidgetGrid {
                                               odd ? this->fg_color_1 : this->fg_color_2,
                                               odd ? this->bg_color_1 : this->bg_color_2,
                                               3, 1);
+            label->tool = true;
             this->set_widget(this->nb_rows, i, label);
             this->toDelete[i][this->nb_rows] = true;
         }
         return this->nb_rows++;
     }
+
     const char * get_cell_text(uint16_t row_index, uint16_t column_index) {
         const char * result = "";
         if (this->toDelete[column_index][row_index]) {

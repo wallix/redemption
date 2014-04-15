@@ -215,8 +215,21 @@ public:
     }
 
     void rearrange() {
+        int target_group_min_width = 0;
+        int target_min_width = 0;
+        int protocol_min_width = 0;
+        int h = 0;
+        this->drawable.text_metrics(this->target_group_label.get_text(), target_group_min_width, h);
+        this->drawable.text_metrics(this->target_label.get_text(), target_min_width, h);
+        this->drawable.text_metrics(this->protocol_label.get_text(), protocol_min_width, h);
+        target_group_min_width += 5;
+        target_min_width += 5;
+        protocol_min_width += 5;
+
         ColumnWidthStrategy column_width_strategies[] = {
-            { 50, 200 }, { 150, 64000 }, { 50, 100 }
+            { static_cast<uint16_t>(target_group_min_width), 200 },
+            { static_cast<uint16_t>(target_min_width), 64000 },
+            { static_cast<uint16_t>(protocol_min_width), 80 }
         };
 
         uint16_t rows_height[GRID_NB_ROWS_MAX]      = { 0 };
