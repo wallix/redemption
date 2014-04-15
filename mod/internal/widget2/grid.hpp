@@ -119,6 +119,7 @@ public:
             }
         }
         this->nb_rows = 0;
+        this->selection_y = static_cast<uint16_t>(-1);
     }
 
 

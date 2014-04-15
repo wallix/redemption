@@ -234,13 +234,12 @@ public:
             this->selector.selector_lines.focus_flag = Widget2::IGNORE_FOCUS;
             this->selector.add_device("", TR("no_results", this->ini), "", "");
         } else {
-            this->selector.rearrange();
             this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;
             this->selector.selector_lines.focus_flag = Widget2::NORMAL_FOCUS;
             this->selector.selector_lines.set_selection(0, static_cast<uint16_t>(-1));
             this->selector.set_widget_focus(&this->selector.selector_lines);
         }
-
+        this->selector.rearrange();
     }
 
     static inline size_t proceed_item(const char * list, char sep = ' ')
