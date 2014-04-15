@@ -66,11 +66,11 @@ struct WidgetLabelGrid : public WidgetGrid {
         }
     }
 
-    void add_line(const char ** entries) {
+    uint16_t add_line(const char ** entries) {
         REDASSERT(this->nb_rows <= GRID_NB_ROWS_MAX);
         for (int i = 0; i < this->nb_columns; i++) {
             bool odd = this->nb_rows & 1;
-            Widget2 * label = new WidgetLabel(this->drawable, 0, 0, *this, this,
+            WidgetLabel * label = new WidgetLabel(this->drawable, 0, 0, *this, this,
                                               entries[i], true, this->group_id,
                                               odd ? this->fg_color_1 : this->fg_color_2,
                                               odd ? this->bg_color_1 : this->bg_color_2,
@@ -78,7 +78,15 @@ struct WidgetLabelGrid : public WidgetGrid {
             this->set_widget(this->nb_rows, i, label);
             this->toDelete[i][this->nb_rows] = true;
         }
-        this->nb_rows++;
+        return this->nb_rows++;
+    }
+    const char * get_cell_text(uint16_t row_index, uint16_t column_index) {
+        const char * result = "";
+        if (this->toDelete[column_index][row_index]) {
+            WidgetLabel * label = static_cast<WidgetLabel*>(this->widgets[column_index][row_index]);
+            result = label->get_text();
+        }
+        return result;
     }
 
 };

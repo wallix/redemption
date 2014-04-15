@@ -42,7 +42,8 @@
 #include "translation.hpp"
 
 #include "internal/flat_login_mod.hpp"
-#include "internal/flat_selector_mod.hpp"
+// #include "internal/flat_selector_mod.hpp"
+#include "internal/flat_selector2_mod.hpp"
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
 
@@ -329,7 +330,8 @@ public:
                 break;
             case MODULE_INTERNAL_WIDGET2_SELECTOR:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
-                this->mod = new FlatSelectorMod(this->ini,
+                this->mod = new FlatSelector2Mod(this->ini,
+                            // new FlatSelectorMod(this->ini,
                             // new SelectorMod(this->ini,
                                             this->front,
                                             this->front.client_info.width,

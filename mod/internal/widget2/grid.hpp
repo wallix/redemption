@@ -118,6 +118,7 @@ public:
                 this->meta_data[column_index][row_index] = NULL;
             }
         }
+        this->nb_rows = 0;
     }
 
 
@@ -270,12 +271,14 @@ public:
             uint16_t previous_selection_y = this->selection_y;
             this->selection_y = row_index;
 
+            this->drawable.begin_update();
             if (previous_selection_y < this->nb_rows) {
                 this->draw_row(previous_selection_y, this->rect);
             }
             if (this->selection_y < this->nb_rows) {
                 this->draw_row(this->selection_y, this->rect);
             }
+            this->drawable.end_update();
         }
     }
 
@@ -439,12 +442,16 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
 }
 
 void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_width) {
+    uint16_t height = 0;
     for (uint16_t row_index = 0; row_index < grid.get_nb_rows(); row_index++) {
         grid.set_row_height(row_index, row_height[row_index]);
+        height += row_height[row_index] + grid.border * 2;
     }
+    grid.rect.cy = height;
     for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
         grid.set_column_width(column_index, column_width[column_index]);
     }
+
 }
 
 
