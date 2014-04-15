@@ -369,6 +369,7 @@ unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp cryptofile p
 unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_nativecapture : tests/capture/test_nativecapture.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_staticcapture : tests/capture/test_staticcapture.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_OSDCapture : tests/capture/test_OSDCapture.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_cliprdr : tests/channels/cliprdr/test_cliprdr.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdpdr : tests/channels/rdpdr/test_rdpdr.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_sound : tests/channels/sound/test_sound.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

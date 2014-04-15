@@ -494,9 +494,6 @@ public:
     virtual void draw(const RDPBrushCache & cmd) {}
     virtual void draw(const RDPColCache & cmd) {}
 
-    virtual void set_row(uint16_t r, uint8_t * row){
-        memcpy(this->drawable.data + this->drawable.rowsize * r, row, this->drawable.rowsize);
-    }
     virtual void flush() {}
 
     static FontChar * get_font(Font& font, uint32_t c)

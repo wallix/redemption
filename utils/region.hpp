@@ -70,7 +70,7 @@ struct Region {
                 }
             }
         }
-        this->rects = new_rects;
+        this->rects.swap(new_rects); // this->rects = std::move(new_rects);
     }
 };
 

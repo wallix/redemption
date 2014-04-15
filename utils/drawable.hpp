@@ -176,6 +176,11 @@ struct Drawable {
         return this->data + (rect.y * this->width + rect.x) * Bpp;
     }
 
+    const uint8_t * first_pixel(const Rect & rect) const
+    {
+        return this->data + (rect.y * this->width + rect.x) * Bpp;
+    }
+
     uint8_t * first_pixel(int y)
     {
         return this->data + y * this->width * Bpp;
