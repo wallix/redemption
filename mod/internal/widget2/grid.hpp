@@ -259,7 +259,7 @@ public:
     }
 
     void get_selection(uint16_t & row_index, uint16_t & column_index) const {
-        row_index    = selection_y;
+        row_index    = this->selection_y;
         column_index = static_cast<uint16_t>(-1);
     }
     void set_selection(uint16_t row_index, uint16_t column_index = static_cast<uint16_t>(-1)) {
@@ -279,6 +279,32 @@ public:
                 this->draw_row(this->selection_y, this->rect);
             }
             this->drawable.end_update();
+        }
+    }
+
+    void refresh_selected() {
+        if (this->selection_y < this->nb_rows) {
+            this->drawable.begin_update();
+            this->draw_row(this->selection_y, this->rect);
+            this->drawable.end_update();
+        }
+    }
+
+    virtual void focus()
+    {
+        if (!this->has_focus){
+            this->has_focus = true;
+            this->send_notify(NOTIFY_FOCUS_BEGIN);
+            this->refresh_selected();
+        }
+    }
+
+    virtual void blur()
+    {
+        if (this->has_focus){
+            this->has_focus = false;
+            this->send_notify(NOTIFY_FOCUS_END);
+            this->refresh_selected();
         }
     }
 

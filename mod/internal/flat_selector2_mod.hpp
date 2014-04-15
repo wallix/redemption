@@ -115,9 +115,6 @@ public:
                          target, this->ini.globals.auth_user.get_cstr());
                 this->ini.parse_username(buffer);
 
-                this->ini.context.ticket.set_from_cstr(this->selector.ticket_edit.get_text());
-                this->ini.context.comment.set_from_cstr(this->selector.comment_edit.get_text());
-
 
                 this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();

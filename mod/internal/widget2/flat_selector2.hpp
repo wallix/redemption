@@ -57,7 +57,6 @@ public:
     WidgetLabel target_group_label;
     WidgetLabel target_label;
     WidgetLabel protocol_label;
-    WidgetLabel close_time_label;
 
     WidgetLabelGrid selector_lines;
 
@@ -79,14 +78,6 @@ public:
     WidgetFlatButton connect;
     //WidgetPager pager;
 
-    // WidgetRadioList radiolist;
-
-    WidgetLabel ticket_label;
-    WidgetEdit ticket_edit;
-    WidgetLabel comment_label;
-    WidgetEdit comment_edit;
-
-    int tc_flag;
 
 public:
     struct temporary_number_of_page {
@@ -132,11 +123,8 @@ public:
         , protocol_label(drawable, 0, 0, *this, NULL, TR("protocol", ini), true, -10,
                          this->theme.selector_label.fgcolor,
                          this->theme.selector_label.bgcolor, 5)
-        , close_time_label(drawable, 0, 0, *this, NULL, TR("close_time", ini), true, -10,
-                           this->theme.selector_label.fgcolor,
-                           this->theme.selector_label.bgcolor, 5)
         , selector_lines(drawable, Rect(0, 0, width - (this->less_than_800 ? 0 : 30), 1),
-                         *this, this, 0, 4,
+                         *this, this, 0, 3,
                          this->theme.selector_line1.bgcolor,
                          this->theme.selector_line1.fgcolor,
                          this->theme.selector_line2.bgcolor,
@@ -186,18 +174,6 @@ public:
         , connect(drawable, 0, 0, *this, this, TR("connect", ini), true, -18,
                   this->theme.global.fgcolor, this->theme.global.bgcolor,
                   this->theme.global.focus_color, 6, 2)
-        // , radiolist(drawable, this->device_label.lx() + 30, this->device_label.dy(), *this, this, -19, this->theme.global.fgcolr, this->theme.global.bgcolor)
-        , ticket_label(drawable, 15, 10, *this, NULL, TR("Ticket n°", ini), true, -20,
-                       this->theme.global.fgcolor, this->theme.global.bgcolor)
-        , ticket_edit(drawable, 15, 0, 200, *this, this,
-                      filter_target?filter_target:0, -20, this->theme.edit.fgcolor,
-                      this->theme.edit.bgcolor, this->theme.edit.focus_color, -1, 1, 1)
-        , comment_label(drawable, 15, 10, *this, NULL, TR("comment", ini), true, -20,
-                       this->theme.global.fgcolor, this->theme.global.bgcolor)
-        , comment_edit(drawable, 15, 0, 200, *this, this,
-                    filter_target_group?filter_target_group:0, -20, this->theme.edit.fgcolor,
-                    this->theme.edit.bgcolor, this->theme.edit.focus_color, -1, 1, 1)
-        , tc_flag(ticcom_flag)
     {
         this->impl = new CompositeTable;
 
@@ -205,21 +181,11 @@ public:
         this->add_widget(&this->target_group_label);
         this->add_widget(&this->target_label);
         this->add_widget(&this->protocol_label);
-        this->add_widget(&this->close_time_label);
         this->add_widget(&this->filter_target_group);
         this->add_widget(&this->filter_target);
         this->add_widget(&this->filter_protocol);
         this->add_widget(&this->apply);
         this->add_widget(&this->selector_lines);
-
-        // if (this->tc_flag & TICKET_VISIBLE) {
-        //     this->add_widget(&this->ticket_label);
-        //     this->add_widget(&this->ticket_edit);
-        // }
-        // if (this->tc_flag & COMMENT_VISIBLE) {
-        //     this->add_widget(&this->comment_label);
-        //     this->add_widget(&this->comment_edit);
-        // }
 
         this->add_widget(&this->first_page);
         this->add_widget(&this->prev_page);
@@ -240,30 +206,6 @@ public:
 
         this->rearrange();
 
-
-        // // Comment fields
-        // {
-        //     int tc_label_max = 0;
-        //     if (this->tc_flag & TICKET_VISIBLE) {
-        //         tc_label_max = this->ticket_label.lx();
-        //     }
-        //     if ((this->tc_flag & COMMENT_VISIBLE) &&
-        //         (tc_label_max < this->comment_label.lx())) {
-        //         tc_label_max = this->comment_label.lx();
-        //     }
-
-        //     this->ticket_edit.set_edit_x(tc_label_max + 10);
-        //     this->comment_edit.set_edit_x(tc_label_max + 10);
-
-        //     this->ticket_edit.set_edit_cx((this->logout.dx() - tc_label_max - 45) / 2);
-        //     this->comment_edit.set_edit_cx(this->logout.dx() - tc_label_max - 45);
-
-        //     this->ticket_label.rect.y = this->current_page.dy();
-        //     this->comment_label.rect.y = this->logout.dy();
-        //     this->ticket_edit.set_edit_y(this->current_page.dy());
-        //     this->comment_edit.set_edit_y(this->comment_label.dy());
-        // }
-
     }
 
 
@@ -274,7 +216,7 @@ public:
 
     void rearrange() {
         ColumnWidthStrategy column_width_strategies[] = {
-            { 50, 200 }, { 150, 64000 }, { 50, 100 }, { 140, 140 }
+            { 50, 200 }, { 150, 64000 }, { 50, 100 }
         };
 
         uint16_t rows_height[GRID_NB_ROWS_MAX]      = { 0 };
@@ -325,12 +267,6 @@ public:
             this->filter_protocol.set_edit_y(this->protocol_label.ly() +
                                              SEPARATOR_SPACE);
             offset += this->protocol_label.rect.cx;
-
-
-            this->close_time_label.rect.cx = columns_width[IDX_CLOSETIME] +
-                this->selector_lines.border * 2;
-            this->close_time_label.rect.x = offset;
-            this->close_time_label.rect.y = this->target_group_label.rect.y;
         }
         {
             // selector list position
@@ -377,16 +313,6 @@ public:
     }
 
     void ask_for_connection() {
-        if (((this->tc_flag & TICKET_MANDATORY) == TICKET_MANDATORY) &&
-            (this->ticket_edit.num_chars == 0)) {
-            this->set_widget_focus(&this->ticket_edit);
-            return;
-        }
-        if (((this->tc_flag & COMMENT_MANDATORY) == COMMENT_MANDATORY) &&
-            (this->comment_edit.num_chars == 0)) {
-            this->set_widget_focus(&this->comment_edit);
-            return;
-        }
         if (this->notifier) {
             this->notifier->notify(&this->connect, NOTIFY_SUBMIT);
         }
@@ -419,11 +345,6 @@ public:
                 this->ask_for_connection();
             }
         }
-        else if (widget->group_id == this->ticket_edit.group_id) {
-            if (NOTIFY_SUBMIT == event) {
-                this->ask_for_connection();
-            }
-        }
         else {
             WidgetParent::notify(widget, event);
         }
@@ -444,7 +365,7 @@ public:
     void add_device(const char * device_group, const char * target_label,
                     const char * protocol, const char * close_time)
     {
-        const char * texts[] = { device_group, target_label, protocol, close_time };
+        const char * texts[] = { device_group, target_label, protocol };
         this->selector_lines.add_line(texts);
     }
 
