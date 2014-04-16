@@ -58,15 +58,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("rdp", "administrateur@qa@10.10.14.111",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("rdp", "administrateur@qa@10.10.14.27",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("rdp", "administrateur@qa@10.10.14.103",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
 
     selector.selector_lines.set_selection(0);
 
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "selector1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -116,15 +116,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
                                 "1", "1", 0, 0, 0, ini);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("rdp", "administrateur@qa@10.10.14.111",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("rdp", "administrateur@qa@10.10.14.27",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("rdp", "administrateur@qa@10.10.14.103",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
 
     selector.selector_lines.set_selection(0);
     selector.rearrange();
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "selector-resize2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-resize2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x3e\xed\x13\x08\x17\x7a\x50\x16\xc9\xbd"
@@ -268,15 +268,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("rdp", "administrateur@qa@10.10.14.111",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("rdp", "administrateur@qa@10.10.14.27",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("rdp", "administrateur@qa@10.10.14.103",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
 
     selector.set_widget_focus(&selector.selector_lines);
     selector.selector_lines.set_selection(0);
@@ -416,15 +416,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
 
     selector.add_device("reptile", "snake@10.10.14.111",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("bird", "raven@10.10.14.111",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("reptile", "lezard@10.10.14.27",
-                        "VNC", "2013-04-20 19:56:50");
+                        "VNC");
     selector.add_device("fish", "shark@10.10.14.103",
-                        "RDP", "2013-04-20 19:56:50");
+                        "RDP");
     selector.add_device("bird", "eagle@10.10.14.33",
-                        "VNC", "2013-04-20 19:56:50");
+                        "VNC");
 
     int curx = 0;
     int cury = 0;
