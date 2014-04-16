@@ -326,7 +326,8 @@ public:
 
     virtual void notify(Widget2* widget, notify_event_t event)
     {
-        if (widget->group_id == this->selector_lines.group_id) {
+        if ((widget->group_id == this->selector_lines.group_id) ||
+            (widget->group_id == this->connect.group_id)) {
             if (NOTIFY_SUBMIT == event) {
                 this->ask_for_connection();
             }
@@ -343,11 +344,6 @@ public:
                 if (this->notifier) {
                     this->notifier->notify(widget, NOTIFY_CANCEL);
                 }
-            }
-        }
-        else if (widget->group_id == this->connect.group_id) {
-            if (NOTIFY_SUBMIT == event) {
-                this->ask_for_connection();
             }
         }
         else {
