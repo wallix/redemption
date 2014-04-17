@@ -398,7 +398,7 @@ struct ShareData
     void emit_begin( uint8_t pdu_type2
                    , uint32_t share_id
                    , uint8_t streamid
-                   , uint8_t _uncompressedLen = 0
+                   , uint16_t _uncompressedLen = 0
                    , uint8_t compressedType = 0
                    , uint16_t compressedLen = 0
                    )
@@ -410,6 +410,7 @@ struct ShareData
         this->uncompressedLen = _uncompressedLen;
         if (!_uncompressedLen) {
             stream.out_clear_bytes(2); // skip len
+            REDASSERT(compressedType == 0);
         }
         else {
             stream.out_uint16_le(_uncompressedLen);

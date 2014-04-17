@@ -286,9 +286,9 @@ protected:
                     this->sdata_orders = new ShareData(compressed_buffer_stream_orders);
                     this->sdata_orders->emit_begin( PDUTYPE2_UPDATE, this->shareid
                                                   , RDP::STREAM_MED
-                                                  , this->buffer_stream_orders.size()
+                                                  , this->buffer_stream_orders.size() + 18  // TS_SHAREDATAHEADER(18)
                                                   , compressionFlags
-                                                  , datalen
+                                                  , datalen + 18    // TS_SHAREDATAHEADER(18)
                                                   );
 
                     if (compressionFlags & PACKET_COMPRESSED) {
@@ -484,9 +484,9 @@ protected:
                     this->sdata_bitmaps = new ShareData(compressed_buffer_stream_bitmaps);
                     this->sdata_bitmaps->emit_begin( PDUTYPE2_UPDATE, this->shareid
                                                    , RDP::STREAM_MED
-                                                   , this->buffer_stream_bitmaps.size()
+                                                   , this->buffer_stream_bitmaps.size() + 18    // TS_SHAREDATAHEADER(18)
                                                    , compressionFlags
-                                                   , datalen
+                                                   , datalen + 18   // TS_SHAREDATAHEADER(18)
                                                    );
 
                     if (compressionFlags & PACKET_COMPRESSED) {
