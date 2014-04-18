@@ -1116,7 +1116,6 @@ struct NTLMContext {
         in_stream.mark_end();
         in_stream.rewind();
         this->CHALLENGE_MESSAGE.recv(in_stream);
-
         this->SavedChallengeMessage.init(in_stream.size());
         this->SavedChallengeMessage.copy(in_stream.get_data(), in_stream.size());
 

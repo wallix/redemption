@@ -57,7 +57,7 @@
 /* 0050 */ "\x02\xff\xff\x02\x01\x01\x02\x01\x00\x02\x01\x01\x02\x02\xff\xff" //................ |
 /* 0060 */ "\x02\x01\x02\x04\x82\x01\x3f\x00\x05\x00\x14\x7c\x00\x01\x81\x36" //......?....|...6 |
 /* 0070 */ "\x00\x08\x00\x10\x00\x01\xc0\x00\x44\x75\x63\x61\x81\x28\x01\xc0" //........Duca.(.. |
-/* 0080 */ "\xd8\x00\x04\x00\x08\x00\x00\x05\xc0\x03\x01\xca\x03\xaa\x0c\x04" //................ |
+/* 0080 */ "\xd8\x00\x04\x00\x08\x00\x80\x04\x60\x03\x01\xca\x03\xaa\x0c\x04" //........`....... |
 /* 0090 */ "\x00\x00\x71\x17\x00\x00\x52\x00\x44\x00\x50\x00\x2d\x00\x54\x00" //..q...R.D.P.-.T. |
 /* 00a0 */ "\x45\x00\x53\x00\x54\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //E.S.T........... |
 /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x0c\x00" //................ |
@@ -80,8 +80,8 @@
 // GCC::UserData tag=c001 length=216 |
 // Received from Client GCC User Data CS_CORE (216 bytes) |
 // cs_core::version [80004] RDP 5.0, 5.1, 5.2, and 6.0 clients) |
-// cs_core::desktopWidth  = 1280 |
-// cs_core::desktopHeight = 960 |
+// cs_core::desktopWidth  = 1152 |
+// cs_core::desktopHeight = 864 |
 // cs_core::colorDepth    = [ca01] [RNS_UD_COLOR_8BPP] superseded by postBeta2ColorDepth |
 // cs_core::SASSequence   = [aa03] [Unknown] |
 // cs_core::keyboardLayout= 040c |
@@ -307,65 +307,57 @@
 // Dump done on RDP Client (5) 1 bytes |
 // Socket RDP Client (5) receiving 3 bytes |
 // Recv done on RDP Client (5) 3 bytes |
-/* 0000 */ "\x00\x01\x8b"                                                     //... |
+/* 0000 */ "\x00\x01\x49"                                                     //..I |
 // Dump done on RDP Client (5) 3 bytes |
 // Socket RDP Client (5) receiving 2 bytes |
 // Recv done on RDP Client (5) 2 bytes |
 /* 0000 */ "\x02\xf0"                                                         //.. |
 // Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 389 bytes |
-// Recv done on RDP Client (5) 389 bytes |
-/* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x81\x7c\x48\x00\x00\x00\x0c\x04\x0c" //.d....p.|H...... |
-/* 0010 */ "\x04\xb3\x47\x03\x00\x00\x00\x42\x00\x00\x00\x00\x00\x00\x00\x00" //..G....B........ |
-/* 0020 */ "\x00\x61\x00\x64\x00\x6d\x00\x69\x00\x6e\x00\x69\x00\x73\x00\x74" //.a.d.m.i.n.i.s.t |
-/* 0030 */ "\x00\x72\x00\x61\x00\x74\x00\x65\x00\x75\x00\x72\x00\x40\x00\x31" //.r.a.t.e.u.r.@.1 |
-/* 0040 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
-/* 0050 */ "\x00\x32\x00\x30\x00\x35\x00\x3a\x00\x52\x00\x44\x00\x50\x00\x3a" //.2.0.5.:.R.D.P.: |
-/* 0060 */ "\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //.x.............1 |
-/* 0070 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
-/* 0080 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
-/* 0090 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
-/* 00a0 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
-/* 00b0 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
-/* 00c0 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
-/* 00d0 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
-/* 00e0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
-/* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// Socket RDP Client (5) receiving 323 bytes |
+// Recv done on RDP Client (5) 323 bytes |
+/* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x81\x3a\x48\x00\x00\x00\x0c\x04\x0c" //.d....p.:H...... |
+/* 0010 */ "\x04\xb3\x47\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //..G............. |
+/* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31\x00\x30" //.............1.0 |
+/* 0030 */ "\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e\x00\x31" //...1.0...4.7...1 |
+/* 0040 */ "\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c\x00\x57" //.7.5...@.C.:...W |
+/* 0050 */ "\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c\x00\x73" //.I.N.D.O.W.S...s |
+/* 0060 */ "\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32\x00\x5c" //.y.s.t.e.m.3.2.. |
+/* 0070 */ "\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78\x00\x2e" //.m.s.t.s.c.a.x.. |
+/* 0080 */ "\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50\x00\x61" //.d.l.l.......P.a |
+/* 0090 */ "\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61\x00\x64" //.r.i.s.,. .M.a.d |
+/* 00a0 */ "\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //.r.i.d.......... |
+/* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0a" //................ |
+/* 00d0 */ "\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 00e0 */ "\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d" //.P.a.r.i.s.,. .M |
+/* 00f0 */ "\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00" //.a.d.r.i.d...... |
 /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0110 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0120 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
-/* 0130 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
-/* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0160 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
-/* 0170 */ "\x00\x00\x00\xc4\xff\xff\xff\x00\x00\x00\x00\x0f\x00\x00\x00\x00" //................ |
-/* 0180 */ "\x00\x64\x00\x00\x00"                                             //.d... |
-// Dump done on RDP Client (5) 389 bytes |
+/* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 0120 */ "\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00\x00\x00" //................ |
+/* 0130 */ "\x00\xc4\xff\xff\xff\x00\x00\x00\x00\x80\x01\x00\x00\x00\x00\x64" //...............d |
+/* 0140 */ "\x00\x00\x00"                                                     //... |
+// Dump done on RDP Client (5) 323 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x0c, 0x04, 0x0c, 0x04, 0xb3, 0x47, 0x03, 0x00, 0x00, 0x00, 0x42, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G....B..... |
-// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x61, 0x00, 0x64, 0x00, 0x6d, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x69, 0x00,  // ....a.d.m.i.n.i. |
-// /* 0020 */ 0x73, 0x00, 0x74, 0x00, 0x72, 0x00, 0x61, 0x00, 0x74, 0x00, 0x65, 0x00, 0x75, 0x00, 0x72, 0x00,  // s.t.r.a.t.e.u.r. |
-// /* 0030 */ 0x40, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00,  // @.1.0...1.0...4. |
-// /* 0040 */ 0x37, 0x00, 0x2e, 0x00, 0x32, 0x00, 0x30, 0x00, 0x35, 0x00, 0x3a, 0x00, 0x52, 0x00, 0x44, 0x00,  // 7...2.0.5.:.R.D. |
-// /* 0050 */ 0x50, 0x00, 0x3a, 0x00, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,  // P.:.x........... |
-// /* 0060 */ 0x1a, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00,  // ..1.0...1.0...4. |
-// /* 0070 */ 0x37, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00,  // 7...1.7.5...@.C. |
-// /* 0080 */ 0x3a, 0x00, 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00,  // :...W.I.N.D.O.W. |
-// /* 0090 */ 0x53, 0x00, 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00,  // S...s.y.s.t.e.m. |
-// /* 00a0 */ 0x33, 0x00, 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00,  // 3.2...m.s.t.s.c. |
-// /* 00b0 */ 0x61, 0x00, 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff,  // a.x...d.l.l..... |
-// /* 00c0 */ 0xff, 0xff, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00,  // ..P.a.r.i.s.,. . |
-// /* 00d0 */ 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00,  // M.a.d.r.i.d..... |
-// /* 00e0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0000 */ 0x0c, 0x04, 0x0c, 0x04, 0xb3, 0x47, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G.......... |
+// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x1a, 0x00,  // ................ |
+// /* 0020 */ 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00, 0x37, 0x00,  // 1.0...1.0...4.7. |
+// /* 0030 */ 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00, 0x3a, 0x00,  // ..1.7.5...@.C.:. |
+// /* 0040 */ 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00,  // ..W.I.N.D.O.W.S. |
+// /* 0050 */ 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00, 0x33, 0x00,  // ..s.y.s.t.e.m.3. |
+// /* 0060 */ 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00, 0x61, 0x00,  // 2...m.s.t.s.c.a. |
+// /* 0070 */ 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff,  // x...d.l.l....... |
+// /* 0080 */ 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00,  // P.a.r.i.s.,. .M. |
+// /* 0090 */ 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // a.d.r.i.d....... |
+// /* 00a0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00b0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00c0 */ 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00d0 */ 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00,  // ....P.a.r.i.s.,. |
+// /* 00e0 */ 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00,  //  .M.a.d.r.i.d... |
 // /* 00f0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0100 */ 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00,  // ......P.a.r.i.s. |
-// /* 0120 */ 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00,  // ,. .M.a.d.r.i.d. |
-// /* 0130 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0140 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0150 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00,  // ................ |
-// /* 0160 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00,  // ................ |
-// /* 0170 */ 0x00, 0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                          // ....d... |
+// /* 0100 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
+// /* 0120 */ 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x80, 0x01, 0x00, 0x00,  // ................ |
+// /* 0130 */ 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                                // ..d... |
 // RDP-5 Style logon |
 // Receiving from client InfoPacket |
 // InfoPacket::CodePage 67896332 |
@@ -390,12 +382,12 @@
 // InfoPacket::flags:RNS_INFO_AUDIOCAPTURE no |
 // InfoPacket::flags:RNS_INFO_VIDEO_DISABLE no |
 // InfoPacket::cbDomain 2 |
-// InfoPacket::cbUserName 68 |
+// InfoPacket::cbUserName 2 |
 // InfoPacket::cbPassword 2 |
 // InfoPacket::cbAlternateShell 2 |
 // InfoPacket::cbWorkingDir 2 |
 // InfoPacket::Domain  |
-// InfoPacket::UserName administrateur@10.10.47.205:RDP:x |
+// InfoPacket::UserName  |
 // InfoPacket::Password <hidden> |
 // InfoPacket::AlternateShell  |
 // InfoPacket::WorkingDir  |
@@ -405,7 +397,7 @@
 // InfoPacket::ExtendedInfoPacket::cbClientDir 64 |
 // InfoPacket::ExtendedInfoPacket::clientDir C:\WINDOWS\system32\mstscax.dll |
 // InfoPacket::ExtendedInfoPacket::clientSessionId 0 |
-// InfoPacket::ExtendedInfoPacket::performanceFlags 15 |
+// InfoPacket::ExtendedInfoPacket::performanceFlags 384 |
 // InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen 0 |
 // InfoPacket::ExtendedInfoPacket::autoReconnectCookie  |
 // InfoPacket::ExtendedInfoPacket::reserved1 100 |
@@ -430,7 +422,7 @@
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds 0 |
-// client info: performance flags before=0x0000000F after=0x0000000F default=0x00000000 present=0x00000000 not-present=0x00000000 |
+// client info: performance flags before=0x00000180 after=0x00000180 default=0x00000000 present=0x00000000 not-present=0x00000000 |
 // Front::incoming::licencing not client_info.is_mce |
 // Front::incoming::licencing send_lic_initial |
 // Sec clear payload to send: |
@@ -495,26 +487,26 @@
 // Dump done on RDP Client (5) 2 bytes |
 // Socket RDP Client (5) receiving 165 bytes |
 // Recv done on RDP Client (5) 165 bytes |
-/* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\x8f\x4d\x13\x83\x98" //.d....p.....M... |
-/* 0010 */ "\x00\x01\x00\x00\x00\x00\x00\x01\x03\x63\x5e\xb1\x27\x62\xb3\xb9" //.........c^.'b.. |
-/* 0020 */ "\xa9\x1f\xa4\x0d\x94\x2f\x67\x9d\x9a\xb8\x14\xa6\x48\x99\x99\xbe" //...../g.....H... |
-/* 0030 */ "\xee\x0d\x93\xa9\xc7\xab\x5e\xa1\x3d\x00\x00\x48\x00\xae\x6f\xa5" //......^.=..H..o. |
-/* 0040 */ "\x43\xa7\x26\x9a\xb9\x7d\x2e\xc3\x83\xef\x86\x34\x2c\x53\xd1\xb8" //C.&..}.....4,S.. |
-/* 0050 */ "\x08\x16\xbb\xe4\xdf\x16\xbe\x8f\xe8\x18\x13\xe1\xa8\x63\xab\x2f" //.............c./ |
-/* 0060 */ "\x9c\xc3\x95\x0e\x76\x0b\xe6\xf1\x4d\x51\x16\x3c\xa0\xf9\x26\xa4" //....v...MQ.<..&. |
-/* 0070 */ "\xbe\x34\xfb\x50\xd2\x78\x55\xc4\xb7\x96\x26\xf2\x68\x00\x00\x00" //.4.P.xU...&.h... |
+/* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\x4c\xde\x13\x83\x98" //.d....p....L.... |
+/* 0010 */ "\x00\x01\x00\x00\x00\x00\x00\x01\x03\x47\x08\x6f\xf5\xcf\x1e\x76" //.........G.o...v |
+/* 0020 */ "\x3d\x27\x64\xd4\xad\xe3\xd1\xe1\x0d\xa4\xb9\xef\x24\x6b\x49\x1e" //='d.........$kI. |
+/* 0030 */ "\xbc\xc2\x65\xf6\xe8\xa6\x9a\xbf\x2f\x00\x00\x48\x00\x18\xd1\x32" //..e...../..H...2 |
+/* 0040 */ "\x85\x86\xf0\x89\xa4\x91\x20\x1a\xf5\xf1\x52\x6a\xed\x23\x75\xd3" //...... ...Rj.#u. |
+/* 0050 */ "\x3d\x70\xcf\xbf\x3c\xf7\x4c\x3b\xcc\x97\x72\x49\xdf\xd0\x32\x70" //=p..<.L;..rI..2p |
+/* 0060 */ "\xed\x4a\x57\x6d\x81\x33\x31\xe4\x87\x02\x36\x85\x96\x94\x4c\xd8" //.JWm.31...6...L. |
+/* 0070 */ "\x8d\x9b\xcc\x20\xcb\x0d\x14\x35\x78\x51\x3c\x01\x61\x00\x00\x00" //... ...5xQ<.a... |
 /* 0080 */ "\x00\x00\x00\x00\x00\x0f\x00\x0f\x00\x41\x64\x6d\x69\x6e\x69\x73" //.........Adminis |
 /* 0090 */ "\x74\x72\x61\x74\x65\x75\x72\x00\x10\x00\x09\x00\x52\x44\x50\x2d" //trateur.....RDP- |
 /* 00a0 */ "\x54\x45\x53\x54\x00"                                             //TEST. |
 // Dump done on RDP Client (5) 165 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x63, 0x5e, 0xb1, 0x27,  // ............c^.' |
-// /* 0010 */ 0x62, 0xb3, 0xb9, 0xa9, 0x1f, 0xa4, 0x0d, 0x94, 0x2f, 0x67, 0x9d, 0x9a, 0xb8, 0x14, 0xa6, 0x48,  // b......./g.....H |
-// /* 0020 */ 0x99, 0x99, 0xbe, 0xee, 0x0d, 0x93, 0xa9, 0xc7, 0xab, 0x5e, 0xa1, 0x3d, 0x00, 0x00, 0x48, 0x00,  // .........^.=..H. |
-// /* 0030 */ 0xae, 0x6f, 0xa5, 0x43, 0xa7, 0x26, 0x9a, 0xb9, 0x7d, 0x2e, 0xc3, 0x83, 0xef, 0x86, 0x34, 0x2c,  // .o.C.&..}.....4, |
-// /* 0040 */ 0x53, 0xd1, 0xb8, 0x08, 0x16, 0xbb, 0xe4, 0xdf, 0x16, 0xbe, 0x8f, 0xe8, 0x18, 0x13, 0xe1, 0xa8,  // S............... |
-// /* 0050 */ 0x63, 0xab, 0x2f, 0x9c, 0xc3, 0x95, 0x0e, 0x76, 0x0b, 0xe6, 0xf1, 0x4d, 0x51, 0x16, 0x3c, 0xa0,  // c./....v...MQ.<. |
-// /* 0060 */ 0xf9, 0x26, 0xa4, 0xbe, 0x34, 0xfb, 0x50, 0xd2, 0x78, 0x55, 0xc4, 0xb7, 0x96, 0x26, 0xf2, 0x68,  // .&..4.P.xU...&.h |
+// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x47, 0x08, 0x6f, 0xf5,  // ............G.o. |
+// /* 0010 */ 0xcf, 0x1e, 0x76, 0x3d, 0x27, 0x64, 0xd4, 0xad, 0xe3, 0xd1, 0xe1, 0x0d, 0xa4, 0xb9, 0xef, 0x24,  // ..v='d.........$ |
+// /* 0020 */ 0x6b, 0x49, 0x1e, 0xbc, 0xc2, 0x65, 0xf6, 0xe8, 0xa6, 0x9a, 0xbf, 0x2f, 0x00, 0x00, 0x48, 0x00,  // kI...e...../..H. |
+// /* 0030 */ 0x18, 0xd1, 0x32, 0x85, 0x86, 0xf0, 0x89, 0xa4, 0x91, 0x20, 0x1a, 0xf5, 0xf1, 0x52, 0x6a, 0xed,  // ..2...... ...Rj. |
+// /* 0040 */ 0x23, 0x75, 0xd3, 0x3d, 0x70, 0xcf, 0xbf, 0x3c, 0xf7, 0x4c, 0x3b, 0xcc, 0x97, 0x72, 0x49, 0xdf,  // #u.=p..<.L;..rI. |
+// /* 0050 */ 0xd0, 0x32, 0x70, 0xed, 0x4a, 0x57, 0x6d, 0x81, 0x33, 0x31, 0xe4, 0x87, 0x02, 0x36, 0x85, 0x96,  // .2p.JWm.31...6.. |
+// /* 0060 */ 0x94, 0x4c, 0xd8, 0x8d, 0x9b, 0xcc, 0x20, 0xcb, 0x0d, 0x14, 0x35, 0x78, 0x51, 0x3c, 0x01, 0x61,  // .L.... ...5xQ<.a |
 // /* 0070 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x41, 0x64, 0x6d, 0x69,  // ............Admi |
 // /* 0080 */ 0x6e, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x75, 0x72, 0x00, 0x10, 0x00, 0x09, 0x00, 0x52,  // nistrateur.....R |
 // /* 0090 */ 0x44, 0x50, 0x2d, 0x54, 0x45, 0x53, 0x54, 0x00,                          // DP-TEST. |
@@ -549,8 +541,8 @@
 // Bitmap caps::receive1BitPerPixel 1 |
 // Bitmap caps::receive4BitsPerPixel 1 |
 // Bitmap caps::receive8BitsPerPixel 1 |
-// Bitmap caps::desktopWidth 1280 |
-// Bitmap caps::desktopHeight 960 |
+// Bitmap caps::desktopWidth 1152 |
+// Bitmap caps::desktopHeight 864 |
 // Bitmap caps::pad2octets 0 |
 // Bitmap caps::desktopResizeFlag 1 (yes) |
 // Bitmap caps::bitmapCompressionFlag 1 yes |
@@ -630,12 +622,12 @@
 // Input caps::keyboardType 0 |
 // Input caps::keyboardSubType 0 |
 // Input caps::keyboardFunctionKey 0 |
-// Input caps::imeFileName 3684312144 |
+// Input caps::imeFileName 2395588000 |
 // Sec clear payload to send: |
 // /* 0000 */ 0x20, 0x01, 0x11, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x04, 0x00, 0x0a, 0x01, 0x52, 0x44,  //  .............RD |
 // /* 0010 */ 0x50, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x01, 0x00, 0x03, 0x00, 0x00, 0x02,  // P............... |
 // /* 0020 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,  // ................ |
-// /* 0030 */ 0x1c, 0x00, 0x10, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x05, 0xc0, 0x03, 0x00, 0x00,  // ................ |
+// /* 0030 */ 0x1c, 0x00, 0x10, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x80, 0x04, 0x60, 0x03, 0x00, 0x00,  // ............`... |
 // /* 0040 */ 0x01, 0x00, 0x01, 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x08, 0x00, 0x01, 0x00,  // ................ |
 // /* 0050 */ 0x00, 0x00, 0x03, 0x00, 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ....X........... |
 // /* 0060 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x42, 0x0f, 0x00, 0x01, 0x00, 0x14, 0x00, 0x00, 0x00,  // ......@B........ |
@@ -655,7 +647,7 @@
 // /* 0010 */ "\x01\x11\x00\xe9\x03\x02\x00\x01\x00\x04\x00\x0a\x01\x52\x44\x50" //.............RDP |
 // /* 0020 */ "\x00\x08\x00\x00\x00\x01\x00\x18\x00\x01\x00\x03\x00\x00\x02\x00" //................ |
 // /* 0030 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1c" //................ |
-// /* 0040 */ "\x00\x10\x00\x01\x00\x01\x00\x01\x00\x00\x05\xc0\x03\x00\x00\x01" //................ |
+// /* 0040 */ "\x00\x10\x00\x01\x00\x01\x00\x01\x00\x80\x04\x60\x03\x00\x00\x01" //...........`.... |
 // /* 0050 */ "\x00\x01\x00\x00\x08\x01\x00\x00\x00\x0e\x00\x08\x00\x01\x00\x00" //................ |
 // /* 0060 */ "\x00\x03\x00\x58\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //...X............ |
 // /* 0070 */ "\x00\x00\x00\x00\x00\x40\x42\x0f\x00\x01\x00\x14\x00\x00\x00\x01" //.....@B......... |
@@ -692,7 +684,7 @@
 /* 0010 */ "\x00\x01\x00\xe9\x03\x06\x00\xde\x01\x4d\x53\x54\x53\x43\x00\x13" //.........MSTSC.. |
 /* 0020 */ "\x00\x00\x00\x01\x00\x18\x00\x01\x00\x03\x00\x00\x02\x00\x00\x00" //................ |
 /* 0030 */ "\x00\x0d\x04\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1c\x00\x10" //................ |
-/* 0040 */ "\x00\x01\x00\x01\x00\x01\x00\x00\x05\xc0\x03\x00\x00\x01\x00\x01" //................ |
+/* 0040 */ "\x00\x01\x00\x01\x00\x01\x00\x80\x04\x60\x03\x00\x00\x01\x00\x01" //.........`...... |
 /* 0050 */ "\x00\x00\x08\x01\x00\x00\x00\x03\x00\x58\x00\x00\x00\x00\x00\x00" //.........X...... |
 /* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01" //................ |
 /* 0070 */ "\x00\x14\x00\x00\x00\x01\x00\x00\x00\x2a\x00\x01\x01\x01\x01\x01" //.........*...... |
@@ -725,8 +717,8 @@
 // /* 0000 */ 0xf4, 0x01, 0x13, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0xe9, 0x03, 0x06, 0x00, 0xde, 0x01,  // ................ |
 // /* 0010 */ 0x4d, 0x53, 0x54, 0x53, 0x43, 0x00, 0x13, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x01, 0x00,  // MSTSC........... |
 // /* 0020 */ 0x03, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0030 */ 0x00, 0x00, 0x02, 0x00, 0x1c, 0x00, 0x10, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x05,  // ................ |
-// /* 0040 */ 0xc0, 0x03, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00, 0x03, 0x00,  // ................ |
+// /* 0030 */ 0x00, 0x00, 0x02, 0x00, 0x1c, 0x00, 0x10, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x80, 0x04,  // ................ |
+// /* 0040 */ 0x60, 0x03, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00, 0x03, 0x00,  // `............... |
 // /* 0050 */ 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // X............... |
 // /* 0060 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x14, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,  // ................ |
 // /* 0070 */ 0x2a, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x01, 0x01, 0x01, 0x00, 0x01, 0x00, 0x00,  // *............... |
@@ -782,8 +774,8 @@
 // Bitmap caps::receive1BitPerPixel 1 |
 // Bitmap caps::receive4BitsPerPixel 1 |
 // Bitmap caps::receive8BitsPerPixel 1 |
-// Bitmap caps::desktopWidth 1280 |
-// Bitmap caps::desktopHeight 960 |
+// Bitmap caps::desktopWidth 1152 |
+// Bitmap caps::desktopHeight 864 |
 // Bitmap caps::pad2octets 0 |
 // Bitmap caps::desktopResizeFlag 1 (yes) |
 // Bitmap caps::bitmapCompressionFlag 1 yes |
@@ -894,8 +886,7 @@
 // Front::capability 18 / 19 |
 // Receiving from client MultifragmentUpdate caps (8 bytes) |
 // MultifragmentUpdate caps::MaxRequestSize 0 |
-// process_confirm_active done p=0x7fffdba154eb end=0x7fffdba154eb |
-// Front::reset() |
+// process_confirm_active done p=0x7fff8ed2d87b end=0x7fff8ed2d87b |
 // Front::reset::use_bitmap_comp=1 |
 // Front::reset::use_compact_packets=1 |
 // Front::reset::bitmap_cache_version=0 |
@@ -1344,11 +1335,11 @@
 // PDUTYPE2_SYNCHRONIZE messageType=1 controlId=1001 |
 // send_synchronize |
 // Sec clear payload to send: |
-// /* 0000 */ 0x16, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x02, 0x08, 0x00, 0x1f, 0x00,  // ................ |
+// /* 0000 */ 0x16, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x02, 0x16, 0x00, 0x1f, 0x00,  // ................ |
 // /* 0010 */ 0x00, 0x00, 0x01, 0x00, 0xea, 0x03,                                // ...... |
 // Sending on RDP Client (5) 36 bytes |
 // /* 0000 */ "\x03\x00\x00\x24\x02\xf0\x80\x68\x00\x00\x03\xeb\x70\x16\x16\x00" //...$...h....p... |
-// /* 0010 */ "\x17\x00\xe9\x03\x02\x00\x01\x00\x00\x02\x08\x00\x1f\x00\x00\x00" //................ |
+// /* 0010 */ "\x17\x00\xe9\x03\x02\x00\x01\x00\x00\x02\x16\x00\x1f\x00\x00\x00" //................ |
 // /* 0020 */ "\x01\x00\xea\x03"                                                 //.... |
 // Sent dumped on RDP Client (5) 36 bytes |
 // send_synchronize done |
@@ -1384,14 +1375,14 @@
 // PDUTYPE2_CONTROL |
 // send_control action=4 |
 // Sec clear payload to send: |
-// /* 0000 */ 0x1a, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x02, 0x0c, 0x00, 0x14, 0x00,  // ................ |
+// /* 0000 */ 0x1a, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x02, 0x1a, 0x00, 0x14, 0x00,  // ................ |
 // /* 0010 */ 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xea, 0x03, 0x00, 0x00,                    // .......... |
 // Sending on RDP Client (5) 40 bytes |
 // /* 0000 */ "\x03\x00\x00\x28\x02\xf0\x80\x68\x00\x00\x03\xeb\x70\x1a\x1a\x00" //...(...h....p... |
-// /* 0010 */ "\x17\x00\xe9\x03\x02\x00\x01\x00\x00\x02\x0c\x00\x14\x00\x00\x00" //................ |
+// /* 0010 */ "\x17\x00\xe9\x03\x02\x00\x01\x00\x00\x02\x1a\x00\x14\x00\x00\x00" //................ |
 // /* 0020 */ "\x04\x00\x00\x00\xea\x03\x00\x00"                                 //........ |
 // Sent dumped on RDP Client (5) 40 bytes |
-// send_control action=4 |
+// send_control done. action=4 |
 // process_data done |
 // Front received DATAPDU done |
 // Front::incoming() |
@@ -1424,14 +1415,14 @@
 // PDUTYPE2_CONTROL |
 // send_control action=2 |
 // Sec clear payload to send: |
-// /* 0000 */ 0x1a, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x02, 0x0c, 0x00, 0x14, 0x00,  // ................ |
+// /* 0000 */ 0x1a, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x02, 0x1a, 0x00, 0x14, 0x00,  // ................ |
 // /* 0010 */ 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0xea, 0x03, 0x00, 0x00,                    // .......... |
 // Sending on RDP Client (5) 40 bytes |
 // /* 0000 */ "\x03\x00\x00\x28\x02\xf0\x80\x68\x00\x00\x03\xeb\x70\x1a\x1a\x00" //...(...h....p... |
-// /* 0010 */ "\x17\x00\xe9\x03\x02\x00\x01\x00\x00\x02\x0c\x00\x14\x00\x00\x00" //................ |
+// /* 0010 */ "\x17\x00\xe9\x03\x02\x00\x01\x00\x00\x02\x1a\x00\x14\x00\x00\x00" //................ |
 // /* 0020 */ "\x02\x00\x00\x00\xea\x03\x00\x00"                                 //........ |
 // Sent dumped on RDP Client (5) 40 bytes |
-// send_control action=2 |
+// send_control done. action=2 |
 // process_data done |
 // Front received DATAPDU done |
 // Front::incoming() |
@@ -1464,7 +1455,7 @@
 // PDUTYPE2_FONTLIST |
 // send_fontmap |
 // Sec clear payload to send: |
-// /* 0000 */ 0xbe, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x02, 0xb0, 0x00, 0x28, 0x00,  // ..............(. |
+// /* 0000 */ 0xbe, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x02, 0xbe, 0x00, 0x28, 0x00,  // ..............(. |
 // /* 0010 */ 0x00, 0x00, 0xff, 0x02, 0xb6, 0x00, 0x28, 0x00, 0x00, 0x00, 0x27, 0x00, 0x27, 0x00, 0x03, 0x00,  // ......(...'.'... |
 // /* 0020 */ 0x04, 0x00, 0x00, 0x00, 0x26, 0x00, 0x01, 0x00, 0x1e, 0x00, 0x02, 0x00, 0x1f, 0x00, 0x03, 0x00,  // ....&........... |
 // /* 0030 */ 0x1d, 0x00, 0x04, 0x00, 0x27, 0x00, 0x05, 0x00, 0x0b, 0x00, 0x06, 0x00, 0x28, 0x00, 0x08, 0x00,  // ....'.......(... |
@@ -1478,7 +1469,7 @@
 // /* 00b0 */ 0x02, 0x00, 0x29, 0x00, 0x01, 0x00, 0x2a, 0x00, 0x05, 0x00, 0x2b, 0x00, 0x2a, 0x00,        // ..)...*...+.*. |
 // Sending on RDP Client (5) 205 bytes |
 // /* 0000 */ "\x03\x00\x00\xcd\x02\xf0\x80\x68\x00\x00\x03\xeb\x70\x80\xbe\xbe" //.......h....p... |
-// /* 0010 */ "\x00\x17\x00\xe9\x03\x02\x00\x01\x00\x00\x02\xb0\x00\x28\x00\x00" //.............(.. |
+// /* 0010 */ "\x00\x17\x00\xe9\x03\x02\x00\x01\x00\x00\x02\xbe\x00\x28\x00\x00" //.............(.. |
 // /* 0020 */ "\x00\xff\x02\xb6\x00\x28\x00\x00\x00\x27\x00\x27\x00\x03\x00\x04" //.....(...'.'.... |
 // /* 0030 */ "\x00\x00\x00\x26\x00\x01\x00\x1e\x00\x02\x00\x1f\x00\x03\x00\x1d" //...&............ |
 // /* 0040 */ "\x00\x04\x00\x27\x00\x05\x00\x0b\x00\x06\x00\x28\x00\x08\x00\x21" //...'.......(...! |
@@ -1491,7 +1482,7 @@
 // /* 00b0 */ "\x00\x25\x00\x09\x00\x26\x00\x04\x00\x27\x00\x03\x00\x28\x00\x02" //.%...&...'...(.. |
 // /* 00c0 */ "\x00\x29\x00\x01\x00\x2a\x00\x05\x00\x2b\x00\x2a\x00"             //.)...*...+.*. |
 // Sent dumped on RDP Client (5) 205 bytes |
-// send_fontmap |
+// send_fontmap done |
 // Front::send_data_update_sync |
 // Front::send_data_update_sync: fast-path |
 // Sending on RDP Client (5) 5 bytes |
@@ -1918,45 +1909,45 @@
 // hostname=RDP-TEST |
 // Front::begin_update() |
 // Widget_load: image file [./tests/fixtures/Philips_PM5544_640.png] is PNG file |
-// front::draw:draw_tile((320, 240, 64, 64) (0, 0, 64, 64) |
-// front::draw:draw_tile((384, 240, 64, 64) (64, 0, 64, 64) |
-// front::draw:draw_tile((448, 240, 64, 64) (128, 0, 64, 64) |
-// front::draw:draw_tile((512, 240, 64, 64) (192, 0, 64, 64) |
-// front::draw:draw_tile((576, 240, 64, 64) (256, 0, 64, 64) |
-// front::draw:draw_tile((640, 240, 64, 64) (320, 0, 64, 64) |
-// front::draw:draw_tile((704, 240, 64, 64) (384, 0, 64, 64) |
-// front::draw:draw_tile((768, 240, 64, 64) (448, 0, 64, 64) |
-// front::draw:draw_tile((832, 240, 64, 64) (512, 0, 64, 64) |
-// front::draw:draw_tile((896, 240, 64, 64) (576, 0, 64, 64) |
-// front::draw:draw_tile((320, 304, 64, 64) (0, 64, 64, 64) |
-// front::draw:draw_tile((384, 304, 64, 64) (64, 64, 64, 64) |
-// front::draw:draw_tile((448, 304, 64, 64) (128, 64, 64, 64) |
-// front::draw:draw_tile((512, 304, 64, 64) (192, 64, 64, 64) |
-// front::draw:draw_tile((576, 304, 64, 64) (256, 64, 64, 64) |
-// front::draw:draw_tile((640, 304, 64, 64) (320, 64, 64, 64) |
-// front::draw:draw_tile((704, 304, 64, 64) (384, 64, 64, 64) |
-// front::draw:draw_tile((768, 304, 64, 64) (448, 64, 64, 64) |
-// front::draw:draw_tile((832, 304, 64, 64) (512, 64, 64, 64) |
-// front::draw:draw_tile((896, 304, 64, 64) (576, 64, 64, 64) |
-// front::draw:draw_tile((320, 368, 64, 64) (0, 128, 64, 64) |
-// front::draw:draw_tile((384, 368, 64, 64) (64, 128, 64, 64) |
-// front::draw:draw_tile((448, 368, 64, 64) (128, 128, 64, 64) |
-// front::draw:draw_tile((512, 368, 64, 64) (192, 128, 64, 64) |
-// front::draw:draw_tile((576, 368, 64, 64) (256, 128, 64, 64) |
-// front::draw:draw_tile((640, 368, 64, 64) (320, 128, 64, 64) |
-// front::draw:draw_tile((704, 368, 64, 64) (384, 128, 64, 64) |
-// front::draw:draw_tile((768, 368, 64, 64) (448, 128, 64, 64) |
-// front::draw:draw_tile((832, 368, 64, 64) (512, 128, 64, 64) |
-// front::draw:draw_tile((896, 368, 64, 64) (576, 128, 64, 64) |
-// front::draw:draw_tile((320, 432, 64, 64) (0, 192, 64, 64) |
-// front::draw:draw_tile((384, 432, 64, 64) (64, 192, 64, 64) |
-// front::draw:draw_tile((448, 432, 64, 64) (128, 192, 64, 64) |
-// front::draw:draw_tile((512, 432, 64, 64) (192, 192, 64, 64) |
-// front::draw:draw_tile((576, 432, 64, 64) (256, 192, 64, 64) |
-// front::draw:draw_tile((640, 432, 64, 64) (320, 192, 64, 64) |
-// front::draw:draw_tile((704, 432, 64, 64) (384, 192, 64, 64) |
-// front::draw:draw_tile((768, 432, 64, 64) (448, 192, 64, 64) |
-// front::draw:draw_tile((832, 432, 64, 64) (512, 192, 64, 64) |
+// front::draw:draw_tile((256, 192, 64, 64) (0, 0, 64, 64) |
+// front::draw:draw_tile((320, 192, 64, 64) (64, 0, 64, 64) |
+// front::draw:draw_tile((384, 192, 64, 64) (128, 0, 64, 64) |
+// front::draw:draw_tile((448, 192, 64, 64) (192, 0, 64, 64) |
+// front::draw:draw_tile((512, 192, 64, 64) (256, 0, 64, 64) |
+// front::draw:draw_tile((576, 192, 64, 64) (320, 0, 64, 64) |
+// front::draw:draw_tile((640, 192, 64, 64) (384, 0, 64, 64) |
+// front::draw:draw_tile((704, 192, 64, 64) (448, 0, 64, 64) |
+// front::draw:draw_tile((768, 192, 64, 64) (512, 0, 64, 64) |
+// front::draw:draw_tile((832, 192, 64, 64) (576, 0, 64, 64) |
+// front::draw:draw_tile((256, 256, 64, 64) (0, 64, 64, 64) |
+// front::draw:draw_tile((320, 256, 64, 64) (64, 64, 64, 64) |
+// front::draw:draw_tile((384, 256, 64, 64) (128, 64, 64, 64) |
+// front::draw:draw_tile((448, 256, 64, 64) (192, 64, 64, 64) |
+// front::draw:draw_tile((512, 256, 64, 64) (256, 64, 64, 64) |
+// front::draw:draw_tile((576, 256, 64, 64) (320, 64, 64, 64) |
+// front::draw:draw_tile((640, 256, 64, 64) (384, 64, 64, 64) |
+// front::draw:draw_tile((704, 256, 64, 64) (448, 64, 64, 64) |
+// front::draw:draw_tile((768, 256, 64, 64) (512, 64, 64, 64) |
+// front::draw:draw_tile((832, 256, 64, 64) (576, 64, 64, 64) |
+// front::draw:draw_tile((256, 320, 64, 64) (0, 128, 64, 64) |
+// front::draw:draw_tile((320, 320, 64, 64) (64, 128, 64, 64) |
+// front::draw:draw_tile((384, 320, 64, 64) (128, 128, 64, 64) |
+// front::draw:draw_tile((448, 320, 64, 64) (192, 128, 64, 64) |
+// front::draw:draw_tile((512, 320, 64, 64) (256, 128, 64, 64) |
+// front::draw:draw_tile((576, 320, 64, 64) (320, 128, 64, 64) |
+// front::draw:draw_tile((640, 320, 64, 64) (384, 128, 64, 64) |
+// front::draw:draw_tile((704, 320, 64, 64) (448, 128, 64, 64) |
+// front::draw:draw_tile((768, 320, 64, 64) (512, 128, 64, 64) |
+// front::draw:draw_tile((832, 320, 64, 64) (576, 128, 64, 64) |
+// front::draw:draw_tile((256, 384, 64, 64) (0, 192, 64, 64) |
+// front::draw:draw_tile((320, 384, 64, 64) (64, 192, 64, 64) |
+// front::draw:draw_tile((384, 384, 64, 64) (128, 192, 64, 64) |
+// front::draw:draw_tile((448, 384, 64, 64) (192, 192, 64, 64) |
+// front::draw:draw_tile((512, 384, 64, 64) (256, 192, 64, 64) |
+// front::draw:draw_tile((576, 384, 64, 64) (320, 192, 64, 64) |
+// front::draw:draw_tile((640, 384, 64, 64) (384, 192, 64, 64) |
+// front::draw:draw_tile((704, 384, 64, 64) (448, 192, 64, 64) |
+// front::draw:draw_tile((768, 384, 64, 64) (512, 192, 64, 64) |
 // Sending on RDP Client (5) 8413 bytes |
 // /* 0000 */ "\x00\xa0\xdd\x00\xd7\x20\x53\x00\x03\xfc\x03\x00\x00\x01\x00\x00" //..... S......... |
 // /* 0010 */ "\x01\x00\x00\x00\x00\x55\x00\x00\x00\xaa\x00\x00\x00\xff\x00\x00" //.....U.......... |
@@ -2023,7 +2014,7 @@
 // /* 03e0 */ "\x00\x00\xb6\xff\x00\x55\xb6\xff\x00\xaa\xb6\xff\x00\xff\xb6\xff" //.....U.......... |
 // /* 03f0 */ "\x00\x00\xdb\xff\x00\x55\xdb\xff\x00\xaa\xdb\xff\x00\xff\xdb\xff" //.....U.......... |
 // /* 0400 */ "\x00\x00\xff\xff\x00\x55\xff\xff\x00\xaa\xff\xff\x00\xff\xff\xff" //.....U.......... |
-// /* 0410 */ "\x00\x09\x0a\x3c\x00\x05\xc0\x03\xff\xff\x11\x3f\x05\x05\xf6\xf6" //...<.......?.... |
+// /* 0410 */ "\x00\x09\x0a\x3c\x80\x04\x60\x03\xff\xff\x11\x3f\x05\x05\xf6\xf6" //...<..`....?.... |
 // /* 0420 */ "\x00\xf8\x11\x3f\x05\x05\xf6\xf6\xe0\x07\x11\x3f\x05\x05\xf6\xf6" //...?.......?.... |
 // /* 0430 */ "\x1f\x00\x11\x1f\x05\x05\xf6\xf6\x00\x11\x3f\x0a\x0a\xec\xec\x73" //..........?....s |
 // /* 0440 */ "\x02\x03\x73\x00\x00\x04\x02\x02\x00\x40\x40\x10\x71\x00\x00\x00" //..s......@@.q... |
@@ -2034,7 +2025,7 @@
 // /* 0490 */ "\x11\x45\x29\x02\x81\xf7\xbd\x2b\xf0\xc0\x07\xce\xaa\x52\xd0\x02" //.E)....+.....R.. |
 // /* 04a0 */ "\x86\x31\x05\xc0\x11\x45\x29\x02\x81\xba\xd6\x2b\x60\x70\xff\xff" //.1...E)....+`p.. |
 // /* 04b0 */ "\x81\xb6\xb5\xc0\x11\xdb\xde\x1e\x81\x34\xa5\xc0\x11\x24\x21\x00" //.........4...$!. |
-// /* 04c0 */ "\xee\x49\x0d\x3f\x02\x00\x40\x01\xf0\x00\x40\x00\x40\x00\xcc\x03" //.I.?..@...@.@... |
+// /* 04c0 */ "\xee\x49\x0d\x3f\x02\x00\x00\x01\xc0\x00\x40\x00\x40\x00\xcc\x03" //.I.?......@.@... |
 // /* 04d0 */ "\x8a\x00\x00\x04\x02\x02\x00\x40\x40\x10\x88\x00\x01\x00\xc0\x05" //.......@@....... |
 // /* 04e0 */ "\xef\x34\x81\x33\x55\xc0\x13\xdd\x53\x81\x3e\x8d\xc2\xff\xff\x81" //.4.3U...S.>..... |
 // /* 04f0 */ "\x92\x94\xc3\x10\x84\xf0\x80\x04\xc0\x05\x9e\x61\x81\x95\x6d\xc0" //...........a..m. |
@@ -2173,7 +2164,7 @@
 // /* 0d40 */ "\xff\x0c\xce\xcb\x5a\xd0\x02\x61\x08\x05\xc0\x11\x65\x29\x0e\xce" //....Z..a....e).. |
 // /* 0d50 */ "\x34\xa5\xd0\x01\x24\x21\x01\x81\x9a\xd6\xc0\x11\x8a\x52\xf0\x0e" //4...$!.......R.. |
 // /* 0d60 */ "\x08\x60\x14\xff\xff\x00\x3c\x81\x5d\xef\xc0\x11\x08\x42\x1e\x81" //.`....<.]....B.. |
-// /* 0d70 */ "\x9a\xd6\xc0\x11\xe7\x39\xf0\x0e\x03\x01\x06\x01\x40\x01\x30\x01" //.....9......@.0. |
+// /* 0d70 */ "\x9a\xd6\xc0\x11\xe7\x39\xf0\x0e\x03\x01\x06\x01\x00\x01\x00\x01" //.....9.......... |
 // /* 0d80 */ "\x0a\x00\x03\x78\x00\x00\x04\x02\x02\x00\x40\x40\x10\x76\x00\x0b" //...x......@@.v.. |
 // /* 0d90 */ "\x00\xc0\x05\xef\x34\x81\x71\x55\xc2\xff\xff\x81\x55\xad\xc0\x10" //....4.qU....U... |
 // /* 0da0 */ "\x10\x84\x81\x55\xad\xc2\xff\xff\x81\x92\x94\xc3\x10\x84\xf0\xd8" //...U............ |
@@ -2296,7 +2287,7 @@
 // /* 14f0 */ "\xc0\x11\xef\x7b\xf0\x0e\x08\xce\x34\xa5\xd0\x01\x24\x21\x01\x81" //...{....4...$!.. |
 // /* 1500 */ "\x9e\xf7\xc0\x11\x8a\x52\x0e\x60\x14\xff\xff\x1c\x81\xdf\xff\xc0" //.....R.`........ |
 // /* 1510 */ "\x11\xa2\x10\x1e\x81\x9a\xd6\xc0\x11\x4d\x6b\xf0\x0e\x05\x01\x06" //.........Mk..... |
-// /* 1520 */ "\x01\x40\x01\x70\x01\x14\x00\x03\x81\x01\x00\x04\x02\x02\x00\x40" //.@.p...........@ |
+// /* 1520 */ "\x01\x00\x01\x40\x01\x14\x00\x03\x81\x01\x00\x04\x02\x02\x00\x40" //...@...........@ |
 // /* 1530 */ "\x40\x10\x7f\x01\x15\x00\xc0\x05\xef\x34\x81\x71\x55\xc2\xff\xff" //@........4.qU... |
 // /* 1540 */ "\x81\x55\xad\xc0\x03\x10\x84\x81\xcb\x9c\xc0\x03\xe0\xff\x00\x0c" //.U.............. |
 // /* 1550 */ "\x81\x10\x84\x00\x20\x81\x80\xf7\x00\x1f\x81\xc3\xde\x00\x0a\x81" //.... ........... |
@@ -2399,7 +2390,7 @@
 // /* 1b60 */ "\x03\x81\x77\x9e\xcb\x20\x8e\xf0\xc0\x03\xce\xaa\x52\xd0\x02\x86" //..w.. ......R... |
 // /* 1b70 */ "\x31\x05\xc0\x11\x45\x29\x0e\x60\x14\xff\xff\x00\x3c\x81\xdb\xde" //1...E).`....<... |
 // /* 1b80 */ "\xc0\x11\x6d\x6b\x1e\x81\x9a\xd6\xc0\x11\x82\x10\xf0\xce\x06\x01" //..mk............ |
-// /* 1b90 */ "\x06\x01\x40\x01\xb0\x01\x1e\x00\x03\xab\x01\x00\x04\x02\x02\x00" //..@............. |
+// /* 1b90 */ "\x06\x01\x00\x01\x80\x01\x1e\x00\x03\xab\x01\x00\x04\x02\x02\x00" //................ |
 // /* 1ba0 */ "\x40\x40\x10\xa9\x01\x1f\x00\xc0\x05\xcf\xba\x81\x91\xcb\xc2\xff" //@@.............. |
 // /* 1bb0 */ "\xff\x81\x55\xad\xce\x10\x84\x81\xcf\x7b\x11\x81\xcb\x5a\xc2\xff" //..U......{...Z.. |
 // /* 1bc0 */ "\xff\xd0\x03\x45\x29\x01\x00\x07\x81\x8e\x73\x00\x1f\x81\x2c\x63" //...E).....s...,c |
@@ -2485,49 +2476,49 @@
 // /* 20c0 */ "\x39\x42\xda\x5a\x9a\x52\x30\xcd\x35\x21\xcf\x04\x51\x81\x97\x40" //9B.Z.R0.5!..Q..@ |
 // /* 20d0 */ "\x60\x10\x1f\x00\xf0\x40\x07\x11\x02\x01\x40\x25\x00"             //`....@....@%. |
 // Sent dumped on RDP Client (5) 8413 bytes |
-// front::draw:draw_tile((896, 432, 64, 64) (576, 192, 64, 64) |
-// front::draw:draw_tile((320, 496, 64, 64) (0, 256, 64, 64) |
-// front::draw:draw_tile((384, 496, 64, 64) (64, 256, 64, 64) |
-// front::draw:draw_tile((448, 496, 64, 64) (128, 256, 64, 64) |
-// front::draw:draw_tile((512, 496, 64, 64) (192, 256, 64, 64) |
-// front::draw:draw_tile((576, 496, 64, 64) (256, 256, 64, 64) |
-// front::draw:draw_tile((640, 496, 64, 64) (320, 256, 64, 64) |
-// front::draw:draw_tile((704, 496, 64, 64) (384, 256, 64, 64) |
-// front::draw:draw_tile((768, 496, 64, 64) (448, 256, 64, 64) |
-// front::draw:draw_tile((832, 496, 64, 64) (512, 256, 64, 64) |
-// front::draw:draw_tile((896, 496, 64, 64) (576, 256, 64, 64) |
-// front::draw:draw_tile((320, 560, 64, 64) (0, 320, 64, 64) |
-// front::draw:draw_tile((384, 560, 64, 64) (64, 320, 64, 64) |
-// front::draw:draw_tile((448, 560, 64, 64) (128, 320, 64, 64) |
-// front::draw:draw_tile((512, 560, 64, 64) (192, 320, 64, 64) |
-// front::draw:draw_tile((576, 560, 64, 64) (256, 320, 64, 64) |
-// front::draw:draw_tile((640, 560, 64, 64) (320, 320, 64, 64) |
-// front::draw:draw_tile((704, 560, 64, 64) (384, 320, 64, 64) |
-// front::draw:draw_tile((768, 560, 64, 64) (448, 320, 64, 64) |
-// front::draw:draw_tile((832, 560, 64, 64) (512, 320, 64, 64) |
-// front::draw:draw_tile((896, 560, 64, 64) (576, 320, 64, 64) |
-// front::draw:draw_tile((320, 624, 64, 64) (0, 384, 64, 64) |
-// front::draw:draw_tile((384, 624, 64, 64) (64, 384, 64, 64) |
-// front::draw:draw_tile((448, 624, 64, 64) (128, 384, 64, 64) |
-// front::draw:draw_tile((512, 624, 64, 64) (192, 384, 64, 64) |
-// front::draw:draw_tile((576, 624, 64, 64) (256, 384, 64, 64) |
-// front::draw:draw_tile((640, 624, 64, 64) (320, 384, 64, 64) |
-// front::draw:draw_tile((704, 624, 64, 64) (384, 384, 64, 64) |
-// front::draw:draw_tile((768, 624, 64, 64) (448, 384, 64, 64) |
-// front::draw:draw_tile((832, 624, 64, 64) (512, 384, 64, 64) |
-// front::draw:draw_tile((896, 624, 64, 64) (576, 384, 64, 64) |
-// front::draw:draw_tile((320, 688, 64, 32) (0, 448, 64, 32) |
-// front::draw:draw_tile((384, 688, 64, 32) (64, 448, 64, 32) |
-// front::draw:draw_tile((448, 688, 64, 32) (128, 448, 64, 32) |
-// front::draw:draw_tile((512, 688, 64, 32) (192, 448, 64, 32) |
-// front::draw:draw_tile((576, 688, 64, 32) (256, 448, 64, 32) |
-// front::draw:draw_tile((640, 688, 64, 32) (320, 448, 64, 32) |
-// front::draw:draw_tile((704, 688, 64, 32) (384, 448, 64, 32) |
-// front::draw:draw_tile((768, 688, 64, 32) (448, 448, 64, 32) |
-// front::draw:draw_tile((832, 688, 64, 32) (512, 448, 64, 32) |
-// front::draw:draw_tile((896, 688, 64, 32) (576, 448, 64, 32) |
+// front::draw:draw_tile((832, 384, 64, 64) (576, 192, 64, 64) |
+// front::draw:draw_tile((256, 448, 64, 64) (0, 256, 64, 64) |
+// front::draw:draw_tile((320, 448, 64, 64) (64, 256, 64, 64) |
+// front::draw:draw_tile((384, 448, 64, 64) (128, 256, 64, 64) |
+// front::draw:draw_tile((448, 448, 64, 64) (192, 256, 64, 64) |
+// front::draw:draw_tile((512, 448, 64, 64) (256, 256, 64, 64) |
+// front::draw:draw_tile((576, 448, 64, 64) (320, 256, 64, 64) |
+// front::draw:draw_tile((640, 448, 64, 64) (384, 256, 64, 64) |
+// front::draw:draw_tile((704, 448, 64, 64) (448, 256, 64, 64) |
+// front::draw:draw_tile((768, 448, 64, 64) (512, 256, 64, 64) |
+// front::draw:draw_tile((832, 448, 64, 64) (576, 256, 64, 64) |
+// front::draw:draw_tile((256, 512, 64, 64) (0, 320, 64, 64) |
+// front::draw:draw_tile((320, 512, 64, 64) (64, 320, 64, 64) |
+// front::draw:draw_tile((384, 512, 64, 64) (128, 320, 64, 64) |
+// front::draw:draw_tile((448, 512, 64, 64) (192, 320, 64, 64) |
+// front::draw:draw_tile((512, 512, 64, 64) (256, 320, 64, 64) |
+// front::draw:draw_tile((576, 512, 64, 64) (320, 320, 64, 64) |
+// front::draw:draw_tile((640, 512, 64, 64) (384, 320, 64, 64) |
+// front::draw:draw_tile((704, 512, 64, 64) (448, 320, 64, 64) |
+// front::draw:draw_tile((768, 512, 64, 64) (512, 320, 64, 64) |
+// front::draw:draw_tile((832, 512, 64, 64) (576, 320, 64, 64) |
+// front::draw:draw_tile((256, 576, 64, 64) (0, 384, 64, 64) |
+// front::draw:draw_tile((320, 576, 64, 64) (64, 384, 64, 64) |
+// front::draw:draw_tile((384, 576, 64, 64) (128, 384, 64, 64) |
+// front::draw:draw_tile((448, 576, 64, 64) (192, 384, 64, 64) |
+// front::draw:draw_tile((512, 576, 64, 64) (256, 384, 64, 64) |
+// front::draw:draw_tile((576, 576, 64, 64) (320, 384, 64, 64) |
+// front::draw:draw_tile((640, 576, 64, 64) (384, 384, 64, 64) |
+// front::draw:draw_tile((704, 576, 64, 64) (448, 384, 64, 64) |
+// front::draw:draw_tile((768, 576, 64, 64) (512, 384, 64, 64) |
+// front::draw:draw_tile((832, 576, 64, 64) (576, 384, 64, 64) |
+// front::draw:draw_tile((256, 640, 64, 32) (0, 448, 64, 32) |
+// front::draw:draw_tile((320, 640, 64, 32) (64, 448, 64, 32) |
+// front::draw:draw_tile((384, 640, 64, 32) (128, 448, 64, 32) |
+// front::draw:draw_tile((448, 640, 64, 32) (192, 448, 64, 32) |
+// front::draw:draw_tile((512, 640, 64, 32) (256, 448, 64, 32) |
+// front::draw:draw_tile((576, 640, 64, 32) (320, 448, 64, 32) |
+// front::draw:draw_tile((640, 640, 64, 32) (384, 448, 64, 32) |
+// front::draw:draw_tile((704, 640, 64, 32) (448, 448, 64, 32) |
+// front::draw:draw_tile((768, 640, 64, 32) (512, 448, 64, 32) |
+// front::draw:draw_tile((832, 640, 64, 32) (576, 448, 64, 32) |
 // Widget_load: image file [./tests/fixtures/xrdp24b-redemption.png] is PNG file |
-// front::draw:draw_tile((994, 805, 64, 64) (0, 0, 64, 64) |
+// front::draw:draw_tile((866, 709, 64, 64) (0, 0, 64, 64) |
 // Sending on RDP Client (5) 10759 bytes |
 // /* 0000 */ "\x00\xaa\x07\x00\x01\x2a\x73\x00\x03\xb5\x01\x00\x04\x02\x02\x00" //.....*s......... |
 // /* 0010 */ "\x40\x40\x10\xb3\x01\x26\x00\x03\x81\x45\x29\x22\x81\xcb\x5a\x11" //@@...&...E)"..Z. |
@@ -2569,7 +2560,7 @@
 // /* 0250 */ "\x00\x06\x60\x14\xff\xff\x00\x3c\x81\x5d\xef\xc0\x11\x08\x42\x1e" //..`....<.]....B. |
 // /* 0260 */ "\x81\x9a\xd6\xc0\x11\xe7\x39\xf0\xde\x07\x81\xdb\xde\xc0\x11\x82" //......9......... |
 // /* 0270 */ "\x10\x1e\x60\x04\xff\xff\x00\x2c\xce\x55\xad\xd0\x01\xc3\x18\x01" //..`....,.U...... |
-// /* 0280 */ "\x81\x1c\xe7\xc0\x11\xaa\x52\x0e\x01\x06\x01\x40\x01\xf0\x01\x28" //......R....@...( |
+// /* 0280 */ "\x81\x1c\xe7\xc0\x11\xaa\x52\x0e\x01\x06\x01\x00\x01\xc0\x01\x28" //......R........( |
 // /* 0290 */ "\x00\x03\xb5\x01\x00\x04\x02\x02\x00\x40\x40\x10\xb3\x01\x29\x00" //.........@@...). |
 // /* 02a0 */ "\xc0\x05\xcf\xba\x81\x91\xcb\xc2\xff\xff\x81\x55\xad\xc0\x0d\x10" //...........U.... |
 // /* 02b0 */ "\x84\x81\xc7\x39\x09\x00\x15\x82\xef\x7b\x41\x08\x00\x1e\x81\xaa" //...9.....{A..... |
@@ -2750,7 +2741,7 @@
 // /* 0da0 */ "\xa2\x10\x1e\x81\x9a\xd6\xc0\x11\x4d\x6b\xf0\x1e\x08\x81\xdf\xff" //........Mk...... |
 // /* 0db0 */ "\x20\x01\x1e\x60\x04\xff\xff\x0c\xce\xcb\x5a\xd0\x02\x61\x08\x05" // ..`......Z..a.. |
 // /* 0dc0 */ "\xc0\x11\x65\x29\x0e\xce\x34\xa5\xd0\x01\x24\x21\x01\x81\x9a\xd6" //..e)..4...$!.... |
-// /* 0dd0 */ "\xc0\x11\x8a\x52\xf0\xce\x01\x01\x06\x01\x40\x01\x30\x02\x32\x00" //...R......@.0.2. |
+// /* 0dd0 */ "\xc0\x11\x8a\x52\xf0\xce\x01\x01\x06\x01\x00\x01\x00\x02\x32\x00" //...R..........2. |
 // /* 0de0 */ "\x03\x07\x01\x00\x04\x02\x02\x00\x40\x40\x10\x05\x01\x33\x00\xc0" //........@@...3.. |
 // /* 0df0 */ "\x05\xcf\xba\x81\x8f\xc3\xc0\x13\xc1\xa3\x81\x2b\xc5\xc2\xff\xff" //...........+.... |
 // /* 0e00 */ "\x81\x92\x94\xc3\x10\x84\xf0\x15\x04\x81\x90\xc3\xc0\x13\x54\x45" //..............TE |
@@ -2908,7 +2899,7 @@
 // /* 1780 */ "\xc0\x11\x82\x10\x02\x81\x57\xdd\xcb\x5e\x71\xf0\xd0\x07\x81\x5d" //......W..^q....] |
 // /* 1790 */ "\xef\xc0\x11\xe7\x39\x1e\x60\x04\xff\xff\x00\x2c\xce\xff\xff\xd0" //....9.`....,.... |
 // /* 17a0 */ "\x01\x45\x29\x01\x81\x9a\xd6\xc0\x11\xef\x7b\xf0\xce\x03\x01\x06" //.E).......{..... |
-// /* 17b0 */ "\x01\x40\x01\x70\x02\x3c\x00\x03\x7d\x00\x00\x04\x02\x02\x00\x40" //.@.p.<..}......@ |
+// /* 17b0 */ "\x01\x00\x01\x40\x02\x3c\x00\x03\x7d\x00\x00\x04\x02\x02\x00\x40" //...@.<..}......@ |
 // /* 17c0 */ "\x40\x10\x7b\x00\x3d\x00\xc0\x05\x10\x84\x81\x92\x94\xc2\xff\xff" //@.{.=........... |
 // /* 17d0 */ "\x81\x55\xad\xc0\x10\x10\x84\x81\x55\xad\xc2\xff\xff\x81\x92\x94" //.U......U....... |
 // /* 17e0 */ "\xc3\x10\x84\xf0\x00\x02\xc0\x06\x45\x29\x02\x81\x59\xce\x20\x00" //........E)..Y. . |
@@ -3055,7 +3046,7 @@
 // /* 20b0 */ "\x01\x2e\x00\xf0\x81\xb6\xb5\xc0\x11\x24\x21\x60\x6e\xff\xff\xce" //.........$!`n... |
 // /* 20c0 */ "\x55\xad\xd0\x01\xc3\x18\x01\x81\x1c\xe7\xc0\x11\xaa\x52\x02\x81" //U............R.. |
 // /* 20d0 */ "\xba\xd6\x39\xd0\x02\x86\x31\x05\xc0\x11\x45\x29\x02\x81\xf7\xbd" //..9...1...E).... |
-// /* 20e0 */ "\x2b\xf0\x80\x05\x01\x16\x01\x40\x01\xb0\x02\x20\x00\x46\x00\x03" //+......@... .F.. |
+// /* 20e0 */ "\x2b\xf0\x80\x05\x01\x16\x01\x00\x01\x80\x02\x20\x00\x46\x00\x03" //+.......... .F.. |
 // /* 20f0 */ "\x46\x00\x00\x04\x02\x02\x00\x40\x20\x10\x44\x00\x47\x00\x38\x81" //F......@ .D.G.8. |
 // /* 2100 */ "\xaa\x52\x00\x00\x81\xaa\x52\x26\x00\xf8\xc0\x12\x24\x21\x60\x66" //.R....R&....$!`f |
 // /* 2110 */ "\xff\xff\xc0\x05\xaa\x52\xd0\x02\x28\x42\x01\x81\x59\xce\xc0\x10" //.....R..(B..Y... |
@@ -3203,14 +3194,14 @@
 // /* 29f0 */ "\x40\x00\x7e\x00\x6e\x00\x40\x00\x7e\x00\x7e\x00\x0a\x0b\x00\x0c" //@.~.n.@.~.~..... |
 // /* 2a00 */ "\x09\x0e\x03\x0f\x08\x10\x07"                                     //....... |
 // Sent dumped on RDP Client (5) 10759 bytes |
-// front::draw:draw_tile((1058, 805, 64, 64) (64, 0, 64, 64) |
-// front::draw:draw_tile((1122, 805, 64, 64) (128, 0, 64, 64) |
-// front::draw:draw_tile((1186, 805, 64, 64) (192, 0, 64, 64) |
-// front::draw:draw_tile((994, 869, 64, 61) (0, 64, 64, 61) |
-// front::draw:draw_tile((1058, 869, 64, 61) (64, 64, 64, 61) |
-// front::draw:draw_tile((1122, 869, 64, 61) (128, 64, 64, 61) |
-// front::draw:draw_tile((1186, 869, 64, 61) (192, 64, 64, 61) |
-// front::draw:draw_tile((0, 896, 32, 32) (32, 32, 32, 32) |
+// front::draw:draw_tile((930, 709, 64, 64) (64, 0, 64, 64) |
+// front::draw:draw_tile((994, 709, 64, 64) (128, 0, 64, 64) |
+// front::draw:draw_tile((1058, 709, 64, 64) (192, 0, 64, 64) |
+// front::draw:draw_tile((866, 773, 64, 61) (0, 64, 64, 61) |
+// front::draw:draw_tile((930, 773, 64, 61) (64, 64, 64, 61) |
+// front::draw:draw_tile((994, 773, 64, 61) (128, 64, 64, 61) |
+// front::draw:draw_tile((1058, 773, 64, 61) (192, 64, 64, 61) |
+// front::draw:draw_tile((0, 800, 32, 32) (32, 32, 32, 32) |
 // Widget_load: image file [./tests/fixtures/ad8b.png] is PNG file |
 // front::draw:draw_tile((100, 100, 26, 32) (80, 50, 26, 32) |
 // Front::end_update() |
@@ -3245,7 +3236,7 @@
 // /* 01b0 */ "\x83\x41\xd8\x20\x98\x00\x48\x73\x00\x00\x81\x20\x78\x00\x04\x85" //.A. ..Hs... x... |
 // /* 01c0 */ "\x41\xe8\x41\xc8\x41\xa0\x20\x70\x00\x38\x76\x00\x00\x81\x00\x28" //A.A.A. p.8v....( |
 // /* 01d0 */ "\xc0\x0e\x41\x98\x86\x20\x68\x20\x60\x20\x58\x20\x48\x00\x38\x00" //..A.. h ` X H.8. |
-// /* 01e0 */ "\x20\xf3\x89\x06\x00\x00\x19\x0d\x16\x01\x62\x75\x20\x50\x00\x03" // .........bu P.. |
+// /* 01e0 */ "\x20\xf3\x89\x06\x00\x00\x19\x0d\x16\x01\x22\x45\x20\x50\x00\x03" // ........."E P.. |
 // /* 01f0 */ "\xba\x02\x00\x04\x02\x02\x00\x40\x40\x10\xb8\x02\x51\x00\xc6\x61" //.......@@...Q..a |
 // /* 0200 */ "\xe8\x81\x41\xc8\xd0\x03\x00\x08\x01\x81\x36\x09\xc0\x06\x9d\x09" //..A.......6..... |
 // /* 0210 */ "\x81\x7b\x09\x1d\x67\x61\xe8\xd0\x03\x20\x78\x01\x81\xf1\x00\x77" //.{..ga... x....w |
@@ -3441,7 +3432,7 @@
 // /* 0df0 */ "\x1f\x81\x20\x58\x00\x1f\x81\x00\x28\x14\x81\x41\xa8\xc8\x20\x48" //.. X....(..A.. H |
 // /* 0e00 */ "\x84\x41\xa8\x41\xb8\x41\xc8\x41\xe8\x1e\x82\x00\x08\x41\xe8\x13" //.A.A.A.A.....A.. |
 // /* 0e10 */ "\x81\x00\x38\x6b\x00\x00\x84\x00\x08\x00\x40\x20\x78\x41\xd0\x10" //..8k......@ xA.. |
-// /* 0e20 */ "\x01\x16\x01\xe2\x03\x65\x03\x3d\x00\x54\x00\x03\x13\x05\x00\x04" //.....e.=.T...... |
+// /* 0e20 */ "\x01\x16\x01\x62\x03\x05\x03\x3d\x00\x54\x00\x03\x13\x05\x00\x04" //...b...=.T...... |
 // /* 0e30 */ "\x02\x02\x00\x40\x3d\x10\x11\x05\x55\x00\x00\x20\xf0\x81\x01\x81" //...@=...U.. .... |
 // /* 0e40 */ "\x47\x00\xc0\x0a\x9d\x09\xc2\x9c\x09\xc2\x7c\x09\x82\x7b\x09\x7a" //G.........|..{.z |
 // /* 0e50 */ "\x09\xc2\x59\x09\x8d\x58\x09\x36\x09\x15\x09\x13\x09\xf2\x00\xf0" //..Y..X.6........ |
@@ -3681,7 +3672,7 @@
 // /* 1cf0 */ "\xa0\x15\x20\x00\x00\x1e\x82\x61\x1f\xa0\x14\x00\x1f\x82\x61\x1f" //.. ....a......a. |
 // /* 1d00 */ "\x20\x0b\x14\x11\x02\x01\x40\x57\x00\x03\x09\x00\x00\x04\x02\x01" // .....@W........ |
 // /* 1d10 */ "\x00\x20\x20\x10\x07\x00\x00\x00\xc0\x10\x00\xf8\xf0\xe0\x03\x01" //.  ............. |
-// /* 1d20 */ "\x1f\x01\x01\x00\x00\x00\x80\x03\x20\x00\x20\x00\x00\x00\x03\x2e" //........ . ..... |
+// /* 1d20 */ "\x1f\x01\x01\x00\x00\x00\x20\x03\x20\x00\x20\x00\x00\x00\x03\x2e" //...... . . ..... |
 // /* 1d30 */ "\x01\x00\x04\x02\x01\x00\x1c\x20\x10\x2c\x01\x01\x00\xc4\x18\xc6" //....... .,...... |
 // /* 1d40 */ "\x82\xf3\xb5\xec\xa5\xc5\xe7\x95\x81\xeb\x9d\xc5\x18\xc6\xc9\xff" //................ |
 // /* 1d50 */ "\xff\x02\x02\x82\xf3\xb5\xeb\x9d\x65\xe7\x95\x82\xe8\x95\xef\xad" //........e....... |
@@ -3704,7 +3695,5 @@
 // /* 1e60 */ "\xef\xdf\xff\x13\x6f\x18\xc6\x00\x52\x01\x0e\x01\x64\x00\x64\x00" //....o...R...d.d. |
 // /* 1e70 */ "\x1a\x00\x01\x00"                                                 //.... |
 // Sent dumped on RDP Client (5) 7796 bytes |
-// Listener closed |
-// Incoming socket 5 (ip=10.10.47.175) |
 // Socket RDP Client (5) : closing connection |
-// RDP Client (0): total_received=1776, total_sent=41077 |
+// RDP Client (0): total_received=1710, total_sent=41077 |
