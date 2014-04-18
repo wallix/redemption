@@ -196,7 +196,7 @@ struct GraphicsUpdatePDU : public RDPSerializer {
 
     void init_bitmaps() {
         if (this->fastpath_support == false) {
-            if (this->sdata_bitmaps) { delete this->sdata_bitmaps; }
+            if (this->sdata_bitmaps) { delete this->sdata_bitmaps; this->sdata_bitmaps = 0; }
 
             if (this->ini.debug.primary_orders > 3) {
                 LOG( LOG_INFO
