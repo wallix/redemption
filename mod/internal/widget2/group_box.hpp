@@ -21,14 +21,15 @@
 #ifndef REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
 #define REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
 
-#include "widget.hpp"
+#include "composite.hpp"
 
-class WidgetGroupBox : public Widget2
+class WidgetGroupBox : public WidgetParent
 {
 public:
     static const size_t buffer_size = 256;
 
     char buffer[buffer_size];
+
     int bg_color;
     int fg_color;
 
@@ -36,10 +37,12 @@ public:
     WidgetGroupBox( DrawApi & drawable, int16_t x, int16_t y
                   , uint16_t cx, uint16_t cy, Widget2 & parent
                   , NotifyApi * notifier, const char * text
-                  , int group_id, int fgcolor, int bgcolor)
-    : Widget2(drawable, Rect(x, y, cx, cy), parent, notifier, group_id)
+                  , int group_id, int fgcolor, int bgcolor, CompositeInterface & composite_interface)
+    : WidgetParent(drawable, Rect(x, y, cx, cy), parent, notifier)
     , bg_color(bgcolor)
     , fg_color(fgcolor) {
+        this->impl = &composite_interface;
+
         this->tab_flag   = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
 
@@ -61,11 +64,12 @@ public:
         return this->buffer;
     }
 
-    virtual void draw(const Rect & clip)
-    {
+    virtual void draw(const Rect & clip) {
+        // Background.
         this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
 
 
+        // Box.
         const uint16_t border           = 6;
         const uint16_t text_margin      = 6;
         const uint16_t text_indentation = border + text_margin + 4;
@@ -101,6 +105,7 @@ public:
         this->drawable.draw(polyline_box, clip);
 
 
+        // Label.
         this->drawable.server_draw_text( this->rect.x + text_indentation
                                        , this->rect.y
                                        , this->buffer
