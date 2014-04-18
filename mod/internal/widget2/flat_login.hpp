@@ -47,6 +47,8 @@ public:
     WidgetFlatButton helpicon;
     Inifile & ini;
 
+    CompositeTable composite_table;
+
     FlatLogin(DrawApi& drawable, uint16_t width, uint16_t height, Widget2 & parent,
               NotifyApi* notifier, const char* caption,
               bool focus_on_password, int group_id,
@@ -79,7 +81,7 @@ public:
                    this->theme.global.focus_color, 6, 2)
         , ini(ini)
     {
-        this->impl = new CompositeTable;
+        this->impl = &composite_table;
         this->add_widget(&this->helpicon);
         this->add_widget(&this->img);
         this->add_widget(&this->login_edit);

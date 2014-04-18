@@ -60,10 +60,10 @@ public:
     }
 
     virtual ~WidgetParent() {
-        if (this->impl) {
-            delete this->impl;
-            this->impl = NULL;
-        }
+        // if (this->impl) {
+        //     delete this->impl;
+        //     this->impl = NULL;
+        // }
     }
 
     void set_widget_focus(Widget2 * new_focused)
@@ -317,6 +317,7 @@ public:
 
 // WidgetComposite is a WidgetParent and use Delegation to an implementation of CompositeInterface
 class WidgetComposite: public WidgetParent {
+    CompositeTable composite_table;
 
 public:
 
@@ -324,7 +325,7 @@ public:
                     NotifyApi * notifier, int group_id = 0)
     : WidgetParent(drawable, rect, parent, notifier, group_id)
     {
-        this->impl = new CompositeTable;
+        this->impl = &composite_table;
     }
 
     ~WidgetComposite() {

@@ -50,6 +50,7 @@ public:
     WidgetLabel timeleft_label;
     WidgetLabel timeleft_value;
     WidgetRect separator;
+    CompositeTable composite_table;
 
 private:
     long prev_time;
@@ -94,7 +95,7 @@ public:
     , prev_time(0)
     , ini(ini)
     {
-        this->impl = new CompositeTable;
+        this->impl = &composite_table;
 
         char label[255];
         snprintf(label, sizeof(label), "%s:", TR("username", ini));

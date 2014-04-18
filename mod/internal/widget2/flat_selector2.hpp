@@ -68,6 +68,7 @@ public:
     WidgetFlatButton apply;
     WidgetFlatButton connect;
 
+    CompositeTable composite_table;
 
 public:
     struct temporary_number_of_page {
@@ -170,7 +171,7 @@ public:
                   this->theme.global.fgcolor, this->theme.global.bgcolor,
                   this->theme.global.focus_color, 6, 2)
     {
-        this->impl = new CompositeTable;
+        this->impl = &composite_table;
 
         this->add_widget(&this->device_label);
         this->add_widget(&this->target_group_label);
