@@ -53,9 +53,7 @@ public:
                    ini.context.selector_group_filter.get_cstr(),
                    ini.context.selector_device_filter.get_cstr(),
                    ini.context.selector_proto_filter.get_cstr(),
-                   ini,
-                   NONE/* | TICKET_VISIBLE | COMMENT_VISIBLE */
-                   )
+                   ini)
         , current_page(atoi(this->selector.current_page.get_text()))
         , number_page(atoi(this->selector.number_page.get_text()+1))
         , ini(ini)
@@ -110,7 +108,7 @@ public:
                 uint16_t row_index = 0;
                 uint16_t column_index = 0;
                 this->selector.selector_lines.get_selection(row_index, column_index);
-                const char * target = this->selector.selector_lines.get_cell_text(row_index, 1);
+                const char * target = this->selector.selector_lines.get_cell_text(row_index, WidgetSelectorFlat2::IDX_TARGET);
                 snprintf(buffer, sizeof(buffer), "%s:%s",
                          target, this->ini.globals.auth_user.get_cstr());
                 this->ini.parse_username(buffer);
@@ -207,7 +205,7 @@ public:
             protocols[size_protocols] = '\0';
             endtimes[size_endtimes] = '\0';
 
-            this->selector.add_device(groups, targets, protocols, endtimes);
+            this->selector.add_device(groups, targets, protocols);
 
             groups[size_groups] = c_group;
             targets[size_targets] = c_target;
@@ -232,7 +230,7 @@ public:
         if (this->selector.selector_lines.get_nb_rows() == 0) {
             this->selector.selector_lines.tab_flag = Widget2::IGNORE_TAB;
             this->selector.selector_lines.focus_flag = Widget2::IGNORE_FOCUS;
-            this->selector.add_device("", TR("no_results", this->ini), "", "");
+            this->selector.add_device("", TR("no_results", this->ini), "");
         } else {
             this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;
             this->selector.selector_lines.focus_flag = Widget2::NORMAL_FOCUS;
