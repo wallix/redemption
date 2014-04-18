@@ -617,3 +617,5 @@ unit-test test_grid : tests/mod/internal/widget2/test_grid.cpp cryptofile png z 
 unit-test test_labelgrid : tests/mod/internal/widget2/test_labelgrid.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_flat_selector2 : tests/mod/internal/widget2/test_flat_selector2.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_group_box : tests/mod/internal/widget2/test_group_box.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
