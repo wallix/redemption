@@ -1,25 +1,24 @@
 /*
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *   Product name: redemption, a FLOSS RDP proxy
- *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
- *              Meng Tan
- */
+    This program is free software; you can redistribute it and/or modify it
+     under the terms of the GNU General Public License as published by the
+     Free Software Foundation; either version 2 of the License, or (at your
+     option) any later version.
 
-#if !defined(REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP)
+    This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+     Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+     with this program; if not, write to the Free Software Foundation, Inc.,
+     675 Mass Ave, Cambridge, MA 02139, USA.
+
+    Product name: redemption, a FLOSS RDP proxy
+    Copyright (C) Wallix 2013
+    Author(s): Christophe Grosjean, Meng Tan, Raphael Zhou
+*/
+
+#ifndef REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
 #define REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
 
 #include "widget.hpp"
@@ -30,87 +29,86 @@ public:
     static const size_t buffer_size = 256;
 
     char buffer[buffer_size];
-    int initial_x_text;
-    int x_text;
-    int y_text;
     int bg_color;
     int fg_color;
-    bool auto_resize;
-
-    int w_border;
-    int h_border;
 
 public:
-    WidgetGroupBox(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
-                NotifyApi* notifier, const char * text, bool auto_resize,
-                int group_id, int fgcolor, int bgcolor,
-                int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
-    , initial_x_text(xtext)
-    , x_text(xtext)
-    , y_text(ytext)
+    WidgetGroupBox( DrawApi & drawable, int16_t x, int16_t y
+                  , uint16_t cx, uint16_t cy, Widget2 & parent
+                  , NotifyApi * notifier, const char * text
+                  , int group_id, int fgcolor, int bgcolor)
+    : Widget2(drawable, Rect(x, y, cx, cy), parent, notifier, group_id)
     , bg_color(bgcolor)
-    , fg_color(fgcolor)
-    , auto_resize(auto_resize)
-    , w_border(x_text)
-    , h_border(y_text)
-    {
-        this->tab_flag = IGNORE_TAB;
+    , fg_color(fgcolor) {
+        this->tab_flag   = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
+
         this->set_text(text);
     }
 
-    virtual ~WidgetGroupBox()
-    {
-    }
+    virtual ~WidgetGroupBox() {}
 
-    void set_text(const char * text)
-    {
+    void set_text(const char * text) {
         this->buffer[0] = 0;
         if (text) {
             const size_t max = std::min(buffer_size - 1, strlen(text));
             memcpy(this->buffer, text, max);
             this->buffer[max] = 0;
-            if (this->auto_resize) {
-                int w, h;
-                this->drawable.text_metrics(this->buffer, w, h);
-                this->rect.cx = this->x_text * 2 + w;
-                this->rect.cy = this->y_text * 2 + h;
-            }
         }
     }
 
-    const char * get_text() const
-    {
+    const char * get_text() const {
         return this->buffer;
     }
 
-    virtual void draw(const Rect& clip)
+    virtual void draw(const Rect & clip)
     {
         this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
-        this->drawable.server_draw_text(this->x_text + this->dx(),
-                                        this->y_text + this->dy(),
-                                        this->get_text(),
-                                        this->fg_color,
-                                        this->bg_color,
-                                        this->rect.intersect(clip)
-                                        );
-    }
 
-    bool shift_text(int pos_x) {
-        bool res = true;
-        if (pos_x + this->x_text > this->cx() - 4) {
-            this->x_text = this->cx() - pos_x - 4;
-        }
-        else if (pos_x + this->x_text < this->w_border) {
-            this->x_text = this->w_border - pos_x;
-        }
-        else {
-            res = false;
-        }
-        return res;
-    }
 
+        const uint16_t border           = 6;
+        const uint16_t text_margin      = 6;
+        const uint16_t text_indentation = border + text_margin + 4;
+        const uint16_t x_offset         = 1;
+
+        int w, h, tmp;
+        this->drawable.text_metrics("bp", tmp, h);
+        this->drawable.text_metrics(this->buffer, w, tmp);
+
+        BStream deltaPoints(256);
+
+        deltaPoints.out_sint16_le(border - (text_indentation - text_margin + 1));
+        deltaPoints.out_sint16_le(0);
+
+        deltaPoints.out_sint16_le(0);
+        deltaPoints.out_sint16_le(this->rect.cy - h / 2 - border);
+
+        deltaPoints.out_sint16_le(this->rect.cx - border * 2 + x_offset);
+        deltaPoints.out_sint16_le(0);
+
+        deltaPoints.out_sint16_le(0);
+        deltaPoints.out_sint16_le(-(this->rect.cy - h / 2 - border));    // OK
+
+        deltaPoints.out_sint16_le(-(this->rect.cx - border * 2 - w - text_indentation + x_offset));
+        deltaPoints.out_sint16_le(0);
+
+        deltaPoints.mark_end();
+        deltaPoints.rewind();
+
+        RDPPolyline polyline_box( this->rect.x + text_indentation - text_margin
+                                , this->rect.y + h / 2
+                                , 0x0D, 0, this->fg_color, 5, deltaPoints);
+        this->drawable.draw(polyline_box, clip);
+
+
+        this->drawable.server_draw_text( this->rect.x + text_indentation
+                                       , this->rect.y
+                                       , this->buffer
+                                       , this->fg_color
+                                       , this->bg_color
+                                       , this->rect.intersect(clip)
+                                       );
+    }
 };
 
-#endif
+#endif  // #ifndef REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
