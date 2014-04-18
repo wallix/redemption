@@ -127,6 +127,9 @@ public:
 
                     LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, real_target_ip, target_port);
                 }
+                else {
+                    ::memset(real_target_ip, 0, sizeof(real_target_ip));
+                }
 
                 int nodelay = 1;
                 if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
@@ -147,7 +150,9 @@ public:
                     close(fd);
 
                     // Launch session
-                    LOG(LOG_INFO, "New session on %u (pid=%u) from %s to %s", (unsigned)sck, (unsigned)child_pid, source_ip, real_target_ip);
+                    LOG(LOG_INFO,
+                        "New session on %u (pid=%u) from %s to %s",
+                        (unsigned)sck, (unsigned)child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
                     ini.context_set_value(AUTHID_HOST, source_ip);
 //                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
                     ini.context_set_value(AUTHID_TARGET, target_ip);
