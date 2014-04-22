@@ -84,6 +84,9 @@ struct rdpCredssp
         , verbose(verbose)
         , hardcodedtests(false)
     {
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp:: Initialization");
+        }
         this->SspiModule.init(0);
         this->set_credentials(user, domain, pass, hostname);
     }
@@ -100,6 +103,9 @@ struct rdpCredssp
 
     void set_credentials(uint8_t * user, uint8_t * domain,
                          uint8_t * pass, uint8_t * hostname) {
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::set_credentials");
+        }
         this->identity.SetUserFromUtf8(user);
         this->identity.SetDomainFromUtf8(domain);
         this->identity.SetPasswordFromUtf8(pass);
@@ -124,6 +130,9 @@ struct rdpCredssp
 
 
     void InitSecurityInterface(SecInterface secInter) {
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::InitSecurityInterface");
+        }
         if (this->table) {
             this->table->FreeContextBuffer(&this->context);
             this->table->FreeCredentialsHandle(&this->credentials);
@@ -144,6 +153,10 @@ struct rdpCredssp
     }
 
     int credssp_ntlm_client_init() {
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::client_init");
+        }
+
         this->server = false;
 
 // ============================================
@@ -160,6 +173,9 @@ struct rdpCredssp
     }
 
     int credssp_ntlm_server_init() {
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::server_init");
+        }
 
         this->server = true;
 
@@ -206,6 +222,9 @@ struct rdpCredssp
 
 
     SEC_STATUS credssp_encrypt_public_key_echo() {
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::encrypt_public_key_echo");
+        }
         SecBuffer Buffers[2];
         SecBufferDesc Message;
         SEC_STATUS status;
@@ -258,6 +277,9 @@ struct rdpCredssp
         SecBuffer Buffers[2];
         SecBufferDesc Message;
         SEC_STATUS status;
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::decrypt_public_key_echo");
+        }
 
         if (this->pubKeyAuth.size() < this->ContextSizes.cbMaxSignature) {
             LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%d\n",
@@ -338,7 +360,9 @@ struct rdpCredssp
         SecBuffer Buffers[2];
         SecBufferDesc Message;
         SEC_STATUS status;
-
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::encrypt_ts_credentials");
+        }
         this->credssp_encode_ts_credentials();
 
         BStream ts_credentials_send;
@@ -383,7 +407,9 @@ struct rdpCredssp
         SecBuffer Buffers[2];
         SecBufferDesc Message;
         SEC_STATUS status;
-
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::decrypt_ts_credentials");
+        }
         Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
         Buffers[1].BufferType = SECBUFFER_DATA; /* TSCredentials */
 
@@ -425,14 +451,19 @@ struct rdpCredssp
     }
 
     void credssp_send() {
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::send");
+        }
         BStream ts_request_emit;
         this->ts_request.emit(ts_request_emit);
         this->trans.send(ts_request_emit);
     }
     int credssp_recv() {
         // ad hoc read of ber encoding size.
-
-        uint8_t head[4];
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::recv");
+        }
+        uint8_t head[4] = {};
         uint8_t * point = head;
         size_t length = 0;
         this->trans.recv(&point, 2);
@@ -467,6 +498,9 @@ struct rdpCredssp
     }
 
     void credssp_buffer_free() {
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::buffer_free");
+        }
         this->negoToken.init(0);
         this->pubKeyAuth.init(0);
         this->authInfo.init(0);
@@ -474,7 +508,9 @@ struct rdpCredssp
 
     int credssp_client_authenticate() {
         SEC_STATUS status;
-
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::client_authenticate");
+        }
 
         if (this->credssp_ntlm_client_init() == 0) {
             return 0;
@@ -607,6 +643,9 @@ struct rdpCredssp
                 //             LOG(LOG_ERR, "Sending Authentication Token\n");
                 //             hexdump_c(this->negoToken.pvBuffer, this->negoToken.cbBuffer);
                 // #endif
+                if (this->verbose & 0x400) {
+                    LOG(LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
+                }
 
                 this->credssp_send();
                 this->credssp_buffer_free();
@@ -617,9 +656,12 @@ struct rdpCredssp
                 this->credssp_buffer_free();
             }
 
-            if (status != SEC_I_CONTINUE_NEEDED)
+            if (status != SEC_I_CONTINUE_NEEDED) {
+                if (this->verbose & 0x400) {
+                    LOG(LOG_INFO, "rdpCredssp Token loop: CONTINUE_NEEDED");
+                }
                 break;
-
+            }
             /* receive server response and place in input buffer */
 
             input_buffer_desc.ulVersion = SECBUFFER_VERSION;
@@ -635,7 +677,9 @@ struct rdpCredssp
             //         LOG(LOG_ERR, "Receiving Authentication Token (%d)\n", (int) this->negoToken.cbBuffer);
             //         hexdump_c(this->negoToken.pvBuffer, this->negoToken.cbBuffer);
             // #endif
-
+            if (this->verbose & 0x400) {
+                LOG(LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
+            }
             input_buffer.Buffer.init(this->negoToken.size());
             input_buffer.Buffer.copy(this->negoToken.get_data(),
                                      this->negoToken.size());
@@ -645,6 +689,9 @@ struct rdpCredssp
         }
 
         /* Encrypted Public Key +1 */
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
+        }
         if (this->credssp_recv() < 0) {
             LOG(LOG_ERR, "Encrypted Public Key Expected!");
             return -1;
@@ -669,7 +716,9 @@ struct rdpCredssp
             LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X\n", status);
             return 0;
         }
-
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
+        }
         this->credssp_send();
 
         /* Free resources */
@@ -681,7 +730,9 @@ struct rdpCredssp
 
     int credssp_server_authenticate() {
         SEC_STATUS status;
-
+        if (this->verbose & 0x400) {
+            LOG(LOG_INFO, "rdpCredssp::server_authenticate");
+        }
         // TODO
         // sspi_GlobalInit();
 
