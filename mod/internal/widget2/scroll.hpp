@@ -95,30 +95,36 @@ public:
 
     uint16_t bar_height; // = frame_height - 2 * arrow_height
     Rect scroll;
-    uint16_t scroll_height; // = (frame_height * scroll_height) / widget_height
-    int16_t scroll_y;
-    /*
-      widget_y = frame_y + LAMBDA * (frame_height - widget_height);
-      sblock_y = frame_y + arrow_height + LAMBDA * (scroll_height - sblock_height);
-    */
-    uint16_t widget_height;
 
-    WidgetVScrollBar(DrawApi & drawable, const Rect& rect, Widget2 & parent,
-                    NotifyApi * notifier, int group_id = 0)
-        : Widget2(drawable, rect, parent, notifier, group_id)
+    uint16_t widget_height;
+    int fg_color;
+    int bg_color;
+
+    WidgetVScrollBar(DrawApi & drawable, Widget2 & parent,
+                     NotifyApi * notifier, int fg_color, int bg_color, int group_id = 0)
+        : Widget2(drawable, Rect(0, 0, 12, 1), parent, notifier, group_id)
         , frame(NULL)
         , arrow_height(0)
-        , bar_height(this->rect.cy)
-        , scroll(Rect(rect.x, rect.y, 1, 1))
-        , scroll_height(0)
-        , scroll_y(this->rect.y)
+        , bar_height(0)
+        , scroll(Rect(this->rect.x + 1, this->rect.y + 1, 10, 1))
         , widget_height(0)
+        , fg_color(fg_color)
+        , bg_color(bg_color)
     {
+    }
+
+    virtual void set_xy(int16_t x, int16_t y) {
+        this->scroll.x = x + 1;
+        this->scroll.y = y + 1;
+        Widget2::set_xy(x, y);
     }
 
     void set_frame(WidgetFrame * wframe) {
         if (wframe) {
             this->frame = wframe;
+            this->set_xy(this->frame->lx(), this->frame->dy());
+            this->rect.cy = this->frame->cy();
+            this->bar_height = this->rect.cy - 2;
             this->set_scroll_height();
         }
     }
@@ -126,17 +132,38 @@ public:
     void set_scroll_height() {
         if (this->frame->need_vertical_scroll()) {
             this->widget_height = this->frame->wid->rect.cy;
-            this->scroll_height = this->bar_height * this->rect.cy / this->widget_height;
+            this->scroll.cy = (this->bar_height * this->rect.cy) / this->widget_height;
+            LOG(LOG_INFO, "Set scroll height %d, widget height : %d", this->scroll.cy, this->widget_height);
+        }
+        else {
+            this->widget_height = 0;
         }
     }
 
+    uint get_percent() {
+        return (this->scroll.y - this->rect.y) * 100 / (this->bar_height - this->scroll.cy);
+    }
+
     void set_vertical_scroll(uint percent) {
-        this->scroll_y = this->rect.y + percent * (this->bar_height - this->scroll_height) / 100;
+        this->scroll.y = this->rect.y + 1  + percent * (this->bar_height - this->scroll.cy) / 100;
         if (this->frame) {
             this->frame->set_vertical_widget_pos(percent);
         }
     }
     virtual void draw(const Rect& clip) {
+        // bar
+        this->drawable.draw(RDPOpaqueRect(this->rect,
+                                          this->bg_color),
+                            clip);
+        LOG(LOG_INFO, "scroll x : %d, y : %d, width : %d, height : %d",
+            this->scroll.x, this->scroll.y, this->scroll.cx, this->scroll.cy);
+        // scroll
+        if (this->widget_height) {
+            this->drawable.draw(RDPOpaqueRect(this->scroll,
+                                              this->fg_color),
+                                clip);
+        }
+        LOG(LOG_INFO, "get percent %d",this->get_percent());
     }
 };
 
