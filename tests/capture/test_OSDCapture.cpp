@@ -60,8 +60,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     {
         Drawable tmp_drawable(50,50);
-        Rect tmp_drawable_rect(0,0,50,50);
-        tmp_drawable.white_color(tmp_drawable_rect);
+        tmp_drawable.white_color(Rect(0,0,50,50));
         OSDCapture osd(drawable, drawable.drawable, tmp_drawable, 120, 120);
         now.tv_sec++;
         consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);

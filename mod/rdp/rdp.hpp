@@ -1620,7 +1620,8 @@ struct mod_rdp : public mod_api {
                                 switch (upd.updateCode) {
                                 case FastPath::FASTPATH_UPDATETYPE_ORDERS:
                                     this->front.begin_update();
-                                    this->orders.process_orders(this->bpp, upd.payload, true, this);
+                                    this->orders.process_orders(this->bpp, upd.payload, true, *this->gd,
+                                                                this->front_width, this->front_height);
                                     this->front.end_update();
 
                                     if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_ORDERS"); }
@@ -1891,7 +1892,8 @@ struct mod_rdp : public mod_api {
                                                     case RDP_UPDATE_ORDERS:
                                                         if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
                                                         this->front.begin_update();
-                                                        this->orders.process_orders(this->bpp, sdata.payload, false, this);
+                                                        this->orders.process_orders(this->bpp, sdata.payload, false, *this->gd,
+                                                                                    this->front_width, this->front_height);
                                                         this->front.end_update();
                                                         break;
                                                     case RDP_UPDATE_BITMAP:

@@ -74,6 +74,7 @@
 
 #include "front_api.hpp"
 #include "genrandom.hpp"
+#include "osd_mod.hpp"
 
 #include "auth_api.hpp"
 

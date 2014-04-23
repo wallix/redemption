@@ -11,7 +11,7 @@
  *
  *   You should have received a copy of the GNU General Public License
  *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *   Foundation, Inc.; 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
@@ -19,123 +19,79 @@
  *              Loïc Michaux
  */
 
-#ifndef REDEMPTION_PUBLIC_CAPTURE_OSD_CAPTURE_HPP
-#define REDEMPTION_PUBLIC_CAPTURE_OSD_CAPTURE_HPP
+#ifndef REDEMPTION_PUBLIC_MOD_OSD_MOD_HPP
+#define REDEMPTION_PUBLIC_MOD_OSD_MOD_HPP
 
-#include "RDP/RDPGraphicDevice.hpp"
+#include "mod_api.hpp"
 
-#include <vector>
-#include <algorithm>
-
-
-class OSDCapture : public RDPGraphicDevice
+class osd_mod : public mod_api
 {
-    struct buffer_type
-    {
-        Rect region;
-        uint8_t * buf;
-
-        buffer_type(const Rect & rect)
-        : region(rect)
-        , buf(new uint8_t[rect.cx * Drawable::Bpp * rect.cy])
-        {}
-
-        std::size_t rowsize() const
-        {
-            return this->region.cx * Drawable::Bpp;
-        }
-
-        std::size_t height() const
-        {
-            return this->region.cy;
-        }
-
-        ~buffer_type()
-        {
-            delete[] this->buf;
-        }
-    } buf;
-    RDPGraphicDevice & gd;
-    Drawable & out;
-
-    static void swap_region(uint8_t * src, uint8_t * dest,
-                            unsigned w, unsigned h,
-                            unsigned src_step, unsigned dest_step)
-    {
-        for (unsigned i = 0; i < h; ++i) {
-            std::swap_ranges(src, src + w, dest);
-            src += src_step;
-            dest += dest_step;
-        }
-    }
-
-    static void copy_region(const uint8_t * src, uint8_t * dest,
-                            unsigned w, unsigned h,
-                            unsigned src_step, unsigned dest_step)
-    {
-        for (unsigned i = 0; i < h; ++i) {
-            std::copy(src, src + w, dest);
-            src += src_step;
-            dest += dest_step;
-        }
-    }
-
     struct region_saver
     {
         const Rect clip;
-        Drawable & out;
-        buffer_type & buf;
+        unsigned srcx;
+        unsigned srcy;
+        mod_api & mod;
+        Bitmap & fg;
 
-        region_saver(const Rect & dest, Drawable & out, buffer_type & buf)
-        : clip(buf.region.intersect(dest))
-        , out(out)
-        , buf(buf)
+        region_saver(const Rect & dest, mod_api & mod, unsigned srcx, unsigned srcy, Bitmap & fg, Bitmap & bg)
+        : clip(Rect(dest.x, dest.y, fg.cx, fg.cy).intersect(dest))
+        , srcx(srcx)
+        , srcy(srcy)
+        , mod(mod)
+        , fg(fg)
         {
-            this->swap_region();
+            if (!this->clip.isempty()) {
+                this->mod.draw(RDPMemBlt(0, clip, 0x55, clip.x - srcx, clip.y - srcy, 0), clip, bg);
+            }
         }
 
         ~region_saver()
         {
-            this->swap_region();
-        }
-
-        void swap_region()
-        {
-            OSDCapture::swap_region(this->out.first_pixel(this->clip), this->buf.buf,
-                                    this->clip.cx * Drawable::Bpp, this->clip.cy,
-                                    this->out.rowsize, this->buf.rowsize());
+            if (!this->clip.isempty()) {
+                this->mod.draw(RDPMemBlt(0, clip, 0x55, clip.x - srcx, clip.y - srcy, 0), clip, fg);
+            }
         }
 
     private:
         region_saver(region_saver const &);
     };
 
+    Bitmap bg;
+    Bitmap fg;
+    unsigned destx;
+    unsigned desty;
+    mod_api & mod;
+
 public:
-    OSDCapture(RDPGraphicDevice & gd, Drawable & out, Drawable const & in, unsigned destx, unsigned desty)
-    : buf(Rect(destx, desty, in.width, in.height).intersect(out.width, out.height))
-    , gd(gd)
-    , out(out)
+    osd_mod(int bpp, mod_api & mod, Drawable const & out, Drawable const & in, unsigned destx, unsigned desty)
+    : mod_api(mod.front_width, mod.front_height)
+    , bg(in.data, in.width, in.height, bpp, Rect(0,0,in.width, in.height))
+    , fg(out.data, out.width, out.height, bpp, Rect(destx,desty,in.width, in.height))
+    , destx(destx)
+    , desty(desty)
+    , mod(mod)
     {
-        uint8_t * out_buf = out.first_pixel(buf.region);
-        this->copy_region(out_buf, this->buf.buf, buf.rowsize(), buf.height(), out.rowsize, buf.rowsize());
-        this->copy_region(in.first_pixel(), out_buf, buf.rowsize(), buf.height(), in.rowsize, out.rowsize);
+        const Rect rect(destx, desty, fg.cx, fg.cy);
+        mod.draw(RDPMemBlt(0, rect, 0x55, 0, 0, 0), rect, fg);
+        RDPBmpCache(this->fg);
     }
 
-    virtual ~OSDCapture()
+    virtual ~osd_mod()
     {
-        this->copy_region(this->buf.buf, out.first_pixel(buf.region),
-                          buf.rowsize(), buf.height(), buf.rowsize(), out.rowsize);
+        const Rect rect(destx, desty, bg.cx, bg.cy);
+        mod.draw(RDPMemBlt(0, rect, 0x55, 0, 0, 0), rect, bg);
     }
 
-    Rect const & rect() const
+    virtual wait_obj& get_event()
     {
-        return this->buf.region;
+        return this->mod.get_event();
     }
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        region_saver saver(clip.intersect(cmd.rect), this->out, this->buf);
-        this->gd.draw(cmd, clip);
+        region_saver saver(clip.intersect(cmd.rect), this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
@@ -159,76 +115,76 @@ public:
             rect1.cy -= rect3.cy;
             rect1.y += rect3.cy;
         }
-        region_saver saver1(rect1, this->out, this->buf);
-        region_saver saver2(rect2, this->out, this->buf);
-        region_saver saver3(rect3, this->out, this->buf);
-        this->gd.draw(cmd, clip);
+        region_saver saver1(rect1, this->mod, this->destx, this->desty, this->fg, this->bg);
+        region_saver saver2(rect2, this->mod, this->destx, this->desty, this->fg, this->bg);
+        region_saver saver3(rect3, this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip)
     {
-        region_saver saver(clip.intersect(cmd.rect), this->out, this->buf);
-        this->gd.draw(cmd, clip);
+        region_saver saver(clip.intersect(cmd.rect), this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
     {
         region_saver saver(clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)),
-                           this->out, this->buf);
-        this->gd.draw(cmd, clip);
+                          this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip)
     {
         region_saver saver(clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)),
-                           this->out, this->buf);
-        this->gd.draw(cmd, clip);
+                          this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip)
     {
         region_saver saver(clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)),
-                           this->out, this->buf);
-        this->gd.draw(cmd, clip);
+                          this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip)
     {
         region_saver saver(clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)),
-                           this->out, this->buf);
-        this->gd.draw(cmd, clip);
+                          this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
-        region_saver saver(clip.intersect(cmd.rect), this->out, this->buf);
-        this->gd.draw(cmd, clip);
+        region_saver saver(clip.intersect(cmd.rect), this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        region_saver saver(clip.intersect(cmd.rect), this->out, this->buf);
-        this->gd.draw(cmd, clip, bmp);
+        region_saver saver(clip.intersect(cmd.rect), this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip, bmp);
     }
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        region_saver saver(clip.intersect(cmd.rect), this->out, this->buf);
-        this->gd.draw(cmd, clip, bmp);
+        region_saver saver(clip.intersect(cmd.rect), this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip, bmp);
     }
 
     virtual void draw(const RDPLineTo& cmd, const Rect & clip)
     {
         region_saver saver(clip.intersect(Rect(cmd.startx, cmd.starty, cmd.endx - cmd.startx, cmd.endy - cmd.starty)),
-                           this->out, this->buf);
-        this->gd.draw(cmd, clip);
+                          this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
         region_saver saver(clip.intersect(Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy)),
-                           this->out, this->buf);
-        this->gd.draw(cmd, clip, gly_cache);
+                          this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip, gly_cache);
     }
 
     virtual void draw(const RDPPolygonSC & cmd, const Rect & clip)
@@ -240,8 +196,8 @@ public:
             endy = std::max(endy, cmd.deltaPoints[i].yDelta);
         }
         region_saver saver(clip.intersect(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart)),
-                           this->out, this->buf);
-        this->gd.draw(cmd, clip);
+                          this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDPPolygonCB & cmd, const Rect & clip)
@@ -253,8 +209,8 @@ public:
             endy = std::max(endy, cmd.deltaPoints[i].yDelta);
         }
         region_saver saver(clip.intersect(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart)),
-                           this->out, this->buf);
-        this->gd.draw(cmd, clip);
+                          this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDPPolyline & cmd, const Rect & clip)
@@ -266,78 +222,130 @@ public:
             endy = std::max(endy, cmd.deltaEncodedPoints[i].yDelta);
         }
         region_saver saver(clip.intersect(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart)),
-                           this->out, this->buf);
-        this->gd.draw(cmd, clip);
+                          this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDPEllipseSC & cmd, const Rect & clip)
     {
         region_saver saver(clip.intersect(Rect(cmd.el.centerx - cmd.el.radiusx,
                                                cmd.el.centery - cmd.el.radiusy, cmd.el.radiusx * 2, cmd.el.radiusy * 2)),
-                           this->out, this->buf);
-        this->gd.draw(cmd, clip);
+                          this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
     {
         region_saver saver(clip.intersect(Rect(cmd.el.centerx - cmd.el.radiusx,
                                                cmd.el.centery - cmd.el.radiusy, cmd.el.radiusx * 2, cmd.el.radiusy * 2)),
-                           this->out, this->buf);
-        this->gd.draw(cmd, clip);
+                          this->mod, this->destx, this->desty, this->fg, this->bg);
+        this->mod.draw(cmd, clip);
     }
 
     //@{
-    virtual void draw(const RDPBrushCache & cmd) { this->gd.draw(cmd); }
-    virtual void draw(const RDPColCache   & cmd) { this->gd.draw(cmd); }
-    virtual void draw(const RDPGlyphCache & cmd) { this->gd.draw(cmd); }
+    virtual void draw(const RDPBrushCache & cmd) { this->mod.draw(cmd); }
+    virtual void draw(const RDPColCache   & cmd) { this->mod.draw(cmd); }
+    virtual void draw(const RDPGlyphCache & cmd) { this->mod.draw(cmd); }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
                       size_t size, const Bitmap & bmp)
     {
-        this->gd.draw(bitmap_data, data, size, bmp);
+        this->mod.draw(bitmap_data, data, size, bmp);
     }
     //@}
 
+    virtual void begin_update()
+    {
+        this->mod.begin_update();
+    }
+
+    virtual void end_update()
+    {
+        this->mod.begin_update();
+    }
+
+    virtual void draw_event(time_t now)
+    {
+        this->mod.draw_event(now);
+    }
+
+    virtual void rdp_input_invalidate(const Rect& r)
+    {
+        this->mod.rdp_input_invalidate(r);
+    }
+
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+    {
+        this->mod.rdp_input_mouse(device_flags, x, y, keymap);
+    }
+
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    {
+        this->mod.rdp_input_synchronize(time, device_flags, param1, param2);
+    }
+
+    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+    {
+        this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
+    }
+
+    virtual void send_to_front_channel(const char*const mod_channel_name, uint8_t* data, size_t length,
+                                       size_t chunk_size, int flags)
+    {
+        this->mod.send_to_front_channel(mod_channel_name, data, length, chunk_size, flags);
+    }
+
     virtual void set_row(size_t rownum, const uint8_t * data)
     {
-        this->gd.set_row(rownum, data);
+        this->mod.set_row(rownum, data);
     }
 
     virtual void input(const timeval & now, Stream & input_data_32)
     {
-        this->gd.input(now, input_data_32);
+        this->mod.input(now, input_data_32);
     }
 
     virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
                           bool ignore_frame_in_timeval)
     {
-        this->gd.snapshot(now, mouse_x, mouse_y, ignore_frame_in_timeval);
+        this->mod.snapshot(now, mouse_x, mouse_y, ignore_frame_in_timeval);
     }
 
     virtual void server_set_pointer(const Pointer & cursor)
     {
-        this->gd.server_set_pointer(cursor);
+        this->mod.server_set_pointer(cursor);
     }
 
     virtual void send_pointer(int cache_idx, const uint8_t * data,
                               const uint8_t * mask, int hotspot_x, int hotspot_y)
     {
-        this->gd.send_pointer(cache_idx, data, mask, hotspot_x, hotspot_y);
+        this->mod.send_pointer(cache_idx, data, mask, hotspot_x, hotspot_y);
     }
 
     virtual void set_pointer(int cache_idx)
     {
-        this->gd.set_pointer(cache_idx);
+        this->mod.set_pointer(cache_idx);
     }
 
     virtual void set_pointer_display()
     {
-        this->gd.set_pointer_display();
+        this->mod.set_pointer_display();
     }
 
     virtual void flush()
     {
-        this->gd.flush();
+        this->mod.flush();
+    }
+
+    virtual void server_draw_text(int16_t x, int16_t y, const char * text,
+                                  uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    {
+        this->mod.server_draw_text(x, y, text, bgcolor, fgcolor, clip);
+    }
+
+    virtual void text_metrics(const char * text, int & width, int & height)
+    {
+        this->mod.text_metrics(text, width, height);
     }
 };
 

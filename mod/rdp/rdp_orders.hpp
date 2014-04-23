@@ -262,16 +262,16 @@ public:
     void server_add_char( int font, int character
                         , int offset, int baseline
                         , int width, int height, const uint8_t * data
-                        , mod_api * mod) {
+                        , RDPGraphicDevice & gd) {
         struct FontChar fi(offset, baseline, width, height, 0);
         memcpy(fi.data, data, fi.datasize());
 
         RDPGlyphCache cmd(font, 1, character, fi.offset, fi.baseline, fi.width, fi.height, fi.data);
         this->gly_cache.set_glyph(cmd);
-        mod->draw(cmd);
+        gd.draw(cmd);
     }
 
-    void process_fontcache(Stream & stream, int flags, mod_api * mod) {
+    void process_fontcache(Stream & stream, int flags, RDPGraphicDevice & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders_process_fontcache");
         }
@@ -287,7 +287,7 @@ public:
             int             datasize = (height * nbbytes(width) + 3) & ~3;
             const uint8_t * data     = stream.in_uint8p(datasize);
 
-            this->server_add_char(font, character, offset, baseline, width, height, data, mod);
+            this->server_add_char(font, character, offset, baseline, width, height, data, gd);
         }
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders_process_fontcache done");
@@ -295,7 +295,7 @@ public:
     }
 
     void process_colormap( Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header
-                         , mod_api * mod) {
+                         , RDPGraphicDevice & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "process_colormap");
         }
@@ -303,7 +303,7 @@ public:
         colormap.receive(stream, control, header);
         memcpy(this->cache_colormap[colormap.cacheIndex], &colormap.palette, sizeof(BGRPalette));
         RDPColCache cmd(colormap.cacheIndex, colormap.palette);
-        mod->draw(cmd);
+        gd.draw(cmd);
 
         if (this->verbose & 64) {
             LOG(LOG_INFO, "process_colormap done");
@@ -311,7 +311,8 @@ public:
     }
 
     /*****************************************************************************/
-    int process_orders(uint8_t bpp, Stream & stream, bool fast_path, mod_api * mod) {
+    int process_orders(uint8_t bpp, Stream & stream, bool fast_path, RDPGraphicDevice & gd,
+                       uint16_t front_width, uint16_t front_height) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "process_orders bpp=%u", bpp);
         }
@@ -344,10 +345,10 @@ public:
                     this->process_bmpcache(bpp, stream, drawing_order.control_flags, header);
                     break;
                 case TS_CACHE_COLOR_TABLE:
-                    this->process_colormap(stream, drawing_order.control_flags, header, mod);
+                    this->process_colormap(stream, drawing_order.control_flags, header, gd);
                     break;
                 case TS_CACHE_GLYPH:
-                    this->process_fontcache(stream, header.flags, mod);
+                    this->process_fontcache(stream, header.flags, gd);
                     break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV3:
                     LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)"
@@ -364,53 +365,53 @@ public:
                 RDPPrimaryOrderHeader header = this->common.receive(stream, drawing_order.control_flags);
                 const Rect & cmd_clip = ( (drawing_order.control_flags & BOUNDS)
                                         ? this->common.clip
-                                        : Rect(0, 0, mod->front_width, mod->front_height)
+                                        : Rect(0, 0, front_width, front_height)
                                         );
                 // LOG(LOG_INFO, "/* order=%d ordername=%s */", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
-                    mod->draw(this->glyph_index, cmd_clip, &this->gly_cache);
+                    gd.draw(this->glyph_index, cmd_clip, &this->gly_cache);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
-                    mod->draw(this->destblt, cmd_clip);
+                    gd.draw(this->destblt, cmd_clip);
                     break;
                 case MULTIDSTBLT:
                     this->multidstblt.receive(stream, header);
-                    mod->draw(this->multidstblt, cmd_clip);
+                    gd.draw(this->multidstblt, cmd_clip);
                     //this->multidstblt.log(LOG_INFO, cmd_clip);
                     break;
                 case MULTIOPAQUERECT:
                     this->multiopaquerect.receive(stream, header);
-                    mod->draw(this->multiopaquerect, cmd_clip);
+                    gd.draw(this->multiopaquerect, cmd_clip);
                     //this->multiopaquerect.log(LOG_INFO, cmd_clip);
                     break;
                 case MULTIPATBLT:
                     this->multipatblt.receive(stream, header);
-                    mod->draw(this->multipatblt, cmd_clip);
+                    gd.draw(this->multipatblt, cmd_clip);
                     //this->multipatblt.log(LOG_INFO, cmd_clip);
                     break;
                 case MULTISCRBLT:
                     this->multiscrblt.receive(stream, header);
-                    mod->draw(this->multiscrblt, cmd_clip);
+                    gd.draw(this->multiscrblt, cmd_clip);
                     //this->multiscrblt.log(LOG_INFO, cmd_clip);
                     break;
                 case PATBLT:
                     this->patblt.receive(stream, header);
-                    mod->draw(this->patblt, cmd_clip);
+                    gd.draw(this->patblt, cmd_clip);
                     break;
                 case SCREENBLT:
                     this->scrblt.receive(stream, header);
-                    mod->draw(this->scrblt, cmd_clip);
+                    gd.draw(this->scrblt, cmd_clip);
                     break;
                 case LINE:
                     this->lineto.receive(stream, header);
-                    mod->draw(this->lineto, cmd_clip);
+                    gd.draw(this->lineto, cmd_clip);
                     break;
                 case RECT:
                     this->opaquerect.receive(stream, header);
-                    mod->draw(this->opaquerect, cmd_clip);
+                    gd.draw(this->opaquerect, cmd_clip);
                     break;
                 case MEMBLT:
                     this->memblt.receive(stream, header);
@@ -426,7 +427,7 @@ public:
                         TODO("CGR: check if bitmap has the right palette...");
                         TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps");
                         if (bitmap) {
-                            mod->draw(this->memblt, cmd_clip, *bitmap);
+                            gd.draw(this->memblt, cmd_clip, *bitmap);
                         }
                     }
                     break;
@@ -444,17 +445,17 @@ public:
                         TODO("CGR: check if bitmap has the right palette...");
                         TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps");
                         if (bitmap) {
-                            mod->draw(this->mem3blt, cmd_clip, *bitmap);
+                            gd.draw(this->mem3blt, cmd_clip, *bitmap);
                         }
                     }
                     break;
                 case POLYLINE:
                     this->polyline.receive(stream, header);
-                    mod->draw(this->polyline, cmd_clip);
+                    gd.draw(this->polyline, cmd_clip);
                     break;
                 case ELLIPSESC:
                     this->ellipseSC.receive(stream, header);
-                    mod->draw(this->ellipseSC, cmd_clip);
+                    gd.draw(this->ellipseSC, cmd_clip);
                     break;
                 default:
                     /* error unknown order */
@@ -468,7 +469,7 @@ public:
             LOG(LOG_INFO, "process_orders done");
         }
         return 0;
-    }   // int process_orders(uint8_t bpp, Stream & stream, bool fast_path, mod_api * mod)
+    }   // int process_orders(uint8_t bpp, Stream & stream, bool fast_path, RDPGraphicDevice & gd)
 };
 
 #endif

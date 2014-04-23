@@ -154,6 +154,7 @@ public:
     {
         this->front.draw(cmd, clip);
     }
+    
     virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
     {
         this->front.draw(cmd, clip);
