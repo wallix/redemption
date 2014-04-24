@@ -58,7 +58,7 @@ public:
             }
             // widget_y = frame_y + LAMBDA * (frame_height - widget_height)
             int16_t widget_y = this->rect.y - percent * (this->wid->rect.cy - this->rect.cy) / 100;
-            LOG(LOG_INFO, "move vertical position from %u to %d", this->wid->rect.y, widget_y);
+            // LOG(LOG_INFO, "move vertical position from %d to %d", this->wid->rect.y, widget_y);
             this->wid->set_xy(this->wid->rect.x, widget_y);
         }
     }
@@ -75,7 +75,7 @@ public:
             }
             // widget_x = frame_x - LAMBDA * (widget_width - frame_width)
             int16_t widget_x = this->rect.x - percent * (this->wid->rect.cx - this->rect.cx) / 100;
-            LOG(LOG_INFO, "move horizontal position from %d to %d", this->wid->rect.x, widget_x);
+            // LOG(LOG_INFO, "move horizontal position from %d to %d", this->wid->rect.x, widget_x);
             this->wid->set_xy(widget_x, this->wid->rect.y);
         }
     }
@@ -99,6 +99,7 @@ public:
     uint16_t widget_height;
     int fg_color;
     int bg_color;
+    int16_t y_click;
 
     WidgetVScrollBar(DrawApi & drawable, Widget2 & parent,
                      NotifyApi * notifier, int fg_color, int bg_color, int group_id = 0)
@@ -110,6 +111,7 @@ public:
         , widget_height(0)
         , fg_color(fg_color)
         , bg_color(bg_color)
+        , y_click(-1)
     {
     }
 
@@ -150,21 +152,64 @@ public:
             this->frame->set_vertical_widget_pos(percent);
         }
     }
+
+    void send_position_to_frame() {
+        if (this->frame) {
+            this->frame->set_vertical_widget_pos(this->get_percent());
+        }
+    }
+
     virtual void draw(const Rect& clip) {
         // bar
         this->drawable.draw(RDPOpaqueRect(this->rect,
                                           this->bg_color),
                             clip);
-        LOG(LOG_INFO, "scroll x : %d, y : %d, width : %d, height : %d",
-            this->scroll.x, this->scroll.y, this->scroll.cx, this->scroll.cy);
+        // LOG(LOG_INFO, "scroll x : %d, y : %d, width : %d, height : %d",
+        //     this->scroll.x, this->scroll.y, this->scroll.cx, this->scroll.cy);
         // scroll
         if (this->widget_height) {
             this->drawable.draw(RDPOpaqueRect(this->scroll,
                                               this->fg_color),
                                 clip);
         }
-        LOG(LOG_INFO, "get percent %d",this->get_percent());
+        // LOG(LOG_INFO, "get percent %d",this->get_percent());
     }
+
+    bool move_scroll(int16_t my) {
+        int16_t new_y_pos = this->scroll.y + my;
+        bool res = false;
+        if ((new_y_pos > this->dy()) && (new_y_pos + this->scroll.cy < this->ly())) {
+            this->scroll.y = new_y_pos;
+            res = true;
+        }
+        return res;
+    }
+
+    // - mouve event (mouse moves or a button went up or down)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+    {
+        if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+            if (this->scroll.contains_pt(x, y)) {
+                this->y_click = y;
+            }
+        }
+        if (device_flags == (MOUSE_FLAG_MOVE)) {
+            if (this->y_click != -1) {
+                bool moved = this->move_scroll(y - this->y_click);
+                if (moved) {
+                    this->send_position_to_frame();
+                    this->y_click = y;
+                    TODO("This seems to be greedy");
+                    this->frame->refresh(this->frame->rect);
+                    this->refresh(this->rect);
+                }
+            }
+        }
+        if (device_flags == (MOUSE_FLAG_BUTTON1)) {
+            this->y_click = -1;
+        }
+    }
+
 };
 
 #endif
