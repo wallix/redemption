@@ -156,6 +156,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         CREDENTIALS* credentials = NULL;
         PSecBuffer input_buffer = NULL;
         PSecBuffer output_buffer = NULL;
+        if (Reserved2 & 0x400) {
+            LOG(LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
+        }
 
         if (phContext) {
             context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
