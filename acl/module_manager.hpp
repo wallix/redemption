@@ -46,6 +46,8 @@
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
 
+#include "osd_mod.hpp"
+
 #define STRMODULE_LOGIN       "login"
 #define STRMODULE_SELECTOR    "selector"
 #define STRMODULE_CONFIRM     "confirm"
@@ -680,10 +682,11 @@ public:
                                           this->ini,
                                           acl);
                 this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
-                Drawable tmp_drawable(50,50);
-                tmp_drawable.white_color(Rect(0,0,50,50));
+                Bitmap fg("/home/jpoelen/projects/redemption-public/tests/fixtures/ad8b.bmp");
+                const Rect r(0, 0, fg.cx, fg.cy);
                 mod_api * oldmod = this->mod;
-                this->mod = new osd_mod(this->front.mod_bpp, *this->mod, this->front.capture->drawable->drawable, tmp_drawable, 0,0);
+                oldmod->draw(RDPMemBlt(0, r, 0xCC, 0, 0, 0), r, fg);
+                this->mod = new osd_mod(*this->mod, r);
                 oldmod->set_gd(this->mod);
             }
             else if (this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {

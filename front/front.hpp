@@ -74,7 +74,6 @@
 
 #include "front_api.hpp"
 #include "genrandom.hpp"
-#include "osd_mod.hpp"
 
 #include "auth_api.hpp"
 
@@ -4368,7 +4367,7 @@ public:
     void draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
         if (this->verbose & 64){
-            LOG(LOG_INFO, "front::draw:draw_tile((%u, %u, %u, %u) (%u, %u, %u, %u)",
+            LOG(LOG_INFO, "front::draw:draw_tile((%u, %u, %u, %u) (%u, %u, %u, %u))",
                  dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
                  src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
         }

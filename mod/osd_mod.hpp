@@ -23,64 +23,85 @@
 #define REDEMPTION_PUBLIC_MOD_OSD_MOD_HPP
 
 #include "mod_api.hpp"
+#include "../../redemption-wab.9.x/public/regex/regex.hpp"
 
 class osd_mod : public mod_api
 {
-    struct region_saver
+    /**
+     * Emulate variadic template with 2 arguments (variadic template is feature of C++11)
+     * @{
+     */
+    template<class Command, class OtherArg>
+    void dispath_draw(Command const & cmd, const Rect & clip, OtherArg const & other_arg)
     {
-        const Rect clip;
-        unsigned srcx;
-        unsigned srcy;
-        mod_api & mod;
-        Bitmap & fg;
+        this->mod.draw(cmd, clip, other_arg);
+    }
 
-        region_saver(const Rect & dest, mod_api & mod, unsigned srcx, unsigned srcy, Bitmap & fg, Bitmap & bg)
-        : clip(Rect(dest.x, dest.y, fg.cx, fg.cy).intersect(dest))
-        , srcx(srcx)
-        , srcy(srcy)
-        , mod(mod)
-        , fg(fg)
-        {
-            if (!this->clip.isempty()) {
-                this->mod.draw(RDPMemBlt(0, clip, 0x55, clip.x - srcx, clip.y - srcy, 0), clip, bg);
+    struct no_arg {};
+
+    template<class Command>
+    void dispath_draw(Command const & cmd, const Rect & clip, no_arg)
+    {
+        this->mod.draw(cmd, clip);
+    }
+
+    template<class Command>
+    void split_draw(const Rect & cmd_rect, Command const & cmd, const Rect & clip)
+    {
+        this->split_draw(cmd_rect, cmd, clip, no_arg());
+    }
+    //@}
+
+    template<class Command, class OtherArg>
+    void split_draw(const Rect & cmd_rect, Command const & cmd, const Rect & clip, OtherArg const & other_arg)
+    {
+        Rect rect = cmd_rect.intersect(clip);
+        if (this->fg_rect.contains(rect) || rect.isempty()) {
+            //nada
+        }
+        else if (rect.has_intersection(this->fg_rect)) {
+            //top
+            if (rect.y < this->fg_rect.y) {
+                this->dispath_draw(cmd, Rect(rect.x, rect.y, rect.cx, this->fg_rect.y - rect.y), other_arg);
+            }
+            //bottom
+            if (this->fg_rect.bottom() < rect.bottom()) {
+                this->dispath_draw(cmd, Rect(rect.x, this->fg_rect.bottom(), rect.cx,
+                                             rect.bottom() - this->fg_rect.bottom()),
+                                   other_arg);
+            }
+            //left
+            if (rect.x < this->fg_rect.x) {
+                const int16_t y = std::max(this->fg_rect.y, rect.y);
+                this->dispath_draw(cmd, Rect(rect.x, y, this->fg_rect.x - rect.x, this->fg_rect.bottom() - y),
+                                   other_arg);
+            }
+            //right
+            if (this->fg_rect.right() < rect.right()) {
+                const int16_t y = std::max(this->fg_rect.y, rect.y);
+                this->dispath_draw(cmd, Rect(this->fg_rect.right(), y,
+                                             rect.right() - this->fg_rect.right(), this->fg_rect.bottom() - y),
+                                   other_arg);
             }
         }
-
-        ~region_saver()
-        {
-            if (!this->clip.isempty()) {
-                this->mod.draw(RDPMemBlt(0, clip, 0x55, clip.x - srcx, clip.y - srcy, 0), clip, fg);
-            }
+        else {
+            this->dispath_draw(cmd, clip, other_arg);
         }
+    }
 
-    private:
-        region_saver(region_saver const &);
-    };
-
-    Bitmap bg;
-    Bitmap fg;
-    unsigned destx;
-    unsigned desty;
+    Rect fg_rect;
     mod_api & mod;
 
 public:
-    osd_mod(int bpp, mod_api & mod, Drawable const & out, Drawable const & in, unsigned destx, unsigned desty)
+    osd_mod(mod_api & mod, Rect const & rect_saver)
     : mod_api(mod.front_width, mod.front_height)
-    , bg(in.data, in.width, in.height, bpp, Rect(0,0,in.width, in.height))
-    , fg(out.data, out.width, out.height, bpp, Rect(destx,desty,in.width, in.height))
-    , destx(destx)
-    , desty(desty)
+    , fg_rect(Rect(0, 0, mod.front_width, mod.front_height).intersect(rect_saver))
     , mod(mod)
-    {
-        const Rect rect(destx, desty, fg.cx, fg.cy);
-        mod.draw(RDPMemBlt(0, rect, 0x55, 0, 0, 0), rect, fg);
-        RDPBmpCache(this->fg);
-    }
+    {}
 
     virtual ~osd_mod()
     {
-        const Rect rect(destx, desty, bg.cx, bg.cy);
-        mod.draw(RDPMemBlt(0, rect, 0x55, 0, 0, 0), rect, bg);
+        // TODO send order redraw(this->fg_rect)
     }
 
     virtual wait_obj& get_event()
@@ -90,101 +111,99 @@ public:
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        region_saver saver(clip.intersect(cmd.rect), this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(cmd.rect, cmd, clip);
     }
 
-    virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
+    virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
-        Rect rect1 = clip.intersect(cmd.rect);
-        Rect rect2 = clip.offset(cmd.srcx - cmd.rect.x, cmd.srcy - cmd.rect.y);
-        Rect rect3;
-        if (rect1.y > rect2.y) {
-            rect3 = rect1.x < rect2.x
-            ? Rect(rect1.x, rect1.y, rect2.right() - rect1.x, rect2.bottom() - rect1.y)
-            : Rect(rect2.x, rect1.y, rect1.right() - rect2.x, rect2.bottom() - rect1.y);
-            rect1.cy -= rect3.cy;
-            rect2.cy -= rect3.cy;
-            rect2.y += rect3.cy;
+        const Rect drect = cmd.rect.intersect(clip);
+        const signed int srcx = drect.x + (cmd.srcx - cmd.rect.x);
+        const signed int srcy = drect.y + (cmd.srcy - cmd.rect.y);
+        const Rect srect(srcx, srcy, drect.cx, drect.cy);
+
+        const bool has_intersection_src = cmd.rect.has_intersection(srect);
+        const bool has_intersection_dest = cmd.rect.has_intersection(drect);
+        if (!has_intersection_src && !has_intersection_dest) {
+            this->mod.draw(cmd, clip);
+            return ;
         }
-        else if (rect1.y < rect2.y) {
-            rect3 = rect1.x < rect2.x
-            ? Rect(rect1.x, rect2.y, rect2.right() - rect1.x, rect1.bottom() - rect2.y)
-            : Rect(rect2.x, rect2.y, rect1.right() - rect2.x, rect1.bottom() - rect2.y);
-            rect2.cy -= rect3.cy;
-            rect1.cy -= rect3.cy;
-            rect1.y += rect3.cy;
+
+        if (srect.y < this->fg_rect.y) {
+            Rect rect(cmd.rect.x, cmd.rect.y, cmd.rect.x, this->fg_rect.y - cmd.rect.y);
+            this->split_draw(rect, cmd, clip);
         }
-        region_saver saver1(rect1, this->mod, this->destx, this->desty, this->fg, this->bg);
-        region_saver saver2(rect2, this->mod, this->destx, this->desty, this->fg, this->bg);
-        region_saver saver3(rect3, this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+
+        if (this->fg_rect.bottom() < srect.bottom()) {
+            Rect rect(cmd.rect.x, this->fg_rect.bottom(), cmd.rect.x, cmd.rect.bottom() - this->fg_rect.bottom());
+            this->split_draw(rect, cmd, clip);
+        }
+
+        const Rect intersec = srect.intersect(this->fg_rect);
+
+        {
+            const Rect left(srect.x, intersec.y, intersec.x - srect.x, intersec.cy);
+            if (!left.isempty()) {
+                this->split_draw(left.offset(srcx, srcy), cmd, clip);
+            }
+        }
+        {
+            const Rect right(intersec.right(), intersec.y, intersec.right() - srect.right(), intersec.cy);
+            if (!right.isempty()) {
+                this->split_draw(right.offset(srcx, srcy), cmd, clip);
+            }
+        }
+
+        //TODO redraw: this->split_draw(intersec, ???, clip);
     }
 
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip)
     {
-        region_saver saver(clip.intersect(cmd.rect), this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(cmd.rect, cmd, clip);
     }
 
     virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
     {
-        region_saver saver(clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)),
-                          this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight), cmd, clip);
     }
 
     virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip)
     {
-        region_saver saver(clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)),
-                          this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight), cmd, clip);
     }
 
     virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip)
     {
-        region_saver saver(clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)),
-                          this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight), cmd, clip);
     }
 
     virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip)
     {
-        region_saver saver(clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)),
-                          this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(cmd.rect, cmd, clip);
     }
 
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
-        region_saver saver(clip.intersect(cmd.rect), this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(cmd.rect, cmd, clip);
     }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        region_saver saver(clip.intersect(cmd.rect), this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip, bmp);
+        this->split_draw(cmd.rect, cmd, clip, bmp);
     }
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        region_saver saver(clip.intersect(cmd.rect), this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip, bmp);
+        this->split_draw(cmd.rect, cmd, clip, bmp);
     }
 
     virtual void draw(const RDPLineTo& cmd, const Rect & clip)
     {
-        region_saver saver(clip.intersect(Rect(cmd.startx, cmd.starty, cmd.endx - cmd.startx, cmd.endy - cmd.starty)),
-                          this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(Rect(cmd.startx, cmd.starty, cmd.endx - cmd.startx, cmd.endy - cmd.starty), cmd, clip);
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
-        region_saver saver(clip.intersect(Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy)),
-                          this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip, gly_cache);
+        this->split_draw(Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), cmd, clip, gly_cache);
     }
 
     virtual void draw(const RDPPolygonSC & cmd, const Rect & clip)
@@ -195,9 +214,7 @@ public:
             endx = std::max(endx, cmd.deltaPoints[i].xDelta);
             endy = std::max(endy, cmd.deltaPoints[i].yDelta);
         }
-        region_saver saver(clip.intersect(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart)),
-                          this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart), cmd, clip);
     }
 
     virtual void draw(const RDPPolygonCB & cmd, const Rect & clip)
@@ -208,9 +225,7 @@ public:
             endx = std::max(endx, cmd.deltaPoints[i].xDelta);
             endy = std::max(endy, cmd.deltaPoints[i].yDelta);
         }
-        region_saver saver(clip.intersect(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart)),
-                          this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart), cmd, clip);
     }
 
     virtual void draw(const RDPPolyline & cmd, const Rect & clip)
@@ -221,25 +236,21 @@ public:
             endx = std::max(endx, cmd.deltaEncodedPoints[i].xDelta);
             endy = std::max(endy, cmd.deltaEncodedPoints[i].yDelta);
         }
-        region_saver saver(clip.intersect(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart)),
-                          this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart), cmd, clip);
     }
 
     virtual void draw(const RDPEllipseSC & cmd, const Rect & clip)
     {
-        region_saver saver(clip.intersect(Rect(cmd.el.centerx - cmd.el.radiusx,
-                                               cmd.el.centery - cmd.el.radiusy, cmd.el.radiusx * 2, cmd.el.radiusy * 2)),
-                          this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(Rect(cmd.el.centerx - cmd.el.radiusx,
+                              cmd.el.centery - cmd.el.radiusy, cmd.el.radiusx * 2, cmd.el.radiusy * 2),
+                           cmd, clip);
     }
 
     virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
     {
-        region_saver saver(clip.intersect(Rect(cmd.el.centerx - cmd.el.radiusx,
-                                               cmd.el.centery - cmd.el.radiusy, cmd.el.radiusx * 2, cmd.el.radiusy * 2)),
-                          this->mod, this->destx, this->desty, this->fg, this->bg);
-        this->mod.draw(cmd, clip);
+        this->split_draw(Rect(cmd.el.centerx - cmd.el.radiusx,
+                              cmd.el.centery - cmd.el.radiusy, cmd.el.radiusx * 2, cmd.el.radiusy * 2),
+                           cmd, clip);
     }
 
     //@{

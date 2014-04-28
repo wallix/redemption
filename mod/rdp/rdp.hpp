@@ -189,7 +189,7 @@ struct mod_rdp : public mod_api {
     const uint32_t password_printing_mode;
 
     mod_rdp( Transport * trans
-           , struct FrontAPI & front
+           , FrontAPI & front
            , const ClientInfo & info
            , Random & gen
            , const ModRDPParams & mod_rdp_params
@@ -4749,10 +4749,10 @@ public:
             if (!this->enable_bitmap_update
                || (bmpdata.bits_per_pixel != this->front_bpp)
                || ((bmpdata.bits_per_pixel == 8) && (this->front_bpp != 8))) {
-                this->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
+                this->gd->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
             }
             else {
-                this->front.draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
+                this->gd->draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
             }
         }
         if (this->verbose & 64){
