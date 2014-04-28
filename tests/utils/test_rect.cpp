@@ -412,4 +412,23 @@ BOOST_AUTO_TEST_CASE(TestRect)
 
     }
 
+    {
+        Rect r(10,10,10,10);
+        BOOST_CHECK_EQUAL(false, r.has_intersection(Rect(100,10,10,10)));
+        BOOST_CHECK_EQUAL(false, r.has_intersection(Rect(10,100,10,10)));
+        BOOST_CHECK_EQUAL(false, r.has_intersection(Rect(100,100,10,10)));
+        BOOST_CHECK_EQUAL(false, r.has_intersection(Rect(10,20,5,5)));
+        BOOST_CHECK_EQUAL(false, r.has_intersection(Rect(20,10,5,5)));
+        BOOST_CHECK_EQUAL(false, r.has_intersection(Rect(0,10,5,5)));
+        BOOST_CHECK_EQUAL(false, r.has_intersection(Rect(10,0,5,5)));
+        BOOST_CHECK_EQUAL(false, r.has_intersection(Rect(0,0,5,5)));
+
+        BOOST_CHECK_EQUAL(true, r.has_intersection(Rect(10,10,10,10)));
+        BOOST_CHECK_EQUAL(true, r.has_intersection(Rect(5,10,10,10)));
+        BOOST_CHECK_EQUAL(true, r.has_intersection(Rect(10,5,10,10)));
+        BOOST_CHECK_EQUAL(true, r.has_intersection(Rect(15,10,10,10)));
+        BOOST_CHECK_EQUAL(true, r.has_intersection(Rect(10,15,10,10)));
+        BOOST_CHECK_EQUAL(true, r.has_intersection(Rect(15,15,5,5)));
+        BOOST_CHECK_EQUAL(true, r.has_intersection(Rect(0,0,40,40)));
+    }
 }

@@ -165,7 +165,10 @@ struct Rect {
 
     bool has_intersection(const Rect & in) const
     {
-        return (this->cx && (std::min<int>(in.right(), this->right()) - std::max(in.x, this->x) > 0));
+        return (this->cx
+        && ((in.x >= this->x && in.x < this->right()) || (this->x >= in.x && this->x < in.right()))
+        && ((in.y >= this->y && in.y < this->bottom()) || (this->y >= in.y && this->y < in.bottom()))
+        );
     }
 
     // Ensemblist difference
