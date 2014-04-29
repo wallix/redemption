@@ -31,14 +31,14 @@
 
 /* region */
 struct Region {
-    struct std::vector<Rect> rects;
+    std::vector<Rect> rects;
 
     Region() {}
     ~Region() {}
 
     void subtract_rect(const Rect& rect)
     {
-        struct std::vector<Rect> new_rects;
+        std::vector<Rect> new_rects;
 
         int count = this->rects.size();
         for (int i = 0; i < count; i++) {

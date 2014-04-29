@@ -60,33 +60,41 @@ class osd_mod : public mod_api
             //nada
         }
         else if (rect.has_intersection(this->fg_rect)) {
-            //top
-            if (rect.y < this->fg_rect.y) {
-                this->dispath_draw(cmd, Rect(rect.x, rect.y, rect.cx, this->fg_rect.y - rect.y), other_arg);
+            subrect_t rect4 = subrect(rect, this->fg_rect);
+            if (!rect4.top.isempty()) {
+                this->dispath_draw(cmd, rect4.top, other_arg);
             }
-            //bottom
-            if (this->fg_rect.bottom() < rect.bottom()) {
-                this->dispath_draw(cmd, Rect(rect.x, this->fg_rect.bottom(), rect.cx,
-                                             rect.bottom() - this->fg_rect.bottom()),
-                                   other_arg);
+            if (!rect4.right.isempty()) {
+                this->dispath_draw(cmd, rect4.right, other_arg);
             }
-            //left
-            if (rect.x < this->fg_rect.x) {
-                const int16_t y = std::max(this->fg_rect.y, rect.y);
-                this->dispath_draw(cmd, Rect(rect.x, y, this->fg_rect.x - rect.x, this->fg_rect.bottom() - y),
-                                   other_arg);
+            if (!rect4.bottom.isempty()) {
+                this->dispath_draw(cmd, rect4.bottom, other_arg);
             }
-            //right
-            if (this->fg_rect.right() < rect.right()) {
-                const int16_t y = std::max(this->fg_rect.y, rect.y);
-                this->dispath_draw(cmd, Rect(this->fg_rect.right(), y,
-                                             rect.right() - this->fg_rect.right(), this->fg_rect.bottom() - y),
-                                   other_arg);
+            if (!rect4.left.isempty()) {
+                this->dispath_draw(cmd, rect4.left, other_arg);
             }
         }
         else {
             this->dispath_draw(cmd, clip, other_arg);
         }
+    }
+
+    struct subrect_t {
+        Rect top;
+        Rect right;
+        Rect bottom;
+        Rect left;
+    };
+
+    static subrect_t subrect(const Rect & rect, const Rect & sub)
+    {
+        subrect_t ret;
+        Rect sect = rect.intersect(sub);
+        ret.top = Rect(rect.x, rect.y, rect.cx, sect.y - rect.y);
+        ret.left = Rect(rect.x, sect.y, sect.x - rect.x, sect.cy);
+        ret.right = Rect(sect.right(), sect.y, rect.right() - sect.right(), sect.cy);
+        ret.bottom = Rect(rect.x, sect.bottom(), rect.cx, rect.bottom() - sect.bottom());
+        return ret;
     }
 
     Rect fg_rect;
@@ -101,7 +109,7 @@ public:
 
     virtual ~osd_mod()
     {
-        // TODO send order redraw(this->fg_rect)
+        this->mod.rdp_input_invalidate(this->fg_rect);
     }
 
     virtual wait_obj& get_event()
@@ -114,46 +122,45 @@ public:
         this->split_draw(cmd.rect, cmd, clip);
     }
 
+private:
+    void subrect_input_invalidate(const Rect & rect)
+    {
+        subrect_t rect4 = subrect(rect, this->fg_rect);
+
+        if (!rect4.top.isempty()){
+            this->mod.rdp_input_invalidate(rect4.top);
+        }
+        if (!rect4.right.isempty()){
+            this->mod.rdp_input_invalidate(rect4.right);
+        }
+        if (!rect4.bottom.isempty()){
+            this->mod.rdp_input_invalidate(rect4.bottom);
+        }
+        if (!rect4.left.isempty()){
+            this->mod.rdp_input_invalidate(rect4.left);
+        }
+    }
+
+public:
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
         const Rect drect = cmd.rect.intersect(clip);
-        const signed int srcx = drect.x + (cmd.srcx - cmd.rect.x);
-        const signed int srcy = drect.y + (cmd.srcy - cmd.rect.y);
+        const int deltax = cmd.srcx - cmd.rect.x;
+        const int deltay = cmd.srcy - cmd.rect.y;
+        const int srcx = drect.x + deltax;
+        const int srcy = drect.y + deltay;
         const Rect srect(srcx, srcy, drect.cx, drect.cy);
 
-        const bool has_intersection_src = cmd.rect.has_intersection(srect);
-        const bool has_intersection_dest = cmd.rect.has_intersection(drect);
-        if (!has_intersection_src && !has_intersection_dest) {
+        const bool has_dest_intersec_fg = drect.has_intersection(this->fg_rect);
+        const bool has_src_intersec_fg = srect.has_intersection(this->fg_rect);
+
+        if (!has_dest_intersec_fg && !has_src_intersec_fg) {
             this->mod.draw(cmd, clip);
             return ;
         }
-
-        if (srect.y < this->fg_rect.y) {
-            Rect rect(cmd.rect.x, cmd.rect.y, cmd.rect.x, this->fg_rect.y - cmd.rect.y);
-            this->split_draw(rect, cmd, clip);
+        else {
+            this->subrect_input_invalidate(drect);
         }
-
-        if (this->fg_rect.bottom() < srect.bottom()) {
-            Rect rect(cmd.rect.x, this->fg_rect.bottom(), cmd.rect.x, cmd.rect.bottom() - this->fg_rect.bottom());
-            this->split_draw(rect, cmd, clip);
-        }
-
-        const Rect intersec = srect.intersect(this->fg_rect);
-
-        {
-            const Rect left(srect.x, intersec.y, intersec.x - srect.x, intersec.cy);
-            if (!left.isempty()) {
-                this->split_draw(left.offset(srcx, srcy), cmd, clip);
-            }
-        }
-        {
-            const Rect right(intersec.right(), intersec.y, intersec.right() - srect.right(), intersec.cy);
-            if (!right.isempty()) {
-                this->split_draw(right.offset(srcx, srcy), cmd, clip);
-            }
-        }
-
-        //TODO redraw: this->split_draw(intersec, ???, clip);
     }
 
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip)
@@ -243,27 +250,53 @@ public:
     {
         this->split_draw(Rect(cmd.el.centerx - cmd.el.radiusx,
                               cmd.el.centery - cmd.el.radiusy, cmd.el.radiusx * 2, cmd.el.radiusy * 2),
-                           cmd, clip);
+                         cmd, clip);
     }
 
     virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
     {
         this->split_draw(Rect(cmd.el.centerx - cmd.el.radiusx,
                               cmd.el.centery - cmd.el.radiusy, cmd.el.radiusx * 2, cmd.el.radiusy * 2),
-                           cmd, clip);
+                         cmd, clip);
     }
 
-    //@{
     virtual void draw(const RDPBrushCache & cmd) { this->mod.draw(cmd); }
     virtual void draw(const RDPColCache   & cmd) { this->mod.draw(cmd); }
     virtual void draw(const RDPGlyphCache & cmd) { this->mod.draw(cmd); }
 
+private:
+    void bitmap_data_rect(const Rect & rectBmp,RDPBitmapData & bitmap_data,
+                          const uint8_t * data, size_t size, const Bitmap & bmp)
+    {
+        if (!rectBmp.isempty()){
+            bitmap_data.dest_left = rectBmp.x;
+            bitmap_data.dest_top = rectBmp.y;
+            bitmap_data.dest_right = rectBmp.x + rectBmp.cx;
+            bitmap_data.dest_bottom = rectBmp.y + rectBmp.cy;
+            this->mod.draw(bitmap_data, data, size, bmp);
+        }
+    }
+
+public:
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
                       size_t size, const Bitmap & bmp)
     {
-        this->mod.draw(bitmap_data, data, size, bmp);
+        Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
+                    , bitmap_data.dest_right - bitmap_data.dest_left + 1
+                    , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
+
+        if (rectBmp.has_intersection(this->fg_rect)) {
+            subrect_t rect4 = subrect(rectBmp, this->fg_rect);
+            RDPBitmapData bitmap_data_copy = bitmap_data;
+            this->bitmap_data_rect(rect4.top, bitmap_data_copy, data, size, bmp);
+            this->bitmap_data_rect(rect4.right, bitmap_data_copy, data, size, bmp);
+            this->bitmap_data_rect(rect4.bottom, bitmap_data_copy, data, size, bmp);
+            this->bitmap_data_rect(rect4.left, bitmap_data_copy, data, size, bmp);
+        }
+        else {
+            this->mod.draw(bitmap_data, data, size, bmp);
+        }
     }
-    //@}
 
     virtual void begin_update()
     {
@@ -282,7 +315,12 @@ public:
 
     virtual void rdp_input_invalidate(const Rect& r)
     {
-        this->mod.rdp_input_invalidate(r);
+        if (r.has_intersection(this->fg_rect)) {
+            this->subrect_input_invalidate(r);
+        }
+        else {
+            this->mod.rdp_input_invalidate(r);
+        }
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
