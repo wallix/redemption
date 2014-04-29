@@ -182,6 +182,15 @@ public:
             this->scroll.y = new_y_pos;
             res = true;
         }
+        else if ((new_y_pos < this->dy()) && (this->scroll.y != this->dy() + 1)) {
+            this->scroll.y = this->dy() + 1;
+            res = true;
+        }
+        else if ((new_y_pos + this->scroll.cy > this->ly()) &&
+                 (this->scroll.y + this->scroll.cy + 1 != this->ly())) {
+            this->scroll.y = this->ly() - this->scroll.cy - 1;
+            res = true;
+        }
         return res;
     }
 
