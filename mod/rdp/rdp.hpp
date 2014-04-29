@@ -4922,6 +4922,12 @@ public:
         this->front.draw(cmd);
     }
 
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+                      size_t size, const Bitmap & bmp)
+    {
+        this->front.draw(bitmap_data, data, size, bmp);
+    }
+
     virtual bool is_up_and_running() {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
