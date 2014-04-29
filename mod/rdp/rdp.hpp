@@ -4168,7 +4168,7 @@ public:
                                           this->encryptionLevel,
                                           this->encrypt);
 
-                rrpdu.addInclusiveRect(r.x, r.y, r.cx - 1, r.cy - 1);
+                rrpdu.addInclusiveRect(r.x, r.y, r.x + r.cx, r.y + r.cy);
 
                 rrpdu.emit(*this->nego.trans);
             }
