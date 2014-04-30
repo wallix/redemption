@@ -101,9 +101,11 @@ public:
 
     virtual wait_obj& get_event() { return this->event; }
 
-    void set_gd(mod_api * gd)
-    { this->gd = gd; }
+protected:
+    static void set_gd(mod_api & mod, RDPGraphicDevice * gd)
+    { mod.gd = gd; }
 
+public:
     virtual void send_to_front_channel(const char * const mod_channel_name,
         uint8_t* data, size_t length, size_t chunk_size, int flags) = 0;
 

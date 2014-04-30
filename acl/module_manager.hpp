@@ -683,11 +683,9 @@ public:
                                           acl);
                 this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
                 Bitmap fg("/home/jpoelen/projects/redemption-public/tests/fixtures/ad8b.bmp");
-                const Rect r(0, 0, fg.cx, fg.cy);
-                mod_api * oldmod = this->mod;
-                oldmod->draw(RDPMemBlt(0, r, 0xCC, 0, 0, 0), r, fg);
+                const Rect r(200, 200, fg.cx, fg.cy);
+                this->mod->draw(RDPMemBlt(0, r, 0xCC, 0, 0, 0), r, fg);
                 this->mod = new osd_mod(*this->mod, r);
-                oldmod->set_gd(this->mod);
             }
             else if (this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {
                 this->front.resume_capture();

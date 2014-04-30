@@ -247,14 +247,14 @@ public:
         break;
         case 0x55:
             this->drawable.mem_blt(rect, bmp
-                , cmd.srcx + (rect.x  - cmd.rect.x)
-                , cmd.srcy + (rect.y  - cmd.rect.y)
+                , cmd.srcx + (rect.x - cmd.rect.x)
+                , cmd.srcy + (rect.y - cmd.rect.y)
                 , 0xFFFFFF, false);
         break;
         case 0xCC:
             this->drawable.mem_blt(rect, bmp
-                , cmd.srcx + (rect.x  - cmd.rect.x)
-                , cmd.srcy + (rect.y  - cmd.rect.y)
+                , cmd.srcx + (rect.x - cmd.rect.x)
+                , cmd.srcy + (rect.y - cmd.rect.y)
                 , 0, false);
         break;
         case 0x22:  // dest = dest AND (NOT source)

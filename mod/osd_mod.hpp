@@ -25,6 +25,8 @@
 #include "mod_api.hpp"
 #include "../../redemption-wab.9.x/public/regex/regex.hpp"
 
+class Keymap2;
+
 class osd_mod : public mod_api
 {
     /**
@@ -86,15 +88,19 @@ class osd_mod : public mod_api
         Rect left;
     };
 
-    static subrect_t subrect(const Rect & rect, const Rect & sub)
+    static subrect_t do_subrect(const Rect & rect, const Rect & sect)
     {
         subrect_t ret;
-        Rect sect = rect.intersect(sub);
         ret.top = Rect(rect.x, rect.y, rect.cx, sect.y - rect.y);
         ret.left = Rect(rect.x, sect.y, sect.x - rect.x, sect.cy);
         ret.right = Rect(sect.right(), sect.y, rect.right() - sect.right(), sect.cy);
         ret.bottom = Rect(rect.x, sect.bottom(), rect.cx, rect.bottom() - sect.bottom());
         return ret;
+    }
+
+    static subrect_t subrect(const Rect & rect, const Rect & sub)
+    {
+        return do_subrect(rect, rect.intersect(sub));
     }
 
     Rect fg_rect;
@@ -105,7 +111,9 @@ public:
     : mod_api(mod.front_width, mod.front_height)
     , fg_rect(Rect(0, 0, mod.front_width, mod.front_height).intersect(rect_saver))
     , mod(mod)
-    {}
+    {
+        this->set_gd(mod, this);
+    }
 
     virtual ~osd_mod()
     {
@@ -265,15 +273,10 @@ public:
     virtual void draw(const RDPGlyphCache & cmd) { this->mod.draw(cmd); }
 
 private:
-    void bitmap_data_rect(const Rect & rectBmp,RDPBitmapData & bitmap_data,
-                          const uint8_t * data, size_t size, const Bitmap & bmp)
+    void draw_bitmap_rect(Rect const & rect, Rect const & rectBmp, Bitmap const & bmp)
     {
-        if (!rectBmp.isempty()){
-            bitmap_data.dest_left = rectBmp.x;
-            bitmap_data.dest_top = rectBmp.y;
-            bitmap_data.dest_right = rectBmp.x + rectBmp.cx;
-            bitmap_data.dest_bottom = rectBmp.y + rectBmp.cy;
-            this->mod.draw(bitmap_data, data, size, bmp);
+        if (!rect.isempty()) {
+            this->mod.draw(RDPMemBlt(0, rect, 0xCC, rect.x - rectBmp.x, rect.y - rectBmp.y, 0), rect, bmp);
         }
     }
 
@@ -286,12 +289,12 @@ public:
                     , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
 
         if (rectBmp.has_intersection(this->fg_rect)) {
-            subrect_t rect4 = subrect(rectBmp, this->fg_rect);
-            RDPBitmapData bitmap_data_copy = bitmap_data;
-            this->bitmap_data_rect(rect4.top, bitmap_data_copy, data, size, bmp);
-            this->bitmap_data_rect(rect4.right, bitmap_data_copy, data, size, bmp);
-            this->bitmap_data_rect(rect4.bottom, bitmap_data_copy, data, size, bmp);
-            this->bitmap_data_rect(rect4.left, bitmap_data_copy, data, size, bmp);
+            Rect intersect = rectBmp.intersect(this->fg_rect);
+            subrect_t rect4 = do_subrect(rectBmp, intersect);
+            this->draw_bitmap_rect(rect4.top, rectBmp, bmp);
+            this->draw_bitmap_rect(rect4.right, rectBmp, bmp);
+            this->draw_bitmap_rect(rect4.bottom, rectBmp, bmp);
+            this->draw_bitmap_rect(rect4.left, rectBmp, bmp);
         }
         else {
             this->mod.draw(bitmap_data, data, size, bmp);
@@ -325,7 +328,12 @@ public:
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        this->mod.rdp_input_mouse(device_flags, x, y, keymap);
+        /*if (this->fg_rect.x <= x && x < this->fg_rect.right() && this->fg_rect.y <= y && y < this->fg_rect.bottom()) {
+            this->input_mouse(device_flags, x - this->fg_rect.x, y - this->fg_rect.y, keymap);
+        }
+        else*/ {
+            this->mod.rdp_input_mouse(device_flags, x, y, keymap);
+        }
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
