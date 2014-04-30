@@ -27,7 +27,6 @@
 #include "RDP/caches/pointercache.hpp"
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
-#include "OSDCapture.hpp"
 
 #include "wait_obj.hpp"
 #include "RDP/pointer.hpp"
@@ -45,6 +44,7 @@ public:
     OutFilenameTransport * png_trans;
     StaticCapture        * psc;
 
+private:
     TODO("wrm_trans and crypto_wrm_trans should be one and the same (and crypto status hidden)");
     OutmetaTransport       * wrm_trans;
     CryptoOutmetaTransport * crypto_wrm_trans;
@@ -55,8 +55,10 @@ public:
 
     PointerCache ptr_cache;
 
+public:
     wait_obj capture_event;
 
+private:
     redemption::string png_path;
     redemption::string basename;
 

@@ -19,15 +19,15 @@
  *              Loïc Michaux
  */
 
-#ifndef REDEMPTION_PUBLIC_MOD_OSD_MOD_HPP
-#define REDEMPTION_PUBLIC_MOD_OSD_MOD_HPP
+#ifndef REDEMPTION_PUBLIC_MOD_MOD_OSD_HPP
+#define REDEMPTION_PUBLIC_MOD_MOD_OSD_HPP
 
 #include "mod_api.hpp"
 #include "../../redemption-wab.9.x/public/regex/regex.hpp"
 
 class Keymap2;
 
-class osd_mod : public mod_api
+class mod_osd : public mod_api
 {
     /**
      * Emulate variadic template with 2 arguments (variadic template is feature of C++11)
@@ -63,6 +63,7 @@ class osd_mod : public mod_api
         }
         else if (rect.has_intersection(this->fg_rect)) {
             subrect_t rect4 = subrect(rect, this->fg_rect);
+            this->mod.begin_update();
             if (!rect4.top.isempty()) {
                 this->dispath_draw(cmd, rect4.top, other_arg);
             }
@@ -75,6 +76,7 @@ class osd_mod : public mod_api
             if (!rect4.left.isempty()) {
                 this->dispath_draw(cmd, rect4.left, other_arg);
             }
+            this->mod.end_update();
         }
         else {
             this->dispath_draw(cmd, clip, other_arg);
@@ -103,19 +105,31 @@ class osd_mod : public mod_api
         return do_subrect(rect, rect.intersect(sub));
     }
 
-    Rect fg_rect;
+    void draw_fg(Rect const & rect)
+    {
+        this->mod.draw(RDPMemBlt(0, rect, 0xCC, this->bmp_srcx, this->bmp_srcy, 0), this->fg_rect, this->bmp);
+    }
+
+    const Rect fg_rect;
+    const int bmp_srcx;
+    const int bmp_srcy;
+    const Bitmap bmp;
     mod_api & mod;
 
 public:
-    osd_mod(mod_api & mod, Rect const & rect_saver)
+    mod_osd(mod_api & mod, const Bitmap& bmp, int x = 0, int y = 0)
     : mod_api(mod.front_width, mod.front_height)
-    , fg_rect(Rect(0, 0, mod.front_width, mod.front_height).intersect(rect_saver))
+    , fg_rect(Rect(0, 0, mod.front_width, mod.front_height).intersect(Rect(x,y,bmp.cx,bmp.cy)))
+    , bmp_srcx(x - this->fg_rect.x)
+    , bmp_srcy(y - this->fg_rect.y)
+    , bmp(bmp.original_bpp, bmp)
     , mod(mod)
     {
+        this->draw_fg(this->fg_rect);
         this->set_gd(mod, this);
     }
 
-    virtual ~osd_mod()
+    virtual ~mod_osd()
     {
         this->mod.rdp_input_invalidate(this->fg_rect);
     }
@@ -167,7 +181,9 @@ public:
             return ;
         }
         else {
+            this->mod.begin_update();
             this->subrect_input_invalidate(drect);
+            this->mod.end_update();
         }
     }
 
@@ -291,10 +307,12 @@ public:
         if (rectBmp.has_intersection(this->fg_rect)) {
             Rect intersect = rectBmp.intersect(this->fg_rect);
             subrect_t rect4 = do_subrect(rectBmp, intersect);
+            this->mod.begin_update();
             this->draw_bitmap_rect(rect4.top, rectBmp, bmp);
             this->draw_bitmap_rect(rect4.right, rectBmp, bmp);
             this->draw_bitmap_rect(rect4.bottom, rectBmp, bmp);
             this->draw_bitmap_rect(rect4.left, rectBmp, bmp);
+            this->mod.end_update();
         }
         else {
             this->mod.draw(bitmap_data, data, size, bmp);
@@ -319,7 +337,10 @@ public:
     virtual void rdp_input_invalidate(const Rect& r)
     {
         if (r.has_intersection(this->fg_rect)) {
+            this->mod.begin_update();
             this->subrect_input_invalidate(r);
+            this->draw_fg(this->fg_rect.intersect(r));
+            this->mod.end_update();
         }
         else {
             this->mod.rdp_input_invalidate(r);

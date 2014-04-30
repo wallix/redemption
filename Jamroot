@@ -369,7 +369,6 @@ unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp cryptofile p
 unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_nativecapture : tests/capture/test_nativecapture.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_staticcapture : tests/capture/test_staticcapture.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_OSDCapture : tests/capture/test_OSDCapture.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_cliprdr : tests/channels/cliprdr/test_cliprdr.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdpdr : tests/channels/rdpdr/test_rdpdr.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_sound : tests/channels/sound/test_sound.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -416,6 +415,7 @@ unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit
 unit-test test_wait_obj : tests/core/test_wait_obj.cpp cryptofile openssl crypto dl z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_front : tests/front/test_front.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_mod_osd : tests/mod/test_mod_osd.cpp cryptofile openssl crypto dl png z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_draw_api : tests/mod/test_draw_api.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_null : tests/mod/null/test_null.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

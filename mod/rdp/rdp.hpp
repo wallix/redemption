@@ -220,7 +220,8 @@ struct mod_rdp : public mod_api {
         , auth_channel_state(0) // 0 means unused
         , acl(mod_rdp_params.acl)
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
-                , mod_rdp_params.enable_nla, mod_rdp_params.target_device, mod_rdp_params.enable_krb, mod_rdp_params.verbose)
+              , mod_rdp_params.enable_nla, mod_rdp_params.target_device
+              , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
         , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
         , enable_clipboard(mod_rdp_params.enable_clipboard)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
@@ -2107,8 +2108,7 @@ struct mod_rdp : public mod_api {
                     this->hostname);
                 if (this->acl)
                 {
-                    this->acl->report("CONNECTION_FAILED",
-                        "Logon timer expired.");
+                    this->acl->report("CONNECTION_FAILED", "Logon timer expired.");
                 }
 
                 this->event.signal = BACK_EVENT_NEXT;
@@ -4820,7 +4820,7 @@ public:
 
     virtual void end_update()
     {
-        this->front.begin_update();
+        this->front.end_update();
     }
 
     virtual void draw(const RDPGlyphCache & cmd)
