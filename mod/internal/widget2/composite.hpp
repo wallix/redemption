@@ -171,6 +171,7 @@ public:
                 && (w != this->pressed)) {
                 this->pressed->rdp_input_mouse(device_flags, x, y, keymap);
             }
+            this->pressed = NULL;
         }
         if (w){
             // get focus when mouse clic
@@ -184,6 +185,9 @@ public:
         }
         else {
             Widget2::rdp_input_mouse(device_flags, x, y, keymap);
+        }
+        if (device_flags == MOUSE_FLAG_MOVE && this->pressed) {
+            this->pressed->rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
 

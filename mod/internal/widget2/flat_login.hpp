@@ -33,6 +33,8 @@
 #include "ellipse.hpp"
 #include "theme.hpp"
 
+// #include "scroll.hpp"
+
 class FlatLogin : public WidgetParent
 {
 public:
@@ -48,6 +50,11 @@ public:
     Inifile & ini;
 
     CompositeTable composite_table;
+
+    // WidgetFrame frame;
+    // WidgetImage wimage;
+    // WidgetVScrollBar bar;
+
 
     FlatLogin(DrawApi& drawable, uint16_t width, uint16_t height, Widget2 & parent,
               NotifyApi* notifier, const char* caption,
@@ -80,6 +87,10 @@ public:
                    this->theme.global.fgcolor, this->theme.global.bgcolor,
                    this->theme.global.focus_color, 6, 2)
         , ini(ini)
+        // , frame(drawable, Rect(0, 0, 600, 250), parent, notifier, -17)
+        // , wimage(drawable, 0, 0, SHARE_PATH "/Philips_PM5544_640.bmp",
+        //          parent, notifier, -17)
+        // , bar(drawable, parent, notifier, MEDIUM_BLUE, LIGHT_BLUE, -17)
     {
         this->impl = &composite_table;
         this->add_widget(&this->helpicon);
@@ -133,6 +144,10 @@ public:
         this->helpicon.set_button_x(width - 60);
         this->helpicon.set_button_y(height - 60);
 
+        // this->add_widget(&this->frame);
+        // this->add_widget(&this->bar);
+        // this->frame.set_widget(&this->wimage);
+        // this->bar.set_frame(&this->frame);
     }
 
     virtual ~FlatLogin()
