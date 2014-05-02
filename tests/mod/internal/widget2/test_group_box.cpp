@@ -24,8 +24,10 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
+#include "internal/widget2/flat_button.hpp"
 #include "internal/widget2/group_box.hpp"
 #include "internal/widget2/screen.hpp"
 #include "internal/widget2/composite.hpp"
@@ -56,15 +58,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
     int16_t     x        = 200;
     int16_t     y        = 100;
     uint16_t    cx       = 150;
-    uint16_t    cy       = 100;
-
-    CompositeTable composite_table;
+    uint16_t    cy       = 200;
 
     TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
          "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
          "these possibilities (and others) are supported in RDPGlyphIndex")
     WidgetGroupBox wgroupbox( drawable, x, y, cx, cy, parent, notifier, "Group 1", group_id
-                            , fg_color, bg_color, composite_table);
+                            , fg_color, bg_color);
+
+    bool auto_resize = true;
+    int  focuscolor  = LIGHT_YELLOW;
+    int  xtext       = 4;
+    int  ytext       = 1;
+    WidgetFlatButton wbutton(drawable, 10, 20, wgroupbox, notifier, "Button 1", auto_resize, group_id,
+        fg_color, bg_color, focuscolor, xtext, ytext);
+
+    wgroupbox.add_widget(&wbutton);
 
     // ask to widget to redraw at it's current position
     wgroupbox.rdp_input_invalidate(Rect( wgroupbox.dx()
@@ -73,12 +82,31 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
                                        , wgroupbox.cy()
                                        ));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "group_box.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "group_box_0.png");
 
     char message[1024];
     if (!check_sig( drawable.gd.drawable, message
-                  , "\x04\xbc\x9c\x07\x23\x7e\x03\x2d\x28\x80"
-                    "\x50\x26\x24\x95\xc9\x45\x28\x5c\x33\x7d")) {
+                  , "\x3a\x68\x71\xa0\x6d\x23\xc2\xd5\xf8\xd5"
+                    "\x41\xdf\x41\x2f\x60\xbc\x03\x1e\xaf\xd7")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
+                            wbutton.rect.x + 1, wbutton.rect.y + 1,
+                            NULL);
+
+    // ask to widget to redraw at it's current position
+    wgroupbox.rdp_input_invalidate(Rect( wgroupbox.dx()
+                                       , wgroupbox.dy()
+                                       , wgroupbox.cx()
+                                       , wgroupbox.cy()
+                                       ));
+
+    //drawable.save_to_png(OUTPUT_FILE_PATH "group_box_1.png");
+
+    if (!check_sig( drawable.gd.drawable, message
+                  , "\x2d\xb0\xd3\x13\xc9\x3e\xc1\x62\xa7\x43"
+                    "\x0c\x1c\x3a\x7a\x7e\xb1\x54\x22\x49\xd1")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
