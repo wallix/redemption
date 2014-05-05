@@ -159,7 +159,6 @@ public:
         else if (this->capture_drawable) {
             this->gd = this->drawable;
         }
-        this->gd = this->gd;
     }
 
     virtual ~Capture() {

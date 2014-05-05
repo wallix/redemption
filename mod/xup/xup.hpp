@@ -24,6 +24,8 @@
 #if !defined(__XUP_HPP__)
 #define __XUP_HPP__
 
+#include "mod_api.hpp"
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -221,7 +223,7 @@ enum {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                         this->front.draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
+                         this->gd->draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
                             RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")
                             ), r);
                     }
@@ -236,7 +238,7 @@ enum {
                         const int srcx = stream.in_sint16_le();
                         const int srcy = stream.in_sint16_le();
                         const RDPScrBlt scrblt(r, 0xCC, srcx, srcy);
-                        this->front.draw(scrblt, r);
+                        this->gd->draw(scrblt, r);
                     }
                     break;
                     case 5:
@@ -253,7 +255,7 @@ enum {
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
                         Bitmap bmp(this->bpp, bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
-                        this->front.draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
+                        this->gd->draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
                     }
                     break;
                     case 10: /* server_set_clip */
@@ -296,7 +298,7 @@ enum {
                         const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
                                                this->rop,
                                                RDPPen(this->pen.style, this->pen.width, this->fgcolor));
-                        this->front.draw(lineto, Rect(0,0,1,1));
+                        this->gd->draw(lineto, Rect(0,0,1,1));
                     }
                     break;
                     case 19:
@@ -327,7 +329,7 @@ enum {
 
     virtual void end_update()
     {
-        this->front.begin_update();
+        this->front.end_update();
     }
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)

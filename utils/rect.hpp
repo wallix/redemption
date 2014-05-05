@@ -90,6 +90,10 @@ struct Rect {
         return this->equal(other);
     }
 
+    bool operator!=(const Rect &other) const {
+        return !this->equal(other);
+    }
+
     // Rect constructor ensures that any empty rect will be (0, 0, 0, 0)
     // hence testing cx or cy is enough
     bool isempty() const {
