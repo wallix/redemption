@@ -33,9 +33,10 @@ public:
     int initial_x_text;
     int x_text;
     int y_text;
-    int bg_color;
-    int fg_color;
+    uint32_t bg_color;
+    uint32_t fg_color;
     bool auto_resize;
+    bool tool;
 
     int w_border;
     int h_border;
@@ -43,7 +44,7 @@ public:
 public:
     WidgetLabel(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
                 NotifyApi* notifier, const char * text, bool auto_resize,
-                int group_id, int fgcolor, int bgcolor,
+                int group_id, uint32_t fgcolor, uint32_t bgcolor,
                 int xtext = 0, int ytext = 0)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , initial_x_text(xtext)
@@ -52,6 +53,7 @@ public:
     , bg_color(bgcolor)
     , fg_color(fgcolor)
     , auto_resize(auto_resize)
+    , tool(false)
     , w_border(x_text)
     , h_border(y_text)
     {
@@ -97,6 +99,12 @@ public:
                                         );
     }
 
+    virtual Dimension get_optimal_dim() {
+        int w, h;
+        this->drawable.text_metrics(this->buffer, w, h);
+        return Dimension(w, h);
+    }
+
     bool shift_text(int pos_x) {
         bool res = true;
         if (pos_x + this->x_text > this->cx() - 4) {
@@ -109,6 +117,24 @@ public:
             res = false;
         }
         return res;
+    }
+
+    virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
+        this->bg_color = bg_color;
+        this->fg_color = fg_color;
+    }
+
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {
+        if (this->tool) {
+            if (device_flags == MOUSE_FLAG_MOVE) {
+                int w = 0;
+                int h = 0;
+                this->drawable.text_metrics(this->buffer, w, h);
+                if (w > this->rect.cx) {
+                    this->show_tooltip(this, this->buffer, x, y);
+                }
+            }
+        }
     }
 
 };

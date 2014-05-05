@@ -56,7 +56,6 @@ class WidgetSelectorFlat : public WidgetParent
         WidgetLabel closetime;
         int border_color;
 
-
         Line(DrawApi & drawable, Widget2& parent, NotifyApi* notifier, int x, int y,
              int lcy, int group_w, int target_w, int protocol_w, int closetime_w,
              const char * device_group, const char * target_label, const char * protocol,
@@ -570,6 +569,8 @@ public:
 
     int tc_flag;
 
+    CompositeTable composite_table;
+
 public:
     struct temporary_number_of_page {
         char buffer[15];
@@ -669,7 +670,7 @@ public:
                     this->theme.edit.bgcolor, this->theme.edit.focus_color, -1, 1, 1)
         , tc_flag(ticcom_flag)
     {
-        this->impl = new CompositeTable;
+        this->impl = &composite_table;
 
         this->add_widget(&this->device_label);
         this->add_widget(&this->device_target_label);

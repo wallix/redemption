@@ -48,6 +48,7 @@ public:
     WidgetFlatButton ok;
     WidgetFlatButton * cancel;
     WidgetRect separator;
+    CompositeTable composite_table;
 
     FlatDialog(DrawApi& drawable, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
@@ -77,7 +78,7 @@ public:
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
                     this->theme.global.separator_color)
     {
-        this->impl = new CompositeTable;
+        this->impl = &composite_table;
 
         this->add_widget(&this->title);
         this->add_widget(&this->dialog);

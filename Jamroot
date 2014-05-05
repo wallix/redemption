@@ -606,5 +606,18 @@ unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp krb5 gss
 
 unit-test test_gap_buffer : tests/utils/test_gap_buffer.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
-# unit-test test_column : tests/mod/internal/widget2/test_column.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_columnlayout : tests/mod/internal/widget2/test_columnlayout.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
+unit-test test_linelayout : tests/mod/internal/widget2/test_linelayout.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_stacklayout : tests/mod/internal/widget2/test_stacklayout.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_grid : tests/mod/internal/widget2/test_grid.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_labelgrid : tests/mod/internal/widget2/test_labelgrid.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_flat_selector2 : tests/mod/internal/widget2/test_flat_selector2.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_group_box : tests/mod/internal/widget2/test_group_box.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_scroll : tests/mod/internal/widget2/test_scroll.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;

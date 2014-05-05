@@ -65,6 +65,7 @@ struct ModRDPParams {
     uint32_t password_printing_mode;
 
     uint32_t verbose;
+    uint32_t cache_verbose;
 
     ModRDPParams( const char * target_user
                 , const char * target_password
@@ -116,6 +117,7 @@ struct ModRDPParams {
         , password_printing_mode(0)
 
         , verbose(verbose)
+        , cache_verbose(0)
     {}
 
     void log() const {
@@ -192,7 +194,9 @@ struct ModRDPParams {
             "ModRDPParams password_printing_mode=%u",              this->password_printing_mode);
 
         LOG(LOG_INFO,
-            "ModRDPParams verbose=0x%08X",                      this->verbose);
+            "ModRDPParams verbose=0x%08X",                         this->verbose);
+        LOG(LOG_INFO,
+            "ModRDPParams cache_verbose=0x%08X",                   this->cache_verbose);
     }   // void log() const
 };  // struct ModRDPParams
 

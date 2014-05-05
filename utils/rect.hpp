@@ -248,6 +248,15 @@ struct Rect {
     }
 
 };
+struct Dimension {
+    uint16_t w;
+    uint16_t h;
+
+    Dimension(uint16_t w, uint16_t h)
+        : w(w)
+        , h(h)
+    {}
+};
 struct Point {
     int x;
     int y;

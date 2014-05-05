@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
     // redemption::string error_message;
     // SocketTransport t( name
     //                  , client_sck
-    //                  , "10.10.46.64"
+    //                  , "10.10.47.205"
     //                  , 3389
     //                  , verbose
     //                  , &error_message

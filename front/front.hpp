@@ -679,25 +679,25 @@ public:
             }
             this->mppc_enc_match_finder = new rdp_mppc_61_enc_hash_based_match_finder();
             //this->mppc_enc_match_finder = new rdp_mppc_61_enc_sequential_search_match_finder();
-            this->mppc_enc = new rdp_mppc_61_enc(this->mppc_enc_match_finder);
+            this->mppc_enc = new rdp_mppc_61_enc(this->mppc_enc_match_finder, this->ini->debug.compression);
             break;
         case PACKET_COMPR_TYPE_RDP6:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 6.0 Bulk compression");
             }
-            this->mppc_enc = new rdp_mppc_60_enc();
+            this->mppc_enc = new rdp_mppc_60_enc(this->ini->debug.compression);
             break;
         case PACKET_COMPR_TYPE_64K:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 5.0 Bulk compression");
             }
-            this->mppc_enc = new rdp_mppc_50_enc();
+            this->mppc_enc = new rdp_mppc_50_enc(this->ini->debug.compression);
             break;
         case PACKET_COMPR_TYPE_8K:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 4.0 Bulk compression");
             }
-            this->mppc_enc = new rdp_mppc_40_enc();
+            this->mppc_enc = new rdp_mppc_40_enc(this->ini->debug.compression);
             break;
         }
 
@@ -727,7 +727,8 @@ public:
                         this->client_info.cache4_persistent,
                         this->client_info.cache5_entries,
                         this->client_info.cache5_size,
-                        this->client_info.cache5_persistent/*, 8192*/);
+                        this->client_info.cache5_persistent,
+                        this->ini->debug.cache);
 
         if (this->ini->client.persistent_disk_bitmap_cache) {
             // Generates the name of file.
@@ -4416,10 +4417,6 @@ public:
             }
         }
 
-        // if not we have to split it
-        const uint16_t TILE_CX = 64;
-        const uint16_t TILE_CY = 64;
-
         const uint16_t dst_x = cmd.rect.x;
         const uint16_t dst_y = cmd.rect.y;
         // clip dst as it can be larger than source bitmap
@@ -4447,6 +4444,10 @@ public:
             this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
         }
         else {
+            // if not we have to split it
+            const uint16_t TILE_CX = ((::nbbytes(this->client_info.bpp) * 64 * 64 < RDPSerializer::MAX_ORDERS_SIZE) ? 64 : 32);
+            const uint16_t TILE_CY = TILE_CX;
+
             for (int y = 0; y < dst_cy ; y += TILE_CY) {
                 int cy = std::min(TILE_CY, (uint16_t)(dst_cy - y));
 
@@ -4535,10 +4536,6 @@ public:
             }
         }
 
-        // if not we have to split it
-        const uint16_t TILE_CX = 64;
-        const uint16_t TILE_CY = 64;
-
         const uint16_t dst_x = cmd.rect.x;
         const uint16_t dst_y = cmd.rect.y;
         // clip dst as it can be larger than source bitmap
@@ -4566,6 +4563,10 @@ public:
             this->draw_tile3(dst_tile, src_tile, cmd, bitmap, clip);
         }
         else {
+            // if not we have to split it
+            const uint16_t TILE_CX = ((::nbbytes(this->client_info.bpp) * 64 * 64 < RDPSerializer::MAX_ORDERS_SIZE) ? 64 : 32);
+            const uint16_t TILE_CY = TILE_CX;
+
             for (int y = 0; y < dst_cy ; y += TILE_CY) {
                 int cy = std::min(TILE_CY, (uint16_t)(dst_cy - y));
 

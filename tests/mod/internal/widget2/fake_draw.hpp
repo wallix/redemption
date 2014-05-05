@@ -8,9 +8,9 @@ struct TestDraw : DrawApi
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
-    virtual void draw(const RDPOpaqueRect& cmd, const Rect& rect)
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        this->gd.draw(cmd, rect);
+        this->gd.draw(cmd, clip);
     }
 
     virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) {
@@ -21,89 +21,87 @@ struct TestDraw : DrawApi
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPScrBlt&, const Rect&)
+    virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPDestBlt&, const Rect&)
+    virtual void draw(const RDPDestBlt & cmd, const Rect & clip)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiDstBlt &, const Rect &) {
-        BOOST_CHECK(false);
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+        this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiOpaqueRect &, const Rect &) {
-        BOOST_CHECK(false);
+    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+        this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiPatBlt &, const Rect &) {
-        BOOST_CHECK(false);
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+        this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiScrBlt &, const Rect &) {
-        BOOST_CHECK(false);
+    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+        this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPatBlt& cmd, const Rect& rect)
+    virtual void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
-        this->gd.draw(cmd, rect);
+        this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        this->gd.draw(cmd, rect, bmp);
+        this->gd.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPMem3Blt& cmd, const Rect& rect, const Bitmap& bmp)
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        this->gd.draw(cmd, rect, bmp);
+        this->gd.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPLineTo&, const Rect&)
+    virtual void draw(const RDPLineTo & cmd, const Rect & clip)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex&, const Rect&, const GlyphCache * gly_cache)
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd, clip, gly_cache);
     }
 
-    virtual void draw(const RDPBrushCache&)
+    virtual void draw(const RDPBrushCache & cmd)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd);
     }
 
-    virtual void draw(const RDPColCache&)
+    virtual void draw(const RDPColCache & cmd)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd);
     }
 
-    virtual void draw(const RDPGlyphCache&)
+    virtual void draw(const RDPGlyphCache & cmd)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd);
     }
 
-    virtual void draw(const RDPPolygonSC &, const Rect &) {
-        BOOST_CHECK(false);
+    virtual void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+        this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPolygonCB &, const Rect &) {
-        BOOST_CHECK(false);
+    virtual void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+        this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPolyline &, const Rect &) {
-        BOOST_CHECK(false);
+    virtual void draw(const RDPPolyline & cmd, const Rect & clip) {
+        this->gd.draw(cmd, clip);
     }
 
-    virtual void begin_update()
-    {}
+    virtual void begin_update() {}
 
-    virtual void end_update()
-    {}
+    virtual void end_update() {}
 
     virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
     {

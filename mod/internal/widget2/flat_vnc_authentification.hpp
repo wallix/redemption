@@ -35,7 +35,7 @@
 class FlatVNCAuthentification : public WidgetParent
 {
 public:
-    Theme &    theme;
+    Theme &         theme;
     WidgetLabel     message_label;
     WidgetLabel     password_label;
     WidgetEditValid password_edit;
@@ -43,6 +43,8 @@ public:
 
     int fgcolor;
     int bgcolor;
+
+    CompositeTable composite_table;
 
     FlatVNCAuthentification(DrawApi& drawable, uint16_t width, uint16_t height,
                             Widget2 & parent, NotifyApi* notifier, const char* caption,
@@ -65,7 +67,7 @@ public:
         , fgcolor(this->theme.global.fgcolor)
         , bgcolor(this->theme.global.bgcolor)
     {
-        this->impl = new CompositeTable;
+        this->impl = &composite_table;
         this->add_widget(&this->message_label);
         this->add_widget(&this->password_label);
         this->add_widget(&this->password_edit);

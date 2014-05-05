@@ -34,6 +34,7 @@ public:
     Theme theme;
     WidgetTooltip * tooltip;
     Widget2 * current_over;
+    CompositeTable composite_table;
 
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height,
                  NotifyApi * notifier = NULL, Theme * theme = NULL)
@@ -42,7 +43,7 @@ public:
         , tooltip(NULL)
         , current_over(NULL)
     {
-        this->impl = new CompositeTable;
+        this->impl = &composite_table;
         this->tab_flag = IGNORE_TAB;
     }
 

@@ -694,6 +694,8 @@ struct Inifile : public FieldObserver {
         uint32_t widget;
         uint32_t input;
         uint32_t password;
+        uint32_t compression;
+        uint32_t cache;
 
         uint32_t pass_dialog_box;
         int log_type;
@@ -1042,6 +1044,8 @@ public:
         this->debug.widget            = 0;
         this->debug.input             = 0;
         this->debug.password          = 0;
+        this->debug.compression       = 0;
+        this->debug.cache             = 0;
 
         this->debug.log_type          = 2; // syslog by default
         this->debug.log_file_path[0]  = 0;
@@ -1631,7 +1635,13 @@ public:
                 this->debug.input             = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "password")) {
-                this->debug.password             = ulong_from_cstr(value);
+                this->debug.password          = ulong_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "compression")) {
+                this->debug.compression       = ulong_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "cache")) {
+                this->debug.cache             = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "log_type")) {
                 this->debug.log_type = logtype_from_cstr(value);

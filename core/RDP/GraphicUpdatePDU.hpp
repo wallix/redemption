@@ -172,7 +172,7 @@ struct GraphicsUpdatePDU : public RDPSerializer {
                    , this->shareid);
             }
 
-            /*if (!this->compression)*/ {
+            if (!this->compression) {
                 this->sdata_orders = new ShareData(this->stream_orders);
                 this->sdata_orders->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
             }
@@ -196,8 +196,7 @@ struct GraphicsUpdatePDU : public RDPSerializer {
 
     void init_bitmaps() {
         if (this->fastpath_support == false) {
-            if (this->sdata_bitmaps) { delete this->sdata_bitmaps; }
-            this->sdata_bitmaps = new ShareData(this->stream_bitmaps);
+            if (this->sdata_bitmaps) { delete this->sdata_bitmaps; this->sdata_bitmaps = 0; }
 
             if (this->ini.debug.primary_orders > 3) {
                 LOG( LOG_INFO
@@ -205,7 +204,11 @@ struct GraphicsUpdatePDU : public RDPSerializer {
                    , this->userid
                    , this->shareid);
             }
-            this->sdata_bitmaps->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
+
+            if (!this->compression) {
+                this->sdata_bitmaps = new ShareData(this->stream_bitmaps);
+                this->sdata_bitmaps->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
+            }
             TODO("this is to kind of header, to be treated like other headers");
             this->stream_bitmaps.out_uint16_le(RDP_UPDATE_BITMAP);
             this->offset_bitmap_count = this->stream_bitmaps.get_offset();
@@ -243,31 +246,90 @@ protected:
                     LOG(LOG_INFO, "GraphicsUpdatePDU::flush_orders:slow-path");
                 }
 
-                this->sdata_orders->emit_end();
+                if (!this->compression) {
+                    this->sdata_orders->emit_end();
 
-                BStream sctrl_header(256);
-                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream_orders.size());
+                    BStream sctrl_header(256);
+                    ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream_orders.size());
 
-                this->buffer_stream_orders.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
+                    this->buffer_stream_orders.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
 
-                BStream x224_header(256);
-                OutPerBStream mcs_header(256);
-                BStream sec_header(256);
+                    BStream x224_header(256);
+                    OutPerBStream mcs_header(256);
+                    BStream sec_header(256);
 
-                SEC::Sec_Send sec( sec_header, this->buffer_stream_orders, 0, this->encrypt
-                                 , this->encryptionLevel);
-                MCS::SendDataIndication_Send mcs( mcs_header, this->userid
-                                                , GCC::MCS_GLOBAL_CHANNEL, 1, 3
-                                                ,   sec_header.size()
-                                                  + this->buffer_stream_orders.size()
-                                                , MCS::PER_ENCODING
-                                                );
-                X224::DT_TPDU_Send( x224_header
-                                  ,   mcs_header.size() + sec_header.size()
-                                    + this->buffer_stream_orders.size()
-                                  );
-                this->trans->send( x224_header, mcs_header, sec_header
-                                 , this->buffer_stream_orders);
+                    SEC::Sec_Send sec( sec_header, this->buffer_stream_orders, 0, this->encrypt
+                                     , this->encryptionLevel);
+                    MCS::SendDataIndication_Send mcs( mcs_header, this->userid
+                                                    , GCC::MCS_GLOBAL_CHANNEL, 1, 3
+                                                    ,   sec_header.size()
+                                                      + this->buffer_stream_orders.size()
+                                                    , MCS::PER_ENCODING
+                                                    );
+                    X224::DT_TPDU_Send( x224_header
+                                      ,   mcs_header.size() + sec_header.size()
+                                        + this->buffer_stream_orders.size()
+                                      );
+                    this->trans->send( x224_header, mcs_header, sec_header
+                                     , this->buffer_stream_orders);
+                }
+                else {
+                    this->stream_orders.mark_end();
+
+                    HStream  compressed_buffer_stream_orders(1024, 65565);
+                    uint8_t  compressionFlags;
+                    uint16_t datalen;
+
+                    this->mppc_enc->compress(this->buffer_stream_orders.get_data(), this->buffer_stream_orders.size(),
+                        compressionFlags, datalen, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
+
+                    this->sdata_orders = new ShareData(compressed_buffer_stream_orders);
+                    this->sdata_orders->emit_begin( PDUTYPE2_UPDATE, this->shareid
+                                                  , RDP::STREAM_MED
+                                                  , this->buffer_stream_orders.size() + 18  // TS_SHAREDATAHEADER(18)
+                                                  , compressionFlags
+                                                  , (  (compressionFlags & PACKET_COMPRESSED)
+                                                     ? datalen + 18 // TS_SHAREDATAHEADER(18)
+                                                     : 0
+                                                    )
+                                                  );
+
+                    if (compressionFlags & PACKET_COMPRESSED) {
+                        this->mppc_enc->get_compressed_data(compressed_buffer_stream_orders);
+                    }
+                    else {
+                        compressed_buffer_stream_orders.out_copy_bytes(
+                              this->buffer_stream_orders.get_data()
+                            , this->buffer_stream_orders.size());
+                    }
+                    this->sdata_orders->emit_end();
+
+                    BStream sctrl_header(256);
+                    ShareControl_Send( sctrl_header, PDUTYPE_DATAPDU
+                                     , this->userid + GCC::MCS_USERCHANNEL_BASE
+                                     , compressed_buffer_stream_orders.size());
+
+                    compressed_buffer_stream_orders.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
+
+                    BStream x224_header(256);
+                    OutPerBStream mcs_header(256);
+                    BStream sec_header(256);
+
+                    SEC::Sec_Send sec( sec_header, compressed_buffer_stream_orders, 0
+                                     , this->encrypt , this->encryptionLevel);
+                    MCS::SendDataIndication_Send mcs( mcs_header, this->userid
+                                                    , GCC::MCS_GLOBAL_CHANNEL, 1, 3
+                                                    ,   sec_header.size()
+                                                      + compressed_buffer_stream_orders.size()
+                                                    , MCS::PER_ENCODING
+                                                    );
+                    X224::DT_TPDU_Send( x224_header
+                                      ,   mcs_header.size() + sec_header.size()
+                                        + compressed_buffer_stream_orders.size()
+                                      );
+                    this->trans->send( x224_header, mcs_header, sec_header
+                                     , compressed_buffer_stream_orders);
+                }
             }
             else {
                 if (this->ini.debug.primary_orders > 3) {
@@ -375,41 +437,100 @@ protected:
                     LOG(LOG_INFO, "GraphicsUpdatePDU::flush_bitmaps:slow-path");
                 }
 
-                this->sdata_bitmaps->emit_end();
+                if (!this->compression) {
+                    this->sdata_bitmaps->emit_end();
 
-                BStream sctrl_header(256);
-                ShareControl_Send( sctrl_header
-                                 , PDUTYPE_DATAPDU
-                                 , this->userid + GCC::MCS_USERCHANNEL_BASE
-                                 , this->stream_bitmaps.size());
+                    BStream sctrl_header(256);
+                    ShareControl_Send( sctrl_header
+                                     , PDUTYPE_DATAPDU
+                                     , this->userid + GCC::MCS_USERCHANNEL_BASE
+                                     , this->stream_bitmaps.size());
 
-                this->buffer_stream_bitmaps.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
+                    this->buffer_stream_bitmaps.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
 
-                BStream x224_header(256);
-                OutPerBStream mcs_header(256);
-                BStream sec_header(256);
+                    BStream x224_header(256);
+                    OutPerBStream mcs_header(256);
+                    BStream sec_header(256);
 
-                SEC::Sec_Send sec( sec_header
-                                 , this->buffer_stream_bitmaps
-                                 , 0
-                                 , this->encrypt
-                                 , this->encryptionLevel
-                                 );
-                MCS::SendDataIndication_Send mcs( mcs_header
-                                                , this->userid
-                                                , GCC::MCS_GLOBAL_CHANNEL
-                                                , 1
-                                                , 3
-                                                ,   sec_header.size()
-                                                  + this->buffer_stream_bitmaps.size()
-                                                , MCS::PER_ENCODING
-                                                );
-                X224::DT_TPDU_Send( x224_header
-                                  ,   mcs_header.size() + sec_header.size()
-                                    + this->buffer_stream_bitmaps.size()
-                                  );
-                this->trans->send( x224_header, mcs_header, sec_header
-                                 , this->buffer_stream_bitmaps);
+                    SEC::Sec_Send sec( sec_header
+                                     , this->buffer_stream_bitmaps
+                                     , 0
+                                     , this->encrypt
+                                     , this->encryptionLevel
+                                     );
+                    MCS::SendDataIndication_Send mcs( mcs_header
+                                                    , this->userid
+                                                    , GCC::MCS_GLOBAL_CHANNEL
+                                                    , 1
+                                                    , 3
+                                                    ,   sec_header.size()
+                                                      + this->buffer_stream_bitmaps.size()
+                                                    , MCS::PER_ENCODING
+                                                    );
+                    X224::DT_TPDU_Send( x224_header
+                                      ,   mcs_header.size() + sec_header.size()
+                                        + this->buffer_stream_bitmaps.size()
+                                      );
+                    this->trans->send( x224_header, mcs_header, sec_header
+                                     , this->buffer_stream_bitmaps);
+                }
+                else {
+                    this->stream_bitmaps.mark_end();
+
+                    HStream  compressed_buffer_stream_bitmaps(1024, 65565);
+                    uint8_t  compressionFlags;
+                    uint16_t datalen;
+
+                    this->mppc_enc->compress(this->buffer_stream_bitmaps.get_data(), this->buffer_stream_bitmaps.size(),
+                        compressionFlags, datalen, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
+
+                    this->sdata_bitmaps = new ShareData(compressed_buffer_stream_bitmaps);
+                    this->sdata_bitmaps->emit_begin( PDUTYPE2_UPDATE, this->shareid
+                                                   , RDP::STREAM_MED
+                                                   , this->buffer_stream_bitmaps.size() + 18    // TS_SHAREDATAHEADER(18)
+                                                   , compressionFlags
+                                                   , (  (compressionFlags & PACKET_COMPRESSED)
+                                                      ? datalen + 18    // TS_SHAREDATAHEADER(18)
+                                                      : 0
+                                                     )
+                                                   );
+
+                    if (compressionFlags & PACKET_COMPRESSED) {
+                        this->mppc_enc->get_compressed_data(compressed_buffer_stream_bitmaps);
+                    }
+                    else {
+                        compressed_buffer_stream_bitmaps.out_copy_bytes(
+                              this->buffer_stream_bitmaps.get_data()
+                            , this->buffer_stream_bitmaps.size());
+                    }
+                    this->sdata_bitmaps->emit_end();
+
+                    BStream sctrl_header(256);
+                    ShareControl_Send( sctrl_header, PDUTYPE_DATAPDU
+                                     , this->userid + GCC::MCS_USERCHANNEL_BASE
+                                     , compressed_buffer_stream_bitmaps.size());
+
+                    compressed_buffer_stream_bitmaps.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
+
+                    BStream x224_header(256);
+                    OutPerBStream mcs_header(256);
+                    BStream sec_header(256);
+
+                    SEC::Sec_Send sec( sec_header, compressed_buffer_stream_bitmaps, 0
+                                     , this->encrypt , this->encryptionLevel);
+                    MCS::SendDataIndication_Send mcs( mcs_header, this->userid
+                                                    , GCC::MCS_GLOBAL_CHANNEL, 1, 3
+                                                    ,   sec_header.size()
+                                                      + compressed_buffer_stream_bitmaps.size()
+                                                    , MCS::PER_ENCODING
+                                                    );
+                    X224::DT_TPDU_Send( x224_header
+                                      ,   mcs_header.size() + sec_header.size()
+                                        + compressed_buffer_stream_bitmaps.size()
+                                      );
+                    this->trans->send( x224_header, mcs_header, sec_header
+                                     , compressed_buffer_stream_bitmaps);
+                }
             }
             else {
                 if (this->ini.debug.primary_orders > 3){
