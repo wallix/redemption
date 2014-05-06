@@ -687,10 +687,6 @@ public:
                 this->front.resume_capture();
                 this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
             }
-
-//             this->mod = new mod_osd(*this->mod,
-//                                     Bitmap("/home/jpoelen/projects/redemption-public/tests/fixtures/ad8b.bmp"),
-//                                     200, 200);
         }
         else if (this->front.capture_state == Front::CAPTURE_STATE_STARTED) {
             this->front.pause_capture();

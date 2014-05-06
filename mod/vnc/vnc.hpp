@@ -142,7 +142,7 @@ public:
                 TR("VNC password", ini))
     , verbose(verbose)
     , keymapSym(verbose)
-    , incr(0)
+    , incr(1)
     , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
     , opt_clipboard(clipboard)
     , state(WAIT_SECURITY_TYPES)
@@ -362,7 +362,7 @@ public:
         if (!r.isempty()) {
             uint8_t data[10];
             FixedSizeStream stream(data, sizeof(data));
-            stream.end = data;
+            stream.end = stream.p;
             /* FrambufferUpdateRequest */
             stream.out_uint8(3);
             stream.out_uint8(this->incr);
@@ -371,7 +371,6 @@ public:
             stream.out_uint16_be(r.cx);
             stream.out_uint16_be(r.cy);
             this->t->send(stream.get_data(), 10);
-            this->incr = 1;
         }
     } // rdp_input_invalidate
 
@@ -454,7 +453,9 @@ public:
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
             if (this->event.can_recv()) {
-                BStream stream(1);
+                uint8_t data[1];
+                FixedSizeStream stream(data, 1);
+                stream.end = stream.p;
                 try {
                     this->t->recv(&stream.end, 1);
                     char type = stream.in_uint8();  /* message-type */
@@ -1296,7 +1297,9 @@ public:
     //==============================================================================================================
     void lib_framebuffer_update() throw (Error) {
     //==============================================================================================================
-        BStream stream(256);
+        uint8_t data[256];
+        FixedSizeStream stream(data, sizeof(data));
+        stream.end = stream.p;
         this->t->recv(&stream.end, 3);
         stream.in_skip_bytes(1);
         size_t num_recs = stream.in_uint16_be();
@@ -1334,20 +1337,29 @@ public:
             break;
             case 1: /* copy rect */
             {
-                BStream stream(4);
+                uint8_t data[4];
+                FixedSizeStream stream(data, sizeof(data));
+                stream.end = stream.p;
                 this->t->recv(&stream.end, 4);
                 const int srcx = stream.in_uint16_be();
                 const int srcy = stream.in_uint16_be();
 //                LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
                 this->front.begin_update();
-                this->gd->draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
+                if (this->gd == this) {
+                    this->front.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
+                }
+                else {
+                    this->incr = 0;
+                    this->gd->draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
+                    this->incr = 1;
+                }
                 this->front.end_update();
             }
             break;
             case 2: /* RRE */
             {
-//LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+                //LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
                 uint8_t * raw = (uint8_t *)malloc(cx * cy * Bpp);
                 if (!raw) {
                     LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
@@ -1422,11 +1434,11 @@ public:
             }
             break;
             case 5: /* Hextile */
-LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+                LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
             break;
             case 16:    /* ZRLE */
             {
-//LOG(LOG_INFO, "VNC Encoding: ZRLE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+                //LOG(LOG_INFO, "VNC Encoding: ZRLE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
                 this->t->recv(&stream.end, 4);
 
                 uint32_t zlib_compressed_data_length = stream.in_uint32_be();
@@ -2136,6 +2148,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
             this->is_first_membelt = false;
         }
         this->front.draw(cmd, clip, bmp);
+        std::cout << cmd.rect << std::endl;
     }
 
 private:
