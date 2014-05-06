@@ -2188,7 +2188,9 @@ public:
     {
         //LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
 
-        if (out_bpp != bmp.original_bpp){
+//        if (out_bpp != bmp.original_bpp){
+        // Support of 16-bit bitmaps in 15-bit RDP session.
+        if (nbbytes(out_bpp) != nbbytes(bmp.original_bpp)){
             this->data_bitmap.alloc(this->bmp_size);
             uint8_t * dest = this->data_bitmap.get();
             const uint8_t * src = bmp.data_bitmap.get();
