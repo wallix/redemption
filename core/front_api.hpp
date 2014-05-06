@@ -30,12 +30,6 @@
 
 class FrontAPI : public DrawApi {
     public:
-    virtual void draw_vnc(const Rect & rect
-                         , const uint8_t bpp
-                         , const BGRPalette & palette332
-                         , const uint8_t * raw
-                         , uint32_t need_size) {}
-
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data
                                 , size_t length, size_t chunk_size, int flags) = 0;

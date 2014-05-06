@@ -539,7 +539,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
         , false         /* allow authentification retries */
         , verbose);
-    mod->event.set();
+    mod->get_event().set();
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD VNC DONE ====================\n\n");

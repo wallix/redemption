@@ -415,6 +415,7 @@ unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit
 unit-test test_wait_obj : tests/core/test_wait_obj.cpp cryptofile openssl crypto dl z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_front : tests/front/test_front.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_mod_osd : tests/mod/test_mod_osd.cpp cryptofile openssl crypto dl png z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_draw_api : tests/mod/test_draw_api.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_null : tests/mod/null/test_null.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

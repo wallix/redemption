@@ -274,7 +274,7 @@ public:
         , mod_transport(NULL)
     {
         this->no_mod = new null_mod(this->front);
-        this->no_mod->event.reset();
+        this->no_mod->get_event().reset();
         this->mod = this->no_mod;
     }
 
@@ -527,7 +527,7 @@ public:
                                              , this->ini.context.opt_height.get()
                                              , this->ini.context.opt_bpp.get()
                                              );
-                    this->mod->event.st = t;
+                    this->mod->get_event().st = t;
                     this->ini.context.auth_error_message.empty();
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
                     this->connected = true;
@@ -624,7 +624,7 @@ public:
 
                     UdevRandom gen;
                     this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
-                    this->mod->event.st = t;
+                    this->mod->get_event().st = t;
 
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
@@ -672,7 +672,7 @@ public:
                                             , this->ini.mod_vnc.encodings.c_str()
                                             , this->ini.mod_vnc.allow_authentification_retries
                                             , this->ini.debug.mod_vnc);
-                    this->mod->event.st = t;
+                    this->mod->get_event().st = t;
 
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
                     this->ini.context.auth_error_message.empty();

@@ -52,6 +52,7 @@
 
 #define MAX_VNC_2_RDP_CLIP_DATA_SIZE 8000
 
+
 //###############################################################################################################
 struct mod_vnc : public InternalMod, public NotifyApi {
 //###############################################################################################################
@@ -113,6 +114,10 @@ struct mod_vnc : public InternalMod, public NotifyApi {
 
     bool allow_authentification_retries;
 
+private:
+    bool is_first_membelt;
+
+public:
     //==============================================================================================================
     mod_vnc( Transport * t
            , Inifile & ini
@@ -129,20 +134,22 @@ struct mod_vnc : public InternalMod, public NotifyApi {
            , uint32_t verbose
            )
     //==============================================================================================================
-        : InternalMod(front, front_width, front_height, &ini)
-        , challenge(*this, front_width, front_height, this->screen, this,
-                    "Redemption " VERSION,
-                    0, 0, ini.theme,
-                    TR("Authentification required", ini),
-                    TR("VNC password", ini))
-        , verbose(verbose)
-        , keymapSym(verbose)
-        , incr(0)
-        , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
-        , opt_clipboard(clipboard)
-        , state(WAIT_SECURITY_TYPES)
-        , ini(ini)
-        , allow_authentification_retries(allow_authentification_retries || !(*password)) {
+    : InternalMod(front, front_width, front_height, &ini)
+    , challenge(*this, front_width, front_height, this->screen, this,
+                "Redemption " VERSION,
+                0, 0, ini.theme,
+                TR("Authentification required", ini),
+                TR("VNC password", ini))
+    , verbose(verbose)
+    , keymapSym(verbose)
+    , incr(1)
+    , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
+    , opt_clipboard(clipboard)
+    , state(WAIT_SECURITY_TYPES)
+    , ini(ini)
+    , allow_authentification_retries(allow_authentification_retries || !(*password))
+    , is_first_membelt(true)
+    {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
 
@@ -353,7 +360,9 @@ struct mod_vnc : public InternalMod, public NotifyApi {
         }
 
         if (!r.isempty()) {
-            BStream stream(32768);
+            uint8_t data[10];
+            FixedSizeStream stream(data, sizeof(data));
+            stream.end = stream.p;
             /* FrambufferUpdateRequest */
             stream.out_uint8(3);
             stream.out_uint8(this->incr);
@@ -362,7 +371,6 @@ struct mod_vnc : public InternalMod, public NotifyApi {
             stream.out_uint16_be(r.cx);
             stream.out_uint16_be(r.cy);
             this->t->send(stream.get_data(), 10);
-            this->incr = 1;
         }
     } // rdp_input_invalidate
 
@@ -408,7 +416,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                 LOG(LOG_INFO, "VNC connection complete, connected ok\n");
                 this->front.begin_update();
                 RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
-                this->front.draw(orect, Rect(0, 0, this->width, this->height));
+                this->gd->draw(orect, Rect(0, 0, this->width, this->height));
                 this->front.end_update();
 
                 this->state = UP_AND_RUNNING;
@@ -445,7 +453,9 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
             if (this->event.can_recv()) {
-                BStream stream(1);
+                uint8_t data[1];
+                FixedSizeStream stream(data, 1);
+                stream.end = stream.p;
                 try {
                     this->t->recv(&stream.end, 1);
                     char type = stream.in_uint8();  /* message-type */
@@ -876,6 +886,8 @@ struct mod_vnc : public InternalMod, public NotifyApi {
 
                     this->state = WAIT_CLIENT_UP_AND_RUNNING;
                     this->event.object_and_time = true;
+
+                    this->is_first_membelt = true;
                     break;
                 case -1:
                     // resizing failed
@@ -1252,11 +1264,9 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                 }
 
                 this->front.begin_update();
-                this->front.draw_vnc(
-                    Rect(update_context.tile_x, update_context.tile_y,
-                        tile_cx, tile_cy),
-                    this->bpp, this->palette332, tile_data_p,
-                    tile_data_length);
+                this->draw_tile(Rect(update_context.tile_x, update_context.tile_y,
+                                     tile_cx, tile_cy),
+                                tile_data_p);
                 this->front.end_update();
 
                 update_context.cx_remain -= tile_cx;
@@ -1287,7 +1297,9 @@ struct mod_vnc : public InternalMod, public NotifyApi {
     //==============================================================================================================
     void lib_framebuffer_update() throw (Error) {
     //==============================================================================================================
-        BStream stream(256);
+        uint8_t data[256];
+        FixedSizeStream stream(data, sizeof(data));
+        stream.end = stream.p;
         this->t->recv(&stream.end, 3);
         stream.in_skip_bytes(1);
         size_t num_recs = stream.in_uint16_be();
@@ -1317,7 +1329,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                     uint16_t cyy = std::min<uint16_t>(16, cy-(yy-y));
                     this->t->recv(&tmp, cyy*cx*Bpp);
 //                    LOG(LOG_INFO, "draw vnc: x=%d y=%d cx=%d cy=%d", x, yy, cx, cyy);
-                    this->front.draw_vnc(Rect(x, yy, cx, cyy), this->bpp, this->palette332, raw, cx*16*Bpp);
+                    this->draw_tile(Rect(x, yy, cx, cyy), raw);
                 }
                 this->front.end_update();
                 free(raw);
@@ -1325,20 +1337,29 @@ struct mod_vnc : public InternalMod, public NotifyApi {
             break;
             case 1: /* copy rect */
             {
-                BStream stream(4);
+                uint8_t data[4];
+                FixedSizeStream stream(data, sizeof(data));
+                stream.end = stream.p;
                 this->t->recv(&stream.end, 4);
                 const int srcx = stream.in_uint16_be();
                 const int srcy = stream.in_uint16_be();
 //                LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
                 this->front.begin_update();
-                this->front.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
+                if (this->gd == this) {
+                    this->front.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
+                }
+                else {
+                    this->incr = 0;
+                    this->gd->draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
+                    this->incr = 1;
+                }
                 this->front.end_update();
             }
             break;
             case 2: /* RRE */
             {
-//LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+                //LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
                 uint8_t * raw = (uint8_t *)malloc(cx * cy * Bpp);
                 if (!raw) {
                     LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
@@ -1406,18 +1427,18 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                 }
 
                 this->front.begin_update();
-                this->front.draw_vnc(Rect(x, y, cx, cy), this->bpp, this->palette332, raw, cx*cy*Bpp);
+                this->draw_tile(Rect(x, y, cx, cy), raw);
                 this->front.end_update();
 
                 free(raw);
             }
             break;
             case 5: /* Hextile */
-LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+                LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
             break;
             case 16:    /* ZRLE */
             {
-//LOG(LOG_INFO, "VNC Encoding: ZRLE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+                //LOG(LOG_INFO, "VNC Encoding: ZRLE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
                 this->t->recv(&stream.end, 4);
 
                 uint32_t zlib_compressed_data_length = stream.in_uint32_be();
@@ -1569,7 +1590,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
                     if (x > 31) { x = 31; }
                     if (y > 31) { y = 31; }
                 }
-TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation");
+                TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation");
                 this->front.begin_update();
                 this->front.server_set_pointer(cursor);
                 this->front.end_update();
@@ -1613,7 +1634,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         this->front.send_global_palette();
         this->front.begin_update();
         RDPColCache cmd(0, this->palette);
-        this->front.draw(cmd);
+        this->gd->draw(cmd);
         this->front.end_update();
     } // lib_palette_update
 
@@ -2114,8 +2135,40 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             break;
         }
     }
+
     virtual bool is_up_and_running() {
         return (UP_AND_RUNNING == this->state);
+    }
+
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
+    {
+        /// NOTE force resize cliping with rdesktop...
+        if (this->is_first_membelt && clip.cx != 1 && clip.cy != 1) {
+            this->front.draw(cmd, Rect(clip.x,clip.y,1,1), bmp);
+            this->is_first_membelt = false;
+        }
+        this->front.draw(cmd, clip, bmp);
+    }
+
+private:
+    void draw_tile(const Rect & rect, const uint8_t * raw) const
+    {
+        const uint16_t TILE_CX = 32;
+        const uint16_t TILE_CY = 32;
+
+        for (int y = 0; y < rect.cy ; y += TILE_CY) {
+            uint16_t cy = std::min(TILE_CY, (uint16_t)(rect.cy - y));
+
+            for (int x = 0; x < rect.cx ; x += TILE_CX) {
+                uint16_t cx = std::min(TILE_CX, (uint16_t)(rect.cx - x));
+
+                const Rect src_tile(x, y, cx, cy);
+                const Bitmap tiled_bmp(raw, rect.cx, rect.cy, this->bpp, src_tile);
+                const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
+                const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
+                this->gd->draw(cmd2, dst_tile, tiled_bmp);
+            }
+        }
     }
 };
 
