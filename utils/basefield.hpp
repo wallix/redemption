@@ -208,7 +208,7 @@ struct FieldObserver : public ConfigurationHolder {
             this->data.copy_c_str(cstr);
         }
         virtual void set_from_cstr(const char * cstr) {
-            if (strcmp(this->data.c_str(),cstr) || this->asked) {
+            if (this->asked || strcmp(this->data.c_str(),cstr)) {
                 this->modify();
                 this->read = false;
                 this->data.copy_c_str(cstr);

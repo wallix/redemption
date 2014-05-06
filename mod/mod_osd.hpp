@@ -25,8 +25,6 @@
 #include "mod_api.hpp"
 #include "../../redemption-wab.9.x/public/regex/regex.hpp"
 
-class Keymap2;
-
 class mod_osd : public mod_api
 {
     /**

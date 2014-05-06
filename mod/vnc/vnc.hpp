@@ -52,6 +52,7 @@
 
 #define MAX_VNC_2_RDP_CLIP_DATA_SIZE 8000
 
+
 //###############################################################################################################
 struct mod_vnc : public InternalMod, public NotifyApi {
 //###############################################################################################################
@@ -113,6 +114,10 @@ struct mod_vnc : public InternalMod, public NotifyApi {
 
     bool allow_authentification_retries;
 
+private:
+    bool is_first_membelt;
+
+public:
     //==============================================================================================================
     mod_vnc( Transport * t
            , Inifile & ini
@@ -129,20 +134,22 @@ struct mod_vnc : public InternalMod, public NotifyApi {
            , uint32_t verbose
            )
     //==============================================================================================================
-        : InternalMod(front, front_width, front_height, &ini)
-        , challenge(*this, front_width, front_height, this->screen, this,
-                    "Redemption " VERSION,
-                    0, 0, ini.theme,
-                    TR("Authentification required", ini),
-                    TR("VNC password", ini))
-        , verbose(verbose)
-        , keymapSym(verbose)
-        , incr(0)
-        , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
-        , opt_clipboard(clipboard)
-        , state(WAIT_SECURITY_TYPES)
-        , ini(ini)
-        , allow_authentification_retries(allow_authentification_retries || !(*password)) {
+    : InternalMod(front, front_width, front_height, &ini)
+    , challenge(*this, front_width, front_height, this->screen, this,
+                "Redemption " VERSION,
+                0, 0, ini.theme,
+                TR("Authentification required", ini),
+                TR("VNC password", ini))
+    , verbose(verbose)
+    , keymapSym(verbose)
+    , incr(0)
+    , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
+    , opt_clipboard(clipboard)
+    , state(WAIT_SECURITY_TYPES)
+    , ini(ini)
+    , allow_authentification_retries(allow_authentification_retries || !(*password))
+    , is_first_membelt(true)
+    {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
 
@@ -878,6 +885,8 @@ struct mod_vnc : public InternalMod, public NotifyApi {
 
                     this->state = WAIT_CLIENT_UP_AND_RUNNING;
                     this->event.object_and_time = true;
+
+                    this->is_first_membelt = true;
                     break;
                 case -1:
                     // resizing failed
@@ -2114,8 +2123,19 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
             break;
         }
     }
+
     virtual bool is_up_and_running() {
         return (UP_AND_RUNNING == this->state);
+    }
+
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
+    {
+        /// NOTE force resize cliping with rdesktop...
+        if (this->is_first_membelt && clip.cx != 1 && clip.cy != 1) {
+            this->front.draw(cmd, Rect(clip.x,clip.y,1,1), bmp);
+            this->is_first_membelt = false;
+        }
+        this->front.draw(cmd, clip, bmp);
     }
 
 private:
