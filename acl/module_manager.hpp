@@ -46,8 +46,6 @@
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
 
-#include "mod_osd.hpp"
-
 #define STRMODULE_LOGIN       "login"
 #define STRMODULE_SELECTOR    "selector"
 #define STRMODULE_CONFIRM     "confirm"

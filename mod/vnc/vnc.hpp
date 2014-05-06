@@ -2148,7 +2148,6 @@ public:
             this->is_first_membelt = false;
         }
         this->front.draw(cmd, clip, bmp);
-        std::cout << cmd.rect << std::endl;
     }
 
 private:
