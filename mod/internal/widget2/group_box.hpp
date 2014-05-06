@@ -21,32 +21,36 @@
 #ifndef REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
 #define REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
 
-#include "widget.hpp"
+#include "composite.hpp"
 
-class WidgetGroupBox : public Widget2
+class WidgetGroupBox : public WidgetParent
 {
 public:
     static const size_t buffer_size = 256;
 
     char buffer[buffer_size];
+
     int bg_color;
     int fg_color;
+
+    CompositeTable composite_table;
 
 public:
     WidgetGroupBox( DrawApi & drawable, int16_t x, int16_t y
                   , uint16_t cx, uint16_t cy, Widget2 & parent
                   , NotifyApi * notifier, const char * text
                   , int group_id, int fgcolor, int bgcolor)
-    : Widget2(drawable, Rect(x, y, cx, cy), parent, notifier, group_id)
+    : WidgetParent(drawable, Rect(x, y, cx, cy), parent, notifier)
     , bg_color(bgcolor)
     , fg_color(fgcolor) {
-        this->tab_flag   = IGNORE_TAB;
-        this->focus_flag = IGNORE_FOCUS;
+        this->impl = &composite_table;
 
         this->set_text(text);
     }
 
-    virtual ~WidgetGroupBox() {}
+    virtual ~WidgetGroupBox() {
+        this->clear();
+    }
 
     void set_text(const char * text) {
         this->buffer[0] = 0;
@@ -61,11 +65,14 @@ public:
         return this->buffer;
     }
 
-    virtual void draw(const Rect & clip)
-    {
+    virtual void draw(const Rect & clip) {
+      this->draw_inner_free(clip.intersect(this->rect), this->bg_color);
+
+        // Background.
         this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
 
 
+        // Box.
         const uint16_t border           = 6;
         const uint16_t text_margin      = 6;
         const uint16_t text_indentation = border + text_margin + 4;
@@ -101,6 +108,7 @@ public:
         this->drawable.draw(polyline_box, clip);
 
 
+        // Label.
         this->drawable.server_draw_text( this->rect.x + text_indentation
                                        , this->rect.y
                                        , this->buffer
@@ -108,6 +116,19 @@ public:
                                        , this->bg_color
                                        , this->rect.intersect(clip)
                                        );
+
+      this->impl->draw(clip);
+    }
+
+    virtual void draw_inner_free(const Rect& clip, int bg_color) {
+        Region region;
+        region.rects.push_back(clip);
+
+        this->impl->draw_inner_free(clip, bg_color, region);
+
+        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
+            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
+        }
     }
 };
 
