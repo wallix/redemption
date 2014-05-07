@@ -116,8 +116,8 @@ class mod_osd : public mod_api
 
 public:
     mod_osd(mod_api & mod, const Bitmap& bmp, int x = 0, int y = 0)
-    : mod_api(mod.front_width, mod.front_height)
-    , fg_rect(Rect(0, 0, mod.front_width, mod.front_height).intersect(Rect(x,y,bmp.cx,bmp.cy)))
+    : mod_api(mod.get_front_width(), mod.get_front_height())
+    , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(Rect(x,y,bmp.cx,bmp.cy)))
     , bmp_srcx(x - this->fg_rect.x)
     , bmp_srcy(y - this->fg_rect.y)
     , bmp(bmp.original_bpp, bmp)
@@ -324,7 +324,7 @@ public:
 
     virtual void end_update()
     {
-        this->mod.begin_update();
+        this->mod.end_update();
     }
 
     virtual void draw_event(time_t now)
@@ -416,12 +416,34 @@ public:
     virtual void server_draw_text(int16_t x, int16_t y, const char * text,
                                   uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
-        this->mod.server_draw_text(x, y, text, bgcolor, fgcolor, clip);
+        this->mod.server_draw_text(x, y, text, fgcolor, bgcolor, clip);
     }
 
     virtual void text_metrics(const char * text, int & width, int & height)
     {
         this->mod.text_metrics(text, width, height);
+    }
+
+    virtual void send_to_mod_channel(const char * const front_channel_name, Stream & chunk, size_t length, uint32_t flags)
+    {
+        this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
+    }
+
+    // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
+    virtual void send_auth_channel_data(const char * data)
+    {
+        this->mod.send_auth_channel_data(data);
+    }
+
+    virtual void rdp_input_up_and_running()
+    {
+        this->mod.rdp_input_up_and_running();
+    }
+
+    // Front calls this member function when it became up and running.
+    virtual void on_front_up_and_running()
+    {
+        this->mod.on_front_up_and_running();
     }
 };
 

@@ -116,6 +116,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
 
 private:
     bool is_first_membelt;
+    bool is_first_incr;
 
 public:
     //==============================================================================================================
@@ -149,6 +150,7 @@ public:
     , ini(ini)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
     , is_first_membelt(true)
+    , is_first_incr(true)
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -366,7 +368,8 @@ public:
             /* FrambufferUpdateRequest */
             stream.out_uint8(3);
             stream.out_uint8(this->incr);
-            if (this->is_first_membelt) {
+            if (this->is_first_incr) {
+                this->is_first_incr = false;
                 this->incr = 1;
             }
             stream.out_uint16_be(r.x);
@@ -1803,6 +1806,7 @@ public:
         }
     } // send_to_mod_channel
 
+private:
     //==============================================================================================================
     void send_to_vnc( const CHANNELS::ChannelDef & channel
                     , Stream & chunk

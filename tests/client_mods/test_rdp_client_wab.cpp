@@ -151,8 +151,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
     BOOST_CHECK(t.get_status());
 
-    BOOST_CHECK_EQUAL(mod->front_width,  1024);
-    BOOST_CHECK_EQUAL(mod->front_height, 768);
+    BOOST_CHECK_EQUAL(mod->get_front_width(),  1024);
+    BOOST_CHECK_EQUAL(mod->get_front_height(), 768);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
