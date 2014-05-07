@@ -44,6 +44,7 @@ public:
     OutFilenameTransport * png_trans;
     StaticCapture        * psc;
 
+private:
     TODO("wrm_trans and crypto_wrm_trans should be one and the same (and crypto status hidden)");
     OutmetaTransport       * wrm_trans;
     CryptoOutmetaTransport * crypto_wrm_trans;
@@ -54,13 +55,19 @@ public:
 
     PointerCache ptr_cache;
 
+public:
     wait_obj capture_event;
 
+private:
     redemption::string png_path;
     redemption::string basename;
 
     CryptoContext crypto_ctx;
 
+private:
+    RDPGraphicDevice * gd;
+
+public:
     Capture( const timeval & now, int width, int height, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
            , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini)
@@ -77,7 +84,8 @@ public:
             , drawable(NULL)
             , capture_event(wait_obj(NULL))
             , png_path(png_path)
-            , basename(basename) {
+            , basename(basename)
+            , gd(NULL) {
         if (this->capture_drawable) {
             this->drawable = new RDPDrawable(width, height);
         }
@@ -143,6 +151,13 @@ public:
         this->ptr_cache.add_pointer_static(pointer1, 1);
         if (this->drawable) {
             this->drawable->send_pointer(1, pointer1);
+        }
+
+        if (this->capture_wrm) {
+            this->gd = this->pnc;
+        }
+        else if (this->capture_drawable) {
+            this->gd = this->drawable;
         }
     }
 
@@ -232,182 +247,116 @@ public:
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip) {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
     void draw(const RDPDestBlt & cmd, const Rect &clip) {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
     void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
     void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
     void draw(const RDPPatBlt & cmd, const Rect &clip) {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip, bmp);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip, bmp);
+        if (this->gd) {
+            this->gd->draw(cmd, clip, bmp);
         }
     }
 
     void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip, bmp);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip, bmp);
+        if (this->gd) {
+            this->gd->draw(cmd, clip, bmp);
         }
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
     void draw(const RDPLineTo & cmd, const Rect & clip) {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
-    virtual void draw(const RDPGlyphCache & cmd)
-    {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd);
+    void draw(const RDPGlyphCache & cmd) {
+        if (this->gd) {
+            this->gd->draw(cmd);
         }
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
-        const GlyphCache * gly_cache)
-    {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip, gly_cache);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip, gly_cache);
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
+        if (this->gd) {
+            this->gd->draw(cmd, clip, gly_cache);
         }
     }
 
-    virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
-                     , size_t size, const Bitmap & bmp) {
-        if (this->capture_wrm) {
-            this->pnc->draw(bitmap_data, data, size, bmp);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(bitmap_data, data, size, bmp);
+    void draw( const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) {
+        if (this->gd) {
+            this->gd->draw(bitmap_data, data, size, bmp);
         }
     }
 
-    virtual void draw(const RDPPolygonSC & cmd, const Rect & clip)
-    {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
-    virtual void draw(const RDPPolygonCB & cmd, const Rect & clip)
-    {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
-    virtual void draw(const RDPPolyline & cmd, const Rect & clip)
-    {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+    void draw(const RDPPolyline & cmd, const Rect & clip) {
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
-    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip)
-    {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+    void draw(const RDPEllipseSC & cmd, const Rect & clip) {
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 
-    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
-    {
-        if (this->capture_wrm) {
-            this->pnc->draw(cmd, clip);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->draw(cmd, clip);
+    void draw(const RDPEllipseCB & cmd, const Rect & clip) {
+        if (this->gd) {
+            this->gd->draw(cmd, clip);
         }
     }
 

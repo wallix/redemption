@@ -176,6 +176,11 @@ struct Drawable {
         return this->data + (rect.y * this->width + rect.x) * Bpp;
     }
 
+    const uint8_t * first_pixel(const Rect & rect) const
+    {
+        return this->data + (rect.y * this->width + rect.x) * Bpp;
+    }
+
     uint8_t * first_pixel(int y)
     {
         return this->data + y * this->width * Bpp;
@@ -1981,11 +1986,11 @@ struct Drawable {
                 // |      | RPN: D                        |
                 // +------+-------------------------------+
             case 0xAA: // nothing to change
-        break;
-        // +------+-------------------------------+
-        // | 0xBB | ROP: 0x00BB0226 (MERGEPAINT)  |
-        // |      | RPN: DSno                     |
-        // +------+-------------------------------+
+                break;
+                // +------+-------------------------------+
+                // | 0xBB | ROP: 0x00BB0226 (MERGEPAINT)  |
+                // |      | RPN: DSno                     |
+                // +------+-------------------------------+
             case 0xBB:
                 this->scr_blt_op<Op_0xBB>(srcx, srcy, drect);
                 break;

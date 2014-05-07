@@ -111,6 +111,9 @@ enum {
 
 struct RDPSerializer : public RDPGraphicDevice
 {
+    // Packet more than 16384 bytes can cause MSTSC to crash.
+    enum { MAX_ORDERS_SIZE = 16384 };
+
     using RDPGraphicDevice::draw;
 
     Stream & stream_orders;
@@ -209,7 +212,7 @@ public:
     {
         //LOG(LOG_INFO, "RDPSerializer::reserve_order %u (avail=%u)", asked_size, this->stream_orders.size());
         // To support 64x64 32-bit bitmap.
-        size_t max_packet_size = std::min(this->stream_orders.get_capacity(), static_cast<size_t>(16384 + 256));
+        size_t max_packet_size = std::min(this->stream_orders.get_capacity(), static_cast<size_t>(MAX_ORDERS_SIZE));
         size_t used_size = this->stream_orders.get_offset();
         if (this->ini.debug.primary_orders > 3){
             LOG( LOG_INFO

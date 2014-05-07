@@ -25,8 +25,6 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRdpClientTLSW2008
 #include <boost/test/auto_unit_test.hpp>
-#include <errno.h>
-#include <algorithm>
 
 #define LOGNULL
 //#define LOGPRINT
@@ -40,15 +38,10 @@
 #include "RDP/mcs.hpp"
 #include "RDP/sec.hpp"
 #include "wait_obj.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
 #include "channel_list.hpp"
 #include "front_api.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
-#include "ssl_calls.hpp"
-#include "png.hpp"
-#include "RDP/RDPDrawable.hpp"
-#include "staticcapture.hpp"
 
 #include "../../front/fake_front.hpp"
 
@@ -112,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 
         // To always get the same client random, in tests
         LCGRandom gen(0);
-        struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
+        mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -200,7 +193,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
+    mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -279,7 +272,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
+    mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -365,7 +358,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
+    mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

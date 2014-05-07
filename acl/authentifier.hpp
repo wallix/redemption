@@ -220,7 +220,7 @@ public:
        //     (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {
             // here, mm.last_module should be false only when we are in login box
-            mm.mod->event.reset();
+            mm.mod->get_event().reset();
             return false;
         }
 
@@ -295,8 +295,8 @@ public:
                      "it's basically the same behavior. It could be implemented by "
                      "closing module then opening another one of the same kind");
                 mm.mod->refresh_context(*this->ini);
-                mm.mod->event.signal = BACK_EVENT_NONE;
-                mm.mod->event.set();
+                mm.mod->get_event().signal = BACK_EVENT_NONE;
+                mm.mod->get_event().set();
             }
             else if (signal == BACK_EVENT_NEXT) {
                 LOG(LOG_INFO, "===========> MODULE_NEXT");

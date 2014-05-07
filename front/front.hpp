@@ -4339,36 +4339,10 @@ public:
         }
     }
 
-    void draw_vnc(const Rect & rect, const uint8_t bpp, const BGRPalette & palette332, const uint8_t * raw, uint32_t need_size)
-    {
-        const uint16_t TILE_CX = 32;
-        const uint16_t TILE_CY = 32;
-
-        for (int y = 0; y < rect.cy ; y += TILE_CY) {
-            int cy = std::min(TILE_CY, (uint16_t)(rect.cy - y));
-
-            for (int x = 0; x < rect.cx ; x += TILE_CX) {
-                int cx = std::min(TILE_CX, (uint16_t)(rect.cx - x));
-
-                const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
-                const Rect src_tile(x, y, cx, cy);
-
-                const Bitmap tiled_bmp(raw, rect.cx, rect.cy, bpp, src_tile);
-                const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
-                this->orders->draw(cmd2, dst_tile, tiled_bmp);
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)){
-                    this->capture->draw(cmd2, dst_tile, tiled_bmp);
-                }
-            }
-        }
-
-    }
-
     void draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
         if (this->verbose & 64){
-            LOG(LOG_INFO, "front::draw:draw_tile((%u, %u, %u, %u) (%u, %u, %u, %u)",
+            LOG(LOG_INFO, "front::draw:draw_tile((%u, %u, %u, %u) (%u, %u, %u, %u))",
                  dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
                  src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
         }
@@ -4417,10 +4391,6 @@ public:
             }
         }
 
-        // if not we have to split it
-        const uint16_t TILE_CX = 64;
-        const uint16_t TILE_CY = 64;
-
         const uint16_t dst_x = cmd.rect.x;
         const uint16_t dst_y = cmd.rect.y;
         // clip dst as it can be larger than source bitmap
@@ -4448,6 +4418,10 @@ public:
             this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
         }
         else {
+            // if not we have to split it
+            const uint16_t TILE_CX = ((::nbbytes(this->client_info.bpp) * 64 * 64 < RDPSerializer::MAX_ORDERS_SIZE) ? 64 : 32);
+            const uint16_t TILE_CY = TILE_CX;
+
             for (int y = 0; y < dst_cy ; y += TILE_CY) {
                 int cy = std::min(TILE_CY, (uint16_t)(dst_cy - y));
 
@@ -4536,10 +4510,6 @@ public:
             }
         }
 
-        // if not we have to split it
-        const uint16_t TILE_CX = 64;
-        const uint16_t TILE_CY = 64;
-
         const uint16_t dst_x = cmd.rect.x;
         const uint16_t dst_y = cmd.rect.y;
         // clip dst as it can be larger than source bitmap
@@ -4567,6 +4537,10 @@ public:
             this->draw_tile3(dst_tile, src_tile, cmd, bitmap, clip);
         }
         else {
+            // if not we have to split it
+            const uint16_t TILE_CX = ((::nbbytes(this->client_info.bpp) * 64 * 64 < RDPSerializer::MAX_ORDERS_SIZE) ? 64 : 32);
+            const uint16_t TILE_CY = TILE_CX;
+
             for (int y = 0; y < dst_cy ; y += TILE_CY) {
                 int cy = std::min(TILE_CY, (uint16_t)(dst_cy - y));
 

@@ -79,57 +79,49 @@ public:
 
     void in_item(Stream & stream)
     {
-        enum { STATE_KEYWORD, STATE_VALUE } state = STATE_KEYWORD;
-        uint8_t * value = stream.p;
-        uint8_t * keyword = stream.p;
+        const char * keyword = reinterpret_cast<const char*>(stream.p);
         const uint8_t * start = stream.p;
-        for ( ; stream.p < stream.end ; stream.p++){
-            switch (state){
-            case STATE_KEYWORD:
-                if (*stream.p == '\n'){
-                    *stream.p = 0;
-                    value = stream.p+1;
-                    state = STATE_VALUE;
-                }
-                break;
-            case STATE_VALUE:
-                if (*stream.p == '\n') {
-                    *stream.p = 0;
-
-                    if ((0 == strncasecmp(reinterpret_cast<const char*>(value), "ask", 3))) {
-                        this->ini->ask_from_acl(reinterpret_cast<const char *>(keyword));
-                        LOG(LOG_INFO, "receiving %s '%s'", value, keyword);
-                    }
-                    else {
-                        // BASE64 TRY
-                        // unsigned char output[32000];
-                        // if (value[0] == '!') value++;
-                        // size_t value_len = strlen((const char*)value);
-                        // size_t out_len = this->ini->b64.decode(output, sizeof(output), (const unsigned char *)value, value_len);
-                        // output[out_len] = 0;
-                        // this->ini->set_from_acl((char *)keyword,
-                        //                         (char *)output);
-                        this->ini->set_from_acl((char *)keyword,
-                                                (char *)value + (value[0] == '!' ? 1 : 0));
-                        const char * val         = this->ini->context_get_value_by_string(reinterpret_cast<const char*>(keyword));
-                        const char * display_val = val;
-                        if ((strncasecmp("password", reinterpret_cast<const char*>(keyword),
-                                         9 ) == 0) ||
-                            (strncasecmp("target_password", reinterpret_cast<const char*>(keyword),
-                                         16) == 0)) {
-                            display_val = ::get_printable_password(val, this->ini->debug.password);
-                        }
-                        LOG(LOG_INFO, "receiving '%s'='%s'", keyword, display_val);
-                    }
-
-                    stream.p = stream.p+1;
-                    return;
-                }
+        for ( ; stream.p < stream.end; ++stream.p){
+            if (*stream.p == '\n') {
+                *stream.p = 0;
+                ++stream.p;
                 break;
             }
         }
+        const char * value = reinterpret_cast<const char*>(stream.p);
+        for ( ; stream.p < stream.end; ++stream.p){
+            if (*stream.p == '\n') {
+                *stream.p = 0;
+
+                if ((0 == strncasecmp(value, "ask", 3))) {
+                    this->ini->ask_from_acl(keyword);
+                    LOG(LOG_INFO, "receiving %s '%s'", value, keyword);
+                }
+                else {
+                    // BASE64 TRY
+                    // unsigned char output[32000];
+                    // if (value[0] == '!') value++;
+                    // size_t value_len = strlen((const char*)value);
+                    // size_t out_len = this->ini->b64.decode(output, sizeof(output), (const unsigned char *)value, value_len);
+                    // output[out_len] = 0;
+                    // this->ini->set_from_acl((char *)keyword,
+                    //                         (char *)output);
+                    this->ini->set_from_acl(keyword, value + (value[0] == '!' ? 1 : 0));
+                    const char * val         = this->ini->context_get_value_by_string(keyword);
+                    const char * display_val = val;
+                    if ((strncasecmp("password", keyword, 9 ) == 0) ||
+                        (strncasecmp("target_password", keyword, 16) == 0)) {
+                        display_val = ::get_printable_password(val, this->ini->debug.password);
+                    }
+                    LOG(LOG_INFO, "receiving '%s'='%s'", keyword, display_val);
+                }
+
+                stream.p = stream.p+1;
+                return;
+            }
+        }
         LOG(LOG_WARNING, "Unexpected exit while parsing ACL message");
-        hexdump(reinterpret_cast<const char *>(start), stream.p-start);
+        hexdump(start, stream.p-start);
         throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
     }
 
