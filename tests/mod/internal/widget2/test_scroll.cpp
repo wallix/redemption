@@ -103,6 +103,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrame)
     }
 
     frame.set_vertical_widget_pos(0);
+    // frame.rdp_input_invalidate(parent.rect);
     frame.set_horizontal_widget_pos(100);
     // ask to widget to redraw at it's current position
     frame.rdp_input_invalidate(parent.rect);
@@ -135,6 +136,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrame)
     }
 
     frame.set_horizontal_widget_pos(0);
+    // frame.rdp_input_invalidate(parent.rect);
     frame.set_vertical_widget_pos(95);
     frame.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "frame7.png");
@@ -153,18 +155,20 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
 
-    NotifyApi * notifier = NULL;
-    int         fg_color = MEDIUM_BLUE;
-    int         bg_color = LIGHT_BLUE;
-    int         group_id = 0;
-    int16_t     x        = 0;
-    int16_t     y        = 0;
-    uint16_t    cx       = 750;
-    uint16_t    cy       = 267;
+    NotifyApi * notifier    = NULL;
+    int         fg_color    = MEDIUM_BLUE;
+    int         bg_color    = LIGHT_BLUE;
+    int         focus_color = WINBLUE;
+    int         group_id    = 0;
+    int16_t     x           = 0;
+    int16_t     y           = 0;
+    uint16_t    cx          = 750;
+    uint16_t    cy          = 267;
 
     WidgetFrame frame(drawable, Rect(x, y, cx, cy), parent, notifier, group_id);
     WidgetImage wimage(drawable, 0, 0, FIXTURES_PATH"/win2008capture10.png", parent, notifier);
-    WidgetVScrollBar bar(drawable, parent, notifier, fg_color, bg_color, group_id);
+    WidgetVScrollBar bar(drawable, parent, notifier, fg_color, bg_color, focus_color,
+                         group_id);
 
     parent.add_widget(&frame);
     parent.add_widget(&bar);
@@ -178,8 +182,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
 
     char message[1024];
     if (!check_sig( drawable.gd.drawable, message,
-                    "\x7b\x4b\x06\x75\xc5\xd0\x1a\x7c\xcd\x6a"
-                    "\x07\x16\xc7\x30\x90\x18\x42\x6e\xc4\x05")) {
+                    "\xed\x43\x4b\x4d\xa8\x3d\x99\xc2\x73\xaa"
+                    "\x29\xf4\xb8\x8c\x10\x2a\xde\xf1\x79\xee")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -190,8 +194,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // drawable.save_to_png(OUTPUT_FILE_PATH "framebar2.png");
 
     if (!check_sig( drawable.gd.drawable, message,
-                    "\xd0\x94\x1b\x8c\x9e\x94\x38\x38\xf2\xd1"
-                    "\xdb\x12\xe2\xc1\xae\x7a\x44\xc1\x75\x9f")) {
+                    "\x52\x61\xcd\x0d\x63\xa6\xc0\xe7\xe2\xee"
+                    "\x89\xa3\x7b\x89\x14\x33\x67\xf3\x8c\x7a")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -202,8 +206,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // drawable.save_to_png(OUTPUT_FILE_PATH "framebar3.png");
 
     if (!check_sig( drawable.gd.drawable, message,
-                    "\x4d\x94\x2b\x51\xd7\x0a\x77\xc9\x08\x1a"
-                    "\x97\x2b\xc0\xe1\xc7\x3f\xaa\x71\x41\x5e")) {
+                    "\xb5\xe6\x94\xba\x12\xdd\x08\x82\xe8\xdc"
+                    "\x76\xe7\xe2\x78\x61\xa2\x32\xf1\xc9\x37")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -214,8 +218,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // drawable.save_to_png(OUTPUT_FILE_PATH "framebar4.png");
 
     if (!check_sig( drawable.gd.drawable, message,
-                    "\xce\x0d\xb8\xaa\x16\x59\x16\x66\xcf\x3e"
-                    "\xed\x3e\x3c\xa2\x1c\xb6\x53\xd7\x4e\x97")) {
+                    "\x20\x99\x11\xa0\x76\x08\x85\xc0\x17\xe3"
+                    "\xe4\x52\x67\x9b\xb9\x7d\xf9\x5f\x6d\xa0")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -226,8 +230,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // drawable.save_to_png(OUTPUT_FILE_PATH "framebar5.png");
 
     if (!check_sig( drawable.gd.drawable, message,
-                    "\x30\xb2\x15\xa2\xf3\xad\xc1\x65\xf1\x69"
-                    "\x92\x3c\x73\x93\x17\x3a\xc0\x3b\x8a\x29")) {
+                    "\xdb\x0f\x0c\x59\xa0\x57\x9a\x18\x74\x93"
+                    "\x0d\x0f\x82\x6f\x95\x26\x8c\x56\x11\x39")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -238,8 +242,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // drawable.save_to_png(OUTPUT_FILE_PATH "framebar6.png");
 
     if (!check_sig( drawable.gd.drawable, message,
-                    "\xde\x0d\x45\x04\xb7\xdc\x3f\xc6\x14\xda"
-                    "\xf9\xe1\x93\x64\x0f\x29\xc2\x6a\x5e\x44")) {
+                    "\xc7\xc7\x60\x9b\x89\x45\x5d\x6b\x76\x96"
+                    "\xdd\x95\x83\x48\x59\xfa\x0e\xe3\x0d\xc5")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -250,8 +254,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // drawable.save_to_png(OUTPUT_FILE_PATH "framebar7.png");
 
     if (!check_sig( drawable.gd.drawable, message,
-                    "\x7b\x4b\x06\x75\xc5\xd0\x1a\x7c\xcd\x6a"
-                    "\x07\x16\xc7\x30\x90\x18\x42\x6e\xc4\x05")) {
+                    "\xed\x43\x4b\x4d\xa8\x3d\x99\xc2\x73\xaa"
+                    "\x29\xf4\xb8\x8c\x10\x2a\xde\xf1\x79\xee")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
