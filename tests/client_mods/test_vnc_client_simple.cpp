@@ -525,7 +525,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     Inifile ini;
 
-    struct mod_api * mod = new mod_vnc(
+    mod_vnc mod(
           &t
         , ini
         , "10.10.3.103"
@@ -539,27 +539,27 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
         , false         /* allow authentification retries */
         , verbose);
-    mod->get_event().set();
+    mod.get_event().set();
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD VNC DONE ====================\n\n");
     }
 //    BOOST_CHECK(t.status);
 
-    mod->draw_event(time(NULL));
-    mod->on_front_up_and_running();
-    mod->draw_event(time(NULL));
+    mod.draw_event(time(NULL));
+    mod.on_front_up_and_running();
+    mod.draw_event(time(NULL));
 
-    BOOST_CHECK_EQUAL(mod->front_width, 1024);
-    BOOST_CHECK_EQUAL(mod->front_height, 768);
+    BOOST_CHECK_EQUAL(mod.front_width, 1024);
+    BOOST_CHECK_EQUAL(mod.front_height, 768);
 
-//    mod->draw_event(time(NULL));
+//    mod.draw_event(time(NULL));
 ////    BOOST_CHECK(t.status);
 
-//    mod->draw_event(time(NULL));
+//    mod.draw_event(time(NULL));
 ////    BOOST_CHECK(t.status);
 
-//    mod->draw_event(time(NULL));
+//    mod.draw_event(time(NULL));
 ////    BOOST_CHECK(t.status);
 
 }
