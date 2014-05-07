@@ -68,6 +68,10 @@ public:
         this->rect.cy += this->style.borders.top.size + this->style.borders.bottom.size;
     }
 
+    virtual int get_bg_color() const {
+        return BLACK;
+    }
+
     virtual void draw(const Rect& clip)
     {
         this->drawable.draw(

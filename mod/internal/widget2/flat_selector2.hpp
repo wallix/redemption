@@ -42,7 +42,8 @@ class WidgetSelectorFlat2 : public WidgetParent
 {
 public:
 
-    Theme & theme;
+//    Theme & theme;
+    int bg_color;
     const bool less_than_800;
     WidgetLabel device_label;
     WidgetLabel target_group_label;
@@ -68,7 +69,8 @@ public:
     WidgetFlatButton apply;
     WidgetFlatButton connect;
 
-    CompositeTable composite_table;
+//    CompositeTable composite_table;
+    CompositeArray composite_array;
 
 public:
     struct temporary_number_of_page {
@@ -104,74 +106,76 @@ public:
                         const char * filter_target_group, const char * filter_target,
                         const char * filter_protocol, Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , theme(ini.theme)
+//        , theme(ini.theme)
+        , bg_color(ini.theme.global.bgcolor)
         , less_than_800(this->rect.cx < 800)
         , device_label(drawable, TEXT_MARGIN, VERTICAL_MARGIN, *this, NULL, device_name,
-                       true, -10, this->theme.global.fgcolor, this->theme.global.bgcolor)
+                       true, -10, ini.theme.global.fgcolor, ini.theme.global.bgcolor)
         , target_group_label(drawable, 0, 0, *this, NULL, TR("target_group", ini), true,
-                              -10, this->theme.selector_label.fgcolor,
-                             this->theme.selector_label.bgcolor, 5)
+                              -10, ini.theme.selector_label.fgcolor,
+                             ini.theme.selector_label.bgcolor, 5)
         , target_label(drawable, 0, 0, *this, NULL, TR("target", ini), true, -10,
-                       this->theme.selector_label.fgcolor,
-                       this->theme.selector_label.bgcolor, 5)
+                       ini.theme.selector_label.fgcolor,
+                       ini.theme.selector_label.bgcolor, 5)
         , protocol_label(drawable, 0, 0, *this, NULL, TR("protocol", ini), true, -10,
-                         this->theme.selector_label.fgcolor,
-                         this->theme.selector_label.bgcolor, 5)
+                         ini.theme.selector_label.fgcolor,
+                         ini.theme.selector_label.bgcolor, 5)
         , selector_lines(drawable, Rect(0, 0, width - (this->less_than_800 ? 0 : 30), 1),
                          *this, this, 0, 3,
-                         this->theme.selector_line1.bgcolor,
-                         this->theme.selector_line1.fgcolor,
-                         this->theme.selector_line2.bgcolor,
-                         this->theme.selector_line2.fgcolor,
-                         this->theme.selector_focus.bgcolor,
-                         this->theme.selector_focus.fgcolor,
-                         this->theme.selector_selected.bgcolor,
-                         this->theme.selector_selected.fgcolor,
+                         ini.theme.selector_line1.bgcolor,
+                         ini.theme.selector_line1.fgcolor,
+                         ini.theme.selector_line2.bgcolor,
+                         ini.theme.selector_line2.fgcolor,
+                         ini.theme.selector_focus.bgcolor,
+                         ini.theme.selector_focus.fgcolor,
+                         ini.theme.selector_selected.bgcolor,
+                         ini.theme.selector_selected.fgcolor,
                          2, -11)
         , filter_target_group(drawable, 0, 0, 120, *this, this,
                               filter_target_group?filter_target_group:0, -12,
-                              this->theme.edit.fgcolor, this->theme.edit.bgcolor,
-                              this->theme.edit.focus_color, -1, 1, 1)
+                              ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
+                              ini.theme.edit.focus_color, -1, 1, 1)
         , filter_target(drawable, 0, 0, 340, *this, this, filter_target?filter_target:0,
-                        -12, this->theme.edit.fgcolor, this->theme.edit.bgcolor,
-                        this->theme.edit.focus_color, -1, 1, 1)
+                        -12, ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
+                        ini.theme.edit.focus_color, -1, 1, 1)
         , filter_protocol(drawable, 0, 0, 110, *this, this,
                           filter_protocol?filter_protocol:0, -12,
-                          this->theme.edit.fgcolor, this->theme.edit.bgcolor,
-                          this->theme.edit.focus_color, -1, 1, 1)
+                          ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
+                          ini.theme.edit.focus_color, -1, 1, 1)
           //BEGIN WidgetPager
         , first_page(drawable, 0, 0, *this, notifier, "◀◂", true, -15,
-                     this->theme.global.fgcolor, this->theme.global.bgcolor,
-                     this->theme.global.focus_color, 6, 2, true)
+                     ini.theme.global.fgcolor, ini.theme.global.bgcolor,
+                     ini.theme.global.focus_color, 6, 2, true)
         , prev_page(drawable, 0, 0, *this, notifier, "◀", true, -15,
-                    this->theme.global.fgcolor, this->theme.global.bgcolor,
-                    this->theme.global.focus_color, 6, 2, true)
+                    ini.theme.global.fgcolor, ini.theme.global.bgcolor,
+                    ini.theme.global.focus_color, 6, 2, true)
         , current_page(drawable, 0, 0, this->first_page.cy(), *this, notifier,
                        current_page ? current_page : "XXXX", -15,
-                       this->theme.edit.fgcolor, this->theme.edit.bgcolor,
-                       this->theme.edit.focus_color, -1, 1, 1)
+                       ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
+                       ini.theme.edit.focus_color, -1, 1, 1)
         , number_page(drawable, 0, 0, *this, NULL,
                       number_of_page ? temporary_number_of_page(number_of_page).buffer
-                      : "/XXX", true, -100, this->theme.global.fgcolor,
-                      this->theme.global.bgcolor)
+                      : "/XXX", true, -100, ini.theme.global.fgcolor,
+                      ini.theme.global.bgcolor)
         , next_page(drawable, 0, 0, *this, notifier, "▶", true, -15,
-                    this->theme.global.fgcolor, this->theme.global.bgcolor,
-                    this->theme.global.focus_color, 6, 2, true)
+                    ini.theme.global.fgcolor, ini.theme.global.bgcolor,
+                    ini.theme.global.focus_color, 6, 2, true)
         , last_page(drawable, 0, 0, *this, notifier, "▸▶", true, -15,
-                    this->theme.global.fgcolor, this->theme.global.bgcolor,
-                    this->theme.global.focus_color, 6, 2, true)
+                    ini.theme.global.fgcolor, ini.theme.global.bgcolor,
+                    ini.theme.global.focus_color, 6, 2, true)
           //END WidgetPager
         , logout(drawable, 0, 0, *this, this, TR("logout", ini), true, -16,
-                 this->theme.global.fgcolor, this->theme.global.bgcolor,
-                 this->theme.global.focus_color, 6, 2)
+                 ini.theme.global.fgcolor, ini.theme.global.bgcolor,
+                 ini.theme.global.focus_color, 6, 2)
         , apply(drawable, 0, 0, *this, this, TR("filter", ini), true, -12,
-                this->theme.global.fgcolor, this->theme.global.bgcolor,
-                this->theme.global.focus_color, 6, 2)
+                ini.theme.global.fgcolor, ini.theme.global.bgcolor,
+                ini.theme.global.focus_color, 6, 2)
         , connect(drawable, 0, 0, *this, this, TR("connect", ini), true, -18,
-                  this->theme.global.fgcolor, this->theme.global.bgcolor,
-                  this->theme.global.focus_color, 6, 2)
+                  ini.theme.global.fgcolor, ini.theme.global.bgcolor,
+                  ini.theme.global.focus_color, 6, 2)
     {
-        this->impl = &composite_table;
+//        this->impl = &composite_table;
+        this->imp_l = &composite_array;
 
         this->add_widget(&this->device_label);
         this->add_widget(&this->target_group_label);
@@ -198,6 +202,10 @@ public:
     virtual ~WidgetSelectorFlat2()
     {
         this->clear();
+    }
+
+    virtual int get_bg_color() const {
+        return this->bg_color;
     }
 
     void rearrange() {
@@ -311,12 +319,13 @@ public:
         }
     }
 
-
+/*
     virtual void draw(const Rect& clip)
     {
         this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), this->theme.global.bgcolor);
+        this->draw_inner_free(clip.intersect(this->rect), ini.theme.global.bgcolor);
     }
+*/
 
     void ask_for_connection() {
         if (this->notifier) {
@@ -359,7 +368,7 @@ public:
         this->selector_lines.add_line(texts);
     }
 
-
+/*
     virtual void draw_inner_free(const Rect& clip, int bg_color) {
         Region region;
         region.rects.push_back(clip);
@@ -370,7 +379,7 @@ public:
             this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
         }
     }
-
+*/
 };
 
 #endif

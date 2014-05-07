@@ -38,7 +38,8 @@
 class FlatLogin : public WidgetParent
 {
 public:
-    Theme & theme;
+//    Theme & theme;
+    int bg_color;
     WidgetEditValid  password_edit;
     WidgetLabel login_label;
     WidgetEditValid  login_edit;
@@ -49,7 +50,8 @@ public:
     WidgetFlatButton helpicon;
     Inifile & ini;
 
-    CompositeTable composite_table;
+//    CompositeTable composite_table;
+    CompositeArray composite_array;
 
     // WidgetFrame frame;
     // WidgetImage wimage;
@@ -64,35 +66,38 @@ public:
               const char * label_text_password,
               Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , theme(ini.theme)
+//        , theme(ini.theme)
+        , bg_color(ini.theme.global.bgcolor)
         , password_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
-                        password, -14, this->theme.edit.fgcolor,
-                        this->theme.edit.bgcolor, this->theme.edit.focus_color,
+                        password, -14, ini.theme.edit.fgcolor,
+                        ini.theme.edit.bgcolor, ini.theme.edit.focus_color,
                         -1u, 1, 1, true, (width <= 640) ? label_text_password : NULL)
         , login_label(drawable, 0, 0, *this, NULL, label_text_login, true, -11,
-                      this->theme.global.fgcolor, this->theme.global.bgcolor)
+                      ini.theme.global.fgcolor, ini.theme.global.bgcolor)
         , login_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
-                     login, -12, this->theme.edit.fgcolor, this->theme.edit.bgcolor,
-                     this->theme.edit.focus_color, -1u, 1, 1, false,
+                     login, -12, ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
+                     ini.theme.edit.focus_color, -1u, 1, 1, false,
                      (width <= 640) ? label_text_login : NULL)
         // , img(drawable, 0, 0, ini.theme.global.logo_path, *this, NULL, -10)
         , img(drawable, 0, 0,
-              theme.global.logo ? theme.global.logo_path :
+              ini.theme.global.logo ? ini.theme.global.logo_path :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
         , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13,
-                         this->theme.global.fgcolor, this->theme.global.bgcolor)
+                         ini.theme.global.fgcolor, ini.theme.global.bgcolor)
         , version_label(drawable, 0, 0, *this, NULL, caption, true, -15,
-                        this->theme.global.fgcolor, this->theme.global.bgcolor)
+                        ini.theme.global.fgcolor, ini.theme.global.bgcolor)
         , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16,
-                   this->theme.global.fgcolor, this->theme.global.bgcolor,
-                   this->theme.global.focus_color, 6, 2)
+                   ini.theme.global.fgcolor, ini.theme.global.bgcolor,
+                   ini.theme.global.focus_color, 6, 2)
         , ini(ini)
         // , frame(drawable, Rect(0, 0, 600, 250), parent, notifier, -17)
         // , wimage(drawable, 0, 0, SHARE_PATH "/Philips_PM5544_640.bmp",
         //          parent, notifier, -17)
         // , bar(drawable, parent, notifier, MEDIUM_BLUE, LIGHT_BLUE, -17)
     {
-        this->impl = &composite_table;
+//        this->impl = &composite_table;
+        this->imp_l = &composite_array;
+
         this->add_widget(&this->helpicon);
         this->add_widget(&this->img);
         this->add_widget(&this->login_edit);
@@ -155,10 +160,15 @@ public:
         this->clear();
     }
 
+    virtual int get_bg_color() const {
+        return this->bg_color;
+    }
+
+/*
     virtual void draw(const Rect& clip)
     {
         this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), this->theme.global.bgcolor);
+        this->draw_inner_free(clip.intersect(this->rect), ini.theme.global.bgcolor);
 
     }
 
@@ -172,6 +182,7 @@ public:
             this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
         }
     }
+*/
 
     virtual void notify(Widget2* widget, NotifyApi::notify_event_t event)
     {

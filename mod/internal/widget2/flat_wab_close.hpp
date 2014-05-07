@@ -37,7 +37,8 @@
 class FlatWabClose : public WidgetParent
 {
 public:
-    Theme & theme;
+//    Theme & theme;
+    int bg_color;
     WidgetImage img;
     WidgetLabel username_label;
     WidgetLabel username_label_value;
@@ -50,7 +51,8 @@ public:
     WidgetLabel timeleft_label;
     WidgetLabel timeleft_value;
     WidgetRect separator;
-    CompositeTable composite_table;
+//    CompositeTable composite_table;
+    CompositeArray composite_array;
 
 private:
     long prev_time;
@@ -63,39 +65,41 @@ public:
                  const char * username, const char * target,
                  bool showtimer, Inifile & ini)
     : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-    , theme(ini.theme)
+//    , theme(ini.theme)
+    , bg_color(ini.theme.global.bgcolor)
     // , img(drawable, 0, 0, ini.theme.global.logo_path, *this, NULL, -10)
     , img(drawable, 0, 0,
-          theme.global.logo ? theme.global.logo_path :
+          ini.theme.global.logo ? ini.theme.global.logo_path :
           SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
     , username_label(drawable, (width - 600) / 2, 0, *this, NULL, "Username:", true, -11,
-                     this->theme.global.fgcolor, this->theme.global.bgcolor)
+                     ini.theme.global.fgcolor, ini.theme.global.bgcolor)
     , username_label_value(drawable, 0, 0, *this, NULL, username, true, -11,
-                           this->theme.global.fgcolor, this->theme.global.bgcolor)
+                           ini.theme.global.fgcolor, ini.theme.global.bgcolor)
     , target_label(drawable, (width - 600) / 2, 0, *this, NULL, "Target:", true, -12,
-                   this->theme.global.fgcolor, this->theme.global.bgcolor)
+                   ini.theme.global.fgcolor, ini.theme.global.bgcolor)
     , target_label_value(drawable, 0, 0, *this, NULL, target, true, -12,
-                         this->theme.global.fgcolor, this->theme.global.bgcolor)
+                         ini.theme.global.fgcolor, ini.theme.global.bgcolor)
     , connection_closed_label(drawable, 0, 0, *this, NULL, TR("connection_closed", ini),
-                              true, -13, this->theme.global.fgcolor,
-                              this->theme.global.bgcolor)
+                              true, -13, ini.theme.global.fgcolor,
+                              ini.theme.global.bgcolor)
     , cancel(drawable, 0, 0, *this, this, TR("close", ini), true, -14,
-             this->theme.global.fgcolor, this->theme.global.bgcolor,
-             this->theme.global.focus_color, 6, 2)
+             ini.theme.global.fgcolor, ini.theme.global.bgcolor,
+             ini.theme.global.focus_color, 6, 2)
     , diagnostic(drawable, (width - 600) / 2, 0, *this, NULL, "Diagnostic:", true, -15,
-                 this->theme.global.fgcolor, this->theme.global.bgcolor)
+                 ini.theme.global.fgcolor, ini.theme.global.bgcolor)
     , diagnostic_lines(drawable, 0, 0, *this, NULL, diagnostic_text, true, -16,
-                       this->theme.global.fgcolor, this->theme.global.bgcolor)
+                       ini.theme.global.fgcolor, ini.theme.global.bgcolor)
     , timeleft_label(drawable, (width - 600) / 2, 0, *this, NULL, "Time left:", true, -12,
-                     this->theme.global.fgcolor, this->theme.global.bgcolor)
+                     ini.theme.global.fgcolor, ini.theme.global.bgcolor)
     , timeleft_value(drawable, 0, 0, *this, NULL, NULL, true, -12,
-                     this->theme.global.fgcolor, this->theme.global.bgcolor)
+                     ini.theme.global.fgcolor, ini.theme.global.bgcolor)
     , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
-                this->theme.global.separator_color)
+                ini.theme.global.separator_color)
     , prev_time(0)
     , ini(ini)
     {
-        this->impl = &composite_table;
+//        this->impl = &composite_table;
+        this->imp_l = &composite_array;
 
         char label[255];
         snprintf(label, sizeof(label), "%s:", TR("username", ini));
@@ -178,7 +182,8 @@ public:
         this->cancel.set_button_y(y);
         y += this->cancel.cy();
 
-        this->impl->move_xy(0, (height - y) / 2);
+//        this->impl->move_xy(0, (height - y) / 2);
+        this->move_xy(0, (height - y) / 2);
 
         this->img.rect.x = (this->cx() - this->img.cx()) / 2;
         this->img.rect.y = (3*(height - y) / 2 - this->img.cy()) / 2 + y;
@@ -190,6 +195,10 @@ public:
     virtual ~FlatWabClose()
     {
         this->clear();
+    }
+
+    virtual int get_bg_color() const {
+        return this->bg_color;
     }
 
     void refresh_timeleft(long tl) {
@@ -244,10 +253,11 @@ public:
         }
     }
 
+/*
     virtual void draw(const Rect& clip)
     {
         this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), this->theme.global.bgcolor);
+        this->draw_inner_free(clip.intersect(this->rect), ini.theme.global.bgcolor);
     }
 
     virtual void draw_inner_free(const Rect& clip, int bg_color) {
@@ -260,6 +270,7 @@ public:
             this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
         }
     }
+*/
 };
 
 #endif
