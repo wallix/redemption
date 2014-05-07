@@ -181,6 +181,7 @@ def parse_template(filename, distro, codename, version, arch):
     return out
   return ''
 
+status = 0
 try:
   res = subprocess.Popen(["git", "diff", "--shortstat"],
                          stdout = subprocess.PIPE,
@@ -265,19 +266,29 @@ try:
   if git_commit:
     status = os.system("git commit -am 'Version %s'" % tag)
     if status:
-      exit(status)
+      raise ""
 
     if git_tag:
       status = os.system("git tag %s" % tag)
       if status:
-        exit(status)
+        raise ""
 
   if buildpackage:
     status = os.system("dpkg-buildpackage -b -tc -us -uc -r")
-    if status == 0 and git_push_tag and git_tag:
-      exit(os.system("git push --tags"))
-    exit(status)
+    if status:
+      raise ""
+    if git_push_tag and git_tag:
+      status = os.system("git push --tags")
+      if status:
+        raise ""
   exit(0)
 except Exception, e:
+  res = subprocess.Popen(["git", "diff", "--shortstat"],
+                         stdout = subprocess.PIPE,
+                         stderr = subprocess.STDOUT
+                        ).communicate()[0]
+  if res:
+    os.system("git stash")
+    os.system("git stash drop")
   print "Build failed: %s" % e
-  exit(-1)
+  exit(status if status else -1)
