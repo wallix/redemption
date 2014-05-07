@@ -84,10 +84,10 @@ protected:
     RDPPen   pen;
     RDPGraphicDevice * gd;
 
-public:
     uint16_t front_width;
     uint16_t front_height;
 
+public:
     mod_api(const uint16_t front_width, const uint16_t front_height)
     : event(NULL)
     , gd(this)
@@ -100,6 +100,9 @@ public:
     virtual ~mod_api() {}
 
     virtual wait_obj& get_event() { return this->event; }
+
+    uint16_t get_front_width() const { return this->front_width; }
+    uint16_t get_front_height() const { return this->front_height; }
 
 protected:
     static void set_gd(mod_api & mod, RDPGraphicDevice * gd)
