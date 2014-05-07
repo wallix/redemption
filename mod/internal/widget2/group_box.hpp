@@ -53,11 +53,8 @@ public:
     }
 
     virtual void draw(const Rect & clip) {
-        WidgetParent::draw_inner_free(clip.intersect(this->rect), this->bg_color);
-
-        // Background.
-        this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
-
+        Rect rect_intersect = clip.intersect(this->rect);
+        WidgetParent::draw_inner_free(rect_intersect, this->bg_color);
 
         // Box.
         const uint16_t border           = 6;
@@ -101,10 +98,10 @@ public:
                                        , this->buffer
                                        , this->fg_color
                                        , this->bg_color
-                                       , this->rect.intersect(clip)
+                                       , rect_intersect
                                        );
 
-        WidgetParent::draw_children(clip);
+        WidgetParent::draw_children(rect_intersect);
     }
 
     virtual int get_bg_color() const {
