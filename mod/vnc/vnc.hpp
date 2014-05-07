@@ -142,7 +142,7 @@ public:
                 TR("VNC password", ini))
     , verbose(verbose)
     , keymapSym(verbose)
-    , incr(1)
+    , incr(0)
     , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
     , opt_clipboard(clipboard)
     , state(WAIT_SECURITY_TYPES)
@@ -366,6 +366,9 @@ public:
             /* FrambufferUpdateRequest */
             stream.out_uint8(3);
             stream.out_uint8(this->incr);
+            if (this->is_first_membelt) {
+                this->incr = 1;
+            }
             stream.out_uint16_be(r.x);
             stream.out_uint16_be(r.y);
             stream.out_uint16_be(r.cx);
@@ -2096,6 +2099,7 @@ public:
     } // send_to_vnc
 
     // Front calls this member function when it became up and running.
+public:
     virtual void on_front_up_and_running()
     {
         if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
@@ -2136,10 +2140,12 @@ public:
         }
     }
 
+private:
     virtual bool is_up_and_running() {
         return (UP_AND_RUNNING == this->state);
     }
 
+public:
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         /// NOTE force resize cliping with rdesktop...
