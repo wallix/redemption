@@ -78,22 +78,34 @@ public:
     }
 };
 
-struct mod_api : public Callback, public DrawApi {
+class mod_api : public Callback, public DrawApi {
+protected:
     wait_obj event;
     RDPPen   pen;
+    RDPGraphicDevice * gd;
 
+public:
     uint16_t front_width;
     uint16_t front_height;
 
     mod_api(const uint16_t front_width, const uint16_t front_height)
-        : event(NULL)
-        , front_width(front_width)
-        , front_height(front_height) {
+    : event(NULL)
+    , gd(this)
+    , front_width(front_width)
+    , front_height(front_height)
+    {
         this->event.set(0);
     }
 
     virtual ~mod_api() {}
 
+    virtual wait_obj& get_event() { return this->event; }
+
+protected:
+    static void set_gd(mod_api & mod, RDPGraphicDevice * gd)
+    { mod.gd = gd; }
+
+public:
     virtual void send_to_front_channel(const char * const mod_channel_name,
         uint8_t* data, size_t length, size_t chunk_size, int flags) = 0;
 

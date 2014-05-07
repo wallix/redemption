@@ -190,7 +190,7 @@ struct mod_rdp : public mod_api {
     const uint32_t password_printing_mode;
 
     mod_rdp( Transport * trans
-           , struct FrontAPI & front
+           , FrontAPI & front
            , const ClientInfo & info
            , Random & gen
            , const ModRDPParams & mod_rdp_params
@@ -222,7 +222,8 @@ struct mod_rdp : public mod_api {
         , auth_channel_state(0) // 0 means unused
         , acl(mod_rdp_params.acl)
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
-                , mod_rdp_params.enable_nla, mod_rdp_params.target_device, mod_rdp_params.enable_krb, mod_rdp_params.verbose)
+              , mod_rdp_params.enable_nla, mod_rdp_params.target_device
+              , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
         , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
         , enable_clipboard(mod_rdp_params.enable_clipboard)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
@@ -1622,7 +1623,8 @@ struct mod_rdp : public mod_api {
                                 switch (upd.updateCode) {
                                 case FastPath::FASTPATH_UPDATETYPE_ORDERS:
                                     this->front.begin_update();
-                                    this->orders.process_orders(this->bpp, upd.payload, true, this);
+                                    this->orders.process_orders(this->bpp, upd.payload, true, *this->gd,
+                                                                this->front_width, this->front_height);
                                     this->front.end_update();
 
                                     if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_ORDERS"); }
@@ -1893,7 +1895,8 @@ struct mod_rdp : public mod_api {
                                                     case RDP_UPDATE_ORDERS:
                                                         if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
                                                         this->front.begin_update();
-                                                        this->orders.process_orders(this->bpp, sdata.payload, false, this);
+                                                        this->orders.process_orders(this->bpp, sdata.payload, false, *this->gd,
+                                                                                    this->front_width, this->front_height);
                                                         this->front.end_update();
                                                         break;
                                                     case RDP_UPDATE_BITMAP:
@@ -2107,8 +2110,7 @@ struct mod_rdp : public mod_api {
                     this->hostname);
                 if (this->acl)
                 {
-                    this->acl->report("CONNECTION_FAILED",
-                        "Logon timer expired.");
+                    this->acl->report("CONNECTION_FAILED", "Logon timer expired.");
                 }
 
                 this->event.signal = BACK_EVENT_NEXT;
@@ -4170,7 +4172,7 @@ public:
                                           this->encryptionLevel,
                                           this->encrypt);
 
-                rrpdu.addInclusiveRect(r.x, r.y, r.cx - 1, r.cy - 1);
+                rrpdu.addInclusiveRect(r.x, r.y, r.x + r.cx - 1, r.y + r.cy - 1);
 
                 rrpdu.emit(*this->nego.trans);
             }
@@ -4751,10 +4753,10 @@ public:
             if (!this->enable_bitmap_update
                || (bmpdata.bits_per_pixel != this->front_bpp)
                || ((bmpdata.bits_per_pixel == 8) && (this->front_bpp != 8))) {
-                this->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
+                this->gd->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
             }
             else {
-                this->front.draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
+                this->gd->draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
             }
         }
         if (this->verbose & 64){
@@ -4822,7 +4824,7 @@ public:
 
     virtual void end_update()
     {
-        this->front.begin_update();
+        this->front.end_update();
     }
 
     virtual void draw(const RDPGlyphCache & cmd)
@@ -4922,6 +4924,12 @@ public:
     virtual void draw(const RDPColCache & cmd)
     {
         this->front.draw(cmd);
+    }
+
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+                      size_t size, const Bitmap & bmp)
+    {
+        this->front.draw(bitmap_data, data, size, bmp);
     }
 
     virtual bool is_up_and_running() {

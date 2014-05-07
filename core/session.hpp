@@ -148,7 +148,7 @@ struct Session {
                 if (this->acl) {
                     this->ptr_auth_event->add_to_fd_set(rfds, max, timeout);
                 }
-                mm.mod->event.add_to_fd_set(rfds, max, timeout);
+                mm.mod->get_event().add_to_fd_set(rfds, max, timeout);
 
                 has_pending_data =
                     (front_event.st->tls && SSL_pending(front_event.st->allocated_ssl));
@@ -192,12 +192,12 @@ struct Session {
                         }
 
                         // Process incoming module trafic
-                        if (mm.mod->event.is_set(rfds)) {
+                        if (mm.mod->get_event().is_set(rfds)) {
                             mm.mod->draw_event(now);
 
-                            if (mm.mod->event.signal != BACK_EVENT_NONE) {
-                                signal = mm.mod->event.signal;
-                                mm.mod->event.reset();
+                            if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
+                                signal = mm.mod->get_event().signal;
+                                mm.mod->get_event().reset();
                             }
                         }
                         if (this->front->capture
@@ -249,7 +249,7 @@ struct Session {
                             run_session = this->acl->check(mm, now, front_trans, signal);
                         }
                         else if (signal == BACK_EVENT_STOP) {
-                            mm.mod->event.reset();
+                            mm.mod->get_event().reset();
                             run_session = false;
                         }
                         if (mm.last_module) {

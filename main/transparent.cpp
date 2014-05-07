@@ -282,7 +282,7 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.extra_orders                    = ini.mod_rdp.extra_orders.c_str();
 
             mod_rdp mod(&mod_trans, front, client_info, gen, mod_rdp_params);
-            mod.event.st = &mod_trans;
+            mod.get_event().st = &mod_trans;
 
             run_mod(mod, front, front_event);
 
@@ -341,9 +341,9 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event) {
             struct timeval timeout = time_mark;
 
             front_event.add_to_fd_set(rfds, max, timeout);
-            mod.event.add_to_fd_set(rfds, max, timeout);
+            mod.get_event().add_to_fd_set(rfds, max, timeout);
 
-            if (mod.event.is_set(rfds)) {
+            if (mod.get_event().is_set(rfds)) {
                 timeout.tv_sec  = 0;
                 timeout.tv_usec = 0;
             }
@@ -370,11 +370,11 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event) {
             }
 
             if (front.up_and_running) {
-                if (mod.event.is_set(rfds)) {
-                    mod.event.reset();
+                if (mod.get_event().is_set(rfds)) {
+                    mod.get_event().reset();
                     mod.draw_event(time(NULL));
-                    if (mod.event.signal != BACK_EVENT_NONE) {
-                        mod_event_signal = mod.event.signal;
+                    if (mod.get_event().signal != BACK_EVENT_NONE) {
+                        mod_event_signal = mod.get_event().signal;
                     }
 
                     if (mod_event_signal == BACK_EVENT_NEXT) {

@@ -288,7 +288,10 @@ protected:
                                                   , RDP::STREAM_MED
                                                   , this->buffer_stream_orders.size() + 18  // TS_SHAREDATAHEADER(18)
                                                   , compressionFlags
-                                                  , datalen + 18    // TS_SHAREDATAHEADER(18)
+                                                  , (  (compressionFlags & PACKET_COMPRESSED)
+                                                     ? datalen + 18 // TS_SHAREDATAHEADER(18)
+                                                     : 0
+                                                    )
                                                   );
 
                     if (compressionFlags & PACKET_COMPRESSED) {
@@ -486,7 +489,10 @@ protected:
                                                    , RDP::STREAM_MED
                                                    , this->buffer_stream_bitmaps.size() + 18    // TS_SHAREDATAHEADER(18)
                                                    , compressionFlags
-                                                   , datalen + 18   // TS_SHAREDATAHEADER(18)
+                                                   , (  (compressionFlags & PACKET_COMPRESSED)
+                                                      ? datalen + 18    // TS_SHAREDATAHEADER(18)
+                                                      : 0
+                                                     )
                                                    );
 
                     if (compressionFlags & PACKET_COMPRESSED) {

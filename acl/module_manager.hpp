@@ -42,23 +42,24 @@
 #include "translation.hpp"
 
 #include "internal/flat_login_mod.hpp"
-// #include "internal/flat_selector_mod.hpp"
+#include "internal/flat_selector_mod.hpp"
 #include "internal/flat_selector2_mod.hpp"
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
 
-#define STRMODULE_LOGIN       "login"
-#define STRMODULE_SELECTOR    "selector"
-#define STRMODULE_CONFIRM     "confirm"
-#define STRMODULE_CHALLENGE   "challenge"
-#define STRMODULE_VALID       "valid"
-#define STRMODULE_TRANSITORY  "transitory"
-#define STRMODULE_CLOSE       "close"
-#define STRMODULE_CONNECTION  "connection"
-#define STRMODULE_MESSAGE     "message"
-#define STRMODULE_RDP         "RDP"
-#define STRMODULE_VNC         "VNC"
-#define STRMODULE_INTERNAL    "INTERNAL"
+#define STRMODULE_LOGIN            "login"
+#define STRMODULE_SELECTOR         "selector"
+#define STRMODULE_SELECTOR_LEGACY  "selector_legacy"
+#define STRMODULE_CONFIRM          "confirm"
+#define STRMODULE_CHALLENGE        "challenge"
+#define STRMODULE_VALID            "valid"
+#define STRMODULE_TRANSITORY       "transitory"
+#define STRMODULE_CLOSE            "close"
+#define STRMODULE_CONNECTION       "connection"
+#define STRMODULE_MESSAGE          "message"
+#define STRMODULE_RDP              "RDP"
+#define STRMODULE_VNC              "VNC"
+#define STRMODULE_INTERNAL         "INTERNAL"
 
 enum {
     MODULE_EXIT,
@@ -81,6 +82,7 @@ enum {
     MODULE_INTERNAL_BOUNCER2,
     MODULE_INTERNAL_TEST,
     MODULE_INTERNAL_WIDGET2_SELECTOR,
+    MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY,
     MODULE_EXIT_INTERNAL_CLOSE,
     MODULE_TRANSITORY,
     MODULE_AUTH,
@@ -183,6 +185,10 @@ public:
             LOG(LOG_INFO, "===============> MODULE_SELECTOR");
             return MODULE_INTERNAL_WIDGET2_SELECTOR;
         }
+        else if (!strcmp(module_cstr, STRMODULE_SELECTOR_LEGACY)) {
+            LOG(LOG_INFO, "===============> MODULE_SELECTOR_LEGACY");
+            return MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY;
+        }
         else if (!strcmp(module_cstr, STRMODULE_CONFIRM)) {
             LOG(LOG_INFO, "===============> MODULE_DIALOG_CONFIRM");
             return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
@@ -268,7 +274,7 @@ public:
         , mod_transport(NULL)
     {
         this->no_mod = new null_mod(this->front);
-        this->no_mod->event.reset();
+        this->no_mod->get_event().reset();
         this->mod = this->no_mod;
     }
 
@@ -339,6 +345,18 @@ public:
                                             );
                 if (this->verbose){
                     LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
+                }
+                break;
+            case MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY:
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector legacy'");
+                this->mod = new FlatSelectorMod(this->ini,
+                            // new SelectorMod(this->ini,
+                                            this->front,
+                                            this->front.client_info.width,
+                                            this->front.client_info.height
+                                            );
+                if (this->verbose){
+                    LOG(LOG_INFO, "ModuleManager::internal module 'selector legacy' ready");
                 }
                 break;
             case MODULE_INTERNAL_CLOSE:
@@ -509,7 +527,7 @@ public:
                                              , this->ini.context.opt_height.get()
                                              , this->ini.context.opt_bpp.get()
                                              );
-                    this->mod->event.st = t;
+                    this->mod->get_event().st = t;
                     this->ini.context.auth_error_message.empty();
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
                     this->connected = true;
@@ -606,7 +624,7 @@ public:
 
                     UdevRandom gen;
                     this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
-                    this->mod->event.st = t;
+                    this->mod->get_event().st = t;
 
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
@@ -654,7 +672,7 @@ public:
                                             , this->ini.mod_vnc.encodings.c_str()
                                             , this->ini.mod_vnc.allow_authentification_retries
                                             , this->ini.debug.mod_vnc);
-                    this->mod->event.st = t;
+                    this->mod->get_event().st = t;
 
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
                     this->ini.context.auth_error_message.empty();

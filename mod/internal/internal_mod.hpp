@@ -29,12 +29,6 @@ public:
     FrontAPI & front;
 
     WidgetScreen screen;
-//     int dragging;
-//     Rect dragging_rect;
-//     int draggingdx; // distance between mouse and top angle of dragged window
-//     int draggingdy; // distance between mouse and left angle of dragged window
-//     Widget2 * dragging_window;
-//     RDPBrush brush;
 
     InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height,
                 Inifile * ini = NULL)
@@ -43,13 +37,6 @@ public:
         , screen(*this, front_width, front_height, NULL, ini ? &(ini->theme): NULL)
     {
         this->front.server_resize(front_width, front_height, 24);
-        /* dragging info */
-//         this->dragging = 0;
-        this->event = event;
-        // dragging_rect is (0,0,0,0)
-//         this->draggingdx = 0; // distance between mouse and top angle of dragged window
-//         this->draggingdy = 0; // distance between mouse and left angle of dragged window
-//         this->dragging_window = 0;
     }
 
     virtual ~InternalMod()
@@ -154,6 +141,7 @@ public:
     {
         this->front.draw(cmd, clip);
     }
+
     virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
     {
         this->front.draw(cmd, clip);
@@ -175,11 +163,6 @@ public:
     }
     virtual void set_pointer(int cache_idx) {
         this->front.set_pointer(cache_idx);
-    }
-
-    uint32_t convert_to_black(uint32_t color)
-    {
-        return 0; // convert(color);
     }
 
     virtual void rdp_input_invalidate(const Rect& r)

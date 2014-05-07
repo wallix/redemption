@@ -11,11 +11,41 @@ gccinfo = subprocess.Popen(["gcc", "--version"], stdout=subprocess.PIPE, stderr 
 res = re.search(r"(\d+[.]*\d+[.]?\d+)\n", gccinfo)
 GCCVERSION = 'gcc-%s' % res.group(1)
 
+def grep(filename, ematch):
+    result = None
+    try:
+        f_in = open(filename, 'r')
+    except IOError:
+        pass
+    else:
+        with f_in:
+            result = [line for line in f_in if re.search(ematch, line)]
+    return result
+
+def bjam_gcc():
+    # get gcc version used in bjam config
+    result = None
+    # bjam_user_config_path = "~/user-config.jam"
+    # print grep(bjam_user_config_path, r'^using gcc')
+    bjam_site_config_path = "/etc/site-config.jam"
+    matches = grep(bjam_site_config_path, r'^using gcc')
+    if matches:
+        for line in matches:
+            res = re.search(r'^using gcc : (\d+[.]*\d+)', matches[0])
+            if res:
+                result = "gcc-%s" % res.group(1)
+                break
+    return result
+
+BJAMGCC = bjam_gcc()
+if BJAMGCC:
+    GCCVERSION = BJAMGCC
+
 TESTSSUBDIR = ''
 if GCCVERSION[:9] in ['gcc-4.6.1']:
     GCCVERSION = GCCVERSION[:9]
     TESTSSUBDIR = 'tests/'
-elif GCCVERSION[:7] in ['gcc-4.6', 'gcc-4.7']:
+elif GCCVERSION[:7] in ['gcc-4.6', 'gcc-4.7', 'gcc-4.8']:
     GCCVERSION = GCCVERSION[:7]
     TESTSSUBDIR = 'tests/'
 
