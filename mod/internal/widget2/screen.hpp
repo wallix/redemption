@@ -34,7 +34,8 @@ public:
     Theme theme;
     WidgetTooltip * tooltip;
     Widget2 * current_over;
-    CompositeTable composite_table;
+
+    CompositeArray composite_array;
 
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height,
                  NotifyApi * notifier = NULL, Theme * theme = NULL)
@@ -43,7 +44,8 @@ public:
         , tooltip(NULL)
         , current_over(NULL)
     {
-        this->impl = &composite_table;
+        this->impl = &composite_array;
+
         this->tab_flag = IGNORE_TAB;
     }
 
@@ -53,6 +55,10 @@ public:
             delete this->tooltip;
             this->tooltip = NULL;
         }
+    }
+
+    virtual int get_bg_color() const {
+        return BLACK;
     }
 
     void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
@@ -126,26 +132,6 @@ public:
             keymap->get_kevent();
         }
     }
-
-    virtual void draw(const Rect& clip)
-    {
-        Rect new_clip = clip.intersect(this->rect);
-        this->impl->draw(new_clip);
-        this->draw_inner_free(clip, BLACK);
-    }
-
-
-    virtual void draw_inner_free(const Rect& clip, int bg_color) {
-        Region region;
-        region.rects.push_back(clip);
-
-        this->impl->draw_inner_free(clip, bg_color, region);
-
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
-        }
-    }
-
 };
 
 #endif

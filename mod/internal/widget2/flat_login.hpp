@@ -33,10 +33,12 @@
 #include "ellipse.hpp"
 #include "theme.hpp"
 
+// #include "scroll.hpp"
+
 class FlatLogin : public WidgetParent
 {
 public:
-    Theme & theme;
+    int bg_color;
     WidgetEditValid  password_edit;
     WidgetLabel login_label;
     WidgetEditValid  login_edit;
@@ -47,7 +49,12 @@ public:
     WidgetFlatButton helpicon;
     Inifile & ini;
 
-    CompositeTable composite_table;
+    CompositeArray composite_array;
+
+    // WidgetFrame frame;
+    // WidgetImage wimage;
+    // WidgetVScrollBar vbar;
+    // WidgetHScrollBar hbar;
 
     FlatLogin(DrawApi& drawable, uint16_t width, uint16_t height, Widget2 & parent,
               NotifyApi* notifier, const char* caption,
@@ -57,31 +64,39 @@ public:
               const char * label_text_password,
               Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , theme(ini.theme)
+        , bg_color(ini.theme.global.bgcolor)
         , password_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
-                        password, -14, this->theme.edit.fgcolor,
-                        this->theme.edit.bgcolor, this->theme.edit.focus_color,
+                        password, -14, ini.theme.edit.fgcolor,
+                        ini.theme.edit.bgcolor, ini.theme.edit.focus_color,
                         -1u, 1, 1, true, (width <= 640) ? label_text_password : NULL)
         , login_label(drawable, 0, 0, *this, NULL, label_text_login, true, -11,
-                      this->theme.global.fgcolor, this->theme.global.bgcolor)
+                      ini.theme.global.fgcolor, ini.theme.global.bgcolor)
         , login_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
-                     login, -12, this->theme.edit.fgcolor, this->theme.edit.bgcolor,
-                     this->theme.edit.focus_color, -1u, 1, 1, false,
+                     login, -12, ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
+                     ini.theme.edit.focus_color, -1u, 1, 1, false,
                      (width <= 640) ? label_text_login : NULL)
         // , img(drawable, 0, 0, ini.theme.global.logo_path, *this, NULL, -10)
         , img(drawable, 0, 0,
-              theme.global.logo ? theme.global.logo_path :
+              ini.theme.global.logo ? ini.theme.global.logo_path :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
         , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13,
-                         this->theme.global.fgcolor, this->theme.global.bgcolor)
+                         ini.theme.global.fgcolor, ini.theme.global.bgcolor)
         , version_label(drawable, 0, 0, *this, NULL, caption, true, -15,
-                        this->theme.global.fgcolor, this->theme.global.bgcolor)
+                        ini.theme.global.fgcolor, ini.theme.global.bgcolor)
         , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16,
-                   this->theme.global.fgcolor, this->theme.global.bgcolor,
-                   this->theme.global.focus_color, 6, 2)
+                   ini.theme.global.fgcolor, ini.theme.global.bgcolor,
+                   ini.theme.global.focus_color, 6, 2)
         , ini(ini)
+        // , frame(drawable, Rect((width - 300) / 2, 10, 300, 250), parent, notifier, -17)
+        // , wimage(drawable, 0, 0, SHARE_PATH "/Philips_PM5544_640.bmp",
+        //          parent, notifier, -17)
+        // , vbar(drawable, parent, notifier, this->theme.selector_selected.bgcolor,
+        //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
+        // , hbar(drawable, parent, notifier, this->theme.selector_selected.bgcolor,
+        //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
     {
-        this->impl = &composite_table;
+        this->impl = &composite_array;
+
         this->add_widget(&this->helpicon);
         this->add_widget(&this->img);
         this->add_widget(&this->login_edit);
@@ -133,29 +148,22 @@ public:
         this->helpicon.set_button_x(width - 60);
         this->helpicon.set_button_y(height - 60);
 
+        // this->add_widget(&this->frame);
+        // this->add_widget(&this->vbar);
+        // this->add_widget(&this->hbar);
+        // this->frame.set_widget(&this->wimage);
+        // this->vbar.set_frame(&this->frame);
+        // this->hbar.set_frame(&this->frame);
+        // this->frame.tab_flag = IGNORE_TAB;
+        // this->frame.focus_flag = IGNORE_FOCUS;
     }
 
-    virtual ~FlatLogin()
-    {
+    virtual ~FlatLogin() {
         this->clear();
     }
 
-    virtual void draw(const Rect& clip)
-    {
-        this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), this->theme.global.bgcolor);
-
-    }
-
-    virtual void draw_inner_free(const Rect& clip, int bg_color) {
-        Region region;
-        region.rects.push_back(clip);
-
-        this->impl->draw_inner_free(clip, bg_color, region);
-
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
-        }
+    virtual int get_bg_color() const {
+        return this->bg_color;
     }
 
     virtual void notify(Widget2* widget, NotifyApi::notify_event_t event)
@@ -183,7 +191,6 @@ public:
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {
-
         if (device_flags == MOUSE_FLAG_MOVE) {
             Widget2 * wid = this->widget_at_pos(x, y);
             if (wid == &this->helpicon) {

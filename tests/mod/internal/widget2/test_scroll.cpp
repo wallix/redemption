@@ -103,6 +103,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrame)
     }
 
     frame.set_vertical_widget_pos(0);
+    // frame.rdp_input_invalidate(parent.rect);
     frame.set_horizontal_widget_pos(100);
     // ask to widget to redraw at it's current position
     frame.rdp_input_invalidate(parent.rect);
@@ -135,6 +136,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrame)
     }
 
     frame.set_horizontal_widget_pos(0);
+    // frame.rdp_input_invalidate(parent.rect);
     frame.set_vertical_widget_pos(95);
     frame.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "frame7.png");
@@ -146,25 +148,27 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrame)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
+BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarVertical)
 {
     TestDraw drawable(800, 600);
 
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
 
-    NotifyApi * notifier = NULL;
-    int         fg_color = MEDIUM_BLUE;
-    int         bg_color = LIGHT_BLUE;
-    int         group_id = 0;
-    int16_t     x        = 0;
-    int16_t     y        = 0;
-    uint16_t    cx       = 750;
-    uint16_t    cy       = 267;
+    NotifyApi * notifier    = NULL;
+    int         fg_color    = MEDIUM_BLUE;
+    int         bg_color    = LIGHT_BLUE;
+    int         focus_color = WINBLUE;
+    int         group_id    = 0;
+    int16_t     x           = 0;
+    int16_t     y           = 0;
+    uint16_t    cx          = 750;
+    uint16_t    cy          = 267;
 
     WidgetFrame frame(drawable, Rect(x, y, cx, cy), parent, notifier, group_id);
     WidgetImage wimage(drawable, 0, 0, FIXTURES_PATH"/win2008capture10.png", parent, notifier);
-    WidgetVScrollBar bar(drawable, parent, notifier, fg_color, bg_color, group_id);
+    WidgetVScrollBar bar(drawable, parent, notifier, fg_color, bg_color, focus_color,
+                         group_id);
 
     parent.add_widget(&frame);
     parent.add_widget(&bar);
@@ -174,12 +178,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "framebar1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarv1.png");
 
     char message[1024];
     if (!check_sig( drawable.gd.drawable, message,
-                    "\x7b\x4b\x06\x75\xc5\xd0\x1a\x7c\xcd\x6a"
-                    "\x07\x16\xc7\x30\x90\x18\x42\x6e\xc4\x05")) {
+                    "\xed\x43\x4b\x4d\xa8\x3d\x99\xc2\x73\xaa"
+                    "\x29\xf4\xb8\x8c\x10\x2a\xde\xf1\x79\xee")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -187,11 +191,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "framebar2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarv2.png");
 
     if (!check_sig( drawable.gd.drawable, message,
-                    "\xd0\x94\x1b\x8c\x9e\x94\x38\x38\xf2\xd1"
-                    "\xdb\x12\xe2\xc1\xae\x7a\x44\xc1\x75\x9f")) {
+                    "\x52\x61\xcd\x0d\x63\xa6\xc0\xe7\xe2\xee"
+                    "\x89\xa3\x7b\x89\x14\x33\x67\xf3\x8c\x7a")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -199,11 +203,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "framebar3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarv3.png");
 
     if (!check_sig( drawable.gd.drawable, message,
-                    "\x4d\x94\x2b\x51\xd7\x0a\x77\xc9\x08\x1a"
-                    "\x97\x2b\xc0\xe1\xc7\x3f\xaa\x71\x41\x5e")) {
+                    "\xb5\xe6\x94\xba\x12\xdd\x08\x82\xe8\xdc"
+                    "\x76\xe7\xe2\x78\x61\xa2\x32\xf1\xc9\x37")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -211,11 +215,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "framebar4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarv4.png");
 
     if (!check_sig( drawable.gd.drawable, message,
-                    "\xce\x0d\xb8\xaa\x16\x59\x16\x66\xcf\x3e"
-                    "\xed\x3e\x3c\xa2\x1c\xb6\x53\xd7\x4e\x97")) {
+                    "\x20\x99\x11\xa0\x76\x08\x85\xc0\x17\xe3"
+                    "\xe4\x52\x67\x9b\xb9\x7d\xf9\x5f\x6d\xa0")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -223,11 +227,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "framebar5.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarv5.png");
 
     if (!check_sig( drawable.gd.drawable, message,
-                    "\x30\xb2\x15\xa2\xf3\xad\xc1\x65\xf1\x69"
-                    "\x92\x3c\x73\x93\x17\x3a\xc0\x3b\x8a\x29")) {
+                    "\xdb\x0f\x0c\x59\xa0\x57\x9a\x18\x74\x93"
+                    "\x0d\x0f\x82\x6f\x95\x26\x8c\x56\x11\x39")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -235,11 +239,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "framebar6.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarv6.png");
 
     if (!check_sig( drawable.gd.drawable, message,
-                    "\xde\x0d\x45\x04\xb7\xdc\x3f\xc6\x14\xda"
-                    "\xf9\xe1\x93\x64\x0f\x29\xc2\x6a\x5e\x44")) {
+                    "\xc7\xc7\x60\x9b\x89\x45\x5d\x6b\x76\x96"
+                    "\xdd\x95\x83\x48\x59\xfa\x0e\xe3\x0d\xc5")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -247,11 +251,566 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbar)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "framebar7.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarv7.png");
 
     if (!check_sig( drawable.gd.drawable, message,
-                    "\x7b\x4b\x06\x75\xc5\xd0\x1a\x7c\xcd\x6a"
-                    "\x07\x16\xc7\x30\x90\x18\x42\x6e\xc4\x05")) {
+                    "\xed\x43\x4b\x4d\xa8\x3d\x99\xc2\x73\xaa"
+                    "\x29\xf4\xb8\x8c\x10\x2a\xde\xf1\x79\xee")) {
         BOOST_CHECK_MESSAGE(false, message);
     }
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarHorizontal)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetGroupBox is a widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
+
+    NotifyApi * notifier    = NULL;
+    int         fg_color    = MEDIUM_BLUE;
+    int         bg_color    = LIGHT_BLUE;
+    int         focus_color = WINBLUE;
+    int         group_id    = 0;
+    int16_t     x           = 0;
+    int16_t     y           = 0;
+    uint16_t    cx          = 379;
+    uint16_t    cy          = 267;
+
+    WidgetFrame frame(drawable, Rect(x, y, cx, cy), parent, notifier, group_id);
+    WidgetImage wimage(drawable, 0, 0, FIXTURES_PATH"/win2008capture10.png", parent, notifier);
+    WidgetHScrollBar bar(drawable, parent, notifier, fg_color, bg_color, focus_color,
+                         group_id);
+
+    parent.add_widget(&frame);
+    parent.add_widget(&bar);
+    frame.set_widget(&wimage);
+    bar.set_frame(&frame);
+
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarh1.png");
+
+    char message[1024];
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x8b\x80\xef\x39\xcb\xb3\x16\x8c\x4e\xee"
+                    "\xe5\x40\x1a\xca\xbe\x5a\xe2\xec\xea\x03")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    bar.set_horizontal_scroll(30);
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarh2.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\xf5\x92\xff\x5e\xe1\xcc\x0a\x37\x9b\x30"
+                    "\x02\x75\xc1\x9f\xae\xbd\x9b\xbb\x44\x50")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    bar.set_horizontal_scroll(60);
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarh3.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x2f\xba\x8a\xe3\x1e\x9f\xe5\x95\x0b\x7f"
+                    "\x3d\xbe\x2e\x72\x07\x75\xab\x9b\x4d\xdf")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    bar.set_horizontal_scroll(100);
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarh4.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x89\x02\x7a\xdd\x2f\x76\x2c\x70\x05\xc3"
+                    "\xc7\x48\x29\x3b\xde\xab\xc2\x30\xe1\x93")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    bar.set_horizontal_scroll(40);
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarh5.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\xa3\x43\x21\x16\x91\x79\x42\x55\xfb\xd3"
+                    "\x8c\x64\x16\xfd\x5b\x6b\xc3\x9e\xad\xfa")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    bar.set_horizontal_scroll(5);
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarh6.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x19\xbc\xbb\x98\x7e\x3d\x61\x2f\x9f\xfe"
+                    "\x30\xa5\xc5\xf2\x42\x0e\xba\xb9\x21\x16")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    bar.set_horizontal_scroll(0);
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarh7.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x8b\x80\xef\x39\xcb\xb3\x16\x8c\x4e\xee"
+                    "\xe5\x40\x1a\xca\xbe\x5a\xe2\xec\xea\x03")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarControl)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetGroupBox is a widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
+
+    NotifyApi * notifier    = NULL;
+    int         fg_color    = MEDIUM_BLUE;
+    int         bg_color    = LIGHT_BLUE;
+    int         focus_color = WINBLUE;
+    int         group_id    = 0;
+    int16_t     x           = 0;
+    int16_t     y           = 0;
+    uint16_t    cx          = 400;
+    uint16_t    cy          = 300;
+
+    WidgetFrame frame(drawable, Rect(x, y, cx, cy), parent, notifier, group_id);
+    WidgetImage wimage(drawable, 0, 0, FIXTURES_PATH"/win2008capture10.png", parent, notifier);
+    WidgetVScrollBar vbar(drawable, parent, notifier, fg_color, bg_color, focus_color,
+                          group_id);
+    WidgetHScrollBar hbar(drawable, parent, notifier, fg_color, bg_color, focus_color,
+                          group_id);
+
+    parent.add_widget(&frame);
+    parent.add_widget(&vbar);
+    parent.add_widget(&hbar);
+    frame.set_widget(&wimage);
+    vbar.set_frame(&frame);
+    hbar.set_frame(&frame);
+
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc01.png");
+
+    char message[1024];
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x50\xe3\x5f\xa8\x23\x4d\x4f\x96\x48\x90"
+                    "\x54\xa6\x68\x75\x44\x29\x8a\xba\xdc\x29")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // first action
+    // move horizontal bar to center
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           hbar.scroll.getCenteredX(), hbar.scroll.getCenteredY(),
+                           NULL);
+
+    parent.rdp_input_mouse(MOUSE_FLAG_MOVE,
+                           hbar.rect.getCenteredX(), hbar.rect.getCenteredY(),
+                           NULL);
+
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc02.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x12\x87\xa0\x8a\x64\xbe\xd1\xef\xcb\x45"
+                    "\x30\x85\x06\xa9\xd7\x5c\x06\x04\xda\xdc")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // click on right bar in scroll control
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           (hbar.rect.right() + hbar.scroll.right()) / 2,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
+                           (hbar.rect.right() + hbar.scroll.right()) / 2,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc03.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x84\x49\x7a\x99\x01\x8c\x77\x3a\xb2\x61"
+                    "\xee\x2c\x95\xd3\x96\x20\xc1\x9a\x99\x42")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // click on right bar in scroll control
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           (hbar.rect.right() + hbar.scroll.right()) / 2,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
+                           (hbar.rect.right() + hbar.scroll.right()) / 2,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc04.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\xc8\x2a\x16\x07\x0f\x26\x82\x7f\xa8\x1e"
+                    "\x36\x45\xa9\x44\xda\xab\xbe\x5d\x82\x1d")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // click on left bar in scroll control to the end
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
+                           hbar.rect.x + 2 ,
+                           hbar.rect.getCenteredY(),
+                           NULL);
+
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc05.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\xa5\x8f\x11\x10\xc1\x1b\x88\x85\x4c\xcf"
+                    "\x51\x5e\xe1\xdf\x2a\xed\xa0\x48\x79\x40")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    Keymap2 keymap;
+    keymap.init_layout(0x040C);
+    // keyboard right to the end
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc06.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\xf7\x4c\x26\xa5\x95\x5f\x3a\x9e\x70\x9e"
+                    "\x4c\xd6\xab\xe1\xa2\x29\xb4\xe1\xfc\xc6")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc07.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x26\x78\x76\xd4\x19\xef\xca\x14\x15\x80"
+                    "\xf4\xc6\x44\x13\x05\x2d\xd6\x07\x8d\xf5")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+
+
+
+    // first action
+    // move horizontal bar to center
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           vbar.scroll.getCenteredX(), vbar.scroll.getCenteredY(),
+                           NULL);
+
+    parent.rdp_input_mouse(MOUSE_FLAG_MOVE,
+                           vbar.rect.getCenteredX(), vbar.rect.getCenteredY(),
+                           NULL);
+
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc08.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x86\x7f\x03\xf7\x8d\xc2\xb1\xc5\x35\x4b"
+                    "\x48\x09\x04\x98\xe9\x9f\x25\x47\xb5\xee")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // click on right bar in scroll control
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           vbar.rect.getCenteredX(),
+                           (vbar.rect.bottom() + vbar.scroll.bottom()) / 2,
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
+                           vbar.rect.getCenteredX(),
+                           (vbar.rect.bottom() + vbar.scroll.bottom()) / 2,
+                           NULL);
+
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc09.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x40\x89\xcb\xfd\xa9\xe4\x7c\x87\xfd\xf5"
+                    "\xa8\xf8\xe2\x4c\xe0\x4d\x81\x9e\x32\xbd")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // click on right bar in scroll control
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           vbar.rect.getCenteredX(),
+                           (vbar.rect.bottom() + vbar.scroll.bottom()) / 2,
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
+                           vbar.rect.getCenteredX(),
+                           (vbar.rect.bottom() + vbar.scroll.bottom()) / 2,
+                           NULL);
+
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc10.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\xcb\x83\x63\x93\x4f\xf6\x7d\xdf\x08\x93"
+                    "\xd7\x98\x6b\xb6\x89\xa5\x51\xfa\x2c\x84")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // click on left bar in scroll control to the end
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                           vbar.rect.getCenteredX(),
+                           vbar.rect.y + 2,
+                           NULL);
+
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc11.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x7f\x06\xcd\xcf\xd4\xc3\xfa\xdd\x5d\x57"
+                    "\xe3\x72\xd2\x28\x6e\xa2\x9b\xc0\x08\x27")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // keyboard down to the end
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc12.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x73\xe1\x2f\x4a\x86\x59\xb6\x35\xae\x86"
+                    "\x55\x3f\x82\x0c\x92\xe6\xf0\xd0\x69\x3a")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+    // keyboard up
+    keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
+    parent.rdp_input_scancode(0,0,0,0, &keymap);
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarc13.png");
+
+    if (!check_sig( drawable.gd.drawable, message,
+                    "\x52\xb2\xa3\x27\x20\x97\x35\x95\xf8\xca"
+                    "\xbc\xbf\x84\x09\x24\x7c\xb0\x00\xc1\x04")) {
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+
 }

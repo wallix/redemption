@@ -21,51 +21,42 @@
 #ifndef REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
 #define REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
 
-#include "widget.hpp"
+#include "composite.hpp"
 
-class WidgetGroupBox : public Widget2
+class WidgetGroupBox : public WidgetParent
 {
 public:
     static const size_t buffer_size = 256;
 
     char buffer[buffer_size];
+
     int bg_color;
     int fg_color;
+
+    CompositeArray composite_array;
 
 public:
     WidgetGroupBox( DrawApi & drawable, int16_t x, int16_t y
                   , uint16_t cx, uint16_t cy, Widget2 & parent
                   , NotifyApi * notifier, const char * text
                   , int group_id, int fgcolor, int bgcolor)
-    : Widget2(drawable, Rect(x, y, cx, cy), parent, notifier, group_id)
+    : WidgetParent(drawable, Rect(x, y, cx, cy), parent, notifier)
     , bg_color(bgcolor)
     , fg_color(fgcolor) {
-        this->tab_flag   = IGNORE_TAB;
-        this->focus_flag = IGNORE_FOCUS;
+        this->impl = &composite_array;
 
         this->set_text(text);
     }
 
-    virtual ~WidgetGroupBox() {}
-
-    void set_text(const char * text) {
-        this->buffer[0] = 0;
-        if (text) {
-            const size_t max = std::min(buffer_size - 1, strlen(text));
-            memcpy(this->buffer, text, max);
-            this->buffer[max] = 0;
-        }
+    virtual ~WidgetGroupBox() {
+        this->clear();
     }
 
-    const char * get_text() const {
-        return this->buffer;
-    }
+    virtual void draw(const Rect & clip) {
+        Rect rect_intersect = clip.intersect(this->rect);
+        WidgetParent::draw_inner_free(rect_intersect, this->bg_color);
 
-    virtual void draw(const Rect & clip)
-    {
-        this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
-
-
+        // Box.
         const uint16_t border           = 6;
         const uint16_t text_margin      = 6;
         const uint16_t text_indentation = border + text_margin + 4;
@@ -101,13 +92,32 @@ public:
         this->drawable.draw(polyline_box, clip);
 
 
+        // Label.
         this->drawable.server_draw_text( this->rect.x + text_indentation
                                        , this->rect.y
                                        , this->buffer
                                        , this->fg_color
                                        , this->bg_color
-                                       , this->rect.intersect(clip)
+                                       , rect_intersect
                                        );
+
+        WidgetParent::draw_children(rect_intersect);
+    }
+
+    virtual int get_bg_color() const {
+        return this->bg_color;
+    }
+
+    const char * get_text() const {
+        return this->buffer;
+    }
+    void set_text(const char * text) {
+        this->buffer[0] = 0;
+        if (text) {
+            const size_t max = std::min(buffer_size - 1, strlen(text));
+            memcpy(this->buffer, text, max);
+            this->buffer[max] = 0;
+        }
     }
 };
 

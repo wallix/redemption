@@ -40,7 +40,8 @@ enum ChallengeOpt {
 class FlatDialog : public WidgetParent
 {
 public:
-    Theme & theme;
+    int bg_color;
+
     WidgetImage img;
     WidgetLabel title;
     WidgetMultiLine dialog;
@@ -48,7 +49,8 @@ public:
     WidgetFlatButton ok;
     WidgetFlatButton * cancel;
     WidgetRect separator;
-    CompositeTable composite_table;
+
+    CompositeArray composite_array;
 
     FlatDialog(DrawApi& drawable, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
@@ -57,28 +59,28 @@ public:
                const char * cancel_text = "Cancel",
                ChallengeOpt has_challenge = NO_CHALLENGE)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , theme(theme)
+        , bg_color(theme.global.bgcolor)
         , img(drawable, 0, 0,
               theme.global.logo ? theme.global.logo_path :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -8)
         , title(drawable, 0, 0, *this, NULL, caption, true, -9,
-                this->theme.global.fgcolor, this->theme.global.bgcolor, 5)
+                theme.global.fgcolor, theme.global.bgcolor, 5)
         , dialog(drawable, 0, 0, *this, NULL, text, true, -10,
-                 this->theme.global.fgcolor, this->theme.global.bgcolor, 10, 2)
+                 theme.global.fgcolor, theme.global.bgcolor, 10, 2)
         , challenge(NULL)
         , ok(drawable, 0, 0, *this, this, ok_text ? ok_text : "Ok", true, -12,
-             this->theme.global.fgcolor, this->theme.global.bgcolor,
-             this->theme.global.focus_color, 6, 2)
+             theme.global.fgcolor, theme.global.bgcolor,
+             theme.global.focus_color, 6, 2)
         , cancel(cancel_text ? new WidgetFlatButton(drawable, 0, 0, *this, this,
                                                     cancel_text, true, -11,
-                                                    this->theme.global.fgcolor,
-                                                    this->theme.global.bgcolor,
-                                                    this->theme.global.focus_color,
+                                                    theme.global.fgcolor,
+                                                    theme.global.bgcolor,
+                                                    theme.global.focus_color,
                                                     6, 2) : NULL)
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
-                    this->theme.global.separator_color)
+                    theme.global.separator_color)
     {
-        this->impl = &composite_table;
+        this->impl = &composite_array;
 
         this->add_widget(&this->title);
         this->add_widget(&this->dialog);
@@ -103,16 +105,16 @@ public:
                 this->challenge = new WidgetEdit(this->drawable,
                                                  this->separator.rect.x + 10, y,
                                                  total_width - 20, *this, this, 0, -13,
-                                                 this->theme.edit.fgcolor,
-                                                 this->theme.edit.bgcolor,
-                                                 this->theme.edit.focus_color, -1u, 1, 1);
+                                                 theme.edit.fgcolor,
+                                                 theme.edit.bgcolor,
+                                                 theme.edit.focus_color, -1u, 1, 1);
             } else {
                 this->challenge = new WidgetPassword(this->drawable,
                                                      this->separator.rect.x + 10,
                                                      y, total_width - 20, *this, this, 0,
-                                                     -13, this->theme.edit.fgcolor,
-                                                     this->theme.edit.bgcolor,
-                                                     this->theme.edit.focus_color,
+                                                     -13, theme.edit.fgcolor,
+                                                     theme.edit.bgcolor,
+                                                     theme.edit.focus_color,
                                                      -1u, 1, 1);
             }
             this->add_widget(this->challenge);
@@ -136,7 +138,7 @@ public:
             this->ok.set_button_x(this->dialog.dx() + this->dialog.cx() - (this->ok.cx() + 10));
             this->ok.set_button_y(y);
         }
-        this->impl->move_xy(0, (height - total_height) / 2);
+        this->move_xy(0, (height - total_height) / 2);
 
         this->img.rect.x = (this->cx() - this->img.cx()) / 2;
         this->img.rect.y = (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height;
@@ -146,13 +148,16 @@ public:
             this->set_widget_focus(&this->ok);
     }
 
-    virtual ~FlatDialog()
-    {
+    virtual ~FlatDialog() {
         if (this->challenge)
             delete this->challenge;
         if (this->cancel)
             delete this->cancel;
         this->clear();
+    }
+
+    virtual int get_bg_color() const {
+        return this->bg_color;
     }
 
     virtual void notify(Widget2* widget, NotifyApi::notify_event_t event) {
@@ -166,23 +171,6 @@ public:
         }
         else {
             WidgetParent::notify(widget, event);
-        }
-    }
-
-    virtual void draw(const Rect& clip)
-    {
-        this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), this->theme.global.bgcolor);
-    }
-
-    virtual void draw_inner_free(const Rect& clip, int bg_color) {
-        Region region;
-        region.rects.push_back(clip);
-
-        this->impl->draw_inner_free(clip, bg_color, region);
-
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
         }
     }
 
@@ -200,7 +188,6 @@ public:
             }
         }
     }
-
 };
 
 #endif
