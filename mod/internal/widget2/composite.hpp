@@ -300,7 +300,7 @@ public:
                 return true;
             }
 
-            iter_w_previous = this->impl->get_next(iter_w_previous);
+            iter_w_previous = this->impl->get_previous(iter_w_previous);
         }
 
         return false;
