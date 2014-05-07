@@ -33,7 +33,7 @@ public:
     int bg_color;
     int fg_color;
 
-    CompositeTable composite_table;
+    CompositeArray composite_array;
 
 public:
     WidgetGroupBox( DrawApi & drawable, int16_t x, int16_t y
@@ -43,7 +43,7 @@ public:
     : WidgetParent(drawable, Rect(x, y, cx, cy), parent, notifier)
     , bg_color(bgcolor)
     , fg_color(fgcolor) {
-        this->impl = &composite_table;
+        this->impl = &composite_array;
 
         this->set_text(text);
     }
@@ -52,21 +52,8 @@ public:
         this->clear();
     }
 
-    void set_text(const char * text) {
-        this->buffer[0] = 0;
-        if (text) {
-            const size_t max = std::min(buffer_size - 1, strlen(text));
-            memcpy(this->buffer, text, max);
-            this->buffer[max] = 0;
-        }
-    }
-
-    const char * get_text() const {
-        return this->buffer;
-    }
-
     virtual void draw(const Rect & clip) {
-      this->draw_inner_free(clip.intersect(this->rect), this->bg_color);
+        WidgetParent::draw_inner_free(clip.intersect(this->rect), this->bg_color);
 
         // Background.
         this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
@@ -117,17 +104,22 @@ public:
                                        , this->rect.intersect(clip)
                                        );
 
-      this->impl->draw(clip);
+        WidgetParent::draw_children(clip);
     }
 
-    virtual void draw_inner_free(const Rect& clip, int bg_color) {
-        Region region;
-        region.rects.push_back(clip);
+    virtual int get_bg_color() const {
+        return this->bg_color;
+    }
 
-        this->impl->draw_inner_free(clip, bg_color, region);
-
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
+    const char * get_text() const {
+        return this->buffer;
+    }
+    void set_text(const char * text) {
+        this->buffer[0] = 0;
+        if (text) {
+            const size_t max = std::min(buffer_size - 1, strlen(text));
+            memcpy(this->buffer, text, max);
+            this->buffer[max] = 0;
         }
     }
 };

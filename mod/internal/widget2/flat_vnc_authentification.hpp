@@ -35,7 +35,6 @@
 class FlatVNCAuthentification : public WidgetParent
 {
 public:
-    Theme &         theme;
     WidgetLabel     message_label;
     WidgetLabel     password_label;
     WidgetEditValid password_edit;
@@ -44,7 +43,7 @@ public:
     int fgcolor;
     int bgcolor;
 
-    CompositeTable composite_table;
+    CompositeArray composite_array;
 
     FlatVNCAuthentification(DrawApi& drawable, uint16_t width, uint16_t height,
                             Widget2 & parent, NotifyApi* notifier, const char* caption,
@@ -52,22 +51,22 @@ public:
                             Theme & theme, const char * label_text_message,
                             const char * label_text_password)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , theme(theme)
         , message_label(drawable, 0, 0, *this, NULL, label_text_message, true, -13,
-                        this->theme.global.fgcolor, this->theme.global.bgcolor)
+                        theme.global.fgcolor, theme.global.bgcolor)
         , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13,
-                         this->theme.global.fgcolor, this->theme.global.bgcolor)
+                         theme.global.fgcolor, theme.global.bgcolor)
         , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
-                        this->theme.edit.fgcolor, this->theme.edit.bgcolor,
-                        this->theme.edit.focus_color, -1u, 1, 1, true)
+                        theme.edit.fgcolor, theme.edit.bgcolor,
+                        theme.edit.focus_color, -1u, 1, 1, true)
         // , img(drawable, 0, 0, theme.global.logo_path, *this, NULL, -10)
         , img(drawable, 0, 0,
               theme.global.logo ? theme.global.logo_path :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
-        , fgcolor(this->theme.global.fgcolor)
-        , bgcolor(this->theme.global.bgcolor)
+        , fgcolor(theme.global.fgcolor)
+        , bgcolor(theme.global.bgcolor)
     {
-        this->impl = &composite_table;
+        this->impl = &composite_array;
+
         this->add_widget(&this->message_label);
         this->add_widget(&this->password_label);
         this->add_widget(&this->password_edit);
@@ -104,21 +103,8 @@ public:
         this->clear();
     }
 
-    virtual void draw(const Rect& clip)
-    {
-        this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), this->bgcolor);
-    }
-
-    virtual void draw_inner_free(const Rect& clip, int bg_color) {
-        Region region;
-        region.rects.push_back(clip);
-
-        this->impl->draw_inner_free(clip, bg_color, region);
-
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
-        }
+    virtual int get_bg_color() const {
+        return this->bgcolor;
     }
 
     virtual void notify(Widget2* widget, NotifyApi::notify_event_t event)
