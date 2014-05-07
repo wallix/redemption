@@ -42,7 +42,6 @@ class WidgetSelectorFlat2 : public WidgetParent
 {
 public:
 
-//    Theme & theme;
     int bg_color;
     const bool less_than_800;
     WidgetLabel device_label;
@@ -69,7 +68,6 @@ public:
     WidgetFlatButton apply;
     WidgetFlatButton connect;
 
-//    CompositeTable composite_table;
     CompositeArray composite_array;
 
 public:
@@ -106,7 +104,6 @@ public:
                         const char * filter_target_group, const char * filter_target,
                         const char * filter_protocol, Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-//        , theme(ini.theme)
         , bg_color(ini.theme.global.bgcolor)
         , less_than_800(this->rect.cx < 800)
         , device_label(drawable, TEXT_MARGIN, VERTICAL_MARGIN, *this, NULL, device_name,
@@ -174,8 +171,7 @@ public:
                   ini.theme.global.fgcolor, ini.theme.global.bgcolor,
                   ini.theme.global.focus_color, 6, 2)
     {
-//        this->impl = &composite_table;
-        this->imp_l = &composite_array;
+        this->impl = &composite_array;
 
         this->add_widget(&this->device_label);
         this->add_widget(&this->target_group_label);
@@ -319,14 +315,6 @@ public:
         }
     }
 
-/*
-    virtual void draw(const Rect& clip)
-    {
-        this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), ini.theme.global.bgcolor);
-    }
-*/
-
     void ask_for_connection() {
         if (this->notifier) {
             this->notifier->notify(&this->connect, NOTIFY_SUBMIT);
@@ -367,19 +355,6 @@ public:
         const char * texts[] = { device_group, target_label, protocol };
         this->selector_lines.add_line(texts);
     }
-
-/*
-    virtual void draw_inner_free(const Rect& clip, int bg_color) {
-        Region region;
-        region.rects.push_back(clip);
-
-        this->impl->draw_inner_free(clip, bg_color, region);
-
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
-        }
-    }
-*/
 };
 
 #endif

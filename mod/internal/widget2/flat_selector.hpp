@@ -533,8 +533,8 @@ private:
 
 public:
 
-//    Theme & theme;
     int bg_color;
+
     WidgetLabel device_label;
     WidgetLabel device_target_label;
     WidgetLabel target_label;
@@ -570,7 +570,6 @@ public:
 
     int tc_flag;
 
-//    CompositeTable composite_table;
     CompositeArray composite_array;
 
 public:
@@ -594,7 +593,6 @@ public:
                        const char * filter_device, const char * filter_target,
                        const char * filter_proto, Inifile & ini, int ticcom_flag = 0)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-//        , theme(ini.theme)
         , bg_color(ini.theme.global.bgcolor)
         , device_label(drawable, 20, 10, *this, NULL, device_name, true, -10,
                        ini.theme.global.fgcolor, ini.theme.global.bgcolor)
@@ -673,8 +671,7 @@ public:
                     ini.theme.edit.bgcolor, ini.theme.edit.focus_color, -1, 1, 1)
         , tc_flag(ticcom_flag)
     {
-//        this->impl = &composite_table;
-        this->imp_l = &composite_array;
+        this->impl = &composite_array;
 
         this->add_widget(&this->device_label);
         this->add_widget(&this->device_target_label);
@@ -881,14 +878,6 @@ public:
         return this->bg_color;
     }
 
-/*
-    virtual void draw(const Rect& clip)
-    {
-        this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), ini.theme.global.bgcolor);
-    }
-*/
-
     void ask_for_connection() {
         if (((this->tc_flag & TICKET_MANDATORY) == TICKET_MANDATORY) &&
             (this->ticket_edit.num_chars == 0)) {
@@ -958,20 +947,6 @@ public:
     {
         this->selector_lines.add_line(device_group, target_label, protocol, close_time);
     }
-
-
-/*
-    virtual void draw_inner_free(const Rect& clip, int bg_color) {
-        Region region;
-        region.rects.push_back(clip);
-
-        this->impl->draw_inner_free(clip, bg_color, region);
-
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
-        }
-    }
-*/
 };
 
 #endif

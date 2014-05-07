@@ -33,7 +33,6 @@ public:
     int bg_color;
     int fg_color;
 
-//    CompositeTable composite_table;
     CompositeArray composite_array;
 
 public:
@@ -44,8 +43,7 @@ public:
     : WidgetParent(drawable, Rect(x, y, cx, cy), parent, notifier)
     , bg_color(bgcolor)
     , fg_color(fgcolor) {
-//        this->impl = &composite_table;
-        this->imp_l = &composite_array;
+        this->impl = &composite_array;
 
         this->set_text(text);
     }
@@ -55,7 +53,6 @@ public:
     }
 
     virtual void draw(const Rect & clip) {
-//        this->draw_inner_free(clip.intersect(this->rect), this->bg_color);
         WidgetParent::draw_inner_free(clip.intersect(this->rect), this->bg_color);
 
         // Background.
@@ -107,7 +104,6 @@ public:
                                        , this->rect.intersect(clip)
                                        );
 
-//        this->impl->draw(clip);
         WidgetParent::draw_children(clip);
     }
 
@@ -126,19 +122,6 @@ public:
             this->buffer[max] = 0;
         }
     }
-
-/*
-    virtual void draw_inner_free(const Rect& clip, int bg_color) {
-        Region region;
-        region.rects.push_back(clip);
-
-        this->impl->draw_inner_free(clip, bg_color, region);
-
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
-        }
-    }
-*/
 };
 
 #endif  // #ifndef REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP

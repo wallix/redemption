@@ -37,8 +37,8 @@
 class FlatWabClose : public WidgetParent
 {
 public:
-//    Theme & theme;
     int bg_color;
+
     WidgetImage img;
     WidgetLabel username_label;
     WidgetLabel username_label_value;
@@ -51,7 +51,7 @@ public:
     WidgetLabel timeleft_label;
     WidgetLabel timeleft_value;
     WidgetRect separator;
-//    CompositeTable composite_table;
+
     CompositeArray composite_array;
 
 private:
@@ -65,7 +65,6 @@ public:
                  const char * username, const char * target,
                  bool showtimer, Inifile & ini)
     : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-//    , theme(ini.theme)
     , bg_color(ini.theme.global.bgcolor)
     // , img(drawable, 0, 0, ini.theme.global.logo_path, *this, NULL, -10)
     , img(drawable, 0, 0,
@@ -98,8 +97,7 @@ public:
     , prev_time(0)
     , ini(ini)
     {
-//        this->impl = &composite_table;
-        this->imp_l = &composite_array;
+        this->impl = &composite_array;
 
         char label[255];
         snprintf(label, sizeof(label), "%s:", TR("username", ini));
@@ -182,7 +180,6 @@ public:
         this->cancel.set_button_y(y);
         y += this->cancel.cy();
 
-//        this->impl->move_xy(0, (height - y) / 2);
         this->move_xy(0, (height - y) / 2);
 
         this->img.rect.x = (this->cx() - this->img.cx()) / 2;
@@ -252,25 +249,6 @@ public:
             }
         }
     }
-
-/*
-    virtual void draw(const Rect& clip)
-    {
-        this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), ini.theme.global.bgcolor);
-    }
-
-    virtual void draw_inner_free(const Rect& clip, int bg_color) {
-        Region region;
-        region.rects.push_back(clip);
-
-        this->impl->draw_inner_free(clip, bg_color, region);
-
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
-        }
-    }
-*/
 };
 
 #endif

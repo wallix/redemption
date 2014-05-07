@@ -40,8 +40,8 @@ enum ChallengeOpt {
 class FlatDialog : public WidgetParent
 {
 public:
-//    Theme & theme;
     int bg_color;
+
     WidgetImage img;
     WidgetLabel title;
     WidgetMultiLine dialog;
@@ -49,7 +49,7 @@ public:
     WidgetFlatButton ok;
     WidgetFlatButton * cancel;
     WidgetRect separator;
-//    CompositeTable composite_table;
+
     CompositeArray composite_array;
 
     FlatDialog(DrawApi& drawable, int16_t width, int16_t height,
@@ -59,7 +59,6 @@ public:
                const char * cancel_text = "Cancel",
                ChallengeOpt has_challenge = NO_CHALLENGE)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-//        , theme(theme)
         , bg_color(theme.global.bgcolor)
         , img(drawable, 0, 0,
               theme.global.logo ? theme.global.logo_path :
@@ -81,8 +80,7 @@ public:
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
                     theme.global.separator_color)
     {
-//        this->impl = &composite_table;
-        this->imp_l = &composite_array;
+        this->impl = &composite_array;
 
         this->add_widget(&this->title);
         this->add_widget(&this->dialog);
@@ -140,7 +138,6 @@ public:
             this->ok.set_button_x(this->dialog.dx() + this->dialog.cx() - (this->ok.cx() + 10));
             this->ok.set_button_y(y);
         }
-//        this->impl->move_xy(0, (height - total_height) / 2);
         this->move_xy(0, (height - total_height) / 2);
 
         this->img.rect.x = (this->cx() - this->img.cx()) / 2;
@@ -151,8 +148,7 @@ public:
             this->set_widget_focus(&this->ok);
     }
 
-    virtual ~FlatDialog()
-    {
+    virtual ~FlatDialog() {
         if (this->challenge)
             delete this->challenge;
         if (this->cancel)
@@ -178,25 +174,6 @@ public:
         }
     }
 
-/*
-    virtual void draw(const Rect& clip)
-    {
-        this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), theme.global.bgcolor);
-    }
-
-    virtual void draw_inner_free(const Rect& clip, int bg_color) {
-        Region region;
-        region.rects.push_back(clip);
-
-        this->impl->draw_inner_free(clip, bg_color, region);
-
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
-        }
-    }
-*/
-
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
         if (keymap->nb_kevent_available() > 0){
@@ -211,7 +188,6 @@ public:
             }
         }
     }
-
 };
 
 #endif
