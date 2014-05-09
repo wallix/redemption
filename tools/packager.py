@@ -11,7 +11,7 @@ import datetime
 import re
 
 def usage():
-  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--no-entry-changelog] [--force-distro name] [--force-distro-codename name] [--no-buildpackage] [--no-git-commit] [--no-git-tag] [--debug] --tag version" % sys.argv[0])
+  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--no-entry-changelog] [--force-distro name] [--force-distro-codename name] [--no-buildpackage] [--no-git-commit] [--git-tag] [--git-push-tag] [--debug] --tag version" % sys.argv[0])
 
 try:
   opts, args = getopt.getopt(sys.argv[1:], "h",
@@ -36,7 +36,8 @@ force_distro = None
 force_distro_codename = None
 buildpackage = True
 git_commit = True
-git_tag = True
+git_tag = False
+git_push_tag = False
 
 for o,a in opts:
   if o in ("-h", "--help"):
@@ -62,8 +63,10 @@ for o,a in opts:
     buildpackage = False
   elif o == "--no-git-commit":
     git_commit = False
-  elif o == "--no-git-tag":
-    git_tag = False
+  elif o == "--git-tag":
+    git_tag = True
+  elif o == "--git-push-tag":
+    git_push_tag = True
   elif o == "--debug":
     debug = True
 
@@ -178,6 +181,7 @@ def parse_template(filename, distro, codename, version, arch):
     return out
   return ''
 
+status = 0
 try:
   res = subprocess.Popen(["git", "diff", "--shortstat"],
                          stdout = subprocess.PIPE,
@@ -185,6 +189,22 @@ try:
                         ).communicate()[0]
   if res:
     raise Exception('your repository has uncommited changes:\n%sPlease commit before packaging.' % (res))
+  
+  locale_tags = subprocess.Popen(["git", "tag", "--list"],
+                               stdout = subprocess.PIPE,
+                               stderr = subprocess.STDOUT
+                               ).communicate()[0].split('\n')
+
+  if tag in locale_tags:
+    raise Exception('tag %s already exists (locale).' % tag)
+  
+  remote_tags = map(lambda x : x.split('/')[-1], subprocess.Popen(["git", "ls-remote", "--tags", "origin"],
+                               stdout = subprocess.PIPE,
+                               stderr = subprocess.STDOUT
+                               ).communicate()[0].split('\n'))
+  
+  if tag in remote_tags:
+    raise Exception('tag %s already exists (remote).' % tag)
 
   os.mkdir("debian", 0766)
 
@@ -246,16 +266,29 @@ try:
   if git_commit:
     status = os.system("git commit -am 'Version %s'" % tag)
     if status:
-      exit(status)
+      raise ""
 
     if git_tag:
       status = os.system("git tag %s" % tag)
       if status:
-        exit(status)
+        raise ""
 
   if buildpackage:
-    exit(os.system("dpkg-buildpackage -b -tc -us -uc -r"))
+    status = os.system("dpkg-buildpackage -b -tc -us -uc -r")
+    if status:
+      raise ""
+    if git_push_tag and git_tag:
+      status = os.system("git push --tags")
+      if status:
+        raise ""
   exit(0)
 except Exception, e:
+  res = subprocess.Popen(["git", "diff", "--shortstat"],
+                         stdout = subprocess.PIPE,
+                         stderr = subprocess.STDOUT
+                        ).communicate()[0]
+  if res:
+    os.system("git stash")
+    os.system("git stash drop")
   print "Build failed: %s" % e
-  exit(-1)
+  exit(status if status else -1)

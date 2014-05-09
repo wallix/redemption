@@ -37,7 +37,6 @@
 #include "internal/bouncer2_mod.hpp"
 #include "internal/test_card_mod.hpp"
 #include "internal/replay_mod.hpp"
-#include "internal/rwl_mod.hpp"
 #include "front.hpp"
 #include "translation.hpp"
 
@@ -74,7 +73,6 @@ enum {
     MODULE_INTERNAL_WIDGET2_DIALOG,
     MODULE_INTERNAL_WIDGET2_MESSAGE,
     MODULE_INTERNAL_WIDGET2_LOGIN,
-    MODULE_INTERNAL_WIDGET2_RWL,
     MODULE_INTERNAL_CARD,
     MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE,
     MODULE_INTERNAL_DIALOG_VALID_MESSAGE,
@@ -482,15 +480,6 @@ public:
                                          this->front,
                                          this->front.client_info.width,
                                          this->front.client_info.height);
-                LOG(LOG_INFO, "ModuleManager::internal module Login ready");
-                break;
-            case MODULE_INTERNAL_WIDGET2_RWL:
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-                this->mod = new RwlMod(
-                                       this->ini,
-                                       this->front,
-                                       this->front.client_info.width,
-                                       this->front.client_info.height);
                 LOG(LOG_INFO, "ModuleManager::internal module Login ready");
                 break;
 

@@ -550,8 +550,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     mod.on_front_up_and_running();
     mod.draw_event(time(NULL));
 
-    BOOST_CHECK_EQUAL(mod.front_width, 1024);
-    BOOST_CHECK_EQUAL(mod.front_height, 768);
+    BOOST_CHECK_EQUAL(mod.get_front_width(), 1024);
+    BOOST_CHECK_EQUAL(mod.get_front_height(), 768);
 
 //    mod.draw_event(time(NULL));
 ////    BOOST_CHECK(t.status);
