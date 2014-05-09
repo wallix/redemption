@@ -57,10 +57,6 @@ public:
         }
     }
 
-    virtual int get_bg_color() const {
-        return BLACK;
-    }
-
     void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
         if (text == NULL) {
             if (this->tooltip) {

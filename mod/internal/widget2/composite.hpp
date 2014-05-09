@@ -246,7 +246,9 @@ public:
         }
     }
 
-    virtual int get_bg_color() const = 0;
+    virtual int get_bg_color() const {
+        return BLACK;
+    }
 
     void move_xy(int16_t x, int16_t y) {
         CompositeContainer::iterator iter_w_first = this->impl->get_first();
@@ -399,10 +401,6 @@ public:
     }
 
     virtual ~WidgetComposite() {}
-
-    virtual int get_bg_color() const {
-        return BLACK;
-    }
 
     virtual void draw(const Rect & clip) {
         Rect rect_intersect = clip.intersect(this->rect);
