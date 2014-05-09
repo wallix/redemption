@@ -561,7 +561,6 @@ unit-test test_screen : tests/mod/internal/widget2/test_screen.cpp cryptofile pn
 
 
 unit-test test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_rwl_mod : tests/mod/internal/test_rwl_mod.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_test_card_mod : tests/mod/internal/test_test_card_mod.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
