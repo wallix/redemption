@@ -15,7 +15,7 @@ def usage():
 
 try:
   opts, args = getopt.getopt(sys.argv[1:], "h",
-                             ["help", "update-version=", "build-package"
+                             ["help", "update-version=", "build-package",
                               "no-entry-changelog",
                               "no-git-commit", "git-tag", "git-push-tag",
                               "prefix=", "etc-prefix=", "cert-prefix=",
