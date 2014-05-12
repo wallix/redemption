@@ -242,8 +242,6 @@ def check_new_tag_version_with_local_and_remote_tags(newtag):
   if newtag in remote_tags:
     raise Exception('tag %s already exists (remote).' % tag)
 # Check tag version END
-def git_tag():
-  pass
 
 # BUILD FUNCTIONS
 # Check matching versions BEGIN
