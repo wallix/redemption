@@ -216,8 +216,8 @@ def update_changelog_template(newtag):
     with open("/tmp/redemption.changelog.tmp", "r") as f:
       for line in f:
         if len(line) and line != "\n":
-        changelog += "  * "
-        changelog += line
+          changelog += "  * "
+          changelog += line
   changelog += "\n\n -- cgrosjean <cgrosjean at wallix.com>  "
   changelog += datetime.datetime.today().strftime("%a, %d %b %Y %H:%M:%S +0200")
   changelog += "\n\n"
