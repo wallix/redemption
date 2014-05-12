@@ -263,7 +263,7 @@ def check_matching_version_changelog():
     raise Exception('Source Version not found in file main/version.hpp')
 
   found = False
-  out = readall("debian/changelog")
+  out = readall("%s/changelog" % packagetemp)
   out = out.split('\n')
   for line in out:
     res = re.match('^redemption\s*[(](((\d+)[.](\d+)[.](\d+))(-[a-z]*)*)(.*)[)].*$', line)
