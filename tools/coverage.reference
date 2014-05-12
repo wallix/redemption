@@ -188,7 +188,6 @@ mod/internal/replay_mod 100 100
 mod/internal/flat_selector_mod 100 100
 mod/internal/test_card_mod 100 100
 mod/internal/bouncer2_mod 100 100
-mod/internal/rwl_mod 100 100
 mod/internal/flat_dialog_mod 100 100
 mod/internal/widget2/flat_button 100 100
 mod/internal/widget2/flat_dialog 100 100
