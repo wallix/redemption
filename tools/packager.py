@@ -201,7 +201,7 @@ def check_uncommited_changes():
 # Check uncommited changes END
 
 # UPDATE VERSION FUNCTIONS
-def update_version(newtag):
+def update_version_file(newtag):
   # Set tag version in main/version.hpp
   out = readall("main/version.hpp")
   out = re.sub('#\s*define\sVERSION\s".*"', '#define VERSION "%s"' % newtag, out, 1)
@@ -296,11 +296,11 @@ def check_last_version_commited_match_current_version(version):
 status = 0
 try:
   check_uncommited_changes()
-  if update_version:
+  if (update_version and tag):
     # check tag does not exist
     check_new_tag_version_with_local_and_remote_tags(tag)
     # update changelog and version (write in main/version.hpp and changelog template)
-    update_version(tag)
+    update_version_file(tag)
     update_changelog_template(tag)
 
     # tags and commits BEGIN
