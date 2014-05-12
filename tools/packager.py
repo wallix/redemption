@@ -11,7 +11,7 @@ import datetime
 import re
 
 def usage():
-  print("Usage: %s [-h|--help] --update-version version [--no-entry-changelog] [--no-git-commit] [--git-tag] [--git-push-tag] --build-package [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--force-distro name] [--force-distro-codename name] [--debug] --tag version" % sys.argv[0])
+  print("Usage: %s [-h|--help] --update-version version [--no-entry-changelog] [--no-git-commit] [--git-tag] [--git-push-tag] --build-package [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--force-distro name] [--force-distro-codename name] [--debug]" % sys.argv[0])
 
 try:
   opts, args = getopt.getopt(sys.argv[1:], "h",
