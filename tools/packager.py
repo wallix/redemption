@@ -248,6 +248,7 @@ def check_new_tag_version_with_local_and_remote_tags(newtag):
 def check_matching_version_changelog():
   found = False
   out = readall("main/version.hpp")
+  out = out.split('\n')
   for line in out:
     res = re.match('^[#]define\sVERSION\s["](((\d+)[.](\d+)[.](\d+))(-[a-z]*)*)["]\s*$', line)
     if res:
@@ -263,6 +264,7 @@ def check_matching_version_changelog():
 
   found = False
   out = readall("debian/changelog")
+  out = out.split('\n')
   for line in out:
     res = re.match('^redemption\s*[(](((\d+)[.](\d+)[.](\d+))(-[a-z]*)*)(.*)[)].*$', line)
     if res:
@@ -294,8 +296,10 @@ def check_last_version_commited_match_current_version(version):
 # Check last version tag commited match current version tag END
 
 status = 0
+remove_diff = False
 try:
   check_uncommited_changes()
+  remove_diff = True
   if (update_version and tag):
     # check tag does not exist
     check_new_tag_version_with_local_and_remote_tags(tag)
@@ -372,12 +376,13 @@ try:
       raise ""
   exit(0)
 except Exception, e:
-  res = subprocess.Popen(["git", "diff", "--shortstat"],
-                         stdout = subprocess.PIPE,
-                         stderr = subprocess.STDOUT
-                        ).communicate()[0]
-  if res:
-    os.system("git stash")
-    os.system("git stash drop")
+  if remove_diff:
+    res = subprocess.Popen(["git", "diff", "--shortstat"],
+                           stdout = subprocess.PIPE,
+                           stderr = subprocess.STDOUT
+                           ).communicate()[0]
+    if res:
+      os.system("git stash")
+      os.system("git stash drop")
   print "Build failed: %s" % e
   exit(status if status else -1)
