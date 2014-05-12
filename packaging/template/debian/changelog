@@ -1,3 +1,10 @@
+redemption (0.9.424%target_name) %pkg_distribution; urgency=low
+
+  * Fix bugs in packager script
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 12 May 2014 18:43:51 +0200
+
 redemption (0.9.422%target_name) %pkg_distribution; urgency=low
 
   * Fix bug in package script
