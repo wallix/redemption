@@ -413,7 +413,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         if (!context) {
             return SEC_E_NO_CONTEXT;
         }
-
+        if (context->verbose & 0x400) {
+            LOG(LOG_INFO, "NTLM_SSPI::EncryptMessage");
+        }
         for (index = 0; index < (int) pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
                 data_buffer = &pMessage->pBuffers[index];
@@ -513,6 +515,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         }
         if (!context) {
             return SEC_E_NO_CONTEXT;
+        }
+        if (context->verbose & 0x400) {
+            LOG(LOG_INFO, "NTLM_SSPI::DecryptMessage");
         }
 
         for (index = 0; index < (int) pMessage->cBuffers; index++) {
