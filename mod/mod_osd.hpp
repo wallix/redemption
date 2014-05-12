@@ -129,7 +129,33 @@ public:
 
     virtual ~mod_osd()
     {
-        this->mod.rdp_input_invalidate(this->fg_rect);
+        if (this->get_gd(this->mod) == this) {
+            this->mod.rdp_input_invalidate(this->fg_rect);
+        }
+    }
+
+    const Rect & fg() const
+    {
+        return this->fg_rect;
+    }
+
+    bool is_active() const
+    {
+        return this->get_gd(this->mod) == this;
+    }
+
+    void swap_active()
+    {
+        if (this->is_active()) {
+            this->set_gd(this->mod, &this->mod);
+            this->mod.rdp_input_invalidate(this->fg_rect);
+        }
+        else {
+            this->mod.begin_update();
+            this->draw_fg(this->fg_rect);
+            this->mod.end_update();
+            this->set_gd(this->mod, this);
+        }
     }
 
     virtual wait_obj& get_event()
@@ -347,12 +373,7 @@ public:
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        /*if (this->fg_rect.x <= x && x < this->fg_rect.right() && this->fg_rect.y <= y && y < this->fg_rect.bottom()) {
-            this->input_mouse(device_flags, x - this->fg_rect.x, y - this->fg_rect.y, keymap);
-        }
-        else*/ {
-            this->mod.rdp_input_mouse(device_flags, x, y, keymap);
-        }
+        this->mod.rdp_input_mouse(device_flags, x, y, keymap);
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
@@ -362,7 +383,15 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
+//         if (keymap->nb_kevent_available() > 0){
+//             if (!(param3 & SlowPath::KBDFLAGS_DOWN) && keymap->top_kevent() == Keymap2::KEVENT_END) {
+//                 keymap->get_kevent();
+//                 this->swap_active();
+//             }
+//             else {
+                this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
+//             }
+//         }
     }
 
     virtual void send_to_front_channel(const char*const mod_channel_name, uint8_t* data, size_t length,
