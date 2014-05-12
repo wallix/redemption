@@ -356,6 +356,7 @@ try:
     else:
       # debian codename
       package_distribution = distro_codename
+    changelog = readall("%s/changelog" % packagetemp)
     writeall("debian/changelog",
              changelog.replace('%target_name', target).replace('%pkg_distribution', package_distribution))
 
