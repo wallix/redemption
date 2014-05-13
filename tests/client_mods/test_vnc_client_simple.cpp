@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         public:
         uint8_t mod_bpp;
         uint32_t verbose;
-        const ClientInfo & info;
+        ClientInfo & info;
         CHANNELS::ChannelDefArray cl;
 
         virtual void flush()
@@ -297,9 +297,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "========================================\n");
             }
         }
+        virtual void set_mod_color_depth(uint8_t bpp) {
+            this->mod_bpp = bpp;
+        }
         virtual int server_resize(int width, int height, int bpp)
         {
-            this->mod_bpp = bpp;
+            this->set_mod_color_depth(bpp);
+            this->info.bpp = bpp;
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");
                 LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
@@ -314,7 +318,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         bool notimestamp;
         bool nomouse;
 
-        Front(const ClientInfo & info, uint32_t verbose) :
+        Front(ClientInfo & info, uint32_t verbose) :
               FrontAPI(false, false),
               verbose(verbose),
               info(info),
@@ -323,7 +327,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
               notimestamp(true),
               nomouse(true)
             {}
-
     } front(info, verbose);
 
 //    BStream stream(65536);
