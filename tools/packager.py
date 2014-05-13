@@ -11,74 +11,85 @@ import datetime
 import re
 
 def usage():
-  print("Usage: %s [-h|--help] [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--no-entry-changelog] [--force-distro name] [--force-distro-codename name] [--no-buildpackage] [--no-git-commit] [--git-tag] [--git-push-tag] [--debug] --tag version" % sys.argv[0])
+  print("Usage: %s [-h|--help] --update-version version [--no-entry-changelog] [--no-git-commit] [--git-tag] [--git-push-tag] | --build-package [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--force-distro name] [--force-distro-codename name] [--debug]" % sys.argv[0])
 
 try:
-  opts, args = getopt.getopt(sys.argv[1:], "h",
-                             ["help", "package-distribution=", "tag=",
+  options, args = getopt.getopt(sys.argv[1:], "h",
+                             ["help", "update-version=", "build-package",
+                              "no-entry-changelog",
+                              "no-git-commit", "git-tag", "git-push-tag",
                               "prefix=", "etc-prefix=", "cert-prefix=",
-                              "no-entry-changelog", "no-buildpackage",
+                              "package-distribution=",
                               "force-distro=", "force-distro-codename=",
-                              "no-git-commit", "no-git-tag", "debug"])
+                              "debug"])
 except getopt.GetoptError as err:
   print(str(err))
   usage()
   sys.exit(2)
 
-tag = None
-prefix = '/usr/local'
-etc_prefix = '/etc/rdpproxy'
-cert_prefix = '/etc/rdpproxy/cert'
-package_distribution = 'unstable'
-debug = False
-entry_changelog = True
-force_distro = None
-force_distro_codename = None
-buildpackage = True
-git_commit = True
-git_tag = False
-git_push_tag = False
+class opts(object):
+  tag = None
+  packagetemp = "packaging/template/debian"
+  prefix = '/usr/local'
+  etc_prefix = '/etc/rdpproxy'
+  cert_prefix = '/etc/rdpproxy/cert'
+  package_distribution = 'unstable'
+  debug = False
+  entry_changelog = True
+  force_distro = None
+  force_distro_codename = None
+  git_commit = True
+  git_tag = False
+  git_push_tag = False
 
-for o,a in opts:
+  update_version = False
+  build_package = False
+
+for o,a in options:
   if o in ("-h", "--help"):
     usage()
     sys.exit()
-  elif o == "--tag":
-    tag = a
-  elif o == "--package-distribution":
-    package_distribution = a
-  elif o == "--prefix":
-    prefix = a
-  elif o == "--etc-prefix":
-    etc_prefix = a
-  elif o == "--cert-prefix":
-    cert_prefix = a
+  elif o in ("-u", "--update-version"):
+    opts.update_version = True
+    opts.tag = a
+  elif o in ("-b", "--build-package"):
+    opts.build_package = True
   elif o == "--no-entry-changelog":
-    entry_changelog = False
-  elif o == "--force-distro":
-    force_distro = a
-  elif o == "--force-distro-codename":
-    force_distro_codename = a
-  elif o == "--no-buildpackage":
-    buildpackage = False
+    opts.entry_changelog = False
   elif o == "--no-git-commit":
-    git_commit = False
+    opts.git_commit = False
   elif o == "--git-tag":
-    git_tag = True
+    opts.git_tag = True
   elif o == "--git-push-tag":
-    git_push_tag = True
+    opts.git_push_tag = True
+  elif o == "--package-distribution":
+    opts.package_distribution = a
+  elif o == "--prefix":
+    opts.prefix = a
+  elif o == "--etc-prefix":
+    opts.etc_prefix = a
+  elif o == "--cert-prefix":
+    opts.cert_prefix = a
+  elif o == "--force-distro":
+    opts.force_distro = a
+  elif o == "--force-distro-codename":
+    opts.force_distro_codename = a
   elif o == "--debug":
-    debug = True
+    opts.debug = True
 
-if tag == None:
+# not (opts.build_package or (opts.update_version and opts.tag))
+if ((not opts.build_package) and
+    ((not opts.update_version) or
+     (not opts.tag))):
   usage()
   sys.exit(1)
 
-
+# remove existing deban directory BEGIN
 try:
   shutil.rmtree("debian")
 except:
   pass
+# remove existing deban directory END
 
 def readall(filename):
   with open(filename) as f:
@@ -181,114 +192,206 @@ def parse_template(filename, distro, codename, version, arch):
     return out
   return ''
 
-status = 0
-try:
+# Check uncommited changes BEGIN
+def check_uncommited_changes():
   res = subprocess.Popen(["git", "diff", "--shortstat"],
                          stdout = subprocess.PIPE,
                          stderr = subprocess.STDOUT
                         ).communicate()[0]
   if res:
     raise Exception('your repository has uncommited changes:\n%sPlease commit before packaging.' % (res))
-  
-  locale_tags = subprocess.Popen(["git", "tag", "--list"],
-                               stdout = subprocess.PIPE,
-                               stderr = subprocess.STDOUT
-                               ).communicate()[0].split('\n')
+# Check uncommited changes END
 
-  if tag in locale_tags:
-    raise Exception('tag %s already exists (locale).' % tag)
-  
-  remote_tags = map(lambda x : x.split('/')[-1], subprocess.Popen(["git", "ls-remote", "--tags", "origin"],
-                               stdout = subprocess.PIPE,
-                               stderr = subprocess.STDOUT
-                               ).communicate()[0].split('\n'))
-  
-  if tag in remote_tags:
-    raise Exception('tag %s already exists (remote).' % tag)
-
-  os.mkdir("debian", 0766)
-
-  distro, distro_release, distro_codename = distroinfo.get_distro()
-  if force_distro != None:
-    distro = force_distro
-  if force_distro_codename != None:
-    distro_codename = force_distro_codename
-
-  packagetemp = "packaging/template/debian"
-
-  writeall("debian/redemption.install",
-           "%s/*\n%s/bin/*\n%s/share/rdpproxy/*" % (etc_prefix, prefix, prefix))
-
-  env = 'PREFIX="%s"\nETC_PREFIX="%s"\nCERT_PREFIX="%s"' % (prefix, etc_prefix, cert_prefix)
-
-  copy_and_replace("%s/redemption.postinst" % packagetemp, "debian/redemption.postinst", '%setenv', env)
-
-  if debug:
-    env += "\nBJAM_EXTRA_INSTALL=debug"
-  copy_and_replace("%s/rules" % packagetemp, "debian/rules", '%setenv', env)
-
-  changelog = ""
-  if entry_changelog:
+# UPDATE VERSION FUNCTIONS
+def update_version_file(newtag):
+  # Set tag version in main/version.hpp
+  out = readall("main/version.hpp")
+  out = re.sub('#\s*define\sVERSION\s".*"', '#define VERSION "%s"' % newtag, out, 1)
+  writeall("main/version.hpp", out)
+def update_changelog_template(newtag):
+  # write changelog
+  changelog = "redemption (%s%%target_name) %%pkg_distribution; urgency=low\n\n" % newtag
+  if opts.entry_changelog:
     if not 'EDITOR' in os.environ:
       os.environ['EDITOR'] = 'nano'
     os.system("%s /tmp/redemption.changelog.tmp" % os.environ['EDITOR'])
-    changelog = "redemption (%s%%target_name) %%pkg_distribution; urgency=low\n\n" % tag
     with open("/tmp/redemption.changelog.tmp", "r") as f:
       for line in f:
         if len(line) and line != "\n":
           changelog += "  * "
           changelog += line
-    changelog += "\n\n -- cgrosjean <cgrosjean at wallix.com>  "
-    changelog += datetime.datetime.today().strftime("%a, %d %b %Y %H:%M:%S +0200")
-    changelog += "\n\n"
-  changelog += readall("%s/changelog" % packagetemp)
-  if entry_changelog:
-    writeall("%s/changelog" % packagetemp, changelog)
+  changelog += "\n\n -- cgrosjean <cgrosjean at wallix.com>  "
+  changelog += datetime.datetime.today().strftime("%a, %d %b %Y %H:%M:%S +0200")
+  changelog += "\n\n"
+  changelog += readall("%s/changelog" % opts.packagetemp)
+  writeall("%s/changelog" % opts.packagetemp, changelog)
 
-  target = ''
-  if distro == 'ubuntu':
-    target += '+'
-    target += distro_codename
-  writeall("debian/changelog",
-           changelog.replace('%target_name', target).replace('%pkg_distribution', package_distribution))
+# Check tag version BEGIN
+def check_new_tag_version_with_local_and_remote_tags(newtag):
+  locale_tags = subprocess.Popen(["git", "tag", "--list"],
+                               stdout = subprocess.PIPE,
+                               stderr = subprocess.STDOUT
+                               ).communicate()[0].split('\n')
 
-  out = parse_template("%s/control" % packagetemp,
-                       distro, distro_codename, distro_release, distroinfo.get_arch())
-  writeall("debian/control", out.replace('%REDEMPTION_VERSION', tag))
+  if newtag in locale_tags:
+    raise Exception('tag %s already exists (locale).' % newtag)
 
-  shutil.copy("%s/compat" % packagetemp, "debian/compat")
-  shutil.copy("docs/copyright", "debian/copyright")
+  remote_tags = map(lambda x : x.split('/')[-1], subprocess.Popen(["git", "ls-remote", "--tags", "origin"],
+                               stdout = subprocess.PIPE,
+                               stderr = subprocess.STDOUT
+                               ).communicate()[0].split('\n'))
 
+  if newtag in remote_tags:
+    raise Exception('tag %s already exists (remote).' % newtag)
+# Check tag version END
+
+# BUILD FUNCTIONS
+# Check matching versions BEGIN
+def check_matching_version_changelog():
+  found = False
   out = readall("main/version.hpp")
-  out = re.sub('#\s*define\sVERSION\s".*"', '#define VERSION "%s"' % tag, out, 1)
-  writeall("main/version.hpp", out)
+  out = out.split('\n')
+  for line in out:
+    res = re.match('^[#]define\sVERSION\s["](((\d+)[.](\d+)[.](\d+))(-[a-z]*)*)["]\s*$', line)
+    if res:
+      red_source_version = res.group(1)
+      red_num_ver = res.group(2)
+      bas_ver = res.group(3)
+      rel_ver = res.group(4)
+      fix_ver = res.group(5)
+      found = True
+      break
+  if not found:
+    raise Exception('Source Version not found in file main/version.hpp')
 
-  if git_commit:
-    status = os.system("git commit -am 'Version %s'" % tag)
-    if status:
-      raise ""
+  found = False
+  out = readall("%s/changelog" % opts.packagetemp)
+  out = out.split('\n')
+  for line in out:
+    res = re.match('^redemption\s*[(](((\d+)[.](\d+)[.](\d+))(-[a-z]*)*)(.*)[)].*$', line)
+    if res:
+      changelog_red_source_version = res.group(1)
+      changelog_red_num_ver = res.group(2)
+      changelog_bas_ver = res.group(3)
+      changelog_rel_ver = res.group(4)
+      changelog_fix_ver = res.group(5)
+      changelog_suffix_ver = res.group(6)
+      found = True
+      break
 
-    if git_tag:
-      status = os.system("git tag %s" % tag)
+  if not found:
+    raise Exception('Source Version not found in debian/changelog')
+
+  if changelog_red_source_version != red_source_version:
+    raise Exception('Version mismatch between changelog and main/version ("%s" != "%s")' %
+                    (changelog_red_source_version, red_source_version))
+  return red_source_version
+# Check matching versions END
+
+
+# Check last version tag commited match current version tag BEGIN
+def check_last_version_commited_match_current_version(version):
+  res = subprocess.Popen(["git", "describe", "--tags"], stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
+  tag_describe = res.split("\n")[0]
+  if version != tag_describe:
+    raise Exception('Repository head mismatch current version ("%s" != "%s"), please tag current version before building packet' % (version, tag_describe))
+# Check last version tag commited match current version tag END
+
+status = 0
+remove_diff = False
+try:
+  check_uncommited_changes()
+  remove_diff = True
+  if (opts.update_version and opts.tag):
+    # check tag does not exist
+    check_new_tag_version_with_local_and_remote_tags(opts.tag)
+    # update changelog and version (write in main/version.hpp and changelog template)
+    update_version_file(opts.tag)
+    update_changelog_template(opts.tag)
+
+    # tags and commits BEGIN
+    if opts.git_commit:
+      status = os.system("git commit -am 'Version %s'" % opts.tag)
       if status:
         raise ""
+      if opts.git_tag:
+        status = os.system("git tag %s" % opts.tag)
+        if status:
+          raise ""
+        if opts.git_push_tag:
+          status = os.system("git push --tags")
+          if status:
+            raise ""
+    # tags and commits END
 
-  if buildpackage:
+  if opts.build_package:
+    opts.tag = check_matching_version_changelog()
+    check_last_version_commited_match_current_version(opts.tag)
+    # Set debian (packaging data) directory with distro specific packaging files BEGIN
+    # Create temporary directory
+    os.mkdir("debian", 0766)
+
+    distro, distro_release, distro_codename = distroinfo.get_distro()
+    if opts.force_distro != None:
+      distro = opts.force_distro
+    if opts.force_distro_codename != None:
+      distro_codename = opts.force_distro_codename
+
+    # write redemption.install file
+    writeall("debian/redemption.install",
+             "%s/*\n%s/bin/*\n%s/share/rdpproxy/*" %
+             (opts.etc_prefix, opts.prefix, opts.prefix))
+
+    env = 'PREFIX="%s"\nETC_PREFIX="%s"\nCERT_PREFIX="%s"' % (opts.prefix,
+                                                              opts.etc_prefix,
+                                                              opts.cert_prefix)
+    # write redemption.postinst
+    copy_and_replace("%s/redemption.postinst" % opts.packagetemp,
+                     "debian/redemption.postinst", '%setenv', env)
+
+    # write rules
+    if opts.debug:
+      env += "\nBJAM_EXTRA_INSTALL=debug"
+    copy_and_replace("%s/rules" % opts.packagetemp, "debian/rules", '%setenv', env)
+
+    # write changelog
+    target = ''
+    if distro == 'ubuntu':
+      target += '+'
+      target += distro_codename
+    else:
+      # debian codename
+      opts.package_distribution = distro_codename
+    changelog = readall("%s/changelog" % opts.packagetemp)
+    writeall("debian/changelog",
+             changelog.replace('%target_name',
+                               target).replace('%pkg_distribution',
+                                               opts.package_distribution))
+
+    # write control
+    out = parse_template("%s/control" % opts.packagetemp,
+                         distro, distro_codename, distro_release, distroinfo.get_arch())
+    writeall("debian/control", out.replace('%REDEMPTION_VERSION', opts.tag))
+
+    # write compat
+    shutil.copy("%s/compat" % opts.packagetemp, "debian/compat")
+    # write copyright
+    shutil.copy("docs/copyright", "debian/copyright")
+
+    # Set debian (packaging data) directory with distro specific packaging files END
+
     status = os.system("dpkg-buildpackage -b -tc -us -uc -r")
     if status:
       raise ""
-    if git_push_tag and git_tag:
-      status = os.system("git push --tags")
-      if status:
-        raise ""
   exit(0)
 except Exception, e:
-  res = subprocess.Popen(["git", "diff", "--shortstat"],
-                         stdout = subprocess.PIPE,
-                         stderr = subprocess.STDOUT
-                        ).communicate()[0]
-  if res:
-    os.system("git stash")
-    os.system("git stash drop")
+  if remove_diff:
+    res = subprocess.Popen(["git", "diff", "--shortstat"],
+                           stdout = subprocess.PIPE,
+                           stderr = subprocess.STDOUT
+                           ).communicate()[0]
+    if res:
+      os.system("git stash")
+      os.system("git stash drop")
   print "Build failed: %s" % e
   exit(status if status else -1)
