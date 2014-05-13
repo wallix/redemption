@@ -27,6 +27,7 @@
 #include "RDP/PersistentKeyListPDU.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "fileutils.hpp"
+#include "unique_ptr.hpp"
 
 enum {
       BITMAP_FOUND_IN_CACHE
@@ -48,13 +49,13 @@ struct BmpCache {
     uint16_t cache_size[MAXIMUM_NUMBER_OF_CACHES];
     bool     cache_persistent[MAXIMUM_NUMBER_OF_CACHES];
 
-    const Bitmap * cache [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
-    uint32_t       stamps[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
-    uint8_t        sha1  [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES][20];
+    unique_ptr<const Bitmap> cache [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
+    uint32_t                 stamps[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
+    uint8_t                  sha1  [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES][20];
     union {
         uint8_t  sig_8[8];
         uint32_t sig_32[2];
-    }              sig   [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
+    }                        sig   [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
 
     // Map based bitmap finder.
     class Finder {
@@ -196,7 +197,6 @@ struct BmpCache {
         }
 
         ~BmpCache() {
-            this->destroy_cache();
         }
 
     private:
@@ -206,7 +206,7 @@ struct BmpCache {
             }
             for (uint8_t cid = 0; cid < MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */; cid++) {
                 for (uint16_t cidx = 0; cidx < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cidx++) {
-                    delete this->cache[cid][cidx];
+                    this->cache[cid][cidx].reset();
                 }
                 this->finders[cid].clear();
             }
@@ -216,7 +216,7 @@ struct BmpCache {
             this->stamp = 0;
             for (uint8_t cid = 0; cid < MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */; cid++) {
                 for (uint16_t cidx = 0; cidx < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cidx++) {
-                    this->cache[cid][cidx]  = NULL;
+                    this->cache[cid][cidx].reset();
                     this->stamps[cid][cidx] = 0;
                     bzero(this->sha1[cid][cidx], sizeof(this->sha1[cid][cidx]));
                     bzero(this->sig[cid][cidx].sig_8, sizeof(this->sig[cid][cidx].sig_8));
@@ -239,12 +239,10 @@ struct BmpCache {
                 idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
             }
             if (this->cache[id][idx]) {
-                this->finders[id].remove(this->sha1[id][idx], this->cache[id][idx]->cx,
-                    this->cache[id][idx]->cy);
-                delete this->cache[id][idx];
+                this->finders[id].remove(this->sha1[id][idx], this->cache[id][idx]->cx, this->cache[id][idx]->cy);
             }
-            this->cache[id][idx]         = bmp;
-            this->stamps[id][idx]        = ++this->stamp;
+            this->cache[id][idx].reset(bmp);
+            this->stamps[id][idx] = ++this->stamp;
             bmp->compute_sha1(this->sha1[id][idx]);
             if (this->cache_persistent[id]) {
                 REDASSERT(key1 && key2);
@@ -262,13 +260,13 @@ struct BmpCache {
 
         const Bitmap * get(uint8_t id, uint16_t idx) {
             if (id & IN_WAIT_LIST)
-                return this->cache[MAXIMUM_NUMBER_OF_CACHES][idx];
+                return this->cache[MAXIMUM_NUMBER_OF_CACHES][idx].get();
             if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
                 // Last bitmap cache entry is used by waiting list.
                 //LOG(LOG_INFO, "BmpCache: Get bitmap from waiting list.");
                 idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
             }
-            return this->cache[id][idx];
+            return this->cache[id][idx].get();
         }
 
         unsigned get_stamp(uint8_t id, uint16_t idx) {
@@ -342,7 +340,7 @@ struct BmpCache {
 
             this->finding_counter++;
 
-            const Bitmap * bmp = new Bitmap(this->bpp, oldbmp);
+            unique_ptr<const Bitmap> bmp(new Bitmap(this->bpp, oldbmp));
 
             uint8_t bmp_sha1[20];
             bmp->compute_sha1(bmp_sha1);
@@ -402,7 +400,6 @@ struct BmpCache {
                     }
                 }
                 this->stamps[id][cache_index_32] = ++this->stamp;
-                delete bmp;
                 this->found_counter++;
                 // Generating source code for unit test.
                 //if (this->verbose & 8192) {
@@ -445,7 +442,7 @@ struct BmpCache {
                     }
                 }
                 else {
-                    this->cache [MAXIMUM_NUMBER_OF_CACHES][cache_index_32] = NULL;
+                    this->cache [MAXIMUM_NUMBER_OF_CACHES][cache_index_32].reset();
                     this->stamps[MAXIMUM_NUMBER_OF_CACHES][cache_index_32] = 0;
                     bzero(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cache_index_32],
                           sizeof(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cache_index_32]));
@@ -464,16 +461,16 @@ struct BmpCache {
             // find oldest stamp (or 0) and replace bitmap
             if (this->cache[id_real][oldest_cidx]) {
                 this->finders[id_real].remove(this->sha1[id_real][oldest_cidx],
-                    this->cache[id_real][oldest_cidx]->cx, this->cache[id_real][oldest_cidx]->cy);
-                delete this->cache[id_real][oldest_cidx];
+                                              this->cache[id_real][oldest_cidx]->cx,
+                                              this->cache[id_real][oldest_cidx]->cy);
             }
-            this->cache [id_real][oldest_cidx] = bmp;
-            this->stamps[id_real][oldest_cidx] = ++this->stamp;
             if (id_real == id) {
                 ::memcpy(this->sig[id_real][oldest_cidx].sig_8, bmp_sha1, sizeof(this->sig[id_real][oldest_cidx].sig_8));
             }
             ::memcpy(this->sha1[id_real][oldest_cidx], bmp_sha1, 20);
-            this->finders[id_real].add(bmp_sha1, bmp->cx, bmp->cy, bmp, oldest_cidx);
+            this->finders[id_real].add(bmp_sha1, bmp->cx, bmp->cy, bmp.get(), oldest_cidx);
+            this->cache [id_real][oldest_cidx] = move(bmp);
+            this->stamps[id_real][oldest_cidx] = ++this->stamp;
             // Generating source code for unit test.
             //if (this->verbose & 8192) {
             //    LOG(LOG_INFO, "cache_id    = %u;", id);

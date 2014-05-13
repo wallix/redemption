@@ -334,7 +334,7 @@ private:
             if (bmp_cache.cache[cache_id][cache_index]) {
                 stream.reset();
 
-                const Bitmap   * bmp      = bmp_cache.cache[cache_id][cache_index];
+                const Bitmap   * bmp      = bmp_cache.cache[cache_id][cache_index].get();
                 const uint8_t  * sig      = bmp_cache.sig[cache_id][cache_index].sig_8;
                 const uint16_t   bmp_size = bmp->bmp_size;
                 const uint8_t  * bmp_data = bmp->data_bitmap.get();
