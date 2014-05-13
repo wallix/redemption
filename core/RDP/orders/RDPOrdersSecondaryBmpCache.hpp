@@ -957,7 +957,8 @@ class RDPBmpCache {
                 bpp = 8;
             break;
             case CBR2_16BPP:
-                bpp = 16;
+                // Support of 16-bit bitmaps in 15-bit RDP session.
+                bpp = ((session_color_depth == 15) ? 15 : 16);
             break;
             case CBR2_24BPP:
                 bpp = 24;
@@ -1110,7 +1111,8 @@ class RDPBmpCache {
                 bpp = 8;
             break;
             case CBR2_16BPP:
-                bpp = 16;
+                // Support of 16-bit bitmaps in 15-bit RDP session.
+                bpp = ((session_color_depth == 15) ? 15 : 16);
             break;
             case CBR2_24BPP:
                 bpp = 24;
