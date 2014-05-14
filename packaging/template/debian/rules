@@ -3,6 +3,8 @@
 export DH_VERBOSE=10
 export DESTDIR=debian/buildtmp
 
+BJAM_EXTRA_INSTALL=
+
 %setenv
 
 clean:
