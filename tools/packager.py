@@ -9,19 +9,22 @@ import shutil
 import os
 import datetime
 import re
+import platform
 
 def usage():
-  print("Usage: %s [-h|--help] --update-version version [--no-entry-changelog] [--no-git-commit] [--git-tag] [--git-push-tag] | --build-package [--prefix path] [--etc-prefix path] [--cert-prefix path] [--package-distribution name] [--force-distro name] [--force-distro-codename name] [--debug]" % sys.argv[0])
+  print("Usage: %s [-h|--help] --update-version version [--no-entry-changelog] [--no-git-commit] [--git-tag] [--git-push-tag] | --build-package [--package-distribution name] [--force-target target] [--debug]" % sys.argv[0])
 
+# [--prefix path] [--etc-prefix path] [--cert-prefix path]
+# [--force-distro name] [--force-distro-codename name]
 try:
   options, args = getopt.getopt(sys.argv[1:], "h",
                              ["help", "update-version=", "build-package",
                               "no-entry-changelog",
                               "no-git-commit", "git-tag", "git-push-tag",
-                              "prefix=", "etc-prefix=", "cert-prefix=",
+                              # "prefix=", "etc-prefix=", "cert-prefix=",
                               "package-distribution=",
-                              "force-distro=", "force-distro-codename=",
-                              "debug"])
+                              # "force-distro=", "force-distro-codename=",
+                              "debug", "force-target="])
 except getopt.GetoptError as err:
   print(str(err))
   usage()
@@ -29,14 +32,18 @@ except getopt.GetoptError as err:
 
 class opts(object):
   tag = None
+  target_param_path = "packaging/targets"
+  force_target = None
   packagetemp = "packaging/template/debian"
   prefix = '/usr/local'
   etc_prefix = '/etc/rdpproxy'
   cert_prefix = '/etc/rdpproxy/cert'
   package_distribution = 'unstable'
+  archi = 'any'
   debug = False
   entry_changelog = True
   force_distro = None
+  force_distro_release = None
   force_distro_codename = None
   git_commit = True
   git_tag = False
@@ -64,23 +71,25 @@ for o,a in options:
     opts.git_push_tag = True
   elif o == "--package-distribution":
     opts.package_distribution = a
-  elif o == "--prefix":
-    opts.prefix = a
-  elif o == "--etc-prefix":
-    opts.etc_prefix = a
-  elif o == "--cert-prefix":
-    opts.cert_prefix = a
-  elif o == "--force-distro":
-    opts.force_distro = a
-  elif o == "--force-distro-codename":
-    opts.force_distro_codename = a
+  # elif o == "--prefix":
+  #   opts.prefix = a
+  # elif o == "--etc-prefix":
+  #   opts.etc_prefix = a
+  # elif o == "--cert-prefix":
+  #   opts.cert_prefix = a
+  # elif o == "--force-distro":
+  #   opts.force_distro = a
+  # elif o == "--force-distro-codename":
+  #   opts.force_distro_codename = a
   elif o == "--debug":
     opts.debug = True
+  elif o == "--force-target":
+    opts.force_target = a
 
-# not (opts.build_package or (opts.update_version and opts.tag))
-if ((not opts.build_package) and
-    ((not opts.update_version) or
-     (not opts.tag))):
+# if ((not opts.build_package) and
+#     ((not opts.update_version) or
+#      (not opts.tag))):
+if not (opts.build_package or (opts.update_version and opts.tag)):
   usage()
   sys.exit(1)
 
@@ -91,6 +100,7 @@ except:
   pass
 # remove existing deban directory END
 
+# IO Files functions BEGIN
 def readall(filename):
   with open(filename) as f:
     return f.read()
@@ -191,6 +201,61 @@ def parse_template(filename, distro, codename, version, arch):
     num,out = _parse_template(filename, 0, f, vars)
     return out
   return ''
+rgx_prefix = re.compile("^\s*PREFIX=\s*(.*)$")
+rgx_etc_prefix = re.compile("^\s*ETC_PREFIX=\s*(.*)$")
+rgx_cert_prefix = re.compile("^\s*CERT_PREFIX=\s*(.*)$")
+rgx_archi = re.compile("^\s*ARCHI=\s*(.*)$")
+rgx_build_depends = re.compile("^\s*BUILD_DEPENDS=\s*(.*)$")
+rgx_depends = re.compile("^\s*DEPENDS=\s*(.*)$")
+rgx_distro = re.compile("^\s*DISTRO=\s*(.*)$")
+rgx_distro_release = re.compile("^\s*DISTRO_RELEASE=\s*(.*)$")
+rgx_distro_codename = re.compile("^\s*DISTRO_CODENAME=\s*(.*)$")
+
+def _parse_target_param(fl):
+  for l in fl:
+    m = re.search(rgx_prefix, l)
+    if m:
+      opts.prefix = m.group(1)
+      continue
+    m = re.search(rgx_etc_prefix, l)
+    if m:
+      opts.etc_prefix = m.group(1)
+      continue
+    m = re.search(rgx_cert_prefix, l)
+    if m:
+      opts.cert_prefix = m.group(1)
+      continue
+    m = re.search(rgx_archi, l)
+    if m:
+      opts.archi = m.group(1)
+      continue
+    m = re.search(rgx_build_depends, l)
+    if m:
+      opts.build_depends = m.group(1)
+      continue
+    m = re.search(rgx_depends, l)
+    if m:
+      opts.depends = m.group(1)
+      continue
+    m = re.search(rgx_distro, l)
+    if m:
+      opts.force_distro = m.group(1)
+      continue
+    m = re.search(rgx_distro_release, l)
+    if m:
+      opts.force_distro_release = m.group(1)
+      continue
+    m = re.search(rgx_distro_codename, l)
+    if m:
+      opts.force_distro_codename = m.group(1)
+      continue
+
+
+
+def parse_target_param(filename):
+  with open(filename) as f:
+    _parse_target_param(f)
+# IO Files functions END
 
 # Check uncommited changes BEGIN
 def check_uncommited_changes():
@@ -229,17 +294,18 @@ def update_changelog_template(newtag):
 # Check tag version BEGIN
 def check_new_tag_version_with_local_and_remote_tags(newtag):
   locale_tags = subprocess.Popen(["git", "tag", "--list"],
-                               stdout = subprocess.PIPE,
-                               stderr = subprocess.STDOUT
-                               ).communicate()[0].split('\n')
+                                 stdout = subprocess.PIPE,
+                                 stderr = subprocess.STDOUT
+                                 ).communicate()[0].split('\n')
 
   if newtag in locale_tags:
     raise Exception('tag %s already exists (locale).' % newtag)
 
-  remote_tags = map(lambda x : x.split('/')[-1], subprocess.Popen(["git", "ls-remote", "--tags", "origin"],
-                               stdout = subprocess.PIPE,
-                               stderr = subprocess.STDOUT
-                               ).communicate()[0].split('\n'))
+  remote_tags = map(lambda x : x.split('/')[-1],
+                    subprocess.Popen(["git", "ls-remote", "--tags", "origin"],
+                                     stdout = subprocess.PIPE,
+                                     stderr = subprocess.STDOUT
+                                     ).communicate()[0].split('\n'))
 
   if newtag in remote_tags:
     raise Exception('tag %s already exists (remote).' % newtag)
@@ -297,9 +363,38 @@ def check_last_version_commited_match_current_version(version):
     raise Exception('Repository head mismatch current version ("%s" != "%s"), please tag current version before building packet' % (version, tag_describe))
 # Check last version tag commited match current version tag END
 
+
+def get_device_architecture():
+  res = platform.machine()
+  if res:
+    return res
+  # res = subprocess.Popen(["lscpu"], stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
+  # for l in res.split('\n'):
+  #   m = re.match('^Architecture.*:.*(x86_64|i386)', l)
+  #   if m:
+  #     return m.group(1)
+  raise Exception('Device architecture not found')
+
 status = 0
 remove_diff = False
 try:
+  if opts.force_target:
+    try:
+      parse_target_param("%s/%s" % (opts.target_param_path, opts.force_target))
+    except IOError:
+      raise Exception('Target param file not found (%s/%s)' %
+                      (opts.target_param_path, opts.force_target))
+    print opts.prefix
+    print opts.etc_prefix
+    print opts.cert_prefix
+    print opts.archi
+    print opts.build_depends
+    print opts.depends
+    device_archi = get_device_architecture()
+    if not ((opts.archi == 'any') or (device_archi == opts.archi)):
+      print 'Target architecture (%s) does not match current device architecture (%s)' % (opts.archi, device_archi)
+    exit(0)
+
   check_uncommited_changes()
   remove_diff = True
   if (opts.update_version and opts.tag):
@@ -331,11 +426,28 @@ try:
     # Create temporary directory
     os.mkdir("debian", 0766)
 
+    # existing target parameters
+    if opts.force_target:
+      try:
+        parse_target_param("%s/%s" % (opts.target_param_path, opts.force_target))
+      except IOError:
+        raise Exception('Target param file not found (%s/%s)' %
+                        (opts.target_param_path, opts.force_target))
+
+    # check Distro
     distro, distro_release, distro_codename = distroinfo.get_distro()
     if opts.force_distro != None:
       distro = opts.force_distro
+    if opts.force_distro_release != None:
+      distro_release = opts.force_distro_release
     if opts.force_distro_codename != None:
       distro_codename = opts.force_distro_codename
+
+    # Check Architecture
+    device_archi = get_device_architecture()
+    if not ((opts.archi == 'any') or (device_archi == opts.archi)):
+      raise Exception('Target architecture (%s) does not match current device architecture (%s)' % (opts.archi, device_archi))
+    opts.archi = device_archi
 
     # write redemption.install file
     writeall("debian/redemption.install",
@@ -371,7 +483,7 @@ try:
     # write control
     out = parse_template("%s/control" % opts.packagetemp,
                          distro, distro_codename, distro_release, distroinfo.get_arch())
-    writeall("debian/control", out.replace('%REDEMPTION_VERSION', opts.tag))
+    writeall("debian/control", out.replace('%REDEMPTION_VERSION', opts.tag).replace('%ARCHI', opts.archi))
 
     # write compat
     shutil.copy("%s/compat" % opts.packagetemp, "debian/compat")

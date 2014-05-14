@@ -14,7 +14,7 @@ Vcs-browser: https://github.com/wallix/redemption
 Homepage: https://github.com/wallix/redemption
 
 Package: redemption
-Architecture: any
+Architecture: %ARCHI
 Homepage: https://github.com/wallix/redemption
 Depends: libboost-program-options (>=1.42.0), libpng12-0, libssl (>=0.9.8), libkrb5-3, libgssglue1
 Description: A new generation RDP proxy for WAB

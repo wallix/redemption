@@ -1,0 +1,6 @@
+PREFIX=/opt/wab
+ETC_PREFIX=/etc/opt/wab/rdp
+CERT_PREFIX=/var/wab/etc/cert
+ARCHI=i386
+BUILD_DEPENDS=debhelper (>=7), git, dpkg-dev, build-essential, g++, libboost-program-options-dev, libssl-dev, libpng12-dev, libboost-dev
+DEPENDS=libboost-program-options (>=1.42.0), libpng12-0, libssl (>=0.9.8), libkrb5-3, libgssglue1
