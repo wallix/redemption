@@ -23,7 +23,6 @@
 #define REDEMPTION_PUBLIC_MOD_MOD_OSD_HPP
 
 #include "mod_api.hpp"
-#include "../../redemption-wab.9.x/public/regex/regex.hpp"
 
 class mod_osd : public mod_api
 {

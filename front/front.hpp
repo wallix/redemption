@@ -298,9 +298,7 @@ public:
         }
     }
 
-    int server_resize(int width, int height, int bpp)
-    {
-        uint32_t res = 0;
+    virtual void set_mod_color_depth(uint8_t bpp) {
         this->mod_bpp = bpp;
         if (bpp == 8){
             this->mod_palette_setted = false;
@@ -309,9 +307,19 @@ public:
                 this->palette_memblt_sent[i] = false;
             }
         }
+    }
+
+    int server_resize(int width, int height, int bpp)
+    {
+        uint32_t res = 0;
+
+        this->set_mod_color_depth(bpp);
 
         if (this->client_info.width != width
-        || this->client_info.height != height) {
+        || this->client_info.height != height
+        || this->client_info.bpp != bpp) {
+            this->client_info.bpp = bpp;
+
             /* older client can't resize */
             if (client_info.build <= 419) {
                 LOG(LOG_WARNING, "Resizing is not available on older RDP clients");

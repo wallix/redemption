@@ -28,4 +28,7 @@ chown -R wabuser.wabuser $RECORD_PATH
 mkdir -p $RECORD_TMP_PATH
 chown -R wabuser.wabuser $RECORD_TMP_PATH
 
+mkdir -p $PERSISTENT_PATH
+chown -R wabuser.wabuser $PERSISTENT_PATH
+
 #DEBHELPER#
