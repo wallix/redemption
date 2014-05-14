@@ -491,7 +491,7 @@ try:
     # write control
     out = parse_template("%s/control" % opts.packagetemp,
                          distro, distro_codename, distro_release, distroinfo.get_arch())
-    writeall("debian/control", out.replace('%REDEMPTION_VERSION', opts.tag).replace('%ARCHI', opts.archi))
+    writeall("debian/control", out.replace('%REDEMPTION_VERSION', opts.tag).replace('%ARCHI', archi_to_control_archi(opts.archi)))
 
     # write compat
     shutil.copy("%s/compat" % opts.packagetemp, "debian/compat")
