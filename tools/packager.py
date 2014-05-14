@@ -378,22 +378,23 @@ def get_device_architecture():
 status = 0
 remove_diff = False
 try:
-  if opts.force_target:
-    try:
-      parse_target_param("%s/%s" % (opts.target_param_path, opts.force_target))
-    except IOError:
-      raise Exception('Target param file not found (%s/%s)' %
-                      (opts.target_param_path, opts.force_target))
-    print opts.prefix
-    print opts.etc_prefix
-    print opts.cert_prefix
-    print opts.archi
-    print opts.build_depends
-    print opts.depends
-    device_archi = get_device_architecture()
-    if not ((opts.archi == 'any') or (device_archi == opts.archi)):
-      print 'Target architecture (%s) does not match current device architecture (%s)' % (opts.archi, device_archi)
-    exit(0)
+  # TESTS
+  # if opts.force_target:
+  #   try:
+  #     parse_target_param("%s/%s" % (opts.target_param_path, opts.force_target))
+  #   except IOError:
+  #     raise Exception('Target param file not found (%s/%s)' %
+  #                     (opts.target_param_path, opts.force_target))
+  #   print opts.prefix
+  #   print opts.etc_prefix
+  #   print opts.cert_prefix
+  #   print opts.archi
+  #   print opts.build_depends
+  #   print opts.depends
+  #   device_archi = get_device_architecture()
+  #   if not ((opts.archi == 'any') or (device_archi == opts.archi)):
+  #     print 'Target architecture (%s) does not match current device architecture (%s)' % (opts.archi, device_archi)
+  #   exit(0)
 
   check_uncommited_changes()
   remove_diff = True
