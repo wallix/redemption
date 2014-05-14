@@ -460,12 +460,7 @@ try:
     install_file = readall("%s/redemption.install" % opts.packagetemp)
     install_file = install_file.replace('%prefix', opts.prefix)
     install_file = install_file.replace('%etc_prefix', opts.etc_prefix)
-    install_file = install_file.replace('%cert-prefix', opts.cert_prefix)
     writeall("debian/redemption.install", install_file)
-
-    writeall("debian/redemption.install",
-             "%s/*\n%s/bin/*\n%s/share/rdpproxy/*" %
-             (opts.etc_prefix, opts.prefix, opts.prefix))
 
     env = 'PREFIX="%s"\nETC_PREFIX="%s"\nCERT_PREFIX="%s"' % (opts.prefix,
                                                               opts.etc_prefix,
