@@ -35,9 +35,9 @@ class opts(object):
   target_param_path = "packaging/targets"
   force_target = None
   packagetemp = "packaging/template/debian"
-  prefix = '/usr/local'
-  etc_prefix = '/etc/rdpproxy'
-  cert_prefix = '/etc/rdpproxy/cert'
+  prefix = 'usr/local'
+  etc_prefix = 'etc/rdpproxy'
+  cert_prefix = 'etc/rdpproxy/cert'
   package_distribution = 'unstable'
   archi = 'any'
   debug = False
@@ -363,6 +363,12 @@ def check_last_version_commited_match_current_version(version):
     raise Exception('Repository head mismatch current version ("%s" != "%s"), please tag current version before building packet' % (version, tag_describe))
 # Check last version tag commited match current version tag END
 
+def archi_to_control_archi(architecture):
+  if architecture == 'x86_64':
+    return 'amd64'
+  if architecture == 'i386':
+    return architecture
+  return 'any'
 
 def get_device_architecture():
   res = platform.machine()
@@ -451,6 +457,12 @@ try:
     opts.archi = device_archi
 
     # write redemption.install file
+    install_file = readall("%s/redemption.install" % opts.packagetemp)
+    install_file = install_file.replace('%prefix', opts.prefix)
+    install_file = install_file.replace('%etc_prefix', opts.etc_prefix)
+    install_file = install_file.replace('%cert-prefix', opts.cert_prefix)
+    writeall("debian/redemption.install", install_file)
+
     writeall("debian/redemption.install",
              "%s/*\n%s/bin/*\n%s/share/rdpproxy/*" %
              (opts.etc_prefix, opts.prefix, opts.prefix))
