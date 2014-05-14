@@ -285,7 +285,7 @@ def update_changelog_template(newtag):
         if len(line) and line != "\n":
           changelog += "  * "
           changelog += line
-  changelog += "\n\n -- cgrosjean <cgrosjean at wallix.com>  "
+  changelog += "\n -- cgrosjean <cgrosjean at wallix.com>  "
   changelog += datetime.datetime.today().strftime("%a, %d %b %Y %H:%M:%S +0200")
   changelog += "\n\n"
   changelog += readall("%s/changelog" % opts.packagetemp)
