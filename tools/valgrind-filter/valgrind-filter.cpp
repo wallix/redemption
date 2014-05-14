@@ -19,10 +19,8 @@
  *              Loïc Michaux
  */
 
-#include <system_error>
 #include <iostream>
 #include <vector>
-#include <cerrno>
 #include <string>
 
 struct cstring {
@@ -41,7 +39,7 @@ int main(int ac, char ** av)
     names.resize(ac-1);
     {
         auto it = names.begin();
-        for (unsigned i = 1; i < ac; ++i) {
+        for (int i = 1; i < ac; ++i) {
             it->s = av[i];
             it->len = std::char_traits<char>::length(av[i]);
             ++it;
@@ -51,10 +49,9 @@ int main(int ac, char ** av)
     std::string pidinfo;
     std::string line;
     std::string block;
-    using size_type = std::string::size_type;
     while (std::cin >> pidinfo && std::getline(std::cin, line)) {
         if (line.empty() || (line.size() == 1 && line[0] == ' ')) {
-            [&]() {
+            [&](){
                 for (cstring & cs: names) {
                     if (block.find(cs.s, 0, cs.len) != std::string::npos) {
                         return;
@@ -67,8 +64,10 @@ int main(int ac, char ** av)
         else {
             block += pidinfo;
             block += line;
-            block += "\n";
+            block += '\n';
         }
     }
     std::cout << pidinfo << block;
+
+    return 0;
 }
