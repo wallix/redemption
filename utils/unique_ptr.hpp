@@ -51,16 +51,6 @@ struct default_delete<T[]>
     }
 };
 
-namespace detail {
-    template<class T>
-    struct is_trait_deleter
-    { static const bool value = false; };
-
-    template<class T>
-    struct is_trait_deleter<default_delete<T> >
-    { static const bool value = true; };
-}
-
 namespace aux_ {
     template<class T>
     struct unique_ptr_move
@@ -75,121 +65,13 @@ namespace aux_ {
     struct enable_if_type
     { typedef U type; };
 
-    template<class P, class T, class = void>
+    template<class T, class P, class = void>
     struct use_pointer
     { typedef P type; };
 
-    template<class P, class T>
-    struct use_pointer<P, T, typename enable_if_type<typename T::pointer>::type>
+    template<class T, class P>
+    struct use_pointer<T, P, typename enable_if_type<typename T::pointer>::type>
     { typedef typename T::pointer type; };
-
-    template<class T, class Deleter, class Pointer, bool = detail::is_trait_deleter<Deleter>::value>
-    struct unique_ptr_data
-    {
-        Pointer p_;
-        Deleter deleter_;
-
-        typedef Deleter & deleter_reference;
-        typedef Deleter const & const_deleter_reference;
-
-        explicit unique_ptr_data()
-        : p_(0)
-        {}
-
-        explicit unique_ptr_data(Pointer ptr)
-        : p_(ptr)
-        {}
-
-        unique_ptr_data(Pointer ptr, Deleter & deleter)
-        : p_(ptr)
-        , deleter_(deleter)
-        {}
-
-        unique_ptr_data(Pointer ptr, Deleter const & deleter)
-        : p_(ptr)
-        , deleter_(deleter)
-        {}
-
-        template<class U>
-        unique_ptr_data& operator=(aux_::unique_ptr_move<U> other)
-        {
-            p_ = other.u.release();
-            deleter_ = other.u.get_deleter();
-            return *this;
-        }
-
-        ~unique_ptr_data()
-        {
-            deleter_(p_);
-        }
-
-        Deleter & get_deleter()
-        {
-            return deleter_;
-        }
-
-        const Deleter & get_deleter() const
-        {
-            return deleter_;
-        }
-
-        void swap(unique_ptr_data& other)
-        {
-            using std::swap;
-            swap(p_, other.p_);
-            swap(deleter_, other.deleter_);
-        }
-
-    private:
-        unique_ptr_data(const unique_ptr_data&);
-    };
-
-    template<class T, class Deleter, class Pointer>
-    struct unique_ptr_data<T, Deleter, Pointer, true>
-    {
-        Pointer p_;
-
-        typedef Deleter deleter_reference;
-        typedef Deleter const_deleter_reference;
-
-        explicit unique_ptr_data()
-        : p_(0)
-        {}
-
-        explicit unique_ptr_data(Pointer ptr)
-        : p_(ptr)
-        {}
-
-        unique_ptr_data(Pointer ptr, Deleter)
-        : p_(ptr)
-        {}
-
-        template<class U>
-        unique_ptr_data& operator=(aux_::unique_ptr_move<U> other)
-        {
-            p_ = other.u.release();
-            return *this;
-        }
-
-        ~unique_ptr_data()
-        {
-            Deleter()(p_);
-        }
-
-        Deleter get_deleter() const
-        {
-            return Deleter();
-        }
-
-        void swap(unique_ptr_data& other)
-        {
-            using std::swap;
-            swap(p_, other.p_);
-        }
-
-    private:
-        unique_ptr_data(const unique_ptr_data&);
-    };
 
     template<class T>
     struct pointer_trait
@@ -205,81 +87,89 @@ struct unique_ptr
 {
     typedef T element_type;
     typedef Deleter deleter_type;
-    typedef typename aux_::use_pointer<typename aux_::pointer_trait<T>::type, Deleter>::type pointer;
+    typedef typename aux_::use_pointer<Deleter, typename aux_::pointer_trait<T>::type>::type pointer;
 
-    explicit unique_ptr()
-    : data()
+    unique_ptr()
     {}
 
     explicit unique_ptr(pointer ptr)
-    : data(ptr)
+    : data_(ptr)
     {}
 
-    unique_ptr(pointer ptr, deleter_type & deleter)
-    : data(ptr, deleter)
+    explicit unique_ptr(pointer ptr, Deleter & deleter)
+    : data_(ptr, deleter)
     {}
 
-    unique_ptr(pointer ptr, deleter_type const & deleter)
-    : data(ptr, deleter)
+    explicit unique_ptr(pointer ptr, Deleter const & deleter)
+    : data_(ptr, deleter)
     {}
 
     unique_ptr(aux_::unique_ptr_move<unique_ptr> other)
-    : data(other.u.release(), other.u.get_deleter())
+    : data_(other.u.release())
+    {}
+
+    ~unique_ptr()
     {}
 
     unique_ptr& operator=(aux_::unique_ptr_move<unique_ptr> other)
     {
-        data = other;
+        reset(other.u.release());
         return *this;
     }
 
     pointer get() const
     {
-        return data.p_;
+        return data_.p_;
     }
 
-    typename aux_::unique_ptr_data<T, Deleter, pointer>::deleter_reference
-    get_deleter()
+    Deleter & get_deleter()
     {
-        return data.get_deleter();
+        return data_;
     }
 
-    typename aux_::unique_ptr_data<T, Deleter, pointer>::const_deleter_reference
-    get_deleter() const
+    Deleter const & get_deleter() const
     {
-        return data.get_deleter();
+        return data_;
     }
 
     operator bool() const
-    { return data.p_ != 0; }
+    {
+        return data_.p_ != 0;
+    }
 
     T& operator*() const
-    { return data.p_; }
+    {
+        return *data_.p_;
+    }
 
     pointer operator->() const
-    { return data.p_; }
-
-    void swap(unique_ptr& other)
     {
-        data.swap(other.data);
-    }
-
-    void reset(pointer ptr = pointer())
-    {
-        data.get_deleter()(data.p_);
-        data.p_ = ptr;
-    }
-
-    pointer release()
-    {
-        pointer ret = data.p_;
-        data.p_ = 0;
-        return ret;
+        return data_.p_;
     }
 
     T& operator[](std::size_t i) const
     {
-        return data.p_[i];
+        return data_.p_[i];
+    }
+
+    void swap(unique_ptr& other)
+    {
+        using std::swap;
+        swap(data_.p_, other.data_.p_);
+        swap(get_deleter(), other.get_deleter());
+    }
+
+    void reset(pointer ptr = pointer())
+    {
+        get_deleter()(data_.p_);
+        data_.p_ = ptr;
+    }
+
+    pointer release()
+    {
+        pointer ret = data_.p_;
+        data_.p_ = 0;
+        return ret;
     }
 
 private:
@@ -288,7 +178,32 @@ private:
     template<class U>
     void reset( U );
 
-    aux_::unique_ptr_data<T, Deleter, pointer> data;
+    struct Data : Deleter {
+        pointer p_;
+
+        Data()
+        : p_()
+        {}
+
+        Data(pointer p)
+        : p_(p)
+        {}
+
+        Data(pointer p, deleter_type const & deleter)
+        : Deleter(deleter)
+        , p_(p)
+        {}
+
+        Data(pointer p, deleter_type & deleter)
+        : Deleter(deleter)
+        , p_(p)
+        {}
+
+        ~Data()
+        {
+            (*this)(p_);
+        }
+    } data_;
 };
 
 template<class T, class Deleter>
@@ -296,7 +211,12 @@ aux_::unique_ptr_move<unique_ptr<T, Deleter> >
 move(unique_ptr<T, Deleter> & u)
 { return aux_::unique_ptr_move<unique_ptr<T, Deleter> >(u); }
 
-#endif
+namespace std {
+    template<class T, class Deleter>
+    void swap(::unique_ptr<T, Deleter> & a, ::unique_ptr<T, Deleter> & b)
+    { a.swap(b); }
+}
 
+#endif
 
 #endif

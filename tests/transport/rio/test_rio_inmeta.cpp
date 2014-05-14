@@ -57,7 +57,6 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
         tv.tv_sec += 100;
         sq_timestamp(seq, &tv);
 
-        rio_clear(rt);
         rio_delete(rt);
     }
 
@@ -75,6 +74,8 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
             LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
             BOOST_CHECK(false);
         }
+
+        rio_delete(rt);
     }
 
     const char * file[] = {

@@ -79,8 +79,9 @@ public:
         }
         void use(const CountdownData & other)
         {
+            other.ptr[0]++;
+            this->reset();
             this->ptr = other.ptr;
-            this->ptr[0]++;
         }
         void reset() {
             if (this->ptr){

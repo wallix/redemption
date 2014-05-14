@@ -48,13 +48,13 @@ BOOST_AUTO_TEST_CASE(TestOutfileRIO)
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
     uint8_t buffer[1024];
-    
+
     BOOST_CHECK_EQUAL(3, rio_recv(rt, buffer, 3));
     BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
     BOOST_CHECK_EQUAL(21, rio_recv(rt, buffer + 3, 1024));
     BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
     BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 24, 1024));
-    
+
     rio_delete(rt);
     BOOST_CHECK_EQUAL(0, close(fd));
 }
@@ -63,17 +63,17 @@ BOOST_AUTO_TEST_CASE(TestInfileInputOnly)
 {
     int fd = ::open("./tests/fixtures/test_infile.txt", O_RDONLY);
 
-    // same test as above but using object allocated on stack 
+    // same test as above but using object allocated on stack
     // instead of mallocated on heap
     RIO_ERROR status = RIO_ERROR_OK;
     RIO * rt = rio_new_infile(&status, fd);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
-    
+
     BOOST_CHECK_EQUAL(RIO_ERROR_RECV_ONLY, static_cast<RIO_ERROR>(-rio_send(rt, "xxx", 3)));
     uint8_t buffer[1024];
     BOOST_CHECK_EQUAL(RIO_ERROR_RECV_ONLY, static_cast<RIO_ERROR>(-rio_recv(rt, buffer+24, 1024))); // EOF
 
-    rio_clear(rt);
+    rio_delete(rt);
 }
 
 
@@ -81,15 +81,15 @@ BOOST_AUTO_TEST_CASE(TestInfileErrorIsDir)
 {
     int fd = ::open("./tests/fixtures", O_RDONLY);
 
-    // same test as above but using object allocated on stack 
+    // same test as above but using object allocated on stack
     // instead of mallocated on heap
     RIO_ERROR status = RIO_ERROR_OK;
     RIO * rt = rio_new_infile(&status, fd);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
-    
+
     uint8_t buffer[1024];
     BOOST_CHECK_EQUAL(RIO_ERROR_EISDIR, static_cast<RIO_ERROR>(-rio_recv(rt, buffer+24, 1024)));
     BOOST_CHECK_EQUAL(RIO_ERROR_EISDIR, static_cast<RIO_ERROR>(-rio_recv(rt, buffer+24, 1024)));
 
-    rio_clear(rt);
+    rio_delete(rt);
 }
