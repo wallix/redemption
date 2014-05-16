@@ -1,34 +1,37 @@
 #!/bin/sh -e
 
-%setenv
-
+export PREFIX=%PREFIX%
+export ETC_PREFIX=%ETC_PREFIX%
+export CERT_PREFIX=%CERT_PREFIX%
 export RDPLICENSE_PATH=$CERT_PREFIX/rdplicense
 export RDPCERT_PATH=$CERT_PREFIX/rdp
-export RECORD_PATH=/var/wab/recorded/rdp
-export RECORD_TMP_PATH=/var/tmp/wab/recorded/rdp
+export RECORD_PATH=%RECORD_PATH%
+export RECORD_TMP_PATH=%RECORD_TMP_PATH%
 export HASH_PATH=/var/lib/hash
+export PERSISTENT_PATH=/var/lib/redemption/cache
+
+REDUSER=%REDEMPTION_USER%
+
 
 if [ ! -e "$ETC_PREFIX/rdpproxy.crt" ] || [ ! -e "$ETC_PREFIX/rdpproxy.key" ]; then
 $PREFIX/bin/rdpcert $ETC_PREFIX --key --x509
 fi
-chown -R wabuser.wabuser $ETC_PREFIX
 
 mkdir -p $HASH_PATH
-chown -R wabuser.wabuser $HASH_PATH
-
 mkdir -p $RDPCERT_PATH
-chown -R wabuser.wabuser $RDPCERT_PATH
-
 mkdir -p $RDPLICENSE_PATH
-chown -R wabuser.wabuser $RDPLICENSE_PATH
-
 mkdir -p $RECORD_PATH
-chown -R wabuser.wabuser $RECORD_PATH
-
 mkdir -p $RECORD_TMP_PATH
-chown -R wabuser.wabuser $RECORD_TMP_PATH
-
 mkdir -p $PERSISTENT_PATH
-chown -R wabuser.wabuser $PERSISTENT_PATH
+
+if [ ! -z "$REDUSER" ]; then
+chown -R $REDUSER.$REDUSER $ETC_PREFIX
+chown -R $REDUSER.$REDUSER $HASH_PATH
+chown -R $REDUSER.$REDUSER $RDPCERT_PATH
+chown -R $REDUSER.$REDUSER $RDPLICENSE_PATH
+chown -R $REDUSER.$REDUSER $RECORD_PATH
+chown -R $REDUSER.$REDUSER $RECORD_TMP_PATH
+chown -R $REDUSER.$REDUSER $PERSISTENT_PATH
+fi
 
 #DEBHELPER#

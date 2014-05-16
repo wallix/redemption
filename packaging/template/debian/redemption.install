@@ -1,4 +1,4 @@
-%etc_prefix/*
-%prefix/bin/*
-%prefix/share/rdpproxy/*
-%etc_prefix/themes/*
+%ETC_PREFIX%/*
+%PREFIX%/bin/*
+%PREFIX%/share/rdpproxy/*
+%ETC_PREFIX%/themes/*
