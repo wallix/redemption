@@ -49,6 +49,7 @@
 #include "stream.hpp"
 #include "ssl_calls.hpp"
 #include "rect.hpp"
+#include "unique_ptr.hpp"
 
 class Bitmap {
 public:
@@ -62,38 +63,39 @@ public:
 
     struct CountdownData {
         uint8_t * ptr;
-        CountdownData() {
-            this->ptr = 0;
-        }
+        CountdownData(uint8_t * p = 0)
+        : ptr(p)
+        {}
         ~CountdownData(){
+            this->reset();
+        }
+        uint8_t * get() const {
+            return this->ptr + 128;
+        }
+        void alloc(uint32_t size) {
+            this->reset();
+            this->ptr = static_cast<uint8_t*>(malloc(size+128));
+            this->ptr[0] = 1;
+        }
+        void use(const CountdownData & other)
+        {
+            other.ptr[0]++;
+            this->reset();
+            this->ptr = other.ptr;
+        }
+        void reset() {
             if (this->ptr){
                 this->ptr[0]--;
                 if (!this->ptr[0]){
                     free(this->ptr);
                 }
             }
-        }
-        uint8_t * get() const {
-            return this->ptr + 128;
-        }
-        void alloc(uint32_t size) {
-            this->ptr = static_cast<uint8_t*>(malloc(size+128));
-            this->ptr[0] = 1;
-        }
-        void use(const CountdownData & other)
-        {
-            this->ptr = other.ptr;
-            this->ptr[0]++;
-        }
-        void reset() {
-            if (this->ptr) {
-                free(this->ptr);
-            }
+            this->ptr = 0;
         }
     } data_bitmap;
 
     // Memoize compressed bitmap
-    mutable uint8_t * data_compressed;
+    mutable unique_ptr<uint8_t[]> data_compressed;
     mutable size_t data_compressed_size;
 
     Bitmap(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
@@ -1367,7 +1369,7 @@ public:
     void compress(uint8_t session_color_depth, Stream & outbuffer) const
     {
         if (this->data_compressed) {
-            outbuffer.out_copy_bytes(this->data_compressed, this->data_compressed_size);
+            outbuffer.out_copy_bytes(this->data_compressed.get(), this->data_compressed_size);
             return;
         }
 
@@ -1901,9 +1903,9 @@ public:
 
         // Memoize result of compression
         this->data_compressed_size = out.stream.p - tmp_data_compressed;
-        this->data_compressed = static_cast<uint8_t*>(malloc(this->data_compressed_size));
+        this->data_compressed.reset(new uint8_t[this->data_compressed_size]);
         if (this->data_compressed) {
-            memcpy(this->data_compressed, tmp_data_compressed, this->data_compressed_size);
+            memcpy(this->data_compressed.get(), tmp_data_compressed, this->data_compressed_size);
         }
     }
 
@@ -2143,9 +2145,9 @@ public:
         // Memoize result of compression
         this->data_compressed_size = outbuffer.p - tmp_data_compressed;
         //LOG(LOG_INFO, "data_compressed_size=%u", this->data_compressed_size);
-        this->data_compressed = static_cast<uint8_t*>(malloc(this->data_compressed_size));
+        this->data_compressed.reset(new uint8_t[this->data_compressed_size]);
         if (this->data_compressed) {
-            memcpy(this->data_compressed, tmp_data_compressed, this->data_compressed_size);
+            memcpy(this->data_compressed.get(), tmp_data_compressed, this->data_compressed_size);
         }
 
         //LOG(LOG_INFO, "bmp compress60: done");
@@ -2169,10 +2171,6 @@ public:
     }
 
     ~Bitmap(){
-        if (this->data_compressed) {
-            free(this->data_compressed);
-            this->data_compressed = NULL;
-        }
     }
 
     Bitmap(uint8_t out_bpp, const Bitmap& bmp)
@@ -2184,7 +2182,6 @@ public:
     , data_bitmap()
     , data_compressed(NULL)
     , data_compressed_size(0)
-
     {
         //LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
 

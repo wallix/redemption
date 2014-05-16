@@ -223,4 +223,8 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
         }
     }
 
+    for (int i = 0; i < nb_recv_sck; ++i) {
+        delete sck_trans[i];
+    }
+    delete client_trans;
 }

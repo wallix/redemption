@@ -186,7 +186,7 @@ struct RDPSerializer : public RDPGraphicDevice
     , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
     , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
     , glyphindex( 0, 0, 0, 0, 0, 0
-                , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t *)"")
+                , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (const uint8_t *)"")
     , polygonSC()
     , polygonCB()
     , polyline()

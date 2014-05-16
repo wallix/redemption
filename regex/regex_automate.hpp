@@ -572,32 +572,37 @@ namespace re {
             this->sl_beginning.next = &this->st_range_beginning;
         }
 
-#if __cplusplus >= 201103L && __cplusplus != 1 || defined(__GXX_EXPERIMENTAL_CXX0X__)
+#if __cplusplus >= 201103L
         StateMachine2(StateMachine2 && other) noexcept
+        : root(other.root)
+        , nums(other.nums)
+        , caps_type(other.caps_type)
+        , nb_states(other.nb_states)
+        , nb_capture(other.nb_capture)
+        , nodes(other.nodes)
+        , idx_trace(other.idx_trace)
+        , reindex_trace(other.reindex_trace)
+        , idx_trace_free(other.idx_trace_free)
+        , pidx_trace_free(other.pidx_trace_free)
+        , traces(other.traces)
+        , l1(other.l1)
+        , l2(other.l2)
+        , mini_sts(other.mini_sts)
+        , mini_sts_last(other.mini_sts_last)
+        , st_list(other.st_list)
+        , st_range_list(other.st_range_list)
+        , st_range_list_last(other.st_range_list_last)
+        , st_range_beginning(other.st_range_beginning)
+        , sl_beginning(other.sl_beginning)
+        , step_id(other.step_id)
+        , step_count(other.step_count)
+        , first_last(other.first_last)
+        , consumer(other.consumer)
+        , pal1(other.pal1)
+        , pal2(other.pal2)
+        , start_s(other.start_s)
+        , s(other.s)
         {
-            this->root = other.root;
-            this->nums = other.nums;
-            this->caps_type = other.caps_type;
-            this->nb_states = other.nb_states;
-            this->nb_capture = other.nb_capture;
-            this->nodes = other.nodes;
-            this->idx_trace = other.idx_trace;
-            this->reindex_trace = other.reindex_trace;
-            this->idx_trace_free = other.idx_trace_free;
-            this->pidx_trace_free = other.pidx_trace_free;
-            this->traces = other.traces;
-            this->l1 = other.l1;
-            this->l2 = other.l2;
-            this->mini_sts = other.mini_sts;
-            this->mini_sts_last = other.mini_sts_last;
-            this->st_list = other.st_list;
-            this->st_range_list = other.st_range_list;
-            this->st_range_list_last = other.st_range_list_last;
-            this->st_range_beginning = other.st_range_beginning;
-            this->sl_beginning = other.sl_beginning;
-            this->step_id = other.step_id;
-            this->first_last = other.first_last;
-
             other.st_list = nullptr;
             other.nb_states = 0;
             other.nb_capture = 0;

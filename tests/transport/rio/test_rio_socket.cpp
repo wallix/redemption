@@ -283,4 +283,9 @@ BOOST_AUTO_TEST_CASE(TestSocket)
             run = false;
         }
     }
+
+    for (int i = 0; i < nb_recv_sck; ++i) {
+        rio_delete(sck_rt[i]);
+    }
+    rio_delete(client_rt);
 }

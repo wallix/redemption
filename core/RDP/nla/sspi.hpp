@@ -174,7 +174,7 @@ struct SEC_WINNT_AUTH_IDENTITY
     }
     void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass) {
         if (user) {
-            const char * p = (char *)user;
+            const char * p = (char const *)user;
             size_t length = 0;
             if (p) {
                 length = strlen(p);
@@ -186,7 +186,7 @@ struct SEC_WINNT_AUTH_IDENTITY
             this->princname[length] = 0;
         }
         if (pass) {
-            const char * p = (char *)pass;
+            const char * p = (char const*)pass;
             size_t length = 0;
             if (p) {
                 length = strlen(p);

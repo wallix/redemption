@@ -92,7 +92,7 @@ extern "C" {
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
-            ret = ::write(self->fd, (uint8_t*)data + total_sent, remaining_len);
+            ret = ::write(self->fd, (uint8_t const *)data + total_sent, remaining_len);
             if (ret <= 0){
                 if (errno == EINTR){ continue; }
                 rio_m_RIOOutfile_destructor(self);

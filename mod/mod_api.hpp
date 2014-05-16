@@ -105,8 +105,17 @@ public:
     uint16_t get_front_height() const { return this->front_height; }
 
 protected:
+    static RDPGraphicDevice * get_gd(mod_api & mod)
+    {
+        return mod.gd;
+    }
+
     static void set_gd(mod_api & mod, RDPGraphicDevice * gd)
-    { mod.gd = gd; }
+    {
+        //mod.gd_changed(gd);
+        mod.gd = gd;
+    }
+    //virtual gd_changed(RDPGraphicDevice * /*gd*/) {}
 
 public:
     virtual void send_to_front_channel(const char * const mod_channel_name,

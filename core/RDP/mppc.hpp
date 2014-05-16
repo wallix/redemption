@@ -551,7 +551,7 @@ public:
             LOG(LOG_INFO, "compressedType=0x%02X", compressedType);
             LOG(LOG_INFO, "uncompressed_data_size=%u compressed_data_size=%u rate=%.2f",
                 uncompressed_data_size, compressed_data_size,
-                (float)compressed_data_size * 100.0 / uncompressed_data_size);
+                compressed_data_size * 100.0 / uncompressed_data_size);
             LOG(LOG_INFO, "total_uncompressed_data_size=%llu total_compressed_data_size=%llu total_rate=%.2Lf",
                 total_uncompressed_data_size, total_compressed_data_size,
                 (long double)total_compressed_data_size * 100.0 / (long double)total_uncompressed_data_size);

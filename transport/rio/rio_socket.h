@@ -112,7 +112,7 @@ extern "C" {
     {
         size_t total = 0;
         while (total < len) {
-            ssize_t sent = ::send(self->sck, &(((uint8_t*)data)[total]), len - total, 0);
+            ssize_t sent = ::send(self->sck, &(((uint8_t const*)data)[total]), len - total, 0);
             switch (sent){
             case -1:
                 if (try_again(errno)) {

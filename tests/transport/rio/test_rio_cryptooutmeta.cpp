@@ -69,6 +69,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoOutMetaCleaning)
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));
 
     rio_full_clear(rt);
+    free(rt);
 
     const char * file[] = {
         "TESTOFS.mwrm",

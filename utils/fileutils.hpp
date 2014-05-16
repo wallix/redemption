@@ -390,8 +390,8 @@ static inline int parse_ip_conntrack(int fd, const char * source, const char * d
 #define RE_IP_DEF "\\d\\d?\\d?\\.\\d\\d?\\d?\\.\\d\\d?\\d?\\.\\d\\d?\\d?"
     sprintf(strre,
             "^ *6 +\\d+ +ESTABLISHED +"
-            "src="RE_IP_DEF" +"
-            "dst=("RE_IP_DEF") +"
+            "src=" RE_IP_DEF " +"
+            "dst=(" RE_IP_DEF ") +"
             "sport=\\d+ +dport=\\d+ +packets=\\d+ bytes=\\d+ +"
             "src=%s +"
             "dst=%s +"
