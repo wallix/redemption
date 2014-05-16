@@ -151,7 +151,7 @@ extern "C" {
        and an error returned on subsequent call.
     */
     static inline ssize_t rio_m_RIOCrypto_send(RIOCrypto * self, const void * data, size_t len) {
-        ssize_t res = crypto_write(self->cf_struct, (char *)data, len);
+        ssize_t res = crypto_write(self->cf_struct, (char const *)data, len);
         if (res != (ssize_t)len) {
             rio_m_RIOCrypto_destructor(self);
             return -RIO_ERROR_ANY;

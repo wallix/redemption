@@ -57,7 +57,6 @@ BOOST_AUTO_TEST_CASE(TestInsequence)
         tv.tv_sec+= 100;
         sq_timestamp(seq, &tv);
 
-        rio_clear(rt);
         rio_delete(rt);
     }
 
@@ -81,6 +80,9 @@ BOOST_AUTO_TEST_CASE(TestInsequence)
             LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
             BOOST_CHECK(false);
         }
+
+        rio_delete(rt);
+        sq_delete(inseq);
     }
 
     const char * file[] = {
@@ -114,7 +116,6 @@ BOOST_AUTO_TEST_CASE(TestSequenceMeta)
     BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
     BOOST_CHECK_EQUAL(0, buffer[15]);
     BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 15, 1024));
-    rio_clear(rt);
     rio_delete(rt);
     sq_delete(sequence);
 }
