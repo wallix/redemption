@@ -350,9 +350,9 @@ def get_device_architecture():
 def archi_to_control_archi(architecture):
   if architecture == 'x86_64':
     return 'amd64'
-  if architecture == 'i386':
-    return architecture
   if architecture == 'i686':
+    return 'i386'
+  if architecture == 'i386':
     return architecture
   return 'any'
 
