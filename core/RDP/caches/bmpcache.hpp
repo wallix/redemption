@@ -340,7 +340,8 @@ struct BmpCache {
 
             this->finding_counter++;
 
-            unique_ptr<const Bitmap> bmp(new Bitmap(this->bpp, oldbmp));
+            uint8_t target_bpp = ((oldbmp.original_bpp > this->bpp) ? this->bpp : oldbmp.original_bpp);
+            unique_ptr<const Bitmap> bmp(new Bitmap(target_bpp, oldbmp));
 
             uint8_t bmp_sha1[20];
             bmp->compute_sha1(bmp_sha1);
