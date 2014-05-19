@@ -72,6 +72,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     ini.video.break_interval = 20;
 
     BmpCache bmp_cache(
+        BmpCache::Recorder,
         player.bmp_cache->bpp,
         player.bmp_cache->number_of_cache,
         player.bmp_cache->use_waiting_list,
@@ -160,6 +161,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //    ini.video.break_interval = 20;
 
 //    BmpCache bmp_cache(
+//        BmpCache::Recorder,
 //        player.bmp_cache->bpp,
 //        player.bmp_cache->number_of_cache,
 //        player.bmp_cache->use_waiting_list,

@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         Rect scr(0, 0, 20, 10);
         CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
         Inifile ini;
-        BmpCache bmp_cache(24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
+        BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
         RDPDrawable drawable(scr.cx, scr.cy);
         GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
         consumer.draw(RDPOpaqueRect(scr, RED), scr);
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
-    BmpCache bmp_cache(24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
+    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
@@ -232,7 +232,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
-    BmpCache bmp_cache(24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
+    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);

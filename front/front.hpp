@@ -717,6 +717,7 @@ public:
             delete this->bmp_cache;
         }
         this->bmp_cache = new BmpCache(
+                        BmpCache::Front,
                         this->client_info.bpp,
                         this->client_info.number_of_cache,
                         ((this->client_info.cache_flags & ALLOW_CACHE_WAITING_LIST_FLAG) &&

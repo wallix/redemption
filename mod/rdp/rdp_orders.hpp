@@ -207,8 +207,10 @@ struct rdp_orders {
             this->bmp_cache = NULL;
         }
 
-        this->bmp_cache = new BmpCache(bpp, 3, false, small_entries, small_size, small_persistent,
-            medium_entries, medium_size, medium_persistent, big_entries, big_size, big_persistent,
+        this->bmp_cache = new BmpCache(BmpCache::Mod_rdp, bpp, 3, false,
+            small_entries, small_size, small_persistent,
+            medium_entries, medium_size, medium_persistent,
+            big_entries, big_size, big_persistent,
             0, 0, false, 0, 0, false, verbose);
 
         if (this->enable_persistent_disk_bitmap_cache) {

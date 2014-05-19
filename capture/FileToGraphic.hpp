@@ -653,7 +653,7 @@ struct FileToGraphic
                 this->stream.p = this->stream.end;
 
                 if (!this->meta_ok){
-                    this->bmp_cache = new BmpCache(this->info_bpp, this->info_number_of_cache,
+                    this->bmp_cache = new BmpCache(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
                         this->info_use_waiting_list,
                         this->info_cache_0_entries, this->info_cache_0_size, this->info_cache_0_persistent,
                         this->info_cache_1_entries, this->info_cache_1_size, this->info_cache_1_persistent,

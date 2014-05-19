@@ -35,15 +35,21 @@ enum {
 };
 
 struct BmpCache {
+
     static const uint8_t  MAXIMUM_NUMBER_OF_CACHES        = 5;
     static const uint16_t MAXIMUM_NUMBER_OF_CACHE_ENTRIES = 8192;
 
     static const uint8_t IN_WAIT_LIST = 0x80;
 
+    const enum Owner {
+          Front
+        , Mod_rdp
+        , Recorder
+    } owner;
     const uint8_t bpp;
 
-    uint8_t number_of_cache;
-    bool    use_waiting_list;
+    const uint8_t number_of_cache;
+    const bool    use_waiting_list;
 
     uint16_t cache_entries[MAXIMUM_NUMBER_OF_CACHES];
     uint16_t cache_size[MAXIMUM_NUMBER_OF_CACHES];
@@ -131,15 +137,16 @@ struct BmpCache {
 
     Finder finders[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */];
 
-    uint32_t stamp;
-    uint32_t verbose;
+          uint32_t stamp;
+    const uint32_t verbose;
 
     unsigned finding_counter;
     unsigned found_counter;
     unsigned not_found_counter;
 
     public:
-        BmpCache(const uint8_t bpp,
+        BmpCache(Owner owner,
+                 const uint8_t bpp,
                  uint8_t number_of_cache,
                  bool use_waiting_list,
                  uint16_t cache_0_entries,     uint16_t cache_0_size,     bool cache_0_persistent,
@@ -148,7 +155,8 @@ struct BmpCache {
                  uint16_t cache_3_entries = 0, uint16_t cache_3_size = 0, bool cache_3_persistent = false,
                  uint16_t cache_4_entries = 0, uint16_t cache_4_size = 0, bool cache_4_persistent = false,
                  uint32_t verbose = 0)
-            : bpp(bpp)
+            : owner(owner)
+            , bpp(bpp)
             , number_of_cache(number_of_cache)
             , use_waiting_list(use_waiting_list)
             , stamp(0)
