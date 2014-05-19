@@ -347,13 +347,12 @@ def get_device_architecture():
     return res
   raise Exception('Device architecture not found')
 
+# control file for dpkg packager only allow 'amd64' for 64bits architectures and 'i386' for 32bits or any if there is no specification
 def archi_to_control_archi(architecture):
-  if architecture == 'x86_64':
+  if architecture in ['x86_64', 'amd64']:
     return 'amd64'
-  if architecture == 'i686':
+  if architecture in ['i686', 'i386']:
     return 'i386'
-  if architecture == 'i386':
-    return architecture
   return 'any'
 
 
