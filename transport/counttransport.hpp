@@ -20,18 +20,15 @@
    Transport layer abstraction
 */
 
-#ifndef _REDEMPTION_TRANSPORT_COUNTTRANSPORT_HPP_
-#define _REDEMPTION_TRANSPORT_COUNTTRANSPORT_HPP_
+#ifndef REDEMPTION_TRANSPORT_COUNTTRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_COUNTTRANSPORT_HPP
 
 #include "transport.hpp"
 
-class CountTransport : public Transport {
-    public:
-
-    CountTransport() {}
-
-    ~CountTransport() {}
-
+class CountTransport
+: public Transport
+{
+public:
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         TODO("move that to base class : accounting_recv(len) (or base class recv could just do accounting)");
@@ -46,7 +43,9 @@ class CountTransport : public Transport {
         this->last_quantum_sent += len;
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+    virtual void seek(int64_t offset, int whence) throw (Error) {
+        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
+    }
 
     virtual bool get_status()
     {

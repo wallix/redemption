@@ -573,7 +573,7 @@ unit-test test_regex : tests/regex/test_regex.cpp libboost_unit_test : <variant>
 # unit-test benchmark_regex_parser : tests/benchmark/parser.cpp ;
 # unit-test benchmark_regex_search : tests/benchmark/search.cpp ;
 
-unit-test test_rwl : ftests/rwl/test_rwl.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+# unit-test test_rwl : ftests/rwl/test_rwl.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_base64 : tests/utils/test_base64.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 

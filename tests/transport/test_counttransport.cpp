@@ -37,44 +37,44 @@ BOOST_AUTO_TEST_CASE(TestCountTransport)
 {
     // Count transport never receive anything or send anything but updates amount of data sent/received
     CountTransport ct;
-    BOOST_CHECK_EQUAL(0, ct.total_received);
-    BOOST_CHECK_EQUAL(0, ct.last_quantum_received);
-    BOOST_CHECK_EQUAL(0, ct.total_sent);
-    BOOST_CHECK_EQUAL(0, ct.last_quantum_sent);
+    BOOST_CHECK_EQUAL(0, ct.get_total_received());
+    BOOST_CHECK_EQUAL(0, ct.get_last_quantum_received());
+    BOOST_CHECK_EQUAL(0, ct.get_total_sent());
+    BOOST_CHECK_EQUAL(0, ct.get_last_quantum_sent());
 
     char buffer[128] = {};
     char * p = buffer;
     ct.recv(&p, 0);
-    BOOST_CHECK_EQUAL(0, ct.total_received);
-    BOOST_CHECK_EQUAL(0, ct.last_quantum_received);
+    BOOST_CHECK_EQUAL(0, ct.get_total_received());
+    BOOST_CHECK_EQUAL(0, ct.get_last_quantum_received());
 
     ct.recv(&p, 1);
-    BOOST_CHECK_EQUAL(1, ct.total_received);
-    BOOST_CHECK_EQUAL(1, ct.last_quantum_received);
+    BOOST_CHECK_EQUAL(1, ct.get_total_received());
+    BOOST_CHECK_EQUAL(1, ct.get_last_quantum_received());
 
     ct.tick();
 
     ct.recv(&p, 3);
-    BOOST_CHECK_EQUAL(4, ct.total_received);
-    BOOST_CHECK_EQUAL(3, ct.last_quantum_received);
-    
-    BOOST_CHECK_EQUAL(0, ct.total_sent);
-    BOOST_CHECK_EQUAL(0, ct.last_quantum_sent);
-    
+    BOOST_CHECK_EQUAL(4, ct.get_total_received());
+    BOOST_CHECK_EQUAL(3, ct.get_last_quantum_received());
+
+    BOOST_CHECK_EQUAL(0, ct.get_total_sent());
+    BOOST_CHECK_EQUAL(0, ct.get_last_quantum_sent());
+
     ct.send(buffer, 3);
 
-    BOOST_CHECK_EQUAL(3, ct.total_sent);
-    BOOST_CHECK_EQUAL(3, ct.last_quantum_sent);
+    BOOST_CHECK_EQUAL(3, ct.get_total_sent());
+    BOOST_CHECK_EQUAL(3, ct.get_last_quantum_sent());
 
     ct.send(buffer, 10);
 
-    BOOST_CHECK_EQUAL(13, ct.total_sent);
-    BOOST_CHECK_EQUAL(13, ct.last_quantum_sent);
+    BOOST_CHECK_EQUAL(13, ct.get_total_sent());
+    BOOST_CHECK_EQUAL(13, ct.get_last_quantum_sent());
 
     ct.tick();
 
-    BOOST_CHECK_EQUAL(13, ct.total_sent);
-    BOOST_CHECK_EQUAL(0, ct.last_quantum_sent);    
+    BOOST_CHECK_EQUAL(13, ct.get_total_sent());
+    BOOST_CHECK_EQUAL(0, ct.get_last_quantum_sent());
 }
 
 

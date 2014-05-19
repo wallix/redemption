@@ -20,41 +20,35 @@
    Transport layer abstraction
 */
 
-#ifndef _REDEMPTION_TRANSPORT_INFILETRANSPORT_HPP_
-#define _REDEMPTION_TRANSPORT_INFILETRANSPORT_HPP_
+#ifndef REDEMPTION_TRANSPORT_INFILETRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_INFILETRANSPORT_HPP
 
 #include "transport.hpp"
-#include "rio/rio.h"
+#include <unistd.h>
+#include <cerrno>
 
-class InFileTransport : public Transport {
-    public:
-    RIO rio;
+
+class InFileTransport
+: public Transport
+{
+    int fd;
     uint32_t verbose;
 
+public:
     InFileTransport(int fd, unsigned verbose = 0)
-        : verbose(verbose)
-    {
-        RIO_ERROR status = rio_init_infile(&this->rio, fd);
-        if (status != RIO_ERROR_OK){
-            LOG(LOG_ERR, "rio infile initialisation failed (%u)", status);
-            throw Error(ERR_TRANSPORT);
-        }
-    }
-
-    virtual ~InFileTransport() 
-    {
-        rio_clear(&this->rio);
-    }
+    : fd(fd)
+    , verbose(verbose)
+    {}
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error)
     {
-        ssize_t res = rio_recv(&this->rio, *pbuffer, len);
+        const ssize_t res = this->privrecv(*pbuffer, len);
         if (res <= 0){
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
         *pbuffer += res;
-        if (res != (ssize_t)len){
+        if (static_cast<size_t>(res) != len){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
     }
@@ -63,8 +57,36 @@ class InFileTransport : public Transport {
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV, 0);
     }
-    
-    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+
+    virtual void seek(int64_t offset, int whence) throw (Error) {
+        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
+    }
+
+private:
+    ssize_t privrecv(char * data, size_t len) const
+    {
+        ssize_t ret = 0;
+        size_t remaining_len = len;
+        while (remaining_len) {
+            ret = ::read(this->fd, data + (len - remaining_len), remaining_len);
+            if (ret < 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                // Error should still be there next time we try to read
+                if (remaining_len != len){
+                    return len - remaining_len;
+                }
+                return -1;
+            }
+            // We must exit loop or we will enter infinite loop
+            if (ret == 0){
+                break;
+            }
+            remaining_len -= ret;
+        }
+        return len - remaining_len;
+    }
 };
 
 #endif

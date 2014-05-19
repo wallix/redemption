@@ -20,36 +20,30 @@
    Transport layer abstraction, outfile implementation
 */
 
-#ifndef _REDEMPTION_TRANSPORT_OUTFILETRANSPORT_HPP_
-#define _REDEMPTION_TRANSPORT_OUTFILETRANSPORT_HPP_
+#ifndef REDEMPTION_TRANSPORT_OUTFILETRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_OUTFILETRANSPORT_HPP
 
 #include "transport.hpp"
-#include "rio/rio.h"
+#include <sys/types.h>
+#include <unistd.h>
+#include <cerrno>
 
-class OutFileTransport : public Transport {
-    public:
-    RIO rio;
+
+class OutFileTransport
+: public Transport
+{
+    int fd;
     uint32_t verbose;
 
+public:
     OutFileTransport(int fd, unsigned verbose = 0)
-        : verbose(verbose)
-    {
-        RIO_ERROR status = rio_init_outfile(&this->rio, fd);
-        if (status != RIO_ERROR_OK){
-            LOG(LOG_ERR, "rio outfile initialisation failed (%u)", status);
-            throw Error(ERR_TRANSPORT);
-        }
-    }
-
-    virtual ~OutFileTransport()
-    {
-        rio_clear(&this->rio);
-    }
-
+    : fd(fd)
+    , verbose(verbose)
+    {}
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
-        ssize_t res = rio_send(&this->rio, buffer, len);
+        const ssize_t res = this->privsend(buffer, len);
         if (res < 0){
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
@@ -64,10 +58,29 @@ class OutFileTransport : public Transport {
 
     virtual void seek(int64_t offset, int whence) throw (Error)
     {
-        RIO_ERROR res = rio_seek(&this->rio, offset, whence);
-        if (res != RIO_ERROR_OK){
+        if (lseek(this->fd, offset, whence) < 0) {
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
+    }
+
+private:
+    ssize_t privsend(const char * data, size_t len) const
+    {
+        ssize_t ret = 0;
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ret = ::write(this->fd, data + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                return -1;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
     }
 };
 

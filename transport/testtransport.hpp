@@ -20,192 +20,198 @@
    Transport layer abstraction
 */
 
-#ifndef _REDEMPTION_TRANSPORT_TESTTRANSPORT_HPP_
-#define _REDEMPTION_TRANSPORT_TESTTRANSPORT_HPP_
+#ifndef REDEMPTION_TRANSPORT_TESTTRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_TESTTRANSPORT_HPP
 
+#include "rio/rio.h"
 #include "transport.hpp"
+#include "unique_ptr.hpp"
 
-class GeneratorTransport : public Transport {
-
-    public:
-    RIO rio;
+#include <new>
+#include <algorithm>
 
 
-    GeneratorTransport(const char * data, size_t len)
-        : Transport()
+namespace detail {
+    struct BufArrayTransport
     {
-        RIO_ERROR status = rio_init_generator(&this->rio, data, len);
-        if (status != RIO_ERROR_OK){
-            throw Error(ERR_TRANSPORT, 0);
+        unique_ptr<uint8_t[]> data;
+        std::size_t len;
+        std::size_t current;
+
+        BufArrayTransport(const char * data, size_t len)
+        : data(new(std::nothrow) uint8_t[len])
+        , len(len)
+        {
+            if (!this->data) {
+                throw Error(ERR_TRANSPORT, 0);
+            }
+            memcpy(this->data.get(), data, len);
         }
-    }
+    };
+}
 
-    ~GeneratorTransport()
-    {
-        rio_clear(&this->rio);
-    }
+class GeneratorTransport
+: public Transport
+{
+    detail::BufArrayTransport buffer;
+
+public:
+    GeneratorTransport(const char * data, size_t len, uint32_t verbose = 0)
+    : buffer(data, len)
+    {}
 
     using Transport::recv;
-    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        ssize_t res = rio_recv(&this->rio, *pbuffer, len);
-        if (res < 0){
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
-        }
-        *pbuffer += res;
-        if (static_cast<size_t>(res) < len){
+    virtual void recv(char ** pbuffer, size_t len) throw (Error)
+    {
+        const size_t rlen = std::min<size_t>(this->buffer.len - this->buffer.current, len);
+        memcpy(*pbuffer, this->buffer.data.get() + this->buffer.current, rlen);
+        this->buffer.current += rlen;
+        *pbuffer += rlen;
+        if (rlen < len){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
     }
 
     using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
+    virtual void send(const char * const /*buffer*/, size_t /*len*/) throw (Error)
+    {
         // send perform like a /dev/null and does nothing in generator transport
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
-
-    virtual bool get_status()
+    virtual void seek(int64_t /*offset*/, int /*whence*/) throw (Error)
     {
-        return rio_get_status(&this->rio) == RIO_ERROR_OK;
+        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
     }
 
+    virtual bool get_status() const
+    {
+        return true;
+    }
 };
 
-class CheckTransport : public Transport {
-    public:
-    RIO rio;
 
+class CheckTransport
+: public Transport
+{
+    detail::BufArrayTransport buffer;
+
+public:
     CheckTransport(const char * data, size_t len, uint32_t verbose = 0)
-        : Transport()
-    {
-        RIO_ERROR res = rio_init_check(&this->rio, data, len);
-        if (res != RIO_ERROR_OK){
-            throw Error(ERR_TRANSPORT, 0);
-        }
-    }
-
-    ~CheckTransport()
-    {
-        rio_clear(&this->rio);
-    }
+    : buffer(data, len)
+    {}
 
     using Transport::recv;
-    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+    virtual void recv(char ** pbuffer, size_t len) throw (Error)
+    {
         // CheckTransport does never receive anything
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
     using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
-        ssize_t res = rio_send(&this->rio, buffer, len);
-        if (res < 0) {
+    virtual void send(const char * const data, size_t len) throw (Error)
+    {
+        const size_t available_len = std::min<size_t>(this->buffer.len - this->buffer.current, len);
+        if (0 != memcmp(data, this->buffer.data.get() + this->buffer.current, available_len)){
+            // data differs, find where
+            uint32_t differs = 0;
+            for (size_t i = 0; i < available_len ; i++){
+                if (data[i] != this->buffer.data.get()[this->buffer.current+i]) {
+                    differs = i;
+                    break;
+                }
+            }
+            LOG(LOG_INFO, "=============== Common Part =======");
+            hexdump_c(data, differs);
+            LOG(LOG_INFO, "=============== Expected ==========");
+            hexdump_c(this->buffer.data.get() + this->buffer.current + differs, available_len - differs);
+            LOG(LOG_INFO, "=============== Got ===============");
+            hexdump_c(data + differs, available_len - differs);
+            this->buffer.data.reset();
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
-        if (res < (ssize_t)len) {
+
+        this->buffer.current += available_len;
+
+        if (available_len != len){
+            LOG(LOG_INFO, "Check transport out of reference data available=%u len=%u", available_len, len);
+            LOG(LOG_INFO, "=============== Common Part =======");
+            hexdump_c(data, available_len);
+            LOG(LOG_INFO, "=============== Got Unexpected Data ==========");
+            hexdump_c(data + available_len, len - available_len);
+            this->buffer.data.reset();
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        return;
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
-
-    virtual bool get_status()
+    virtual void seek(int64_t offset, int whence) throw (Error)
     {
-        return rio_get_status(&this->rio) == RIO_ERROR_OK;
+        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
     }
 
+    virtual bool get_status() const
+    {
+        return true;
+    }
 };
 
-class TestTransport : public Transport {
-    public:
-    RIO rio_check;
-    RIO rio_gen;
 
-    uint8_t* public_key;
-    size_t   public_key_length;
+class TestTransport
+: public Transport
+{
+    CheckTransport check;
+    GeneratorTransport gen;
+    unique_ptr<uint8_t[]> public_key;
+    std::size_t public_key_length;
 
-
-    TestTransport(const char * name, const char * outdata, size_t outlen, const char * indata, size_t inlen, uint32_t verbose = 0)
-        : public_key(NULL), public_key_length(0)
-    {
-        RIO_ERROR res1 = rio_init_check(&this->rio_check, indata, inlen);
-        if (res1 != RIO_ERROR_OK){
-            throw Error(ERR_TRANSPORT, 0);
-        }
-        RIO_ERROR res2 = rio_init_generator(&this->rio_gen, outdata, outlen);
-        if (res2 != RIO_ERROR_OK){
-            throw Error(ERR_TRANSPORT, 0);
-        }
-    }
-
-    ~TestTransport()
-    {
-        rio_clear(&this->rio_check);
-        rio_clear(&this->rio_gen);
-
-        if (this->public_key) {
-            delete [] this->public_key;
-            this->public_key = NULL;
-            this->public_key_length = 0;
-        }
-    }
+public:
+    TestTransport(const char * name, const char * outdata, size_t outlen,
+                  const char * indata, size_t inlen, uint32_t verbose = 0)
+    : check(indata, inlen, verbose)
+    , gen(outdata, outlen, verbose)
+    , public_key_length(0)
+    {}
 
     void set_public_key(uint8_t * data, size_t data_size) {
-        this->public_key = new uint8_t[data_size];
+        this->public_key.reset(new uint8_t[data_size]);
         this->public_key_length = data_size;
-        memcpy(this->public_key, data, data_size);
+        memcpy(this->public_key.get(), data, data_size);
     }
 
-    virtual const uint8_t * get_public_key() {
-        return this->public_key;
+    virtual const uint8_t * get_public_key() const {
+        return this->public_key.get();
     }
 
-    virtual size_t get_public_key_length() {
+    virtual size_t get_public_key_length() const {
         return this->public_key_length;
     }
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        ssize_t res = rio_recv(&this->rio_gen, *pbuffer, len);
-        if (res < 0){
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
-        }
-        *pbuffer += res;
-        if (static_cast<size_t>(res) < len){
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
-        }
-
+        this->gen.recv(pbuffer, len);
     }
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
-        ssize_t res = rio_send(&this->rio_check, buffer, len);
-        if (res < 0) {
-            throw Error(ERR_TRANSPORT_DIFFERS);
-        }
-        if (res < (ssize_t)len) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        return;
+        this->check.send(buffer, len);
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+    virtual void seek(int64_t offset, int whence) throw (Error) {
+        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
+    }
 
-    virtual bool get_status()
+    virtual bool get_status() const
     {
-        return (rio_get_status(&this->rio_check) == RIO_ERROR_OK) && (rio_get_status(&this->rio_gen) == RIO_ERROR_OK);
+        return this->check.get_status() && this->gen.get_status();
     }
 };
 
-class LogTransport : public Transport {
-    public:
-    LogTransport()
-    {
-    }
 
-    ~LogTransport()
-    {
-    }
+class LogTransport
+: public Transport
+{
+public:
+    LogTransport()
+    {}
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
@@ -217,11 +223,13 @@ class LogTransport : public Transport {
         hexdump_c(buffer, len);
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+    virtual void seek(int64_t offset, int whence) throw (Error) {
+        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
+    }
 
-    virtual bool get_status()
+    virtual bool get_status() const
     {
-        return RIO_ERROR_OK;
+        return true;
     }
 };
 
