@@ -20,57 +20,63 @@
    Transport layer abstraction, socket implementation with TLS support
 */
 
-#ifndef _REDEMPTION_TRANSPORT_SOCKETTRANSPORT_HPP_
-#define _REDEMPTION_TRANSPORT_SOCKETTRANSPORT_HPP_
+#ifndef REDEMPTION_TRANSPORT_SOCKETTRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_SOCKETTRANSPORT_HPP
 
 #include "config.hpp"
 #include "transport.hpp"
-#include "rio/rio.h"
+#include "unique_ptr.hpp"
 #include "string.hpp"
+#include "netutils.hpp"
+#include "openssl_crypto.hpp"
+#include "openssl_tls.hpp"
 
-    // X509_NAME_print_ex() prints a human readable version of nm to BIO out.
-    // Each line (for multiline formats) is indented by indent spaces.
-    // The output format can be extensively customised by use of the flags parameter.
+#include <unistd.h>
+#include <fcntl.h>
 
-    TODO("we should be able to simplify that to just put expected value in a provided buffer");
-    static inline char* crypto_print_name(X509_NAME* name)
+// X509_NAME_print_ex() prints a human readable version of nm to BIO out.
+// Each line (for multiline formats) is indented by indent spaces.
+// The output format can be extensively customised by use of the flags parameter.
+
+TODO("we should be able to simplify that to just put expected value in a provided buffer");
+static inline char* crypto_print_name(X509_NAME* name)
+{
+    char* buffer = NULL;
+    BIO* outBIO = BIO_new(BIO_s_mem());
+
+    if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
     {
-        char* buffer = NULL;
-        BIO* outBIO = BIO_new(BIO_s_mem());
-
-        if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
-        {
-            unsigned long size = BIO_number_written(outBIO);
-            buffer = static_cast<char*>(malloc(size + 1));
-            memset(buffer, 0, size + 1);
-            BIO_read(outBIO, buffer, size);
-        }
-        BIO_free(outBIO);
-        return buffer;
+        unsigned long size = BIO_number_written(outBIO);
+        buffer = static_cast<char*>(malloc(size + 1));
+        memset(buffer, 0, size + 1);
+        BIO_read(outBIO, buffer, size);
     }
+    BIO_free(outBIO);
+    return buffer;
+}
 
-    static inline char* crypto_cert_fingerprint(X509* xcert)
+static inline char* crypto_cert_fingerprint(X509* xcert)
+{
+    uint32_t fp_len;
+    uint8_t fp[EVP_MAX_MD_SIZE];
+
+    X509_digest(xcert, EVP_sha1(), fp, &fp_len);
+
+    char * fp_buffer = static_cast<char*>(malloc(3 * fp_len));
+    memset(fp_buffer, 0, 3 * fp_len);
+
+    char * p = fp_buffer;
+
+    int i = 0;
+    for (i = 0; i < (int) (fp_len - 1); i++)
     {
-        uint32_t fp_len;
-        uint8_t fp[EVP_MAX_MD_SIZE];
-
-        X509_digest(xcert, EVP_sha1(), fp, &fp_len);
-
-        char * fp_buffer = static_cast<char*>(malloc(3 * fp_len));
-        memset(fp_buffer, 0, 3 * fp_len);
-
-        char * p = fp_buffer;
-
-        int i = 0;
-        for (i = 0; i < (int) (fp_len - 1); i++)
-        {
-            sprintf(p, "%02x:", fp[i]);
-            p = &fp_buffer[(i + 1) * 3];
-        }
-        sprintf(p, "%02x", fp[i]);
-
-        return fp_buffer;
+        sprintf(p, "%02x:", fp[i]);
+        p = &fp_buffer[(i + 1) * 3];
     }
+    sprintf(p, "%02x", fp[i]);
+
+    return fp_buffer;
+}
 
 
 static inline int password_cb0(char *buf, int num, int rwflag, void *userdata)
@@ -86,9 +92,10 @@ static inline int password_cb0(char *buf, int num, int rwflag, void *userdata)
 }
 
 
-class SocketTransport : public Transport {
+class SocketTransport
+: public Transport
+{
 public:
-    RIO rio;
     bool tls;
     int sck;
     int sck_closed;
@@ -98,7 +105,7 @@ public:
     char ip_address[128];
     int  port;
 
-    uint8_t * public_key;
+    unique_ptr<uint8_t[]> public_key;
     size_t public_key_length;
     TODO("check if buffer is defined before accessing it");
 
@@ -107,22 +114,24 @@ public:
     SSL_CTX * allocated_ctx;
     SSL     * allocated_ssl;
 
-    SocketTransport( const char * name, int sck, const char *ip_address, int port
-                     , uint32_t verbose, redemption::string * error_message = 0)
-        : Transport(), tls(false), name(name), verbose(verbose)
-        , public_key(NULL), public_key_length(0)
-        , error_message(error_message), allocated_ctx(0), allocated_ssl(0)
-    {
-        RIO_ERROR res = rio_init_socket(&this->rio, sck);
-        this->sck = sck;
-        this->sck_closed = 0;
-        if (res != RIO_ERROR_OK){
-            throw Error(ERR_TRANSPORT, 0);
-        }
-        strncpy(this->ip_address, ip_address, 127);
-        this->ip_address[127] = 0;
+    SSL * io;
 
-        this->port = port;
+    SocketTransport( const char * name, int sck, const char *ip_address, int port
+                   , uint32_t verbose, redemption::string * error_message = 0)
+    : tls(false)
+    , sck(sck)
+    , sck_closed(0)
+    , name(name)
+    , verbose(verbose)
+    , port(port)
+    , public_key_length(0)
+    , error_message(error_message)
+    , allocated_ctx(0)
+    , allocated_ssl(0)
+    , io(0)
+    {
+        strncpy(this->ip_address, ip_address, sizeof(this->ip_address)-1);
+        this->ip_address[127] = 0;
     }
 
     virtual ~SocketTransport(){
@@ -130,14 +139,12 @@ public:
             this->disconnect();
         }
         if (this->allocated_ssl) {
-//            SSL_shutdown(this->allocated_ssl);
+            //SSL_shutdown(this->allocated_ssl);
             SSL_free(this->allocated_ssl);
-            this->allocated_ssl = NULL;
         }
 
         if (this->allocated_ctx) {
             SSL_CTX_free(this->allocated_ctx);
-            this->allocated_ctx = NULL;
         }
 
         if (verbose) {
@@ -145,15 +152,10 @@ public:
                , "%s (%d): total_received=%llu, total_sent=%llu"
                , this->name, this->sck, this->total_received, this->total_sent);
         }
-        if (this->public_key) {
-            delete [] this->public_key;
-            this->public_key = NULL;
-            this->public_key_length = 0;
-        }
     }
 
     virtual const uint8_t * get_public_key() {
-        return this->public_key;
+        return this->public_key.get();
     }
 
     virtual size_t get_public_key_length() {
@@ -167,8 +169,6 @@ public:
             return;
         }
         LOG(LOG_INFO, "RIO *::enable_server_tls() start");
-
-        rio_clear(&this->rio);
 
         // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
         // ------------------------------------------------------------------------------------
@@ -435,15 +435,11 @@ public:
             exit(0);
         }
 
-        RIO_ERROR res = rio_init_socket_tls(&this->rio, ssl);
-        if (res != RIO_ERROR_OK){
-            throw Error(ERR_TRANSPORT, 0);
-        }
+        this->io = ssl;
         this->tls = true;
 
         BIO_free(bio_err);
         LOG(LOG_INFO, "RIO *::enable_server_tls() done");
-        return;
     }
 
     virtual void enable_client_tls(bool ignore_certificate_change) throw (Error)
@@ -453,8 +449,6 @@ public:
             return;
         }
         LOG(LOG_INFO, "Client TLS start");
-
-        rio_clear(&this->rio);
 
 
         // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
@@ -1015,10 +1009,10 @@ public:
 
         // export the public key to DER format
         this->public_key_length = i2d_PublicKey(pkey, NULL);
-        this->public_key = new uint8_t[this->public_key_length];
+        this->public_key.reset(new uint8_t[this->public_key_length]);
         LOG(LOG_INFO, "RIO *::i2d_PublicKey()");
         // hexdump_c(this->public_key, this->public_key_length);
-        uint8_t * tmp = this->public_key;
+        uint8_t * tmp = this->public_key.get();
         i2d_PublicKey(pkey, &tmp);
 
         tmp             = 0;
@@ -1029,34 +1023,34 @@ public:
         X509* xcert = px509;
         X509_STORE* cert_ctx = X509_STORE_new();
 
-            // OpenSSL_add_all_algorithms(3SSL)
-            // --------------------------------
+        // OpenSSL_add_all_algorithms(3SSL)
+        // --------------------------------
 
-            // OpenSSL keeps an internal table of digest algorithms and ciphers. It uses this table
-            // to lookup ciphers via functions such as EVP_get_cipher_byname().
+        // OpenSSL keeps an internal table of digest algorithms and ciphers. It uses this table
+        // to lookup ciphers via functions such as EVP_get_cipher_byname().
 
-           // OpenSSL_add_all_digests() adds all digest algorithms to the table.
+        // OpenSSL_add_all_digests() adds all digest algorithms to the table.
 
-           // OpenSSL_add_all_algorithms() adds all algorithms to the table (digests and ciphers).
+        // OpenSSL_add_all_algorithms() adds all algorithms to the table (digests and ciphers).
 
-           // OpenSSL_add_all_ciphers() adds all encryption algorithms to the table including password
-           // based encryption algorithms.
+        // OpenSSL_add_all_ciphers() adds all encryption algorithms to the table including password
+        // based encryption algorithms.
 
-           // EVP_cleanup() removes all ciphers and digests from the table.
+        // EVP_cleanup() removes all ciphers and digests from the table.
 
-            OpenSSL_add_all_algorithms();
+        OpenSSL_add_all_algorithms();
 
-            X509_LOOKUP* lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
-                         lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
+        X509_LOOKUP* lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
+        lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
 
-                                  X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
-//                                  X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_ASN1);
+        X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+        //X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_ASN1);
 
-                X509_STORE_CTX* csc = X509_STORE_CTX_new();
-                                          X509_STORE_set_flags(cert_ctx, 0);
-                                          X509_STORE_CTX_init(csc, cert_ctx, xcert, 0);
-                                          X509_verify_cert(csc);
-                                      X509_STORE_CTX_free(csc);
+        X509_STORE_CTX* csc = X509_STORE_CTX_new();
+        X509_STORE_set_flags(cert_ctx, 0);
+        X509_STORE_CTX_init(csc, cert_ctx, xcert, 0);
+        X509_verify_cert(csc);
+        X509_STORE_CTX_free(csc);
 
         X509_STORE_free(cert_ctx);
 
@@ -1081,18 +1075,13 @@ public:
 
        X509_free(px509);
 
-       RIO_ERROR res = rio_init_socket_tls(&this->rio, ssl);
-       if (res != RIO_ERROR_OK){
-           throw Error(ERR_TRANSPORT, 0);
-       }
+       this->io = ssl;
        this->tls = true;
 
        LOG(LOG_INFO, "RIO *::enable_tls() done");
-       return;
     }
 
     void disconnect(){
-        rio_clear(&this->rio);
         LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
         // Disconnect tls if needed
         if (this->tls) {
@@ -1119,10 +1108,6 @@ public:
                                     this->port,
                                     3, 1000,
                                     this->verbose);
-            RIO_ERROR res = rio_init_socket(&this->rio, this->sck);
-            if (res != RIO_ERROR_OK){
-                throw Error(ERR_TRANSPORT, 0);
-            }
             this->sck_closed = 0;
         }
         return true;
@@ -1136,7 +1121,7 @@ public:
         }
         char * start = *pbuffer;
 
-        ssize_t res = rio_recv(&this->rio, *pbuffer, len);
+        ssize_t res = this->privrecv(*pbuffer, len);
         if (res < 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
@@ -1168,7 +1153,7 @@ public:
             LOG(LOG_INFO, "Sent dumped on %s (%u) %u bytes", this->name, this->sck, len);
         }
 
-        ssize_t res = rio_send(&this->rio, buffer, len);
+        ssize_t res = this->privsend(buffer, len);
         if (res < 0) {
             LOG(LOG_WARNING,
                 "SocketTransport::Send failed on %s (%d) errno=%u [%s]",
@@ -1184,15 +1169,77 @@ public:
         this->last_quantum_sent += len;
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+    virtual void seek(int64_t offset, int whence) throw (Error) {
+        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
+    }
 
-    virtual bool get_status()
+    virtual bool get_status() const
     {
-        return rio_get_status(&this->rio) == RIO_ERROR_OK;
+        return this->status;
     }
 
     virtual int get_native_object() {
         return this->sck;
+    }
+
+private:
+    ssize_t privrecv(char * data, size_t len)
+    {
+        size_t remaining_len = len;
+
+        while (remaining_len > 0) {
+            ssize_t res = ::recv(this->sck, data, remaining_len, 0);
+            switch (res) {
+                case -1: /* error, maybe EAGAIN */
+                    if (try_again(errno)) {
+                        fd_set fds;
+                        struct timeval time = { 0, 100000 };
+                        FD_ZERO(&fds);
+                        FD_SET(this->sck, &fds);
+                        ::select(this->sck + 1, &fds, NULL, NULL, &time);
+                        continue;
+                    }
+                    if (len != remaining_len){
+                        return len - remaining_len;
+                    }
+                    TODO("replace this with actual error management, EOF is not even an option for sockets");
+                    return -1;
+                case 0: /* no data received, socket closed */
+                    // if we were not able to receive the amount of data required, this is an error
+                    // not need to process the received data as it will end badly
+                    return -1;
+                default: /* some data received */
+                    data += res;
+                    remaining_len -= res;
+                break;
+            }
+        }
+        return len;
+    }
+
+    ssize_t privsend(const char * data, size_t len)
+    {
+        size_t total = 0;
+        while (total < len) {
+            ssize_t sent = ::send(this->sck, data + total, len - total, 0);
+            switch (sent){
+            case -1:
+                if (try_again(errno)) {
+                    fd_set wfds;
+                    struct timeval time = { 0, 10000 };
+                    FD_ZERO(&wfds);
+                    FD_SET(this->sck, &wfds);
+                    select(this->sck + 1, NULL, &wfds, NULL, &time);
+                    continue;
+                }
+                return -1;
+            case 0:
+                return -1;
+            default:
+                total = total + sent;
+            }
+        }
+        return len;
     }
 };
 
