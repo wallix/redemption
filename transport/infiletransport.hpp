@@ -24,7 +24,8 @@
 #define REDEMPTION_TRANSPORT_INFILETRANSPORT_HPP
 
 #include "transport.hpp"
-#include <unistd.h>
+#include "fdbub.hpp"
+
 #include <cerrno>
 
 
@@ -32,18 +33,18 @@ class InFileTransport
 : public Transport
 {
     int fd;
-    uint32_t verbose;
+    //uint32_t verbose;
 
 public:
     InFileTransport(int fd, unsigned verbose = 0)
     : fd(fd)
-    , verbose(verbose)
+    //, verbose(verbose)
     {}
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error)
     {
-        const ssize_t res = this->privrecv(*pbuffer, len);
+        const ssize_t res = io::posix::read_all(this->fd, *pbuffer, len);
         if (res <= 0){
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
@@ -60,32 +61,6 @@ public:
 
     virtual void seek(int64_t offset, int whence) throw (Error) {
         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
-    }
-
-private:
-    ssize_t privrecv(char * data, size_t len) const
-    {
-        ssize_t ret = 0;
-        size_t remaining_len = len;
-        while (remaining_len) {
-            ret = ::read(this->fd, data + (len - remaining_len), remaining_len);
-            if (ret < 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                // Error should still be there next time we try to read
-                if (remaining_len != len){
-                    return len - remaining_len;
-                }
-                return -1;
-            }
-            // We must exit loop or we will enter infinite loop
-            if (ret == 0){
-                break;
-            }
-            remaining_len -= ret;
-        }
-        return len - remaining_len;
     }
 };
 

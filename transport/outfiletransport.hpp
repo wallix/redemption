@@ -24,8 +24,8 @@
 #define REDEMPTION_TRANSPORT_OUTFILETRANSPORT_HPP
 
 #include "transport.hpp"
-#include <sys/types.h>
-#include <unistd.h>
+#include "fdbub.hpp"
+
 #include <cerrno>
 
 
@@ -33,17 +33,18 @@ class OutFileTransport
 : public Transport
 {
     int fd;
-    uint32_t verbose;
+    //uint32_t verbose;
 
 public:
     OutFileTransport(int fd, unsigned verbose = 0)
     : fd(fd)
-    , verbose(verbose)
+    //, verbose(verbose)
     {}
 
     using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
-        const ssize_t res = this->privsend(buffer, len);
+    virtual void send(const char * const buffer, size_t len) throw (Error)
+    {
+        const ssize_t res = io::posix::write_all(this->fd, buffer, len);
         if (res < 0){
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
@@ -58,29 +59,9 @@ public:
 
     virtual void seek(int64_t offset, int whence) throw (Error)
     {
-        if (lseek(this->fd, offset, whence) < 0) {
+        if (::lseek(this->fd, offset, whence) < 0) {
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
-    }
-
-private:
-    ssize_t privsend(const char * data, size_t len) const
-    {
-        ssize_t ret = 0;
-        size_t remaining_len = len;
-        size_t total_sent = 0;
-        while (remaining_len) {
-            ret = ::write(this->fd, data + total_sent, remaining_len);
-            if (ret <= 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                return -1;
-            }
-            remaining_len -= ret;
-            total_sent += ret;
-        }
-        return total_sent;
     }
 };
 
