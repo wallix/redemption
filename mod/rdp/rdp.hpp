@@ -2213,8 +2213,13 @@ struct mod_rdp : public mod_api {
         confirm_active_pdu.emit_capability_set(bitmap_caps);
 
         OrderCaps order_caps;
-        order_caps.numberFonts                                   = 0x147;
-        order_caps.orderFlags                                    = 0x2a;
+        order_caps.numberFonts                                   = 0;
+        order_caps.orderFlags                                    = /*0x2a*/
+                                                                    NEGOTIATEORDERSUPPORT   /* 0x02 */
+                                                                  | ZEROBOUNDSDELTASSUPPORT /* 0x08 */
+                                                                  | COLORINDEXSUPPORT       /* 0x20 */
+                                                                  | ORDERFLAGS_EXTRA_FLAGS  /* 0x80 */
+                                                                  ;
         order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = (this->enable_multidstblt     ? 1 : 0);
         order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]    = (this->enable_multiopaquerect ? 1 : 0);
@@ -2236,6 +2241,7 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
 
         order_caps.textFlags                                     = 0x06a1;
+        order_caps.orderSupportExFlags                           = ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT;
         order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
 
         // Apparently, these primary drawing orders are supported
@@ -2262,12 +2268,12 @@ struct mod_rdp : public mod_api {
         this->front.intersect_order_caps(TS_NEG_ELLIPSE_CB_INDEX,         order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_INDEX_INDEX,              order_caps.orderSupport);
 
+        this->front.intersect_order_caps_ex(order_caps);
+
         // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
         //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
         if (this->enable_transparent_mode) {
             this->front.retrieve_client_capability_set(order_caps);
-            order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX] = 0;
-            order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX] = 0;
         }
         if (this->verbose & 1) {
             order_caps.log("Sending to server");
@@ -4924,6 +4930,10 @@ public:
     virtual void draw(const RDPColCache & cmd)
     {
         this->front.draw(cmd);
+    }
+
+    virtual void draw(const RDP::FrameMarker & order) {
+        this->front.draw(order);
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,

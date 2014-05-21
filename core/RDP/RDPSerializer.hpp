@@ -496,6 +496,10 @@ public:
         this->ellipseCB = cmd;
     }
 
+    virtual void draw(const RDP::FrameMarker & order) {
+        this->reserve_order(5);
+        order.emit(this->stream_orders);
+    }
 
     // check if the next bitmap will fit in available packet size
     // if not send previous bitmaps we got and init a new packet

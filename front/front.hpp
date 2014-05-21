@@ -4889,8 +4889,16 @@ public:
         this->palette_sent = false;
     }
 
-    virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) {
+    virtual void draw(const RDP::FrameMarker & order) {
+        this->orders->draw(order);
+    }
+
+    virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {
         proxy_order_caps[idx] &= this->client_order_caps.orderSupport[idx];
+    }
+
+    virtual void intersect_order_caps_ex(OrderCaps & order_caps) const {
+        order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data

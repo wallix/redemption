@@ -49,6 +49,7 @@
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "RDP/bitmapupdate.hpp"
 #include "RDP/caches/fontcache.hpp"
@@ -80,6 +81,8 @@ struct RDPGraphicDevice {
     virtual void draw(const RDPBrushCache & cmd) {}
     virtual void draw(const RDPColCache   & cmd) {}
     virtual void draw(const RDPGlyphCache & cmd) {}
+
+    virtual void draw(const RDP::FrameMarker & order) {}
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
         size_t size, const Bitmap & bmp) {}
