@@ -117,12 +117,12 @@ public:
         // default enable_tls do nothing
     }
 
-    virtual const uint8_t * get_public_key()
+    virtual const uint8_t * get_public_key() const
     {
         return NULL;
     }
 
-    virtual size_t get_public_key_length()
+    virtual size_t get_public_key_length() const
     {
         return 0;
     }

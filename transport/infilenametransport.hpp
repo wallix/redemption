@@ -20,41 +20,61 @@
    Transport layer abstraction
 */
 
-#ifndef _REDEMPTION_TRANSPORT_INFILENAMETRANSPORT_HPP_
-#define _REDEMPTION_TRANSPORT_INFILENAMETRANSPORT_HPP_
+#ifndef REDEMPTION_TRANSPORT_INFILENAMETRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_INFILENAMETRANSPORT_HPP
 
 #include "transport.hpp"
-#include "rio/rio.h"
+#include "rio/cryptofile.hpp"
 
 /****************************
 * CryptoInFilenameTransport *
 ****************************/
 
-class CryptoInFilenameTransport : public Transport {
-    public:
-    RIO rio;
+class CryptoInFilenameTransport
+: public Transport
+{
+    CryptoContext * crypto_ctx;
+    crypto_file cf_struct;
     uint32_t verbose;
 
+public:
     CryptoInFilenameTransport(CryptoContext * crypto_ctx, const char * filename, unsigned verbose = 0)
-        : verbose(verbose)
+    : verbose(verbose)
+    , crypto_ctx(crypto_ctx)
     {
-        RIO_ERROR status = rio_init_cryptoinfilename(&this->rio, crypto_ctx, filename);
-        if (status != RIO_ERROR_OK){
-            LOG(LOG_ERR, "rio infile initialisation failed (%u)", status);
+        unsigned char derivator[DERIVATOR_LENGTH];
+        get_derivator(filename, derivator, DERIVATOR_LENGTH);
+        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+        if (compute_hmac(trace_key, this->crypto_ctx->crypto_key, derivator) == -1){
+            throw Error(ERR_TRANSPORT);
+        }
+
+        LOG("crypto open read... filename=%s\n", filename);
+
+        int system_fd = open(filename, O_RDONLY, 0600);
+        if (system_fd == -1){
+            LOG("failed opening=%s\n", filename);
+            throw Error(ERR_TRANSPORT);
+        }
+
+        if (-1 == cf_struct.open_read_init(system_fd, trace_key, this->crypto_ctx)) {
+            close(system_fd);
+            LOG("open failed for crypto filename=%s\n", filename);
             throw Error(ERR_TRANSPORT);
         }
     }
 
     virtual ~CryptoInFilenameTransport()
     {
-        rio_clear(&this->rio);
+        unsigned char hash[HASH_LEN];
+        this->cf_struct.close(hash, this->crypto_ctx->hmac_key);
     }
 
     using Transport::recv;
-    virtual void recv(char ** pbuffer, size_t len) throw (Error)
+    virtual void srecv(char ** pbuffer, size_t len) throw (Error)
     {
-        ssize_t res = rio_recv(&this->rio, *pbuffer, len);
-        if (res == -RIO_ERROR_OPEN) {
+        ssize_t res = this->cf_struct.read(*pbuffer, len);
+        if (res == -1) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
         else if (res <= 0){
@@ -71,8 +91,9 @@ class CryptoInFilenameTransport : public Transport {
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV, 0);
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
-
+    virtual void seek(int64_t offset, int whence) throw (Error) {
+        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
+    }
 };
 
 #endif

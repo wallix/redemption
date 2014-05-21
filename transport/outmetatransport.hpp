@@ -26,74 +26,73 @@
 #include "transport.hpp"
 #include "error.hpp"
 
+#include <limits>
 #include "rio/rio.h"
+#include "outfiletransport.hpp"
+#include "outfilenametransport.hpp"
 
-class OutmetaTransport : public Transport
+
+class OutmetaTransport
+: public Transport
 {
-public:
-    RIO    rio;
-    SQ   * seq;
-    char   path[512];
+    detail::OutFilenameCreator filename_creator;
+    io::posix::fdbuf fdbuf;
+    timeval start_tv;
+    timeval stop_tv;
 
+public:
     OutmetaTransport(const char * path, const char * basename, timeval now,
-        uint16_t width, uint16_t height, const int groupid, auth_api * authentifier = NULL,
-        unsigned verbose = 0)
-    : seq(NULL)
+                     uint16_t width, uint16_t height, const int groupid, auth_api * authentifier = NULL,
+                     unsigned verbose = 0)
+    : filename_creator(SQF_PATH_FILE_PID_COUNT_EXTENSION, path, basename, ".wrm", groupid)
+    , start_tv(now)
+    , stop_tv(now)
     {
-        if (authentifier) {
-            this->set_authentifier(authentifier);
+        {
+            char meta_filename[2048];
+            int res = snprintf(meta_filename, sizeof(meta_filename), "%s%s-%06u.mwrm", path, basename, getpid());
+            if (res > int(sizeof(meta_filename) - 6) || res < 0) {
+                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            }
+            if (this->fdbuf.open(meta_filename, O_WRONLY|O_CREAT, S_IRUSR) < 0) {
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+            }
         }
 
-        char filename[1024];
-        snprintf(filename, sizeof(filename), "%s-%06u", basename, getpid());
-        char header1[64];
+        char header1[(std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 2];
         sprintf(header1, "%u %u", width, height);
-        RIO_ERROR status = rio_init_outmeta(&this->rio, &this->seq, path,
-            filename, ".mwrm", header1, "0", "", &now, groupid);
-        if (status < 0)
-        {
-            if (errno == ENOSPC) {
+        ssize_t res = this->fdbuf.write(header1, strlen(header1));
+        if (res > 0) {
+            res = this->fdbuf.write("\n0\n\n", 4);
+        }
+
+        if (res < 0) {
+            int err = errno;
+            if (err == ENOSPC) {
                 char message[1024];
-                snprintf(message, sizeof(message), "100|%s", this->path);
+                snprintf(message, sizeof(message), "100|%s", path);
                 this->authentifier->report("FILESYSTEM_FULL", message);
             }
 
-            LOG(LOG_INFO, "Write to transport failed (M): code=%d", errno);
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            LOG(LOG_INFO, "Write to transport failed (M): code=%d", err);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
         }
 
-        size_t max_path_length = sizeof(path) - 1;
-        strncpy(this->path, path, max_path_length);
-        this->path[max_path_length] = 0;
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
     }
 
-    ~OutmetaTransport()
+    virtual ~OutmetaTransport()
     {
-        if (this->full_cleaning_requested)
-        {
-            rio_full_clear(&this->rio);
-        }
-        else
-        {
-            rio_clear(&this->rio);
-        }
+        this->filename_creator.next();
+        this->write_wrm(false);
     }
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw(Error)
     {
-        ssize_t res = rio_send(&this->rio, buffer, len);
-        if (res < 0)
-        {
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", this->path);
-                this->authentifier->report("FILESYSTEM_FULL", message);
-            }
-
-            LOG(LOG_INFO, "Write to transport failed (M): code=%d", errno);
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
+        this->filename_creator.send(buffer, len, this->authentifier);
     }
 
     using Transport::recv;
@@ -105,24 +104,44 @@ public:
 
     virtual void seek(int64_t offset, int whence) throw(Error)
     {
-        RIO_ERROR res = rio_seek(&this->rio, offset, whence);
-        if (res != RIO_ERROR_OK)
-        {
-            LOG(LOG_INFO, "Set position within transport failed: code=%d", errno);
-            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
-        }
-    }
-
-    virtual void timestamp(timeval now)
-    {
-        sq_timestamp(this->seq, &now);
-        Transport::timestamp(now);
+        this->filename_creator.seek(offset, whence);
     }
 
     virtual bool next()
     {
-        sq_next(this->seq);
+        this->filename_creator.next();
+        this->write_wrm(true);
         return Transport::next();
+    }
+
+    virtual void timestamp(timeval now)
+    {
+        this->stop_tv.tv_sec = now.tv_sec;
+        this->stop_tv.tv_usec = now.tv_usec;
+    }
+
+private:
+    void write_wrm(bool send_exception)
+    {
+        const char * filename = this->filename_creator.get_filename();
+        size_t len = strlen(filename);
+        ssize_t res = this->fdbuf.write(filename, len);
+        if (res > 0) {
+            char mes[(std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 5];
+            len = snprintf(mes, sizeof(mes), " %u %u\n",
+                           (unsigned)this->start_tv.tv_sec,
+                           (unsigned)this->stop_tv.tv_sec+1);
+            res = this->fdbuf.write(mes, len);
+            this->start_tv.tv_sec = this->stop_tv.tv_sec;
+            this->start_tv.tv_usec = this->stop_tv.tv_usec;
+        }
+        if (res < 0) {
+            int err = errno;
+            LOG(LOG_INFO, "Write to transport failed (M): code=%d", err);
+            if (send_exception) {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+            }
+        }
     }
 };
 

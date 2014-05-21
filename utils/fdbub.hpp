@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <cstddef>
+#include <cerrno>
 
 namespace io {
 namespace posix {
