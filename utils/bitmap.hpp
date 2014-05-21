@@ -122,6 +122,12 @@ public:
         }
 
         if (compressed) {
+            this->data_compressed_size = size;
+            this->data_compressed.reset(new uint8_t[size]);
+            if (this->data_compressed) {
+                memcpy(this->data_compressed.get(), data, size);
+            }
+
             if ((session_color_depth == 32) && ((bpp == 24) || (bpp == 32))) {
                 this->decompress60(cx, cy, data, size);
             }
