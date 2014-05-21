@@ -42,8 +42,8 @@ namespace detail
         char        path[1024];
         char        filename[1012];
         char        extension[12];
-        char        current_filename[2048];
-        char        rename_to[2048];
+        char        current_filename[1024];
+        char        rename_to[1024];
         SQ_FORMAT   format;
         unsigned    pid;
         unsigned    count;

@@ -37,11 +37,12 @@ using std::size_t;
 
 class Transport
 {
-protected:
     timeval future;
-
+    
+public:
     uint32_t seqno;
 
+protected:
     uint64_t total_received;
     uint64_t last_quantum_received;
 

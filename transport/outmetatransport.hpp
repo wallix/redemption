@@ -27,6 +27,8 @@
 #include "error.hpp"
 
 #include <limits>
+#include <iterator>
+#include <sys/time.h>
 #include "rio/rio.h"
 #include "outfiletransport.hpp"
 #include "outfilenametransport.hpp"
@@ -37,16 +39,16 @@ class OutmetaTransport
 {
     detail::OutFilenameCreator filename_creator;
     io::posix::fdbuf fdbuf;
-    timeval start_tv;
-    timeval stop_tv;
+    time_t start_sec;
+    time_t stop_sec;
 
 public:
     OutmetaTransport(const char * path, const char * basename, timeval now,
                      uint16_t width, uint16_t height, const int groupid, auth_api * authentifier = NULL,
                      unsigned verbose = 0)
     : filename_creator(SQF_PATH_FILE_PID_COUNT_EXTENSION, path, basename, ".wrm", groupid)
-    , start_tv(now)
-    , stop_tv(now)
+    , start_sec(now.tv_sec)
+    , stop_sec(now.tv_sec)
     {
         {
             char meta_filename[2048];
@@ -116,8 +118,7 @@ public:
 
     virtual void timestamp(timeval now)
     {
-        this->stop_tv.tv_sec = now.tv_sec;
-        this->stop_tv.tv_usec = now.tv_usec;
+        this->stop_sec = now.tv_sec;
     }
 
 private:
@@ -129,11 +130,10 @@ private:
         if (res > 0) {
             char mes[(std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 5];
             len = snprintf(mes, sizeof(mes), " %u %u\n",
-                           (unsigned)this->start_tv.tv_sec,
-                           (unsigned)this->stop_tv.tv_sec+1);
+                           (unsigned)this->start_sec,
+                           (unsigned)this->stop_sec+1);
             res = this->fdbuf.write(mes, len);
-            this->start_tv.tv_sec = this->stop_tv.tv_sec;
-            this->start_tv.tv_usec = this->stop_tv.tv_usec;
+            this->start_sec = this->stop_sec;
         }
         if (res < 0) {
             int err = errno;

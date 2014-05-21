@@ -34,7 +34,7 @@ namespace posix {
 
 using std::size_t;
 
-ssize_t read_all(int fd, char * data, size_t len) /*noexcept*/
+inline ssize_t read_all(int fd, char * data, size_t len) /*noexcept*/
 {
     ssize_t ret = 0;
     size_t remaining_len = len;
@@ -59,7 +59,7 @@ ssize_t read_all(int fd, char * data, size_t len) /*noexcept*/
     return len - remaining_len;
 }
 
-ssize_t write_all(int fd, const char * data, size_t len) /*noexcept*/
+inline ssize_t write_all(int fd, const char * data, size_t len) /*noexcept*/
 {
     ssize_t ret = 0;
     size_t remaining_len = len;

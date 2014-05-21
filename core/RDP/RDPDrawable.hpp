@@ -501,7 +501,7 @@ public:
         FontChar *font_item = font.glyph_defined(c) ? font.font_items[c] : 0;
         if (!font_item) {
             LOG(LOG_WARNING, "RDPDrawable::get_font() - character not defined >0x%02x<", c);
-            font_item = font.font_items['?'];
+            font_item = font.font_items[int('?')];
         }
         return font_item;
     }

@@ -15,15 +15,18 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou,
+              Jonathan Poelen
 
    Error exception object
 */
 
-#ifndef _REDEMPTION_CORE_ERROR_HPP_
-#define _REDEMPTION_CORE_ERROR_HPP_
+#ifndef REDEMPTION_CORE_ERROR_HPP
+#define REDEMPTION_CORE_ERROR_HPP
 
-enum {
+#include <stdio.h>
+
+enum error_type {
     NO_ERROR = 0,
     ERR_STREAM_MEMORY_TOO_SMALL,
     ERR_STREAM_MEMORY_ALLOCATION_ERROR,
@@ -296,16 +299,16 @@ enum {
     ERR_SSL_CALL_SHA1_FINAL_FAILED,
 };
 
-class Error {
-    public:
+struct Error
+{
     int id;
     int errnum;
-    char errstr[256];
+    char errstr[64];
 
-    Error(int id, int errnum = 0)
+    Error(int id, int errnum = 0) throw()
+    : id(id)
+    , errnum(errnum)
     {
-        this->id = id;
-        this->errnum = errnum;
 //        LOG(LOG_ERR, "error=%u", this->id);
 //        exit(0);
     }
@@ -313,31 +316,24 @@ class Error {
     const char * errmsg() {
         switch(this->id) {
         case NO_ERROR:
-            snprintf(this->errstr, sizeof(errstr), "No error");
-            break;
+            return "No error";
         case ERR_SESSION_UNKNOWN_BACKEND:
-            snprintf(this->errstr, sizeof(errstr), "Unknown Backend");
-            break;
+            return  "Unknown Backend";
         case ERR_NLA_AUTHENTICATION_FAILED:
-            snprintf(this->errstr, sizeof(errstr), "NLA Authentication Failed");
-            break;
+            return "NLA Authentication Failed";
         case ERR_TRANSPORT_OPEN_FAILED:
-            snprintf(this->errstr, sizeof(errstr), "Open file failed");
-            break;
+            return "Open file failed";
         case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
-            snprintf(this->errstr, sizeof(errstr), "TLS certificate changed");
-            break;
+            return "TLS certificate changed";
         case ERR_VNC_CONNECTION_ERROR:
-            snprintf(this->errstr, sizeof(errstr), "VNC connection error.");
-            break;
+            return "VNC connection error.";
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
-            snprintf(this->errstr, sizeof(errstr), "Composite Widget Destroyed without child list not empty.");
-            break;
+            return "Composite Widget Destroyed without child list not empty.";
         default:
             snprintf(this->errstr, sizeof(errstr), "Exception Error no : %d", this->id);
+            this->errstr[sizeof(this->errstr)-1] = 0;
+            return this->errstr;
         }
-        this->errstr[255] = 0;
-        return this->errstr;
     }
 };
 

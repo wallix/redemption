@@ -45,7 +45,7 @@ public:
     virtual void recv(char ** pbuffer, size_t len) throw (Error)
     {
         const ssize_t res = io::posix::read_all(this->fd, *pbuffer, len);
-        if (res <= 0){
+        if (res < 0){
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
         *pbuffer += res;

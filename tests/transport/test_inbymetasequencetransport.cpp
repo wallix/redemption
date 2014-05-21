@@ -24,7 +24,7 @@
 #define BOOST_TEST_MODULE TestInByMetaSequenceTransport
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include <stdlib.h>

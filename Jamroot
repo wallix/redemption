@@ -121,11 +121,15 @@ project redemption
     <cxxflags>-Wpacked
     <cxxflags>-Wredundant-decls
 #     <cxxflags>-Winline
-    <cxxflags>-Wdouble-promotion
+    <toolset>gcc:<cxxflags>-Wdouble-promotion
     <cxxflags>-Winit-self
 #     <cxxflags>-Wcast-qual
 #     <cxxflags>-Woverloaded-virtual
+#     <cxxflags>-Wunused-variable
     <cxxflags>-fpie
+    <toolset>clang:<cxxflags>-Wno-mismatched-tags
+    <toolset>clang:<cxxflags>-Wno-overloaded-virtual
+    <toolset>clang:<cxxflags>-Wno-char-subscripts
     <define>PUBLIC
    : default-build release
 
