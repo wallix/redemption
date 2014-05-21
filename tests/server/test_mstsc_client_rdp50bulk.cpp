@@ -92,15 +92,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     LCGRandom gen(0);
 
-    const char outdata[] =
-    {
-        #include "fixtures/trace_mstsc_client_rdp50bulk_outdata.hpp"
-    };
-
-    const char indata[] =
-    {
-        #include "fixtures/trace_mstsc_client_rdp50bulk_indata.hpp"
-    };
+    #include "fixtures/trace_mstsc_client_rdp50bulk.hpp"
 
     uint32_t     verbose = 511;
     const char * name    = "Test Front Transport";
