@@ -2911,7 +2911,8 @@ public:
         stream.out_clear_bytes(4);
 
         GeneralCaps general_caps;
-        if (this->server_fastpath_update_support) {
+
+        if (this->fastpath_support) {
             general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
         }
         if (!this->server_capabilities_filename.is_empty()) {
