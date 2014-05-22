@@ -626,6 +626,8 @@ public:
         this->drawable.draw_bitmap(trect, bmp, false);
     }
 
+    virtual void draw(const RDP::FrameMarker & order) {}
+
     virtual void send_pointer(int cache_idx, const Pointer & cursor)
     {
         this->ptr_cache.add_pointer_static(cursor, cache_idx);
