@@ -4891,7 +4891,13 @@ public:
     }
 
     virtual void draw(const RDP::FrameMarker & order) {
-        this->orders->draw(order);
+        if (this->client_order_caps.orderSupportExFlags & ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT) {
+            this->orders->draw(order);
+        }
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->draw(order);
+        }
     }
 
     virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {

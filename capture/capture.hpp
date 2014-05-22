@@ -330,6 +330,12 @@ public:
         }
     }
 
+    virtual void draw(const RDP::FrameMarker & order) {
+        if (this->gd) {
+            this->gd->draw(order);
+        }
+    }
+
     void draw(const RDPPolygonSC & cmd, const Rect & clip) {
         if (this->gd) {
             this->gd->draw(cmd, clip);

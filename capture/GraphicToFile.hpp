@@ -677,6 +677,10 @@ public:
         this->RDPSerializer::draw(bitmap_data, data, size, bmp);
     }
 
+    virtual void draw(const RDP::FrameMarker & order) {
+        this->RDPSerializer::draw(order);
+    }
+
     void send_bitmaps_chunk()
     {
         this->stream_bitmaps.mark_end();

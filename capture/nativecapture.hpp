@@ -224,6 +224,10 @@ public:
         this->recorder.draw(bitmap_data, data, size, bmp);
     }
 
+    virtual void draw(const RDP::FrameMarker & order) {
+        this->recorder.draw(order);
+    }
+
     virtual void draw(const RDPPolygonSC & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);

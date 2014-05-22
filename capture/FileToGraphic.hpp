@@ -301,12 +301,30 @@ struct FileToGraphic
                 throw Error(ERR_WRM);
             }
             uint8_t control = this->stream.in_uint8();
-            if (!control & RDP::STANDARD){
-                /* error, this should always be set */
-                LOG(LOG_ERR, "Non standard order detected : protocol error");
-                throw Error(ERR_WRM);
+            uint8_t class_ = (control & (RDP::STANDARD | RDP::SECONDARY));
+            if (class_ == RDP::SECONDARY) {
+                RDP::AltsecDrawingOrderHeader header(control);
+                switch (header.orderType) {
+                    case RDP::AltsecDrawingOrderHeader::FrameMarker:
+                    {
+                        RDP::FrameMarker order;
+
+                        order.receive(stream, header);
+                        if (this->verbose > 32){
+                            order.log(LOG_INFO);
+                        }
+                        for (size_t i = 0; i < this->nbconsumers ; i++){
+                            this->consumers[i]->draw(order);
+                        }
+                    }
+                    break;
+                    default:
+                        LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
+                        /* error, unknown order */
+                    break;
+                }
             }
-            else if (control & RDP::SECONDARY) {
+            else if (class_ == (RDP::STANDARD | RDP::SECONDARY)) {
                 using namespace RDP;
                 RDPSecondaryOrderHeader header(this->stream);
                 uint8_t *next_order = this->stream.p + header.order_data_length();
@@ -357,7 +375,7 @@ struct FileToGraphic
                 }
                 stream.p = next_order;
             }
-            else {
+            else if (class_ == RDP::STANDARD) {
                 RDPPrimaryOrderHeader header = this->common.receive(this->stream, control);
                 const Rect & clip = (control & RDP::BOUNDS)?this->common.clip:this->screen_rect;
                 switch (this->common.order) {
@@ -498,6 +516,11 @@ struct FileToGraphic
                     LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
                     throw Error(ERR_WRM);
                 }
+            }
+            else {
+                /* error, this should always be set */
+                LOG(LOG_ERR, "Unsupported drawing order detected : protocol error");
+                throw Error(ERR_WRM);
             }
             }
             break;
