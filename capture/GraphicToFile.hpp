@@ -678,6 +678,7 @@ public:
     }
 
     virtual void draw(const RDP::FrameMarker & order) {
+        this->drawable.draw(order);
         this->RDPSerializer::draw(order);
     }
 

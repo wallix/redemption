@@ -4898,6 +4898,9 @@ public:
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             this->capture->draw(order);
         }
+        if (order.action == RDP::FrameMarker::FrameEnd) {
+            this->periodic_snapshot();
+        }
     }
 
     virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {

@@ -56,8 +56,11 @@ public:
     DrawablePointerCache ptr_cache;
     GlyphCache           gly_cache;
 
+    int frame_start_count;
+
     RDPDrawable(const uint16_t width, const uint16_t height)
     : drawable(width, height)
+    , frame_start_count(0)
     {
         Pointer pointer0(Pointer::POINTER_CURSOR0);
         this->ptr_cache.add_pointer_static(pointer0, 0);
@@ -626,7 +629,10 @@ public:
         this->drawable.draw_bitmap(trect, bmp, false);
     }
 
-    virtual void draw(const RDP::FrameMarker & order) {}
+    virtual void draw(const RDP::FrameMarker & order) {
+        this->frame_start_count += ((order.action == RDP::FrameMarker::FrameStart) ? 1 : -1);
+        REDASSERT(this->frame_start_count >= 0);
+    }
 
     virtual void send_pointer(int cache_idx, const Pointer & cursor)
     {
