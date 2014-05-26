@@ -41,6 +41,7 @@ namespace detail {
         BufArrayTransport(const char * data, size_t len)
         : data(new(std::nothrow) uint8_t[len])
         , len(len)
+        , current(0)
         {
             if (!this->data) {
                 throw Error(ERR_TRANSPORT, 0);

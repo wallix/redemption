@@ -80,6 +80,16 @@ namespace detail
             return this->rename_to;
         }
 
+        const char * get_path() const
+        {
+            return this->path;
+        }
+
+        int get_fd() const
+        {
+            return this->fd;
+        }
+
         void open_if_not_open(int err_id)
         {
             if (!this->is_open()) {
@@ -143,11 +153,6 @@ namespace detail
             }
 
             this->current_filename[0] = 0;
-        }
-
-        int getfd() const
-        {
-            return this->fd;
         }
 
         void send(const char * const buffer, size_t len, auth_api * authentifier) throw (Error) {

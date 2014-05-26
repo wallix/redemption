@@ -27,7 +27,7 @@
 #include "transport.hpp"
 #include "error.hpp"
 #include "fileutils.hpp"
-#include "unique_ptr.hpp"
+#include "fdbub.hpp"
 #include "rio/rio.h"
 
 #include <sys/types.h>
@@ -40,14 +40,7 @@
 class InByMetaSequenceTransport
 : public Transport
 {
-    struct close_fd {
-        typedef int pointer;
-        void operator()(int fd) const {
-            ::close(fd);
-        }
-    };
-
-    unique_ptr<int, close_fd> meta_fd;
+    io::posix::fdbuf metabuf;
 
     int wrm_fd;
 
@@ -72,7 +65,7 @@ class InByMetaSequenceTransport
 
     void read(int err)
     {
-        ssize_t ret = ::read(this->meta_fd.get(), this->buf, sizeof(this->buf));
+        ssize_t ret = this->metabuf.read(this->buf, sizeof(this->buf));
         if (ret < 0 && errno != EINTR) {
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
@@ -88,7 +81,7 @@ class InByMetaSequenceTransport
         size_t total_read = 0;
         while (1) {
             char * pos = std::find(this->cur, this->eof, '\n');
-            if (len < pos - this->cur) {
+            if (len < size_t(pos - this->cur)) {
                 total_read += len;
                 memcpy(dest, this->cur, len);
                 this->cur += len;
@@ -116,7 +109,7 @@ class InByMetaSequenceTransport
 
     char meta_path[1024];
 
-    static unsigned parse_sec(char * first, char * last)
+    static unsigned parse_sec(const char * first, const char * last)
     {
         unsigned sec = 0;
         unsigned old_sec;
@@ -156,7 +149,7 @@ class InByMetaSequenceTransport
         reverse_iterator first(this->path + len);
         reverse_iterator e1 = std::find(first, last, ' ');
         reverse_iterator e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
-        if (last - e1 == 64 && e2 != last) {
+        if (e1 - first == 64 && e2 != last) {
             first = e2 + 1;
             e1 = std::find(first, last, ' ');
             e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
@@ -178,13 +171,14 @@ class InByMetaSequenceTransport
     }
 
 public:
+    //Line format "path sssss eeeee hhhhh HHHHH"
     char path[1024 + (std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
     unsigned begin_chunk_time;
     unsigned end_chunk_time;
     unsigned chunk_num;
 
     InByMetaSequenceTransport(const char * filename, const char * extension)
-    : meta_fd(this->open(filename, extension))
+    : metabuf(this->open(filename, extension))
     , wrm_fd(-1)
     , eof(buf)
     , cur(buf)
@@ -285,7 +279,9 @@ public:
 * CryptoInByMetaSequenceTransport *
 **********************************/
 
-class CryptoInByMetaSequenceTransport : public Transport {
+class CryptoInByMetaSequenceTransport
+: public Transport
+{
 public:
     char path[1024];
     unsigned begin_chunk_time;
@@ -297,11 +293,11 @@ public:
 
     CryptoInByMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
     : Transport()
+    , begin_chunk_time(0)
+    , end_chunk_time(0)
+    , chunk_num(0)
     {
         memset(this->path, 0, sizeof(path));
-        this->begin_chunk_time = 0;
-        this->end_chunk_time = 0;
-        this->chunk_num = 0;
 
         RIO_ERROR status = RIO_ERROR_OK;
         SQ * seq = NULL;

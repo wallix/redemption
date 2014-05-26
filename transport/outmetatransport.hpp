@@ -20,8 +20,8 @@
    Transport layer abstraction
 */
 
-#ifndef _REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP_
-#define _REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP_
+#ifndef REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP
 
 #include "transport.hpp"
 #include "error.hpp"
@@ -33,6 +33,46 @@
 #include "outfiletransport.hpp"
 #include "outfilenametransport.hpp"
 
+
+namespace detail
+{
+    struct MetaFilename
+    {
+        char meta_filename[2048];
+
+        MetaFilename(const char * path, const char * basename)
+        {
+            int res = snprintf(this->meta_filename, sizeof(this->meta_filename)-1,
+                               "%s%s-%06u.mwrm", path, basename, getpid());
+            if (res > int(sizeof(this->meta_filename) - 6) || res < 0) {
+                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            }
+        }
+    };
+
+    void write_meta_headers(io::posix::fdbuf & fdbuf, const char * path,
+                            uint16_t width, uint16_t height, auth_api * authentifier)
+    {
+        char header1[(std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 2];
+        const int len = sprintf(header1, "%u %u", width, height);
+        ssize_t res = fdbuf.write(header1, len);
+        if (res > 0) {
+            res = fdbuf.write("\n0\n\n", 4);
+        }
+
+        if (res < 0) {
+            int err = errno;
+            if (err == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", path);
+                authentifier->report("FILESYSTEM_FULL", message);
+            }
+
+            LOG(LOG_INFO, "Write to transport failed (M): code=%d", err);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+        }
+    }
+}
 
 class OutmetaTransport
 : public Transport
@@ -50,49 +90,27 @@ public:
     , start_sec(now.tv_sec)
     , stop_sec(now.tv_sec)
     {
-        {
-            char meta_filename[2048];
-            int res = snprintf(meta_filename, sizeof(meta_filename), "%s%s-%06u.mwrm", path, basename, getpid());
-            if (res > int(sizeof(meta_filename) - 6) || res < 0) {
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
-            }
-            if (this->fdbuf.open(meta_filename, O_WRONLY|O_CREAT, S_IRUSR) < 0) {
-                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-            }
-        }
-
-        char header1[(std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 2];
-        sprintf(header1, "%u %u", width, height);
-        ssize_t res = this->fdbuf.write(header1, strlen(header1));
-        if (res > 0) {
-            res = this->fdbuf.write("\n0\n\n", 4);
-        }
-
-        if (res < 0) {
-            int err = errno;
-            if (err == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", path);
-                this->authentifier->report("FILESYSTEM_FULL", message);
-            }
-
-            LOG(LOG_INFO, "Write to transport failed (M): code=%d", err);
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
-        }
-
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
+
+        if (this->fdbuf.open(detail::MetaFilename(path, basename).meta_filename, O_WRONLY|O_CREAT, S_IRUSR) < 0) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+        }
+
+        detail::write_meta_headers(this->fdbuf, path, width, height, this->authentifier);
     }
 
     virtual ~OutmetaTransport()
     {
-        this->filename_creator.next();
-        this->write_wrm(false);
+        if (this->filename_creator.is_open()) {
+            this->filename_creator.next();
+            this->write_wrm(false);
+        }
     }
 
     using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw(Error)
+    virtual void send(const char * buffer, size_t len) throw(Error)
     {
         this->filename_creator.send(buffer, len, this->authentifier);
     }
@@ -152,65 +170,56 @@ private:
 
 class CryptoOutmetaTransport : public Transport
 {
-public:
-    RIO   rio;
-    SQ  * seq;
-    char  path[512];
+    detail::OutFilenameCreator filename_creator;
+    io::posix::fdbuf fdbuf;
+    detail::MetaFilename mf;
+    crypto_file crypto;
+    time_t start_sec;
+    time_t stop_sec;
+    CryptoContext * crypto_ctx;
 
+
+public:
     CryptoOutmetaTransport(CryptoContext * crypto_ctx, const char * path, const char * hash_path,
         const char * basename, timeval now, uint16_t width, uint16_t height,
         const int groupid, auth_api * authentifier = NULL, unsigned verbose = 0)
-    : seq(NULL)
+    : filename_creator(SQF_PATH_FILE_PID_COUNT_EXTENSION, path, basename, ".wrm", groupid)
+    , mf(path, basename)
+    , start_sec(now.tv_sec)
+    , stop_sec(now.tv_sec)
+    , crypto_ctx(crypto_ctx)
     {
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
 
-        char filename[1024];
-        snprintf(filename, sizeof(filename), "%s-%06u", basename, getpid());
-        char header1[64];
-        sprintf(header1, "%u %u", width, height);
-        RIO_ERROR status = rio_init_cryptooutmeta(&this->rio,
-            &this->seq, crypto_ctx, path, hash_path, filename, ".mwrm", header1, "0", "",
-            &now, groupid);
-        if (status < 0)
-        {
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", this->path);
-                this->authentifier->report("FILESYSTEM_FULL", message);
-            }
-
-            LOG(LOG_INFO, "Write to transport failed (CM): code=%d", errno);
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        if (this->fdbuf.open(mf.meta_filename, O_WRONLY|O_CREAT, S_IRUSR) < 0) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
 
-        size_t max_path_length = sizeof(path) - 1;
-        strncpy(this->path, path, max_path_length);
-        this->path[max_path_length] = 0;
+        detail::write_meta_headers(this->fdbuf, path, width, height, this->authentifier);
     }
 
     ~CryptoOutmetaTransport()
     {
-        if (this->full_cleaning_requested)
-        {
-            rio_full_clear(&this->rio);
-        }
-        else
-        {
-            rio_clear(&this->rio);
+        if (this->filename_creator.is_open()) {
+            this->write_wrm(false);
         }
     }
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw(Error)
     {
-        ssize_t res = rio_send(&this->rio, buffer, len);
+        if (!this->filename_creator.is_open()) {
+            this->filename_creator.open_if_not_open(ERR_TRANSPORT_WRITE_FAILED);
+            this->init_crypto_ctx();
+        }
+        int res = this->crypto.write(buffer, len);
         if (res < 0)
         {
             if (errno == ENOSPC) {
                 char message[1024];
-                snprintf(message, sizeof(message), "100|%s", this->path);
+                snprintf(message, sizeof(message), "100|%s", this->filename_creator.get_path());
                 this->authentifier->report("FILESYSTEM_FULL", message);
             }
 
@@ -232,16 +241,73 @@ public:
         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
     }
 
-    virtual void timestamp(timeval now)
-    {
-        sq_timestamp(this->seq, &now);
-        Transport::timestamp(now);
-    }
-
     virtual bool next()
     {
-        sq_next(this->seq);
+        this->write_wrm(true);
         return Transport::next();
+    }
+
+    virtual void timestamp(timeval now)
+    {
+        this->stop_sec = now.tv_sec;
+    }
+
+private:
+    void write_wrm(bool send_exception)
+    {
+        unsigned char hash[HASH_LEN];
+        this->crypto.close(hash, this->crypto_ctx->hmac_key);
+
+        this->filename_creator.next();
+
+        const char * filename = this->filename_creator.get_filename();
+        size_t len = strlen(filename);
+        ssize_t res = this->fdbuf.write(filename, len);
+        if (res > 0) {
+            char mes[(std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 5 + 2 + HASH_LEN*2];
+            len = snprintf(mes, sizeof(mes), " %u %u",
+                           (unsigned)this->start_sec,
+                           (unsigned)this->stop_sec+1);
+            char * p = mes + len;
+            *p++ = ' ';                           //     1 octet
+            for (int i = 0; i < HASH_LEN / 2; i++, p += 2) {
+                sprintf(p, "%02x", hash[i]);      //    64 octets (hash1)
+            }
+            *p++ = ' ';                           //     1 octet
+            for (int i = HASH_LEN / 2; i < HASH_LEN; i++, p += 2) {
+                sprintf(p, "%02x", hash[i]);      //    64 octets (hash2)
+            }
+            *p++ = '\n';                          //     1 octet
+            res = this->fdbuf.write(mes, p-mes);
+            this->start_sec = this->stop_sec;
+        }
+        if (res < 0) {
+            int err = errno;
+            LOG(LOG_INFO, "Write to transport failed (M): code=%d", err);
+            if (send_exception) {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+            }
+        }
+    }
+
+    void init_crypto_ctx()
+    {
+        unsigned char derivator[DERIVATOR_LENGTH];
+        get_derivator(mf.meta_filename, derivator, DERIVATOR_LENGTH);
+        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+        if (compute_hmac(trace_key, this->crypto_ctx->crypto_key, derivator) == -1) {
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+
+        unsigned char iv[32];
+        if (dev_urandom_read(iv, 32) == -1) {
+            LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", mf.meta_filename);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+
+        if (-1 == this->crypto.open_write_init(this->filename_creator.get_fd(), trace_key, this->crypto_ctx, iv)) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+        }
     }
 };
 
