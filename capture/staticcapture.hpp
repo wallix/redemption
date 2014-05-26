@@ -123,14 +123,21 @@ public:
 
     virtual void snapshot( const timeval & now, int x, int y, bool ignore_frame_in_timeval)
     {
-        if (static_cast<unsigned>(difftimeval(now, this->start_static_capture))
-            >= static_cast<unsigned>(this->inter_frame_interval_static_capture)) {
-            if (!this->pointer_displayed) { this->drawable.trace_mouse(x, y); }
-            this->breakpoint(now);
-            this->start_static_capture = addusectimeval(this->inter_frame_interval_static_capture, this->start_static_capture);
-            if (!this->pointer_displayed) { this->drawable.clear_mouse(); }
-//            this->time_to_wait = this->inter_frame_interval_static_capture;
-//            this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
+        unsigned diff_time_val = static_cast<unsigned>(difftimeval(now, this->start_static_capture));
+        if (diff_time_val >= static_cast<unsigned>(this->inter_frame_interval_static_capture)) {
+            if (   !this->drawable.frame_start_count
+                || (diff_time_val >= static_cast<unsigned>(this->inter_frame_interval_static_capture) * 3 / 2)) {
+                if (!this->pointer_displayed) { this->drawable.trace_mouse(x, y); }
+                this->breakpoint(now);
+                this->start_static_capture = addusectimeval(this->inter_frame_interval_static_capture, this->start_static_capture);
+                if (!this->pointer_displayed) { this->drawable.clear_mouse(); }
+    //            this->time_to_wait = this->inter_frame_interval_static_capture;
+    //            this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
+            }
+            else {
+                this->time_to_wait = this->inter_frame_interval_static_capture / 3;
+                return;
+            }
         }
         // else {
         //     this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
