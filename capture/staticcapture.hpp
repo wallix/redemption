@@ -127,6 +127,7 @@ public:
             >= static_cast<unsigned>(this->inter_frame_interval_static_capture)) {
             if (!this->pointer_displayed) { this->drawable.trace_mouse(x, y); }
             this->breakpoint(now);
+            this->start_static_capture = addusectimeval(this->inter_frame_interval_static_capture, this->start_static_capture);
             if (!this->pointer_displayed) { this->drawable.clear_mouse(); }
 //            this->time_to_wait = this->inter_frame_interval_static_capture;
 //            this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
@@ -173,7 +174,6 @@ public:
 
         this->drawable.clear_timestamp();
 //        this->start_static_capture = now;
-        this->start_static_capture = addusectimeval(this->inter_frame_interval_static_capture, this->start_static_capture);
     }
 
     virtual void flush()
