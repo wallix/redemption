@@ -315,8 +315,6 @@ struct FileToGraphic
                         }
                         for (size_t i = 0; i < this->nbconsumers ; i++){
                             this->consumers[i]->draw(order);
-                            this->consumers[i]->snapshot( this->record_now, this->mouse_x, this->mouse_y
-                                                        , this->ignore_frame_in_timeval);
                         }
                     }
                     break;
