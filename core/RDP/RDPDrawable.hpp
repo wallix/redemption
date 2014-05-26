@@ -632,6 +632,7 @@ public:
     virtual void draw(const RDP::FrameMarker & order) {
         this->frame_start_count += ((order.action == RDP::FrameMarker::FrameStart) ? 1 : -1);
         REDASSERT(this->frame_start_count >= 0);
+        this->drawable.logical_frame_ended = (this->frame_start_count == 0);
     }
 
     virtual void send_pointer(int cache_idx, const Pointer & cursor)

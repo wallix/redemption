@@ -97,7 +97,7 @@ struct FileToGraphic
 
     BGRPalette palette;
 
-    timeval begin_capture;
+    const timeval begin_capture;
     timeval end_capture;
     uint32_t max_order_count;
     uint32_t verbose;
@@ -315,6 +315,8 @@ struct FileToGraphic
                         }
                         for (size_t i = 0; i < this->nbconsumers ; i++){
                             this->consumers[i]->draw(order);
+                            this->consumers[i]->snapshot( this->record_now, this->mouse_x, this->mouse_y
+                                                        , this->ignore_frame_in_timeval);
                         }
                     }
                     break;
@@ -1045,16 +1047,6 @@ struct FileToGraphic
     }
 
     void play() {
-        bool send_initial_image = true;
-        if (  (this->begin_capture.tv_sec == 0)
-           || (this->begin_capture.tv_sec > this->record_now.tv_sec)
-           || (  (this->begin_capture.tv_sec == this->record_now.tv_sec)
-              && (this->begin_capture.tv_usec > this->record_now.tv_usec)
-              )
-           ) {
-                send_initial_image = false;
-        }
-
         while (this->next_order()) {
             if (this->verbose > 8) {
                 LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
@@ -1067,11 +1059,9 @@ struct FileToGraphic
                   && (this->begin_capture.tv_usec <= this->record_now.tv_usec)
                   )
                ) {
-                if (send_initial_image) {
-                    send_initial_image = false;
-                }
                 for (size_t i = 0; i < this->nbconsumers ; i++) {
-                    this->consumers[i]->snapshot( this->record_now, this->mouse_x, this->mouse_y, this->ignore_frame_in_timeval);
+                    this->consumers[i]->snapshot( this->record_now, this->mouse_x, this->mouse_y
+                                                , this->ignore_frame_in_timeval);
                 }
 
                 this->ignore_frame_in_timeval = false;
