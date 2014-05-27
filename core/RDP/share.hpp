@@ -282,6 +282,12 @@ namespace RDP {
 // | 50 PDUTYPE2_ARC_STATUS_PDU        | Auto-Reconnect Status PDU             |
 // |                                   |    (section 2.2.4.1.1)                |
 // +-----------------------------------+---------------------------------------+
+// | 54 PDUTYPE2_STATUS_INFO_PDU       | Status Info PDU (section 2.2.5.2)     |
+// |                                   |                                       |
+// +-----------------------------------+---------------------------------------+
+// | 55 PDUTYPE2_MONITOR_LAYOUT_PDU    | Monitor Layout PDU (section 2.2.12.1) |
+// |                                   |                                       |
+// +-----------------------------------+---------------------------------------+
 
 enum {
     PDUTYPE2_UPDATE                      = 2,  // Update PDU (section 2.2.9.1.1.3)
@@ -316,6 +322,8 @@ enum {
                                                // (see [MS-RDPEGDI] section 2.2.2.3.4)
     PDUTYPE2_ARC_STATUS_PDU              = 50, // Auto-Reconnect Status PDU
                                                // (section 2.2.4.1.1)
+    PDUTYPE2_STATUS_INFO_PDU             = 54, // Status Info PDU (section 2.2.5.2)
+    PDUTYPE2_MONITOR_LAYOUT_PDU          = 55  // Monitor Layout PDU (section 2.2.12.1)
 };
 
 // compressedType (1 byte): An 8-bit, unsigned integer. The compression type
