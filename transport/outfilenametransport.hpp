@@ -37,30 +37,24 @@
 
 namespace detail
 {
-    class OutFilenameCreator
+    struct FilenameGenerator
     {
         char        path[1024];
         char        filename[1012];
         char        extension[12];
-        char        current_filename[1024];
-        char        rename_to[1024];
         SQ_FORMAT   format;
         unsigned    pid;
-        unsigned    count;
         int         groupid;
-        int         fd;
+        char        filename_gen[1024];
 
-    public:
-        OutFilenameCreator(SQ_FORMAT format,
-                           const char * const prefix,
-                           const char * const filename,
-                           const char * const extension,
-                           const int groupid)
+        FilenameGenerator(SQ_FORMAT format,
+                          const char * const prefix,
+                          const char * const filename,
+                          const char * const extension,
+                          const int groupid)
         : format(format)
         , pid(getpid())
-        , count(0)
         , groupid(groupid)
-        , fd(-1)
         {
             if (strlen(prefix) > sizeof(this->path) - 1
              || strlen(filename) > sizeof(this->filename) - 1
@@ -71,18 +65,64 @@ namespace detail
             strcpy(this->path, prefix);
             strcpy(this->filename, filename);
             strcpy(this->extension, extension);
+
+            this->filename_gen[0] = 0;
+        }
+
+        const char * next_filename(unsigned count)
+        {
+            switch (this->format) {
+                default:
+                case SQF_PATH_FILE_PID_COUNT_EXTENSION:
+                    snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u-%06u%s", this->path
+                    , this->filename, this->pid, count, this->extension);
+                    break;
+                case SQF_PATH_FILE_COUNT_EXTENSION:
+                    snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
+                    , this->filename, count, this->extension);
+                    break;
+                case SQF_PATH_FILE_PID_EXTENSION:
+                    snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
+                    , this->filename, this->pid, this->extension);
+                    break;
+                case SQF_PATH_FILE_EXTENSION:
+                    snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", this->path
+                    , this->filename, this->extension);
+                    break;
+            }
+            return this->filename;
+        }
+    };
+
+
+    class OutFilenameCreator
+    {
+        FilenameGenerator filegen;
+        char        current_filename[1024];
+        unsigned    count;
+        int         fd;
+
+    public:
+        OutFilenameCreator(SQ_FORMAT format,
+                           const char * const prefix,
+                           const char * const filename,
+                           const char * const extension,
+                           const int groupid)
+        : filegen(format, prefix, filename, extension, groupid)
+        , count(0)
+        , fd(-1)
+        {
             this->current_filename[0] = 0;
-            this->rename_to[0] = 0;
         }
 
         const char * get_filename() const
         {
-            return this->rename_to;
+            return this->filegen.filename_gen;
         }
 
         const char * get_path() const
         {
-            return this->path;
+            return this->filegen.path;
         }
 
         int get_fd() const
@@ -93,18 +133,20 @@ namespace detail
         void open_if_not_open(int err_id)
         {
             if (!this->is_open()) {
-                snprintf(this->current_filename, sizeof(this->current_filename), "%sred-XXXXXX.tmp", this->path);
+                snprintf(this->current_filename, sizeof(this->current_filename), "%sred-XXXXXX.tmp", this->filegen.path);
                 TODO("add rights information to constructor");
                 this->fd = ::mkostemps(this->current_filename, 4, O_WRONLY | O_CREAT);
                 if (this->fd < 0) {
                     throw Error(err_id, errno);
                 }
                 if (chmod( this->current_filename
-                        , (this->groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR)) == -1) {
+                         , (this->filegen.groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR)) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                     , this->current_filename, strerror(errno), errno
-                    , (this->groupid ? "u+r, g+r" : "u+r"));
+                    , (this->filegen.groupid ? "u+r, g+r" : "u+r"));
                 }
+
+                this->filegen.next_filename(this->count);
             }
         }
 
@@ -123,33 +165,13 @@ namespace detail
                 }
             }
 
-            switch (this->format) {
-                default:
-                case SQF_PATH_FILE_PID_COUNT_EXTENSION:
-                    snprintf( this->rename_to, sizeof(this->rename_to), "%s%s-%06u-%06u%s", this->path
-                            , this->filename, this->pid, this->count, this->extension);
-                    break;
-                case SQF_PATH_FILE_COUNT_EXTENSION:
-                    snprintf( this->rename_to, sizeof(this->rename_to), "%s%s-%06u%s", this->path
-                            , this->filename, this->count, this->extension);
-                    break;
-                case SQF_PATH_FILE_PID_EXTENSION:
-                    snprintf( this->rename_to, sizeof(this->rename_to), "%s%s-%06u%s", this->path
-                            , this->filename, this->pid, this->extension);
-                    break;
-                case SQF_PATH_FILE_EXTENSION:
-                    snprintf( this->rename_to, sizeof(this->rename_to), "%s%s%s", this->path
-                            , this->filename, this->extension);
-                    break;
-            }
-
             ++this->count;
 
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            int res = rename(this->current_filename, this->rename_to);
+            int res = rename(this->current_filename, this->get_filename());
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                   , this->current_filename, this->rename_to, errno, strerror(errno));
+                   , this->current_filename, this->get_filename(), errno, strerror(errno));
             }
 
             this->current_filename[0] = 0;
@@ -161,7 +183,7 @@ namespace detail
             if (res < 0){
                 if (errno == ENOSPC) {
                     char message[1024];
-                    snprintf(message, sizeof(message), "100|%s", this->path);
+                    snprintf(message, sizeof(message), "100|%s", this->filegen.path);
                     authentifier->report("FILESYSTEM_FULL", message);
                 }
                 LOG(LOG_INFO, "Write to transport failed (F): code=%d", errno);

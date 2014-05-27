@@ -85,7 +85,7 @@ class fdbuf
 
 public:
     fdbuf(int fd = -1) /*noexcept*/
-    : fd(-1)
+    : fd(fd)
     {}
 
     //CPP_MOVE_CTOR(fdbuf) /*noexcept*/
@@ -99,10 +99,10 @@ public:
         this->close();
     }
 
-    //int getfd() const
-    //{
-    //    return this->fd;
-    //}
+    int get_fd() const
+    {
+       return this->fd;
+    }
 
     int open(const char *pathname, int flags) /*noexcept*/
     {

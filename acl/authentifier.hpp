@@ -151,12 +151,12 @@ public:
         uint32_t timeout = max_tick?30*max_tick:10;
         LOG(LOG_INFO, "Session User inactivity : set timeout to %u seconds", timeout);
         this->last_activity_time = now;
-        this->last_total_received = trans.total_received;
+        this->last_total_received = trans.get_total_received();
         this->inactivity_timeout = timeout;
     }
 
     bool check(time_t now, Transport & trans) {
-        if (trans.total_received == this->last_total_received) {
+        if (trans.get_total_received() == this->last_total_received) {
             if (now > this->last_activity_time + this->inactivity_timeout) {
                 LOG(LOG_INFO, "Session User inactivity : closing");
                 // mm.invoke_close_box("Connection closed on inactivity", signal, now);
@@ -165,7 +165,7 @@ public:
         }
         else {
             this->last_activity_time = now;
-            this->last_total_received = trans.total_received;
+            this->last_total_received = trans.get_total_received();
         }
         return false;
     }
@@ -434,7 +434,7 @@ public:
     void check(time_t now, Front & front) {
         // Procedure which stops the recording on inactivity
         if (this->last_record_activity_time == 0) this->last_record_activity_time = now;
-        if ((front.trans->total_received == this->last_total_received)
+        if ((front.trans->get_total_received() == this->last_total_received)
             && (front.trans->total_sent == this->last_total_sent)) {
             if (!this->stop_record_inactivity &&
                 (now > this->last_record_activity_time + this->stop_record_time)) {
@@ -444,7 +444,7 @@ public:
         }
         else {
             this->last_record_activity_time = now;
-            this->last_total_received = front.trans->total_received;
+            this->last_total_received = front.trans->get_total_received();
             this->last_total_sent = front.trans->total_sent;
             // front.trans->reset_quantum_sent();
             // Here we only reset the quantum sent

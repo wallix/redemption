@@ -29,6 +29,7 @@
 #include "fileutils.hpp"
 #include "fdbub.hpp"
 #include "rio/rio.h"
+#include "rio/cryptofile.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -37,15 +38,9 @@
 #include <algorithm>
 #include <limits>
 
-class InByMetaSequenceTransport
-: public Transport
-{
-    io::posix::fdbuf metabuf;
-
-    int wrm_fd;
-
-
-    static int open(const char * prefix, const char * extension) {
+namespace detail {
+    int open_inmeta(const char * prefix, const char * extension)
+    {
         char filename[1024];
         if (snprintf(filename, sizeof(filename), "%s%s", prefix, extension) >= int(sizeof(filename))) {
             throw Error(ERR_TRANSPORT);
@@ -59,57 +54,67 @@ class InByMetaSequenceTransport
         return fd;
     }
 
-    char buf[1024];
-    char * eof;
-    char * cur;
-
-    void read(int err)
+    template<class Reader>
+    class ReaderLine
     {
-        ssize_t ret = this->metabuf.read(this->buf, sizeof(this->buf));
-        if (ret < 0 && errno != EINTR) {
-            throw Error(ERR_TRANSPORT_READ_FAILED);
-        }
-        if (ret == 0) {
-            throw Error(err);
-        }
-        this->eof = this->buf + ret;
-        this->cur = this->buf;
-    }
+        char buf[1024];
+        char * eof;
+        char * cur;
+        Reader reader;
 
-    size_t read_line(char * dest, size_t len, int err) throw(Error)
-    {
-        size_t total_read = 0;
-        while (1) {
-            char * pos = std::find(this->cur, this->eof, '\n');
-            if (len < size_t(pos - this->cur)) {
-                total_read += len;
-                memcpy(dest, this->cur, len);
-                this->cur += len;
-                break;
+        void read(int err)
+        {
+            ssize_t ret = this->reader(this->buf, sizeof(this->buf));
+            if (ret < 0 && errno != EINTR) {
+                throw Error(ERR_TRANSPORT_READ_FAILED);
             }
-            total_read += pos - this->cur;
-            memcpy(dest, this->cur, pos - this->cur);
+            if (ret == 0) {
+                throw Error(err);
+            }
+            this->eof = this->buf + ret;
+            this->cur = this->buf;
+        }
+
+    public:
+        ReaderLine(Reader reader)
+        : eof(buf)
+        , cur(buf)
+        , reader(reader)
+        {}
+
+        size_t read_line(char * dest, size_t len, int err) throw(Error)
+        {
+            size_t total_read = 0;
+            while (1) {
+                char * pos = std::find(this->cur, this->eof, '\n');
+                if (len < size_t(pos - this->cur)) {
+                    total_read += len;
+                    memcpy(dest, this->cur, len);
+                    this->cur += len;
+                    break;
+                }
+                total_read += pos - this->cur;
+                memcpy(dest, this->cur, pos - this->cur);
+                this->cur = pos+1;
+                if (pos != this->eof) {
+                    break;
+                }
+                this->read(err);
+            }
+            return total_read;
+        }
+
+        void next_line()
+        {
+            char * pos;
+            while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
+                this->read(ERR_TRANSPORT_READ_FAILED);
+            }
             this->cur = pos+1;
-            if (pos != this->eof) {
-                break;
-            }
-            this->read(err);
         }
-        return total_read;
-    }
+    };
 
-    void next_line()
-    {
-        char * pos;
-        while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
-            this->read(ERR_TRANSPORT_READ_FAILED);
-        }
-        this->cur = pos+1;
-    }
-
-    char meta_path[1024];
-
-    static unsigned parse_sec(const char * first, const char * last)
+    unsigned parse_sec(const char * first, const char * last)
     {
         unsigned sec = 0;
         unsigned old_sec;
@@ -126,10 +131,33 @@ class InByMetaSequenceTransport
         }
         return sec;
     }
+}
+
+class InByMetaSequenceTransport
+: public Transport
+{
+    io::posix::fdbuf metabuf;
+
+    int wrm_fd;
+
+    struct ReaderBuf {
+        io::posix::fdbuf & fdbuf;
+
+        ReaderBuf(io::posix::fdbuf & fdbuf)
+        : fdbuf(fdbuf)
+        {}
+
+        ssize_t operator()(char * buf, size_t len) const {
+            return this->fdbuf.read(buf, len);
+        }
+    };
+
+    detail::ReaderLine<ReaderBuf> reader;
+    char meta_path[1024];
 
     void open_next_wrm(int err)
     {
-        size_t len = this->read_line(this->path, sizeof(this->path) - 1, err);
+        size_t len = this->reader.read_line(this->path, sizeof(this->path) - 1, err);
         this->path[len] = 0;
 
         // Line format "fffff sssss eeeee hhhhh HHHHH"
@@ -155,17 +183,21 @@ class InByMetaSequenceTransport
             e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
         }
 
-        this->end_chunk_time = this->parse_sec(e1.base(), first.base());
+        this->end_chunk_time = detail::parse_sec(e1.base(), first.base());
         if (e1 != last) {
             ++e1;
         }
-        this->begin_chunk_time = this->parse_sec(e2.base(), e1.base());
+        this->begin_chunk_time = detail::parse_sec(e2.base(), e1.base());
 
         if (e2 != last) {
             *e2 = 0;
         }
 
         this->wrm_fd = ::open(this->path, O_RDONLY);
+
+        if (this->wrm_fd < 0) {
+            throw Error(err, errno);
+        }
 
         this->chunk_num++;
     }
@@ -178,10 +210,9 @@ public:
     unsigned chunk_num;
 
     InByMetaSequenceTransport(const char * filename, const char * extension)
-    : metabuf(this->open(filename, extension))
+    : metabuf(detail::open_inmeta(filename, extension))
     , wrm_fd(-1)
-    , eof(buf)
-    , cur(buf)
+    , reader(this->metabuf)
     , begin_chunk_time(0)
     , end_chunk_time(0)
     , chunk_num(0)
@@ -198,9 +229,9 @@ public:
 
         // headers
         //@{
-        this->next_line();
-        this->next_line();
-        this->next_line();
+        this->reader.next_line();
+        this->reader.next_line();
+        this->reader.next_line();
         //@}
 
         this->path[0] = 0;
@@ -282,76 +313,180 @@ public:
 class CryptoInByMetaSequenceTransport
 : public Transport
 {
+    io::posix::fdbuf metabuf;
+    int wrm_fd;
+
+    crypto_file crypto_wrm;
+    crypto_file crypto_mwrm;
+
+    CryptoContext * crypto_ctx;
+
+    struct ReaderCrypto {
+        crypto_file & crypto;
+
+        ReaderCrypto(crypto_file & crypto)
+        : crypto(crypto)
+        {}
+
+        int operator()(char * buf, size_t len) const {
+            return this->crypto.read(buf, len);
+        }
+    };
+
+    detail::ReaderLine<ReaderCrypto> reader_meta;
+
+    void open_next_wrm(int err)
+    {
+        size_t len = this->reader_meta.read_line(this->path, sizeof(this->path) - 1, err);
+        this->path[len] = 0;
+
+        // Line format "fffff sssss eeeee hhhhh HHHHH"
+        //                               ^  ^  ^  ^
+        //                               |  |  |  |
+        //                               |hash1|  |
+        //                               |     |  |
+        //                           space3    |hash2
+        //                                     |
+        //                                   space4
+        //
+        // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
+        //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
+        typedef std::reverse_iterator<char*> reverse_iterator;
+
+        reverse_iterator last(this->path);
+        reverse_iterator first(this->path + len);
+        reverse_iterator e1 = std::find(first, last, ' ');
+        reverse_iterator e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
+        if (e1 - first == 64 && e2 != last) {
+            first = e2 + 1;
+            e1 = std::find(first, last, ' ');
+            e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
+        }
+
+        this->end_chunk_time = detail::parse_sec(e1.base(), first.base());
+        if (e1 != last) {
+            ++e1;
+        }
+        this->begin_chunk_time = detail::parse_sec(e2.base(), e1.base());
+
+        if (e2 != last) {
+            *e2 = 0;
+        }
+
+        this->wrm_fd = ::open(this->path, O_RDONLY);
+
+        if (this->wrm_fd < 0) {
+            throw Error(err, errno);
+        }
+
+        this->chunk_num++;
+    }
+
 public:
-    char path[1024];
+    //Line format "path sssss eeeee hhhhh HHHHH"
+    char path[1024 + (std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
     unsigned begin_chunk_time;
     unsigned end_chunk_time;
     unsigned chunk_num;
 
-    RIO * rio;
-    SQ * seq;
-
     CryptoInByMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
     : Transport()
+    , metabuf(detail::open_inmeta(filename, extension))
+    , wrm_fd(-1)
+    , crypto_ctx(crypto_ctx)
+    , reader_meta(this->crypto_mwrm)
     , begin_chunk_time(0)
     , end_chunk_time(0)
     , chunk_num(0)
     {
-        memset(this->path, 0, sizeof(path));
+        char meta_filename[1024];
+        snprintf(meta_filename, sizeof(meta_filename), "%s%s", filename, extension);
+        this->init_crypto_ctx(this->crypto_mwrm, meta_filename, this->metabuf.get_fd());
 
-        RIO_ERROR status = RIO_ERROR_OK;
-        SQ * seq = NULL;
-        this->rio = rio_new_cryptoinmeta(&status, &seq, crypto_ctx, filename, extension);
-        if (status != RIO_ERROR_OK){
-            throw Error(ERR_TRANSPORT);
-        }
-        this->seq = seq;
+        // headers
+        //@{
+        this->reader_meta.next_line();
+        this->reader_meta.next_line();
+        this->reader_meta.next_line();
+        //@}
     }
 
-    ~CryptoInByMetaSequenceTransport()
+    virtual ~CryptoInByMetaSequenceTransport()
     {
-        if (this->rio){
-            rio_delete(this->rio);
-        }
+        ::close(this->wrm_fd);
     }
 
     void next_chunk_info()
     {
-        {
-            timeval tv_begin = {};
-            timeval tv_end = {};
-            RIO_ERROR status = sq_get_chunk_info(this->seq, &this->chunk_num, this->path, sizeof(this->path), &tv_begin, &tv_end);
-            if (status != RIO_ERROR_OK){
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
-            this->begin_chunk_time = tv_begin.tv_sec;
-            this->end_chunk_time = tv_end.tv_sec;
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_READ_FAILED);
         }
-        // if some error occurs calling sq_next
-        // it will be took care of when opening next chunk, not now
-        sq_next(this->seq);
+
+        this->open_next_wrm(ERR_TRANSPORT_READ_FAILED);
+
+        this->init_crypto_ctx(this->crypto_wrm, this->path, this->wrm_fd);
     }
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error)
     {
-        ssize_t res = rio_recv(this->rio, *pbuffer, len);
-        if (res <= 0){
-            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        if (this->wrm_fd == -1) {
+            this->next_chunk_info();
         }
-        *pbuffer += res;
-        if (res != (ssize_t)len){
+        int res;
+        size_t remaining_len = len;
+        bool zero_res = false;
+        while (remaining_len) {
+            res = this->crypto_wrm.read(*pbuffer, remaining_len);
+            if (res < 0) {
+                if (errno != EINTR) {
+                    continue;
+                }
+                this->next_chunk_info();
+                continue;
+            }
+            if (res == 0){
+                if (zero_res) {
+                    this->next_chunk_info();
+                    zero_res = false;
+                }
+                else {
+                    zero_res = true;
+                }
+            }
+            *pbuffer += res;
+            remaining_len -= res;
+        }
+        if (remaining_len){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
     }
 
     using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
+    virtual void send(const char * const buffer, size_t len) throw (Error)
+    {
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV, 0);
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+    virtual void seek(int64_t offset, int whence) throw (Error)
+    {
+        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
+    }
 
+private:
+    void init_crypto_ctx(crypto_file & crypto, const char * filename, int fd)
+    {
+        unsigned char derivator[DERIVATOR_LENGTH];
+        get_derivator(filename, derivator, DERIVATOR_LENGTH);
+        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+        if (compute_hmac(trace_key, this->crypto_ctx->crypto_key, derivator) == -1) {
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+
+        if (-1 == crypto.open_read_init(fd, trace_key, this->crypto_ctx)) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+        }
+    }
 };
 
 #endif

@@ -24,6 +24,8 @@
 #define _REDEMPTION_TRANSPORT_RIO_RIO_CRYPTOOUTMETA_H_
 
 #include "rio.h"
+#include "rio_crypto.h"
+#include <fileutils.hpp>
 
 #define HASH_LEN 64
 

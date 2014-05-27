@@ -168,6 +168,10 @@ public:
         this->MAX_CIPHERED_SIZE   = this->MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
         this->fd                  = systemfd;
         this->oflag               = O_RDONLY;
+        this->pos                 = 0;
+        this->raw_size            = 0;
+        this->file_size           = 0;
+        this->state               = 0;
 
         unsigned char tmp_buf[40];
 
@@ -214,6 +218,10 @@ public:
         this->MAX_CIPHERED_SIZE   = this->MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
         this->fd                  = systemfd;
         this->oflag               = O_WRONLY;
+        this->pos                 = 0;
+        this->raw_size            = 0;
+        this->file_size           = 0;
+        this->state               = 0;
 
         const EVP_CIPHER * cipher   = EVP_aes_256_cbc();
         unsigned int       salt[]   = {12345, 54321};    // suspicious, to check...

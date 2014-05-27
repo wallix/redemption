@@ -100,7 +100,6 @@ project redemption
     <cxxflags>-O3
 #     <cxxflags>-march=native
     <cxxflags>-Wuninitialized
-    <cxxflags>-Wmaybe-uninitialized
     <cxxflags>-Wnon-virtual-dtor
 #     <cxxflags>-Wall
 #     <cxxflags>-Wextra
@@ -122,12 +121,14 @@ project redemption
     <cxxflags>-Wpacked
     <cxxflags>-Wredundant-decls
 #     <cxxflags>-Winline
-    <toolset>gcc:<cxxflags>-Wdouble-promotion
     <cxxflags>-Winit-self
 #     <cxxflags>-Wcast-qual
 #     <cxxflags>-Woverloaded-virtual
 #     <cxxflags>-Wunused-variable
     <cxxflags>-fpie
+
+    <toolset>gcc:<cxxflags>-Wdouble-promotion
+    <toolset>gcc:<cxxflags>-Wmaybe-uninitialized
 
     <toolset>clang:<cxxflags>-Wno-mismatched-tags
     <toolset>clang:<cxxflags>-Wno-overloaded-virtual
@@ -472,6 +473,7 @@ unit-test test_outfiletransport : tests/transport/test_outfiletransport.cpp cryp
 unit-test test_sockettransport : tests/transport/test_sockettransport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_filetransport : tests/transport/test_filetransport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_cryptooutmetatransport : tests/transport/test_cryptooutmetatransport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_cryptoinmetatransport : tests/transport/test_cryptoinmetatransport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
 #unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_image_capture : tests/capture/test_image_capture.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;

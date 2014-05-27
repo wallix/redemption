@@ -77,7 +77,8 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(&(trans.seq), 0));
     BOOST_CHECK_EQUAL(3083, sq_outfilename_filesize(&(trans.seq), 1));
-    sq_outfilename_unlink(&(trans.seq), 0);
-    sq_outfilename_unlink(&(trans.seq), 1);
+    detail::FilenameGenerator filegen(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
+    ::unlink(filegen.next_filename(0));
+    ::unlink(filegen.next_filename(1));
 }
 

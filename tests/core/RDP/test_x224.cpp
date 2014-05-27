@@ -533,5 +533,5 @@ BOOST_AUTO_TEST_CASE(TestSend_DT_TPDU)
     CheckTransport t("\x03\x00\x00\x0C\x02\xF0\x80\x12\x34\x56\x78\x9A", 12);
     t.send(stream.get_data(), stream.size());
     t.send(payload.get_data(), payload_len);
-    BOOST_CHECK_EQUAL(true, t.status);
+    BOOST_CHECK_EQUAL(true, t.get_status());
 }

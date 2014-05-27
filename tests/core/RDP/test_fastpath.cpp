@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     out_t.send(out_s);
     out_t.send(out_payload);
 
-    BOOST_CHECK_EQUAL(true, out_t.status);
+    BOOST_CHECK_EQUAL(true, out_t.get_status());
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     out_t.send(out_s);
     out_t.send(out_payload);
 
-    BOOST_CHECK_EQUAL(true, out_t.status);
+    BOOST_CHECK_EQUAL(true, out_t.get_status());
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
@@ -342,6 +342,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
 
     BOOST_CHECK_EQUAL(0, in_su.payload.in_remain());
 
-    BOOST_CHECK_EQUAL(true, out_t.status);
+    BOOST_CHECK_EQUAL(true, out_t.get_status());
 }
 
