@@ -67,10 +67,6 @@ private:
 private:
     RDPGraphicDevice * gd;
 
-    timeval last_now;
-    int     last_x;
-    int     last_y;
-
 public:
     Capture( const timeval & now, int width, int height, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
@@ -89,10 +85,7 @@ public:
             , capture_event(wait_obj(NULL))
             , png_path(png_path)
             , basename(basename)
-            , gd(NULL)
-            , last_now(now)
-            , last_x(width / 2)
-            , last_y(height / 2) {
+            , gd(NULL) {
         if (this->capture_drawable) {
             this->drawable = new RDPDrawable(width, height);
         }
@@ -228,10 +221,6 @@ public:
     void snapshot( const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
         this->capture_event.reset();
 
-        this->last_now = now;
-        this->last_x   = x;
-        this->last_y   = y;
-
         if (this->capture_png) {
             this->psc->snapshot( now, x, y, ignore_frame_in_timeval);
             this->capture_event.update(this->psc->time_to_wait);
@@ -240,10 +229,6 @@ public:
             this->pnc->snapshot( now, x, y, ignore_frame_in_timeval);
             this->capture_event.update(this->pnc->time_to_wait);
         }
-    }
-
-    virtual void timestamp(const timeval & now) {
-        this->last_now = now;
     }
 
     void flush() {
@@ -349,15 +334,6 @@ public:
         if (this->gd) {
             this->gd->draw(order);
         }
-
-        if (order.action == RDP::FrameMarker::FrameEnd) {
-            if (this->capture_png) {
-                this->psc->snapshot(this->last_now, this->last_x, this->last_y, false);
-            }
-            if (this->capture_wrm) {
-                this->pnc->snapshot(this->last_now, this->last_x, this->last_y, false);
-            }
-        }
     }
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) {
@@ -387,6 +363,12 @@ public:
     void draw(const RDPEllipseCB & cmd, const Rect & clip) {
         if (this->gd) {
             this->gd->draw(cmd, clip);
+        }
+    }
+
+    virtual void tick(const timeval & now) {
+        if (this->gd) {
+            this->gd->tick(now);
         }
     }
 

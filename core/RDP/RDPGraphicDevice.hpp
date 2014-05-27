@@ -57,25 +57,27 @@
 #include "ellipse.hpp"
 
 struct RDPGraphicDevice {
+    TODO("RZ : Move this method into Drawable class.");
     virtual void set_row(size_t rownum, const uint8_t * data) {}
 
-    virtual void draw(const RDPOpaqueRect      & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPScrBlt          & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPDestBlt         & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPMultiDstBlt     & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) = 0;
+
+    virtual void draw(const RDPOpaqueRect       & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPScrBlt           & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPDestBlt          & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPMultiDstBlt      & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPMultiOpaqueRect  & cmd, const Rect & clip) = 0;
     virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) = 0;
     virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPPatBlt          & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPMemBlt          & cmd, const Rect & clip, const Bitmap & bmp) = 0;
-    virtual void draw(const RDPMem3Blt         & cmd, const Rect & clip, const Bitmap & bmp) = 0;
-    virtual void draw(const RDPLineTo          & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPGlyphIndex      & cmd, const Rect & clip, const GlyphCache * gly_cache) = 0;
-    virtual void draw(const RDPPolygonSC       & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPPolygonCB       & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPPolyline        & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPEllipseSC       & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPEllipseCB       & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPPatBlt           & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPMemBlt           & cmd, const Rect & clip, const Bitmap & bmp) = 0;
+    virtual void draw(const RDPMem3Blt          & cmd, const Rect & clip, const Bitmap & bmp) = 0;
+    virtual void draw(const RDPLineTo           & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPGlyphIndex       & cmd, const Rect & clip, const GlyphCache * gly_cache) = 0;
+    virtual void draw(const RDPPolygonSC        & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPPolygonCB        & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPPolyline         & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPEllipseSC        & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPEllipseCB        & cmd, const Rect & clip) = 0;
 
     TODO("The 3 methods below should not exist and cache access be done before calling drawing orders");
     virtual void draw(const RDPBrushCache & cmd) {}
@@ -87,12 +89,14 @@ struct RDPGraphicDevice {
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
         size_t size, const Bitmap & bmp) {}
 
+
+    TODO("RZ : Move these methods into an other interface.");
+    virtual void tick(const timeval & now) {}
+
     virtual void input(const timeval & now, Stream & input_data_32) {}
 
     virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
         bool ignore_frame_in_timeval) {}
-
-    virtual void timestamp(const timeval & now) {}
 
     virtual void server_set_pointer(const Pointer & cursor) {}
     virtual void send_pointer(int cache_idx, const uint8_t * data,
@@ -100,6 +104,8 @@ struct RDPGraphicDevice {
     virtual void set_pointer(int cache_idx) {}
 
     virtual void set_pointer_display() {}
+
+    virtual void flush() = 0;
 
 protected:
     // this to avoid calling constructor of base abstract class
@@ -110,8 +116,6 @@ public:
     // through pointer of base class. As this class is interface only
     // it does not looks really usefull.
     virtual ~RDPGraphicDevice() {}
-
-    virtual void flush() = 0;
 };
 
 #endif

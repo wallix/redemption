@@ -4849,6 +4849,13 @@ public:
     }
 
 
+    virtual void tick(const timeval & now) {
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->tick(now);
+        }
+    }
+
     virtual void flush() {
         this->orders->flush();
         if (  this->capture
@@ -4896,11 +4903,6 @@ public:
         }
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            if (order.action == RDP::FrameMarker::FrameEnd) {
-                struct timeval now = tvtime();
-                this->capture->timestamp(now);
-            }
-
             this->capture->draw(order);
         }
     }
