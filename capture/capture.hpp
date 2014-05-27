@@ -228,8 +228,9 @@ public:
     void snapshot( const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
         this->capture_event.reset();
 
-        this->last_x = x;
-        this->last_y = y;
+        this->last_now = now;
+        this->last_x   = x;
+        this->last_y   = y;
 
         if (this->capture_png) {
             this->psc->snapshot( now, x, y, ignore_frame_in_timeval);
@@ -349,11 +350,13 @@ public:
             this->gd->draw(order);
         }
 
-        if (this->capture_png) {
-            this->psc->snapshot(this->last_now, this->last_x, this->last_y, false);
-        }
-        if (this->capture_wrm) {
-            this->pnc->snapshot(this->last_now, this->last_x, this->last_y, false);
+        if (order.action == RDP::FrameMarker::FrameEnd) {
+            if (this->capture_png) {
+                this->psc->snapshot(this->last_now, this->last_x, this->last_y, false);
+            }
+            if (this->capture_wrm) {
+                this->pnc->snapshot(this->last_now, this->last_x, this->last_y, false);
+            }
         }
     }
 
