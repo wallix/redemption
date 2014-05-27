@@ -126,6 +126,7 @@ public:
         unsigned diff_time_val = static_cast<unsigned>(difftimeval(now, this->start_static_capture));
         if (diff_time_val >= static_cast<unsigned>(this->inter_frame_interval_static_capture)) {
             if (   this->drawable.logical_frame_ended
+                // Force snapshot if diff_time_val >= 1,5 x inter_frame_interval_static_capture.
                 || (diff_time_val >= static_cast<unsigned>(this->inter_frame_interval_static_capture) * 3 / 2)) {
                 if (!this->pointer_displayed) { this->drawable.trace_mouse(x, y); }
                 this->breakpoint(now);
@@ -135,6 +136,7 @@ public:
     //            this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
             }
             else {
+                // Wait 0,3 x inter_frame_interval_static_capture.
                 this->time_to_wait = this->inter_frame_interval_static_capture / 3;
                 return;
             }

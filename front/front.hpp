@@ -4896,10 +4896,12 @@ public:
         }
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            if (order.action == RDP::FrameMarker::FrameEnd) {
+                struct timeval now = tvtime();
+                this->capture->timestamp(now);
+            }
+
             this->capture->draw(order);
-        }
-        if (order.action == RDP::FrameMarker::FrameEnd) {
-            this->periodic_snapshot();
         }
     }
 
