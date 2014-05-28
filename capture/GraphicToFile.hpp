@@ -543,14 +543,16 @@ public:
 
     void send_orders_chunk()
     {
-        uint64_t old_timer = last_sent_timer.tv_sec * 1000000ULL + last_sent_timer.tv_usec;
+        uint64_t old_timer = this->last_sent_timer.tv_sec * 1000000ULL + this->last_sent_timer.tv_usec;
         uint64_t current_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
 
-        uint64_t diff_timer = (current_timer - old_timer) / 1000;   // ms
+        uint64_t time_val = (current_timer - old_timer) / 1000;   // ms
+
+        this->last_sent_timer = addusectimeval(time_val * 1000, this->last_sent_timer);
 
         this->stream_orders.mark_end();
         BStream header(8);
-        WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->stream_orders.size(), this->order_count, diff_timer);
+        WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->stream_orders.size(), this->order_count, time_val);
         this->trans->send(header);
         this->trans->send(this->stream_orders);
         this->order_count = 0;
