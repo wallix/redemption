@@ -143,10 +143,6 @@ public:
         }
     }
 
-    virtual void tick(const timeval & now) {
-        this->recorder.tick(now);
-    }
-
     virtual void flush()
     {
         this->recorder.flush();

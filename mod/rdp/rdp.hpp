@@ -4945,10 +4945,6 @@ public:
     virtual bool is_up_and_running() {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
-
-    virtual void tick(const timeval & now) {
-        this->front.tick(now);
-    }
 };
 
 #endif
