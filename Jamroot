@@ -121,7 +121,7 @@ project redemption
     <cxxflags>-Wpacked
     <cxxflags>-Wredundant-decls
 #     <cxxflags>-Winline
-    <cxxflags>-Wdouble-promotion
+    # <cxxflags>-Wdouble-promotion
     <cxxflags>-Winit-self
 #     <cxxflags>-Wcast-qual
 #     <cxxflags>-Woverloaded-virtual
@@ -622,3 +622,5 @@ unit-test test_flat_selector2 : tests/mod/internal/widget2/test_flat_selector2.c
 unit-test test_group_box : tests/mod/internal/widget2/test_group_box.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_scroll : tests/mod/internal/widget2/test_scroll.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_vector : tests/utils/test_vector.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
