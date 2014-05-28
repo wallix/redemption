@@ -110,7 +110,7 @@ project redemption
 #     <cxxflags>-Wformat=2
 #     <cxxflags>-Wformat-security
 #     <cxxflags>-Wmissing-format-attribute
-    <cxxflags>-Werror-implicit-function-declaration
+#    <cxxflags>-Werror-implicit-function-declaration
     <cxxflags>-Wsequence-point
     <cxxflags>-Wreturn-type
     <cxxflags>-Wfloat-equal
@@ -121,7 +121,7 @@ project redemption
     <cxxflags>-Wpacked
     <cxxflags>-Wredundant-decls
 #     <cxxflags>-Winline
-    # <cxxflags>-Wdouble-promotion
+#    <cxxflags>-Wdouble-promotion
     <cxxflags>-Winit-self
 #     <cxxflags>-Wcast-qual
 #     <cxxflags>-Woverloaded-virtual

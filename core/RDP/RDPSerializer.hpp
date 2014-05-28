@@ -93,21 +93,72 @@
 #include "transport.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
+#include "RDP/share.hpp"
 #include "difftimeval.hpp"
 #include "stream.hpp"
 #include "rect.hpp"
 #include "colors.hpp"
 
 enum {
-    BREAKPOINT          = 1005,
+//    BREAKPOINT          = 1005,
     META_FILE           = 1006,
-    NEXT_FILE_ID        = 1007,
+//    NEXT_FILE_ID        = 1007,
     TIMESTAMP           = 1008,
     POINTER             = 1009,
     LAST_IMAGE_CHUNK    = 0x1000,   // 4096
     PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
     SAVE_STATE          = 0x1002,   // 4098
+
+    INVALID_CHUNK       = 0x8000
 };
+
+enum {
+    CHUNK_ORDER               = 0,
+    CHUNK_BITMAP              = 1,
+//    CHUNK_BREAKPOINT          = 2,
+    CHUNK_META_FILE           = 3,
+//    CHUNK_NEXT_FILE_ID        = 4,
+    CHUNK_TIMESTAMP           = 5,
+    CHUNK_POINTER             = 6,
+    CHUNK_LAST_IMAGE_CHUNK    = 7,
+    CHUNK_PARTIAL_IMAGE_CHUNK = 8,
+    CHUNK_SAVE_STATE          = 9,
+
+    CHUNK_INVALID             = 15
+};
+
+int get_new_chunk_type(int old_chunk_type) {
+    switch (old_chunk_type) {
+        case RDP_UPDATE_ORDERS:    return CHUNK_ORDER;
+        case RDP_UPDATE_BITMAP:   return CHUNK_BITMAP;
+        case META_FILE:           return CHUNK_META_FILE;
+        case TIMESTAMP:           return CHUNK_TIMESTAMP;
+        case POINTER:             return CHUNK_POINTER;
+        case LAST_IMAGE_CHUNK:    return CHUNK_LAST_IMAGE_CHUNK;
+        case PARTIAL_IMAGE_CHUNK: return CHUNK_PARTIAL_IMAGE_CHUNK;
+        case SAVE_STATE:          return CHUNK_SAVE_STATE;
+    }
+
+    REDASSERT(false);
+    return CHUNK_INVALID;
+}
+
+int get_old_chunk_type(int new_chunk_type) {
+    switch (new_chunk_type) {
+        case CHUNK_ORDER:               return RDP_UPDATE_ORDERS;
+        case CHUNK_BITMAP:              return RDP_UPDATE_BITMAP;
+        case CHUNK_META_FILE:           return META_FILE;
+        case CHUNK_TIMESTAMP:           return TIMESTAMP;
+        case CHUNK_POINTER:             return POINTER;
+        case CHUNK_LAST_IMAGE_CHUNK:    return LAST_IMAGE_CHUNK;
+        case CHUNK_PARTIAL_IMAGE_CHUNK: return PARTIAL_IMAGE_CHUNK;
+        case CHUNK_SAVE_STATE:          return SAVE_STATE;
+    }
+
+    REDASSERT(false);
+    return INVALID_CHUNK;
+}
+
 
 struct RDPSerializer : public RDPGraphicDevice
 {

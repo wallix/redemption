@@ -260,6 +260,16 @@ struct FileToGraphic
                 BStream header(HEADER_SIZE);
                 this->trans->recv(&header.end, HEADER_SIZE);
                 this->chunk_type = header.in_uint16_le();
+                if (this->chunk_type & 0x8000) {
+                    this->chunk_type &= ~0x8000;
+                    uint16_t time_val = (this->chunk_type >> 4) & 0x7FF;
+                    this->record_now = ::addusectimeval(time_val * 1000, this->record_now);    // ns
+                    this->chunk_type &= 0xF;
+                    this->chunk_type = ::get_old_chunk_type(this->chunk_type);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->tick(this->record_now);
+                    }
+                }
                 this->chunk_size = header.in_uint32_le();
                 this->remaining_order_count = this->chunk_count = header.in_uint16_le();
 

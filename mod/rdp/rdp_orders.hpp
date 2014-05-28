@@ -333,6 +333,9 @@ public:
             LOG(LOG_INFO, "process_orders bpp=%u", bpp);
         }
 
+        struct timeval now = tvtime();
+        gd.tick(now);
+
         using namespace RDP;
 
         OrdersUpdate_Recv orders_update(stream, fast_path);

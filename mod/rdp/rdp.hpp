@@ -4972,6 +4972,7 @@ public:
     virtual bool is_up_and_running() {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
+
     virtual void disconnect() {
         if (this->is_up_and_running()) {
             if (this->verbose & 1){
@@ -5012,6 +5013,9 @@ public:
         this->nego.trans->send(x224_header, mcs_data);
     }
 
+    virtual void tick(const timeval & now) {
+        this->front.tick(now);
+    }
 };
 
 #endif

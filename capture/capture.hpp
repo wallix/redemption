@@ -225,7 +225,7 @@ public:
         }
     }
 
-    void snapshot( const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
+    void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
         this->capture_event.reset();
 
         this->last_now = now;
@@ -233,17 +233,13 @@ public:
         this->last_y   = y;
 
         if (this->capture_png) {
-            this->psc->snapshot( now, x, y, ignore_frame_in_timeval);
+            this->psc->snapshot(now, x, y, ignore_frame_in_timeval);
             this->capture_event.update(this->psc->time_to_wait);
         }
         if (this->capture_wrm) {
-            this->pnc->snapshot( now, x, y, ignore_frame_in_timeval);
+            this->pnc->snapshot(now, x, y, ignore_frame_in_timeval);
             this->capture_event.update(this->pnc->time_to_wait);
         }
-    }
-
-    virtual void timestamp(const timeval & now) {
-        this->last_now = now;
     }
 
     void flush() {
@@ -339,7 +335,7 @@ public:
         }
     }
 
-    void draw( const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) {
         if (this->gd) {
             this->gd->draw(bitmap_data, data, size, bmp);
         }
@@ -350,13 +346,8 @@ public:
             this->gd->draw(order);
         }
 
-        if (order.action == RDP::FrameMarker::FrameEnd) {
-            if (this->capture_png) {
-                this->psc->snapshot(this->last_now, this->last_x, this->last_y, false);
-            }
-            if (this->capture_wrm) {
-                this->pnc->snapshot(this->last_now, this->last_x, this->last_y, false);
-            }
+        if (this->capture_png) {
+            this->psc->snapshot(this->last_now, this->last_x, this->last_y, false);
         }
     }
 
@@ -387,6 +378,14 @@ public:
     void draw(const RDPEllipseCB & cmd, const Rect & clip) {
         if (this->gd) {
             this->gd->draw(cmd, clip);
+        }
+    }
+
+    virtual void tick(const timeval & now) {
+        this->last_now = now;
+
+        if (this->gd) {
+            this->gd->tick(now);
         }
     }
 
