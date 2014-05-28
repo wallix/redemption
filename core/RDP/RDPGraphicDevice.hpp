@@ -91,8 +91,6 @@ struct RDPGraphicDevice {
 
 
     TODO("RZ : Move these methods into an other interface.");
-    virtual void tick(const timeval & now) {}
-
     virtual void input(const timeval & now, Stream & input_data_32) {}
 
     virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,

@@ -4852,13 +4852,6 @@ public:
     }
 
 
-    virtual void tick(const timeval & now) {
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->tick(now);
-        }
-    }
-
     virtual void flush() {
         this->orders->flush();
         if (  this->capture

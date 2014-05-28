@@ -346,8 +346,10 @@ public:
             this->gd->draw(order);
         }
 
-        if (this->capture_png) {
-            this->psc->snapshot(this->last_now, this->last_x, this->last_y, false);
+        if (order.action == RDP::FrameMarker::FrameEnd) {
+            if (this->capture_png) {
+                this->psc->snapshot(this->last_now, this->last_x, this->last_y, false);
+            }
         }
     }
 
@@ -378,14 +380,6 @@ public:
     void draw(const RDPEllipseCB & cmd, const Rect & clip) {
         if (this->gd) {
             this->gd->draw(cmd, clip);
-        }
-    }
-
-    virtual void tick(const timeval & now) {
-        this->last_now = now;
-
-        if (this->gd) {
-            this->gd->tick(now);
         }
     }
 

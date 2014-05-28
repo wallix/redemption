@@ -46,9 +46,9 @@
 class WRMChunk_Send
 {
     public:
-    WRMChunk_Send(Stream & stream, uint16_t chunktype, uint16_t data_size, uint16_t count, uint16_t time_val = 0)
+    WRMChunk_Send(Stream & stream, uint16_t chunktype, uint16_t data_size, uint16_t count)
     {
-        stream.out_uint16_le((time_val ? (0x8000 | ((time_val & 0x7FF) << 4) | ::get_new_chunk_type(chunktype)) : chunktype));
+        stream.out_uint16_le(chunktype);
         stream.out_uint32_le(8 + data_size);
         stream.out_uint16_le(count);
         stream.mark_end();
@@ -178,10 +178,6 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             this->timer = now;
             this->trans->timestamp(now);
         }
-    }
-
-    virtual void tick(const timeval & now) {
-        this->timer = now;
     }
 
     virtual void mouse(uint16_t mouse_x, uint16_t mouse_y)
@@ -543,16 +539,9 @@ public:
 
     void send_orders_chunk()
     {
-        uint64_t old_timer = this->last_sent_timer.tv_sec * 1000000ULL + this->last_sent_timer.tv_usec;
-        uint64_t current_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
-
-        uint64_t time_val = (current_timer - old_timer) / 1000;   // ms
-
-        this->last_sent_timer = addusectimeval(time_val * 1000, this->last_sent_timer);
-
         this->stream_orders.mark_end();
         BStream header(8);
-        WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->stream_orders.size(), this->order_count, time_val);
+        WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->stream_orders.size(), this->order_count);
         this->trans->send(header);
         this->trans->send(this->stream_orders);
         this->order_count = 0;
