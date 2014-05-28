@@ -1951,6 +1951,10 @@ struct mod_rdp : public mod_api {
                                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
                                                 this->process_disconnect_pdu(sdata.payload);
                                                 break;
+                                            case PDUTYPE2_SHUTDOWN_DENIED:
+                                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");}
+                                                LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED Received");
+                                                break;
                                             default:
                                                 LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
                                                 TODO("CGR: Data should actually be consumed");
@@ -4187,6 +4191,29 @@ public:
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
         }
     }
+    virtual void rdp_input_invalidate2(const Vector<Rect> & vr) {
+        LOG(LOG_INFO, " ===================> mod_rdp::rdp_input_invalidate 2 <=====================");
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
+        }
+        if ((UP_AND_RUNNING == this->connection_finalization_state)
+            && (vr.size() > 0)) {
+            RDP::RefreshRectPDU rrpdu(this->share_id,
+                                      this->userid,
+                                      this->encryptionLevel,
+                                      this->encrypt);
+            for (size_t i = 0; i < vr.size() ; i++){
+                if (!vr[i].isempty()){
+                    rrpdu.addInclusiveRect(vr[i].x, vr[i].y, vr[i].x + vr[i].cx - 1, vr[i].y + vr[i].cy - 1);
+                }
+            }
+            rrpdu.emit(*this->nego.trans);
+        }
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
+        }
+
+    };
 
     // 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
     // =========================================================================
@@ -4945,6 +4972,46 @@ public:
     virtual bool is_up_and_running() {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
+    virtual void disconnect() {
+        if (this->is_up_and_running()) {
+            if (this->verbose & 1){
+                LOG(LOG_INFO, "mod_rdp::disconnect()");
+            }
+            // this->send_shutdown_request();
+            // this->draw_event(time(NULL));
+            this->send_disconnect_ultimatum();
+        }
+    }
+    void send_shutdown_request() {
+        LOG(LOG_INFO, "SEND SHUTDOWN REQUEST PDU");
+
+        BStream stream(65536);
+        ShareData sdata(stream);
+        sdata.emit_begin(PDUTYPE2_SHUTDOWN_REQUEST, this->share_id,
+                         RDP::STREAM_MED);
+        sdata.emit_end();
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+                          this->userid + GCC::MCS_USERCHANNEL_BASE,
+                          stream.size());
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+    }
+    void send_disconnect_ultimatum() {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
+        }
+        BStream x224_header(256);
+        HStream mcs_data(256, 512);
+        MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_data.size());
+        this->nego.trans->send(x224_header, mcs_data);
+    }
+
 };
 
 #endif
