@@ -21,14 +21,14 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestVector
+#define BOOST_TEST_MODULE TestDArray
 #include <boost/test/auto_unit_test.hpp>
 
 // #define LOGNULL
 #define LOGPRINT
 #include "log.hpp"
 
-#include "vector.hpp"
+#include "darray.hpp"
 struct Something {
     int a;
     Something()
@@ -39,15 +39,15 @@ struct Something {
     {}
 };
 
-BOOST_AUTO_TEST_CASE(TestVector)
+BOOST_AUTO_TEST_CASE(TestDArray)
 {
-    Vector<Something> collection(11);
+    DArray<Something> collection(11);
 
     BOOST_CHECK_EQUAL(collection.size(), 11);
     BOOST_CHECK_EQUAL(collection[5].a, 45);
     collection[7] = 12;
     BOOST_CHECK_EQUAL(collection[7].a, 12);
 
-    Vector<int> integers(0);
+    DArray<int> integers(0);
     BOOST_CHECK_EQUAL(integers.size(), 0);
 }

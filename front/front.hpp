@@ -3852,7 +3852,7 @@ public:
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
 
-                Vector<Rect> rects(numberOfAreas);
+                DArray<Rect> rects(numberOfAreas);
                 for (size_t i = 0; i < numberOfAreas ; i++){
 
                     int left = sdata_in.payload.in_uint16_le();

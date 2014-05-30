@@ -4191,7 +4191,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
         }
     }
-    virtual void rdp_input_invalidate2(const Vector<Rect> & vr) {
+    virtual void rdp_input_invalidate2(const DArray<Rect> & vr) {
         LOG(LOG_INFO, " ===================> mod_rdp::rdp_input_invalidate 2 <=====================");
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");

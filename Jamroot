@@ -623,4 +623,4 @@ unit-test test_group_box : tests/mod/internal/widget2/test_group_box.cpp cryptof
 
 unit-test test_scroll : tests/mod/internal/widget2/test_scroll.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
-unit-test test_vector : tests/utils/test_vector.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_darray : tests/utils/test_darray.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

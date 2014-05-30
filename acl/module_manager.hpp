@@ -619,7 +619,7 @@ public:
                     this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
                     this->mod->get_event().st = t;
 
-                    // Vector<Rect> rects(1);
+                    // DArray<Rect> rects(1);
                     // rects[0] = Rect(0, 0, this->front.client_info.width, this->front.client_info.height);
                     // this->mod->rdp_input_invalidate2(rects);
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));

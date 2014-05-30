@@ -17,33 +17,33 @@
  *   Copyright (C) Wallix 2010-2014
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
-#ifndef REDEMPTION_UTILS_VECTOR_HPP
-#define REDEMPTION_UTILS_VECTOR_HPP
+#ifndef REDEMPTION_UTILS_DARRAY_HPP
+#define REDEMPTION_UTILS_DARRAY_HPP
 #include "log.hpp"
 
 template<class T>
-class Vector {
+class DArray {
     size_t item_count;
     T * items;
 
 public:
-    Vector(size_t count)
+    DArray(size_t count)
     : item_count(count)
     , items(new T[count])
     {
-        // LOG(LOG_INFO,"###### Vector Constructor ######");
+        // LOG(LOG_INFO,"###### DArray Constructor ######");
     }
-    Vector(const Vector & vect)
+    DArray(const DArray & vect)
     : item_count(vect.size())
     , items(new T[vect.size()])
     {
-        // LOG(LOG_INFO,"###### Vector Copy Constructor ######");
+        // LOG(LOG_INFO,"###### DArray Copy Constructor ######");
         for (size_t i = 0; i < vect.size(); i++) {
             this->items[i] = vect[i];
         }
     }
-    virtual ~Vector() {
-        // LOG(LOG_INFO,"###### Vector Destructor ######");
+    virtual ~DArray() {
+        // LOG(LOG_INFO,"###### DArray Destructor ######");
         delete [] this->items;
         this->items = NULL;
     }
