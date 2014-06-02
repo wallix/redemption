@@ -1734,6 +1734,7 @@ class Engine(object):
         class User:
             def __init__(self, preferredLanguage = u'en'):
                 self.preferredLanguage = preferredLanguage
+                self.cn = None
         Logger().info("Engine constructor")
         self.wab_login = None
         self.user = User()
@@ -1958,7 +1959,7 @@ class Engine(object):
         Logger().info("release_target_password done: target_device=\"%s\" reason=\"%s\"" %
             (target_device, reason))
 
-    def start_session(self, target, pid):
+    def start_session(self, target, pid, effective_login):
         return "SESSIONID-0000"
 
     def get_restrictions(self, target):
