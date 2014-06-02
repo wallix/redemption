@@ -426,8 +426,8 @@ struct mod_rdp : public mod_api {
             this->acl->report("CONNECTION_SUCCESSFUL", "Ok.");
         }
 
-        this->end_session_reason.copy_c_str("OPEN_SESSION_FAILED");
-        this->end_session_message.copy_c_str("Open RDP session cancelled.");
+        // this->end_session_reason.copy_c_str("OPEN_SESSION_FAILED");
+        // this->end_session_message.copy_c_str("Open RDP session cancelled.");
     }
 
     virtual ~mod_rdp()
