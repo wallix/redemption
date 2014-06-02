@@ -265,7 +265,9 @@ struct Session {
                     mm.invoke_close_box(e.errmsg(), signal, now);
                 };
             }
-
+            if (mm.mod) {
+                mm.mod->disconnect();
+            }
             this->front->disconnect();
         }
         catch (const Error & e) {

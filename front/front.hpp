@@ -3852,6 +3852,7 @@ public:
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
 
+                DArray<Rect> rects(numberOfAreas);
                 for (size_t i = 0; i < numberOfAreas ; i++){
 
                     int left = sdata_in.payload.in_uint16_le();
@@ -3859,16 +3860,18 @@ public:
                     int right = sdata_in.payload.in_uint16_le();
                     int bottom = sdata_in.payload.in_uint16_le();
                     Rect rect(left, top, (right - left) + 1, (bottom - top) + 1);
+                    rects[i] = rect;
                     if (this->verbose & (64|4)){
                         LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
                             " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
                             left, top, right, bottom, rect.x, rect.cy);
                     }
-                    TODO("we should consider adding to API some function to refresh several rects at once")
-                    if (this->up_and_running){
-                        cb.rdp_input_invalidate(rect);
-                    }
+                    // TODO("we should consider adding to API some function to refresh several rects at once")
+                    // if (this->up_and_running){
+                    //     cb.rdp_input_invalidate(rect);
+                    // }
                 }
+                cb.rdp_input_invalidate2(rects);
             }
         break;
         case PDUTYPE2_PLAY_SOUND:   // Play Sound PDU (section 2.2.9.1.1.5.1):w
