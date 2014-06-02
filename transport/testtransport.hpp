@@ -69,6 +69,7 @@ public:
         this->buffer.current += rlen;
         *pbuffer += rlen;
         if (rlen < len){
+            this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
     }
@@ -111,7 +112,7 @@ public:
     using Transport::send;
     virtual void send(const char * const data, size_t len) throw (Error)
     {
-        const size_t available_len = std::min<size_t>(this->buffer.len - this->buffer.current, len);
+        const size_t available_len = (buffer.current + len > buffer.len) ? (buffer.len - buffer.current) : len;
         if (0 != memcmp(data, this->buffer.data.get() + this->buffer.current, available_len)){
             // data differs, find where
             uint32_t differs = 0;
@@ -128,6 +129,7 @@ public:
             LOG(LOG_INFO, "=============== Got ===============");
             hexdump_c(data + differs, available_len - differs);
             this->buffer.data.reset();
+            this->status = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
 
@@ -140,7 +142,8 @@ public:
             LOG(LOG_INFO, "=============== Got Unexpected Data ==========");
             hexdump_c(data + available_len, len - available_len);
             this->buffer.data.reset();
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+            this->status = false;
+            throw Error(ERR_TRANSPORT_DIFFERS);
         }
     }
 
@@ -151,7 +154,7 @@ public:
 
     virtual bool get_status() const
     {
-        return true;
+        return this->status;
     }
 };
 

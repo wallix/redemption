@@ -134,9 +134,10 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(298, sq_outfilename_filesize(&out_png_trans.seq, 0));
 
-    sq_outfilename_unlink(&out_png_trans.seq, 0);
+    const char * filename = out_png_trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(298, ::filesize(filename));
+    ::unlink(filename);
 }
 
 const char expected_reset_rect_wrm[] =
@@ -263,8 +264,9 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(341, sq_outfilename_filesize(&out_png_trans.seq, 0));
-    sq_outfilename_unlink(&out_png_trans.seq, 0);
+    const char * filename = out_png_trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(341, ::filesize(filename));
+    ::unlink(filename);
 }
 
 const char expected_continuation_wrm[] =
@@ -345,7 +347,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
 
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid);
-    SQ * seq = &(out_png_trans.seq);
+    const SequenceGenerator * seq = out_png_trans.seqgen();
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
@@ -355,7 +357,8 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(341, sq_outfilename_filesize(seq, 0));
-    sq_outfilename_unlink(seq, 0);
+    const char * filename = seq->get(0);
+    BOOST_CHECK_EQUAL(341, ::filesize(filename));
+    ::unlink(filename);
 }
 

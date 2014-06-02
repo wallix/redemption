@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     Inifile ini;
     ini.video.png_limit = -1;
     ini.video.png_interval = 0;
-    StaticCapture consumer(now, trans, &(trans.seq), screen_rect.cx, screen_rect.cy, false, ini, drawable.drawable);
+    StaticCapture consumer(now, trans, trans.seqgen(), screen_rect.cx, screen_rect.cy, false, ini, drawable.drawable);
 
     consumer.set_pointer_display();
 
@@ -126,15 +126,14 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     now.tv_sec++;
     consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
 
-    rio_clear(&trans.rio); // ensure file is closed to have accurate values for size
+    trans.disconnect();
 
-    BOOST_CHECK_EQUAL(5021, sq_outfilename_filesize(&(trans.seq), 1));
-    BOOST_CHECK_EQUAL(5047, sq_outfilename_filesize(&(trans.seq), 2));
-    BOOST_CHECK_EQUAL(5054, sq_outfilename_filesize(&(trans.seq), 3));
-    sq_outfilename_unlink(&(trans.seq), 0);
-    sq_outfilename_unlink(&(trans.seq), 1);
-    sq_outfilename_unlink(&(trans.seq), 2);
-    sq_outfilename_unlink(&(trans.seq), 3);
-    sq_outfilename_unlink(&(trans.seq), 4);
+    BOOST_CHECK_EQUAL(5021, ::filesize(trans.seqgen()->get(1)));
+    BOOST_CHECK_EQUAL(5047, ::filesize(trans.seqgen()->get(2)));
+    BOOST_CHECK_EQUAL(5054, ::filesize(trans.seqgen()->get(3)));
+    ::unlink(trans.seqgen()->get(0));
+    ::unlink(trans.seqgen()->get(1));
+    ::unlink(trans.seqgen()->get(2));
+    ::unlink(trans.seqgen()->get(3));
+    ::unlink(trans.seqgen()->get(4));
 }
-

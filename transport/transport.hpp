@@ -38,7 +38,7 @@ using std::size_t;
 class Transport
 {
     timeval future;
-    
+
 public:
     uint32_t seqno;
 
@@ -72,6 +72,9 @@ public:
 
     virtual ~Transport()
     {}
+
+    //SequenceGenerator * seqgen() const
+    //{ return this->pseq; }
 
     uint32_t get_seqno() const
     { return this->seqno; }

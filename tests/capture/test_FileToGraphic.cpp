@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         player.bmp_cache->cache_entries[4],
         player.bmp_cache->cache_size[4],
         player.bmp_cache->cache_persistent[4]
-        );
+    );
 
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     NativeCapture wrm_recorder(
@@ -110,15 +110,21 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     BOOST_CHECK_EQUAL((unsigned)1352304870, (unsigned)player.record_now.tv_sec);
 
     wrm_recorder.flush();
-    BOOST_CHECK_EQUAL((unsigned)21280, (unsigned)sq_outfilename_filesize(&(out_png_trans.seq), 0));
-    sq_outfilename_unlink(&(out_png_trans.seq), 0);
+    const char * filename;
 
-    BOOST_CHECK_EQUAL(static_cast<unsigned>(490438),  static_cast<unsigned>(sq_outfilename_filesize(&(out_wrm_trans.seq), 0)));
-    sq_outfilename_unlink(&(out_wrm_trans.seq), 0);
-    BOOST_CHECK_EQUAL(static_cast<unsigned>(1247494), static_cast<unsigned>(sq_outfilename_filesize(&(out_wrm_trans.seq), 1)));
-    sq_outfilename_unlink(&(out_wrm_trans.seq), 1);
-    BOOST_CHECK_EQUAL(static_cast<unsigned>(363530),  static_cast<unsigned>(sq_outfilename_filesize(&(out_wrm_trans.seq), 2)));
-    sq_outfilename_unlink(&(out_wrm_trans.seq), 2);
+    filename = out_png_trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(21280, ::filesize(filename));
+    ::unlink(filename);
+
+    filename = out_wrm_trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(490438, ::filesize(filename));
+    ::unlink(filename);
+    filename = out_wrm_trans.seqgen()->get(1);
+    BOOST_CHECK_EQUAL(1247494, ::filesize(filename));
+    ::unlink(filename);
+    filename = out_wrm_trans.seqgen()->get(2);
+    BOOST_CHECK_EQUAL(363530, ::filesize(filename));
+    ::unlink(filename);
 }
 
 //BOOST_AUTO_TEST_CASE(TestSecondPart)

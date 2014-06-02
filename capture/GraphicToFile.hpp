@@ -535,8 +535,8 @@ protected:
             this->send_orders_chunk();
         }
     }
-public:
 
+public:
     void send_orders_chunk()
     {
         this->stream_orders.mark_end();

@@ -21,6 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGE_HPP_
 #define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGE_HPP_
 
+#include "stream.hpp"
+
 // [MS-NLMP]
 
 // NTLM Message

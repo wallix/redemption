@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
     const int groupid = 0;
     OutFilenameTransport png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     d.dump_png24(&png_trans, true);
-    sq_outfilename_unlink(&(png_trans.seq), 0);
+    ::unlink(png_trans.seqgen()->get(0));
 }
 
 
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     const int groupid = 0;
     OutFilenameTransport png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     d.dump_png24(&png_trans, true);
-    sq_outfilename_unlink(&(png_trans.seq), 0);
+    ::unlink(png_trans.seqgen()->get(0));
 }
 
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
@@ -399,8 +399,9 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(out_png_trans.seq), 0));
-    sq_outfilename_unlink(&(out_png_trans.seq), 0);
+    const char * filename = out_png_trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(107, ::filesize(filename));
+    ::unlink(filename);
 }
 
 
@@ -471,13 +472,18 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     while (player.next_order()){
         player.interpret_order();
     }
+
+    const char * filename;
+
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(out_png_trans.seq), 0));
-    sq_outfilename_unlink(&(out_png_trans.seq), 0);
+    filename = out_png_trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(107, ::filesize(filename));
+    ::unlink(filename);
 
     second_png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(second_out_png_trans.seq), 0));
-    sq_outfilename_unlink(&(second_out_png_trans.seq), 0);
+    filename = second_out_png_trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(107, ::filesize(filename));
+    ::unlink(filename);
 }
 
 
@@ -548,6 +554,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     png_recorder.flush();
     BOOST_CHECK_EQUAL((unsigned)1004, (unsigned)player.synctime_now.tv_sec);
 
-    BOOST_CHECK_EQUAL((unsigned)107, sq_outfilename_filesize(&(out_png_trans.seq), 0));
-    sq_outfilename_unlink(&(out_png_trans.seq), 0);
+    const char * filename = out_png_trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(107, ::filesize(filename));
+    ::unlink(filename);
 }

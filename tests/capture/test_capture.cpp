@@ -88,39 +88,54 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         capture.flush(); // to close last wrm
 
-        BOOST_CHECK_EQUAL((unsigned)3067, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 0));
-        sq_outfilename_unlink(&(capture.png_trans->seq), 0);
-        BOOST_CHECK_EQUAL((unsigned)3094, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 1));
-        sq_outfilename_unlink(&(capture.png_trans->seq), 1);
-        BOOST_CHECK_EQUAL((unsigned)3107, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 2));
-        sq_outfilename_unlink(&(capture.png_trans->seq), 2);
-        BOOST_CHECK_EQUAL((unsigned)3129, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 3));
-        sq_outfilename_unlink(&(capture.png_trans->seq), 3);
-        BOOST_CHECK_EQUAL((unsigned)3139, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 4));
-        sq_outfilename_unlink(&(capture.png_trans->seq), 4);
-        BOOST_CHECK_EQUAL((unsigned)3165, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 5));
-        sq_outfilename_unlink(&(capture.png_trans->seq), 5);
-        BOOST_CHECK_EQUAL((unsigned)3190, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 6));
-        sq_outfilename_unlink(&(capture.png_trans->seq), 6);
+        const char * filename;
 
-        SQ wrm_seq;
-        sq_init_outfilename(&wrm_seq, SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "capture", ".wrm", groupid);
-        BOOST_CHECK_EQUAL(static_cast<unsigned>(1625), static_cast<unsigned>(sq_outfilename_filesize(&wrm_seq, 0)));
-        sq_outfilename_unlink(&wrm_seq, 0);
-        BOOST_CHECK_EQUAL(static_cast<unsigned>(3487), static_cast<unsigned>(sq_outfilename_filesize(&wrm_seq, 1)));
-        sq_outfilename_unlink(&wrm_seq, 1);
-        BOOST_CHECK_EQUAL(static_cast<unsigned>(3463), static_cast<unsigned>(sq_outfilename_filesize(&wrm_seq, 2)));
-        sq_outfilename_unlink(&wrm_seq, 2);
+        filename = capture.png_trans->seqgen()->get(0);
+        BOOST_CHECK_EQUAL(3067, ::filesize(filename));
+        ::unlink(filename);
+        filename = capture.png_trans->seqgen()->get(1);
+        BOOST_CHECK_EQUAL(3094, ::filesize(filename));
+        ::unlink(filename);
+        filename = capture.png_trans->seqgen()->get(2);
+        BOOST_CHECK_EQUAL(3107, ::filesize(filename));
+        ::unlink(filename);
+        filename = capture.png_trans->seqgen()->get(3);
+        BOOST_CHECK_EQUAL(3129, ::filesize(filename));
+        ::unlink(filename);
+        filename = capture.png_trans->seqgen()->get(4);
+        BOOST_CHECK_EQUAL(3139, ::filesize(filename));
+        ::unlink(filename);
+        filename = capture.png_trans->seqgen()->get(5);
+        BOOST_CHECK_EQUAL(3165, ::filesize(filename));
+        ::unlink(filename);
+        filename = capture.png_trans->seqgen()->get(6);
+        BOOST_CHECK_EQUAL(3190, ::filesize(filename));
+        ::unlink(filename);
+
+        const SequenceGenerator * wrm_seq = capture.wrm_trans->seqgen();
+        filename = wrm_seq->get(0);
+        BOOST_CHECK_EQUAL(1625, ::filesize(filename));
+        ::unlink(filename);
+        filename = wrm_seq->get(1);
+        BOOST_CHECK_EQUAL(3487, ::filesize(filename));
+        ::unlink(filename);
+        filename = wrm_seq->get(2);
+        BOOST_CHECK_EQUAL(3463, ::filesize(filename));
+        ::unlink(filename);
         // The destruction of capture object will finalize the metafile content
     }
-    SQ meta_seq;
-    sq_init_outfilename(&meta_seq, SQF_PATH_FILE_PID_EXTENSION, "./", "capture", ".mwrm", groupid);
-    BOOST_CHECK_EQUAL((unsigned)125, (unsigned)sq_outfilename_filesize(&meta_seq, 0));
-    sq_outfilename_unlink(&meta_seq, 0);
 
-    if (ini.globals.enable_file_encryption.get()){
-        sq_init_outfilename(&meta_seq, SQF_PATH_FILE_PID_EXTENSION, "/tmp/", "capture", ".mwrm", groupid);
-        BOOST_CHECK_EQUAL((unsigned)32, (unsigned)sq_outfilename_filesize(&meta_seq, 0));
-        sq_outfilename_unlink(&meta_seq, 0);
+    {
+        FilenameGenerator wrm_seq(SQF_PATH_FILE_PID_EXTENSION, "./", "capture", ".mwrm", groupid);
+        const char * filename = wrm_seq.get(0);
+        BOOST_CHECK_EQUAL(125, ::filesize(filename));
+        ::unlink(filename);
+    }
+
+    if (ini.globals.enable_file_encryption.get()) {
+        FilenameGenerator wrm_seq(SQF_PATH_FILE_PID_EXTENSION, "/tmp/", "capture", ".mwrm", groupid);
+        const char * filename = wrm_seq.get(0);
+        BOOST_CHECK_EQUAL(32, ::filesize(filename));
+        ::unlink(filename);
     }
 }

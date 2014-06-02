@@ -64,11 +64,12 @@ struct StaticCaptureConfig {
     }
 };
 
-class StaticCapture : public ImageCapture
+class StaticCapture
+: public ImageCapture
 {
 public:
     bool clear_png;
-    SQ * seq;
+    SequenceGenerator const * seq;
     StaticCaptureConfig conf;
 
     struct timeval start_static_capture;
@@ -77,7 +78,8 @@ public:
 
     bool pointer_displayed;
 
-    StaticCapture(const timeval & now, Transport & trans, SQ * seq, unsigned width, unsigned height, bool clear_png, const Inifile & ini, Drawable & drawable)
+    StaticCapture(const timeval & now, Transport & trans, SequenceGenerator const * seq, unsigned width, unsigned height,
+                  bool clear_png, const Inifile & ini, Drawable & drawable)
     : ImageCapture(trans, width, height, drawable)
     , clear_png(clear_png)
     , seq(seq)
@@ -94,23 +96,25 @@ public:
     {
         // delete all captured files at the end of the RDP client session
         if (this->clear_png){
-            for(size_t i = this->conf.png_limit ; i > 0 ; i--) {
-                if (this->trans.seqno >= i){
-                    // unlink may fail, for instance if file does not exist, just don't care
-                    sq_outfilename_unlink(this->seq, this->trans.seqno - i);
-                }
+            this->unlink_filegen(0);
+        }
+    }
+
+private:
+    void unlink_filegen(size_t end)
+    {
+        for(size_t i = this->conf.png_limit ; i > end ; i--) {
+            if (this->trans.get_seqno() >= i){
+                // unlink may fail, for instance if file does not exist, just don't care
+                ::unlink(this->seq->get(this->trans.get_seqno() - i));
             }
         }
     }
 
+public:
     void update_config(const Inifile & ini){
         if (ini.video.png_limit < this->conf.png_limit) {
-            for(size_t i = this->conf.png_limit ; i > ini.video.png_limit ; i--){
-                if (this->trans.seqno >= i){
-                    // unlink may fail, for instance if file does not exist, just don't care
-                    sq_outfilename_unlink(this->seq, this->trans.seqno - i);
-                }
-            }
+            this->unlink_filegen(ini.video.png_limit);
         }
         this->conf.png_limit = ini.video.png_limit;
 
@@ -135,21 +139,26 @@ public:
         }
     }
 
+private:
+    void flush_png()
+    {
+        if (this->conf.png_limit > 0){
+            if (this->trans.get_seqno() >= this->conf.png_limit) {
+                // unlink may fail, for instance if file does not exist, just don't care
+                ::unlink(this->seq->get(this->trans.get_seqno() - this->conf.png_limit));
+            }
+            this->ImageCapture::flush();
+            this->trans.next();
+        }
+    }
+
+public:
     void pause_snapshot(const timeval & now) {
         // Draw Pause message
         time_t rawtime = now.tv_sec;
         tm *ptm = localtime(&rawtime);
         this->drawable.trace_pausetimestamp(*ptm);
-
-        if (this->conf.png_limit > 0){
-            if (this->trans.seqno >= this->conf.png_limit){
-                // unlink may fail, for instance if file does not exist, just don't care
-                sq_outfilename_unlink(this->seq, this->trans.seqno - this->conf.png_limit);
-            }
-            this->ImageCapture::flush();
-            this->trans.next();
-        }
-
+        this->flush_png();
         this->drawable.clear_pausetimestamp();
         this->start_static_capture = now;
     }
@@ -159,16 +168,7 @@ public:
         time_t rawtime = now.tv_sec;
         tm *ptm = localtime(&rawtime);
         this->drawable.trace_timestamp(*ptm);
-
-        if (this->conf.png_limit > 0){
-            if (this->trans.seqno >= this->conf.png_limit){
-                // unlink may fail, for instance if file does not exist, just don't care
-                sq_outfilename_unlink(this->seq, this->trans.seqno - this->conf.png_limit);
-            }
-            this->ImageCapture::flush();
-            this->trans.next();
-        }
-
+        this->flush_png();
         this->drawable.clear_timestamp();
         this->start_static_capture = now;
     }

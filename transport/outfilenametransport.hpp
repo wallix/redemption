@@ -29,6 +29,7 @@
 #include "rio/rio.h"
 #include "rio/cryptofile.hpp"
 #include "outfiletransport.hpp"
+#include "sequence_generator.hpp"
 #include "fdbub.hpp"
 
 #include <sys/types.h>
@@ -37,64 +38,6 @@
 
 namespace detail
 {
-    struct FilenameGenerator
-    {
-        char        path[1024];
-        char        filename[1012];
-        char        extension[12];
-        SQ_FORMAT   format;
-        unsigned    pid;
-        int         groupid;
-        char        filename_gen[1024];
-
-        FilenameGenerator(SQ_FORMAT format,
-                          const char * const prefix,
-                          const char * const filename,
-                          const char * const extension,
-                          const int groupid)
-        : format(format)
-        , pid(getpid())
-        , groupid(groupid)
-        {
-            if (strlen(prefix) > sizeof(this->path) - 1
-             || strlen(filename) > sizeof(this->filename) - 1
-             || strlen(extension) > sizeof(this->extension) - 1) {
-                throw Error(ERR_TRANSPORT);
-            }
-
-            strcpy(this->path, prefix);
-            strcpy(this->filename, filename);
-            strcpy(this->extension, extension);
-
-            this->filename_gen[0] = 0;
-        }
-
-        const char * next_filename(unsigned count)
-        {
-            switch (this->format) {
-                default:
-                case SQF_PATH_FILE_PID_COUNT_EXTENSION:
-                    snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u-%06u%s", this->path
-                    , this->filename, this->pid, count, this->extension);
-                    break;
-                case SQF_PATH_FILE_COUNT_EXTENSION:
-                    snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-                    , this->filename, count, this->extension);
-                    break;
-                case SQF_PATH_FILE_PID_EXTENSION:
-                    snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-                    , this->filename, this->pid, this->extension);
-                    break;
-                case SQF_PATH_FILE_EXTENSION:
-                    snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", this->path
-                    , this->filename, this->extension);
-                    break;
-            }
-            return this->filename;
-        }
-    };
-
-
     class OutFilenameCreator
     {
         FilenameGenerator filegen;
@@ -115,9 +58,14 @@ namespace detail
             this->current_filename[0] = 0;
         }
 
+        const FilenameGenerator & seqgen() const
+        {
+            return this->filegen;
+        }
+
         const char * get_filename() const
         {
-            return this->filegen.filename_gen;
+            return this->filegen.get(this->count);
         }
 
         const char * get_path() const
@@ -145,8 +93,7 @@ namespace detail
                     , this->current_filename, strerror(errno), errno
                     , (this->filegen.groupid ? "u+r, g+r" : "u+r"));
                 }
-
-                this->filegen.next_filename(this->count);
+                this->filegen.set_last_filename(this->count, this->current_filename);
             }
         }
 
@@ -155,7 +102,7 @@ namespace detail
             return -1 != this->fd;
         }
 
-        void next()
+        void rename_tmp()
         {
             if (this->is_open()) {
                 int res = close(this->fd);
@@ -163,21 +110,28 @@ namespace detail
                 if (res < 0) {
                     LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
                 }
+                this->filegen.set_last_filename(0, 0);
+
+                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+                const char * filename = this->get_filename();
+                res = rename(this->current_filename, filename);
+                if (res < 0) {
+                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                    , this->current_filename, filename, errno, strerror(errno));
+                }
+
+                this->current_filename[0] = 0;
             }
-
-            ++this->count;
-
-            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            int res = rename(this->current_filename, this->get_filename());
-            if (res < 0) {
-                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                   , this->current_filename, this->get_filename(), errno, strerror(errno));
-            }
-
-            this->current_filename[0] = 0;
         }
 
-        void send(const char * const buffer, size_t len, auth_api * authentifier) throw (Error) {
+        void next()
+        {
+            this->rename_tmp();
+            ++this->count;
+        }
+
+        void send(const char * const buffer, size_t len, auth_api * authentifier) throw (Error)
+        {
             this->open_if_not_open(ERR_TRANSPORT_WRITE_FAILED);
             ssize_t res = io::posix::write_all(this->fd, buffer, len);
             if (res < 0){
@@ -226,6 +180,11 @@ public:
         this->filename_creator.next();
     }
 
+    const FilenameGenerator * seqgen() const
+    {
+        return &this->filename_creator.seqgen();
+    }
+
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         this->filename_creator.send(buffer, len, this->authentifier);
@@ -247,6 +206,12 @@ public:
     {
         this->filename_creator.next();
         return Transport::next();
+    }
+
+    virtual void disconnect()
+    {
+        this->filename_creator.rename_tmp();
+        this->status = false;
     }
 };
 

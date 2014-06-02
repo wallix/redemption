@@ -435,7 +435,7 @@ public:
         // Procedure which stops the recording on inactivity
         if (this->last_record_activity_time == 0) this->last_record_activity_time = now;
         if ((front.trans->get_total_received() == this->last_total_received)
-            && (front.trans->total_sent == this->last_total_sent)) {
+            && (front.trans->get_total_sent() == this->last_total_sent)) {
             if (!this->stop_record_inactivity &&
                 (now > this->last_record_activity_time + this->stop_record_time)) {
                 this->stop_record_inactivity = true;
@@ -445,7 +445,7 @@ public:
         else {
             this->last_record_activity_time = now;
             this->last_total_received = front.trans->get_total_received();
-            this->last_total_sent = front.trans->total_sent;
+            this->last_total_sent = front.trans->get_total_sent();
             // front.trans->reset_quantum_sent();
             // Here we only reset the quantum sent
             // because Check() will already reset the

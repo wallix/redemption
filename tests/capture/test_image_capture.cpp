@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
     d.flush();
-    rio_clear(&trans.rio); // close file before checking size
+    trans.disconnect(); // close file before checking size
     BOOST_CHECK_EQUAL(2786, filesize(filename));
     ::unlink(filename);
 }
@@ -283,16 +283,20 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     drawable.draw(cmd, screen_rect);
     d.flush();
 
-    BOOST_CHECK_EQUAL(2786, sq_outfilename_filesize(&trans.seq, 0));
-    sq_outfilename_unlink(&trans.seq, 0);
+    const char * filename;
+
+    filename = trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(2786, ::filesize(filename));
+    ::unlink(filename);
 
     RDPOpaqueRect cmd2(Rect(50, 50, 100, 50), BLUE);
     drawable.draw(cmd2, screen_rect);
     trans.next();
     d.flush();
 
-    BOOST_CHECK_EQUAL(2806, sq_outfilename_filesize(&trans.seq, 1));
-    sq_outfilename_unlink(&trans.seq, 1);
+    filename = trans.seqgen()->get(1);
+    BOOST_CHECK_EQUAL(2806, ::filesize(filename));
+    ::unlink(filename);
 }
 
 BOOST_AUTO_TEST_CASE(TestOneRedScreen)
@@ -304,76 +308,75 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     Rect screen_rect(0, 0, 800, 600);
     const int groupid = 0;
     OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "xxxtest", ".png", groupid);
-    SQ * seq = &(trans.seq);
     Inifile ini;
     ini.video.png_interval = 1;
     ini.video.png_limit = 3;
     RDPDrawable drawable(800, 600);
 
-    StaticCapture consumer(now, trans, &(trans.seq), 800, 600, false, ini, drawable.drawable);
+    StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.drawable);
 
     consumer.set_pointer_display();
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
 
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
 
     bool ignore_frame_in_timeval = false;
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-    BOOST_CHECK_EQUAL(3052, sq_outfilename_filesize(seq, 0));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
+    BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-    BOOST_CHECK_EQUAL(3052, sq_outfilename_filesize(seq, 0));
-    BOOST_CHECK_EQUAL(3061, sq_outfilename_filesize(seq, 1));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 2));
+    BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
+    BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(2)));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-    BOOST_CHECK_EQUAL(3052, sq_outfilename_filesize(seq, 0));
-    BOOST_CHECK_EQUAL(3061, sq_outfilename_filesize(seq, 1));
-    BOOST_CHECK_EQUAL(3057, sq_outfilename_filesize(seq, 2));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 3));
+    BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
+    BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
+    BOOST_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(3)));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-    rio_clear(&trans.rio);
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
-    BOOST_CHECK_EQUAL(3061, sq_outfilename_filesize(seq, 1));
-    BOOST_CHECK_EQUAL(3057, sq_outfilename_filesize(seq, 2));
-    BOOST_CHECK_EQUAL(3059, sq_outfilename_filesize(seq, 3));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
+    trans.disconnect();
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
+    BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
+    BOOST_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
+    BOOST_CHECK_EQUAL(3059, ::filesize(trans.seqgen()->get(3)));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
 
     ini.video.png_limit = 10;
     consumer.update_config(ini);
 
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
-    BOOST_CHECK_EQUAL(3061, sq_outfilename_filesize(seq, 1));
-    BOOST_CHECK_EQUAL(3057, sq_outfilename_filesize(seq, 2));
-    BOOST_CHECK_EQUAL(3059, sq_outfilename_filesize(seq, 3));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
+    BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
+    BOOST_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
+    BOOST_CHECK_EQUAL(3059, ::filesize(trans.seqgen()->get(3)));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
 
     ini.video.png_limit = 2;
     consumer.update_config(ini);
 
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
-    BOOST_CHECK_EQUAL(3057, sq_outfilename_filesize(seq, 2));
-    BOOST_CHECK_EQUAL(3059, sq_outfilename_filesize(seq, 3));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
+    BOOST_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
+    BOOST_CHECK_EQUAL(3059, ::filesize(trans.seqgen()->get(3)));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
 
     ini.video.png_limit = 0;
     consumer.update_config(ini);
 
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 2));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 3));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(2)));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(3)));
+    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
 }
 
 BOOST_AUTO_TEST_CASE(TestSmallImage)
@@ -387,8 +390,9 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     d.flush();
-    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(trans.seq), 0));
-    sq_outfilename_unlink(&(trans.seq), 0);
+    const char * filename = trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(107, ::filesize(filename));
+    ::unlink(filename);
 }
 
 BOOST_AUTO_TEST_CASE(TestScaleImage)
@@ -411,8 +415,9 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     }
     d.flush();
     TODO("check this: BGR/RGB problem i changed 8176 to 8162 to fix test")
-    BOOST_CHECK_EQUAL(8162, sq_outfilename_filesize(&(trans.seq), 0));
-    sq_outfilename_unlink(&(trans.seq), 0);
+    const char * filename = trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(8162, ::filesize(filename));
+    ::unlink(filename);
 }
 
 BOOST_AUTO_TEST_CASE(TestBogusBitmap)
@@ -535,8 +540,9 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     drawable.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx, bogus.cy), 0xCC, 0, 0, 0), scr, bogus);
 
     d.flush();
-    BOOST_CHECK_EQUAL(4094, sq_outfilename_filesize(&(trans.seq), 0));
-    sq_outfilename_unlink(&(trans.seq), 0);
+    const char * filename = trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(4094, ::filesize(filename));
+    ::unlink(filename);
 }
 
 BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
@@ -588,7 +594,8 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     };
 
     d.flush();
-    BOOST_CHECK_EQUAL(2913, sq_outfilename_filesize(&(trans.seq), 0));
-    sq_outfilename_unlink(&(trans.seq), 0);
+    const char * filename = trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(2913, ::filesize(filename));
+    ::unlink(filename);
 }
 

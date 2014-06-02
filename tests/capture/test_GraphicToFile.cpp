@@ -417,7 +417,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.timestamp(now);
     consumer.flush();
     BOOST_CHECK_EQUAL(0, 0);
-    rio_clear(&trans.rio); // close file before reading filesize
+    trans.disconnect(); // close file before reading filesize
     BOOST_CHECK_EQUAL(1588, filesize(filename));
 
     char in_path[1024];
@@ -479,13 +479,14 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     out_png_trans.next();
 
     BOOST_CHECK_EQUAL(false, player.next_order());
-    rio_clear(&in_wrm_trans.rio);
+    in_wrm_trans.disconnect();
 
     // clear PNG files
     size_t sz[6] = {1476, 2786, 2800, 2800, 2814, 2823};
     for (int i = 0; i < 6 ; i++){
-        BOOST_CHECK_EQUAL(sz[i], sq_outfilename_filesize(&(out_png_trans.seq), i));
-        sq_outfilename_unlink(&(out_png_trans.seq), i);
+        const char * filename = out_png_trans.seqgen()->get(i);
+        BOOST_CHECK_EQUAL(sz[i], ::filesize(filename));
+        ::unlink(filename);
     }
    ::unlink("./testcap.wrm");
 }

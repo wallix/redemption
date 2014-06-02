@@ -111,6 +111,11 @@ public:
         }
     }
 
+    const FilenameGenerator * seqgen() const
+    {
+        return &this->filename_creator.seqgen();
+    }
+
     using Transport::send;
     virtual void send(const char * buffer, size_t len) throw(Error)
     {

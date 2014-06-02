@@ -63,11 +63,15 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec += 6;
     consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
-    rio_clear(&trans.rio);
+    trans.disconnect();
 
-    BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)sq_outfilename_filesize(&(trans.seq), 0));
-    sq_outfilename_unlink(&(trans.seq), 0);
-    BOOST_CHECK_EQUAL(static_cast<unsigned>(3365), (unsigned)sq_outfilename_filesize(&(trans.seq), 1));
-    sq_outfilename_unlink(&(trans.seq), 1);
+    const char * filename;
+
+    filename = trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(1544, ::filesize(filename));
+    ::unlink(filename);
+    filename = trans.seqgen()->get(1);
+    BOOST_CHECK_EQUAL(3365, ::filesize(filename));
+    ::unlink(filename);
 }
 

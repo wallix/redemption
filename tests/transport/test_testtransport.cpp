@@ -120,13 +120,13 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport2)
 BOOST_AUTO_TEST_CASE(TestCheckTransport)
 {
     CheckTransport gt("input", 5);
-    BOOST_CHECK_EQUAL(gt.status, true);
+    BOOST_CHECK_EQUAL(gt.get_status(), true);
     try{
         gt.send("in", 2);
     } catch (const Error & e){
         BOOST_CHECK(false);
     };
-    BOOST_CHECK_EQUAL(gt.status, true);
+    BOOST_CHECK_EQUAL(gt.get_status(), true);
     try{
         gt.send("pot", 3);
     } catch (const Error & e){
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport)
 BOOST_AUTO_TEST_CASE(TestCheckTransportInputOverflow)
 {
     CheckTransport gt("0123456789ABCDEF", 16);
-    BOOST_CHECK_EQUAL(gt.status, true);
+    BOOST_CHECK_EQUAL(gt.get_status(), true);
     try {
         gt.send("0123456789ABCDEFGHI", 19);
     } catch (const Error & e)
