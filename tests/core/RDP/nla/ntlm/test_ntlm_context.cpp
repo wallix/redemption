@@ -191,7 +191,116 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
                              16),
                       0);
 }
+BOOST_AUTO_TEST_CASE(TestNTOWFv2)
+{
+    NTLMContext context;
+    uint8_t buff[16];
 
+    uint8_t password[] = "Password";
+    uint8_t user[] = "User";
+    uint8_t domain[] = "Domain";
+
+    uint8_t upassword[(sizeof(password) - 1) * 2];
+    uint8_t uuser[(sizeof(user) - 1) * 2];
+    uint8_t udomain[(sizeof(domain) - 1) * 2];
+    UTF8toUTF16(password, upassword, sizeof(upassword));
+    UTF8toUTF16(user, uuser, sizeof(uuser));
+    UTF8toUTF16(domain, udomain, sizeof(udomain));
+
+    context.NTOWFv2(upassword, sizeof(upassword),
+                    uuser, sizeof(uuser),
+                    udomain, sizeof(udomain),
+                    buff, sizeof(buff));
+    BOOST_CHECK_EQUAL(memcmp("\x0c\x86\x8a\x40\x3b\xfd\x7a\x93"
+                             "\xa3\x00\x1e\xf2\x2e\xf0\x2e\x3f",
+                             buff,
+                             16),
+                      0);
+}
+
+BOOST_AUTO_TEST_CASE(TestSetters)
+{
+    NTLMContext context;
+    // context.init();
+
+    uint8_t work[] = "Carpe Diem";
+
+    uint8_t spn[] = "Sustine et abstine";
+
+    BOOST_CHECK_EQUAL(context.Workstation.size(), 0);
+    context.ntlm_SetContextWorkstation(work);
+    BOOST_CHECK_EQUAL(context.Workstation.size(), (sizeof(work) - 1) * 2);
+    BOOST_CHECK(memcmp(work, context.Workstation.get_data(), sizeof(work)));
+
+    BOOST_CHECK_EQUAL(context.ServicePrincipalName.size(), 0);
+    context.ntlm_SetContextServicePrincipalName(spn);
+    BOOST_CHECK_EQUAL(context.ServicePrincipalName.size(), (sizeof(spn) - 1) * 2);
+    BOOST_CHECK(memcmp(spn, context.ServicePrincipalName.get_data(), sizeof(spn)));
+
+}
+
+
+BOOST_AUTO_TEST_CASE(TestOutputs)
+{
+    LOG(LOG_INFO, "SebBuffer size : %u", sizeof(SecBuffer));
+    LOG(LOG_INFO, "Array size : %u", sizeof(Array));
+    LOG(LOG_INFO, "size_t size : %u", sizeof(size_t));
+    LOG(LOG_INFO, "unsigned long size : %u", sizeof(unsigned long));
+    LOG(LOG_INFO, "unsigned int size : %u", sizeof(unsigned int));
+    LOG(LOG_INFO, "int size : %u", sizeof(int));
+    LOG(LOG_INFO, "uint8_t size : %u", sizeof(uint8_t));
+    LOG(LOG_INFO, "uint8_t* size : %u", sizeof(uint8_t*));
+    uint8_t autobuffer[AUTOSIZE];
+    LOG(LOG_INFO, "autobuffer size : %u", sizeof(autobuffer));
+
+
+    uint8_t head[2];
+    head[0] = 1;
+    head[1] = 0xFF;
+    size_t length = (head[0] << 8) | head[1];
+    LOG(LOG_INFO, "size length : %x", length);
+
+//     const char ccd_r[] = {
+// // Client Core Data
+// "\x01\xc0\xd8\x00\x04\x00\x08\x00" //..Duca..........
+// /* 0090 */ "\x00\x04\x00\x03\x01\xca\x03\xaa\x0c\x04\x00\x00\x28\x0a\x00\x00" //............(...
+// /* 00a0 */ "\x6d\x00\x74\x00\x61\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //m.t.a...........
+// /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+// /* 00c0 */ "\x04\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00" //................
+// /* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+// /* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+// /* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+// /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xca\x01\x00" //................
+// /* 0110 */ "\x00\x00\x00\x00\x10\x00\x07\x00\x01\x00\x00\x00\x00\x00\x00\x00" //................
+// /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+// /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+// /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+// /* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00" //................
+//     };
+
+
+//     const char ccd_f[] = {
+// // Client Core Data
+// "\x01\xc0\xd8\x00\x04\x00\x08\x00\x80\x07\xdb\x03" // ca.(............
+// /*0090*/ "\x01\xca\x03\xaa\x09\x04\x00\x00\xb0\x1d\x00\x00\x57\x00\x49\x00" // ............W.I.
+// /*00a0*/ "\x4e\x00\x58\x00\x50\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // N.X.P...........
+// /*00b0*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00" // ................
+// /*00c0*/ "\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
+// /*00d0*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
+// /*00e0*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
+// /*00f0*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
+// /*0100*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x01\xca\x01\x00\x00\x00\x00\x00" // ................
+// /*0110*/ "\x18\x00\x0f\x00\x2f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ..../...........
+// /*0120*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
+// /*0130*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
+// /*0140*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
+// /*0150*/ "\x00\x00\x00\x00\x00\x00\x02\x00\x02\x00\x00\x00"
+//     };
+
+    // hexdump_c(ccd_r, sizeof(ccd_r) - 1);
+    // hexdump_c(ccd_f, sizeof(ccd_f) - 1);
+
+}
 
 
 BOOST_AUTO_TEST_CASE(TestNtlmScenario)
@@ -311,10 +420,10 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
     client_to_server.rewind();
     server_context.AUTHENTICATE_MESSAGE.recv(client_to_server);
 
-
     // SERVER PROCEED RESPONSE CHECKING
     uint8_t hash[16] = {};
     server_context.hash_password(password, sizeof(password), hash);
+
     result = server_context.ntlm_check_nt_response_from_authenticate(hash, 16);
     BOOST_CHECK(result);
     result = server_context.ntlm_check_lm_response_from_authenticate(hash, 16);
@@ -531,125 +640,16 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
 }
 
 
-BOOST_AUTO_TEST_CASE(TestNTOWFv2)
-{
-    NTLMContext context;
-    uint8_t buff[16];
 
-    uint8_t password[] = "Password";
-    uint8_t user[] = "User";
-    uint8_t domain[] = "Domain";
-
-    uint8_t upassword[(sizeof(password) - 1) * 2];
-    uint8_t uuser[(sizeof(user) - 1) * 2];
-    uint8_t udomain[(sizeof(domain) - 1) * 2];
-    UTF8toUTF16(password, upassword, sizeof(upassword));
-    UTF8toUTF16(user, uuser, sizeof(uuser));
-    UTF8toUTF16(domain, udomain, sizeof(udomain));
-
-    context.NTOWFv2(upassword, sizeof(upassword),
-                    uuser, sizeof(uuser),
-                    udomain, sizeof(udomain),
-                    buff, sizeof(buff));
-    BOOST_CHECK_EQUAL(memcmp("\x0c\x86\x8a\x40\x3b\xfd\x7a\x93"
-                             "\xa3\x00\x1e\xf2\x2e\xf0\x2e\x3f",
-                             buff,
-                             16),
-                      0);
-}
-
-BOOST_AUTO_TEST_CASE(TestSetters)
-{
-    NTLMContext context;
-    // context.init();
-
-    uint8_t work[] = "Carpe Diem";
-
-    uint8_t spn[] = "Sustine et abstine";
-
-    BOOST_CHECK_EQUAL(context.Workstation.size(), 0);
-    context.ntlm_SetContextWorkstation(work);
-    BOOST_CHECK_EQUAL(context.Workstation.size(), (sizeof(work) - 1) * 2);
-    BOOST_CHECK(memcmp(work, context.Workstation.get_data(), sizeof(work)));
-
-    BOOST_CHECK_EQUAL(context.ServicePrincipalName.size(), 0);
-    context.ntlm_SetContextServicePrincipalName(spn);
-    BOOST_CHECK_EQUAL(context.ServicePrincipalName.size(), (sizeof(spn) - 1) * 2);
-    BOOST_CHECK(memcmp(spn, context.ServicePrincipalName.get_data(), sizeof(spn)));
-
-}
-
-
-BOOST_AUTO_TEST_CASE(TestOutputs)
-{
-    LOG(LOG_INFO, "SebBuffer size : %u", sizeof(SecBuffer));
-    LOG(LOG_INFO, "Array size : %u", sizeof(Array));
-    LOG(LOG_INFO, "size_t size : %u", sizeof(size_t));
-    LOG(LOG_INFO, "unsigned long size : %u", sizeof(unsigned long));
-    LOG(LOG_INFO, "unsigned int size : %u", sizeof(unsigned int));
-    LOG(LOG_INFO, "int size : %u", sizeof(int));
-    LOG(LOG_INFO, "uint8_t size : %u", sizeof(uint8_t));
-    LOG(LOG_INFO, "uint8_t* size : %u", sizeof(uint8_t*));
-    uint8_t autobuffer[AUTOSIZE];
-    LOG(LOG_INFO, "autobuffer size : %u", sizeof(autobuffer));
-
-
-    uint8_t head[2];
-    head[0] = 1;
-    head[1] = 0xFF;
-    size_t length = (head[0] << 8) | head[1];
-    LOG(LOG_INFO, "size length : %x", length);
-
-    const char ccd_r[] = {
-// Client Core Data
-"\x01\xc0\xd8\x00\x04\x00\x08\x00" //..Duca..........
-/* 0090 */ "\x00\x04\x00\x03\x01\xca\x03\xaa\x0c\x04\x00\x00\x28\x0a\x00\x00" //............(...
-/* 00a0 */ "\x6d\x00\x74\x00\x61\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //m.t.a...........
-/* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 00c0 */ "\x04\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00" //................
-/* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xca\x01\x00" //................
-/* 0110 */ "\x00\x00\x00\x00\x10\x00\x07\x00\x01\x00\x00\x00\x00\x00\x00\x00" //................
-/* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00" //................
-    };
-
-
-    const char ccd_f[] = {
-// Client Core Data
-"\x01\xc0\xd8\x00\x04\x00\x08\x00\x80\x07\xdb\x03" // ca.(............
-/*0090*/ "\x01\xca\x03\xaa\x09\x04\x00\x00\xb0\x1d\x00\x00\x57\x00\x49\x00" // ............W.I.
-/*00a0*/ "\x4e\x00\x58\x00\x50\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // N.X.P...........
-/*00b0*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00" // ................
-/*00c0*/ "\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-/*00d0*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-/*00e0*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-/*00f0*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-/*0100*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x01\xca\x01\x00\x00\x00\x00\x00" // ................
-/*0110*/ "\x18\x00\x0f\x00\x2f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ..../...........
-/*0120*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-/*0130*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-/*0140*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-/*0150*/ "\x00\x00\x00\x00\x00\x00\x02\x00\x02\x00\x00\x00"
-    };
-
-    hexdump_c(ccd_r, sizeof(ccd_r) - 1);
-    hexdump_c(ccd_f, sizeof(ccd_f) - 1);
-
-
-}
 
 BOOST_AUTO_TEST_CASE(TestWrittersReaders)
 {
     NTLMContext context_write;
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-
     NTLMContext context_read;
+    context_read.verbose = 0x400;
+    context_write.verbose = 0x400;
     context_read.server = true;
     SEC_STATUS status;
     SecBuffer nego;
