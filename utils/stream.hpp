@@ -40,7 +40,6 @@ enum {
     AUTOSIZE = 65536
 };
 
-// BStream is for "buffering stream", as this stream allocate a work buffer.
 class Array {
     uint8_t* data;
     size_t capacity;
@@ -841,7 +840,9 @@ class BStream : public Stream {
     uint8_t autobuffer[AUTOSIZE];
 
     public:
-    BStream(size_t size = AUTOSIZE) {
+    BStream(size_t size = AUTOSIZE)
+        : autobuffer()
+    {
         this->p = NULL;
         this->end = NULL;
         this->data = NULL;

@@ -1211,13 +1211,13 @@ struct NTLMContext {
         // LOG(LOG_INFO, "DOMAIN from authenticate size = %u", this->identity.Domain.size());
         // hexdump_c(this->identity.Domain.get_data(), this->identity.Domain.size());
 
-        uint8_t hash[16];
-        this->ntlm_server_fetch_hash(hash);
         if ((this->identity.User.size() == 0) &&
             (this->identity.Domain.size() == 0)) {
             LOG(LOG_ERR, "ANONYMOUS User not allowed");
             return SEC_E_LOGON_DENIED;
         }
+        uint8_t hash[16];
+        this->ntlm_server_fetch_hash(hash);
         SEC_STATUS status = this->ntlm_server_proceed_authenticate(hash);
         return status;
     }
