@@ -139,9 +139,21 @@ private:
 
                 REDASSERT(this->bmp_map[cache_id][key].bmp == NULL);
 
-                this->bmp_map[cache_id][key].bmp = new Bitmap( this->bmp_cache.bpp, original_bpp
-                                                             , &original_palette, cx, cy, stream.get_data()
-                                                             , bmp_size);
+                Bitmap * bmp = new Bitmap( this->bmp_cache.bpp, original_bpp
+                                         , &original_palette, cx, cy, stream.get_data()
+                                         , bmp_size);
+
+                uint8_t sha1[20];
+                bmp->compute_sha1(sha1);
+                if (memcmp(sig, sha1, sizeof(sig))) {
+                    LOG( LOG_ERR
+                       , "BmpCachePersister::preload_from_disk: Preload failed. Cause: bitmap or key corruption.");
+                    REDASSERT(false);
+                    delete bmp;
+                }
+                else {
+                    this->bmp_map[cache_id][key].bmp = bmp;
+                }
             }
 
             stream.reset();
@@ -338,6 +350,27 @@ private:
                 const uint8_t  * sig      = bmp_cache.sig[cache_id][cache_index].sig_8;
                 const uint16_t   bmp_size = bmp->bmp_size;
                 const uint8_t  * bmp_data = bmp->data_bitmap.get();
+
+                // if (bmp_cache.owner == BmpCache::Front) {
+                //     uint8_t sha1[20];
+                //     bmp->compute_sha1(sha1);
+
+                //     char sig_sig[20];
+
+                //     snprintf( sig_sig, sizeof(sig_sig), "%02X%02X%02X%02X%02X%02X%02X%02X"
+                //             , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+
+                //     char sig_sha1[20];
+
+                //     snprintf( sig_sha1, sizeof(sig_sig), "%02X%02X%02X%02X%02X%02X%02X%02X"
+                //             , sha1[0], sha1[1], sha1[2], sha1[3], sha1[4], sha1[5], sha1[6], sha1[7]);
+
+                //     LOG( LOG_INFO
+                //        , "BmpCachePersister::save_to_disk: sig=\"%s\" sha1=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
+                //        , sig_sig, sig_sha1, bmp->original_bpp, bmp->cx, bmp->cy, bmp_size);
+
+                //     REDASSERT(!memcmp(bmp_cache.sig[cache_id][cache_index].sig_8, sha1, sizeof(bmp_cache.sig[cache_id][cache_index].sig_8)));
+                // }
 
                 char key[20];
 
