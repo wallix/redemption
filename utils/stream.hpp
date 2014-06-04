@@ -37,10 +37,9 @@
 
 // using a template for default size of stream would make sense instead of always using the large buffer below
 enum {
-     AUTOSIZE = 65536
+    AUTOSIZE = 65536
 };
 
-// BStream is for "buffering stream", as this stream allocate a work buffer.
 class Array {
     uint8_t* data;
     size_t capacity;
@@ -48,8 +47,12 @@ class Array {
     uint8_t autobuffer[AUTOSIZE];
 
     public:
-    Array(size_t size = AUTOSIZE) {
-        this->capacity = 0;
+    Array(size_t size = AUTOSIZE)
+        : data(NULL)
+        , capacity(0)
+        , autobuffer()
+    {
+        this->data = this->autobuffer;
         this->init(size);
     }
 
@@ -837,7 +840,12 @@ class BStream : public Stream {
     uint8_t autobuffer[AUTOSIZE];
 
     public:
-    BStream(size_t size = AUTOSIZE) {
+    BStream(size_t size = AUTOSIZE)
+        : autobuffer()
+    {
+        this->p = NULL;
+        this->end = NULL;
+        this->data = NULL;
         this->capacity = 0;
         this->init(size);
     }

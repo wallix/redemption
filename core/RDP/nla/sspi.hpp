@@ -140,6 +140,14 @@ struct SEC_WINNT_AUTH_IDENTITY
     Array Password;
     uint32_t Flags;
 
+    SEC_WINNT_AUTH_IDENTITY()
+        : User(Array(0))
+        , Domain(Array(0))
+        , Password(Array(0))
+        , Flags(0)
+    {
+    }
+
     void SetUserFromUtf8(const uint8_t * user) {
         if (user) {
             size_t user_len = UTF8Len(user);

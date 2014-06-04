@@ -97,7 +97,8 @@ struct NTLMMessage {
     NtlmMessageType msgType;   /* 4 Bytes */
 
     NTLMMessage(NtlmMessageType msgType)
-        : msgType(msgType)
+    : signature()
+    , msgType(msgType)
     {
         memcpy(this->signature, NTLM_MESSAGE_SIGNATURE, 8);
         // signature[0] = 'N';
@@ -486,6 +487,13 @@ static const char* const NTLM_NEGOTIATE_STRINGS[] ={
 
 struct NtlmNegotiateFlags {
     uint32_t flags;          /* 4 Bytes */
+    NtlmNegotiateFlags()
+        : flags(0)
+    {
+    }
+
+    ~NtlmNegotiateFlags() {
+    }
     void emit(Stream & stream) {
         stream.out_uint32_le(this->flags);
     }
@@ -518,6 +526,15 @@ struct NtlmField {
     uint16_t maxLen;        /* 2 Bytes */
     uint32_t bufferOffset;  /* 4 Bytes */
     BStream Buffer;
+
+    NtlmField()
+        : len(0)
+        , maxLen(0)
+        , bufferOffset(0)
+    {
+    }
+
+    ~NtlmField() {}
 
     unsigned int emit(Stream & stream, unsigned int currentOffset) {
         this->len = this->Buffer.size();

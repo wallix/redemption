@@ -134,7 +134,48 @@ struct ShareControl_Recv
 
         this->totalLength = stream.in_uint16_le();
 
+        // LOG(LOG_INFO, "ShareControl packet recv: TotalLength=%u", this->totalLength);
+        if (this->totalLength == 0x8000) {
+            LOG(LOG_INFO, "ShareControl packet recv : FlowPDU received !");
+            // FlowPDU ::= SEQUENCE {
+            // flowMarker
+            // Integer16(32768), -- ('8000'H),
+            // -- distinguishes FlowPDUs from ASPDUs
+            // -- containing ShareControlHeaders
+            // pad8bits
+            // Integer8(0),
+            // pduTypeFlow
+            // PDUTypeFlow(flowResponsePDU | flowStopPDU | flowTestPDU),
+            // flowIdentifier Integer8(0..127),
+            // flowNumber
+            // Integer8,
+            // -- shall be zero for PDUType FlowStopPDU
+            // pduSource
+            // UserID
+            // -- MCS User ID of sending ASCE
+            // }
+
+            // uint8_t pad8bits = stream.in_uint8();
+            uint8_t PDUTypeFlow = stream.in_uint8();
+            uint8_t flowIdentifier = stream.in_uint8();
+            uint16_t pduSource = stream.in_uint16_le();
+            // LOG(LOG_INFO, "pad8bits=%u", pad8bits);
+            LOG(LOG_INFO, "PDUTypeFlow=%u", PDUTypeFlow);
+            // PDUTypeFlow ::= INTEGER {flowResponsePDU(66), flowStopPDU(67), flowTestPDU(65)
+            // }(0..255)
+            LOG(LOG_INFO, "flowIdentifier=%u", flowIdentifier);
+            LOG(LOG_INFO, "pduSource=%u", pduSource);
+            LOG(LOG_INFO, "remaining bytes = %u", stream.in_remain());
+            this->totalLength = 6 + stream.in_remain();
+            this->pdu_type1 = 0;
+            this->payload.resize(stream, stream.in_remain());
+            TODO("FlowPDU is currently ignored, maybe we should just send a FlowResponsePDU on flowTestPDU reception");
+            return;
+        }
+
         this->pdu_type1 = stream.in_uint16_le() & 0xF;
+        // LOG(LOG_INFO, "ShareControl packet recv: PDUTYPE=%u", this->pdu_type1);
+
         if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4){
             // should not happen
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
@@ -157,7 +198,8 @@ struct ShareControl_Recv
         size_t new_size = this->totalLength - 6;
 
         if (!stream.in_check_rem(new_size)){
-            LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=2 remains=%u",
+            LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=%u remains=%u",
+                new_size,
                 stream.in_remain());
             throw Error(ERR_SEC);
         }
