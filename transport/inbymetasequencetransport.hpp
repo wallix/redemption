@@ -46,6 +46,17 @@ namespace detail {
             throw Error(ERR_TRANSPORT);
         }
 
+        //char meta_path[1024];
+        //char cp_basename[1024];
+        //char cp_extension[128];
+        //
+        //meta_path[0] = cp_basename[0] = cp_extension[0] = 0;
+        //canonical_path(filename,
+        //               meta_path, sizeof(meta_path),
+        //               cp_basename, sizeof(cp_basename),
+        //               cp_extension, sizeof(cp_extension));
+        //LOG(LOG_INFO, "%s", meta_path);
+
         const int fd = ::open(filename, O_RDONLY);
         if (fd < 0) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
@@ -120,31 +131,116 @@ namespace detail {
         }
     };
 
-    unsigned parse_sec(const char * first, const char * last)
+    template<class Reader>
+    struct MetaReader
     {
-        unsigned sec = 0;
-        unsigned old_sec;
-        for (; first != last; ++first) {
-            if (*first < '0' || '9' < *first) {
-                throw Error(ERR_TRANSPORT_READ_FAILED);
+        char path[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
+        detail::ReaderLine<Reader> reader;
+        int wrm_fd;
+        unsigned begin_chunk_time;
+        unsigned end_chunk_time;
+
+        template<class T>
+        MetaReader(T & arg_reader)
+        : reader(arg_reader)
+        , wrm_fd(-1)
+        , begin_chunk_time(0)
+        , end_chunk_time(0)
+        {
+            // headers
+            //@{
+            if (this->reader.next_line()
+             || this->reader.next_line()
+             || this->reader.next_line()
+            ) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
-            old_sec = sec;
-            sec *= 10;
-            sec += *first - '0';
-            if (old_sec > sec) {
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
+            //@}
+
+            this->path[0] = 0;
         }
-        return sec;
-    }
+
+        ~MetaReader()
+        {
+            ::close(this->wrm_fd);
+        }
+
+        ///\return 0 if success
+        int next()
+        {
+            ssize_t len = reader.read_line(path, sizeof(path) - 1, ERR_TRANSPORT_NO_MORE_DATA);
+            if (len < 0) {
+                return -len;
+            }
+            path[len] = 0;
+
+            // Line format "fffff sssss eeeee hhhhh HHHHH"
+            //                               ^  ^  ^  ^
+            //                               |  |  |  |
+            //                               |hash1|  |
+            //                               |     |  |
+            //                           space3    |hash2
+            //                                     |
+            //                                   space4
+            //
+            // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
+            //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
+            typedef std::reverse_iterator<char*> reverse_iterator;
+
+            reverse_iterator last(path);
+            reverse_iterator first(path + len);
+            reverse_iterator e1 = std::find(first, last, ' ');
+            reverse_iterator e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
+            if (e1 - first == 64 && e2 != last) {
+                first = e2 + 1;
+                e1 = std::find(first, last, ' ');
+                e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
+            }
+
+            this->end_chunk_time = this->parse_sec(e1.base(), first.base());
+            if (e1 != last) {
+                ++e1;
+            }
+            this->begin_chunk_time = this->parse_sec(e2.base(), e1.base());
+
+            if (e2 != last) {
+                *e2 = 0;
+            }
+
+            this->wrm_fd = ::open(path, O_RDONLY);
+
+            if (this->wrm_fd < 0) {
+                return ERR_TRANSPORT_NO_MORE_DATA;
+            }
+
+            return 0;
+        }
+
+    private:
+        static unsigned parse_sec(const char * first, const char * last)
+        {
+            unsigned sec = 0;
+            unsigned old_sec;
+            for (; first != last; ++first) {
+                if (*first < '0' || '9' < *first) {
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
+                old_sec = sec;
+                sec *= 10;
+                sec += *first - '0';
+                if (old_sec > sec) {
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
+            }
+            return sec;
+        }
+    };
 }
 
 class InByMetaSequenceTransport
 : public Transport
 {
     io::posix::fdbuf metabuf;
-
-    int wrm_fd;
 
     struct ReaderBuf {
         io::posix::fdbuf & fdbuf;
@@ -158,126 +254,47 @@ class InByMetaSequenceTransport
         }
     };
 
-    detail::ReaderLine<ReaderBuf> reader;
-    char meta_path[1024];
+    detail::MetaReader<ReaderBuf> meta_reader;
 
-    void open_next_wrm(int err)
+    void open_next_wrm()
     {
-        ssize_t len = this->reader.read_line(this->path, sizeof(this->path) - 1, err);
-        if (len < 0) {
+        if (int e = this->meta_reader.next()) {
             this->status = false;
-            throw Error(-len, errno);
+            throw Error(e, errno);
         }
-        this->path[len] = 0;
-
-        // Line format "fffff sssss eeeee hhhhh HHHHH"
-        //                               ^  ^  ^  ^
-        //                               |  |  |  |
-        //                               |hash1|  |
-        //                               |     |  |
-        //                           space3    |hash2
-        //                                     |
-        //                                   space4
-        //
-        // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
-        //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
-        typedef std::reverse_iterator<char*> reverse_iterator;
-
-        reverse_iterator last(this->path);
-        reverse_iterator first(this->path + len);
-        reverse_iterator e1 = std::find(first, last, ' ');
-        reverse_iterator e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
-        if (e1 - first == 64 && e2 != last) {
-            first = e2 + 1;
-            e1 = std::find(first, last, ' ');
-            e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
-        }
-
-        this->end_chunk_time = detail::parse_sec(e1.base(), first.base());
-        if (e1 != last) {
-            ++e1;
-        }
-        this->begin_chunk_time = detail::parse_sec(e2.base(), e1.base());
-
-        if (e2 != last) {
-            *e2 = 0;
-        }
-
-        this->wrm_fd = ::open(this->path, O_RDONLY);
-
-        if (this->wrm_fd < 0) {
-            this->status = false;
-            throw Error(err, errno);
-        }
-
-        ++this->chunk_num;
+        this->begin_chunk_time = this->meta_reader.begin_chunk_time;
+        this->end_chunk_time = this->meta_reader.end_chunk_time;
         Transport::next();
     }
 
 public:
-    //Line format "path sssss eeeee hhhhh HHHHH"
-    char path[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
     unsigned begin_chunk_time;
     unsigned end_chunk_time;
-    unsigned chunk_num;
 
     InByMetaSequenceTransport(const char * filename, const char * extension)
     : metabuf(detail::open_inmeta(filename, extension))
-    , wrm_fd(-1)
-    , reader(this->metabuf)
+    , meta_reader(this->metabuf)
     , begin_chunk_time(0)
     , end_chunk_time(0)
-    , chunk_num(0)
+    {}
+
+    char * path()
     {
-        char cp_basename[1024];
-        char cp_extension[128];
-
-        this->meta_path[0] = cp_basename[0] = cp_extension[0] = 0;
-        canonical_path(filename,
-                       this->meta_path, sizeof(this->meta_path),
-                       cp_basename, sizeof(cp_basename),
-                       cp_extension, sizeof(cp_extension));
-        LOG(LOG_INFO, "%s", this->meta_path);
-
-        // headers
-        //@{
-        if (this->reader.next_line()
-         || this->reader.next_line()
-         || this->reader.next_line()
-        ) {
-            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-        }
-        //@}
-
-        this->path[0] = 0;
-    }
-
-    virtual ~InByMetaSequenceTransport()
-    {
-        ::close(this->wrm_fd);
+        return this->meta_reader.path;
     }
 
     virtual void seek(int64_t offset, int whence) throw (Error) {
         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
     }
 
-    void next_chunk_info()
-    {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_READ_FAILED);
-        }
-
-        this->open_next_wrm(ERR_TRANSPORT_READ_FAILED);
-    }
-
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error)
     {
-        ssize_t res = io::posix::read_all(this->wrm_fd, *pbuffer, len);
+        ssize_t res = io::posix::read_all(this->meta_reader.wrm_fd, *pbuffer, len);
         if (res < 0) {
-            if (this->wrm_fd == -1) {
-                this->open_next_wrm(ERR_TRANSPORT_NO_MORE_DATA);
-                res = io::posix::read_all(this->wrm_fd, *pbuffer, len);
+            if (this->meta_reader.wrm_fd == -1) {
+                this->open_next_wrm();
+                res = io::posix::read_all(this->meta_reader.wrm_fd, *pbuffer, len);
             }
             else {
                 this->status = false;
@@ -292,15 +309,15 @@ public:
             len -= res;
             do {
                 if (res == 0) {
-                    ::close(this->wrm_fd);
-                    this->open_next_wrm(ERR_TRANSPORT_NO_MORE_DATA);
-                    if (this->wrm_fd < 0) {
+                    ::close(this->meta_reader.wrm_fd);
+                    this->open_next_wrm();
+                    if (this->meta_reader.wrm_fd < 0) {
                         *pbuffer = tmppbuffer;
                         res = -1;
                         break;
                     }
                 }
-                res = io::posix::read_all(this->wrm_fd, *pbuffer, len);
+                res = io::posix::read_all(this->meta_reader.wrm_fd, *pbuffer, len);
                 if (res < 0) {
                     *pbuffer = tmppbuffer;
                     break;
@@ -322,8 +339,16 @@ public:
 
     virtual bool next()
     {
-        this->open_next_wrm(ERR_TRANSPORT_NO_MORE_DATA);
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        this->open_next_wrm();
         return true;
+    }
+
+    void next_chunk_info()
+    {
+        this->next();
     }
 };
 
@@ -337,7 +362,7 @@ class CryptoInByMetaSequenceTransport
 : public Transport
 {
     io::posix::fdbuf metabuf;
-    int wrm_fd;
+    bool crypto_wrm_is_init;
 
     crypto_file crypto_wrm;
     crypto_file crypto_mwrm;
@@ -356,114 +381,54 @@ class CryptoInByMetaSequenceTransport
         }
     };
 
-    detail::ReaderLine<ReaderCrypto> reader_meta;
+    detail::MetaReader<ReaderCrypto> meta_reader;
 
-    void open_next_wrm(int err)
+    void open_next_wrm()
     {
-        ssize_t len = this->reader_meta.read_line(this->path, sizeof(this->path) - 1, err);
-        if (len < 0) {
+        if (int e = this->meta_reader.next()) {
             this->status = false;
-            throw Error(-len, errno);
+            throw Error(e, errno);
         }
-        this->path[len] = 0;
-
-        // Line format "fffff sssss eeeee hhhhh HHHHH"
-        //                               ^  ^  ^  ^
-        //                               |  |  |  |
-        //                               |hash1|  |
-        //                               |     |  |
-        //                           space3    |hash2
-        //                                     |
-        //                                   space4
-        //
-        // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
-        //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
-        typedef std::reverse_iterator<char*> reverse_iterator;
-
-        reverse_iterator last(this->path);
-        reverse_iterator first(this->path + len);
-        reverse_iterator e1 = std::find(first, last, ' ');
-        reverse_iterator e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
-        if (e1 - first == 64 && e2 != last) {
-            first = e2 + 1;
-            e1 = std::find(first, last, ' ');
-            e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
-        }
-
-        this->end_chunk_time = detail::parse_sec(e1.base(), first.base());
-        if (e1 != last) {
-            ++e1;
-        }
-        this->begin_chunk_time = detail::parse_sec(e2.base(), e1.base());
-
-        if (e2 != last) {
-            *e2 = 0;
-        }
-
-        this->wrm_fd = ::open(this->path, O_RDONLY);
-
-        if (this->wrm_fd < 0) {
-            this->status = false;
-            throw Error(err, errno);
-        }
-
-        ++this->chunk_num;
+        this->begin_chunk_time = this->meta_reader.begin_chunk_time;
+        this->end_chunk_time = this->meta_reader.end_chunk_time;
         Transport::next();
     }
 
-public:
-    //Line format "path sssss eeeee hhhhh HHHHH"
-    char path[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
-    unsigned begin_chunk_time;
-    unsigned end_chunk_time;
-    unsigned chunk_num;
-
-    CryptoInByMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
-    : Transport()
-    , metabuf(detail::open_inmeta(filename, extension))
-    , wrm_fd(-1)
-    , crypto_ctx(crypto_ctx)
-    , reader_meta(this->crypto_mwrm)
-    , begin_chunk_time(0)
-    , end_chunk_time(0)
-    , chunk_num(0)
+    crypto_file & init_crypto_mwrm(const char * filename, const char * extension)
     {
         char meta_filename[1024];
         std::snprintf(meta_filename, sizeof(meta_filename), "%s%s", filename, extension);
         this->init_crypto_ctx(this->crypto_mwrm, meta_filename, this->metabuf.get_fd());
-
-        // headers
-        //@{
-        if (this->reader_meta.next_line()
-         || this->reader_meta.next_line()
-         || this->reader_meta.next_line()
-        ) {
-            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-        }
-        //@}
+        return this->crypto_mwrm;
     }
 
-    virtual ~CryptoInByMetaSequenceTransport()
+public:
+    unsigned begin_chunk_time;
+    unsigned end_chunk_time;
+
+    CryptoInByMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
+    : Transport()
+    , metabuf(detail::open_inmeta(filename, extension))
+    , crypto_wrm_is_init(false)
+    , crypto_ctx(crypto_ctx)
+    , meta_reader(this->init_crypto_mwrm(filename, extension))
+    , begin_chunk_time(0)
+    , end_chunk_time(0)
+    {}
+
+    char * path()
     {
-        ::close(this->wrm_fd);
-    }
-
-    void next_chunk_info()
-    {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_READ_FAILED);
-        }
-
-        this->open_next_wrm(ERR_TRANSPORT_READ_FAILED);
-
-        this->init_crypto_ctx(this->crypto_wrm, this->path, this->wrm_fd);
+        return this->meta_reader.path;
     }
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error)
     {
-        if (this->wrm_fd == -1) {
-            this->next_chunk_info();
+        if (!this->crypto_wrm_is_init) {
+            if (this->meta_reader.wrm_fd == -1) {
+                this->next_chunk_info();
+            }
+            this->init_crypto_ctx(this->crypto_wrm, this->meta_reader.path, this->meta_reader.wrm_fd);
         }
         int res;
         size_t remaining_len = len;
@@ -477,6 +442,7 @@ public:
 //                 unsigned char hash[HASH_LEN];
 //                 this->crypto_wrm.close(hash, this->crypto_ctx->hmac_key);
                 this->next_chunk_info();
+                this->init_crypto_ctx(this->crypto_wrm, this->meta_reader.path, this->meta_reader.wrm_fd);
                 continue;
             }
             if (res == 0){
@@ -484,6 +450,7 @@ public:
 //                     unsigned char hash[HASH_LEN];
 //                     this->crypto_wrm.close(hash, this->crypto_ctx->hmac_key);
                     this->next_chunk_info();
+                    this->init_crypto_ctx(this->crypto_wrm, this->meta_reader.path, this->meta_reader.wrm_fd);
                     zero_res = false;
                 }
                 else {
@@ -512,8 +479,16 @@ public:
 
     virtual bool next()
     {
-        this->open_next_wrm(ERR_TRANSPORT_NO_MORE_DATA);
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        this->open_next_wrm();
         return true;
+    }
+
+    void next_chunk_info()
+    {
+        this->next();
     }
 
 private:

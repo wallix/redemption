@@ -177,7 +177,7 @@ int main(int argc, char** argv)
         while (begin_cap >= in_wrm_trans_tmp.end_chunk_time){
             in_wrm_trans_tmp.next_chunk_info();
         }
-        count = in_wrm_trans_tmp.chunk_num;
+        count = in_wrm_trans_tmp.get_seqno();
     }
     catch (const Error & e) {
         if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)){
