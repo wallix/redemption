@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoOutMetaTransport)
 
     // cleanup of possible previous test files
     {
-        const char * file[] = {"TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
+        const char * file[] = {"/tmp/TESTOFS.mwrm", "TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
         for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
             ::unlink(file[i]);
         }
@@ -58,7 +58,8 @@ BOOST_AUTO_TEST_CASE(TestCryptoOutMetaTransport)
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        CryptoOutmetaTransport crypro_trans(&crypto_ctx, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid);
+        CryptoOutmetaTransport crypro_trans(&crypto_ctx, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
+                                            0, 0, SQF_PATH_FILE_COUNT_EXTENSION);
 
         crypro_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
@@ -77,10 +78,10 @@ BOOST_AUTO_TEST_CASE(TestCryptoOutMetaTransport)
         "TESTOFS-000001.wrm"
     };
     for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
-        if (::unlink(file[i]) >= 0)
+        if (::unlink(file[i]))
         {
             BOOST_CHECK(false);
-            LOG(LOG_ERR, "File \"%s\" is always present!", file[i]);
+            LOG(LOG_ERR, "failed to unlink %s", file[i]);
         }
     }
 }

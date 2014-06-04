@@ -127,7 +127,7 @@ project redemption
 #     <cxxflags>-Wunused-variable
     <cxxflags>-fpie
 
-    <toolset>gcc:<cxxflags>-Wdouble-promotion
+#     <toolset>gcc:<cxxflags>-Wdouble-promotion
     <toolset>gcc:<cxxflags>-Wmaybe-uninitialized
 
     <toolset>clang:<cxxflags>-Wno-mismatched-tags
@@ -136,6 +136,8 @@ project redemption
     <toolset>clang:<cxxflags>-Wno-array-bounds
     <toolset>clang:<cxxflags>-Wno-unused-variable
     <toolset>clang:<cxxflags>-Wno-unused-private-field
+
+    <toolset>clang,<variant>debug:<cxxflags>-Wno-null-dereference
 
     <define>PUBLIC
    : default-build release

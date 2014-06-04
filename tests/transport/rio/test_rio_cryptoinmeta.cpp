@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmeta)
 
     // cleanup of possible previous test files
     {
-        const char * file[] = {"TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
+        const char * file[] = {"/tmp/TESTOFS.mwrm", "TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
         for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
             ::unlink(file[i]);
         }

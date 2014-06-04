@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
 
     char meta_path[1024];
     snprintf(meta_path, 1024, "./xxx-%06u.mwrm", getpid());
-    BOOST_CHECK_EQUAL(103, filesize(meta_path));
+    BOOST_CHECK_EQUAL(102, filesize(meta_path));
     BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
 
     char file1[1024];

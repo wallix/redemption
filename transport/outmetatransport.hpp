@@ -245,6 +245,9 @@ public:
                  || crypto_hash.write(reinterpret_cast<const char*>(hash), HASH_LEN) != HASH_LEN) {
                     LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", hf.filename, -HASH_LEN);
                 }
+                else {
+                    crypto_hash.close(hash, this->crypto_ctx->hmac_key);
+                }
             }
 
             if (chmod(hf.filename, S_IRUSR|S_IRGRP) == -1){
@@ -252,15 +255,19 @@ public:
             }
             ::close(hash_fd);
         }
+        else {
+            LOG(LOG_ERR, "Open to transport failed: code=%d", errno);
+        }
     }
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw(Error)
     {
         if (!this->filename_creator.is_open()) {
+            const char * filename = this->filename_creator.get_filename();
             this->filename_creator.open_if_not_open(ERR_TRANSPORT_WRITE_FAILED);
-            this->init_crypto_ctx(this->crypto_wrm, this->filename_creator.get_fd(), this->filename_creator.get_filename(),
-                                  ERR_TRANSPORT_WRITE_FAILED);
+            this->init_crypto_ctx(this->crypto_wrm, this->filename_creator.get_fd(),
+                                  filename, ERR_TRANSPORT_WRITE_FAILED);
         }
         int res = this->crypto_wrm.write(buffer, len);
         if (res < 0)
@@ -316,7 +323,7 @@ private:
             using std::sprintf;
 
             char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + HASH_LEN*2 + 5];
-            len = snprintf(mes, sizeof(mes) - 3 + HASH_LEN*2, " %u %u",
+            len = snprintf(mes, sizeof(mes) - 3, " %u %u",
                            (unsigned)this->start_sec,
                            (unsigned)this->stop_sec+1);
             char * p = mes + len;
@@ -350,7 +357,7 @@ private:
             return false;
         }
 
-        unsigned char iv[32]={0};
+        unsigned char iv[32];
         if (dev_urandom_read(iv, 32) == -1) {
             LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
             return false;

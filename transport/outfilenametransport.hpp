@@ -90,8 +90,8 @@ namespace detail
                 if (chmod( this->current_filename
                          , (this->filegen.groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR)) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                    , this->current_filename, strerror(errno), errno
-                    , (this->filegen.groupid ? "u+r, g+r" : "u+r"));
+                       , this->current_filename, strerror(errno), errno
+                       , (this->filegen.groupid ? "u+r, g+r" : "u+r"));
                 }
                 this->filegen.set_last_filename(this->count, this->current_filename);
             }
@@ -206,12 +206,6 @@ public:
     {
         this->filename_creator.next();
         return Transport::next();
-    }
-
-    virtual void disconnect()
-    {
-        this->filename_creator.rename_tmp();
-        this->status = false;
     }
 };
 

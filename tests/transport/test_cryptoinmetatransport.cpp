@@ -17,7 +17,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
 
     // cleanup of possible previous test files
     {
-        const char * file[] = {"TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
+        const char * file[] = {"/tmp/TESTOFS.mwrm", "TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
         for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
             ::unlink(file[i]);
         }
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
         "TESTOFS-000001.wrm"
     };
     for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
-        if (::unlink(file[i]) < 0){
+        if (::unlink(file[i])){
             BOOST_CHECK(false);
             LOG(LOG_ERR, "failed to unlink %s", file[i]);
         }

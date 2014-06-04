@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     {
         FilenameGenerator wrm_seq(SQF_PATH_FILE_PID_EXTENSION, "./", "capture", ".mwrm", groupid);
         const char * filename = wrm_seq.get(0);
-        BOOST_CHECK_EQUAL(125, ::filesize(filename));
+        BOOST_CHECK_EQUAL(124, ::filesize(filename));
         ::unlink(filename);
     }
 

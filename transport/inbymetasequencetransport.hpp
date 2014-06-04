@@ -42,7 +42,7 @@ namespace detail {
     int open_inmeta(const char * prefix, const char * extension)
     {
         char filename[1024];
-        if (snprintf(filename, sizeof(filename), "%s%s", prefix, extension) >= int(sizeof(filename))) {
+        if (std::snprintf(filename, sizeof(filename), "%s%s", prefix, extension) >= int(sizeof(filename))) {
             throw Error(ERR_TRANSPORT);
         }
 
@@ -62,29 +62,30 @@ namespace detail {
         char * cur;
         Reader reader;
 
-        void read(int err)
+        int read(int err) /*noexcept*/
         {
             ssize_t ret = this->reader(this->buf, sizeof(this->buf));
             if (ret < 0 && errno != EINTR) {
-                throw Error(ERR_TRANSPORT_READ_FAILED);
+                return -ERR_TRANSPORT_READ_FAILED;
             }
             if (ret == 0) {
-                throw Error(err);
+                return -err;
             }
             this->eof = this->buf + ret;
             this->cur = this->buf;
+            return 0;
         }
 
     public:
-        ReaderLine(Reader reader)
+        ReaderLine(Reader reader) /*noexcept*/
         : eof(buf)
         , cur(buf)
         , reader(reader)
         {}
 
-        size_t read_line(char * dest, size_t len, int err) throw(Error)
+        ssize_t read_line(char * dest, size_t len, int err) throw(Error) /*noexcept*/
         {
-            size_t total_read = 0;
+            ssize_t total_read = 0;
             while (1) {
                 char * pos = std::find(this->cur, this->eof, '\n');
                 if (len < size_t(pos - this->cur)) {
@@ -99,18 +100,23 @@ namespace detail {
                 if (pos != this->eof) {
                     break;
                 }
-                this->read(err);
+                if (int e = this->read(err)) {
+                    return e;
+                }
             }
             return total_read;
         }
 
-        void next_line()
+        int next_line() /*noexcept*/
         {
             char * pos;
             while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
-                this->read(ERR_TRANSPORT_READ_FAILED);
+                if (int e = this->read(ERR_TRANSPORT_READ_FAILED)) {
+                    return e;
+                }
             }
             this->cur = pos+1;
+            return 0;
         }
     };
 
@@ -157,7 +163,11 @@ class InByMetaSequenceTransport
 
     void open_next_wrm(int err)
     {
-        size_t len = this->reader.read_line(this->path, sizeof(this->path) - 1, err);
+        ssize_t len = this->reader.read_line(this->path, sizeof(this->path) - 1, err);
+        if (len < 0) {
+            this->status = false;
+            throw Error(-len, errno);
+        }
         this->path[len] = 0;
 
         // Line format "fffff sssss eeeee hhhhh HHHHH"
@@ -196,15 +206,17 @@ class InByMetaSequenceTransport
         this->wrm_fd = ::open(this->path, O_RDONLY);
 
         if (this->wrm_fd < 0) {
+            this->status = false;
             throw Error(err, errno);
         }
 
-        this->chunk_num++;
+        ++this->chunk_num;
+        Transport::next();
     }
 
 public:
     //Line format "path sssss eeeee hhhhh HHHHH"
-    char path[1024 + (std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
+    char path[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
     unsigned begin_chunk_time;
     unsigned end_chunk_time;
     unsigned chunk_num;
@@ -229,9 +241,12 @@ public:
 
         // headers
         //@{
-        this->reader.next_line();
-        this->reader.next_line();
-        this->reader.next_line();
+        if (this->reader.next_line()
+         || this->reader.next_line()
+         || this->reader.next_line()
+        ) {
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        }
         //@}
 
         this->path[0] = 0;
@@ -265,6 +280,7 @@ public:
                 res = io::posix::read_all(this->wrm_fd, *pbuffer, len);
             }
             else {
+                this->status = false;
                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
         }
@@ -294,6 +310,7 @@ public:
             } while (len);
         }
         if (res < 0) {
+            this->status = false;
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
     }
@@ -301,6 +318,12 @@ public:
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV, 0);
+    }
+
+    virtual bool next()
+    {
+        this->open_next_wrm(ERR_TRANSPORT_NO_MORE_DATA);
+        return true;
     }
 };
 
@@ -337,7 +360,11 @@ class CryptoInByMetaSequenceTransport
 
     void open_next_wrm(int err)
     {
-        size_t len = this->reader_meta.read_line(this->path, sizeof(this->path) - 1, err);
+        ssize_t len = this->reader_meta.read_line(this->path, sizeof(this->path) - 1, err);
+        if (len < 0) {
+            this->status = false;
+            throw Error(-len, errno);
+        }
         this->path[len] = 0;
 
         // Line format "fffff sssss eeeee hhhhh HHHHH"
@@ -376,15 +403,17 @@ class CryptoInByMetaSequenceTransport
         this->wrm_fd = ::open(this->path, O_RDONLY);
 
         if (this->wrm_fd < 0) {
+            this->status = false;
             throw Error(err, errno);
         }
 
-        this->chunk_num++;
+        ++this->chunk_num;
+        Transport::next();
     }
 
 public:
     //Line format "path sssss eeeee hhhhh HHHHH"
-    char path[1024 + (std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
+    char path[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
     unsigned begin_chunk_time;
     unsigned end_chunk_time;
     unsigned chunk_num;
@@ -400,14 +429,17 @@ public:
     , chunk_num(0)
     {
         char meta_filename[1024];
-        snprintf(meta_filename, sizeof(meta_filename), "%s%s", filename, extension);
+        std::snprintf(meta_filename, sizeof(meta_filename), "%s%s", filename, extension);
         this->init_crypto_ctx(this->crypto_mwrm, meta_filename, this->metabuf.get_fd());
 
         // headers
         //@{
-        this->reader_meta.next_line();
-        this->reader_meta.next_line();
-        this->reader_meta.next_line();
+        if (this->reader_meta.next_line()
+         || this->reader_meta.next_line()
+         || this->reader_meta.next_line()
+        ) {
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        }
         //@}
     }
 
@@ -440,13 +472,17 @@ public:
             res = this->crypto_wrm.read(*pbuffer, remaining_len);
             if (res < 0) {
                 if (errno != EINTR) {
-                    continue;
+                    break;
                 }
+//                 unsigned char hash[HASH_LEN];
+//                 this->crypto_wrm.close(hash, this->crypto_ctx->hmac_key);
                 this->next_chunk_info();
                 continue;
             }
             if (res == 0){
                 if (zero_res) {
+//                     unsigned char hash[HASH_LEN];
+//                     this->crypto_wrm.close(hash, this->crypto_ctx->hmac_key);
                     this->next_chunk_info();
                     zero_res = false;
                 }
@@ -458,6 +494,7 @@ public:
             remaining_len -= res;
         }
         if (remaining_len){
+            this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
     }
@@ -473,13 +510,19 @@ public:
         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
     }
 
+    virtual bool next()
+    {
+        this->open_next_wrm(ERR_TRANSPORT_NO_MORE_DATA);
+        return true;
+    }
+
 private:
     void init_crypto_ctx(crypto_file & crypto, const char * filename, int fd)
     {
         unsigned char derivator[DERIVATOR_LENGTH];
         get_derivator(filename, derivator, DERIVATOR_LENGTH);
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-        if (compute_hmac(trace_key, this->crypto_ctx->crypto_key, derivator) == -1) {
+        if (-1 == compute_hmac(trace_key, this->crypto_ctx->crypto_key, derivator)) {
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
 
