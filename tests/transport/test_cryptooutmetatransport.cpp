@@ -21,7 +21,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXX
+#define BOOST_TEST_MODULE TestCryptoOutMeta
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
@@ -33,6 +33,9 @@
 
 BOOST_AUTO_TEST_CASE(TestCryptoOutMetaTransport)
 {
+
+    OpenSSL_add_all_digests();
+
     // cleanup of possible previous test files
     {
         const char * file[] = {"TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
@@ -49,8 +52,6 @@ BOOST_AUTO_TEST_CASE(TestCryptoOutMetaTransport)
         "\x01\x02\x03\x04\x05\x06\x07\x08"
         "\x01\x02\x03\x04\x05\x06\x07\x08",
         sizeof(crypto_ctx.crypto_key));
-
-    OpenSSL_add_all_digests();
 
     {
         timeval tv;

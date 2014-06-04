@@ -55,11 +55,11 @@ namespace detail
     void write_meta_headers(Writer & writer, const char * path,
                             uint16_t width, uint16_t height, auth_api * authentifier)
     {
-        char header1[(std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 2];
+        char header1[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2];
         const int len = sprintf(header1, "%u %u", width, height);
         ssize_t res = writer.write(header1, len);
         if (res > 0) {
-            res = writer.write("\n0\n\n", 4);
+            res = writer.write("\n\n\n", 3);
         }
 
         if (res < 0) {
@@ -153,7 +153,7 @@ private:
         size_t len = strlen(filename);
         ssize_t res = this->fdbuf.write(filename, len);
         if (res > 0) {
-            char mes[(std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 5];
+            char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 5];
             len = snprintf(mes, sizeof(mes), " %u %u\n",
                            (unsigned)this->start_sec,
                            (unsigned)this->stop_sec+1);
@@ -218,42 +218,38 @@ public:
         if (this->filename_creator.is_open()) {
             this->write_wrm(false);
         }
-
-        unsigned char hash[HASH_LEN];
         char          path[1024] = {};
         char          basename[1024] = {};
         char          extension[256] = {};
         char          filename[2048] = {};
 
         canonical_path(hf.filename,
-                        path, sizeof(path),
-                        basename, sizeof(basename),
-                        extension, sizeof(extension));
-        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+                       path, sizeof(path),
+                       basename, sizeof(basename),
+                       extension, sizeof(extension));
+        std::snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+        unsigned char hash[HASH_LEN] = {0};
 
         TODO("check if sign returns some error");
-        memset(hash, 0, sizeof(hash));
         this->crypto_meta.close(hash, this->crypto_ctx->hmac_key);
 
         crypto_file crypto_hash;
         TODO("check errors when storing hash");
         int hash_fd = ::open(hf.filename, O_WRONLY|O_CREAT, S_IRUSR);
         if (hash_fd > 0) {
-            try {
-                this->init_crypto_ctx(crypto_hash, hash_fd, hf.filename, 0);
-
+            if (this->noexcept_init_crypto_ctx(crypto_hash, hash_fd, hf.filename)) {
                 const size_t len = strlen(filename);
                 if (crypto_hash.write(filename, len) != long(len)
                  || crypto_hash.write(" ", 1) != 1
                  || crypto_hash.write(reinterpret_cast<const char*>(hash), HASH_LEN) != HASH_LEN) {
                     LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", hf.filename, -HASH_LEN);
                 }
+            }
 
-                if (chmod(hf.filename, S_IRUSR|S_IRGRP) == -1){
-                    LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", hf.filename, strerror(errno), errno);
-                }
-            } catch(...)
-            {}
+            if (chmod(hf.filename, S_IRUSR|S_IRGRP) == -1){
+                LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", hf.filename, strerror(errno), errno);
+            }
             ::close(hash_fd);
         }
     }
@@ -312,12 +308,15 @@ private:
 
         this->filename_creator.next();
 
-        const char * filename = this->filename_creator.get_filename();
+        const char * filename = this->filename_creator.seqgen().get(this->seqno);
         size_t len = strlen(filename);
         ssize_t res = this->crypto_meta.write(filename, len);
         if (res > 0) {
-            char mes[(std::numeric_limits<uint16_t>::digits10 + 1) * 2 + 5 + 2 + HASH_LEN*2];
-            len = snprintf(mes, sizeof(mes), " %u %u",
+            using std::snprintf;
+            using std::sprintf;
+
+            char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + HASH_LEN*2 + 5];
+            len = snprintf(mes, sizeof(mes) - 3 + HASH_LEN*2, " %u %u",
                            (unsigned)this->start_sec,
                            (unsigned)this->stop_sec+1);
             char * p = mes + len;
@@ -342,22 +341,32 @@ private:
         }
     }
 
-    void init_crypto_ctx(crypto_file & crypto, int fd, const char * filename, int errid)
+    bool noexcept_init_crypto_ctx(crypto_file & crypto, int fd, const char * filename) /*noexcept*/
     {
         unsigned char derivator[DERIVATOR_LENGTH];
         get_derivator(filename, derivator, DERIVATOR_LENGTH);
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-        if (compute_hmac(trace_key, this->crypto_ctx->crypto_key, derivator) == -1) {
-            throw Error(errid, errno);
+        if (-1 == compute_hmac(trace_key, this->crypto_ctx->crypto_key, derivator)) {
+            return false;
         }
 
-        unsigned char iv[32];
+        unsigned char iv[32]={0};
         if (dev_urandom_read(iv, 32) == -1) {
             LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
-            throw Error(errid, errno);
+            return false;
         }
 
+        new (&crypto) crypto_file;
         if (-1 == crypto.open_write_init(fd, trace_key, this->crypto_ctx, iv)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    void init_crypto_ctx(crypto_file & crypto, int fd, const char * filename, int errid)
+    {
+        if ( ! this->noexcept_init_crypto_ctx(crypto, fd, filename) ) {
             throw Error(errid, errno);
         }
     }
