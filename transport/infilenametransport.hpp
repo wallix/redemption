@@ -26,6 +26,8 @@
 #include "transport.hpp"
 #include "rio/cryptofile.hpp"
 
+#include "rio/rio_cryptooutmeta.h" // #define HASH_LEN 64
+
 /****************************
 * CryptoInFilenameTransport *
 ****************************/
@@ -49,7 +51,7 @@ public:
             throw Error(ERR_TRANSPORT);
         }
 
-        LOG("crypto open read... filename=%s\n", filename);
+        LOG(LOG_ERR, "crypto open read... filename=%s\n", filename);
 
         int system_fd = open(filename, O_RDONLY, 0600);
         if (system_fd == -1){
@@ -59,7 +61,8 @@ public:
 
         if (-1 == cf_struct.open_read_init(system_fd, trace_key, this->crypto_ctx)) {
             close(system_fd);
-            LOG("open failed for crypto filename=%s\n", filename);
+            LOG(LOG_ERR, "open failed for crypto filename=%s\n", filename);
+            this->status = false;
             throw Error(ERR_TRANSPORT);
         }
     }
@@ -75,13 +78,16 @@ public:
     {
         ssize_t res = this->cf_struct.read(*pbuffer, len);
         if (res == -1) {
+            this->status = false;
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
         else if (res <= 0){
+            this->status = false;
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
         *pbuffer += res;
         if (res != (ssize_t)len){
+            this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
     }

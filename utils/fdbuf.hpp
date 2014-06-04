@@ -19,65 +19,20 @@
  *              Loïc Michaux
  */
 
-#ifndef REDEMPTION_PUBLIC_UTILS_FDBUB_HPP
-#define REDEMPTION_PUBLIC_UTILS_FDBUB_HPP
+#ifndef REDEMPTION_PUBLIC_UTILS_FDBUF_HPP
+#define REDEMPTION_PUBLIC_UTILS_FDBUF_HPP
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <cstddef>
+#include "read_and_write.hpp"
+
 #include <cerrno>
+#include <cstddef>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 namespace io {
 namespace posix {
-
-using std::size_t;
-
-inline ssize_t read_all(int fd, char * data, size_t len) /*noexcept*/
-{
-    ssize_t ret = 0;
-    size_t remaining_len = len;
-    while (remaining_len) {
-        ret = ::read(fd, data + (len - remaining_len), remaining_len);
-        if (ret < 0){
-            if (errno == EINTR){
-                continue;
-            }
-            // Error should still be there next time we try to read
-            if (remaining_len != len){
-                return len - remaining_len;
-            }
-            return -1;
-        }
-        // We must exit loop or we will enter infinite loop
-        if (ret == 0){
-            break;
-        }
-        remaining_len -= ret;
-    }
-    return len - remaining_len;
-}
-
-inline ssize_t write_all(int fd, const char * data, size_t len) /*noexcept*/
-{
-    ssize_t ret = 0;
-    size_t remaining_len = len;
-    size_t total_sent = 0;
-    while (remaining_len) {
-        ret = ::write(fd, data + total_sent, remaining_len);
-        if (ret <= 0){
-            if (errno == EINTR){
-                continue;
-            }
-            return -1;
-        }
-        remaining_len -= ret;
-        total_sent += ret;
-    }
-    return total_sent;
-}
-
 
 class fdbuf
 {
@@ -168,7 +123,7 @@ private:
 void swap(fdbuf & a, fdbuf & b) /*noexcept*/
 { a.swap(b); }
 
-}
-}
+} //posix
+} //io
 
 #endif

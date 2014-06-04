@@ -27,7 +27,7 @@
 #include "transport.hpp"
 #include "error.hpp"
 #include "fileutils.hpp"
-#include "fdbub.hpp"
+#include "fdbuf.hpp"
 #include "rio/rio.h"
 #include "rio/cryptofile.hpp"
 

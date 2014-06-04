@@ -24,9 +24,11 @@
 #define REDEMPTION_TRANSPORT_OUTFILETRANSPORT_HPP
 
 #include "transport.hpp"
-#include "fdbub.hpp"
+#include "read_and_write.hpp"
 
 #include <cerrno>
+#include <unistd.h>
+#include <sys/types.h>
 
 
 class OutFileTransport

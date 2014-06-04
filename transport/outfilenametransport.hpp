@@ -23,18 +23,16 @@
 #ifndef REDEMPTION_TRANSPORT_OUTFILENAMETRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_OUTFILENAMETRANSPORT_HPP
 
-#include "transport.hpp"
-#include "rio/rio_impl.h"
-#include "rio/rio_outsequence.h"
 #include "rio/rio.h"
-#include "rio/cryptofile.hpp"
+#include "transport.hpp"
 #include "outfiletransport.hpp"
 #include "sequence_generator.hpp"
-#include "fdbub.hpp"
+#include "fdbuf.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 namespace detail
 {
@@ -42,7 +40,6 @@ namespace detail
     {
         FilenameGenerator filegen;
         char        current_filename[1024];
-        unsigned    count;
         int         fd;
 
     public:
@@ -52,7 +49,6 @@ namespace detail
                            const char * const extension,
                            const int groupid)
         : filegen(format, prefix, filename, extension, groupid)
-        , count(0)
         , fd(-1)
         {
             this->current_filename[0] = 0;
@@ -61,11 +57,6 @@ namespace detail
         const FilenameGenerator & seqgen() const
         {
             return this->filegen;
-        }
-
-        const char * get_filename() const
-        {
-            return this->filegen.get(this->count);
         }
 
         const char * get_path() const
@@ -78,7 +69,7 @@ namespace detail
             return this->fd;
         }
 
-        void open_if_not_open(int err_id)
+        void open_if_not_open(int err_id, int seqno)
         {
             if (!this->is_open()) {
                 snprintf(this->current_filename, sizeof(this->current_filename), "%sred-XXXXXX.tmp", this->filegen.path);
@@ -87,13 +78,12 @@ namespace detail
                 if (this->fd < 0) {
                     throw Error(err_id, errno);
                 }
-                if (chmod( this->current_filename
-                         , (this->filegen.groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR)) == -1) {
+                if (chmod( this->current_filename, (this->filegen.groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR)) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                        , this->current_filename, strerror(errno), errno
                        , (this->filegen.groupid ? "u+r, g+r" : "u+r"));
                 }
-                this->filegen.set_last_filename(this->count, this->current_filename);
+                this->filegen.set_last_filename(seqno, this->current_filename);
             }
         }
 
@@ -102,7 +92,7 @@ namespace detail
             return -1 != this->fd;
         }
 
-        void rename_tmp()
+        void rename_tmp(int seqno)
         {
             if (this->is_open()) {
                 int res = close(this->fd);
@@ -113,8 +103,8 @@ namespace detail
                 this->filegen.set_last_filename(0, 0);
 
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                const char * filename = this->get_filename();
-                res = rename(this->current_filename, filename);
+                const char * filename = this->filegen.get(seqno);
+                res = ::rename(this->current_filename, filename);
                 if (res < 0) {
                     LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
                     , this->current_filename, filename, errno, strerror(errno));
@@ -124,15 +114,9 @@ namespace detail
             }
         }
 
-        void next()
+        void send(const char * const buffer, size_t len, auth_api * authentifier, int seqno) throw (Error)
         {
-            this->rename_tmp();
-            ++this->count;
-        }
-
-        void send(const char * const buffer, size_t len, auth_api * authentifier) throw (Error)
-        {
-            this->open_if_not_open(ERR_TRANSPORT_WRITE_FAILED);
+            this->open_if_not_open(ERR_TRANSPORT_WRITE_FAILED, seqno);
             ssize_t res = io::posix::write_all(this->fd, buffer, len);
             if (res < 0){
                 if (errno == ENOSPC) {
@@ -177,7 +161,7 @@ public:
 
     virtual ~OutFilenameTransport()
     {
-        this->filename_creator.next();
+        this->filename_creator.rename_tmp(this->seqno);
     }
 
     const FilenameGenerator * seqgen() const
@@ -187,7 +171,7 @@ public:
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
-        this->filename_creator.send(buffer, len, this->authentifier);
+        this->filename_creator.send(buffer, len, this->authentifier, this->seqno);
     }
 
     using Transport::recv;
@@ -204,7 +188,7 @@ public:
 
     virtual bool next()
     {
-        this->filename_creator.next();
+        this->filename_creator.rename_tmp(this->seqno);
         return Transport::next();
     }
 };

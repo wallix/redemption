@@ -51,6 +51,7 @@ namespace detail {
     };
 }
 
+
 class GeneratorTransport
 : public Transport
 {

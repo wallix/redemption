@@ -25,6 +25,7 @@
 #include "rio/rio.h"
 #include "error.hpp"
 #include <unistd.h>
+#include <cstdio>
 
 struct FilenameGenerator
 {
@@ -68,6 +69,7 @@ struct FilenameGenerator
             return this->last_filename;
         }
 
+        using std::snprintf;
         switch (this->format) {
             default:
             case SQF_PATH_FILE_PID_COUNT_EXTENSION:

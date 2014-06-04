@@ -23,15 +23,19 @@
 #ifndef REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP
 
-#include "transport.hpp"
+#include "rio/rio.h"
 #include "error.hpp"
+#include "transport.hpp"
+#include "fileutils.hpp"
+#include "urandom_read.hpp"
+#include "outfilenametransport.hpp"
+
+#include "rio/rio_cryptooutmeta.h" // #define HASH_LEN 64
 
 #include <limits>
 #include <iterator>
+
 #include <sys/time.h>
-#include "rio/rio.h"
-#include "outfiletransport.hpp"
-#include "outfilenametransport.hpp"
 
 
 namespace detail
@@ -106,7 +110,7 @@ public:
     virtual ~OutmetaTransport()
     {
         if (this->filename_creator.is_open()) {
-            this->filename_creator.next();
+            this->filename_creator.rename_tmp(this->seqno);
             this->write_wrm(false);
         }
     }
@@ -119,7 +123,7 @@ public:
     using Transport::send;
     virtual void send(const char * buffer, size_t len) throw(Error)
     {
-        this->filename_creator.send(buffer, len, this->authentifier);
+        this->filename_creator.send(buffer, len, this->authentifier, this->seqno);
     }
 
     using Transport::recv;
@@ -136,7 +140,7 @@ public:
 
     virtual bool next()
     {
-        this->filename_creator.next();
+        this->filename_creator.rename_tmp(this->seqno);
         this->write_wrm(true);
         return Transport::next();
     }
@@ -149,7 +153,7 @@ public:
 private:
     void write_wrm(bool send_exception)
     {
-        const char * filename = this->filename_creator.get_filename();
+        const char * filename = this->filename_creator.seqgen().get(this->seqno);
         size_t len = strlen(filename);
         ssize_t res = this->fdbuf.write(filename, len);
         if (res > 0) {
@@ -264,14 +268,13 @@ public:
     virtual void send(const char * const buffer, size_t len) throw(Error)
     {
         if (!this->filename_creator.is_open()) {
-            const char * filename = this->filename_creator.get_filename();
-            this->filename_creator.open_if_not_open(ERR_TRANSPORT_WRITE_FAILED);
+            const char * filename = this->filename_creator.seqgen().get(this->seqno);
+            this->filename_creator.open_if_not_open(ERR_TRANSPORT_WRITE_FAILED, this->seqno);
             this->init_crypto_ctx(this->crypto_wrm, this->filename_creator.get_fd(),
                                   filename, ERR_TRANSPORT_WRITE_FAILED);
         }
         int res = this->crypto_wrm.write(buffer, len);
-        if (res < 0)
-        {
+        if (res < 0) {
             if (errno == ENOSPC) {
                 char message[1024];
                 snprintf(message, sizeof(message), "100|%s", this->filename_creator.get_path());
@@ -313,15 +316,12 @@ private:
         unsigned char hash[HASH_LEN];
         this->crypto_wrm.close(hash, this->crypto_ctx->hmac_key);
 
-        this->filename_creator.next();
+        this->filename_creator.rename_tmp(this->seqno);
 
         const char * filename = this->filename_creator.seqgen().get(this->seqno);
         size_t len = strlen(filename);
         ssize_t res = this->crypto_meta.write(filename, len);
         if (res > 0) {
-            using std::snprintf;
-            using std::sprintf;
-
             char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + HASH_LEN*2 + 5];
             len = snprintf(mes, sizeof(mes) - 3, " %u %u",
                            (unsigned)this->start_sec,
@@ -358,7 +358,7 @@ private:
         }
 
         unsigned char iv[32];
-        if (dev_urandom_read(iv, 32) == -1) {
+        if (urandom_read(iv, 32) == -1) {
             LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
             return false;
         }
