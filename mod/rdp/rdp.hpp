@@ -2061,6 +2061,16 @@ struct mod_rdp : public mod_api {
                                 case PDUTYPE_SERVER_REDIR_PKT:
                                     if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_SERVER_REDIR_PKT"); }
                                     break;
+                                case FLOWPDU:
+                                    if (this->verbose & 128) {
+                                        LOG(LOG_WARNING, "FlowPDU TYPE");
+                                    }
+                                    // ignoring
+                                    // if (sctrl.flow_pdu_type == FLOW_TEST_PDU) {
+                                    //     this->send_flow_response_pdu(sctrl.flow_id,
+                                    //                                  sctrl.flow_number);
+                                    // }
+                                    break;
                                 default:
                                     LOG(LOG_INFO, "unknown PDU %u", sctrl.pdu_type1);
                                     break;
@@ -5010,6 +5020,17 @@ public:
         MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_data.size());
         this->nego.trans->send(x224_header, mcs_data);
+    }
+
+    void send_flow_response_pdu(uint8_t flow_id, uint8_t flow_number) {
+        LOG(LOG_INFO, "SEND FLOW RESPONSE PDU n° %u", flow_number);
+        BStream flowpdu(256);
+        FlowPDU_Send(flowpdu, FLOW_RESPONSE_PDU, flow_id, flow_number,
+                     this->userid + GCC::MCS_USERCHANNEL_BASE);
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(flowpdu);
+        target_stream.mark_end();
+        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     }
 
 };
