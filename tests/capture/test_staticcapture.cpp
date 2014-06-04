@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     BOOST_CHECK_EQUAL(3075, sq_outfilename_filesize(&(trans.seq), 0));
     BOOST_CHECK_EQUAL(3108, sq_outfilename_filesize(&(trans.seq), 1));
 
-//    sq_outfilename_unlink(&(trans.seq), 0);
-//    sq_outfilename_unlink(&(trans.seq), 1);
+    sq_outfilename_unlink(&(trans.seq), 0);
+    sq_outfilename_unlink(&(trans.seq), 1);
 }
 
