@@ -139,9 +139,21 @@ private:
 
                 REDASSERT(this->bmp_map[cache_id][key].bmp == NULL);
 
-                this->bmp_map[cache_id][key].bmp = new Bitmap( this->bmp_cache.bpp, original_bpp
-                                                             , &original_palette, cx, cy, stream.get_data()
-                                                             , bmp_size);
+                Bitmap * bmp = new Bitmap( this->bmp_cache.bpp, original_bpp
+                                         , &original_palette, cx, cy, stream.get_data()
+                                         , bmp_size);
+
+                uint8_t sha1[20];
+                bmp->compute_sha1(sha1);
+                if (memcmp(sig, sha1, sizeof(sig))) {
+                    LOG( LOG_ERR
+                       , "BmpCachePersister::preload_from_disk: Preload failed. Cause: bitmap or key corruption.");
+                    REDASSERT(false);
+                    delete bmp;
+                }
+                else {
+                    this->bmp_map[cache_id][key].bmp = bmp;
+                }
             }
 
             stream.reset();
@@ -338,6 +350,12 @@ private:
                 const uint8_t  * sig      = bmp_cache.sig[cache_id][cache_index].sig_8;
                 const uint16_t   bmp_size = bmp->bmp_size;
                 const uint8_t  * bmp_data = bmp->data_bitmap.get();
+
+                {
+                    uint8_t sha1[20];
+                    bmp->compute_sha1(sha1);
+                    REDASSERT(!memcmp(bmp_cache.sig[cache_id][cache_index].sig_8, sha1, sizeof(bmp_cache.sig[cache_id][cache_index].sig_8)));
+                }
 
                 char key[20];
 
