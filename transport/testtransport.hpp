@@ -23,7 +23,6 @@
 #ifndef REDEMPTION_TRANSPORT_TESTTRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_TESTTRANSPORT_HPP
 
-#include "rio/rio.h"
 #include "transport.hpp"
 #include "unique_ptr.hpp"
 
@@ -220,7 +219,7 @@ public:
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        throw Error(RIO_ERROR_SEND_ONLY, 0);
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
 
     using Transport::send;

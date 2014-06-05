@@ -97,7 +97,6 @@ struct Listen {
         LOG(LOG_INFO, "Listen: binding socket %d on %s:%d", this->sck, ::inet_ntoa(u.s4.sin_addr), this->port);
         if (0 != ::bind(this->sck, &u.s, sizeof(u))) {
             LOG(LOG_ERR, "Listen: error binding socket [errno=%u] %s", errno, strerror(errno));
-            ((this->sck) && (shutdown(this->sck, 2), close(this->sck)));
             goto end_of_listener;
         }
 
@@ -131,6 +130,13 @@ struct Listen {
             close(this->sck);
         }
         // throw some exception to signal to outside world listen failed
+    }
+
+    ~Listen()
+    {
+        if (this->sck > 0) {
+            close(this->sck);
+        }
     }
 
     TODO("Some values (server, timeout) become only necessary when calling check");

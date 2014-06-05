@@ -126,14 +126,14 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     }
 
     {
-        FilenameGenerator wrm_seq(SQF_PATH_FILE_PID_EXTENSION, "./", "capture", ".mwrm", groupid);
+        FilenameGenerator wrm_seq(FilenameGenerator::PATH_FILE_PID_EXTENSION, "./", "capture", ".mwrm", groupid);
         const char * filename = wrm_seq.get(0);
         BOOST_CHECK_EQUAL(124, ::filesize(filename));
         ::unlink(filename);
     }
 
     if (ini.globals.enable_file_encryption.get()) {
-        FilenameGenerator wrm_seq(SQF_PATH_FILE_PID_EXTENSION, "/tmp/", "capture", ".mwrm", groupid);
+        FilenameGenerator wrm_seq(FilenameGenerator::PATH_FILE_PID_EXTENSION, "/tmp/", "capture", ".mwrm", groupid);
         const char * filename = wrm_seq.get(0);
         BOOST_CHECK_EQUAL(32, ::filesize(filename));
         ::unlink(filename);

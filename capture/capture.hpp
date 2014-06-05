@@ -95,7 +95,7 @@ public:
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", png_path);
             }
 
-            this->png_trans = new OutFilenameTransport( SQF_PATH_FILE_PID_COUNT_EXTENSION, png_path
+            this->png_trans = new OutFilenameTransport( FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, png_path
                                                       , basename, ".png", ini.video.capture_groupid, authentifier);
             this->psc = new StaticCapture( now, *this->png_trans, this->png_trans->seqgen(), width, height
                                          , clear_png, ini, this->drawable->drawable);

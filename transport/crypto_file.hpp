@@ -1,61 +1,44 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *   Product name: redemption, a FLOSS RDP proxy
+ *   Copyright (C) Wallix 2010-2013
+ *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
+ */
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU General Public License for more details.
+#ifndef REDEMPTION_PUBLIC_TRANSPORT_CRYPTO_FILE_HPP
+#define REDEMPTION_PUBLIC_TRANSPORT_CRYPTO_FILE_HPP
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#include "log.hpp"
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010-2014
-   Author(s): Christophe Grosjean
-*/
+#include "openssl_crypto.hpp"
+#include "openssl_evp.hpp"
 
-#ifndef WABCRYPTOFILE_HPP
-#define WABCRYPTOFILE_HPP
-
-#include <errno.h>
+#include <cerrno>
 #include <fcntl.h>
 #include <snappy-c.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <unistd.h>
 
 extern "C" {
-#include "cryptofile.h"
+#include "rio/cryptofile.h"
 }
 
 /*****************************************************************************************************
  *                             System access wrapper                                                 *
  *****************************************************************************************************/
-static inline int dev_urandom_read(unsigned char *buf, int sz) {
-    int fd = open("/dev/urandom", O_RDONLY);
-    if (fd == -1) {
-        printf("[CRYPTO_ERROR][%d]: /dev/urandom!\n", getpid());
-        return -1;
-    }
-    ssize_t read_ret = read(fd, buf, sz);
-    if (read_ret == -1) {
-        printf("[CRYPTO_ERROR][%d]: read /dev/urandom! error=%s\n", getpid(), strerror(errno));
-        int close_ret = close(fd);
-        if (close_ret == -1) {
-            printf("[CRYPTO_ERROR][%d]: close /dev/urandom! error=%s\n", getpid(), strerror(errno));
-        }
-        return -1;
-    }
-    int close_ret = close(fd);
-    if (close_ret == -1) {
-        printf("[CRYPTO_ERROR][%d]: close /dev/urandom! error=%s\n", getpid(), strerror(errno));
-    }
-    return sz;
-}
 
 /* Decrypt src_buf into dst_buf. Update dst_sz with decrypted output size
  * Return 0 on success, negative value on error
@@ -66,15 +49,15 @@ static inline int xaes_decrypt(EVP_CIPHER_CTX *ectx, char *src_buf, uint32_t src
 
     /* allows reusing of ectx for multiple encryption cycles */
     if (EVP_DecryptInit_ex(ectx, NULL, NULL, NULL, NULL) != 1){
-        printf("[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
+        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
         return -1;
     }
     if (EVP_DecryptUpdate(ectx, (unsigned char *)dst_buf, &safe_size, (unsigned char *)src_buf, src_sz) != 1){
-        printf("[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
+        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
         return -1;
     }
     if (EVP_DecryptFinal_ex(ectx, (unsigned char *)dst_buf + safe_size, &remaining_size) != 1){
-        printf("[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
+        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
         return -1;
     }
     *dst_sz = safe_size + remaining_size;
@@ -90,15 +73,15 @@ static inline int xaes_encrypt(EVP_CIPHER_CTX *ectx, char *src_buf, uint32_t src
 
     /* allows reusing of ectx for multiple encryption cycles */
     if (EVP_EncryptInit_ex(ectx, NULL, NULL, NULL, NULL) != 1){
-        printf("[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
+        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
         return -1;
     }
     if (EVP_EncryptUpdate(ectx, (unsigned char *)dst_buf, &safe_size, (unsigned char *)src_buf, src_sz) != 1){
-        printf("[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
+        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
         return -1;
     }
     if (EVP_EncryptFinal_ex(ectx, (unsigned char *)dst_buf + safe_size, &remaining_size) != 1){
-        printf("[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
+        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
         return -1;
     }
     *dst_sz = safe_size + remaining_size;
@@ -114,11 +97,11 @@ static inline bool raw_read(int fd, uint8_t * buffer, size_t requested)
             if ((errno == EINTR)||(errno == EAGAIN)){
                 continue;
             }
-            printf("[CRYPTO_ERROR][%d]: read error : %s!\n", getpid(), strerror(errno));
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: read error : %s!\n", getpid(), strerror(errno));
             return false;
         }
         if (read_ret == 0) {
-            printf("[CRYPTO_ERROR][%d]: read error : unexpected EOF!\n", getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: read error : unexpected EOF!\n", getpid());
             return false;
         }
         requested -= read_ret;
@@ -177,12 +160,12 @@ public:
         // Check magic
         uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
         if (magic != WABCRYPTOFILE_MAGIC) {
-            ::printf("[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n", ::getpid(), magic, WABCRYPTOFILE_MAGIC);
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n", ::getpid(), magic, WABCRYPTOFILE_MAGIC);
             return -1;
         }
         this->version = tmp_buf[4] + (tmp_buf[5] << 8) + (tmp_buf[6] << 16) + (tmp_buf[7] << 24);
         if (this->version > WABCRYPTOFILE_VERSION) {
-            ::printf("[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n", ::getpid(), this->version, WABCRYPTOFILE_VERSION);
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n", ::getpid(), this->version, WABCRYPTOFILE_VERSION);
             return -1;
         }
 
@@ -192,7 +175,7 @@ public:
         unsigned char      key[32];
         int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), (unsigned char *)salt, trace_key, CRYPTO_KEY_LENGTH, nrounds, key, NULL);
         if (i != 32) {
-            ::printf("[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
             return -1;
         }
 
@@ -201,7 +184,7 @@ public:
 
         ::EVP_CIPHER_CTX_init(&this->ectx);
         if (::EVP_DecryptInit_ex(&this->ectx, cipher, NULL, key, iv) != 1) {
-            ::printf("[CRYPTO_ERROR][%d]: Could not initialize decrypion context\n", ::getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypion context\n", ::getpid());
             return -1;
         }
         return 0;
@@ -214,38 +197,38 @@ public:
         this->MAX_CIPHERED_SIZE   = this->MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
         this->fd                  = systemfd;
         this->oflag               = O_WRONLY;
-     
+
         const EVP_CIPHER * cipher   = EVP_aes_256_cbc();
         unsigned int       salt[]   = {12345, 54321};    // suspicious, to check...
         int                nrounds  = 5;
         unsigned char      key[32];
         int i = EVP_BytesToKey(cipher, EVP_sha1(), (unsigned char *)salt, trace_key, CRYPTO_KEY_LENGTH, nrounds, key, NULL);
         if (i != 32) {
-            ::printf("[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong!\n", ::getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong!\n", ::getpid());
             return -1;
         }
 
         ::EVP_CIPHER_CTX_init(&this->ectx);
         if (::EVP_EncryptInit_ex(&this->ectx, cipher, NULL, key, iv) != 1) {
-            ::printf("[CRYPTO_ERROR][%d]: Could not initialize encryption context!\n", ::getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize encryption context!\n", ::getpid());
             return -1;
         }
 
         // MD stuff
         const EVP_MD * md = EVP_get_digestbyname(MD_HASH_NAME);
         if (!md) {
-            ::printf("[CRYPTO_ERROR][%d]: Could not find message digest algorithm!\n", ::getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find message digest algorithm!\n", ::getpid());
             return -1;
         }
 
         ::EVP_MD_CTX_init(&this->hctx);
         ::EVP_MD_CTX_init(&this->hctx4k);
         if (::EVP_DigestInit_ex(&this->hctx, md, NULL) != 1) {
-            ::printf("[CRYPTO_ERROR][%d]: Could not initialize MD hash context!\n", ::getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context!\n", ::getpid());
             return -1;
         }
         if (::EVP_DigestInit_ex(&this->hctx4k, md, NULL) != 1) {
-            ::printf("[CRYPTO_ERROR][%d]: Could not initialize 4k MD hash context!\n", ::getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize 4k MD hash context!\n", ::getpid());
             return -1;
         }
 
@@ -253,14 +236,14 @@ public:
         int             blocksize = ::EVP_MD_block_size(md);
         unsigned char * key_buf   = (unsigned char *)::calloc(blocksize, 1);
         if (key_buf == NULL) {
-            ::printf("[CRYPTO_ERROR][%d]: malloc!\n", ::getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc!\n", ::getpid());
             return -1;
         }
         ::memset(key_buf, 0, blocksize);
         if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
             unsigned char keyhash[MD_HASH_LENGTH];
             if (::MD_HASH_FUNC((unsigned char *)cctx->hmac_key, CRYPTO_KEY_LENGTH, keyhash) == (void *)0) {
-                ::printf("[CRYPTO_ERROR][%d]: Could not hash crypto key!\n", ::getpid());
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key!\n", ::getpid());
                 ::free(key_buf);
                 return -1;
             }
@@ -273,12 +256,12 @@ public:
             key_buf[idx] = key_buf[idx] ^ 0x36;
         }
         if (::EVP_DigestUpdate(&this->hctx, key_buf, blocksize) != 1) {
-            ::printf("[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
             ::free(key_buf);
             return -1;
         }
         if (::EVP_DigestUpdate(&this->hctx4k, key_buf, blocksize) != 1) {
-            ::printf("[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
             ::free(key_buf);
             return -1;
         }
@@ -301,7 +284,7 @@ public:
             ssize_t write_ret = ::write(this->fd, tmp_buf, 40);
             // TODO: if I suceeded writing a broken file, wouldn't it be better to remove it ?
             if (write_ret != 40){
-                printf("[CRYPTO_ERROR][%d]: write error! error=%s\n", ::getpid(), ::strerror(errno));
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: write error! error=%s\n", ::getpid(), ::strerror(errno));
                 return -1;
             }
             // update file_size
@@ -334,15 +317,15 @@ public:
         case SNAPPY_OK:
         break;
         case SNAPPY_INVALID_INPUT:
-            printf("[CRYPTO_ERROR][%d]: Snappy compression failed with status code INVALID_INPUT!\n", getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code INVALID_INPUT!\n", getpid());
             return -1;
         break;
         case SNAPPY_BUFFER_TOO_SMALL:
-            printf("[CRYPTO_ERROR][%d]: Snappy compression failed with status code BUFFER_TOO_SMALL!\n", getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code BUFFER_TOO_SMALL!\n", getpid());
             return -1;
         break;
         default:
-            printf("[CRYPTO_ERROR][%d]: Snappy compression failed with unknown status code (%d)!\n", getpid(), status);
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with unknown status code (%d)!\n", getpid(), status);
             return -1;
         break;
         }
@@ -364,7 +347,7 @@ public:
         tmp_sz[3] = (ciphered_buf_sz >> 24) & 0xFF;
         int write_ret1 = ::write(this->fd, tmp_sz, 4);
         if (write_ret1 == -1) {
-            ::printf("[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
         }
         // TODO: check errors
         this->xmd_update((char *)&ciphered_buf_sz, 4);
@@ -372,7 +355,7 @@ public:
 
         int write_ret2 = ::write(this->fd, ciphered_buf, ciphered_buf_sz);
         if (write_ret2 == -1) {
-            ::printf("[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
         }
         // TODO: check errors
         this->xmd_update(ciphered_buf, ciphered_buf_sz);
@@ -420,7 +403,7 @@ public:
                 }
                 else {
                     if (ciphered_buf_size > this->MAX_CIPHERED_SIZE) {
-                        ::printf("[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
                         return -1;
                     } else {
                         uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
@@ -445,15 +428,15 @@ public:
                         case SNAPPY_OK:
                         break;
                         case SNAPPY_INVALID_INPUT:
-                            printf("[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
                             return -1;
                         break;
                         case SNAPPY_BUFFER_TOO_SMALL:
-                            printf("[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
                             return -1;
                         break;
                         default:
-                            printf("[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
                             return -1;
                         break;
                         }
@@ -531,7 +514,7 @@ public:
             int write_ret1 = ::write(this->fd, tmp_buf, 8);
             if (write_ret1 == -1){
                 // TOOD: actual error code could help
-                ::printf("[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
             }
             this->file_size += 8;
 
@@ -540,32 +523,32 @@ public:
             if (hash) {
                 unsigned char tmp_hash[MD_HASH_LENGTH << 1];
                 if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, NULL) != 1) {
-                    ::printf("[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
                     result = -1;
                     tmp_hash[0] = '\0';
                 }
                 if (::EVP_DigestFinal_ex(&this->hctx, tmp_hash + MD_HASH_LENGTH, NULL) != 1) {
-                    ::printf("[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
                     result = -1;
                     tmp_hash[MD_HASH_LENGTH] = '\0';
                 }
                 // HMAC: MD(key^opad + MD(key^ipad))
                 const EVP_MD *md = ::EVP_get_digestbyname(MD_HASH_NAME);
                 if (!md) {
-                    ::printf("[CRYPTO_ERROR][%d]: Could not find MD message digest\n", ::getpid());
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find MD message digest\n", ::getpid());
                     return -1;
                 }
                 int blocksize = ::EVP_MD_block_size(md);
                 unsigned char * key_buf = (unsigned char *)::calloc(blocksize, 1);
                 if (key_buf == NULL) {
-                    ::printf("[CRYPTO_ERROR][%d]: malloc\n", ::getpid());
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc\n", ::getpid());
                     return -1;
                 }
                 ::memset(key_buf, '\0', blocksize);
                 if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
                     unsigned char keyhash[MD_HASH_LENGTH];
                     if (::MD_HASH_FUNC((unsigned char *)hmac_key, CRYPTO_KEY_LENGTH, keyhash) == (void *)0) {
-                        ::printf("[CRYPTO_ERROR][%d]: Could not hash crypto key\n", ::getpid());
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key\n", ::getpid());
                         return -1;
                     }
                     ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
@@ -579,38 +562,38 @@ public:
                 EVP_MD_CTX mdctx;
                 ::EVP_MD_CTX_init(&mdctx);
                 if (::EVP_DigestInit_ex(&mdctx, md, NULL) != 1) {
-                    ::printf("[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
                     return -1;
                 }
                 if (::EVP_DigestUpdate(&mdctx, key_buf, blocksize) != 1) {
-                    ::printf("[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                     return -1;
                 }
                 if (::EVP_DigestUpdate(&mdctx, tmp_hash, MD_HASH_LENGTH) != 1) {
-                    ::printf("[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                     return -1;
                 }
                 if (::EVP_DigestFinal_ex(&mdctx, hash, NULL) != 1) {
-                    ::printf("[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
                     result = -1;
                     hash[0] = '\0';
                 }
                 ::EVP_MD_CTX_cleanup(&mdctx);
                 ::EVP_MD_CTX_init(&mdctx);
                 if (::EVP_DigestInit_ex(&mdctx, md, NULL) != 1) {
-                    ::printf("[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
                     return -1;
                 }
                 if (::EVP_DigestUpdate(&mdctx, key_buf, blocksize) != 1){
-                    ::printf("[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                     return -1;
                 }
                 if (::EVP_DigestUpdate(&mdctx, tmp_hash + MD_HASH_LENGTH, MD_HASH_LENGTH) != 1){
-                    ::printf("[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                     return -1;
                 }
                 if (::EVP_DigestFinal_ex(&mdctx, hash + MD_HASH_LENGTH, NULL) != 1) {
-                    ::printf("[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
                     result = -1;
                     hash[MD_HASH_LENGTH] = '\0';
                 }
@@ -631,19 +614,18 @@ private:
      */
     int xmd_update(const char * src_buf, uint32_t src_sz) {
         if (::EVP_DigestUpdate(&this->hctx, src_buf, src_sz) != 1) {
-            ::printf("[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
             return -1;
         }
         if (this->file_size < 4096) {
             size_t remaining_size = 4096 - this->file_size;
             size_t hashable_size = MIN(remaining_size, src_sz);
             if (::EVP_DigestUpdate(&this->hctx4k, src_buf, hashable_size) != 1) {
-                ::printf("[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
                 return -1;
             }
         }
         return 0;
     }
 };
-
 #endif

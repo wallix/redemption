@@ -28,8 +28,7 @@
 #include "error.hpp"
 #include "fileutils.hpp"
 #include "fdbuf.hpp"
-#include "rio/rio.h"
-#include "rio/cryptofile.hpp"
+#include "crypto_transport.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -207,6 +206,7 @@ namespace detail {
                 *e2 = 0;
             }
 
+            ::close(this->wrm_fd);
             this->wrm_fd = ::open(path, O_RDONLY);
 
             if (this->wrm_fd < 0) {
@@ -278,7 +278,7 @@ public:
     , end_chunk_time(0)
     {}
 
-    char * path()
+    const char * path() const
     {
         return this->meta_reader.path;
     }
@@ -367,7 +367,7 @@ class CryptoInByMetaSequenceTransport
     crypto_file crypto_wrm;
     crypto_file crypto_mwrm;
 
-    CryptoContext * crypto_ctx;
+    CryptoContext & crypto_ctx;
 
     struct ReaderCrypto {
         crypto_file & crypto;
@@ -398,7 +398,8 @@ class CryptoInByMetaSequenceTransport
     {
         char meta_filename[1024];
         std::snprintf(meta_filename, sizeof(meta_filename), "%s%s", filename, extension);
-        this->init_crypto_ctx(this->crypto_mwrm, meta_filename, this->metabuf.get_fd());
+        init_crypto_read(this->crypto_mwrm, this->crypto_ctx, this->metabuf.get_fd(),
+                         meta_filename, ERR_TRANSPORT_OPEN_FAILED);
         return this->crypto_mwrm;
     }
 
@@ -410,13 +411,13 @@ public:
     : Transport()
     , metabuf(detail::open_inmeta(filename, extension))
     , crypto_wrm_is_init(false)
-    , crypto_ctx(crypto_ctx)
+    , crypto_ctx(*crypto_ctx)
     , meta_reader(this->init_crypto_mwrm(filename, extension))
     , begin_chunk_time(0)
     , end_chunk_time(0)
     {}
 
-    char * path()
+    const char * path() const
     {
         return this->meta_reader.path;
     }
@@ -428,7 +429,9 @@ public:
             if (this->meta_reader.wrm_fd == -1) {
                 this->next_chunk_info();
             }
-            this->init_crypto_ctx(this->crypto_wrm, this->meta_reader.path, this->meta_reader.wrm_fd);
+            init_crypto_read(this->crypto_wrm, this->crypto_ctx, this->meta_reader.wrm_fd,
+                             this->meta_reader.path, ERR_TRANSPORT_WRITE_FAILED);
+            this->crypto_wrm_is_init = true;
         }
         int res;
         size_t remaining_len = len;
@@ -439,18 +442,12 @@ public:
                 if (errno != EINTR) {
                     break;
                 }
-//                 unsigned char hash[HASH_LEN];
-//                 this->crypto_wrm.close(hash, this->crypto_ctx->hmac_key);
-                this->next_chunk_info();
-                this->init_crypto_ctx(this->crypto_wrm, this->meta_reader.path, this->meta_reader.wrm_fd);
+                this->next_crypto_wrm();
                 continue;
             }
             if (res == 0){
                 if (zero_res) {
-//                     unsigned char hash[HASH_LEN];
-//                     this->crypto_wrm.close(hash, this->crypto_ctx->hmac_key);
-                    this->next_chunk_info();
-                    this->init_crypto_ctx(this->crypto_wrm, this->meta_reader.path, this->meta_reader.wrm_fd);
+                    this->next_crypto_wrm();
                     zero_res = false;
                 }
                 else {
@@ -492,18 +489,12 @@ public:
     }
 
 private:
-    void init_crypto_ctx(crypto_file & crypto, const char * filename, int fd)
+    void next_crypto_wrm()
     {
-        unsigned char derivator[DERIVATOR_LENGTH];
-        get_derivator(filename, derivator, DERIVATOR_LENGTH);
-        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-        if (-1 == compute_hmac(trace_key, this->crypto_ctx->crypto_key, derivator)) {
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
-
-        if (-1 == crypto.open_read_init(fd, trace_key, this->crypto_ctx)) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-        }
+        this->next_chunk_info();
+        new (&this->crypto_wrm) crypto_file;
+        init_crypto_read(this->crypto_wrm, this->crypto_ctx, this->meta_reader.wrm_fd,
+                         this->meta_reader.path, ERR_TRANSPORT_WRITE_FAILED);
     }
 };
 

@@ -23,11 +23,11 @@
 #ifndef REDEMPTION_TRANSPORT_OUTFILENAMETRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_OUTFILENAMETRANSPORT_HPP
 
-#include "rio/rio.h"
 #include "transport.hpp"
-#include "outfiletransport.hpp"
+#include "read_and_write.hpp"
+#include "urandom_read.hpp"
+#include "crypto_transport.hpp"
 #include "sequence_generator.hpp"
-#include "fdbuf.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -43,7 +43,7 @@ namespace detail
         int         fd;
 
     public:
-        OutFilenameCreator(SQ_FORMAT format,
+        OutFilenameCreator(FilenameGenerator::Format format,
                            const char * const prefix,
                            const char * const filename,
                            const char * const extension,
@@ -124,7 +124,7 @@ namespace detail
                     snprintf(message, sizeof(message), "100|%s", this->filegen.path);
                     authentifier->report("FILESYSTEM_FULL", message);
                 }
-                LOG(LOG_INFO, "Write to transport failed (F): code=%d", errno);
+                LOG(LOG_ERR, "Write to transport failed (F): code=%d", errno);
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
         }
@@ -145,7 +145,7 @@ class OutFilenameTransport
     detail::OutFilenameCreator filename_creator;
 
 public:
-    OutFilenameTransport(SQ_FORMAT format,
+    OutFilenameTransport(FilenameGenerator::Format format,
                          const char * const prefix,
                          const char * const filename,
                          const char * const extension,
@@ -199,112 +199,62 @@ public:
 * CryptoOutFilenameTransport *
 *****************************/
 
-// class CryptoOutFilenameTransport
-// : public Transport
-// {
-//     CryptoContext * crypto_ctx;
-//     crypto_file cf_struct;
-//
-//
-//
-//     int fd;
-//
-//     SQ_FORMAT   format;
-//     char        path[1024];
-//     char        filename[1024];
-//     char        extension[12];
-//     char        tempnam[2048];
-//     unsigned    pid;
-//     unsigned    count;
-//     int         groupid;
-//
-//
-// public:
-//     SQ   seq;
-//     RIO  rio;
-//     char path2[512];
-//
-//     CryptoOutFilenameTransport(
-//             CryptoContext * crypto_ctx,
-//             SQ_FORMAT format,
-//             const char * const prefix,
-//             const char * const filename,
-//             const char * const extension,
-//             const int groupid,
-//             auth_api * authentifier = NULL,
-//             unsigned verbose = 0)
-//     {
-//         if (authentifier) {
-//             this->set_authentifier(authentifier);
-//         }
-//
-//         this->count      = 0;
-//         this->format     = format;
-//         this->pid        = getpid();
-//         this->crypto_ctx = crypto_ctx;
-//
-//         const size_t len = strlen(filename);
-//
-//         if (len > sizeof(this->path) - 1){
-//             LOG(LOG_ERR, "Sequence outfilename initialisation failed (%u)", RIO_ERROR_STRING_PATH_TOO_LONG);
-//             throw Error(ERR_TRANSPORT);
-//         }
-//         strcpy(this->path, filename);
-//         if (len > sizeof(this->filename) - 1){
-//             LOG(LOG_ERR, "Sequence outfilename initialisation failed (%u)", RIO_ERROR_STRING_FILENAME_TOO_LONG);
-//             throw Error(ERR_TRANSPORT);
-//         }
-//         strcpy(this->filename, filename);
-//
-//         if (strlen(extension) > sizeof(this->extension) - 1){
-//             LOG(LOG_ERR, "Sequence outfilename initialisation failed (%u)", RIO_ERROR_STRING_EXTENSION_TOO_LONG);
-//             throw Error(ERR_TRANSPORT);
-//         }
-//         strcpy(this->extension, extension);
-//         this->groupid = groupid;
-//
-//         size_t max_path_length = sizeof(path2) - 1;
-//         strncpy(this->path2, prefix, max_path_length);
-//         this->path2[max_path_length] = 0;
-//     }
-//
-//     ~CryptoOutFilenameTransport()
-//     {
-//         rio_clear(&this->rio);
-//         sq_clear(&this->seq);
-//     }
-//
-//     using Transport::send;
-//     virtual void send(const char * const buffer, size_t len) throw (Error) {
-//         ssize_t res = rio_send(&this->rio, buffer, len);
-//         if (res < 0){
-//             if (errno == ENOSPC) {
-//                 char message[1024];
-//                 snprintf(message, sizeof(message), "100|%s", this->path2);
-//                 this->authentifier->report("FILESYSTEM_FULL", message);
-//             }
-//
-//             LOG(LOG_INFO, "Write to transport failed (CF): code=%d", errno);
-//             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-//         }
-//     }
-//
-//     using Transport::recv;
-//     virtual void recv(char**, size_t) throw (Error)
-//     {
-//         LOG(LOG_INFO, "OutFilenameTransport used for recv");
-//         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
-//     }
-//
-//     virtual void seek(int64_t offset, int whence) throw (Error) {
-//         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE, errno);
-//     }
-//
-//     virtual bool next()
-//     {
-//         sq_next(&this->seq);
-//         return Transport::next();
-//     }
-// };
+class CryptoOutFilenameTransport
+: public Transport
+{
+    CryptoContext & crypto_ctx;
+    crypto_file cf;
+    int fd;
+
+public:
+    CryptoOutFilenameTransport(CryptoContext * crypto_ctx, const char * filename,
+                               auth_api * authentifier = NULL, unsigned verbose = 0)
+    : crypto_ctx(*crypto_ctx)
+    , fd(::open(filename, O_WRONLY | O_CREAT, 0600))
+    {
+        if (this->fd == -1) {
+            LOG(LOG_ERR, "failed opening=%s\n", filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+
+        init_crypto_write(this->cf, this->crypto_ctx, this->fd, filename, ERR_TRANSPORT_OPEN_FAILED);
+    }
+
+    ~CryptoOutFilenameTransport()
+    {
+        unsigned char hash[HASH_LEN];
+        this->cf.close(hash, this->crypto_ctx.hmac_key);
+        close(this->fd);
+    }
+
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        ssize_t res = this->cf.write(buffer, len);
+        if (res <= 0) {
+            this->status = false;
+            LOG(LOG_ERR, "Write to transport failed (CF): code=%d", errno);
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+        if (res != (ssize_t)len) {
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+    }
+
+    using Transport::recv;
+    virtual void recv(char**, size_t) throw (Error)
+    {
+        LOG(LOG_INFO, "OutFilenameTransport used for recv");
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
+    }
+
+    virtual void seek(int64_t offset, int whence) throw (Error) {
+        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE, errno);
+    }
+};
 
 #endif

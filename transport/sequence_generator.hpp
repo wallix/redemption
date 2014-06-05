@@ -22,25 +22,35 @@
 #ifndef REDEMPTION_PUBLIC_TRANSPORT_SEQUENCE_GENERATOR_HPP
 #define REDEMPTION_PUBLIC_TRANSPORT_SEQUENCE_GENERATOR_HPP
 
-#include "rio/rio.h"
 #include "error.hpp"
-#include <unistd.h>
+
 #include <cstdio>
+#include <cstring>
+
+#include <sys/types.h>
+#include <unistd.h>
 
 struct FilenameGenerator
 {
-    char        path[1024];
-    char        filename[1012];
-    char        extension[12];
-    SQ_FORMAT   format;
-    unsigned    pid;
-    int         groupid;
-    mutable char        filename_gen[1024];
+    enum Format {
+        PATH_FILE_PID_COUNT_EXTENSION,
+        PATH_FILE_COUNT_EXTENSION,
+        PATH_FILE_PID_EXTENSION,
+        PATH_FILE_EXTENSION,
+    };
 
-    const char* last_filename;
-    unsigned    last_num;
+    char         path[1024];
+    char         filename[1012];
+    char         extension[12];
+    Format       format;
+    unsigned     pid;
+    int          groupid;
+    mutable char filename_gen[1024];
 
-    FilenameGenerator(SQ_FORMAT format,
+    const char * last_filename;
+    unsigned     last_num;
+
+    FilenameGenerator(Format format,
                       const char * const prefix,
                       const char * const filename,
                       const char * const extension,
@@ -49,6 +59,7 @@ struct FilenameGenerator
     , pid(getpid())
     , groupid(groupid)
     , last_filename(0)
+    , last_num(-1u)
     {
         if (strlen(prefix) > sizeof(this->path) - 1
          || strlen(filename) > sizeof(this->filename) - 1
@@ -72,19 +83,19 @@ struct FilenameGenerator
         using std::snprintf;
         switch (this->format) {
             default:
-            case SQF_PATH_FILE_PID_COUNT_EXTENSION:
+            case PATH_FILE_PID_COUNT_EXTENSION:
                 snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u-%06u%s", this->path
                         , this->filename, this->pid, count, this->extension);
                 break;
-            case SQF_PATH_FILE_COUNT_EXTENSION:
+            case PATH_FILE_COUNT_EXTENSION:
                 snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
                         , this->filename, count, this->extension);
                 break;
-            case SQF_PATH_FILE_PID_EXTENSION:
+            case PATH_FILE_PID_EXTENSION:
                 snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
                         , this->filename, this->pid, this->extension);
                 break;
-            case SQF_PATH_FILE_EXTENSION:
+            case PATH_FILE_EXTENSION:
                 snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", this->path
                         , this->filename, this->extension);
                 break;
@@ -102,6 +113,8 @@ private:
     FilenameGenerator(FilenameGenerator const &);
     FilenameGenerator& operator=(FilenameGenerator const &);
 };
+
+typedef FilenameGenerator::Format FilenameFormat;
 
 typedef FilenameGenerator SequenceGenerator;
 

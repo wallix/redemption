@@ -60,14 +60,14 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     ini.debug.secondary_orders = 0;
 
     const int groupid = 0;
-    OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
+    OutFilenameTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
     png_recorder.update_config(ini);
     player.add_consumer(&drawable1);
 
-    OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
+    OutFilenameTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
     ini.video.frame_interval = 10;
     ini.video.break_interval = 20;
 
@@ -154,14 +154,14 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //    ini.debug.secondary_orders = 0;
 
 //    const int groupid = 0;
-//    OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".png", groupid);
+//    OutFilenameTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".png", groupid);
 //    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
 //    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
 //    png_recorder.update_config(ini);
 //    player.add_consumer(&drawable1);
 
-//    OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".wrm", groupid);
+//    OutFilenameTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".wrm", groupid);
 //    ini.video.frame_interval = 10;
 //    ini.video.break_interval = 20;
 

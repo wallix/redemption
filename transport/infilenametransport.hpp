@@ -24,9 +24,7 @@
 #define REDEMPTION_TRANSPORT_INFILENAMETRANSPORT_HPP
 
 #include "transport.hpp"
-#include "rio/cryptofile.hpp"
-
-#include "rio/rio_cryptooutmeta.h" // #define HASH_LEN 64
+#include "crypto_transport.hpp"
 
 /****************************
 * CryptoInFilenameTransport *
@@ -35,58 +33,38 @@
 class CryptoInFilenameTransport
 : public Transport
 {
-    CryptoContext * crypto_ctx;
-    crypto_file cf_struct;
-    uint32_t verbose;
+    CryptoContext & crypto_ctx;
+    crypto_file cf;
 
 public:
     CryptoInFilenameTransport(CryptoContext * crypto_ctx, const char * filename, unsigned verbose = 0)
-    : verbose(verbose)
-    , crypto_ctx(crypto_ctx)
+    : crypto_ctx(*crypto_ctx)
     {
-        unsigned char derivator[DERIVATOR_LENGTH];
-        get_derivator(filename, derivator, DERIVATOR_LENGTH);
-        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-        if (compute_hmac(trace_key, this->crypto_ctx->crypto_key, derivator) == -1){
-            throw Error(ERR_TRANSPORT);
-        }
-
-        LOG(LOG_ERR, "crypto open read... filename=%s\n", filename);
-
         int system_fd = open(filename, O_RDONLY, 0600);
         if (system_fd == -1){
-            LOG("failed opening=%s\n", filename);
-            throw Error(ERR_TRANSPORT);
+            LOG(LOG_ERR, "failed opening=%s\n", filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
 
-        if (-1 == cf_struct.open_read_init(system_fd, trace_key, this->crypto_ctx)) {
-            close(system_fd);
-            LOG(LOG_ERR, "open failed for crypto filename=%s\n", filename);
-            this->status = false;
-            throw Error(ERR_TRANSPORT);
-        }
+        init_crypto_read(this->cf, this->crypto_ctx, system_fd, filename, ERR_TRANSPORT_OPEN_FAILED);
     }
 
     virtual ~CryptoInFilenameTransport()
     {
         unsigned char hash[HASH_LEN];
-        this->cf_struct.close(hash, this->crypto_ctx->hmac_key);
+        this->cf.close(hash, this->crypto_ctx.hmac_key);
     }
 
     using Transport::recv;
-    virtual void srecv(char ** pbuffer, size_t len) throw (Error)
+    virtual void recv(char ** pbuffer, size_t len) throw (Error)
     {
-        ssize_t res = this->cf_struct.read(*pbuffer, len);
-        if (res == -1) {
+        ssize_t res = this->cf.read(*pbuffer, len);
+        if (res <= 0) {
             this->status = false;
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-        else if (res <= 0){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            throw Error(ERR_TRANSPORT_READ_FAILED);
         }
         *pbuffer += res;
-        if (res != (ssize_t)len){
+        if (res != (ssize_t)len) {
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }

@@ -436,7 +436,7 @@ unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp libboost_unit_test
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_vnc : tests/mod/vnc/test_vnc.cpp cryptofile openssl crypto dl z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_xup : tests/mod/xup/test_xup.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_infilenametransport : tests/transport/test_infilenametransport.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_infilenametransport : tests/transport/test_infilenametransport.cpp cryptofile openssl crypto dl z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rio : tests/transport/rio/test_rio.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rio_crypto : tests/transport/rio/test_rio_crypto.cpp cryptofile openssl crypto snappy dl z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rio_cryptoinmeta : tests/transport/rio/test_rio_cryptoinmeta.cpp cryptofile openssl crypto dl z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -463,7 +463,6 @@ unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp openssl crypto dl z li
 unit-test test_string : tests/utils/test_string.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_zlib : tests/utils/test_zlib.cpp z libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_transport : tests/transport/test_transport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_infiletransport : tests/transport/test_infiletransport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 #unit-test test_infilenametransport : tests/transport/test_infilenametransport.cpp openssl crypto z dl libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_inbymetasequencetransport : tests/transport/test_inbymetasequencetransport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;

@@ -29,11 +29,37 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "infiletransport.hpp"
 #include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestInfileTransport)
 {
-}
+    int fd = ::open("./tests/fixtures/test_infile.txt", O_RDONLY);
 
+    {
+        InFileTransport in(fd);
+
+        uint8_t buffer[1024];
+
+        uint8_t * p = buffer;
+        in.recv(&p, 3);
+        BOOST_CHECK_EQUAL(3, p-buffer);
+        BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
+        p = buffer + 3;
+        try {
+            in.recv(&p, 1024);
+            BOOST_CHECK(false);
+        }
+        catch(Error &)
+        {
+            BOOST_CHECK_EQUAL(24, p-buffer);
+            BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
+        }
+    }
+
+    ::close(fd);
+}

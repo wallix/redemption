@@ -23,17 +23,16 @@
 #ifndef REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP
 
-#include "rio/rio.h"
 #include "error.hpp"
+#include "fdbuf.hpp"
 #include "transport.hpp"
 #include "fileutils.hpp"
 #include "urandom_read.hpp"
 #include "outfilenametransport.hpp"
-
-#include "rio/rio_cryptooutmeta.h" // #define HASH_LEN 64
+#include "outfilenametransport.hpp"
+#include "crypto_transport.hpp"
 
 #include <limits>
-#include <iterator>
 
 #include <sys/time.h>
 
@@ -44,9 +43,12 @@ namespace detail
     {
         char filename[2048];
 
-        MetaFilename(const char * path, const char * basename, SQ_FORMAT format = SQF_PATH_FILE_PID_COUNT_EXTENSION)
+        MetaFilename(const char * path, const char * basename,
+                     FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
         {
-            int res = format == SQF_PATH_FILE_PID_COUNT_EXTENSION || format == SQF_PATH_FILE_PID_EXTENSION
+            int res = format == (
+               FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+            || format == FilenameGenerator::PATH_FILE_PID_EXTENSION)
             ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, getpid())
             : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
             if (res > int(sizeof(this->filename) - 6) || res < 0) {
@@ -74,7 +76,7 @@ namespace detail
                 authentifier->report("FILESYSTEM_FULL", message);
             }
 
-            LOG(LOG_INFO, "Write to transport failed (M): code=%d", err);
+            LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
         }
     }
@@ -91,7 +93,8 @@ class OutmetaTransport
 public:
     OutmetaTransport(const char * path, const char * basename, timeval now,
                      uint16_t width, uint16_t height, const int groupid, auth_api * authentifier = NULL,
-                     unsigned verbose = 0, SQ_FORMAT format = SQF_PATH_FILE_PID_COUNT_EXTENSION)
+                     unsigned verbose = 0,
+                     FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
     : filename_creator(format, path, basename, ".wrm", groupid)
     , start_sec(now.tv_sec)
     , stop_sec(now.tv_sec)
@@ -166,7 +169,7 @@ private:
         }
         if (res < 0) {
             int err = errno;
-            LOG(LOG_INFO, "Write to transport failed (M): code=%d", err);
+            LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
             if (send_exception) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
             }
@@ -189,19 +192,19 @@ class CryptoOutmetaTransport
     crypto_file crypto_wrm;
     time_t start_sec;
     time_t stop_sec;
-    CryptoContext * crypto_ctx;
+    CryptoContext & crypto_ctx;
 
 
 public:
     CryptoOutmetaTransport(CryptoContext * crypto_ctx, const char * path, const char * hash_path,
         const char * basename, timeval now, uint16_t width, uint16_t height,
         const int groupid, auth_api * authentifier = NULL, unsigned verbose = 0,
-        SQ_FORMAT format = SQF_PATH_FILE_PID_COUNT_EXTENSION)
+        FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
     : filename_creator(format, path, basename, ".wrm", groupid)
     , hf(hash_path, basename, format)
     , start_sec(now.tv_sec)
     , stop_sec(now.tv_sec)
-    , crypto_ctx(crypto_ctx)
+    , crypto_ctx(*crypto_ctx)
     {
         if (authentifier) {
             this->set_authentifier(authentifier);
@@ -213,7 +216,8 @@ public:
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
 
-        this->init_crypto_ctx(this->crypto_meta, this->fdbuf.get_fd(), mf.filename, ERR_TRANSPORT_OPEN_FAILED);
+        init_crypto_write(this->crypto_meta, this->crypto_ctx, this->fdbuf.get_fd(),
+                          mf.filename, ERR_TRANSPORT_OPEN_FAILED);
         detail::write_meta_headers(this->crypto_meta, path, width, height, this->authentifier);
     }
 
@@ -236,13 +240,13 @@ public:
         unsigned char hash[HASH_LEN] = {0};
 
         TODO("check if sign returns some error");
-        this->crypto_meta.close(hash, this->crypto_ctx->hmac_key);
+        this->crypto_meta.close(hash, this->crypto_ctx.hmac_key);
 
         crypto_file crypto_hash;
         TODO("check errors when storing hash");
         int hash_fd = ::open(hf.filename, O_WRONLY|O_CREAT, S_IRUSR);
         if (hash_fd > 0) {
-            if (this->noexcept_init_crypto_ctx(crypto_hash, hash_fd, hf.filename)) {
+            if (noexcept_init_crypto_write(crypto_hash, this->crypto_ctx, hash_fd, hf.filename)) {
                 const size_t len = strlen(filename);
                 if (crypto_hash.write(filename, len) != long(len)
                  || crypto_hash.write(" ", 1) != 1
@@ -250,7 +254,7 @@ public:
                     LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", hf.filename, -HASH_LEN);
                 }
                 else {
-                    crypto_hash.close(hash, this->crypto_ctx->hmac_key);
+                    crypto_hash.close(hash, this->crypto_ctx.hmac_key);
                 }
             }
 
@@ -270,8 +274,9 @@ public:
         if (!this->filename_creator.is_open()) {
             const char * filename = this->filename_creator.seqgen().get(this->seqno);
             this->filename_creator.open_if_not_open(ERR_TRANSPORT_WRITE_FAILED, this->seqno);
-            this->init_crypto_ctx(this->crypto_wrm, this->filename_creator.get_fd(),
-                                  filename, ERR_TRANSPORT_WRITE_FAILED);
+            new (&this->crypto_wrm) crypto_file;
+            init_crypto_write(this->crypto_wrm, this->crypto_ctx, this->filename_creator.get_fd(),
+                              filename, ERR_TRANSPORT_WRITE_FAILED);
         }
         int res = this->crypto_wrm.write(buffer, len);
         if (res < 0) {
@@ -314,7 +319,7 @@ private:
     void write_wrm(bool send_exception)
     {
         unsigned char hash[HASH_LEN];
-        this->crypto_wrm.close(hash, this->crypto_ctx->hmac_key);
+        this->crypto_wrm.close(hash, this->crypto_ctx.hmac_key);
 
         this->filename_creator.rename_tmp(this->seqno);
 
@@ -341,40 +346,10 @@ private:
         }
         if (res < 0) {
             int err = errno;
-            LOG(LOG_INFO, "Write to transport failed (M): code=%d", err);
+            LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
             if (send_exception) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
             }
-        }
-    }
-
-    bool noexcept_init_crypto_ctx(crypto_file & crypto, int fd, const char * filename) /*noexcept*/
-    {
-        unsigned char derivator[DERIVATOR_LENGTH];
-        get_derivator(filename, derivator, DERIVATOR_LENGTH);
-        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-        if (-1 == compute_hmac(trace_key, this->crypto_ctx->crypto_key, derivator)) {
-            return false;
-        }
-
-        unsigned char iv[32];
-        if (urandom_read(iv, 32) == -1) {
-            LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
-            return false;
-        }
-
-        new (&crypto) crypto_file;
-        if (-1 == crypto.open_write_init(fd, trace_key, this->crypto_ctx, iv)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    void init_crypto_ctx(crypto_file & crypto, int fd, const char * filename, int errid)
-    {
-        if ( ! this->noexcept_init_crypto_ctx(crypto, fd, filename) ) {
-            throw Error(errid, errno);
         }
     }
 };

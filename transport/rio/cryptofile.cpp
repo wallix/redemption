@@ -22,6 +22,7 @@
 
 #include <libgen.h>
 #include <string.h>
+#include <new>
 
 #include "cryptofile.hpp"
 
@@ -104,40 +105,34 @@ void get_derivator(const char *const_file, unsigned char * derivator, int deriva
 
 void * crypto_open_read(int systemfd, unsigned char * trace_key,  struct CryptoContext * cctx)
 {
-    try
-    {
-        struct crypto_file * cf_struct = new struct crypto_file();
+    crypto_file * cf_struct = new (std::nothrow) crypto_file();
 
-        if (-1 == cf_struct->open_read_init(systemfd, trace_key, cctx)) {
-            delete cf_struct;
-            return NULL;
-        }
-
-        return cf_struct;
-    }
-    catch (...)
-    {
+    if (!cf_struct) {
         return NULL;
     }
+
+    if (-1 == cf_struct->open_read_init(systemfd, trace_key, cctx)) {
+        delete cf_struct;
+        return NULL;
+    }
+
+    return cf_struct;
 }
 
 void * crypto_open_write(int systemfd, unsigned char * trace_key, struct CryptoContext * cctx, const unsigned char * iv)
 {
-    try
-    {
-        struct crypto_file * cf_struct = new struct crypto_file();
+    crypto_file * cf_struct = new (std::nothrow) crypto_file();
 
-        if (-1 == cf_struct->open_write_init(systemfd, trace_key, cctx, iv)) {
-            delete cf_struct;
-            return NULL;
-        }
-
-        return cf_struct;
-    }
-    catch (...)
-    {
+    if (!cf_struct) {
         return NULL;
     }
+
+    if (-1 == cf_struct->open_write_init(systemfd, trace_key, cctx, iv)) {
+        delete cf_struct;
+        return NULL;
+    }
+
+    return cf_struct;
 }
 
 /* Flush procedure (compression, encryption, effective file writing)

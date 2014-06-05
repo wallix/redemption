@@ -6,8 +6,6 @@
 #define LOGPRINT
 #include "log.hpp"
 
-#include "rio/rio.h"
-#include "rio/rio_impl.h"
 #include "inbymetasequencetransport.hpp"
 #include <outmetatransport.hpp>
 
@@ -38,7 +36,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
         tv.tv_sec = 1352304810;
         const int groupid = 0;
         CryptoOutmetaTransport crypto_trans(&cctx, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
-                                            0, 0, SQF_PATH_FILE_COUNT_EXTENSION);
+                                            0, 0, FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);

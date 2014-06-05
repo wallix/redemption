@@ -27,8 +27,6 @@
 #define LOGNULL
 #include "log.hpp"
 
-#include "rio/rio.h"
-#include "rio/rio_impl.h"
 #include <outmetatransport.hpp>
 
 BOOST_AUTO_TEST_CASE(TestCryptoOutMetaTransport)
@@ -59,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoOutMetaTransport)
         tv.tv_sec = 1352304810;
         const int groupid = 0;
         CryptoOutmetaTransport crypro_trans(&crypto_ctx, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
-                                            0, 0, SQF_PATH_FILE_COUNT_EXTENSION);
+                                            0, 0, FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
 
         crypro_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
