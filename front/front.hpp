@@ -2020,6 +2020,7 @@ public:
             }
 
             this->keymap.init_layout(this->client_info.keylayout);
+            LOG(LOG_INFO, "Front Keyboard Layout = 0x%x", this->client_info.keylayout);
             this->ini->client.keyboard_layout.set(this->client_info.keylayout);
             if (this->client_info.is_mce) {
                 if (this->verbose & 2){

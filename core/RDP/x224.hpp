@@ -503,6 +503,27 @@ namespace X224
     // |                               | (section 5.4.5.2)                            |
     // +-------------------------------+----------------------------------------------+
 
+    // 2.2.1.1.2 RDP Correlation Info (RDP_NEG_CORRELATION_INFO)
+    // =========================================================
+    // The RDP Correlation Info structure is used by a client to propagate connection
+    // correlation information to the server. This information allows diagnostic tools
+    // on the server to track and monitor a specific connection as it is handled by
+    // Terminal Services components.
+
+    // type (1 byte): An 8-bit, unsigned integer that indicates the packet type.
+    // This field MUST be set to 0x06 (TYPE_RDP_CORRELATION_INFO).
+
+    // flags (1 byte): An 8-bit, unsigned integer that contains protocol flags.
+    // There are currently no defined flags, so this field MUST be set to 0x00.
+
+    // length (2 bytes): A 16-bit, unsigned integer that specifies the packet size.
+    // This field MUST be set to 0x0024 (36 bytes).
+
+    // correlationId (16 bytes): An array of sixteen 8-bit, unsigned integers that
+    // specifies a unique identifier to associate with the connection.
+
+    // reserved (16 bytes): An array of sixteen 8-bit, unsigned i
+
 
     // 3.3.5.3.1 Processing X.224 Connection Request PDU
     // =================================================
@@ -570,12 +591,21 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_requestedProtocols;
 
+        uint8_t rdp_cinfo_type;
+        uint8_t rdp_cinfo_flags;
+        uint16_t rdp_cinfo_length;
+        uint8_t rdp_cinfo_correlationid[16];
+
         CR_TPDU_Recv(Transport & t, Stream & stream, bool bogus_neg_req, uint32_t verbose = 0)
         : Recv(t, stream)
         , rdp_neg_type(0)
         , rdp_neg_flags(0)
         , rdp_neg_length(0)
         , rdp_neg_requestedProtocols(0)
+        , rdp_cinfo_type(0)
+        , rdp_cinfo_flags(0)
+        , rdp_cinfo_length(0)
+        , rdp_cinfo_correlationid()
         {
             const unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
             if (!stream.in_check_rem(expected)){
@@ -617,26 +647,30 @@ namespace X224
                     memcpy(this->cookie, stream.get_data() + 11, this->cookie_len);
                     this->cookie[this->cookie_len] = 0;
                     if (verbose){
-                        LOG(LOG_INFO, "cookie: %s", this->cookie);
+                        LOG(LOG_INFO, "cookie: %s [%.2x][%.2x]",
+                            this->cookie,this->cookie[this->cookie_len-2],
+                            this->cookie[this->cookie_len-1]);
                     }
                     break;
                 }
             }
             stream.p += this->cookie_len;
 
+            // 2.2.1.1.2 RDP Correlation Info (RDP_NEG_CORRELATION_INFO)
             if (end_of_header - stream.p >= 8){
                 if (verbose){
                     LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
                 }
-                if (this->rdp_neg_type == X224::RDP_NEG_NONE && bogus_neg_req){
+                this->rdp_neg_type = stream.in_uint8();
+                this->rdp_neg_flags = stream.in_uint8();
+                this->rdp_neg_length = stream.in_uint16_le();
+                this->rdp_neg_requestedProtocols = stream.in_uint32_le();
+
+                if (bogus_neg_req){
                     // for broken clients like jrdp
                     stream.p = end_of_header;
                 }
                 else {
-                    this->rdp_neg_type = stream.in_uint8();
-                    this->rdp_neg_flags = stream.in_uint8();
-                    this->rdp_neg_length = stream.in_uint16_le();
-                    this->rdp_neg_requestedProtocols = stream.in_uint32_le();
 
                     if (this->rdp_neg_type != X224::RDP_NEG_REQ){
                         LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
@@ -664,6 +698,15 @@ namespace X224
                         LOG(LOG_INFO, "CR Recv: Unknown protocol flags %x", this->rdp_neg_requestedProtocols);
                     }
                 }
+            }
+            // 2.2.1.1.2 RDP Correlation Info (RDP_NEG_CORRELATION_INFO)
+            if (this->rdp_neg_flags & CORRELATION_INFO_PRESENT) {
+                this->rdp_cinfo_type = stream.in_uint8();
+                this->rdp_cinfo_flags = stream.in_uint8();
+                this->rdp_cinfo_length = stream.in_uint16_le();
+                stream.in_copy_bytes(this->rdp_cinfo_correlationid, 16);
+                stream.in_skip_bytes(16);
+                hexdump_c(this->rdp_cinfo_correlationid, 16);
             }
             if (end_of_header != stream.p){
                 LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %u", end_of_header - stream.p);
