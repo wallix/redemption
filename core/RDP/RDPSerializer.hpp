@@ -115,7 +115,10 @@ enum {
 struct RDPSerializer : public RDPGraphicDevice
 {
     // Packet more than 16384 bytes can cause MSTSC to crash.
-    enum { MAX_ORDERS_SIZE = 16384 };
+    enum { MAX_ORDERS_SIZE = 16384,
+           MAX_BITMAP_SIZE_8K = 8192,
+           MAX_BITMAP_SIZE_64K = 65536
+    };
 
     using RDPGraphicDevice::draw;
 
@@ -507,7 +510,8 @@ public:
     // check if the next bitmap will fit in available packet size
     // if not send previous bitmaps we got and init a new packet
     void reserve_bitmap(size_t asked_size) {
-        size_t max_packet_size = std::min(this->stream_bitmaps.get_capacity(), static_cast<size_t>(8192));
+        size_t max_packet_size = std::min(this->stream_bitmaps.get_capacity(), static_cast<size_t>(MAX_BITMAP_SIZE_8K + 300));
+        TODO("QuickFix, should set a max packet size according to RDP compression version of client, proxy and server");
         size_t used_size       = this->stream_bitmaps.get_offset();
         if (this->ini.debug.primary_orders > 3) {
             LOG( LOG_INFO
