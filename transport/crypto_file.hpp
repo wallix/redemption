@@ -33,7 +33,7 @@
 #include <unistd.h>
 
 extern "C" {
-#include "rio/cryptofile.h"
+#include "cryptofile.h"
 }
 
 /*****************************************************************************************************
@@ -605,6 +605,11 @@ public:
         this->fd = -1;
 
         return result;
+    }
+
+    void close_fd()
+    {
+        ::close(this->fd);
     }
 
 private:

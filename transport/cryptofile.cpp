@@ -24,7 +24,7 @@
 #include <string.h>
 #include <new>
 
-#include "cryptofile.hpp"
+#include "crypto_file.hpp"
 
 extern "C" {
 
@@ -139,7 +139,7 @@ void * crypto_open_write(int systemfd, unsigned char * trace_key, struct CryptoC
  * Return 0 on success, -1 on error
  */
 int crypto_flush(void * cf) {
-    struct crypto_file * cf_struct = (struct crypto_file *)cf;
+    crypto_file * cf_struct = reinterpret_cast<crypto_file*>(cf);
 
     return cf_struct->flush();
 }
@@ -148,7 +148,7 @@ int crypto_flush(void * cf) {
  * Return the actual size read into buf, -1 on error
  */
 int crypto_read(void * cf, char * buf, unsigned int buf_size) {
-    struct crypto_file * cf_struct = (struct crypto_file *)cf;
+    crypto_file * cf_struct = reinterpret_cast<crypto_file*>(cf);
 
     return cf_struct->read(buf, buf_size);
 }
@@ -158,16 +158,17 @@ int crypto_read(void * cf, char * buf, unsigned int buf_size) {
  */
 int crypto_write(void *cf, const char * buf, unsigned int size)
 {
-    struct crypto_file * cf_struct = (struct crypto_file *)cf;
+    crypto_file * cf_struct = reinterpret_cast<crypto_file*>(cf);
 
     return cf_struct->write(buf, size);
 }
 
 int crypto_close(void *cf, unsigned char hash[MD_HASH_LENGTH << 1], unsigned char * hmac_key)
 {
-    struct crypto_file * cf_struct = (struct crypto_file *)cf;
+    crypto_file * cf_struct = reinterpret_cast<crypto_file*>(cf);
 
     int nResult = cf_struct->close(hash, hmac_key);
+    cf_struct->close_fd();
 
     delete cf_struct;
 
