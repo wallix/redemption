@@ -25,7 +25,7 @@
 #define _REDEMPTION_CORE_MAINLOOP_HPP_
 
 #include "config.hpp"
-#include "rio/cryptokeyholder.hpp"
+#include "crypto_key_holder.hpp"
 
 int g_is_term(void);
 void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, crypto_key_holder & cryptoKeyHldr);

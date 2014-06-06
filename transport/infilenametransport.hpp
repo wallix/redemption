@@ -35,24 +35,26 @@ class CryptoInFilenameTransport
 {
     CryptoContext & crypto_ctx;
     crypto_file cf;
+    int fd;
 
 public:
     CryptoInFilenameTransport(CryptoContext * crypto_ctx, const char * filename, unsigned verbose = 0)
     : crypto_ctx(*crypto_ctx)
+    , fd(open(filename, O_RDONLY, 0600))
     {
-        int system_fd = open(filename, O_RDONLY, 0600);
-        if (system_fd == -1){
+        if (this->fd == -1){
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
 
-        init_crypto_read(this->cf, this->crypto_ctx, system_fd, filename, ERR_TRANSPORT_OPEN_FAILED);
+        init_crypto_read(this->cf, this->crypto_ctx, this->fd, filename, ERR_TRANSPORT_OPEN_FAILED);
     }
 
     virtual ~CryptoInFilenameTransport()
     {
         unsigned char hash[HASH_LEN];
         this->cf.close(hash, this->crypto_ctx.hmac_key);
+        ::close(this->fd);
     }
 
     using Transport::recv;

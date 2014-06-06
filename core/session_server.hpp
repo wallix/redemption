@@ -25,7 +25,7 @@
 #include "ssl_calls.hpp"
 #include "server.hpp"
 #include "session.hpp"
-#include "rio/cryptokeyholder.hpp"
+#include "crypto_key_holder.hpp"
 
 class SessionServer : public Server
 {

@@ -320,7 +320,7 @@ public:
         //  ...
 
         // SSL_OP_NETSCAPE_CA_DN_BUG
-        // If we accept a netscape connection, demand a client cert, have a non-self-signed CA
+        // If we accept a netscape connection, demand a client cert, have a non-this-signed CA
         // which does not have its CA in netscape, and the browser has a cert, it will crash/hang.
         // Works for 3.x and 4.xbeta
 
@@ -599,7 +599,7 @@ public:
         //  ...
 
         // SSL_OP_NETSCAPE_CA_DN_BUG
-        // If we accept a netscape connection, demand a client cert, have a non-self-signed CA
+        // If we accept a netscape connection, demand a client cert, have a non-this-signed CA
         // which does not have its CA in netscape, and the browser has a cert, it will crash/hang.
         // Works for 3.x and 4.xbeta
 
@@ -1121,7 +1121,7 @@ public:
         }
         char * start = *pbuffer;
 
-        ssize_t res = this->privrecv(*pbuffer, len);
+        ssize_t res = this->tls ? this->privrecv_tls(*pbuffer, len) : this->privrecv(*pbuffer, len);
         if (res < 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
@@ -1153,7 +1153,7 @@ public:
             LOG(LOG_INFO, "Sent dumped on %s (%u) %u bytes", this->name, this->sck, len);
         }
 
-        ssize_t res = this->privsend(buffer, len);
+        ssize_t res = this->tls ? this->privsend_tls(buffer, len) : this->privsend(buffer, len);
         if (res < 0) {
             LOG(LOG_WARNING,
                 "SocketTransport::Send failed on %s (%d) errno=%u [%s]",
@@ -1237,6 +1237,107 @@ private:
                 return -1;
             default:
                 total = total + sent;
+            }
+        }
+        return len;
+    }
+
+    ssize_t privrecv_tls(char * data, size_t len)
+    {
+        char * pbuffer = (char*)data;
+        size_t remaining_len = len;
+        while (remaining_len > 0) {
+            ssize_t rcvd = ::SSL_read(this->io, pbuffer, remaining_len);
+            unsigned long error = SSL_get_error(this->io, rcvd);
+            switch (error) {
+                case SSL_ERROR_NONE:
+                    pbuffer += rcvd;
+                    remaining_len -= rcvd;
+                    break;
+
+                case SSL_ERROR_WANT_READ:
+                    LOG(LOG_INFO, "recv_tls WANT READ");
+                    continue;
+
+                case SSL_ERROR_WANT_WRITE:
+                    LOG(LOG_INFO, "recv_tls WANT WRITE");
+                    continue;
+
+                case SSL_ERROR_WANT_CONNECT:
+                    LOG(LOG_INFO, "recv_tls WANT CONNECT");
+                    continue;
+
+                case SSL_ERROR_WANT_ACCEPT:
+                    LOG(LOG_INFO, "recv_tls WANT ACCEPT");
+                    continue;
+
+                case SSL_ERROR_WANT_X509_LOOKUP:
+                    LOG(LOG_INFO, "recv_tls WANT X509 LOOKUP");
+                    continue;
+
+                case SSL_ERROR_ZERO_RETURN:
+                    if (remaining_len - len){
+                        LOG(LOG_WARNING, "TLS receive for %u bytes, ZERO RETURN got %u",
+                            (unsigned)len, (unsigned)(remaining_len - len));
+                    }
+                    return remaining_len - len;
+                default:
+                {
+                    uint32_t errcount = 0;
+                    errcount++;
+                    LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                    while ((error = ERR_get_error()) != 0){
+                        errcount++;
+                        LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                    }
+                    TODO("if recv fail with partial read we should return the amount of data received, "
+                         "close socket and store some delayed error value that will be sent back next call")
+                    TODO("replace this with actual error management, EOF is not even an option for sockets");
+                    TODO("Manage actual errors, check possible values");
+                    return -1;
+                }
+                break;
+            }
+        }
+        return len;
+    }
+
+    ssize_t privsend_tls(const char * data, size_t len)
+    {
+        const char * const buffer = (const char * const)data;
+        size_t remaining_len = len;
+        size_t offset = 0;
+        while (remaining_len > 0){
+            int ret = SSL_write(this->io, buffer + offset, remaining_len);
+
+            unsigned long error = SSL_get_error(this->io, ret);
+            switch (error)
+            {
+                case SSL_ERROR_NONE:
+                    remaining_len -= ret;
+                    offset += ret;
+                    break;
+
+                case SSL_ERROR_WANT_READ:
+                    LOG(LOG_INFO, "send_tls WANT READ");
+                    continue;
+
+                case SSL_ERROR_WANT_WRITE:
+                    LOG(LOG_INFO, "send_tls WANT WRITE");
+                    continue;
+
+                default:
+                {
+                    LOG(LOG_INFO, "Failure in SSL library");
+                    uint32_t errcount = 0;
+                    errcount++;
+                    LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                    while ((error = ERR_get_error()) != 0){
+                        errcount++;
+                        LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                    }
+                    return -1;
+                }
             }
         }
         return len;

@@ -602,7 +602,6 @@ public:
             }
         }
         // TODO: the actual closing of the file should be done by caller (as open is now done by caller)
-        ::close(this->fd);
         this->fd = -1;
 
         return result;

@@ -1,5 +1,7 @@
  /* A simple TLS server */
 
+#define LOGPRINT
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -15,41 +17,30 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include "rio/rio_impl.h"
 
-static int password_cb0(char *buf, int num, int rwflag, void *userdata)
-{
-    printf("password cb num=%u\n", num);
-    const char * pass = (char*)userdata;
-    if(num < (int)strlen(pass)+1){
-      return(0);
-    }
-
-    strcpy(buf, pass);
-    return strlen(pass);
-}
+#include "sockettransport.hpp"
 
 static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
 {
-     TODO("test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL");
+    TODO("test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL");
+
+    SocketTransport sockettransport("TestTLSServer", sock, "", 0, 0xFFFFFFF);
 
     char buf[1024];
-    RIO rio;
-    rio_init_socket(&rio, sock); /* I do not bother to check return code, as I know it can't fail in current implementation */
-    ssize_t r1 = rio_recv(&rio, buf, 14);
+    char * pbuf = buf;
+    sockettransport.recv(&pbuf, 14);
 
-    if(r1 != 14 || (0 != strcmp(buf, "REDEMPTION\r\n\r\n"))){
+    if(0 != strcmp(buf, "REDEMPTION\r\n\r\n")){
         fprintf(stderr,"failed to read expected hello\n");
         exit(0);
     }
 
     printf("received plain text HELLO, going TLS\n");
 
-    rio_clear(&rio);
     BIO * sbio = BIO_new_socket(sock, BIO_NOCLOSE);
     SSL * ssl = SSL_new(ctx);
     SSL_set_bio(ssl, sbio, sbio);
-    
+
     int r = SSL_accept(ssl);
     if(r <= 0)
     {
@@ -57,29 +48,24 @@ static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
         ERR_print_errors(bio_err);
         exit(0);
     }
-    rio_init_socket_tls(&rio, ssl);
 
-    r1 = rio_send(&rio, "Server: Redemption Server\r\n\r\n", 29);
-    if(r1 < 0){
-        fprintf(stderr, "Write error 1\n");
-        exit(0);
-    }
-    r1 = rio_send(&rio, "Server test page\r\n", 18);
-    if(r1 < 0){
-        fprintf(stderr, "Write error 2\n");
-        exit(0);
-    }
-    
+    sockettransport.allocated_ctx = ctx;
+    sockettransport.allocated_ssl = ssl;
+    sockettransport.tls = true;
+    sockettransport.io = ssl;
+
+    sockettransport.send("Server: Redemption Server\r\n\r\n", 29);
+    sockettransport.send("Server test page\r\n", 18);
+
 //    r = SSL_shutdown(ssl);
-    if(!r){
-      /* If we called SSL_shutdown() first then we always get return value of '0'. 
+//     if(!r){
+      /* If we called SSL_shutdown() first then we always get return value of '0'.
          In this case, try again, but first send a TCP FIN to trigger the other side's close_notify*/
-      shutdown(sock, 1);
+//       shutdown(sock, 1);
 //      r=SSL_shutdown(ssl);
-    }
-      
+//     }
+
 //    SSL_free(ssl);
-    close(sock);
 
     return(0);
 }
@@ -88,12 +74,12 @@ int main(int argc, char **argv)
 {
     SSL_library_init();
     SSL_load_error_strings();
-     
+
     BIO * bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
     /* Set up a SIGPIPE handler */
     signal(SIGPIPE, SIG_IGN);
-    
+
     /* Create our context*/
     SSL_CTX * ctx = SSL_CTX_new(SSLv23_method());
 
@@ -113,7 +99,7 @@ int main(int argc, char **argv)
         ERR_print_errors(bio_err);
         exit(0);
     }
-   
+
     DH *ret=0;
     BIO *bio;
 
@@ -131,7 +117,8 @@ int main(int argc, char **argv)
         ERR_print_errors(bio_err);
         exit(0);
     }
- 
+
+
     union
     {
       struct sockaddr s;
@@ -140,7 +127,7 @@ int main(int argc, char **argv)
       struct sockaddr_in6 s6;
     } ucs;
     memset(&ucs, 0, sizeof(ucs));
- 
+
     int val=1;
 
     int sock = socket(AF_INET, SOCK_STREAM,0);
@@ -160,7 +147,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Failed to bind\n");
         exit(0);
     }
-    listen(sock,5);  
+    listen(sock,5);
 
     while(1){
       int s = accept(sock,0,0);
