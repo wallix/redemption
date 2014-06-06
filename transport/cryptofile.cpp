@@ -22,6 +22,7 @@
 
 #include <libgen.h>
 #include <string.h>
+#include <cstdio>
 #include <new>
 
 #include "crypto_file.hpp"
@@ -83,7 +84,7 @@ int compute_hmac(unsigned char * hmac, const unsigned char * key, const unsigned
     memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
     memcpy(tmp_derivation + DERIVATOR_LENGTH, key, CRYPTO_KEY_LENGTH);
     if (SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated) == NULL){
-        printf("[CRYPTO_ERROR][%d]: Could not derivate hash crypto key, SHA256!\n", getpid());
+        std::printf("[CRYPTO_ERROR][%d]: Could not derivate hash crypto key, SHA256!\n", getpid());
         return -1;
     }
     memcpy(hmac, derivated, HMAC_KEY_LENGTH);
@@ -97,13 +98,13 @@ void get_derivator(const char *const_file, unsigned char * derivator, int deriva
     char * file_basename = basename(file);
     char tmp_derivated[SHA256_DIGEST_LENGTH];
     if (SHA256((unsigned char *)file_basename, strlen(file_basename), (unsigned char *)tmp_derivated) == (void *) 0){
-        printf("[CRYPTO_ERROR][%d]: Could not derivate trace crypto key, SHA256 from=%s!\n", getpid(), file_basename);
+        std::printf("[CRYPTO_ERROR][%d]: Could not derivate trace crypto key, SHA256 from=%s!\n", getpid(), file_basename);
         return;
     }
     memcpy(derivator, tmp_derivated, MIN(DERIVATOR_LENGTH, SHA256_DIGEST_LENGTH));
 }
 
-void * crypto_open_read(int systemfd, unsigned char * trace_key,  struct CryptoContext * cctx)
+void * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoContext * cctx) /*noexcept*/
 {
     crypto_file * cf_struct = new (std::nothrow) crypto_file();
 
@@ -119,7 +120,8 @@ void * crypto_open_read(int systemfd, unsigned char * trace_key,  struct CryptoC
     return cf_struct;
 }
 
-void * crypto_open_write(int systemfd, unsigned char * trace_key, struct CryptoContext * cctx, const unsigned char * iv)
+void * crypto_open_write(int systemfd, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
+/*noexcept*/
 {
     crypto_file * cf_struct = new (std::nothrow) crypto_file();
 

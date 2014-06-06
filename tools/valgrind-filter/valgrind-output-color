@@ -1,0 +1,5 @@
+#!/bin/sh
+GREP_COLOR='38;5;9' grep -A10000 ':.\+ ' --color=always "$@" \
+|GREP_COLOR='1;33' grep -A10000 '([a-zA-Z_-]\+\.[ch]pp' --color=always \
+|GREP_COLOR='1;34' grep -A10000 ':[0-9]\+' --color=always \
+|GREP_COLOR='38;5;10' grep -A10000 '==[0-9]\+== [A-Z].*' --color=always

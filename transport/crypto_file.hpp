@@ -128,15 +128,15 @@ private:
 
 public:
     crypto_file()
-        : fd(-1)
-        , oflag(0)
-        , pos(0)
-        , raw_size(0)
-        , file_size(0)
-        , state(0)
-        , version(0)
-        , MAX_COMPRESSED_SIZE(0)
-        , MAX_CIPHERED_SIZE(0)
+    : fd(-1)
+    , oflag(0)
+    , pos(0)
+    , raw_size(0)
+    , file_size(0)
+    , state(0)
+    , version(0)
+    , MAX_COMPRESSED_SIZE(0)
+    , MAX_CIPHERED_SIZE(0)
     {
         ::memset(this->buf, 0, sizeof(this->buf));
         ::memset(&this->ectx, 0, sizeof(this->ectx));
