@@ -225,6 +225,13 @@ public:
         }
     }
 
+    virtual void set_row(size_t rownum, const uint8_t * data)
+    {
+        if (this->capture_drawable){
+            this->drawable->set_row(rownum, data);
+        }
+    }
+
     void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
         this->capture_event.reset();
 
