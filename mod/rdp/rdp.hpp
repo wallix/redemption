@@ -4380,7 +4380,7 @@ public:
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
         }
-        int system_pointer_type = stream.in_uint16_le();
+        int system_pointer_type = stream.in_uint32_le();
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
