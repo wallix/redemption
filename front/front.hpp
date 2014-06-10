@@ -1377,11 +1377,13 @@ public:
         }
     }   // void set_pointer(int cache_idx)
 
+/*
     virtual void set_pointer_display() {
         if (this->capture) {
             this->capture->set_pointer_display();
         }
     }
+*/
 
     void incoming(Callback & cb) throw(Error)
     {

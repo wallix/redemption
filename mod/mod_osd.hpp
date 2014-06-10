@@ -401,6 +401,7 @@ public:
         this->mod.send_to_front_channel(mod_channel_name, data, length, chunk_size, flags);
     }
 
+/*
     virtual void set_row(size_t rownum, const uint8_t * data)
     {
         this->mod.set_row(rownum, data);
@@ -416,6 +417,7 @@ public:
     {
         this->mod.snapshot(now, mouse_x, mouse_y, ignore_frame_in_timeval);
     }
+*/
 
     virtual void server_set_pointer(const Pointer & cursor)
     {
@@ -433,10 +435,12 @@ public:
         this->mod.set_pointer(cache_idx);
     }
 
+/*
     virtual void set_pointer_display()
     {
         this->mod.set_pointer_display();
     }
+*/
 
     virtual void flush()
     {

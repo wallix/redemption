@@ -33,7 +33,7 @@
 
 #include "auth_api.hpp"
 
-class Capture : public RDPGraphicDevice {
+class Capture : public RDPGraphicDevice, public RDPCaptureDevice {
 public:
     const bool capture_wrm;
     const bool capture_drawable;
@@ -222,6 +222,13 @@ public:
         }
         if (this->capture_wrm) {
             this->pnc->update_config(ini);
+        }
+    }
+
+    virtual void set_row(size_t rownum, const uint8_t * data)
+    {
+        if (this->capture_drawable){
+            this->drawable->set_row(rownum, data);
         }
     }
 

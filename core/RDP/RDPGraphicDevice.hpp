@@ -57,10 +57,6 @@
 #include "ellipse.hpp"
 
 struct RDPGraphicDevice {
-    TODO("RZ : Move this method into Drawable class.");
-    virtual void set_row(size_t rownum, const uint8_t * data) {}
-
-
     virtual void draw(const RDPOpaqueRect       & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPScrBlt           & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPDestBlt          & cmd, const Rect & clip) = 0;
@@ -90,18 +86,10 @@ struct RDPGraphicDevice {
         size_t size, const Bitmap & bmp) {}
 
 
-    TODO("RZ : Move these methods into an other interface.");
-    virtual void input(const timeval & now, Stream & input_data_32) {}
-
-    virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
-        bool ignore_frame_in_timeval) {}
-
     virtual void server_set_pointer(const Pointer & cursor) {}
     virtual void send_pointer(int cache_idx, const uint8_t * data,
         const uint8_t * mask, int hotspot_x, int hotspot_y) {}
     virtual void set_pointer(int cache_idx) {}
-
-    virtual void set_pointer_display() {}
 
     virtual void flush() = 0;
 
@@ -114,6 +102,30 @@ public:
     // through pointer of base class. As this class is interface only
     // it does not looks really usefull.
     virtual ~RDPGraphicDevice() {}
+};
+
+struct RDPCaptureDevice {
+    TODO("RZ : Move this method into Drawable class.");
+    virtual void set_row(size_t rownum, const uint8_t * data) {}
+
+
+    TODO("RZ : Move these methods into an other interface.");
+    virtual void input(const timeval & now, Stream & input_data_32) {}
+
+    virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
+        bool ignore_frame_in_timeval) {}
+
+    virtual void set_pointer_display() {}
+
+protected:
+    // this to avoid calling constructor of base abstract class
+    RDPCaptureDevice() {}
+
+public:
+    // we choosed to make destructor virtual to allow destructing object
+    // through pointer of base class. As this class is interface only
+    // it does not looks really usefull.
+    virtual ~RDPCaptureDevice() {}
 };
 
 #endif

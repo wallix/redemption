@@ -85,7 +85,12 @@ struct FileToGraphic
     timeval record_now;
 
     uint16_t nbconsumers;
-    RDPGraphicDevice * consumers[10];
+
+    struct Consumer {
+        RDPGraphicDevice * graphic_device;
+        RDPCaptureDevice * capture_device;
+    } consumers[10];
+//    RDPGraphicDevice * consumers[10];
 
     bool meta_ok;
     bool timestamp_ok;
@@ -219,9 +224,15 @@ struct FileToGraphic
         delete this->bmp_cache;
     }
 
+/*
     void add_consumer(RDPGraphicDevice * consumer)
     {
         this->consumers[this->nbconsumers++] = consumer;
+    }
+*/
+    void add_consumer(RDPGraphicDevice * graphic_device, RDPCaptureDevice * capture_device) {
+        this->consumers[this->nbconsumers  ].graphic_device = graphic_device;
+        this->consumers[this->nbconsumers++].capture_device = capture_device;
     }
 
     bool next_order()
@@ -314,7 +325,7 @@ struct FileToGraphic
                             order.log(LOG_INFO);
                         }
                         for (size_t i = 0; i < this->nbconsumers ; i++){
-                            this->consumers[i]->draw(order);
+                            this->consumers[i].graphic_device->draw(order);
                         }
                     }
                     break;
@@ -355,7 +366,7 @@ struct FileToGraphic
                     }
                     this->gly_cache.set_glyph(cmd);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(cmd);
+                        this->consumers[i].graphic_device->draw(cmd);
                     }
                 }
                 break;
@@ -382,7 +393,7 @@ struct FileToGraphic
                 case RDP::GLYPHINDEX:
                     this->glyphindex.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(this->glyphindex, clip, &this->gly_cache);
+                        this->consumers[i].graphic_device->draw(this->glyphindex, clip, &this->gly_cache);
                     }
                     break;
                 case RDP::DESTBLT:
@@ -391,7 +402,7 @@ struct FileToGraphic
                         this->destblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(this->destblt, clip);
+                        this->consumers[i].graphic_device->draw(this->destblt, clip);
                     }
                     break;
                 case RDP::MULTIDSTBLT:
@@ -400,7 +411,7 @@ struct FileToGraphic
                         this->multidstblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++) {
-                        this->consumers[i]->draw(this->multidstblt, clip);
+                        this->consumers[i].graphic_device->draw(this->multidstblt, clip);
                     }
                     break;
                 case RDP::MULTIOPAQUERECT:
@@ -409,7 +420,7 @@ struct FileToGraphic
                         this->multiopaquerect.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++) {
-                        this->consumers[i]->draw(this->multiopaquerect, clip);
+                        this->consumers[i].graphic_device->draw(this->multiopaquerect, clip);
                     }
                     break;
                 case RDP::MULTIPATBLT:
@@ -418,7 +429,7 @@ struct FileToGraphic
                         this->multipatblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++) {
-                        this->consumers[i]->draw(this->multipatblt, clip);
+                        this->consumers[i].graphic_device->draw(this->multipatblt, clip);
                     }
                     break;
                 case RDP::MULTISCRBLT:
@@ -427,7 +438,7 @@ struct FileToGraphic
                         this->multiscrblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++) {
-                        this->consumers[i]->draw(this->multiscrblt, clip);
+                        this->consumers[i].graphic_device->draw(this->multiscrblt, clip);
                     }
                     break;
                 case RDP::PATBLT:
@@ -436,7 +447,7 @@ struct FileToGraphic
                         this->patblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(this->patblt, clip);
+                        this->consumers[i].graphic_device->draw(this->patblt, clip);
                     }
                     break;
                 case RDP::SCREENBLT:
@@ -445,7 +456,7 @@ struct FileToGraphic
                         this->scrblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(this->scrblt, clip);
+                        this->consumers[i].graphic_device->draw(this->scrblt, clip);
                     }
                     break;
                 case RDP::LINE:
@@ -454,7 +465,7 @@ struct FileToGraphic
                         this->lineto.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++) {
-                        this->consumers[i]->draw(this->lineto, clip);
+                        this->consumers[i].graphic_device->draw(this->lineto, clip);
                     }
                     break;
                 case RDP::RECT:
@@ -463,7 +474,7 @@ struct FileToGraphic
                         this->opaquerect.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(this->opaquerect, clip);
+                        this->consumers[i].graphic_device->draw(this->opaquerect, clip);
                     }
                     break;
                 case RDP::MEMBLT:
@@ -479,7 +490,7 @@ struct FileToGraphic
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers ; i++){
-                                this->consumers[i]->draw(this->memblt, clip, *bmp);
+                                this->consumers[i].graphic_device->draw(this->memblt, clip, *bmp);
                             }
                         }
                     }
@@ -497,7 +508,7 @@ struct FileToGraphic
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers ; i++){
-                                this->consumers[i]->draw(this->mem3blt, clip, *bmp);
+                                this->consumers[i].graphic_device->draw(this->mem3blt, clip, *bmp);
                             }
                         }
                     }
@@ -508,7 +519,7 @@ struct FileToGraphic
                         this->polyline.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++) {
-                        this->consumers[i]->draw(this->polyline, clip);
+                        this->consumers[i].graphic_device->draw(this->polyline, clip);
                     }
                     break;
                 default:
@@ -564,7 +575,9 @@ struct FileToGraphic
                         StaticStream ss(this->input, this->input_len);
 
                         for (size_t i = 0; i < this->nbconsumers ; i++){
-                            this->consumers[i]->input(this->record_now, ss);
+                            if (this->consumers[i].capture_device) {
+                                this->consumers[i].capture_device->input(this->record_now, ss);
+                            }
                         }
 
                         if (this->verbose > 16) {
@@ -601,7 +614,7 @@ struct FileToGraphic
                 else {
                    if (this->real_time){
                         for (size_t i = 0; i < this->nbconsumers ; i++){
-                            this->consumers[i]->flush();
+                            this->consumers[i].graphic_device->flush();
                         }
 
                         struct   timeval now = tvtime();
@@ -947,7 +960,9 @@ struct FileToGraphic
                         }
 
                         for (size_t cu = 0 ; cu < this->nbconsumers ; cu++){
-                            this->consumers[cu]->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
+                            if (this->consumers[cu].capture_device) {
+                                this->consumers[cu].capture_device->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
+                            }
                         }
                     }
                     png_read_end(ppng, pinfo);
@@ -994,7 +1009,7 @@ struct FileToGraphic
                 }
 
                 for (size_t i = 0; i < this->nbconsumers; i++) {
-                    this->consumers[i]->draw( bitmap_data
+                    this->consumers[i].graphic_device->draw( bitmap_data
                                             , data
                                             , bitmap_data.bitmap_size()
                                             , bitmap);
@@ -1020,7 +1035,7 @@ struct FileToGraphic
                     this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i]->server_set_pointer(cursor);
+                        this->consumers[i].graphic_device->server_set_pointer(cursor);
                     }
                 }
                 else {
@@ -1032,7 +1047,7 @@ struct FileToGraphic
                     memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
 
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i]->server_set_pointer(cursor);
+                        this->consumers[i].graphic_device->server_set_pointer(cursor);
                     }
                 }
             }
@@ -1058,8 +1073,10 @@ struct FileToGraphic
                   )
                ) {
                 for (size_t i = 0; i < this->nbconsumers ; i++) {
-                    this->consumers[i]->snapshot( this->record_now, this->mouse_x, this->mouse_y
-                                                , this->ignore_frame_in_timeval);
+                    if (this->consumers[i].capture_device) {
+                        this->consumers[i].capture_device->snapshot( this->record_now, this->mouse_x, this->mouse_y
+                                                                   , this->ignore_frame_in_timeval);
+                    }
                 }
 
                 this->ignore_frame_in_timeval = false;

@@ -99,7 +99,7 @@ public:
             break;
         }
 
-        this->reader->add_consumer(&this->front);
+        this->reader->add_consumer((RDPGraphicDevice *)&this->front, NULL);
         this->front.send_global_palette();
     }
 
