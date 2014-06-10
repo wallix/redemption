@@ -33,7 +33,7 @@
 
 #include "auth_api.hpp"
 
-class Capture : public RDPGraphicDevice {
+class Capture : public RDPGraphicDevice, public RDPCaptureDevice {
 public:
     const bool capture_wrm;
     const bool capture_drawable;
