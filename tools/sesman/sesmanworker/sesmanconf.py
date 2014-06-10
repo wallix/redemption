@@ -141,6 +141,7 @@ class SesmanConfig(object):
             , u'Username_parse_error %s': u"Erreur de parsing du nom d'utilisateur %s"
             , u'Your password will expire in %s days. Please change it.': u'Votre mot de passe expirera dans %s jours. Vous devriez le changer.'
             , u'Your password will expire soon. Please change it.': u"L'expiration de votre mot de passe est imminente. Saisissez un nouveau mot de passe."
+            , u'passthrough_auth_failed_wab %s' : u"Echec de l'authentification passthrough pour l'utilisateur %s."
             }
         , u'en':
             { u'login'                  : u"Login"
@@ -215,6 +216,7 @@ class SesmanConfig(object):
             , u'Username_parse_error %s': u'Username_parse_error %s'
             , u'Your password will expire in %s days. Please change it.': u'Your password will expire in %s days. Please change it.'
             , u'Your password will expire soon. Please change it.': u'Your password will expire soon. Please change it.'
+            , u'passthrough_auth_failed_wab %s' : u'Passthrough authentication failed for user %s.'
             }
         }
 
