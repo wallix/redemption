@@ -4380,15 +4380,15 @@ public:
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
         }
-        int system_pointer_type = stream.in_uint16_le();
+        int system_pointer_type = stream.in_uint32_le();
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
                 struct Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 this->front.server_set_pointer(cursor);
-                this->front.set_pointer_display();
-                this->set_pointer_display();
+//                this->front.set_pointer_display();
+//                this->set_pointer_display();
             }
             break;
         default:
