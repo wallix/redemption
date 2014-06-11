@@ -38,7 +38,6 @@
 #include <stdint.h>
 
 #include "png.hpp"
-#include "rio/rio.h"
 
 BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
 {

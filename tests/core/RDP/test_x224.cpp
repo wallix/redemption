@@ -28,7 +28,6 @@
 
 #define LOGNULL
 #include "log.hpp"
-#include "rio/rio.h"
 #include "stream.hpp"
 #include "transport.hpp"
 #include "testtransport.hpp"

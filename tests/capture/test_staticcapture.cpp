@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
 {
     Rect screen_rect(0, 0, 800, 600);
     const int groupid = 0;
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
+    OutFilenameTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
 
     struct timeval now;
     now.tv_sec = 1350998222;
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     ini.video.png_limit = 3;
     ini.video.png_interval = 20;
     RDPDrawable drawable(800, 600);
-    StaticCapture consumer(now, trans, &(trans.seq), 800, 600, false, ini, drawable.drawable);
+    StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.drawable);
 
     consumer.set_pointer_display();
 
@@ -133,12 +133,9 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec++;
 
-    rio_clear(&trans.rio); // ensure file is closed to have accurate values for size
-
-    BOOST_CHECK_EQUAL(3075, sq_outfilename_filesize(&(trans.seq), 0));
-    BOOST_CHECK_EQUAL(3108, sq_outfilename_filesize(&(trans.seq), 1));
-
-    sq_outfilename_unlink(&(trans.seq), 0);
-    sq_outfilename_unlink(&(trans.seq), 1);
+    BOOST_CHECK_EQUAL(3075, ::filesize(trans.seqgen()->get(0)));
+    BOOST_CHECK_EQUAL(3108, ::filesize(trans.seqgen()->get(1)));
+    ::unlink(trans.seqgen()->get(0));
+    ::unlink(trans.seqgen()->get(1));
 }
 
