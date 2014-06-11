@@ -380,8 +380,7 @@ class Sesman():
                         wab_login,
                         self.shared.get(u'ip_client'),
                         self.shared.get(u'ip_target')):
-                    self.engine.challenge = None
-                    return None, TR(u"passthrough_auth_failed_wab %s") % wab_login
+                    return False, TR(u"passthrough_auth_failed_wab %s") % wab_login
             else:
                 # PASSWORD based Authentication
                 if ((self.shared.get(u'password') == MAGICASK
