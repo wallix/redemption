@@ -80,6 +80,8 @@ struct Drawable {
     Rect tracked_area;
     bool tracked_area_changed;
 
+    bool logical_frame_ended;
+
     Drawable(int width, int height)
     : width(width)
     , height(height)
@@ -87,6 +89,7 @@ struct Drawable {
     , pix_len(this->rowsize * height)
     , tracked_area(0, 0, 0, 0)
     , tracked_area_changed(false)
+    , logical_frame_ended(true)
     {
         static const Mouse_t default_mouse_cursor[] =
         {

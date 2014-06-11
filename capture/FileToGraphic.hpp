@@ -85,7 +85,12 @@ struct FileToGraphic
     timeval record_now;
 
     uint16_t nbconsumers;
-    RDPGraphicDevice * consumers[10];
+
+    struct Consumer {
+        RDPGraphicDevice * graphic_device;
+        RDPCaptureDevice * capture_device;
+    } consumers[10];
+//    RDPGraphicDevice * consumers[10];
 
     bool meta_ok;
     bool timestamp_ok;
@@ -97,7 +102,7 @@ struct FileToGraphic
 
     BGRPalette palette;
 
-    timeval begin_capture;
+    const timeval begin_capture;
     timeval end_capture;
     uint32_t max_order_count;
     uint32_t verbose;
@@ -219,9 +224,15 @@ struct FileToGraphic
         delete this->bmp_cache;
     }
 
+/*
     void add_consumer(RDPGraphicDevice * consumer)
     {
         this->consumers[this->nbconsumers++] = consumer;
+    }
+*/
+    void add_consumer(RDPGraphicDevice * graphic_device, RDPCaptureDevice * capture_device) {
+        this->consumers[this->nbconsumers  ].graphic_device = graphic_device;
+        this->consumers[this->nbconsumers++].capture_device = capture_device;
     }
 
     bool next_order()
@@ -301,12 +312,30 @@ struct FileToGraphic
                 throw Error(ERR_WRM);
             }
             uint8_t control = this->stream.in_uint8();
-            if (!control & RDP::STANDARD){
-                /* error, this should always be set */
-                LOG(LOG_ERR, "Non standard order detected : protocol error");
-                throw Error(ERR_WRM);
+            uint8_t class_ = (control & (RDP::STANDARD | RDP::SECONDARY));
+            if (class_ == RDP::SECONDARY) {
+                RDP::AltsecDrawingOrderHeader header(control);
+                switch (header.orderType) {
+                    case RDP::AltsecDrawingOrderHeader::FrameMarker:
+                    {
+                        RDP::FrameMarker order;
+
+                        order.receive(stream, header);
+                        if (this->verbose > 32){
+                            order.log(LOG_INFO);
+                        }
+                        for (size_t i = 0; i < this->nbconsumers ; i++){
+                            this->consumers[i].graphic_device->draw(order);
+                        }
+                    }
+                    break;
+                    default:
+                        LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
+                        /* error, unknown order */
+                    break;
+                }
             }
-            else if (control & RDP::SECONDARY) {
+            else if (class_ == (RDP::STANDARD | RDP::SECONDARY)) {
                 using namespace RDP;
                 RDPSecondaryOrderHeader header(this->stream);
                 uint8_t *next_order = this->stream.p + header.order_data_length();
@@ -337,7 +366,7 @@ struct FileToGraphic
                     }
                     this->gly_cache.set_glyph(cmd);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(cmd);
+                        this->consumers[i].graphic_device->draw(cmd);
                     }
                 }
                 break;
@@ -357,14 +386,14 @@ struct FileToGraphic
                 }
                 stream.p = next_order;
             }
-            else {
+            else if (class_ == RDP::STANDARD) {
                 RDPPrimaryOrderHeader header = this->common.receive(this->stream, control);
                 const Rect & clip = (control & RDP::BOUNDS)?this->common.clip:this->screen_rect;
                 switch (this->common.order) {
                 case RDP::GLYPHINDEX:
                     this->glyphindex.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(this->glyphindex, clip, &this->gly_cache);
+                        this->consumers[i].graphic_device->draw(this->glyphindex, clip, &this->gly_cache);
                     }
                     break;
                 case RDP::DESTBLT:
@@ -373,7 +402,7 @@ struct FileToGraphic
                         this->destblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(this->destblt, clip);
+                        this->consumers[i].graphic_device->draw(this->destblt, clip);
                     }
                     break;
                 case RDP::MULTIDSTBLT:
@@ -382,7 +411,7 @@ struct FileToGraphic
                         this->multidstblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++) {
-                        this->consumers[i]->draw(this->multidstblt, clip);
+                        this->consumers[i].graphic_device->draw(this->multidstblt, clip);
                     }
                     break;
                 case RDP::MULTIOPAQUERECT:
@@ -391,7 +420,7 @@ struct FileToGraphic
                         this->multiopaquerect.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++) {
-                        this->consumers[i]->draw(this->multiopaquerect, clip);
+                        this->consumers[i].graphic_device->draw(this->multiopaquerect, clip);
                     }
                     break;
                 case RDP::MULTIPATBLT:
@@ -400,7 +429,7 @@ struct FileToGraphic
                         this->multipatblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++) {
-                        this->consumers[i]->draw(this->multipatblt, clip);
+                        this->consumers[i].graphic_device->draw(this->multipatblt, clip);
                     }
                     break;
                 case RDP::MULTISCRBLT:
@@ -409,7 +438,7 @@ struct FileToGraphic
                         this->multiscrblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++) {
-                        this->consumers[i]->draw(this->multiscrblt, clip);
+                        this->consumers[i].graphic_device->draw(this->multiscrblt, clip);
                     }
                     break;
                 case RDP::PATBLT:
@@ -418,7 +447,7 @@ struct FileToGraphic
                         this->patblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(this->patblt, clip);
+                        this->consumers[i].graphic_device->draw(this->patblt, clip);
                     }
                     break;
                 case RDP::SCREENBLT:
@@ -427,7 +456,7 @@ struct FileToGraphic
                         this->scrblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(this->scrblt, clip);
+                        this->consumers[i].graphic_device->draw(this->scrblt, clip);
                     }
                     break;
                 case RDP::LINE:
@@ -436,7 +465,7 @@ struct FileToGraphic
                         this->lineto.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++) {
-                        this->consumers[i]->draw(this->lineto, clip);
+                        this->consumers[i].graphic_device->draw(this->lineto, clip);
                     }
                     break;
                 case RDP::RECT:
@@ -445,7 +474,7 @@ struct FileToGraphic
                         this->opaquerect.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(this->opaquerect, clip);
+                        this->consumers[i].graphic_device->draw(this->opaquerect, clip);
                     }
                     break;
                 case RDP::MEMBLT:
@@ -461,7 +490,7 @@ struct FileToGraphic
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers ; i++){
-                                this->consumers[i]->draw(this->memblt, clip, *bmp);
+                                this->consumers[i].graphic_device->draw(this->memblt, clip, *bmp);
                             }
                         }
                     }
@@ -479,7 +508,7 @@ struct FileToGraphic
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers ; i++){
-                                this->consumers[i]->draw(this->mem3blt, clip, *bmp);
+                                this->consumers[i].graphic_device->draw(this->mem3blt, clip, *bmp);
                             }
                         }
                     }
@@ -490,7 +519,7 @@ struct FileToGraphic
                         this->polyline.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers ; i++) {
-                        this->consumers[i]->draw(this->polyline, clip);
+                        this->consumers[i].graphic_device->draw(this->polyline, clip);
                     }
                     break;
                 default:
@@ -498,6 +527,11 @@ struct FileToGraphic
                     LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
                     throw Error(ERR_WRM);
                 }
+            }
+            else {
+                /* error, this should always be set */
+                LOG(LOG_ERR, "Unsupported drawing order detected : protocol error");
+                throw Error(ERR_WRM);
             }
             }
             break;
@@ -541,7 +575,9 @@ struct FileToGraphic
                         StaticStream ss(this->input, this->input_len);
 
                         for (size_t i = 0; i < this->nbconsumers ; i++){
-                            this->consumers[i]->input(this->record_now, ss);
+                            if (this->consumers[i].capture_device) {
+                                this->consumers[i].capture_device->input(this->record_now, ss);
+                            }
                         }
 
                         if (this->verbose > 16) {
@@ -578,7 +614,7 @@ struct FileToGraphic
                 else {
                    if (this->real_time){
                         for (size_t i = 0; i < this->nbconsumers ; i++){
-                            this->consumers[i]->flush();
+                            this->consumers[i].graphic_device->flush();
                         }
 
                         struct   timeval now = tvtime();
@@ -653,7 +689,7 @@ struct FileToGraphic
                 this->stream.p = this->stream.end;
 
                 if (!this->meta_ok){
-                    this->bmp_cache = new BmpCache(this->info_bpp, this->info_number_of_cache,
+                    this->bmp_cache = new BmpCache(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
                         this->info_use_waiting_list,
                         this->info_cache_0_entries, this->info_cache_0_size, this->info_cache_0_persistent,
                         this->info_cache_1_entries, this->info_cache_1_size, this->info_cache_1_persistent,
@@ -924,7 +960,9 @@ struct FileToGraphic
                         }
 
                         for (size_t cu = 0 ; cu < this->nbconsumers ; cu++){
-                            this->consumers[cu]->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
+                            if (this->consumers[cu].capture_device) {
+                                this->consumers[cu].capture_device->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
+                            }
                         }
                     }
                     png_read_end(ppng, pinfo);
@@ -971,7 +1009,7 @@ struct FileToGraphic
                 }
 
                 for (size_t i = 0; i < this->nbconsumers; i++) {
-                    this->consumers[i]->draw( bitmap_data
+                    this->consumers[i].graphic_device->draw( bitmap_data
                                             , data
                                             , bitmap_data.bitmap_size()
                                             , bitmap);
@@ -997,7 +1035,7 @@ struct FileToGraphic
                     this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i]->server_set_pointer(cursor);
+                        this->consumers[i].graphic_device->server_set_pointer(cursor);
                     }
                 }
                 else {
@@ -1009,7 +1047,7 @@ struct FileToGraphic
                     memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
 
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i]->server_set_pointer(cursor);
+                        this->consumers[i].graphic_device->server_set_pointer(cursor);
                     }
                 }
             }
@@ -1022,16 +1060,6 @@ struct FileToGraphic
     }
 
     void play() {
-        bool send_initial_image = true;
-        if (  (this->begin_capture.tv_sec == 0)
-           || (this->begin_capture.tv_sec > this->record_now.tv_sec)
-           || (  (this->begin_capture.tv_sec == this->record_now.tv_sec)
-              && (this->begin_capture.tv_usec > this->record_now.tv_usec)
-              )
-           ) {
-                send_initial_image = false;
-        }
-
         while (this->next_order()) {
             if (this->verbose > 8) {
                 LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
@@ -1044,11 +1072,11 @@ struct FileToGraphic
                   && (this->begin_capture.tv_usec <= this->record_now.tv_usec)
                   )
                ) {
-                if (send_initial_image) {
-                    send_initial_image = false;
-                }
                 for (size_t i = 0; i < this->nbconsumers ; i++) {
-                    this->consumers[i]->snapshot( this->record_now, this->mouse_x, this->mouse_y, this->ignore_frame_in_timeval);
+                    if (this->consumers[i].capture_device) {
+                        this->consumers[i].capture_device->snapshot( this->record_now, this->mouse_x, this->mouse_y
+                                                                   , this->ignore_frame_in_timeval);
+                    }
                 }
 
                 this->ignore_frame_in_timeval = false;

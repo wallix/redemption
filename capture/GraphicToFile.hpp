@@ -107,7 +107,7 @@ public:
     }
 };
 
-struct GraphicToFile : public RDPSerializer
+struct GraphicToFile : public RDPSerializer, public RDPCaptureDevice
 REDOC("To keep things easy all chunks have 8 bytes headers"
       " starting with chunk_type, chunk_size"
       " and order_count (whatever it means, depending on chunks")
@@ -142,6 +142,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
                 , const Inifile & ini)
     : RDPSerializer( trans, this->buffer_stream_orders
                    , this->buffer_stream_bitmaps, bpp, bmp_cache, 0, 1, 1, ini)
+    , RDPCaptureDevice()
     , trans(trans)
     , buffer_stream_orders(65536)
     , buffer_stream_bitmaps(65536)
@@ -675,6 +676,11 @@ public:
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) {
         this->drawable.draw(bitmap_data, data, size, bmp);
         this->RDPSerializer::draw(bitmap_data, data, size, bmp);
+    }
+
+    virtual void draw(const RDP::FrameMarker & order) {
+        this->drawable.draw(order);
+        this->RDPSerializer::draw(order);
     }
 
     void send_bitmaps_chunk()

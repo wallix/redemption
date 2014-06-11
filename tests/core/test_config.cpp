@@ -205,7 +205,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
     BOOST_CHECK_EQUAL(0,                                ini.context.selector_focus);
 
@@ -469,7 +468,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.context_get_value(AUTHID_TRANS_TARGET)));
     BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.context_get_value(AUTHID_TRANS_DIAGNOSTIC)));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.context_get_value(AUTHID_TRANS_CONNECTION_CLOSED)));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.context_get_value(AUTHID_TRANS_HELP_MESSAGE)));
 
     BOOST_CHECK_EQUAL(0,                                ini.context.selector_focus);
 
@@ -746,7 +744,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
@@ -998,7 +995,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
@@ -1223,7 +1219,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connexion fermée"),  std::string(ini.translation.connection_closed.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
@@ -1424,7 +1419,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
@@ -1613,7 +1607,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
@@ -1793,7 +1786,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
@@ -1969,7 +1961,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
@@ -2145,7 +2136,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
@@ -2310,7 +2300,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());

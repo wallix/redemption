@@ -10,6 +10,29 @@ from logger import Logger
 from model import RightInfo, UserInfo
 from sesmanconf import TR, SESMANCONF, translations
 
+def _binary_ip(network, bits):
+    # TODO need Ipv6 support
+    # This is a bit too resilient, add check for obviously bad values
+    a,b,c,d = [ int(x)&0xFF for x in network.split('.')]
+    mask = (0xFFFFFFFF >> bits) ^ 0xFFFFFFFF
+    return ((a << 24) + (b << 16) + (c << 8) + d) & mask
+
+def is_device_in_subnet(device, subnet):
+
+    if '/' in subnet:
+        try:
+            network, bits = subnet.rsplit('/')
+            network_bits = _binary_ip(network, int(bits))
+            device_bits = _binary_ip(device, int(bits))
+            result = network_bits == device_bits
+        except Exception, e:
+            Logger().error("Bad host definition device '%s' subnet '%s': %s" % (device, subnet, str(e)))
+            result = False
+    else:
+        result = device == subnet
+    Logger().info("checking if device %s is in subnet %s -> %s" % (device, subnet, ['No', 'Yes'][result]))
+    return result
+
 class Engine(object):
     def __init__(self):
         self.wabengine = None
@@ -105,17 +128,12 @@ class Engine(object):
                                                              realm = "realm",
                                                              ip_source = ip_client,
                                                              server_ip = server_ip)
-            self.challenge = None
             if self.wabengine is not None:
                 self.user = self.wabengine.who_am_i()
                 return True
-        except AuthenticationChallenged, e:
-            self.challenge = e.challenge
         except AuthenticationFailed, e:
-            self.challenge = None
             pass
         except Exception, e:
-            self.challenge = None
             import traceback
             Logger().info("Engine passthrough_authenticate failed: (((%s)))" % traceback.format_exc(e))
         return False
@@ -265,7 +283,7 @@ class Engine(object):
             else:
                 #Logger().info("%s@%s:%s host=%s" % (r.account.login, r.resource.device.cn, r.resource.service.cn, r.resource.device.host))
                 if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
-                    if target_device != r.resource.device.host:
+                    if not is_device_in_subnet(target_device, r.resource.device.host):
                         continue
                     #Allow any user
                     if target_protocol != r.resource.service.cn:

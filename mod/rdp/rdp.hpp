@@ -426,8 +426,8 @@ struct mod_rdp : public mod_api {
             this->acl->report("CONNECTION_SUCCESSFUL", "Ok.");
         }
 
-        this->end_session_reason.copy_c_str("OPEN_SESSION_FAILED");
-        this->end_session_message.copy_c_str("Open RDP session cancelled.");
+        // this->end_session_reason.copy_c_str("OPEN_SESSION_FAILED");
+        // this->end_session_message.copy_c_str("Open RDP session cancelled.");
     }
 
     virtual ~mod_rdp()
@@ -1951,6 +1951,10 @@ struct mod_rdp : public mod_api {
                                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
                                                 this->process_disconnect_pdu(sdata.payload);
                                                 break;
+                                            case PDUTYPE2_SHUTDOWN_DENIED:
+                                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");}
+                                                LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED Received");
+                                                break;
                                             default:
                                                 LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
                                                 TODO("CGR: Data should actually be consumed");
@@ -2056,6 +2060,16 @@ struct mod_rdp : public mod_api {
                                     break;
                                 case PDUTYPE_SERVER_REDIR_PKT:
                                     if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_SERVER_REDIR_PKT"); }
+                                    break;
+                                case FLOWPDU:
+                                    if (this->verbose & 128) {
+                                        LOG(LOG_WARNING, "FlowPDU TYPE");
+                                    }
+                                    // ignoring
+                                    // if (sctrl.flow_pdu_type == FLOW_TEST_PDU) {
+                                    //     this->send_flow_response_pdu(sctrl.flow_id,
+                                    //                                  sctrl.flow_number);
+                                    // }
                                     break;
                                 default:
                                     LOG(LOG_INFO, "unknown PDU %u", sctrl.pdu_type1);
@@ -2213,8 +2227,13 @@ struct mod_rdp : public mod_api {
         confirm_active_pdu.emit_capability_set(bitmap_caps);
 
         OrderCaps order_caps;
-        order_caps.numberFonts                                   = 0x147;
-        order_caps.orderFlags                                    = 0x2a;
+        order_caps.numberFonts                                   = 0;
+        order_caps.orderFlags                                    = /*0x2a*/
+                                                                    NEGOTIATEORDERSUPPORT   /* 0x02 */
+                                                                  | ZEROBOUNDSDELTASSUPPORT /* 0x08 */
+                                                                  | COLORINDEXSUPPORT       /* 0x20 */
+                                                                  | ORDERFLAGS_EXTRA_FLAGS  /* 0x80 */
+                                                                  ;
         order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = (this->enable_multidstblt     ? 1 : 0);
         order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]    = (this->enable_multiopaquerect ? 1 : 0);
@@ -2236,6 +2255,7 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
 
         order_caps.textFlags                                     = 0x06a1;
+        order_caps.orderSupportExFlags                           = ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT;
         order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
 
         // Apparently, these primary drawing orders are supported
@@ -2262,12 +2282,12 @@ struct mod_rdp : public mod_api {
         this->front.intersect_order_caps(TS_NEG_ELLIPSE_CB_INDEX,         order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_INDEX_INDEX,              order_caps.orderSupport);
 
+        this->front.intersect_order_caps_ex(order_caps);
+
         // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
         //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
         if (this->enable_transparent_mode) {
             this->front.retrieve_client_capability_set(order_caps);
-            order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX] = 0;
-            order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX] = 0;
         }
         if (this->verbose & 1) {
             order_caps.log("Sending to server");
@@ -4181,6 +4201,29 @@ public:
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
         }
     }
+    virtual void rdp_input_invalidate2(const DArray<Rect> & vr) {
+        LOG(LOG_INFO, " ===================> mod_rdp::rdp_input_invalidate 2 <=====================");
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
+        }
+        if ((UP_AND_RUNNING == this->connection_finalization_state)
+            && (vr.size() > 0)) {
+            RDP::RefreshRectPDU rrpdu(this->share_id,
+                                      this->userid,
+                                      this->encryptionLevel,
+                                      this->encrypt);
+            for (size_t i = 0; i < vr.size() ; i++){
+                if (!vr[i].isempty()){
+                    rrpdu.addInclusiveRect(vr[i].x, vr[i].y, vr[i].x + vr[i].cx - 1, vr[i].y + vr[i].cy - 1);
+                }
+            }
+            rrpdu.emit(*this->nego.trans);
+        }
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
+        }
+
+    };
 
     // 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
     // =========================================================================
@@ -4337,15 +4380,15 @@ public:
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
         }
-        int system_pointer_type = stream.in_uint16_le();
+        int system_pointer_type = stream.in_uint32_le();
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
                 struct Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 this->front.server_set_pointer(cursor);
-                this->front.set_pointer_display();
-                this->set_pointer_display();
+//                this->front.set_pointer_display();
+//                this->set_pointer_display();
             }
             break;
         default:
@@ -4926,6 +4969,10 @@ public:
         this->front.draw(cmd);
     }
 
+    virtual void draw(const RDP::FrameMarker & order) {
+        this->front.draw(order);
+    }
+
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
                       size_t size, const Bitmap & bmp)
     {
@@ -4935,6 +4982,57 @@ public:
     virtual bool is_up_and_running() {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
+    virtual void disconnect() {
+        if (this->is_up_and_running()) {
+            if (this->verbose & 1){
+                LOG(LOG_INFO, "mod_rdp::disconnect()");
+            }
+            // this->send_shutdown_request();
+            // this->draw_event(time(NULL));
+            this->send_disconnect_ultimatum();
+        }
+    }
+    void send_shutdown_request() {
+        LOG(LOG_INFO, "SEND SHUTDOWN REQUEST PDU");
+
+        BStream stream(65536);
+        ShareData sdata(stream);
+        sdata.emit_begin(PDUTYPE2_SHUTDOWN_REQUEST, this->share_id,
+                         RDP::STREAM_MED);
+        sdata.emit_end();
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+                          this->userid + GCC::MCS_USERCHANNEL_BASE,
+                          stream.size());
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+    }
+    void send_disconnect_ultimatum() {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
+        }
+        BStream x224_header(256);
+        HStream mcs_data(256, 512);
+        MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_data.size());
+        this->nego.trans->send(x224_header, mcs_data);
+    }
+
+    void send_flow_response_pdu(uint8_t flow_id, uint8_t flow_number) {
+        LOG(LOG_INFO, "SEND FLOW RESPONSE PDU n° %u", flow_number);
+        BStream flowpdu(256);
+        FlowPDU_Send(flowpdu, FLOW_RESPONSE_PDU, flow_id, flow_number,
+                     this->userid + GCC::MCS_USERCHANNEL_BASE);
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(flowpdu);
+        target_stream.mark_end();
+        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+    }
+
 };
 
 #endif

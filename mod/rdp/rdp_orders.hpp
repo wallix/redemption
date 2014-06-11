@@ -34,8 +34,6 @@
 #include "RDP/protocol.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
@@ -47,6 +45,9 @@
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/bmpcachepersister.hpp"
@@ -207,8 +208,10 @@ struct rdp_orders {
             this->bmp_cache = NULL;
         }
 
-        this->bmp_cache = new BmpCache(bpp, 3, false, small_entries, small_size, small_persistent,
-            medium_entries, medium_size, medium_persistent, big_entries, big_size, big_persistent,
+        this->bmp_cache = new BmpCache(BmpCache::Mod_rdp, bpp, 3, false,
+            small_entries, small_size, small_persistent,
+            medium_entries, medium_size, medium_persistent,
+            big_entries, big_size, big_persistent,
             0, 0, false, 0, 0, false, verbose);
 
         if (this->enable_persistent_disk_bitmap_cache) {
@@ -239,6 +242,19 @@ struct rdp_orders {
     }
 
 public:
+    void process_framemarker( Stream & stream, const RDP::AltsecDrawingOrderHeader & header
+                            , RDPGraphicDevice & gd) {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "rdp_orders_process_framemarker");
+        }
+
+        RDP::FrameMarker order;
+
+        order.receive(stream, header);
+
+        gd.draw(order);
+    }
+
     void process_bmpcache( uint8_t bpp, Stream & stream, const uint8_t control
                          , const RDPSecondaryOrderHeader & header)
     {
@@ -327,13 +343,20 @@ public:
         while (processed < orders_update.number_orders) {
             DrawingOrder_RecvFactory drawing_order(stream);
 
-            if (!drawing_order.control_flags & STANDARD) {
-                /* error, this should always be set */
-                LOG(LOG_ERR, "Non standard order detected : protocol error");
-                REDASSERT(false);
-                break;
+            uint8_t class_ = (drawing_order.control_flags & (STANDARD | SECONDARY));
+            if (class_ == SECONDARY) {
+                RDP::AltsecDrawingOrderHeader header(drawing_order.control_flags);
+                switch (header.orderType) {
+                    case RDP::AltsecDrawingOrderHeader::FrameMarker:
+                        this->process_framemarker(stream, header, gd);
+                    break;
+                    default:
+                        LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
+                        /* error, unknown order */
+                    break;
+                }
             }
-            if (drawing_order.control_flags & SECONDARY) {
+            else if (class_ == (STANDARD | SECONDARY)) {
                 RDPSecondaryOrderHeader header(stream);
 //                LOG(LOG_INFO, "secondary order=%d", header.type);
                 uint8_t * next_order = stream.p + header.order_data_length();
@@ -361,7 +384,7 @@ public:
                 }
                 stream.p = next_order;
             }
-            else {
+            else if (class_ == STANDARD) {
                 RDPPrimaryOrderHeader header = this->common.receive(stream, drawing_order.control_flags);
                 const Rect & cmd_clip = ( (drawing_order.control_flags & BOUNDS)
                                         ? this->common.clip
@@ -462,6 +485,12 @@ public:
                     LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
                     break;
                 }
+            }
+            else {
+                /* error, this should always be set */
+                LOG(LOG_ERR, "Unsupported drawing order detected : protocol error");
+                REDASSERT(false);
+                break;
             }
             processed++;
         }

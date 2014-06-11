@@ -64,14 +64,15 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
-    png_recorder.update_config(ini);
-    player.add_consumer(&drawable1);
+//    png_recorder.update_config(ini);
+    player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
 
     OutFilenameTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
     ini.video.frame_interval = 10;
     ini.video.break_interval = 20;
 
     BmpCache bmp_cache(
+        BmpCache::Recorder,
         player.bmp_cache->bpp,
         player.bmp_cache->number_of_cache,
         player.bmp_cache->use_waiting_list,
@@ -101,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         bmp_cache, drawable, ini);
 
     wrm_recorder.update_config(ini);
-    player.add_consumer(&wrm_recorder);
+    player.add_consumer((RDPGraphicDevice *)&wrm_recorder, (RDPCaptureDevice *)&wrm_recorder);
 
     BOOST_CHECK_EQUAL((unsigned)1352304810, (unsigned)player.record_now.tv_sec);
     player.play();
@@ -159,13 +160,14 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
 //    png_recorder.update_config(ini);
-//    player.add_consumer(&drawable1);
+//    player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
 
 //    OutFilenameTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".wrm", groupid);
 //    ini.video.frame_interval = 10;
 //    ini.video.break_interval = 20;
 
 //    BmpCache bmp_cache(
+//        BmpCache::Recorder,
 //        player.bmp_cache->bpp,
 //        player.bmp_cache->number_of_cache,
 //        player.bmp_cache->use_waiting_list,
@@ -194,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //        bmp_cache, drawable, ini);
 
 //    wrm_recorder.update_config(ini);
-//    player.add_consumer(&wrm_recorder);
+//    player.add_consumer((RDPGraphicDevice *)&wrm_recorder, (RDPCaptureDevice *)&wrm_recorder);
 
 //    BOOST_CHECK_EQUAL((unsigned)1352304870, (unsigned)player.record_now.tv_sec);
 //    player.play();

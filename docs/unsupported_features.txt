@@ -1,0 +1,91 @@
+RDP
+===
+
+
+Remote Desktop Multimon feature (Wish #6414)
+http://blogs.msdn.com/b/rds/archive/2009/07/01/using-multiple-monitors-in-remote-desktop-session.aspx
+
+
+Basic Output
+    Server Fast-Path Update PDU
+        Fast-Path Update ([MS-RDPBCGR] section 2.2.9.1.2.1) (Internal #6753 and Internal #6754)
+            fragmentation
+                FASTPATH_FRAGMENT_LAST
+                FASTPATH_FRAGMENT_FIRST
+                FASTPATH_FRAGMENT_NEXT
+
+Drawing Order
+    Primary Drawing Orders
+        SaveBitmap ([MS-RDPEGDI] section 2.2.2.2.1.1.2.12) (Internal #5676 and Internal #5677)
+
+        FastIndex ([MS-RDPEGDI] section 2.2.2.2.1.1.2.14) (Internal #5678 and Internal #5679)
+
+        FastGlyph ([MS-RDPEGDI] section 2.2.2.2.1.1.2.15) (Internal #5680 and Internal #5681)
+
+        PolygonSC ([MS-RDPEGDI] section 2.2.2.2.1.1.2.16) (Internal #5682 and Internal #5683)
+
+        PolygonCB ([MS-RDPEGDI] section 2.2.2.2.1.1.2.17) (Internal #5684 and Internal #5685)
+
+        DrawNineGrid ([MS-RDPEGDI] section 2.2.2.2.1.1.2.21) (Internal #3453 and Internal #3456)
+
+        MultiDrawNineGrid ([MS-RDPEGDI] section 2.2.2.2.1.1.2.22)
+
+    Secondary Drawing Order Header
+        Cache Glyph - Revision 2 ([MS-RDPEGDI] section 2.2.2.2.1.2.6) (Internal #5688 and Internal #5689)
+
+        Cache Bitmap - Revision 3 ([MS-RDPEGDI] section 2.2.2.2.1.2.8)
+
+    Alternate Secondary Drawing Orders
+        Create Offscreen Bitmap ([MS-RDPEGDI] section 2.2.2.2.1.3.2) (Internal #5251 and Internal #5252)
+
+        Switch Surface ([MS-RDPEGDI] section 2.2.2.2.1.3.3)
+
+        Create NineGrid Bitmap ([MS-RDPEGDI] section 2.2.2.2.1.3.4)
+
+        Stream Bitmap Orders
+            Stream Bitmap First ([MS-RDPEGDI] section 2.2.2.2.1.3.5.1)
+
+            Stream Bitmap Next ([MS-RDPEGDI] section 2.2.2.2.1.3.5.2)
+
+        GDI+ Orders
+            Draw GDI+ Cache First ([MS-RDPEGDI] section 2.2.2.2.1.3.6.2)
+
+            Draw GDI+ Cache Next ([MS-RDPEGDI] section 2.2.2.2.1.3.6.3)
+
+            Draw GDI+ Cache End ([MS-RDPEGDI] section 2.2.2.2.1.3.6.4)
+
+            Draw GDI+ First ([MS-RDPEGDI] section 2.2.2.2.1.3.6.5)
+
+            Draw GDI+ Next ([MS-RDPEGDI] section 2.2.2.2.1.3.6.6)
+
+            Draw GDI+ End ([MS-RDPEGDI] section 2.2.2.2.1.3.6.7)
+
+Cache
+    Offscreen Bitmap Cache ([MS-RDPEGDI] section 3.1.1.1.5)
+
+    NineGrid Bitmap Cache ([MS-RDPEGDI] section 3.1.1.1.6)
+
+    GDI+ Caches ([MS-RDPEGDI] section 3.1.1.1.7)
+
+RDP 6.0 Bitmap Compression
+    Chroma Subsampling and Super-Sampling ([MS-RDPEGDI] section 3.1.9.1.3) (Internal #6324)
+
+    Color Loss Reduction ([MS-RDPEGDI] section 3.1.9.1.4) (Internal #6323)
+
+
+
+
+
+VNC
+===
+
+
+MS-Logon I & MS-Logon II (Wish #5538)
+http://www.uvnc.com/features/authentication.html
+
+
+Encodings
+    Hextile encoding ([The RFB Protocol] section 6.6.4) (Wish #3460)
+
+Pseudo-encodings
+    DesktopSize pseudo-encoding ([The RFB Protocol] section 6.7.2) (Wish #3461)

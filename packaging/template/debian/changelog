@@ -1,4 +1,4 @@
-redemption (0.9.289%target_name) %pkg_distribution; urgency=low
+redemption (0.9.289%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fixed Numlock initial state bug
   * Use only one RDPDrawable
@@ -10,7 +10,7 @@ redemption (0.9.289%target_name) %pkg_distribution; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 26 Jun 2013 10:12:26 +0200
 
-redemption (0.9.283%target_name) %pkg_distribution; urgency=low
+redemption (0.9.283%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fully moved internal pages to new widget components
   * support for RDP Bitmap Update order
@@ -18,7 +18,7 @@ redemption (0.9.283%target_name) %pkg_distribution; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 17 Jun 2013 10:12:26 +0200
 
-redemption (0.9.269%target_name) %pkg_distribution; urgency=low
+redemption (0.9.269%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Improved packager for debian/squeeze and ubuntu/precise
   * merging ACL context and config file (Work in progress)
@@ -26,7 +26,7 @@ redemption (0.9.269%target_name) %pkg_distribution; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 17 May 2013 16:12:26 +0200
 
-redemption (0.9.253+precise) %pkg_distribution; urgency=low
+redemption (0.9.253%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Initial packaged release
 

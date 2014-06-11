@@ -363,7 +363,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
     LCGRandom gen(0);
     mod_rdp mod_(&t, front, info, gen, mod_rdp_params);
     mod_api * mod = &mod_;
-    
+
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }

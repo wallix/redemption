@@ -717,6 +717,7 @@ public:
             delete this->bmp_cache;
         }
         this->bmp_cache = new BmpCache(
+                        BmpCache::Front,
                         this->client_info.bpp,
                         this->client_info.number_of_cache,
                         ((this->client_info.cache_flags & ALLOW_CACHE_WAITING_LIST_FLAG) &&
@@ -1376,11 +1377,13 @@ public:
         }
     }   // void set_pointer(int cache_idx)
 
+/*
     virtual void set_pointer_display() {
         if (this->capture) {
             this->capture->set_pointer_display();
         }
     }
+*/
 
     void incoming(Callback & cb) throw(Error)
     {
@@ -2019,6 +2022,7 @@ public:
             }
 
             this->keymap.init_layout(this->client_info.keylayout);
+            LOG(LOG_INFO, "Front Keyboard Layout = 0x%x", this->client_info.keylayout);
             this->ini->client.keyboard_layout.set(this->client_info.keylayout);
             if (this->client_info.is_mce) {
                 if (this->verbose & 2){
@@ -2910,7 +2914,8 @@ public:
         stream.out_clear_bytes(4);
 
         GeneralCaps general_caps;
-        if (this->server_fastpath_update_support) {
+
+        if (this->fastpath_support) {
             general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
         }
         if (!this->server_capabilities_filename.is_empty()) {
@@ -3850,6 +3855,7 @@ public:
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
 
+                DArray<Rect> rects(numberOfAreas);
                 for (size_t i = 0; i < numberOfAreas ; i++){
 
                     int left = sdata_in.payload.in_uint16_le();
@@ -3857,16 +3863,18 @@ public:
                     int right = sdata_in.payload.in_uint16_le();
                     int bottom = sdata_in.payload.in_uint16_le();
                     Rect rect(left, top, (right - left) + 1, (bottom - top) + 1);
+                    rects[i] = rect;
                     if (this->verbose & (64|4)){
                         LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
                             " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
                             left, top, right, bottom, rect.x, rect.cy);
                     }
-                    TODO("we should consider adding to API some function to refresh several rects at once")
-                    if (this->up_and_running){
-                        cb.rdp_input_invalidate(rect);
-                    }
+                    // TODO("we should consider adding to API some function to refresh several rects at once")
+                    // if (this->up_and_running){
+                    //     cb.rdp_input_invalidate(rect);
+                    // }
                 }
+                cb.rdp_input_invalidate2(rects);
             }
         break;
         case PDUTYPE2_PLAY_SOUND:   // Play Sound PDU (section 2.2.9.1.1.5.1):w
@@ -4888,8 +4896,22 @@ public:
         this->palette_sent = false;
     }
 
-    virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) {
+    virtual void draw(const RDP::FrameMarker & order) {
+        if (this->client_order_caps.orderSupportExFlags & ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT) {
+            this->orders->draw(order);
+        }
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->draw(order);
+        }
+    }
+
+    virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {
         proxy_order_caps[idx] &= this->client_order_caps.orderSupport[idx];
+    }
+
+    virtual void intersect_order_caps_ex(OrderCaps & order_caps) const {
+        order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data

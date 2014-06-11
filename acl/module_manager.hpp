@@ -151,6 +151,9 @@ public:
         if (auth_error_message) {
             this->ini.context.auth_error_message.copy_c_str(auth_error_message);
         }
+        if (this->mod) {
+            this->mod->disconnect();
+        }
         this->remove_mod();
         if (this->ini.globals.enable_close_box) {
             this->new_mod(MODULE_INTERNAL_CLOSE, now, NULL);
@@ -608,6 +611,7 @@ public:
                     mod_rdp_params.enable_persistent_disk_bitmap_cache = this->ini.mod_rdp.persistent_disk_bitmap_cache;
                     mod_rdp_params.enable_cache_waiting_list           = this->ini.mod_rdp.cache_waiting_list;
                     mod_rdp_params.password_printing_mode              = this->ini.debug.password;
+                    mod_rdp_params.cache_verbose                       = this->ini.debug.cache;
 
                     mod_rdp_params.extra_orders                    = this->ini.mod_rdp.extra_orders.c_str();
 
@@ -615,6 +619,9 @@ public:
                     this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
                     this->mod->get_event().st = t;
 
+                    // DArray<Rect> rects(1);
+                    // rects[0] = Rect(0, 0, this->front.client_info.width, this->front.client_info.height);
+                    // this->mod->rdp_input_invalidate2(rects);
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
                     this->ini.context.auth_error_message.empty();

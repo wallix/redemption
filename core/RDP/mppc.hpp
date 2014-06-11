@@ -427,9 +427,9 @@ public:
 // Decompressor
 //
 ////////////////////
-
 static inline void insert_n_bits_40_50(uint8_t n, uint32_t data, uint8_t * outputBuffer,
-    uint8_t & bits_left, uint16_t & opb_index)
+                                       uint8_t & bits_left, uint16_t & opb_index,
+                                       const uint16_t outputBufferSize)
 {
     uint8_t bits_to_serialize = n;
     if (bits_left >= bits_to_serialize + 1) {
@@ -438,6 +438,9 @@ static inline void insert_n_bits_40_50(uint8_t n, uint32_t data, uint8_t * outpu
         bits_left = i;
     }
     else {
+        if (opb_index + 1 > outputBufferSize) {
+            throw Error(ERR_RDP45_COMPRESS_BUFFER_OVERFLOW);
+        }
         outputBuffer[opb_index++] |= data >> (bits_to_serialize - bits_left);
         data                      &= (0xFFFFFFFF >> (32 - (bits_to_serialize - bits_left)));
         bits_to_serialize         -= bits_left;
@@ -453,12 +456,12 @@ static inline void insert_n_bits_40_50(uint8_t n, uint32_t data, uint8_t * outpu
 }
 
 static inline void encode_literal_40_50(char c, uint8_t * outputBuffer, uint8_t & bits_left,
-    uint16_t & opb_index)
+                                        uint16_t & opb_index, const uint16_t outputBufferSize)
 {
     insert_n_bits_40_50(
         (c & 0x80) ? 9 : 8,
         (c & 0x80) ? (0x02 << 7) | (c & 0x7F) : c,
-        outputBuffer, bits_left, opb_index);
+        outputBuffer, bits_left, opb_index, outputBufferSize);
 }
 
 struct rdp_mppc_enc {

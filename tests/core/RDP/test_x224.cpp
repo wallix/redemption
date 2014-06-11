@@ -35,6 +35,45 @@
 #include "RDP/x224.hpp"
 #include "config.hpp"
 
+BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
+{
+    size_t tpkt_len = 85;
+    GeneratorTransport t(
+/* 0000 */ "\x03\x00\x00\x55\x50\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...UP......Cooki
+/* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x6a\x62\x62\x65" //e: mstshash=jbbe
+/* 0020 */ "\x72\x74\x68\x65\x6c\x69\x6e\x0d\x0a"                             //rthelin..
+           "\x01\x08\x08\x00\x0b\x00\x00" //.......
+/* 0030 */ "\x00"
+               "\x06\x00\x24\x00\x75\xcc\x9f\xac\x96\xa5\x41\x82\xbd\x1c\x2d" //...$.u.....A...-
+/* 0040 */ "\x63\x52\xc7\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //cR..............
+/* 0050 */ "\x00\x00\x00\x00\x00" //.....
+        , tpkt_len);
+
+    BStream stream(65536);
+    X224::RecvFactory fac_x224(t, stream);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
+    BOOST_CHECK_EQUAL(tpkt_len, (size_t)fac_x224.length);
+
+    Inifile ini;
+
+    X224::CR_TPDU_Recv x224(t, stream, false, true);
+
+    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+    BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(0x50, x224.tpdu_hdr.LI);
+
+    BOOST_CHECK_EQUAL(0, strcmp("Cookie: mstshash=jbberthelin\x0D\x0A", x224.cookie));
+    BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_REQ, x224.rdp_neg_type);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CORRELATION_INFO_PRESENT, x224.rdp_neg_flags);
+    BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
+    BOOST_CHECK_EQUAL((uint32_t)((X224::PROTOCOL_TLS | X224::PROTOCOL_HYBRID) | X224::PROTOCOL_HYBRID_EX), x224.rdp_neg_requestedProtocols);
+
+    BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+}
+
+
 BOOST_AUTO_TEST_CASE(TestReceive_RecvFactory_Bad_TPKT)
 {
     GeneratorTransport t("\x04\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
@@ -273,6 +312,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
     BOOST_CHECK_EQUAL(x224._header_size, stream.size());
 }
+
+
+
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
 {

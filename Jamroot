@@ -37,7 +37,7 @@ constant PREFIX : [ setvar PREFIX : /usr/local ] ;
 constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
 constant LIB_PREFIX : [ setvar LIB_PREFIX : $(PREFIX)/lib ] ;
 constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
-constant RECORD_TMP_PATH : [ setvar TMP_PATH : /var/rdpproxy/tmp ] ;
+constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : /var/rdpproxy/tmp ] ;
 constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
 constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
 constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
@@ -110,7 +110,7 @@ project redemption
 #     <cxxflags>-Wformat=2
 #     <cxxflags>-Wformat-security
 #     <cxxflags>-Wmissing-format-attribute
-    <cxxflags>-Werror-implicit-function-declaration
+#    <cxxflags>-Werror-implicit-function-declaration
     <cxxflags>-Wsequence-point
     <cxxflags>-Wreturn-type
     <cxxflags>-Wfloat-equal
@@ -608,3 +608,5 @@ unit-test test_flat_selector2 : tests/mod/internal/widget2/test_flat_selector2.c
 unit-test test_group_box : tests/mod/internal/widget2/test_group_box.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_scroll : tests/mod/internal/widget2/test_scroll.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_darray : tests/utils/test_darray.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

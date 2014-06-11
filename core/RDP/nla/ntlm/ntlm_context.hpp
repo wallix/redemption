@@ -137,6 +137,7 @@ struct NTLMContext {
         , state(NTLM_STATE_INITIAL)
         , SendSeqNum(0)
         , RecvSeqNum(0)
+        , MachineID()
         , SendVersionInfo(true)
         , confidentiality(true)
         , SendRc4Seal(SslRC4())
@@ -148,32 +149,51 @@ struct NTLMContext {
         , NegotiateFlags(0)
         , LmCompatibilityLevel(3)
         , SendWorkstationName(true)
+        , Workstation(Array(0))
+        , ServicePrincipalName(Array(0))
+        , SavedNegotiateMessage(Array(0))
+        , SavedChallengeMessage(Array(0))
+        , SavedAuthenticateMessage(Array(0))
+        , Timestamp()
+        , ChallengeTimestamp()
+        , ServerChallenge()
+        , ClientChallenge()
+        , SessionBaseKey()
+        , KeyExchangeKey()
+        , RandomSessionKey()
+        , ExportedSessionKey()
+        , EncryptedRandomSessionKey()
+        , ClientSigningKey()
+        , ClientSealingKey()
+        , ServerSigningKey()
+        , ServerSealingKey()
+        , MessageIntegrityCheck()
         , verbose(0)
         // , SendSingleHostData(false)
     {
-        this->SavedNegotiateMessage.init(0);
-        this->SavedChallengeMessage.init(0);
-        this->SavedAuthenticateMessage.init(0);
-        this->LmCompatibilityLevel = 3;
+        // this->SavedNegotiateMessage.init(0);
+        // this->SavedChallengeMessage.init(0);
+        // this->SavedAuthenticateMessage.init(0);
+        // this->LmCompatibilityLevel = 3;
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
         memset(this->MessageIntegrityCheck, 0x00, sizeof(this->MessageIntegrityCheck));
 
-        memset(this->Timestamp, 0x00, 8);
-        memset(this->ChallengeTimestamp, 0x00, 8);
-        memset(this->ServerChallenge, 0x00, 8);
-        memset(this->ClientChallenge, 0x00, 8);
-        memset(this->SessionBaseKey, 0x00, 16);
-        memset(this->KeyExchangeKey, 0x00, 16);
-        memset(this->RandomSessionKey, 0x00, 16);
-        memset(this->ExportedSessionKey, 0x00, 16);
-        memset(this->EncryptedRandomSessionKey, 0x00, 16);
-        memset(this->ClientSigningKey, 0x00, 16);
-        memset(this->ClientSealingKey, 0x00, 16);
-        memset(this->ServerSigningKey, 0x00, 16);
-        memset(this->ServerSealingKey, 0x00, 16);
+        // memset(this->Timestamp, 0x00, 8);
+        // memset(this->ChallengeTimestamp, 0x00, 8);
+        // memset(this->ServerChallenge, 0x00, 8);
+        // memset(this->ClientChallenge, 0x00, 8);
+        // memset(this->SessionBaseKey, 0x00, 16);
+        // memset(this->KeyExchangeKey, 0x00, 16);
+        // memset(this->RandomSessionKey, 0x00, 16);
+        // memset(this->ExportedSessionKey, 0x00, 16);
+        // memset(this->EncryptedRandomSessionKey, 0x00, 16);
+        // memset(this->ClientSigningKey, 0x00, 16);
+        // memset(this->ClientSealingKey, 0x00, 16);
+        // memset(this->ServerSigningKey, 0x00, 16);
+        // memset(this->ServerSealingKey, 0x00, 16);
 
-        this->Workstation.init(0);
-        this->ServicePrincipalName.init(0);
+        // this->Workstation.init(0);
+        // this->ServicePrincipalName.init(0);
 
         if (this->NTLMv2) {
             this->UseMIC = true;
@@ -210,9 +230,9 @@ struct NTLMContext {
         }
         uint8_t ZeroTimestamp[8] = {};
 
-	if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0)
+        if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0)
             memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
-	else {
+        else {
             timeval tv = this->timeobj->get_time();
             struct {
                 uint32_t low;
@@ -231,7 +251,7 @@ struct NTLMContext {
     // client method
     void ntlm_generate_client_challenge()
     {
-	// /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
+        // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Generate Client Challenge");
         }
@@ -278,8 +298,8 @@ struct NTLMContext {
     // client method
     void ntlm_generate_key_exchange_key()
     {
-	// /* In NTLMv2, KeyExchangeKey is the 128-bit SessionBaseKey */
-	memcpy(this->KeyExchangeKey, this->SessionBaseKey, 16);
+        // /* In NTLMv2, KeyExchangeKey is the 128-bit SessionBaseKey */
+        memcpy(this->KeyExchangeKey, this->SessionBaseKey, 16);
     }
 
     // all strings are in unicode utf16
@@ -563,7 +583,7 @@ struct NTLMContext {
 
     void ntlm_generate_client_sealing_key()
     {
-	ntlm_generate_sealing_key(client_seal_magic, sizeof(client_seal_magic),
+        ntlm_generate_sealing_key(client_seal_magic, sizeof(client_seal_magic),
                                   this->ClientSealingKey);
     }
 
@@ -575,7 +595,7 @@ struct NTLMContext {
 
     void ntlm_generate_server_sealing_key()
     {
-	ntlm_generate_sealing_key(server_seal_magic, sizeof(server_seal_magic),
+        ntlm_generate_sealing_key(server_seal_magic, sizeof(server_seal_magic),
                                   this->ServerSealingKey);
     }
 
@@ -627,7 +647,7 @@ struct NTLMContext {
 
     void ntlm_init_rc4_seal_states()
     {
-	if (this->server) {
+        if (this->server) {
             this->SendSigningKey = this->ServerSigningKey;
             this->RecvSigningKey = this->ClientSigningKey;
             this->SendSealingKey = this->ClientSealingKey;
@@ -635,7 +655,7 @@ struct NTLMContext {
             this->SendRc4Seal.set_key(this->ServerSealingKey, 16);
             this->RecvRc4Seal.set_key(this->ClientSealingKey, 16);
         }
-	else {
+        else {
             this->SendSigningKey = this->ClientSigningKey;
             this->RecvSigningKey = this->ServerSigningKey;
             this->SendSealingKey = this->ServerSealingKey;
@@ -654,6 +674,7 @@ struct NTLMContext {
         BStream & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
         BStream & UserName = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
         size_t temp_size = AuthNtResponse.size() - 16;
+        // LOG(LOG_INFO, "tmp size = %u", temp_size);
         uint8_t NtProofStr_from_msg[16] = {};
         AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
         uint8_t * temp = new uint8_t[temp_size];
@@ -662,11 +683,17 @@ struct NTLMContext {
 
         uint8_t NtProofStr[16] = {};
         uint8_t ResponseKeyNT[16] = {};
+        // LOG(LOG_INFO, "NTLM CHECK NT RESPONSE FROM AUTHENTICATE");
+        // LOG(LOG_INFO, "UserName size = %u", UserName.size());
+        // LOG(LOG_INFO, "DomainName size = %u", DomainName.size());
+        // LOG(LOG_INFO, "hash size = %u", hash_size);
+
         this->NTOWFv2_FromHash(hash, hash_size,
                                UserName.get_data(), UserName.size(),
                                DomainName.get_data(), DomainName.size(),
                                ResponseKeyNT, sizeof(ResponseKeyNT));
-
+        // LOG(LOG_INFO, "ResponseKeyNT");
+        // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
         SslHMAC_Md5 hmac_md5resp(ResponseKeyNT, sizeof(ResponseKeyNT));
         hmac_md5resp.update(this->ServerChallenge, 8);
         hmac_md5resp.update(temp, temp_size);
@@ -760,31 +787,31 @@ struct NTLMContext {
             negoFlag |= NTLMSSP_NEGOTIATE_OEM;
         }
 
-	negoFlag |= NTLMSSP_NEGOTIATE_KEY_EXCH;
-	negoFlag |= NTLMSSP_NEGOTIATE_128;
-	negoFlag |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
-	negoFlag |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
-	negoFlag |= NTLMSSP_NEGOTIATE_NTLM;
-	negoFlag |= NTLMSSP_NEGOTIATE_SIGN;
-	negoFlag |= NTLMSSP_REQUEST_TARGET;
-	negoFlag |= NTLMSSP_NEGOTIATE_UNICODE;
+        negoFlag |= NTLMSSP_NEGOTIATE_KEY_EXCH;
+        negoFlag |= NTLMSSP_NEGOTIATE_128;
+        negoFlag |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
+        negoFlag |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
+        negoFlag |= NTLMSSP_NEGOTIATE_NTLM;
+        negoFlag |= NTLMSSP_NEGOTIATE_SIGN;
+        negoFlag |= NTLMSSP_REQUEST_TARGET;
+        negoFlag |= NTLMSSP_NEGOTIATE_UNICODE;
 
-	if (this->confidentiality) {
+        if (this->confidentiality) {
             negoFlag |= NTLMSSP_NEGOTIATE_SEAL;
         }
 
-	if (this->SendVersionInfo) {
+        if (this->SendVersionInfo) {
             negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
         }
 
-	if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
+        if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
             this->version.ntlm_get_version_info();
         }
         else {
             this->version.ignore_version_info();
         }
 
-	this->NegotiateFlags = negoFlag;
+        this->NegotiateFlags = negoFlag;
         this->NEGOTIATE_MESSAGE.negoFlags.flags = negoFlag;
     }
 
@@ -803,32 +830,32 @@ struct NTLMContext {
         if (this->SendWorkstationName) {
             negoFlag |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
         }
-	if (this->confidentiality) {
+        if (this->confidentiality) {
             negoFlag |= NTLMSSP_NEGOTIATE_SEAL;
         }
         if (this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH) {
             negoFlag |= NTLMSSP_NEGOTIATE_KEY_EXCH;
         }
-	negoFlag |= NTLMSSP_NEGOTIATE_128;
-	negoFlag |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
-	negoFlag |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
-	negoFlag |= NTLMSSP_NEGOTIATE_NTLM;
-	negoFlag |= NTLMSSP_NEGOTIATE_SIGN;
-	negoFlag |= NTLMSSP_REQUEST_TARGET;
-	negoFlag |= NTLMSSP_NEGOTIATE_UNICODE;
+        negoFlag |= NTLMSSP_NEGOTIATE_128;
+        negoFlag |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
+        negoFlag |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
+        negoFlag |= NTLMSSP_NEGOTIATE_NTLM;
+        negoFlag |= NTLMSSP_NEGOTIATE_SIGN;
+        negoFlag |= NTLMSSP_REQUEST_TARGET;
+        negoFlag |= NTLMSSP_NEGOTIATE_UNICODE;
 
-	// if (this->SendVersionInfo) {
+        // if (this->SendVersionInfo) {
         //     negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
         // }
 
-	if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
+        if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
             this->version.ntlm_get_version_info();
         }
         else {
             this->version.ignore_version_info();
         }
 
-	this->NegotiateFlags = negoFlag;
+        this->NegotiateFlags = negoFlag;
         this->AUTHENTICATE_MESSAGE.negoFlags.flags = negoFlag;
     }
 
@@ -1035,11 +1062,11 @@ struct NTLMContext {
             this->Workstation.init(host_len * 2);
             UTF8toUTF16(workstation, this->Workstation.get_data(), host_len * 2);
             this->SendWorkstationName = true;
-	}
+        }
         else {
             this->Workstation.init(0);
             this->SendWorkstationName = false;
-	}
+        }
     }
     void ntlm_SetContextServicePrincipalName(const uint8_t * pszTargetName) {
         // CHECK UTF8 or UTF16 (should store in UTF16)
@@ -1047,10 +1074,10 @@ struct NTLMContext {
             size_t host_len = UTF8Len(pszTargetName);
             this->ServicePrincipalName.init(host_len * 2);
             UTF8toUTF16(pszTargetName, this->ServicePrincipalName.get_data(), host_len * 2);
-	}
+        }
         else {
             this->ServicePrincipalName.init(0);
-	}
+        }
     }
 
 
@@ -1088,7 +1115,7 @@ struct NTLMContext {
         this->SavedNegotiateMessage.copy(in_stream.get_data(), in_stream.size());
 
         this->state = NTLM_STATE_CHALLENGE;
-	return SEC_I_CONTINUE_NEEDED;
+        return SEC_I_CONTINUE_NEEDED;
     }
     SEC_STATUS write_challenge(PSecBuffer output_buffer) {
         if (this->verbose & 0x400) {
@@ -1103,7 +1130,7 @@ struct NTLMContext {
         this->SavedChallengeMessage.init(out_stream.size());
         this->SavedChallengeMessage.copy(out_stream.get_data(), out_stream.size());
 
-	this->state = NTLM_STATE_AUTHENTICATE;
+        this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
     }
     SEC_STATUS read_challenge(PSecBuffer input_buffer) {
@@ -1176,17 +1203,24 @@ struct NTLMContext {
         this->identity.User.init(this->AUTHENTICATE_MESSAGE.UserName.Buffer.size());
         this->identity.User.copy(this->AUTHENTICATE_MESSAGE.UserName.Buffer.get_data(),
                                   this->AUTHENTICATE_MESSAGE.UserName.Buffer.size());
+        // LOG(LOG_INFO, "USER from authenticate size = %u", this->identity.User.size());
+        // hexdump_c(this->identity.User.get_data(), this->identity.User.size());
         this->identity.Domain.init(this->AUTHENTICATE_MESSAGE.DomainName.Buffer.size());
         this->identity.Domain.copy(this->AUTHENTICATE_MESSAGE.DomainName.Buffer.get_data(),
                                     this->AUTHENTICATE_MESSAGE.DomainName.Buffer.size());
+        // LOG(LOG_INFO, "DOMAIN from authenticate size = %u", this->identity.Domain.size());
+        // hexdump_c(this->identity.Domain.get_data(), this->identity.Domain.size());
 
-
+        if ((this->identity.User.size() == 0) &&
+            (this->identity.Domain.size() == 0)) {
+            LOG(LOG_ERR, "ANONYMOUS User not allowed");
+            return SEC_E_LOGON_DENIED;
+        }
         uint8_t hash[16];
         this->ntlm_server_fetch_hash(hash);
         SEC_STATUS status = this->ntlm_server_proceed_authenticate(hash);
         return status;
     }
 };
-
 
 #endif

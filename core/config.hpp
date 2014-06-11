@@ -1086,7 +1086,7 @@ public:
         this->translation.connection_closed.set_from_cstr("Connection closed");
         this->translation.connection_closed.attach_ini(this, AUTHID_TRANS_CONNECTION_CLOSED);
 
-        this->translation.help_message.set_from_cstr("Help message");
+        this->translation.help_message.set_from_cstr("");
         this->translation.help_message.attach_ini(this, AUTHID_TRANS_HELP_MESSAGE);
 
         this->translation.manager_close_cnx.set_from_cstr("Connection closed by manager");

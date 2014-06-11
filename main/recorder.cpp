@@ -215,7 +215,7 @@ int main(int argc, char** argv)
     if (capture.capture_png){
         capture.psc->zoom(zoom);
     }
-    player.add_consumer(&capture);
+    player.add_consumer((RDPGraphicDevice * )&capture, (RDPCaptureDevice * )&capture);
 
     int return_code = 0;
     try {

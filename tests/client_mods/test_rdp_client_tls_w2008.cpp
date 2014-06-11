@@ -68,12 +68,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     FakeFront front(info, verbose);
 
     const char * name       = "RDP W2008 TLS Target";
-//     int          client_sck = ip_connect("192.168.1.50", 3389, 3, 1000, verbose);
+//     int          client_sck = ip_connect("10.10.46.78", 3389, 3, 1000, verbose);
 
 //     redemption::string  error_message;
 //     SocketTransport     t( name
 //                          , client_sck
-//                          , "192.168.1.50"
+//                          , "10.10.46.78"
 //                          , 3389
 //                          , verbose
 //                          , &error_message
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     ModRDPParams mod_rdp_params( "administrateur@qa"
                                , "S3cur3!1nux"
-                               , "192.168.1.50"
+                               , "10.10.46.78"
                                , "192.168.1.100"
                                , 7
                                , 511

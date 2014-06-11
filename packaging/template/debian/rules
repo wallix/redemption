@@ -3,9 +3,17 @@
 export DH_VERBOSE=10
 export DESTDIR=debian/buildtmp
 
-BJAM_EXTRA_INSTALL=
+export PREFIX=%PREFIX%
+export ETC_PREFIX=%ETC_PREFIX%
+export CERT_PREFIX=%CERT_PREFIX%
+export RDPLICENSE_PATH=$CERT_PREFIX/rdplicense
+export RDPCERT_PATH=$CERT_PREFIX/rdp
+export RECORD_PATH=%RECORD_PATH%
+export RECORD_TMP_PATH=%RECORD_TMP_PATH%
+export HASH_PATH=/var/lib/hash
+export PERSISTENT_PATH=/var/lib/redemption/cache
 
-%setenv
+BJAM_EXTRA_INSTALL=%DEBUG_OPT%
 
 clean:
 	# dh_testdir - test directory before building Debian package. It makes sure

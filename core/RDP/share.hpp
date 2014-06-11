@@ -40,6 +40,15 @@ enum {
     PDUTYPE_DEACTIVATEALLPDU       = 6,
     PDUTYPE_DATAPDU                = 7,
     PDUTYPE_SERVER_REDIR_PKT       = 10,
+    FLOWPDU                        = 11, // FlowPDU from T.128
+};
+
+// PDUTypeFlow ::= INTEGER {flowResponsePDU(66), flowStopPDU(67), flowTestPDU(65)
+// }(0..255)
+enum {
+    FLOW_RESPONSE_PDU = 66,
+    FLOW_STOP_PDU     = 67,
+    FLOW_TEST_PDU     = 65
 };
 
 enum {
@@ -118,12 +127,19 @@ struct ShareControl_Recv
     uint8_t pdu_type1;
     TODO("Rename to PDUSource");
     uint16_t mcs_channel;
+    //flow_pdu fields
+    uint8_t flow_pdu_type;
+    uint8_t flow_id;
+    uint16_t flow_number;
 
     ShareControl_Recv(Stream & stream)
     : payload(stream, 0)
     , totalLength(0)
     , pdu_type1(0)
     , mcs_channel(0)
+    , flow_pdu_type(0)
+    , flow_id(0)
+    , flow_number(0)
     {
         const unsigned expected = 4; /* totalLength(2) + pdu_type1(2) */
         if (!stream.in_check_rem(expected)){
@@ -134,7 +150,44 @@ struct ShareControl_Recv
 
         this->totalLength = stream.in_uint16_le();
 
+        // LOG(LOG_INFO, "ShareControl packet recv: TotalLength=%u", this->totalLength);
+        if (this->totalLength == 0x8000) {
+            // FlowPDU ::= SEQUENCE {
+            // flowMarker
+            // Integer16(32768), -- ('8000'H),
+            // -- distinguishes FlowPDUs from ASPDUs
+            // -- containing ShareControlHeaders
+            // pad8bits
+            // Integer8(0),
+            // pduTypeFlow
+            // PDUTypeFlow(flowResponsePDU | flowStopPDU | flowTestPDU),
+            // flowIdentifier Integer8(0..127),
+            // flowNumber
+            // Integer8,
+            // -- shall be zero for PDUType FlowStopPDU
+            // pduSource
+            // UserID
+            // -- MCS User ID of sending ASCE
+            // }
+            this->flow_pdu_type = stream.in_uint8();
+            stream.in_skip_bytes(1);
+            this->flow_id = stream.in_uint8();
+            this->flow_number = stream.in_uint8();
+            this->mcs_channel = stream.in_uint16_le();
+            LOG(LOG_INFO, "ShareControl packet recv : FlowPDU received -> ignored");
+            LOG(LOG_INFO, "PDUTypeFlow=%u", this->flow_pdu_type);
+            if (stream.in_remain()) {
+                LOG(LOG_INFO, "remaining bytes in FlowPDU remains %u bytes", stream.in_remain());
+            }
+            this->totalLength = 8 + stream.in_remain();
+            this->pdu_type1 = FLOWPDU;
+            this->payload.resize(stream, stream.in_remain());
+            return;
+        }
+
         this->pdu_type1 = stream.in_uint16_le() & 0xF;
+        // LOG(LOG_INFO, "ShareControl packet recv: PDUTYPE=%u", this->pdu_type1);
+
         if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4){
             // should not happen
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
@@ -157,7 +210,8 @@ struct ShareControl_Recv
         size_t new_size = this->totalLength - 6;
 
         if (!stream.in_check_rem(new_size)){
-            LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=2 remains=%u",
+            LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=%u remains=%u",
+                new_size,
                 stream.in_remain());
             throw Error(ERR_SEC);
         }
@@ -282,6 +336,10 @@ namespace RDP {
 // | 50 PDUTYPE2_ARC_STATUS_PDU        | Auto-Reconnect Status PDU             |
 // |                                   |    (section 2.2.4.1.1)                |
 // +-----------------------------------+---------------------------------------+
+// | 54 PDUTYPE2_STATUS_INFO_PDU       | Status Info PDU (section 2.2.5.2)     |
+// +-----------------------------------+---------------------------------------+
+// | 55 PDUTYPE2_MONITOR_LAYOUT_PDU    | Monitor Layout PDU (section 2.2.12.1) |
+// +-----------------------------------+---------------------------------------+
 
 enum {
     PDUTYPE2_UPDATE                      = 2,  // Update PDU (section 2.2.9.1.1.3)
@@ -316,6 +374,8 @@ enum {
                                                // (see [MS-RDPEGDI] section 2.2.2.3.4)
     PDUTYPE2_ARC_STATUS_PDU              = 50, // Auto-Reconnect Status PDU
                                                // (section 2.2.4.1.1)
+    PDUTYPE2_STATUS_INFO_PDU             = 54, // Status Info PDU (section 2.2.5.2)
+    PDUTYPE2_MONITOR_LAYOUT_PDU          = 55  // Monitor Layout PDU (section 2.2.12.1)
 };
 
 // compressedType (1 byte): An 8-bit, unsigned integer. The compression type
@@ -479,5 +539,35 @@ struct ShareData
         }
     } // END METHOD recv_end
 }; // END CLASS ShareData
+
+//##############################################################################
+struct FlowPDU_Send
+//##############################################################################
+{
+    FlowPDU_Send(Stream & stream, uint8_t flow_pdu_type, uint8_t flow_identifier,
+                 uint8_t flow_number, uint16_t pdu_source)
+    {
+        stream.out_uint16_le(0x8000);
+        stream.out_uint8(flow_pdu_type);
+        stream.out_uint8(0);
+        stream.out_uint8(flow_identifier);
+        stream.out_uint8(flow_number);
+        stream.out_uint16_le(pdu_source);
+        stream.mark_end();
+    }
+}; // END CLASS FlowPDU_Send
+// FlowPDU ::= SEQUENCE {
+// flowMarker
+// Integer16(32768), -- ('8000'H),
+// -- distinguishes FlowPDUs from ASPDUs
+// -- containing ShareControlHeaders
+// pad8bits  Integer8(0),
+// pduTypeFlow  PDUTypeFlow(flowResponsePDU | flowStopPDU | flowTestPDU),
+// flowIdentifier Integer8(0..127),
+// flowNumber Integer8,
+// -- shall be zero for PDUType FlowStopPDU
+// pduSource UserID
+// -- MCS User ID of sending ASCE
+// }
 
 #endif
