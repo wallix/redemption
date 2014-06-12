@@ -468,8 +468,8 @@ class Sesman():
                 data_to_send = { u'login'                   : wab_login
                                , u'target_login'            : target_login
                                , u'target_device'           : target_device
-                               , u'proto_dest'              : proto_dest
-                               , u'module'                  : u'transitory'
+                               , u'proto_dest'              : proto_dest if proto_dest != u'INTERNAL' else u'RDP'
+                               , u'module'                  : u'transitory' if proto_dest != u'INTERNAL' else u'INTERNAL'
                                }
                 self.send_data(data_to_send)
                 _status = True
@@ -479,9 +479,17 @@ class Sesman():
                 services = []
                 for right in self.engine.rights:
                     if not right.resource.application:
-                        temp_service_login                = right.service_login
-                        temp_resource_service_protocol_cn = right.resource.service.protocol.cn
-                        temp_resource_device_cn           = right.resource.device.cn
+                        if (right.resource.device.host == u'autotest' or
+                            right.resource.device.host == u'bouncer2' or
+                            right.resource.device.host == u'widget2_message' or
+                            right.resource.device.host == u'test_card'):
+                            temp_service_login                = right.service_login.replace(u':RDP', u':INTERNAL', 1)
+                            temp_resource_service_protocol_cn = 'INTERNAL'
+                            temp_resource_device_cn           = right.resource.device.cn
+                        else:
+                            temp_service_login                = right.service_login
+                            temp_resource_service_protocol_cn = right.resource.service.protocol.cn
+                            temp_resource_device_cn           = right.resource.device.cn
                     else:
                         temp_service_login                = right.service_login + u':APP'
                         temp_resource_service_protocol_cn = u'APP'
@@ -607,7 +615,7 @@ class Sesman():
                 elif len(services) == 1:
                     s = services[0]
                     data_to_send = {}
-                    data_to_send[u'module'] = u'transitory'
+                    data_to_send[u'module'] = u'transitory' if s[2] != u'INTERNAL' else u'INTERNAL'
                     if s[2] == u'APP':
                         data_to_send[u'target_login'] = '@'.join(s[1].split('@')[:-1])
                         data_to_send[u'target_device'] = s[4]
@@ -620,7 +628,7 @@ class Sesman():
                     else:
                         data_to_send[u'target_login'] = '@'.join(s[1].split('@')[:-1])
                         data_to_send[u'target_device'] = s[4]
-                        data_to_send[u'proto_dest'] = s[2]
+                        data_to_send[u'proto_dest'] = s[2] if s[2] != u'INTERNAL' else u'RDP'
 
                         self._full_user_device_account = u"%s@%s:%s" % ( self.shared.get(u'target_login')
                                                                        , self.shared.get(u'target_device')
