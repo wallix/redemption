@@ -104,6 +104,8 @@ class Sesman():
         self.shared[u'auth_channel_result'] = u''
         self.shared[u'auth_channel_target'] = u''
 
+        self.internal_mod = False
+
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
         french_layouts = [0x0000040C, # French (France)
@@ -146,7 +148,6 @@ class Sesman():
         #         data[u'password'] = u''
         #         Logger().info(u"Update password")
         #     data.update({})
-
 
         # replace MAGICASK with ASK and send data on the wire
         _list = []
@@ -471,6 +472,8 @@ class Sesman():
                                , u'proto_dest'              : proto_dest if proto_dest != u'INTERNAL' else u'RDP'
                                , u'module'                  : u'transitory' if proto_dest != u'INTERNAL' else u'INTERNAL'
                                }
+                if data_to_send.has_key(u'module') and not self.internal_mod:
+                    self.internal_mod = True if data_to_send[u'module'] == u'INTERNAL' else False
                 self.send_data(data_to_send)
                 _status = True
             elif self.shared.get(u'selector') == MAGICASK:
@@ -634,6 +637,8 @@ class Sesman():
                                                                        , self.shared.get(u'target_device')
                                                                        , self.shared.get(u'login')
                                                                        )
+                    if data_to_send.has_key(u'module') and not self.internal_mod:
+                        self.internal_mod = True if data_to_send[u'module'] == u'INTERNAL' else False
                     self.send_data(data_to_send)
                     _status = True
                 else:
@@ -1038,9 +1043,10 @@ class Sesman():
                                     self.shared[u'auth_channel_target'] = u''
 
                             else: # (if self.proxy_conx in r)
-                                Logger().error(u'break connection')
-                                release_reason = u'Break connection'
-                                break
+                                if not self.internal_mod:
+                                    Logger().error(u'break connection')
+                                    release_reason = u'Break connection'
+                                    break
 
                         Logger().debug(u"End Of Keep Alive")
 
