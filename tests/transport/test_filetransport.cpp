@@ -33,8 +33,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "outfiletransport.hpp"
-#include "infiletransport.hpp"
+#include "filetransport.hpp"
 #include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFileTransport)

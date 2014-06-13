@@ -110,7 +110,8 @@ static inline bool raw_read(int fd, uint8_t * buffer, size_t requested)
     return true;
 }
 
-struct crypto_file {
+struct crypto_file
+{
 private:
     int            fd;                      // system file descriptor
     int            oflag;                   // file output flag (O_RDONLY or O_WRONLY)

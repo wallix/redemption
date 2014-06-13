@@ -21,7 +21,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestInfileTransport
+#define BOOST_TEST_MODULE TestOutFilenameSequenceTransport
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
@@ -29,37 +29,20 @@
 
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
-#include "file_transport.hpp"
-#include "error.hpp"
+#include "filename_sequence_transport.hpp"
 
-BOOST_AUTO_TEST_CASE(TestInfileTransport)
+BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
 {
-    int fd = ::open("./tests/fixtures/test_infile.txt", O_RDONLY);
+    OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid());
+    fnt.send("We write, ", 10);
+    fnt.send("and again, ", 11);
+    fnt.send("and so on.", 10);
 
-    {
-        InFileTransport in(fd);
+    fnt.next();
+    fnt.send(" ", 1);
+    fnt.send("A new file.", 11);
 
-        uint8_t buffer[1024];
-
-        uint8_t * p = buffer;
-        in.recv(&p, 3);
-        BOOST_CHECK_EQUAL(3, p-buffer);
-        BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
-        p = buffer + 3;
-        try {
-            in.recv(&p, 1024);
-            BOOST_CHECK(false);
-        }
-        catch(Error &)
-        {
-            BOOST_CHECK_EQUAL(24, p-buffer);
-            BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
-        }
-    }
-
-    ::close(fd);
+    fnt.request_full_cleaning();
 }
+

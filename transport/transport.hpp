@@ -94,6 +94,9 @@ public:
     uint32_t get_quantum_count() const
     { return this->quantum_count; }
 
+    virtual bool get_status() const
+    { return this->status; }
+
     void set_authentifier(auth_api * authentifier)
     {
         this->authentifier = authentifier;

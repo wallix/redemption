@@ -456,6 +456,7 @@ unit-test test_infiletransport : tests/transport/test_infiletransport.cpp crypto
 #unit-test test_infilenametransport : tests/transport/test_infilenametransport.cpp openssl crypto z dl libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_inbymetasequencetransport : tests/transport/test_inbymetasequencetransport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_outfilenametransport : tests/transport/test_outfilenametransport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_filename_sequence_transport : tests/transport/test_filename_sequence_transport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_outmetatransport : tests/transport/test_outmetatransport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_testtransport : tests/transport/test_testtransport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_counttransport : tests/transport/test_counttransport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;

@@ -82,7 +82,7 @@ public:
 
     int close() /*noexcept*/
     {
-        if (this->fd != -1) {
+        if (this->is_open()) {
             const int ret = ::close(this->fd);
             this->fd = -1;
             return ret;
@@ -95,12 +95,12 @@ public:
         return -1 != this->fd;
     }
 
-    ssize_t read(char * data, size_t len) const /*noexcept*/
+    ssize_t read(void * data, size_t len) const /*noexcept*/
     {
         return read_all(this->fd, data, len);
     }
 
-    ssize_t write(const char * data, size_t len) const /*noexcept*/
+    ssize_t write(const void * data, size_t len) const /*noexcept*/
     {
         return write_all(this->fd, data, len);
     }

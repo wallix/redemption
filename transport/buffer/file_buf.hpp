@@ -1,0 +1,58 @@
+/*
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *   Product name: redemption, a FLOSS RDP proxy
+ *   Copyright (C) Wallix 2010-2013
+ *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
+ */
+
+#ifndef REDEMPTION_PUBLIC_TRANSPORT_BUFFER_FILE_BUF_HPP
+#define REDEMPTION_PUBLIC_TRANSPORT_BUFFER_FILE_BUF_HPP
+
+#include "fdbuf.hpp"
+
+namespace transbuf {
+    class ifile_base
+    {
+        io::posix::fdbuf fdbuf;
+
+    public:
+        int open(const char * filename) /*noexcept*/
+        { return this->fdbuf.open(filename, O_RDONLY, 0600); }
+
+        int close() /*noexcept*/
+        { return this->fdbuf.close(); }
+
+        ssize_t read(void * data, size_t len) /*noexcept*/
+        { return this->fdbuf.read(data, len); }
+    };
+
+    class ofile_base
+    {
+        io::posix::fdbuf fdbuf;
+
+    public:
+        int open(const char * filename) /*noexcept*/
+        { return this->fdbuf.open(filename, O_WRONLY | O_CREAT, 0600); }
+
+        int close() /*noexcept*/
+        { return this->fdbuf.close(); }
+
+        ssize_t write(const void * data, size_t len) /*noexcept*/
+        { return this->fdbuf.write(data, len); }
+    };
+}
+
+#endif

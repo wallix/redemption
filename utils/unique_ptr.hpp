@@ -22,6 +22,18 @@
 #ifndef REDEMPTION_PUBLIC_UTILS_UNIQUE_PTR_HPP
 #define REDEMPTION_PUBLIC_UTILS_UNIQUE_PTR_HPP
 
+#include <cstdlib>
+
+template<class T>
+struct default_free
+{
+    void operator()(T * p) const
+    {
+        ::free(p);
+    }
+};
+
+
 #if __cplusplus >= 201103L && !defined(IN_IDE_PARSER)
 
 #include <memory>

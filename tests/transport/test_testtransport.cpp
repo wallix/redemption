@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "testtransport.hpp"
+#include "test_transport.hpp"
 #include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
@@ -73,10 +73,10 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
     try {
         gt.recv(&p, 1);
         BOOST_CHECK_EQUAL(true, false);
-    } catch (Error e) {
+    } catch (Error & e) {
         BOOST_CHECK_EQUAL(p-buffer, 0);
         BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_TRANSPORT_NO_MORE_DATA));
-    };
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestGeneratorTransport2)
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport2)
     try {
         gt.recv(&p, 13);
         BOOST_CHECK(false);
-    } catch (Error e) {
+    } catch (Error & e) {
         BOOST_CHECK_EQUAL(p-buffer, 12);
         BOOST_CHECK_EQUAL(0, strncmp(buffer, " we provide!", 12));
         BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_TRANSPORT_NO_MORE_DATA));

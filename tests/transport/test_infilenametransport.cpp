@@ -27,8 +27,7 @@
 #define LOGPRINT
 #include "log.hpp"
 
-#include "infilenametransport.hpp"
-#include "outfilenametransport.hpp"
+#include "crypto_filename_transport.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestInfilenameCrypto)
@@ -60,6 +59,7 @@ BOOST_AUTO_TEST_CASE(TestInfilenameCrypto)
         char ** p = &sp;
         out.recv(p, 5);
         BOOST_CHECK_EQUAL(sp-s, 5);
+        BOOST_CHECK_EQUAL(strncmp(s, "ABCDE", 5), 0);
         try {
             sp = s;
             p = &sp;
