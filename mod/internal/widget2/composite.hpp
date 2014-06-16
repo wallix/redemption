@@ -228,19 +228,6 @@ public:
 
             iter_w_current = this->impl->get_next(iter_w_current);
         }
-
-        // CompositeContainer::iterator iter_w_first = this->impl->get_first();
-        // if (iter_w_first != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-        //     CompositeContainer::iterator iter_w_current = iter_w_first;
-        //     do {
-        //         Widget2 * w = this->impl->get(iter_w_current);
-        //         REDASSERT(w);
-        //         w->refresh(clip.intersect(w->rect));
-
-        //         iter_w_current = this->impl->get_next(iter_w_current);
-        //     }
-        //     while (iter_w_current != iter_w_first);
-        // }
     }
     virtual void draw_inner_free(const Rect & clip, int bg_color) {
         Region region;
@@ -258,23 +245,6 @@ public:
 
             iter_w_current = this->impl->get_next(iter_w_current);
         }
-
-        // CompositeContainer::iterator iter_w_first = this->impl->get_first();
-        // if (iter_w_first != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-        //     CompositeContainer::iterator iter_w_current = iter_w_first;
-        //     do {
-        //         Widget2 * w = this->impl->get(iter_w_current);
-        //         REDASSERT(w);
-
-        //         Rect rect = clip.intersect(w->rect);
-        //         if (!rect.isempty()) {
-        //             region.subtract_rect(rect);
-        //         }
-
-        //         iter_w_current = this->impl->get_next(iter_w_current);
-        //     }
-        //     while (iter_w_current != iter_w_first);
-        // }
 
         for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
             this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
@@ -296,7 +266,8 @@ public:
 
                 iter_w_current = this->impl->get_next(iter_w_current);
             }
-            while (iter_w_current != iter_w_first);
+            while ((iter_w_current != iter_w_first) &&
+                   (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)));
         }
     }
 
@@ -366,20 +337,6 @@ public:
                 return this->current_focus;
             }
         }
-        // CompositeContainer::iterator iter_w_first = this->impl->get_first();
-        // if (iter_w_first != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-        //     CompositeContainer::iterator iter_w_current = iter_w_first;
-        //     do {
-        //         Widget2 * w = this->impl->get(iter_w_current);
-        //         REDASSERT(w);
-        //         if (w->rect.contains_pt(x, y)) {
-        //             return w;
-        //         }
-
-        //         iter_w_current = this->impl->get_next(iter_w_current);
-        //     }
-        //     while (iter_w_current != iter_w_first);
-        // }
         CompositeContainer::iterator iter_w_current = this->impl->get_first();
         while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             Widget2 * w = this->impl->get(iter_w_current);

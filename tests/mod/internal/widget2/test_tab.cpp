@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                                   , wtab.cy()
                                   ));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "tab_0.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "tab_0.png");
 
     char message[1024];
     if (!check_sig( drawable.gd.drawable, message
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
 
     drawable.draw(RDPOpaqueRect(Rect(mouse_x + 2, mouse_y, 1, 1), GREEN), parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "tab_1.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "tab_1.png");
 
     if (!check_sig( drawable.gd.drawable, message
                   , "\x2d\xb0\xd3\x13\xc9\x3e\xc1\x62\xa7\x43"
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
 
     drawable.draw(RDPOpaqueRect(Rect(mouse_x + 2, mouse_y, 1, 1), GREEN), parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "tab_2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "tab_2.png");
 
     if (!check_sig( drawable.gd.drawable, message
                   , "\x2d\xb0\xd3\x13\xc9\x3e\xc1\x62\xa7\x43"
