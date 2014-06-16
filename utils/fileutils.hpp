@@ -407,7 +407,7 @@ static inline int parse_ip_conntrack(int fd, const char * source, const char * d
             "src=%s +"
             "dst=%s +"
             "sport=%d +dport=%d .*"
-            "\\[ASSURED].+$",
+            "\\[ASSURED].*",
             source, dest, sport, dport
     );
 #undef RE_IP_DEF

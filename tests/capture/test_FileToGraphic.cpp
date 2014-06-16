@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
-    png_recorder.update_config(ini);
+//    png_recorder.update_config(ini);
     player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
 
     OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);

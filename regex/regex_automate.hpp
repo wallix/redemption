@@ -1348,7 +1348,7 @@ namespace re {
                             if (((exact_match ? stl.next_is_finish && !consumer.valid() : stl.next_is_finish)
                                 && (stl.st->type != SEQUENCE
                                  || stl.st->data.sequence.len+1 == ifirst->real_count_consume))
-                            || (stl.is_terminate && count_consume_is_one && !consumer.valid())) {
+                            || (stl.is_terminate && count_consume_is_one)) {
                                 return active_capture ? ifirst->idx : 0;
                             }
                         }
@@ -1366,12 +1366,8 @@ namespace re {
                                 }
                             }
 
-                            if (stl.next_is_finish || (stl.is_terminate && !consumer.valid())) {
+                            if (stl.next_is_finish || stl.is_terminate) {
                                 return active_capture ? ifirst->idx : 0;
-                            }
-
-                            if (stl.is_terminate && consumer.valid()) {
-                                continue ;
                             }
 
                             if(active_capture) {
@@ -1615,7 +1611,7 @@ namespace re {
                             tracer.good(result);
                         }
                         this->set_pos(ppos);
-                        return (false == exact_match || !this->consumer.valid()) ? match_success : match_fail;
+                        return match_success;
                     }
                     if (exact_match == true && this->pal2->empty()) {
                         this->set_pos(ppos);

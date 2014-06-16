@@ -250,9 +250,11 @@ public:
     }
 
     void flush() {
+/*
         if (this->capture_png) {
             this->psc->flush();
         }
+*/
         if (this->capture_wrm) {
             this->pnc->flush();
         }
