@@ -267,12 +267,12 @@ int main(int argc, char** argv)
 
     openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
 
-    bool user_check_file_result  =
-        ((uid != euid) || (gid != egid)) ?
-        CheckFile::check(user_check_file_list) : true;
-    bool euser_check_file_result = CheckFile::check(euser_check_file_list);
-
     if (options.count("check")) {
+        bool user_check_file_result  =
+            ((uid != euid) || (gid != egid)) ?
+            CheckFile::check(user_check_file_list) : true;
+        bool euser_check_file_result = CheckFile::check(euser_check_file_list);
+
         if ((uid != euid) || (gid != egid))
         {
             CheckFile::ShowAll(user_check_file_list, uid, gid);
@@ -281,21 +281,18 @@ int main(int argc, char** argv)
 
         if (!user_check_file_result || !euser_check_file_result)
         {
+            if ((uid != euid) || (gid != egid))
+            {
+                CheckFile::ShowErrors(user_check_file_list, uid, gid);
+            }
+            CheckFile::ShowErrors(euser_check_file_list, euid, egid);
+
             LOG(LOG_INFO,
                 "Please verify that all tests passed. If not, "
                     "you may need to remove " PID_PATH "/redemption/"
                     LOCKFILE " or reinstall rdpproxy if some configuration "
                     "files are missing.");
         }
-        _exit(0);
-    }
-    else if (!user_check_file_result || !euser_check_file_result)
-    {
-        if ((uid != euid) || (gid != egid))
-        {
-            CheckFile::ShowErrors(user_check_file_list, euid, egid);
-        }
-        CheckFile::ShowErrors(euser_check_file_list, euid, egid);
         _exit(0);
     }
 
