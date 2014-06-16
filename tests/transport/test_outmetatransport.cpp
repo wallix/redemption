@@ -26,8 +26,9 @@
 
 #define LOGNULL
 #include "transport.hpp"
-#include "outmetatransport.hpp"
-#include "outfilenametransport.hpp"
+// #include "outmetatransport.hpp"
+#include "meta_transport.hpp"
+#include "fileutils.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
@@ -37,7 +38,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         now.tv_sec = 1352304810;
         now.tv_usec = 0;
         const int groupid = 0;
-        OutmetaTransport wrm_trans("./", "xxx", now, 800, 600, groupid);
+        OutMetaTransport wrm_trans("./", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();

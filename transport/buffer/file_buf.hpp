@@ -30,13 +30,19 @@ namespace transbuf {
 
     public:
         int open(const char * filename) /*noexcept*/
-        { return this->fdbuf.open(filename, O_RDONLY, 0600); }
+        { return this->fdbuf.open(filename, O_RDONLY); }
+
+        int open(const char * filename, mode_t mode) /*noexcept*/
+        { return this->fdbuf.open(filename, O_RDONLY, mode); }
 
         int close() /*noexcept*/
         { return this->fdbuf.close(); }
 
         ssize_t read(void * data, size_t len) /*noexcept*/
         { return this->fdbuf.read(data, len); }
+
+        bool ready() const
+        { return this->fdbuf.is_open(); }
     };
 
     class ofile_base
@@ -45,13 +51,19 @@ namespace transbuf {
 
     public:
         int open(const char * filename) /*noexcept*/
-        { return this->fdbuf.open(filename, O_WRONLY | O_CREAT, 0600); }
+        { return this->fdbuf.open(filename, O_WRONLY | O_CREAT); }
+
+        int open(const char * filename, mode_t mode) /*noexcept*/
+        { return this->fdbuf.open(filename, O_WRONLY | O_CREAT, mode); }
 
         int close() /*noexcept*/
         { return this->fdbuf.close(); }
 
         ssize_t write(const void * data, size_t len) /*noexcept*/
         { return this->fdbuf.write(data, len); }
+
+        bool ready() const
+        { return this->fdbuf.is_open(); }
     };
 }
 

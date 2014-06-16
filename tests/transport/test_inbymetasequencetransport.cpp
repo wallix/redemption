@@ -21,7 +21,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestInByMetaSequenceTransport
+#define BOOST_TEST_MODULE TestInMetaTransport
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
@@ -30,19 +30,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "staticcapture.hpp"
-#include "nativecapture.hpp"
-#include "FileToGraphic.hpp"
-#include "inbymetasequencetransport.hpp"
+// #include "inbymetasequencetransport.hpp"
+#include "meta_transport.hpp"
 #include "error.hpp"
-
-
-
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 {
     // This is what we are actually testing, chaining of several files content
-    InByMetaSequenceTransport wrm_trans("./tests/fixtures/sample", ".mwrm");
+    InMetaTransport wrm_trans("./tests/fixtures/sample", ".mwrm");
     char buffer[10000];
     char * pbuffer = buffer;
     size_t total = 0;
@@ -71,29 +66,29 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 
     // This is what we are actually testing, chaining of several files content
     {
-        InByMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
+        InMetaTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
-        mwrm_trans.next_chunk_info();
+        mwrm_trans.next();
         BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path());
-        BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time);
-        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time);
+        BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
 
-        mwrm_trans.next_chunk_info();
+        mwrm_trans.next();
         BOOST_CHECK_EQUAL("./tests/fixtures/sample1.wrm", mwrm_trans.path());
-        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time);
-        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time);
+        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
 
-        mwrm_trans.next_chunk_info();
+        mwrm_trans.next();
         BOOST_CHECK_EQUAL("./tests/fixtures/sample2.wrm", mwrm_trans.path());
-        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time);
-        BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time);
+        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
         try {
-            mwrm_trans.next_chunk_info();
+            mwrm_trans.next();
             BOOST_CHECK(false);
         }
         catch (const Error & e){
@@ -102,26 +97,26 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
     }
 
     // check we can do it two times
-    InByMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
+    InMetaTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
 
     BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
-    mwrm_trans.next_chunk_info();
+    mwrm_trans.next();
     BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path());
-    BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time);
-    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time);
+    BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
     BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
 
-    mwrm_trans.next_chunk_info();
+    mwrm_trans.next();
     BOOST_CHECK_EQUAL("./tests/fixtures/sample1.wrm", mwrm_trans.path());
-    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time);
-    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time);
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
     BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
 
-    mwrm_trans.next_chunk_info();
+    mwrm_trans.next();
     BOOST_CHECK_EQUAL("./tests/fixtures/sample2.wrm", mwrm_trans.path());
-    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time);
-    BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time);
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
     BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
 }
@@ -138,29 +133,29 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 
     // This is what we are actually testing, chaining of several files content
     try {
-        InByMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
+        InMetaTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
-        mwrm_trans.next_chunk_info();
+        mwrm_trans.next();
         BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path());
-        BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time);
-        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time);
+        BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
 
-        mwrm_trans.next_chunk_info();
+        mwrm_trans.next();
         BOOST_CHECK_EQUAL("./tests/fixtures/sample1.wrm", mwrm_trans.path());
-        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time);
-        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time);
+        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
 
-        mwrm_trans.next_chunk_info();
+        mwrm_trans.next();
         BOOST_CHECK_EQUAL("./tests/fixtures/sample2.wrm", mwrm_trans.path());
-        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time);
-        BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time);
+        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
         try {
-            mwrm_trans.next_chunk_info();
+            mwrm_trans.next();
             BOOST_CHECK(false);
         }
         catch (const Error & e){

@@ -36,7 +36,7 @@ namespace transbuf {
                 return -1;
             }
 
-            return buf.open(filename);
+            return buf.open(filename, 0600);
         }
     }
 
@@ -90,7 +90,7 @@ namespace transbuf {
         ssize_t write(const void * data, size_t len) /*noexcept*/
         { return this->encrypt.write(this->file, data, len); }
 
-        int close(unsigned char hash[MD_HASH_LENGTH << 1], unsigned char * hmac_key) /*noexcept*/
+        int close(unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key) /*noexcept*/
         {
             const int res1 = this->encrypt.close(this->file, hash, hmac_key);
             const int res2 = this->file.close();

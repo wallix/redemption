@@ -29,7 +29,7 @@ struct InFilenameTransport
 {
     InFilenameTransport(const char * filename)
     {
-        if (this->open(filename) < 0) {
+        if (this->open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
@@ -41,7 +41,7 @@ struct OutFilenameTransport
 {
     OutFilenameTransport(const char * filename)
     {
-        if (this->open(filename) < 0) {
+        if (this->open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }

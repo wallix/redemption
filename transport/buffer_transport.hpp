@@ -55,13 +55,21 @@ protected:
     }
 };
 
-template<class Buf>
+struct nexter_transport_base
+{
+    template<class Transport, class Buf>
+    int next(Transport & trans, Buf & buf) /*noexcept*/
+    {
+        return buf.close();
+    }
+};
+
+template<class Buf, class Nexter = nexter_transport_base>
 struct InBufferTransport
 : DispatchTransport<InBufferTransport<Buf> >
 , protected Buf
+, protected Nexter
 {
-    //using Buf::Buf; //inherit constructor (C++11)
-    //@{
     InBufferTransport()
     {}
 
@@ -69,13 +77,18 @@ struct InBufferTransport
     InBufferTransport(const T & params)
     : Buf(params)
     {}
-    //@}
+
+    template<class T, class U>
+    InBufferTransport(const T & buf_params, const U & nexter_params)
+    : Buf(buf_params)
+    , Nexter(nexter_params)
+    {}
 
     void do_recv(char ** pbuffer, size_t len) {
-        ssize_t res = this->Buf::read(*pbuffer, len);
+        const ssize_t res = this->Buf::read(*pbuffer, len);
         if (res < 0){
             this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            throw Error(ERR_TRANSPORT_READ_FAILED, res);
         }
         *pbuffer += res;
         if (static_cast<size_t>(res) != len){
@@ -84,36 +97,77 @@ struct InBufferTransport
         }
     }
 
+    virtual bool next()
+    {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->Nexter::next(*this, static_cast<Buf&>(*this));
+        if (res){
+            this->status = false;
+            if (res < 0) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, res);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+            }
+        }
+        return 0;
+    }
+
 protected:
     typedef InBufferTransport TransportType;
+    typedef Buf BufferType;
+    typedef Nexter NexterType;
 };
 
-template<class Buf>
+template<class Buf, class Nexter = nexter_transport_base>
 struct OutBufferTransport
 : DispatchTransport<OutBufferTransport<Buf> >
 , protected Buf
+, protected Nexter
 {
-    //using Buf::Buf; //inherit constructor (C++11)
-    //@{
     OutBufferTransport()
     {}
 
     template<class T>
-    OutBufferTransport(const T & params)
-    : Buf(params)
+    OutBufferTransport(const T & buf_params)
+    : Buf(buf_params)
     {}
-    //@}
+
+    template<class T, class U>
+    OutBufferTransport(const T & buf_params, const U & nexter_params)
+    : Buf(buf_params)
+    , Nexter(nexter_params)
+    {}
+
+    ~OutBufferTransport()
+    {
+        this->Nexter::next(*this, static_cast<Buf&>(*this));
+    }
 
     void do_send(const char * buffer, size_t len) {
-        ssize_t res = this->Buf::write(buffer, len);
+        const ssize_t res = this->Buf::write(buffer, len);
         if (res < 0){
             this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, res);
         }
+    }
+
+    virtual bool next()
+    {
+        const ssize_t res = this->Nexter::next(*this, static_cast<Buf&>(*this));
+        if (res < 0){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, res);
+        }
+        return !res;
     }
 
 protected:
     typedef OutBufferTransport TransportType;
+    typedef Buf BufferType;
+    typedef Nexter NexterType;
 };
 
 #endif

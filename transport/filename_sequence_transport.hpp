@@ -21,25 +21,109 @@
 #ifndef REDEMPTION_PUBLIC_TRANSPORT_FILENAME_SEQUENCE_TRANSPORT_HPP
 #define REDEMPTION_PUBLIC_TRANSPORT_FILENAME_SEQUENCE_TRANSPORT_HPP
 
-#include "buffer/filename_sequence_buf.hpp"
-#include "buffer_transport.hpp"
+#include "log.hpp"
+#include "fdbuf.hpp"
 #include "sequence_generator.hpp"
+#include "buffer/input_output_buf.hpp"
+#include "buffer_transport.hpp"
+#include "buffer/filename_sequence_buf.hpp"
 
-// struct InFilenameSequenceTransport
-// : InBufferTransport<transbuf::ifile_buf>
-// {
-//     InFilenameTransport(const char * filename)
-//     {
-//         if (this->open(filename) < 0) {
-//             LOG(LOG_ERR, "failed opening=%s\n", filename);
-//             throw Error(ERR_TRANSPORT_OPEN_FAILED);
-//         }
-//     }
-// };
+#include <cstdio>
+#include <cstdlib>
+
+namespace detail
+{
+    struct FilenameSequencePolicyParams
+    {
+        FilenameGenerator::Format format;
+        const char * const prefix;
+        const char * const filename;
+        const char * const extension;
+        const int groupid;
+
+        FilenameSequencePolicyParams(FilenameGenerator::Format format,
+                                     const char * const prefix,
+                                     const char * const filename,
+                                     const char * const extension,
+                                     const int groupid) /*noexcept*/
+        : format(format)
+        , prefix(prefix)
+        , filename(filename)
+        , extension(extension)
+        , groupid(groupid)
+        {}
+    };
+
+    class FilenameSequencePolicy
+    //: public transbuf::open_close_base
+    {
+        FilenameGenerator filegen;
+        char current_filename[1024];
+        unsigned seqno;
+
+    public:
+        FilenameSequencePolicy(FilenameSequencePolicyParams const & params)
+        : filegen(params.format, params.prefix, params.filename, params.extension, params.groupid)
+        , seqno(-1u)
+        {
+            this->current_filename[0] = 0;
+        }
+
+        bool ready(const io::posix::fdbuf & file) const /*noexcept*/
+        { return file.is_open(); }
+
+        int init(io::posix::fdbuf & file) /*noexcept*/
+        {
+            if (!file.is_open()) {
+                std::snprintf(this->current_filename, sizeof(this->current_filename), "%sred-XXXXXX.tmp", this->filegen.path);
+                TODO("add rights information to constructor");
+                const int res = file.open(::mkostemps(this->current_filename, 4, O_WRONLY | O_CREAT));
+                if (res < 0) {
+                    return res;
+                }
+                if (chmod( this->current_filename, (this->filegen.groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR)) == -1) {
+                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                    , this->current_filename, strerror(errno), errno
+                    , (this->filegen.groupid ? "u+r, g+r" : "u+r"));
+                }
+                ++this->seqno;
+                this->filegen.set_last_filename(this->seqno, this->current_filename);
+            }
+            return 0;
+        }
+
+        int close(io::posix::fdbuf & file) /*noexcept*/
+        {
+            if (file.is_open()) {
+                if (file.close() < 0) {
+                    LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
+                }
+                this->filegen.set_last_filename(0, 0);
+
+                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+                const char * filename = this->filegen.get(this->seqno);
+                const int res = ::rename(this->current_filename, filename);
+                if (res < 0) {
+                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                    , this->current_filename, filename, errno, strerror(errno));
+                }
+
+                this->current_filename[0] = 0;
+            }
+            return 0;
+        }
+
+        const FilenameGenerator & seqgen() const /*noexcept*/
+        { return this->filegen; }
+
+        unsigned seqnum() const /*noexcept*/
+        { return this->seqno; }
+    };
+}
 
 
 struct OutFilenameSequenceTransport
-: OutBufferTransport<transbuf::filename_sequence_buf>
+: OutBufferTransport<transbuf::output_buf<io::posix::fdbuf, detail::FilenameSequencePolicy> >
 {
     OutFilenameSequenceTransport(FilenameGenerator::Format format,
                                  const char * const prefix,
@@ -49,7 +133,7 @@ struct OutFilenameSequenceTransport
                                  auth_api * authentifier = NULL,
                                  unsigned verbose = 0)
     : OutFilenameSequenceTransport::TransportType(
-        transbuf::filename_sequence_params(format, prefix, filename, extension, groupid))
+        detail::FilenameSequencePolicyParams(format, prefix, filename, extension, groupid))
     {
         (void)verbose;
         if (authentifier) {
@@ -57,12 +141,8 @@ struct OutFilenameSequenceTransport
         }
     }
 
-    virtual bool next()
-    {
-        return !this->close();
-    }
-
-    using OutFilenameSequenceTransport::seqgen;
+    const FilenameGenerator * seqgen() const /*noexcept*/
+    { return &this->impl().seqgen(); }
 };
 
 #endif

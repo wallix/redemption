@@ -42,7 +42,4 @@ BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
     fnt.next();
     fnt.send(" ", 1);
     fnt.send("A new file.", 11);
-
-    fnt.request_full_cleaning();
 }
-

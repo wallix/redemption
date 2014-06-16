@@ -44,7 +44,7 @@ inline ssize_t read_all(int fd, void * data, size_t len) /*noexcept*/
             if (remaining_len != len){
                 return len - remaining_len;
             }
-            return -1;
+            return ret;
         }
         // We must exit loop or we will enter infinite loop
         if (ret == 0){

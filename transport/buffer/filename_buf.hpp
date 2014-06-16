@@ -21,13 +21,12 @@
 #ifndef REDEMPTION_PUBLIC_TRANSPORT_BUFFER_FILENAME_BUF_HPP
 #define REDEMPTION_PUBLIC_TRANSPORT_BUFFER_FILENAME_BUF_HPP
 
-#include "dispatch_buf.hpp"
-#include "fd_buf.hpp"
+#include "fdbuf.hpp"
 #include "error.hpp"
 
 namespace transbuf {
     struct in_filename_buf
-    : dispatch_buf<fd_buf>
+    : private io::posix::fdbuf
     {
         in_filename_buf(const char * filename)
         {
@@ -35,10 +34,14 @@ namespace transbuf {
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
             }
         }
+
+        using io::posix::fdbuf::read;
+        using io::posix::fdbuf::close;
+        using io::posix::fdbuf::is_open;
     };
 
     struct out_filename_buf
-    : dispatch_buf<fd_buf>
+    : private io::posix::fdbuf
     {
         out_filename_buf(const char * filename)
         {
@@ -46,6 +49,10 @@ namespace transbuf {
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
             }
         }
+
+        using io::posix::fdbuf::write;
+        using io::posix::fdbuf::close;
+        using io::posix::fdbuf::is_open;
     };
 }
 

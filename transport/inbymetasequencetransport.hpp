@@ -23,7 +23,6 @@
 #ifndef REDEMPTION_TRANSPORT_INBYMETASEQUENCETRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_INBYMETASEQUENCETRANSPORT_HPP
 
-#include "infiletransport.hpp"
 #include "transport.hpp"
 #include "error.hpp"
 #include "fileutils.hpp"

@@ -23,6 +23,7 @@
 
 #include "log.hpp"
 #include "fdbuf.hpp"
+#include "dispatch_read_and_write.hpp"
 #include "sequence_generator.hpp"
 
 #include <cstdio>
@@ -52,21 +53,24 @@ struct filename_sequence_params
 };
 
 
-class filename_sequence_buf
+class ofilename_sequence_buf
+: public dispatch_write<ofilename_sequence_buf>
 {
+    friend class dispatch_core;
+
     FilenameGenerator filegen;
     char current_filename[1024];
     io::posix::fdbuf file;
     int seqno;
 
 public:
-    filename_sequence_buf(filename_sequence_params const & params)
+    ofilename_sequence_buf(filename_sequence_params const & params)
     : filegen(params.format, params.prefix, params.filename, params.extension, params.groupid)
     {
         this->current_filename[0] = 0;
     }
 
-    ~filename_sequence_buf() /*noexcept*/
+    ~ofilename_sequence_buf() /*noexcept*/
     {
         this->close();
     }
@@ -92,17 +96,6 @@ public:
         return 0;
     }
 
-    ssize_t write(const void * data, size_t len) /*noexcept*/
-    {
-        if (!this->ready()) {
-            const int res = this->init();
-            if (res < 0) {
-                return res;
-            }
-        }
-        return this->file.write(data, len);
-    }
-
     bool ready() const /*noexcept*/
     { return this->file.is_open(); }
 
@@ -110,6 +103,9 @@ public:
     { return this->filegen; }
 
 protected:
+    io::posix::fdbuf & dispatch()
+    { return this->file; }
+
     int init() /*noexcept*/
     {
         if (!this->ready()) {
@@ -121,8 +117,8 @@ protected:
             }
             if (chmod( this->current_filename, (this->filegen.groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR)) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                , this->current_filename, strerror(errno), errno
-                , (this->filegen.groupid ? "u+r, g+r" : "u+r"));
+                   , this->current_filename, strerror(errno), errno
+                   , (this->filegen.groupid ? "u+r, g+r" : "u+r"));
             }
             this->filegen.set_last_filename(this->seqno, this->current_filename);
             ++this->seqno;
