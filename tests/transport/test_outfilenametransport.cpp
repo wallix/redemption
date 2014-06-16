@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "outfilenametransport.hpp"
+#include "filename_sequence_transport.hpp"
 /*
 #include "transport.hpp"
 #include "testtransport.hpp"
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TestOutFilenameTransport)
     }
 */
 
-    OutFilenameTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid());
+    OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid());
     fnt.send("We write, ", 10);
     fnt.send("and again, ", 11);
     fnt.send("and so on.", 10);
