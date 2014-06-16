@@ -464,8 +464,8 @@ public:
                 0x03, // fl_accel
                 0x0, // ui_charinc
                 1, // f_op_redundant,
-                bgcolor, // bgcolor
-                fgcolor, // fgcolor
+                fgcolor, // BackColor (text color)
+                bgcolor, // ForeColor (color of the opaque rectangle)
                 bk, // bk
                 bk, // op
                 // brush
