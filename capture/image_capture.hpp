@@ -25,6 +25,7 @@
 #ifndef _REDEMPTION_CAPTURE_IMAGE_CAPTURE_HPP_
 #define _REDEMPTION_CAPTURE_IMAGE_CAPTURE_HPP_
 
+/*
 #include <stdio.h>
 #include <png.h>
 
@@ -38,12 +39,16 @@
 
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+*/
 
 #include "png.hpp"
+/*
 #include "error.hpp"
+
 #include "config.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "colors.hpp"
+*/
 
 #include "RDP/RDPDrawable.hpp"
 
@@ -79,7 +84,9 @@ public:
         this->scaled_height = zoom_height;
     }
 
+/*
     void update_config(const Inifile & ini){}
+*/
 
     virtual void flush()
     {
@@ -113,7 +120,7 @@ public:
         free(scaled_data);
     }
 
-    TODO("move scale_data to Drawable");
+//    TODO("move scale_data to Drawable");
     static void scale_data(uint8_t *dest, const uint8_t *src,
                             unsigned int dest_width, unsigned int src_width,
                             unsigned int dest_height, unsigned int src_height,
@@ -157,7 +164,6 @@ public:
             }
         }
     }
-
 };
 
 #endif

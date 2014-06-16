@@ -71,6 +71,8 @@ class Sesman():
 
         self.engine = engine.Engine()
 
+        self.effective_login = None
+
         # shared should be read from sesman but never written except when sending
         self.shared                    = {}
 
@@ -101,6 +103,8 @@ class Sesman():
         self.shared[u'auth_channel_answer'] = u''
         self.shared[u'auth_channel_result'] = u''
         self.shared[u'auth_channel_target'] = u''
+
+        self.internal_mod = False
 
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
@@ -136,13 +140,14 @@ class Sesman():
             data[u'language'] = SESMANCONF.language
             # if self.shared.get(u'password') == MAGICASK:
             #     data[u'password'] = u''
+
             data.update(translations())
+
         # else:
         #     if self.shared.get(u'password') == MAGICASK:
         #         data[u'password'] = u''
         #         Logger().info(u"Update password")
         #     data.update({})
-
 
         # replace MAGICASK with ASK and send data on the wire
         _list = []
@@ -225,27 +230,31 @@ class Sesman():
         return _status, _error
 
     def parse_username(self, wab_login, target_login, target_device, proto_dest):
-        if ((SESMANCONF[u'sesman'][u'use_default_login'].strip() == u'2')
-        and len(SESMANCONF[u'sesman'][u'default_login'].strip())):
+        effective_login = None
+        if ((SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true')
+            and (SESMANCONF[u'sesman'][u'use_default_login'].strip() == u'2')
+            and len(SESMANCONF[u'sesman'][u'default_login'].strip())):
             target_login = wab_login
             wab_login = SESMANCONF[u'sesman'][u'default_login'].strip()
-            Logger().info(u'ip_target="%s" real_target_device="%s"' % (self.shared.get(u'ip_target'), self.shared.get(u'real_target_device')))
-#            target_device = self.shared.get(u'ip_target')
+            effective_login = target_login
+        else:
+            level_0_items = wab_login.split(u':')
+            if len(level_0_items) > 1:
+                if len(level_0_items) > 3:
+                    Logger().info(u"username parse error %s" % wab_login)
+                    return False, (TR(u'Username_parse_error %s') % wab_login), wab_login, target_login, target_device, proto_dest, None
+
+                proto_dest = u'RDP' if len(level_0_items) <= 2 else level_0_items[-2]
+                level_1_items, wab_login       = level_0_items[0].split(u'@'), level_0_items[-1]
+                target_login, target_device = '@'.join(level_1_items[:-1]), level_1_items[-1]
+        if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
+            Logger().info(u'ip_target="%s" real_target_device="%s"' % (
+                self.shared.get(u'ip_target'), self.shared.get(u'real_target_device')))
+            if target_login == MAGICASK:
+                target_login = wab_login
             target_device = self.shared.get(u'real_target_device')
             proto_dest = u'RDP'
-            return True, "", wab_login, target_login, target_device, proto_dest
-
-        level_0_items = wab_login.split(u':')
-        if len(level_0_items) > 1:
-            if len(level_0_items) > 3:
-                Logger().info(u"username parse error %s" % wab_login)
-                return False, TR(u'Username_parse_error %s') % wab_login, wab_login, target_login, target_device, proto_dest
-
-            proto_dest = u'RDP' if len(level_0_items) <= 2 else level_0_items[-2]
-            level_1_items, wab_login       = level_0_items[0].split(u'@'), level_0_items[-1]
-            target_login, target_device = '@'.join(level_1_items[:-1]), level_1_items[-1]
-
-        return True, "", wab_login, target_login, target_device, proto_dest
+        return True, "", wab_login, target_login, target_device, proto_dest, effective_login
 
     def interactive_ask_x509_connection(self):
         """ Send a message to the proxy to prompt the user to validate x509 in his browser
@@ -341,12 +350,14 @@ class Sesman():
         if self.shared.get(u'login') == MAGICASK:
             return None, TR(u"Empty user, try again")
 
-        _status, _error, wab_login, target_login, target_device, proto_dest = self.parse_username(
-                                                                                self.shared.get(u'login'),
-                                                                                self.shared.get(u'target_login'),
-                                                                                self.shared.get(u'target_device'),
-                                                                                self.shared.get(u'proto_dest')
-                                                                                )
+        (_status, _error,
+         wab_login, target_login,
+         target_device, proto_dest,
+         self.effective_login) = self.parse_username(self.shared.get(u'login'),
+                                                     self.shared.get(u'target_login'),
+                                                     self.shared.get(u'target_device'),
+                                                     self.shared.get(u'proto_dest')
+                                                     )
         if not _status:
             return None, TR(u"Invalid user, try again")
 
@@ -370,11 +381,11 @@ class Sesman():
                         wab_login,
                         self.shared.get(u'ip_client'),
                         self.shared.get(u'ip_target')):
-                    self.engine.challenge = None
-                    return None, TR(u"passthrough_auth_failed_wab %s") % wab_login
+                    return False, TR(u"passthrough_auth_failed_wab %s") % wab_login
             else:
                 # PASSWORD based Authentication
-                if (self.shared.get(u'password') == MAGICASK
+                if ((self.shared.get(u'password') == MAGICASK
+                     and not wab_login.startswith('_OTP_'))  # one-time pwd
                     or not self.engine.password_authenticate(
                         wab_login,
                         self.shared.get(u'ip_client'),
@@ -432,12 +443,14 @@ class Sesman():
 
         Logger().info(u"get_service")
 
-        _status, _error, wab_login, target_login, target_device, proto_dest = self.parse_username(
-                                                                                self.shared.get(u'login'),
-                                                                                self.shared.get(u'target_login'),
-                                                                                self.shared.get(u'target_device'),
-                                                                                self.shared.get(u'proto_dest')
-                                                                                                )
+        (_status, _error,
+         wab_login, target_login,
+         target_device, proto_dest,
+         self.effective_login) = self.parse_username(self.shared.get(u'login'),
+                                                     self.shared.get(u'target_login'),
+                                                     self.shared.get(u'target_device'),
+                                                     self.shared.get(u'proto_dest')
+                                                     )
 
         if not _status:
             Logger().info(u"Invalid user %s, try again" % self.shared.get(u'login'))
@@ -456,9 +469,11 @@ class Sesman():
                 data_to_send = { u'login'                   : wab_login
                                , u'target_login'            : target_login
                                , u'target_device'           : target_device
-                               , u'proto_dest'              : proto_dest
-                               , u'module'                  : u'transitory'
+                               , u'proto_dest'              : proto_dest if proto_dest != u'INTERNAL' else u'RDP'
+                               , u'module'                  : u'transitory' if proto_dest != u'INTERNAL' else u'INTERNAL'
                                }
+                if data_to_send.has_key(u'module') and not self.internal_mod:
+                    self.internal_mod = True if data_to_send[u'module'] == u'INTERNAL' else False
                 self.send_data(data_to_send)
                 _status = True
             elif self.shared.get(u'selector') == MAGICASK:
@@ -467,9 +482,17 @@ class Sesman():
                 services = []
                 for right in self.engine.rights:
                     if not right.resource.application:
-                        temp_service_login                = right.service_login
-                        temp_resource_service_protocol_cn = right.resource.service.protocol.cn
-                        temp_resource_device_cn           = right.resource.device.cn
+                        if (right.resource.device.host == u'autotest' or
+                            right.resource.device.host == u'bouncer2' or
+                            right.resource.device.host == u'widget2_message' or
+                            right.resource.device.host == u'test_card'):
+                            temp_service_login                = right.service_login.replace(u':RDP', u':INTERNAL', 1)
+                            temp_resource_service_protocol_cn = 'INTERNAL'
+                            temp_resource_device_cn           = right.resource.device.cn
+                        else:
+                            temp_service_login                = right.service_login
+                            temp_resource_service_protocol_cn = right.resource.service.protocol.cn
+                            temp_resource_device_cn           = right.resource.device.cn
                     else:
                         temp_service_login                = right.service_login + u':APP'
                         temp_resource_service_protocol_cn = u'APP'
@@ -481,9 +504,14 @@ class Sesman():
                         item_filtered = True
                         continue
 
-                    if (self.shared.get(u'real_target_device')
-                       and (right.resource.device.host != self.shared.get(u'real_target_device'))):
-                       continue
+                    if self.shared.get(u'real_target_device'):
+                       if right.resource.application:
+                           continue
+                       if (right.resource.device
+                           and (not engine.is_device_in_subnet(
+                               self.shared.get(u'real_target_device'),
+                               right.resource.device.host))):
+                           continue
 
                     services.append(( right.target_groups # ( = concatenated list)
                                     , temp_service_login
@@ -570,7 +598,13 @@ class Sesman():
                         target_login = MAGICASK
                         target_device = MAGICASK
                         proto_dest = MAGICASK
-                        _status, _error, wab_login, target_login, target_device, proto_dest = self.parse_username(self.shared.get(u'login'), target_login, target_device, proto_dest)
+                        (_status, _error,
+                         wab_login, target_login,
+                         target_device, proto_dest,
+                         self.effective_login) = self.parse_username(self.shared.get(u'login'),
+                                                                     target_login,
+                                                                     target_device,
+                                                                     proto_dest)
                         if not _status:
                             Logger().info(u"Invalid user %s, try again" % self.shared.get(u'login'))
                             return None, TR(u"Invalid user, try again")
@@ -584,7 +618,7 @@ class Sesman():
                 elif len(services) == 1:
                     s = services[0]
                     data_to_send = {}
-                    data_to_send[u'module'] = u'transitory'
+                    data_to_send[u'module'] = u'transitory' if s[2] != u'INTERNAL' else u'INTERNAL'
                     if s[2] == u'APP':
                         data_to_send[u'target_login'] = '@'.join(s[1].split('@')[:-1])
                         data_to_send[u'target_device'] = s[4]
@@ -597,12 +631,14 @@ class Sesman():
                     else:
                         data_to_send[u'target_login'] = '@'.join(s[1].split('@')[:-1])
                         data_to_send[u'target_device'] = s[4]
-                        data_to_send[u'proto_dest'] = s[2]
+                        data_to_send[u'proto_dest'] = s[2] if s[2] != u'INTERNAL' else u'RDP'
 
                         self._full_user_device_account = u"%s@%s:%s" % ( self.shared.get(u'target_login')
                                                                        , self.shared.get(u'target_device')
                                                                        , self.shared.get(u'login')
                                                                        )
+                    if data_to_send.has_key(u'module') and not self.internal_mod:
+                        self.internal_mod = True if data_to_send[u'module'] == u'INTERNAL' else False
                     self.send_data(data_to_send)
                     _status = True
                 else:
@@ -632,7 +668,7 @@ class Sesman():
         return _status, _error
 
 
-    def check_video_recording(self, isRecorded):
+    def check_video_recording(self, isRecorded, user):
         Logger().info(u"Checking video")
 
         _status, _error = True, u''
@@ -660,7 +696,7 @@ class Sesman():
                     random.seed(self.pid)
 
                     #keeping code synchronized with wabengine/src/common/data.py
-                    video_path =  u"%s@%s," % ( self.shared.get(u'login'), self.shared.get(u'ip_client'))
+                    video_path =  u"%s@%s," % (user, self.shared.get(u'ip_client'))
                     video_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
                     video_path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
                     video_path += u"%s," % gethostname()
@@ -781,7 +817,9 @@ class Sesman():
         if _status:
             session_started = False
 
-            _status, _error = self.check_video_recording(selected_target.authorization.isRecorded)
+            _status, _error = self.check_video_recording(
+                selected_target.authorization.isRecorded,
+                self.engine.user.cn if self.engine.user.cn else self.shared.get(u'login'))
 
             Logger().info(u"Fetching protocol")
 
@@ -791,19 +829,15 @@ class Sesman():
             kv[u'timezone'] = str(altzone if daylight else timezone)
 
             if _status:
-# <<<<<<< HEAD
-#                 # kv[u'authenticated'] = u'True'
-# =======
-#                 kv[u'authenticated'] = u'True'
                 kv['password'] = 'pass'
-# >>>>>>> future
 
                 # register signal
                 signal.signal(signal.SIGUSR1, self.kill_handler)
 
                 Logger().info(u"Starting Session")
                 # Add connection to the observer
-                kv[u'session_id'] = self.engine.start_session(selected_target, self.pid)
+                kv[u'session_id'] = self.engine.start_session(selected_target, self.pid,
+                                                              self.effective_login)
                 _status, _error = self.engine.write_trace(self.full_path)
                 self.engine.get_restrictions(selected_target)
                 if self.engine.pattern_kill:
@@ -861,7 +895,11 @@ class Sesman():
                 else:
                     self.cn = selected_target.resource.device.cn
 
-                kv[u'target_device'] = physical_target.resource.device.host
+                if self.shared.get(u'real_target_device'):
+                    kv[u'target_device'] = self.shared.get(u'real_target_device')
+                else:
+                    kv[u'target_device'] = physical_target.resource.device.host
+
                 if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() != u'true':
                     kv[u'target_login'] = physical_target.account.login
 
@@ -888,7 +926,10 @@ class Sesman():
                     if not _status:
                         break
 
-                    self._physical_target_device = physical_target.resource.device.host
+                    if self.shared.get(u'real_target_device'):
+                        self._physical_target_device = self.shared.get(u'real_target_device')
+                    else:
+                        self._physical_target_device = physical_target.resource.device.host
 
                     Logger().info(u"Send critic notification (every attempt to connect to some physical node)")
                     if selected_target.authorization.isCritical:
@@ -901,7 +942,7 @@ class Sesman():
                             self.shared.get(u'ip_client'),
                             self.shared.get(u'target_login'),
                             self.shared.get(u'target_device'),
-                            physical_target.resource.device.host,
+                            self._physical_target_device,
                             ctime(),
                             None
                             )
@@ -937,7 +978,6 @@ class Sesman():
                         ###########
                         # SEND KV #
                         ###########
-
                         self.send_data(kv)
 
                         Logger().info(u"Added connection to active WAB services")
@@ -1003,9 +1043,10 @@ class Sesman():
                                     self.shared[u'auth_channel_target'] = u''
 
                             else: # (if self.proxy_conx in r)
-                                Logger().error(u'break connection')
-                                release_reason = u'Break connection'
-                                break
+                                if not self.internal_mod:
+                                    Logger().error(u'break connection')
+                                    release_reason = u'Break connection'
+                                    break
 
                         Logger().debug(u"End Of Keep Alive")
 

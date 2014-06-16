@@ -64,7 +64,7 @@ struct StaticCaptureConfig {
     }
 };
 
-class StaticCapture : public ImageCapture
+class StaticCapture : public ImageCapture, public RDPCaptureDevice
 {
 public:
     bool clear_png;
@@ -121,18 +121,30 @@ public:
         }
     }
 
-    virtual void snapshot( const timeval & now, int x, int y, bool ignore_frame_in_timeval)
+    virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval)
     {
-        if (static_cast<unsigned>(difftimeval(now, this->start_static_capture))
-            >= static_cast<unsigned>(this->inter_frame_interval_static_capture)) {
-            if (!this->pointer_displayed) { this->drawable.trace_mouse(x, y); }
-            this->breakpoint(now);
-            if (!this->pointer_displayed) { this->drawable.clear_mouse(); }
-            this->time_to_wait = this->inter_frame_interval_static_capture;
+        unsigned diff_time_val = static_cast<unsigned>(difftimeval(now, this->start_static_capture));
+        if (diff_time_val >= static_cast<unsigned>(this->inter_frame_interval_static_capture)) {
+            if (   this->drawable.logical_frame_ended
+                // Force snapshot if diff_time_val >= 1,5 x inter_frame_interval_static_capture.
+                || (diff_time_val >= static_cast<unsigned>(this->inter_frame_interval_static_capture) * 3 / 2)) {
+                if (!this->pointer_displayed) { this->drawable.trace_mouse(x, y); }
+                this->breakpoint(now);
+                this->start_static_capture = addusectimeval(this->inter_frame_interval_static_capture, this->start_static_capture);
+                if (!this->pointer_displayed) { this->drawable.clear_mouse(); }
+//                this->time_to_wait = this->inter_frame_interval_static_capture;
+//                this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
+            }
+            else {
+                // Wait 0,3 x inter_frame_interval_static_capture.
+                this->time_to_wait = this->inter_frame_interval_static_capture / 3;
+                return;
+            }
         }
-        else {
-            this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
-        }
+        // else {
+        //     this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
+        // }
+        this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
     }
 
     void pause_snapshot(const timeval & now) {
@@ -146,7 +158,8 @@ public:
                 // unlink may fail, for instance if file does not exist, just don't care
                 sq_outfilename_unlink(this->seq, this->trans.seqno - this->conf.png_limit);
             }
-            this->ImageCapture::flush();
+//            this->ImageCapture::flush();
+            this->flush();
             this->trans.next();
         }
 
@@ -165,17 +178,20 @@ public:
                 // unlink may fail, for instance if file does not exist, just don't care
                 sq_outfilename_unlink(this->seq, this->trans.seqno - this->conf.png_limit);
             }
-            this->ImageCapture::flush();
+//            this->ImageCapture::flush();
+            this->flush();
             this->trans.next();
         }
 
         this->drawable.clear_timestamp();
-        this->start_static_capture = now;
+//        this->start_static_capture = now;
     }
 
+/*
     virtual void flush()
     {
     }
+*/
 
     virtual void set_pointer_display() {
         this->pointer_displayed = true;

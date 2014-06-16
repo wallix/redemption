@@ -49,15 +49,18 @@
 
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
-class RDPDrawable : public RDPGraphicDevice {
+class RDPDrawable : public RDPGraphicDevice, public RDPCaptureDevice {
 public:
     Drawable drawable;
 
     DrawablePointerCache ptr_cache;
     GlyphCache           gly_cache;
 
+    int frame_start_count;
+
     RDPDrawable(const uint16_t width, const uint16_t height)
     : drawable(width, height)
+    , frame_start_count(0)
     {
         Pointer pointer0(Pointer::POINTER_CURSOR0);
         this->ptr_cache.add_pointer_static(pointer0, 0);
@@ -624,6 +627,12 @@ public:
         const Rect & trect = rectBmp.intersect(this->drawable.width, this->drawable.height);
 
         this->drawable.draw_bitmap(trect, bmp, false);
+    }
+
+    virtual void draw(const RDP::FrameMarker & order) {
+        this->frame_start_count += ((order.action == RDP::FrameMarker::FrameStart) ? 1 : -1);
+        REDASSERT(this->frame_start_count >= 0);
+        this->drawable.logical_frame_ended = (this->frame_start_count == 0);
     }
 
     virtual void send_pointer(int cache_idx, const Pointer & cursor)

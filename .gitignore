@@ -13,3 +13,4 @@
 password.py
 *.pyc
 /debian
+/tools/valgrind-filter/valgrind-filter

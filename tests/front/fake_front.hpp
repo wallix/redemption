@@ -22,11 +22,12 @@
 
 #include "RDP/RDPDrawable.hpp"
 #include "front_api.hpp"
+#include "openssl/ssl.h"
 
 class FakeFront : public FrontAPI {
 public:
     uint32_t                    verbose;
-    const ClientInfo          & info;
+    ClientInfo                & info;
     CHANNELS::ChannelDefArray   cl;
     uint8_t                     mod_bpp;
     BGRPalette                  mod_palette;
@@ -165,8 +166,13 @@ public:
 
     virtual void text_metrics(const char * text, int & width, int & height) { width = 0; height = 0; }
 
-    virtual int server_resize(int width, int height, int bpp) {
+    virtual void set_mod_color_depth(uint8_t bpp) {
         this->mod_bpp = bpp;
+    }
+
+    virtual int server_resize(int width, int height, int bpp) {
+        this->set_mod_color_depth(bpp);
+        this->info.bpp = bpp;
         if (verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
@@ -185,7 +191,7 @@ public:
         ::fclose(f);
     }
 
-    FakeFront(const ClientInfo & info, uint32_t verbose)
+    FakeFront(ClientInfo & info, uint32_t verbose)
             : FrontAPI(false, false)
             , verbose(verbose)
             , info(info)

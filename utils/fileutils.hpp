@@ -388,15 +388,26 @@ static inline int parse_ip_conntrack(int fd, const char * source, const char * d
 
     char strre[512];
 #define RE_IP_DEF "\\d\\d?\\d?\\.\\d\\d?\\d?\\.\\d\\d?\\d?\\.\\d\\d?\\d?"
+    // sprintf(strre,
+    //         "^ *6 +\\d+ +ESTABLISHED +"
+    //         "src=" RE_IP_DEF " +"
+    //         "dst=(" RE_IP_DEF ") +"
+    //         "sport=\\d+ +dport=\\d+( +packets=\\d+ bytes=\\d+)? +"
+    //         "src=%s +"
+    //         "dst=%s +"
+    //         "sport=%d +dport=%d( +packets=\\d+ bytes=\\d+)? +"
+    //         "\\[ASSURED] +mark=\\d+ +secmark=\\d+ use=\\d+$",
+    //         source, dest, sport, dport
+    // );
     sprintf(strre,
             "^ *6 +\\d+ +ESTABLISHED +"
-            "src="RE_IP_DEF" +"
-            "dst=("RE_IP_DEF") +"
-            "sport=\\d+ +dport=\\d+ +packets=\\d+ bytes=\\d+ +"
+            "src=" RE_IP_DEF " +"
+            "dst=(" RE_IP_DEF ") +"
+            "sport=\\d+ +dport=\\d+ .*"
             "src=%s +"
             "dst=%s +"
-            "sport=%d +dport=%d +packets=\\d+ bytes=\\d+ +"
-            "\\[ASSURED] +mark=\\d+ +secmark=\\d+ use=\\d+$",
+            "sport=%d +dport=%d .*"
+            "\\[ASSURED].*",
             source, dest, sport, dport
     );
 #undef RE_IP_DEF

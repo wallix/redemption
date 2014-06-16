@@ -140,6 +140,14 @@ struct SEC_WINNT_AUTH_IDENTITY
     Array Password;
     uint32_t Flags;
 
+    SEC_WINNT_AUTH_IDENTITY()
+        : User(Array(0))
+        , Domain(Array(0))
+        , Password(Array(0))
+        , Flags(0)
+    {
+    }
+
     void SetUserFromUtf8(const uint8_t * user) {
         if (user) {
             size_t user_len = UTF8Len(user);
@@ -174,7 +182,7 @@ struct SEC_WINNT_AUTH_IDENTITY
     }
     void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass) {
         if (user) {
-            const char * p = (char *)user;
+            const char * p = (char const *)user;
             size_t length = 0;
             if (p) {
                 length = strlen(p);
@@ -186,7 +194,7 @@ struct SEC_WINNT_AUTH_IDENTITY
             this->princname[length] = 0;
         }
         if (pass) {
-            const char * p = (char *)pass;
+            const char * p = (char const*)pass;
             size_t length = 0;
             if (p) {
                 length = strlen(p);

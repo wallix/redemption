@@ -185,7 +185,7 @@ struct GeneralCaps : public Capability {
     uint16_t os_major;
     uint16_t os_minor;
     uint16_t protocolVersion;
-    uint16_t pad1;
+    uint16_t pad2octetsA;
     uint16_t compressionType;
     uint16_t extraflags;
     uint16_t updateCapability;
@@ -199,7 +199,7 @@ struct GeneralCaps : public Capability {
     , os_major(OSMAJORTYPE_WINDOWS)
     , os_minor(TS_OSMINORTYPE_WINDOWS_NT)
     , protocolVersion(0x200)
-    , pad1(0)
+    , pad2octetsA(0)
     , compressionType(0)
     , extraflags(0)
     , updateCapability(0)
@@ -218,7 +218,7 @@ struct GeneralCaps : public Capability {
         stream.out_uint16_le(this->os_major);
         stream.out_uint16_le(this->os_minor);
         stream.out_uint16_le(this->protocolVersion);
-        stream.out_uint16_le(this->pad1);
+        stream.out_uint16_le(this->pad2octetsA);
         stream.out_uint16_le(this->compressionType);
         stream.out_uint16_le(this->extraflags);
         stream.out_uint16_le(this->updateCapability);
@@ -245,7 +245,7 @@ struct GeneralCaps : public Capability {
         this->os_major = stream.in_uint16_le();
         this->os_minor = stream.in_uint16_le();
         this->protocolVersion = stream.in_uint16_le();
-        this->pad1 = stream.in_uint16_le();
+        this->pad2octetsA = stream.in_uint16_le();
         this->compressionType = stream.in_uint16_le();
         this->extraflags = stream.in_uint16_le();
         this->updateCapability = stream.in_uint16_le();
@@ -260,6 +260,7 @@ struct GeneralCaps : public Capability {
         LOG(LOG_INFO, "General caps::major %u", this->os_major);
         LOG(LOG_INFO, "General caps::minor %u", this->os_minor);
         LOG(LOG_INFO, "General caps::protocol %u", this->protocolVersion);
+        LOG(LOG_INFO, "General caps::pad2octetA %u", this->pad2octetsA);
         LOG(LOG_INFO, "General caps::compression type %x", this->compressionType);
         LOG(LOG_INFO, "General caps::extra flags %x", this->extraflags);
         LOG(LOG_INFO, "General caps::extraflags:FASTPATH_OUTPUT_SUPPORTED %s",

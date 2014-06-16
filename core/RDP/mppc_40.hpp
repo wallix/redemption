@@ -446,6 +446,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
     uint8_t  * historyBuffer;       /* contains uncompressed data */
     uint8_t  * outputBuffer;        /* contains compressed data */
     uint8_t  * outputBufferPlus;
+    uint16_t   outputBufferSize;
     uint16_t   historyOffset;       /* next free slot in historyBuffer */
     uint16_t   bytes_in_opb;        /* compressed bytes available in outputBuffer */
     uint8_t    flags;               /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
@@ -462,6 +463,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         , historyBuffer(NULL)       /* contains uncompressed data */
         , outputBuffer(NULL)        /* contains compressed data */
         , outputBufferPlus(NULL)
+        , outputBufferSize(RDP_40_HIST_BUF_LEN + 8)
         , historyOffset(0)          /* next free slot in historyBuffer */
         , bytes_in_opb(0)           /* compressed bytes available in outputBuffer */
         , flags(0)                  /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
@@ -614,77 +616,83 @@ private:
         /* if we are at start of history buffer, do not attempt to compress    */
         /*  first RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1 bytes, because */
         /*  minimum LoM is RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH           */
-        if (this->historyOffset == 0) {
-            /* encode first two bytes as literals */
-            ctr = RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
-            for (offset_type i = 0; i < ctr; i++) {
-                ::encode_literal_40_50(
-                    this->historyBuffer[this->historyOffset + i],
-                    this->outputBuffer, bits_left, opb_index);
-            }
-
-            this->hash_tab_mgr.update_indirect(this->historyBuffer, 0);
-            this->hash_tab_mgr.update_indirect(this->historyBuffer, 1);
-        }
-
-        uint16_t lom = 0;
-        for (; ctr + (RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1) < uncompressed_data_size;
-             ctr += lom) { // we need at least 3 bytes to look for match
-            offset_type     offset         = this->historyOffset + ctr;
-            const uint8_t * data           = this->historyBuffer + offset;
-            hash_type       hash           = this->hash_tab_mgr.sign(data);
-            offset_type     previous_match = this->hash_tab_mgr.get_offset(hash);
-
-            this->hash_tab_mgr.update(hash, offset);
-
-            /* check that we have a pattern match, hash is not enough */
-            if (0 != memcmp(data, this->historyBuffer + previous_match,
-                            RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH)) {
-                /* no match found; encode literal uint8_t */
-                ::encode_literal_40_50(*data, this->outputBuffer, bits_left, opb_index);
-                lom = 1;
-            }
-            else {
-                /* we have a match - compute hash and Length of Match for triplets */
-                this->hash_tab_mgr.update_indirect(this->historyBuffer, offset + 1);
-
-                for (lom = RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH; ctr + lom < uncompressed_data_size; lom++) {
-                    this->hash_tab_mgr.update_indirect(this->historyBuffer, offset + lom - 1);
-                    if (this->historyBuffer[offset + lom] !=
-                        this->historyBuffer[previous_match + lom]) {
-                        break;
-                    }
+        try {
+            if (this->historyOffset == 0) {
+                /* encode first two bytes as literals */
+                ctr = RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
+                for (offset_type i = 0; i < ctr; i++) {
+                    ::encode_literal_40_50(this->historyBuffer[this->historyOffset + i],
+                                           this->outputBuffer, bits_left, opb_index,
+                                           this->outputBufferSize);
                 }
 
-                /* encode copy_offset and insert into output buffer */
-                          copy_offset = this->historyOffset + ctr - previous_match;
-                const int nbbits[3]   = { 10, 12, 16 };
-                const int headers[3]  = { 0x3c0, 0xe00, 0xc000 };
-                const int base[3]     = { 0, 0x40, 0x140 };
-                int       range       = (copy_offset <= 0x3F)  ? 0 :
-                                        (copy_offset <= 0x13F) ? 1 :
-                                                                 2 ;
-                ::insert_n_bits_40_50(nbbits[range],
-                    headers[range] | (copy_offset - base[range]),
-                    this->outputBuffer, bits_left, opb_index);
+                this->hash_tab_mgr.update_indirect(this->historyBuffer, 0);
+                this->hash_tab_mgr.update_indirect(this->historyBuffer, 1);
+            }
 
-                int log_lom = 31 - __builtin_clz(lom);
+            uint16_t lom = 0;
+            for (; ctr + (RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1) < uncompressed_data_size;
+                 ctr += lom) { // we need at least 3 bytes to look for match
+                offset_type     offset         = this->historyOffset + ctr;
+                const uint8_t * data           = this->historyBuffer + offset;
+                hash_type       hash           = this->hash_tab_mgr.sign(data);
+                offset_type     previous_match = this->hash_tab_mgr.get_offset(hash);
 
-                /* encode length of match and insert into output buffer */
-                ::insert_n_bits_40_50(
-                    (lom == 3) ? 1 : 2 * log_lom,
-                    (lom == 3) ? 0 : (((((1 << log_lom) - 1) & 0xFFE) << log_lom) | (lom - (1 << log_lom))),
-                    this->outputBuffer, bits_left, opb_index);
+                this->hash_tab_mgr.update(hash, offset);
+
+                /* check that we have a pattern match, hash is not enough */
+                if (0 != memcmp(data, this->historyBuffer + previous_match,
+                                RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH)) {
+                    /* no match found; encode literal uint8_t */
+                    ::encode_literal_40_50(*data, this->outputBuffer, bits_left,
+                                           opb_index, this->outputBufferSize);
+                    lom = 1;
+                }
+                else {
+                    /* we have a match - compute hash and Length of Match for triplets */
+                    this->hash_tab_mgr.update_indirect(this->historyBuffer, offset + 1);
+
+                    for (lom = RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH; ctr + lom < uncompressed_data_size; lom++) {
+                        this->hash_tab_mgr.update_indirect(this->historyBuffer, offset + lom - 1);
+                        if (this->historyBuffer[offset + lom] !=
+                            this->historyBuffer[previous_match + lom]) {
+                            break;
+                        }
+                    }
+
+                    /* encode copy_offset and insert into output buffer */
+                    copy_offset = this->historyOffset + ctr - previous_match;
+                    const int nbbits[3]   = { 10, 12, 16 };
+                    const int headers[3]  = { 0x3c0, 0xe00, 0xc000 };
+                    const int base[3]     = { 0, 0x40, 0x140 };
+                    int       range       = (copy_offset <= 0x3F)  ? 0 :
+                        (copy_offset <= 0x13F) ? 1 :
+                        2 ;
+                    ::insert_n_bits_40_50(nbbits[range],
+                                          headers[range] | (copy_offset - base[range]),
+                                          this->outputBuffer, bits_left, opb_index,
+                                          this->outputBufferSize);
+
+                    int log_lom = 31 - __builtin_clz(lom);
+
+                    /* encode length of match and insert into output buffer */
+                    ::insert_n_bits_40_50((lom == 3) ? 1 : 2 * log_lom,
+                                          (lom == 3) ? 0 : (((((1 << log_lom) - 1) & 0xFFE) << log_lom) | (lom - (1 << log_lom))),
+                                          this->outputBuffer, bits_left, opb_index,
+                                          this->outputBufferSize);
+                }
+            }
+
+            /* add remaining data if any to the output */
+            while (uncompressed_data_size - ctr > 0) {
+                ::encode_literal_40_50(uncompressed_data[ctr], this->outputBuffer, bits_left,
+                                       opb_index, this->outputBufferSize);
+                ctr++;
             }
         }
-
-        /* add remaining data if any to the output */
-        while (uncompressed_data_size - ctr > 0) {
-            ::encode_literal_40_50(uncompressed_data[ctr], this->outputBuffer, bits_left,
-                opb_index);
-            ctr++;
+        catch (Error & e) {
+            opb_index = uncompressed_data_size;
         }
-
         if (opb_index >= uncompressed_data_size) {
             /* compressed data longer or same size than uncompressed data */
             /* give up */

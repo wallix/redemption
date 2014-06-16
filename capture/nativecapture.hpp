@@ -57,7 +57,7 @@
 #include "GraphicToFile.hpp"
 #include "png.hpp"
 
-class NativeCapture : public RDPGraphicDevice
+class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice
 {
 public:
     int width;
@@ -222,6 +222,10 @@ public:
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
             size_t size, const Bitmap & bmp) {
         this->recorder.draw(bitmap_data, data, size, bmp);
+    }
+
+    virtual void draw(const RDP::FrameMarker & order) {
+        this->recorder.draw(order);
     }
 
     virtual void draw(const RDPPolygonSC & cmd, const Rect & clip)

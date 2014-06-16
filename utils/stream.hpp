@@ -37,10 +37,9 @@
 
 // using a template for default size of stream would make sense instead of always using the large buffer below
 enum {
-     AUTOSIZE = 65536
+    AUTOSIZE = 65536
 };
 
-// BStream is for "buffering stream", as this stream allocate a work buffer.
 class Array {
     uint8_t* data;
     size_t capacity;
@@ -48,8 +47,12 @@ class Array {
     uint8_t autobuffer[AUTOSIZE];
 
     public:
-    Array(size_t size = AUTOSIZE) {
-        this->capacity = 0;
+    Array(size_t size = AUTOSIZE)
+        : data(NULL)
+        , capacity(0)
+        , autobuffer()
+    {
+        this->data = this->autobuffer;
         this->init(size);
     }
 
@@ -699,13 +702,13 @@ public:
     // Output zero terminated string, including trailing 0
     void out_sz(const char * v) {
         size_t len = strlen(v);
-        this->out_copy_bytes((uint8_t*)v, len+1);
+        this->out_copy_bytes((uint8_t const*)v, len+1);
     }
 
     // Output zero terminated string, non including trailing 0
     void out_string(const char * v) {
         size_t len = strlen(v);
-        this->out_copy_bytes((uint8_t*)v, len);
+        this->out_copy_bytes((uint8_t const*)v, len);
     }
 
 
@@ -724,11 +727,11 @@ public:
     }
 
     void out_copy_bytes(const char * v, size_t n) {
-        this->out_copy_bytes((uint8_t*)v, n);
+        this->out_copy_bytes((uint8_t const*)v, n);
     }
 
     void set_out_copy_bytes(const char * v, size_t n, size_t offset) {
-        this->set_out_copy_bytes((uint8_t*)v, n, offset);
+        this->set_out_copy_bytes((uint8_t const*)v, n, offset);
     }
 
     void out_concat(const char * v) {
@@ -736,7 +739,7 @@ public:
     }
 
     void set_out_concat(const char * v, size_t offset) {
-        this->set_out_copy_bytes((uint8_t*)v, strlen(v), offset);
+        this->set_out_copy_bytes((uint8_t const*)v, strlen(v), offset);
     }
 
 
@@ -837,7 +840,12 @@ class BStream : public Stream {
     uint8_t autobuffer[AUTOSIZE];
 
     public:
-    BStream(size_t size = AUTOSIZE) {
+    BStream(size_t size = AUTOSIZE)
+        : autobuffer()
+    {
+        this->p = NULL;
+        this->end = NULL;
+        this->data = NULL;
         this->capacity = 0;
         this->init(size);
     }

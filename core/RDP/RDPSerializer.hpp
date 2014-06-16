@@ -93,26 +93,32 @@
 #include "transport.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
+#include "RDP/share.hpp"
 #include "difftimeval.hpp"
 #include "stream.hpp"
 #include "rect.hpp"
 #include "colors.hpp"
 
 enum {
-    BREAKPOINT          = 1005,
+//    BREAKPOINT          = 1005,
     META_FILE           = 1006,
-    NEXT_FILE_ID        = 1007,
+//    NEXT_FILE_ID        = 1007,
     TIMESTAMP           = 1008,
     POINTER             = 1009,
     LAST_IMAGE_CHUNK    = 0x1000,   // 4096
     PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
     SAVE_STATE          = 0x1002,   // 4098
+
+    INVALID_CHUNK       = 0x8000
 };
 
 struct RDPSerializer : public RDPGraphicDevice
 {
     // Packet more than 16384 bytes can cause MSTSC to crash.
-    enum { MAX_ORDERS_SIZE = 16384 };
+    enum { MAX_ORDERS_SIZE = 16384,
+           MAX_BITMAP_SIZE_8K = 8192,
+           MAX_BITMAP_SIZE_64K = 65536
+    };
 
     using RDPGraphicDevice::draw;
 
@@ -186,7 +192,7 @@ struct RDPSerializer : public RDPGraphicDevice
     , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
     , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
     , glyphindex( 0, 0, 0, 0, 0, 0
-                , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t *)"")
+                , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (const uint8_t *)"")
     , polygonSC()
     , polygonCB()
     , polyline()
@@ -496,11 +502,16 @@ public:
         this->ellipseCB = cmd;
     }
 
+    virtual void draw(const RDP::FrameMarker & order) {
+        this->reserve_order(5);
+        order.emit(this->stream_orders);
+    }
 
     // check if the next bitmap will fit in available packet size
     // if not send previous bitmaps we got and init a new packet
     void reserve_bitmap(size_t asked_size) {
-        size_t max_packet_size = std::min(this->stream_bitmaps.get_capacity(), static_cast<size_t>(8192));
+        size_t max_packet_size = std::min(this->stream_bitmaps.get_capacity(), static_cast<size_t>(MAX_BITMAP_SIZE_8K + 300));
+        TODO("QuickFix, should set a max packet size according to RDP compression version of client, proxy and server");
         size_t used_size       = this->stream_bitmaps.get_offset();
         if (this->ini.debug.primary_orders > 3) {
             LOG( LOG_INFO

@@ -27,7 +27,7 @@
 #define _REDEMPTION_CORE_CALLBACK_HPP_
 #include "keymap2.hpp"
 #include "channel_list.hpp"
-
+#include "darray.hpp"
 enum {
     RDP_INPUT_SYNCHRONIZE          = 0,
     RDP_INPUT_CODEPOINT            = 1,
@@ -83,6 +83,7 @@ struct Callback : RdpInput
 
     // Front calls this member function when it became up and running.
     virtual void on_front_up_and_running() {}
+    virtual void rdp_input_invalidate2(const DArray<Rect> & vr) {};
 };
 
 #endif

@@ -153,6 +153,9 @@ BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
                 BOOST_CHECK_EQUAL(0x00, row[pos+2+Bpp*((2*width)/3)]); // BLUE
             }
         }
+        for (uint32_t row = 0; row < height; row++){
+            png_free(ppng, row_pointers[row]);
+        }
         png_read_end(ppng, pinfo);
         png_destroy_read_struct(&ppng, &pinfo, NULL);
         fclose(fp);

@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
     general_caps.os_major = 0;
     general_caps.os_minor = 1;
     general_caps.protocolVersion = 2;
-    general_caps.pad1 = 3;
+    general_caps.pad2octetsA = 3;
     general_caps.compressionType = 4;
     general_caps.extraflags = 65535;
     general_caps.updateCapability = 6;
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
     BOOST_CHECK_EQUAL(general_caps.os_major, static_cast<uint16_t>(0));
     BOOST_CHECK_EQUAL(general_caps.os_minor, static_cast<uint16_t>(1));
     BOOST_CHECK_EQUAL(general_caps.protocolVersion, static_cast<uint16_t>(2));
-    BOOST_CHECK_EQUAL(general_caps.pad1, static_cast<uint16_t>(3));
+    BOOST_CHECK_EQUAL(general_caps.pad2octetsA, static_cast<uint16_t>(3));
     BOOST_CHECK_EQUAL(general_caps.compressionType, static_cast<uint16_t>(4));
     BOOST_CHECK_EQUAL(general_caps.extraflags, static_cast<uint16_t>(65535));
     BOOST_CHECK_EQUAL(general_caps.updateCapability, static_cast<uint16_t>(6));
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
     BOOST_CHECK_EQUAL(general_caps2.os_major, static_cast<uint16_t>(0));
     BOOST_CHECK_EQUAL(general_caps2.os_minor, static_cast<uint16_t>(1));
     BOOST_CHECK_EQUAL(general_caps2.protocolVersion, static_cast<uint16_t>(2));
-    BOOST_CHECK_EQUAL(general_caps2.pad1, static_cast<uint16_t>(3));
+    BOOST_CHECK_EQUAL(general_caps2.pad2octetsA, static_cast<uint16_t>(3));
     BOOST_CHECK_EQUAL(general_caps2.compressionType, static_cast<uint16_t>(4));
     BOOST_CHECK_EQUAL(general_caps2.extraflags, static_cast<uint16_t>(65535));
     BOOST_CHECK_EQUAL(general_caps2.updateCapability, static_cast<uint16_t>(6));

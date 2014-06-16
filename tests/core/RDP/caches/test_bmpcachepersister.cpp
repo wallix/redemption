@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
         { 2553, nbbytes(bpp) * 64 * 64, true  }
     };
 
-    BmpCache bmp_cache( bpp, 3, use_waiting_list
+    BmpCache bmp_cache( BmpCache::Recorder, bpp, 3, use_waiting_list
                       , bmp_cache_params[0].entiers, bmp_cache_params[0].size, bmp_cache_params[0].persistent
                       , bmp_cache_params[1].entiers, bmp_cache_params[1].size, bmp_cache_params[1].persistent
                       , bmp_cache_params[2].entiers, bmp_cache_params[2].size, bmp_cache_params[2].persistent
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister1)
         { 2553, nbbytes(bpp) * 64 * 64, true  }
     };
 
-    BmpCache bmp_cache( bpp, 3, use_waiting_list
+    BmpCache bmp_cache( BmpCache::Recorder, bpp, 3, use_waiting_list
                       , bmp_cache_params[0].entiers, bmp_cache_params[0].size, bmp_cache_params[0].persistent
                       , bmp_cache_params[1].entiers, bmp_cache_params[1].size, bmp_cache_params[1].persistent
                       , bmp_cache_params[2].entiers, bmp_cache_params[2].size, bmp_cache_params[2].persistent
@@ -376,7 +376,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister2)
         { 2553, nbbytes(bpp) * 64 * 64, true  }
     };
 
-    BmpCache bmp_cache( bpp, 3, use_waiting_list
+    BmpCache bmp_cache( BmpCache::Recorder, bpp, 3, use_waiting_list
                       , bmp_cache_params[0].entiers, bmp_cache_params[0].size, bmp_cache_params[0].persistent
                       , bmp_cache_params[1].entiers, bmp_cache_params[1].size, bmp_cache_params[1].persistent
                       , bmp_cache_params[2].entiers, bmp_cache_params[2].size, bmp_cache_params[2].persistent

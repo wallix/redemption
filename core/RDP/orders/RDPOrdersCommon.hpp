@@ -377,7 +377,147 @@ struct DeltaEncodedRectangle {
         BOTTOM = 3
     };
 
-} /* namespace */
+
+
+// [MS-RDPEGDI] - 2.2.2.2.1.3.1.1 Alternate Secondary Drawing Order Header
+//  (ALTSEC_DRAWING_ORDER_HEADER)
+// =======================================================================
+// The ALTSEC_DRAWING_ORDER_HEADER structure is included in all alternate
+//  secondary drawing orders.
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |  controlFlags |
+// +---------------+
+
+// controlFlags (1 byte): An 8-bit, unsigned integer. The control byte that
+//  identifies the class and type of the drawing order.
+
+//  The format of the controlFlags byte is described by the following bitmask
+//   diagram.
+
+//  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//  | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+//  |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+//  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//  |cla| orderType |
+//  | ss|           |
+//  +---+-----------+
+
+//  class (2 bits): A 2-bit, unsigned integer. This field MUST contain only
+//   the TS_SECONDARY (0x02) flag to indicate that the order is an alternate
+//   secondary drawing order (see section 2.2.2.2.1).
+
+//  orderType (6 bits): A 6-bit, unsigned integer. Identifies the type of
+//   alternate secondary drawing order.
+
+//  +----------------------------------+---------------------------------------+
+//  | Value                            | Meaning                               |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_SWITCH_SURFACE         | Switch Surface Alternate Secondary    |
+//  | 0x00                             | Drawing Order (see section            |
+//  |                                  | 2.2.2.2.1.3.3).                       |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_CREATE_OFFSCR_BITMAP   | Create Offscreen Bitmap Alternate     |
+//  | 0x01                             | Secondary Drawing Order (see section  |
+//  |                                  | 2.2.2.2.1.3.2).                       |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_STREAM_BITMAP_FIRST    | Stream Bitmap First (Revision 1 and   |
+//  | 0x02                             | 2) Alternate Secondary Drawing Order  |
+//  |                                  | (see section 2.2.2.2.1.3.5.1).        |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_STREAM_BITMAP_NEXT     | Stream Bitmap Next Alternate          |
+//  | 0x03                             | Secondary Drawing Order (see section  |
+//  |                                  | 2.2.2.2.1.3.5.2).                     |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_CREATE_NINEGRID_BITMAP | Create NineGrid Bitmap Alternate      |
+//  | 0x04                             | Secondary Drawing Order (see section  |
+//  |                                  | 2.2.2.2.1.3.4).                       |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_GDIP_FIRST             | Draw GDI+ First Alternate Secondary   |
+//  | 0x05                             | Drawing Order (see section            |
+//  |                                  | 2.2.2.2.1.3.6.2).                     |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_GDIP_NEXT              | Draw GDI+ Next Alternate Secondary    |
+//  | 0x06                             | Drawing Order (see section            |
+//  |                                  | 2.2.2.2.1.3.6.3).                     |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_GDIP_END               | Draw GDI+ End Alternate Secondary     |
+//  | 0x07                             | Drawing Order (see section            |
+//  |                                  | 2.2.2.2.1.3.6.4).                     |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_GDIP_CACHE_FIRST       | Draw GDI+ First Alternate Secondary   |
+//  | 0x08                             | Drawing Order (see section            |
+//  |                                  | 2.2.2.2.1.3.6.2).                     |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_GDIP_CACHE_NEXT        | Draw GDI+ Cache Next Alternate        |
+//  | 0x09                             | Secondary Drawing Order (see section  |
+//  |                                  | 2.2.2.2.1.3.6.3).                     |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_GDIP_CACHE_END         | Draw GDI+ Cache End Alternate         |
+//  | 0x0A                             | Secondary Drawing Order (see section  |
+//  |                                  | 2.2.2.2.1.3.6.4).                     |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_WINDOW                 | Windowing Alternate Secondary Drawing |
+//  | 0x0B                             | Order (see [MS-RDPERP] section        |
+//  |                                  | 2.2.1.3).                             |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_COMPDESK_FIRST         | Desktop Composition Alternate         |
+//  | 0x0C                             | Secondary Drawing Order (see          |
+//  |                                  | [MS-RDPEDC] section 2.2.1.1).         |
+//  +----------------------------------+---------------------------------------+
+//  | TS_ALTSEC_FRAME_MARKER           | Frame Marker Alternate Secondary      |
+//  | 0x0D                             | Drawing Order (see section            |
+//  |                                  | 2.2.2.2.1.3.7).                       |
+//  +----------------------------------+---------------------------------------+
+
+class AltsecDrawingOrderHeader {
+public:
+    uint8_t controlFlags;
+    uint8_t class_;
+    uint8_t orderType;
+
+    enum {
+          SwitchSurface        = 0x00
+        , CreateOffscrBitmap   = 0x01
+        , StreamBitmapFirst    = 0x02
+        , StreamBitmapNext     = 0x03
+        , CreateNinegridBitmap = 0x04
+        , GdipFirst            = 0x05
+        , GdipNext             = 0x06
+        , GdipEnd              = 0x07
+        , GdipCacheFirst       = 0x08
+        , GdipCacheNext        = 0x09
+        , GdipCacheEnd         = 0x0A
+        , Window               = 0x0B
+        , CompdeskFirst        = 0x0C
+        , FrameMarker          = 0x0D
+    };
+
+    AltsecDrawingOrderHeader(Stream & stream) {
+        this->controlFlags = stream.in_uint8();
+
+        this->class_    = (this->controlFlags & 0x03);
+        this->orderType = (this->controlFlags >> 2);
+    }
+
+    AltsecDrawingOrderHeader(uint8_t controlFlags) {
+        this->controlFlags = controlFlags;
+
+        this->class_    = (this->controlFlags & 0x03);
+        this->orderType = (this->controlFlags >> 2);
+    }
+
+    AltsecDrawingOrderHeader(uint8_t class_, uint8_t orderType) {
+        this->class_    = (class_ & 0x03);
+        this->orderType = (orderType & 0x3F);
+
+        this->controlFlags = (this->class_ | (this->orderType << 2));
+    }
+};  // class AltsecDrawingOrderHeader
+
+} /* namespace RDP */
 
 
 

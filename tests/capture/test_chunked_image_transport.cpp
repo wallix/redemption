@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         Rect scr(0, 0, 20, 10);
         CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
         Inifile ini;
-        BmpCache bmp_cache(24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
+        BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
         RDPDrawable drawable(scr.cx, scr.cy);
         GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
         consumer.draw(RDPOpaqueRect(scr, RED), scr);
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
-    BmpCache bmp_cache(24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
+    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
@@ -232,7 +232,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
-    BmpCache bmp_cache(24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
+    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
@@ -393,7 +393,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
-    player.add_consumer(&drawable);
+    player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -466,7 +466,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     OutFilenameTransport second_out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid);
     ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
-    player.add_consumer(&drawable1);
+    player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -541,7 +541,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
-    player.add_consumer(&drawable);
+    player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
     while (player.next_order()){
         player.interpret_order();
     }

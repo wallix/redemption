@@ -200,7 +200,7 @@ int main(int argc, char * argv[]) {
     }
 
     const bool fastpath_support = true;
-    const bool mem3blt_support  = false;
+    const bool mem3blt_support  = true;
     Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini,
         fastpath_support, mem3blt_support, input_filename.c_str(), persistent_key_list_oft);
     null_mod no_mod(front);
@@ -260,26 +260,30 @@ int main(int argc, char * argv[]) {
                                        , front.keymap.key_flags
                                        , ini.debug.mod_rdp
                                        );
-            //mod_rdp_params.enable_tls                      = true;
-            mod_rdp_params.enable_nla                      = ini.mod_rdp.enable_nla;
-            mod_rdp_params.enable_krb                      = ini.mod_rdp.enable_kerberos;
-            mod_rdp_params.enable_clipboard                = ini.client.clipboard.get();
-            //mod_rdp_params.enable_fastpath                 = true;
-            //mod_rdp_params.enable_mem3blt                  = true;
-            mod_rdp_params.enable_bitmap_update            = ini.globals.enable_bitmap_update;
-            //mod_rdp_params.enable_new_pointer              = true;
-            mod_rdp_params.enable_transparent_mode         = true;
-            mod_rdp_params.output_filename                 = (output_filename.empty() ? "" : output_filename.c_str());
-            mod_rdp_params.persistent_key_list_transport   = persistent_key_list_ift;
-            mod_rdp_params.transparent_recorder_transport  = record_oft;
-            mod_rdp_params.auth_channel                    = ini.globals.auth_channel;
-            mod_rdp_params.alternate_shell                 = ini.globals.alternate_shell.get_cstr();
-            mod_rdp_params.shell_working_directory         = ini.globals.shell_working_directory.get_cstr();
-            mod_rdp_params.rdp_compression                 = ini.mod_rdp.rdp_compression;
-            mod_rdp_params.disconnect_on_logon_user_change = ini.mod_rdp.disconnect_on_logon_user_change;
-            mod_rdp_params.open_session_timeout            = ini.mod_rdp.open_session_timeout;
-            mod_rdp_params.certificate_change_action       = ini.mod_rdp.certificate_change_action;
-            mod_rdp_params.extra_orders                    = ini.mod_rdp.extra_orders.c_str();
+            //mod_rdp_params.enable_tls                          = true;
+            mod_rdp_params.enable_nla                          = ini.mod_rdp.enable_nla;
+            mod_rdp_params.enable_krb                          = ini.mod_rdp.enable_kerberos;
+            mod_rdp_params.enable_clipboard                    = ini.client.clipboard.get();
+            //mod_rdp_params.enable_fastpath                     = true;
+            //mod_rdp_params.enable_mem3blt                      = true;
+            mod_rdp_params.enable_bitmap_update                = ini.globals.enable_bitmap_update;
+            //mod_rdp_params.enable_new_pointer                  = true;
+            mod_rdp_params.enable_transparent_mode             = true;
+            mod_rdp_params.output_filename                     = (output_filename.empty() ? "" : output_filename.c_str());
+            mod_rdp_params.persistent_key_list_transport       = persistent_key_list_ift;
+            mod_rdp_params.transparent_recorder_transport      = record_oft;
+            mod_rdp_params.auth_channel                        = ini.globals.auth_channel;
+            mod_rdp_params.alternate_shell                     = ini.globals.alternate_shell.get_cstr();
+            mod_rdp_params.shell_working_directory             = ini.globals.shell_working_directory.get_cstr();
+            mod_rdp_params.rdp_compression                     = ini.mod_rdp.rdp_compression;
+            mod_rdp_params.disconnect_on_logon_user_change     = ini.mod_rdp.disconnect_on_logon_user_change;
+            mod_rdp_params.open_session_timeout                = ini.mod_rdp.open_session_timeout;
+            mod_rdp_params.certificate_change_action           = ini.mod_rdp.certificate_change_action;
+            mod_rdp_params.extra_orders                        = ini.mod_rdp.extra_orders.c_str();
+            mod_rdp_params.enable_persistent_disk_bitmap_cache = ini.mod_rdp.persistent_disk_bitmap_cache;
+            mod_rdp_params.enable_cache_waiting_list           = ini.mod_rdp.cache_waiting_list;
+            mod_rdp_params.password_printing_mode              = ini.debug.password;
+            mod_rdp_params.cache_verbose                       = ini.debug.cache;
 
             mod_rdp mod(&mod_trans, front, client_info, gen, mod_rdp_params);
             mod.get_event().st = &mod_trans;

@@ -324,6 +324,7 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
 
     NTLMAuthenticateMessage()
         : NTLMMessage(NtlmAuthenticate)
+        , MIC()
         , ignore_mic(false)
         , has_mic(true)
         , PayloadOffset(12+8+8+8+8+8+8+4+8)
@@ -480,6 +481,12 @@ struct LMv2_Response {
     uint8_t Response[16];
     uint8_t ClientChallenge[8];
 
+    LMv2_Response()
+        : Response()
+        , ClientChallenge()
+    {
+    }
+    ~LMv2_Response() {}
     void emit(Stream & stream) {
         stream.out_copy_bytes(this->Response, 16);
         stream.out_copy_bytes(this->ClientChallenge, 8);
@@ -573,6 +580,12 @@ struct NTLMv2_Client_Challenge {
     NtlmAvPairList AvPairList;
     uint32_t Reserved4;             // MUST BE 0x00
 
+    NTLMv2_Client_Challenge()
+        : Timestamp()
+        , ClientChallenge()
+    {
+    }
+    ~NTLMv2_Client_Challenge() {}
     void emit(Stream & stream) {
 	// ULONG length;
 
@@ -635,6 +648,12 @@ struct NTLMv2_Client_Challenge {
 struct NTLMv2_Response {
     uint8_t Response[16];
     NTLMv2_Client_Challenge Challenge;
+
+    NTLMv2_Response()
+        : Response()
+    {
+    }
+    ~NTLMv2_Response() {}
 
     void emit(Stream & stream) {
         stream.out_copy_bytes(this->Response, 16);

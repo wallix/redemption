@@ -144,7 +144,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
+    mod_rdp mod_(&t, front, info, gen, mod_rdp_params);
+    mod_api * mod = &mod_;
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -164,7 +165,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     char message[1024];
     if (!check_sig(front.gd.drawable, message,
-    "\x9d\x6c\x55\x50\x4d\x1e\x85\x4c\xb7\x35\x09\x6b\x2a\x58\x5d\xb0\x83\x02\xc3\x0e"
+    "\xb0\x16\x5e\xf5\x85\xdc\x1e\x3f\x91\x04\xe8\x0c\x19\x5e\x65\x34\xb5\x1b\xbd\xa6"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }

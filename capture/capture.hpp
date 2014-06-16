@@ -33,7 +33,7 @@
 
 #include "auth_api.hpp"
 
-class Capture : public RDPGraphicDevice {
+class Capture : public RDPGraphicDevice, public RDPCaptureDevice {
 public:
     const bool capture_wrm;
     const bool capture_drawable;
@@ -67,6 +67,10 @@ private:
 private:
     RDPGraphicDevice * gd;
 
+    timeval last_now;
+    int     last_x;
+    int     last_y;
+
 public:
     Capture( const timeval & now, int width, int height, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
@@ -85,7 +89,10 @@ public:
             , capture_event(wait_obj(NULL))
             , png_path(png_path)
             , basename(basename)
-            , gd(NULL) {
+            , gd(NULL)
+            , last_now(now)
+            , last_x(width / 2)
+            , last_y(height / 2) {
         if (this->capture_drawable) {
             this->drawable = new RDPDrawable(width, height);
         }
@@ -121,7 +128,7 @@ public:
             TODO("Also we may wonder why we are encrypting wrm and not png"
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
-            this->pnc_bmp_cache = new BmpCache(24, 3, false, 600, 768, false, 300, 3072, false, 262, 12288, false);
+            this->pnc_bmp_cache = new BmpCache(BmpCache::Recorder, 24, 3, false, 600, 768, false, 300, 3072, false, 262, 12288, false);
             if (this->enable_file_encryption) {
                 this->crypto_wrm_trans = new CryptoOutmetaTransport( &this->crypto_ctx
                                                                    , wrm_path, hash_path, basename, now
@@ -218,23 +225,36 @@ public:
         }
     }
 
-    void snapshot( const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
+    virtual void set_row(size_t rownum, const uint8_t * data)
+    {
+        if (this->capture_drawable){
+            this->drawable->set_row(rownum, data);
+        }
+    }
+
+    void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
         this->capture_event.reset();
 
+        this->last_now = now;
+        this->last_x   = x;
+        this->last_y   = y;
+
         if (this->capture_png) {
-            this->psc->snapshot( now, x, y, ignore_frame_in_timeval);
+            this->psc->snapshot(now, x, y, ignore_frame_in_timeval);
             this->capture_event.update(this->psc->time_to_wait);
         }
         if (this->capture_wrm) {
-            this->pnc->snapshot( now, x, y, ignore_frame_in_timeval);
+            this->pnc->snapshot(now, x, y, ignore_frame_in_timeval);
             this->capture_event.update(this->pnc->time_to_wait);
         }
     }
 
     void flush() {
+/*
         if (this->capture_png) {
             this->psc->flush();
         }
+*/
         if (this->capture_wrm) {
             this->pnc->flush();
         }
@@ -324,9 +344,21 @@ public:
         }
     }
 
-    void draw( const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) {
         if (this->gd) {
             this->gd->draw(bitmap_data, data, size, bmp);
+        }
+    }
+
+    virtual void draw(const RDP::FrameMarker & order) {
+        if (this->gd) {
+            this->gd->draw(order);
+        }
+
+        if (order.action == RDP::FrameMarker::FrameEnd) {
+            if (this->capture_png) {
+                this->psc->snapshot(this->last_now, this->last_x, this->last_y, false);
+            }
         }
     }
 

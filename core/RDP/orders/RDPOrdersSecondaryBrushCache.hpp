@@ -135,9 +135,9 @@
 
 enum {
     BMF_1BPP = 0x01,
-    BMF_8BPP = 0x03, 
-    BMF_16BPP = 0x04, 
-    BMF_24BPP = 0x05, 
+    BMF_8BPP = 0x03,
+    BMF_16BPP = 0x04,
+    BMF_24BPP = 0x05,
 };
 
 
@@ -195,8 +195,12 @@ class RDPBrushCache {
         this->width = stream.in_uint8();
         this->height = stream.in_uint8();
         this->type = stream.in_uint8();
-        this->size = stream.in_uint8();
-        this->data = (uint8_t *)malloc(this->size);
+        uint8_t size = stream.in_uint8();
+        if (this->size < size) {
+            free(this->data);
+            this->data = (uint8_t *)malloc(size);
+        }
+        this->size = size;
         memcpy(this->data, stream.in_uint8p(this->size), this->size);
     }
 

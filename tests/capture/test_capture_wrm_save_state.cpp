@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     Rect scr(0, 0, 100, 100);
     CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1, 511);
     Inifile ini;
-    BmpCache bmp_cache(24, 3, false, 2, 256, false, 2, 1024, false, 2, 4096, false);
+    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 2, 256, false, 2, 1024, false, 2, 4096, false);
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.timestamp(now);
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
-    player.add_consumer(&drawable);
+    player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     CheckTransport trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1, 511);
     Inifile ini;
     ini.debug.primary_orders = 1;
-    BmpCache bmp_cache(24, 3, false, 2, 256, false, 2, 1024, false, 2, 4096, false);
+    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 2, 256, false, 2, 1024, false, 2, 4096, false);
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.timestamp(now);
@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
-    player.add_consumer(&drawable);
+    player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -349,7 +349,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
-    player.add_consumer(&drawable);
+    player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();

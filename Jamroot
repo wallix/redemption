@@ -37,7 +37,7 @@ constant PREFIX : [ setvar PREFIX : /usr/local ] ;
 constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
 constant LIB_PREFIX : [ setvar LIB_PREFIX : $(PREFIX)/lib ] ;
 constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
-constant RECORD_TMP_PATH : [ setvar TMP_PATH : /var/rdpproxy/tmp ] ;
+constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : /var/rdpproxy/tmp ] ;
 constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
 constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
 constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
@@ -98,30 +98,30 @@ project redemption
 #    <cxxflags>-Wold-style-cast
 #    <cxxflags>-Wlong-long
     <cxxflags>-O3
+#     <cxxflags>-march=native
     <cxxflags>-Wuninitialized
     <cxxflags>-Wnon-virtual-dtor
 #     <cxxflags>-Wall
 #     <cxxflags>-Wextra
-#     <cxxflags>-Wundef
-#     <cxxflags>-Wcast-align
-#     <cxxflags>-Wchar-subscripts
-#     <cxxflags>-Wformat-security
-#     <cxxflags>-Wunreachable-code
+    <cxxflags>-Wundef
+    <cxxflags>-Wcast-align
+    <cxxflags>-Wchar-subscripts
 #     <cxxflags>-Wformat
 #     <cxxflags>-Wformat=2
-#     <cxxflags>-Werror-implicit-function-declaration
-#     <cxxflags>-Wsequence-point
-#     <cxxflags>-Wreturn-type
-#     <cxxflags>-Wfloat-equal
-#     <cxxflags>-Wshadow
-#     <cxxflags>-Wpointer-arith
-#     <cxxflags>-Wsign-compare
-#     <cxxflags>-Wmissing-declarations
+#     <cxxflags>-Wformat-security
 #     <cxxflags>-Wmissing-format-attribute
-#     <cxxflags>-Wpacked
-#     <cxxflags>-Wredundant-decls
+#    <cxxflags>-Werror-implicit-function-declaration
+    <cxxflags>-Wsequence-point
+    <cxxflags>-Wreturn-type
+    <cxxflags>-Wfloat-equal
+#     <cxxflags>-Wshadow
+    <cxxflags>-Wpointer-arith
+    <cxxflags>-Wsign-compare
+#     <cxxflags>-Wmissing-declarations
+    <cxxflags>-Wpacked
+    <cxxflags>-Wredundant-decls
 #     <cxxflags>-Winline
-#     <cxxflags>-Wdouble-promotion
+#    <cxxflags>-Wdouble-promotion
     <cxxflags>-Winit-self
 #     <cxxflags>-Wcast-qual
 #     <cxxflags>-Woverloaded-virtual
@@ -336,6 +336,7 @@ exe rgx_cmp
 
 import testing ;
 
+unit-test test_unique_ptr : tests/utils/test_unique_ptr.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_stream : tests/utils/test_stream.cpp cryptofile openssl crypto png z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_utf : tests/utils/test_utf.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rect : tests/utils/test_rect.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -623,3 +624,5 @@ unit-test test_group_box : tests/mod/internal/widget2/test_group_box.cpp cryptof
 unit-test test_scroll : tests/mod/internal/widget2/test_scroll.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_tab : tests/mod/internal/widget2/test_tab.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_darray : tests/utils/test_darray.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

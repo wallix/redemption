@@ -152,7 +152,7 @@ class Engine(object):
     }   # config_effective_targets
 
     config_rights = {
-        'itnl_internal@bouncer2:INTERNAL': RightInfo(
+        'itnl_internal@bouncer2:RDP': RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'internal',
@@ -181,9 +181,9 @@ class Engine(object):
                         data = u''
                     ),
                     protocol = ProtocolInfo(
-                        cn = u'INTERNAL'
+                        cn = u'RDP'
                     ),
-                    cn = u'INTERNAL',
+                    cn = u'RDP',
                     port = u'3389'
                 )
             ),
@@ -192,7 +192,7 @@ class Engine(object):
                 isCritical = False,
                 isRecorded = False
             ),
-            service_login = u'internal@bouncer2:INTERNAL',
+            service_login = u'internal@bouncer2:RDP',
             subprotocols =
             [
                 SubprotocolInfo(
@@ -202,7 +202,7 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
-        'itnl_internal@test_card:INTERNAL': RightInfo(
+        'itnl_internal@test_card:RDP': RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'internal',
@@ -231,9 +231,9 @@ class Engine(object):
                         data = u''
                     ),
                     protocol = ProtocolInfo(
-                        cn = u'INTERNAL'
+                        cn = u'RDP'
                     ),
-                    cn = u'INTERNAL',
+                    cn = u'RDP',
                     port = u'3389'
                 )
             ),
@@ -242,7 +242,7 @@ class Engine(object):
                 isCritical = False,
                 isRecorded = False
             ),
-            service_login = u'internal@test_card:INTERNAL',
+            service_login = u'internal@test_card:RDP',
             subprotocols =
             [
                 SubprotocolInfo(
@@ -252,7 +252,7 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
-        'itnl_internal@widget2_message:INTERNAL': RightInfo(
+        'itnl_internal@widget2_message:RDP': RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'internal',
@@ -281,9 +281,9 @@ class Engine(object):
                         data = u''
                     ),
                     protocol = ProtocolInfo(
-                        cn = u'INTERNAL'
+                        cn = u'RDP'
                     ),
-                    cn = u'INTERNAL',
+                    cn = u'RDP',
                     port = u'3389'
                 )
             ),
@@ -292,7 +292,7 @@ class Engine(object):
                 isCritical = False,
                 isRecorded = False
             ),
-            service_login = u'internal@widget2_message:INTERNAL',
+            service_login = u'internal@widget2_message:RDP',
             subprotocols =
             [
                 SubprotocolInfo(
@@ -302,7 +302,7 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
-        'itnl_replay@autotest:INTERNAL': RightInfo(
+        'itnl_replay@autotest:RDP': RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'replay',
@@ -331,9 +331,9 @@ class Engine(object):
                         data = u''
                     ),
                     protocol = ProtocolInfo(
-                        cn = u'INTERNAL'
+                        cn = u'RDP'
                     ),
-                    cn = u'INTERNAL',
+                    cn = u'RDP',
                     port = u'3389'
                 )
             ),
@@ -342,7 +342,7 @@ class Engine(object):
                 isCritical = False,
                 isRecorded = False
             ),
-            service_login = u'replay@autotest:INTERNAL',
+            service_login = u'replay@autotest:RDP',
             subprotocols =
             [
                 SubprotocolInfo(
@@ -540,6 +540,56 @@ class Engine(object):
                 isRecorded = True
             ),
             service_login = u'administrateur@10.10.47.205:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
+        ),
+        'rec_w2k8_administrateur@10.10.47.89:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'administrateur',
+                password = PASSWORD2,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                )
+            ],
+            target_groups = u'win1',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.47.89',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.47.89',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = True,
+                isRecorded = True
+            ),
+            service_login = u'administrateur@10.10.47.89:RDP',
             subprotocols =
             [
                 SubprotocolInfo(
@@ -1111,7 +1161,7 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
-        'w2k8_administrateur@10.10.47.228:RDP' : RightInfo(
+        'w2k8_administrateur@10.10.47.89:RDP' : RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'administrateur',
@@ -1131,10 +1181,10 @@ class Engine(object):
             target_groups = u'win1;win2',
             resource = ResourceInfo(
                 device = DeviceInfo(
-                    cn = u'10.10.47.228',
+                    cn = u'10.10.47.89',
                     uid = u'140ee23607907e970800279eed97',
                     deviceAlias = u'',
-                    host = u'10.10.47.228',
+                    host = u'10.10.47.89',
                     isKeyAuth = None
                 ),
                 application = None,
@@ -1154,7 +1204,7 @@ class Engine(object):
                 isCritical = False,
                 isRecorded = False
             ),
-            service_login = u'administrateur@10.10.47.228:RDP',
+            service_login = u'administrateur@10.10.47.89:RDP',
             subprotocols =
             [
                 SubprotocolInfo(
@@ -1466,6 +1516,12 @@ class Engine(object):
             password = PASSWORD2
         ),
         TargetPasswordInfo(
+            account = u'administrateur',
+            resource = u'10.10.47.89',
+            protocol = u'RDP',
+            password = PASSWORD2
+        ),
+        TargetPasswordInfo(
             account = u'admin',
             resource = u'10.10.46.78',
             protocol = u'RDP',
@@ -1491,32 +1547,32 @@ class Engine(object):
         ),
         TargetPasswordInfo(
             account = u'administrateur',
-            resource = u'10.10.47.228',
+            resource = u'10.10.47.89',
             protocol = u'RDP',
             password = PASSWORD1
         ),
         TargetPasswordInfo(
             account = u'internal',
             resource = u'bouncer2',
-            protocol = u'INTERNAL',
+            protocol = u'RDP',
             password = u'internal'
         ),
         TargetPasswordInfo(
             account = u'internal',
             resource = u'test_card',
-            protocol = u'INTERNAL',
+            protocol = u'RDP',
             password = u'internal'
         ),
         TargetPasswordInfo(
             account = u'internal',
             resource = u'widget2_message',
-            protocol = u'INTERNAL',
+            protocol = u'RDP',
             password = u'internal'
         ),
         TargetPasswordInfo(
             account = u'replay',
             resource = u'autotest',
-            protocol = u'INTERNAL',
+            protocol = u'RDP',
             password = u'password'
         ),
         TargetPasswordInfo(
@@ -1581,10 +1637,10 @@ class Engine(object):
             'preferredLanguage': u'en',
             'rights':
             [
-                'itnl_internal@bouncer2:INTERNAL',
-                'itnl_internal@test_card:INTERNAL',
-                'itnl_internal@widget2_message:INTERNAL',
-                'itnl_replay@autotest:INTERNAL',
+                'itnl_internal@bouncer2:RDP',
+                'itnl_internal@test_card:RDP',
+                'itnl_internal@widget2_message:RDP',
+                'itnl_replay@autotest:RDP',
             ]
         },
         'rec':
@@ -1599,6 +1655,7 @@ class Engine(object):
                 'rec_w2k_administrateur@10.10.46.64:RDP',
                 'rec_w2k_administrateur@10.10.47.39:RDP',
                 'rec_w2k3_administrateur@10.10.47.205:RDP',
+                'rec_w2k8_administrateur@10.10.47.89:RDP',
                 'rec_w2k3_any@10.10.46.70:VNC',
                 'rec_w2k3_qa\\administrateur@10.10.46.70:RDP',
                 'rec_w2k8_qa\\administrateur@10.10.46.78:RDP',
@@ -1619,7 +1676,7 @@ class Engine(object):
                 'w2k3_administrateur@10.10.47.205:RDP',
                 'w2k3_any@10.10.46.70:VNC',
                 'w2k3_qa\\administrateur@10.10.46.70:RDP',
-                'w2k8_administrateur@10.10.47.228:RDP',
+                'w2k8_administrateur@10.10.47.89:RDP',
                 'w2k8_qa\\administrateur@10.10.46.78:RDP',
                 'w2k8_qa\\administrateur@10.10.46.88:RDP',
                 'wxp_administrateur@10.10.47.175:RDP',
@@ -1677,6 +1734,7 @@ class Engine(object):
         class User:
             def __init__(self, preferredLanguage = u'en'):
                 self.preferredLanguage = preferredLanguage
+                self.cn = None
         Logger().info("Engine constructor")
         self.wab_login = None
         self.user = User()
@@ -1901,7 +1959,7 @@ class Engine(object):
         Logger().info("release_target_password done: target_device=\"%s\" reason=\"%s\"" %
             (target_device, reason))
 
-    def start_session(self, target, pid):
+    def start_session(self, target, pid, effective_login):
         return "SESSIONID-0000"
 
     def get_restrictions(self, target):

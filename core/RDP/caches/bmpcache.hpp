@@ -27,6 +27,7 @@
 #include "RDP/PersistentKeyListPDU.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "fileutils.hpp"
+#include "unique_ptr.hpp"
 
 enum {
       BITMAP_FOUND_IN_CACHE
@@ -34,27 +35,33 @@ enum {
 };
 
 struct BmpCache {
+
     static const uint8_t  MAXIMUM_NUMBER_OF_CACHES        = 5;
     static const uint16_t MAXIMUM_NUMBER_OF_CACHE_ENTRIES = 8192;
 
     static const uint8_t IN_WAIT_LIST = 0x80;
 
+    const enum Owner {
+          Front
+        , Mod_rdp
+        , Recorder
+    } owner;
     const uint8_t bpp;
 
-    uint8_t number_of_cache;
-    bool    use_waiting_list;
+    const uint8_t number_of_cache;
+    const bool    use_waiting_list;
 
     uint16_t cache_entries[MAXIMUM_NUMBER_OF_CACHES];
     uint16_t cache_size[MAXIMUM_NUMBER_OF_CACHES];
     bool     cache_persistent[MAXIMUM_NUMBER_OF_CACHES];
 
-    const Bitmap * cache [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
-    uint32_t       stamps[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
-    uint8_t        sha1  [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES][20];
+    unique_ptr<const Bitmap> cache [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
+    uint32_t                 stamps[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
+    uint8_t                  sha1  [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES][20];
     union {
         uint8_t  sig_8[8];
         uint32_t sig_32[2];
-    }              sig   [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
+    }                        sig   [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
 
     // Map based bitmap finder.
     class Finder {
@@ -130,15 +137,15 @@ struct BmpCache {
 
     Finder finders[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */];
 
-    uint32_t stamp;
-    uint32_t verbose;
+          uint32_t stamp;
+    const uint32_t verbose;
 
-    unsigned finding_counter;
-    unsigned found_counter;
-    unsigned not_found_counter;
+    unsigned ref_counter[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */];
+    unsigned put_counter[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */];
 
     public:
-        BmpCache(const uint8_t bpp,
+        BmpCache(Owner owner,
+                 const uint8_t bpp,
                  uint8_t number_of_cache,
                  bool use_waiting_list,
                  uint16_t cache_0_entries,     uint16_t cache_0_size,     bool cache_0_persistent,
@@ -147,14 +154,14 @@ struct BmpCache {
                  uint16_t cache_3_entries = 0, uint16_t cache_3_size = 0, bool cache_3_persistent = false,
                  uint16_t cache_4_entries = 0, uint16_t cache_4_size = 0, bool cache_4_persistent = false,
                  uint32_t verbose = 0)
-            : bpp(bpp)
+            : owner(owner)
+            , bpp(bpp)
             , number_of_cache(number_of_cache)
             , use_waiting_list(use_waiting_list)
             , stamp(0)
             , verbose(verbose)
-            , finding_counter(0)
-            , found_counter(0)
-            , not_found_counter(0)
+            , ref_counter()
+            , put_counter()
         {
             this->cache_entries   [0] = cache_0_entries;
             this->cache_size      [0] = cache_0_size;
@@ -174,9 +181,10 @@ struct BmpCache {
 
             if (this->verbose) {
                 LOG( LOG_INFO
-                   , "BmpCache: bpp=%u number_of_cache=%u use_waiting_list=%s "
+                   , "BmpCache: %s bpp=%u number_of_cache=%u use_waiting_list=%s "
                      "cache_0(%u, %u, %s) cache_1(%u, %u, %s) cache_2(%u, %u, %s) "
                      "cache_3(%u, %u, %s) cache_4(%u, %u, %s)"
+                   , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                    , this->bpp, this->number_of_cache, (this->use_waiting_list ? "yes" : "no")
                    , this->cache_entries[0], this->cache_size[0], (cache_persistent[0] ? "yes" : "no")
                    , this->cache_entries[1], this->cache_size[1], (cache_persistent[1] ? "yes" : "no")
@@ -187,8 +195,10 @@ struct BmpCache {
             }
 
             if (this->number_of_cache > MAXIMUM_NUMBER_OF_CACHES) {
-                LOG(LOG_ERR, "BmpCache: number_of_cache(%u) > %u", this->number_of_cache,
-                    MAXIMUM_NUMBER_OF_CACHES);
+                LOG( LOG_ERR, "BmpCache: %s number_of_cache(%u) > %u"
+                   , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
+                   , this->number_of_cache
+                   , MAXIMUM_NUMBER_OF_CACHES);
                 throw Error(ERR_RDP_PROTOCOL);
             }
 
@@ -196,7 +206,9 @@ struct BmpCache {
         }
 
         ~BmpCache() {
-            this->destroy_cache();
+            if (this->verbose) {
+                this->log();
+            }
         }
 
     private:
@@ -206,7 +218,7 @@ struct BmpCache {
             }
             for (uint8_t cid = 0; cid < MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */; cid++) {
                 for (uint16_t cidx = 0; cidx < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cidx++) {
-                    delete this->cache[cid][cidx];
+                    this->cache[cid][cidx].reset();
                 }
                 this->finders[cid].clear();
             }
@@ -216,7 +228,7 @@ struct BmpCache {
             this->stamp = 0;
             for (uint8_t cid = 0; cid < MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */; cid++) {
                 for (uint16_t cidx = 0; cidx < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cidx++) {
-                    this->cache[cid][cidx]  = NULL;
+                    this->cache[cid][cidx].reset();
                     this->stamps[cid][cidx] = 0;
                     bzero(this->sha1[cid][cidx], sizeof(this->sha1[cid][cidx]));
                     bzero(this->sig[cid][cidx].sig_8, sizeof(this->sig[cid][cidx].sig_8));
@@ -237,14 +249,16 @@ struct BmpCache {
                 // Last bitmap cache entry is used by waiting list.
                 //LOG(LOG_INFO, "BmpCache: Put bitmap to waiting list.");
                 idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
+                this->put_counter[MAXIMUM_NUMBER_OF_CACHES]++;  // Wait list
+            }
+            else {
+                this->put_counter[id]++;
             }
             if (this->cache[id][idx]) {
-                this->finders[id].remove(this->sha1[id][idx], this->cache[id][idx]->cx,
-                    this->cache[id][idx]->cy);
-                delete this->cache[id][idx];
+                this->finders[id].remove(this->sha1[id][idx], this->cache[id][idx]->cx, this->cache[id][idx]->cy);
             }
-            this->cache[id][idx]         = bmp;
-            this->stamps[id][idx]        = ++this->stamp;
+            this->cache[id][idx].reset(bmp);
+            this->stamps[id][idx] = ++this->stamp;
             bmp->compute_sha1(this->sha1[id][idx]);
             if (this->cache_persistent[id]) {
                 REDASSERT(key1 && key2);
@@ -261,14 +275,22 @@ struct BmpCache {
         }
 
         const Bitmap * get(uint8_t id, uint16_t idx) {
-            if (id & IN_WAIT_LIST)
-                return this->cache[MAXIMUM_NUMBER_OF_CACHES][idx];
+            if (id & IN_WAIT_LIST) {
+                REDASSERT(this->owner != Mod_rdp);
+                this->ref_counter[MAXIMUM_NUMBER_OF_CACHES]++;
+                return this->cache[MAXIMUM_NUMBER_OF_CACHES][idx].get();
+            }
             if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
+                REDASSERT(this->owner != Front);
                 // Last bitmap cache entry is used by waiting list.
                 //LOG(LOG_INFO, "BmpCache: Get bitmap from waiting list.");
                 idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
+                this->ref_counter[MAXIMUM_NUMBER_OF_CACHES]++;
             }
-            return this->cache[id][idx];
+            else {
+                this->ref_counter[id]++;
+            }
+            return this->cache[id][idx].get();
         }
 
         unsigned get_stamp(uint8_t id, uint16_t idx) {
@@ -289,7 +311,9 @@ struct BmpCache {
                 case MAXIMUM_NUMBER_OF_CACHES: return true;
             }
 
-            LOG(LOG_ERR, "BmpCache: index_of_cache(%u) > %u", id, MAXIMUM_NUMBER_OF_CACHES);
+            LOG( LOG_ERR, "BmpCache: %s index_of_cache(%u) > %u"
+               , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
+               , id, MAXIMUM_NUMBER_OF_CACHES);
             throw Error(ERR_RDP_PROTOCOL);
             return false;
         }
@@ -309,9 +333,11 @@ struct BmpCache {
 
         void log() const {
             LOG( LOG_INFO
-               , "BmpCache: total=%u found=%u not_found=%u "
+               , "BmpCache: %s ref_counter=(%u %u %u ... %u) put_counter=(%u %u %u ... %u) "
                  "(0=>%u, %u%s) (1=>%u, %u%s) (2=>%u, %u%s) (3=>%u, %u%s) (4=>%u, %u%s)"
-               , this->finding_counter, this->found_counter, this->not_found_counter
+               , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
+               , this->ref_counter[0], this->ref_counter[1], this->ref_counter[2], this->ref_counter[MAXIMUM_NUMBER_OF_CACHES]
+               , this->put_counter[0], this->put_counter[1], this->put_counter[2], this->put_counter[MAXIMUM_NUMBER_OF_CACHES]
                , get_cache_usage(0), this->cache_entries[0], (this->cache_persistent[0] ? ", persistent" : "")
                , get_cache_usage(1), this->cache_entries[1], (this->cache_persistent[1] ? ", persistent" : "")
                , get_cache_usage(2), this->cache_entries[2], (this->cache_persistent[2] ? ", persistent" : "")
@@ -321,6 +347,7 @@ struct BmpCache {
 
         TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap");
         uint32_t cache_bitmap(const Bitmap & oldbmp) {
+            REDASSERT(this->owner != Mod_rdp);
             // Generating source code for unit test.
             //if (this->verbose & 8192) {
             //    if (this->finding_counter == 500) {
@@ -340,9 +367,9 @@ struct BmpCache {
             //        this->finding_counter, oldbmp.bmp_size);
             //}
 
-            this->finding_counter++;
-
-            const Bitmap * bmp = new Bitmap(this->bpp, oldbmp);
+            unique_ptr<const Bitmap> bmp(new Bitmap(
+                 (((this->owner == Recorder) || (oldbmp.original_bpp > this->bpp)) ? this->bpp : oldbmp.original_bpp)
+                , oldbmp));
 
             uint8_t bmp_sha1[20];
             bmp->compute_sha1(bmp_sha1);
@@ -361,14 +388,16 @@ struct BmpCache {
             }
 
             if (id_real == MAXIMUM_NUMBER_OF_CACHES) {
-                LOG(LOG_ERR,
-                    "BmpCache: bitmap size(%u) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u",
-                    bmp_size,
-                    (this->cache_entries[0] ? this->cache_size[0] : 0),
-                    (this->cache_entries[1] ? this->cache_size[1] : 0),
-                    (this->cache_entries[2] ? this->cache_size[2] : 0),
-                    (this->cache_entries[3] ? this->cache_size[3] : 0),
-                    (this->cache_entries[4] ? this->cache_size[4] : 0));
+                LOG( LOG_ERR
+                   , "BmpCache: %s bitmap size(%u) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u"
+                   , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
+                   , bmp_size
+                   , (this->cache_entries[0] ? this->cache_size[0] : 0)
+                   , (this->cache_entries[1] ? this->cache_size[1] : 0)
+                   , (this->cache_entries[2] ? this->cache_size[2] : 0)
+                   , (this->cache_entries[3] ? this->cache_size[3] : 0)
+                   , (this->cache_entries[4] ? this->cache_size[4] : 0)
+                   );
                 REDASSERT(0);
                 throw Error(ERR_BITMAP_CACHE_TOO_BIG);
             }
@@ -395,15 +424,14 @@ struct BmpCache {
             else {
                 if (this->verbose & 512) {
                     if (persistent) {
-                        LOG(LOG_INFO,
-                            "BmpCache: use bitmap %02X%02X%02X%02X%02X%02X%02X%02X stored in persistent disk bitmap cache",
-                            bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3],
-                            bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7]);
+                        LOG( LOG_INFO
+                           , "BmpCache: %s use bitmap %02X%02X%02X%02X%02X%02X%02X%02X stored in persistent disk bitmap cache"
+                           , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
+                           , bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3]
+                           , bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7]);
                     }
                 }
                 this->stamps[id][cache_index_32] = ++this->stamp;
-                delete bmp;
-                this->found_counter++;
                 // Generating source code for unit test.
                 //if (this->verbose & 8192) {
                 //    LOG(LOG_INFO, "cache_id    = %u;", id);
@@ -415,10 +443,9 @@ struct BmpCache {
                 //    LOG(LOG_INFO, "delete bmp_%d;", this->finding_counter - 1);
                 //    LOG(LOG_INFO, "");
                 //}
+                this->ref_counter[id]++;
                 return (BITMAP_FOUND_IN_CACHE << 24) | (id << 16) | cache_index_32;
             }
-
-            this->not_found_counter++;
 
             if (persistent && this->use_waiting_list) {
                 // The bitmap cache is persistent.
@@ -439,13 +466,13 @@ struct BmpCache {
                     id          |= IN_WAIT_LIST;
 
                     if (this->verbose & 512) {
-                        LOG(LOG_INFO, "BmpCache: Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into wait list.",
-                            bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3],
-                            bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7]);
+                        LOG( LOG_INFO, "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into wait list."
+                           , bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3]
+                           , bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7]);
                     }
                 }
                 else {
-                    this->cache [MAXIMUM_NUMBER_OF_CACHES][cache_index_32] = NULL;
+                    this->cache [MAXIMUM_NUMBER_OF_CACHES][cache_index_32].reset();
                     this->stamps[MAXIMUM_NUMBER_OF_CACHES][cache_index_32] = 0;
                     bzero(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cache_index_32],
                           sizeof(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cache_index_32]));
@@ -453,10 +480,10 @@ struct BmpCache {
                     wait_list_finder.remove(bmp_sha1, bmp->cx, bmp->cy);
 
                     if (this->verbose & 512) {
-                        LOG(LOG_INFO,
-                            "BmpCache: Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into persistent cache, cache_index=%u",
-                            bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3],
-                            bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7], oldest_cidx);
+                        LOG( LOG_INFO
+                           , "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into persistent cache, cache_index=%u"
+                           , bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3]
+                           , bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7], oldest_cidx);
                     }
                 }
             }
@@ -464,16 +491,17 @@ struct BmpCache {
             // find oldest stamp (or 0) and replace bitmap
             if (this->cache[id_real][oldest_cidx]) {
                 this->finders[id_real].remove(this->sha1[id_real][oldest_cidx],
-                    this->cache[id_real][oldest_cidx]->cx, this->cache[id_real][oldest_cidx]->cy);
-                delete this->cache[id_real][oldest_cidx];
+                                              this->cache[id_real][oldest_cidx]->cx,
+                                              this->cache[id_real][oldest_cidx]->cy);
             }
-            this->cache [id_real][oldest_cidx] = bmp;
-            this->stamps[id_real][oldest_cidx] = ++this->stamp;
             if (id_real == id) {
                 ::memcpy(this->sig[id_real][oldest_cidx].sig_8, bmp_sha1, sizeof(this->sig[id_real][oldest_cidx].sig_8));
             }
+            this->put_counter[id_real]++;
             ::memcpy(this->sha1[id_real][oldest_cidx], bmp_sha1, 20);
-            this->finders[id_real].add(bmp_sha1, bmp->cx, bmp->cy, bmp, oldest_cidx);
+            this->finders[id_real].add(bmp_sha1, bmp->cx, bmp->cy, bmp.get(), oldest_cidx);
+            this->cache [id_real][oldest_cidx] = move(bmp);
+            this->stamps[id_real][oldest_cidx] = ++this->stamp;
             // Generating source code for unit test.
             //if (this->verbose & 8192) {
             //    LOG(LOG_INFO, "cache_id    = %u;", id);

@@ -27,6 +27,7 @@
 #include "channel_list.hpp"
 #include "draw_api.hpp"
 #include "stream.hpp"
+#include "RDP/capabilities/order.hpp"
 
 class FrontAPI : public DrawApi {
     public:
@@ -36,6 +37,7 @@ class FrontAPI : public DrawApi {
 
     virtual void send_global_palette() throw(Error) = 0;
     virtual void set_mod_palette(const BGRPalette & palette) = 0;
+    virtual void set_mod_color_depth(uint8_t bpp) = 0;
 
     virtual int server_resize(int width, int height, int bpp) = 0;
     virtual void update_config(const timeval & now, const Inifile & ini) {}
@@ -51,7 +53,9 @@ class FrontAPI : public DrawApi {
         , notimestamp(notimestamp)
         , nomouse(nomouse) {}
 
-    virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) {}
+    TODO("RZ : Move these methods in OrderCaps class.")
+    virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {}
+    virtual void intersect_order_caps_ex(OrderCaps & order_caps) const {}
 
     ////////////////////////////////
     // Used by transparent proxy.
