@@ -645,6 +645,16 @@ void test_re(re::Regex::flag_t flags)
         BOOST_CHECK_MESSAGE(false, os.str());
     }
     regex_test(regex, "c", 1, 1, 1, matches, 1, matches);
+
+    str_regex = "^ +\\d+.*bc.*$";
+    regex.reset(str_regex, flags);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    regex_test(regex, " 24abcd", 1, 1, 1, matches, 1, matches);
 }
 
 

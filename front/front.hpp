@@ -464,8 +464,8 @@ public:
                 0x03, // fl_accel
                 0x0, // ui_charinc
                 1, // f_op_redundant,
-                bgcolor, // bgcolor
-                fgcolor, // fgcolor
+                fgcolor, // BackColor (text color)
+                bgcolor, // ForeColor (color of the opaque rectangle)
                 bk, // bk
                 bk, // op
                 // brush
@@ -1377,11 +1377,13 @@ public:
         }
     }   // void set_pointer(int cache_idx)
 
+/*
     virtual void set_pointer_display() {
         if (this->capture) {
             this->capture->set_pointer_display();
         }
     }
+*/
 
     void incoming(Callback & cb) throw(Error)
     {
@@ -2020,6 +2022,7 @@ public:
             }
 
             this->keymap.init_layout(this->client_info.keylayout);
+            LOG(LOG_INFO, "Front Keyboard Layout = 0x%x", this->client_info.keylayout);
             this->ini->client.keyboard_layout.set(this->client_info.keylayout);
             if (this->client_info.is_mce) {
                 if (this->verbose & 2){
@@ -2223,10 +2226,12 @@ public:
                     }
                     LIC::NewLicenseRequest_Recv lic(sec.payload);
                     TODO("Instead of returning a license we return a message saying that no license is OK")
+                    this->send_valid_client_license_data();
+/*
                     HStream stream(1024, 65535);
                     // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
 
-                    /* some compilers need unsigned char to avoid warnings */
+                    // some compilers need unsigned char to avoid warnings
                     static uint8_t lic2[16] = {
                         0xff,       // bMsgType : ERROR_ALERT
                         0x02,       // NOT EXTENDED_ERROR_MSG_SUPPORTED, PREAMBLE_VERSION_2_0
@@ -2250,6 +2255,7 @@ public:
                     stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
                     this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
+*/
                 }
                 break;
                 case LIC::PLATFORM_CHALLENGE_RESPONSE:
@@ -2263,6 +2269,8 @@ public:
                     if (this->verbose & 2){
                         LOG(LOG_INFO, "Front::LICENSE_INFO");
                     }
+                    TODO("Instead of returning a license we return a message saying that no license is OK")
+                    this->send_valid_client_license_data();
                     break;
                 default:
                     if (this->verbose & 2){
@@ -2714,6 +2722,37 @@ public:
         }
         break;
         }
+    }
+
+    void send_valid_client_license_data() {
+        HStream stream(1024, 65535);
+
+        // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
+
+        /* some compilers need unsigned char to avoid warnings */
+        static uint8_t lic2[16] = {
+            0xff,                   // bMsgType : ERROR_ALERT
+            0x02,                   // NOT EXTENDED_ERROR_MSG_SUPPORTED, PREAMBLE_VERSION_2_0
+            0x10, 0x00,             // wMsgSize: 16 bytes including preamble
+            0x07, 0x00, 0x00, 0x00, // dwErrorCode : STATUS_VALID_CLIENT
+            0x02, 0x00, 0x00, 0x00, // dwStateTransition ST_NO_TRANSITION
+            0x28, 0x14,             // wBlobType : ignored because wBlobLen is 0
+            0x00, 0x00              // wBlobLen  : 0
+        };
+        stream.out_copy_bytes((char *)lic2, 16);
+        stream.mark_end();
+
+        BStream sec_header(256);
+
+        if ((this->verbose & (128 | 2)) == (128 | 2)) {
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.get_data(), stream.size());
+        }
+
+        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
+        stream.copy_to_head(sec_header.get_data(), sec_header.size());
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
     }
 
     void send_data_indication(uint16_t channelId, HStream & stream)

@@ -49,7 +49,7 @@
 
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
-class RDPDrawable : public RDPGraphicDevice {
+class RDPDrawable : public RDPGraphicDevice, public RDPCaptureDevice {
 public:
     Drawable drawable;
 

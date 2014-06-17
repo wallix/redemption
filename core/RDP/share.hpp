@@ -40,6 +40,15 @@ enum {
     PDUTYPE_DEACTIVATEALLPDU       = 6,
     PDUTYPE_DATAPDU                = 7,
     PDUTYPE_SERVER_REDIR_PKT       = 10,
+    FLOWPDU                        = 11, // FlowPDU from T.128
+};
+
+// PDUTypeFlow ::= INTEGER {flowResponsePDU(66), flowStopPDU(67), flowTestPDU(65)
+// }(0..255)
+enum {
+    FLOW_RESPONSE_PDU = 66,
+    FLOW_STOP_PDU     = 67,
+    FLOW_TEST_PDU     = 65
 };
 
 enum {
@@ -118,12 +127,19 @@ struct ShareControl_Recv
     uint8_t pdu_type1;
     TODO("Rename to PDUSource");
     uint16_t mcs_channel;
+    //flow_pdu fields
+    uint8_t flow_pdu_type;
+    uint8_t flow_id;
+    uint16_t flow_number;
 
     ShareControl_Recv(Stream & stream)
     : payload(stream, 0)
     , totalLength(0)
     , pdu_type1(0)
     , mcs_channel(0)
+    , flow_pdu_type(0)
+    , flow_id(0)
+    , flow_number(0)
     {
         const unsigned expected = 4; /* totalLength(2) + pdu_type1(2) */
         if (!stream.in_check_rem(expected)){
@@ -136,7 +152,6 @@ struct ShareControl_Recv
 
         // LOG(LOG_INFO, "ShareControl packet recv: TotalLength=%u", this->totalLength);
         if (this->totalLength == 0x8000) {
-            LOG(LOG_INFO, "ShareControl packet recv : FlowPDU received !");
             // FlowPDU ::= SEQUENCE {
             // flowMarker
             // Integer16(32768), -- ('8000'H),
@@ -154,22 +169,19 @@ struct ShareControl_Recv
             // UserID
             // -- MCS User ID of sending ASCE
             // }
-
-            // uint8_t pad8bits = stream.in_uint8();
-            uint8_t PDUTypeFlow = stream.in_uint8();
-            uint8_t flowIdentifier = stream.in_uint8();
-            uint16_t pduSource = stream.in_uint16_le();
-            // LOG(LOG_INFO, "pad8bits=%u", pad8bits);
-            LOG(LOG_INFO, "PDUTypeFlow=%u", PDUTypeFlow);
-            // PDUTypeFlow ::= INTEGER {flowResponsePDU(66), flowStopPDU(67), flowTestPDU(65)
-            // }(0..255)
-            LOG(LOG_INFO, "flowIdentifier=%u", flowIdentifier);
-            LOG(LOG_INFO, "pduSource=%u", pduSource);
-            LOG(LOG_INFO, "remaining bytes = %u", stream.in_remain());
-            this->totalLength = 6 + stream.in_remain();
-            this->pdu_type1 = 0;
+            this->flow_pdu_type = stream.in_uint8();
+            stream.in_skip_bytes(1);
+            this->flow_id = stream.in_uint8();
+            this->flow_number = stream.in_uint8();
+            this->mcs_channel = stream.in_uint16_le();
+            LOG(LOG_INFO, "ShareControl packet recv : FlowPDU received -> ignored");
+            LOG(LOG_INFO, "PDUTypeFlow=%u", this->flow_pdu_type);
+            if (stream.in_remain()) {
+                LOG(LOG_INFO, "remaining bytes in FlowPDU remains %u bytes", stream.in_remain());
+            }
+            this->totalLength = 8 + stream.in_remain();
+            this->pdu_type1 = FLOWPDU;
             this->payload.resize(stream, stream.in_remain());
-            TODO("FlowPDU is currently ignored, maybe we should just send a FlowResponsePDU on flowTestPDU reception");
             return;
         }
 
@@ -191,7 +203,8 @@ struct ShareControl_Recv
 
         this->mcs_channel = stream.in_uint16_le();
         if (this->totalLength < 6){
-            LOG(LOG_ERR, "ShareControl packet too short totalLength=%u", this->totalLength);
+            LOG(LOG_ERR, "ShareControl packet too short totalLength=%u pdu_type1=%u mcs_channel=%u",
+                this->totalLength, this->pdu_type1, this->mcs_channel);
             throw Error(ERR_SEC);
         }
 
@@ -527,5 +540,35 @@ struct ShareData
         }
     } // END METHOD recv_end
 }; // END CLASS ShareData
+
+//##############################################################################
+struct FlowPDU_Send
+//##############################################################################
+{
+    FlowPDU_Send(Stream & stream, uint8_t flow_pdu_type, uint8_t flow_identifier,
+                 uint8_t flow_number, uint16_t pdu_source)
+    {
+        stream.out_uint16_le(0x8000);
+        stream.out_uint8(flow_pdu_type);
+        stream.out_uint8(0);
+        stream.out_uint8(flow_identifier);
+        stream.out_uint8(flow_number);
+        stream.out_uint16_le(pdu_source);
+        stream.mark_end();
+    }
+}; // END CLASS FlowPDU_Send
+// FlowPDU ::= SEQUENCE {
+// flowMarker
+// Integer16(32768), -- ('8000'H),
+// -- distinguishes FlowPDUs from ASPDUs
+// -- containing ShareControlHeaders
+// pad8bits  Integer8(0),
+// pduTypeFlow  PDUTypeFlow(flowResponsePDU | flowStopPDU | flowTestPDU),
+// flowIdentifier Integer8(0..127),
+// flowNumber Integer8,
+// -- shall be zero for PDUType FlowStopPDU
+// pduSource UserID
+// -- MCS User ID of sending ASCE
+// }
 
 #endif

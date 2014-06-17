@@ -64,7 +64,7 @@ struct StaticCaptureConfig {
     }
 };
 
-class StaticCapture : public ImageCapture
+class StaticCapture : public ImageCapture, public RDPCaptureDevice
 {
 public:
     bool clear_png;
@@ -158,7 +158,8 @@ public:
                 // unlink may fail, for instance if file does not exist, just don't care
                 sq_outfilename_unlink(this->seq, this->trans.seqno - this->conf.png_limit);
             }
-            this->ImageCapture::flush();
+//            this->ImageCapture::flush();
+            this->flush();
             this->trans.next();
         }
 
@@ -177,7 +178,8 @@ public:
                 // unlink may fail, for instance if file does not exist, just don't care
                 sq_outfilename_unlink(this->seq, this->trans.seqno - this->conf.png_limit);
             }
-            this->ImageCapture::flush();
+//            this->ImageCapture::flush();
+            this->flush();
             this->trans.next();
         }
 
@@ -185,9 +187,11 @@ public:
 //        this->start_static_capture = now;
     }
 
+/*
     virtual void flush()
     {
     }
+*/
 
     virtual void set_pointer_display() {
         this->pointer_displayed = true;

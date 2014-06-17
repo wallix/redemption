@@ -33,7 +33,7 @@
 
 #include "auth_api.hpp"
 
-class Capture : public RDPGraphicDevice {
+class Capture : public RDPGraphicDevice, public RDPCaptureDevice {
 public:
     const bool capture_wrm;
     const bool capture_drawable;
@@ -225,6 +225,13 @@ public:
         }
     }
 
+    virtual void set_row(size_t rownum, const uint8_t * data)
+    {
+        if (this->capture_drawable){
+            this->drawable->set_row(rownum, data);
+        }
+    }
+
     void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
         this->capture_event.reset();
 
@@ -243,9 +250,11 @@ public:
     }
 
     void flush() {
+/*
         if (this->capture_png) {
             this->psc->flush();
         }
+*/
         if (this->capture_wrm) {
             this->pnc->flush();
         }

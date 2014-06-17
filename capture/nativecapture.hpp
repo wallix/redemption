@@ -57,7 +57,7 @@
 #include "GraphicToFile.hpp"
 #include "png.hpp"
 
-class NativeCapture : public RDPGraphicDevice
+class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice
 {
 public:
     int width;
