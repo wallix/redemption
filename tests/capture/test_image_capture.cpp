@@ -275,7 +275,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
     const int groupid = 0;
-    OutFilenameTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
     RDPDrawable drawable(800, 600);
     ImageCapture d(trans, 800, 600, drawable.drawable);
     Rect screen_rect(0, 0, 800, 600);
@@ -307,7 +307,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     Rect screen_rect(0, 0, 800, 600);
     const int groupid = 0;
-    OutFilenameTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "xxxtest", ".png", groupid);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "xxxtest", ".png", groupid);
     Inifile ini;
     ini.video.png_interval = 1;
     ini.video.png_limit = 3;
@@ -345,7 +345,6 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-    trans.disconnect();
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
     BOOST_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
@@ -382,7 +381,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestSmallImage)
 {
     const int groupid = 0;
-    OutFilenameTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, NULL, 0x100);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, NULL, 0x100);
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
@@ -400,7 +399,7 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     const int width = 800;
     const int height = 600;
     const int groupid = 0;
-    OutFilenameTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
     Rect scr(0, 0, width, height);
     RDPDrawable drawable(scr.cx, scr.cy);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
@@ -424,7 +423,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 {
     BOOST_CHECK(1);
     const int groupid = 0;
-    OutFilenameTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, NULL, 0x100);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, NULL, 0x100);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
@@ -549,7 +548,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
 {
     BOOST_CHECK(1);
     const int groupid = 0;
-    OutFilenameTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, NULL, 0x100);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, NULL, 0x100);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);

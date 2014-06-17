@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     RDPDrawable & drawable = mod.gd;
 
     const int groupid = 0;
-    OutFilenameTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid);
 
     struct timeval now;
     now.tv_sec = 1350998222;

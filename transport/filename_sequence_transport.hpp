@@ -59,12 +59,12 @@ namespace detail
     {
         FilenameGenerator filegen;
         char current_filename[1024];
-        unsigned seqno;
+        unsigned num_file;
 
     public:
         FilenameSequencePolicy(FilenameSequencePolicyParams const & params)
         : filegen(params.format, params.prefix, params.filename, params.extension, params.groupid)
-        , seqno(-1u)
+        , num_file(-1u)
         {
             this->current_filename[0] = 0;
         }
@@ -84,8 +84,8 @@ namespace detail
                        , (this->filegen.groupid ? "u+r, g+r" : "u+r"));
                 }
                 file.open(fd);
-                ++this->seqno;
-                this->filegen.set_last_filename(this->seqno, this->current_filename);
+                ++this->num_file;
+                this->filegen.set_last_filename(this->num_file, this->current_filename);
             }
             return 0;
         }
@@ -100,7 +100,7 @@ namespace detail
                 this->filegen.set_last_filename(0, 0);
 
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                const char * filename = this->filegen.get(this->seqno);
+                const char * filename = this->filegen.get(this->num_file);
                 const int res = ::rename(this->current_filename, filename);
                 if (res < 0) {
                     LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -116,7 +116,7 @@ namespace detail
         { return this->filegen; }
 
         unsigned seqnum() const /*noexcept*/
-        { return this->seqno; }
+        { return this->num_file; }
     };
 }
 

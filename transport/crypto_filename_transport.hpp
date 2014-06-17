@@ -37,12 +37,9 @@ struct CryptoInFilenameTransport
     }
 };
 
-class CryptoOutFilenameTransport
-: public OutBufferTransport<transbuf::ocrypto_filename_base>
+struct CryptoOutFilenameTransport
+: OutBufferTransport<transbuf::ocrypto_filename_base>
 {
-    CryptoContext & crypto_ctx;
-
-public:
     CryptoOutFilenameTransport(CryptoContext * crypto_ctx, const char * filename, auth_api * authentifier = NULL)
     : CryptoOutFilenameTransport::TransportType(crypto_ctx)
     {

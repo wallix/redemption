@@ -434,7 +434,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     InFileTransport in_wrm_trans(fd);
 
     const int groupid = 0;
-    OutFilenameTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid);
 
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;

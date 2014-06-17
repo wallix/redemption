@@ -58,7 +58,7 @@ protected:
 struct nexter_transport_base
 {
     template<class Transport, class Buf>
-    int next(Transport & trans, Buf & buf) /*noexcept*/
+    int next(Transport & /*trans*/, Buf & buf) /*noexcept*/
     {
         return buf.close();
     }
@@ -160,6 +160,9 @@ struct OutBufferTransport
         if (res < 0){
             this->status = false;
             throw Error(ERR_TRANSPORT_WRITE_FAILED, res);
+        }
+        if (!res) {
+            ++this->seqno;
         }
         return !res;
     }

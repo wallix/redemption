@@ -153,6 +153,9 @@ struct OutMetaTransport
     {
         this->update_sec(now.tv_sec);
     }
+
+    const FilenameGenerator * seqgen() const /*noexcept*/
+    { return &this->impl().seqgen(); }
 };
 
 

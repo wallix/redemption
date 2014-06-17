@@ -6,9 +6,8 @@
 #define LOGPRINT
 #include "log.hpp"
 
-// #include "inbymetasequencetransport.hpp"
+#include "outmetatransport.hpp"
 #include "crypto_meta_transport.hpp"
-#include <outmetatransport.hpp>
 
 BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
 {
@@ -36,7 +35,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        CryptoOutmetaTransport crypto_trans(&cctx, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
+        CryptoOutMetaTransport crypto_trans(&cctx, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
                                             0, 0, FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
@@ -66,18 +65,18 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
         BOOST_CHECK(true);
     }
 
-    const char * file[] = {
-        "/tmp/TESTOFS.mwrm", // hash
-        "TESTOFS.mwrm",
-        "TESTOFS-000000.wrm",
-        "TESTOFS-000001.wrm"
-    };
-    for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
-        if (::unlink(file[i])){
-            BOOST_CHECK(false);
-            LOG(LOG_ERR, "failed to unlink %s", file[i]);
-        }
-    }
+//     const char * file[] = {
+//         "/tmp/TESTOFS.mwrm", // hash
+//         "TESTOFS.mwrm",
+//         "TESTOFS-000000.wrm",
+//         "TESTOFS-000001.wrm"
+//     };
+//     for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
+//         if (::unlink(file[i])){
+//             BOOST_CHECK(false);
+//             LOG(LOG_ERR, "failed to unlink %s", file[i]);
+//         }
+//     }
 }
 
 BOOST_AUTO_TEST_CASE(CryptoTestInmeta2Transport)

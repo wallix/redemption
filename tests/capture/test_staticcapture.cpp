@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 {
     Rect screen_rect(0, 0, 800, 600);
     const int groupid = 0;
-    OutFilenameTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
 
     struct timeval now;
     now.tv_sec = 1350998222;
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
 {
     Rect screen_rect(0, 0, 800, 600);
     const int groupid = 0;
-    OutFilenameTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
 
     struct timeval now;
     now.tv_sec = 1350998222;

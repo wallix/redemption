@@ -60,7 +60,7 @@ struct crypto_out_meta_nexter
                     sprintf(p, "%02x", hash[i]);      //    64 octets (hash2)
                 }
                 *p++ = '\n';
-                res = this->write(mes, len);
+                res = this->write(mes, p-mes);
                 this->start_sec = this->stop_sec;
             }
             if (res < 0) {
@@ -115,16 +115,18 @@ namespace detail {
 
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             const char * filename = this->fsq.seqgen().get(this->fsq.seqnum()+1);
-            const int err = transbuf::detail::init_trace_key(this->file, &this->ctx, filename, 0600, trace_key);
+            unsigned char derivator[DERIVATOR_LENGTH];
+            get_derivator(filename, derivator, DERIVATOR_LENGTH);
+            const int err = compute_hmac(trace_key, this->ctx.crypto_key, derivator);
             if (err < 0) {
                 return err;
             }
 
-            unsigned char iv[32];
-            if (-1 == urandom_read(iv, 32)) {
-                LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
-                return -1;
-            }
+            unsigned char iv[32]={0};
+//             if (-1 == urandom_read(iv, 32)) {
+//                 LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
+//                 return -1;
+//             }
 
             return this->encrypt.open(this->file, trace_key, &this->ctx, iv);
         }
@@ -205,9 +207,10 @@ public:
 
     ~CryptoOutMetaTransport()
     {
-        if (this->nexter().is_open()) {
+        if (this->buffer().is_open()) {
             this->nexter().next(*this, this->buffer());
         }
+
         char          path[1024] = {};
         char          basename[1024] = {};
         char          extension[256] = {};

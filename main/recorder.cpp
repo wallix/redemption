@@ -163,19 +163,19 @@ int main(int argc, char** argv)
     unsigned count = 0;
     try {
         InByMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
-        in_wrm_trans_tmp.next_chunk_info();
+        in_wrm_trans_tmp.next();
         TODO("a negative time should be a time relative to end of movie")
         REDOC("less than 1 year means we are given a time relatve to beginning of movie")
         if (begin_cap < 31536000){ // less than 1 year, it is relative not absolute timestamp
             // begin_capture.tv_usec is 0
-            begin_cap += in_wrm_trans_tmp.begin_chunk_time;
+            begin_cap += in_wrm_trans_tmp.begin_chunk_time();
         }
         if (end_cap < 31536000){ // less than 1 year, it is relative not absolute timestamp
             // begin_capture.tv_usec is 0
-            end_cap += in_wrm_trans_tmp.begin_chunk_time;
+            end_cap += in_wrm_trans_tmp.begin_chunk_time();
         }
-        while (begin_cap >= in_wrm_trans_tmp.end_chunk_time){
-            in_wrm_trans_tmp.next_chunk_info();
+        while (begin_cap >= in_wrm_trans_tmp.end_chunk_time()){
+            in_wrm_trans_tmp.next();
         }
         count = in_wrm_trans_tmp.get_seqno();
     }
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
 
     InByMetaSequenceTransport in_wrm_trans(infile_prefix, infile_extension);
     for (unsigned i = 1; i < count ; i++){
-        in_wrm_trans.next_chunk_info();
+        in_wrm_trans.next();
     }
 
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);

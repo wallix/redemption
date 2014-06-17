@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoOutMetaTransport)
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        CryptoOutmetaTransport crypro_trans(&crypto_ctx, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
+        CryptoOutMetaTransport crypro_trans(&crypto_ctx, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
                                             0, 0, FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
 
         crypro_trans.send("AAAAX", 5);
