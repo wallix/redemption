@@ -55,9 +55,17 @@ public:
         tab_0_index = this->tab.add_item("First tab");
         tab_1_index = this->tab.add_item("Second tab");
 
+//        this->tab.set_current_item(tab_0_index);
+
         this->screen.add_widget(&this->tab);
 
-        this->screen.refresh(this->screen.rect);
+        //this->screen.refresh(this->screen.rect);
+
+LOG(LOG_INFO, "WidgetTestMod: rdp_input_invalidate, x=%u y=%u cx=%u cy=%u",
+    this->screen.rect.x, this->screen.rect.y, this->screen.rect.cx, this->screen.rect.cy);
+        this->screen.rdp_input_invalidate(this->screen.rect);
+    this->begin_update();
+    this->end_update();
 
 /*
         if (this->dialog_widget.challenge) {

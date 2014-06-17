@@ -191,6 +191,7 @@ public:
     }
 
     virtual void draw(const Rect & clip) {
+LOG(LOG_INFO, ">>>>> WidgetTab::draw, x=%u y=%u cx=%u cy=%u", clip.x, clip.y, clip.cx, clip.cy);
         this->drawing_policy.draw( this->rect
                                  , clip
                                  , this->items
@@ -426,6 +427,8 @@ this->drawable.draw(RDPOpaqueRect(rect_intersect, RED), clip);
             if (rect_index.contains_pt(x, y)) {
                 if (device_flags & (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
                     tab.set_current_item(item_index);
+
+                    tab.rdp_input_invalidate(rect_tab);
                 }
 
                 return;
