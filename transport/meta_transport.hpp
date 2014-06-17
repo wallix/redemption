@@ -284,9 +284,9 @@ namespace detail {
         }
 
         template<class T>
-        MetaOpener(const transbuf::input_params<T, const char *> & params)
+        MetaOpener(const transbuf::two_params<T, const char *> & params)
         : buf(params.buf_params)
-        , reader(this->open_and_return(params.open_close_params, this->buf))
+        , reader(this->open_and_return(params.other_params, this->buf))
         , begin_chunk_time(0)
         , end_chunk_time(0)
         , seqnum(0)

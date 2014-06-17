@@ -26,7 +26,6 @@
 #include "sequence_generator.hpp"
 #include "buffer/input_output_buf.hpp"
 #include "buffer_transport.hpp"
-#include "buffer/filename_sequence_buf.hpp"
 
 #include <cstdio>
 #include <cstdlib>

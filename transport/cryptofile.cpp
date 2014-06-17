@@ -23,9 +23,9 @@
 #include <libgen.h>
 #include <string.h>
 #include <cstdio>
-#include <new>
+#include <unistd.h>
 
-#include "crypto_file.hpp"
+#include "cryptofile.h"
 
 extern "C" {
 
@@ -102,79 +102,6 @@ void get_derivator(const char *const_file, unsigned char * derivator, int deriva
         return;
     }
     memcpy(derivator, tmp_derivated, MIN(DERIVATOR_LENGTH, SHA256_DIGEST_LENGTH));
-}
-
-void * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoContext * cctx) /*noexcept*/
-{
-    crypto_file * cf_struct = new (std::nothrow) crypto_file();
-
-    if (!cf_struct) {
-        return NULL;
-    }
-
-    if (-1 == cf_struct->open_read_init(systemfd, trace_key, cctx)) {
-        delete cf_struct;
-        return NULL;
-    }
-
-    return cf_struct;
-}
-
-void * crypto_open_write(int systemfd, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
-/*noexcept*/
-{
-    crypto_file * cf_struct = new (std::nothrow) crypto_file();
-
-    if (!cf_struct) {
-        return NULL;
-    }
-
-    if (-1 == cf_struct->open_write_init(systemfd, trace_key, cctx, iv)) {
-        delete cf_struct;
-        return NULL;
-    }
-
-    return cf_struct;
-}
-
-/* Flush procedure (compression, encryption, effective file writing)
- * Return 0 on success, -1 on error
- */
-int crypto_flush(void * cf) {
-    crypto_file * cf_struct = reinterpret_cast<crypto_file*>(cf);
-
-    return cf_struct->flush();
-}
-
-/* The actual read method. Read chunks until we reach requested size.
- * Return the actual size read into buf, -1 on error
- */
-int crypto_read(void * cf, char * buf, unsigned int buf_size) {
-    crypto_file * cf_struct = reinterpret_cast<crypto_file*>(cf);
-
-    return cf_struct->read(buf, buf_size);
-}
-
-/* Actually appends data to crypto_file buffer, flush if buffer gets full
- * Return the written size, -1 on error
- */
-int crypto_write(void *cf, const char * buf, unsigned int size)
-{
-    crypto_file * cf_struct = reinterpret_cast<crypto_file*>(cf);
-
-    return cf_struct->write(buf, size);
-}
-
-int crypto_close(void *cf, unsigned char hash[MD_HASH_LENGTH << 1], unsigned char * hmac_key)
-{
-    crypto_file * cf_struct = reinterpret_cast<crypto_file*>(cf);
-
-    int nResult = cf_struct->close(hash, hmac_key);
-    cf_struct->close_fd();
-
-    delete cf_struct;
-
-    return nResult;
 }
 
 } // extern "C"

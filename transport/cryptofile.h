@@ -10,6 +10,10 @@
 #ifndef WABCRYPTOFILE_H
 #define WABCRYPTOFILE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "openssl_crypto.hpp"
 #include "openssl_evp.hpp"
 
@@ -53,12 +57,8 @@ size_t unbase64(char *buffer, size_t bufsiz, const char *txt);
 int compute_hmac(unsigned char * hmac, const unsigned char * key, const unsigned char * derivator);
 void get_derivator(const char * file, unsigned char * derivator, int derivator_len);
 
-void * crypto_open_read (int systemfd, unsigned char * trace_key, struct CryptoContext * cctx);
-void * crypto_open_write(int systemfd, unsigned char * trace_key, struct CryptoContext * cctx, const unsigned char * iv);
-
-int    crypto_flush(void * cf);
-int    crypto_read (void * cf, char * buf, unsigned int size);
-int    crypto_write(void * cf, const char * buf, unsigned int size);
-int    crypto_close(void * cf, unsigned char buf[MD_HASH_LENGTH << 1], unsigned char * hmac_key);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

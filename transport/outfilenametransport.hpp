@@ -23,7 +23,6 @@
 #ifndef REDEMPTION_TRANSPORT_OUTFILENAMETRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_OUTFILENAMETRANSPORT_HPP
 
-#include "crypto_transport.hpp"
 #include "filename_transport.hpp"
 #include "filename_sequence_transport.hpp"
 

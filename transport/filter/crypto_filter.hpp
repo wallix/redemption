@@ -32,12 +32,11 @@
 #include <stdint.h>
 #include <unistd.h>
 
-extern "C" {
-    #include "cryptofile.h"
-}
+#include "cryptofile.h"
 
 #include "unique_ptr.hpp"
 
+#define HASH_LEN (MD_HASH_LENGTH << 1)
 
 namespace transfil {
     namespace detail {
@@ -462,7 +461,7 @@ namespace transfil {
         }
 
         template<class Sink>
-        int close(Sink & snk, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
+        int close(Sink & snk, unsigned char hash[HASH_LEN], const unsigned char * hmac_key)
         {
             int result = this->flush(snk);
 
@@ -488,7 +487,7 @@ namespace transfil {
             this->xmd_update(tmp_buf, 8);
 
             if (hash) {
-                unsigned char tmp_hash[MD_HASH_LENGTH << 1];
+                unsigned char tmp_hash[HASH_LEN];
                 if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, NULL) != 1) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
                     result = -1;

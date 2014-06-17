@@ -22,7 +22,6 @@
 #define REDEMPTION_PUBLIC_TRANSPORT_CRYPTO_META_TRANSPORT_HPP
 
 #include "meta_transport.hpp"
-#include "crypto_transport.hpp"
 #include "buffer/crypto_filename_buf.hpp"
 #include <fileutils.hpp>
 
@@ -30,9 +29,9 @@ template<class Buf/*, class FilenameAccessTraits*/>
 struct crypto_out_meta_nexter
 : Buf
 {
-    crypto_out_meta_nexter(transbuf::output_params<CryptoContext*, time_t> params) /*noexcept*/
+    crypto_out_meta_nexter(transbuf::two_params<CryptoContext*, time_t> params) /*noexcept*/
     : Buf(params.buf_params)
-    , start_sec(params.open_close_params)
+    , start_sec(params.other_params)
     , stop_sec(this->start_sec)
     {}
 
@@ -122,11 +121,11 @@ namespace detail {
                 return err;
             }
 
-            unsigned char iv[32]={0};
-//             if (-1 == urandom_read(iv, 32)) {
-//                 LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
-//                 return -1;
-//             }
+            unsigned char iv[32];
+            if (-1 == urandom_read(iv, 32)) {
+                LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
+                return -1;
+            }
 
             return this->encrypt.open(this->file, trace_key, &this->ctx, iv);
         }
@@ -187,7 +186,7 @@ public:
         detail::crypto_out_meta_buf_base_params(
             *crypto_ctx,
             detail::FilenameSequencePolicyParams(format, path, basename, ".wrm", groupid)),
-        transbuf::out_params(crypto_ctx, now.tv_sec))
+        transbuf::buf_params(crypto_ctx, now.tv_sec))
     , hf(hash_path, basename, format)
     {
         (void)verbose;
@@ -263,8 +262,8 @@ struct CryptoInMetaTransport
 >
 {
     CryptoInMetaTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
-    : CryptoInMetaTransport::TransportType(transbuf::in_params(
-        crypto_ctx, transbuf::in_params(crypto_ctx, detail::temporary_concat(filename, extension).c_str())))
+    : CryptoInMetaTransport::TransportType(transbuf::buf_params(
+        crypto_ctx, transbuf::buf_params(crypto_ctx, detail::temporary_concat(filename, extension).c_str())))
     {}
 
     unsigned begin_chunk_time() const /*noexcept*/

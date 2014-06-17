@@ -3,7 +3,7 @@
 #define BOOST_TEST_MODULE TestCryptoInmetaTransport
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "outmetatransport.hpp"
@@ -65,18 +65,18 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
         BOOST_CHECK(true);
     }
 
-//     const char * file[] = {
-//         "/tmp/TESTOFS.mwrm", // hash
-//         "TESTOFS.mwrm",
-//         "TESTOFS-000000.wrm",
-//         "TESTOFS-000001.wrm"
-//     };
-//     for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
-//         if (::unlink(file[i])){
-//             BOOST_CHECK(false);
-//             LOG(LOG_ERR, "failed to unlink %s", file[i]);
-//         }
-//     }
+    const char * file[] = {
+        "/tmp/TESTOFS.mwrm", // hash
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    };
+    for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
+        if (::unlink(file[i])){
+            BOOST_CHECK(false);
+            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+        }
+    }
 }
 
 BOOST_AUTO_TEST_CASE(CryptoTestInmeta2Transport)
