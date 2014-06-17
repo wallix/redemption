@@ -49,7 +49,7 @@ namespace transbuf
         ssize_t write(const void * data, size_t len) /*noexcept*/
         { return io::posix::write_all(this->fd_, data, len); }
 
-        bool ready() const /*noexcept*/
+        bool is_open() const /*noexcept*/
         { return this->fd_ != -1; }
     };
 }

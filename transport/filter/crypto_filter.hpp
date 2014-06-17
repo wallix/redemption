@@ -467,7 +467,7 @@ namespace transfil {
             int result = this->flush(snk);
 
             const uint32_t eof_magic = WABCRYPTOFILE_EOF_MAGIC;
-            char tmp_buf[8] = {
+            unsigned char tmp_buf[8] = {
                 eof_magic & 0xFF,
                 (eof_magic >> 8) & 0xFF,
                 (eof_magic >> 16) & 0xFF,
@@ -630,7 +630,7 @@ namespace transfil {
     template<class>
     struct encrypt_params
     {
-        
+
     };
 }
 

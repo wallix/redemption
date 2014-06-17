@@ -41,7 +41,7 @@ namespace transbuf {
         ssize_t read(void * data, size_t len) /*noexcept*/
         { return this->fdbuf.read(data, len); }
 
-        bool ready() const
+        bool is_open() const
         { return this->fdbuf.is_open(); }
     };
 
@@ -62,7 +62,7 @@ namespace transbuf {
         ssize_t write(const void * data, size_t len) /*noexcept*/
         { return this->fdbuf.write(data, len); }
 
-        bool ready() const
+        bool is_open() const
         { return this->fdbuf.is_open(); }
     };
 }

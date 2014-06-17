@@ -55,7 +55,7 @@ namespace detail
     };
 
     class FilenameSequencePolicy
-    //: public transbuf::open_close_base
+    : public transbuf::open_close_base
     {
         FilenameGenerator filegen;
         char current_filename[1024];
@@ -69,30 +69,29 @@ namespace detail
             this->current_filename[0] = 0;
         }
 
-        bool ready(const io::posix::fdbuf & file) const /*noexcept*/
-        { return file.is_open(); }
-
-        int init(io::posix::fdbuf & file) /*noexcept*/
+        template<class Buf>
+        int init(Buf & file) /*noexcept*/
         {
             if (!file.is_open()) {
                 std::snprintf(this->current_filename, sizeof(this->current_filename), "%sred-XXXXXX.tmp", this->filegen.path);
-                TODO("add rights information to constructor");
-                const int res = file.open(::mkostemps(this->current_filename, 4, O_WRONLY | O_CREAT));
-                if (res < 0) {
-                    return res;
+                const int fd = ::mkostemps(this->current_filename, 4, O_WRONLY | O_CREAT);
+                if (fd < 0) {
+                    return fd;
                 }
                 if (chmod( this->current_filename, (this->filegen.groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR)) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                    , this->current_filename, strerror(errno), errno
-                    , (this->filegen.groupid ? "u+r, g+r" : "u+r"));
+                       , this->current_filename, strerror(errno), errno
+                       , (this->filegen.groupid ? "u+r, g+r" : "u+r"));
                 }
+                file.open(fd);
                 ++this->seqno;
                 this->filegen.set_last_filename(this->seqno, this->current_filename);
             }
             return 0;
         }
 
-        int close(io::posix::fdbuf & file) /*noexcept*/
+        template<class Buf>
+        int close(Buf & file) /*noexcept*/
         {
             if (file.is_open()) {
                 if (file.close() < 0) {

@@ -77,7 +77,7 @@ public:
 
     int close() /*noexcept*/
     {
-        if (this->ready()) {
+        if (this->is_open()) {
             if (this->file.close() < 0) {
                 LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
             }
@@ -96,7 +96,7 @@ public:
         return 0;
     }
 
-    bool ready() const /*noexcept*/
+    bool is_open() const /*noexcept*/
     { return this->file.is_open(); }
 
     const FilenameGenerator & seqgen() const /*noexcept*/
@@ -108,7 +108,7 @@ protected:
 
     int init() /*noexcept*/
     {
-        if (!this->ready()) {
+        if (!this->is_open()) {
             std::snprintf(this->current_filename, sizeof(this->current_filename), "%sred-XXXXXX.tmp", this->filegen.path);
             TODO("add rights information to constructor");
             const int res = this->file.open(::mkostemps(this->current_filename, 4, O_WRONLY | O_CREAT));

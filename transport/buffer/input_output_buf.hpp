@@ -39,9 +39,51 @@ namespace transbuf
         { return buf.close(); }
 
         template<class Buf>
-        static bool ready(const Buf & buf) /*noexcept*/
-        { return buf.ready(); }
+        static bool is_open(const Buf & buf) /*noexcept*/
+        { return buf.is_open(); }
     };
+
+    const struct no_param_t {
+        no_param_t(){} /*fix clang-3.2*/
+    } no_param;
+
+    template<class BufParams, class OpenCloseParams>
+    struct input_params
+    {
+        //tuple
+        BufParams buf_params;
+        OpenCloseParams open_close_params;
+
+        input_params(const BufParams & buf_params, const OpenCloseParams & open_close_params)
+        : buf_params(buf_params)
+        , open_close_params(open_close_params)
+        {}
+    };
+
+    template<class BufParams, class OpenCloseParams>
+    //using output_params = input_params<BufParams, OpenCloseParams>;
+    struct output_params
+    {
+        //tuple
+        BufParams buf_params;
+        OpenCloseParams open_close_params;
+
+        output_params(const BufParams & buf_params, const OpenCloseParams & open_close_params)
+        : buf_params(buf_params)
+        , open_close_params(open_close_params)
+        {}
+    };
+
+    template<class BufParams, class OpenCloseParams>
+    input_params<BufParams, OpenCloseParams>
+    in_params(const BufParams & buf_params, const OpenCloseParams & open_close_params)
+    { return input_params<BufParams, OpenCloseParams>(buf_params, open_close_params); }
+
+    template<class BufParams, class OpenCloseParams>
+    output_params<BufParams, OpenCloseParams>
+    out_params(const BufParams & buf_params, const OpenCloseParams & open_close_params)
+    { return output_params<BufParams, OpenCloseParams>(buf_params, open_close_params); }
+
 
     template<class Reader, class OpenClose = open_close_base>
     class input_buf
@@ -53,14 +95,39 @@ namespace transbuf
         Reader buf;
 
     public:
+        input_buf()
+        {}
+
         template<class T>
         input_buf(const T & params)
         : OpenClose(params)
         {}
 
+        template<class T, class U>
+        input_buf(const T & params, const U & params2)
+        : OpenClose(params)
+        , buf(params2)
+        {}
+
+        template<class BufParams, class OpenCloseParams>
+        input_buf(const input_params<BufParams, OpenCloseParams> & params)
+        : OpenClose(params.open_close_params)
+        , buf(params.buf_params)
+        {}
+
+        template<class OpenCloseParams>
+        input_buf(const input_params<no_param_t, OpenCloseParams> & params)
+        : OpenClose(params.open_close_params)
+        {}
+
+        template<class BufParams>
+        input_buf(const input_params<BufParams, no_param_t> & params)
+        : buf(params.buf_params)
+        {}
+
         ~input_buf()
         {
-            if (this->ready()) {
+            if (this->is_open()) {
                 this->close();
             }
         }
@@ -68,8 +135,8 @@ namespace transbuf
         int close() /*noexcept*/
         { return OpenClose::close(this->buf); }
 
-        bool ready() const /*noexcept*/
-        { return OpenClose::ready(this->buf); }
+        bool is_open() const /*noexcept*/
+        { return OpenClose::is_open(this->buf); }
 
         OpenClose & impl()
         { return *this; }
@@ -95,20 +162,45 @@ namespace transbuf
         Writer buf;
 
     public:
+        output_buf()
+        {}
+
         template<class T>
         output_buf(const T & params)
         : OpenClose(params)
         {}
 
+        template<class T, class U>
+        output_buf(const T & params, const U & params2)
+        : OpenClose(params)
+        , buf(params2)
+        {}
+
+        template<class BufParams, class OpenCloseParams>
+        output_buf(const output_params<BufParams, OpenCloseParams> & params)
+        : OpenClose(params.open_close_params)
+        , buf(params.buf_params)
+        {}
+
+        template<class OpenCloseParams>
+        output_buf(const output_params<no_param_t, OpenCloseParams> & params)
+        : OpenClose(params.open_close_params)
+        {}
+
+        template<class BufParams>
+        output_buf(const output_params<BufParams, no_param_t> & params)
+        : buf(params.buf_params)
+        {}
+
         ~output_buf()
         {
-            if (this->ready()) {
+            if (this->is_open()) {
                 this->close();
             }
         }
 
-        bool ready() const /*noexcept*/
-        { return OpenClose::ready(this->buf); }
+        bool is_open() const /*noexcept*/
+        { return OpenClose::is_open(this->buf); }
 
         int close() /*noexcept*/
         { return OpenClose::close(this->buf); }
@@ -141,6 +233,11 @@ namespace transbuf
         template<class T>
         reopen_input(const T & params)
         : base_buf(params)
+        {}
+
+        template<class T, class U>
+        reopen_input(const T & params, const U & params2)
+        : base_buf(params, params2)
         {}
 
         ssize_t read(void * data, size_t len) /*noexcept*/

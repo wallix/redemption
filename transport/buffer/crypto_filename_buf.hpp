@@ -28,7 +28,7 @@
 namespace transbuf {
     namespace detail {
         template<class Buf>
-        int init_trace_key(Buf & buf, CryptoContext * ctx, const char * filename, unsigned char * trace_key) /*noexcept*/
+        int init_trace_key(Buf & buf, CryptoContext * ctx, const char * filename, mode_t mode, unsigned char * trace_key) /*noexcept*/
         {
             unsigned char derivator[DERIVATOR_LENGTH];
             get_derivator(filename, derivator, DERIVATOR_LENGTH);
@@ -36,20 +36,25 @@ namespace transbuf {
                 return -1;
             }
 
-            return buf.open(filename, 0600);
+            return buf.open(filename, mode);
         }
     }
 
     class icrypto_filename_base
     {
-        transbuf::ifile_base file;
         transfil::decrypt_filter decrypt;
+        CryptoContext * ctx;
+        ifile_base file;
 
     public:
-        int open(CryptoContext * ctx, const char * filename) /*noexcept*/
+        icrypto_filename_base(CryptoContext * ctx)
+        : ctx(ctx)
+        {}
+
+        int open(const char * filename, mode_t mode = 0600) /*noexcept*/
         {
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-            const int err = detail::init_trace_key(this->file, ctx, filename, trace_key);
+            const int err = detail::init_trace_key(this->file, this->ctx, filename, mode, trace_key);
             if (err < 0) {
                 return err;
             }
@@ -60,20 +65,35 @@ namespace transbuf {
         ssize_t read(void * data, size_t len) /*noexcept*/
         { return this->decrypt.read(this->file, data, len); }
 
-        int close()
+        int close() /*noexcept*/
         { return this->file.close(); }
+
+        bool is_open() const /*noexcept*/
+        { return this->file.is_open(); }
+
+    protected:
+        CryptoContext * crypto_context() const /*noexcept*/
+        { return this->ctx; }
+
+        void crypto_context(CryptoContext * ctx) /*noexcept*/
+        { this->ctx = ctx; }
     };
 
     class ocrypto_filename_base
     {
-        transbuf::ofile_base file;
         transfil::encrypt_filter encrypt;
+        CryptoContext * ctx;
+        ofile_base file;
 
     public:
-        int open(CryptoContext * ctx, const char * filename) /*noexcept*/
+        ocrypto_filename_base(CryptoContext * ctx)
+        : ctx(ctx)
+        {}
+
+        int open(const char * filename, mode_t mode = 0600) /*noexcept*/
         {
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-            const int err = detail::init_trace_key(this->file, ctx, filename, trace_key);
+            const int err = detail::init_trace_key(this->file, this->ctx, filename, mode, trace_key);
             if (err < 0) {
                 return err;
             }
@@ -84,18 +104,34 @@ namespace transbuf {
                 return -1;
             }
 
-            return this->encrypt.open(this->file, trace_key, ctx, iv);
+            return this->encrypt.open(this->file, trace_key, this->ctx, iv);
         }
 
         ssize_t write(const void * data, size_t len) /*noexcept*/
         { return this->encrypt.write(this->file, data, len); }
 
-        int close(unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key) /*noexcept*/
+        int close(unsigned char hash[MD_HASH_LENGTH << 1]) /*noexcept*/
         {
-            const int res1 = this->encrypt.close(this->file, hash, hmac_key);
+            const int res1 = this->encrypt.close(this->file, hash, this->ctx->hmac_key);
             const int res2 = this->file.close();
             return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
         }
+
+        int close() /*noexcept*/
+        {
+            unsigned char hash[MD_HASH_LENGTH << 1];
+            return this->close(hash);
+        }
+
+        bool is_open() const /*noexcept*/
+        { return this->file.is_open(); }
+
+    protected:
+        CryptoContext * crypto_context() const /*noexcept*/
+        { return this->ctx; }
+
+        void crypto_context(CryptoContext * ctx) /*noexcept*/
+        { this->ctx = ctx; }
     };
 }
 

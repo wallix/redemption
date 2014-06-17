@@ -37,50 +37,50 @@
 #include <sys/time.h>
 
 
-namespace detail
-{
-    struct MetaFilename
-    {
-        char filename[2048];
-
-        MetaFilename(const char * path, const char * basename,
-                     FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
-        {
-            int res = format == (
-               FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
-            || format == FilenameGenerator::PATH_FILE_PID_EXTENSION)
-            ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, getpid())
-            : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
-            if (res > int(sizeof(this->filename) - 6) || res < 0) {
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
-            }
-        }
-    };
-
-    template<class Writer>
-    void write_meta_headers(Writer & writer, const char * path,
-                            uint16_t width, uint16_t height, auth_api * authentifier)
-    {
-        char header1[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2];
-        const int len = sprintf(header1, "%u %u", width, height);
-        ssize_t res = writer.write(header1, len);
-        if (res > 0) {
-            res = writer.write("\n\n\n", 3);
-        }
-
-        if (res < 0) {
-            int err = errno;
-            if (err == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", path);
-                authentifier->report("FILESYSTEM_FULL", message);
-            }
-
-            LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
-        }
-    }
-}
+// namespace detail
+// {
+//     struct MetaFilename
+//     {
+//         char filename[2048];
+//
+//         MetaFilename(const char * path, const char * basename,
+//                      FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
+//         {
+//             int res = format == (
+//                FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+//             || format == FilenameGenerator::PATH_FILE_PID_EXTENSION)
+//             ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, getpid())
+//             : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
+//             if (res > int(sizeof(this->filename) - 6) || res < 0) {
+//                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
+//             }
+//         }
+//     };
+//
+//     template<class Writer>
+//     void write_meta_headers(Writer & writer, const char * path,
+//                             uint16_t width, uint16_t height, auth_api * authentifier)
+//     {
+//         char header1[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2];
+//         const int len = sprintf(header1, "%u %u", width, height);
+//         ssize_t res = writer.write(header1, len);
+//         if (res > 0) {
+//             res = writer.write("\n\n\n", 3);
+//         }
+//
+//         if (res < 0) {
+//             int err = errno;
+//             if (err == ENOSPC) {
+//                 char message[1024];
+//                 snprintf(message, sizeof(message), "100|%s", path);
+//                 authentifier->report("FILESYSTEM_FULL", message);
+//             }
+//
+//             LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
+//             throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+//         }
+//     }
+// }
 
 class OutmetaTransport
 : public Transport

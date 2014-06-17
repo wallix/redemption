@@ -168,6 +168,12 @@ protected:
     typedef OutBufferTransport TransportType;
     typedef Buf BufferType;
     typedef Nexter NexterType;
+
+    NexterType & nexter()
+    { return *this; }
+
+    BufferType & buffer()
+    { return *this; }
 };
 
 #endif

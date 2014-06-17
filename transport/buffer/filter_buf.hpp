@@ -40,7 +40,7 @@ public:
 
     ~filter_buf() /*noexcept*/
     {
-        if (this->filter.ready()) {
+        if (this->filter.is_open()) {
             this->filter.close(this->buf);
         }
     }
@@ -58,8 +58,8 @@ public:
     ssize_t read(void * data, size_t len) /*noexcept*/
     { return this->filter.read(this->buf, data, len); }
 
-    bool ready() /*noexcept*/
-    { return this->filter.ready(); }
+    bool is_open() /*noexcept*/
+    { return this->filter.is_open(); }
 };
 
 }

@@ -66,7 +66,7 @@ namespace transbuf {
         int write(const void * buffer, size_t len) /*noexcept*/
         { return this->copy(this->data.get() + this->current, buffer, len); }
 
-        bool ready() const /*noexcept*/
+        bool is_open() const /*noexcept*/
         { return this->data.get(); }
 
     private:

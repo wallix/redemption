@@ -6,7 +6,8 @@
 #define LOGPRINT
 #include "log.hpp"
 
-#include "inbymetasequencetransport.hpp"
+// #include "inbymetasequencetransport.hpp"
+#include "crypto_meta_transport.hpp"
 #include <outmetatransport.hpp>
 
 BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
@@ -47,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
     }
 
     {
-        CryptoInByMetaSequenceTransport crypto_trans(&cctx, "TESTOFS", ".mwrm");
+        CryptoInMetaTransport crypto_trans(&cctx, "TESTOFS", ".mwrm");
 
         char buffer[1024] = {};
         char * bob = buffer;
@@ -91,7 +92,7 @@ BOOST_AUTO_TEST_CASE(CryptoTestInmeta2Transport)
        CRYPTO_KEY_LENGTH);
 
     try {
-        CryptoInByMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm");
+        CryptoInMetaTransport(&cctx, "TESTOFSXXX", ".mwrm");
         BOOST_CHECK(false); // check open fails if file does not exist
     } catch (Error & e) {
         if (e.id != ERR_TRANSPORT_OPEN_FAILED) {

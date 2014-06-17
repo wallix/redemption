@@ -31,7 +31,7 @@ namespace transbuf {
         template<class Buf>
         static ssize_t write(Buf & buf, const void * data, size_t len) /*noexcept*/
         {
-            if (!buf.ready()) {
+            if (!buf.is_open()) {
                 const int res = buf.init();
                 if (res < 0) {
                     return res;
@@ -43,7 +43,7 @@ namespace transbuf {
         template<class Buf>
         static ssize_t read(Buf & buf, void * data, size_t len) /*noexcept*/
         {
-            if (!buf.ready()) {
+            if (!buf.is_open()) {
                 const int res = buf.init();
                 if (res < 0) {
                     return res;

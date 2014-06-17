@@ -28,8 +28,9 @@ struct CryptoInFilenameTransport
 : InBufferTransport<transbuf::icrypto_filename_base>
 {
     CryptoInFilenameTransport(CryptoContext * crypto_ctx, const char * filename)
+    : CryptoInFilenameTransport::TransportType(crypto_ctx)
     {
-        if (this->open(crypto_ctx, filename) < 0) {
+        if (this->open(filename) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
@@ -43,9 +44,9 @@ class CryptoOutFilenameTransport
 
 public:
     CryptoOutFilenameTransport(CryptoContext * crypto_ctx, const char * filename, auth_api * authentifier = NULL)
-    : crypto_ctx(*crypto_ctx)
+    : CryptoOutFilenameTransport::TransportType(crypto_ctx)
     {
-        if (this->open(crypto_ctx, filename) < 0) {
+        if (this->open(filename) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
@@ -58,7 +59,7 @@ public:
     virtual ~CryptoOutFilenameTransport()
     {
         unsigned char hash[MD_HASH_LENGTH << 1];
-        this->close(hash, this->crypto_ctx.hmac_key);
+        this->close(hash);
     }
 };
 

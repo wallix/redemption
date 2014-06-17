@@ -39,7 +39,7 @@ struct out_meta_nexter
     template<class Transport, class TransportBuf>
     int next(Transport & /*trans*/, TransportBuf & buf) /*noexcept*/
     {
-        if (buf.ready()) {
+        if (buf.is_open()) {
             buf.close();
             const char * filename = buf.impl().seqgen().get(buf.impl().seqnum());
             size_t len = strlen(filename);
@@ -255,12 +255,7 @@ namespace detail {
             return buf;
         }
 
-    public:
-        MetaOpener(const char * filename)
-        : reader(this->open_and_return(filename, this->buf))
-        , begin_chunk_time(0)
-        , end_chunk_time(0)
-        , seqnum(0)
+        void read_header()
         {
             // headers
             //@{
@@ -273,6 +268,27 @@ namespace detail {
             //@}
 
             this->path[0] = 0;
+        }
+
+    public:
+        MetaOpener(const char * filename)
+        : reader(this->open_and_return(filename, this->buf))
+        , begin_chunk_time(0)
+        , end_chunk_time(0)
+        , seqnum(0)
+        {
+            this->read_header();
+        }
+
+        template<class T>
+        MetaOpener(const transbuf::input_params<T, const char *> & params)
+        : buf(params.buf_params)
+        , reader(this->open_and_return(params.open_close_params, this->buf))
+        , begin_chunk_time(0)
+        , end_chunk_time(0)
+        , seqnum(0)
+        {
+            this->read_header();
         }
 
         template<class UBuf>
@@ -370,6 +386,9 @@ namespace detail {
                 throw Error(ERR_TRANSPORT);
             }
         }
+
+        const char * c_str() const /*noexcept*/
+        { return this->str; }
     };
 }
 
@@ -381,8 +400,10 @@ struct in_meta_nexter
     template<class Transport, class TransportBuf>
     int next(Transport & /*trans*/, TransportBuf & buf) /*noexcept*/
     {
-        int res = buf.impl().next();
-        return res;
+        if (buf.is_open()) {
+            buf.close();
+        }
+        return buf.impl().next();
     }
 };
 
@@ -408,6 +429,5 @@ struct InMetaTransport
     unsigned get_seqno() const /*noexcept*/
     { return this->impl().get_seqno(); }
 };
-
 
 #endif

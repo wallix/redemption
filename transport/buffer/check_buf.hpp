@@ -65,7 +65,7 @@ namespace transbuf {
             return p - (databuf + rlen);
         }
 
-        bool ready() const /*noexcept*/
+        bool is_open() const /*noexcept*/
         { return this->data.get(); }
     };
 
