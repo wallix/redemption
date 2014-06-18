@@ -18,34 +18,20 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_FILENAME_TRANSPORT_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_FILENAME_TRANSPORT_HPP
+#ifndef REDEMPTION_PUBLIC_TRANSPORT_OUT_FILE_TRANSPORT_HPP
+#define REDEMPTION_PUBLIC_TRANSPORT_OUT_FILE_TRANSPORT_HPP
 
-#include "buffer/file_buf.hpp"
 #include "buffer_transport.hpp"
+#include "fdbuf.hpp"
 
-struct InFilenameTransport
-: InBufferTransport<transbuf::ifile_base>
-{
-    InFilenameTransport(const char * filename)
-    {
-        if (this->open(filename, 0600) < 0) {
-            LOG(LOG_ERR, "failed opening=%s\n", filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-    }
-};
+// typedef OutBufferTransport<io::posix::fdbuf> OutFileTransport;
 
-struct OutFilenameTransport
-: OutBufferTransport<transbuf::ofile_base>
+struct OutFileTransport
+: OutBufferTransport<io::posix::fdbuf>
 {
-    OutFilenameTransport(const char * filename)
-    {
-        if (this->open(filename, 0600) < 0) {
-            LOG(LOG_ERR, "failed opening=%s\n", filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-    }
+    OutFileTransport(int fd) /*noexcept*/
+    : OutBufferTransport::TransportType(fd)
+    {}
 };
 
 #endif

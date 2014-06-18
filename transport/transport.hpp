@@ -37,16 +37,15 @@ using std::size_t;
 
 class Transport
 {
+    uint64_t total_received;
+    uint64_t total_sent;
+    uint64_t quantum_count;
+
 protected:
     uint32_t seqno;
 
-    uint64_t total_received;
     uint64_t last_quantum_received;
-
-    uint64_t total_sent;
     uint64_t last_quantum_sent;
-
-    uint64_t quantum_count;
 
     bool status;
 
@@ -54,12 +53,12 @@ protected:
 
 public:
     Transport()
-    : seqno(0)
-    , total_received(0)
-    , last_quantum_received(0)
+    : total_received(0)
     , total_sent(0)
-    , last_quantum_sent(0)
     , quantum_count(0)
+    , seqno(0)
+    , last_quantum_received(0)
+    , last_quantum_sent(0)
     , status(true)
     , authentifier(get_null_authentifier())
     {}
@@ -74,13 +73,13 @@ public:
     { return this->seqno; }
 
     uint32_t get_total_received() const
-    { return this->total_received; }
+    { return this->total_received + this->last_quantum_received; }
 
     uint32_t get_last_quantum_received() const
     { return this->last_quantum_received; }
 
     uint32_t get_total_sent() const
-    { return this->total_sent; }
+    { return this->total_sent + this->last_quantum_sent; }
 
     uint32_t get_last_quantum_sent() const
     { return this->last_quantum_sent; }
@@ -98,6 +97,15 @@ public:
 
     void reset_quantum_sent()
     {
+        this->last_quantum_sent = 0;
+    }
+
+    void tick()
+    {
+        this->quantum_count++;
+        this->total_received += this->last_quantum_received;
+        this->total_sent += this->last_quantum_sent;
+        this->last_quantum_received = 0;
         this->last_quantum_sent = 0;
     }
 

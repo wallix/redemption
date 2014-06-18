@@ -91,9 +91,7 @@ private:
             throw Error(ERR_TRANSPORT_READ_FAILED, res);
         }
         *pbuffer += res;
-        this->total_received += res;
-        this->last_quantum_received = res;
-        ++this->quantum_count;
+        this->last_quantum_received += res;
         if (static_cast<size_t>(res) != len){
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
@@ -165,9 +163,7 @@ private:
             }
             throw Error(ERR_TRANSPORT_WRITE_FAILED, res);
         }
-        this->total_sent += res;
-        this->last_quantum_sent = res;
-        ++this->quantum_count;
+        this->last_quantum_sent += res;
     }
 
 protected:

@@ -20,10 +20,22 @@
    Transport layer abstraction
 */
 
-#ifndef REDEMPTION_TRANSPORT_OUTFILENAMETRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_OUTFILENAMETRANSPORT_HPP
+#ifndef REDEMPTION_TRANSPORT_OUT_FILENAME_TRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_OUT_FILENAME_TRANSPORT_HPP
 
-#include "filename_transport.hpp"
-#include "filename_sequence_transport.hpp"
+#include "buffer/file_buf.hpp"
+#include "buffer_transport.hpp"
+
+struct OutFilenameTransport
+: OutBufferTransport<transbuf::ofile_base>
+{
+    OutFilenameTransport(const char * filename)
+    {
+        if (this->open(filename, 0600) < 0) {
+            LOG(LOG_ERR, "failed opening=%s\n", filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+    }
+};
 
 #endif

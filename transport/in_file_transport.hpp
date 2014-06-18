@@ -18,22 +18,13 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_FILE_TRANSPORT_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_FILE_TRANSPORT_HPP
+#ifndef REDEMPTION_PUBLIC_TRANSPORT_IN_FILE_TRANSPORT_HPP
+#define REDEMPTION_PUBLIC_TRANSPORT_IN_FILE_TRANSPORT_HPP
 
 #include "buffer_transport.hpp"
 #include "fdbuf.hpp"
 
-// typedef OutBufferTransport<io::posix::fdbuf> OutFileTransport;
 // typedef InBufferTransport<io::posix::fdbuf> InFileTransport;
-
-struct OutFileTransport
-: OutBufferTransport<io::posix::fdbuf>
-{
-    OutFileTransport(int fd) /*noexcept*/
-    : OutBufferTransport::TransportType(fd)
-    {}
-};
 
 struct InFileTransport
 : InBufferTransport<io::posix::fdbuf>

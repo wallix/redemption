@@ -18,16 +18,16 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_FILENAME_SEQUENCE_TRANSPORT_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_FILENAME_SEQUENCE_TRANSPORT_HPP
+#ifndef REDEMPTION_PUBLIC_TRANSPORT_DETAIL_FILENAME_SEQUENCE_POLICY_HPP
+#define REDEMPTION_PUBLIC_TRANSPORT_DETAIL_FILENAME_SEQUENCE_POLICY_HPP
 
 #include "log.hpp"
-#include "fdbuf.hpp"
 #include "sequence_generator.hpp"
 #include "buffer/input_output_buf.hpp"
-#include "buffer_transport.hpp"
 
+#include <cerrno>
 #include <cstdio>
+#include <cstring>
 #include <cstdlib>
 
 namespace detail
@@ -125,34 +125,5 @@ namespace detail
         }
     };
 }
-
-
-struct OutFilenameSequenceTransport
-: OutBufferTransport<transbuf::output_buf<io::posix::fdbuf, detail::FilenameSequencePolicy> >
-{
-    OutFilenameSequenceTransport(FilenameGenerator::Format format,
-                                 const char * const prefix,
-                                 const char * const filename,
-                                 const char * const extension,
-                                 const int groupid,
-                                 auth_api * authentifier = NULL,
-                                 unsigned verbose = 0)
-    : OutFilenameSequenceTransport::TransportType(
-        detail::FilenameSequencePolicyParams(format, prefix, filename, extension, groupid))
-    {
-        (void)verbose;
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-    }
-
-    const FilenameGenerator * seqgen() const /*noexcept*/
-    { return &this->impl().seqgen(); }
-
-    virtual void request_full_cleaning()
-    {
-        this->impl().request_full_cleaning();
-    }
-};
 
 #endif

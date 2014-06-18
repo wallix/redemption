@@ -20,8 +20,8 @@
    Transport layer abstraction, socket implementation with TLS support
 */
 
-#ifndef REDEMPTION_TRANSPORT_SOCKETTRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_SOCKETTRANSPORT_HPP
+#ifndef REDEMPTION_TRANSPORT_SOCKET_TRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_SOCKET_TRANSPORT_HPP
 
 #include "config.hpp"
 #include "transport.hpp"

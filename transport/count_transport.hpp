@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,18 +15,29 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean, Raphael Zhou
+   Author(s): Christophe Grosjean
 
    Transport layer abstraction
 */
 
-#ifndef REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP
+#ifndef REDEMPTION_TRANSPORT_COUNT_TRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_COUNT_TRANSPORT_HPP
 
-#include "meta_transport.hpp"
-#include "crypto_meta_transport.hpp"
+#include "transport.hpp"
 
-typedef OutMetaTransport OutmetaTransport;
-typedef CryptoOutMetaTransport CryptoOutmetaTransport;
+class CountTransport
+: public Transport
+{
+    void do_recv(char ** pbuffer, size_t len) {
+        TODO("move that to base class : accounting_recv(len) (or base class recv could just do accounting)");
+        this->last_quantum_received += len;
+    }
+
+    void do_send(const char * const buffer, size_t len) {
+        TODO("move that to base class : accounting_send(len) (or base class send could just do accounting)");
+        this->last_quantum_sent += len;
+    }
+};
 
 #endif
+
