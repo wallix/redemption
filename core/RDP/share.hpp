@@ -203,7 +203,8 @@ struct ShareControl_Recv
 
         this->mcs_channel = stream.in_uint16_le();
         if (this->totalLength < 6){
-            LOG(LOG_ERR, "ShareControl packet too short totalLength=%u", this->totalLength);
+            LOG(LOG_ERR, "ShareControl packet too short totalLength=%u pdu_type1=%u mcs_channel=%u",
+                this->totalLength, this->pdu_type1, this->mcs_channel);
             throw Error(ERR_SEC);
         }
 
