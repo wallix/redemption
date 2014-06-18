@@ -37,6 +37,12 @@ struct nexter_transport_base
     {
         return 0;
     }
+
+    template<class Buf>
+    /*constexpr*/ const char * current_path(Buf & buf) /*noexcept*/
+    {
+        return "";
+    }
 };
 
 template<class Buf, class Nexter = nexter_transport_base>
@@ -145,10 +151,18 @@ struct OutBufferTransport
     }
 
 private:
-    void do_send(const char * buffer, size_t len) {
+    void do_send(const char * buffer, size_t len)
+    {
         const ssize_t res = this->Buf::write(buffer, len);
         if (res < 0){
             this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                const char * filename = this->Nexter::current_path(static_cast<Buf&>(*this));
+                snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
+                authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+            }
             throw Error(ERR_TRANSPORT_WRITE_FAILED, res);
         }
         this->total_sent += res;

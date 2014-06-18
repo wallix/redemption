@@ -41,7 +41,7 @@ struct out_meta_nexter
     {
         if (buf.is_open()) {
             buf.close();
-            const char * filename = buf.impl().seqgen().get(buf.impl().seqnum());
+            const char * filename = this->current_path(buf);
             size_t len = strlen(filename);
             ssize_t res = this->write(filename, len);
             if (res >= 0 && size_t(res) == len) {
@@ -66,6 +66,12 @@ struct out_meta_nexter
     bool next_end(TransportBuf & buf) /*noexcept*/
     {
         return this->next(buf, buf);
+    }
+
+    template<class TransportBuf>
+    /*constexpr*/ const char * current_path(TransportBuf & buf) const /*noexcept*/
+    {
+        return buf.impl().seqgen().get(buf.impl().seqnum());
     }
 
     void update_sec(time_t sec) /*noexcept*/
