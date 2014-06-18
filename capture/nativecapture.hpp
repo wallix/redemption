@@ -65,11 +65,11 @@ public:
     int bpp;
 
     uint64_t frame_interval;
-    struct timeval start_native_capture;
+    timeval start_native_capture;
     uint64_t inter_frame_interval_native_capture;
 
     uint64_t break_interval;
-    struct timeval start_break_capture;
+    timeval start_break_capture;
     uint64_t inter_frame_interval_start_break_capture;
 
     BmpCache & bmp_cache;

@@ -116,6 +116,13 @@ namespace detail
 
         unsigned seqnum() const /*noexcept*/
         { return this->num_file; }
+
+        void request_full_cleaning() const
+        {
+            for (unsigned i = 0; i < this->num_file; ++i) {
+                ::unlink(this->filegen.get(i));
+            }
+        }
     };
 }
 
@@ -141,6 +148,11 @@ struct OutFilenameSequenceTransport
 
     const FilenameGenerator * seqgen() const /*noexcept*/
     { return &this->impl().seqgen(); }
+
+    virtual void request_full_cleaning()
+    {
+        this->impl().request_full_cleaning();
+    }
 };
 
 #endif

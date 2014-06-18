@@ -25,14 +25,42 @@
 #include "buffer/crypto_filename_buf.hpp"
 #include <fileutils.hpp>
 
-template<class Buf/*, class FilenameAccessTraits*/>
-struct crypto_out_meta_nexter
-: Buf
+struct crypto_out_meta_nexter_params
 {
-    crypto_out_meta_nexter(transbuf::two_params<CryptoContext*, time_t> params) /*noexcept*/
-    : Buf(params.buf_params)
-    , start_sec(params.other_params)
-    , stop_sec(this->start_sec)
+    CryptoContext * crypto_ctx;
+    const char * hash_path;
+    const char * basename;
+    time_t start_sec;
+    FilenameFormat format;
+
+    crypto_out_meta_nexter_params(
+        CryptoContext * crypto_ctx,
+        time_t start_sec,
+        const char * hash_path,
+        const char * basename,
+        FilenameFormat format
+    )
+    : crypto_ctx(crypto_ctx)
+    , hash_path(hash_path)
+    , basename(basename)
+    , start_sec(start_sec)
+    , format(format)
+    {}
+};
+
+class crypto_out_meta_nexter
+: public transbuf::ocrypto_filename_base
+{
+    detail::MetaFilename hf;
+    time_t start_sec;
+    time_t stop_sec;
+
+public:
+    crypto_out_meta_nexter(crypto_out_meta_nexter_params const & params) /*noexcept*/
+    : transbuf::ocrypto_filename_base(params.crypto_ctx)
+    , hf(params.hash_path, params.basename, params.format)
+    , start_sec(params.start_sec)
+    , stop_sec(params.start_sec)
     {}
 
     template<class Transport, class TransportBuf>
@@ -72,12 +100,64 @@ struct crypto_out_meta_nexter
         return 1;
     }
 
+    template<class TransportBuf>
+    bool next_end(TransportBuf & buf) /*noexcept*/
+    {
+        if (buf.is_open()) {
+            if (this->next(buf, buf)) {
+                return false;
+            }
+        }
+
+        if (!this->is_open()) {
+            return false;
+        }
+
+        char path[1024] = {};
+        char basename[1024] = {};
+        char extension[256] = {};
+        char filename[2048] = {};
+
+        canonical_path(hf.filename,
+                       path, sizeof(path),
+                       basename, sizeof(basename),
+                       extension, sizeof(extension));
+        std::snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+        unsigned char hash[HASH_LEN + 1] = {0};
+        hash[0] = ' ';
+
+        if (this->close(hash+1) < 0) {
+            return false;
+        }
+
+        transbuf::ocrypto_filename_base crypto_hash(this->crypto_context());
+        TODO("check errors when storing hash");
+        if (crypto_hash.open(hf.filename) >= 0) {
+            const size_t len = strlen(filename);
+            if (crypto_hash.write(filename, len) != long(len)
+             || crypto_hash.write(hash, HASH_LEN+1) != HASH_LEN+1) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", hf.filename, -HASH_LEN);
+                return false;
+            }
+            else {
+                crypto_hash.close(hash);
+            }
+
+            if (chmod(hf.filename, S_IRUSR|S_IRGRP) == -1){
+                LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", hf.filename, strerror(errno), errno);
+            }
+        }
+        else {
+            LOG(LOG_ERR, "Open to transport failed: code=%d", errno);
+            return false;
+        }
+
+        return true;
+    }
+
     void update_sec(time_t sec) /*noexcept*/
     { this->stop_sec = sec; }
-
-private:
-    time_t start_sec;
-    time_t stop_sec;
 };
 
 namespace detail {
@@ -157,20 +237,20 @@ namespace detail {
         bool is_open() const /*noexcept*/
         { return this->file.is_open(); }
 
+        const FilenameSequencePolicy & impl() const /*noexcept*/
+        { return this->fsq; }
+
         FilenameSequencePolicy & impl() /*noexcept*/
         { return this->fsq; }
     };
 }
 
-class CryptoOutMetaTransport
-: public OutBufferTransport<
+struct CryptoOutMetaTransport
+: OutBufferTransport<
     detail::crypto_out_meta_buf_base,
-    crypto_out_meta_nexter<transbuf::ocrypto_filename_base>
+    crypto_out_meta_nexter
 >
 {
-    detail::MetaFilename hf;
-
-public:
     CryptoOutMetaTransport(CryptoContext * crypto_ctx,
                            const char * path,
                            const char * hash_path,
@@ -186,8 +266,8 @@ public:
         detail::crypto_out_meta_buf_base_params(
             *crypto_ctx,
             detail::FilenameSequencePolicyParams(format, path, basename, ".wrm", groupid)),
-        transbuf::buf_params(crypto_ctx, now.tv_sec))
-    , hf(hash_path, basename, format)
+        crypto_out_meta_nexter_params(crypto_ctx, now.tv_sec, hash_path, basename, format)
+    )
     {
         (void)verbose;
 
@@ -204,53 +284,17 @@ public:
         detail::write_meta_headers(this->nexter(), path, width, height, this->authentifier);
     }
 
-    ~CryptoOutMetaTransport()
-    {
-        if (this->buffer().is_open()) {
-            this->nexter().next(*this, this->buffer());
-        }
-
-        char          path[1024] = {};
-        char          basename[1024] = {};
-        char          extension[256] = {};
-        char          filename[2048] = {};
-
-        canonical_path(hf.filename,
-                       path, sizeof(path),
-                       basename, sizeof(basename),
-                       extension, sizeof(extension));
-        std::snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-
-        unsigned char hash[HASH_LEN + 1] = {0};
-        hash[0] = ' ';
-
-        TODO("check if sign returns some error");
-        this->nexter().close(hash+1);
-
-        transbuf::ocrypto_filename_base crypto_hash(this->crypto_context());
-        TODO("check errors when storing hash");
-        if (crypto_hash.open(hf.filename) >= 0) {
-            const size_t len = strlen(filename);
-            if (crypto_hash.write(filename, len) != long(len)
-             || crypto_hash.write(hash, HASH_LEN+1) != HASH_LEN+1) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", hf.filename, -HASH_LEN);
-            }
-            else {
-                crypto_hash.close(hash);
-            }
-
-            if (chmod(hf.filename, S_IRUSR|S_IRGRP) == -1){
-                LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", hf.filename, strerror(errno), errno);
-            }
-        }
-        else {
-            LOG(LOG_ERR, "Open to transport failed: code=%d", errno);
-        }
-    }
-
     virtual void timestamp(timeval now)
     {
         this->update_sec(now.tv_sec);
+    }
+
+    const FilenameGenerator * seqgen() const /*noexcept*/
+    { return &this->impl().seqgen(); }
+
+    virtual void request_full_cleaning()
+    {
+        this->impl().request_full_cleaning();
     }
 };
 

@@ -45,7 +45,7 @@ struct GeneratorTransport
 
 
 class CheckTransport
-: public DispatchTransport<CheckTransport>
+: public Transport
 {
     unique_ptr<uint8_t[]> data;
     std::size_t len;
@@ -104,7 +104,7 @@ private:
 
 
 class TestTransport
-: public DispatchTransport<TestTransport>
+: public Transport
 {
     CheckTransport check;
     GeneratorTransport gen;
@@ -149,7 +149,7 @@ private:
 
 
 class LogTransport
-: public DispatchTransport<LogTransport>
+: public Transport
 {
     void do_send(const char * const buffer, size_t len) {
         hexdump_c(buffer, len);

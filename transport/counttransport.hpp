@@ -28,28 +28,24 @@
 class CountTransport
 : public Transport
 {
-public:
-    using Transport::recv;
-    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+    void do_recv(char ** pbuffer, size_t len) throw (Error) {
         TODO("move that to base class : accounting_recv(len) (or base class recv could just do accounting)");
         this->total_received += len;
         this->last_quantum_received += len;
     }
 
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
+    void do_send(const char * const buffer, size_t len) throw (Error) {
         TODO("move that to base class : accounting_send(len) (or base class send could just do accounting)");
         this->total_sent += len;
         this->last_quantum_sent += len;
     }
-
-    virtual void seek(int64_t offset, int whence) throw (Error) {
-        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
-    }
-
-    virtual bool get_status()
+    
+public:
+    void tick()
     {
-        return true;
+        this->quantum_count++;
+        this->last_quantum_received = 0;
+        this->last_quantum_sent = 0;
     }
 };
 

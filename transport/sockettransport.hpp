@@ -1081,7 +1081,7 @@ public:
        LOG(LOG_INFO, "RIO *::enable_tls() done");
     }
 
-    void disconnect(){
+    virtual bool disconnect(){
         LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
         // Disconnect tls if needed
         if (this->tls) {
@@ -1099,6 +1099,7 @@ public:
         close(this->sck);
         this->sck = 0;
         this->sck_closed = 1;
+        return true;
     }
 
     virtual bool connect()
@@ -1113,8 +1114,7 @@ public:
         return true;
     }
 
-    using Transport::recv;
-    virtual void recv(char ** pbuffer, size_t len) throw (Error)
+    virtual void do_recv(char ** pbuffer, size_t len) throw (Error)
     {
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%u) receiving %u bytes", this->name, this->sck, len);
@@ -1139,11 +1139,10 @@ public:
 
         TODO("move that to base class : accounting_recv(len)");
         this->total_received += len;
-        this->last_quantum_received += len;
+        this->last_quantum_received = len;
     }
 
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error)
+    virtual void do_send(const char * const buffer, size_t len) throw (Error)
     {
         if (len == 0) { return; }
 
@@ -1166,7 +1165,7 @@ public:
 
         TODO("move that to base class : accounting_send(len)");
         this->total_sent += len;
-        this->last_quantum_sent += len;
+        this->last_quantum_sent = len;
     }
 
     virtual void seek(int64_t offset, int whence) throw (Error) {
@@ -1176,10 +1175,6 @@ public:
     virtual bool get_status() const
     {
         return this->status;
-    }
-
-    virtual int get_native_object() {
-        return this->sck;
     }
 
 private:

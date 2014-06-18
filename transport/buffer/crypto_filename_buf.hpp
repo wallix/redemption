@@ -90,6 +90,13 @@ namespace transbuf {
         : ctx(ctx)
         {}
 
+        ~ocrypto_filename_base()
+        {
+            if (this->is_open()) {
+                this->close();
+            }
+        }
+
         int open(const char * filename, mode_t mode = 0600) /*noexcept*/
         {
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher

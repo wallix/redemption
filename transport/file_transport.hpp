@@ -21,29 +21,26 @@
 #ifndef REDEMPTION_PUBLIC_TRANSPORT_FILE_TRANSPORT_HPP
 #define REDEMPTION_PUBLIC_TRANSPORT_FILE_TRANSPORT_HPP
 
-
 #include "buffer_transport.hpp"
-#include "buffer/rwfd_buf.hpp"
+#include "fdbuf.hpp"
 
-//using OutFileTransport = OutBufferTransport<transbuf::rwfd_buf>; //C++11
-//using InFileTransport = InBufferTransport<transbuf::rwfd_buf>; //C++11
+// typedef OutBufferTransport<io::posix::fdbuf> OutFileTransport;
+// typedef InBufferTransport<io::posix::fdbuf> InFileTransport;
 
 struct OutFileTransport
-: OutBufferTransport<transbuf::rwfd_buf>
+: OutBufferTransport<io::posix::fdbuf>
 {
     OutFileTransport(int fd) /*noexcept*/
-    {
-        this->open(fd);
-    }
+    : OutBufferTransport::TransportType(fd)
+    {}
 };
 
 struct InFileTransport
-: InBufferTransport<transbuf::rwfd_buf>
+: InBufferTransport<io::posix::fdbuf>
 {
     InFileTransport(int fd) /*noexcept*/
-    {
-        this->open(fd);
-    }
+    : InBufferTransport::TransportType(fd)
+    {}
 };
 
 #endif

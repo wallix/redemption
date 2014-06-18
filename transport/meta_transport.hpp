@@ -62,6 +62,12 @@ struct out_meta_nexter
         return 1;
     }
 
+    template<class TransportBuf>
+    bool next_end(TransportBuf & buf) /*noexcept*/
+    {
+        return this->next(buf, buf);
+    }
+
     void update_sec(time_t sec) /*noexcept*/
     { this->stop_sec = sec; }
 
@@ -155,7 +161,14 @@ struct OutMetaTransport
     }
 
     const FilenameGenerator * seqgen() const /*noexcept*/
-    { return &this->impl().seqgen(); }
+    {
+        return &this->impl().seqgen();
+    }
+
+    virtual void request_full_cleaning()
+    {
+        this->impl().request_full_cleaning();
+    }
 };
 
 

@@ -24,7 +24,7 @@
 #include "fdbuf.hpp"
 
 namespace transbuf {
-    class ifile_base
+    class file_base
     {
         io::posix::fdbuf fdbuf;
 
@@ -38,32 +38,22 @@ namespace transbuf {
         int close() /*noexcept*/
         { return this->fdbuf.close(); }
 
-        ssize_t read(void * data, size_t len) /*noexcept*/
-        { return this->fdbuf.read(data, len); }
-
-        bool is_open() const
+        bool is_open() const /*noexcept*/
         { return this->fdbuf.is_open(); }
     };
 
-    class ofile_base
+    struct ifile_base
+    : file_base
     {
-        io::posix::fdbuf fdbuf;
+        ssize_t read(void * data, size_t len) /*noexcept*/
+        { return this->fdbuf.read(data, len); }
+    };
 
-    public:
-        int open(const char * filename) /*noexcept*/
-        { return this->fdbuf.open(filename, O_WRONLY | O_CREAT); }
-
-        int open(const char * filename, mode_t mode) /*noexcept*/
-        { return this->fdbuf.open(filename, O_WRONLY | O_CREAT, mode); }
-
-        int close() /*noexcept*/
-        { return this->fdbuf.close(); }
-
+    struct ofile_base
+    : file_base
+    {
         ssize_t write(const void * data, size_t len) /*noexcept*/
         { return this->fdbuf.write(data, len); }
-
-        bool is_open() const
-        { return this->fdbuf.is_open(); }
     };
 }
 

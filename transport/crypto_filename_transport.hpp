@@ -52,12 +52,6 @@ struct CryptoOutFilenameTransport
             this->set_authentifier(authentifier);
         }
     }
-
-    virtual ~CryptoOutFilenameTransport()
-    {
-        unsigned char hash[MD_HASH_LENGTH << 1];
-        this->close(hash);
-    }
 };
 
 #endif

@@ -69,14 +69,13 @@ public:
     {
     }
 
-    using Transport::recv;
-    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+private:
+    virtual void do_recv(char ** pbuffer, size_t len) throw (Error) {
         // CheckTransport does never receive anything
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error)
+    virtual void do_send(const char * const buffer, size_t len) throw (Error)
     {
         size_t to_buffer_len = len;
         while (this->stream.size() + to_buffer_len > max){
@@ -94,8 +93,7 @@ public:
         this->stream.mark_end();
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
-
+public:
     virtual void flush() {
         this->stream.mark_end();
         if (this->stream.size() > 0){

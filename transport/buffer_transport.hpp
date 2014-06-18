@@ -24,37 +24,6 @@
 #include "transport.hpp"
 #include <cerrno>
 
-template<class Trans>
-struct DispatchTransport
-: Transport
-{
-    using Transport::recv;
-    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        this->do_recv(pbuffer, len);
-    }
-
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
-        this->do_send(buffer, len);
-    }
-
-    virtual void seek(int64_t offset, int whence) throw (Error) {
-        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
-    }
-
-    virtual ~DispatchTransport()
-    {}
-
-protected:
-    virtual void do_recv(char ** pbuffer, size_t len) {
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
-    }
-
-    virtual void do_send(const char * const buffer, size_t len) {
-        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV, 0);
-    }
-};
-
 struct nexter_transport_base
 {
     template<class Transport, class Buf>
@@ -62,11 +31,17 @@ struct nexter_transport_base
     {
         return buf.close();
     }
+
+    template<class Buf>
+    /*constexpr*/ bool next_end(Buf & buf) /*noexcept*/
+    {
+        return 0;
+    }
 };
 
 template<class Buf, class Nexter = nexter_transport_base>
 struct InBufferTransport
-: DispatchTransport<InBufferTransport<Buf> >
+: Transport
 , protected Buf
 , protected Nexter
 {
@@ -83,19 +58,6 @@ struct InBufferTransport
     : Buf(buf_params)
     , Nexter(nexter_params)
     {}
-
-    void do_recv(char ** pbuffer, size_t len) {
-        const ssize_t res = this->Buf::read(*pbuffer, len);
-        if (res < 0){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, res);
-        }
-        *pbuffer += res;
-        if (static_cast<size_t>(res) != len){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-        }
-    }
 
     virtual bool next()
     {
@@ -115,15 +77,33 @@ struct InBufferTransport
         return 0;
     }
 
+private:
+    void do_recv(char ** pbuffer, size_t len) {
+        const ssize_t res = this->Buf::read(*pbuffer, len);
+        if (res < 0){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+        }
+        *pbuffer += res;
+        this->total_received += res;
+        this->last_quantum_received = res;
+        ++this->quantum_count;
+        if (static_cast<size_t>(res) != len){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+    }
+
 protected:
     typedef InBufferTransport TransportType;
     typedef Buf BufferType;
     typedef Nexter NexterType;
 };
 
+
 template<class Buf, class Nexter = nexter_transport_base>
 struct OutBufferTransport
-: DispatchTransport<OutBufferTransport<Buf> >
+: Transport
 , protected Buf
 , protected Nexter
 {
@@ -143,15 +123,12 @@ struct OutBufferTransport
 
     ~OutBufferTransport()
     {
-        this->Nexter::next(*this, static_cast<Buf&>(*this));
+        this->Nexter::next_end(static_cast<Buf&>(*this));
     }
 
-    void do_send(const char * buffer, size_t len) {
-        const ssize_t res = this->Buf::write(buffer, len);
-        if (res < 0){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, res);
-        }
+    bool disconnect()
+    {
+        return this->Nexter::next_end(static_cast<Buf&>(*this));
     }
 
     virtual bool next()
@@ -165,6 +142,18 @@ struct OutBufferTransport
             ++this->seqno;
         }
         return !res;
+    }
+
+private:
+    void do_send(const char * buffer, size_t len) {
+        const ssize_t res = this->Buf::write(buffer, len);
+        if (res < 0){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, res);
+        }
+        this->total_sent += res;
+        this->last_quantum_sent = res;
+        ++this->quantum_count;
     }
 
 protected:

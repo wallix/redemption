@@ -98,10 +98,10 @@ namespace transbuf
         bool is_open() const /*noexcept*/
         { return OpenClose::is_open(this->buf); }
 
-        OpenClose & impl()
+        OpenClose & impl() /*noexcept*/
         { return *this; }
 
-        const OpenClose & impl() const
+        const OpenClose & impl() const /*noexcept*/
         { return *this; }
     };
 
