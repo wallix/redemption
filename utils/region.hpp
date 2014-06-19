@@ -36,18 +36,16 @@ struct Region {
     Region() {}
     ~Region() {}
 
-    void subtract_rect(const Rect& rect)
-    {
+    void subtract_rect(const Rect & rect) {
         std::vector<Rect> new_rects;
 
         int count = this->rects.size();
         for (int i = 0; i < count; i++) {
             Rect rect1 = this->rects[i];
-            if (!rect.contains(rect1))
-            {
+            if (!rect.contains(rect1)) {
                 const Rect & sect = rect.intersect(rect1);
 
-                if (sect.isempty()){
+                if (sect.isempty()) {
                     new_rects.push_back(rect1);
                 }
                 else {
@@ -55,16 +53,16 @@ struct Region {
                     const Rect b(rect1.x, sect.y, sect.x - rect1.x, sect.cy);
                     const Rect c(sect.right(), sect.y, rect1.right() - sect.right(), sect.cy);
                     const Rect d(rect1.x, sect.bottom(), rect1.cx, rect1.bottom() - sect.bottom());
-                    if (!a.isempty()){
+                    if (!a.isempty()) {
                         new_rects.push_back(a);
                     }
-                    if (!b.isempty()){
+                    if (!b.isempty()) {
                         new_rects.push_back(b);
                     }
-                    if (!c.isempty()){
+                    if (!c.isempty()) {
                         new_rects.push_back(c);
                     }
-                    if (!d.isempty()){
+                    if (!d.isempty()) {
                         new_rects.push_back(d);
                     }
                 }
@@ -72,7 +70,10 @@ struct Region {
         }
         this->rects.swap(new_rects); // this->rects = std::move(new_rects);
     }
-};
 
+    void add_rect(const Rect & rect) {
+        this->rects.push_back(rect);
+    }
+};
 
 #endif

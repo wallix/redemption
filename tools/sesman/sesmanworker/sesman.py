@@ -485,6 +485,7 @@ class Sesman():
                         if (right.resource.device.host == u'autotest' or
                             right.resource.device.host == u'bouncer2' or
                             right.resource.device.host == u'widget2_message' or
+                            right.resource.device.host == u'widgettest' or
                             right.resource.device.host == u'test_card'):
                             temp_service_login                = right.service_login.replace(u':RDP', u':INTERNAL', 1)
                             temp_resource_service_protocol_cn = 'INTERNAL'
