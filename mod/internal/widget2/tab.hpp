@@ -37,7 +37,7 @@ public:
         uint32_t fg_color;
 
     public:
-        DrawingPolicy(DrawApi & drawable) : drawable(drawable) {}
+        DrawingPolicy(DrawApi & drawable) : drawable(drawable), bg_color(BLACK), fg_color(WHITE) {}
 
         virtual ~DrawingPolicy() {}
 
@@ -191,6 +191,7 @@ public:
     }
 
     virtual void draw(const Rect & clip) {
+LOG(LOG_INFO, ">>>>> WidgetTab::draw, x=%u y=%u cx=%u cy=%u", clip.x, clip.y, clip.cx, clip.cy);
         this->drawing_policy.draw( this->rect
                                  , clip
                                  , this->items
@@ -424,7 +425,11 @@ this->drawable.draw(RDPOpaqueRect(rect_intersect, RED), clip);
                                                      , this->item_index_height));
 
             if (rect_index.contains_pt(x, y)) {
-                tab.set_current_item(item_index);
+                if (device_flags & (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
+                    tab.set_current_item(item_index);
+
+                    tab.rdp_input_invalidate(rect_tab);
+                }
 
                 return;
             }
