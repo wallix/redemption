@@ -1000,7 +1000,9 @@ struct KeymapSym {
     };
 
 
+
     uint32_t verbose;
+    bool left_ctrl_pressed;
 
     int last_sym;
 
@@ -1021,6 +1023,7 @@ struct KeymapSym {
             , nbuf_sym(0)
             , dead_key(DEADKEY_NONE)
             , verbose(verbose)
+            , left_ctrl_pressed(false)
     //------------------------------------------------------------------------------
     {
         memset(this->keys_down, 0, 256 * sizeof(int));
@@ -1093,7 +1096,7 @@ struct KeymapSym {
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
 
         // if ctrl+alt+fin or ctrl+alt+suppr -> insert delete
-        if (is_ctrl_pressed() && is_alt_pressed() 
+        if (is_ctrl_pressed() && is_alt_pressed()
         && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
         //    Delete                           65535     0xffff
             extendedKeyCode = 211;
@@ -1168,7 +1171,7 @@ struct KeymapSym {
                 const KeyLayout_t * layout = &keylayout_WORK_noshift_sym;
 
                 // if ctrl+alt+fin or ctrl+alt+suppr -> insert delete
-//                if (is_ctrl_pressed() && is_alt_pressed() 
+//                if (is_ctrl_pressed() && is_alt_pressed()
 //                && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
                     //    Delete                           65535     0xffff
 //                    this->push_sym(0xFFFF);
@@ -1243,17 +1246,31 @@ struct KeymapSym {
                     }
                     // SET the LAYOUT to use (depending on current keyboard state)
                     //----------------------------------------
-                    if (this->is_ctrl_pressed() && this->is_alt_pressed()){
+                    if ((this->is_ctrl_pressed() && this->is_alt_pressed()) ||
+                        (this->is_right_alt_pressed())
+                        ){
                         layout = &this->keylayout_WORK_altgr_sym;
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "Use KEYLAYOUT WORK Altgr");
+                        }
                     }
                     else if (this->is_shift_pressed() && this->is_caps_locked()){
                         layout = &this->keylayout_WORK_shiftcapslock_sym;
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "KEYLAYOUT WORK shiftcapslock");
+                        }
                     }
                     else if (this->is_shift_pressed()){
                         layout = &this->keylayout_WORK_shift_sym;
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "KEYLAYOUT WORK shift");
+                        }
                     }
                     else if (this->is_caps_locked()) {
                         layout = &this->keylayout_WORK_capslock_sym;
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "KEYLAYOUT WORK capslock");
+                        }
                     }
                     // Translate the scancode to a KeySym
                     //----------------------------------------
@@ -1823,7 +1840,7 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                                 
+
                     };
                     const KeyLayout_t x0409_shift_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
