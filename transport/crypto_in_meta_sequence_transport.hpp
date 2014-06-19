@@ -50,9 +50,6 @@ struct CryptoInMetaSequenceTransport
 
     const char * path() const /*noexcept*/
     { return this->buffer().policy().get_path(); }
-
-    unsigned get_seqno() const /*noexcept*/
-    { return this->buffer().policy().get_seqno(); }
 };
 
 #endif

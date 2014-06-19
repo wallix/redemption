@@ -69,38 +69,38 @@ public:
     //virtual const SequenceGenerator * seqgen() const
     //{ return this->pseq; }
 
-    uint32_t get_seqno() const
+    uint32_t get_seqno() const /*noexcept*/
     { return this->seqno; }
 
-    uint32_t get_total_received() const
+    uint32_t get_total_received() const /*noexcept*/
     { return this->total_received + this->last_quantum_received; }
 
-    uint32_t get_last_quantum_received() const
+    uint32_t get_last_quantum_received() const /*noexcept*/
     { return this->last_quantum_received; }
 
-    uint32_t get_total_sent() const
+    uint32_t get_total_sent() const /*noexcept*/
     { return this->total_sent + this->last_quantum_sent; }
 
-    uint32_t get_last_quantum_sent() const
+    uint32_t get_last_quantum_sent() const /*noexcept*/
     { return this->last_quantum_sent; }
 
-    uint32_t get_quantum_count() const
+    uint32_t get_quantum_count() const /*noexcept*/
     { return this->quantum_count; }
 
-    bool get_status() const
+    bool get_status() const /*noexcept*/
     { return this->status; }
 
-    void set_authentifier(auth_api * authentifier)
+    void set_authentifier(auth_api * authentifier) /*noexcept*/
     {
         this->authentifier = authentifier;
     }
 
-    void reset_quantum_sent()
+    void reset_quantum_sent() /*noexcept*/
     {
         this->last_quantum_sent = 0;
     }
 
-    void tick()
+    void tick() /*noexcept*/
     {
         this->quantum_count++;
         this->total_received += this->last_quantum_received;
@@ -129,22 +129,22 @@ public:
         return 0;
     }
 
-    void recv(char ** pbuffer, size_t len) throw (Error)
+    void recv(char ** pbuffer, size_t len)
     {
         this->do_recv(reinterpret_cast<char **>(pbuffer), len);
     }
 
-    void send(const char * const buffer, size_t len) throw (Error)
+    void send(const char * const buffer, size_t len)
     {
         this->do_send(reinterpret_cast<const char * const>(buffer), len);
     }
 
-    void recv(uint8_t ** pbuffer, size_t len) throw (Error)
+    void recv(uint8_t ** pbuffer, size_t len)
     {
         this->do_recv(reinterpret_cast<char **>(pbuffer), len);
     }
 
-    void send(const uint8_t * const buffer, size_t len) throw (Error)
+    void send(const uint8_t * const buffer, size_t len)
     {
         this->do_send(reinterpret_cast<const char * const>(buffer), len);
     }
@@ -183,7 +183,7 @@ public:
         this->send(stream);
     }
 
-    void send(Stream & stream) throw(Error)
+    void send(Stream & stream)
     {
         this->send(stream.get_data(), stream.size());
     }
@@ -198,7 +198,7 @@ public:
         return true;
     }
 
-    virtual void timestamp(timeval now)
+    virtual void timestamp(timeval now) /*noexcept*/
     {}
 
     virtual bool next()

@@ -131,6 +131,7 @@ struct InBufferTransport
                 throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
             }
         }
+        ++this->seqno;
         return 0;
     }
 

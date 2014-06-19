@@ -53,10 +53,8 @@ namespace detail
                 size_t len = strlen(filename);
                 ssize_t res = this->write(filename, len);
                 if (res >= 0 && size_t(res) == len) {
-                    char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 5];
-                    len = snprintf(mes, sizeof(mes), " %u %u\n",
-                                (unsigned)this->start_sec,
-                                (unsigned)this->stop_sec+1);
+                    char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4];
+                    len = std::sprintf(mes, " %u %u\n", (unsigned)this->start_sec, (unsigned)this->stop_sec+1);
                     res = this->write(mes, len);
                     this->start_sec = this->stop_sec;
                 }
@@ -129,7 +127,7 @@ public:
         detail::write_meta_headers(this->nexter(), path, width, height, this->authentifier);
     }
 
-    virtual void timestamp(timeval now)
+    virtual void timestamp(timeval now) /*noexcept*/
     {
         this->nexter().update_sec(now.tv_sec);
     }

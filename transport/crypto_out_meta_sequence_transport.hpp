@@ -78,18 +78,16 @@ namespace detail
                 size_t len = strlen(filename);
                 ssize_t res = this->write(filename, len);
                 if (res >= 0 && size_t(res) == len) {
-                    char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + HASH_LEN*2 + 5];
-                    len = snprintf(mes, sizeof(mes) - 3, " %u %u",
-                                (unsigned)this->start_sec,
-                                (unsigned)this->stop_sec+1);
+                    char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + HASH_LEN*2 + 2];
+                    len = std::sprintf(mes, " %u %u", (unsigned)this->start_sec, (unsigned)this->stop_sec+1);
                     char * p = mes + len;
                     *p++ = ' ';                           //     1 octet
                     for (int i = 0; i < HASH_LEN / 2; i++, p += 2) {
-                        sprintf(p, "%02x", hash[i]);      //    64 octets (hash1)
+                        std::sprintf(p, "%02x", hash[i]); //    64 octets (hash1)
                     }
                     *p++ = ' ';                           //     1 octet
                     for (int i = HASH_LEN / 2; i < HASH_LEN; i++, p += 2) {
-                        sprintf(p, "%02x", hash[i]);      //    64 octets (hash2)
+                        std::sprintf(p, "%02x", hash[i]); //    64 octets (hash2)
                     }
                     *p++ = '\n';
                     res = this->write(mes, p-mes);
@@ -297,7 +295,7 @@ public:
         detail::write_meta_headers(this->nexter(), path, width, height, this->authentifier);
     }
 
-    virtual void timestamp(timeval now)
+    virtual void timestamp(timeval now) /*noexcept*/
     {
         this->nexter().update_sec(now.tv_sec);
     }

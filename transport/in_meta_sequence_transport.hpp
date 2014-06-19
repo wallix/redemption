@@ -36,7 +36,7 @@ struct InMetaSequenceTransport
     : InMetaSequenceTransport::TransportType(detail::temporary_concat(filename, extension).str)
     {}
 
-    InMetaSequenceTransport(const char * filename)
+    InMetaSequenceTransport(const char * filename) /*noexcept*/
     : InMetaSequenceTransport::TransportType(filename)
     {}
 
@@ -48,9 +48,6 @@ struct InMetaSequenceTransport
 
     const char * path() const /*noexcept*/
     { return this->buffer().policy().get_path(); }
-
-    unsigned get_seqno() const /*noexcept*/
-    { return this->buffer().policy().get_seqno(); }
 };
 
 #endif
