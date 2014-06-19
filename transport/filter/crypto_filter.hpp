@@ -421,38 +421,30 @@ namespace transfil {
             }
 
             // Encrypt
-            unsigned char ciphered_buf[65536];
+            unsigned char ciphered_buf[4 + 65536];
             //char ciphered_buf[ciphered_buf_sz];
             uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
             {
                 const unsigned char * src_buf = reinterpret_cast<unsigned char*>(compressed_buf);
-                if (this->xaes_encrypt(src_buf, compressed_buf_sz, ciphered_buf, &ciphered_buf_sz)) {
+                if (this->xaes_encrypt(src_buf, compressed_buf_sz, ciphered_buf + 4, &ciphered_buf_sz)) {
                     return -1;
                 }
             }
 
-            // TODO: merge tmp_sz and ciphered_buf and perform only one write
+            ciphered_buf[0] = ciphered_buf_sz & 0xFF;
+            ciphered_buf[1] = (ciphered_buf_sz >> 8) & 0xFF;
+            ciphered_buf[2] = (ciphered_buf_sz >> 16) & 0xFF;
+            ciphered_buf[3] = (ciphered_buf_sz >> 24) & 0xFF;
 
-            char tmp_sz[4] = {
-                char(ciphered_buf_sz & 0xFF),
-                char((ciphered_buf_sz >> 8) & 0xFF),
-                char((ciphered_buf_sz >> 16) & 0xFF),
-                char((ciphered_buf_sz >> 24) & 0xFF),
-            };
-            if (const ssize_t err = this->raw_write(snk, tmp_sz, 4)) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
-                return err;
-            }
-            // TODO: check errors
-            this->xmd_update(&ciphered_buf_sz, 4);
-            this->file_size += 4;
+            ciphered_buf_sz += 4;
 
             if (const ssize_t err = this->raw_write(snk, ciphered_buf, ciphered_buf_sz)) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
                 return err;
             }
-            // TODO: check errors
-            this->xmd_update(ciphered_buf, ciphered_buf_sz);
+            if (-1 == this->xmd_update(&ciphered_buf, ciphered_buf_sz)) {
+                return -1;
+            }
             this->file_size += ciphered_buf_sz;
 
             // Reset buffer
