@@ -22,8 +22,9 @@
 #define _REDEMPTION_CAPTURE_CAPTURE_HPP_
 
 #include "client_info.hpp"
-#include "outmetatransport.hpp"
-#include "filename_sequence_transport.hpp"
+#include "out_meta_sequence_transport.hpp"
+#include "crypto_out_meta_sequence_transport.hpp"
+#include "out_filename_sequence_transport.hpp"
 #include "RDP/caches/pointercache.hpp"
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
@@ -42,14 +43,12 @@ public:
     const bool enable_file_encryption;
 
     OutFilenameSequenceTransport * png_trans;
-    StaticCapture        * psc;
+    StaticCapture                * psc;
 
-    TODO("wrm_trans and crypto_wrm_trans should be one and the same (and crypto status hidden)");
-    OutmetaTransport       * wrm_trans;
-    CryptoOutmetaTransport * crypto_wrm_trans;
+    Transport                    * wrm_trans;
 private:
-    BmpCache               * pnc_bmp_cache;
-    NativeCapture          * pnc;
+    BmpCache      * pnc_bmp_cache;
+    NativeCapture * pnc;
 
     RDPDrawable * drawable;
 
@@ -82,7 +81,6 @@ public:
     , png_trans(NULL)
     , psc(NULL)
     , wrm_trans(NULL)
-    , crypto_wrm_trans(NULL)
     , pnc_bmp_cache(NULL)
     , pnc(NULL)
     , drawable(NULL)
@@ -129,24 +127,19 @@ public:
             TODO("Also we may wonder why we are encrypting wrm and not png"
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
-            this->pnc_bmp_cache = new BmpCache(BmpCache::Recorder, 24, 3, false, 600, 768, false, 300, 3072, false, 262, 12288, false);
+            this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, 24, 3, false, 600, 768
+                                              ,  false, 300, 3072, false, 262, 12288, false);
             if (this->enable_file_encryption) {
-                this->crypto_wrm_trans = new CryptoOutmetaTransport( &this->crypto_ctx
-                                                                   , wrm_path, hash_path, basename, now
-                                                                   , width, height
-                                                                   , ini.video.capture_groupid
-                                                                   , authentifier);
-                this->pnc = new NativeCapture( now, *this->crypto_wrm_trans, width, height
-                                             , *this->pnc_bmp_cache, *this->drawable, ini);
+                this->wrm_trans = new CryptoOutMetaSequenceTransport( &this->crypto_ctx, wrm_path, hash_path, basename, now
+                                                                    , width, height, ini.video.capture_groupid
+                                                                    , authentifier);
             }
-            else
-            {
-                this->wrm_trans = new OutmetaTransport( wrm_path, basename, now, width, height
-                                                      , ini.video.capture_groupid
-                                                      , authentifier);
-                this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, *this->pnc_bmp_cache
-                                             , *this->drawable, ini);
+            else {
+                this->wrm_trans = new OutMetaSequenceTransport( wrm_path, basename, now
+                                                              , width, height, ini.video.capture_groupid, authentifier);
             }
+            this->pnc = new NativeCapture( now, *this->wrm_trans, width, height
+                                         , *this->pnc_bmp_cache, *this->drawable, ini);
             this->pnc->recorder.send_input = true;
         }
 
@@ -174,26 +167,23 @@ public:
         delete this->png_trans;
 
         delete this->pnc;
-        if (this->enable_file_encryption){
-            delete this->crypto_wrm_trans;
-        }
-        else {
-            delete this->wrm_trans;
-        }
+        delete this->wrm_trans;
         delete this->pnc_bmp_cache;
         delete this->drawable;
 
         clear_files_flv_meta_png(this->png_path.c_str(), this->basename.c_str());
     }
 
+    const SequenceGenerator * seqgen() const
+    {
+        return !this->wrm_trans ? 0 : this->enable_file_encryption
+        ? static_cast<const CryptoOutMetaSequenceTransport*>(this->wrm_trans)->seqgen()
+        : static_cast<const OutMetaSequenceTransport*>(this->wrm_trans)->seqgen();
+    }
+
     void request_full_cleaning()
     {
-        if (this->enable_file_encryption){
-            this->crypto_wrm_trans->request_full_cleaning();
-        }
-        else {
-            this->wrm_trans->request_full_cleaning();
-        }
+        this->wrm_trans->request_full_cleaning();
     }
 
     void pause() {
@@ -205,12 +195,7 @@ public:
 
     void resume() {
         if (this->capture_wrm){
-            if (this->enable_file_encryption) {
-                this->crypto_wrm_trans->next();
-            }
-            else {
-                this->wrm_trans->next();
-            }
+            this->wrm_trans->next();
             struct timeval now = tvtime();
             this->pnc->recorder.timestamp(now);
             this->pnc->recorder.send_timestamp_chunk(true);

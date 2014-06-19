@@ -18,12 +18,13 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_DETAIL_META_OPENER_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_DETAIL_META_OPENER_HPP
+#ifndef REDEMPTION_TRANSPORT_DETAIL_META_OPENER_HPP
+#define REDEMPTION_TRANSPORT_DETAIL_META_OPENER_HPP
 
 #include "log.hpp"
 #include "error.hpp"
 #include "buffer/params.hpp"
+#include "buffer/input_output_buf.hpp"
 
 #include <algorithm>
 #include <cerrno>
@@ -270,13 +271,13 @@ namespace detail
         in_meta_nexter() /*noexcept*/
         {}
 
-        template<class Transport, class TransportBuf>
-        int next(Transport & /*trans*/, TransportBuf & buf) /*noexcept*/
+        template<class TransportBuf>
+        int next(TransportBuf & buf) /*noexcept*/
         {
             if (buf.is_open()) {
                 buf.close();
             }
-            return buf.impl().next();
+            return buf.policy().next();
         }
     };
 }

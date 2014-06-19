@@ -64,8 +64,8 @@
 #include "colors.hpp"
 #include "bitfu.hpp"
 #include "confdescriptor.hpp"
-#include "infiletransport.hpp"
-#include "outfiletransport.hpp"
+#include "in_file_transport.hpp"
+#include "out_file_transport.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/capabilities.hpp"

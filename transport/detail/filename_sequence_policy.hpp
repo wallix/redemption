@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_DETAIL_FILENAME_SEQUENCE_POLICY_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_DETAIL_FILENAME_SEQUENCE_POLICY_HPP
+#ifndef REDEMPTION_TRANSPORT_DETAIL_FILENAME_SEQUENCE_POLICY_HPP
+#define REDEMPTION_TRANSPORT_DETAIL_FILENAME_SEQUENCE_POLICY_HPP
 
 #include "log.hpp"
 #include "sequence_generator.hpp"
@@ -29,6 +29,8 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 namespace detail
 {
@@ -119,8 +121,7 @@ namespace detail
 
         void request_full_cleaning() const
         {
-            for (unsigned i = 0; i < this->num_file; ++i) {
-                ::unlink(this->filegen.get(i));
+            for (unsigned i = this->num_file+1; i > 0 && !::unlink(this->filegen.get(--i)); ) {
             }
         }
     };

@@ -27,7 +27,7 @@
 
 #define LOGNULL
 #include "transport.hpp"
-#include "outfilenametransport.hpp"
+#include "out_filename_sequence_transport.hpp"
 #include "staticcapture.hpp"
 #include "mod_osd.hpp"
 #include "rdp/rdp.hpp"

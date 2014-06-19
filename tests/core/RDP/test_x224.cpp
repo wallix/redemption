@@ -30,7 +30,7 @@
 #include "log.hpp"
 #include "stream.hpp"
 #include "transport.hpp"
-#include "testtransport.hpp"
+#include "test_transport.hpp"
 #include "RDP/x224.hpp"
 #include "config.hpp"
 

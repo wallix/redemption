@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_OUT_FILENAME_SEQUENCE_TRANSPORT_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_OUT_FILENAME_SEQUENCE_TRANSPORT_HPP
+#ifndef REDEMPTION_TRANSPORT_OUT_FILENAME_SEQUENCE_TRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_OUT_FILENAME_SEQUENCE_TRANSPORT_HPP
 
 #include "detail/filename_sequence_policy.hpp"
 
@@ -46,11 +46,11 @@ struct OutFilenameSequenceTransport
     }
 
     const FilenameGenerator * seqgen() const /*noexcept*/
-    { return &this->impl().seqgen(); }
+    { return &(this->buffer().policy().seqgen()); }
 
     virtual void request_full_cleaning()
     {
-        this->impl().request_full_cleaning();
+        this->buffer().policy().request_full_cleaning();
     }
 };
 

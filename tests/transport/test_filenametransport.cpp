@@ -27,10 +27,43 @@
 #define LOGPRINT
 #include "log.hpp"
 
-#include "crypto_filename_transport.hpp"
+#include "in_filename_transport.hpp"
+#include "out_filename_transport.hpp"
+#include "crypto_in_filename_transport.hpp"
+#include "crypto_out_filename_transport.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestInfilenameCrypto)
+BOOST_AUTO_TEST_CASE(TestFilename)
+{
+    const char * const filename = "/tmp/inoufiletest.txt";
+
+    ::unlink(filename);
+
+    {
+        OutFilenameTransport in(filename);
+        in.send("ABCDE", 5);
+    }
+
+    {
+        InFilenameTransport out(filename);
+        char s[5];
+        char * sp = s;
+        char ** p = &sp;
+        out.recv(p, 5);
+        BOOST_CHECK_EQUAL(sp-s, 5);
+        BOOST_CHECK_EQUAL(strncmp(s, "ABCDE", 5), 0);
+        try {
+            sp = s;
+            p = &sp;
+            out.recv(p, 1);
+            BOOST_CHECK(false);
+        }
+        catch (Error & e) {
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
 {
     OpenSSL_add_all_digests();
 

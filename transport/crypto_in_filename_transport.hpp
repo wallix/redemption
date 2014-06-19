@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_CRYPTO_FILENAME_TRANSPORT_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_CRYPTO_FILENAME_TRANSPORT_HPP
+#ifndef REDEMPTION_TRANSPORT_CRYPTO_IN_FILENAME_TRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_CRYPTO_IN_FILENAME_TRANSPORT_HPP
 
 #include "buffer/crypto_filename_buf.hpp"
 #include "buffer_transport.hpp"
@@ -30,26 +30,9 @@ struct CryptoInFilenameTransport
     CryptoInFilenameTransport(CryptoContext * crypto_ctx, const char * filename)
     : CryptoInFilenameTransport::TransportType(crypto_ctx)
     {
-        if (this->open(filename) < 0) {
+        if (this->buffer().open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-    }
-};
-
-struct CryptoOutFilenameTransport
-: OutBufferTransport<transbuf::ocrypto_filename_base>
-{
-    CryptoOutFilenameTransport(CryptoContext * crypto_ctx, const char * filename, auth_api * authentifier = NULL)
-    : CryptoOutFilenameTransport::TransportType(crypto_ctx)
-    {
-        if (this->open(filename) < 0) {
-            LOG(LOG_ERR, "failed opening=%s\n", filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-
-        if (authentifier) {
-            this->set_authentifier(authentifier);
         }
     }
 };

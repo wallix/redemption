@@ -27,7 +27,7 @@
 
 #include "FileToGraphic.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
-#include "inbymetasequencetransport.hpp"
+#include "in_meta_sequence_transport.hpp"
 #include "internal_mod.hpp"
 
 class ReplayMod : public InternalMod {
@@ -35,8 +35,8 @@ class ReplayMod : public InternalMod {
 
     redemption::string & auth_error_message;
 
-    InByMetaSequenceTransport * in_trans;
-    FileToGraphic             * reader;
+    InMetaSequenceTransport * in_trans;
+    FileToGraphic           * reader;
 
 public:
     ReplayMod( FrontAPI & front
@@ -71,7 +71,7 @@ public:
         }
         snprintf(prefix,  sizeof(prefix), "%s%s", path, basename);
 
-        this->in_trans = new InByMetaSequenceTransport(prefix, extension);
+        this->in_trans = new InMetaSequenceTransport(prefix, extension);
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
         timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
         this->reader = new FileToGraphic(this->in_trans, begin_capture, end_capture, true, 0);
@@ -105,11 +105,8 @@ public:
 
     virtual ~ReplayMod()
     {
-        if (reader)
-            delete reader;
-
-        if (in_trans)
-            delete in_trans;
+        delete reader;
+        delete in_trans;
         this->screen.clear();
     }
 

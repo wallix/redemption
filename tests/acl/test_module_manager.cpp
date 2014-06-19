@@ -25,15 +25,7 @@
 
 #define LOGNULL
 #include "log.hpp"
-
 #include "module_manager.hpp"
-#include "counttransport.hpp"
-#include "testtransport.hpp"
-
-#include "client_info.hpp"
-#include "front_api.hpp"
-#include "keymap2.hpp"
-#include "RDP/RDPDrawable.hpp"
 
 BOOST_AUTO_TEST_CASE(TestModuleManagerNextMod)
 {

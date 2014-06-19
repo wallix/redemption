@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_IN_FILENAME_TRANSPORT_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_IN_FILENAME_TRANSPORT_HPP
+#ifndef REDEMPTION_TRANSPORT_IN_FILENAME_TRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_IN_FILENAME_TRANSPORT_HPP
 
 #include "buffer/file_buf.hpp"
 #include "buffer_transport.hpp"
@@ -29,7 +29,7 @@ struct InFilenameTransport
 {
     InFilenameTransport(const char * filename)
     {
-        if (this->open(filename, 0600) < 0) {
+        if (this->buffer().open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }

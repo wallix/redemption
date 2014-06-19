@@ -32,7 +32,7 @@
 #include "log.hpp"
 
 #include "stream.hpp"
-#include "testtransport.hpp"
+#include "test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestStreamInitWithSize)
 {

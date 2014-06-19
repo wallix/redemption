@@ -28,8 +28,8 @@
 
 #include "listen.hpp"
 #include "session.hpp"
-#include "sockettransport.hpp"
-#include "outfiletransport.hpp"
+#include "socket_transport.hpp"
+#include "out_file_transport.hpp"
 #include "internal/transparent_replay_mod.hpp"
 
 void run_mod(mod_api & mod, Front & front, wait_obj & front_event);

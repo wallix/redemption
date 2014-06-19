@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TestOutPerBStream_per_integer_small)
 }
 
 #include "transport.hpp"
-#include "testtransport.hpp"
+#include "test_transport.hpp"
 #include "RDP/gcc.hpp"
 
 

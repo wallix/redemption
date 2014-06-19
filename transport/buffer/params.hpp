@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_BUFFER_PARAMS_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_BUFFER_PARAMS_HPP
+#ifndef REDEMPTION_TRANSPORT_BUFFER_PARAMS_HPP
+#define REDEMPTION_TRANSPORT_BUFFER_PARAMS_HPP
 
 namespace transbuf {
     const struct no_param_t {

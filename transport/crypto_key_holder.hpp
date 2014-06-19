@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_CRYPTO_KEY_HOLDER_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_CRYPTO_KEY_HOLDER_HPP
+#ifndef REDEMPTION_TRANSPORT_CRYPTO_KEY_HOLDER_HPP
+#define REDEMPTION_TRANSPORT_CRYPTO_KEY_HOLDER_HPP
 
 struct crypto_key_holder {
     crypto_key_holder() {}

@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_BUFFER_FILE_BUF_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_BUFFER_FILE_BUF_HPP
+#ifndef REDEMPTION_TRANSPORT_BUFFER_FILE_BUF_HPP
+#define REDEMPTION_TRANSPORT_BUFFER_FILE_BUF_HPP
 
 #include "fdbuf.hpp"
 

@@ -29,11 +29,15 @@
 struct OutFilenameTransport
 : OutBufferTransport<transbuf::ofile_base>
 {
-    OutFilenameTransport(const char * filename)
+    OutFilenameTransport(const char * filename, auth_api * authentifier = NULL)
     {
-        if (this->open(filename, 0600) < 0) {
+        if (this->buffer().open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+
+        if (authentifier) {
+            this->set_authentifier(authentifier);
         }
     }
 };

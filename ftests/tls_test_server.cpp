@@ -18,7 +18,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "sockettransport.hpp"
+#include "socket_transport.hpp"
 
 static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
 {

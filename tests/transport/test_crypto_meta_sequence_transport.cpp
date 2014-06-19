@@ -1,15 +1,16 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCryptoInmetaTransport
+#define BOOST_TEST_MODULE TestCryptoMetaTransport
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
 #include "log.hpp"
 
-#include "outmetatransport.hpp"
-#include "crypto_meta_transport.hpp"
+#include "crypto_in_meta_sequence_transport.hpp"
+#include "crypto_out_meta_sequence_transport.hpp"
+#include "sequence_generator.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
+BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 {
     OpenSSL_add_all_digests();
 
@@ -35,8 +36,8 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        CryptoOutMetaTransport crypto_trans(&cctx, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
-                                            0, 0, FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
+        CryptoOutMetaSequenceTransport crypto_trans(&cctx, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
+                                                    0, 0, FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
@@ -47,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
     }
 
     {
-        CryptoInMetaTransport crypto_trans(&cctx, "TESTOFS", ".mwrm");
+        CryptoInMetaSequenceTransport crypto_trans(&cctx, "TESTOFS", ".mwrm");
 
         char buffer[1024] = {};
         char * bob = buffer;
@@ -79,7 +80,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaTransport)
     }
 }
 
-BOOST_AUTO_TEST_CASE(CryptoTestInmeta2Transport)
+BOOST_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
 {
     CryptoContext cctx;
     memset(&cctx, 0, sizeof(cctx));
@@ -91,7 +92,7 @@ BOOST_AUTO_TEST_CASE(CryptoTestInmeta2Transport)
        CRYPTO_KEY_LENGTH);
 
     try {
-        CryptoInMetaTransport(&cctx, "TESTOFSXXX", ".mwrm");
+        CryptoInMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm");
         BOOST_CHECK(false); // check open fails if file does not exist
     } catch (Error & e) {
         if (e.id != ERR_TRANSPORT_OPEN_FAILED) {

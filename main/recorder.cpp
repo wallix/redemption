@@ -32,7 +32,7 @@
 #include "version.hpp"
 
 #include "fileutils.hpp"
-#include "inbymetasequencetransport.hpp"
+#include "in_meta_sequence_transport.hpp"
 #include "capture.hpp"
 #include "FileToGraphic.hpp"
 
@@ -162,7 +162,7 @@ int main(int argc, char** argv)
 
     unsigned count = 0;
     try {
-        InByMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
+        InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
         in_wrm_trans_tmp.next();
         TODO("a negative time should be a time relative to end of movie")
         REDOC("less than 1 year means we are given a time relatve to beginning of movie")
@@ -186,7 +186,7 @@ int main(int argc, char** argv)
         exit(-1);
     };
 
-    InByMetaSequenceTransport in_wrm_trans(infile_prefix, infile_extension);
+    InMetaSequenceTransport in_wrm_trans(infile_prefix, infile_extension);
     for (unsigned i = 1; i < count ; i++){
         in_wrm_trans.next();
     }

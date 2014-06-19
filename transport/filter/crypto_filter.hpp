@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_FILTER_CRYPTO_FILTER_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_FILTER_CRYPTO_FILTER_HPP
+#ifndef REDEMPTION_TRANSPORT_FILTER_CRYPTO_FILTER_HPP
+#define REDEMPTION_TRANSPORT_FILTER_CRYPTO_FILTER_HPP
 
 #include "log.hpp"
 
@@ -434,10 +434,10 @@ namespace transfil {
             // TODO: merge tmp_sz and ciphered_buf and perform only one write
 
             char tmp_sz[4] = {
-                ciphered_buf_sz & 0xFF,
-                (ciphered_buf_sz >> 8) & 0xFF,
-                (ciphered_buf_sz >> 16) & 0xFF,
-                (ciphered_buf_sz >> 24) & 0xFF,
+                char(ciphered_buf_sz & 0xFF),
+                char((ciphered_buf_sz >> 8) & 0xFF),
+                char((ciphered_buf_sz >> 16) & 0xFF),
+                char((ciphered_buf_sz >> 24) & 0xFF),
             };
             if (const ssize_t err = this->raw_write(snk, tmp_sz, 4)) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
@@ -471,10 +471,10 @@ namespace transfil {
                 (eof_magic >> 8) & 0xFF,
                 (eof_magic >> 16) & 0xFF,
                 (eof_magic >> 24) & 0xFF,
-                this->raw_size & 0xFF,
-                (this->raw_size >> 8) & 0xFF,
-                (this->raw_size >> 16) & 0xFF,
-                (this->raw_size >> 24) & 0xFF,
+                uint8_t(this->raw_size & 0xFF),
+                uint8_t((this->raw_size >> 8) & 0xFF),
+                uint8_t((this->raw_size >> 16) & 0xFF),
+                uint8_t((this->raw_size >> 24) & 0xFF),
             };
 
             int write_ret1 = this->raw_write(snk, tmp_buf, 8);

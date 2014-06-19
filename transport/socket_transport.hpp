@@ -150,7 +150,7 @@ public:
         if (verbose) {
             LOG( LOG_INFO
                , "%s (%d): total_received=%llu, total_sent=%llu"
-               , this->name, this->sck, this->total_received, this->total_sent);
+               , this->name, this->sck, this->get_total_received(), this->get_total_sent());
         }
     }
 
@@ -1138,7 +1138,6 @@ public:
         }
 
         TODO("move that to base class : accounting_recv(len)");
-        this->total_received += len;
         this->last_quantum_received = len;
     }
 
@@ -1164,7 +1163,6 @@ public:
         }
 
         TODO("move that to base class : accounting_send(len)");
-        this->total_sent += len;
         this->last_quantum_sent = len;
     }
 

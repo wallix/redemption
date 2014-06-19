@@ -21,7 +21,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestInMetaTransport
+#define BOOST_TEST_MODULE TestInMetaSequenceTransport
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
@@ -31,13 +31,13 @@
 #include <unistd.h>
 
 // #include "inbymetasequencetransport.hpp"
-#include "meta_transport.hpp"
+#include "in_meta_sequence_transport.hpp"
 #include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 {
     // This is what we are actually testing, chaining of several files content
-    InMetaTransport wrm_trans("./tests/fixtures/sample", ".mwrm");
+    InMetaSequenceTransport wrm_trans("./tests/fixtures/sample", ".mwrm");
     char buffer[10000];
     char * pbuffer = buffer;
     size_t total = 0;
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 
     // This is what we are actually testing, chaining of several files content
     {
-        InMetaTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
+        InMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
     }
 
     // check we can do it two times
-    InMetaTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
+    InMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
 
     BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 
     // This is what we are actually testing, chaining of several files content
     try {
-        InMetaTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
+        InMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();

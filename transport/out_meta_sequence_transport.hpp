@@ -18,10 +18,11 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_META_SEQUENCE_TRANSPORT_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_META_SEQUENCE_TRANSPORT_HPP
+#ifndef REDEMPTION_TRANSPORT_META_SEQUENCE_TRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_META_SEQUENCE_TRANSPORT_HPP
 
 #include "detail/filename_sequence_policy.hpp"
+#include "detail/meta_writer.hpp"
 #include "buffer_transport.hpp"
 #include "buffer/input_output_buf.hpp"
 #include "buffer/file_buf.hpp"
@@ -36,15 +37,15 @@ namespace detail
 {
     template<class Buf>
     struct out_meta_nexter
-    : protected Buf
+    : public Buf
     {
         out_meta_nexter(time_t sec) /*noexcept*/
         : start_sec(sec)
         , stop_sec(sec)
         {}
 
-        template<class Transport, class TransportBuf>
-        int next(Transport & /*trans*/, TransportBuf & buf) /*noexcept*/
+        template<class TransportBuf>
+        int next(TransportBuf & buf) /*noexcept*/
         {
             if (buf.is_open()) {
                 buf.close();
@@ -72,13 +73,13 @@ namespace detail
         template<class TransportBuf>
         bool next_end(TransportBuf & buf) /*noexcept*/
         {
-            return this->next(buf, buf);
+            return this->next(buf);
         }
 
         template<class TransportBuf>
         /*constexpr*/ const char * current_path(TransportBuf & buf) const /*noexcept*/
         {
-            return buf.impl().seqgen().get(buf.impl().seqnum());
+            return buf.policy().seqgen().get(buf.policy().seqnum());
         }
 
         void update_sec(time_t sec) /*noexcept*/
@@ -88,57 +89,18 @@ namespace detail
         time_t start_sec;
         time_t stop_sec;
     };
-
-    struct MetaFilename
-    {
-        char filename[2048];
-
-        MetaFilename(const char * path, const char * basename,
-                     FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
-        {
-            int res = format == (
-               FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
-            || format == FilenameGenerator::PATH_FILE_PID_EXTENSION)
-            ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, getpid())
-            : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
-            if (res > int(sizeof(this->filename) - 6) || res < 0) {
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
-            }
-        }
-    };
-
-    template<class Writer>
-    void write_meta_headers(Writer & writer, const char * path,
-                            uint16_t width, uint16_t height, auth_api * authentifier)
-    {
-        char header1[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2];
-        const int len = sprintf(header1, "%u %u", width, height);
-        ssize_t res = writer.write(header1, len);
-        if (res > 0) {
-            res = writer.write("\n\n\n", 3);
-        }
-
-        if (res < 0) {
-            int err = errno;
-            if (err == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", path);
-                authentifier->report("FILESYSTEM_FULL", message);
-            }
-
-            LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
-        }
-    }
 }
 
 
-struct OutMetaSequenceTransport
-: OutBufferTransport<
+class OutMetaSequenceTransport
+: public OutBufferTransport<
     transbuf::output_buf<io::posix::fdbuf, detail::FilenameSequencePolicy>,
     detail::out_meta_nexter<transbuf::ofile_base>
 >
 {
+    detail::MetaFilename mf;
+
+public:
     OutMetaSequenceTransport(
         const char * path,
         const char * basename,
@@ -151,14 +113,12 @@ struct OutMetaSequenceTransport
         FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
     : OutMetaSequenceTransport::TransportType(
         detail::FilenameSequencePolicyParams(format, path, basename, ".wrm", groupid),
-        now.tv_sec
-    )
+        now.tv_sec)
+    , mf(path, basename, format)
     {
         (void)verbose;
 
-        if (this->OutMetaSequenceTransport::NexterType::open(
-            detail::MetaFilename(path, basename, format).filename, S_IRUSR) < 0)
-        {
+        if (this->nexter().open(this->mf.filename, S_IRUSR) < 0) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
 
@@ -166,22 +126,23 @@ struct OutMetaSequenceTransport
             this->set_authentifier(authentifier);
         }
 
-        detail::write_meta_headers(static_cast<transbuf::ofile_base&>(*this), path, width, height, this->authentifier);
+        detail::write_meta_headers(this->nexter(), path, width, height, this->authentifier);
     }
 
     virtual void timestamp(timeval now)
     {
-        this->update_sec(now.tv_sec);
+        this->nexter().update_sec(now.tv_sec);
     }
 
     const FilenameGenerator * seqgen() const /*noexcept*/
     {
-        return &this->impl().seqgen();
+        return &(this->buffer().policy().seqgen());
     }
 
     virtual void request_full_cleaning()
     {
-        this->impl().request_full_cleaning();
+        this->buffer().policy().request_full_cleaning();
+        ::unlink(this->mf.filename);
     }
 };
 

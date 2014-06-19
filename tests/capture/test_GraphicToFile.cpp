@@ -30,10 +30,10 @@
 
 #include "test_orders.hpp"
 #include "transport.hpp"
-#include "testtransport.hpp"
-#include "outfilenametransport.hpp"
-#include "outfiletransport.hpp"
-#include "infiletransport.hpp"
+#include "test_transport.hpp"
+#include "out_file_transport.hpp"
+#include "in_file_transport.hpp"
+#include "out_filename_sequence_transport.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
@@ -373,7 +373,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 {
     // Same as above, show timestamps are applied only when flushing
     BOOST_CHECK_EQUAL(0, 0);
-    struct timeval now;
+    timeval now;
     now.tv_usec = 0;
     now.tv_sec = 1000;
 

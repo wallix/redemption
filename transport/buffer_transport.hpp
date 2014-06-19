@@ -18,16 +18,16 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_BUFFER_TRANSPORT_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_BUFFER_TRANSPORT_HPP
+#ifndef REDEMPTION_TRANSPORT_BUFFER_TRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_BUFFER_TRANSPORT_HPP
 
 #include "transport.hpp"
 #include <cerrno>
 
 struct nexter_transport_base
 {
-    template<class Transport, class Buf>
-    int next(Transport & /*trans*/, Buf & buf) /*noexcept*/
+    template<class Buf>
+    int next(Buf & buf) /*noexcept*/
     {
         return buf.close();
     }
@@ -45,24 +45,75 @@ struct nexter_transport_base
     }
 };
 
+namespace detail
+{
+    template<class Buf, class Nexter>
+    struct BufAndNextTransport
+    : Transport
+    {
+        BufAndNextTransport()
+        {}
+
+        template<class T>
+        BufAndNextTransport(const T & params)
+        : buf_and_next(params)
+        {}
+
+        template<class T, class U>
+        BufAndNextTransport(const T & buf_params, const U & nexter_params)
+        : buf_and_next(buf_params, nexter_params)
+        {}
+
+    protected:
+        typedef Buf BufferType;
+        typedef Nexter NexterType;
+        typedef BufAndNextTransport BufAndNextType;
+
+        NexterType & nexter()
+        { return static_cast<NexterType&>(this->buf_and_next); }
+
+        BufferType & buffer()
+        { return static_cast<BufferType&>(this->buf_and_next); }
+
+        const BufferType & buffer() const
+        { return static_cast<const BufferType&>(this->buf_and_next); }
+
+    private:
+        //padding optimisation
+        struct BufAndNext : Buf , Nexter
+        {
+            BufAndNext()
+            {}
+
+            template<class T>
+            BufAndNext(const T & params)
+            : Buf(params)
+            {}
+
+            template<class T, class U>
+            BufAndNext(const T & buf_params, const U & nexter_params)
+            : Buf(buf_params)
+            , Nexter(nexter_params)
+            {}
+        } buf_and_next;
+    };
+}
+
 template<class Buf, class Nexter = nexter_transport_base>
 struct InBufferTransport
-: Transport
-, protected Buf
-, protected Nexter
+: detail::BufAndNextTransport<Buf, Nexter>
 {
     InBufferTransport()
     {}
 
     template<class T>
     InBufferTransport(const T & params)
-    : Buf(params)
+    : InBufferTransport::BufAndNextType(params)
     {}
 
     template<class T, class U>
     InBufferTransport(const T & buf_params, const U & nexter_params)
-    : Buf(buf_params)
-    , Nexter(nexter_params)
+    : InBufferTransport::BufAndNextType(buf_params, nexter_params)
     {}
 
     virtual bool next()
@@ -70,7 +121,7 @@ struct InBufferTransport
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        const ssize_t res = this->Nexter::next(*this, static_cast<Buf&>(*this));
+        const ssize_t res = this->nexter().next(this->buffer());
         if (res){
             this->status = false;
             if (res < 0) {
@@ -85,7 +136,7 @@ struct InBufferTransport
 
 private:
     void do_recv(char ** pbuffer, size_t len) {
-        const ssize_t res = this->Buf::read(*pbuffer, len);
+        const ssize_t res = this->buffer().read(*pbuffer, len);
         if (res < 0){
             this->status = false;
             throw Error(ERR_TRANSPORT_READ_FAILED, res);
@@ -100,44 +151,39 @@ private:
 
 protected:
     typedef InBufferTransport TransportType;
-    typedef Buf BufferType;
-    typedef Nexter NexterType;
 };
 
 
 template<class Buf, class Nexter = nexter_transport_base>
 struct OutBufferTransport
-: Transport
-, protected Buf
-, protected Nexter
+: detail::BufAndNextTransport<Buf, Nexter>
 {
     OutBufferTransport()
     {}
 
     template<class T>
     OutBufferTransport(const T & buf_params)
-    : Buf(buf_params)
+    : OutBufferTransport::BufAndNextType(buf_params)
     {}
 
     template<class T, class U>
     OutBufferTransport(const T & buf_params, const U & nexter_params)
-    : Buf(buf_params)
-    , Nexter(nexter_params)
+    : OutBufferTransport::BufAndNextType(buf_params, nexter_params)
     {}
 
     ~OutBufferTransport()
     {
-        this->Nexter::next_end(static_cast<Buf&>(*this));
+        this->nexter().next_end(this->buffer());
     }
 
     bool disconnect()
     {
-        return this->Nexter::next_end(static_cast<Buf&>(*this));
+        return this->nexter().next_end(this->buffer());
     }
 
     virtual bool next()
     {
-        const ssize_t res = this->Nexter::next(*this, static_cast<Buf&>(*this));
+        const ssize_t res = this->nexter().next(this->buffer());
         if (res < 0){
             this->status = false;
             throw Error(ERR_TRANSPORT_WRITE_FAILED, res);
@@ -151,14 +197,14 @@ struct OutBufferTransport
 private:
     void do_send(const char * buffer, size_t len)
     {
-        const ssize_t res = this->Buf::write(buffer, len);
+        const ssize_t res = this->buffer().write(buffer, len);
         if (res < 0){
             this->status = false;
             if (errno == ENOSPC) {
                 char message[1024];
-                const char * filename = this->Nexter::current_path(static_cast<Buf&>(*this));
+                const char * filename = this->nexter().current_path(this->buffer());
                 snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
-                authentifier->report("FILESYSTEM_FULL", message);
+                this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
             }
             throw Error(ERR_TRANSPORT_WRITE_FAILED, res);
@@ -168,14 +214,6 @@ private:
 
 protected:
     typedef OutBufferTransport TransportType;
-    typedef Buf BufferType;
-    typedef Nexter NexterType;
-
-    NexterType & nexter()
-    { return *this; }
-
-    BufferType & buffer()
-    { return *this; }
 };
 
 #endif

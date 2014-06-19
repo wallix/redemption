@@ -27,8 +27,8 @@
 #include "log.hpp"
 
 #include "authentifier.hpp"
-#include "counttransport.hpp"
-#include "testtransport.hpp"
+#include "count_transport.hpp"
+#include "test_transport.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)

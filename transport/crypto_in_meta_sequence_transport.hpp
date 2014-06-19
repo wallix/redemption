@@ -18,36 +18,41 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_CRYPTO_IN_META_SEQUENCE_TRANSPORT_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_CRYPTO_IN_META_SEQUENCE_TRANSPORT_HPP
+#ifndef REDEMPTION_TRANSPORT_CRYPTO_IN_META_SEQUENCE_TRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_CRYPTO_IN_META_SEQUENCE_TRANSPORT_HPP
 
 #include "detail/meta_opener.hpp"
 #include "buffer_transport.hpp"
 #include "buffer/input_output_buf.hpp"
 #include "buffer/crypto_filename_buf.hpp"
 
-struct CryptoInMetaTransport
+struct CryptoInMetaSequenceTransport
 : InBufferTransport<
     transbuf::reopen_input<transbuf::icrypto_filename_base, detail::MetaOpener<transbuf::icrypto_filename_base> >,
     detail::in_meta_nexter
 >
 {
-    CryptoInMetaTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
-    : CryptoInMetaTransport::TransportType(transbuf::buf_params(
+    CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
+    : CryptoInMetaSequenceTransport::TransportType(transbuf::buf_params(
         crypto_ctx, transbuf::buf_params(crypto_ctx, detail::temporary_concat(filename, extension).c_str())))
     {}
 
+    CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename)
+    : CryptoInMetaSequenceTransport::TransportType(transbuf::buf_params(
+        crypto_ctx, transbuf::buf_params(crypto_ctx, filename)))
+    {}
+
     unsigned begin_chunk_time() const /*noexcept*/
-    { return this->impl().get_begin_chunk_time(); }
+    { return this->buffer().policy().get_begin_chunk_time(); }
 
     unsigned end_chunk_time() const /*noexcept*/
-    { return this->impl().get_end_chunk_time(); }
+    { return this->buffer().policy().get_end_chunk_time(); }
 
     const char * path() const /*noexcept*/
-    { return this->impl().get_path(); }
+    { return this->buffer().policy().get_path(); }
 
     unsigned get_seqno() const /*noexcept*/
-    { return this->impl().get_seqno(); }
+    { return this->buffer().policy().get_seqno(); }
 };
 
 #endif

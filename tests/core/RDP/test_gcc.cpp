@@ -30,7 +30,7 @@
 #include "log.hpp"
 
 #include "transport.hpp"
-#include "testtransport.hpp"
+#include "test_transport.hpp"
 #include "RDP/gcc.hpp"
 
 BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)

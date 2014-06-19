@@ -32,7 +32,7 @@
 
 #include "stream.hpp"
 #include "transport.hpp"
-#include "testtransport.hpp"
+#include "test_transport.hpp"
 #include "RDP/slowpath.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {

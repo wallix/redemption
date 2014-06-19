@@ -27,7 +27,7 @@
 #define LOGNULL
 #include "log.hpp"
 #include "RDP/nego.hpp"
-#include "testtransport.hpp"
+#include "test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestNego)
 {

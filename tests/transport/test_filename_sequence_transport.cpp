@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "filename_sequence_transport.hpp"
+#include "out_filename_sequence_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
 {

@@ -25,10 +25,10 @@
 
 #include <string.h>
 
-#include "infiletransport.hpp"
+#include "in_file_transport.hpp"
 #include "log.hpp"
 #include "mod_api.hpp"
-#include "outfiletransport.hpp"
+#include "out_file_transport.hpp"
 #include "stream.hpp"
 
 #include "RDP/protocol.hpp"

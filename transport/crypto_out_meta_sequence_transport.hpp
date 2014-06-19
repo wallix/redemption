@@ -18,12 +18,15 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_CRYPTO_OUT_META_SEQUENCE_TRANSPORT_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_CRYPTO_OUT_META_SEQUENCE_TRANSPORT_HPP
+#ifndef REDEMPTION_TRANSPORT_CRYPTO_OUT_META_SEQUENCE_TRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_CRYPTO_OUT_META_SEQUENCE_TRANSPORT_HPP
 
-#include "meta_transport.hpp"
+#include "detail/meta_writer.hpp"
 #include "buffer/crypto_filename_buf.hpp"
-#include <fileutils.hpp>
+#include "detail/filename_sequence_policy.hpp"
+#include "buffer_transport.hpp"
+#include "urandom_read.hpp"
+#include "fileutils.hpp"
 
 namespace detail
 {
@@ -65,8 +68,8 @@ namespace detail
         , stop_sec(params.start_sec)
         {}
 
-        template<class Transport, class TransportBuf>
-        int next(Transport & /*trans*/, TransportBuf & buf) /*noexcept*/
+        template<class TransportBuf>
+        int next(TransportBuf & buf) /*noexcept*/
         {
             if (buf.is_open()) {
                 unsigned char hash[HASH_LEN];
@@ -106,7 +109,7 @@ namespace detail
         bool next_end(TransportBuf & buf) /*noexcept*/
         {
             if (buf.is_open()) {
-                if (this->next(buf, buf)) {
+                if (this->next(buf)) {
                     return false;
                 }
             }
@@ -120,10 +123,11 @@ namespace detail
             char extension[256] = {};
             char filename[2048] = {};
 
-            canonical_path(hf.filename,
-                        path, sizeof(path),
-                        basename, sizeof(basename),
-                        extension, sizeof(extension));
+            canonical_path(
+                hf.filename,
+                path, sizeof(path),
+                basename, sizeof(basename),
+                extension, sizeof(extension));
             std::snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
             unsigned char hash[HASH_LEN + 1] = {0};
@@ -161,7 +165,7 @@ namespace detail
         template<class Buf>
         /*constexpr*/ const char * current_path(Buf & buf) const /*noexcept*/
         {
-            return buf.impl().seqgen().get(buf.impl().seqnum());
+            return buf.policy().seqgen().get(buf.policy().seqnum());
         }
 
         void update_sec(time_t sec) /*noexcept*/
@@ -244,43 +248,45 @@ namespace detail
         bool is_open() const /*noexcept*/
         { return this->file.is_open(); }
 
-        const FilenameSequencePolicy & impl() const /*noexcept*/
+        const FilenameSequencePolicy & policy() const /*noexcept*/
         { return this->fsq; }
 
-        FilenameSequencePolicy & impl() /*noexcept*/
+        FilenameSequencePolicy & policy() /*noexcept*/
         { return this->fsq; }
     };
 }
 
-struct CryptoOutMetaTransport
-: OutBufferTransport<
+class CryptoOutMetaSequenceTransport
+: public OutBufferTransport<
     detail::crypto_out_meta_buf_base,
     detail::crypto_out_meta_nexter
 >
 {
-    CryptoOutMetaTransport(CryptoContext * crypto_ctx,
-                           const char * path,
-                           const char * hash_path,
-                           const char * basename,
-                           timeval now,
-                           uint16_t width,
-                           uint16_t height,
-                           const int groupid,
-                           auth_api * authentifier = NULL,
-                           unsigned verbose = 0,
-                           FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
-    : CryptoOutMetaTransport::TransportType(
+    detail::MetaFilename mf;
+
+public:
+    CryptoOutMetaSequenceTransport(
+        CryptoContext * crypto_ctx,
+        const char * path,
+        const char * hash_path,
+        const char * basename,
+        timeval now,
+        uint16_t width,
+        uint16_t height,
+        const int groupid,
+        auth_api * authentifier = NULL,
+        unsigned verbose = 0,
+        FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
+    : CryptoOutMetaSequenceTransport::TransportType(
         detail::crypto_out_meta_buf_base_params(
             *crypto_ctx,
             detail::FilenameSequencePolicyParams(format, path, basename, ".wrm", groupid)),
-        detail::crypto_out_meta_nexter_params(crypto_ctx, now.tv_sec, hash_path, basename, format)
-    )
+        detail::crypto_out_meta_nexter_params(crypto_ctx, now.tv_sec, hash_path, basename, format))
+    , mf(path, basename, format)
     {
         (void)verbose;
 
-        detail::MetaFilename mf(path, basename, format);
-
-        if (this->nexter().open(mf.filename, S_IRUSR) < 0) {
+        if (this->nexter().open(this->mf.filename, S_IRUSR) < 0) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
 
@@ -293,15 +299,18 @@ struct CryptoOutMetaTransport
 
     virtual void timestamp(timeval now)
     {
-        this->update_sec(now.tv_sec);
+        this->nexter().update_sec(now.tv_sec);
     }
 
     const FilenameGenerator * seqgen() const /*noexcept*/
-    { return &this->impl().seqgen(); }
+    {
+        return &(this->buffer().policy().seqgen());
+    }
 
     virtual void request_full_cleaning()
     {
-        this->impl().request_full_cleaning();
+        this->buffer().policy().request_full_cleaning();
+        ::unlink(this->mf.filename);
     }
 };
 

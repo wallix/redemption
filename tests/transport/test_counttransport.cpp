@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "counttransport.hpp"
+#include "count_transport.hpp"
 #include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCountTransport)

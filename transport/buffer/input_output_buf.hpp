@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_TRANSPORT_BUFFER_INPUT_OUTPUT_BUF_HPP
-#define REDEMPTION_PUBLIC_TRANSPORT_BUFFER_INPUT_OUTPUT_BUF_HPP
+#ifndef REDEMPTION_TRANSPORT_BUFFER_INPUT_OUTPUT_BUF_HPP
+#define REDEMPTION_TRANSPORT_BUFFER_INPUT_OUTPUT_BUF_HPP
 
 #include "params.hpp"
 #include <unistd.h>
@@ -43,9 +43,9 @@ namespace transbuf
     };
 
 
-    template<class Reader, class OpenClose = open_close_base>
+    template<class Reader, class OpenClosePolicy = open_close_base>
     class input_buf
-    : private OpenClose
+    : private OpenClosePolicy
     {
         Reader buf;
 
@@ -55,18 +55,18 @@ namespace transbuf
 
         template<class T>
         input_buf(const T & params)
-        : OpenClose(params)
+        : OpenClosePolicy(params)
         {}
 
         template<class BufParams, class OtherParams>
         input_buf(const two_params<BufParams, OtherParams> & params)
-        : OpenClose(params.other_params)
+        : OpenClosePolicy(params.other_params)
         , buf(params.buf_params)
         {}
 
         template<class OtherParams>
         input_buf(const two_params<no_param_t, OtherParams> & params)
-        : OpenClose(params.other_params)
+        : OpenClosePolicy(params.other_params)
         {}
 
         template<class BufParams>
@@ -84,7 +84,7 @@ namespace transbuf
         ssize_t read(void * data, size_t len) /*noexcept*/
         {
             if (!this->is_open()) {
-                const int res = OpenClose::init(this->buf);
+                const int res = OpenClosePolicy::init(this->buf);
                 if (res < 0) {
                     return res;
                 }
@@ -93,21 +93,21 @@ namespace transbuf
         }
 
         int close() /*noexcept*/
-        { return OpenClose::close(this->buf); }
+        { return OpenClosePolicy::close(this->buf); }
 
         bool is_open() const /*noexcept*/
-        { return OpenClose::is_open(this->buf); }
+        { return OpenClosePolicy::is_open(this->buf); }
 
-        OpenClose & impl() /*noexcept*/
+        OpenClosePolicy & policy() /*noexcept*/
         { return *this; }
 
-        const OpenClose & impl() const /*noexcept*/
+        const OpenClosePolicy & policy() const /*noexcept*/
         { return *this; }
     };
 
-    template<class Writer, class OpenClose = open_close_base>
+    template<class Writer, class OpenClosePolicy = open_close_base>
     class output_buf
-    : private OpenClose
+    : private OpenClosePolicy
     {
         Writer buf;
 
@@ -117,18 +117,18 @@ namespace transbuf
 
         template<class T>
         output_buf(const T & params)
-        : OpenClose(params)
+        : OpenClosePolicy(params)
         {}
 
         template<class BufParams, class OtherParams>
         output_buf(const two_params<BufParams, OtherParams> & params)
-        : OpenClose(params.other_params)
+        : OpenClosePolicy(params.other_params)
         , buf(params.buf_params)
         {}
 
         template<class OtherParams>
         output_buf(const two_params<no_param_t, OtherParams> & params)
-        : OpenClose(params.other_params)
+        : OpenClosePolicy(params.other_params)
         {}
 
         template<class BufParams>
@@ -146,7 +146,7 @@ namespace transbuf
         ssize_t write(const void * data, size_t len) /*noexcept*/
         {
             if (!this->is_open()) {
-                const int res = OpenClose::init(this->buf);
+                const int res = OpenClosePolicy::init(this->buf);
                 if (res < 0) {
                     return res;
                 }
@@ -155,24 +155,24 @@ namespace transbuf
         }
 
         bool is_open() const /*noexcept*/
-        { return OpenClose::is_open(this->buf); }
+        { return OpenClosePolicy::is_open(this->buf); }
 
         int close() /*noexcept*/
-        { return OpenClose::close(this->buf); }
+        { return OpenClosePolicy::close(this->buf); }
 
-        OpenClose & impl() /*noexcept*/
+        OpenClosePolicy & policy() /*noexcept*/
         { return *this; }
 
-        const OpenClose & impl() const /*noexcept*/
+        const OpenClosePolicy & policy() const /*noexcept*/
         { return *this; }
     };
 
 
-    template<class Reader, class OpenClose = open_close_base>
+    template<class Reader, class OpenClosePolicy = open_close_base>
     class reopen_input
-    : public input_buf<Reader, OpenClose>
+    : public input_buf<Reader, OpenClosePolicy>
     {
-        typedef input_buf<Reader, OpenClose> base_buf;
+        typedef input_buf<Reader, OpenClosePolicy> base_buf;
 
     public:
         reopen_input()

@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_MOD_INTERNAL_TRANSPARENT_REPLAY_MOD_HPP
 #define REDEMPTION_MOD_INTERNAL_TRANSPARENT_REPLAY_MOD_HPP
 
-#include "infiletransport.hpp"
+#include "in_file_transport.hpp"
 #include "transparentplayer.hpp"
 
 class TransparentReplayMod : public InternalMod {

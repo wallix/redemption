@@ -30,8 +30,8 @@
 
 #include "test_orders.hpp"
 #include "transport.hpp"
-#include "testtransport.hpp"
-#include "outfilenametransport.hpp"
+#include "test_transport.hpp"
+#include "out_filename_sequence_transport.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"

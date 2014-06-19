@@ -29,7 +29,7 @@
 
 #include "channel_list.hpp"
 #include "front_api.hpp"
-#include "infiletransport.hpp"
+#include "in_file_transport.hpp"
 #include "RDP/protocol.hpp"
 #include "transparentplayer.hpp"
 #include "version.hpp"

@@ -33,7 +33,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "filetransport.hpp"
+#include "in_file_transport.hpp"
+#include "out_file_transport.hpp"
 #include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFileTransport)
@@ -58,6 +59,14 @@ BOOST_AUTO_TEST_CASE(TestFileTransport)
             ft.recv(&pbuf, 11);
             ft.recv(&pbuf, 10);
             BOOST_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
+            try {
+                char * pbuf = buf;
+                ft.recv(&pbuf, 1);
+                BOOST_CHECK(false);
+            }
+            catch(Error & e) {
+                BOOST_CHECK_EQUAL(e.id, ERR_TRANSPORT_NO_MORE_DATA);
+            }
         }
         ::close(fd);
         ::unlink(tmpname);

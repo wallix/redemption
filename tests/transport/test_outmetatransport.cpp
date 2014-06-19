@@ -25,7 +25,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "meta_transport.hpp"
+#include "out_meta_sequence_transport.hpp"
 #include "fileutils.hpp"
 
 
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         now.tv_sec = 1352304810;
         now.tv_usec = 0;
         const int groupid = 0;
-        OutMetaTransport wrm_trans("./", "xxx", now, 800, 600, groupid);
+        OutMetaSequenceTransport wrm_trans("./", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();

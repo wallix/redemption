@@ -27,8 +27,8 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "outfilenametransport.hpp"
-#include "infiletransport.hpp"
+#include "out_filename_sequence_transport.hpp"
+#include "in_file_transport.hpp"
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
