@@ -392,7 +392,7 @@ public:
             uint8_t data[10];
             FixedSizeStream stream(data, sizeof(data));
             stream.end = stream.p;
-            /* FrambufferUpdateRequest */
+            /* FramebufferUpdateRequest */
             stream.out_uint8(3);
             stream.out_uint8(this->incr);
             if (this->is_first_incr) {
