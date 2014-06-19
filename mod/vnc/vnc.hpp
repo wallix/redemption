@@ -117,6 +117,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
 private:
     bool is_first_membelt;
     bool is_first_incr;
+    bool left_ctrl_pressed;
 
 public:
     //==============================================================================================================
@@ -151,6 +152,7 @@ public:
     , allow_authentification_retries(allow_authentification_retries || !(*password))
     , is_first_membelt(true)
     , is_first_incr(true)
+    , left_ctrl_pressed(false)
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -307,7 +309,7 @@ public:
 
         int key = this->keymapSym.get_sym();
         if (key > 0) {
-            if (this->keymapSym.left_ctrl_pressed) {
+            if (this->left_ctrl_pressed) {
                 if (key == 0xfe03) {
                     // alt gr => left ctrl is ignored
                     this->send_keyevent(downflag, key);
@@ -316,14 +318,14 @@ public:
                     this->send_keyevent(1, 0xffe3);
                     this->send_keyevent(downflag, key);
                 }
-                this->keymapSym.left_ctrl_pressed = false;
+                this->left_ctrl_pressed = false;
             }
             else if (!((key == 0xffe3) && downflag)) {
                 this->send_keyevent(downflag, key);
             }
             else {
                 // left ctrl is down
-                this->keymapSym.left_ctrl_pressed = true;
+                this->left_ctrl_pressed = true;
             }
         }
     } // rdp_input_scancode

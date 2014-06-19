@@ -1002,7 +1002,6 @@ struct KeymapSym {
 
 
     uint32_t verbose;
-    bool left_ctrl_pressed;
 
     int last_sym;
 
@@ -1023,7 +1022,6 @@ struct KeymapSym {
             , nbuf_sym(0)
             , dead_key(DEADKEY_NONE)
             , verbose(verbose)
-            , left_ctrl_pressed(false)
     //------------------------------------------------------------------------------
     {
         memset(this->keys_down, 0, 256 * sizeof(int));
