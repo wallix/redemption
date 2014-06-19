@@ -145,9 +145,15 @@ public:
                                                 , rect_item
                                                 , *this
                                                 , this->notifier);
+
+        this->items[this->item_count]->set_bg_color(this->drawing_policy.get_bg_color());
+
+//        this->rdp_input_invalidate(this->rect);
+        this->refresh(this->rect);
+
         return this->item_count++;
     }
-    Widget2 & get_item(size_t item_index) {
+    WidgetParent & get_item(size_t item_index) {
         REDASSERT(this->item_count > item_index);
         return *(this->items[item_index]);
     }
@@ -191,7 +197,7 @@ public:
     }
 
     virtual void draw(const Rect & clip) {
-LOG(LOG_INFO, ">>>>> WidgetTab::draw, x=%u y=%u cx=%u cy=%u", clip.x, clip.y, clip.cx, clip.cy);
+        this->drawable.begin_update();
         this->drawing_policy.draw( this->rect
                                  , clip
                                  , this->items
@@ -254,8 +260,10 @@ LOG(LOG_INFO, ">>>>> WidgetTab::draw, x=%u y=%u cx=%u cy=%u", clip.x, clip.y, cl
 */
 
         if (this->item_count > 0) {
+//            this->items[this->current_item_index]->draw(clip);
             this->items[this->current_item_index]->draw_children(rect);
         }
+        this->drawable.end_update();
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) {
@@ -282,6 +290,7 @@ LOG(LOG_INFO, ">>>>> WidgetTab::draw, x=%u y=%u cx=%u cy=%u", clip.x, clip.y, cl
     virtual void rdp_input_scancode( long param1, long param2, long param3
                                    , long param4, Keymap2 * keymap) {
         if (keymap->nb_kevent_available() > 0) {
+/*
             switch (keymap->top_kevent()) {
             case Keymap2::KEVENT_TAB:
                 keymap->get_kevent();
@@ -292,6 +301,11 @@ LOG(LOG_INFO, ">>>>> WidgetTab::draw, x=%u y=%u cx=%u cy=%u", clip.x, clip.y, cl
             default:
             break;
             }
+*/
+            if (this->item_count) {
+                REDASSERT(this->item_count > this->current_item_index);
+                return this->items[this->current_item_index]->rdp_input_scancode(param1, param2, param3, param4, keymap);
+            }
         }
     }
 
@@ -300,7 +314,7 @@ LOG(LOG_INFO, ">>>>> WidgetTab::draw, x=%u y=%u cx=%u cy=%u", clip.x, clip.y, cl
         if (this->current_item_index != item_index) {
             this->current_item_index = item_index;
 
-            this->rdp_input_invalidate(this->rect);
+            this->refresh(this->rect);
         }
     }
 
@@ -347,8 +361,10 @@ public:
                      , WidgetTab::Item ** items
                      , size_t item_count
                      , size_t current_item_index) {
-        Rect rect_intersect = clip.intersect(rect_tab);
-this->drawable.draw(RDPOpaqueRect(rect_intersect, RED), clip);
+        this->drawable.begin_update();
+//        Rect rect_intersect = clip.intersect(rect_tab);
+//        this->drawable.draw(RDPOpaqueRect(rect_tab, /*this->get_bg_color()*/RED), clip);
+        this->draw_opaque_rect(rect_tab, RED, clip);
 
         uint16_t item_index_offset = first_item_index_offset_left;
         for (size_t item_index = 0; item_index < item_count; item_index++) {
@@ -363,11 +379,11 @@ this->drawable.draw(RDPOpaqueRect(rect_intersect, RED), clip);
                                         + text_padding_x;
 
             this->drawable.draw(
-                  RDPOpaqueRect( rect_intersect.intersect(Rect( rect_tab.x + item_index_offset + border_width_height
-                                                              , rect_tab.y + border_width_height
-                                                              , item_index_width - border_width_height
-                                                              ,   this->item_index_height
-                                                                - ((current_item_index == item_index) ? 0 : border_width_height)))
+                  RDPOpaqueRect( Rect( rect_tab.x + item_index_offset + border_width_height
+                                     , rect_tab.y + border_width_height
+                                     , item_index_width - border_width_height
+                                     ,   this->item_index_height
+                                       - ((current_item_index == item_index) ? 0 : border_width_height))
                                , this->get_bg_color())
                 , clip);
 
@@ -378,19 +394,55 @@ this->drawable.draw(RDPOpaqueRect(rect_intersect, RED), clip);
                 , item->get_text()
                 , this->get_fg_color()
                 , this->get_bg_color()
-                , rect_intersect);
+                , clip);
 
             item_index_offset += item_index_width;
         }
 
+/*
         this->drawable.draw(
-              RDPOpaqueRect( rect_intersect.intersect(Rect( rect_tab.x + border_width_height
-                                                          , rect_tab.y + this->item_index_height + border_width_height
-                                                          , rect_tab.cx - border_width_height * 2
-                                                          , rect_tab.cy - this->item_index_height - border_width_height * 2))
+              RDPOpaqueRect( Rect( rect_tab.x + border_width_height
+                                 , rect_tab.y + this->item_index_height + border_width_height
+                                 , rect_tab.cx - border_width_height * 2
+                                 , rect_tab.cy - this->item_index_height - border_width_height * 2)
                            , this->get_bg_color())
             , clip);
+*/
+        this->draw_opaque_rect( Rect( rect_tab.x + border_width_height
+                              , rect_tab.y + this->item_index_height + border_width_height
+                              , rect_tab.cx - border_width_height * 2
+                              , rect_tab.cy - this->item_index_height - border_width_height * 2)
+            , this->get_bg_color(), clip);
+
+        this->drawable.end_update();
     }
+
+private:
+    void draw_opaque_rect(const Rect & rect, int bg_color, const Rect & clip) {
+        const uint16_t tile_width_height = 32;
+
+        for (int x_begin = rect.x, x_end = rect.x + rect.cx; x_begin < x_end; x_begin += tile_width_height) {
+            uint16_t cx = x_end - x_begin;
+            if (cx > tile_width_height) {
+                cx = tile_width_height;
+            }
+            for (int y_begin = rect.y, y_end = rect.y + rect.cy; y_begin < y_end; y_begin += tile_width_height) {
+                uint16_t cy = y_end - y_begin;
+                if (cy > tile_width_height) {
+                    cy = tile_width_height;
+                }
+
+                this->drawable.draw(
+                      RDPOpaqueRect( Rect( x_begin
+                                         , y_begin
+                                         , cx
+                                         , cy)
+                                   , bg_color)
+                    , clip);
+            }
+        }
+    }
+public:
 
     virtual Rect get_child_area(const Rect & rect_tab) {
         return Rect( rect_tab.x + border_width_height
@@ -427,8 +479,6 @@ this->drawable.draw(RDPOpaqueRect(rect_intersect, RED), clip);
             if (rect_index.contains_pt(x, y)) {
                 if (device_flags & (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
                     tab.set_current_item(item_index);
-
-                    tab.rdp_input_invalidate(rect_tab);
                 }
 
                 return;
