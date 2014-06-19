@@ -656,7 +656,7 @@ namespace X224
             }
             stream.p += this->cookie_len;
 
-            // 2.2.1.1.2 RDP Correlation Info (RDP_NEG_CORRELATION_INFO)
+            // 2.2.1.1.1 RDP Negotiation Request (RDP_NEG_REQ)
             if (end_of_header - stream.p >= 8){
                 if (verbose){
                     LOG(LOG_INFO, "Found RDP Negotiation Request Structure");

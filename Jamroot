@@ -566,6 +566,7 @@ unit-test test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod.cpp cry
 unit-test test_flat_login_mod : tests/mod/internal/test_flat_login_mod.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_selector_mod : tests/mod/internal/test_flat_selector_mod.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_widget_test_mod : tests/mod/internal/test_widget_test_mod.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
 
 # NLA TESTS
@@ -604,5 +605,7 @@ unit-test test_flat_selector2 : tests/mod/internal/widget2/test_flat_selector2.c
 unit-test test_group_box : tests/mod/internal/widget2/test_group_box.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_scroll : tests/mod/internal/widget2/test_scroll.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_tab : tests/mod/internal/widget2/test_tab.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_darray : tests/utils/test_darray.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

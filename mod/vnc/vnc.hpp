@@ -302,18 +302,45 @@ public:
         }
 
         TODO("As down/up state is not stored in keymapSym, code below is quite dangerous");
-        keymapSym.event(device_flags, param1);
-        int key = keymapSym.get_sym();
+        this->keymapSym.event(device_flags, param1);
+        uint8_t downflag = !(device_flags & KBD_FLAG_UP);
+
+        int key = this->keymapSym.get_sym();
         if (key > 0) {
-            BStream stream(32768);
-            stream.out_uint8(4);
-            stream.out_uint8(!(device_flags & KBD_FLAG_UP)); /* down/up flag */
-            stream.out_clear_bytes(2);
-            stream.out_uint32_be(key);
-            this->t->send(stream.get_data(), 8);
-            this->event.set(1000);
+            if (this->keymapSym.left_ctrl_pressed) {
+                if (key == 0xfe03) {
+                    // alt gr => left ctrl is ignored
+                    this->send_keyevent(downflag, key);
+                }
+                else {
+                    this->send_keyevent(1, 0xffe3);
+                    this->send_keyevent(downflag, key);
+                }
+                this->keymapSym.left_ctrl_pressed = false;
+            }
+            else if (!((key == 0xffe3) && downflag)) {
+                this->send_keyevent(downflag, key);
+            }
+            else {
+                // left ctrl is down
+                this->keymapSym.left_ctrl_pressed = true;
+            }
         }
     } // rdp_input_scancode
+
+    void send_keyevent(uint8_t down_flag, uint32_t key) {
+        if (this->verbose) {
+            LOG(LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
+        }
+        BStream stream(32768);
+        stream.out_uint8(4);
+        stream.out_uint8(down_flag); /* down/up flag */
+        stream.out_clear_bytes(2);
+        stream.out_uint32_be(key);
+        this->t->send(stream.get_data(), 8);
+        this->event.set(1000);
+    }
+
 
     //==============================================================================================================
     virtual void rdp_input_clip_data(uint8_t * data, uint32_t length) {
@@ -365,7 +392,7 @@ public:
             uint8_t data[10];
             FixedSizeStream stream(data, sizeof(data));
             stream.end = stream.p;
-            /* FrambufferUpdateRequest */
+            /* FramebufferUpdateRequest */
             stream.out_uint8(3);
             stream.out_uint8(this->incr);
             if (this->is_first_incr) {
@@ -383,13 +410,13 @@ public:
     //==============================================================================================================
     virtual void draw_event(time_t now)
     {
-        if (this->verbose) {
+        if (this->verbose & 1) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
         switch (this->state)
         {
         case ASK_PASSWORD:
-            if (this->verbose) {
+            if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=ASK_PASSWORD");
             }
             this->screen.add_widget(&this->challenge);
@@ -406,7 +433,7 @@ public:
             break;
         case DO_INITIAL_CLEAR_SCREEN:
             {
-                if (this->verbose) {
+                if (this->verbose & 1) {
                     LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
                 }
                 // set almost null cursor, this is the little dot cursor
@@ -432,13 +459,13 @@ public:
                 this->lib_open_clip_channel();
 
                 this->event.object_and_time = false;
-                if (this->verbose) {
+                if (this->verbose & 1) {
                     LOG(LOG_INFO, "VNC screen cleaning ok\n");
                 }
             }
             break;
         case RETRY_CONNECTION:
-            if (this->verbose) {
+            if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=RETRY_CONNECTION");
             }
             try
@@ -455,7 +482,7 @@ public:
             this->event.set();
             break;
         case UP_AND_RUNNING:
-            if (this->verbose) {
+            if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
             if (this->event.can_recv()) {
@@ -497,7 +524,7 @@ public:
             }
             break;
         case WAIT_PASSWORD:
-            if (this->verbose) {
+            if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=WAIT_PASSWORD");
             }
             this->event.object_and_time = false;
@@ -505,7 +532,7 @@ public:
             break;
         case WAIT_SECURITY_TYPES:
             {
-                if (this->verbose) {
+                if (this->verbose & 1) {
                     LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
                 }
                 BStream stream(32768);

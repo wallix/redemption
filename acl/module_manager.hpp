@@ -45,6 +45,7 @@
 #include "internal/flat_selector2_mod.hpp"
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
+#include "internal/widget_test_mod.hpp"
 
 #define STRMODULE_LOGIN            "login"
 #define STRMODULE_SELECTOR         "selector"
@@ -81,6 +82,7 @@ enum {
     MODULE_INTERNAL_TEST,
     MODULE_INTERNAL_WIDGET2_SELECTOR,
     MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY,
+    MODULE_INTERNAL_WIDGETTEST,
     MODULE_EXIT_INTERNAL_CLOSE,
     MODULE_TRANSITORY,
     MODULE_AUTH,
@@ -247,6 +249,12 @@ public:
                 }
                 res = MODULE_INTERNAL_WIDGET2_MESSAGE;
             }
+            else if (0 == strcmp(target, "widgettest")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widgettest");
+                }
+                res = MODULE_INTERNAL_WIDGETTEST;
+            }
             else {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "==========> INTERNAL card");
@@ -326,6 +334,15 @@ public:
                 if (this->verbose){
                     LOG(LOG_INFO, "ModuleManager::internal module 'test' ready");
                 }
+                break;
+            case MODULE_INTERNAL_WIDGETTEST:
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
+                this->mod = new WidgetTestMod(this->ini,
+                                              this->front,
+                                              this->front.client_info.width,
+                                              this->front.client_info.height
+                                              );
+                LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
                 break;
             case MODULE_INTERNAL_CARD:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
