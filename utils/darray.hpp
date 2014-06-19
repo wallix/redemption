@@ -19,12 +19,16 @@
  */
 #ifndef REDEMPTION_UTILS_DARRAY_HPP
 #define REDEMPTION_UTILS_DARRAY_HPP
+
 #include "log.hpp"
+#include "unique_ptr.hpp"
+
+#include <algorithm>
 
 template<class T>
 class DArray {
     size_t item_count;
-    T * items;
+    unique_ptr<T[]> items;
 
 public:
     DArray(size_t count)
@@ -33,24 +37,18 @@ public:
     {
         // LOG(LOG_INFO,"###### DArray Constructor ######");
     }
+
     DArray(const DArray & vect)
     : item_count(vect.size())
     , items(new T[vect.size()])
     {
         // LOG(LOG_INFO,"###### DArray Copy Constructor ######");
-        for (size_t i = 0; i < vect.size(); i++) {
-            this->items[i] = vect[i];
-        }
-    }
-    virtual ~DArray() {
-        // LOG(LOG_INFO,"###### DArray Destructor ######");
-        delete [] this->items;
-        this->items = NULL;
+        std::copy(this->items.get(), this->items.get() + this->size(), this->vect.items.get());
     }
 
     T & operator[](size_t i) const {
         REDASSERT(i < this->item_count);
-        return this->items[i];
+        return this->items.get()[i];
     }
 
     size_t size() const {

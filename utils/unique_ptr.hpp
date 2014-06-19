@@ -92,6 +92,15 @@ namespace aux_ {
     template<class T>
     struct pointer_trait<T[]>
     { typedef T* type; };
+
+
+    template<class T>
+    struct add_lvalue_reference
+    { typedef T& type;};
+
+    template<class T>
+    struct add_lvalue_reference<T[]>
+    { typedef T& type;};
 }
 
 template<class T, class Deleter = default_delete<T> >
@@ -149,7 +158,8 @@ struct unique_ptr
         return data_.p_ != 0;
     }
 
-    T& operator*() const
+    typename aux_::add_lvalue_reference<T>::type
+    operator*() const
     {
         return *data_.p_;
     }
@@ -159,7 +169,8 @@ struct unique_ptr
         return data_.p_;
     }
 
-    T& operator[](std::size_t i) const
+    typename aux_::add_lvalue_reference<T>::type
+    operator[](std::size_t i) const
     {
         return data_.p_[i];
     }
@@ -186,6 +197,7 @@ struct unique_ptr
 
 private:
     unique_ptr(const unique_ptr &);
+    unique_ptr& operator=(const unique_ptr &);
 
     template<class U>
     void reset( U );

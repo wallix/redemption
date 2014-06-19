@@ -29,15 +29,18 @@
 
 struct A {
     int i;
-    std::ostringstream & os;
+    std::ostringstream * os;
+
+    A()
+    {}
 
     A(int n, std::ostringstream & oss)
     : i(n)
-    , os(oss)
+    , os(&oss)
     {}
 
     ~A()
-    { os << "~dtor(" << i << ")\n"; }
+    { *os << "~dtor(" << i << ")\n"; }
 };
 
 BOOST_AUTO_TEST_CASE(TestUnique)
@@ -76,6 +79,15 @@ BOOST_AUTO_TEST_CASE(TestUnique)
         unique_ptr<A> u1(new A(++i, oss));
         u1 = move(u1);
     }
+    {
+        unique_ptr<A[]> u(new A[2]);
+        u[1].i = ++i;
+        u[0].i = ++i;
+        u[0].os = &oss;
+        u[1].os = &oss;
+        BOOST_CHECK_EQUAL(u.get()[0].i, u[0].i);
+        BOOST_CHECK_EQUAL(u.get()[1].i, u[1].i);
+    }
 
     BOOST_CHECK_EQUAL(oss.str(),
                       "~dtor(2)\n"
@@ -90,5 +102,7 @@ BOOST_AUTO_TEST_CASE(TestUnique)
                       "~dtor(10)\n"
                       "~dtor(11)\n"
                       "~dtor(12)\n"
+                      "~dtor(13)\n"
+                      "~dtor(14)\n"
                      );
 }
