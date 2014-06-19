@@ -27,6 +27,8 @@
 //#include "widget2/flat_dialog.hpp"
 //#include "widget2/screen.hpp"
 #include "internal_mod.hpp"
+#include "widget2/edit.hpp"
+#include "widget2/flat_button.hpp"
 #include "widget2/tab.hpp"
 
 class WidgetTestMod : public InternalMod, public NotifyApi
