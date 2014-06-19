@@ -36,48 +36,70 @@ class WidgetTestMod : public InternalMod, public NotifyApi
     WidgetTabDPDefault drawing_policy;
     WidgetTab          tab;
 
+    WidgetEdit        * wedit_on_first_tab;
+    WidgetFlatButton  * wbutton_on_first_tab;
+
+    WidgetEdit        * wedit_on_screen;
+
 public:
     WidgetTestMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height, &ini)
         , ini(ini)
         , drawing_policy(*this)
-        , tab(*this, drawing_policy, 0, 0, width, height, this->screen, this, 0, ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+        , tab(*this, drawing_policy, 30, 30, width - 60, height - 260, this->screen, this, 0, ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+        , wedit_on_first_tab(NULL)
+        , wbutton_on_first_tab(NULL)
     {
-/*
-        this->screen.add_widget(&this->dialog_widget);
-        this->dialog_widget.set_widget_focus(&this->dialog_widget.ok);
-        this->screen.set_widget_focus(&this->dialog_widget);
-*/
+        this->screen.add_widget(&this->tab);
 
         size_t tab_0_index = static_cast<size_t>(-1);
         size_t tab_1_index = static_cast<size_t>(-1);
 
         tab_0_index = this->tab.add_item("First tab");
         tab_1_index = this->tab.add_item("Second tab");
+(void)tab_1_index;
 
-//        this->tab.set_current_item(tab_0_index);
 
-        this->screen.add_widget(&this->tab);
+        NotifyApi * notifier = NULL;
+        int         group_id = 0;
+        int         fg_color = RED;
+        int         bg_color = YELLOW;
 
-        //this->screen.refresh(this->screen.rect);
+        bool auto_resize = true;
+        int  focuscolor  = LIGHT_YELLOW;
+        int  xtext       = 4;
+        int  ytext       = 1;
 
-LOG(LOG_INFO, "WidgetTestMod: rdp_input_invalidate, x=%u y=%u cx=%u cy=%u",
-    this->screen.rect.x, this->screen.rect.y, this->screen.rect.cx, this->screen.rect.cy);
-        this->screen.rdp_input_invalidate(this->screen.rect);
-    this->begin_update();
-    this->end_update();
+        this->wedit_on_first_tab = new WidgetEdit(*this, 11, 20, 30, this->tab.get_item(tab_0_index),
+            notifier, "", group_id, BLACK, WHITE, WHITE);
+        this->tab.add_widget(tab_0_index, wedit_on_first_tab);
 
-/*
-        if (this->dialog_widget.challenge) {
-            this->dialog_widget.set_widget_focus(this->dialog_widget.challenge);
-            // this->ini.to_send_set.insert(AUTHID_AUTHENTICATION_CHALLENGE);
-        }
-*/
+        this->wbutton_on_first_tab = new WidgetFlatButton(*this, 10, 42, this->tab.get_item(tab_0_index),
+            notifier, "Button on First tab", auto_resize, group_id, fg_color, bg_color,
+            focuscolor, xtext, ytext);
+        this->tab.add_widget(tab_0_index, wbutton_on_first_tab);
+
+
+        this->wedit_on_screen = new WidgetEdit(*this, 11, 620, 30, this->screen,
+            this, "", group_id, BLACK, WHITE, WHITE);
+        this->screen.add_widget(this->wedit_on_screen);
+
+
+        WidgetParent & wp = this->tab.get_item(tab_0_index);
+        wp.set_widget_focus(this->wedit_on_first_tab);
+
+        this->screen.set_widget_focus(&this->tab);
+        this->screen.refresh(this->screen.rect);
     }
 
     virtual ~WidgetTestMod()
     {
         this->screen.clear();
+
+        delete this->wedit_on_screen;
+
+        delete this->wbutton_on_first_tab;
+        delete this->wedit_on_first_tab;
     }
 
     virtual void notify(Widget2* sender, notify_event_t event)
@@ -140,6 +162,7 @@ public:
             break;
         }
 */
+        this->event.reset();
     }
 };
 
