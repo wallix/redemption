@@ -52,7 +52,8 @@ public:
                          , const Rect & clip
                          , Item ** items
                          , size_t item_count
-                         , size_t current_item_index) = 0;
+                         , size_t current_item_index
+                         , bool draw_focus) = 0;
 
         virtual Rect get_child_area(const Rect & rect_tab) = 0;
 
@@ -205,7 +206,9 @@ public:
                                  , clip
                                  , this->items
                                  , this->item_count
-                                 , this->current_item_index);
+                                 , this->current_item_index
+                                 , this->has_focus && (!this->child_has_focus)
+                                 );
 
         if (this->item_count) {
             this->items[this->current_item_index]->draw_children(rect);
@@ -218,6 +221,7 @@ public:
             if (this->item_count) {
                 this->child_has_focus = true;
                 this->items[this->current_item_index]->focus(focus_reason_tabkey);
+                this->refresh(this->rect);
                 return true;
             }
         }
@@ -238,6 +242,7 @@ public:
             }
 
             this->child_has_focus = false;
+            this->refresh(this->rect);
             return true;
         }
 
@@ -349,9 +354,10 @@ public:
                      , const Rect & clip
                      , WidgetTab::Item ** items
                      , size_t item_count
-                     , size_t current_item_index) {
+                     , size_t current_item_index
+                     , bool draw_focus) {
         this->drawable.begin_update();
-        this->draw_opaque_rect(rect_tab, RED, clip);
+        this->draw_opaque_rect(rect_tab, this->get_bg_color(), clip);
 
         uint16_t item_index_offset = first_item_index_offset_left;
         for (size_t item_index = 0; item_index < item_count; item_index++) {
@@ -374,6 +380,42 @@ public:
                                , this->get_bg_color())
                 , clip);
 
+            // Border.
+            BStream deltaPoints(256);
+
+            deltaPoints.out_sint16_le(item_index_width);
+            deltaPoints.out_sint16_le(0);
+
+            deltaPoints.out_sint16_le(0);
+            deltaPoints.out_sint16_le(this->item_index_height - ((current_item_index != item_index) ? 1 : 0));
+
+            if (current_item_index != item_index) {
+                deltaPoints.out_sint16_le(-(item_index_width - 1));
+                deltaPoints.out_sint16_le(0);
+            }
+
+            deltaPoints.mark_end();
+            deltaPoints.rewind();
+
+            RDPPolyline polyline_box( rect_tab.x + item_index_offset
+                                    , rect_tab.y + ((current_item_index != item_index) ? 1 : 0)
+                                    , 0x0D, 0, this->get_fg_color(), ((current_item_index != item_index) ? 3 : 2)
+                                    , deltaPoints);
+            this->drawable.draw(polyline_box, clip);
+
+            if (draw_focus && (current_item_index == item_index)) {
+                this->drawable.draw(RDPLineTo( 1
+                                             , rect_tab.x + item_index_offset + border_width_height
+                                             , rect_tab.y + border_width_height * 2
+                                             , rect_tab.x + item_index_offset + border_width_height + item_index_width - border_width_height * 2
+                                             , rect_tab.y + border_width_height * 2
+                                             , 0
+                                             , 13
+                                             , RDPPen(0, 1, this->get_fg_color())
+                                             )
+                    , clip);
+            }
+
             // Text.
             this->drawable.server_draw_text(
                   rect_tab.x + item_index_offset + border_width_height + text_padding_x
@@ -383,6 +425,7 @@ public:
                 , this->get_bg_color()
                 , clip);
 
+
             item_index_offset += item_index_width;
         }
 
@@ -391,6 +434,35 @@ public:
                               , rect_tab.cx - border_width_height * 2
                               , rect_tab.cy - this->item_index_height - border_width_height * 2)
             , this->get_bg_color(), clip);
+
+        BStream deltaPoints(256);
+
+        deltaPoints.out_sint16_le(0);
+        deltaPoints.out_sint16_le(this->item_index_height - border_width_height);
+
+        deltaPoints.out_sint16_le(-first_item_index_offset_left);
+        deltaPoints.out_sint16_le(0);
+
+        deltaPoints.out_sint16_le(0);
+        deltaPoints.out_sint16_le(rect_tab.cy - this->item_index_height - border_width_height);
+
+        deltaPoints.out_sint16_le(rect_tab.cx - border_width_height);
+        deltaPoints.out_sint16_le(0);
+
+        deltaPoints.out_sint16_le(0);
+        deltaPoints.out_sint16_le(-(rect_tab.cy - this->item_index_height - border_width_height));
+
+        deltaPoints.out_sint16_le(-(rect_tab.cx - item_index_offset - border_width_height * 2));
+        deltaPoints.out_sint16_le(0);
+
+        deltaPoints.mark_end();
+        deltaPoints.rewind();
+
+        RDPPolyline polyline_box( rect_tab.x + first_item_index_offset_left
+                                , rect_tab.y + border_width_height
+                                , 0x0D, 0, this->get_fg_color(), 6
+                                , deltaPoints);
+        this->drawable.draw(polyline_box, clip);
 
         this->drawable.end_update();
     }
