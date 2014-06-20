@@ -154,11 +154,11 @@ public:
 
 private:
     virtual void do_recv(char ** pbuffer, size_t len) {
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
     virtual void do_send(const char * const buffer, size_t len) {
-        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV, 0);
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
     }
 
 public:

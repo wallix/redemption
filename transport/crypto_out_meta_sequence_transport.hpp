@@ -173,14 +173,12 @@ namespace detail
                     }
                     *p++ = '\n';
                     res = this->write(mes, p-mes);
-                    this->start_sec = this->stop_sec;
+                    if (res == ssize_t(p-mes)) {
+                        res = 0;
+                        this->start_sec = this->stop_sec;
+                    }
                 }
-                if (res < 0) {
-                    int err = errno;
-                    LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
-                    return res;
-                }
-                return 0;
+                return res;
             }
             return 1;
         }
@@ -217,16 +215,13 @@ namespace detail
             }
 
             transbuf::ocrypto_filename_base crypto_hash(this->crypto_context());
-            TODO("check errors when storing hash");
             if (crypto_hash.open(hf.filename) >= 0) {
                 const size_t len = strlen(filename);
                 if (crypto_hash.write(filename, len) != long(len)
-                || crypto_hash.write(hash, HASH_LEN+1) != HASH_LEN+1) {
+                 || crypto_hash.write(hash, HASH_LEN+1) != HASH_LEN+1
+                 || crypto_hash.close(hash) != 0) {
                     LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", hf.filename, -HASH_LEN);
                     return false;
-                }
-                else {
-                    crypto_hash.close(hash);
                 }
 
                 if (chmod(hf.filename, S_IRUSR|S_IRGRP) == -1){
@@ -243,24 +238,22 @@ namespace detail
 
         template<class Buf>
         /*constexpr*/ const char * current_path(Buf & buf) const /*noexcept*/
-        {
-            return buf.policy().seqgen().get(buf.policy().seqnum());
-        }
+        { return buf.policy().seqgen().get(buf.policy().seqnum()); }
 
         void update_sec(time_t sec) /*noexcept*/
         { this->stop_sec = sec; }
     };
 }
 
-class CryptoOutMetaSequenceTransport
-: public OutBufferTransport<
+
+#include "detail/out_meta_sequence_transport_base.hpp"
+
+struct CryptoOutMetaSequenceTransport
+: detail::OutMetaSequenceTransportBase<
     detail::crypto_out_meta_buf_base,
     detail::crypto_out_meta_nexter
 >
 {
-    detail::MetaFilename mf;
-
-public:
     CryptoOutMetaSequenceTransport(
         CryptoContext * crypto_ctx,
         const char * path,
@@ -273,41 +266,13 @@ public:
         auth_api * authentifier = NULL,
         unsigned verbose = 0,
         FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
-    : CryptoOutMetaSequenceTransport::TransportType(
+    : CryptoOutMetaSequenceTransport::OutMetaSequenceBase(
         detail::crypto_out_meta_buf_base_params(
             *crypto_ctx,
             detail::FilenameSequencePolicyParams(format, path, basename, ".wrm", groupid)),
-        detail::crypto_out_meta_nexter_params(crypto_ctx, now.tv_sec, hash_path, basename, format))
-    , mf(path, basename, format)
-    {
-        (void)verbose;
-
-        if (this->nexter().open(this->mf.filename, S_IRUSR) < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-        }
-
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-
-        detail::write_meta_headers(this->nexter(), path, width, height, this->authentifier);
-    }
-
-    virtual void timestamp(timeval now) /*noexcept*/
-    {
-        this->nexter().update_sec(now.tv_sec);
-    }
-
-    const FilenameGenerator * seqgen() const /*noexcept*/
-    {
-        return &(this->buffer().policy().seqgen());
-    }
-
-    virtual void request_full_cleaning()
-    {
-        this->buffer().policy().request_full_cleaning();
-        ::unlink(this->mf.filename);
-    }
+        detail::crypto_out_meta_nexter_params(crypto_ctx, now.tv_sec, hash_path, basename, format),
+        path, basename, format, width, height, authentifier, verbose)
+    {}
 };
 
 #endif

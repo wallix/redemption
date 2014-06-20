@@ -50,20 +50,18 @@ namespace detail
             if (buf.is_open()) {
                 buf.close();
                 const char * filename = this->current_path(buf);
-                size_t len = strlen(filename);
+                ssize_t len = strlen(filename);
                 ssize_t res = this->write(filename, len);
-                if (res >= 0 && size_t(res) == len) {
+                if (res >= 0 && res == len) {
                     char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4];
                     len = std::sprintf(mes, " %u %u\n", (unsigned)this->start_sec, (unsigned)this->stop_sec+1);
                     res = this->write(mes, len);
-                    this->start_sec = this->stop_sec;
+                    if (res == len) {
+                        res = 0;
+                        this->start_sec = this->stop_sec;
+                    }
                 }
-                if (res < 0) {
-                    int err = errno;
-                    LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
-                    return res;
-                }
-                return 0;
+                return res;
             }
             return 1;
         }
@@ -90,15 +88,14 @@ namespace detail
 }
 
 
-class OutMetaSequenceTransport
-: public OutBufferTransport<
+#include "detail/out_meta_sequence_transport_base.hpp"
+
+struct OutMetaSequenceTransport
+: detail::OutMetaSequenceTransportBase<
     transbuf::output_buf<io::posix::fdbuf, detail::FilenameSequencePolicy>,
     detail::out_meta_nexter<transbuf::ofile_base>
 >
 {
-    detail::MetaFilename mf;
-
-public:
     OutMetaSequenceTransport(
         const char * path,
         const char * basename,
@@ -109,39 +106,11 @@ public:
         auth_api * authentifier = NULL,
         unsigned verbose = 0,
         FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
-    : OutMetaSequenceTransport::TransportType(
+    : OutMetaSequenceTransport::OutMetaSequenceBase(
         detail::FilenameSequencePolicyParams(format, path, basename, ".wrm", groupid),
-        now.tv_sec)
-    , mf(path, basename, format)
-    {
-        (void)verbose;
-
-        if (this->nexter().open(this->mf.filename, S_IRUSR) < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-        }
-
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-
-        detail::write_meta_headers(this->nexter(), path, width, height, this->authentifier);
-    }
-
-    virtual void timestamp(timeval now) /*noexcept*/
-    {
-        this->nexter().update_sec(now.tv_sec);
-    }
-
-    const FilenameGenerator * seqgen() const /*noexcept*/
-    {
-        return &(this->buffer().policy().seqgen());
-    }
-
-    virtual void request_full_cleaning()
-    {
-        this->buffer().policy().request_full_cleaning();
-        ::unlink(this->mf.filename);
-    }
+        now.tv_sec,
+        path, basename, format, width, height, authentifier, verbose)
+    {}
 };
 
 #endif

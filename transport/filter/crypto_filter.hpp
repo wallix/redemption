@@ -617,12 +617,6 @@ namespace transfil {
             return 0;
         }
     };
-
-    template<class>
-    struct encrypt_params
-    {
-
-    };
 }
 
 #endif

@@ -70,13 +70,12 @@ public:
     }
 
 private:
-    virtual void do_recv(char ** pbuffer, size_t len) throw (Error) {
+    virtual void do_recv(char ** pbuffer, size_t len) {
         // CheckTransport does never receive anything
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
-    virtual void do_send(const char * const buffer, size_t len) throw (Error)
-    {
+    virtual void do_send(const char * const buffer, size_t len) {
         size_t to_buffer_len = len;
         while (this->stream.size() + to_buffer_len > max){
             BStream header(8);

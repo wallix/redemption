@@ -185,13 +185,14 @@ struct OutBufferTransport
     virtual bool next()
     {
         const ssize_t res = this->nexter().next(this->buffer());
-        if (res < 0){
+        if (res) {
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+            }
             this->status = false;
             throw Error(ERR_TRANSPORT_WRITE_FAILED, res);
         }
-        if (!res) {
-            ++this->seqno;
-        }
+        ++this->seqno;
         return !res;
     }
 

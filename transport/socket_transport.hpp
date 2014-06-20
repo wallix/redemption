@@ -796,7 +796,6 @@ public:
             return;
         }
 
-
         // ensures the certificate directory exists
         if (recursive_create_directory(CERTIF_PATH "/", S_IRWXU|S_IRWXG, 0) != 0) {
             LOG(LOG_ERR, "Failed to create certificate directory: " CERTIF_PATH "/");
@@ -1114,7 +1113,7 @@ public:
         return true;
     }
 
-    virtual void do_recv(char ** pbuffer, size_t len) throw (Error)
+    virtual void do_recv(char ** pbuffer, size_t len)
     {
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%u) receiving %u bytes", this->name, this->sck, len);
@@ -1141,7 +1140,7 @@ public:
         this->last_quantum_received = len;
     }
 
-    virtual void do_send(const char * const buffer, size_t len) throw (Error)
+    virtual void do_send(const char * const buffer, size_t len)
     {
         if (len == 0) { return; }
 
