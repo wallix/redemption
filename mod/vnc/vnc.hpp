@@ -421,11 +421,11 @@ public:
             }
             this->screen.add_widget(&this->challenge);
 
-            this->screen.set_widget_focus(&this->challenge);
+            this->screen.set_widget_focus(&this->challenge, Widget2::focus_reason_tabkey);
 
             this->challenge.password_edit.set_text("");
 
-            this->challenge.set_widget_focus(&this->challenge.password_edit);
+            this->challenge.set_widget_focus(&this->challenge.password_edit, Widget2::focus_reason_tabkey);
 
             this->screen.refresh(this->screen.rect);
 

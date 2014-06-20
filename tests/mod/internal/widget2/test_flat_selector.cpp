@@ -277,7 +277,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
                         "RDP", "2013-04-20 19:56:50");
 
-    selector.set_widget_focus(&selector.selector_lines);
+    selector.set_widget_focus(&selector.selector_lines, Widget2::focus_reason_tabkey);
     selector.selector_lines.set_current_index(0);
 
     selector.selector_lines.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
@@ -1072,7 +1072,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldVV)
     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
                         "RDP", "2013-04-20 19:56:50");
 
-    selector.set_widget_focus(&selector.selector_lines);
+    selector.set_widget_focus(&selector.selector_lines, Widget2::focus_reason_tabkey);
     selector.selector_lines.set_current_index(0);
 
     Keymap2 keymap;
@@ -1135,7 +1135,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldVM)
     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
                         "RDP", "2013-04-20 19:56:50");
 
-    selector.set_widget_focus(&selector.selector_lines);
+    selector.set_widget_focus(&selector.selector_lines, Widget2::focus_reason_tabkey);
     selector.selector_lines.set_current_index(0);
 
     Keymap2 keymap;
@@ -1213,7 +1213,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldMV)
     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
                         "RDP", "2013-04-20 19:56:50");
 
-    selector.set_widget_focus(&selector.selector_lines);
+    selector.set_widget_focus(&selector.selector_lines, Widget2::focus_reason_tabkey);
     selector.selector_lines.set_current_index(0);
 
     Keymap2 keymap;
@@ -1309,7 +1309,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldMM)
     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
                         "RDP", "2013-04-20 19:56:50");
 
-    selector.set_widget_focus(&selector.selector_lines);
+    selector.set_widget_focus(&selector.selector_lines, Widget2::focus_reason_tabkey);
     selector.selector_lines.set_current_index(0);
 
     Keymap2 keymap;

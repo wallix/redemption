@@ -48,12 +48,12 @@ public:
         , timeout(Timeout(now, ini.debug.pass_dialog_box))
     {
         this->screen.add_widget(&this->dialog_widget);
-        this->dialog_widget.set_widget_focus(&this->dialog_widget.ok);
-        this->screen.set_widget_focus(&this->dialog_widget);
+        this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget2::focus_reason_tabkey);
+        this->screen.set_widget_focus(&this->dialog_widget, Widget2::focus_reason_tabkey);
         this->screen.refresh(this->screen.rect);
 
         if (this->dialog_widget.challenge) {
-            this->dialog_widget.set_widget_focus(this->dialog_widget.challenge);
+            this->dialog_widget.set_widget_focus(this->dialog_widget.challenge, Widget2::focus_reason_tabkey);
             // this->ini.to_send_set.insert(AUTHID_AUTHENTICATION_CHALLENGE);
         }
     }

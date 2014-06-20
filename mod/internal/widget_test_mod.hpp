@@ -88,9 +88,9 @@ public:
 
 
         WidgetParent & wp = this->tab.get_item(tab_0_index);
-        wp.set_widget_focus(this->wedit_on_first_tab);
+        wp.set_widget_focus(this->wedit_on_first_tab, Widget2::focus_reason_tabkey);
 
-        this->screen.set_widget_focus(&this->tab);
+        this->screen.set_widget_focus(&this->tab, Widget2::focus_reason_tabkey);
         this->screen.refresh(this->screen.rect);
     }
 

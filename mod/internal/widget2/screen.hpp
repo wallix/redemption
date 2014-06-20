@@ -97,7 +97,7 @@ public:
                 future_focus_w = this->get_next_focus(NULL, false);
             }
             REDASSERT(this->current_focus);
-            this->set_widget_focus(future_focus_w);
+            this->set_widget_focus(future_focus_w, focus_reason_tabkey);
 
             return true;
         }
@@ -115,7 +115,7 @@ public:
                 future_focus_w = this->get_previous_focus(NULL, false);
             }
             REDASSERT(this->current_focus);
-            this->set_widget_focus(future_focus_w);
+            this->set_widget_focus(future_focus_w, focus_reason_backtabkey);
 
             return true;
         }

@@ -163,9 +163,9 @@ public:
             this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
         )), color), this->rect);
     }
-    virtual void focus() {
-        this->editbox->focus();
-        Widget2::focus();
+    virtual void focus(int reason) {
+        this->editbox->focus(reason);
+        Widget2::focus(reason);
     }
     virtual void blur() {
         this->editbox->blur();

@@ -215,7 +215,12 @@ public:
     virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
     }
 
-    virtual void focus()
+    enum {
+          focus_reason_tabkey
+        , focus_reason_backtabkey
+        , focus_reason_mousebutton1
+    };
+    virtual void focus(int reason)
     {
         if (!this->has_focus){
             this->has_focus = true;

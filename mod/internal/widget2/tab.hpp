@@ -117,6 +117,8 @@ private:
     size_t   item_count;
     size_t   current_item_index;
 
+    bool child_has_focus;
+
 public:
     WidgetTab( DrawApi & drawable, DrawingPolicy & drawing_policy, int16_t x, int16_t y
              , uint16_t cx, uint16_t cy, Widget2 & parent
@@ -126,7 +128,8 @@ public:
     , drawing_policy(drawing_policy)
     , items()
     , item_count(0)
-    , current_item_index(0) {
+    , current_item_index(0)
+    , child_has_focus(true) {
         this->drawing_policy.set_color(bgcolor, fgcolor);
     }
 
@@ -172,12 +175,12 @@ public:
             this->refresh(this->rect);
         }
     }
-    virtual void focus() {
+    virtual void focus(int reason) {
         if (!this->has_focus) {
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
             if (this->item_count > 0) {
-                this->items[this->current_item_index]->focus();
+                this->items[this->current_item_index]->focus(reason);
             }
             this->refresh(this->rect);
         }
@@ -246,9 +249,32 @@ public:
     virtual void rdp_input_scancode( long param1, long param2, long param3
                                    , long param4, Keymap2 * keymap) {
         if (keymap->nb_kevent_available() > 0) {
-            if (this->item_count) {
+            if (this->child_has_focus && this->item_count) {
                 REDASSERT(this->item_count > this->current_item_index);
-                return this->items[this->current_item_index]->rdp_input_scancode(param1, param2, param3, param4, keymap);
+                this->items[this->current_item_index]->rdp_input_scancode(param1, param2, param3, param4, keymap);
+            }
+            else {
+                switch (keymap->top_kevent()) {
+                case Keymap2::KEVENT_LEFT_ARROW:
+                    keymap->get_kevent();
+                    this->current_item_index++;
+                    if (this->current_item_index >= this->item_count) {
+                        this->current_item_index = 0;
+                    }
+                    this->refresh(this->rect);
+                    break;
+                case Keymap2::KEVENT_RIGHT_ARROW:
+                    keymap->get_kevent();
+
+                    if (this->current_item_index > 0) {
+                        this->current_item_index--;
+                    }
+                    else {
+                        this->current_item_index = (this->item_count ? (this->item_count - 1) : 0);
+                    }
+                    this->refresh(this->rect);
+                    break;
+                }
             }
         }
     }

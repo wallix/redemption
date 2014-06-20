@@ -183,7 +183,7 @@ public:
 
     virtual ~WidgetParent() {}
 
-    void set_widget_focus(Widget2 * new_focused) {
+    void set_widget_focus(Widget2 * new_focused, int reason) {
         REDASSERT(new_focused);
         if (new_focused != this->current_focus) {
             if (this->current_focus) {
@@ -192,16 +192,23 @@ public:
             this->current_focus = new_focused;
         }
 
-        this->current_focus->focus();
+        this->current_focus->focus(reason);
     }
 
-    virtual void focus() {
+    virtual void focus(int reason) {
         if (!this->has_focus) {
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
+
+            if (reason == focus_reason_tabkey) {
+                this->current_focus = this->get_next_focus(NULL, false);
+            }
+            else if (reason == focus_reason_backtabkey) {
+                this->current_focus = this->get_previous_focus(NULL, false);
+            }
         }
         if (this->current_focus) {
-            this->current_focus->focus();
+            this->current_focus->focus(reason);
         }
         this->refresh(this->rect);
     }
@@ -404,7 +411,7 @@ public:
             Widget2 * future_focus_w = this->get_next_focus(this->current_focus, false);
 
             if (future_focus_w) {
-                this->set_widget_focus(future_focus_w);
+                this->set_widget_focus(future_focus_w, focus_reason_tabkey);
 
                 return true;
             }
@@ -425,7 +432,7 @@ public:
             Widget2 * future_focus_w = this->get_previous_focus(this->current_focus, false);
 
             if (future_focus_w) {
-                this->set_widget_focus(future_focus_w);
+                this->set_widget_focus(future_focus_w, focus_reason_backtabkey);
 
                 return true;
             }
@@ -501,7 +508,7 @@ public:
             if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
                 this->pressed = w;
                 if (/*(*/w->focus_flag != IGNORE_FOCUS/*) && (w != this->current_focus)*/) {
-                    this->set_widget_focus(w);
+                    this->set_widget_focus(w, focus_reason_mousebutton1);
                 }
             }
             w->rdp_input_mouse(device_flags, x, y, keymap);

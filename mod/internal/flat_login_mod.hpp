@@ -48,11 +48,11 @@ public:
         this->login.login_edit.set_text(this->ini.account.username);
         this->login.password_edit.set_text(this->ini.account.password);
 
-        this->screen.set_widget_focus(&this->login);
+        this->screen.set_widget_focus(&this->login, Widget2::focus_reason_tabkey);
 
-        this->login.set_widget_focus(&this->login.login_edit);
+        this->login.set_widget_focus(&this->login.login_edit, Widget2::focus_reason_tabkey);
         if (ini.account.username[0] != 0){
-            this->login.set_widget_focus(&this->login.password_edit);
+            this->login.set_widget_focus(&this->login.password_edit, Widget2::focus_reason_tabkey);
         }
 
         this->screen.refresh(this->screen.rect);

@@ -881,12 +881,12 @@ public:
     void ask_for_connection() {
         if (((this->tc_flag & TICKET_MANDATORY) == TICKET_MANDATORY) &&
             (this->ticket_edit.num_chars == 0)) {
-            this->set_widget_focus(&this->ticket_edit);
+            this->set_widget_focus(&this->ticket_edit, focus_reason_mousebutton1);
             return;
         }
         if (((this->tc_flag & COMMENT_MANDATORY) == COMMENT_MANDATORY) &&
             (this->comment_edit.num_chars == 0)) {
-            this->set_widget_focus(&this->comment_edit);
+            this->set_widget_focus(&this->comment_edit, focus_reason_mousebutton1);
             return;
         }
         if (this->notifier) {

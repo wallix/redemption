@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     WidgetEditValid wedit(drawable, x, y, cx, parent, notifier, "test1", id,
                           fg_color, bg_color, ANTHRACITE, edit_pos, xtext, ytext);
 
-    parent.set_widget_focus(&wedit);
+    parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
                                     0 + wedit.dy(),
@@ -574,7 +574,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     WidgetEditValid wedit(drawable, x, y, cx, parent, &notifier, "abcdef", 0, BLACK, WHITE, DARK_BLUE);
 
     parent.add_widget(&wedit);
-    parent.set_widget_focus(&wedit);
+    parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                           wedit.lx() - 5, wedit.centery(), NULL);
