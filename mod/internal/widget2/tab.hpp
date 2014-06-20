@@ -129,7 +129,7 @@ public:
     , items()
     , item_count(0)
     , current_item_index(0)
-    , child_has_focus(true) {
+    , child_has_focus(false) {
         this->drawing_policy.set_color(bgcolor, fgcolor);
     }
 
@@ -169,7 +169,7 @@ public:
         if (this->has_focus) {
             this->has_focus = false;
             this->send_notify(NOTIFY_FOCUS_END);
-            if (this->item_count > 0) {
+            if (this->item_count) {
                 this->items[this->current_item_index]->blur();
             }
             this->refresh(this->rect);
@@ -179,7 +179,12 @@ public:
         if (!this->has_focus) {
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
-            if (this->item_count > 0) {
+
+            if (reason == focus_reason_tabkey) {
+                this->child_has_focus = false;
+            }
+            else if (this->item_count) {
+                this->child_has_focus = true;
                 this->items[this->current_item_index]->focus(reason);
             }
             this->refresh(this->rect);
@@ -202,13 +207,21 @@ public:
                                  , this->item_count
                                  , this->current_item_index);
 
-        if (this->item_count > 0) {
+        if (this->item_count) {
             this->items[this->current_item_index]->draw_children(rect);
         }
         this->drawable.end_update();
     }
 
     virtual bool next_focus() {
+        if (!this->child_has_focus) {
+            if (this->item_count) {
+                this->child_has_focus = true;
+                this->items[this->current_item_index]->focus(focus_reason_tabkey);
+                return true;
+            }
+        }
+
         if (this->item_count) {
             REDASSERT(this->item_count > this->current_item_index);
             return this->items[this->current_item_index]->next_focus();
@@ -217,9 +230,15 @@ public:
         return false;
     }
     virtual bool previous_focus() {
-        if (this->item_count) {
+        if (this->child_has_focus) {
+            REDASSERT(this->item_count);
             REDASSERT(this->item_count > this->current_item_index);
-            return this->items[this->current_item_index]->previous_focus();
+            if (this->items[this->current_item_index]->previous_focus()) {
+                return true;
+            }
+
+            this->child_has_focus = false;
+            return true;
         }
 
         return false;
