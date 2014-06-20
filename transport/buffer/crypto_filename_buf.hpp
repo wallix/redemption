@@ -71,6 +71,9 @@ namespace transbuf {
         bool is_open() const /*noexcept*/
         { return this->file.is_open(); }
 
+        off_t seek(off_t offset, int whence) const /*noexcept*/
+        { return this->file.seek(offset, whence); }
+
     protected:
         CryptoContext * crypto_context() const /*noexcept*/
         { return this->ctx; }
@@ -132,6 +135,9 @@ namespace transbuf {
 
         bool is_open() const /*noexcept*/
         { return this->file.is_open(); }
+
+        off_t seek(off_t offset, int whence) const /*noexcept*/
+        { return this->file.seek(offset, whence); }
 
     protected:
         CryptoContext * crypto_context() const /*noexcept*/

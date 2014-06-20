@@ -152,6 +152,11 @@ public:
     virtual void flush()
     {}
 
+    virtual void seek(int64_t offset, int whence)
+    {
+        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
+    }
+
 private:
     virtual void do_recv(char ** pbuffer, size_t len) {
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);

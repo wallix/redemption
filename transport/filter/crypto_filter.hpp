@@ -40,7 +40,7 @@
 
 namespace transfil {
     namespace detail {
-        int init_cypher(EVP_CIPHER_CTX * ctx, unsigned char * trace_key, const unsigned char * iv, bool is_decrypion)
+        inline int init_cypher(EVP_CIPHER_CTX * ctx, unsigned char * trace_key, const unsigned char * iv, bool is_decrypion)
         {
             const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
             const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...

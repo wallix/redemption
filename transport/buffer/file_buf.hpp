@@ -44,6 +44,9 @@ namespace transbuf {
 
         ssize_t read(void * data, size_t len) /*noexcept*/
         { return this->fdbuf.read(data, len); }
+
+        off_t seek(off_t offset, int whence) const /*noexcept*/
+        { return this->fdbuf.seek(offset, whence); }
     };
 
     class ofile_base
@@ -65,6 +68,9 @@ namespace transbuf {
 
         ssize_t write(const void * data, size_t len) /*noexcept*/
         { return this->fdbuf.write(data, len); }
+
+        off_t seek(off_t offset, int whence) const /*noexcept*/
+        { return this->fdbuf.seek(offset, whence); }
     };
 }
 

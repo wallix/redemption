@@ -32,6 +32,14 @@ struct OutFileTransport
     OutFileTransport(int fd) /*noexcept*/
     : OutBufferTransport::TransportType(fd)
     {}
+
+private:
+    virtual void seek(int64_t offset, int whence)
+    {
+        if ((off_t)-1 == this->buffer().seek(offset, whence)){
+            throw Error(ERR_TRANSPORT_SEEK_FAILED);
+        }
+    }
 };
 
 #endif
