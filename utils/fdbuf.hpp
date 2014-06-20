@@ -120,7 +120,7 @@ private:
     fdbuf&operator=(fdbuf const &) /*= delete */;
 };
 
-void swap(fdbuf & a, fdbuf & b) /*noexcept*/
+inline void swap(fdbuf & a, fdbuf & b) /*noexcept*/
 { a.swap(b); }
 
 } //posix
