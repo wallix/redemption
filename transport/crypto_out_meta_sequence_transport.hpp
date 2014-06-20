@@ -30,146 +30,6 @@
 
 namespace detail
 {
-    struct crypto_out_meta_nexter_params
-    {
-        CryptoContext * crypto_ctx;
-        const char * hash_path;
-        const char * basename;
-        time_t start_sec;
-        FilenameFormat format;
-
-        crypto_out_meta_nexter_params(
-            CryptoContext * crypto_ctx,
-            time_t start_sec,
-            const char * hash_path,
-            const char * basename,
-            FilenameFormat format
-        )
-        : crypto_ctx(crypto_ctx)
-        , hash_path(hash_path)
-        , basename(basename)
-        , start_sec(start_sec)
-        , format(format)
-        {}
-    };
-
-    class crypto_out_meta_nexter
-    : public transbuf::ocrypto_filename_base
-    {
-        detail::MetaFilename hf;
-        time_t start_sec;
-        time_t stop_sec;
-
-    public:
-        crypto_out_meta_nexter(crypto_out_meta_nexter_params const & params) /*noexcept*/
-        : transbuf::ocrypto_filename_base(params.crypto_ctx)
-        , hf(params.hash_path, params.basename, params.format)
-        , start_sec(params.start_sec)
-        , stop_sec(params.start_sec)
-        {}
-
-        template<class TransportBuf>
-        int next(TransportBuf & buf) /*noexcept*/
-        {
-            if (buf.is_open()) {
-                unsigned char hash[HASH_LEN];
-                buf.close(hash);
-                const char * filename = this->current_path(buf);
-                size_t len = strlen(filename);
-                ssize_t res = this->write(filename, len);
-                if (res >= 0 && size_t(res) == len) {
-                    char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + HASH_LEN*2 + 2];
-                    len = std::sprintf(mes, " %u %u", (unsigned)this->start_sec, (unsigned)this->stop_sec+1);
-                    char * p = mes + len;
-                    *p++ = ' ';                           //     1 octet
-                    for (int i = 0; i < HASH_LEN / 2; i++, p += 2) {
-                        std::sprintf(p, "%02x", hash[i]); //    64 octets (hash1)
-                    }
-                    *p++ = ' ';                           //     1 octet
-                    for (int i = HASH_LEN / 2; i < HASH_LEN; i++, p += 2) {
-                        std::sprintf(p, "%02x", hash[i]); //    64 octets (hash2)
-                    }
-                    *p++ = '\n';
-                    res = this->write(mes, p-mes);
-                    this->start_sec = this->stop_sec;
-                }
-                if (res < 0) {
-                    int err = errno;
-                    LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
-                    return res;
-                }
-                return 0;
-            }
-            return 1;
-        }
-
-        template<class TransportBuf>
-        bool next_end(TransportBuf & buf) /*noexcept*/
-        {
-            if (buf.is_open()) {
-                if (this->next(buf)) {
-                    return false;
-                }
-            }
-
-            if (!this->is_open()) {
-                return false;
-            }
-
-            char path[1024] = {};
-            char basename[1024] = {};
-            char extension[256] = {};
-            char filename[2048] = {};
-
-            canonical_path(
-                hf.filename,
-                path, sizeof(path),
-                basename, sizeof(basename),
-                extension, sizeof(extension));
-            std::snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-
-            unsigned char hash[HASH_LEN + 1] = {0};
-            hash[0] = ' ';
-
-            if (this->close(hash+1) < 0) {
-                return false;
-            }
-
-            transbuf::ocrypto_filename_base crypto_hash(this->crypto_context());
-            TODO("check errors when storing hash");
-            if (crypto_hash.open(hf.filename) >= 0) {
-                const size_t len = strlen(filename);
-                if (crypto_hash.write(filename, len) != long(len)
-                || crypto_hash.write(hash, HASH_LEN+1) != HASH_LEN+1) {
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", hf.filename, -HASH_LEN);
-                    return false;
-                }
-                else {
-                    crypto_hash.close(hash);
-                }
-
-                if (chmod(hf.filename, S_IRUSR|S_IRGRP) == -1){
-                    LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", hf.filename, strerror(errno), errno);
-                }
-            }
-            else {
-                LOG(LOG_ERR, "Open to transport failed: code=%d", errno);
-                return false;
-            }
-
-            return true;
-        }
-
-        template<class Buf>
-        /*constexpr*/ const char * current_path(Buf & buf) const /*noexcept*/
-        {
-            return buf.policy().seqgen().get(buf.policy().seqnum());
-        }
-
-        void update_sec(time_t sec) /*noexcept*/
-        { this->stop_sec = sec; }
-    };
-
     struct crypto_out_meta_buf_base_params
     {
         CryptoContext & ctx;
@@ -251,6 +111,144 @@ namespace detail
 
         FilenameSequencePolicy & policy() /*noexcept*/
         { return this->fsq; }
+    };
+
+    struct crypto_out_meta_nexter_params
+    {
+        CryptoContext * crypto_ctx;
+        const char * hash_path;
+        const char * basename;
+        time_t start_sec;
+        FilenameFormat format;
+
+        crypto_out_meta_nexter_params(
+            CryptoContext * crypto_ctx,
+            time_t start_sec,
+            const char * hash_path,
+            const char * basename,
+            FilenameFormat format
+        )
+        : crypto_ctx(crypto_ctx)
+        , hash_path(hash_path)
+        , basename(basename)
+        , start_sec(start_sec)
+        , format(format)
+        {}
+    };
+
+    class crypto_out_meta_nexter
+    : public transbuf::ocrypto_filename_base
+    {
+        detail::MetaFilename hf;
+        time_t start_sec;
+        time_t stop_sec;
+
+    public:
+        crypto_out_meta_nexter(crypto_out_meta_nexter_params const & params) /*noexcept*/
+        : transbuf::ocrypto_filename_base(params.crypto_ctx)
+        , hf(params.hash_path, params.basename, params.format)
+        , start_sec(params.start_sec)
+        , stop_sec(params.start_sec)
+        {}
+
+        int next(crypto_out_meta_buf_base & buf) /*noexcept*/
+        {
+            if (buf.is_open()) {
+                unsigned char hash[HASH_LEN];
+                buf.close(hash);
+                const char * filename = this->current_path(buf);
+                size_t len = strlen(filename);
+                ssize_t res = this->write(filename, len);
+                if (res >= 0 && size_t(res) == len) {
+                    char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + HASH_LEN*2 + 2];
+                    len = std::sprintf(mes, " %u %u", (unsigned)this->start_sec, (unsigned)this->stop_sec+1);
+                    char * p = mes + len;
+                    *p++ = ' ';                           //     1 octet
+                    for (int i = 0; i < HASH_LEN / 2; i++, p += 2) {
+                        std::sprintf(p, "%02x", hash[i]); //    64 octets (hash1)
+                    }
+                    *p++ = ' ';                           //     1 octet
+                    for (int i = HASH_LEN / 2; i < HASH_LEN; i++, p += 2) {
+                        std::sprintf(p, "%02x", hash[i]); //    64 octets (hash2)
+                    }
+                    *p++ = '\n';
+                    res = this->write(mes, p-mes);
+                    this->start_sec = this->stop_sec;
+                }
+                if (res < 0) {
+                    int err = errno;
+                    LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
+                    return res;
+                }
+                return 0;
+            }
+            return 1;
+        }
+
+        bool next_end(crypto_out_meta_buf_base & buf) /*noexcept*/
+        {
+            if (buf.is_open()) {
+                if (this->next(buf)) {
+                    return false;
+                }
+            }
+
+            if (!this->is_open()) {
+                return false;
+            }
+
+            char path[1024] = {};
+            char basename[1024] = {};
+            char extension[256] = {};
+            char filename[2048] = {};
+
+            canonical_path(
+                hf.filename,
+                path, sizeof(path),
+                basename, sizeof(basename),
+                extension, sizeof(extension));
+            std::snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+            unsigned char hash[HASH_LEN + 1] = {0};
+            hash[0] = ' ';
+
+            if (this->close(hash+1) < 0) {
+                return false;
+            }
+
+            transbuf::ocrypto_filename_base crypto_hash(this->crypto_context());
+            TODO("check errors when storing hash");
+            if (crypto_hash.open(hf.filename) >= 0) {
+                const size_t len = strlen(filename);
+                if (crypto_hash.write(filename, len) != long(len)
+                || crypto_hash.write(hash, HASH_LEN+1) != HASH_LEN+1) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", hf.filename, -HASH_LEN);
+                    return false;
+                }
+                else {
+                    crypto_hash.close(hash);
+                }
+
+                if (chmod(hf.filename, S_IRUSR|S_IRGRP) == -1){
+                    LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", hf.filename, strerror(errno), errno);
+                }
+            }
+            else {
+                LOG(LOG_ERR, "Open to transport failed: code=%d", errno);
+                return false;
+            }
+
+            return true;
+        }
+
+        template<class Buf>
+        /*constexpr*/ const char * current_path(Buf & buf) const /*noexcept*/
+        {
+            return buf.policy().seqgen().get(buf.policy().seqnum());
+        }
+
+        void update_sec(time_t sec) /*noexcept*/
+        { this->stop_sec = sec; }
     };
 }
 
