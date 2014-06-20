@@ -40,10 +40,10 @@ public:
 
     enum { invalid_iterator = 0 };
 
-    virtual void add(Widget2 * w) = 0;
-    virtual void remove(Widget2 * w) = 0;
-
     typedef void * iterator;
+
+    virtual iterator add(Widget2 * w) = 0;
+    virtual void remove(const Widget2 * w) = 0;
 
     virtual Widget2 * get(iterator iter) const = 0;
 
@@ -53,7 +53,7 @@ public:
     virtual iterator get_previous(iterator iter, bool loop = false) = 0;
     virtual iterator get_next(iterator iter, bool loop = false) = 0;
 
-    virtual iterator find(Widget2 * w) = 0;
+    virtual iterator find(const Widget2 * w) = 0;
 
     virtual void clear() = 0;
 };
@@ -73,13 +73,13 @@ public:
         }
     }
 
-    virtual void add(Widget2 * w) {
+    virtual iterator add(Widget2 * w) {
         REDASSERT(w);
         REDASSERT(this->children_count < MAX_CHILDREN_COUNT);
         this->child_table[this->children_count] = w;
-        this->children_count++;
+        return static_cast<iterator>(&this->child_table[this->children_count++]);
     }
-    virtual void remove(Widget2 * w) {
+    virtual void remove(const Widget2 * w) {
         REDASSERT(w);
         REDASSERT(this->children_count);
         bool children_found = false;
@@ -147,7 +147,7 @@ public:
         return (static_cast<Widget2 **>(iter)) + 1;
     }
 
-    virtual iterator find(Widget2 * w) {
+    virtual iterator find(const Widget2 * w) {
         for (size_t i = 0; i < this->children_count; i++) {
             if (this->child_table[i] == w) {
                 return static_cast<iterator>(&this->child_table[i]);
@@ -184,10 +184,14 @@ public:
     virtual ~WidgetParent() {}
 
     void set_widget_focus(Widget2 * new_focused) {
-        if (this->current_focus) {
-            this->current_focus->blur();
+        REDASSERT(new_focused);
+        if (new_focused != this->current_focus) {
+            if (this->current_focus) {
+                this->current_focus->blur();
+            }
+            this->current_focus = new_focused;
         }
-        this->current_focus = new_focused;
+
         this->current_focus->focus();
     }
 
@@ -195,31 +199,120 @@ public:
         if (!this->has_focus) {
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
-            if (this->current_focus) {
-                this->current_focus->focus();
-            }
-            this->refresh(this->rect);
         }
+        if (this->current_focus) {
+            this->current_focus->focus();
+        }
+        this->refresh(this->rect);
     }
     virtual void blur() {
         if (this->has_focus) {
             this->has_focus = false;
             this->send_notify(NOTIFY_FOCUS_END);
-            if (this->current_focus) {
-                this->current_focus->blur();
-            }
-            this->refresh(this->rect);
         }
+        if (this->current_focus) {
+            this->current_focus->blur();
+        }
+        this->refresh(this->rect);
+    }
+
+    Widget2 * get_next_focus(Widget2 * w, bool loop) {
+        CompositeContainer::iterator iter;
+        if (!w) {
+            REDASSERT(!loop);
+            if ((iter = this->impl->get_first()) == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
+                return NULL;
+            }
+
+            w = this->impl->get(iter);
+            if ((w->tab_flag != Widget2::IGNORE_TAB) && (w->focus_flag != Widget2::IGNORE_FOCUS)) {
+                return w;
+            }
+        }
+        else {
+            iter = this->impl->find(w);
+            REDASSERT(iter != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator));
+        }
+
+        CompositeContainer::iterator future_focus_iter;
+        while ((future_focus_iter = this->impl->get_next(iter, loop)) != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
+            Widget2 * future_focus_w = this->impl->get(future_focus_iter);
+            if ((future_focus_w->tab_flag != Widget2::IGNORE_TAB) && (future_focus_w->focus_flag != Widget2::IGNORE_FOCUS)) {
+                return future_focus_w;
+            }
+
+            if (future_focus_w == w) {
+                break;
+            }
+
+            iter = future_focus_iter;
+        }
+
+        return NULL;
+    }
+    Widget2 * get_previous_focus(Widget2 * w, bool loop) {
+        CompositeContainer::iterator iter;
+        if (!w) {
+            REDASSERT(!loop);
+            if ((iter = this->impl->get_last()) == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
+                return NULL;
+            }
+
+            w = this->impl->get(iter);
+            if ((w->tab_flag != Widget2::IGNORE_TAB) && (w->focus_flag != Widget2::IGNORE_FOCUS)) {
+                return w;
+            }
+        }
+        else {
+            iter = this->impl->find(w);
+            REDASSERT(iter != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator));
+        }
+
+        CompositeContainer::iterator future_focus_iter;
+        while ((future_focus_iter = this->impl->get_previous(iter, loop)) != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
+            Widget2 * future_focus_w = this->impl->get(future_focus_iter);
+            if ((future_focus_w->tab_flag != Widget2::IGNORE_TAB) && (future_focus_w->focus_flag != Widget2::IGNORE_FOCUS)) {
+                return future_focus_w;
+            }
+
+            if (future_focus_w == w) {
+                break;
+            }
+
+            iter = future_focus_iter;
+        }
+
+        return NULL;
     }
 
     virtual void add_widget(Widget2 * w) {
         this->impl->add(w);
+
+        if (!this->current_focus &&
+            (w->tab_flag != Widget2::IGNORE_TAB) && (w->focus_flag != Widget2::IGNORE_FOCUS)) {
+            this->current_focus = w;
+        }
     }
     virtual void remove_widget(Widget2 * w) {
+        if (this->current_focus == w) {
+            Widget2 * future_focus_w;
+            if ((future_focus_w = this->get_next_focus(w, false)) != NULL) {
+                this->current_focus = future_focus_w;
+            }
+            else if ((future_focus_w = this->get_previous_focus(w, false)) != NULL) {
+                this->current_focus = future_focus_w;
+            }
+            else {
+                this->current_focus = NULL;
+            }
+        }
+
         this->impl->remove(w);
     }
     virtual void clear() {
         this->impl->clear();
+
+        this->current_focus = NULL;
     }
 
     virtual void draw(const Rect & clip) {
@@ -255,11 +348,6 @@ public:
             iter_w_current = this->impl->get_next(iter_w_current);
         }
 
-/*
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
-        }
-*/
         ::fill_region(this->drawable, region, bg_color);
     }
     virtual void hide_child(const Rect & clip, int bg_color) {
@@ -309,6 +397,25 @@ public:
 
     virtual bool next_focus() {
         if (this->current_focus) {
+            if (this->current_focus->next_focus()) {
+                return true;
+            }
+
+            Widget2 * future_focus_w = this->get_next_focus(this->current_focus, false);
+
+            if (future_focus_w) {
+                this->set_widget_focus(future_focus_w);
+
+                return true;
+            }
+
+            this->current_focus->blur();
+            this->current_focus = this->get_next_focus(NULL, false);
+            REDASSERT(this->current_focus);
+        }
+
+/*
+        if (this->current_focus && !this->current_focus->next_focus()) {
             CompositeContainer::iterator iter_w_current = this->impl->find(this->current_focus);
             REDASSERT(iter_w_current !=
                 reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator));
@@ -316,6 +423,8 @@ public:
             CompositeContainer::iterator iter_w_next = this->impl->get_next(iter_w_current);
             if (iter_w_next == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
                 iter_w_next = this->impl->get_first();
+
+                return false;
             }
 
             while ((iter_w_next != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) &&
@@ -333,11 +442,31 @@ public:
                 }
             }
         }
+*/
 
         return false;
     }
     virtual bool previous_focus() {
         if (this->current_focus) {
+            if (this->current_focus->previous_focus()) {
+                return true;
+            }
+
+            Widget2 * future_focus_w = this->get_previous_focus(this->current_focus, false);
+
+            if (future_focus_w) {
+                this->set_widget_focus(future_focus_w);
+
+                return true;
+            }
+
+            this->current_focus->blur();
+            this->current_focus = this->get_previous_focus(NULL, false);
+            REDASSERT(this->current_focus);
+        }
+
+/*
+        if (this->current_focus && !this->current_focus->previous_focus()) {
             CompositeContainer::iterator iter_w_current = this->impl->find(this->current_focus);
             REDASSERT(iter_w_current !=
                 reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator));
@@ -362,6 +491,7 @@ public:
                 }
             }
         }
+*/
 
         return false;
     }
@@ -428,7 +558,7 @@ public:
             // get focus when mouse clic
             if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
                 this->pressed = w;
-                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)) {
+                if (/*(*/w->focus_flag != IGNORE_FOCUS/*) && (w != this->current_focus)*/) {
                     this->set_widget_focus(w);
                 }
             }
