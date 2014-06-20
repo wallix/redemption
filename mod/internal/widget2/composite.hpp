@@ -414,36 +414,6 @@ public:
             REDASSERT(this->current_focus);
         }
 
-/*
-        if (this->current_focus && !this->current_focus->next_focus()) {
-            CompositeContainer::iterator iter_w_current = this->impl->find(this->current_focus);
-            REDASSERT(iter_w_current !=
-                reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator));
-
-            CompositeContainer::iterator iter_w_next = this->impl->get_next(iter_w_current);
-            if (iter_w_next == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-                iter_w_next = this->impl->get_first();
-
-                return false;
-            }
-
-            while ((iter_w_next != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) &&
-                (iter_w_next != iter_w_current)) {
-                Widget2 * w = this->impl->get(iter_w_next);
-                REDASSERT(w);
-                if ((w->tab_flag != Widget2::IGNORE_TAB) && (w->focus_flag != Widget2::IGNORE_FOCUS)) {
-                    this->set_widget_focus(w);
-                    return true;
-                }
-
-                iter_w_next = this->impl->get_next(iter_w_next);
-                if (iter_w_next == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-                    iter_w_next = this->impl->get_first();
-                }
-            }
-        }
-*/
-
         return false;
     }
     virtual bool previous_focus() {
@@ -464,34 +434,6 @@ public:
             this->current_focus = this->get_previous_focus(NULL, false);
             REDASSERT(this->current_focus);
         }
-
-/*
-        if (this->current_focus && !this->current_focus->previous_focus()) {
-            CompositeContainer::iterator iter_w_current = this->impl->find(this->current_focus);
-            REDASSERT(iter_w_current !=
-                reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator));
-
-            CompositeContainer::iterator iter_w_previous = this->impl->get_previous(iter_w_current, true);
-            if (iter_w_previous == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-                iter_w_previous = this->impl->get_last();
-            }
-
-            while ((iter_w_previous != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) &&
-                (iter_w_previous != iter_w_current)) {
-                Widget2 * w = this->impl->get(iter_w_previous);
-                REDASSERT(w);
-                if ((w->tab_flag != Widget2::IGNORE_TAB) && (w->focus_flag != Widget2::IGNORE_FOCUS)) {
-                    this->set_widget_focus(w);
-                    return true;
-                }
-
-                iter_w_previous = this->impl->get_previous(iter_w_previous);
-                if (iter_w_previous == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-                    iter_w_previous = this->impl->get_last();
-                }
-            }
-        }
-*/
 
         return false;
     }

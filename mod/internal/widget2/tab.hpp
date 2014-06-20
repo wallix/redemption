@@ -148,7 +148,6 @@ public:
 
         this->items[this->item_count]->set_bg_color(this->drawing_policy.get_bg_color());
 
-//        this->rdp_input_invalidate(this->rect);
         this->refresh(this->rect);
 
         return this->item_count++;
@@ -167,11 +166,9 @@ public:
         if (this->has_focus) {
             this->has_focus = false;
             this->send_notify(NOTIFY_FOCUS_END);
-/*
-            if (this->current_focus) {
-                this->current_focus->blur();
+            if (this->item_count > 0) {
+                this->items[this->current_item_index]->blur();
             }
-*/
             this->refresh(this->rect);
         }
     }
@@ -179,11 +176,9 @@ public:
         if (!this->has_focus) {
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
-/*
-            if (this->current_focus) {
-                this->current_focus->focus();
+            if (this->item_count > 0) {
+                this->items[this->current_item_index]->focus();
             }
-*/
             this->refresh(this->rect);
         }
     }
@@ -203,67 +198,28 @@ public:
                                  , this->items
                                  , this->item_count
                                  , this->current_item_index);
-/*
-        Rect rect_intersect = clip.intersect(this->drawing_policy.get_child_area(this->rect));
 
         if (this->item_count > 0) {
-            this->items[this->current_item_index]->draw_inner_free(rect_intersect, GREEN);
-        }
-
-        this->drawable.draw(RDPOpaqueRect(this->rect, this->drawing_policy.get_bg_color()), clip);
-*/
-/*
-        // Box.
-        const uint16_t border           = 6;
-        const uint16_t text_margin      = 6;
-        const uint16_t text_indentation = border + text_margin + 4;
-        const uint16_t x_offset         = 1;
-
-        int w, h, tmp;
-        this->drawable.text_metrics("bp", tmp, h);
-        this->drawable.text_metrics(this->buffer, w, tmp);
-
-        BStream deltaPoints(256);
-
-        deltaPoints.out_sint16_le(border - (text_indentation - text_margin + 1));
-        deltaPoints.out_sint16_le(0);
-
-        deltaPoints.out_sint16_le(0);
-        deltaPoints.out_sint16_le(this->rect.cy - h / 2 - border);
-
-        deltaPoints.out_sint16_le(this->rect.cx - border * 2 + x_offset);
-        deltaPoints.out_sint16_le(0);
-
-        deltaPoints.out_sint16_le(0);
-        deltaPoints.out_sint16_le(-(this->rect.cy - h / 2 - border));    // OK
-
-        deltaPoints.out_sint16_le(-(this->rect.cx - border * 2 - w - text_indentation + x_offset));
-        deltaPoints.out_sint16_le(0);
-
-        deltaPoints.mark_end();
-        deltaPoints.rewind();
-
-        RDPPolyline polyline_box( this->rect.x + text_indentation - text_margin
-                                , this->rect.y + h / 2
-                                , 0x0D, 0, this->fg_color, 5, deltaPoints);
-        this->drawable.draw(polyline_box, clip);
-
-
-        // Label.
-        this->drawable.server_draw_text( this->rect.x + text_indentation
-                                       , this->rect.y
-                                       , this->buffer
-                                       , this->fg_color
-                                       , this->bg_color
-                                       , rect_intersect
-                                       );
-*/
-
-        if (this->item_count > 0) {
-//            this->items[this->current_item_index]->draw(clip);
             this->items[this->current_item_index]->draw_children(rect);
         }
         this->drawable.end_update();
+    }
+
+    virtual bool next_focus() {
+        if (this->item_count) {
+            REDASSERT(this->item_count > this->current_item_index);
+            return this->items[this->current_item_index]->next_focus();
+        }
+
+        return false;
+    }
+    virtual bool previous_focus() {
+        if (this->item_count) {
+            REDASSERT(this->item_count > this->current_item_index);
+            return this->items[this->current_item_index]->previous_focus();
+        }
+
+        return false;
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) {
@@ -290,18 +246,6 @@ public:
     virtual void rdp_input_scancode( long param1, long param2, long param3
                                    , long param4, Keymap2 * keymap) {
         if (keymap->nb_kevent_available() > 0) {
-/*
-            switch (keymap->top_kevent()) {
-            case Keymap2::KEVENT_TAB:
-                keymap->get_kevent();
-            break;
-            case Keymap2::KEVENT_BACKTAB:
-                keymap->get_kevent();
-            break;
-            default:
-            break;
-            }
-*/
             if (this->item_count) {
                 REDASSERT(this->item_count > this->current_item_index);
                 return this->items[this->current_item_index]->rdp_input_scancode(param1, param2, param3, param4, keymap);
@@ -362,8 +306,6 @@ public:
                      , size_t item_count
                      , size_t current_item_index) {
         this->drawable.begin_update();
-//        Rect rect_intersect = clip.intersect(rect_tab);
-//        this->drawable.draw(RDPOpaqueRect(rect_tab, /*this->get_bg_color()*/RED), clip);
         this->draw_opaque_rect(rect_tab, RED, clip);
 
         uint16_t item_index_offset = first_item_index_offset_left;
@@ -399,15 +341,6 @@ public:
             item_index_offset += item_index_width;
         }
 
-/*
-        this->drawable.draw(
-              RDPOpaqueRect( Rect( rect_tab.x + border_width_height
-                                 , rect_tab.y + this->item_index_height + border_width_height
-                                 , rect_tab.cx - border_width_height * 2
-                                 , rect_tab.cy - this->item_index_height - border_width_height * 2)
-                           , this->get_bg_color())
-            , clip);
-*/
         this->draw_opaque_rect( Rect( rect_tab.x + border_width_height
                               , rect_tab.y + this->item_index_height + border_width_height
                               , rect_tab.cx - border_width_height * 2
