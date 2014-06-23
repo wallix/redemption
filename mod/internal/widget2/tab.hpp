@@ -303,20 +303,19 @@ public:
                 switch (keymap->top_kevent()) {
                 case Keymap2::KEVENT_LEFT_ARROW:
                     keymap->get_kevent();
-                    this->current_item_index++;
-                    if (this->current_item_index >= this->item_count) {
-                        this->current_item_index = 0;
-                    }
-                    this->refresh(this->rect);
-                    break;
-                case Keymap2::KEVENT_RIGHT_ARROW:
-                    keymap->get_kevent();
-
                     if (this->current_item_index > 0) {
                         this->current_item_index--;
                     }
                     else {
                         this->current_item_index = (this->item_count ? (this->item_count - 1) : 0);
+                    }
+                    this->refresh(this->rect);
+                    break;
+                case Keymap2::KEVENT_RIGHT_ARROW:
+                    keymap->get_kevent();
+                    this->current_item_index++;
+                    if (this->current_item_index >= this->item_count) {
+                        this->current_item_index = 0;
                     }
                     this->refresh(this->rect);
                     break;
