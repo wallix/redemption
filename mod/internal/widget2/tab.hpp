@@ -61,6 +61,7 @@ public:
                                         , const Rect & rect_tab
                                         , WidgetTab::Item ** items
                                         , size_t item_count
+                                        , size_t current_item_index
                                         , int device_flags
                                         , int x
                                         , int y
@@ -118,6 +119,7 @@ private:
     size_t   item_count;
     size_t   current_item_index;
 
+public:
     bool child_has_focus;
 
 public:
@@ -148,7 +150,7 @@ public:
                                                 , this->drawing_policy
                                                 , rect_item
                                                 , *this
-                                                , this->notifier);
+                                                , this);
 
         this->items[this->item_count]->set_bg_color(this->drawing_policy.get_bg_color());
 
@@ -181,12 +183,23 @@ public:
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
 
+/*
             if (reason == focus_reason_tabkey) {
                 this->child_has_focus = false;
             }
             else if (this->item_count) {
                 this->child_has_focus = true;
                 this->items[this->current_item_index]->focus(reason);
+            }
+*/
+            if (reason == focus_reason_backtabkey) {
+                if (this->item_count) {
+                    this->child_has_focus = true;
+                    this->items[this->current_item_index]->focus(reason);
+                }
+            }
+            else {
+                this->child_has_focus = false;
             }
             this->refresh(this->rect);
         }
@@ -219,6 +232,9 @@ public:
     virtual bool next_focus() {
         if (!this->child_has_focus) {
             if (this->item_count) {
+                if (!this->items[this->current_item_index]->get_next_focus(NULL, false)) {
+                    return false;
+                }
                 this->child_has_focus = true;
                 this->items[this->current_item_index]->focus(focus_reason_tabkey);
                 this->refresh(this->rect);
@@ -257,6 +273,7 @@ public:
                                                     , this->rect
                                                     , this->items
                                                     , this->item_count
+                                                    , this->current_item_index
                                                     , device_flags
                                                     , x
                                                     , y
@@ -320,6 +337,14 @@ public:
             }
         }
         return Widget2::widget_at_pos(x, y);
+    }
+
+    virtual void notify(Widget2 * w, NotifyApi::notify_event_t event) {
+        if (event == NOTIFY_FOCUS_BEGIN) {
+            this->child_has_focus = true;
+            this->refresh(this->rect);
+        }
+        Widget2::notify(w, event);
     }
 };
 
@@ -505,6 +530,7 @@ public:
                                     , const Rect & rect_tab
                                     , WidgetTab::Item ** items
                                     , size_t item_count
+                                    , size_t current_item_index
                                     , int device_flags
                                     , int x
                                     , int y
@@ -528,7 +554,16 @@ public:
 
             if (rect_index.contains_pt(x, y)) {
                 if (device_flags & (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
+/*
+                    if (tab.child_has_focus) {
+                        items[current_item_index]->blur();
+                    }
+*/
+                    tab.blur();
+
+                    tab.child_has_focus = false;
                     tab.set_current_item(item_index);
+                    tab.focus(Widget2::focus_reason_mousebutton1);
                 }
 
                 return;

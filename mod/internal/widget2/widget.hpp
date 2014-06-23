@@ -189,8 +189,10 @@ public:
             this->notifier->notify(this, event);
     }
 
-    virtual void notify(Widget2 *, NotifyApi::notify_event_t)
+    virtual void notify(Widget2 * w, NotifyApi::notify_event_t event)
     {
+        if (this->notifier)
+            this->notifier->notify(this, event);
     }
 
     virtual Widget2 * widget_at_pos(int16_t x, int16_t y)

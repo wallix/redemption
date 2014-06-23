@@ -72,11 +72,15 @@ public:
         int  xtext       = 4;
         int  ytext       = 1;
 
-        this->wedit_on_first_tab = new WidgetEdit(*this, 11, 20, 30, this->tab.get_item(tab_0_index),
+        WidgetParent & parent_item = this->tab.get_item(tab_0_index);
+
+        notifier  = &parent_item;
+
+        this->wedit_on_first_tab = new WidgetEdit(*this, 11, 20, 30, parent_item,
             notifier, "", group_id, BLACK, WHITE, WHITE);
         this->tab.add_widget(tab_0_index, wedit_on_first_tab);
 
-        this->wbutton_on_first_tab = new WidgetFlatButton(*this, 10, 42, this->tab.get_item(tab_0_index),
+        this->wbutton_on_first_tab = new WidgetFlatButton(*this, 10, 42, parent_item,
             notifier, "Button on First tab", auto_resize, group_id, fg_color, bg_color,
             focuscolor, xtext, ytext);
         this->tab.add_widget(tab_0_index, wbutton_on_first_tab);
@@ -86,11 +90,12 @@ public:
             this, "", group_id, BLACK, WHITE, WHITE);
         this->screen.add_widget(this->wedit_on_screen);
 
+        this->screen.set_widget_focus(&this->tab, Widget2::focus_reason_tabkey);
 
         WidgetParent & wp = this->tab.get_item(tab_0_index);
         wp.set_widget_focus(this->wedit_on_first_tab, Widget2::focus_reason_tabkey);
+        this->tab.child_has_focus = true;
 
-        this->screen.set_widget_focus(&this->tab, Widget2::focus_reason_tabkey);
         this->screen.refresh(this->screen.rect);
     }
 
