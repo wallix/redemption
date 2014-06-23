@@ -194,8 +194,13 @@ public:
 */
             if (reason == focus_reason_backtabkey) {
                 if (this->item_count) {
-                    this->child_has_focus = true;
-                    this->items[this->current_item_index]->focus(reason);
+                    if (!this->items[this->current_item_index]->get_previous_focus(NULL, false)) {
+                        this->child_has_focus = false;
+                    }
+                    else {
+                        this->child_has_focus = true;
+                        this->items[this->current_item_index]->focus(reason);
+                    }
                 }
             }
             else {
