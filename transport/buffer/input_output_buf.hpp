@@ -98,7 +98,7 @@ namespace transbuf
         bool is_open() const /*noexcept*/
         { return OpenClosePolicy::is_open(this->buf); }
 
-        off_t seek(off_t offset, int whence) const /*noexcept*/
+        off_t seek(off_t offset, int whence) /*noexcept*/
         {
             if (!this->is_open()) {
                 const int res = OpenClosePolicy::init(this->buf);
@@ -168,7 +168,7 @@ namespace transbuf
         bool is_open() const /*noexcept*/
         { return OpenClosePolicy::is_open(this->buf); }
 
-        off_t seek(off_t offset, int whence) const /*noexcept*/
+        off_t seek(off_t offset, int whence) /*noexcept*/
         {
             if (!this->is_open()) {
                 const int res = OpenClosePolicy::init(this->buf);
