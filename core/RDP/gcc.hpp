@@ -1143,6 +1143,8 @@ namespace GCC
                 this->pad1octet = stream.in_uint8();
                 if (this->length < 216) { return; }
                 this->serverSelectedProtocol = stream.in_uint32_le();
+                TODO("Missing desktopPhysicalWith, desktopPhysicalHeight, desktopOrientation, desktopScaleFactor, deviceScaleFactor, see [MS-RDPBCGR] 2.2.1.3.2");
+
             }
 
             void emit(Stream & stream)
@@ -1425,11 +1427,13 @@ namespace GCC
             uint32_t flags;
             uint32_t redirectedSessionID;
 
+            bool permissive;
             CSCluster()
             : userDataType(CS_CLUSTER)
             , length(12)
             , flags(0)
             , redirectedSessionID(0)
+            , permissive(false)
             {
             }
 
@@ -1454,6 +1458,10 @@ namespace GCC
 
                 if (this->length != 12){
                     LOG(LOG_ERR, "CSCluster::recv bad header length=%d", this->length);
+                    if (this->permissive) {
+                        stream.in_skip_bytes(this->length - 4);
+                        return;
+                    }
                     throw Error(ERR_GCC);
                 }
 
@@ -1541,36 +1549,52 @@ namespace GCC
         struct CSMonitor {
             uint16_t userDataType;
             uint16_t length;
-            uint32_t left;
-            uint32_t top;
-            uint32_t right;
-            uint32_t bottom;
+            enum {
+                MAX_MONITOR_COUNT = 16
+            };
             enum {
                 TS_MONITOR_PRIMARY = 0x00000001,
             };
-
             uint32_t flags;
+            uint32_t monitorCount;
+            struct {
+                // Monitor Definition (TS_MONITOR_DEF)
+                uint32_t left;
+                uint32_t top;
+                uint32_t right;
+                uint32_t bottom;
+                uint32_t flags;
+            } monitorDefArray[MAX_MONITOR_COUNT];
 
+            bool permissive;
             CSMonitor()
             : userDataType(CS_MONITOR)
             , length(12) // default: everything except serverSelectedProtocol
-            , left(0)
-            , top(0)
-            , right(0)
-            , bottom(0)
             , flags(0)
+            , monitorCount(0)
+            , monitorDefArray()
+            , permissive(false)
             {
             }
 
             void emit(Stream & stream)
             {
+                if (this->monitorCount > 16) {
+                    this->monitorCount = 16;
+                }
                 stream.out_uint16_le(this->userDataType);
+                this->length = this->monitorCount * 20 + 12;
                 stream.out_uint16_le(this->length);
-                stream.out_uint32_le(this->left);
-                stream.out_uint32_le(this->top);
-                stream.out_uint32_le(this->right);
-                stream.out_uint32_le(this->bottom);
                 stream.out_uint32_le(this->flags);
+
+                stream.out_uint32_le(this->monitorCount);
+                for (size_t i = 0; i < this->monitorCount ; i++){
+                    stream.out_uint32_le(this->monitorDefArray[i].left);
+                    stream.out_uint32_le(this->monitorDefArray[i].top);
+                    stream.out_uint32_le(this->monitorDefArray[i].right);
+                    stream.out_uint32_le(this->monitorDefArray[i].bottom);
+                    stream.out_uint32_le(this->monitorDefArray[i].flags);
+                }
                 stream.mark_end();
             }
 
@@ -1584,29 +1608,44 @@ namespace GCC
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
 
-                if (this->length != 24){
-                    LOG(LOG_ERR, "CSMonitor::recv bad header length=%d", this->length);
+                this->flags          = stream.in_uint32_le();
+                this->monitorCount   = stream.in_uint32_le();
+
+                if (this->monitorCount > 16) {
+                    LOG(LOG_ERR, "CSMonitor::recv monitor count out of range (%u)", this->monitorCount);
+                    this->monitorCount = 0;
+                    if (this->permissive) {
+                        stream.in_skip_bytes(this->length - 12);
+                        return;
+                    }
                     throw Error(ERR_GCC);
                 }
-
-                this->left   = stream.in_uint32_le();
-                this->top    = stream.in_uint32_le();
-                this->right  = stream.in_uint32_le();
-                this->bottom = stream.in_uint32_le();
-                this->flags  = stream.in_uint32_le();
+                for (size_t i = 0; i < this->monitorCount ; i++){
+                    this->monitorDefArray[i].left   = stream.in_uint32_le();
+                    this->monitorDefArray[i].top    = stream.in_uint32_le();
+                    this->monitorDefArray[i].right  = stream.in_uint32_le();
+                    this->monitorDefArray[i].bottom = stream.in_uint32_le();
+                    this->monitorDefArray[i].flags  = stream.in_uint32_le();
+                }
             }
 
             void log(const char * msg)
             {
                 // --------------------- Base Fields ---------------------------------------
                 LOG(LOG_INFO, "%s GCC User Data CS_MONITOR (%u bytes)", msg, this->length);
-                LOG(LOG_INFO, "cs_monitor::left   = %u", this->left);
-                LOG(LOG_INFO, "cs_monitor::top    = %u", this->top);
-                LOG(LOG_INFO, "cs_monitor::right  = %u", this->right);
-                LOG(LOG_INFO, "cs_monitor::bottom = %u", this->bottom);
                 LOG(LOG_INFO, "cs_monitor::flags [%04X]", this->flags);
-                if (this->flags & TS_MONITOR_PRIMARY){
-                    LOG(LOG_INFO, "cs_monitor::flags::TS_MONITOR_PRIMARY");
+                LOG(LOG_INFO, "cs_monitor::monitorCount   = %u", this->monitorCount);
+
+                for (size_t i = 0; i < this->monitorCount ; i++){
+                    LOG(LOG_INFO, "cs_monitor::number = %u", i);
+                    LOG(LOG_INFO, "cs_monitor::left   = %u", this->monitorDefArray[i].left);
+                    LOG(LOG_INFO, "cs_monitor::top    = %u", this->monitorDefArray[i].top);
+                    LOG(LOG_INFO, "cs_monitor::right  = %u", this->monitorDefArray[i].right);
+                    LOG(LOG_INFO, "cs_monitor::bottom = %u", this->monitorDefArray[i].bottom);
+                    LOG(LOG_INFO, "cs_monitor::flags [%04X]", this->monitorDefArray[i].flags);
+                    if (this->flags & TS_MONITOR_PRIMARY){
+                        LOG(LOG_INFO, "cs_monitor::flags::TS_MONITOR_PRIMARY");
+                    }
                 }
             }
         };
@@ -1708,10 +1747,13 @@ namespace GCC
                 uint32_t options;
             } channelDefArray[32];
 
+            bool permissive;
+
             CSNet()
             : userDataType(CS_NET)
             , length(12)
             , channelCount(0)
+            , permissive(false)
             {
             }
 
@@ -1747,8 +1789,23 @@ namespace GCC
                 this->channelCount = stream.in_uint32_le();
                 if (this->channelCount >= 31) {
                     LOG(LOG_ERR, "cs_net::recv channel count out of range (%u)", this->channelCount);
+                    this->channelCount = 0;
+                    if (this->permissive) {
+                        stream.in_skip_bytes(this->length - 8);
+                        return;
+                    }
                     throw Error(ERR_CHANNEL_OUT_OF_RANGE);
                 }
+                if ((12 * this->channelCount + 8) != (this->length)) {
+                    LOG(LOG_ERR, "CSNet::recv length=%u and 12 * channelcount=%u not matching, ",
+                        this->length - 8, this->channelCount);
+                    if (this->permissive) {
+                        stream.in_skip_bytes(this->length - 8);
+                        return;
+                    }
+                    throw Error(ERR_GCC);
+                }
+
                 for (size_t i = 0; i < this->channelCount ; i++){
                     stream.in_copy_bytes(this->channelDefArray[i].name, 8);
                     this->channelDefArray[i].options = stream.in_uint32_le();
