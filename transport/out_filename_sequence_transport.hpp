@@ -52,6 +52,14 @@ struct OutFilenameSequenceTransport
     {
         this->buffer().policy().request_full_cleaning();
     }
+
+private:
+    virtual void seek(int64_t offset, int whence)
+    {
+        if ((off_t)-1 == this->buffer().seek(offset, whence)){
+            throw Error(ERR_TRANSPORT_SEEK_FAILED);
+        }
+    }
 };
 
 #endif
