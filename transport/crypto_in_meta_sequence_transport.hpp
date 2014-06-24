@@ -22,34 +22,32 @@
 #define REDEMPTION_TRANSPORT_CRYPTO_IN_META_SEQUENCE_TRANSPORT_HPP
 
 #include "detail/meta_opener.hpp"
-#include "buffer_transport.hpp"
-#include "buffer/input_output_buf.hpp"
+#include "mixin_transport.hpp"
 #include "buffer/crypto_filename_buf.hpp"
 
+#include "in_meta_sequence_transport.hpp"
+
 struct CryptoInMetaSequenceTransport
-: InBufferTransport<
-    transbuf::reopen_input<transbuf::icrypto_filename_base, detail::MetaOpener<transbuf::icrypto_filename_base> >,
-    detail::in_meta_nexter
->
+: InputNextTransport<detail::in_meta_sequence_buf<transbuf::icrypto_filename_base, transbuf::icrypto_filename_base> >
 {
     CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
-    : CryptoInMetaSequenceTransport::TransportType(transbuf::buf_params(
-        crypto_ctx, transbuf::buf_params(crypto_ctx, detail::temporary_concat(filename, extension).c_str())))
+    : CryptoInMetaSequenceTransport::TransportType(detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(
+        detail::temporary_concat(filename, extension).c_str(), crypto_ctx, crypto_ctx))
     {}
 
     CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename)
-    : CryptoInMetaSequenceTransport::TransportType(transbuf::buf_params(
-        crypto_ctx, transbuf::buf_params(crypto_ctx, filename)))
+    : CryptoInMetaSequenceTransport::TransportType(
+        detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(filename, crypto_ctx, crypto_ctx))
     {}
 
     unsigned begin_chunk_time() const /*noexcept*/
-    { return this->buffer().policy().get_begin_chunk_time(); }
+    { return this->buffer().get_begin_chunk_time(); }
 
     unsigned end_chunk_time() const /*noexcept*/
-    { return this->buffer().policy().get_end_chunk_time(); }
+    { return this->buffer().get_end_chunk_time(); }
 
     const char * path() const /*noexcept*/
-    { return this->buffer().policy().get_path(); }
+    { return this->buffer().current_path(); }
 };
 
 #endif

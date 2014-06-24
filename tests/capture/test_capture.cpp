@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.flush(); // to close last wrm
+        capture.close(); // to close last wrm
 
         const char * filename;
 

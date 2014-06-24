@@ -14,35 +14,23 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *   Product name: redemption, a FLOSS RDP proxy
- *   Copyright (C) Wallix 2010-2013
+ *   Copyright (C) Wallix 2010-2014
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_TRANSPORT_BUFFER_PARAMS_HPP
-#define REDEMPTION_TRANSPORT_BUFFER_PARAMS_HPP
+#ifndef REDEMPTION_TRANSPORT_DETAIL_NO_PARAM_HPP
+#define REDEMPTION_TRANSPORT_DETAIL_NO_PARAM_HPP
 
-namespace transbuf {
-    const struct no_param_t {
-        no_param_t(){} /*fix clang-3.2*/
-    } no_param;
-
-    template<class BufParams, class OtherParams>
-    struct two_params
+namespace detail {
+    struct no_param {};
+    
+    template<class Buf>
+    struct empty_ctor
+    : Buf
     {
-        //tuple
-        BufParams buf_params;
-        OtherParams other_params;
-
-        two_params(const BufParams & buf_params, const OtherParams & other_params)
-        : buf_params(buf_params)
-        , other_params(other_params)
+        empty_ctor(no_param = no_param())
         {}
     };
-
-    template<class BufParams, class OtherParams>
-    two_params<BufParams, OtherParams>
-    buf_params(const BufParams & buf_params, const OtherParams & open_close_params)
-    { return two_params<BufParams, OtherParams>(buf_params, open_close_params); }
 }
 
 #endif

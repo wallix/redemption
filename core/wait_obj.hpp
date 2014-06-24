@@ -130,7 +130,7 @@ public:
     void update(uint64_t idle_usec)
     {
         if (this->set_state) {
-            struct timeval now = tvtime();
+            timeval now = tvtime();
             timeval new_trigger = addusectimeval(idle_usec, now);
             if (lessthantimeval(new_trigger, this->trigger_time)) {
                 this->trigger_time = new_trigger;

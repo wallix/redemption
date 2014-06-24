@@ -22,32 +22,33 @@
 #define REDEMPTION_TRANSPORT_IN_META_SEQUENCE_TRANSPORT_HPP
 
 #include "detail/meta_opener.hpp"
-#include "buffer_transport.hpp"
+#include "mixin_transport.hpp"
 #include "buffer/file_buf.hpp"
-#include "buffer/input_output_buf.hpp"
+
 
 struct InMetaSequenceTransport
-: InBufferTransport<
-    transbuf::reopen_input<transbuf::ifile_base, detail::MetaOpener<transbuf::ifile_base> >,
-    detail::in_meta_nexter
->
+: InputNextTransport<detail::in_meta_sequence_buf<
+    detail::empty_ctor<transbuf::ifile_base>,
+    detail::empty_ctor<transbuf::ifile_base>
+> >
 {
     InMetaSequenceTransport(const char * filename, const char * extension)
-    : InMetaSequenceTransport::TransportType(detail::temporary_concat(filename, extension).str)
+    : InMetaSequenceTransport::TransportType(
+        detail::in_meta_sequence_buf_param<>(detail::temporary_concat(filename, extension).str))
     {}
 
     InMetaSequenceTransport(const char * filename) /*noexcept*/
-    : InMetaSequenceTransport::TransportType(filename)
+    : InMetaSequenceTransport::TransportType(detail::in_meta_sequence_buf_param<>(filename))
     {}
 
     unsigned begin_chunk_time() const /*noexcept*/
-    { return this->buffer().policy().get_begin_chunk_time(); }
+    { return this->buffer().get_begin_chunk_time(); }
 
     unsigned end_chunk_time() const /*noexcept*/
-    { return this->buffer().policy().get_end_chunk_time(); }
+    { return this->buffer().get_end_chunk_time(); }
 
     const char * path() const /*noexcept*/
-    { return this->buffer().policy().get_path(); }
+    { return this->buffer().current_path(); }
 };
 
 #endif

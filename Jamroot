@@ -136,6 +136,7 @@ project redemption
     <toolset>clang:<cxxflags>-Wno-array-bounds
     <toolset>clang:<cxxflags>-Wno-unused-variable
     <toolset>clang:<cxxflags>-Wno-unused-private-field
+    <toolset>clang:<cxxflags>-Wno-dynamic-class-memaccess #memcpy (class 'Capability'; vtable pointer will be overwritten)
 
     <toolset>clang,<variant>debug:<cxxflags>-Wno-null-dereference
 

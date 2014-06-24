@@ -22,10 +22,10 @@
 #define REDEMPTION_TRANSPORT_CRYPTO_OUT_FILENAME_TRANSPORT_HPP
 
 #include "buffer/crypto_filename_buf.hpp"
-#include "buffer_transport.hpp"
+#include "mixin_transport.hpp"
 
 struct CryptoOutFilenameTransport
-: OutBufferTransport<transbuf::ocrypto_filename_base>
+: OutputTransport<transbuf::ocrypto_filename_base>
 {
     CryptoOutFilenameTransport(CryptoContext * crypto_ctx, const char * filename, auth_api * authentifier = NULL)
     : CryptoOutFilenameTransport::TransportType(crypto_ctx)

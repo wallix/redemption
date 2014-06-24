@@ -24,28 +24,16 @@
 #define REDEMPTION_TRANSPORT_OUT_FILENAME_TRANSPORT_HPP
 
 #include "buffer/file_buf.hpp"
-#include "buffer_transport.hpp"
+#include "mixin_transport.hpp"
 
 struct OutFilenameTransport
-: OutBufferTransport<transbuf::ofile_base>
+: SeekableTransport< OutputTransport<transbuf::ofile_base> >
 {
-    OutFilenameTransport(const char * filename, auth_api * authentifier = NULL)
+    OutFilenameTransport(const char * filename)
     {
         if (this->buffer().open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-    }
-
-private:
-    virtual void seek(int64_t offset, int whence)
-    {
-        if ((off_t)-1 == this->buffer().seek(offset, whence)){
-            throw Error(ERR_TRANSPORT_SEEK_FAILED);
         }
     }
 };

@@ -25,7 +25,7 @@
 
 #include "transport.hpp"
 #include "unique_ptr.hpp"
-#include "buffer_transport.hpp"
+#include "mixin_transport.hpp"
 #include "buffer/dynarray_buf.hpp"
 #include "buffer/check_buf.hpp"
 
@@ -33,7 +33,7 @@
 #include <algorithm>
 
 struct GeneratorTransport
-: InBufferTransport<transbuf::dynarray_base>
+: InputTransport<transbuf::dynarray_base>
 {
     GeneratorTransport(const char * data, size_t len, uint32_t verbose = 0)
     {

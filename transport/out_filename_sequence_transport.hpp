@@ -21,23 +21,26 @@
 #ifndef REDEMPTION_TRANSPORT_OUT_FILENAME_SEQUENCE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_OUT_FILENAME_SEQUENCE_TRANSPORT_HPP
 
-#include "detail/filename_sequence_policy.hpp"
-
-#include "buffer_transport.hpp"
+#include "detail/meta_writer.hpp"
+#include "mixin_transport.hpp"
 #include "fdbuf.hpp"
 
+
 struct OutFilenameSequenceTransport
-: OutBufferTransport<transbuf::output_buf<io::posix::fdbuf, detail::FilenameSequencePolicy> >
+: //SeekableTransport<
+    OutputNextTransport<detail::out_sequence_filename_buf<detail::empty_ctor<io::posix::fdbuf> >/*, detail::GetCurrentPath*/>
+// >
 {
-    OutFilenameSequenceTransport(FilenameGenerator::Format format,
-                                 const char * const prefix,
-                                 const char * const filename,
-                                 const char * const extension,
-                                 const int groupid,
-                                 auth_api * authentifier = NULL,
-                                 unsigned verbose = 0)
+    OutFilenameSequenceTransport(
+        FilenameGenerator::Format format,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        auth_api * authentifier = NULL,
+        unsigned verbose = 0)
     : OutFilenameSequenceTransport::TransportType(
-        detail::FilenameSequencePolicyParams(format, prefix, filename, extension, groupid))
+        detail::out_sequence_filename_buf_param<>(format, prefix, filename, extension, groupid))
     {
         (void)verbose;
         if (authentifier) {
@@ -46,19 +49,11 @@ struct OutFilenameSequenceTransport
     }
 
     const FilenameGenerator * seqgen() const /*noexcept*/
-    { return &(this->buffer().policy().seqgen()); }
+    { return &(this->buffer().seqgen()); }
 
     virtual void request_full_cleaning()
     {
-        this->buffer().policy().request_full_cleaning();
-    }
-
-private:
-    virtual void seek(int64_t offset, int whence)
-    {
-        if ((off_t)-1 == this->buffer().seek(offset, whence)){
-            throw Error(ERR_TRANSPORT_SEEK_FAILED);
-        }
+        this->buffer().request_full_cleaning();
     }
 };
 

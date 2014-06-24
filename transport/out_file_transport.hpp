@@ -21,25 +21,17 @@
 #ifndef REDEMPTION_TRANSPORT_OUT_FILE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_OUT_FILE_TRANSPORT_HPP
 
-#include "buffer_transport.hpp"
+#include "mixin_transport.hpp"
 #include "fdbuf.hpp"
 
-// typedef OutBufferTransport<io::posix::fdbuf> OutFileTransport;
+// typedef SeekableTransport<OutputTransport<io::posix::fdbuf> > OutFileTransport;
 
 struct OutFileTransport
-: OutBufferTransport<io::posix::fdbuf>
+: SeekableTransport<OutputTransport<io::posix::fdbuf> >
 {
     OutFileTransport(int fd) /*noexcept*/
-    : OutBufferTransport::TransportType(fd)
+    : OutFileTransport::TransportType(fd)
     {}
-
-private:
-    virtual void seek(int64_t offset, int whence)
-    {
-        if ((off_t)-1 == this->buffer().seek(offset, whence)){
-            throw Error(ERR_TRANSPORT_SEEK_FAILED);
-        }
-    }
 };
 
 #endif

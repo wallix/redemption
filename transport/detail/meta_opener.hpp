@@ -23,8 +23,7 @@
 
 #include "log.hpp"
 #include "error.hpp"
-#include "buffer/params.hpp"
-#include "buffer/input_output_buf.hpp"
+#include "no_param.hpp"
 
 #include <algorithm>
 #include <cerrno>
@@ -98,15 +97,34 @@ namespace detail
         }
     };
 
-    template<class Buf>
-    class MetaOpener
-    : public transbuf::open_close_base
+
+    template<class BufParam = no_param, class BufMetaParam = no_param>
+    struct in_meta_sequence_buf_param
+    {
+        const char * meta_filename;
+        BufParam buf_param;
+        BufMetaParam meta_param;
+
+        in_meta_sequence_buf_param(
+            const char * meta_filename,
+            const BufParam & buf_param = BufParam(),
+            const BufMetaParam & meta_param = BufMetaParam())
+        : meta_filename(meta_filename)
+        , buf_param(buf_param)
+        , meta_param(meta_param)
+        {}
+    };
+
+
+    template<class Buf, class BufMeta>
+    struct in_meta_sequence_buf
+    : Buf
     {
         struct ReaderBuf
         {
-            Buf & buf;
+            BufMeta & buf;
 
-            ReaderBuf(Buf & buf)
+            ReaderBuf(BufMeta & buf)
             : buf(buf)
             {}
 
@@ -116,13 +134,12 @@ namespace detail
         };
 
         char path[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
-        Buf buf;
+        BufMeta buf_meta;
         ReaderLine<ReaderBuf> reader;
         unsigned begin_chunk_time;
         unsigned end_chunk_time;
-        unsigned seqnum;
 
-        static Buf & open_and_return(const char * filename, Buf & buf)
+        static BufMeta & open_and_return(const char * filename, BufMeta & buf)
         {
             if (buf.open(filename) < 0) {
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
@@ -146,36 +163,69 @@ namespace detail
         }
 
     public:
-        MetaOpener(const char * filename)
-        : reader(this->open_and_return(filename, this->buf))
+        template<class BufParam, class BufMetaParam>
+        in_meta_sequence_buf(const in_meta_sequence_buf_param<BufParam, BufMetaParam> & params)
+        : Buf(params.buf_param)
+        , buf_meta(params.meta_param)
+        , reader(this->open_and_return(params.meta_filename, this->buf_meta))
         , begin_chunk_time(0)
         , end_chunk_time(0)
-        , seqnum(0)
         {
             this->read_header();
         }
 
-        template<class T>
-        MetaOpener(const transbuf::two_params<T, const char *> & params)
-        : buf(params.buf_params)
-        , reader(this->open_and_return(params.other_params, this->buf))
-        , begin_chunk_time(0)
-        , end_chunk_time(0)
-        , seqnum(0)
+        ssize_t read(void * data, size_t len) /*noexcept*/
         {
-            this->read_header();
-        }
-
-        template<class UBuf>
-        int init(UBuf & buf) /*noexcept*/
-        {
-            if (int e = this->next()) {
-                return e;
+            if (!this->is_open()) {
+                if (const int e = this->open_next()) {
+                    return e;
+                }
             }
-            return buf.open(this->path);
+
+            ssize_t res = this->Buf::read(data, len);
+            if (res < 0) {
+                return res;
+            }
+            if (size_t(res) != len) {
+                ssize_t res2 = res;
+                do {
+                    if (const ssize_t err = this->Buf::close()) {
+                        return res;
+                    }
+                    reinterpret_cast<char*&>(data) += res2;
+                    if (const int e = this->open_next()) {
+                        return res;
+                    }
+                    len -= res2;
+                    res2 = this->Buf::read(data, len);
+                    if (res2 < 0) {
+                        return res;
+                    }
+                    res += res2;
+                } while (size_t(res2) != len);
+            }
+            return res;
         }
 
         int next()
+        {
+            if (this->is_open()) {
+                this->close();
+            }
+
+            return this->next_line();
+        }
+
+    private:
+        int open_next() {
+            if (const int e = this->next_line()) {
+                return e < 0 ? e : -1;
+            }
+            const int e = this->Buf::open(this->path);
+            return (e < 0) ? e : 0;
+        }
+
+        int next_line()
         {
             ssize_t len = reader.read_line(path, sizeof(path) - 1, ERR_TRANSPORT_NO_MORE_DATA);
             if (len < 0) {
@@ -215,14 +265,11 @@ namespace detail
             if (e2 != last) {
                 *e2 = 0;
             }
-            ++this->seqnum;
             return 0;
         }
 
-        unsigned get_seqno() const /*noexcept*/
-        { return this->seqnum; }
-
-        const char * get_path() const /*noexcept*/
+    public:
+        const char * current_path() const /*noexcept*/
         { return this->path; }
 
         unsigned get_begin_chunk_time() const /*noexcept*/
@@ -264,21 +311,6 @@ namespace detail
 
         const char * c_str() const /*noexcept*/
         { return this->str; }
-    };
-
-    struct in_meta_nexter
-    {
-        in_meta_nexter() /*noexcept*/
-        {}
-
-        template<class TransportBuf>
-        int next(TransportBuf & buf) /*noexcept*/
-        {
-            if (buf.is_open()) {
-                buf.close();
-            }
-            return buf.policy().next();
-        }
     };
 }
 

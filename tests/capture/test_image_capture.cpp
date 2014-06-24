@@ -283,17 +283,16 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     drawable.draw(cmd, screen_rect);
     d.flush();
 
-    const char * filename;
-
-    filename = trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(2786, ::filesize(filename));
-    ::unlink(filename);
-
     RDPOpaqueRect cmd2(Rect(50, 50, 100, 50), BLUE);
     drawable.draw(cmd2, screen_rect);
     trans.next();
     d.flush();
 
+    const char * filename;
+
+    filename = trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(2786, ::filesize(filename));
+    ::unlink(filename);
     filename = trans.seqgen()->get(1);
     BOOST_CHECK_EQUAL(2806, ::filesize(filename));
     ::unlink(filename);

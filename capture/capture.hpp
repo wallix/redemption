@@ -246,6 +246,12 @@ public:
         }
     }
 
+    void close()
+    {
+        this->flush();
+        this->wrm_trans->disconnect();
+    }
+
     void input(const timeval & now, Stream & input_data_32) {
         if (this->capture_wrm) {
             this->pnc->input(now, input_data_32);
