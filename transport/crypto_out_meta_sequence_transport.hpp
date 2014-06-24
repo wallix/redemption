@@ -57,7 +57,7 @@ namespace detail {
         CryptoContext & cctx;
         transfil::encrypt_filter encrypt_wrm;
 
-        typedef typename crypto_meta_sequence_filename_buf::sequence_type sequence_base_type;
+        typedef out_meta_sequence_filename_buf<BufWrm, BufMwrm> sequence_base_type;
 
     public:
         crypto_meta_sequence_filename_buf(crypto_out_meta_sequence_filename_buf_param const & params)

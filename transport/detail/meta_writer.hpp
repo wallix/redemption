@@ -218,8 +218,6 @@ namespace detail
             this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
             return filename;
         }
-
-        typedef out_sequence_filename_buf sequence_type;
     };
 
     template<class T = no_param>
@@ -248,7 +246,7 @@ namespace detail
     class out_meta_sequence_filename_buf
     : public out_sequence_filename_buf<BufWrm>
     {
-        typedef typename out_meta_sequence_filename_buf::sequence_type sequence_base_type;
+        typedef out_sequence_filename_buf<BufWrm> sequence_base_type;
 
         BufMwrm mwrm_;
 
@@ -256,8 +254,6 @@ namespace detail
         detail::MetaFilename mf_;
         time_t start_sec_;
         time_t stop_sec_;
-
-        typedef out_meta_sequence_filename_buf sequence_type;
 
     public:
         template<class T>
