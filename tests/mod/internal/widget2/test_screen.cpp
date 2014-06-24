@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     wscreen.add_widget(&wbutton3);
     wscreen.add_widget(&wbutton4);
 
-    wscreen.set_widget_focus(&wbutton2);
+    wscreen.set_widget_focus(&wbutton2, Widget2::focus_reason_tabkey);
 
     wscreen.refresh(wscreen.rect);
 

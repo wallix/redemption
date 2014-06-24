@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
     FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test3",
                          false, 0, 0, 0, "Login", "Password", ini);
 
-    flat_login.set_widget_focus(&flat_login.password_edit);
+    flat_login.set_widget_focus(&flat_login.password_edit, Widget2::focus_reason_tabkey);
 
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);

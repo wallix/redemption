@@ -60,9 +60,9 @@ public:
         , number_page(atoi(this->selector.number_page.get_text()+1))
         , ini(ini)
     {
-        this->selector.set_widget_focus(&this->selector.selector_lines);
+        this->selector.set_widget_focus(&this->selector.selector_lines, Widget2::focus_reason_tabkey);
         this->screen.add_widget(&this->selector);
-        this->screen.set_widget_focus(&this->selector);
+        this->screen.set_widget_focus(&this->selector, Widget2::focus_reason_tabkey);
 
         this->ini.context.selector_lines_per_page.set((this->selector.first_page.dy() - (this->selector.selector_lines.dy() + 10) + this->selector.selector_lines.h_border) / (this->selector.selector_lines.h_text + this->selector.selector_lines.y_text * 2 + this->selector.selector_lines.h_border));
         this->ask_page();
@@ -239,7 +239,7 @@ public:
             this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;
             this->selector.selector_lines.focus_flag = Widget2::NORMAL_FOCUS;
             this->selector.selector_lines.set_current_index(0);
-            this->selector.set_widget_focus(&this->selector.selector_lines);
+            this->selector.set_widget_focus(&this->selector.selector_lines, Widget2::focus_reason_tabkey);
         }
 
     }

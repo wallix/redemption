@@ -493,7 +493,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     uint16_t cx = 100;
 
     WidgetEdit wedit(drawable, x, y, cx, parent, &notifier, "abcdef", 0, GREEN, RED, RED);
-    wedit.focus();
+    wedit.focus(Widget2::focus_reason_tabkey);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e1.png");
@@ -737,7 +737,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditScrolling)
     uint16_t cx = 100;
     WidgetEdit wedit(drawable, x, y, cx, parent, &parent, "abcde", 0, BLACK, WHITE, WHITE,
                      -1u, 1, 1);
-    wedit.focus();
+    wedit.focus(Widget2::focus_reason_tabkey);
     parent.add_widget(&wedit);
     parent.current_focus = &wedit;
 

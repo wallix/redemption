@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
                         "RDP");
 
-    selector.set_widget_focus(&selector.selector_lines);
+    selector.set_widget_focus(&selector.selector_lines, Widget2::focus_reason_tabkey);
     selector.selector_lines.set_selection(0);
 
     selector.rearrange();
@@ -1075,7 +1075,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
 //                         "RDP", "2013-04-20 19:56:50");
 
-//     selector.set_widget_focus(&selector.selector_lines);
+//     selector.set_widget_focus(&selector.selector_lines, Widget2::focus_reason_tabkey);
 //     selector.selector_lines.set_selection(0);
 
 //     Keymap2 keymap;
@@ -1138,7 +1138,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
 //                         "RDP", "2013-04-20 19:56:50");
 
-//     selector.set_widget_focus(&selector.selector_lines);
+//     selector.set_widget_focus(&selector.selector_lines, Widget2::focus_reason_tabkey);
 //     selector.selector_lines.set_selection(0);
 
 //     Keymap2 keymap;
@@ -1216,7 +1216,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
 //                         "RDP", "2013-04-20 19:56:50");
 
-//     selector.set_widget_focus(&selector.selector_lines);
+//     selector.set_widget_focus(&selector.selector_lines, Widget2::focus_reason_tabkey);
 //     selector.selector_lines.set_selection(0);
 
 //     Keymap2 keymap;
@@ -1312,7 +1312,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
 //                         "RDP", "2013-04-20 19:56:50");
 
-//     selector.set_widget_focus(&selector.selector_lines);
+//     selector.set_widget_focus(&selector.selector_lines, Widget2::focus_reason_tabkey);
 //     selector.selector_lines.set_selection(0);
 
 //     Keymap2 keymap;

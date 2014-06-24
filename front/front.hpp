@@ -1438,7 +1438,7 @@ public:
             {
                 BStream stream(256);
                 uint8_t rdp_neg_type = 0;
-                uint8_t rdp_neg_flags = 0;
+                uint8_t rdp_neg_flags = /*0*/RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED;
                 uint32_t rdp_neg_code = 0;
                 if (this->tls_client_active){
                     LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
@@ -1601,6 +1601,7 @@ public:
                     break;
                     case CS_MONITOR:
                     {
+LOG(LOG_INFO, "****************************");
                         GCC::UserData::CSMonitor cs_monitor;
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
