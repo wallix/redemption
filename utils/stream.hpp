@@ -234,6 +234,11 @@ public:
              ;
     }
 
+    int32_t in_sint32_le(void) {
+        uint64_t v = this->in_uint32_le();
+        return (int32_t)((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
+    }
+
     void in_timeval_from_uint64le_usec(timeval & tv)
     {
         const uint64_t movie_usec_lo = this->in_uint32_le();
@@ -634,6 +639,15 @@ public:
         (this->get_data())[offset+1] = (v >> 16) & 0xFF;
         (this->get_data())[offset+2] = (v >> 8) & 0xFF;
         (this->get_data())[offset+3] = v & 0xFF;
+    }
+
+    void out_sint32_le(int64_t v) {
+        REDASSERT(this->has_room(4));
+        this->p[0] = v & 0xFF;
+        this->p[1] = (v >> 8) & 0xFF;
+        this->p[2] = (v >> 16) & 0xFF;
+        this->p[3] = (v >> 24) & 0xFF;
+        this->p+=4;
     }
 
     void out_unistr(const char* text)

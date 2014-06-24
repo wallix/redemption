@@ -1549,104 +1549,135 @@ namespace GCC
         struct CSMonitor {
             uint16_t userDataType;
             uint16_t length;
+
+            uint32_t flags;
+            uint32_t monitorCount;
+
             enum {
                 MAX_MONITOR_COUNT = 16
             };
             enum {
-                TS_MONITOR_PRIMARY = 0x00000001,
+                TS_MONITOR_PRIMARY = 0x00000001
             };
-            uint32_t flags;
-            uint32_t monitorCount;
             struct {
-                // Monitor Definition (TS_MONITOR_DEF)
-                uint32_t left;
-                uint32_t top;
-                uint32_t right;
-                uint32_t bottom;
+                int32_t  left;
+                int32_t  top;
+                int32_t  right;
+                int32_t  bottom;
                 uint32_t flags;
             } monitorDefArray[MAX_MONITOR_COUNT];
 
             bool permissive;
+
             CSMonitor()
             : userDataType(CS_MONITOR)
-            , length(12) // default: everything except serverSelectedProtocol
+            , length(0)
             , flags(0)
             , monitorCount(0)
             , monitorDefArray()
-            , permissive(false)
-            {
-            }
+            , permissive(false) {}
 
-            void emit(Stream & stream)
-            {
-                if (this->monitorCount > 16) {
-                    this->monitorCount = 16;
-                }
+            void emit(Stream & stream) {
+                REDASSERT((this->monitorCount > 0) && (this->monitorCount <= MAX_MONITOR_COUNT));
+
                 stream.out_uint16_le(this->userDataType);
-                this->length = this->monitorCount * 20 + 12;
+                this->length = 4 + 4 + 4 + this->monitorCount * 20; // header(4) + flags(4) + monitorCount(4) + monitorCount * monitorDefArray(20)
                 stream.out_uint16_le(this->length);
-                stream.out_uint32_le(this->flags);
 
+                stream.out_uint32_le(this->flags);
                 stream.out_uint32_le(this->monitorCount);
-                for (size_t i = 0; i < this->monitorCount ; i++){
-                    stream.out_uint32_le(this->monitorDefArray[i].left);
-                    stream.out_uint32_le(this->monitorDefArray[i].top);
-                    stream.out_uint32_le(this->monitorDefArray[i].right);
-                    stream.out_uint32_le(this->monitorDefArray[i].bottom);
+
+                for (uint32_t i = 0; i < this->monitorCount; i++) {
+                    stream.out_sint32_le(this->monitorDefArray[i].left);
+                    stream.out_sint32_le(this->monitorDefArray[i].top);
+                    stream.out_sint32_le(this->monitorDefArray[i].right);
+                    stream.out_sint32_le(this->monitorDefArray[i].bottom);
                     stream.out_uint32_le(this->monitorDefArray[i].flags);
                 }
+
                 stream.mark_end();
             }
 
-            void recv(Stream & stream)
-            {
-                if (!stream.in_check_rem(24)){
-                    LOG(LOG_ERR, "CSMonitor::recv short header");
+            void recv(Stream & stream) {
+                if (!stream.in_check_rem(4)) {
+                    LOG(LOG_ERR, "CSMonitor::recv short header, need=4 remains=%u",
+                        stream.in_remain());
                     throw Error(ERR_GCC);
                 }
 
                 this->userDataType = stream.in_uint16_le();
-                this->length = stream.in_uint16_le();
+                this->length       = stream.in_uint16_le();
 
-                this->flags          = stream.in_uint32_le();
-                this->monitorCount   = stream.in_uint32_le();
+                if (!stream.in_check_rem(4)) {
+                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=4 remains=%u",
+                        stream.in_remain());
+                    throw Error(ERR_GCC);
+                }
 
-                if (this->monitorCount > 16) {
+                this->flags        = stream.in_uint32_le();
+                this->monitorCount = stream.in_uint32_le();
+
+                if ((this->monitorCount < 1) || (this->monitorCount > MAX_MONITOR_COUNT)) {
                     LOG(LOG_ERR, "CSMonitor::recv monitor count out of range (%u)", this->monitorCount);
                     this->monitorCount = 0;
                     if (this->permissive) {
-                        stream.in_skip_bytes(this->length - 12);
+                        stream.in_skip_bytes(this->length - 12 /*header(4) + flags(4) + monitorCount(4)*/);
                         return;
                     }
                     throw Error(ERR_GCC);
                 }
-                for (size_t i = 0; i < this->monitorCount ; i++){
-                    this->monitorDefArray[i].left   = stream.in_uint32_le();
-                    this->monitorDefArray[i].top    = stream.in_uint32_le();
-                    this->monitorDefArray[i].right  = stream.in_uint32_le();
-                    this->monitorDefArray[i].bottom = stream.in_uint32_le();
+
+                unsigned expected = 4 + 4 + 4 + this->monitorCount * 20;    // header(4) + flags(4) + monitorCount(4) + monitorCount * monitorDefArray(20)
+
+                if ((this->length != expected) && (!this->permissive || (this->length < expected))) {
+                    LOG(LOG_ERR, "CSMonitor::recv bad header length, expecting=%u got=%u",
+                        expected, this->length);
+                    throw Error(ERR_GCC);
+                }
+
+                expected = this->monitorCount * 20;    // monitorCount * monitorDefArray(20)
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_GCC);
+                }
+
+                for (uint32_t i = 0; i < this->monitorCount; i++) {
+                    this->monitorDefArray[i].left   = stream.in_sint32_le();
+                    this->monitorDefArray[i].top    = stream.in_sint32_le();
+                    this->monitorDefArray[i].right  = stream.in_sint32_le();
+                    this->monitorDefArray[i].bottom = stream.in_sint32_le();
                     this->monitorDefArray[i].flags  = stream.in_uint32_le();
+                }
+
+                expected = 4 + 4 + 4 + this->monitorCount * 20;    // header(4) + flags(4) + monitorCount(4) + monitorCount * monitorDefArray(20)
+                if ((this->length > expected) && this->permissive) {
+                    stream.in_skip_bytes(this->length - expected);
                 }
             }
 
             void log(const char * msg)
             {
-                // --------------------- Base Fields ---------------------------------------
-                LOG(LOG_INFO, "%s GCC User Data CS_MONITOR (%u bytes)", msg, this->length);
-                LOG(LOG_INFO, "cs_monitor::flags [%04X]", this->flags);
-                LOG(LOG_INFO, "cs_monitor::monitorCount   = %u", this->monitorCount);
+                char buffer[2048];
 
-                for (size_t i = 0; i < this->monitorCount ; i++){
-                    LOG(LOG_INFO, "cs_monitor::number = %u", i);
-                    LOG(LOG_INFO, "cs_monitor::left   = %u", this->monitorDefArray[i].left);
-                    LOG(LOG_INFO, "cs_monitor::top    = %u", this->monitorDefArray[i].top);
-                    LOG(LOG_INFO, "cs_monitor::right  = %u", this->monitorDefArray[i].right);
-                    LOG(LOG_INFO, "cs_monitor::bottom = %u", this->monitorDefArray[i].bottom);
-                    LOG(LOG_INFO, "cs_monitor::flags [%04X]", this->monitorDefArray[i].flags);
-                    if (this->flags & TS_MONITOR_PRIMARY){
-                        LOG(LOG_INFO, "cs_monitor::flags::TS_MONITOR_PRIMARY");
+                size_t lg = 0;
+                // --------------------- Base Fields ---------------------------------------
+                lg += snprintf(buffer + lg, sizeof(buffer) - lg, "%s GCC User Data CS_MONITOR (%u bytes) ", msg, this->length);
+                lg += snprintf(buffer + lg, sizeof(buffer) - lg, "flags=0x%X monitorCount=%u (", this->flags, this->monitorCount);
+
+                for (uint32_t i = 0; i < this->monitorCount; i++) {
+                    if (i) {
+                        lg += snprintf(buffer + lg, sizeof(buffer) - lg, " ");
                     }
+                    lg += snprintf(buffer + lg, sizeof(buffer) - lg, "(left=%d, top=%d, right=%d, bottom=%d, primary=%s(0x%X))",
+                        this->monitorDefArray[i].left, this->monitorDefArray[i].top, this->monitorDefArray[i].right,
+                        this->monitorDefArray[i].bottom, ((this->monitorDefArray[i].flags & TS_MONITOR_PRIMARY) ? "yes" : "no"),
+                        this->monitorDefArray[i].flags);
                 }
+                lg += snprintf(buffer + lg, sizeof(buffer) - lg, ")");
+
+                buffer[sizeof(buffer) - 1] = 0;
+                LOG(LOG_INFO, buffer);
             }
         };
 
