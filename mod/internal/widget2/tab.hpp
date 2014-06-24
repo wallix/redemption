@@ -52,7 +52,8 @@ public:
                          , const Rect & clip
                          , Item ** items
                          , size_t item_count
-                         , size_t current_item_index) = 0;
+                         , size_t current_item_index
+                         , bool draw_focus) = 0;
 
         virtual Rect get_child_area(const Rect & rect_tab) = 0;
 
@@ -60,6 +61,7 @@ public:
                                         , const Rect & rect_tab
                                         , WidgetTab::Item ** items
                                         , size_t item_count
+                                        , size_t current_item_index
                                         , int device_flags
                                         , int x
                                         , int y
@@ -118,6 +120,9 @@ private:
     size_t   current_item_index;
 
 public:
+    bool child_has_focus;
+
+public:
     WidgetTab( DrawApi & drawable, DrawingPolicy & drawing_policy, int16_t x, int16_t y
              , uint16_t cx, uint16_t cy, Widget2 & parent
              , NotifyApi * notifier
@@ -126,7 +131,8 @@ public:
     , drawing_policy(drawing_policy)
     , items()
     , item_count(0)
-    , current_item_index(0) {
+    , current_item_index(0)
+    , child_has_focus(false) {
         this->drawing_policy.set_color(bgcolor, fgcolor);
     }
 
@@ -144,11 +150,10 @@ public:
                                                 , this->drawing_policy
                                                 , rect_item
                                                 , *this
-                                                , this->notifier);
+                                                , this);
 
         this->items[this->item_count]->set_bg_color(this->drawing_policy.get_bg_color());
 
-//        this->rdp_input_invalidate(this->rect);
         this->refresh(this->rect);
 
         return this->item_count++;
@@ -167,23 +172,40 @@ public:
         if (this->has_focus) {
             this->has_focus = false;
             this->send_notify(NOTIFY_FOCUS_END);
-/*
-            if (this->current_focus) {
-                this->current_focus->blur();
+            if (this->item_count) {
+                this->items[this->current_item_index]->blur();
             }
-*/
             this->refresh(this->rect);
         }
     }
-    virtual void focus() {
+    virtual void focus(int reason) {
         if (!this->has_focus) {
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
+
 /*
-            if (this->current_focus) {
-                this->current_focus->focus();
+            if (reason == focus_reason_tabkey) {
+                this->child_has_focus = false;
+            }
+            else if (this->item_count) {
+                this->child_has_focus = true;
+                this->items[this->current_item_index]->focus(reason);
             }
 */
+            if (reason == focus_reason_backtabkey) {
+                if (this->item_count) {
+                    if (!this->items[this->current_item_index]->get_previous_focus(NULL, false)) {
+                        this->child_has_focus = false;
+                    }
+                    else {
+                        this->child_has_focus = true;
+                        this->items[this->current_item_index]->focus(reason);
+                    }
+                }
+            }
+            else {
+                this->child_has_focus = false;
+            }
             this->refresh(this->rect);
         }
     }
@@ -202,68 +224,50 @@ public:
                                  , clip
                                  , this->items
                                  , this->item_count
-                                 , this->current_item_index);
-/*
-        Rect rect_intersect = clip.intersect(this->drawing_policy.get_child_area(this->rect));
+                                 , this->current_item_index
+                                 , this->has_focus && (!this->child_has_focus)
+                                 );
 
-        if (this->item_count > 0) {
-            this->items[this->current_item_index]->draw_inner_free(rect_intersect, GREEN);
-        }
-
-        this->drawable.draw(RDPOpaqueRect(this->rect, this->drawing_policy.get_bg_color()), clip);
-*/
-/*
-        // Box.
-        const uint16_t border           = 6;
-        const uint16_t text_margin      = 6;
-        const uint16_t text_indentation = border + text_margin + 4;
-        const uint16_t x_offset         = 1;
-
-        int w, h, tmp;
-        this->drawable.text_metrics("bp", tmp, h);
-        this->drawable.text_metrics(this->buffer, w, tmp);
-
-        BStream deltaPoints(256);
-
-        deltaPoints.out_sint16_le(border - (text_indentation - text_margin + 1));
-        deltaPoints.out_sint16_le(0);
-
-        deltaPoints.out_sint16_le(0);
-        deltaPoints.out_sint16_le(this->rect.cy - h / 2 - border);
-
-        deltaPoints.out_sint16_le(this->rect.cx - border * 2 + x_offset);
-        deltaPoints.out_sint16_le(0);
-
-        deltaPoints.out_sint16_le(0);
-        deltaPoints.out_sint16_le(-(this->rect.cy - h / 2 - border));    // OK
-
-        deltaPoints.out_sint16_le(-(this->rect.cx - border * 2 - w - text_indentation + x_offset));
-        deltaPoints.out_sint16_le(0);
-
-        deltaPoints.mark_end();
-        deltaPoints.rewind();
-
-        RDPPolyline polyline_box( this->rect.x + text_indentation - text_margin
-                                , this->rect.y + h / 2
-                                , 0x0D, 0, this->fg_color, 5, deltaPoints);
-        this->drawable.draw(polyline_box, clip);
-
-
-        // Label.
-        this->drawable.server_draw_text( this->rect.x + text_indentation
-                                       , this->rect.y
-                                       , this->buffer
-                                       , this->fg_color
-                                       , this->bg_color
-                                       , rect_intersect
-                                       );
-*/
-
-        if (this->item_count > 0) {
-//            this->items[this->current_item_index]->draw(clip);
+        if (this->item_count) {
             this->items[this->current_item_index]->draw_children(rect);
         }
         this->drawable.end_update();
+    }
+
+    virtual bool next_focus() {
+        if (!this->child_has_focus) {
+            if (this->item_count) {
+                if (!this->items[this->current_item_index]->get_next_focus(NULL, false)) {
+                    return false;
+                }
+                this->child_has_focus = true;
+                this->items[this->current_item_index]->focus(focus_reason_tabkey);
+                this->refresh(this->rect);
+                return true;
+            }
+        }
+
+        if (this->item_count) {
+            REDASSERT(this->item_count > this->current_item_index);
+            return this->items[this->current_item_index]->next_focus();
+        }
+
+        return false;
+    }
+    virtual bool previous_focus() {
+        if (this->child_has_focus) {
+            REDASSERT(this->item_count);
+            REDASSERT(this->item_count > this->current_item_index);
+            if (this->items[this->current_item_index]->previous_focus()) {
+                return true;
+            }
+
+            this->child_has_focus = false;
+            this->refresh(this->rect);
+            return true;
+        }
+
+        return false;
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) {
@@ -274,6 +278,7 @@ public:
                                                     , this->rect
                                                     , this->items
                                                     , this->item_count
+                                                    , this->current_item_index
                                                     , device_flags
                                                     , x
                                                     , y
@@ -290,21 +295,31 @@ public:
     virtual void rdp_input_scancode( long param1, long param2, long param3
                                    , long param4, Keymap2 * keymap) {
         if (keymap->nb_kevent_available() > 0) {
-/*
-            switch (keymap->top_kevent()) {
-            case Keymap2::KEVENT_TAB:
-                keymap->get_kevent();
-            break;
-            case Keymap2::KEVENT_BACKTAB:
-                keymap->get_kevent();
-            break;
-            default:
-            break;
-            }
-*/
-            if (this->item_count) {
+            if (this->child_has_focus && this->item_count) {
                 REDASSERT(this->item_count > this->current_item_index);
-                return this->items[this->current_item_index]->rdp_input_scancode(param1, param2, param3, param4, keymap);
+                this->items[this->current_item_index]->rdp_input_scancode(param1, param2, param3, param4, keymap);
+            }
+            else {
+                switch (keymap->top_kevent()) {
+                case Keymap2::KEVENT_LEFT_ARROW:
+                    keymap->get_kevent();
+                    if (this->current_item_index > 0) {
+                        this->current_item_index--;
+                    }
+                    else {
+                        this->current_item_index = (this->item_count ? (this->item_count - 1) : 0);
+                    }
+                    this->refresh(this->rect);
+                    break;
+                case Keymap2::KEVENT_RIGHT_ARROW:
+                    keymap->get_kevent();
+                    this->current_item_index++;
+                    if (this->current_item_index >= this->item_count) {
+                        this->current_item_index = 0;
+                    }
+                    this->refresh(this->rect);
+                    break;
+                }
             }
         }
     }
@@ -326,6 +341,14 @@ public:
             }
         }
         return Widget2::widget_at_pos(x, y);
+    }
+
+    virtual void notify(Widget2 * w, NotifyApi::notify_event_t event) {
+        if (event == NOTIFY_FOCUS_BEGIN) {
+            this->child_has_focus = true;
+            this->refresh(this->rect);
+        }
+        Widget2::notify(w, event);
     }
 };
 
@@ -360,11 +383,10 @@ public:
                      , const Rect & clip
                      , WidgetTab::Item ** items
                      , size_t item_count
-                     , size_t current_item_index) {
+                     , size_t current_item_index
+                     , bool draw_focus) {
         this->drawable.begin_update();
-//        Rect rect_intersect = clip.intersect(rect_tab);
-//        this->drawable.draw(RDPOpaqueRect(rect_tab, /*this->get_bg_color()*/RED), clip);
-        this->draw_opaque_rect(rect_tab, RED, clip);
+        this->draw_opaque_rect(rect_tab, this->get_bg_color(), clip);
 
         uint16_t item_index_offset = first_item_index_offset_left;
         for (size_t item_index = 0; item_index < item_count; item_index++) {
@@ -387,6 +409,42 @@ public:
                                , this->get_bg_color())
                 , clip);
 
+            // Border.
+            BStream deltaPoints(256);
+
+            deltaPoints.out_sint16_le(item_index_width);
+            deltaPoints.out_sint16_le(0);
+
+            deltaPoints.out_sint16_le(0);
+            deltaPoints.out_sint16_le(this->item_index_height - ((current_item_index != item_index) ? 1 : 0));
+
+            if (current_item_index != item_index) {
+                deltaPoints.out_sint16_le(-(item_index_width - 1));
+                deltaPoints.out_sint16_le(0);
+            }
+
+            deltaPoints.mark_end();
+            deltaPoints.rewind();
+
+            RDPPolyline polyline_box( rect_tab.x + item_index_offset
+                                    , rect_tab.y + ((current_item_index != item_index) ? 1 : 0)
+                                    , 0x0D, 0, this->get_fg_color(), ((current_item_index != item_index) ? 3 : 2)
+                                    , deltaPoints);
+            this->drawable.draw(polyline_box, clip);
+
+            if (draw_focus && (current_item_index == item_index)) {
+                this->drawable.draw(RDPLineTo( 1
+                                             , rect_tab.x + item_index_offset + border_width_height
+                                             , rect_tab.y + border_width_height * 2
+                                             , rect_tab.x + item_index_offset + border_width_height + item_index_width - border_width_height * 2
+                                             , rect_tab.y + border_width_height * 2
+                                             , 0
+                                             , 13
+                                             , RDPPen(0, 1, this->get_fg_color())
+                                             )
+                    , clip);
+            }
+
             // Text.
             this->drawable.server_draw_text(
                   rect_tab.x + item_index_offset + border_width_height + text_padding_x
@@ -396,23 +454,44 @@ public:
                 , this->get_bg_color()
                 , clip);
 
+
             item_index_offset += item_index_width;
         }
 
-/*
-        this->drawable.draw(
-              RDPOpaqueRect( Rect( rect_tab.x + border_width_height
-                                 , rect_tab.y + this->item_index_height + border_width_height
-                                 , rect_tab.cx - border_width_height * 2
-                                 , rect_tab.cy - this->item_index_height - border_width_height * 2)
-                           , this->get_bg_color())
-            , clip);
-*/
         this->draw_opaque_rect( Rect( rect_tab.x + border_width_height
                               , rect_tab.y + this->item_index_height + border_width_height
                               , rect_tab.cx - border_width_height * 2
                               , rect_tab.cy - this->item_index_height - border_width_height * 2)
             , this->get_bg_color(), clip);
+
+        BStream deltaPoints(256);
+
+        deltaPoints.out_sint16_le(0);
+        deltaPoints.out_sint16_le(this->item_index_height - border_width_height);
+
+        deltaPoints.out_sint16_le(-first_item_index_offset_left);
+        deltaPoints.out_sint16_le(0);
+
+        deltaPoints.out_sint16_le(0);
+        deltaPoints.out_sint16_le(rect_tab.cy - this->item_index_height - border_width_height);
+
+        deltaPoints.out_sint16_le(rect_tab.cx - border_width_height);
+        deltaPoints.out_sint16_le(0);
+
+        deltaPoints.out_sint16_le(0);
+        deltaPoints.out_sint16_le(-(rect_tab.cy - this->item_index_height - border_width_height));
+
+        deltaPoints.out_sint16_le(-(rect_tab.cx - item_index_offset - border_width_height * 2));
+        deltaPoints.out_sint16_le(0);
+
+        deltaPoints.mark_end();
+        deltaPoints.rewind();
+
+        RDPPolyline polyline_box( rect_tab.x + first_item_index_offset_left
+                                , rect_tab.y + border_width_height
+                                , 0x0D, 0, this->get_fg_color(), 6
+                                , deltaPoints);
+        this->drawable.draw(polyline_box, clip);
 
         this->drawable.end_update();
     }
@@ -455,6 +534,7 @@ public:
                                     , const Rect & rect_tab
                                     , WidgetTab::Item ** items
                                     , size_t item_count
+                                    , size_t current_item_index
                                     , int device_flags
                                     , int x
                                     , int y
@@ -478,7 +558,16 @@ public:
 
             if (rect_index.contains_pt(x, y)) {
                 if (device_flags & (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
+/*
+                    if (tab.child_has_focus) {
+                        items[current_item_index]->blur();
+                    }
+*/
+                    tab.blur();
+
+                    tab.child_has_focus = false;
                     tab.set_current_item(item_index);
+                    tab.focus(Widget2::focus_reason_mousebutton1);
                 }
 
                 return;

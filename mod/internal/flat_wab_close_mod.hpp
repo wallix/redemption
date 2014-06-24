@@ -82,8 +82,8 @@ public:
         this->front.set_mod_palette(palette);
 
         this->screen.add_widget(&this->close_widget);
-        this->close_widget.set_widget_focus(&this->close_widget.cancel);
-        this->screen.set_widget_focus(&this->close_widget);
+        this->close_widget.set_widget_focus(&this->close_widget.cancel, Widget2::focus_reason_tabkey);
+        this->screen.set_widget_focus(&this->close_widget, Widget2::focus_reason_tabkey);
 
         this->screen.refresh(this->screen.rect);
     }
