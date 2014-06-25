@@ -87,8 +87,7 @@ struct RDPGraphicDevice {
 
 
     virtual void server_set_pointer(const Pointer & cursor) {}
-    virtual void send_pointer(int cache_idx, const uint8_t * data,
-        const uint8_t * mask, int hotspot_x, int hotspot_y) {}
+    virtual void send_pointer(int cache_idx, const Pointer & cursor) {}
     virtual void set_pointer(int cache_idx) {}
 
     virtual void flush() = 0;

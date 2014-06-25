@@ -1259,8 +1259,7 @@ public:
         if (this->verbose & 4) {
             LOG(LOG_INFO, "Front::send_pointer done");
         }
-    }   // void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask,
-        //     int hotspot_x, hotspot_int y)
+    }   // void send_pointer(int cache_idx, const Pointer & cursor)
 
 //    2.2.9.1.1.4.5    New Pointer Update (TS_POINTERATTRIBUTE)
 //    ---------------------------------------------------------
