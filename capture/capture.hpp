@@ -412,15 +412,8 @@ public:
     }
 
     virtual void send_pointer(int cache_idx, const Pointer & cursor) {
-        ///TODO /!\ send_pointer(int, \e Pointer const &) isn't a virtual method of RDPGraphicDevice
-        //if (this->gd) {
-        //    this->gd->send_pointer(cache_idx, cursor);
-        //}
-        if (this->capture_wrm) {
-            this->pnc->send_pointer(cache_idx, cursor);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->send_pointer(cache_idx, cursor);
+        if (this->gd) {
+           this->gd->send_pointer(cache_idx, cursor);
         }
     }
 
