@@ -3880,6 +3880,7 @@ struct mod_rdp : public mod_api {
 
         // Payload
         persistent_key_list_stream.out_copy_bytes(pdu_data_stream);
+        persistent_key_list_stream.mark_end();
 
         sdata.emit_end();
 

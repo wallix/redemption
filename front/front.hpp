@@ -1601,7 +1601,6 @@ public:
                     break;
                     case CS_MONITOR:
                     {
-LOG(LOG_INFO, "****************************");
                         GCC::UserData::CSMonitor cs_monitor;
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
