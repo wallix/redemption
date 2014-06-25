@@ -199,10 +199,12 @@ namespace detail {
 
 struct CryptoOutMetaSequenceTransport
 : //SeekableTransport<
+RequestCleaningTransport<
     OutputNextTransport<detail::crypto_meta_sequence_filename_buf<
         detail::empty_ctor<io::posix::fdbuf>,
         transbuf::ocrypto_filename_base
-    >, detail::GetCurrentPath >
+    >, detail::GetCurrentPath>
+>
 // >
 {
     CryptoOutMetaSequenceTransport(

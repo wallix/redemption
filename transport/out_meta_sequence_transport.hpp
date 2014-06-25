@@ -28,10 +28,12 @@
 
 struct OutMetaSequenceTransport
 : //SeekableTransport<
+RequestCleaningTransport<
     OutputNextTransport<detail::out_meta_sequence_filename_buf<
         detail::empty_ctor<io::posix::fdbuf>,
         detail::empty_ctor<transbuf::ofile_base>
-    >, detail::GetCurrentPath >
+    >, detail::GetCurrentPath>
+>
 // >
 {
     OutMetaSequenceTransport(

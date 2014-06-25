@@ -28,7 +28,12 @@
 
 struct OutFilenameSequenceTransport
 : //SeekableTransport<
-    OutputNextTransport<detail::out_sequence_filename_buf<detail::empty_ctor<io::posix::fdbuf> >/*, detail::GetCurrentPath*/>
+RequestCleaningTransport<
+    OutputNextTransport<detail::out_sequence_filename_buf<
+        detail::empty_ctor<io::posix::fdbuf> >/*,
+        detail::GetCurrentPath*/
+    >
+>
 // >
 {
     OutFilenameSequenceTransport(
@@ -50,11 +55,6 @@ struct OutFilenameSequenceTransport
 
     const FilenameGenerator * seqgen() const /*noexcept*/
     { return &(this->buffer().seqgen()); }
-
-    virtual void request_full_cleaning()
-    {
-        this->buffer().request_full_cleaning();
-    }
 };
 
 #endif

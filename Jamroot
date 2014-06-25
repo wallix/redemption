@@ -461,6 +461,7 @@ unit-test test_count_transport : tests/transport/test_count_transport.cpp crypto
 unit-test test_socket_transport : tests/transport/test_socket_transport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_file_transport : tests/transport/test_file_transport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_crypto_meta_sequence_transport : tests/transport/test_crypto_meta_sequence_transport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_request_full_cleaning : tests/transport/test_request_full_cleaning.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 #unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_image_capture : tests/capture/test_image_capture.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
