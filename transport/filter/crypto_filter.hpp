@@ -308,7 +308,7 @@ namespace transfil {
             int             blocksize = ::EVP_MD_block_size(md);
             unsigned char * key_buf   = static_cast<unsigned char *>(::calloc(blocksize, 1));
             {
-                const unique_ptr<unsigned char, default_free<unsigned char> > auto_free(key_buf);
+                const unique_ptr<unsigned char, default_free> auto_free(key_buf);
                 if (key_buf == NULL) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc!\n", ::getpid());
                     return -1;
@@ -498,7 +498,7 @@ namespace transfil {
                 }
                 int blocksize = ::EVP_MD_block_size(md);
                 unsigned char * key_buf = static_cast<unsigned char *>(::calloc(blocksize, 1));
-                const unique_ptr<unsigned char, default_free<unsigned char> > auto_free(key_buf);
+                const unique_ptr<unsigned char, default_free> auto_free(key_buf);
                 if (key_buf == NULL) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc\n", ::getpid());
                     return -1;

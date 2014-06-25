@@ -324,11 +324,24 @@ public:
         }
     }
 
+    void draw(const RDPBrushCache & cmd) {
+        if (this->gd) {
+            this->gd->draw(cmd);
+        }
+    }
+
+    void draw(const RDPColCache & cmd) {
+        if (this->gd) {
+            this->gd->draw(cmd);
+        }
+    }
+
     void draw(const RDPGlyphCache & cmd) {
         if (this->gd) {
             this->gd->draw(cmd);
         }
     }
+
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
         if (this->gd) {
@@ -399,6 +412,10 @@ public:
     }
 
     virtual void send_pointer(int cache_idx, const Pointer & cursor) {
+        ///TODO /!\ send_pointer(int, \e Pointer const &) isn't a virtual method of RDPGraphicDevice
+        //if (this->gd) {
+        //    this->gd->send_pointer(cache_idx, cursor);
+        //}
         if (this->capture_wrm) {
             this->pnc->send_pointer(cache_idx, cursor);
         }
@@ -408,11 +425,8 @@ public:
     }
 
     virtual void set_pointer(int cache_idx) {
-        if (this->capture_wrm) {
-            this->pnc->set_pointer(cache_idx);
-        }
-        else if (this->capture_drawable) {
-            this->drawable->set_pointer(cache_idx);
+        if (this->gd) {
+            this->gd->set_pointer(cache_idx);
         }
     }
 

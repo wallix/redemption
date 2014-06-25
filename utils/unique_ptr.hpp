@@ -15,8 +15,7 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan,
- *              Loïc Michaux
+ *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
 #ifndef REDEMPTION_PUBLIC_UTILS_UNIQUE_PTR_HPP
@@ -24,10 +23,9 @@
 
 #include <cstdlib>
 
-template<class T>
 struct default_free
 {
-    void operator()(T * p) const
+    void operator()(void * p) const
     {
         ::free(p);
     }

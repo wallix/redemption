@@ -70,11 +70,8 @@ private:
         if (0 != memcmp(data, this->data.get() + this->current, available_len)){
             // data differs, find where
             uint32_t differs = 0;
-            for (size_t i = 0; i < available_len ; i++){
-                if (data[i] != this->data.get()[this->current+i]) {
-                    differs = i;
-                    break;
-                }
+            while (differs < available_len && data[differs] == this->data.get()[this->current+differs]) {
+                ++differs;
             }
             LOG(LOG_INFO, "=============== Common Part =======");
             hexdump_c(data, differs);
