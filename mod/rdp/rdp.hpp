@@ -189,6 +189,8 @@ struct mod_rdp : public mod_api {
 
     const uint32_t password_printing_mode;
 
+    bool deactivation_reactivation_in_progress;
+
     mod_rdp( Transport * trans
            , FrontAPI & front
            , const ClientInfo & info
@@ -255,6 +257,7 @@ struct mod_rdp : public mod_api {
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
         , password_printing_mode(mod_rdp_params.password_printing_mode)
+        , deactivation_reactivation_in_progress(false)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -2025,7 +2028,9 @@ struct mod_rdp : public mod_api {
                                         if (this->use_rdp5){
                                             LOG(LOG_INFO, "use rdp5");
                                             if (this->enable_persistent_disk_bitmap_cache) {
-                                                this->send_persistent_key_list();
+                                                if (!this->deactivation_reactivation_in_progress) {
+                                                    this->send_persistent_key_list();
+                                                }
                                             }
                                             this->send_fonts(3);
                                         }
@@ -2049,11 +2054,14 @@ struct mod_rdp : public mod_api {
                                         }
 //                                        this->orders.reset();
                                         this->connection_finalization_state = WAITING_SYNCHRONIZE;
+
+                                        this->deactivation_reactivation_in_progress = false;
                                     }
                                     break;
                                 case PDUTYPE_DEACTIVATEALLPDU:
                                     if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_DEACTIVATEALLPDU"); }
                                     LOG(LOG_INFO, "Deactivate All PDU");
+                                    this->deactivation_reactivation_in_progress = true;
                                     TODO("CGR: Data should actually be consumed");
                                         TODO("CGR: Check we are indeed expecting Synchronize... dubious");
                                         this->connection_finalization_state = WAITING_SYNCHRONIZE;

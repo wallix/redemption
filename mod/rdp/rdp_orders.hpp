@@ -125,9 +125,9 @@ struct rdp_orders {
                                          , RDPBrush(), 0, 0, 0, (uint8_t *)"");
         this->polyline        = RDPPolyline();
 
-        if (this->bmp_cache) {
-            this->bmp_cache->reset();
-        }
+//        if (this->bmp_cache) {
+//            this->bmp_cache->reset();
+//        }
 
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
         memset(this->global_palette, 0, sizeof(this->global_palette));
