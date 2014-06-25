@@ -141,8 +141,9 @@ struct rdp_orders {
     }
 
     void save_persistent_disk_bitmap_cache() const {
-        if (!this->enable_persistent_disk_bitmap_cache)
+        if (!this->enable_persistent_disk_bitmap_cache) {
             return;
+        }
 
         const char * persistent_path = PERSISTENT_PATH "/mod_rdp";
 
