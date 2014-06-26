@@ -454,7 +454,7 @@ public:
                             gd.draw(this->memblt, cmd_clip, *bitmap);
                         }
                         else {
-                            LOG(LOG_ERROR, "rdp_orders::process_orders: MEMBLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
+                            LOG(LOG_ERR, "rdp_orders::process_orders: MEMBLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
                                 this->memblt.cache_id & 0x3, this->memblt.cache_idx);
                             REDASSERT(false);
                         }
@@ -477,7 +477,7 @@ public:
                             gd.draw(this->mem3blt, cmd_clip, *bitmap);
                         }
                         else {
-                            LOG(LOG_ERROR, "rdp_orders::process_orders: MEM3BLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
+                            LOG(LOG_ERR, "rdp_orders::process_orders: MEM3BLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
                                 this->mem3blt.cache_id & 0x3, this->mem3blt.cache_idx);
                             REDASSERT(false);
                         }
