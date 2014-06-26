@@ -98,7 +98,8 @@ project redemption
 #    <cxxflags>-Wold-style-cast
 #    <cxxflags>-Wlong-long
     <cxxflags>-O3
-#     <cxxflags>-march=native
+    <variant>debug:<cxxflags>-g
+    <variant>release:<cxxflags>-march=native
     <cxxflags>-Wuninitialized
     <cxxflags>-Wnon-virtual-dtor
 #     <cxxflags>-Wall
@@ -123,7 +124,7 @@ project redemption
 #     <cxxflags>-Winline
     <cxxflags>-Winit-self
 #     <cxxflags>-Wcast-qual
-#     <cxxflags>-Woverloaded-virtual
+    <cxxflags>-Woverloaded-virtual
 #     <cxxflags>-Wunused-variable
     <cxxflags>-fpie
 
@@ -131,7 +132,7 @@ project redemption
     <toolset>gcc:<cxxflags>-Wmaybe-uninitialized
 
     <toolset>clang:<cxxflags>-Wno-mismatched-tags
-    <toolset>clang:<cxxflags>-Wno-overloaded-virtual
+#    <toolset>clang:<cxxflags>-Wno-overloaded-virtual
     <toolset>clang:<cxxflags>-Wno-char-subscripts
     <toolset>clang:<cxxflags>-Wno-array-bounds
     <toolset>clang:<cxxflags>-Wno-unused-variable
