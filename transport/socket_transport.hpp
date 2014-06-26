@@ -154,11 +154,11 @@ public:
         }
     }
 
-    virtual const uint8_t * get_public_key() {
+    virtual const uint8_t * get_public_key() const {
         return this->public_key.get();
     }
 
-    virtual size_t get_public_key_length() {
+    virtual size_t get_public_key_length() const {
         return this->public_key_length;
     }
 
