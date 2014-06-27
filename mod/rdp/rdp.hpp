@@ -2017,7 +2017,7 @@ struct mod_rdp : public mod_api {
     // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
 
                                         uint32_t sessionId = sctrl.payload.in_uint32_le();
-                                        (void)sessionId;
+(void)sessionId;
 
                                         this->send_confirm_active(this);
                                         this->send_synchronise();
@@ -2343,16 +2343,6 @@ struct mod_rdp : public mod_api {
             confirm_active_pdu.emit_capability_set(bmpcache_caps);
         }
 
-        //if(this->use_rdp5){
-        //    BmpCache2Caps bmpcache2_caps;
-        //    bmpcache2_caps.numCellCaches = 3;
-        //    bmpcache2_caps.bitmapCache0CellInfo = 2000;
-        //    bmpcache2_caps.bitmapCache1CellInfo = 2000;
-        //    bmpcache2_caps.bitmapCache2CellInfo = 2000;
-        //    confirm_active_pdu.emit_capability_set(bmpcache2_caps);
-        //}
-
-
         ColorCacheCaps colorcache_caps;
         if (this->verbose & 1) {
             colorcache_caps.log("Sending to server");
@@ -2413,13 +2403,13 @@ struct mod_rdp : public mod_api {
         }
         confirm_active_pdu.emit_capability_set(glyphsupport_caps);
 
-        //            BrushCacheCaps brushcache_caps;
-        //            brushcache_caps.log("Sending brushcache caps to server");
-        //            confirm_active_pdu.emit_capability_set(BrushCacheCaps);
+//        BrushCacheCaps brushcache_caps;
+//        brushcache_caps.log("Sending brushcache caps to server");
+//        confirm_active_pdu.emit_capability_set(BrushCacheCaps);
 
-        //            CompDeskCaps compdesk_caps;
-        //            compdesk_caps.log("Sending compdesk caps to server");
-        //            confirm_active_pdu.emit_capability_set(CompDeskCaps);
+//        CompDeskCaps compdesk_caps;
+//        compdesk_caps.log("Sending compdesk caps to server");
+//        confirm_active_pdu.emit_capability_set(CompDeskCaps);
 
         confirm_active_pdu.emit_end();
 
@@ -2494,7 +2484,7 @@ struct mod_rdp : public mod_api {
             {
                 LOG(LOG_WARNING, "mod::rdp::RDP Pointer move not yet supported");
                 TODO("CGR: implement RDP_POINTER_MOVE");
-                    /* int x = */ stream.in_uint16_le();
+                /* int x = */ stream.in_uint16_le();
                 /* int y = */ stream.in_uint16_le();
             }
             break;
@@ -3617,9 +3607,9 @@ struct mod_rdp : public mod_api {
             "%s@%s", username, domain);
         snprintf(domain_username_format_1, sizeof(domain_username_format_0),
             "%s\\%s", domain, username);
-//        LOG(LOG_INFO,
-//            "Domain username format 0=(%s) Domain username format 1=(%s)",
-//            domain_username_format_0, domain_username_format_0);
+        //LOG(LOG_INFO,
+        //    "Domain username format 0=(%s) Domain username format 1=(%s)",
+        //    domain_username_format_0, domain_username_format_0);
 
         if (this->disconnect_on_logon_user_change &&
             ((strcasecmp(domain, this->domain) || strcasecmp(username, this->username)) &&
@@ -4355,13 +4345,7 @@ public:
         }
 
         TODO("Add check that the idx transmitted is actually an used pointer")
-//        int pointer_idx = stream.in_uint16_le();
         uint16_t pointer_idx = stream.in_uint16_le();
-//        if (pointer_idx < 0){
-//            LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu negative pointer cache idx (%d)", pointer_idx);
-//            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
-//        }
-//        if (pointer_idx >= static_cast<int>(sizeof(this->cursors) / sizeof(Pointer))) {
         if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu pointer cache idx overflow (%d)", pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
@@ -4398,8 +4382,6 @@ public:
                 struct Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 this->front.server_set_pointer(cursor);
-//                this->front.set_pointer_display();
-//                this->set_pointer_display();
             }
             break;
         default:
@@ -4523,11 +4505,6 @@ public:
         unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned pointer_idx = stream.in_uint16_le();
 
-//        if (pointer_idx < 0){
-//            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu negative pointer cache idx (%d)", pointer_idx);
-//            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
-//        }
-//        if (pointer_idx >= (int)(sizeof(this->cursors) / sizeof(Pointer))) {
         if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu pointer cache idx overflow (%d)", pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
@@ -5049,7 +5026,6 @@ public:
         target_stream.mark_end();
         this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     }
-
 };
 
 #endif

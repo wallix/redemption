@@ -77,12 +77,12 @@ struct PointerCache {
         this->pointer_stamp++;
         /* look for match */
         for (i = 2; i < this->pointer_cache_entries; i++) {
-            if (this->Pointers[i].x == cursor.x 
-            &&  this->Pointers[i].y == cursor.y 
-            &&  this->Pointers[i].width == cursor.width 
-            &&  this->Pointers[i].height == cursor.height 
-            &&  this->Pointers[i].bpp == cursor.bpp 
-            &&  (memcmp(this->Pointers[i].data, cursor.data, cursor.data_size()) == 0) 
+            if (this->Pointers[i].x == cursor.x
+            &&  this->Pointers[i].y == cursor.y
+            &&  this->Pointers[i].width == cursor.width
+            &&  this->Pointers[i].height == cursor.height
+            &&  this->Pointers[i].bpp == cursor.bpp
+            &&  (memcmp(this->Pointers[i].data, cursor.data, cursor.data_size()) == 0)
             &&  (memcmp(this->Pointers[i].mask, cursor.mask, cursor.mask_size()) == 0)) {
                 this->stamps[i] = this->pointer_stamp;
                 cache_idx = i;
@@ -96,7 +96,7 @@ struct PointerCache {
                 index  = i;
             }
         }
-        
+
         this->stamps[index] = this->pointer_stamp;
         cache_idx = index;
         this->add_pointer_static(cursor, index);
@@ -142,9 +142,10 @@ protected:
 
         bool                draw_pixel;
         int                 current_contiguous_mouse_pixels = 0;
-        Drawable::Mouse_t * mouse_cursor                    = &Pointer.mouse_cursor[-1];
         bool                in_contiguous_mouse_pixels      = false;
         uint8_t           * line_data                       = Pointer.data;
+        Drawable::Mouse_t * mouse_cursor                    = Pointer.mouse_cursor;
+        --mouse_cursor;
 
         for (unsigned line = 0; line < 32; line++) {
             in_contiguous_mouse_pixels = false;

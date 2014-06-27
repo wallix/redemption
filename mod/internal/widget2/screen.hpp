@@ -123,7 +123,7 @@ public:
         return false;
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         Widget2 * w = this->last_widget_at_pos(x, y);
         if (this->current_over != w) {
@@ -137,7 +137,6 @@ public:
         }
         if (this->tooltip) {
             if (device_flags & MOUSE_FLAG_MOVE) {
-                // Widget2 * w = this->last_widget_at_pos(x, y);
                 if (w != this->tooltip->notifier) {
                     this->hide_tooltip();
                 }
@@ -154,20 +153,7 @@ public:
         if (this->tooltip) {
             this->hide_tooltip();
         }
-/*
-        if (this->tab_flag != IGNORE_TAB) {
-*/
-            WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
-/*
-        }
-        else if (this->current_focus) {
-            this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
-        }
-
-        for (uint32_t n = keymap->nb_kevent_available(); n ; --n) {
-            keymap->get_kevent();
-        }
-*/
+        WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 };
 

@@ -49,7 +49,8 @@ public:
     }
 
 private:
-    virtual void do_recv(char ** pbuffer, size_t len) {
+    virtual void do_recv(char ** pbuffer, size_t len)
+    {
         size_t total_len = 0;
         while (total_len < len){
             if (static_cast<size_t>(stream.end - stream.p) >= static_cast<size_t>(len - total_len)){

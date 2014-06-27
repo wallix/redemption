@@ -21,18 +21,14 @@
 #ifndef REDEMPTION_MOD_INTERNAL_WIDGETTESTMOD_HPP
 #define REDEMPTION_MOD_INTERNAL_WIDGETTESTMOD_HPP
 
-//#include "translation.hpp"
 #include "front_api.hpp"
 #include "config.hpp"
-//#include "widget2/flat_dialog.hpp"
-//#include "widget2/screen.hpp"
 #include "internal_mod.hpp"
 #include "widget2/edit.hpp"
 #include "widget2/flat_button.hpp"
 #include "widget2/tab.hpp"
 
-class WidgetTestMod : public InternalMod, public NotifyApi
-{
+class WidgetTestMod : public InternalMod, public NotifyApi {
     Inifile & ini;
 
     WidgetTabDPDefault drawing_policy;
@@ -45,13 +41,12 @@ class WidgetTestMod : public InternalMod, public NotifyApi
 
 public:
     WidgetTestMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
-        : InternalMod(front, width, height, &ini)
-        , ini(ini)
-        , drawing_policy(*this)
-        , tab(*this, drawing_policy, 30, 30, width - 60, height - 260, this->screen, this, 0, ini.theme.global.fgcolor, ini.theme.global.bgcolor)
-        , wedit_on_first_tab(NULL)
-        , wbutton_on_first_tab(NULL)
-    {
+    : InternalMod(front, width, height, &ini)
+    , ini(ini)
+    , drawing_policy(*this)
+    , tab(*this, drawing_policy, 30, 30, width - 60, height - 260, this->screen, this, 0, ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+    , wedit_on_first_tab(NULL)
+    , wbutton_on_first_tab(NULL) {
         this->screen.add_widget(&this->tab);
 
         size_t tab_0_index = static_cast<size_t>(-1);
@@ -99,8 +94,7 @@ public:
         this->screen.refresh(this->screen.rect);
     }
 
-    virtual ~WidgetTestMod()
-    {
+    virtual ~WidgetTestMod() {
         this->screen.clear();
 
         delete this->wedit_on_screen;
@@ -109,66 +103,10 @@ public:
         delete this->wedit_on_first_tab;
     }
 
-    virtual void notify(Widget2* sender, notify_event_t event)
-    {
-/*
-        switch (event) {
-            case NOTIFY_SUBMIT: this->accepted(); break;
-            case NOTIFY_CANCEL: this->refused(); break;
-            default: ;
-        }
-*/
-    }
-
-/*
-private:
-    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod");
-    void accepted()
-    {
-        if (this->dialog_widget.challenge) {
-            this->ini.context_set_value(AUTHID_PASSWORD,
-                                        this->dialog_widget.challenge->get_text());
-        }
-        else {
-            this->ini.context_set_value((this->dialog_widget.cancel
-                                         ? AUTHID_ACCEPT_MESSAGE
-                                         : AUTHID_DISPLAY_MESSAGE),
-                                        "True");
-        }
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set();
-    }
-
-    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod");
-    void refused()
-    {
-        if (!this->dialog_widget.challenge) {
-            this->ini.context_set_value((this->dialog_widget.cancel
-                                         ? AUTHID_ACCEPT_MESSAGE
-                                         : AUTHID_DISPLAY_MESSAGE),
-                                        "False");
-        }
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set();
-    }
-*/
+    virtual void notify(Widget2* sender, notify_event_t event) {}
 
 public:
-    virtual void draw_event(time_t now)
-    {
-/*
-        switch(this->timeout.check(now)) {
-        case Timeout::TIMEOUT_REACHED:
-            this->accepted();
-            break;
-        case Timeout::TIMEOUT_NOT_REACHED:
-            this->event.set(1000000);
-            break;
-        default:
-            this->event.reset();
-            break;
-        }
-*/
+    virtual void draw_event(time_t now) {
         this->event.reset();
     }
 };

@@ -125,10 +125,6 @@ struct rdp_orders {
                                          , RDPBrush(), 0, 0, 0, (uint8_t *)"");
         this->polyline        = RDPPolyline();
 
-//        if (this->bmp_cache) {
-//            this->bmp_cache->reset();
-//        }
-
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
         memset(this->global_palette, 0, sizeof(this->global_palette));
     }
@@ -359,7 +355,7 @@ public:
             }
             else if (class_ == (STANDARD | SECONDARY)) {
                 RDPSecondaryOrderHeader header(stream);
-//                LOG(LOG_INFO, "secondary order=%d", header.type);
+                //LOG(LOG_INFO, "secondary order=%d", header.type);
                 uint8_t * next_order = stream.p + header.order_data_length();
                 switch (header.type) {
                 case TS_CACHE_BITMAP_COMPRESSED:
@@ -391,7 +387,7 @@ public:
                                         ? this->common.clip
                                         : Rect(0, 0, front_width, front_height)
                                         );
-                // LOG(LOG_INFO, "/* order=%d ordername=%s */", this->common.order, ordernames[this->common.order]);
+                //LOG(LOG_INFO, "/* order=%d ordername=%s */", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);

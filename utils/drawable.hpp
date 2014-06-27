@@ -2172,18 +2172,14 @@ public:
         this->mouse_hotspot_y         = hotspot_y;
     }
 
-    void trace_mouse(/*uint16_t ux, uint16_t uy*/) {
+    void trace_mouse() {
         if (this->dont_show_mouse_cursor) {
             return;
         }
-//        this->save_mouse_x = ux;
-//        this->save_mouse_y = uy;
         this->save_mouse_x = this->mouse_cursor_pos_x;
         this->save_mouse_y = this->mouse_cursor_pos_y;
 
         uint8_t * psave = this->save_mouse;
-//        int       x     = ux - this->mouse_hotspot_x;
-//        int       y     = uy - this->mouse_hotspot_y;
         int       x     = this->mouse_cursor_pos_x - this->mouse_hotspot_x;
         int       y     = this->mouse_cursor_pos_y - this->mouse_hotspot_y;
 
