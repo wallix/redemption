@@ -235,7 +235,9 @@ public:
     void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
         this->capture_event.reset();
 
-        this->drawable->drawable.set_mouse_cursor_pos(x, y);
+        if (this->capture_drawable) {
+            this->drawable->drawable.set_mouse_cursor_pos(x, y);
+        }
 
         this->last_now = now;
         this->last_x   = x;
