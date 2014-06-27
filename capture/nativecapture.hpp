@@ -253,6 +253,8 @@ public:
         this->recorder.draw(cmd, clip);
     }
 
+    using RDPGraphicDevice::draw;
+
     virtual void send_pointer(int cache_idx, const Pointer & cursor) {
         this->recorder.send_pointer(cache_idx, cursor);
     }

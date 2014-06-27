@@ -129,10 +129,22 @@ struct TestDraw : DrawApi
     {
         BOOST_CHECK(false);
     }
+
     virtual void draw(const RDPEllipseCB&, const Rect&)
     {
         BOOST_CHECK(false);
     }
+
+    virtual void draw(const RDP::FrameMarker&)
+    {
+        REDASSERT(false);
+    }
+
+    virtual void draw(const RDPBitmapData&, const uint8_t*, size_t, const Bitmap&)
+    {
+        REDASSERT(false);
+    }
+
     virtual void begin_update()
     {}
 

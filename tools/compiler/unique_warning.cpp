@@ -14,7 +14,7 @@ void filter(std::istream & is) {
             block += l;
             cap = false;
         }
-        else if (l.find("warning:") != std::string::npos) {
+        else if (l.find("warning:") != std::string::npos || l.find("error:") != std::string::npos) {
             if (!block.empty()) {
                 blocks.insert(std::move(block));
             }

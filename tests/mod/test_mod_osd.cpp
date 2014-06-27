@@ -53,7 +53,10 @@ struct FakeMod : mod_api
     virtual void text_metrics(const char * text, int & width, int & height) {}
 
     virtual void server_draw_text(int16_t x, int16_t y, const char * text,
-                                  uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) {}
+                                  uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    {}
+
+    using mod_api::draw;
 
     virtual void draw(const RDPOpaqueRect      & cmd, const Rect & clip) { this->gd.draw(cmd, clip); }
     virtual void draw(const RDPScrBlt          & cmd, const Rect & clip) { this->gd.draw(cmd, clip); }

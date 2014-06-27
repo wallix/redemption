@@ -139,6 +139,8 @@ public:
         this->gd.draw(new_cmd24, clip);
     }
 
+    using FrontAPI::draw;
+
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const { return cl; }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data, size_t length

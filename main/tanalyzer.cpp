@@ -117,6 +117,11 @@ public:
     virtual void draw(const RDPPolyline        & cmd, const Rect & clip) { REDASSERT(false); }
     virtual void draw(const RDPEllipseSC       & cmd, const Rect & clip) { REDASSERT(false); }
     virtual void draw(const RDPEllipseCB       & cmd, const Rect & clip) { REDASSERT(false); }
+    virtual void draw(const RDPGlyphCache&) { REDASSERT(false); }
+    virtual void draw(const RDP::FrameMarker&) { REDASSERT(false); }
+    virtual void draw(const RDPBitmapData&, const uint8_t*, size_t, const Bitmap&) { REDASSERT(false); }
+    virtual void draw(const RDPBrushCache&) { REDASSERT(false); }
+    virtual void draw(const RDPColCache&) { REDASSERT(false); }
 
     virtual void flush() { REDASSERT(false); }
 
