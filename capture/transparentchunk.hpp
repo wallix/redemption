@@ -34,4 +34,3 @@ enum {
 };
 
 #endif  // #ifndef _REDEMPTION_CAPTURE_TRANSPARENTCHUNK_HPP_
-

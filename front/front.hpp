@@ -1376,14 +1376,6 @@ public:
         }
     }   // void set_pointer(int cache_idx)
 
-/*
-    virtual void set_pointer_display() {
-        if (this->capture) {
-            this->capture->set_pointer_display();
-        }
-    }
-*/
-
     void incoming(Callback & cb) throw(Error)
     {
         unsigned expected;
@@ -4656,7 +4648,7 @@ public:
                 {
                     if (new_cmd.data[i] <= 0xFD)
                     {
-//                      LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
+                        //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
                         FontChar * fc = gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item;
                         REDASSERT(fc);
                         int g_idx = this->glyph_cache.find_glyph(fc, new_cmd.cache_id);
@@ -4951,7 +4943,7 @@ public:
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
-//        LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
+        //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
         this->orders->draw(bitmap_data, data, size, bmp);
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {

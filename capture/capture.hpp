@@ -254,11 +254,6 @@ public:
     }
 
     void flush() {
-/*
-        if (this->capture_png) {
-            this->psc->flush();
-        }
-*/
         if (this->capture_wrm) {
             this->pnc->flush();
         }
@@ -429,14 +424,6 @@ public:
     }
 
     virtual void set_pointer_display() {
-/*
-        if (this->capture_wrm) {
-            this->pnc->set_pointer_display();
-        }
-        else if (this->capture_drawable) {
-            this->drawable->set_pointer_display();
-        }
-*/
         if (this->capture_drawable) {
             this->drawable->drawable.dont_show_mouse_cursor = true;
         }
