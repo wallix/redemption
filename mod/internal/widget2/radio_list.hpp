@@ -146,9 +146,7 @@ public:
     }
 
     virtual void select(size_t n) {
-        if (n < this->size &&
-            n >= 0 &&
-            static_cast<int>(n) != this->selected) {
+        if (n < this->size && static_cast<int>(n) != this->selected) {
             if (this->selected >= 0) {
                 this->child_list[this->selected]->unselect();
             }

@@ -162,42 +162,51 @@ struct RecvFactory {
 };
 
 struct CliprdrHeader {
-    uint16_t msgType;
-    uint16_t msgFlags;
-    uint32_t dataLen;
+    uint16_t msgType()  const { return this->msgType_; }
+    uint16_t msgFlags() const { return this->msgFlags_; }
+    uint32_t dataLen()  const { return this->dataLen_; }
+
+protected:
+    uint16_t msgType_;
+    uint16_t msgFlags_;
+    uint32_t dataLen_;
 
 
     CliprdrHeader()
-        : msgType(0)
-        , msgFlags(0)
-        , dataLen(0) {
+        : msgType_(0)
+        , msgFlags_(0)
+        , dataLen_(0) {
     }   // CliprdrHeader()
 
     CliprdrHeader(uint16_t msgType, uint16_t msgFlags, uint32_t dataLen)
-        : msgType(msgType)
-        , msgFlags(msgFlags)
-        , dataLen(dataLen) {
+        : msgType_(msgType)
+        , msgFlags_(msgFlags)
+        , dataLen_(dataLen) {
     }   // CliprdrHeader(uint16_t msgType, uint16_t msgFlags, uint32_t dataLen)
-    virtual ~CliprdrHeader() {}
-    virtual void emit(Stream & stream) {
-        stream.out_uint16_le(this->msgType);
-        stream.out_uint16_le(this->msgFlags);
-        stream.out_uint32_le(this->dataLen);
+
+    void emit(Stream & stream) {
+        stream.out_uint16_le(this->msgType_);
+        stream.out_uint16_le(this->msgFlags_);
+        stream.out_uint32_le(this->dataLen_);
         stream.mark_end();
     }   // void emit(Stream & stream)
 
-    virtual void recv(Stream & stream, const RecvFactory & recv_factory) {
-        const unsigned expected = 6;    /* msgFlags(2) + dataLen(4) */
+    void recv(Stream & stream, const RecvFactory & recv_factory) {
+        const unsigned expected = 6;    /* msgFlags_(2) + dataLen_(4) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO, "RDPECLIP::recv truncated data, need=%u remains=%u"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        this->msgType  = recv_factory.msgType;
-        this->msgFlags = stream.in_uint16_le();
-        this->dataLen  = stream.in_uint32_le();
+        this->msgType_  = recv_factory.msgType;
+        this->msgFlags_ = stream.in_uint16_le();
+        this->dataLen_  = stream.in_uint32_le();
     }
+
+private:
+    CliprdrHeader(CliprdrHeader const &);
+    CliprdrHeader& operator=(CliprdrHeader const &);
 };  // struct CliprdrHeader
 
 // [MS-RDPECLIP] 2.2.2.2 Server Monitor Ready PDU (CLIPRDR_MONITOR_READY)
@@ -223,7 +232,9 @@ struct CliprdrHeader {
 struct ServerMonitorReadyPDU : public CliprdrHeader {
     ServerMonitorReadyPDU() : CliprdrHeader(CB_MONITOR_READY, 0, 0) {
     }   // ServerMonitorReadyPDU(bool response_ok)
-    virtual ~ServerMonitorReadyPDU() {}
+
+    using CliprdrHeader::emit;
+    using CliprdrHeader::recv;
 
 };  // struct ServerMonitorReadyPDU
 
@@ -269,10 +280,9 @@ struct FormatListPDU : public CliprdrHeader {
     FormatListPDU()
         : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
         , contians_data_in_text_format(false) {}
-    virtual ~FormatListPDU() {}
 
-    virtual void emit(Stream & stream) {
-        this->dataLen = 144;    /* (formatId(4) + formatName(32)) * 4 */
+    void emit(Stream & stream) {
+        this->dataLen_ = 144;    /* (formatId(4) + formatName(32)) * 4 */
         CliprdrHeader::emit(stream);
 
         // 4 CLIPRDR_SHORT_FORMAT_NAMES structures.
@@ -291,7 +301,7 @@ struct FormatListPDU : public CliprdrHeader {
         stream.mark_end();
     }
 
-    virtual void recv(Stream & stream, const RecvFactory & recv_factory) {
+    void recv(Stream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
 
         // [MS-RDPECLIP] 2.2.3.1.1.1 Short Format Name (CLIPRDR_SHORT_FORMAT_NAME)
@@ -335,7 +345,7 @@ struct FormatListPDU : public CliprdrHeader {
             36; /* formatId(4) + formatName(32) */
 
         // Parse PDU to find if clipboard data is available in a TEXT format.
-        for (uint32_t i = 0; i < (dataLen / short_format_name_structure_size); i++) {
+        for (uint32_t i = 0; i < (dataLen_ / short_format_name_structure_size); i++) {
             if (!stream.in_check_rem(short_format_name_structure_size)) {
                 LOG( LOG_INFO
                    , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%u"
@@ -385,7 +395,9 @@ struct FormatListResponsePDU : public CliprdrHeader {
                        , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
                        , 0) {
     }   // FormatListResponsePDU(bool response_ok)
-    virtual ~FormatListResponsePDU() {}
+
+    using CliprdrHeader::emit;
+    using CliprdrHeader::recv;
 };  // struct FormatListResponsePDU
 
 // [MS-RDPECLIP] 2.2.5.1 Format Data Request PDU (CLIPRDR_FORMAT_DATA_REQUEST)
@@ -427,16 +439,14 @@ struct FormatDataRequestPDU : public CliprdrHeader {
             , requestedFormatId(requestedFormatId) {
     }   // FormatDataRequestPDU(uint32_t requestedFormatId)
 
-    virtual ~FormatDataRequestPDU() {}
-
-    virtual void emit(Stream & stream) {
+    void emit(Stream & stream) {
         CliprdrHeader::emit(stream);
 
         stream.out_uint32_le(this->requestedFormatId);
         stream.mark_end();
     }   // void emit(Stream & stream)
 
-    virtual void recv(Stream & stream, const RecvFactory & recv_factory) {
+    void recv(Stream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
 
         this->requestedFormatId = stream.in_uint32_le();
@@ -485,28 +495,29 @@ struct FormatDataResponsePDU : public CliprdrHeader {
                        , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
                        , 0) {
     }
-    virtual ~FormatDataResponsePDU() {}
 
-    virtual void emit(Stream & stream, const char * utf8_string) {
-        stream.out_uint16_le(this->msgType);
-        stream.out_uint16_le(this->msgFlags);
+    void emit(Stream & stream, const char * utf8_string) {
+        stream.out_uint16_le(this->msgType_);
+        stream.out_uint16_le(this->msgFlags_);
 
-        if (this->msgFlags == CB_RESPONSE_OK) {
-            uint16_t offset_dataLen;
+        if (this->msgFlags_ == CB_RESPONSE_OK) {
+            uint16_t offset_dataLen_;
 
-            offset_dataLen = stream.get_offset();
+            offset_dataLen_ = stream.get_offset();
             stream.out_uint32_le(0);
 
             stream.out_unistr_crlf(utf8_string);
 
             stream.set_out_uint32_le(   stream.get_offset()
-                                      - offset_dataLen
-                                      - 4                   /* dataLen(4) */
-                                    , offset_dataLen);
+                                      - offset_dataLen_
+                                      - 4                   /* dataLen_(4) */
+                                    , offset_dataLen_);
 
             stream.mark_end();
         }
     }
+
+    using CliprdrHeader::recv;
 };
 
 }   // namespace RDPECLIP

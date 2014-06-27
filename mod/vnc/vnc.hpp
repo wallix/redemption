@@ -1966,8 +1966,8 @@ private:
                 if (this->verbose) {
                     LOG( LOG_INFO
                        , "mod_vnc::send_to_vnc: CB_FORMAT_DATA_REQUEST msgFlags=0x%02x datalen=%u requestedFormatId=0x%02x"
-                       , format_data_request_pdu.msgFlags
-                       , format_data_request_pdu.dataLen
+                       , format_data_request_pdu.msgFlags()
+                       , format_data_request_pdu.dataLen()
                        , format_data_request_pdu.requestedFormatId
                        );
                 }
@@ -2030,23 +2030,23 @@ private:
 
                 format_data_response_pdu.recv(stream, recv_factory);
 
-                if (format_data_response_pdu.msgFlags == RDPECLIP::CB_RESPONSE_OK) {
+                if (format_data_response_pdu.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
 
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
-                        if (!stream.in_check_rem(format_data_response_pdu.dataLen)) {
+                        if (!stream.in_check_rem(format_data_response_pdu.dataLen())) {
                             LOG( LOG_ERR
                                , "mod_vnc::send_to_vnc truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
-                               , format_data_response_pdu.dataLen, stream.in_remain());
+                               , format_data_response_pdu.dataLen(), stream.in_remain());
                             throw Error(ERR_VNC);
                         }
 
                         Array dataU8(
-                              format_data_response_pdu.dataLen
-                            + format_data_response_pdu.dataLen / 2
+                              format_data_response_pdu.dataLen()
+                            + format_data_response_pdu.dataLen() / 2
                             + 1);
 
                         size_t len_utf8 = UTF16toUTF8( stream.p
-                                                     , format_data_response_pdu.dataLen / 2
+                                                     , format_data_response_pdu.dataLen() / 2
                                                      , dataU8.get_data()
                                                      , dataU8.size());
 
@@ -2065,7 +2065,7 @@ private:
                         if (this->verbose) {
                             LOG( LOG_INFO
                                , "mod_vnc::send_to_vnc Virtual channel data span in multiple Virtual Channel PDUs: total=%u"
-                               , format_data_response_pdu.dataLen);
+                               , format_data_response_pdu.dataLen());
                         }
 
                         this->to_vnc_large_clipboard_data.init(2 * (MAX_VNC_2_RDP_CLIP_DATA_SIZE + 1));

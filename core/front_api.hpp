@@ -40,7 +40,7 @@ class FrontAPI : public DrawApi {
     virtual void set_mod_color_depth(uint8_t bpp) = 0;
 
     virtual int server_resize(int width, int height, int bpp) = 0;
-    virtual void update_config(const timeval & now, const Inifile & ini) {}
+    //virtual void update_config(const timeval & now, const Inifile & ini) {}
 
     int mouse_x;
     int mouse_y;

@@ -82,11 +82,6 @@ public:
                         uint32_t flags                   = payload.in_uint32_le();
 
                         char mod_channel_name[256];
-                        if (mod_channel_name_length >= sizeof(mod_channel_name)) {
-                            LOG(LOG_ERR, "Channel name too long (%d >= %u)",
-                                mod_channel_name_length, sizeof(mod_channel_name));
-                            throw Error(ERR_TRM_CHANNEL_NAME_TOO_LONG);
-                        }
                         payload.in_copy_bytes(mod_channel_name, mod_channel_name_length);
                         mod_channel_name[mod_channel_name_length] = 0;
 

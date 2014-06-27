@@ -73,6 +73,8 @@ public:
         this->event.reset();
     }
 
+    using InternalMod::draw;
+
     void draw()
     {
         this->front.begin_update();
