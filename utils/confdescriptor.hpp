@@ -20,7 +20,7 @@
    Configuration file descriptor objects
 */
 
-#ifndef _REDEMPTION_UTILS_CONFDESCRIPTOR_HPP__
+#ifndef _REDEMPTION_UTILS_CONFDESCRIPTOR_HPP_
 #define _REDEMPTION_UTILS_CONFDESCRIPTOR_HPP_
 
 #include "log.hpp"

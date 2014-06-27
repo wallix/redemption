@@ -237,8 +237,8 @@ public:
     void decrement_edit_pos()
     {
         size_t len = 1;
-        while (this->edit_buffer_pos - len >= 0 &&
-               ((this->label.buffer[this->edit_buffer_pos - len] & 0xC0) == 0x80)){
+        while (/*this->edit_buffer_pos - len >= 0 &&
+               (*/(this->label.buffer[this->edit_buffer_pos - len] & 0xC0) == 0x80/*)*/){
             ++len;
         }
 

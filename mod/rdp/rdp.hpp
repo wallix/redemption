@@ -4355,12 +4355,14 @@ public:
         }
 
         TODO("Add check that the idx transmitted is actually an used pointer")
-        int pointer_idx = stream.in_uint16_le();
-        if (pointer_idx < 0){
-            LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu negative pointer cache idx (%d)", pointer_idx);
-            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
-        }
-        if (pointer_idx >= static_cast<int>(sizeof(this->cursors) / sizeof(Pointer))) {
+//        int pointer_idx = stream.in_uint16_le();
+        uint16_t pointer_idx = stream.in_uint16_le();
+//        if (pointer_idx < 0){
+//            LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu negative pointer cache idx (%d)", pointer_idx);
+//            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
+//        }
+//        if (pointer_idx >= static_cast<int>(sizeof(this->cursors) / sizeof(Pointer))) {
+        if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu pointer cache idx overflow (%d)", pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
@@ -4521,11 +4523,12 @@ public:
         unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned pointer_idx = stream.in_uint16_le();
 
-        if (pointer_idx < 0){
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu negative pointer cache idx (%d)", pointer_idx);
-            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
-        }
-        if (pointer_idx >= (int)(sizeof(this->cursors) / sizeof(Pointer))) {
+//        if (pointer_idx < 0){
+//            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu negative pointer cache idx (%d)", pointer_idx);
+//            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
+//        }
+//        if (pointer_idx >= (int)(sizeof(this->cursors) / sizeof(Pointer))) {
+        if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu pointer cache idx overflow (%d)", pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }

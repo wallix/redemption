@@ -51,7 +51,8 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     RDPDrawable drawable(800, 600);
     StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.drawable);
 
-    consumer.set_pointer_display();
+//    consumer.set_pointer_display();
+    drawable.drawable.dont_show_mouse_cursor = true;
 
     bool ignore_frame_in_timeval = false;
 
@@ -95,7 +96,8 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     RDPDrawable drawable(800, 600);
     StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.drawable);
 
-    consumer.set_pointer_display();
+//    consumer.set_pointer_display();
+    drawable.drawable.dont_show_mouse_cursor = true;
 
     bool ignore_frame_in_timeval = false;
 

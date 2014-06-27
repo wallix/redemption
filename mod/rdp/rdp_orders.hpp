@@ -21,7 +21,7 @@
 */
 
 #ifndef _REDEMPTION_MOD_RDP_RDP_ORDERS_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_ORDERS_HPP__
+#define _REDEMPTION_MOD_RDP_RDP_ORDERS_HPP_
 
 #include <string.h>
 

@@ -79,19 +79,20 @@ public:
 
         char text[MAX_TEXT];
 
-        DrawingPolicy & drawing_policy;
+//        DrawingPolicy & drawing_policy;
 
         CompositeArray child_array;
 
     public:
         Item( const char * text
             , DrawApi & drawable
-            , DrawingPolicy & drawing_policy
+//            , DrawingPolicy & drawing_policy
             , const Rect & rect
             , Widget2 & parent
             , NotifyApi * notifier)
         : WidgetParent(drawable, rect, parent, notifier)
-        , drawing_policy(drawing_policy) {
+//        , drawing_policy(drawing_policy)
+ {
             this->impl = &child_array;
 
             this->set_text(text);
@@ -147,7 +148,7 @@ public:
         Rect rect_item        = rect_child_area.offset(-this->rect.x, -this->rect.y);
 
         this->items[this->item_count] = new Item( name, this->drawable
-                                                , this->drawing_policy
+//                                                , this->drawing_policy
                                                 , rect_item
                                                 , *this
                                                 , this);
