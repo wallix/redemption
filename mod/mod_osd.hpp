@@ -342,6 +342,11 @@ public:
         }
     }
 
+    virtual void draw(const RDP::FrameMarker& order)
+    {
+        this->mod.draw(order);
+    }
+
     virtual void begin_update()
     {
         this->mod.begin_update();

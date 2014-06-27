@@ -63,6 +63,7 @@ struct null_mod : public mod_api {
 
     virtual void begin_update() {}
     virtual void end_update() {}
+    using mod_api::draw;
     virtual void draw(const RDPOpaqueRect      & cmd, const Rect & clip) {}
     virtual void draw(const RDPScrBlt          & cmd, const Rect & clip) {}
     virtual void draw(const RDPDestBlt         & cmd, const Rect & clip) {}

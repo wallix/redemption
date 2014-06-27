@@ -2179,6 +2179,8 @@ private:
     }
 
 public:
+    using InternalMod::draw;
+
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         /// NOTE force resize cliping with rdesktop...

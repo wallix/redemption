@@ -90,7 +90,9 @@ project redemption
     <include>regex
     <include>/usr/include
     <include>FreeRDP/include
+
     <conditional>@defines
+    
 #    <cxxflags>-pedantic
 #    <cxxflags>-Wconversion
     <cxxflags>-Wvla
@@ -139,7 +141,7 @@ project redemption
     <toolset>clang:<cxxflags>-Wno-unused-private-field
     <toolset>clang:<cxxflags>-Wno-dynamic-class-memaccess #memcpy (class 'Capability'; vtable pointer will be overwritten)
 
-    <toolset>clang,<variant>debug:<cxxflags>-Wno-null-dereference
+    <toolset>clang,<variant>debug:<cxxflags>-Wno-null-dereference # RDPASSERT
 
     <define>PUBLIC
    : default-build release

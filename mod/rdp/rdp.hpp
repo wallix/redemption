@@ -4991,6 +4991,11 @@ public:
         this->front.draw(bitmap_data, data, size, bmp);
     }
 
+    virtual void draw(const RDPBrushCache& cmd)
+    {
+        this->front.draw(cmd);
+    }
+
     virtual bool is_up_and_running() {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }

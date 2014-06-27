@@ -655,7 +655,6 @@ public:
         this->RDPSerializer::draw(cmd, clip);
     }
 
-
 protected:
     virtual void flush_bitmaps() {
         if (this->bitmap_count > 0) {
@@ -665,6 +664,7 @@ protected:
             this->send_bitmaps_chunk();
         }
     }
+
 public:
     virtual void flush() {
         this->flush_bitmaps();
@@ -680,6 +680,8 @@ public:
         this->drawable.draw(order);
         this->RDPSerializer::draw(order);
     }
+
+    using RDPSerializer::draw;
 
     void send_bitmaps_chunk()
     {
