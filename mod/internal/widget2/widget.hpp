@@ -29,7 +29,7 @@
 #include <callback.hpp>
 #include "RDP/pointer.hpp"
 
-class Keymap2;
+struct Keymap2;
 
 enum EventType {
     FOCUS_BEGIN,

@@ -425,7 +425,7 @@ public:
                 FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
                 if (!font_item) {
                     LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                    font_item = this->font.font_items['?'];
+                    font_item = this->font.font_items[static_cast<unsigned>('?')];
                 }
                 TODO(" avoid passing parameters by reference to get results")
                 switch (this->glyph_cache.add_glyph(font_item, f, c))

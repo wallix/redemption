@@ -156,7 +156,7 @@ class SslAES
     AES_KEY e_key;
     AES_KEY d_key;
 
-    uint8_t iv;
+//    uint8_t iv;
 
     public:
     SslAES(){}

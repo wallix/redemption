@@ -291,7 +291,7 @@ public:
         }
     }
 
-    virtual void focus()
+    virtual void focus(int reason)
     {
         if (!this->has_focus){
             this->has_focus = true;

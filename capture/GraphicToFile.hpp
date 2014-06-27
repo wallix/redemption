@@ -82,6 +82,7 @@ public:
         while (this->stream.size() + to_buffer_len > max){
             BStream header(8);
             WRMChunk_Send chunk(header, PARTIAL_IMAGE_CHUNK, max, 1);
+(void)chunk;
             this->trans->send(header);
             this->trans->send(this->stream);
             size_t to_send = max - this->stream.size();
