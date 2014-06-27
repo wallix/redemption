@@ -499,7 +499,9 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     Rect screen_rect(0, 0, width, height);
     RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
-    gd.drawable.trace_mouse(100, 100);
+//    gd.drawable.trace_mouse(100, 100);
+    gd.drawable.set_mouse_cursor_pos(100, 100);
+    gd.drawable.trace_mouse();
 
     {
         char message[1024];
@@ -536,7 +538,9 @@ BOOST_AUTO_TEST_CASE(TestAddMouse2)
     Rect screen_rect(0, 0, width, height);
     RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, BLACK), screen_rect); // BLACK
-    gd.drawable.trace_mouse(638, 470);
+//    gd.drawable.trace_mouse(638, 470);
+    gd.drawable.set_mouse_cursor_pos(638, 470);
+    gd.drawable.trace_mouse();
 
     {
         char message[1024];
@@ -575,7 +579,9 @@ BOOST_AUTO_TEST_CASE(TestAddMouse3)
     gd.drawable.mouse_hotspot_x = 8;
     gd.drawable.mouse_hotspot_y = 8;
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
-    gd.drawable.trace_mouse(0, 0);
+//    gd.drawable.trace_mouse(0, 0);
+    gd.drawable.set_mouse_cursor_pos(0, 0);
+    gd.drawable.trace_mouse();
 
     {
         char message[1024];

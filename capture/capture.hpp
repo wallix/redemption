@@ -235,6 +235,8 @@ public:
     void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
         this->capture_event.reset();
 
+        this->drawable->drawable.set_mouse_cursor_pos(x, y);
+
         this->last_now = now;
         this->last_x   = x;
         this->last_y   = y;
@@ -425,11 +427,16 @@ public:
     }
 
     virtual void set_pointer_display() {
+/*
         if (this->capture_wrm) {
             this->pnc->set_pointer_display();
         }
         else if (this->capture_drawable) {
             this->drawable->set_pointer_display();
+        }
+*/
+        if (this->capture_drawable) {
+            this->drawable->drawable.dont_show_mouse_cursor = true;
         }
     }
 };

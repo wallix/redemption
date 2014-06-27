@@ -82,6 +82,15 @@ struct Drawable {
 
     bool logical_frame_ended;
 
+private:
+    int mouse_cursor_pos_x;
+    int mouse_cursor_pos_y;
+
+public:
+    bool dont_show_mouse_cursor;
+
+    bool updated;
+
     Drawable(int width, int height)
     : width(width)
     , height(height)
@@ -90,6 +99,10 @@ struct Drawable {
     , tracked_area(0, 0, 0, 0)
     , tracked_area_changed(false)
     , logical_frame_ended(true)
+    , mouse_cursor_pos_x(width / 2)
+    , mouse_cursor_pos_y(height / 2)
+    , dont_show_mouse_cursor(false)
+    , updated(true)
     {
         static const Mouse_t default_mouse_cursor[] =
         {
@@ -212,6 +225,13 @@ struct Drawable {
     int size() const
     {
         return this->width * this->height;
+    }
+
+    void set_mouse_cursor_pos(int x, int y) {
+        this->updated |= (!this->dont_show_mouse_cursor && ((x != this->mouse_cursor_pos_x) || (y != this->mouse_cursor_pos_y)));
+
+        this->mouse_cursor_pos_x = x;
+        this->mouse_cursor_pos_y = y;
     }
 
     int _posch_12x7(char ch)
@@ -2152,13 +2172,20 @@ struct Drawable {
         this->mouse_hotspot_y         = hotspot_y;
     }
 
-    void trace_mouse(uint16_t ux, uint16_t uy) {
-        this->save_mouse_x = ux;
-        this->save_mouse_y = uy;
+    void trace_mouse(/*uint16_t ux, uint16_t uy*/) {
+        if (this->dont_show_mouse_cursor) {
+            return;
+        }
+//        this->save_mouse_x = ux;
+//        this->save_mouse_y = uy;
+        this->save_mouse_x = this->mouse_cursor_pos_x;
+        this->save_mouse_y = this->mouse_cursor_pos_y;
 
         uint8_t * psave = this->save_mouse;
-        int       x     = ux - this->mouse_hotspot_x;
-        int       y     = uy - this->mouse_hotspot_y;
+//        int       x     = ux - this->mouse_hotspot_x;
+//        int       y     = uy - this->mouse_hotspot_y;
+        int       x     = this->mouse_cursor_pos_x - this->mouse_hotspot_x;
+        int       y     = this->mouse_cursor_pos_y - this->mouse_hotspot_y;
 
         const uint8_t * data_end = this->data + this->height * this->width * 3;
 
@@ -2183,6 +2210,10 @@ struct Drawable {
     }
 
     void clear_mouse() {
+        if (this->dont_show_mouse_cursor) {
+            return;
+        }
+
         uint8_t * psave = this->save_mouse;
         int       x     = this->save_mouse_x - this->mouse_hotspot_x;
         int       y     = this->save_mouse_y - this->mouse_hotspot_y;
