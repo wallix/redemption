@@ -149,7 +149,6 @@ public:
         delete[] this->data;
     }
 
-private:
     uint8_t * first_pixel() {
         return this->data;
     }
@@ -190,7 +189,6 @@ private:
         return this->width * this->height;
     }
 
-public:
     void set_mouse_cursor_pos(int x, int y) {
         this->update_id += ((!this->dont_show_mouse_cursor && ((x != this->mouse_cursor_pos_x) || (y != this->mouse_cursor_pos_y))) ? 1 : 0);
 
