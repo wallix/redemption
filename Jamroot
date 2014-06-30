@@ -101,7 +101,7 @@ project redemption
 #    <cxxflags>-Wlong-long
     <cxxflags>-O3
     <variant>debug:<cxxflags>-g
-    <variant>release:<cxxflags>-march=native
+#     <variant>release:<cxxflags>-march=native
     <cxxflags>-Wuninitialized
     <cxxflags>-Wnon-virtual-dtor
 #     <cxxflags>-Wall
