@@ -60,7 +60,7 @@ namespace detail
         , reader(reader)
         {}
 
-        ssize_t read_line(char * dest, size_t len, int err) throw(Error) /*noexcept*/
+        ssize_t read_line(char * dest, size_t len, int err) /*noexcept*/
         {
             ssize_t total_read = 0;
             while (1) {
