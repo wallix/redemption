@@ -89,7 +89,7 @@ private:
 public:
     bool dont_show_mouse_cursor;
 
-    bool updated;
+    uint32_t update_id;
 
     Drawable(int width, int height)
     : width(width)
@@ -102,30 +102,28 @@ public:
     , mouse_cursor_pos_x(width / 2)
     , mouse_cursor_pos_y(height / 2)
     , dont_show_mouse_cursor(false)
-    , updated(true)
-    {
-        static const Mouse_t default_mouse_cursor[] =
-        {
-            {0,  0, 3 * 1,  "\x00\x00\x00"},
-            {1,  0, 3 * 2,  "\x00\x00\x00\x00\x00\x00"},
-            {2,  0, 3 * 3,  "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00"},
-            {3,  0, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {4,  0, 3 * 5,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {5,  0, 3 * 6,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {6,  0, 3 * 7,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {7,  0, 3 * 8,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {8,  0, 3 * 9,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {9,  0, 3 * 10, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {10, 0, 3 * 11, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {11, 0, 3 * 12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {12, 0, 3 * 12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
-            {13, 0, 3 * 8,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {14, 0, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {14, 5, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {15, 0, 3 * 3,  "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00"},
-            {15, 5, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {16, 1, 3 * 1,  "\x00\x00\x00"},
-            {16, 6, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"}
+    , update_id(0xFFFFFFFF) {
+        static const Mouse_t default_mouse_cursor[] = {
+            { 0,  0, 3 * 1,  "\x00\x00\x00" },
+            { 1,  0, 3 * 2,  "\x00\x00\x00\x00\x00\x00" },
+            { 2,  0, 3 * 3,  "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00" },
+            { 3,  0, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 4,  0, 3 * 5,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 5,  0, 3 * 6,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 6,  0, 3 * 7,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 7,  0, 3 * 8,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 8,  0, 3 * 9,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 9,  0, 3 * 10, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 10, 0, 3 * 11, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 11, 0, 3 * 12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 12, 0, 3 * 12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" },
+            { 13, 0, 3 * 8,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 14, 0, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 14, 5, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 15, 0, 3 * 3,  "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00" },
+            { 15, 5, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
+            { 16, 1, 3 * 1,  "\x00\x00\x00" },
+            { 16, 6, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" }
         };
 
         this->contiguous_mouse_pixels = 20;
@@ -137,7 +135,7 @@ public:
             throw Error(ERR_RECORDER_EMPTY_IMAGE);
         }
         this->data = new (std::nothrow) uint8_t[this->pix_len];
-        if (this->data == 0){
+        if (this->data == 0) {
             throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
         }
         std::fill<>(this->data, this->data + this->pix_len, 0);
@@ -147,17 +145,15 @@ public:
         this->previous_timestamp_length = 0;
     }
 
-    ~Drawable()
-    {
+    ~Drawable() {
         delete[] this->data;
     }
 
-    void bgr2rgb()
-    {
+    void bgr2rgb() {
         const uint32_t * s = reinterpret_cast<const uint32_t *>(this->data);
         uint32_t * t = reinterpret_cast<uint32_t *>(this->data);
-        for (size_t y = 0; y < this->height ; y++){
-            for (size_t n = 0; n < (this->width / 4) ; n++){
+        for (size_t y = 0; y < this->height ; y++) {
+            for (size_t n = 0; n < (this->width / 4) ; n++) {
                 unsigned bRGB = *s++;
                 unsigned GBrg = *s++;
                 unsigned rgbR = *s++;
@@ -177,65 +173,57 @@ public:
         }
     }
 
-    uint8_t * first_pixel()
-    {
+private:
+    uint8_t * first_pixel() {
         return this->data;
     }
 
-    const uint8_t * first_pixel() const
-    {
+    const uint8_t * first_pixel() const {
         return this->data;
     }
 
-    uint8_t * first_pixel(const Rect & rect)
-    {
+    uint8_t * first_pixel(const Rect & rect) {
         return this->data + (rect.y * this->width + rect.x) * Bpp;
     }
 
-    const uint8_t * first_pixel(const Rect & rect) const
-    {
+    const uint8_t * first_pixel(const Rect & rect) const {
         return this->data + (rect.y * this->width + rect.x) * Bpp;
     }
 
-    uint8_t * first_pixel(int y)
-    {
+    uint8_t * first_pixel(int y) {
         return this->data + y * this->width * Bpp;
     }
 
-    uint8_t * first_pixel(int x, int y)
-    {
+    uint8_t * first_pixel(int x, int y) {
         return this->data + (y * this->width + x) * Bpp;
     }
 
-    const uint8_t * first_pixel(int x, int y) const
-    {
+    const uint8_t * first_pixel(int x, int y) const {
         return this->data + (y * this->width + x) * Bpp;
     }
 
-    uint8_t * after_last_pixel()
-    {
+    uint8_t * after_last_pixel() {
         return this->data + this->pix_len;
     }
 
-    uint8_t * beginning_of_last_line(const Rect & rect)
-    {
+    uint8_t * beginning_of_last_line(const Rect & rect) {
         return this->data + ((rect.y + rect.cy - 1) * this->width + rect.x) * Bpp;
     }
 
-    int size() const
-    {
+    int size() const {
         return this->width * this->height;
     }
 
+public:
     void set_mouse_cursor_pos(int x, int y) {
-        this->updated |= (!this->dont_show_mouse_cursor && ((x != this->mouse_cursor_pos_x) || (y != this->mouse_cursor_pos_y)));
+        this->update_id += ((!this->dont_show_mouse_cursor && ((x != this->mouse_cursor_pos_x) || (y != this->mouse_cursor_pos_y))) ? 1 : 0);
 
         this->mouse_cursor_pos_x = x;
         this->mouse_cursor_pos_y = y;
     }
 
-    int _posch_12x7(char ch)
-    {
+private:
+    int _posch_12x7(char ch) {
         return char_width * char_height *
         (isdigit(ch)  ? ch-'0'
         : isupper(ch) ? ch - 'A' + 14
@@ -244,7 +232,6 @@ public:
         : ch == 0x07  ? 13
         :               12);
     }
-
 
     void draw_12x7_digits(uint8_t * rgbpixbuf, unsigned width, unsigned lg_message,
             const char * message, const char * old_message) {
@@ -769,21 +756,21 @@ public:
         "       "
         "       "
         ;
-        for (size_t i = 0 ; i < lg_message ; ++i){
+        for (size_t i = 0 ; i < lg_message ; ++i) {
             char newch = message[i];
             char oldch = old_message[i];
 
-            if (newch != oldch){
+            if (newch != oldch) {
                 const char * pnewch = digits + _posch_12x7(newch);
                 const char * poldch = digits + _posch_12x7(oldch);
 
                 unsigned br_pix = 0;
                 unsigned br_pixindex = i * (char_width * 3);
 
-                for (size_t y = 0 ; y < char_height ; ++y, br_pix += char_width, br_pixindex += width*3){
-                    for (size_t x = 0 ; x <  char_width ; ++x){
+                for (size_t y = 0 ; y < char_height ; ++y, br_pix += char_width, br_pixindex += width*3) {
+                    for (size_t x = 0 ; x <  char_width ; ++x) {
                         unsigned pix = br_pix + x;
-                        if (pnewch[pix] != poldch[pix]){
+                        if (pnewch[pix] != poldch[pix]) {
                             uint8_t pixcolorcomponent = (pnewch[pix] == 'X') ? 0xFF : 0;
                             unsigned pixindex = br_pixindex + x*3;
                             rgbpixbuf[pixindex] =
@@ -796,21 +783,21 @@ public:
         }
     }
 
+public:
     /*
      * The name doesn't say it : mem_blt COPIES a decoded bitmap from
      * a cache (data) and insert a subpart (srcx, srcy) to the local
      * image cache (this->data) a the given position (rect).
      */
-    void mem_blt(const Rect& rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, const uint32_t xormask, const bool bgr)
-    {
-        if (bmp.cx < srcx || bmp.cy < srcy){
+    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, const uint32_t xormask, const bool bgr) {
+        if (bmp.cx < srcx || bmp.cy < srcy) {
             return ;
         }
 
         const int16_t mincx = std::min<int16_t>(bmp.cx - srcx, std::min<int16_t>(this->width - rect.x, rect.cx));
         const int16_t mincy = std::min<int16_t>(bmp.cy - srcy, std::min<int16_t>(this->height - rect.y, rect.cy));
 
-        if (mincx <= 0 || mincy <= 0){
+        if (mincx <= 0 || mincy <= 0) {
             return;
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
@@ -825,14 +812,14 @@ public:
         int steptarget = (this->width - trect.cx) * 3;
         int stepsource = (bmp.bmp_size / bmp.cy) + trect.cx * Bpp;
 
-        for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource){
-            for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp){
+        for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource) {
+            for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp) {
                 uint32_t px = source[Bpp-1];
-                for (int b = 1 ; b < Bpp ; b++){
+                for (int b = 1 ; b < Bpp ; b++) {
                     px = (px << 8) + source[Bpp-1-b];
                 }
                 uint32_t color = xormask ^ color_decode(px, bmp.original_bpp, bmp.original_palette);
-                if (bgr){
+                if (bgr) {
                     color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
                 }
                 target[0] = color;
@@ -840,6 +827,7 @@ public:
                 target[2] = color >> 16;
             }
         }
+        this->update_id += 1;
     }
 
     template <typename Op>
@@ -850,7 +838,7 @@ public:
                   , const bool bgr) {
         Op op;
 
-        if (bmp.cx < srcx || bmp.cy < srcy){
+        if (bmp.cx < srcx || bmp.cy < srcy) {
             return ;
         }
 
@@ -859,7 +847,7 @@ public:
         const int16_t mincy = std::min<int16_t>(bmp.cy - srcy,
             std::min<int16_t>(this->height - rect.y, rect.cy));
 
-        if (mincx <= 0 || mincy <= 0){
+        if (mincx <= 0 || mincy <= 0) {
             return;
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
@@ -878,14 +866,14 @@ public:
 
         uint8_t s0, s1, s2;
 
-        for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource){
-            for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp){
+        for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource) {
+            for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp) {
                 uint32_t px = source[Bpp-1];
-                for (int b = 1 ; b < Bpp ; b++){
+                for (int b = 1 ; b < Bpp ; b++) {
                     px = (px << 8) + source[Bpp-1-b];
                 }
-                uint32_t color = /* xormask ^ */color_decode(px, bmp.original_bpp, bmp.original_palette);
-                if (bgr){
+                uint32_t color = color_decode(px, bmp.original_bpp, bmp.original_palette);
+                if (bgr) {
                     color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
                 }
 
@@ -898,6 +886,7 @@ public:
                 target[2] = op(target[2], s2);
             }
         }
+        this->update_id += 1;
     }
 
     void mem_blt_ex( const Rect & rect
@@ -913,39 +902,39 @@ public:
             // +------+-------------------------------+
             case 0x22:
                 this->memblt_op<Op_0x22>(rect, bmp, srcx, srcy, bgr);
-            break;
+                break;
             // +------+-------------------------------+
             // | 0x66 | ROP: 0x00660046 (SRCINVERT)   |
             // |      | RPN: DSx                      |
             // +------+-------------------------------+
             case 0x66:
                 this->memblt_op<Op_0x66>(rect, bmp, srcx, srcy, bgr);
-            break;
+                break;
             // +------+-------------------------------+
             // | 0x88 | ROP: 0x008800C6 (SRCAND)      |
             // |      | RPN: DSa                      |
             // +------+-------------------------------+
             case 0x88:
                 this->memblt_op<Op_0x88>(rect, bmp, srcx, srcy, bgr);
-            break;
+                break;
             // +------+-------------------------------+
             // | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
             // |      | RPN: DSo                      |
             // +------+-------------------------------+
             case 0xEE:
                 this->memblt_op<Op_0xEE>(rect, bmp, srcx, srcy, bgr);
-            break;
+                break;
             // +------+-------------------------------+
             // | 0xBB | ROP: 0x00BB0226 (MERGEPAINT)  |
             // |      | RPN: DSno                     |
             // +------+-------------------------------+
             case 0xBB:
                 this->memblt_op<Op_0xBB>(rect, bmp, srcx, srcy, bgr);
-            break;
+                break;
 
             default:
                 LOG(LOG_INFO, "Drawable::mem_blt_ex(): unimplemented rop=%X", rop);
-            break;
+                break;
         }
     }
 
@@ -979,7 +968,7 @@ public:
                     px = (px << 8) + source[Bpp - 1 - b];
                 }
                 uint32_t color = color_decode(px, bmp.original_bpp, bmp.original_palette);
-                if (bgr){
+                if (bgr) {
                     color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
                 }
                 target[0] = color      ;
@@ -987,6 +976,7 @@ public:
                 target[2] = color >> 16;
             }
         }
+        this->update_id += 1;
     }
 
     struct Op_0xB8
@@ -1035,14 +1025,14 @@ public:
         uint8_t s0, s1, s2;
         uint8_t p0, p1, p2;
 
-        for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource){
-            for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp){
+        for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource) {
+            for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp) {
                 uint32_t px = source[Bpp-1];
-                for (int b = 1 ; b < Bpp ; b++){
+                for (int b = 1 ; b < Bpp ; b++) {
                     px = (px << 8) + source[Bpp-1-b];
                 }
                 uint32_t color = color_decode(px, bmp.original_bpp, bmp.original_palette);
-                if (bgr){
+                if (bgr) {
                     color =   ((color << 16) & 0xFF0000)
                             | ( color        & 0xFF00)
                             | ((color >> 16) & 0xFF);
@@ -1061,6 +1051,7 @@ public:
                 target[2] = op(target[2], s2, p2);
             }
         }
+        this->update_id += 1;
     }
 
     void mem_3_blt( const Rect & rect
@@ -1096,9 +1087,10 @@ public:
         uint8_t * p = this->first_pixel(trect);
         const size_t step = this->rowsize;
         const size_t rect_rowsize = trect.cx * this->Bpp;
-        for (int j = 0; j < trect.cy ; j++, p += step){
+        for (int j = 0; j < trect.cy ; j++, p += step) {
             bzero(p, rect_rowsize);
         }
+        this->update_id += 1;
     }
 
     void white_color(const Rect & rect)
@@ -1111,9 +1103,10 @@ public:
 
         const size_t step = this->rowsize;
         const size_t rect_rowsize = rect.cx * this->Bpp;
-        for (int j = 0; j < rect.cy ; j++, p += step){
+        for (int j = 0; j < rect.cy ; j++, p += step) {
             memset(p, 0xFF, rect_rowsize);
         }
+        this->update_id += 1;
     }
 
     void invert_color(const Rect & rect)
@@ -1127,15 +1120,14 @@ public:
         uint8_t * p = this->first_pixel(trect);
         const size_t rect_rowsize = trect.cx * this->Bpp;
         const size_t step = this->rowsize - rect_rowsize;
-        for (int j = 0; j < trect.cy ; j++, p += step){
-            for (int i = 0; i < trect.cx ; i++, p += 3){
+        for (int j = 0; j < trect.cy ; j++, p += step) {
+            for (int i = 0; i < trect.cx ; i++, p += 3) {
                 TODO("Applying inversion on blocks of 32 bits instead of bytes should be faster");
                 p[0] ^= 0xFF; p[1] ^= 0xFF; p[2] ^= 0xFF;
             }
         }
+        this->update_id += 1;
     }
-
-
 
 // 2.2.2.2.1.1.1.6 Binary Raster Operation (ROP2_OPERATION)
 //  The ROP2_OPERATION structure is used to define how the bits in a destination bitmap and a
@@ -1317,6 +1309,7 @@ public:
         }
     }
 
+private:
     template<typename Op2>
     void draw_ellipse(const Ellipse & el, const uint8_t fill, const uint32_t color) {
         Op2 op;
@@ -1331,6 +1324,7 @@ public:
         int pY = 0;
         int borX = rYcarre*rX;
         int borY = 0;
+        this->update_id++;
         this->colordot(cX+pX, cY, color, op);
         this->colordot(cX-pX, cY, color, op);
         if (fill) {
@@ -1403,6 +1397,7 @@ public:
             pX++;
         }
     }
+
     uint pos_xy(int x, int y) {
         return (y * this->rowsize) + (x * this->Bpp);
     }
@@ -1443,7 +1438,7 @@ public:
         }
     }
 
-
+public:
     // low level opaquerect,
     // mostly avoid clipping because we already took care of it
     // also we already swapped color if we are using BGR instead of RGB
@@ -1455,16 +1450,17 @@ public:
         uint8_t * const base = this->first_pixel(rect);
         uint8_t * p = base;
 
-        for (size_t x = 0; x < static_cast<size_t>(rect.cx) ; x++){
+        for (size_t x = 0; x < static_cast<size_t>(rect.cx) ; x++) {
             p[0] = color; p[1] = color >> 8; p[2] = color >> 16;
             p += 3;
         }
         uint8_t * target = base;
         size_t line_size = rect.cx * this->Bpp;
-        for (size_t y = 1; y < static_cast<size_t>(rect.cy) ; y++){
+        for (size_t y = 1; y < static_cast<size_t>(rect.cy) ; y++) {
             target += this->rowsize;
             memcpy(target, base, line_size);
         }
+        this->update_id++;
     }
 
     template <typename Op>
@@ -1482,15 +1478,16 @@ public:
         uint8_t p1 = (color >> 8) & 0xFF;
         uint8_t p2 = (color >> 16) & 0xFF;
 
-        for (size_t y = 0; y < static_cast<size_t>(rect.cy) ; y++){
+        for (size_t y = 0; y < static_cast<size_t>(rect.cy) ; y++) {
             p = base + this->rowsize * y;
-            for (size_t x = 0; x < static_cast<size_t>(rect.cx) ; x++){
+            for (size_t x = 0; x < static_cast<size_t>(rect.cx) ; x++) {
                 p[0] = op(p[0], p0);
                 p[1] = op(p[1], p1);
                 p[2] = op(p[2], p2);
                 p += 3;
             }
         }
+        this->update_id++;
     }
 
     struct Op_0x05
@@ -1586,14 +1583,14 @@ public:
     // mostly avoid clipping because we already took care of it
     void patblt(const Rect & rect, const uint8_t rop, const uint32_t color)
     {
-        switch (rop){
+        switch (rop) {
             // +------+-------------------------------+
             // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |
             // |      | RPN: 0                        |
             // +------+-------------------------------+
             case 0x00: // blackness
-            this->black_color(rect);
-            break;
+                this->black_color(rect);
+                break;
             // +------+-------------------------------+
             // | 0x05 | ROP: 0x000500A9               |
             // |      | RPN: DPon                     |
@@ -1620,8 +1617,8 @@ public:
                 // |      | RPN: Dn                       |
                 // +------+-------------------------------+
             case 0x55: // inversion
-            this->invert_color(rect);
-            break;
+                this->invert_color(rect);
+                break;
             // +------+-------------------------------+
             // | 0x5A | ROP: 0x005A0049 (PATINVERT)   |
             // |      | RPN: DPx                      |
@@ -1689,8 +1686,8 @@ public:
                 // |      | RPN: 1                        |
                 // +------+-------------------------------+
             case 0xFF: // whiteness
-            this->white_color(rect);
-            break;
+                this->white_color(rect);
+                break;
             default:
                 // should not happen, do nothing
                 break;
@@ -1738,6 +1735,7 @@ public:
                 p += 3;
             }
         }
+        this->update_id++;
     }
 
     void patblt_ex(const Rect & rect, const uint8_t rop,
@@ -1769,18 +1767,18 @@ public:
     // mostly avoid clipping because we already took care of it
     void destblt(const Rect & rect, const uint8_t rop)
     {
-        switch (rop){
+        switch (rop) {
             case 0x00: // blackness
-            this->black_color(rect);
-            break;
+                this->black_color(rect);
+                break;
             case 0x55: // inversion
-            this->invert_color(rect);
-            break;
+                this->invert_color(rect);
+                break;
             case 0xAA: // change nothing
-        break;
+                break;
             case 0xFF: // whiteness
-            this->white_color(rect);
-            break;
+                this->white_color(rect);
+                break;
             default:
                 // should not happen
                 break;
@@ -1887,7 +1885,6 @@ public:
         }
     };
 
-
     template <typename Op>
     void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect drect)
     {
@@ -1916,7 +1913,7 @@ public:
             uint8_t * linetarget = target + offset;
             uint8_t * linesource = source + offset;
             for (size_t x = 0; x < drect.cx ; x++) {
-                for (uint8_t b = 0 ; b < this->Bpp; b++){
+                for (uint8_t b = 0 ; b < this->Bpp; b++) {
                     linetarget[b] = op(linetarget[b], linesource[b]);
                 }
                 linetarget += to_nextpixel;
@@ -1925,6 +1922,7 @@ public:
             target += to_nextrow;
             source += to_nextrow;
         }
+        this->update_id++;
     };
 
     // low level scrblt, mostly avoid considering clipping
@@ -1932,7 +1930,7 @@ public:
     void scrblt(unsigned srcx, unsigned srcy, const Rect drect, uint8_t rop)
     {
         TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.");
-        switch (rop){
+        switch (rop) {
             // +------+-------------------------------+
             // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |
             // |      | RPN: 0                        |
@@ -2074,9 +2072,9 @@ public:
         int sy = (endy >= starty)?1:-1;
         int err = dx - dy;
 
-        while (true){
+        while (true) {
             uint8_t * const p = this->data + (y * this->width + x) * this->Bpp;
-            for (uint8_t b = 0 ; b < this->Bpp; b++){
+            for (uint8_t b = 0 ; b < this->Bpp; b++) {
                 switch (rop)
                     {
                     case 0x06:  // R2_NOT
@@ -2088,7 +2086,7 @@ public:
                     }
             }
 
-            if ((x >= endx) && (y == endy)){
+            if ((x >= endx) && (y == endy)) {
                 break;
             }
 
@@ -2103,15 +2101,17 @@ public:
                 y += sy;
             }
         }
+        this->update_id++;
     }
 
     void vertical_line(const uint8_t mix_mode, const uint16_t x, const uint16_t starty, const uint16_t endy, const uint8_t rop, const uint32_t color)
     {
         // Color handling
-        uint8_t col[3] =
-            { static_cast<uint8_t>(color)
+        uint8_t col[3] = {
+              static_cast<uint8_t>(color)
             , static_cast<uint8_t>(color >> 8)
-            , static_cast<uint8_t>(color >> 16)};
+            , static_cast<uint8_t>(color >> 16)
+        };
 
         uint8_t * p = this->data + (starty * this->width + x) * 3;
         for (int dy = starty; dy <= endy ; dy++) {
@@ -2121,24 +2121,25 @@ public:
                 p[0] = ~p[0];
                 p[1] = ~p[1];
                 p[2] = ~p[2];
-            break;
+                break;
             default:
                 p[0] = col[0];
                 p[1] = col[1];
                 p[2] = col[2];
-            break;
+                break;
             }
             p += this->width * 3;
         }
+        this->update_id++;
     }
 
     void horizontal_line(const uint8_t mix_mode, const uint16_t startx, const uint16_t y, const uint16_t endx, const uint8_t rop, const uint32_t color)
     {
-        uint8_t col[3] =
-            { static_cast<uint8_t>(color)
+        uint8_t col[3] = {
+              static_cast<uint8_t>(color)
             , static_cast<uint8_t>(color >> 8)
             , static_cast<uint8_t>(color >> 16)
-            };
+        };
 
         uint8_t * p = this->data + (y * this->width + startx) * 3;
         for (int dx = startx; dx <= endx ; dx++) {
@@ -2148,15 +2149,16 @@ public:
                 p[0] = ~p[0];
                 p[1] = ~p[1];
                 p[2] = ~p[2];
-            break;
+                break;
             default:
                 p[0] = col[0];
                 p[1] = col[1];
                 p[2] = col[2];
-            break;
+                break;
             }
             p += 3;
         }
+        this->update_id++;
     }
 
     const Mouse_t & line_of_mouse(size_t i) {
@@ -2262,7 +2264,7 @@ public:
         uint8_t * tsave = this->timestamp_save;
         uint8_t* buf = this->data;
         int step = this->width * 3;
-        for (size_t y = 0; y < ts_height ; ++y, buf += step){
+        for (size_t y = 0; y < ts_height ; ++y, buf += step) {
             memcpy(tsave, buf, timestamp_length*char_width*3);
             tsave += timestamp_length*char_width*3;
             memcpy(buf, this->timestamp_data + y*ts_width*3, timestamp_length*char_width*3);
@@ -2274,7 +2276,7 @@ public:
         const uint8_t * tsave = this->timestamp_save;
         int step = this->width * 3;
         uint8_t* buf = this->data;
-        for (size_t y = 0; y < ts_height ; ++y, buf += step){
+        for (size_t y = 0; y < ts_height ; ++y, buf += step) {
             memcpy(buf, tsave, this->previous_timestamp_length*char_width*3);
             tsave += this->previous_timestamp_length*char_width*3;
         }
@@ -2306,7 +2308,7 @@ public:
             + (this->width * 3) * (this->height / 2)
             + ((this->width - timestamp_length*char_width)*3) / 2 ;
         int step = this->width * 3;
-        for (size_t y = 0; y < ts_height ; ++y, buf += step){
+        for (size_t y = 0; y < ts_height ; ++y, buf += step) {
             memcpy(tsave, buf, timestamp_length*char_width*3);
             tsave += timestamp_length*char_width*3;
             memcpy(buf, this->timestamp_data + y*ts_width*3, timestamp_length*char_width*3);
@@ -2320,7 +2322,7 @@ public:
         uint8_t* buf = this->data
             + (this->width * 3) * (this->height / 2)
             + ((this->width - this->previous_timestamp_length*char_width)*3) / 2 ;
-        for (size_t y = 0; y < ts_height ; ++y, buf += step){
+        for (size_t y = 0; y < ts_height ; ++y, buf += step) {
             memcpy(buf, tsave, this->previous_timestamp_length*char_width*3);
             tsave += this->previous_timestamp_length*char_width*3;
         }
