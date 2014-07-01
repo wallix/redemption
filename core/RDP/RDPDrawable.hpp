@@ -390,12 +390,12 @@ public:
                     bmp_data[x * 3    ] = color;
                     bmp_data[x * 3 + 1] = color >> 8;
                     bmp_data[x * 3 + 2] = color >> 16;
-//                  printf("X");
+                    //printf("X");
                 }
-//              else
-//              {
-//                  printf(".");
-//              }
+                //else
+                //{
+                //    printf(".");
+                //}
 
                 fc_bit_mask >>= 1;
                 if (!fc_bit_mask)
@@ -406,7 +406,7 @@ public:
             }
 
             bmp_data -= bmp.line_size;
-//          printf("\n");
+            //printf("\n");
         }
     }
 
@@ -504,7 +504,7 @@ public:
         FontChar *font_item = font.glyph_defined(c) ? font.font_items[c] : 0;
         if (!font_item) {
             LOG(LOG_WARNING, "RDPDrawable::get_font() - character not defined >0x%02x<", c);
-            font_item = font.font_items['?'];
+            font_item = font.font_items[unsigned('?')];
         }
         return font_item;
     }

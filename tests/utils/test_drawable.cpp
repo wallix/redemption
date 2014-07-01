@@ -499,7 +499,9 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     Rect screen_rect(0, 0, width, height);
     RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
-    gd.drawable.trace_mouse(100, 100);
+//    gd.drawable.trace_mouse(100, 100);
+    gd.drawable.set_mouse_cursor_pos(100, 100);
+    gd.drawable.trace_mouse();
 
     {
         char message[1024];
@@ -536,7 +538,9 @@ BOOST_AUTO_TEST_CASE(TestAddMouse2)
     Rect screen_rect(0, 0, width, height);
     RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, BLACK), screen_rect); // BLACK
-    gd.drawable.trace_mouse(638, 470);
+//    gd.drawable.trace_mouse(638, 470);
+    gd.drawable.set_mouse_cursor_pos(638, 470);
+    gd.drawable.trace_mouse();
 
     {
         char message[1024];
@@ -575,7 +579,9 @@ BOOST_AUTO_TEST_CASE(TestAddMouse3)
     gd.drawable.mouse_hotspot_x = 8;
     gd.drawable.mouse_hotspot_y = 8;
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
-    gd.drawable.trace_mouse(0, 0);
+//    gd.drawable.trace_mouse(0, 0);
+    gd.drawable.set_mouse_cursor_pos(0, 0);
+    gd.drawable.trace_mouse();
 
     {
         char message[1024];
@@ -880,28 +886,6 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
 
     // uncomment to see result in png file
     //dump_png("./test_memblt_", gd.drawable);
-}
-
-BOOST_AUTO_TEST_CASE(TestBgr2RGB)
-{
-    // Create a simple capture image and dump it to file
-    uint16_t width = 640;
-    uint16_t height = 480;
-    Rect screen_rect(0, 0, width, height);
-    BGRPalette palette;
-    init_palette332(palette);
-
-    RDPDrawable gd(width, height);
-    gd.draw(RDPOpaqueRect(screen_rect, 0xFF0000), screen_rect);
-    gd.drawable.bgr2rgb();
-
-    char message[1024];
-    if (!check_sig(gd.drawable, message,
-    "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-    //dump_png("./testBGR2RGB", gd.drawable);
 }
 
 BOOST_AUTO_TEST_CASE(TestMemblt2)

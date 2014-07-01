@@ -125,7 +125,7 @@ public:
            , Inifile & ini
            , const char * username
            , const char * password
-           , struct FrontAPI & front
+           , class FrontAPI & front
            , uint16_t front_width
            , uint16_t front_height
            , int keylayout

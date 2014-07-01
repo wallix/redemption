@@ -87,8 +87,7 @@ struct RDPGraphicDevice {
 
 
     virtual void server_set_pointer(const Pointer & cursor) {}
-    virtual void send_pointer(int cache_idx, const uint8_t * data,
-        const uint8_t * mask, int hotspot_x, int hotspot_y) {}
+    virtual void send_pointer(int cache_idx, const Pointer & cursor) {}
     virtual void set_pointer(int cache_idx) {}
 
     virtual void flush() = 0;
@@ -105,11 +104,8 @@ public:
 };
 
 struct RDPCaptureDevice {
-    TODO("RZ : Move this method into Drawable class.");
     virtual void set_row(size_t rownum, const uint8_t * data) {}
 
-
-    TODO("RZ : Move these methods into an other interface.");
     virtual void input(const timeval & now, Stream & input_data_32) {}
 
     virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,

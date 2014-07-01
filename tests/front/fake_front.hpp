@@ -144,8 +144,7 @@ public:
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data, size_t length
                                 , size_t chunk_size, int flags) {}
 
-    virtual void send_pointer( int cache_idx, uint8_t * data, uint8_t * mask
-                             , int x, int y) throw (Error) {}
+    virtual void send_pointer(int cache_idx, const Pointer & cursor) {}
 
     virtual void send_global_palette() throw (Error) {}
 

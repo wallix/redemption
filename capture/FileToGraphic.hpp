@@ -90,7 +90,6 @@ struct FileToGraphic
         RDPGraphicDevice * graphic_device;
         RDPCaptureDevice * capture_device;
     } consumers[10];
-//    RDPGraphicDevice * consumers[10];
 
     bool meta_ok;
     bool timestamp_ok;
@@ -224,12 +223,6 @@ struct FileToGraphic
         delete this->bmp_cache;
     }
 
-/*
-    void add_consumer(RDPGraphicDevice * consumer)
-    {
-        this->consumers[this->nbconsumers++] = consumer;
-    }
-*/
     void add_consumer(RDPGraphicDevice * graphic_device, RDPCaptureDevice * capture_device) {
         this->consumers[this->nbconsumers  ].graphic_device = graphic_device;
         this->consumers[this->nbconsumers++].capture_device = capture_device;

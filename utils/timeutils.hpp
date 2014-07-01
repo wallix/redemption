@@ -18,19 +18,25 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CAPTURE_TRANSPARENTCHUNK_HPP_
-#define _REDEMPTION_CAPTURE_TRANSPARENTCHUNK_HPP_
+#ifndef _REDEMPTION_UTILS_TIMEUTILS_HPP_
+#define _REDEMPTION_UTILS_TIMEUTILS_HPP_
 
-enum {
-      CHUNK_TYPE_META
-    , CHUNK_TYPE_FASTPATH
-    , CHUNK_TYPE_FRONTCHANNEL
-    , CHUNK_TYPE_SLOWPATH
-    , CHUNK_TYPE_RESIZE
-};
+inline bool operator ==(const struct tm & a, const struct tm & b) {
+    return (   (a.tm_sec   == b.tm_sec  )
+            && (a.tm_min   == b.tm_min  )
+            && (a.tm_hour  == b.tm_hour )
+            && (a.tm_mday  == b.tm_mday )
+            && (a.tm_mon   == b.tm_mon  )
+            && (a.tm_year  == b.tm_year )
+            && (a.tm_wday  == b.tm_wday )
+            && (a.tm_yday  == b.tm_yday )
+            && (a.tm_isdst == b.tm_isdst)
+           );
+}
 
-enum {
-      TRANSPARENT_CHUNT_HEADER_SIZE = 11
-};
+inline bool operator !=(const struct tm & a, const struct tm & b) {
+    return (!(a == b));
+}
 
-#endif  // #ifndef _REDEMPTION_CAPTURE_TRANSPARENTCHUNK_HPP_
+#endif  // #ifndef _REDEMPTION_UTILS_TIMEUTILS_HPP_
+

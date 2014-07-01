@@ -25,35 +25,11 @@
 #ifndef _REDEMPTION_CAPTURE_IMAGE_CAPTURE_HPP_
 #define _REDEMPTION_CAPTURE_IMAGE_CAPTURE_HPP_
 
-/*
-#include <stdio.h>
-#include <png.h>
-
-#include "bitmap.hpp"
-#include "rect.hpp"
-#include "difftimeval.hpp"
-
-#include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-*/
-
 #include "png.hpp"
-/*
-#include "error.hpp"
-
-#include "config.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include "colors.hpp"
-*/
 
 #include "RDP/RDPDrawable.hpp"
 
-class ImageCapture
-{
+class ImageCapture {
 public:
     Transport & trans;
     unsigned zoom_factor;
@@ -66,16 +42,11 @@ public:
     , zoom_factor(100)
     , scaled_width(width)
     , scaled_height(height)
-    , drawable(drawable)
-    {
-    }
+    , drawable(drawable) {}
 
-    virtual ~ImageCapture()
-    {
-    }
+    virtual ~ImageCapture() {}
 
-    void zoom(unsigned percent)
-    {
+    void zoom(unsigned percent) {
         const unsigned zoom_width = (this->drawable.width * percent) / 100;
         const unsigned zoom_height = (this->drawable.height * percent) / 100;
         TODO("we should limit percent to avoid images larger than 4096 x 4096");
@@ -84,13 +55,8 @@ public:
         this->scaled_height = zoom_height;
     }
 
-/*
-    void update_config(const Inifile & ini){}
-*/
-
-    virtual void flush()
-    {
-        if (this->zoom_factor == 100){
+    virtual void flush() {
+        if (this->zoom_factor == 100) {
             this->dump24();
         }
         else {
@@ -98,17 +64,14 @@ public:
         }
     }
 
-    TODO("move dump png24 to Drawable");
-    void dump24(){
+    void dump24() {
         ::transport_dump_png24(&this->trans, this->drawable.data,
-                 this->drawable.width, this->drawable.height,
-                 this->drawable.rowsize,
-                 true
-                );
+            this->drawable.width, this->drawable.height,
+            this->drawable.rowsize,
+            true);
     }
 
-    void scale_dump24()
-    {
+    void scale_dump24() {
         uint8_t * scaled_data = static_cast<uint8_t *>(malloc(this->scaled_width * this->scaled_height * 3));
         scale_data(scaled_data, this->drawable.data,
                    this->scaled_width, this->drawable.width,
@@ -120,12 +83,10 @@ public:
         free(scaled_data);
     }
 
-//    TODO("move scale_data to Drawable");
     static void scale_data(uint8_t *dest, const uint8_t *src,
-                            unsigned int dest_width, unsigned int src_width,
-                            unsigned int dest_height, unsigned int src_height,
-                            unsigned int src_rowsize)
-    {
+                           unsigned int dest_width, unsigned int src_width,
+                           unsigned int dest_height, unsigned int src_height,
+                           unsigned int src_rowsize) {
         const uint32_t Bpp = 3;
         unsigned int y_pixels = dest_height;
         unsigned int y_int_part = src_height / dest_height * src_rowsize;
@@ -134,13 +95,11 @@ public:
         unsigned int x_int_part = src_width / dest_width * Bpp;
         unsigned int x_fract_part = src_width % dest_width;
 
-        while (y_pixels-- > 0)
-        {
+        while (y_pixels-- > 0) {
             unsigned int xE = 0;
             const uint8_t * x_src = src;
             unsigned int x_pixels = dest_width;
-            while (x_pixels-- > 0)
-            {
+            while (x_pixels-- > 0) {
                 TODO("we can perform both scaling and rgb/bgr swapping at the same time");
                 dest[0] = x_src[0];
                 dest[1] = x_src[1];
@@ -149,16 +108,14 @@ public:
                 dest += Bpp;
                 x_src += x_int_part;
                 xE += x_fract_part;
-                if (xE >= dest_width)
-                {
+                if (xE >= dest_width) {
                     xE -= dest_width;
                     x_src += Bpp;
                 }
             }
             src += y_int_part;
             yE += y_fract_part;
-            if (yE >= dest_height)
-            {
+            if (yE >= dest_height) {
                 yE -= dest_height;
                 src += src_rowsize;
             }

@@ -425,7 +425,7 @@ public:
                 FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
                 if (!font_item) {
                     LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                    font_item = this->font.font_items['?'];
+                    font_item = this->font.font_items[static_cast<unsigned>('?')];
                 }
                 TODO(" avoid passing parameters by reference to get results")
                 switch (this->glyph_cache.add_glyph(font_item, f, c))
@@ -1259,8 +1259,7 @@ public:
         if (this->verbose & 4) {
             LOG(LOG_INFO, "Front::send_pointer done");
         }
-    }   // void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask,
-        //     int hotspot_x, hotspot_int y)
+    }   // void send_pointer(int cache_idx, const Pointer & cursor)
 
 //    2.2.9.1.1.4.5    New Pointer Update (TS_POINTERATTRIBUTE)
 //    ---------------------------------------------------------
@@ -1376,14 +1375,6 @@ public:
             LOG(LOG_INFO, "Front::set_pointer done");
         }
     }   // void set_pointer(int cache_idx)
-
-/*
-    virtual void set_pointer_display() {
-        if (this->capture) {
-            this->capture->set_pointer_display();
-        }
-    }
-*/
 
     void incoming(Callback & cb) throw(Error)
     {
@@ -1601,7 +1592,6 @@ public:
                     break;
                     case CS_MONITOR:
                     {
-LOG(LOG_INFO, "****************************");
                         GCC::UserData::CSMonitor cs_monitor;
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
@@ -4658,7 +4648,7 @@ LOG(LOG_INFO, "****************************");
                 {
                     if (new_cmd.data[i] <= 0xFD)
                     {
-//                      LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
+                        //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
                         FontChar * fc = gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item;
                         REDASSERT(fc);
                         int g_idx = this->glyph_cache.find_glyph(fc, new_cmd.cache_id);
@@ -4953,7 +4943,7 @@ LOG(LOG_INFO, "****************************");
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
-//        LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
+        //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
         this->orders->draw(bitmap_data, data, size, bmp);
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
