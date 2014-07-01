@@ -859,6 +859,7 @@ BOOST_AUTO_TEST_CASE(TestAES)
 
     aes.decrypt_cbc(25, iv2, outbuf, decrypted);
 
+hexdump_d(decrypted, sizeof(decrypted));
     BOOST_CHECK_EQUAL(memcmp(inbuf,
                              decrypted,
                              25),
