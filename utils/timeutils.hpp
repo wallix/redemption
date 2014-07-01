@@ -21,20 +21,7 @@
 #ifndef _REDEMPTION_UTILS_TIMEUTILS_HPP_
 #define _REDEMPTION_UTILS_TIMEUTILS_HPP_
 
-bool operator !=(const struct tm & a, const struct tm & b) {
-    return (   (a.tm_sec   != b.tm_sec  )
-            || (a.tm_min   != b.tm_min  )
-            || (a.tm_hour  != b.tm_hour )
-            || (a.tm_mday  != b.tm_mday )
-            || (a.tm_mon   != b.tm_mon  )
-            || (a.tm_year  != b.tm_year )
-            || (a.tm_wday  != b.tm_wday )
-            || (a.tm_yday  != b.tm_yday )
-            || (a.tm_isdst != b.tm_isdst)
-           );
-}
-
-bool operator ==(const struct tm & a, const struct tm & b) {
+inline bool operator ==(const struct tm & a, const struct tm & b) {
     return (   (a.tm_sec   == b.tm_sec  )
             && (a.tm_min   == b.tm_min  )
             && (a.tm_hour  == b.tm_hour )
@@ -45,6 +32,10 @@ bool operator ==(const struct tm & a, const struct tm & b) {
             && (a.tm_yday  == b.tm_yday )
             && (a.tm_isdst == b.tm_isdst)
            );
+}
+
+inline bool operator !=(const struct tm & a, const struct tm & b) {
+    return (!(a == b));
 }
 
 #endif  // #ifndef _REDEMPTION_UTILS_TIMEUTILS_HPP_
