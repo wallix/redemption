@@ -22,8 +22,7 @@
 #ifndef _REDEMPTION_UTILS_DIFFTIMEVAL_HPP_
 #define _REDEMPTION_UTILS_DIFFTIMEVAL_HPP_
 
-#include <sys/time.h>
-#include <stdint.h>
+#include "timeval_ops.hpp"
 
 class TimeObj {
 public:
@@ -64,7 +63,7 @@ static inline uint64_t ustime(const timeval & now) {
     return static_cast<uint64_t>(now.tv_sec)*1000000LL + static_cast<uint64_t>(now.tv_usec);
 }
 
-static inline const timeval tvtime()
+static inline timeval tvtime()
 {
     timeval tv;
     gettimeofday(&tv, 0);
@@ -101,13 +100,13 @@ static inline timeval addusectimeval(const uint64_t usec, const timeval & tv) {
     return res;
 }
 
-// All these operations assume that any timeval.tv_usec is < 1000000L
-// Otherwise, the timeval is not well formated
+/**
+ * All these operations assume that any timeval.tv_usec is < 1000000L
+ * Otherwise, the timeval is not well formated
+ * @{
+ */
 static inline bool lessthantimeval(const timeval & before, const timeval & after) {
-    // return before < after
-    return (    (after.tv_sec > before.tv_sec)
-             || (   (after.tv_sec == before.tv_sec)
-                 && (after.tv_usec > before.tv_usec)));
+    return before < after;
 }
 
 static inline timeval addtimeval(const timeval & time1, const timeval & time2) {
@@ -162,5 +161,8 @@ static inline timeval mintimeval(const timeval & time1, const timeval & time2) {
     // return min(time1,time2)
     return lessthantimeval(time1, time2)?time1:time2;
 }
+/**
+ * @}
+ */
 
 #endif
