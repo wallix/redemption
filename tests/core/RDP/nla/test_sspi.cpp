@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
     status = table.SetContextAttributes(NULL, 0, NULL, 0);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    SecPkgInfo packageInfo = {};
+    SecPkgInfo packageInfo;
     status = table.QuerySecurityPackageInfo(NTLMSP_NAME, &packageInfo);
     BOOST_CHECK_EQUAL(status, SEC_E_SECPKG_NOT_FOUND);
     // BOOST_CHECK_EQUAL(packageInfo.fCapabilities, NTLM_SecPkgInfo.fCapabilities);
@@ -247,7 +247,7 @@ BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
     // BOOST_CHECK_EQUAL(packageInfo.wRPCID, NTLM_SecPkgInfo.wRPCID);
     // BOOST_CHECK_EQUAL(packageInfo.cbMaxToken, NTLM_SecPkgInfo.cbMaxToken);
 
-    SecPkgInfo packageInfo2 = {};
+    SecPkgInfo packageInfo2;
     status = table.QuerySecurityPackageInfo("KERBEROS", &packageInfo2);
     BOOST_CHECK_EQUAL(status, SEC_E_SECPKG_NOT_FOUND);
 

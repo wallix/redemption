@@ -323,7 +323,7 @@ public:
                         this->set_selection(row_index, static_cast<uint16_t>(-1));
                     }
                     else {
-                        if (this->click_interval.tick() <= 700000LL) {
+                        if (this->click_interval.tick() <= uint64_t(700000L)) {
                             this->send_notify(NOTIFY_SUBMIT);
                             return;
                         }

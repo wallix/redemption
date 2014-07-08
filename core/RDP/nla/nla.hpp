@@ -59,7 +59,7 @@ struct rdpCredssp
     const char * target_device;
     const uint32_t verbose;
 
-    TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
+    TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static")
     bool hardcodedtests;
 
     rdpCredssp(Transport & transport,
@@ -558,12 +558,10 @@ struct rdpCredssp
 
         SecBuffer input_buffer;
         SecBuffer output_buffer;
-        SecBufferDesc input_buffer_desc = {};
-        SecBufferDesc output_buffer_desc = {};
-        bool have_context;
-        bool have_input_buffer;
-        have_context = false;
-        have_input_buffer = false;
+        SecBufferDesc input_buffer_desc = {0,0,0};
+        SecBufferDesc output_buffer_desc;
+        bool have_context = false;
+        bool have_input_buffer = false;
         input_buffer.setzero();
         output_buffer.setzero();
         memset(&this->ContextSizes, 0x00, sizeof(SecPkgContext_Sizes));
@@ -765,8 +763,8 @@ struct rdpCredssp
 
         SecBuffer input_buffer;
         SecBuffer output_buffer;
-        SecBufferDesc input_buffer_desc = {};
-        SecBufferDesc output_buffer_desc = {};
+        SecBufferDesc input_buffer_desc;
+        SecBufferDesc output_buffer_desc;
         bool have_context;
 
         have_context = false;

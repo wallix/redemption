@@ -25,6 +25,8 @@
 #include <sys/time.h>
 #include <stdint.h>
 
+#include "log.hpp"
+
 class TimeObj {
 public:
     virtual ~TimeObj() {}
@@ -75,7 +77,7 @@ static inline uint64_t ustime() {
     return ustime(tvtime());
 }
 
-REDOC("as gettimeofday is not monotonic we may get surprising results (overflow). In these case we choose to send 0.");
+REDOC("as gettimeofday is not monotonic we may get surprising results (overflow). In these case we choose to send 0.")
 static inline uint64_t difftimeval(const timeval& endtime, const timeval& starttime)
 {
     uint64_t d = ustime(endtime) - ustime(starttime);
@@ -125,7 +127,7 @@ static inline timeval how_long_to_wait(const timeval & alarm, const timeval & no
     // return number of usec to wait:
     // alarm - now if alarm is in the future
     // or 0 if alarm time is past
-    timeval res = {};
+    timeval res = {0,0};
     if (!lessthantimeval(alarm, now)) {
         bool carry = alarm.tv_usec < now.tv_usec;
         res.tv_usec = alarm.tv_usec - now.tv_usec + carry*1000000L;

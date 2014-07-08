@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BITMAP_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BITMAP_HPP_
 
+#include "common.hpp"
+
 // 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)
 // ============================================================
 
@@ -118,7 +120,7 @@
 enum {
     DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY = 0x02,
     DRAW_ALLOW_COLOR_SUBSAMPLING = 0x04,
-    DRAW_ALLOW_SKIP_ALPHA = 0x08,
+    DRAW_ALLOW_SKIP_ALPHA = 0x08
 };
 
 enum {

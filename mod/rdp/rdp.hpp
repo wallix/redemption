@@ -782,7 +782,7 @@ struct mod_rdp : public mod_api {
                             cs_core.desktopHeight = this->front_height;
                             //cs_core.highColorDepth = this->front_bpp;
                             cs_core.highColorDepth = ((this->front_bpp == 32)
-                                ? GCC::UserData::HIGH_COLOR_24BPP : this->front_bpp);
+                                ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP) : this->front_bpp);
                             cs_core.keyboardLayout = this->keylayout;
                             if (this->front_bpp == 32) {
                                 cs_core.supportedColorDepths = 15;
@@ -3265,7 +3265,7 @@ struct mod_rdp : public mod_api {
         ERRINFO_DECRYPTFAILED                     = 0x00001192,
         ERRINFO_ENCRYPTFAILED                     = 0x00001193,
         ERRINFO_ENCPKGMISMATCH                    = 0x00001194,
-        ERRINFO_DECRYPTFAILED2                    = 0x00001195,
+        ERRINFO_DECRYPTFAILED2                    = 0x00001195
     };
 
     void process_disconnect_pdu(Stream & stream)
@@ -3703,7 +3703,7 @@ struct mod_rdp : public mod_api {
         stream.p = stream.end;
     }
 
-    TODO("CGR: this can probably be unified with process_confirm_active in front");
+    TODO("CGR: this can probably be unified with process_confirm_active in front")
     void process_server_caps(Stream & stream, uint16_t len)
     {
         if (this->verbose & 32){
@@ -4022,7 +4022,7 @@ struct mod_rdp : public mod_api {
         }
     }
 
-    TODO("CGR: duplicated code in front");
+    TODO("CGR: duplicated code in front")
     void send_synchronise() throw(Error)
     {
         if (this->verbose & 1){

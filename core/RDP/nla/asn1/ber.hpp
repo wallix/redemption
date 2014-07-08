@@ -443,6 +443,6 @@ namespace BER {
             && read_length(s, length);
     }
 
-};
+}
 
 #endif

@@ -1,12 +1,18 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#ifdef NO_BOOST
 #include <unordered_set>
+typedef std::unordered_set<std::string> set_type;
+#else
+#include <boost/container/flat_set.hpp>
+typedef boost::container::flat_set<std::string> set_type;
+#endif
 
 void filter(std::istream & is) {
     std::string l;
     std::string block;
-    std::unordered_set<std::string> blocks;
+    set_type blocks;
     bool cap = false;
     while (std::getline(is, l)) {
         if (l.find('^') != std::string::npos) {

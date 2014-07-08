@@ -18,7 +18,7 @@ extern "C" {
 #include "openssl_evp.hpp"
 
 enum crypto_file_state {
-    CF_EOF = 1,
+    CF_EOF = 1
 };
 
 #define MIN(x, y)               (((x) > (y) ? (y) : (x)))

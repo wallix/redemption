@@ -31,7 +31,7 @@
 
 enum {
     BUTTON_STATE_UP   = 0,
-    BUTTON_STATE_DOWN = 1,
+    BUTTON_STATE_DOWN = 1
 };
 
 class Timeout {

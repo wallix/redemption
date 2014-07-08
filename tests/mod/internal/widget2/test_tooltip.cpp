@@ -84,7 +84,7 @@ void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScre
         }
     }
 
-};
+}
 
 BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 {

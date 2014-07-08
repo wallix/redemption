@@ -161,6 +161,8 @@
 //   TS_BITMAPCACHE_SCREEN_ID (0xFF), this field MUST contain the index of an
 //   entry in the Offscreen Bitmap Cache that contains the source bitmap.
 
+#include "RDPOrdersCommon.hpp"
+
 class RDPMem3Blt {
     public:
     uint16_t    cache_id;
@@ -173,7 +175,7 @@ class RDPMem3Blt {
     RDPBrush    brush;
     uint16_t    cache_idx;
 
-    static const uint8_t id(void) {
+    static uint8_t id(void) {
         return RDP::MEM3BLT;
     }
 

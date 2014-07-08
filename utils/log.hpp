@@ -31,10 +31,10 @@
 // These are used to help coverage chain when function length autodetection (using ctags and gcov) fails
 
 #ifndef VERBOSE
-#define TODO(x);
+#define TODO(x)
 #else
 #define DO_PRAGMA(x) _Pragma (#x)
-#define TODO(x) DO_PRAGMA(message ("TODO - " x));
+#define TODO(x) DO_PRAGMA(message ("TODO - " x))
 #endif
 
 // -Wno-null-dereference and clang++
@@ -136,6 +136,8 @@ static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *form
 
 static inline void LOGNULL__REDEMPTION__INTERNAL(int priority, const char *format, ...)
 {
+    (void)priority;
+    (void)format;
 }
 
 static inline void hexdump(const char * data, size_t size)

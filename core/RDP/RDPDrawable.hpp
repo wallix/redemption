@@ -101,7 +101,7 @@ public:
         this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, bgrcolor);
     }
 
-    TODO("This will draw a standard ellipse without brush style");
+    TODO("This will draw a standard ellipse without brush style")
     void draw(const RDPEllipseCB & cmd, const Rect & clip) {
         uint32_t bgrcolor = this->RGBtoBGR(cmd.back_color);
         this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, bgrcolor);
@@ -574,7 +574,7 @@ public:
     }
 
     TODO("this functions only draw polygon borders but do not fill "
-         "them with solid color.");
+         "them with solid color.")
     void draw(const RDPPolygonSC & cmd, const Rect & clip) {
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;
@@ -596,7 +596,7 @@ public:
         drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.BrushColor, clip);
     }
     TODO("this functions only draw polygon borders but do not fill "
-         "them with brush color.");
+         "them with brush color.")
     void draw(const RDPPolygonCB & cmd, const Rect & clip) {
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;

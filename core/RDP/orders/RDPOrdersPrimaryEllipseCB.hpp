@@ -22,6 +22,7 @@
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYELLIPSECB_HPP_
 
 #include "ellipse.hpp"
+#include "RDPOrdersCommon.hpp"
 
 // 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
 // =========================================
@@ -143,7 +144,7 @@ public:
     uint32_t fore_color;
     RDPBrush brush;
 
-    static const uint8_t id(void)
+    static uint8_t id(void)
     {
         return RDP::ELLIPSECB;
     }

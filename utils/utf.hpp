@@ -98,7 +98,7 @@ UTF8Check_exit:
 }
 
 
-REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before");
+REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
 static inline size_t UTF8Len(const uint8_t * source)
 {
     size_t len = 0;
@@ -170,7 +170,7 @@ static inline void UTF16UpperW(uint8_t * source, size_t max_len) {
 
 
 REDOC("UTF8GetLen find the number of bytes of the len first characters of input."
-      " It assumes input is valid utf8, zero terminated (that has been checked before).");
+      " It assumes input is valid utf8, zero terminated (that has been checked before).")
 static inline size_t UTF8GetPos(uint8_t * source, size_t len)
 {
     len += 1;
@@ -185,7 +185,7 @@ static inline size_t UTF8GetPos(uint8_t * source, size_t len)
     return i;
 }
 
-REDOC("UTF8GetFirstCharLen returns the length in bytes of first character of input. It assumes input is valid utf8, zero terminated (that has been checked before).");
+REDOC("UTF8GetFirstCharLen returns the length in bytes of first character of input. It assumes input is valid utf8, zero terminated (that has been checked before).")
 static inline size_t UTF8GetFirstCharLen(const uint8_t * source)
 {
     size_t    len = 0;
@@ -221,14 +221,15 @@ static inline size_t UTF8GetFirstCharLen(const uint8_t * source)
     return len;
 }
 
-REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before.");
+REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before.")
 static inline void UTF8TruncateAtPos(uint8_t * source, size_t len)
 {
     source[UTF8GetPos(source, len)] = 0;
 }
 
-REDOC("UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before")
-REDOC("UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert");
+REDOC(
+    "UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before"
+    "UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert")
 static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, size_t max_source)
 {
     len += 1;
@@ -266,7 +267,7 @@ static inline size_t UTF8CharNbBytes(const uint8_t * source)
     return (c<=0x7F)?1:(c<=0xDF)?2:(c<=0xEF)?3:4;
 }
 
-REDOC("UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before");
+REDOC("UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before")
 static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
 {
     len += 1;
@@ -286,8 +287,9 @@ static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
 }
 
 
-REDOC("UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before")
-REDOC("UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert");
+REDOC(
+    "UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before"
+    "UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert")
 static inline bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_char, size_t max_source)
 {
     uint8_t lo = to_insert_char & 0xFF;

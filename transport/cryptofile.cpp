@@ -101,7 +101,7 @@ void get_derivator(const char *const_file, unsigned char * derivator, int deriva
         std::printf("[CRYPTO_ERROR][%d]: Could not derivate trace crypto key, SHA256 from=%s!\n", getpid(), file_basename);
         return;
     }
-    memcpy(derivator, tmp_derivated, MIN(DERIVATOR_LENGTH, SHA256_DIGEST_LENGTH));
+    memcpy(derivator, tmp_derivated, MIN(derivator_len, SHA256_DIGEST_LENGTH));
 }
 
 } // extern "C"

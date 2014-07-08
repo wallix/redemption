@@ -239,6 +239,6 @@ static inline const char * TR(const char * key, Inifile & ini) {
         }
     }
     return res;
-};
+}
 
 #endif

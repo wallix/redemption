@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
                         creds->identity.Password.get_data(),
                         creds->identity.Password.size()));
 
-    SecPkgInfo packageInfo = {};
+    SecPkgInfo packageInfo;
     status = table.QuerySecurityPackageInfo(NTLMSP_NAME, &packageInfo);
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
 

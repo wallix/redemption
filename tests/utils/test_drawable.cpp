@@ -271,13 +271,13 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), LIGHT_GREEN), screen_rect);
 
-    unsigned long long usec = ustime();
-    unsigned long long cycles = rdtsc();
+    uint64_t usec = ustime();
+    uint64_t cycles = rdtsc();
 
     gd.draw(RDPEllipseSC(Rect(2, 200, 540, 32), BLUE, 0x06, 0x01), screen_rect);
 
-    unsigned long long elapusec = ustime() - usec;
-    unsigned long long elapcyc = rdtsc() - cycles;
+    uint64_t elapusec = ustime() - usec;
+    uint64_t elapcyc = rdtsc() - cycles;
     LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
 
     usec = ustime();

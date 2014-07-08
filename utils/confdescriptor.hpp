@@ -37,7 +37,7 @@ TODO("We could probably use templated Entries instead of InputType_t and Storage
 enum InputType_t {
     INPUT_BOOLEAN,
     INPUT_UNSIGNED,
-    INPUT_LEVEL,
+    INPUT_LEVEL
 };
 
 enum StorageType_t {

@@ -148,6 +148,7 @@
 // Set ([MS-RDPBCGR] section 2.2.7.1.8).
 
 // All fragment cache indices MUST be in the range 0 to 255 (inclusive).
+#include "RDPOrdersCommon.hpp"
 
 class RDPGlyphIndex {
 // GLYPHINDEX_ORDER fields bytes
@@ -192,7 +193,7 @@ class RDPGlyphIndex {
     uint8_t data_len;
     uint8_t data[256];
 
-    static const uint8_t id(void)
+    static uint8_t id(void)
     {
         return RDP::GLYPHINDEX;
     }

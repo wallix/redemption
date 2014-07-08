@@ -1532,7 +1532,7 @@ public:
         }
     };
 
-    TODO("This one is a memset and should be simplified");
+    TODO("This one is a memset and should be simplified")
     struct Op_0xF0
     {
         uint8_t operator()(uint8_t target, uint8_t source)
@@ -1900,7 +1900,7 @@ public:
             target += to_nextrow;
             source += to_nextrow;
         }
-    };
+    }
 
     // low level scrblt, mostly avoid considering clipping
     // because we already took care of it
@@ -2256,7 +2256,7 @@ public:
     }
 
     TODO("Instead of copying the trace timestamp function (un clear timestamp) for pause, "
-         "we could just parametrize the position of the timestamp on the screen");
+         "we could just parametrize the position of the timestamp on the screen")
     void trace_pausetimestamp(tm & now)
     {
         char    * timezone;

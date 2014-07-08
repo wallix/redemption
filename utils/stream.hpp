@@ -784,7 +784,7 @@ public:
     enum {
         ER_CLASS_MASK = 0xC0,
         ER_PC_MASK    = 0x20,
-        ER_TAG_MASK   = 0x1F,
+        ER_TAG_MASK   = 0x1F
     };
 
     enum {
@@ -806,7 +806,7 @@ public:
         ER_CLASS_UNIV           = 0x00, // 0 0
         ER_CLASS_APPL           = 0x40, // 0 1
         ER_CLASS_CTXT           = 0x80, // 1 0
-        ER_CLASS_PRIV           = 0xC0, // 1 1
+        ER_CLASS_PRIV           = 0xC0  // 1 1
     };
 
     // =========================================================================
@@ -1035,7 +1035,7 @@ class SubStream : public Stream {
     virtual ~SubStream() {}
 
     // Not allowed on SubStreams
-    virtual void init(size_t v) {}
+    virtual void init(size_t) {}
 };
 
 // FixedSizeStream does not allocate/reallocate any buffer
@@ -1050,7 +1050,7 @@ class FixedSizeStream : public Stream {
     }
 
     // Not allowed on SubStreams
-    virtual void init(size_t v) {}
+    virtual void init(size_t) {}
 };
 
 // StaticStream does not allocate/reallocate any buffer
@@ -1072,7 +1072,7 @@ class StaticStream : public FixedSizeStream {
     }
 
     // Not allowed on SubStreams
-    virtual void init(size_t v) {}
+    virtual void init(size_t) {}
 
     void resize(const uint8_t * data, size_t len) {
         this->p = this->data = const_cast<uint8_t *>(data);

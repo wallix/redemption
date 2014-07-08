@@ -267,7 +267,7 @@ namespace X224
         REASON_NOT_SPECIFIED        = 0,
         REASON_CONGESTION           = 1,
         REASON_SESSION_NOT_ATTACHED = 2,
-        REASON_ADDRESS_UNKNOWN      = 3,
+        REASON_ADDRESS_UNKNOWN      = 3
     };
 
     // Error codes in ER_TPDU
@@ -275,7 +275,7 @@ namespace X224
         // REASON_NOT_SPECIFIED         = 0,
         REASON_INVALID_PARAMETER_CODE   = 1,
         REASON_INVALID_TPDU_TYPE        = 2,
-        REASON_INVALID_PARAMETER_VALUE  = 3,
+        REASON_INVALID_PARAMETER_VALUE  = 3
     };
 
     enum {
@@ -286,7 +286,7 @@ namespace X224
     enum {
         RDP_NEG_NONE    = 0,
         RDP_NEG_REQ     = 1,
-        RDP_NEG_RSP    = 2,
+        RDP_NEG_RSP     = 2,
         RDP_NEG_FAILURE = 3
     };
 
@@ -306,7 +306,7 @@ namespace X224
         PROTOCOL_RDP    = 0,
         PROTOCOL_TLS    = 1,
         PROTOCOL_HYBRID = 2,
-        PROTOCOL_HYBRID_EX = 8,
+        PROTOCOL_HYBRID_EX = 8
     };
 
     enum {
@@ -315,7 +315,7 @@ namespace X224
         SSL_CERT_NOT_ON_SERVER                = 0x00000003,
         INCONSISTENT_FLAGS                    = 0x00000004,
         HYBRID_REQUIRED_BY_SERVER             = 0x00000005,
-        SSL_WITH_USER_AUTH_REQUIRED_BY_SERVER = 0x00000006,
+        SSL_WITH_USER_AUTH_REQUIRED_BY_SERVER = 0x00000006
     };
 
     // Factory just read enough data to know the type of packet we are dealing with
@@ -898,7 +898,7 @@ namespace X224
     enum {
         CC_TPDU_EXTENDED_CLIENT_DATA_SUPPORTED    = 1,
         CC_TPDU_DYNVC_GFX_PROTOCOL_SUPPORTED      = 2,
-        CC_TPDU_RDP_NEGRSP_RESERVED               = 4,
+        CC_TPDU_RDP_NEGRSP_RESERVED               = 4
     };
 
     struct CC_TPDU_Recv : public Recv
@@ -1427,6 +1427,6 @@ namespace X224
             stream.mark_end();
         }
     };
-}; // end namespace X224
+} // end namespace X224
 
 #endif

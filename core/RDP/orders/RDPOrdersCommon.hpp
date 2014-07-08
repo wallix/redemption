@@ -317,7 +317,7 @@ struct DeltaEncodedRectangle {
         DELTA      = 0x10, // coordinate fields are 1 byte delta
         LASTBOUNDS = 0x20, // use previous bounds (no bounds sent)
         SMALL      = 0x40, // -1 on number of bytes for fields
-        TINY       = 0x80, // -2 on number of bytes for fields
+        TINY       = 0x80  // -2 on number of bytes for fields
     };
 
     enum {
@@ -338,7 +338,7 @@ struct DeltaEncodedRectangle {
         POLYLINE        = 22,
         ELLIPSESC       = 25,
         ELLIPSECB       = 26,
-        GLYPHINDEX      = 27,
+        GLYPHINDEX      = 27
     };
 
     enum SecondaryOrderType {
@@ -1132,7 +1132,7 @@ public:
         return header;
     }
 
-    TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions");
+    TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions")
     size_t str(char * buffer, size_t sz, bool showclip = true) const
     {
         size_t lg = sz;

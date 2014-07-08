@@ -28,7 +28,7 @@ namespace detail
 {
     struct NoCurrentPath {
         template<class Buf>
-        /*constexpr*/ static const char * current_path(Buf & buf) /*noexcept*/
+        /*constexpr*/ static const char * current_path(Buf &) /*noexcept*/
         { return 0; }
     };
 

@@ -145,7 +145,7 @@ enum {
     LONG_CREDENTIALS_SUPPORTED = 0x0004,
     AUTORECONNECT_SUPPORTED = 0x0008,
     ENC_SALTED_CHECKSUM = 0x0010,
-    NO_BITMAP_COMPRESSION_HDR = 0x0400,
+    NO_BITMAP_COMPRESSION_HDR = 0x0400
 };
 
 // updateCapabilityFlag (2 bytes): A 16-bit, unsigned integer. Support for

@@ -345,7 +345,7 @@ struct BmpCache {
                , get_cache_usage(4), this->cache_entries[4], (this->cache_persistent[4] ? ", persistent" : ""));
         }
 
-        TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap");
+        TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap")
         uint32_t cache_bitmap(const Bitmap & oldbmp) {
             REDASSERT(this->owner != Mod_rdp);
             // Generating source code for unit test.

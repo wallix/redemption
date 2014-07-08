@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPATBLT_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPATBLT_HPP_
 
+#include "RDPOrdersCommon.hpp"
+
 // 2.2.2.2.1.1.2.3 PatBlt (PATBLT_ORDER)
 // =====================================
 
@@ -1020,7 +1022,7 @@ class RDPPatBlt {
     uint32_t fore_color;
     RDPBrush brush;
 
-    static const uint8_t id(void)
+    static uint8_t id(void)
     {
         return RDP::PATBLT;
     }

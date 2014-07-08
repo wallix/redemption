@@ -46,7 +46,7 @@ enum NotifyEventType {
     NOTIFY_TEXT_CHANGED = TEXT_CHANGED,
     NOTIFY_SUBMIT = WIDGET_SUBMIT,
     NOTIFY_CANCEL = WIDGET_CANCEL,
-    NOTIFY_SELECTION_CHANGED,
+    NOTIFY_SELECTION_CHANGED
 };
 
 
@@ -54,22 +54,22 @@ class Widget2 : public RdpInput, public NotifyApi
 {
 public:
 
-    TODO("using several booleans may be easier to read than flags");
+    TODO("using several booleans may be easier to read than flags")
     enum OptionTab {
         IGNORE_TAB           = 0x00,
-        NORMAL_TAB           = 0x02,
+        NORMAL_TAB           = 0x02
     };
 
     enum OptionFocus {
         IGNORE_FOCUS = 0x00,
-        NORMAL_FOCUS = 0x01,
+        NORMAL_FOCUS = 0x01
         // FORCE_FOCUS  = 0x04
     };
 
     // Warning: these numbers are not random but associed to Front pointer cache index
     enum OptionPointer {
         NORMAL_POINTER = 0x00,
-        EDIT_POINTER   = 0x01,
+        EDIT_POINTER   = 0x01
     };
 
 public:

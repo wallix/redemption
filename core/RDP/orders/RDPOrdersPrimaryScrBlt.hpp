@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYSCRBLT_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYSCRBLT_HPP_
 
+#include "RDPOrdersCommon.hpp"
+
 // 2.2.2.2.1.1.2.7 ScrBlt (SCRBLT_ORDER)
 // =====================================
 
@@ -138,7 +140,7 @@ class RDPScrBlt {
     uint16_t srcx;
     uint16_t srcy;
 
-    static const uint8_t id(void)
+    static uint8_t id(void)
     {
         return RDP::SCREENBLT;
     }

@@ -36,7 +36,7 @@ struct FilenameGenerator
         PATH_FILE_PID_COUNT_EXTENSION,
         PATH_FILE_COUNT_EXTENSION,
         PATH_FILE_PID_EXTENSION,
-        PATH_FILE_EXTENSION,
+        PATH_FILE_EXTENSION
     };
 
     char         path[1024];

@@ -95,7 +95,7 @@ namespace CredSSP {
         return length;
     }
 
-};
+}
 
 struct TSRequest {
     /* TSRequest */

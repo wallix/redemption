@@ -22,6 +22,7 @@
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYELLIPSESC_HPP_
 
 #include "ellipse.hpp"
+#include "RDPOrdersCommon.hpp"
 // 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
 // =========================================
 // The COORD_FIELD structure is used to describe a value in the range -32768
@@ -145,7 +146,7 @@ public:
                 && (this->color == other.color));
     }
 
-    static const uint8_t id(void) {
+    static uint8_t id(void) {
         return RDP::ELLIPSESC;
     }
 

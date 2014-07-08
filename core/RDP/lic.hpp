@@ -79,7 +79,7 @@ namespace LIC
     enum {
         LICENSE_TOKEN_SIZE             = 10,
         LICENSE_HWID_SIZE              = 20,
-        LICENSE_SIGNATURE_SIZE         = 16,
+        LICENSE_SIGNATURE_SIZE         = 16
     };
 
     enum {
@@ -95,7 +95,7 @@ namespace LIC
 
     enum {
         LICENSE_TAG_USER            = 0x000f,
-        LICENSE_TAG_HOST            = 0x0010,
+        LICENSE_TAG_HOST            = 0x0010
     };
 
     enum {
@@ -112,14 +112,14 @@ namespace LIC
         ERR_INVALID_MESSAGE_LEN          = 0x0000000C,
 
         //    Sent by client and server:
-        ERR_INVALID_MAC                  = 0x00000003,
+        ERR_INVALID_MAC                  = 0x00000003
     };
 
     enum {
         ST_TOTAL_ABORT            = 0x00000001,
         ST_NO_TRANSITION          = 0x00000002,
         ST_RESET_PHASE_TO_START   = 0x00000003,
-        ST_RESEND_LAST_MESSAGE    = 0x00000004,
+        ST_RESEND_LAST_MESSAGE    = 0x00000004
     };
 
     // +------------------------------------+-------------------------------------+
@@ -165,11 +165,11 @@ namespace LIC
         BB_KEY_EXCHG_ALG_BLOB       = 0x000D,
         BB_SCOPE_BLOB               = 0x000E,
         BB_CLIENT_USER_NAME_BLOB    = 0x000F,
-        BB_CLIENT_MACHINE_NAME_BLOB = 0x0010,
+        BB_CLIENT_MACHINE_NAME_BLOB = 0x0010
     };
 
     enum {
-        KEY_EXCHANGE_ALG_RSA        = 0x01,
+        KEY_EXCHANGE_ALG_RSA        = 0x01
     };
 
     // 2.2.1.12.1.1 Licensing Preamble (LICENSE_PREAMBLE)
@@ -3337,7 +3337,7 @@ namespace LIC
     };
 
 
-} /* namespace LIC */;
+} /* namespace LIC */
 
 
     // 2.2.2.2 Client New License Request (CLIENT_NEW_LICENSE_REQUEST)

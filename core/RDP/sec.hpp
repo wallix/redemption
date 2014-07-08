@@ -31,7 +31,7 @@
 #include "client_info.hpp"
 
 
-TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.");
+TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.")
 #include "ssl_calls.hpp"
 
 namespace SEC
@@ -162,7 +162,7 @@ enum {
     SEC_SECURE_CHECKSUM    = 0x0800,
     SEC_AUTODETECT_REQ     = 0x1000,
     SEC_AUTODETECT_RSP     = 0x2000,
-    SEC_FLAGSHI_VALID      = 0x8000,
+    SEC_FLAGSHI_VALID      = 0x8000
 };
 
 
@@ -1873,6 +1873,6 @@ enum {
 // to connect. Furthermore, the server invalidates and updates the cookie at hourly intervals, sending the
 // new cookie to the client in the Save Session Info PDU.
 
-};
+}
 
 #endif

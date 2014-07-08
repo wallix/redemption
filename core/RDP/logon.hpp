@@ -226,7 +226,7 @@ enum {
     INFO_NOAUDIOPLAYBACK    = 0x00080000,
     INFO_USING_SAVED_CREDS  = 0x00100000,
     RNS_INFO_AUDIOCAPTURE   = 0x00200000,
-    RNS_INFO_VIDEO_DISABLE  = 0x00400000,
+    RNS_INFO_VIDEO_DISABLE  = 0x00400000
 };
 
 //     to get PACKET_COMPR_TYPE: (flags & CompressonTypeMask) >> 9
@@ -374,7 +374,7 @@ enum {
     PERF_DISABLE_CURSORSETTINGS     = 0x00000040,
     PERF_ENABLE_FONT_SMOOTHING      = 0x00000080,
     PERF_ENABLE_DESKTOP_COMPOSITION = 0x00000100,
-    PERF_RESERVED2                  = 0x80000000,
+    PERF_RESERVED2                  = 0x80000000
 };
 
 // cbAutoReconnectLen (2 bytes): A 16-bit, unsigned integer. The size in bytes

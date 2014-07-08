@@ -202,7 +202,7 @@ namespace GCC
 
     enum {
         MCS_GLOBAL_CHANNEL   = 1003,
-        MCS_USERCHANNEL_BASE = 1001,
+        MCS_USERCHANNEL_BASE = 1001
     };
 
     class Create_Request_Send {
@@ -1422,7 +1422,7 @@ namespace GCC
                 REDIRECTION_SUPPORTED            = 0x00000001,
                 REDIRECTED_SESSIONID_FIELD_VALID = 0x00000002,
                 REDIRECTED_SMARTCARD             = 0x00000040,
-                ServerSessionRedirectionVersionMask = 0x0000003C,
+                ServerSessionRedirectionVersionMask = 0x0000003C
             };
             uint32_t flags;
             uint32_t redirectedSessionID;
@@ -1768,7 +1768,7 @@ namespace GCC
                 CHANNEL_OPTION_COMPRESS_RDP  = 0x00800000,
                 CHANNEL_OPTION_COMPRESS      = 0x00400000,
                 CHANNEL_OPTION_SHOW_PROTOCOL = 0x00200000,
-                REMOTE_CONTROL_PERSISTENT    = 0x00100000,
+                REMOTE_CONTROL_PERSISTENT    = 0x00100000
             };
 
             struct {
@@ -2302,7 +2302,7 @@ namespace GCC
                 ENCRYPTION_METHOD_40BIT  = 0x00000001,
                 ENCRYPTION_METHOD_128BIT = 0x00000002,
                 ENCRYPTION_METHOD_56BIT  = 0x00000008,
-                ENCRYPTION_METHOD_FIPS   = 0x00000010,
+                ENCRYPTION_METHOD_FIPS   = 0x00000010
             };
             uint32_t encryptionMethod;
 
@@ -2311,7 +2311,7 @@ namespace GCC
                 ENCRYPTION_LEVEL_LOW               = 0x00000001,
                 ENCRYPTION_LEVEL_CLIENT_COMPATIBLE = 0x00000002,
                 ENCRYPTION_LEVEL_HIGH              = 0x00000003,
-                ENCRYPTION_LEVEL_FIPS              = 0x00000004,
+                ENCRYPTION_LEVEL_FIPS              = 0x00000004
             };
             uint32_t encryptionLevel;
             uint32_t serverRandomLen;
@@ -2324,15 +2324,13 @@ namespace GCC
 
             enum { CERT_CHAIN_VERSION_1 = 0x00000001
                  , CERT_CHAIN_VERSION_2 = 0x00000002
-                 ,
             };
 
             enum { SIGNATURE_ALG_RSA = 1
                  , KEY_EXCHANGE_ALG_RSA = 1
                  , BB_RSA_KEY_BLOB = 0x0006
                  , BB_RSA_SIGNATURE_BLOB = 0x0008
-                 , RSA_MAGIC     = 0x31415352, /* RSA1 */
-
+                 , RSA_MAGIC     = 0x31415352 /* RSA1 */
             };
 
             // really proprietaryCertificate and X509Certificate should be some union (sum) controlled by dwVersion
@@ -2881,7 +2879,7 @@ namespace GCC
 // of each display monitor specified in the Client Monitor Data block. The number of
 // TS_MONITOR_ATTRIBUTES structures is specified by the monitorCount field.
 
-    }; /* namespace UserData */
-}; /* namespace GCC */
+    } /* namespace UserData */
+} /* namespace GCC */
 
 #endif

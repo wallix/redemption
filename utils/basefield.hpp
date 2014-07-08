@@ -275,7 +275,7 @@ struct FieldObserver : public ConfigurationHolder {
             this->set(logtype_from_cstr(cstr));
         }
 
-        const uint32_t get() {
+        uint32_t get() {
             this->read = true;
             return this->data;
         }
@@ -320,7 +320,7 @@ struct FieldObserver : public ConfigurationHolder {
             this->set(_long_from_cstr(cstr));
         }
 
-        const signed get() {
+        signed get() {
             this->read = true;
             return this->data;
         }
@@ -361,7 +361,7 @@ struct FieldObserver : public ConfigurationHolder {
             this->set(bool_from_cstr(cstr));
         }
 
-        const bool get() {
+        bool get() {
             this->read = true;
             return this->data;
         }

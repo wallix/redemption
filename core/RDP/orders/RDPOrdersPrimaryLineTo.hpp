@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYLINETO_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYLINETO_HPP_
 
+#include "RDPOrdersCommon.hpp"
+
 class RDPLineTo {
     // LINE fields bytes
     // ------------------
@@ -49,7 +51,7 @@ class RDPLineTo {
     uint8_t rop2;
     RDPPen pen;
 
-    static const uint8_t id(void)
+    static uint8_t id(void)
     {
         return RDP::LINE;
     }

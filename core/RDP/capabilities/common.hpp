@@ -192,7 +192,7 @@ enum {
     // Bitmap Codecs Capability Set ([MS-RDPBCGR] section 2.2.7.2.10)
     CAPSETTYPE_BITMAP_CODECS            = 29,
     // Frame Acknowledge Capability Set (([MS-RDPRFX] section 2.2.1.3))
-    CAPSETTYPE_FRAME_ACKNOWLEDGE        = 30,
+    CAPSETTYPE_FRAME_ACKNOWLEDGE        = 30
 };
 
 enum {
@@ -202,7 +202,7 @@ enum {
     ORDER_CAP_NEGOTIATE            = 2,
     ORDER_CAP_NOSUPPORT            = 4,
 
-    BMPCACHE2_FLAG_PERSIST         = ((long)1<<31),
+    BMPCACHE2_FLAG_PERSIST         = ((long)1<<31)
 };
 
 struct Capability {

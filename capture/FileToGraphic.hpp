@@ -42,7 +42,7 @@
 struct FileToGraphic
 {
     enum {
-        HEADER_SIZE = 8,
+        HEADER_SIZE = 8
     };
     BStream stream;
 
@@ -75,8 +75,10 @@ struct FileToGraphic
     uint32_t chunk_size;
     uint16_t chunk_type;
     uint16_t chunk_count;
+private:
     uint16_t remaining_order_count;
 
+public:
     // total number of RDP orders read from the start of the movie
     // (non orders chunks are counted as 1 order)
     uint32_t total_orders_count;
@@ -236,19 +238,9 @@ struct FileToGraphic
           " reads the next chunk if necessary.")
     {
         if (this->chunk_type != LAST_IMAGE_CHUNK
-        && this->chunk_type != PARTIAL_IMAGE_CHUNK){
-            if ((this->stream.p == this->stream.end)
-            && (this->remaining_order_count)){
-                LOG(LOG_ERR, "Incomplete order batch at chunk %u "
-                             "order [%u/%u] "
-                             "remaining [%u/%u]",
-                             this->chunk_type,
-                             (this->chunk_count-this->remaining_order_count), this->chunk_count,
-                             (this->stream.end - this->stream.p), this->chunk_size);
-                return false;
-            }
-            if ((this->stream.p != this->stream.end)
-            && (this->remaining_order_count == -1)){
+         && this->chunk_type != PARTIAL_IMAGE_CHUNK) {
+            if (this->stream.p == this->stream.end
+             && this->remaining_order_count) {
                 LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                              "order [%u/%u] "
                              "remaining [%u/%u]",

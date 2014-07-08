@@ -80,7 +80,7 @@ enum {
     ORANGE                    = 0x1580DD,
     LIGHT_ORANGE              = 0x64BFFF,
     PALE_ORANGE               = 0x9AD5FF,
-    BROWN                     = 0x006AC5,
+    BROWN                     = 0x006AC5
 };
 
 
@@ -225,7 +225,7 @@ static inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t i
     return 0;
 }
 
-TODO("move that to default palette constructor, make it an actual object");
+TODO("move that to default palette constructor, make it an actual object")
 static inline void init_palette332(BGRPalette & palette)
 {
     /* rgb332 palette */

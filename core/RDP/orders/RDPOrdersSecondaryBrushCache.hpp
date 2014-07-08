@@ -137,7 +137,7 @@ enum {
     BMF_1BPP = 0x01,
     BMF_8BPP = 0x03,
     BMF_16BPP = 0x04,
-    BMF_24BPP = 0x05,
+    BMF_24BPP = 0x05
 };
 
 

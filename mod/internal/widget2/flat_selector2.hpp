@@ -87,7 +87,7 @@ public:
         IDX_TARGETGROUP,
         IDX_TARGET,
         IDX_PROTOCOL,
-        IDX_CLOSETIME,
+        IDX_CLOSETIME
     };
 
     enum {
@@ -95,7 +95,7 @@ public:
         VERTICAL_MARGIN = 10,
         TEXT_MARGIN = 20,
         FILTER_SEPARATOR = 5,
-        NAV_SEPARATOR = 15,
+        NAV_SEPARATOR = 15
     };
 public:
     WidgetSelectorFlat2(DrawApi& drawable, const char * device_name, uint16_t width,

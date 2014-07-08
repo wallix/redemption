@@ -24,6 +24,7 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYDESTBLT_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYDESTBLT_HPP_
 
+#include "RDPOrdersCommon.hpp"
 
 //2.2.2.2.1.1.2.1 DstBlt (DSTBLT_ORDER)
 // ------------------------------------
@@ -65,7 +66,7 @@ class RDPDestBlt {
     Rect rect;
     uint8_t rop;
 
-    static const uint8_t id(void)
+    static uint8_t id(void)
     {
         return RDP::DESTBLT;
     }

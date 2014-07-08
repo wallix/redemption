@@ -41,7 +41,7 @@ class AclSerializer{
     } authid_to_send_t;
 
     enum {
-        HEADER_SIZE = 4,
+        HEADER_SIZE = 4
     };
 
     Inifile * ini;
@@ -162,7 +162,7 @@ public:
     }
 
     TODO("move that function to Inifile create specialized stream object InifileStream "
-         "maybe out_item should be in config , not here");
+         "maybe out_item should be in config , not here")
     void out_item(Stream & stream, authid_t authid)
     {
         const char * key = string_from_authid(authid);

@@ -80,7 +80,7 @@
 enum {
     FRONT_DISCONNECTED,
     FRONT_CONNECTING,
-    FRONT_RUNNING,
+    FRONT_RUNNING
 };
 
 class Front : public FrontAPI {
@@ -132,7 +132,7 @@ public:
         CONNECTION_INITIATION,
         WAITING_FOR_LOGON_INFO,
         WAITING_FOR_ANSWER_TO_LICENCE,
-        ACTIVATE_AND_PROCESS_DATA,
+        ACTIVATE_AND_PROCESS_DATA
     } state;
 
     Random * gen;
@@ -399,7 +399,7 @@ public:
         }
     }
 
-    TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)");
+    TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         this->send_global_palette();
@@ -3500,7 +3500,7 @@ public:
 // targetUser (2 bytes): A 16-bit, unsigned integer. The MCS channel ID of the
 //   target user.
 
-    TODO(" duplicated code in mod/rdp");
+    TODO(" duplicated code in mod/rdp")
     void send_synchronize()
     {
         if (this->verbose & 1){

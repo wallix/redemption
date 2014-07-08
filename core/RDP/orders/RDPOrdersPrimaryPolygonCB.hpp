@@ -21,6 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYGONCB_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYGONCB_HPP_
 
+#include "RDPOrdersCommon.hpp"
+
 // 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
 // =========================================
 // The COORD_FIELD structure is used to describe a value in the range -32768
@@ -211,7 +213,7 @@ public:
         int16_t yDelta;
     } deltaPoints [128];
 
-    static const uint8_t id(void) {
+    static uint8_t id(void) {
         return RDP::POLYGONCB;
     }
 

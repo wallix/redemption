@@ -93,7 +93,7 @@ project redemption
 
     <conditional>@defines
 
-#    <cxxflags>-pedantic
+    <cxxflags>-pedantic
 #    <cxxflags>-Wconversion
     <cxxflags>-Wvla
     <cxxflags>-Wstrict-aliasing=2
@@ -104,8 +104,11 @@ project redemption
 #     <variant>release:<cxxflags>-march=native
     <cxxflags>-Wuninitialized
     <cxxflags>-Wnon-virtual-dtor
-#     <cxxflags>-Wall
-#     <cxxflags>-Wextra
+    <cxxflags>-Wall
+    <cxxflags>-Wextra
+    <cxxflags>-Wno-unused-parameter
+    <cxxflags>-Wno-long-long
+    <cxxflags>-Wtype-limits
     <cxxflags>-Wundef
     <cxxflags>-Wcast-align
     <cxxflags>-Wchar-subscripts
@@ -133,6 +136,7 @@ project redemption
 #     <toolset>gcc:<cxxflags>-Wdouble-promotion
     <toolset>gcc:<cxxflags>-Wmaybe-uninitialized
 
+#     <toolset>clang:<cxxflags>-Weverything
     <toolset>clang:<cxxflags>-Wno-mismatched-tags
 #    <toolset>clang:<cxxflags>-Wno-overloaded-virtual
     <toolset>clang:<cxxflags>-Wno-char-subscripts

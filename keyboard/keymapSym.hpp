@@ -982,7 +982,7 @@ struct KeymapSym {
         KEVENT_HOME,
         KEVENT_END,
         KEVENT_PGUP,
-        KEVENT_PGDOWN,
+        KEVENT_PGDOWN
     };
 
     uint32_t ibuf_sym; // first free position

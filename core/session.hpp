@@ -70,7 +70,7 @@ enum {
     // display dialog when connection is closed
     SESSION_STATE_CLOSE_CONNECTION,
     // disconnect session
-    SESSION_STATE_STOP,
+    SESSION_STATE_STOP
 };
 
 struct Session {

@@ -39,13 +39,13 @@ namespace MCS
     };
 
     // Reason ::= ENUMERATED   -- in DisconnectProviderUltimatum, DetachUserRequest, DetachUserIndication
-    typedef enum {
+    enum t_reasons {
         RN_DOMAIN_DISCONNECTED = 0,
         RN_PROVIDER_INITIATED  = 1,
         RN_TOKEN_PURGED        = 2,
         RN_USER_REQUESTED      = 3,
         RN_CHANNEL_PURGED      = 4
-    } t_reasons;
+    };
 
     const char * get_reason(t_reasons reason)
     {
@@ -123,14 +123,14 @@ namespace MCS
         MCSPDU_TokenReleaseRequest         = 0x27,
         MCSPDU_TokenReleaseConfirm         = 0x28,
         MCSPDU_TokenTestRequest            = 0x29,
-        MCSPDU_TokenTestConfirm            = 0x2A,
+        MCSPDU_TokenTestConfirm            = 0x2A
     };
 
     enum ConnectMCSPDU {
         MCSPDU_CONNECT_INITIAL             = 101,
         MCSPDU_CONNECT_RESPONSE            = 102,
         MCSPDU_CONNECT_ADDITIONAL          = 103,
-        MCSPDU_CONNECT_RESULT              = 104,
+        MCSPDU_CONNECT_RESULT              = 104
     };
 
     static const char* const RT_RESULT[] = {
@@ -196,7 +196,7 @@ namespace MCS
             BER_TAG_BOOLEAN      =    1,
             BER_TAG_INTEGER      =    2,
             BER_TAG_OCTET_STRING =    4,
-            BER_TAG_RESULT       =   10,
+            BER_TAG_RESULT       =   10
         };
 
 
@@ -2973,6 +2973,6 @@ namespace MCS
         }
     };
 
-};
+}
 
 #endif

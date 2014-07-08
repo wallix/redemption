@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
     {
         BOOST_CHECK(1);
         int bpp = 8;
-        uint8_t data[0] = {};
+        const uint8_t * const data = 0;
         Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
         const uint8_t * pmin = bmp.data();
         const uint8_t * pmax = pmin + bmp.bmp_size;
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
     // test BICOLOR COUNT EMPTY
     {
         int bpp = 8;
-        uint8_t data[0] = {};
+        const uint8_t * const data = 0;
         Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
         const uint8_t * pmax = bmp.data() + bmp.bmp_size;
         BOOST_CHECK_EQUAL(0, bmp.get_bicolor_count(::nbbytes(bpp), pmax, bmp.data(), 0xEF, 0xFE));
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
     // test FILL COUNT
     {
         int bpp = 8;
-        uint8_t data[0] = {};
+        const uint8_t * const data = 0;
         Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
         const uint8_t * pmin = bmp.data();
         const uint8_t * pmax = pmin + bmp.bmp_size;
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
     // test MIX COUNT
     {
         int bpp = 8;
-        uint8_t data[0] = {};
+        const uint8_t * const data = 0;
         Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
         const uint8_t * pmin = bmp.data();
         const uint8_t * pmax = pmin + bmp.bmp_size;
@@ -4008,7 +4008,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
     init_palette332(palette332);
 
     int bpp = 8;
-    uint8_t data[0] = {};
+    const uint8_t * const data = 0;
     Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
 
     Bitmap::openfile_t res;

@@ -382,7 +382,7 @@ public:
 
         RDPMemBlt newcmd = cmd;
         newcmd.cache_id = cache_id;
-        newcmd.cache_idx = (in_wait_list ? RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX : cache_idx);
+        newcmd.cache_idx = (in_wait_list ? uint16_t(RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) : cache_idx);
 
         this->reserve_order(30);
         RDPOrderCommon newcommon(RDP::MEMBLT, clip);
@@ -411,7 +411,7 @@ public:
 
         RDPMem3Blt newcmd = cmd;
         newcmd.cache_id = cache_id;
-        newcmd.cache_idx = (in_wait_list ? RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX : cache_idx);
+        newcmd.cache_idx = (in_wait_list ? uint16_t(RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) : cache_idx);
 
         this->reserve_order(60);
         RDPOrderCommon newcommon(RDP::MEM3BLT, clip);

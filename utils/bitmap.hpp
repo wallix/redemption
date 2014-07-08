@@ -192,7 +192,7 @@ public:
         }
     }
 
-    TODO("add palette support");
+    TODO("add palette support")
     Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, uint8_t vnc_bpp, const Rect & tile)
         : original_bpp(vnc_bpp)
         , cx(align4(tile.cx))
@@ -471,11 +471,11 @@ public:
         return this->data_bitmap.get();
     }
 
-    typedef enum {
+    enum openfile_t {
         OPEN_FILE_UNKNOWN,
         OPEN_FILE_BMP,
-        OPEN_FILE_PNG,
-    } openfile_t;
+        OPEN_FILE_PNG
+    };
 
     openfile_t check_file_type(const char * filename) {
         openfile_t res = OPEN_FILE_UNKNOWN;
@@ -605,7 +605,7 @@ public:
 
 
 private:
-    TODO("move that function to external definition");
+    TODO("move that function to external definition")
 
     const char * get_opcode(uint8_t opcode){
         enum {
@@ -1226,7 +1226,7 @@ public:
         FLAG_MIX_SET = 6,
         FLAG_FOM_SET = 7,
         FLAG_COLOR = 8,
-        FLAG_BICOLOR = 9,
+        FLAG_BICOLOR = 9
     };
 
     unsigned get_pixel(const uint8_t Bpp, const uint8_t * const p) const
@@ -1371,7 +1371,7 @@ public:
         return 0;
     }
 
-    TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.");
+    TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")
     void compress(uint8_t session_color_depth, Stream & outbuffer) const
     {
         if (this->data_compressed) {

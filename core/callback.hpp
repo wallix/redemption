@@ -33,7 +33,7 @@ enum {
     RDP_INPUT_CODEPOINT            = 1,
     RDP_INPUT_VIRTKEY              = 2,
     RDP_INPUT_SCANCODE             = 4,
-    RDP_INPUT_MOUSE                = 0x8001,
+    RDP_INPUT_MOUSE                = 0x8001
 };
 
 /* Device flags */
@@ -42,14 +42,14 @@ enum {
     KBD_FLAG_EXT                   = 0x0100,
     KBD_FLAG_QUIET                 = 0x1000,
     KBD_FLAG_DOWN                  = 0x4000,
-    KBD_FLAG_UP                    = 0x8000,
+    KBD_FLAG_UP                    = 0x8000
 };
 
 /* These are for synchronization; not for keystrokes */
 enum {
     KBD_FLAG_SCROLL                = 0x0001,
     KBD_FLAG_NUMLOCK               = 0x0002,
-    KBD_FLAG_CAPITAL               = 0x0004,
+    KBD_FLAG_CAPITAL               = 0x0004
 };
 
 enum {
@@ -59,7 +59,7 @@ enum {
     MOUSE_FLAG_BUTTON3             = 0x4000,
     MOUSE_FLAG_BUTTON4             = 0x0280,
     MOUSE_FLAG_BUTTON5             = 0x0380,
-    MOUSE_FLAG_DOWN                = 0x8000,
+    MOUSE_FLAG_DOWN                = 0x8000
 };
 
 struct RdpInput

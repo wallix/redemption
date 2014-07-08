@@ -247,7 +247,7 @@ public:
         this->t->send(stream.get_data(), 6);
     } // change_mouse_state
 
-    TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?");
+    TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?")
     //==============================================================================================================
     virtual void rdp_input_mouse( int device_flags
                                 , int x
@@ -1792,9 +1792,7 @@ public:
             format_list_pdu.emit(out_s);
 
             size_t length     = out_s.size();
-            size_t chunk_size =   (length < CHANNELS::CHANNEL_CHUNK_LENGTH)
-                                ? length
-                                : CHANNELS::CHANNEL_CHUNK_LENGTH;
+            size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
             this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                        , out_s.get_data()

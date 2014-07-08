@@ -40,7 +40,7 @@ enum {
     PDUTYPE_DEACTIVATEALLPDU       = 6,
     PDUTYPE_DATAPDU                = 7,
     PDUTYPE_SERVER_REDIR_PKT       = 10,
-    FLOWPDU                        = 11, // FlowPDU from T.128
+    FLOWPDU                        = 11 // FlowPDU from T.128
 };
 
 // PDUTypeFlow ::= INTEGER {flowResponsePDU(66), flowStopPDU(67), flowTestPDU(65)
@@ -55,19 +55,19 @@ enum {
     RDP_CTL_REQUEST_CONTROL        = 1,
     RDP_CTL_GRANT_CONTROL          = 2,
     RDP_CTL_DETACH                 = 3,
-    RDP_CTL_COOPERATE              = 4,
+    RDP_CTL_COOPERATE              = 4
 };
 
 enum {
     RDP_UPDATE_ORDERS              = 0,
     RDP_UPDATE_BITMAP              = 1,
     RDP_UPDATE_PALETTE             = 2,
-    RDP_UPDATE_SYNCHRONIZE         = 3,
+    RDP_UPDATE_SYNCHRONIZE         = 3
 };
 
 enum {
     RDP_NULL_POINTER               = 0,
-    RDP_DEFAULT_POINTER            = 0x7F00,
+    RDP_DEFAULT_POINTER            = 0x7F00
 };
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.1 Share Control Header (TS_SHARECONTROLHEADER)
@@ -113,7 +113,7 @@ enum {
     RDP_POINTER_MOVE               = 3,
     RDP_POINTER_COLOR              = 6,
     RDP_POINTER_CACHED             = 7,
-    RDP_POINTER_NEW                = 8,
+    RDP_POINTER_NEW                = 8
 };
 
 //##############################################################################
@@ -123,9 +123,9 @@ struct ShareControl_Recv
     SubStream payload;
     public:
     uint16_t totalLength;
-    TODO("rename to pduType");
+    TODO("rename to pduType")
     uint8_t pdu_type1;
-    TODO("Rename to PDUSource");
+    TODO("Rename to PDUSource")
     uint16_t mcs_channel;
     //flow_pdu fields
     uint8_t flow_pdu_type;
@@ -275,7 +275,7 @@ namespace RDP {
         STREAM_MED = 2,
         STREAM_HI = 4
     };
-};
+}
 
 // uncompressedLength (2 bytes): A 16-bit, unsigned integer. The uncompressed
 //   length of the packet in bytes.

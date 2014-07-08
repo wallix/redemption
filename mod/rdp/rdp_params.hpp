@@ -21,6 +21,14 @@
 #ifndef _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_
 #define _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_
 
+#include "log.hpp"
+
+class Transport;
+class auth_api;
+namespace redemption {
+    class string;
+}
+
 struct ModRDPParams {
     const char * target_user;
     const char * target_password;

@@ -55,7 +55,7 @@ enum {
     XUPWM_BUTTON5DOWN  = 110,
     XUPWM_BUTTON_OK    = 300,
     XUPWM_SCREENUPDATE = 0x4444,
-    XUPWM_CHANNELDATA  = 0x5555,
+    XUPWM_CHANNELDATA  = 0x5555
 };
 
     /* mod data */
@@ -118,7 +118,7 @@ enum {
     }
 
     enum {
-        XUPWM_INVALIDATE = 200,
+        XUPWM_INVALIDATE = 200
     };
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)

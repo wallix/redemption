@@ -29,7 +29,7 @@
 struct RdpNego
 {
     enum {
-        EXTENDED_CLIENT_DATA_SUPPORTED = 0x01,
+        EXTENDED_CLIENT_DATA_SUPPORTED = 0x01
     };
 
     // Protocol Security Negotiation Protocols
@@ -78,7 +78,7 @@ struct RdpNego
     uint8_t domain[256];
     const char * target_device;
 
-    TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
+    TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static")
     bool test;
     const uint32_t verbose;
 

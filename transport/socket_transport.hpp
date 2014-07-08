@@ -38,7 +38,7 @@
 // Each line (for multiline formats) is indented by indent spaces.
 // The output format can be extensively customised by use of the flags parameter.
 
-TODO("we should be able to simplify that to just put expected value in a provided buffer");
+TODO("we should be able to simplify that to just put expected value in a provided buffer")
 static inline char* crypto_print_name(X509_NAME* name)
 {
     char* buffer = NULL;
@@ -107,7 +107,7 @@ public:
 
     unique_ptr<uint8_t[]> public_key;
     size_t public_key_length;
-    TODO("check if buffer is defined before accessing it");
+    TODO("check if buffer is defined before accessing it")
 
     redemption::string * error_message;
 

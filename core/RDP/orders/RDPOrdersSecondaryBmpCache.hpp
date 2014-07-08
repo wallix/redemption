@@ -32,10 +32,10 @@ enum {
     BMPCACHE2_C0_CELLS             = 0x78,
     BMPCACHE2_C1_CELLS             = 0x78,
     BMPCACHE2_C2_CELLS             = 0x150,
-    BMPCACHE2_NUM_PSTCELLS         = 0x9f6,
+    BMPCACHE2_NUM_PSTCELLS         = 0x9f6
 };
 
-TODO(" RDPBmpCache works with a given item (id, idx) inside a given Bitmap cache, hence we should not provide it with the bitmap itself  but with the cache containing the said bitmap. That said we should also have both lowlevel bitmaps (bpp independant) and curryed bitmap with a fixed given bpp. RDPBmpCache relates to a cache containing curryed bitmaps  as the actual id to use depends off the bitmap size in bytes  itself depending from bpp. Alternatively  this bpp could be attached to the cache itself as bpp is unique for a given cache.");
+TODO(" RDPBmpCache works with a given item (id, idx) inside a given Bitmap cache, hence we should not provide it with the bitmap itself  but with the cache containing the said bitmap. That said we should also have both lowlevel bitmaps (bpp independant) and curryed bitmap with a fixed given bpp. RDPBmpCache relates to a cache containing curryed bitmaps  as the actual id to use depends off the bitmap size in bytes  itself depending from bpp. Alternatively  this bpp could be attached to the cache itself as bpp is unique for a given cache.")
 class RDPBmpCache {
     // [MS-RDPGDI] 2.2.2.2.1.2.2 Cache Bitmap - Revision 1 (CACHE_BITMAP_ORDER)
     // ========================================================================
@@ -627,7 +627,7 @@ class RDPBmpCache {
         CBR2_8BPP = 0x03,
         CBR2_16BPP = 0x04,
         CBR2_24BPP = 0x05,
-        CBR2_32BPP = 0x06,
+        CBR2_32BPP = 0x06
     };
 
     enum {

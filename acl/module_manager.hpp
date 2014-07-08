@@ -86,7 +86,7 @@ enum {
     MODULE_EXIT_INTERNAL_CLOSE,
     MODULE_TRANSITORY,
     MODULE_AUTH,
-    MODULE_CLI,
+    MODULE_CLI
 };
 
 class MMApi

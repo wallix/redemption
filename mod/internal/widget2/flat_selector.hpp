@@ -111,13 +111,13 @@ class WidgetSelectorFlat : public WidgetParent
         }
     };
 public:
-    typedef enum {
+    enum Column {
         COLUMN_UNKNOWN,
         COLUMN_GROUP,
         COLUMN_TARGET,
         COLUMN_PROTOCOL,
-        COLUMN_CLOSETIME,
-    } Column;
+        COLUMN_CLOSETIME
+    };
 
 private:
     class WidgetSelectLine : public Widget2
@@ -452,7 +452,7 @@ private:
                         return ;
                     }
                     else {
-                        if (this->click_interval.tick() <= 700000LL) {
+                        if (this->click_interval.tick() <= uint64_t(700000L)) {
                             this->send_notify(NOTIFY_SUBMIT);
                             return ;
                         }

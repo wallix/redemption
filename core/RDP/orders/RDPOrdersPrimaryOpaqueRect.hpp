@@ -31,7 +31,7 @@ class RDPOpaqueRect {
     Rect rect;
     uint32_t color;
 
-    static const uint8_t id(void)
+    static uint8_t id(void)
     {
         return RDP::RECT;
     }
