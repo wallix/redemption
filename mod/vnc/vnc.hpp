@@ -177,10 +177,12 @@ public:
         memset(this->username, 0, 256);
         memset(this->password, 0, 256);
 
-        memcpy(this->username, username, sizeof(this->username)-1);
-        this->username[sizeof(this->username)-1] = 0;
-        memcpy(this->password, password, sizeof(this->password)-1);
-        this->password[sizeof(this->password)-1] = 0;
+//        memcpy(this->username, username, sizeof(this->username)-1);
+//        this->username[sizeof(this->username)-1] = 0;
+        snprintf(this->username, sizeof(this->username), "%s", username);
+//        memcpy(this->password, password, sizeof(this->password)-1);
+//        this->password[sizeof(this->password)-1] = 0;
+        snprintf(this->password, sizeof(this->password), "%s", password);
 
         this->encodings.copy_c_str(encodings);
 
