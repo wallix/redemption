@@ -345,7 +345,27 @@ public:
 
     void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) {
         if (this->gd) {
-            this->gd->draw(bitmap_data, data, size, bmp);
+            if (bmp.original_bpp == 8) {
+                Bitmap bmp_24(24, bmp);
+
+                BStream bmp_stream(65535);
+                bmp_24.compress(24, bmp_stream);
+                bmp_stream.mark_end();
+
+                RDPBitmapData bitmap_data_24 = bitmap_data;
+                bitmap_data_24.bits_per_pixel = 24;
+                bitmap_data_24.flags          = BITMAP_COMPRESSION;
+                bitmap_data_24.bitmap_length  = bmp_stream.size() + 8;
+
+                bitmap_data_24.cb_comp_main_body_size = bmp_stream.size();
+                bitmap_data_24.cb_scan_width          = bmp_24.cx;
+                bitmap_data_24.cb_uncompressed_size   = bmp_24.bmp_size;
+
+                this->gd->draw(bitmap_data_24, bmp_stream.get_data(), bmp_stream.size(), bmp_24);
+            }
+            else {
+                this->gd->draw(bitmap_data, data, size, bmp);
+            }
         }
     }
 

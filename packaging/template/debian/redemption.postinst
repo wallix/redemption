@@ -31,7 +31,7 @@ chown -R $REDUSER.$REDUSER $RDPCERT_PATH
 chown -R $REDUSER.$REDUSER $RDPLICENSE_PATH
 chown -R $REDUSER.$REDUSER $RECORD_TMP_PATH
 chown -R $REDUSER.$REDUSER $PERSISTENT_PATH
-  if ! mountpoint $RECORD_PATH; then
+  if ! mountpoint $RECORD_PATH/..; then
   chown -R $REDUSER.$REDUSER $RECORD_PATH
   fi
 fi
