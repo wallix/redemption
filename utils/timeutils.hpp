@@ -21,7 +21,9 @@
 #ifndef _REDEMPTION_UTILS_TIMEUTILS_HPP_
 #define _REDEMPTION_UTILS_TIMEUTILS_HPP_
 
-inline bool operator ==(const struct tm & a, const struct tm & b) {
+#include <ctime>
+
+inline bool operator ==(const tm & a, const tm & b) {
     return (   (a.tm_sec   == b.tm_sec  )
             && (a.tm_min   == b.tm_min  )
             && (a.tm_hour  == b.tm_hour )
@@ -34,9 +36,8 @@ inline bool operator ==(const struct tm & a, const struct tm & b) {
            );
 }
 
-inline bool operator !=(const struct tm & a, const struct tm & b) {
+inline bool operator !=(const tm & a, const tm & b) {
     return (!(a == b));
 }
 
 #endif  // #ifndef _REDEMPTION_UTILS_TIMEUTILS_HPP_
-

@@ -101,11 +101,7 @@ public:
         }
 
         if (this->set_state) {
-            struct timeval now;
-            now = tvtime();
-            if ((now.tv_sec > this->trigger_time.tv_sec) ||
-                ((now.tv_sec  == this->trigger_time.tv_sec) &&
-                 (now.tv_usec >= this->trigger_time.tv_usec))) {
+            if (tvtime() >= this->trigger_time) {
                 this->waked_up_by_time = true;
                 return true;
             }
