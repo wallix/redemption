@@ -37,7 +37,22 @@
 #define TODO(x) DO_PRAGMA(message ("TODO - " x));
 #endif
 
-#define BOOM (*reinterpret_cast<int*>(0)=1)
+// -Wno-null-dereference and clang++
+namespace aux_ {
+    class null_pointer
+    {
+        void * ptr;
+
+    public:
+        null_pointer()
+        : ptr(0)
+        {}
+
+        void * get() const
+        { return this->ptr; }
+    };
+}
+#define BOOM (*reinterpret_cast<int*>(aux_::null_pointer().get())=1)
 
 // REDASSERT behave like assert but instaed of calling abort it triggers a segfault
 // This is handy to get stacktrace while debugging.
