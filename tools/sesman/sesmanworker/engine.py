@@ -1005,6 +1005,56 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
+        'w2k3_any@10.10.42.13:VNC': RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'any',
+                password = u'linux',
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'vnc1'
+                )
+            ],
+            target_groups = u'vnc1',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.42.13',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.42.13',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'VNC'
+                    ),
+                    cn = u'VNC',
+                    port = u'5900'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = False,
+                isRecorded = False
+            ),
+            service_login = u'any@10.10.42.13:VNC',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'VNC',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
+        ),
         'w2k3_any@10.10.46.70:VNC': RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
@@ -1591,6 +1641,12 @@ class Engine(object):
         ),
         TargetPasswordInfo(
             account = u'any',
+            resource = u'10.10.42.13',
+            protocol = u'VNC',
+            password = u'linux'
+        ),
+        TargetPasswordInfo(
+            account = u'any',
             resource = u'10.10.46.70',
             protocol = u'VNC',
             password = PASSWORD4
@@ -1731,6 +1787,7 @@ class Engine(object):
                 'w2k_administrateur@10.10.46.64:RDP',
                 'w2k_administrateur@10.10.47.39:RDP',
                 'w2k3_administrateur@10.10.47.205:RDP',
+                'w2k3_any@10.10.42.13:VNC',
                 'w2k3_any@10.10.46.70:VNC',
                 'w2k3_qa\\administrateur@10.10.46.70:RDP',
                 'w2k8_administrateur@10.10.47.89:RDP',
