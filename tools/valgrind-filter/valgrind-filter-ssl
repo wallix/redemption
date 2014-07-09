@@ -1,2 +1,3 @@
 #!/bin/sh
+
 "$(dirname "$0")"/valgrind-filter CRYPTO_malloc SSL_library_init CRYPTO_realloc
