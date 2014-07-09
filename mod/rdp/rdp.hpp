@@ -4358,7 +4358,14 @@ public:
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
         struct Pointer & cursor = this->cursors[pointer_idx];
-        this->front.server_set_pointer(cursor);
+        if (cursor.is_valid()) {
+            this->front.server_set_pointer(cursor);
+        }
+        else {
+            LOG(LOG_WARNING, "mod_rdp::process_cached_pointer_pdu: incalid cache cell index, use system default. index=%u", pointer_idx);
+            Pointer cursor(Pointer::POINTER_CURSOR0);
+            this->front.server_set_pointer(cursor);
+        }
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
         }
@@ -4392,6 +4399,10 @@ public:
             }
             break;
         default:
+            {
+                Pointer cursor(Pointer::POINTER_CURSOR0);
+                this->front.server_set_pointer(cursor);
+            }
             break;
         }
         if (this->verbose & 4){
