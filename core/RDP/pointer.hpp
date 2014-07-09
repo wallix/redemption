@@ -37,7 +37,7 @@ struct Pointer {
     enum { DATA_SIZE = 32 * 32 * 4 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x 32 bits
          , MASK_SIZE = 32 * 32 / 8 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x  1 bit
     };
-    enum { 
+    enum {
             MAX_WIDTH = 32
           , MAX_HEIGHT = 32
     };
@@ -58,9 +58,12 @@ struct Pointer {
             {
                 this->x = 0;
                 this->y = 0;
-                this->width = 32;
-                this->height = 32;
-                this->bpp = 24;
+//                this->width = 32;
+                this->width = 0;
+//                this->height = 32;
+                this->height = 0;
+//                this->bpp = 24;
+                this->bpp = 0;
                 memset(this->data, 0, DATA_SIZE);
                 memset(this->mask, 0, MASK_SIZE);
             }
@@ -257,6 +260,10 @@ struct Pointer {
     }
 
     ~Pointer() {}
+
+    bool is_valid() {
+        return (this->width && this->height && this->bpp);
+    }
 };
 
 #endif
