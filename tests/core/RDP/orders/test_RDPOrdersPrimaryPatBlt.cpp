@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         RDPPatBlt(Rect(300, 400, 50, 60),
                   0xFF,
                   0x102030, 0x112233,
-                  RDPBrush(3, 4, 3, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7")
+                  RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")
                   ).emit(stream, newcommon, state_common, state_patblt);
 
         uint8_t datas[30] = {
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         check<RDPPatBlt>(common_cmd, cmd,
             RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),
             RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, 0x102030, 0x112233,
-                RDPBrush(3, 4, 0x03, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7")),
+                RDPBrush(3, 4, 0x03, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")),
             "PatBlt 1");
     }
 
@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         RDPPatBlt(Rect(300, 400, 50, 60),
                   0xFF,
                   0x102030, 0x112233,
-                  RDPBrush(3, 4, 3, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7")
+                  RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")
                   ).emit(stream, newcommon, state_common, state_patblt);
 
         uint8_t datas[28] = {
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         check<RDPPatBlt>(common_cmd, cmd,
             RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),
             RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, 0x102030, 0x112233,
-                RDPBrush(3, 4, 0x03, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7")),
+                RDPBrush(3, 4, 0x03, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")),
             "PatBlt 3");
     }
 }

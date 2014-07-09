@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
         deltaPoints.rewind();
 
         RDPPolygonCB polygonCB(158, 230, 0x0D, 0, 0x0D080F, 0xD41002,
-                               RDPBrush(3, 4, 3, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7"),
+                               RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7"),
                                7, deltaPoints);
 
 
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
         check<RDPPolygonCB>(common_cmd, cmd,
                             RDPOrderCommon(POLYGONCB, Rect(0, 0, 0, 0)),
                             RDPPolygonCB(158, 230, 0x0D, 0, 0x0D080F, 0xD41002,
-                                         RDPBrush(3, 4, 3, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7"),
+                                         RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7"),
                                          7, deltaPoints),
                             "PolygonSC 1");
     }

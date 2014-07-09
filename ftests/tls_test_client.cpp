@@ -71,7 +71,7 @@ static X509 *load_cert(const char *file)
     if ((cert=BIO_new(BIO_s_file())) == NULL)
         goto end;
 
-    if (BIO_read_filename(cert,file) <= 0)
+    if (BIO_read_filename(cert,const_cast<char *>(file)) <= 0)
         goto end;
 
     x=PEM_read_bio_X509_AUX(cert,NULL, NULL, NULL);

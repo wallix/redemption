@@ -96,7 +96,7 @@ struct rdp_orders {
             , patblt(Rect(), 0, 0, 0, RDPBrush())
             , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
             , glyph_index( 0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
-                         , (uint8_t *)"")
+                         , reinterpret_cast<const uint8_t *>(""))
             , bmp_cache(NULL)
             , verbose(verbose)
             , recv_bmp_cache_count(0)
@@ -122,7 +122,7 @@ struct rdp_orders {
         this->patblt      = RDPPatBlt(Rect(), 0, 0, 0, RDPBrush());
         this->lineto      = RDPLineTo(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
         this->glyph_index = RDPGlyphIndex( 0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1)
-                                         , RDPBrush(), 0, 0, 0, (uint8_t *)"");
+                                         , RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
         this->polyline        = RDPPolyline();
 
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));

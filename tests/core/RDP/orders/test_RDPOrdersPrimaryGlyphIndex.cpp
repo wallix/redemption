@@ -41,16 +41,16 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
         TODO(" actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
 
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
-        RDPGlyphIndex statecmd(0, 0, 0, 0, 0, 0, Rect(), Rect(), RDPBrush(), 0, 0, 0, (uint8_t*)"");
+        RDPGlyphIndex statecmd(0, 0, 0, 0, 0, 0, Rect(), Rect(), RDPBrush(), 0, 0, 0, (const uint8_t*)"");
         RDPOrderCommon newcommon(GLYPHINDEX, Rect(5, 0, 800, 600));
         RDPGlyphIndex newcmd(1, 0x20, 1, 4,
                              0x112233,
                              0x445566,
                              Rect(1,2,40,60),
                              Rect(3,4,50,70),
-                             RDPBrush(3, 4, 0x03, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7"),
+                             RDPBrush(3, 4, 0x03, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7"),
                              5, 6,
-                             12, (uint8_t*)"Hello, World");
+                             12, (const uint8_t*)"Hello, World");
 
         newcmd.emit(stream, newcommon, state_common, statecmd);
 
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
         RDPGlyphIndex cmd = statecmd;
         cmd.receive(stream, header);
 
-        if (!(RDPBrush(3, 4, 0x03, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7")
+        if (!(RDPBrush(3, 4, 0x03, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")
                 == cmd.brush)){
             BOOST_CHECK_EQUAL(true, false);
         }
@@ -105,9 +105,9 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
                           0x445566,
                           Rect(1,2,40,60),
                           Rect(3,4,50,70),
-                          RDPBrush(3, 4, 0x03, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7"),
+                          RDPBrush(3, 4, 0x03, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7"),
                           5, 6,
-                          12, (uint8_t*)"Hello, World"),
+                          12, (const uint8_t*)"Hello, World"),
             "Text 1");
     }
 }

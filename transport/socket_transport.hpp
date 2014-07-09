@@ -381,7 +381,7 @@ public:
         }
 
         SSL_CTX_set_default_passwd_cb(ctx, password_cb0);
-        SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)certificate_password);
+        SSL_CTX_set_default_passwd_cb_userdata(ctx, const_cast<void*>(static_cast<const void*>(certificate_password)));
         if(!(SSL_CTX_use_PrivateKey_file(ctx, CFG_PATH "/rdpproxy.key", SSL_FILETYPE_PEM)))
         {
             BIO_printf(bio_err,"Can't read key file\n");

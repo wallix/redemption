@@ -78,7 +78,7 @@ static inline void transport_dump_png24(Transport * trans, const uint8_t * data,
             png_write_row(ppng, (unsigned char*)bgrtmp);
         }
         else {
-            png_write_row(ppng, (unsigned char*)row);
+            png_write_row(ppng, const_cast<unsigned char*>(row));
         }
         row += rowsize;
     }
@@ -137,7 +137,7 @@ static inline void dump_png24(FILE * fd, const uint8_t * data,
             png_write_row(ppng, (unsigned char*)bgrtmp);
         }
         else {
-            png_write_row(ppng, (unsigned char*)row);
+            png_write_row(ppng, const_cast<unsigned char*>(row));
         }
         row += rowsize;
     }
@@ -158,10 +158,9 @@ inline void read_png24(FILE * fd, const uint8_t * data,
     png_init_io(ppng, fd);
     png_read_info(ppng, pinfo);
 
-    unsigned char * row = (unsigned char*)data;
     for (size_t k = 0 ; k < height ; ++k) {
-        png_read_row(ppng, row, NULL);
-        row += rowsize;
+        png_read_row(ppng, const_cast<unsigned char*>(data), NULL);
+        data += rowsize;
     }
     png_read_end(ppng, pinfo);
     png_destroy_read_struct(&ppng, &pinfo, NULL);
@@ -184,10 +183,9 @@ inline void transport_read_png24(Transport * trans, const uint8_t * data,
     png_info * pinfo = png_create_info_struct(ppng);
     png_read_info(ppng, pinfo);
 
-    unsigned char * row = (unsigned char*)data;
     for (size_t k = 0 ; k < height ; ++k) {
-        png_read_row(ppng, row, NULL);
-        row += rowsize;
+        png_read_row(ppng, const_cast<unsigned char*>(data), NULL);
+        data += rowsize;
     }
     png_read_end(ppng, pinfo);
     png_destroy_read_struct(&ppng, &pinfo, NULL);

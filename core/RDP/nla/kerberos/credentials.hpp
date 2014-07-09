@@ -81,7 +81,7 @@ public:
         // get TGT
         // 4th argument should be const char * !!!
         ret = krb5_get_init_creds_password(this->ctx, &creds, client_princ,
-                                           (char*)password, NULL, NULL, 0, NULL, NULL);
+                                           const_cast<char*>(password), NULL, NULL, 0, NULL, NULL);
 
         if (ret) {
             LOG(LOG_INFO, "Init creds password failed: Wrong password or no such user");

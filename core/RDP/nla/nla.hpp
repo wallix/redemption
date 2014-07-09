@@ -118,7 +118,7 @@ struct rdpCredssp
     }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
-        const char * p = (char *)pszTargetName;
+        const char * p = (const char *)pszTargetName;
         size_t length = 0;
         if (p) {
             length = strlen(p);

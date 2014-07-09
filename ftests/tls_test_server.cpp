@@ -92,7 +92,7 @@ int main(int argc, char **argv)
     }
 
     SSL_CTX_set_default_passwd_cb(ctx, password_cb0);
-    SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)"inquisition");
+    SSL_CTX_set_default_passwd_cb_userdata(ctx, const_cast<char *>("inquisition"));
     if(!(SSL_CTX_use_PrivateKey_file(ctx, "ftests/fixtures/rdpproxy-key.pem", SSL_FILETYPE_PEM)))
     {
         BIO_printf(bio_err,"Can't read key file\n");

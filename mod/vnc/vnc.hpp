@@ -1711,7 +1711,7 @@ public:
             size_t length     = out_s.size();
             size_t chunk_size = length;
 
-            this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
+            this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                        , out_s.get_data()
                                        , length
                                        , chunk_size
@@ -1805,7 +1805,7 @@ public:
             size_t length     = out_s.size();
             size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
-            this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
+            this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                        , out_s.get_data()
                                        , length
                                        , chunk_size
@@ -1890,7 +1890,7 @@ private:
                     size_t length     = out_s.size();
                     size_t chunk_size = length;
 
-                    this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                    this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                                , out_s.get_data()
                                                , length
                                                , chunk_size
@@ -1910,7 +1910,7 @@ private:
                     length     = out_s2.size();
                     chunk_size = length;
 
-                    this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                    this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                                , out_s2.get_data()
                                                , length
                                                , chunk_size
@@ -1934,7 +1934,7 @@ private:
                     size_t length     = out_s.size();
                     size_t chunk_size = length;
 
-                    this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                    this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                                , out_s.get_data()
                                                , length
                                                , chunk_size

@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseCB)
         RDPEllipseCB(Rect(300, 400, 50, 60),
                      0xFF, 0x01,
                      0x102030, 0x112233,
-                     RDPBrush(3, 4, 3, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7")
+                     RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")
                      ).emit(stream, newcommon, state_common, state_ellipse);
 
         uint8_t datas[31] = {
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseCB)
         check<RDPEllipseCB>(common_cmd, cmd,
                             RDPOrderCommon(ELLIPSECB, Rect(311, 0, 800, 600)),
                             RDPEllipseCB(Rect(300, 400, 50, 60), 0xFF, 0x01, 0x102030, 0x112233,
-                                         RDPBrush(3, 4, 0x03, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7")),
+                                         RDPBrush(3, 4, 0x03, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")),
                             "EllipseCB 1");
     }
 
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseCB)
         RDPEllipseCB(Rect(300, 400, 50, 60),
                   0xFF, 0x01,
                   0x102030, 0x112233,
-                  RDPBrush(3, 4, 3, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7")
+                  RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")
                   ).emit(stream, newcommon, state_common, state_ellipse);
 
         uint8_t datas[28] =
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseCB)
         check<RDPEllipseCB>(common_cmd, cmd,
             RDPOrderCommon(ELLIPSECB, Rect(311, 0, 800, 600)),
             RDPEllipseCB(Rect(300, 400, 50, 60), 0xFF, 0x01, 0x102030, 0x112233,
-                RDPBrush(3, 4, 0x03, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7")),
+                RDPBrush(3, 4, 0x03, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")),
             "EllipseCB 3");
     }
 

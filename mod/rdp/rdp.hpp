@@ -620,7 +620,7 @@ struct mod_rdp : public mod_api {
                 size_t length     = out_s.size();
                 size_t chunk_size = length;
 
-                this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                              , out_s.get_data()
                                              , length
                                              , chunk_size
@@ -1780,8 +1780,7 @@ struct mod_rdp : public mod_api {
                                     format_list_response_pdu.emit(out_s);
 
                                     const CHANNELS::ChannelDef * mod_channel =
-                                        this->mod_channel_list.get_by_name(
-                                                                           CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+                                        this->mod_channel_list.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
                                     if (mod_channel) {
                                         this->send_to_channel(*mod_channel

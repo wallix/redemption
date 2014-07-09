@@ -128,7 +128,7 @@ project redemption
     <cxxflags>-Wredundant-decls
 #     <cxxflags>-Winline
     <cxxflags>-Winit-self
-#     <cxxflags>-Wcast-qual
+    <cxxflags>-Wcast-qual
     <cxxflags>-Woverloaded-virtual
 #     <cxxflags>-Wunused-variable
     <cxxflags>-fpie

@@ -297,13 +297,11 @@ public:
     }
 
     void* SecureHandleGetLowerPointer() {
-        void * pointer;
-        pointer = (void*) this->pHandle->dwLower;
+        void * pointer = (void*) this->pHandle->dwLower;
         return pointer;
     }
     void* SecureHandleGetUpperPointer() {
-        void * pointer;
-        pointer = (void*) this->pHandle->dwUpper;
+        void * pointer = (void*) this->pHandle->dwUpper;
         return pointer;
     }
 
