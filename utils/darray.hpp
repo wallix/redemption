@@ -27,6 +27,8 @@
 
 template<class T>
 class DArray {
+    typedef std::size_t size_t;
+
     size_t item_count;
     unique_ptr<T[]> items;
 
@@ -43,10 +45,15 @@ public:
     , items(new T[vect.size()])
     {
         // LOG(LOG_INFO,"###### DArray Copy Constructor ######");
-        std::copy(this->items.get(), this->items.get() + this->size(), this->vect.items.get());
+        std::copy(vect.items.get(), vect.items.get() + this->size(), this->items.get());
     }
 
-    T & operator[](size_t i) const {
+    const T & operator[](size_t i) const {
+        REDASSERT(i < this->item_count);
+        return this->items.get()[i];
+    }
+
+    T & operator[](size_t i) {
         REDASSERT(i < this->item_count);
         return this->items.get()[i];
     }

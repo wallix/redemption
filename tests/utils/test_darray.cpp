@@ -48,6 +48,12 @@ BOOST_AUTO_TEST_CASE(TestDArray)
     collection[7] = 12;
     BOOST_CHECK_EQUAL(collection[7].a, 12);
 
+    DArray<Something> copy_collection(collection);
+    BOOST_CHECK_EQUAL(copy_collection[5].a, 45);
+    BOOST_CHECK_EQUAL(copy_collection[7].a, 12);
+    collection[7] = 9;
+    BOOST_CHECK_EQUAL(copy_collection[7].a, 12);
+
     DArray<int> integers(0);
     BOOST_CHECK_EQUAL(integers.size(), 0);
 }
