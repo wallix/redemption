@@ -206,12 +206,11 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         {
         }
 
-        virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
-        {
+        virtual void send_pointer(int cache_idx, const Pointer & cursor) {
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "send_pointer(cache_idx=%d, data=%p, mask=%p, x=%d, y=%d",
-                    cache_idx, data, mask, x, y);
+                LOG(LOG_INFO, "send_pointer(cache_idx=%d x=%d y=%d",
+                    cache_idx, cursor.x, cursor.y);
                 LOG(LOG_INFO, "========================================\n");
             }
         }

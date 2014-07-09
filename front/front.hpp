@@ -425,7 +425,7 @@ public:
                 FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
                 if (!font_item) {
                     LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                    font_item = this->font.font_items['?'];
+                    font_item = this->font.font_items[static_cast<unsigned>('?')];
                 }
                 TODO(" avoid passing parameters by reference to get results")
                 switch (this->glyph_cache.add_glyph(font_item, f, c))
@@ -1259,8 +1259,7 @@ public:
         if (this->verbose & 4) {
             LOG(LOG_INFO, "Front::send_pointer done");
         }
-    }   // void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask,
-        //     int hotspot_x, hotspot_int y)
+    }   // void send_pointer(int cache_idx, const Pointer & cursor)
 
 //    2.2.9.1.1.4.5    New Pointer Update (TS_POINTERATTRIBUTE)
 //    ---------------------------------------------------------
@@ -1377,14 +1376,6 @@ public:
         }
     }   // void set_pointer(int cache_idx)
 
-/*
-    virtual void set_pointer_display() {
-        if (this->capture) {
-            this->capture->set_pointer_display();
-        }
-    }
-*/
-
     void incoming(Callback & cb) throw(Error)
     {
         unsigned expected;
@@ -1438,7 +1429,7 @@ public:
             {
                 BStream stream(256);
                 uint8_t rdp_neg_type = 0;
-                uint8_t rdp_neg_flags = 0;
+                uint8_t rdp_neg_flags = /*0*/RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED;
                 uint32_t rdp_neg_code = 0;
                 if (this->tls_client_active){
                     LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
@@ -4657,7 +4648,7 @@ public:
                 {
                     if (new_cmd.data[i] <= 0xFD)
                     {
-//                      LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
+                        //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
                         FontChar * fc = gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item;
                         REDASSERT(fc);
                         int g_idx = this->glyph_cache.find_glyph(fc, new_cmd.cache_id);
@@ -4952,7 +4943,7 @@ public:
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
-//        LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
+        //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
         this->orders->draw(bitmap_data, data, size, bmp);
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {

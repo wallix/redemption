@@ -576,7 +576,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     }
 
 
-    wbutton.focus();
+    wbutton.focus(Widget2::focus_reason_tabkey);
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 
@@ -605,7 +605,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     }
 
 
-    wbutton.focus();
+    wbutton.focus(Widget2::focus_reason_tabkey);
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 

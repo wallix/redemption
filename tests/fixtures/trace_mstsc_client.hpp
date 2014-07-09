@@ -30,7 +30,7 @@ const char outdata[] =
 // -----------------> Front::TLS Support Enabled |
 // CC Send: PROTOCOL TLS 1.0 |
 // Sending on RDP Client (5) 19 bytes |
-/* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x01" //................ |
+/* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x01\x08\x00\x01" //................ |
 /* 0010 */ "\x00\x00\x00"                                                     //... |
 // Sent dumped on RDP Client (5) 19 bytes |
 // RIO *::enable_server_tls() start |

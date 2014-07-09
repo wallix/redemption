@@ -36,7 +36,6 @@ public:
         , front(front)
         , screen(*this, front_width, front_height, NULL, ini ? &(ini->theme): NULL)
     {
-        //this->front.server_resize(front_width, front_height, 24);
         this->front.set_mod_color_depth(24);
     }
 
@@ -148,12 +147,12 @@ public:
         this->front.draw(cmd, clip);
     }
 
+    virtual void draw(const RDP::FrameMarker & order) {
+        this->front.draw(order);
+    }
+
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
-/*
-        TODO("bgcolor <-> fgcolor");
-        this->front.server_draw_text(x, y, text, bgcolor, fgcolor, clip);
-*/
         this->front.server_draw_text(x, y, text, fgcolor, bgcolor, clip);
     }
 
@@ -185,9 +184,7 @@ public:
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags,
-                                       int16_t param1, int16_t param2)
-    {
-    }
+                                       int16_t param1, int16_t param2) {}
 };
 
 #endif

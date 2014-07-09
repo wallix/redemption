@@ -32,10 +32,6 @@
 #include "difftimeval.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
-/*
-#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-*/
 
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
@@ -43,9 +39,6 @@
 #include "png.hpp"
 #include "error.hpp"
 #include "config.hpp"
-/*
-#include "RDP/caches/bmpcache.hpp"
-*/
 #include "colors.hpp"
 
 #include "RDP/RDPDrawable.hpp"
@@ -59,13 +52,10 @@ struct StaticCaptureConfig {
     bool bgr;
 
     StaticCaptureConfig()
-    : png_limit(3)
-    {
-    }
+    : png_limit(3) {}
 };
 
-class StaticCapture : public ImageCapture, public RDPCaptureDevice
-{
+class StaticCapture : public ImageCapture, public RDPCaptureDevice {
 public:
     bool clear_png;
     SQ * seq;
@@ -75,27 +65,22 @@ public:
     uint64_t inter_frame_interval_static_capture;
     uint64_t time_to_wait;
 
-    bool pointer_displayed;
-
     StaticCapture(const timeval & now, Transport & trans, SQ * seq, unsigned width, unsigned height, bool clear_png, const Inifile & ini, Drawable & drawable)
     : ImageCapture(trans, width, height, drawable)
     , clear_png(clear_png)
     , seq(seq)
-    , time_to_wait(0)
-    , pointer_displayed(false)
-    {
+    , time_to_wait(0) {
         this->start_static_capture = now;
         this->conf.png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
         this->inter_frame_interval_static_capture       = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
         this->update_config(ini);
     }
 
-    virtual ~StaticCapture()
-    {
+    virtual ~StaticCapture() {
         // delete all captured files at the end of the RDP client session
-        if (this->clear_png){
+        if (this->clear_png) {
             for(size_t i = this->conf.png_limit ; i > 0 ; i--) {
-                if (this->trans.seqno >= i){
+                if (this->trans.seqno >= i) {
                     // unlink may fail, for instance if file does not exist, just don't care
                     sq_outfilename_unlink(this->seq, this->trans.seqno - i);
                 }
@@ -103,10 +88,10 @@ public:
         }
     }
 
-    void update_config(const Inifile & ini){
+    void update_config(const Inifile & ini) {
         if (ini.video.png_limit < this->conf.png_limit) {
-            for(size_t i = this->conf.png_limit ; i > ini.video.png_limit ; i--){
-                if (this->trans.seqno >= i){
+            for(size_t i = this->conf.png_limit ; i > ini.video.png_limit ; i--) {
+                if (this->trans.seqno >= i) {
                     // unlink may fail, for instance if file does not exist, just don't care
                     sq_outfilename_unlink(this->seq, this->trans.seqno - i);
                 }
@@ -114,26 +99,23 @@ public:
         }
         this->conf.png_limit = ini.video.png_limit;
 
-        if (ini.video.png_interval != this->conf.png_interval){
+        if (ini.video.png_interval != this->conf.png_interval) {
             // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
             this->conf.png_interval = ini.video.png_interval;
             this->inter_frame_interval_static_capture = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
         }
     }
 
-    virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval)
-    {
+    virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
         unsigned diff_time_val = static_cast<unsigned>(difftimeval(now, this->start_static_capture));
         if (diff_time_val >= static_cast<unsigned>(this->inter_frame_interval_static_capture)) {
             if (   this->drawable.logical_frame_ended
                 // Force snapshot if diff_time_val >= 1,5 x inter_frame_interval_static_capture.
                 || (diff_time_val >= static_cast<unsigned>(this->inter_frame_interval_static_capture) * 3 / 2)) {
-                if (!this->pointer_displayed) { this->drawable.trace_mouse(x, y); }
+                this->drawable.trace_mouse();
                 this->breakpoint(now);
                 this->start_static_capture = addusectimeval(this->inter_frame_interval_static_capture, this->start_static_capture);
-                if (!this->pointer_displayed) { this->drawable.clear_mouse(); }
-//                this->time_to_wait = this->inter_frame_interval_static_capture;
-//                this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
+                this->drawable.clear_mouse();
             }
             else {
                 // Wait 0,3 x inter_frame_interval_static_capture.
@@ -141,9 +123,6 @@ public:
                 return;
             }
         }
-        // else {
-        //     this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
-        // }
         this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
     }
 
@@ -153,12 +132,11 @@ public:
         tm *ptm = localtime(&rawtime);
         this->drawable.trace_pausetimestamp(*ptm);
 
-        if (this->conf.png_limit > 0){
-            if (this->trans.seqno >= this->conf.png_limit){
+        if (this->conf.png_limit > 0) {
+            if (this->trans.seqno >= this->conf.png_limit) {
                 // unlink may fail, for instance if file does not exist, just don't care
                 sq_outfilename_unlink(this->seq, this->trans.seqno - this->conf.png_limit);
             }
-//            this->ImageCapture::flush();
             this->flush();
             this->trans.next();
         }
@@ -173,28 +151,16 @@ public:
         tm *ptm = localtime(&rawtime);
         this->drawable.trace_timestamp(*ptm);
 
-        if (this->conf.png_limit > 0){
-            if (this->trans.seqno >= this->conf.png_limit){
+        if (this->conf.png_limit > 0) {
+            if (this->trans.seqno >= this->conf.png_limit) {
                 // unlink may fail, for instance if file does not exist, just don't care
                 sq_outfilename_unlink(this->seq, this->trans.seqno - this->conf.png_limit);
             }
-//            this->ImageCapture::flush();
             this->flush();
             this->trans.next();
         }
 
         this->drawable.clear_timestamp();
-//        this->start_static_capture = now;
-    }
-
-/*
-    virtual void flush()
-    {
-    }
-*/
-
-    virtual void set_pointer_display() {
-        this->pointer_displayed = true;
     }
 };
 

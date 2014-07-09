@@ -274,7 +274,8 @@ struct PersistentKeyListPDUData {
     BitmapCachePersistentListEntry entries[MAXIMUM_ENCAPSULATED_BITMAP_KEYS];
 
     PersistentKeyListPDUData()
-    : numEntriesCache0(number_entries_cache[0])
+    : number_entries_cache()
+    , numEntriesCache0(number_entries_cache[0])
     , numEntriesCache1(number_entries_cache[1])
     , numEntriesCache2(number_entries_cache[2])
     , numEntriesCache3(number_entries_cache[3])

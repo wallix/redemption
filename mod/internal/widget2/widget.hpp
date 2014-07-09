@@ -29,7 +29,7 @@
 #include <callback.hpp>
 #include "RDP/pointer.hpp"
 
-class Keymap2;
+struct Keymap2;
 
 enum EventType {
     FOCUS_BEGIN,
@@ -189,8 +189,10 @@ public:
             this->notifier->notify(this, event);
     }
 
-    virtual void notify(Widget2 *, NotifyApi::notify_event_t)
+    virtual void notify(Widget2 * w, NotifyApi::notify_event_t event)
     {
+        if (this->notifier)
+            this->notifier->notify(this, event);
     }
 
     virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
@@ -215,7 +217,12 @@ public:
     virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
     }
 
-    virtual void focus()
+    enum {
+          focus_reason_tabkey
+        , focus_reason_backtabkey
+        , focus_reason_mousebutton1
+    };
+    virtual void focus(int reason)
     {
         if (!this->has_focus){
             this->has_focus = true;

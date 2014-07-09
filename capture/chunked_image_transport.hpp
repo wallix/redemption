@@ -31,22 +31,22 @@
 
 
 class InChunkedImageTransport : public Transport {
-    uint16_t chunk_type; 
+    uint16_t chunk_type;
     uint32_t chunk_size;
     uint16_t chunk_count;
     Transport * trans;
     BStream stream;
 public:
-    InChunkedImageTransport(uint16_t chunk_type, uint32_t chunk_size, Transport * trans) 
+    InChunkedImageTransport(uint16_t chunk_type, uint32_t chunk_size, Transport * trans)
         : chunk_type(chunk_type)
         , chunk_size(chunk_size)
         , chunk_count(1)
-        , trans(trans) 
+        , trans(trans)
     {
         this->stream.init(this->chunk_size - 8);
         this->trans->recv(&stream.end, this->chunk_size - 8);
     }
-    
+
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         size_t total_len = 0;
@@ -89,9 +89,9 @@ public:
     {
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
     }
-    
+
     virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
-    
+
 };
 
 #endif

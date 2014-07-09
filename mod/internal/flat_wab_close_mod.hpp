@@ -30,7 +30,7 @@
 
 class FlatWabCloseMod : public InternalMod, public NotifyApi
 {
-    Inifile & ini;
+//    Inifile & ini;
     FlatWabClose close_widget;
     Timeout timeout;
 
@@ -63,7 +63,7 @@ private:
 public:
     FlatWabCloseMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height, time_t now, bool showtimer = false)
         : InternalMod(front, width, height, &ini)
-        , ini(ini)
+//        , ini(ini)
         , close_widget(*this, width, height, this->screen, this,
                        ini.context.auth_error_message.c_str(), 0,
                        (ini.context_is_asked(AUTHID_AUTH_USER)
@@ -82,8 +82,8 @@ public:
         this->front.set_mod_palette(palette);
 
         this->screen.add_widget(&this->close_widget);
-        this->close_widget.set_widget_focus(&this->close_widget.cancel);
-        this->screen.set_widget_focus(&this->close_widget);
+        this->close_widget.set_widget_focus(&this->close_widget.cancel, Widget2::focus_reason_tabkey);
+        this->screen.set_widget_focus(&this->close_widget, Widget2::focus_reason_tabkey);
 
         this->screen.refresh(this->screen.rect);
     }

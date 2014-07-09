@@ -90,7 +90,6 @@ struct FileToGraphic
         RDPGraphicDevice * graphic_device;
         RDPCaptureDevice * capture_device;
     } consumers[10];
-//    RDPGraphicDevice * consumers[10];
 
     bool meta_ok;
     bool timestamp_ok;
@@ -224,12 +223,6 @@ struct FileToGraphic
         delete this->bmp_cache;
     }
 
-/*
-    void add_consumer(RDPGraphicDevice * consumer)
-    {
-        this->consumers[this->nbconsumers++] = consumer;
-    }
-*/
     void add_consumer(RDPGraphicDevice * graphic_device, RDPCaptureDevice * capture_device) {
         this->consumers[this->nbconsumers  ].graphic_device = graphic_device;
         this->consumers[this->nbconsumers++].capture_device = capture_device;
@@ -1066,12 +1059,7 @@ struct FileToGraphic
                    , (unsigned)this->record_now.tv_sec, (unsigned)this->total_orders_count);
             }
             this->interpret_order();
-            if (  (this->begin_capture.tv_sec == 0)
-               || (this->begin_capture.tv_sec < this->record_now.tv_sec)
-               || (  (this->begin_capture.tv_sec == this->record_now.tv_sec)
-                  && (this->begin_capture.tv_usec <= this->record_now.tv_usec)
-                  )
-               ) {
+            if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                 for (size_t i = 0; i < this->nbconsumers ; i++) {
                     if (this->consumers[i].capture_device) {
                         this->consumers[i].capture_device->snapshot( this->record_now, this->mouse_x, this->mouse_y
@@ -1084,13 +1072,7 @@ struct FileToGraphic
             if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
                 break;
             }
-            if (  this->end_capture.tv_sec
-               && (  (this->end_capture.tv_sec < this->record_now.tv_sec)
-                  || (  (this->end_capture.tv_sec == this->record_now.tv_sec)
-                     && (this->end_capture.tv_usec < this->record_now.tv_usec)
-                     )
-                  )
-               ) {
+            if (this->end_capture.tv_sec && this->begin_capture < this->record_now) {
                 break;
             }
         }

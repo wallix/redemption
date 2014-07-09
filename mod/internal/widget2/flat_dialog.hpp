@@ -120,7 +120,7 @@ public:
             this->add_widget(this->challenge);
             total_height += this->challenge->cy() + 10;
             y += this->challenge->cy() + 10;
-            this->set_widget_focus(this->challenge);
+            this->set_widget_focus(this->challenge, focus_reason_tabkey);
         }
 
         this->add_widget(&this->ok);
@@ -145,7 +145,7 @@ public:
         this->add_widget(&this->img);
 
         if (!has_challenge)
-            this->set_widget_focus(&this->ok);
+            this->set_widget_focus(&this->ok, focus_reason_tabkey);
     }
 
     virtual ~FlatDialog() {

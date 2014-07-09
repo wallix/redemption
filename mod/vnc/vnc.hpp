@@ -117,6 +117,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
 private:
     bool is_first_membelt;
     bool is_first_incr;
+    bool left_ctrl_pressed;
 
 public:
     //==============================================================================================================
@@ -124,7 +125,7 @@ public:
            , Inifile & ini
            , const char * username
            , const char * password
-           , struct FrontAPI & front
+           , class FrontAPI & front
            , uint16_t front_width
            , uint16_t front_height
            , int keylayout
@@ -151,6 +152,7 @@ public:
     , allow_authentification_retries(allow_authentification_retries || !(*password))
     , is_first_membelt(true)
     , is_first_incr(true)
+    , left_ctrl_pressed(false)
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -175,10 +177,12 @@ public:
         memset(this->username, 0, 256);
         memset(this->password, 0, 256);
 
-        memcpy(this->username, username, sizeof(this->username)-1);
-        this->username[sizeof(this->username)-1] = 0;
-        memcpy(this->password, password, sizeof(this->password)-1);
-        this->password[sizeof(this->password)-1] = 0;
+//        memcpy(this->username, username, sizeof(this->username)-1);
+//        this->username[sizeof(this->username)-1] = 0;
+        snprintf(this->username, sizeof(this->username), "%s", username);
+//        memcpy(this->password, password, sizeof(this->password)-1);
+//        this->password[sizeof(this->password)-1] = 0;
+        snprintf(this->password, sizeof(this->password), "%s", password);
 
         this->encodings.copy_c_str(encodings);
 
@@ -302,18 +306,45 @@ public:
         }
 
         TODO("As down/up state is not stored in keymapSym, code below is quite dangerous");
-        keymapSym.event(device_flags, param1);
-        int key = keymapSym.get_sym();
+        this->keymapSym.event(device_flags, param1);
+        uint8_t downflag = !(device_flags & KBD_FLAG_UP);
+
+        int key = this->keymapSym.get_sym();
         if (key > 0) {
-            BStream stream(32768);
-            stream.out_uint8(4);
-            stream.out_uint8(!(device_flags & KBD_FLAG_UP)); /* down/up flag */
-            stream.out_clear_bytes(2);
-            stream.out_uint32_be(key);
-            this->t->send(stream.get_data(), 8);
-            this->event.set(1000);
+            if (this->left_ctrl_pressed) {
+                if (key == 0xfe03) {
+                    // alt gr => left ctrl is ignored
+                    this->send_keyevent(downflag, key);
+                }
+                else {
+                    this->send_keyevent(1, 0xffe3);
+                    this->send_keyevent(downflag, key);
+                }
+                this->left_ctrl_pressed = false;
+            }
+            else if (!((key == 0xffe3) && downflag)) {
+                this->send_keyevent(downflag, key);
+            }
+            else {
+                // left ctrl is down
+                this->left_ctrl_pressed = true;
+            }
         }
     } // rdp_input_scancode
+
+    void send_keyevent(uint8_t down_flag, uint32_t key) {
+        if (this->verbose) {
+            LOG(LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
+        }
+        BStream stream(32768);
+        stream.out_uint8(4);
+        stream.out_uint8(down_flag); /* down/up flag */
+        stream.out_clear_bytes(2);
+        stream.out_uint32_be(key);
+        this->t->send(stream.get_data(), 8);
+        this->event.set(1000);
+    }
+
 
     //==============================================================================================================
     virtual void rdp_input_clip_data(uint8_t * data, uint32_t length) {
@@ -365,7 +396,7 @@ public:
             uint8_t data[10];
             FixedSizeStream stream(data, sizeof(data));
             stream.end = stream.p;
-            /* FrambufferUpdateRequest */
+            /* FramebufferUpdateRequest */
             stream.out_uint8(3);
             stream.out_uint8(this->incr);
             if (this->is_first_incr) {
@@ -383,22 +414,22 @@ public:
     //==============================================================================================================
     virtual void draw_event(time_t now)
     {
-        if (this->verbose) {
+        if (this->verbose & 1) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
         switch (this->state)
         {
         case ASK_PASSWORD:
-            if (this->verbose) {
+            if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=ASK_PASSWORD");
             }
             this->screen.add_widget(&this->challenge);
 
-            this->screen.set_widget_focus(&this->challenge);
+            this->screen.set_widget_focus(&this->challenge, Widget2::focus_reason_tabkey);
 
             this->challenge.password_edit.set_text("");
 
-            this->challenge.set_widget_focus(&this->challenge.password_edit);
+            this->challenge.set_widget_focus(&this->challenge.password_edit, Widget2::focus_reason_tabkey);
 
             this->screen.refresh(this->screen.rect);
 
@@ -406,7 +437,7 @@ public:
             break;
         case DO_INITIAL_CLEAR_SCREEN:
             {
-                if (this->verbose) {
+                if (this->verbose & 1) {
                     LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
                 }
                 // set almost null cursor, this is the little dot cursor
@@ -432,13 +463,13 @@ public:
                 this->lib_open_clip_channel();
 
                 this->event.object_and_time = false;
-                if (this->verbose) {
+                if (this->verbose & 1) {
                     LOG(LOG_INFO, "VNC screen cleaning ok\n");
                 }
             }
             break;
         case RETRY_CONNECTION:
-            if (this->verbose) {
+            if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=RETRY_CONNECTION");
             }
             try
@@ -455,7 +486,7 @@ public:
             this->event.set();
             break;
         case UP_AND_RUNNING:
-            if (this->verbose) {
+            if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
             if (this->event.can_recv()) {
@@ -497,7 +528,7 @@ public:
             }
             break;
         case WAIT_PASSWORD:
-            if (this->verbose) {
+            if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=WAIT_PASSWORD");
             }
             this->event.object_and_time = false;
@@ -505,7 +536,7 @@ public:
             break;
         case WAIT_SECURITY_TYPES:
             {
-                if (this->verbose) {
+                if (this->verbose & 1) {
                     LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
                 }
                 BStream stream(32768);
@@ -1303,22 +1334,23 @@ public:
     //==============================================================================================================
     void lib_framebuffer_update() throw (Error) {
     //==============================================================================================================
-        uint8_t data[256];
-        FixedSizeStream stream(data, sizeof(data));
-        stream.end = stream.p;
-        this->t->recv(&stream.end, 3);
-        stream.in_skip_bytes(1);
-        size_t num_recs = stream.in_uint16_be();
+        uint8_t data_rec[256];
+        FixedSizeStream stream_rec(data_rec, sizeof(data_rec));
+        stream_rec.end = stream_rec.p;
+        this->t->recv(&stream_rec.end, 3);
+        stream_rec.in_skip_bytes(1);
+        size_t num_recs = stream_rec.in_uint16_be();
 
         uint8_t Bpp = nbbytes(this->bpp);
-        stream.init(256);
         for (size_t i = 0; i < num_recs; i++) {
-            this->t->recv(&stream.end, 12);
-            uint16_t x = stream.in_uint16_be();
-            uint16_t y = stream.in_uint16_be();
-            uint16_t cx = stream.in_uint16_be();
-            uint16_t cy = stream.in_uint16_be();
-            uint32_t encoding = stream.in_uint32_be();
+            stream_rec.p = stream_rec.get_data();
+            stream_rec.end = stream_rec.get_data();
+            this->t->recv(&stream_rec.end, 12);
+            uint16_t x = stream_rec.in_uint16_be();
+            uint16_t y = stream_rec.in_uint16_be();
+            uint16_t cx = stream_rec.in_uint16_be();
+            uint16_t cy = stream_rec.in_uint16_be();
+            uint32_t encoding = stream_rec.in_uint32_be();
 
             switch (encoding) {
             case 0: /* raw */
@@ -1343,12 +1375,12 @@ public:
             break;
             case 1: /* copy rect */
             {
-                uint8_t data[4];
-                FixedSizeStream stream(data, sizeof(data));
-                stream.end = stream.p;
-                this->t->recv(&stream.end, 4);
-                const int srcx = stream.in_uint16_be();
-                const int srcy = stream.in_uint16_be();
+                uint8_t data_copy_rect[4];
+                FixedSizeStream stream_copy_rect(data_copy_rect, sizeof(data_copy_rect));
+                stream_copy_rect.end = stream_copy_rect.p;
+                this->t->recv(&stream_copy_rect.end, 4);
+                const int srcx = stream_copy_rect.in_uint16_be();
+                const int srcy = stream_copy_rect.in_uint16_be();
 //                LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
                 this->front.begin_update();
@@ -1372,7 +1404,11 @@ public:
                     throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
                 }
 
-                this->t->recv(&stream.end,
+                uint8_t data_rre[256];
+                FixedSizeStream stream_rre(data_rre, sizeof(data_rre));
+                stream_rre.end = stream_rre.p;
+
+                this->t->recv(&stream_rre.end,
                       4   /* number-of-subrectangles */
                     + Bpp /* background-pixel-value */
                     );
@@ -1382,14 +1418,14 @@ public:
                 uint32_t number_of_subrectangles_read;
 
                 number_of_subrectangles_remain =
-                number_of_subrectangles        = stream.in_uint32_be();
+                number_of_subrectangles        = stream_rre.in_uint32_be();
 
                 char * bytes_per_pixel;
                 char * point_cur;
                 char * point_end;
 
-                bytes_per_pixel = reinterpret_cast<char *>(stream.p);
-                stream.in_skip_bytes(Bpp);
+                bytes_per_pixel = reinterpret_cast<char *>(stream_rre.p);
+                stream_rre.in_skip_bytes(Bpp);
 
                 for (point_cur = reinterpret_cast<char *>(raw), point_end = point_cur + cx * cy * Bpp;
                      point_cur < point_end; point_cur += Bpp) {
@@ -1444,10 +1480,14 @@ public:
             break;
             case 16:    /* ZRLE */
             {
-                //LOG(LOG_INFO, "VNC Encoding: ZRLE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-                this->t->recv(&stream.end, 4);
+                uint8_t data_zrle[256];
+                FixedSizeStream stream_zrle(data_zrle, sizeof(data_zrle));
+                stream_zrle.end = stream_zrle.p;
 
-                uint32_t zlib_compressed_data_length = stream.in_uint32_be();
+                //LOG(LOG_INFO, "VNC Encoding: ZRLE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+                this->t->recv(&stream_zrle.end, 4);
+
+                uint32_t zlib_compressed_data_length = stream_zrle.in_uint32_be();
 
                 if (this->verbose)
                 {
@@ -1539,11 +1579,11 @@ public:
 
                 const int sz_pixel_array = cx * cy * Bpp;
                 const int sz_bitmask = nbbytes(cx) * cy;
-                BStream stream(sz_pixel_array + sz_bitmask);
-                this->t->recv(&stream.end, sz_pixel_array + sz_bitmask);
+                BStream stream_cursor(sz_pixel_array + sz_bitmask);
+                this->t->recv(&stream_cursor.end, sz_pixel_array + sz_bitmask);
 
-                const uint8_t *vnc_pointer_data = stream.in_uint8p(sz_pixel_array);
-                const uint8_t *vnc_pointer_mask = stream.in_uint8p(sz_bitmask);
+                const uint8_t *vnc_pointer_data = stream_cursor.in_uint8p(sz_pixel_array);
+                const uint8_t *vnc_pointer_mask = stream_cursor.in_uint8p(sz_bitmask);
 
                 struct Pointer cursor;
                 cursor.x = 3;

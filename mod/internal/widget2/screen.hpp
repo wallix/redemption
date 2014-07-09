@@ -86,7 +86,44 @@ public:
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+    virtual bool next_focus() {
+        if (this->current_focus) {
+            if (this->current_focus->next_focus()) {
+                return true;
+            }
+
+            Widget2 * future_focus_w = this->get_next_focus(this->current_focus, false);
+            if (!future_focus_w) {
+                future_focus_w = this->get_next_focus(NULL, false);
+            }
+            REDASSERT(this->current_focus);
+            this->set_widget_focus(future_focus_w, focus_reason_tabkey);
+
+            return true;
+        }
+
+        return false;
+    }
+    virtual bool previous_focus() {
+        if (this->current_focus) {
+            if (this->current_focus->previous_focus()) {
+                return true;
+            }
+
+            Widget2 * future_focus_w = this->get_previous_focus(this->current_focus, false);
+            if (!future_focus_w) {
+                future_focus_w = this->get_previous_focus(NULL, false);
+            }
+            REDASSERT(this->current_focus);
+            this->set_widget_focus(future_focus_w, focus_reason_backtabkey);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         Widget2 * w = this->last_widget_at_pos(x, y);
         if (this->current_over != w) {
@@ -100,7 +137,6 @@ public:
         }
         if (this->tooltip) {
             if (device_flags & MOUSE_FLAG_MOVE) {
-                // Widget2 * w = this->last_widget_at_pos(x, y);
                 if (w != this->tooltip->notifier) {
                     this->hide_tooltip();
                 }
@@ -117,16 +153,7 @@ public:
         if (this->tooltip) {
             this->hide_tooltip();
         }
-        if (this->tab_flag != IGNORE_TAB) {
-            WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
-        }
-        else if (this->current_focus) {
-            this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
-        }
-
-        for (uint32_t n = keymap->nb_kevent_available(); n ; --n) {
-            keymap->get_kevent();
-        }
+        WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 };
 

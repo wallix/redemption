@@ -25,6 +25,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
 #include "internal/widget2/edit.hpp"
@@ -42,7 +43,7 @@
 # define FIXTURES_PATH
 #endif
 #undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "/tmp/"
+#define OUTPUT_FILE_PATH "./"
 
 #include "fake_draw.hpp"
 
@@ -69,7 +70,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     WidgetEditValid wedit(drawable, x, y, cx, parent, notifier, "test1", id,
                           fg_color, bg_color, ANTHRACITE, edit_pos, xtext, ytext);
 
-    parent.set_widget_focus(&wedit);
+    parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
                                     0 + wedit.dy(),
@@ -133,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalid3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x10\x48\x36\x49\xcb\xd6\xdc\xcb\xa1\x08"
@@ -289,7 +290,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel1.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -306,7 +307,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x2a\x09\x42\xa4\xf7\xc6\x8b\x5a\x11\xda"
@@ -330,7 +331,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x18\xba\xdc\xab\x2e\x15\xb9\xeb\x6b\x25"
@@ -345,7 +346,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel4.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel4.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x14\xd8\x17\x26\x71\xcd\xd1\x0e\xd0\x4a"
@@ -359,7 +360,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel5.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel5.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x8a\xda\xbb\x2f\x91\xa0\x97\x3c\x70\xe4"
@@ -374,7 +375,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel6.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel6.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x3f\xea\xbb\x60\xc6\x4c\x6a\x8c\xf0\xe7"
@@ -386,7 +387,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel7.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel7.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x2a\x09\x42\xa4\xf7\xc6\x8b\x5a\x11\xda"
@@ -419,7 +420,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass1.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -436,7 +437,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\xcd\xca\x28\x8f\x2d\xe7\x07\xab\x82\x62"
@@ -460,7 +461,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x00\x24\x21\xf5\x22\xf2\x99\x3c\x9f\x63"
@@ -475,7 +476,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass4.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass4.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\xd4\xe7\x43\x1d\x6d\x74\x17\x10\xbb\x46"
@@ -489,7 +490,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass5.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass5.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\xc3\x26\xf7\xf8\xcd\x69\x5a\xb7\xa6\x62"
@@ -504,7 +505,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass6.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass6.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x35\x7a\x44\x04\x82\x88\xa1\xc1\xc5\x4f"
@@ -516,7 +517,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass7.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass7.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\xcd\xca\x28\x8f\x2d\xe7\x07\xab\x82\x62"
@@ -573,7 +574,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     WidgetEditValid wedit(drawable, x, y, cx, parent, &notifier, "abcdef", 0, BLACK, WHITE, DARK_BLUE);
 
     parent.add_widget(&wedit);
-    parent.set_widget_focus(&wedit);
+    parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                           wedit.lx() - 5, wedit.centery(), NULL);

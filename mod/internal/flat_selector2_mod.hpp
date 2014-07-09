@@ -58,9 +58,9 @@ public:
         , number_page(atoi(this->selector.number_page.get_text()+1))
         , ini(ini)
     {
-        this->selector.set_widget_focus(&this->selector.selector_lines);
+        this->selector.set_widget_focus(&this->selector.selector_lines, Widget2::focus_reason_tabkey);
         this->screen.add_widget(&this->selector);
-        this->screen.set_widget_focus(&this->selector);
+        this->screen.set_widget_focus(&this->selector, Widget2::focus_reason_tabkey);
 
         uint16_t available_height = (this->selector.first_page.dy() - 10) - this->selector.selector_lines.dy();
         int w, h = 0;
@@ -235,7 +235,7 @@ public:
             this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;
             this->selector.selector_lines.focus_flag = Widget2::NORMAL_FOCUS;
             this->selector.selector_lines.set_selection(0, static_cast<uint16_t>(-1));
-            this->selector.set_widget_focus(&this->selector.selector_lines);
+            this->selector.set_widget_focus(&this->selector.selector_lines, Widget2::focus_reason_tabkey);
         }
         this->selector.rearrange();
     }

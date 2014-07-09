@@ -377,14 +377,16 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
                            "line 4",
                            0, colors);
 
-    BOOST_CHECK(notifier.sender == 0);
+//    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == &flat_dialog);
     BOOST_CHECK(notifier.event == 0);
 
     unsigned x = flat_dialog.ok.rect.x + flat_dialog.ok.rect.cx / 2 ;
     unsigned y = flat_dialog.ok.rect.y + flat_dialog.ok.rect.cy / 2 ;
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, NULL);
     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
-    BOOST_CHECK(notifier.sender == 0);
+//    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == &flat_dialog);
     BOOST_CHECK(notifier.event == 0);
 
     flat_dialog.rdp_input_invalidate(flat_dialog.rect);
@@ -425,7 +427,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     y = flat_dialog.cancel->rect.y + flat_dialog.cancel->rect.cy / 2 ;
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, NULL);
     // flat_dialog.cancel->rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
-    BOOST_CHECK(notifier.sender == 0);
+//    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == &flat_dialog);
     BOOST_CHECK(notifier.event == 0);
 
 
@@ -507,13 +510,15 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
                            "adipiscing et arcu.", 0, colors,
                            "Ok", "Cancel", CHALLENGE_ECHO);
 
-    BOOST_CHECK(notifier.sender == 0);
+//    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == &flat_dialog);
     BOOST_CHECK(notifier.event == 0);
 
 
     flat_dialog.challenge->set_text("challenge_test");
 
-    BOOST_CHECK(notifier.sender == 0);
+//    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == &flat_dialog);
     BOOST_CHECK(notifier.event == 0);
 
     flat_dialog.rdp_input_invalidate(flat_dialog.rect);
