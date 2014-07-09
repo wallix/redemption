@@ -139,12 +139,13 @@ namespace detail
             return this->wrm_.write(data, len);
         }
 
+        /// \return 0 if success
         int next() /*noexcept*/
         {
             if (this->wrm_.is_open()) {
                 this->wrm_.close();
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                return this->rename_wrm() ? 0 : -1;
+                return this->rename_wrm() ? 0 : 1;
             }
             return 1;
         }
@@ -281,6 +282,7 @@ namespace detail
             return res1 ? res1 : res2;
         }
 
+        /// \return 0 if success
         int next() /*noexcept*/
         {
             if (this->wrm().is_open()) {
