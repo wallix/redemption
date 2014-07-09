@@ -200,6 +200,10 @@ struct rdp_orders {
         uint16_t big_entries, uint16_t big_size, bool big_persistent, uint32_t verbose)
     {
         if (this->bmp_cache) {
+            if (this->bmp_cache->bpp == bpp) {
+                return;
+            }
+
             this->save_persistent_disk_bitmap_cache();
             delete this->bmp_cache;
             this->bmp_cache = NULL;

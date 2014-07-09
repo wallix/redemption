@@ -1051,12 +1051,7 @@ public:
                    , (unsigned)this->record_now.tv_sec, (unsigned)this->total_orders_count);
             }
             this->interpret_order();
-            if (  (this->begin_capture.tv_sec == 0)
-               || (this->begin_capture.tv_sec < this->record_now.tv_sec)
-               || (  (this->begin_capture.tv_sec == this->record_now.tv_sec)
-                  && (this->begin_capture.tv_usec <= this->record_now.tv_usec)
-                  )
-               ) {
+            if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                 for (size_t i = 0; i < this->nbconsumers ; i++) {
                     if (this->consumers[i].capture_device) {
                         this->consumers[i].capture_device->snapshot( this->record_now, this->mouse_x, this->mouse_y
@@ -1069,13 +1064,7 @@ public:
             if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
                 break;
             }
-            if (  this->end_capture.tv_sec
-               && (  (this->end_capture.tv_sec < this->record_now.tv_sec)
-                  || (  (this->end_capture.tv_sec == this->record_now.tv_sec)
-                     && (this->end_capture.tv_usec < this->record_now.tv_usec)
-                     )
-                  )
-               ) {
+            if (this->end_capture.tv_sec && this->begin_capture < this->record_now) {
                 break;
             }
         }

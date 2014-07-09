@@ -849,19 +849,20 @@ BOOST_AUTO_TEST_CASE(TestAES)
     uint8_t iv[] = "vecteur d'initialisation pas secret du tout";
     uint8_t iv2[] = "vecteur d'initialisation pas secret du tout";
 
-    uint8_t inbuf[1024]= "secret très confidentiel";
+    uint8_t inbuf[1024]= "secret très confidentiel\x00\x00\x00\x00\x00\x00\x00\x00";
     uint8_t outbuf[1024] = {};
     uint8_t decrypted[1024] = {};
 
+
     aes.set_key(key24, 24);
 
-    aes.crypt_cbc(25, iv, inbuf, outbuf);
+    aes.crypt_cbc(32, iv, inbuf, outbuf);
 
-    aes.decrypt_cbc(25, iv2, outbuf, decrypted);
+    aes.decrypt_cbc(32, iv2, outbuf, decrypted);
 
     BOOST_CHECK_EQUAL(memcmp(inbuf,
                              decrypted,
-                             25),
+                             32),
                       0);
 
 }

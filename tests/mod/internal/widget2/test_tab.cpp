@@ -23,8 +23,8 @@
 #define BOOST_TEST_MODULE TestWidgetTab
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
 #include "internal/widget2/edit.hpp"

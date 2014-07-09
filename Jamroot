@@ -434,7 +434,6 @@ unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp libboost_unit_test
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_vnc : tests/mod/vnc/test_vnc.cpp cryptofile openssl crypto dl z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_xup : tests/mod/xup/test_xup.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_filename_transport : tests/transport/test_filename_transport.cpp cryptofile openssl crypto dl z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_bitmap : tests/utils/test_bitmap.cpp z openssl crypto dl png libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp z png libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -449,7 +448,6 @@ unit-test test_rdtsc : tests/utils/test_rdtsc.cpp libboost_unit_test : <variant>
 unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp openssl crypto dl z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_string : tests/utils/test_string.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_zlib : tests/utils/test_zlib.cpp z libboost_unit_test : <variant>coverage:<library>gcov ;
 
 
 ## Transport tests
@@ -463,7 +461,9 @@ unit-test test_socket_transport : tests/transport/test_socket_transport.cpp cryp
 unit-test test_file_transport : tests/transport/test_file_transport.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_crypto_meta_sequence_transport : tests/transport/test_crypto_meta_sequence_transport.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_request_full_cleaning : tests/transport/test_request_full_cleaning.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_filename_transport : tests/transport/test_filename_transport.cpp cryptofile openssl crypto dl z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 ## @}
+
 
 #unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_image_capture : tests/capture/test_image_capture.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -559,7 +559,6 @@ unit-test test_regex : tests/regex/test_regex.cpp libboost_unit_test : <variant>
 # unit-test benchmark_regex_parser : tests/benchmark/parser.cpp ;
 # unit-test benchmark_regex_search : tests/benchmark/search.cpp ;
 
-# unit-test test_rwl : ftests/rwl/test_rwl.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_base64 : tests/utils/test_base64.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
@@ -591,8 +590,6 @@ unit-test test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm.cpp openssl crypto dl z 
 unit-test test_credentials : tests/core/RDP/nla/kerberos/test_credentials.cpp krb5 libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp krb5 gssglue libboost_unit_test : <variant>coverage:<library>gcov ;
 ## @}
-
-unit-test test_gap_buffer : tests/utils/test_gap_buffer.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_columnlayout : tests/mod/internal/widget2/test_columnlayout.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
