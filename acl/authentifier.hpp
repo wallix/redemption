@@ -382,12 +382,12 @@ public:
         } catch (...) {
             // acl connection lost
             this->ini->context.authenticated.set(false);
-            if (this->ini) {
+//            if (this->ini) {
                 this->ini->context.rejected.set_from_cstr(TR("manager_close_cnx", *(this->ini)));
-            }
-            else {
-                this->ini->context.rejected.set_from_cstr("Connection closed by manager");
-            }
+//            }
+//            else {
+//                this->ini->context.rejected.set_from_cstr("Connection closed by manager");
+//            }
         }
     }
 

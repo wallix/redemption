@@ -1012,6 +1012,9 @@ public:
                 if (  chunk_size - 8 /*header(8)*/
                     > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
                     struct Pointer cursor(Pointer::POINTER_NULL);
+                    cursor.width = 32;
+                    cursor.height = 32;
+                    cursor.bpp = 24;
                     cursor.x = this->stream.in_uint8();
                     cursor.y = this->stream.in_uint8();
                     stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
@@ -1026,6 +1029,9 @@ public:
                 else {
                     Pointer & pi = this->ptr_cache.Pointers[cache_idx];
                     Pointer cursor(Pointer::POINTER_NULL);
+                    cursor.width = 32;
+                    cursor.height = 32;
+                    cursor.bpp = 24;
                     cursor.x = pi.x;
                     cursor.y = pi.y;
                     memcpy(cursor.data, pi.data, sizeof(pi.data));
