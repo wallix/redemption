@@ -78,7 +78,7 @@ public:
         this->renew_time = now + this->grace_delay;
     }
 
-    bool check(time_t now, Inifile * ini) {
+    bool check(time_t now, Inifile & ini) {
         if (this->connected) {
             // LOG(LOG_INFO, "now=%u timeout=%u  renew_time=%u wait_answer=%s grace_delay=%u", now, this->timeout, this->renew_time, this->wait_answer?"Y":"N", this->grace_delay);
             // Keep alive timeout
@@ -89,13 +89,13 @@ public:
             }
 
             // LOG(LOG_INFO, "keepalive state ask=%s bool=%s\n",
-            //     ini->context_is_asked(AUTHID_KEEPALIVE)?"Y":"N",
-            //     ini->context_get_bool(AUTHID_KEEPALIVE)?"Y":"N");
+            //     ini.context_is_asked(AUTHID_KEEPALIVE)?"Y":"N",
+            //     ini.context_get_bool(AUTHID_KEEPALIVE)?"Y":"N");
 
             // Keepalive received positive response
             if (this->wait_answer
-                && !ini->context_is_asked(AUTHID_KEEPALIVE)
-                && ini->context_get_bool(AUTHID_KEEPALIVE)) {
+                && !ini.context_is_asked(AUTHID_KEEPALIVE)
+                && ini.context_get_bool(AUTHID_KEEPALIVE)) {
                 if (this->verbose & 0x10) {
                     LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
                 }
@@ -110,7 +110,7 @@ public:
 
                 this->wait_answer = true;
 
-                ini->context_ask(AUTHID_KEEPALIVE);
+                ini.context_ask(AUTHID_KEEPALIVE);
             }
         }
         return false;
@@ -172,7 +172,7 @@ public:
 };
 
 class SessionManager : public auth_api {
-    Inifile * ini;
+    Inifile & ini;
 
 public:
     AclSerializer acl_serial;
@@ -191,21 +191,21 @@ private:
     bool wait_for_capture;
 
 public:
-    SessionManager(Inifile * ini, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
+    SessionManager(Inifile & ini, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
         : ini(ini)
-        , acl_serial(AclSerializer(ini, _auth_trans, ini->debug.auth))
+        , acl_serial(AclSerializer(&ini, _auth_trans, ini.debug.auth))
         , remote_answer(false)
         , start_time(start_time)
         , acl_start_time(acl_start_time)
-        , verbose(ini->debug.auth)
-        , keepalive(KeepAlive(ini->globals.keepalive_grace_delay, ini->debug.auth))
-        , inactivity(Inactivity(ini->globals.max_tick, acl_start_time, ini->debug.auth))
+        , verbose(ini.debug.auth)
+        , keepalive(KeepAlive(ini.globals.keepalive_grace_delay, ini.debug.auth))
+        , inactivity(Inactivity(ini.globals.max_tick, acl_start_time, ini.debug.auth))
         , wait_for_capture(true)
     {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::SessionManager");
         }
-        this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
+        this->ini.to_send_set.insert(AUTHID_KEEPALIVE);
     }
 
     virtual ~SessionManager() {
@@ -231,51 +231,39 @@ public:
             return true;
         }
 
-        long enddate = this->ini->context.end_date_cnx.get();
+        long enddate = this->ini.context.end_date_cnx.get();
         if (enddate != 0 && (now > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             const char * message = "Session is out of allowed timeframe";
-            if (this->ini) {
-                message = TR("session_out_time", *(this->ini));
-            }
+            message = TR("session_out_time", this->ini);
             mm.invoke_close_box(message, signal, now);
 
             return true;
         }
 
         // Close by rejeted message received
-        if (!this->ini->context.rejected.is_empty()) {
-            this->ini->context.auth_error_message.copy_str(this->ini->context.rejected.get());
-            LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini->context.rejected.get_cstr());
-            this->ini->context.rejected.set_empty();
+        if (!this->ini.context.rejected.is_empty()) {
+            this->ini.context.auth_error_message.copy_str(this->ini.context.rejected.get());
+            LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini.context.rejected.get_cstr());
+            this->ini.context.rejected.set_empty();
             mm.invoke_close_box(NULL, signal, now);
             return true;
         }
 
         // Keep Alive
         if (this->keepalive.check(now, this->ini)) {
-            if (this->ini) {
-                mm.invoke_close_box(TR("miss_keepalive", *(this->ini)), signal, now);
-            }
-            else {
-                mm.invoke_close_box("Missed keepalive from ACL", signal, now);
-            }
+            mm.invoke_close_box(TR("miss_keepalive", this->ini), signal, now);
             return true;
         }
 
         // Inactivity management
         if (this->inactivity.check(now, trans)) {
-            if (this->ini) {
-                mm.invoke_close_box(TR("close_inactivity", *(this->ini)), signal, now);
-            }
-            else {
-                mm.invoke_close_box("Connection closed on inactivity", signal, now);
-            }
+            mm.invoke_close_box(TR("close_inactivity", this->ini), signal, now);
             return true;
         }
 
         // Manage module (refresh or next)
-        if (this->ini->check()) {
+        if (this->ini.check()) {
             if (mm.connected) {
                 // send message to acl with changed values when connected to
                 // a module (rdp, vnc, xup ...) and something changed.
@@ -294,7 +282,7 @@ public:
                 TODO("signal management (refresh/next) should go to ModuleManager, "
                      "it's basically the same behavior. It could be implemented by "
                      "closing module then opening another one of the same kind");
-                mm.mod->refresh_context(*this->ini);
+                mm.mod->refresh_context(this->ini);
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
                 mm.mod->get_event().set();
             }
@@ -319,7 +307,7 @@ public:
                 }
                 catch (Error & e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                        this->ini->context.module.set_from_cstr(
+                        this->ini.context.module.set_from_cstr(
                             STRMODULE_TRANSITORY);
 
                         signal = BACK_EVENT_NEXT;
@@ -328,16 +316,6 @@ public:
 
                         this->report("CONNECTION_FAILED",
                             "Failed to connect to remote TCP host.");
-/*
-                        if (this->ini) {
-                            mm.invoke_close_box(TR("target_fail", *(this->ini)),
-                                                signal, now);
-                        }
-                        else {
-                            mm.invoke_close_box("Failed to connect to remote TCP host.",
-                                                signal, now);
-                        }
-*/
                         return true;
                     }
                     else {
@@ -355,20 +333,20 @@ public:
             this->wait_for_capture = false;
         }
 
-        // LOG(LOG_INFO, "connect=%s ini->check=%s", this->connected?"Y":"N", this->ini->check()?"Y":"N");
+        // LOG(LOG_INFO, "connect=%s ini.check=%s", this->connected?"Y":"N", this->ini.check()?"Y":"N");
 
         // AuthCHANNEL CHECK
         // if an answer has been received, send it to
         // rdp serveur via mod (should be rdp module)
         TODO("Check if this->mod is RDP MODULE");
-        if (mm.connected && this->ini->globals.auth_channel[0]) {
+        if (mm.connected && this->ini.globals.auth_channel[0]) {
             // Get sesman answer to AUTHCHANNEL_TARGET
-            if (!this->ini->context.authchannel_answer.get().is_empty()) {
+            if (!this->ini.context.authchannel_answer.get().is_empty()) {
                 // If set, transmit to auth_channel channel
-                mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
-                this->ini->context.authchannel_answer.use();
+                mm.mod->send_auth_channel_data(this->ini.context.authchannel_answer.get_cstr());
+                this->ini.context.authchannel_answer.use();
                 // Erase the context variable
-                this->ini->context.authchannel_answer.set_empty();
+                this->ini.context.authchannel_answer.set_empty();
             }
         }
         return true;
@@ -381,13 +359,8 @@ public:
             this->remote_answer = true;
         } catch (...) {
             // acl connection lost
-            this->ini->context.authenticated.set(false);
-//            if (this->ini) {
-                this->ini->context.rejected.set_from_cstr(TR("manager_close_cnx", *(this->ini)));
-//            }
-//            else {
-//                this->ini->context.rejected.set_from_cstr("Connection closed by manager");
-//            }
+            this->ini.context.authenticated.set(false);
+            this->ini.context.rejected.set_from_cstr(TR("manager_close_cnx", this->ini));
         }
     }
 
@@ -398,22 +371,22 @@ public:
 
     virtual void set_auth_channel_target(const char * target)
     {
-        this->ini->context.authchannel_target.set_from_cstr(target);
+        this->ini.context.authchannel_target.set_from_cstr(target);
     }
 
     virtual void set_auth_channel_result(const char * result)
     {
-        this->ini->context.authchannel_result.set_from_cstr(result);
+        this->ini.context.authchannel_result.set_from_cstr(result);
     }
 
     virtual void report(const char * reason, const char * message)
     {
-        this->ini->context_ask(AUTHID_KEEPALIVE);
+        this->ini.context_ask(AUTHID_KEEPALIVE);
 
         char report[1024];
         snprintf(report, sizeof(report), "%s:%s:%s", reason,
-            this->ini->globals.target_device.get_cstr(), message);
-        this->ini->context.reporting.set_from_cstr(report);
+            this->ini.globals.target_device.get_cstr(), message);
+        this->ini.context.reporting.set_from_cstr(report);
 
         this->ask_acl();
     }

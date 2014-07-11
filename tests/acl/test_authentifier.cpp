@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     ;
 
     TestTransport acl_trans("test", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    SessionManager sesman(&mm.ini, acl_trans, 10000, 10010);
+    SessionManager sesman(mm.ini, acl_trans, 10000, 10010);
     signal = BACK_EVENT_NEXT;
 
     CountTransport keepalivetrans;
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     ;
 
     TestTransport acl_trans("test", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    SessionManager sesman(&mm.ini, acl_trans, 10000, 10010);
+    SessionManager sesman(mm.ini, acl_trans, 10000, 10010);
     signal = BACK_EVENT_NEXT;
 
     CountTransport keepalivetrans;
@@ -411,7 +411,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     TestTransport acl_trans("test", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     CountTransport keepalivetrans;
-    SessionManager sesman(&ini, acl_trans, 10000, 10010);
+    SessionManager sesman(ini, acl_trans, 10000, 10010);
     signal = BACK_EVENT_NEXT;
 
 

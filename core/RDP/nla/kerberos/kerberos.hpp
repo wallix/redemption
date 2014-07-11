@@ -37,7 +37,7 @@ const SecPkgInfo KERBEROS_SecPkgInfo = {
     Kerberos_Comment        // Comment
 };
 static gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
-	{ 9, (void *) "\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
+	{ 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) };
 
 struct KERBEROSContext {
     gss_ctx_id_t gss_ctx;
@@ -123,9 +123,9 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal,
                                                 const char * pszPackage,
                                                 unsigned long fCredentialUse,
-                                                void* pvLogonID,
-                                                void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-                                                void* pvGetKeyArgument,
+                                                void * pvLogonID,
+                                                void * pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+                                                void * pvGetKeyArgument,
                                                 PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
 
@@ -141,8 +141,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             spn->get_data()[length] = 0;
         }
         Krb5Creds * credentials = new Krb5Creds;
-        phCredential->SecureHandleSetLowerPointer((void*) credentials);
-        phCredential->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
+        phCredential->SecureHandleSetLowerPointer(static_cast<void *>(credentials));
+        phCredential->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
 
         SEC_WINNT_AUTH_IDENTITY* identity = NULL;
         if (pAuthData != NULL) {
@@ -237,7 +237,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             }
 
             phNewContext->SecureHandleSetLowerPointer(krb_ctx);
-            phNewContext->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
+            phNewContext->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
 
             // Target name (server name, ip ...)
             if (!this->get_service_name(pszTargetName, &krb_ctx->target_name)) {
@@ -359,7 +359,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             }
 
             phNewContext->SecureHandleSetLowerPointer(krb_ctx);
-            phNewContext->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
+            phNewContext->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
         }
         // else {
         //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");

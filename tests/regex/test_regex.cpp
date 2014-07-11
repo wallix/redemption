@@ -29,6 +29,7 @@
 
 #include "log.hpp"
 #define LOGNULL
+//#define LOGPRINT
 
 #include "regex.hpp"
 
