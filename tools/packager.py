@@ -295,7 +295,7 @@ def check_matching_version_changelog():
   out = readall("main/version.hpp")
   out = out.split('\n')
   for line in out:
-    res = re.match('^[#]define\sVERSION\s["](((\d+)[.](\d+)[.](\d+))(-[a-z]*)*)["]\s*$', line)
+    res = re.match('^[#]define\sVERSION\s["](((\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)["]\s*$', line)
     if res:
       red_source_version = res.group(1)
       red_num_ver = res.group(2)
@@ -311,7 +311,7 @@ def check_matching_version_changelog():
   out = readall("%s/changelog" % opts.packagetemp)
   out = out.split('\n')
   for line in out:
-    res = re.match('^redemption\s*[(](((\d+)[.](\d+)[.](\d+))(-[a-z]*)*)(.*)[)].*$', line)
+    res = re.match('^redemption\s*[(](((\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)(.*)[)].*$', line)
     if res:
       changelog_red_source_version = res.group(1)
       changelog_red_num_ver = res.group(2)

@@ -119,7 +119,7 @@ class RDPColCache {
 
         this->cacheIndex = stream.in_uint8();
         LOG(LOG_INFO, "receiving colormap %u", this->cacheIndex);
-        assert(this->cacheIndex >= 0 && this->cacheIndex < 6);
+        assert(this->cacheIndex < 6);
 
         uint16_t numberColors = stream.in_uint16_le();
 

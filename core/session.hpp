@@ -226,11 +226,11 @@ struct Session {
                                                                                 , this->ini->debug.auth
                                                                                 );
                                     this->ptr_auth_event = new wait_obj(this->ptr_auth_trans);
-                                    this->acl = new SessionManager( this->ini
-                                                                    , *this->ptr_auth_trans
-                                                                    , start_time // proxy start time
-                                                                    , now        // acl start time
-                                                                   );
+                                    this->acl = new SessionManager( *this->ini
+                                                                  , *this->ptr_auth_trans
+                                                                  , start_time // proxy start time
+                                                                  , now        // acl start time
+                                                                  );
                                     signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {

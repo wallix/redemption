@@ -812,7 +812,7 @@ class Sesman():
             selected_target = None
             target_device =  self.shared.get(u'target_device')
             target_login = self.shared.get(u'target_login')
-            target_service = self.target_service_name
+            target_service = self.target_service_name if self.target_service_name != u'INTERNAL' else u'RDP'
             # proto_dest = self.shared.get(u'proto_dest')
             # protocols = [proto_dest] if proto_dest else [ u'APP', u'RDP', u'VNC']
             services = [target_service] if target_service else [ u'APP', u'RDP', u'VNC']
