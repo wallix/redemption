@@ -81,9 +81,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal, const char * pszPackage,
-                                                unsigned long fCredentialUse, void* pvLogonID,
-                                                void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-                                                void* pvGetKeyArgument, PCredHandle phCredential,
+                                                unsigned long fCredentialUse, void * pvLogonID,
+                                                void * pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+                                                void * pvGetKeyArgument, PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
 
         CREDENTIALS* credentials = NULL;
@@ -98,8 +98,8 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 credentials->identity.CopyAuthIdentity(*identity);
             }
 
-            phCredential->SecureHandleSetLowerPointer(credentials);
-            phCredential->SecureHandleSetUpperPointer(const_cast<char*>(NTLM_PACKAGE_NAME));
+            phCredential->SecureHandleSetLowerPointer(static_cast<void *>(credentials));
+            phCredential->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
 
             return SEC_E_OK;
         }
@@ -114,8 +114,8 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             else {
                 credentials->identity.clear();
             }
-            phCredential->SecureHandleSetLowerPointer(credentials);
-            phCredential->SecureHandleSetUpperPointer(const_cast<char*>(NTLM_PACKAGE_NAME));
+            phCredential->SecureHandleSetLowerPointer(static_cast<void *>(credentials));
+            phCredential->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
 
             return SEC_E_OK;
         }
@@ -193,7 +193,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             context->identity.CopyAuthIdentity(credentials->identity);
 
             phNewContext->SecureHandleSetLowerPointer(context);
-            phNewContext->SecureHandleSetUpperPointer(const_cast<char*>(NTLM_PACKAGE_NAME));
+            phNewContext->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
         }
 
         if ((!pInput) || (context->state == NTLM_STATE_AUTHENTICATE)) {
@@ -309,7 +309,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             context->ntlm_SetContextServicePrincipalName(NULL);
 
             phNewContext->SecureHandleSetLowerPointer(context);
-            phNewContext->SecureHandleSetUpperPointer(const_cast<char*>(NTLM_PACKAGE_NAME));
+            phNewContext->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
         }
 
         if (context->state == NTLM_STATE_INITIAL) {

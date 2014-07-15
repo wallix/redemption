@@ -35,14 +35,9 @@ struct ConfigurationHolder {
 
 struct ConfigurationLoader {
     ConfigurationLoader(ConfigurationHolder & configuration_holder) {
-        std::stringstream oss("");
-
-        this->cparse(configuration_holder, oss);
     }
 
     ConfigurationLoader(ConfigurationHolder & configuration_holder, const char * filename) {
-        std::stringstream oss("");
-
         this->cparse(configuration_holder, filename);
     }
 
@@ -89,9 +84,6 @@ struct ConfigurationLoader {
 
     void parseline( ConfigurationHolder & configuration_holder
                   , const char * line, char * context) {
-        char key[128];
-        char value[128];
-
         const char * startkey = line;
         for (; *startkey ; startkey++) {
             if (!isspace(*startkey)) {
@@ -111,6 +103,8 @@ struct ConfigurationLoader {
         const char * endkey = strchr(startkey, '=');
         if (endkey && endkey != startkey) {
             const char * sep = endkey;
+            char key[128];
+            char value[128];
             for (--endkey; endkey >= startkey ; endkey--) {
                 if (!isspace(*endkey)) {
                     TODO("RZ: Possible buffer overflow if length of key is larger than 128 bytes");

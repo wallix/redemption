@@ -25,11 +25,11 @@
 #include "config.hpp"
 
 typedef std::map <const char *, const char *> trans_t;
-typedef enum {
+enum language_t {
     EN,
     FR,
     MAX_LANG
-} language_t;
+};
 
 class Translation {
 private:
@@ -144,6 +144,12 @@ private:
 
     ~Translation()
     {}
+
+    static const char * get_value(const trans_t & trans, const char * key) {
+        trans_t::const_iterator it = trans.find(key);
+        return it != trans.end() ? it->second : 0;
+    }
+
 public:
     static Translation& getInstance() {
         static Translation instance;
@@ -157,20 +163,12 @@ public:
         return true;
     }
 
-    trans_t & getmap() {
-        switch(this->lang) {
-        case EN:
-            return this->en_map;
-            break;
-        case FR:
-            return this->fr_map;
-            break;
-        default:
-            break;
+    const char * translate(const char * key) const {
+        if (this->lang == FR) {
+            return this->get_value(this->fr_map, key);
         }
-        return this->en_map;
+        return this->get_value(this->en_map, key);
     }
-
 };
 
 #define TRANSLATIONCONF Translation::getInstance()
@@ -229,11 +227,8 @@ static inline const char * TR(const char * key, Inifile & ini) {
         0 == strcmp(res, "") ||
         0 == strcmp(res, "ASK")) {
 
-        trans_t trans = TRANSLATIONCONF.getmap();
-        try {
-            res = trans.at(key);
-        }
-        catch (const std::out_of_range & oor) {
+        res = TRANSLATIONCONF.translate(key);
+        if (!res) {
             LOG(LOG_INFO, "Translation not found for '%s'", key);
             res = key;
         }

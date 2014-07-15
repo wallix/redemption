@@ -189,7 +189,7 @@ struct OutputNextTransport
             this->status = false;
             if (res < 0){
                 LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, res);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
             }
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }

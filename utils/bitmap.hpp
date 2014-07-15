@@ -107,7 +107,6 @@ public:
         , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(this->line_size * cy)
         , data_bitmap()
-        , data_compressed(NULL)
         , data_compressed_size(0)
     {
         this->data_bitmap.alloc(this->bmp_size);
@@ -157,7 +156,6 @@ public:
         , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(this->line_size * this->cy)
         , data_bitmap()
-        , data_compressed(NULL)
         , data_compressed_size(0)
 
     {
@@ -200,7 +198,6 @@ public:
         , line_size(align4(this->cx * nbbytes(this->original_bpp)))
         , bmp_size(this->line_size * this->cy)
         , data_bitmap()
-        , data_compressed(NULL)
         , data_compressed_size(0)
 
     {
@@ -240,7 +237,6 @@ public:
         , line_size(0)
         , bmp_size(0)
         , data_bitmap()
-        , data_compressed(NULL)
         , data_compressed_size(0)
 
     {
@@ -2186,7 +2182,6 @@ public:
     , line_size(this->cx * nbbytes(this->original_bpp))
     , bmp_size(this->line_size * cy)
     , data_bitmap()
-    , data_compressed(NULL)
     , data_compressed_size(0)
     {
         //LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
@@ -2243,7 +2238,6 @@ public:
         , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(this->line_size * cy)
         , data_bitmap()
-        , data_compressed(NULL)
         , data_compressed_size(0)
     {
         this->data_bitmap.alloc(this->bmp_size);

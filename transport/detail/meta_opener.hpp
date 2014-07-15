@@ -207,6 +207,7 @@ namespace detail
             return res;
         }
 
+        /// \return 0 if success
         int next()
         {
             if (this->is_open()) {
