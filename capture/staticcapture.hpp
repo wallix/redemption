@@ -65,19 +65,31 @@ public:
     uint64_t inter_frame_interval_static_capture;
     uint64_t time_to_wait;
 
+    bool    first_picture_capture_delayed;
+    timeval first_picture_capture_now;
+
+
     StaticCapture(const timeval & now, Transport & trans, SequenceGenerator const * seq, unsigned width, unsigned height,
                   bool clear_png, const Inifile & ini, Drawable & drawable)
     : ImageCapture(trans, width, height, drawable)
     , clear_png(clear_png)
     , seq(seq)
-    , time_to_wait(0) {
+    , time_to_wait(0)
+    , first_picture_capture_delayed(true)
+    , first_picture_capture_now() {
         this->start_static_capture = now;
         this->conf.png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
         this->inter_frame_interval_static_capture       = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
         this->update_config(ini);
+
+        ::memcpy(&this->first_picture_capture_now, &now, sizeof(this->first_picture_capture_now));
     }
 
     virtual ~StaticCapture() {
+        if (this->first_picture_capture_delayed) {
+            this->breakpoint(this->first_picture_capture_now);
+        }
+
         // delete all captured files at the end of the RDP client session
         if (this->clear_png){
             this->unlink_filegen(0);
@@ -121,6 +133,9 @@ public:
                 this->drawable.clear_mouse();
             }
             else {
+                if (this->first_picture_capture_delayed) {
+                    ::memcpy(&this->first_picture_capture_now, &now, sizeof(this->first_picture_capture_now));
+                }
                 // Wait 0,3 x inter_frame_interval_static_capture.
                 this->time_to_wait = this->inter_frame_interval_static_capture / 3;
                 return;
@@ -155,6 +170,8 @@ public:
 
     void breakpoint(const timeval & now)
     {
+        this->first_picture_capture_delayed = false;
+
         time_t rawtime = now.tv_sec;
         tm *ptm = localtime(&rawtime);
         this->drawable.trace_timestamp(*ptm);
