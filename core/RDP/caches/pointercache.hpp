@@ -105,12 +105,13 @@ struct PointerCache {
 
 };  // struct PointerCache
 
+/*
 struct drawable_Pointer {
     Drawable::Mouse_t mouse_cursor[16 * 32];
     int               contiguous_mouse_pixels;
     uint8_t           data[32 * 32 * 3];
 
-    int x; /* hotspot */
+    int x; // hotspot
     int y;
 };
 
@@ -187,5 +188,6 @@ protected:
         Pointer.contiguous_mouse_pixels = current_contiguous_mouse_pixels;
     }
 };
+*/
 
 #endif  // #ifndef _REDEMPTION_CORE_RDP_CACHES_POINTERCACHE_HPP_

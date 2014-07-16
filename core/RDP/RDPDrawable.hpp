@@ -53,7 +53,7 @@ class RDPDrawable : public RDPGraphicDevice, public RDPCaptureDevice {
 public:
     Drawable drawable;
 
-    DrawablePointerCache ptr_cache;
+//    DrawablePointerCache ptr_cache;
     GlyphCache           gly_cache;
 
     int frame_start_count;
@@ -63,10 +63,12 @@ public:
     , frame_start_count(0)
     {
         Pointer pointer0(Pointer::POINTER_CURSOR0);
-        this->ptr_cache.add_pointer_static(pointer0, 0);
+//        this->ptr_cache.add_pointer_static(pointer0, 0);
+        this->drawable.cache_pointer(pointer0.x, pointer0.y, pointer0.data, pointer0.mask, 0);
 
         Pointer pointer1(Pointer::POINTER_CURSOR1);
-        this->ptr_cache.add_pointer_static(pointer1, 1);
+//        this->ptr_cache.add_pointer_static(pointer1, 1);
+        this->drawable.cache_pointer(pointer1.x, pointer1.y, pointer1.data, pointer1.mask, 1);
     }
 
     virtual void set_row(size_t rownum, const uint8_t * data)
@@ -637,19 +639,26 @@ public:
 
     virtual void send_pointer(int cache_idx, const Pointer & cursor)
     {
-        this->ptr_cache.add_pointer_static(cursor, cache_idx);
+//        this->ptr_cache.add_pointer_static(cursor, cache_idx);
+        this->drawable.cache_pointer(cursor.x, cursor.y, cursor.data, cursor.mask, cache_idx);
 
+        this->drawable.use_cached_pointer(cache_idx);
+/*
         drawable_Pointer & dcursor = this->ptr_cache.Pointers[cache_idx];
         this->drawable.set_mouse_cursor(
             dcursor.contiguous_mouse_pixels, dcursor.mouse_cursor,
             dcursor.x, dcursor.y);
+*/
     }
 
     virtual void set_pointer(int cache_idx) {
+/*
         drawable_Pointer & Pointer = this->ptr_cache.Pointers[cache_idx];
         this->drawable.set_mouse_cursor(
             Pointer.contiguous_mouse_pixels, Pointer.mouse_cursor,
             Pointer.x, Pointer.y);
+*/
+        this->drawable.use_cached_pointer(cache_idx);
     }
 
     virtual void dump_png24(Transport * trans, bool bgr) {
