@@ -16,7 +16,15 @@ $#ARGV != -1 && (open(STDIN, "<$ARGV[0]") || exit 1);
 
 while(<STDIN>)
 {
-    if (m/^(==\d+== +(?:by|at) 0x(?:[A-F]|\d)+: )(.*\)) \((.*):([0-9]+)\)$/)
+    if (m/^(==\d+== +(?:by|at) 0x(?:[A-F]|\d)+: )(.+) \(in (.+)\)$/)
+    {
+        $bg = index($1, 'at') == -1 ? "" : $color_bg_at;
+        print(
+            $bg, $1, $color_funcname, $2, $color_reset, $bg, ' (in ',
+            $color_in_funcname, $3, $color_reset, ")\n"
+        )
+    }
+    elsif (m/^(==\d+== +(?:by|at) 0x(?:[A-F]|\d)+: )(.+) \((.+):([0-9]+)\)$/)
     {
         $bg = index($1, 'at') == -1 ? "" : $color_bg_at;
         print(
@@ -25,15 +33,7 @@ while(<STDIN>)
             $4, $color_reset, ")\n"
         )
     }
-    elsif (m/^(==\d+== +(?:by|at) 0x(?:[A-F]|\d)+: )((?:.*\))|\w+|\?\?\?) \(in (.*\))$/)
-    {
-        $bg = index($1, 'at') == -1 ? "" : $color_bg_at;
-        print(
-            $bg, $1, $color_funcname, $2, $color_reset, $bg, ' (in ',
-            $color_in_funcname, $3, $color_reset, ")\n"
-        )
-    }
-    elsif (m/^(==\d+== [A-Z].*?:)(.*)$/)
+    elsif (m/^(==\d+== [A-Z].+?:)(.+)$/)
     {
         print($color_title, $1, $color_reset, $2, "\n")
     }
