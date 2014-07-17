@@ -23,14 +23,12 @@
 #define _REDEMPTION_UTILS_DRAWABLE_HPP_
 
 #include <algorithm>
-#include "bitmap.hpp"
 
+#include "bitmap.hpp"
 #include "colors.hpp"
 #include "rect.hpp"
 #include "ellipse.hpp"
-
 #include "difftimeval.hpp"
-#include "rdtsc.hpp"
 
 struct DrawablePointer {
     struct ContiguousPixels {
@@ -153,23 +151,9 @@ struct Drawable {
     char previous_timestamp[size_str_timestamp];
     uint8_t previous_timestamp_length;
 
-/*
-    struct Mouse_t {
-        int      y;
-        int      x;
-        int      lg;
-        const char * line;
-    };
-
-    size_t          contiguous_mouse_pixels;
-    const Mouse_t * mouse_cursor;
-    uint8_t         mouse_hotspot_x;
-    uint8_t         mouse_hotspot_y;
-*/
-
-    uint8_t         save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
-    uint16_t        save_mouse_x;
-    uint16_t        save_mouse_y;
+    uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
+    uint16_t save_mouse_x;
+    uint16_t save_mouse_y;
 
     Rect tracked_area;
     bool tracked_area_changed;
@@ -202,40 +186,9 @@ public:
     , mouse_cursor_pos_x(width / 2)
     , mouse_cursor_pos_y(height / 2)
     , dont_show_mouse_cursor(false)
-    , current_pointer(NULL)
+    , current_pointer(&this->default_pointer)
     {
-/*
-        static const Mouse_t default_mouse_cursor[] = {
-            { 0,  0, 3 * 1,  "\x00\x00\x00" },
-            { 1,  0, 3 * 2,  "\x00\x00\x00\x00\x00\x00" },
-            { 2,  0, 3 * 3,  "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00" },
-            { 3,  0, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 4,  0, 3 * 5,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 5,  0, 3 * 6,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 6,  0, 3 * 7,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 7,  0, 3 * 8,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 8,  0, 3 * 9,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 9,  0, 3 * 10, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 10, 0, 3 * 11, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 11, 0, 3 * 12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 12, 0, 3 * 12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" },
-            { 13, 0, 3 * 8,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 14, 0, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 14, 5, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 15, 0, 3 * 3,  "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00" },
-            { 15, 5, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" },
-            { 16, 1, 3 * 1,  "\x00\x00\x00" },
-            { 16, 6, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00" }
-        };
-
-        this->contiguous_mouse_pixels = 20;
-        this->mouse_cursor            = default_mouse_cursor;
-        this->mouse_hotspot_x         = 0;
-        this->mouse_hotspot_y         = 0;
-*/
         this->initialize_default_pointer();
-
-        current_pointer = &this->default_pointer;
 
         if (!this->pix_len) {
             throw Error(ERR_RECORDER_EMPTY_IMAGE);
@@ -1014,7 +967,6 @@ public:
         }
     }
 
-
     void draw_bitmap(const Rect & rect, const Bitmap & bmp, bool bgr) {
         const int16_t mincx =
             std::min<int16_t>(bmp.cx, std::min<int16_t>(this->width  - rect.x, rect.cx));
@@ -1482,7 +1434,6 @@ private:
         }
         uint8_t * p = this->data + this->pos_xy(x, y);
         p[0] = op2(p[0], color); p[1] = op2(p[1], color >> 8); p[2] = op2(p[2], color >> 16);
-        // this->bRop2(p, color);
     }
 
     template <typename Op2>
@@ -1503,7 +1454,6 @@ private:
             p[0] = op2(p[0], color);
             p[1] = op2(p[1], color >> 8);
             p[2] = op2(p[2], color >> 16);
-            // this->bRop2(p, color);
             p += 3;
         }
     }
@@ -2269,88 +2219,6 @@ public:
             memcpy(pixel_start, this->current_pointer->contiguous_pixels[i].data + offset, lg);
         }
     }
-/*
-protected:
-    uint8_t * pixel_start_data(int x, int y, size_t i) {
-        return this->data +
-               ((this->line_of_mouse(i).y + y) * this->width + this->line_of_mouse(i).x + x) * 3;
-    }
-
-    const Mouse_t & line_of_mouse(size_t i) {
-        return this->mouse_cursor[i];
-    }
-
-public:
-    void set_mouse_cursor(int contiguous_mouse_pixels,
-            const Mouse_t * mouse_cursor,
-            uint8_t hotspot_x, uint8_t hotspot_y) {
-        this->contiguous_mouse_pixels = contiguous_mouse_pixels;
-        this->mouse_cursor            = mouse_cursor;
-        this->mouse_hotspot_x         = hotspot_x;
-        this->mouse_hotspot_y         = hotspot_y;
-    }
-
-    void trace_mouse() {
-        if (this->dont_show_mouse_cursor) {
-            return;
-        }
-        this->save_mouse_x = this->mouse_cursor_pos_x;
-        this->save_mouse_y = this->mouse_cursor_pos_y;
-
-        uint8_t * psave = this->save_mouse;
-        int       x     = this->mouse_cursor_pos_x - this->mouse_hotspot_x;
-        int       y     = this->mouse_cursor_pos_y - this->mouse_hotspot_y;
-
-        const uint8_t * data_end = this->data + this->height * this->width * 3;
-
-        for (size_t i = 0; i < this->contiguous_mouse_pixels; i++) {
-            uint8_t  * pixel_start = this->pixel_start_data(x, y, i);
-            unsigned   lg          = this->line_of_mouse(i).lg;
-            int offset = 0;
-            if (pixel_start + lg <= this->data) continue;
-            if (pixel_start < this->data) {
-                offset = this->data - pixel_start;
-                lg -= offset;
-                pixel_start = this->data;
-            }
-            if (pixel_start > data_end) break;
-            if (pixel_start + lg >= data_end) {
-                lg = data_end - pixel_start;
-            }
-            memcpy(psave, pixel_start, lg);
-            psave += lg;
-            memcpy(pixel_start, this->line_of_mouse(i).line + offset, lg);
-        }
-    }
-
-    void clear_mouse() {
-        if (this->dont_show_mouse_cursor) {
-            return;
-        }
-
-        uint8_t * psave = this->save_mouse;
-        int       x     = this->save_mouse_x - this->mouse_hotspot_x;
-        int       y     = this->save_mouse_y - this->mouse_hotspot_y;
-
-        const uint8_t * data_end = this->data + this->height * this->width * 3;
-
-        for (size_t i = 0; i < this->contiguous_mouse_pixels; i++) {
-            uint8_t  * pixel_start = this->pixel_start_data(x, y, i);
-            unsigned   lg          = this->line_of_mouse(i).lg;
-            if (pixel_start + lg <= this->data) continue;
-            if (pixel_start < this->data) {
-                lg -= this->data - pixel_start;
-                pixel_start = this->data;
-            }
-            if (pixel_start > data_end) break;
-            if (pixel_start + lg >= data_end) {
-                lg = data_end - pixel_start;
-            }
-            memcpy(pixel_start, psave, lg);
-            psave += lg;
-        }
-    }
-*/
 
     void clear_mouse() {
         if (this->dont_show_mouse_cursor || !this->current_pointer) {
