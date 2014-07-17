@@ -369,7 +369,24 @@ public:
                 this->gd->draw(bitmap_data_24, bmp_stream.get_data(), bmp_stream.size(), bmp_24);
             }
             else {
-                this->gd->draw(bitmap_data, data, size, bmp);
+                if (!(bitmap_data.flags & BITMAP_COMPRESSION)) {
+                    BStream bmp_stream(65535);
+                    bmp.compress(24, bmp_stream);
+                    bmp_stream.mark_end();
+
+                    RDPBitmapData bitmap_data_compressed = bitmap_data;
+                    bitmap_data_compressed.flags          = BITMAP_COMPRESSION;
+                    bitmap_data_compressed.bitmap_length  = bmp_stream.size() + 8;
+
+                    bitmap_data_compressed.cb_comp_main_body_size = bmp_stream.size();
+                    bitmap_data_compressed.cb_scan_width          = bmp.cx;
+                    bitmap_data_compressed.cb_uncompressed_size   = bmp.bmp_size;
+
+                    this->gd->draw(bitmap_data_compressed, bmp_stream.get_data(), bmp_stream.size(), bmp);
+                }
+                else {
+                    this->gd->draw(bitmap_data, data, size, bmp);
+                }
             }
         }
     }
