@@ -252,6 +252,10 @@ public:
         }
 
         if (!this->remaining_order_count){
+            for (size_t i = 0; i < this->nbconsumers ; i++){
+                this->consumers[i].graphic_device->flush();
+            }
+
             try {
                 BStream header(HEADER_SIZE);
                 this->trans->recv(&header.end, HEADER_SIZE);
