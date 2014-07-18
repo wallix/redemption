@@ -499,6 +499,11 @@ public:
 
         if (!ini.globals.movie.get()) {
             ini.video.capture_flags = 8;
+            ini.video.capture_wrm   = false;
+            ini.video.capture_flv   = false;
+            ini.video.capture_ocr   = true;
+            ini.video.capture_png   = false;
+            ini.video.png_limit     = 0:
         }
 
         LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
