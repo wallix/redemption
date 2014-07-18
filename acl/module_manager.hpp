@@ -310,101 +310,145 @@ public:
         LOG(LOG_INFO, "target_module=%u", target_module);
         if (this->last_module) this->front.stop_capture();
         switch (target_module)
-            {
-            case MODULE_INTERNAL_BOUNCER2:
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2_mod'");
-                this->mod = new Bouncer2Mod(this->front,
-                                            this->front.client_info.width,
-                                            this->front.client_info.height
-                                            );
-                if (this->verbose){
-                    LOG(LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
-                }
-                break;
-            case MODULE_INTERNAL_TEST:
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
-                this->mod = new ReplayMod(
-                                          this->front
-                                          , this->ini.video.replay_path
-                                          , this->ini.context.movie
-                                          , this->front.client_info.width
-                                          , this->front.client_info.height
-                                          , this->ini.context.auth_error_message
+        {
+        case MODULE_INTERNAL_BOUNCER2:
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2_mod'");
+            this->mod = new Bouncer2Mod(this->front,
+                                        this->front.client_info.width,
+                                        this->front.client_info.height
+                                        );
+            if (this->verbose){
+                LOG(LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
+            }
+            break;
+        case MODULE_INTERNAL_TEST:
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
+            this->mod = new ReplayMod(
+                                      this->front
+                                      , this->ini.video.replay_path
+                                      , this->ini.context.movie
+                                      , this->front.client_info.width
+                                      , this->front.client_info.height
+                                      , this->ini.context.auth_error_message
+                                      );
+            if (this->verbose){
+                LOG(LOG_INFO, "ModuleManager::internal module 'test' ready");
+            }
+            break;
+        case MODULE_INTERNAL_WIDGETTEST:
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
+            this->mod = new WidgetTestMod(this->ini,
+                                          this->front,
+                                          this->front.client_info.width,
+                                          this->front.client_info.height
                                           );
-                if (this->verbose){
-                    LOG(LOG_INFO, "ModuleManager::internal module 'test' ready");
+            LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
+            break;
+        case MODULE_INTERNAL_CARD:
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
+            this->mod = new TestCardMod(this->front,
+                                        this->front.client_info.width,
+                                        this->front.client_info.height
+                                        );
+            LOG(LOG_INFO, "ModuleManager::internal module 'test_card' ready");
+            break;
+        case MODULE_INTERNAL_WIDGET2_SELECTOR:
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
+            this->mod = new FlatSelector2Mod(this->ini,
+                        // new FlatSelectorMod(this->ini,
+                        // new SelectorMod(this->ini,
+                                        this->front,
+                                        this->front.client_info.width,
+                                        this->front.client_info.height
+                                        );
+            if (this->verbose){
+                LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
+            }
+            break;
+        case MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY:
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector legacy'");
+            this->mod = new FlatSelectorMod(this->ini,
+                        // new SelectorMod(this->ini,
+                                        this->front,
+                                        this->front.client_info.width,
+                                        this->front.client_info.height
+                                        );
+            if (this->verbose){
+                LOG(LOG_INFO, "ModuleManager::internal module 'selector legacy' ready");
+            }
+            break;
+        case MODULE_INTERNAL_CLOSE:
+            {
+                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::Close'");
+                if (this->ini.context.auth_error_message.is_empty()) {
+                    this->ini.context.auth_error_message.copy_c_str("Connection to server ended");
                 }
-                break;
-            case MODULE_INTERNAL_WIDGETTEST:
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
-                this->mod = new WidgetTestMod(this->ini,
-                                              this->front,
-                                              this->front.client_info.width,
-                                              this->front.client_info.height
-                                              );
-                LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
-                break;
-            case MODULE_INTERNAL_CARD:
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
-                this->mod = new TestCardMod(this->front,
-                                            this->front.client_info.width,
-                                            this->front.client_info.height
-                                            );
-                LOG(LOG_INFO, "ModuleManager::internal module 'test_card' ready");
-                break;
-            case MODULE_INTERNAL_WIDGET2_SELECTOR:
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
-                this->mod = new FlatSelector2Mod(this->ini,
-                            // new FlatSelectorMod(this->ini,
-                            // new SelectorMod(this->ini,
+                this->mod = new FlatWabCloseMod(this->ini,
+                            // new WabCloseMod(this->ini,
                                             this->front,
                                             this->front.client_info.width,
-                                            this->front.client_info.height
+                                            this->front.client_info.height,
+                                            now,
+                                            true
                                             );
-                if (this->verbose){
-                    LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
-                }
-                break;
-            case MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY:
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector legacy'");
-                this->mod = new FlatSelectorMod(this->ini,
-                            // new SelectorMod(this->ini,
-                                            this->front,
-                                            this->front.client_info.width,
-                                            this->front.client_info.height
-                                            );
-                if (this->verbose){
-                    LOG(LOG_INFO, "ModuleManager::internal module 'selector legacy' ready");
-                }
-                break;
-            case MODULE_INTERNAL_CLOSE:
-                {
-                    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::Close'");
-                    if (this->ini.context.auth_error_message.is_empty()) {
-                        this->ini.context.auth_error_message.copy_c_str("Connection to server ended");
-                    }
-                    this->mod = new FlatWabCloseMod(this->ini,
-                                // new WabCloseMod(this->ini,
-                                                this->front,
-                                                this->front.client_info.width,
-                                                this->front.client_info.height,
-                                                now,
-                                                true
-                                                );
-                    this->front.init_pointers();
-                }
-                LOG(LOG_INFO, "ModuleManager::internal module Close ready");
-                break;
+                this->front.init_pointers();
+            }
+            LOG(LOG_INFO, "ModuleManager::internal module Close ready");
+            break;
 
-            case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
-            case MODULE_INTERNAL_WIDGET2_DIALOG:
-                {
-                    LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Accept Message'");
-                    const char * message = this->ini.context.message.get_cstr();
-                    const char * button = this->ini.translation.button_refused.get_cstr();
-                    const char * caption = "Information";
-                    this->mod = new FlatDialogMod(
-                                // new DialogMod(
+        case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
+        case MODULE_INTERNAL_WIDGET2_DIALOG:
+            {
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Accept Message'");
+                const char * message = this->ini.context.message.get_cstr();
+                const char * button = this->ini.translation.button_refused.get_cstr();
+                const char * caption = "Information";
+                this->mod = new FlatDialogMod(
+                            // new DialogMod(
+                                          this->ini,
+                                          this->front,
+                                          this->front.client_info.width,
+                                          this->front.client_info.height,
+                                          caption,
+                                          message,
+                                          button,
+                                          now);
+                LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Accept Message' ready");
+            }
+            break;
+        case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
+        case MODULE_INTERNAL_WIDGET2_MESSAGE:
+            {
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Display Message'");
+                const char * message = this->ini.context.message.get_cstr();
+                const char * button = NULL;
+                const char * caption = "Information";
+                this->mod = new FlatDialogMod(
+                            // new DialogMod(
+                                          this->ini,
+                                          this->front,
+                                          this->front.client_info.width,
+                                          this->front.client_info.height,
+                                          caption,
+                                          message,
+                                          button,
+                                          now);
+                LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Display Message' ready");
+            }
+            break;
+        case MODULE_INTERNAL_DIALOG_CHALLENGE:
+            {
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Challenge'");
+                const char * message = this->ini.context.message.get_cstr();
+                const char * button = NULL;
+                const char * caption = "Challenge";
+                ChallengeOpt challenge = CHALLENGE_HIDE;
+                if (this->ini.context_get_bool(AUTHID_AUTHENTICATION_CHALLENGE)) {
+                    challenge = CHALLENGE_ECHO;
+                }
+                this->ini.context_ask(AUTHID_AUTHENTICATION_CHALLENGE);
+                this->ini.context_ask(AUTHID_PASSWORD);
+                this->mod = new FlatDialogMod(
                                               this->ini,
                                               this->front,
                                               this->front.client_info.width,
@@ -412,300 +456,255 @@ public:
                                               caption,
                                               message,
                                               button,
-                                              now);
-                    LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Accept Message' ready");
-                }
-                break;
-            case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
-            case MODULE_INTERNAL_WIDGET2_MESSAGE:
-                {
-                    LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Display Message'");
-                    const char * message = this->ini.context.message.get_cstr();
-                    const char * button = NULL;
-                    const char * caption = "Information";
-                    this->mod = new FlatDialogMod(
-                                // new DialogMod(
-                                              this->ini,
-                                              this->front,
-                                              this->front.client_info.width,
-                                              this->front.client_info.height,
-                                              caption,
-                                              message,
-                                              button,
-                                              now);
-                    LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Display Message' ready");
-                }
-                break;
-            case MODULE_INTERNAL_DIALOG_CHALLENGE:
-                {
-                    LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Challenge'");
-                    const char * message = this->ini.context.message.get_cstr();
-                    const char * button = NULL;
-                    const char * caption = "Challenge";
-                    ChallengeOpt challenge = CHALLENGE_HIDE;
-                    if (this->ini.context_get_bool(AUTHID_AUTHENTICATION_CHALLENGE)) {
-                        challenge = CHALLENGE_ECHO;
-                    }
-                    this->ini.context_ask(AUTHID_AUTHENTICATION_CHALLENGE);
-                    this->ini.context_ask(AUTHID_PASSWORD);
-                    this->mod = new FlatDialogMod(
-                                                  this->ini,
-                                                  this->front,
-                                                  this->front.client_info.width,
-                                                  this->front.client_info.height,
-                                                  caption,
-                                                  message,
-                                                  button,
-                                                  now,
-                                                  challenge);
-                    LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Challenge' ready");
-                }
+                                              now,
+                                              challenge);
+                LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Challenge' ready");
+            }
 
-                break;
-            case MODULE_INTERNAL_WIDGET2_LOGIN:
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-                if (this->ini.context_is_asked(AUTHID_TARGET_USER)
-                    ||  this->ini.context_is_asked(AUTHID_TARGET_DEVICE)){
-                    if (this->ini.context_is_asked(AUTHID_AUTH_USER)){
-                        this->ini.account.username[0] = 0;
-                    }
-                    else {
-                        strncpy(this->ini.account.username,
-                                this->ini.globals.auth_user.get_cstr(),
-                                // this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0),
-                                sizeof(this->ini.account.username));
-                        this->ini.account.username[sizeof(this->ini.account.username) - 1] = 0;
-                    }
-                }
-                else if (this->ini.context_is_asked(AUTHID_AUTH_USER)) {
+            break;
+        case MODULE_INTERNAL_WIDGET2_LOGIN:
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
+            if (this->ini.context_is_asked(AUTHID_TARGET_USER)
+                ||  this->ini.context_is_asked(AUTHID_TARGET_DEVICE)){
+                if (this->ini.context_is_asked(AUTHID_AUTH_USER)){
                     this->ini.account.username[0] = 0;
                 }
                 else {
-                    TODO("check this! Assembling parts to get user login with target is not obvious"
-                         "method used below il likely to show @: if target fields are empty")
-                    char buffer[255];
-                    snprintf( buffer, sizeof(buffer), "%s@%s:%s%s%s"
-                            , this->ini.globals.target_user.get_cstr()
-                            , this->ini.globals.target_device.get_cstr()
-                            , this->ini.context.target_protocol.get_cstr()
-                            , (!this->ini.context.target_protocol.is_empty() ? ":" : "")
-                            , this->ini.globals.auth_user.get_cstr()
-                            );
-                    strcpy(this->ini.account.username, buffer);
-                }
-
-                this->mod = new FlatLoginMod(
-                            // new LoginMod(
-                                         this->ini,
-                                         this->front,
-                                         this->front.client_info.width,
-                                         this->front.client_info.height);
-                LOG(LOG_INFO, "ModuleManager::internal module Login ready");
-                break;
-
-            case MODULE_XUP:
-                {
-                    const char * name = "XUP Target";
-                    if (this->verbose){
-                        LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
-                    }
-
-                    int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
-                                                this->ini.context.target_port.get(),
-                                                4, 1000,
-                                                this->ini.debug.mod_xup);
-
-                    if (client_sck == -1){
-                        this->ini.context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
-                        throw Error(ERR_SOCKET_CONNECT_FAILED);
-                    }
-
-                    SocketTransport * t = new SocketTransport(name
-                                                              , client_sck
-                                                              , this->ini.globals.target_device.get_cstr()
-                                                              , this->ini.context.target_port.get()
-                                                              , this->ini.debug.mod_xup);
-                    this->mod_transport = t;
-
-                    this->ini.context.auth_error_message.copy_c_str("failed authentification on remote X host");
-                    this->mod = new xup_mod( t
-                                             , this->front
-                                             , this->front.client_info.width
-                                             , this->front.client_info.height
-                                             , this->ini.context.opt_width.get()
-                                             , this->ini.context.opt_height.get()
-                                             , this->ini.context.opt_bpp.get()
-                                             );
-                    this->mod->get_event().st = t;
-                    this->ini.context.auth_error_message.empty();
-                    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
-                    this->connected = true;
-                }
-                break;
-
-            case MODULE_RDP:
-                {
-                    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
-
-                    // REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.");
-                    // char hostname[255];
-
-                    // TODO("as we now provide a client_info copy, we could extract hostname from in in mod_rdp, no need to use a separate field any more")
-                    // hostname[0] = 0;
-                    // if (this->front.client_info.hostname[0]){
-                    //     memcpy(hostname, this->front.client_info.hostname, 31);
-                    //     hostname[31] = 0;
-                    // }
-
-                    ClientInfo client_info = this->front.client_info;
-
-                    if (strcmp(ini.context.mode_console.get_cstr(), "force") == 0) {
-                        client_info.console_session = true;
-                        LOG(LOG_INFO, "Session::mode console : force");
-                    }
-                    else if (strcmp(ini.context.mode_console.get_cstr(), "forbid") == 0) {
-                        client_info.console_session = false;
-                        LOG(LOG_INFO, "Session::mode console : forbid");
-                    }
-                    else {
-                        // default is "allow", do nothing special
-                    }
-
-                    static const char * name = "RDP Target";
-
-                    int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
-                                                this->ini.context.target_port.get(),
-                                                3, 1000,
-                                                this->ini.debug.mod_rdp);
-
-                    if (client_sck == -1){
-                        this->ini.context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
-                        throw Error(ERR_SOCKET_CONNECT_FAILED);
-                    }
-
-                    TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
-                    SocketTransport * t = new SocketTransport(
-                                                              name
-                                                              , client_sck
-                                                              , this->ini.globals.target_device.get_cstr()
-                                                              , this->ini.context.target_port.get()
-                                                              , this->ini.debug.mod_rdp
-                                                              , &this->ini.context.auth_error_message
-                                                              );
-                    this->mod_transport = t;
-
-                    this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
-
-                    ModRDPParams mod_rdp_params( this->ini.globals.target_user.get_cstr()
-                                               , this->ini.context.target_password.get_cstr()
-                                               , this->ini.globals.target_device.get_cstr()
-                                               , "0.0.0.0"   // client ip is silenced
-                                               , this->front.keymap.key_flags
-                                               , this->ini.debug.mod_rdp
-                                               );
-                    //mod_rdp_params.enable_tls                          = true;
-                    if (!mod_rdp_params.target_password[0]) {
-                        mod_rdp_params.enable_nla                      = false;
-                    }
-                    else {
-                        mod_rdp_params.enable_nla                      = this->ini.mod_rdp.enable_nla;
-                    }
-                    mod_rdp_params.enable_krb                          = this->ini.mod_rdp.enable_kerberos;
-                    mod_rdp_params.enable_clipboard                    = this->ini.client.clipboard.get();
-                    //mod_rdp_params.enable_fastpath                     = true;
-                    //mod_rdp_params.enable_mem3blt                      = true;
-                    mod_rdp_params.enable_bitmap_update                = this->ini.globals.enable_bitmap_update;
-                    //mod_rdp_params.enable_new_pointer                  = true;
-                    mod_rdp_params.acl                                 = acl;
-                    mod_rdp_params.auth_channel                        = this->ini.globals.auth_channel;
-                    mod_rdp_params.alternate_shell                     = this->ini.globals.alternate_shell.get_cstr();
-                    mod_rdp_params.shell_working_directory             = this->ini.globals.shell_working_directory.get_cstr();
-                    mod_rdp_params.rdp_compression                     = this->ini.mod_rdp.rdp_compression;
-                    mod_rdp_params.error_message                       = &this->ini.context.auth_error_message;
-                    mod_rdp_params.disconnect_on_logon_user_change     = this->ini.mod_rdp.disconnect_on_logon_user_change;
-                    mod_rdp_params.open_session_timeout                = this->ini.mod_rdp.open_session_timeout;
-                    mod_rdp_params.certificate_change_action           = this->ini.mod_rdp.certificate_change_action;
-                    mod_rdp_params.enable_persistent_disk_bitmap_cache = this->ini.mod_rdp.persistent_disk_bitmap_cache;
-                    mod_rdp_params.enable_cache_waiting_list           = this->ini.mod_rdp.cache_waiting_list;
-                    mod_rdp_params.password_printing_mode              = this->ini.debug.password;
-                    mod_rdp_params.cache_verbose                       = this->ini.debug.cache;
-
-                    mod_rdp_params.extra_orders                    = this->ini.mod_rdp.extra_orders.c_str();
-
-                    UdevRandom gen;
-                    this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
-                    this->mod->get_event().st = t;
-
-                    // DArray<Rect> rects(1);
-                    // rects[0] = Rect(0, 0, this->front.client_info.width, this->front.client_info.height);
-                    // this->mod->rdp_input_invalidate2(rects);
-                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
-                    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
-                    this->ini.context.auth_error_message.empty();
-                    this->connected = true;
-                }
-                break;
-
-            case MODULE_VNC:
-                {
-                    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
-                    static const char * name = "VNC Target";
-
-
-                    int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
-                                                //this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                                this->ini.context.target_port.get(),
-                                                3, 1000,
-                                                this->ini.debug.mod_vnc);
-
-                    if (client_sck == -1){
-                        this->ini.context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
-                        throw Error(ERR_SOCKET_CONNECT_FAILED);
-                    }
-
-                    SocketTransport * t = new SocketTransport(name
-                                                              , client_sck
-                                                              , this->ini.globals.target_device.get_cstr()
-                                                              , this->ini.context.target_port.get()
-                                                              , this->ini.debug.mod_vnc);
-                    this->mod_transport = t;
-
-                    this->ini.context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
-
-                    this->mod = new mod_vnc(t
-                                            , this->ini
-                                            , this->ini.globals.target_user.get_cstr()
-                                            , this->ini.context.target_password.get_cstr()
-                                            , this->front
-                                            , this->front.client_info.width
-                                            , this->front.client_info.height
-                                            , this->front.client_info.keylayout
-                                            , this->front.keymap.key_flags
-                                            , this->ini.client.clipboard.get()
-                                            , this->ini.mod_vnc.encodings.c_str()
-                                            , this->ini.mod_vnc.allow_authentification_retries
-                                            , this->ini.debug.mod_vnc);
-                    this->mod->get_event().st = t;
-
-                    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
-                    this->ini.context.auth_error_message.empty();
-                    this->connected = true;
-                }
-                break;
-
-            default:
-                {
-                    LOG(LOG_INFO, "ModuleManager::Unknown backend exception\n");
-                    throw Error(ERR_SESSION_UNKNOWN_BACKEND);
+                    strncpy(this->ini.account.username,
+                            this->ini.globals.auth_user.get_cstr(),
+                            // this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0),
+                            sizeof(this->ini.account.username));
+                    this->ini.account.username[sizeof(this->ini.account.username) - 1] = 0;
                 }
             }
-        // if (this->connected) this->record(acl);
+            else if (this->ini.context_is_asked(AUTHID_AUTH_USER)) {
+                this->ini.account.username[0] = 0;
+            }
+            else {
+                TODO("check this! Assembling parts to get user login with target is not obvious"
+                     "method used below il likely to show @: if target fields are empty")
+                char buffer[255];
+                snprintf( buffer, sizeof(buffer), "%s@%s:%s%s%s"
+                        , this->ini.globals.target_user.get_cstr()
+                        , this->ini.globals.target_device.get_cstr()
+                        , this->ini.context.target_protocol.get_cstr()
+                        , (!this->ini.context.target_protocol.is_empty() ? ":" : "")
+                        , this->ini.globals.auth_user.get_cstr()
+                        );
+                strcpy(this->ini.account.username, buffer);
+            }
+
+            this->mod = new FlatLoginMod(
+                        // new LoginMod(
+                                     this->ini,
+                                     this->front,
+                                     this->front.client_info.width,
+                                     this->front.client_info.height);
+            LOG(LOG_INFO, "ModuleManager::internal module Login ready");
+            break;
+
+        case MODULE_XUP:
+            {
+                const char * name = "XUP Target";
+                if (this->verbose){
+                    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
+                }
+
+                int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
+                                            this->ini.context.target_port.get(),
+                                            4, 1000,
+                                            this->ini.debug.mod_xup);
+
+                if (client_sck == -1){
+                    this->ini.context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+
+                SocketTransport * t = new SocketTransport(name
+                                                          , client_sck
+                                                          , this->ini.globals.target_device.get_cstr()
+                                                          , this->ini.context.target_port.get()
+                                                          , this->ini.debug.mod_xup);
+                this->mod_transport = t;
+
+                this->ini.context.auth_error_message.copy_c_str("failed authentification on remote X host");
+                this->mod = new xup_mod( t
+                                         , this->front
+                                         , this->front.client_info.width
+                                         , this->front.client_info.height
+                                         , this->ini.context.opt_width.get()
+                                         , this->ini.context.opt_height.get()
+                                         , this->ini.context.opt_bpp.get()
+                                         );
+                this->mod->get_event().st = t;
+                this->ini.context.auth_error_message.empty();
+                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
+                this->connected = true;
+            }
+            break;
+
+        case MODULE_RDP:
+            {
+                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
+
+                // REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.");
+                // char hostname[255];
+
+                // TODO("as we now provide a client_info copy, we could extract hostname from in in mod_rdp, no need to use a separate field any more")
+                // hostname[0] = 0;
+                // if (this->front.client_info.hostname[0]){
+                //     memcpy(hostname, this->front.client_info.hostname, 31);
+                //     hostname[31] = 0;
+                // }
+
+                ClientInfo client_info = this->front.client_info;
+
+                if (strcmp(ini.context.mode_console.get_cstr(), "force") == 0) {
+                    client_info.console_session = true;
+                    LOG(LOG_INFO, "Session::mode console : force");
+                }
+                else if (strcmp(ini.context.mode_console.get_cstr(), "forbid") == 0) {
+                    client_info.console_session = false;
+                    LOG(LOG_INFO, "Session::mode console : forbid");
+                }
+                else {
+                    // default is "allow", do nothing special
+                }
+
+                static const char * name = "RDP Target";
+
+                int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
+                                            this->ini.context.target_port.get(),
+                                            3, 1000,
+                                            this->ini.debug.mod_rdp);
+
+                if (client_sck == -1){
+                    this->ini.context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+
+                TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
+                SocketTransport * t = new SocketTransport(
+                                                          name
+                                                          , client_sck
+                                                          , this->ini.globals.target_device.get_cstr()
+                                                          , this->ini.context.target_port.get()
+                                                          , this->ini.debug.mod_rdp
+                                                          , &this->ini.context.auth_error_message
+                                                          );
+                this->mod_transport = t;
+
+                this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
+
+                ModRDPParams mod_rdp_params( this->ini.globals.target_user.get_cstr()
+                                           , this->ini.context.target_password.get_cstr()
+                                           , this->ini.globals.target_device.get_cstr()
+                                           , "0.0.0.0"   // client ip is silenced
+                                           , this->front.keymap.key_flags
+                                           , this->ini.debug.mod_rdp
+                                           );
+                //mod_rdp_params.enable_tls                          = true;
+                if (!mod_rdp_params.target_password[0]) {
+                    mod_rdp_params.enable_nla                      = false;
+                }
+                else {
+                    mod_rdp_params.enable_nla                      = this->ini.mod_rdp.enable_nla;
+                }
+                mod_rdp_params.enable_krb                          = this->ini.mod_rdp.enable_kerberos;
+                mod_rdp_params.enable_clipboard                    = this->ini.client.clipboard.get();
+                //mod_rdp_params.enable_fastpath                     = true;
+                //mod_rdp_params.enable_mem3blt                      = true;
+                mod_rdp_params.enable_bitmap_update                = this->ini.globals.enable_bitmap_update;
+                //mod_rdp_params.enable_new_pointer                  = true;
+                mod_rdp_params.acl                                 = acl;
+                mod_rdp_params.auth_channel                        = this->ini.globals.auth_channel;
+                mod_rdp_params.alternate_shell                     = this->ini.globals.alternate_shell.get_cstr();
+                mod_rdp_params.shell_working_directory             = this->ini.globals.shell_working_directory.get_cstr();
+                mod_rdp_params.rdp_compression                     = this->ini.mod_rdp.rdp_compression;
+                mod_rdp_params.error_message                       = &this->ini.context.auth_error_message;
+                mod_rdp_params.disconnect_on_logon_user_change     = this->ini.mod_rdp.disconnect_on_logon_user_change;
+                mod_rdp_params.open_session_timeout                = this->ini.mod_rdp.open_session_timeout;
+                mod_rdp_params.certificate_change_action           = this->ini.mod_rdp.certificate_change_action;
+                mod_rdp_params.enable_persistent_disk_bitmap_cache = this->ini.mod_rdp.persistent_disk_bitmap_cache;
+                mod_rdp_params.enable_cache_waiting_list           = this->ini.mod_rdp.cache_waiting_list;
+                mod_rdp_params.password_printing_mode              = this->ini.debug.password;
+                mod_rdp_params.cache_verbose                       = this->ini.debug.cache;
+
+                mod_rdp_params.extra_orders                    = this->ini.mod_rdp.extra_orders.c_str();
+
+                UdevRandom gen;
+                this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
+                this->mod->get_event().st = t;
+
+                // DArray<Rect> rects(1);
+                // rects[0] = Rect(0, 0, this->front.client_info.width, this->front.client_info.height);
+                // this->mod->rdp_input_invalidate2(rects);
+                this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
+                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
+                this->ini.context.auth_error_message.empty();
+                this->connected = true;
+            }
+            break;
+
+        case MODULE_VNC:
+            {
+                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
+                static const char * name = "VNC Target";
+
+
+                int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
+                                            //this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
+                                            this->ini.context.target_port.get(),
+                                            3, 1000,
+                                            this->ini.debug.mod_vnc);
+
+                if (client_sck == -1){
+                    this->ini.context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+
+                SocketTransport * t = new SocketTransport(name
+                                                          , client_sck
+                                                          , this->ini.globals.target_device.get_cstr()
+                                                          , this->ini.context.target_port.get()
+                                                          , this->ini.debug.mod_vnc);
+                this->mod_transport = t;
+
+                this->ini.context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
+
+                this->mod = new mod_vnc(t
+                                        , this->ini
+                                        , this->ini.globals.target_user.get_cstr()
+                                        , this->ini.context.target_password.get_cstr()
+                                        , this->front
+                                        , this->front.client_info.width
+                                        , this->front.client_info.height
+                                        , this->front.client_info.keylayout
+                                        , this->front.keymap.key_flags
+                                        , this->ini.client.clipboard.get()
+                                        , this->ini.mod_vnc.encodings.c_str()
+                                        , this->ini.mod_vnc.allow_authentification_retries
+                                        , this->ini.debug.mod_vnc);
+                this->mod->get_event().st = t;
+
+                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
+                this->ini.context.auth_error_message.empty();
+                this->connected = true;
+            }
+            break;
+
+        default:
+            {
+                LOG(LOG_INFO, "ModuleManager::Unknown backend exception\n");
+                throw Error(ERR_SESSION_UNKNOWN_BACKEND);
+            }
+        }
     }
 
     // Check movie start/stop/pause
     virtual void record(auth_api * acl)
     {
-        if (this->ini.globals.movie.get()) {
+        if (this->ini.globals.movie.get() || !ini.context.pattern_kill.is_empty() || !ini.context.pattern_notify.is_empty()) {
             //TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)") DONE ?
             if (this->front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
                 this->front.start_capture(this->front.client_info.width,

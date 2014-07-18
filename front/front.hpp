@@ -486,57 +486,64 @@ public:
     // ===========================================================================
     void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)
     {
+        // Recording or pattern dectection is enabled.
+        if (!ini.globals.movie.get() && ini.context.pattern_kill.is_empty() && ini.context.pattern_notify.is_empty()) {
+            return;
+        }
+
         if (this->capture) {
             LOG(LOG_INFO, "Front::start_capture: session capture is already started");
 
             return;
         }
 
-        if (ini.globals.movie.get()) {
-            LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
-            struct timeval now = tvtime();
-
-            if (this->verbose & 1) {
-                LOG(LOG_INFO, "movie_path    = %s\n", ini.globals.movie_path.get_cstr());
-                LOG(LOG_INFO, "codec_id      = %s\n", ini.globals.codec_id.get_cstr());
-                LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality.get_cstr());
-                LOG(LOG_INFO, "auth_user     = %s\n", ini.globals.auth_user.get_cstr());
-                LOG(LOG_INFO, "host          = %s\n", ini.globals.host.get_cstr());
-                LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get().c_str());
-                LOG(LOG_INFO, "target_user   = %s\n", ini.globals.target_user.get_cstr());
-            }
-
-            char path[1024];
-            char basename[1024];
-            char extension[128];
-            strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
-            strcpy(basename, "redemption"); // default value actual one should come from movie_path
-            strcpy(extension, "");          // extension is currently ignored
-            bool res = true;
-            res = canonical_path(ini.globals.movie_path.get_cstr(), path,
-                                 sizeof(path), basename, sizeof(basename), extension,
-                                 sizeof(extension));
-            if (!res) {
-                LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-                throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-            }
-            this->capture = new Capture( now, width, height
-                                       , ini.video.record_path
-                                       , ini.video.record_tmp_path
-                                       , ini.video.hash_path, basename
-                                       , true
-                                       , false
-                                       , authentifier
-                                       , ini
-                                       );
-            if (this->nomouse) {
-                this->capture->set_pointer_display();
-            }
-            this->capture->capture_event.set();
-            this->capture_state = CAPTURE_STATE_STARTED;
-
-            this->authentifier = authentifier;
+        if (!ini.globals.movie.get()) {
+            ini.video.capture_flags = 8;
         }
+
+        LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
+        struct timeval now = tvtime();
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "movie_path    = %s\n", ini.globals.movie_path.get_cstr());
+            LOG(LOG_INFO, "codec_id      = %s\n", ini.globals.codec_id.get_cstr());
+            LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality.get_cstr());
+            LOG(LOG_INFO, "auth_user     = %s\n", ini.globals.auth_user.get_cstr());
+            LOG(LOG_INFO, "host          = %s\n", ini.globals.host.get_cstr());
+            LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get().c_str());
+            LOG(LOG_INFO, "target_user   = %s\n", ini.globals.target_user.get_cstr());
+        }
+
+        char path[1024];
+        char basename[1024];
+        char extension[128];
+        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+        strcpy(basename, "redemption"); // default value actual one should come from movie_path
+        strcpy(extension, "");          // extension is currently ignored
+        bool res = true;
+        res = canonical_path(ini.globals.movie_path.get_cstr(), path,
+                             sizeof(path), basename, sizeof(basename), extension,
+                             sizeof(extension));
+        if (!res) {
+            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+        }
+        this->capture = new Capture( now, width, height
+                                   , ini.video.record_path
+                                   , ini.video.record_tmp_path
+                                   , ini.video.hash_path, basename
+                                   , true
+                                   , false
+                                   , authentifier
+                                   , ini
+                                   );
+        if (this->nomouse) {
+            this->capture->set_pointer_display();
+        }
+        this->capture->capture_event.set();
+        this->capture_state = CAPTURE_STATE_STARTED;
+
+        this->authentifier = authentifier;
     }
 
     void pause_capture() {
@@ -561,6 +568,18 @@ public:
         this->capture_state = CAPTURE_STATE_STARTED;
     }
 
+    void stop_capture()
+    {
+        if (this->capture){
+            LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
+            this->authentifier = NULL;
+            delete this->capture;
+            this->capture = 0;
+
+            this->capture_state = CAPTURE_STATE_STOPED;
+        }
+    }
+
     void update_config(Inifile & ini){
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)){
@@ -576,18 +595,6 @@ public:
             this->capture->snapshot( now, this->mouse_x, this->mouse_y
                                    , false  // ignore frame in time interval
                                    );
-        }
-    }
-
-    void stop_capture()
-    {
-        if (this->capture){
-            LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
-            this->authentifier = NULL;
-            delete this->capture;
-            this->capture = 0;
-
-            this->capture_state = CAPTURE_STATE_STOPED;
         }
     }
     // ===========================================================================
