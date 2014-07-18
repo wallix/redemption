@@ -503,7 +503,7 @@ public:
             ini.video.capture_flv   = false;
             ini.video.capture_ocr   = true;
             ini.video.capture_png   = false;
-            ini.video.png_limit     = 0:
+            ini.video.png_limit     = 0;
         }
 
         LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
