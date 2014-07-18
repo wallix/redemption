@@ -27,14 +27,14 @@
 
 
 struct OutFilenameSequenceTransport
-: //SeekableTransport<
+: SeekableTransport<
 RequestCleaningTransport<
     OutputNextTransport<detail::out_sequence_filename_buf<
         detail::empty_ctor<io::posix::fdbuf> >/*,
         detail::GetCurrentPath*/
     >
 >
-// >
+>
 {
     OutFilenameSequenceTransport(
         FilenameGenerator::Format format,

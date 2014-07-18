@@ -160,8 +160,8 @@ namespace detail
             }
         }
 
-        //off_t seek(int64_t offset, int whence) /*noexcept*/
-        //{ return this->wrm.seek(offset, whence); }
+        off_t seek(int64_t offset, int whence) /*noexcept*/
+        { return this->wrm_.seek(offset, whence); }
 
         const FilenameGenerator & seqgen() const /*noexcept*/
         { return this->filegen_; }
