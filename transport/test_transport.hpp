@@ -153,5 +153,29 @@ class LogTransport
     }
 };
 
+
+class MemoryTransport : public Transport {
+public:
+    BStream         stream;
+    FixedSizeStream in_stream;
+    FixedSizeStream out_stream;
+
+    MemoryTransport()
+    : Transport()
+    , stream(65536)
+    , in_stream(stream.get_data(), stream.get_capacity())
+    , out_stream(stream.get_data(), stream.get_capacity()) {}
+
+    virtual void do_recv(char ** pbuffer, size_t len) {
+        char * buffer = *pbuffer;
+        this->in_stream.in_copy_bytes(buffer, len);
+        (*pbuffer) = buffer + len;
+    }
+
+    virtual void do_send(const char * const buffer, size_t len) {
+        this->out_stream.out_copy_bytes(buffer, len);
+    }
+};
+
 #endif
 
