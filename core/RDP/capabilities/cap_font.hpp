@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_FONT_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_FONT_HPP_
 
+#include "common.hpp"
+
 //  2.2.7.2.5 Font Capability Set (TS_FONT_CAPABILITYSET)
 
 //  The TS_FONT_CAPABILITYSET structure is used to advertise font support options. This capability is

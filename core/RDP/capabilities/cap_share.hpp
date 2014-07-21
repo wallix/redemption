@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_SHARE_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_SHARE_HPP_
 
+#include "common.hpp"
+
 // 2.2.7.2.4 Share Capability Set (TS_SHARE_CAPABILITYSET)
 // ====================================================
 // The TS_SHARE_CAPABILITYSET structure is used to advertise the channel ID of

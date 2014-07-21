@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_VIRCHAN_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_VIRCHAN_HPP_
 
+#include "common.hpp"
+
 // 2.2.7.1.10 Virtual Channel Capability Set (TS_VIRTUALCHANNEL_CAPABILITYSET)
 // ===========================================================================
 

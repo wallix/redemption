@@ -2521,7 +2521,6 @@ public:
                                 "Front::Received unexpected fast-path PUD, eventCode = %u",
                                 eventCode);
                             throw Error(ERR_RDP_FASTPATH);
-                        break;
                     }
                     if (this->verbose & 4){
                         LOG(LOG_INFO, "Front::Received fast-path PUD done");

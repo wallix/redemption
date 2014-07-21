@@ -518,7 +518,7 @@ public:
             }
 
             fgcolor = RGBtoBGR(fgcolor);
-            bgcolor = RGBtoBGR(bgcolor);
+            //bgcolor = RGBtoBGR(bgcolor);
             uint32_t uni[128];
             size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
 

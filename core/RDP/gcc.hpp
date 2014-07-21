@@ -239,8 +239,6 @@ namespace GCC
 
     class Create_Request_Recv {
         public:
-        size_t payload_size;
-
         SubStream payload;
 
         Create_Request_Recv(Stream & stream) {
@@ -469,8 +467,6 @@ namespace GCC
 
     class Create_Response_Recv {
         public:
-        size_t payload_size;
-
         SubStream payload;
 
         Create_Response_Recv(Stream & stream) {
@@ -1084,9 +1080,9 @@ namespace GCC
             , pad1octet(0)
             , serverSelectedProtocol(0)
             {
-                bzero(this->clientName, 32);
-                bzero(this->imeFileName, 64);
-                bzero(this->clientDigProductId, 64);
+                memset(this->clientName, 0, 32);
+                memset(this->imeFileName, 0, 64);
+                memset(this->clientDigProductId, 0, 64);
             }
 
             void recv(Stream & stream)

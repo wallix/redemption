@@ -117,7 +117,6 @@ public:
                 default:
                     LOG(LOG_ERR, "Unknown chunt type(%d)", chunk_type);
                     throw Error(ERR_TRM_UNKNOWN_CHUNK_TYPE);
-                    break;
             }
 
             if (real_time && (chunk_type != CHUNK_TYPE_META)) {

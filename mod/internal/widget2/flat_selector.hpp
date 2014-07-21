@@ -297,7 +297,6 @@ private:
                     return this->labels[this->current_index]->closetime.get_text();
                 default:
                     return "";
-                    break;
                 }
             }
             return "";

@@ -475,7 +475,7 @@ public:
             try
             {
                 this->t->connect();
-                this->event.st = (SocketTransport *)this->t;
+                this->event.st = static_cast<SocketTransport *>(this->t);
             }
             catch (Error e)
             {
@@ -931,14 +931,12 @@ public:
                     // thow an Error ?
                     LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
                     throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
-                    break;
                 }
             }
             break;
         default:
             LOG(LOG_ERR, "Unknown state=%d", this->state);
             throw Error(ERR_VNC);
-            break;
         }
     } // draw_event
 
@@ -1645,7 +1643,6 @@ public:
             default:
                 LOG(LOG_ERR, "unexpected encoding %8x in lib_frame_buffer", encoding);
                 throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
-                break;
             }
         }
 

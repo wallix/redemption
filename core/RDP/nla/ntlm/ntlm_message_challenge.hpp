@@ -218,7 +218,7 @@ struct NTLMChallengeMessage : public NTLMMessage {
         this->negoFlags.emit(stream);
         stream.out_copy_bytes(this->serverChallenge, 8);
         stream.out_clear_bytes(8);
-        currentOffset += this->TargetInfo.emit(stream, currentOffset);
+        /*currentOffset +=*/ this->TargetInfo.emit(stream, currentOffset);
         if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
             this->version.emit(stream);
         }

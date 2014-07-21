@@ -55,7 +55,7 @@ RequestCleaningTransport<
             this->set_authentifier(authentifier);
         }
 
-        detail::write_meta_headers(this->buffer().mwrm(), path, width, height, this->authentifier);
+        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier);
     }
 
     virtual void timestamp(timeval now) /*noexcept*/

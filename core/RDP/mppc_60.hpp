@@ -21,6 +21,9 @@
 #ifndef _REDEMPTION_CORE_RDP_MPPC_60_HPP_
 #define _REDEMPTION_CORE_RDP_MPPC_60_HPP_
 
+#include <stdint.h>
+#include "mppc.hpp"
+
 static uint8_t HuffLenLEC[] = {
     0x6, 0x6, 0x6, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x8, 0x8, 0x8, 0x8, 0x8, // 0
     0x8, 0x8, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0x8, 0x8, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, // 16
@@ -215,27 +218,26 @@ static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex) {
 }
 
 struct rdp_mppc_60_dec : public rdp_mppc_dec {
-    uint8_t  * history_buf;
-    uint16_t * offset_cache;
+    uint8_t    history_buf[RDP_60_HIST_BUF_LEN];
+    uint16_t   offset_cache[RDP_60_OFFSET_CACHE_SIZE];
     uint8_t  * history_buf_end;
     uint8_t  * history_ptr;
 
     /**
      * Initialize rdp_mppc_60_dec structure
      */
-    rdp_mppc_60_dec() {
-        this->history_buf     = static_cast<uint8_t *>(calloc(RDP_60_HIST_BUF_LEN, 1));
-        this->offset_cache    = static_cast<uint16_t *>(calloc(RDP_60_OFFSET_CACHE_SIZE, 1));
-        this->history_ptr     = this->history_buf;
-        this->history_buf_end = this->history_buf + RDP_60_HIST_BUF_LEN - 1;
+    rdp_mppc_60_dec()
+    : history_buf_end(this->history_buf + RDP_60_HIST_BUF_LEN - 1)
+    , history_ptr(this->history_buf)
+    {
+        memset(this->history_buf, 0, sizeof(this->history_buf));
+        memset(this->offset_cache, 0, sizeof(this->offset_cache));
     }
 
     /**
      * Deinitialize rdp_mppc_60_dec structure
      */
     virtual ~rdp_mppc_60_dec() {
-        free(this->history_buf);
-        free(this->offset_cache);
     }
 
     virtual void mini_dump()
@@ -285,19 +287,19 @@ protected:
     }
 
     static inline uint16_t getLECindex(uint16_t huff) {
-        uint16_t h = HuffIndexLEC[rdp_mppc_60_dec::LEChash(huff)];
+        uint16_t h = HuffIndexLEC[ ::rdp_mppc_60_dec::LEChash(huff)];
         if ((h ^ huff) >> 9) {
             return h & 0x1ff;
         }
-        return HuffIndexLEC[LECHTab[rdp_mppc_60_dec::miniLEChash(huff)]];
+        return HuffIndexLEC[LECHTab[ ::rdp_mppc_60_dec::miniLEChash(huff)]];
     }
 
     static inline uint16_t getLOMindex(uint16_t huff) {
-        uint16_t h = HuffIndexLOM[rdp_mppc_60_dec::LOMhash(huff)];
+        uint16_t h = HuffIndexLOM[ ::rdp_mppc_60_dec::LOMhash(huff)];
         if ((h ^ huff) >> 5) {
             return h & 0x1f;
         }
-        return HuffIndexLOM[LOMHTab[rdp_mppc_60_dec::miniLOMhash(huff)]];
+        return HuffIndexLOM[LOMHTab[ ::rdp_mppc_60_dec::miniLOMhash(huff)]];
     }
 
     static inline uint32_t transposebits(uint32_t x) {
@@ -399,10 +401,10 @@ public:
             }
         }
 
-        d32 = rdp_mppc_60_dec::transposebits(d32);
+        d32 = this->transposebits(d32);
 
         if (cptr < cbuf + len) {
-            cur_uint8_t   = rdp_mppc_60_dec::transposebits(*cptr++);
+            cur_uint8_t   = this->transposebits(*cptr++);
             cur_bits_left = 8;
         }
         else {
@@ -421,8 +423,8 @@ public:
                 if (i == 0xc) {
                     continue;
                 }
-                i32 = rdp_mppc_60_dec::transposebits((d32 & (0xffffffff << (32 - i))));
-                i32 = rdp_mppc_60_dec::getLECindex(i32);
+                i32 = this->transposebits((d32 & (0xffffffff << (32 - i))));
+                i32 = this->getLECindex(i32);
                 if (i == HuffLenLEC[i32]) {
                     break;
                 }
@@ -437,7 +439,7 @@ public:
                 tmp         = CopyOffsetBitsLUT[LUTIndex];
                 copy_offset = CopyOffsetBaseLUT[LUTIndex] - 0x1;
                 if (tmp != 0) {
-                    copy_offset += rdp_mppc_60_dec::transposebits(d32 & (0xffffffff << (32 - tmp)));
+                    copy_offset += this->transposebits(d32 & (0xffffffff << (32 - tmp)));
                 }
                 cache_add(offset_cache, copy_offset);
                 d32       <<= tmp;
@@ -469,7 +471,7 @@ public:
                     tmp       -= cur_bits_left;
                     if (cptr < cbuf + len) {
                         /* more compressed data available */
-                        cur_uint8_t   = rdp_mppc_60_dec::transposebits(*cptr++);
+                        cur_uint8_t   = this->transposebits(*cptr++);
                         cur_bits_left = 8;
                     }
                     else {
@@ -491,7 +493,7 @@ public:
                     d32       |= cur_uint8_t >> (8 - tmp);
                     bits_left =  32;
                     if (cptr < cbuf + len) {
-                        cur_uint8_t   = rdp_mppc_60_dec::transposebits(*cptr++);
+                        cur_uint8_t   = this->transposebits(*cptr++);
                         cur_bits_left = 8;
                     }
                     else {
@@ -505,8 +507,8 @@ public:
                 continue;
 
             for (i = 0x2; i <= 0x9; i++) {
-                i32 = rdp_mppc_60_dec::transposebits((d32 & (0xffffffff << (32 - i))));
-                i32 = rdp_mppc_60_dec::getLOMindex(i32);
+                i32 = this->transposebits((d32 & (0xffffffff << (32 - i))));
+                i32 = this->getLOMindex(i32);
                 if (i == HuffLenLOM[i32]) {
                     break;
                 }
@@ -516,7 +518,7 @@ public:
             tmp       =   LOMBitsLUT[i32];
             lom       =   LOMBaseLUT[i32];
             if(tmp != 0) {
-                lom += rdp_mppc_60_dec::transposebits(d32 & (0xffffffff << (32 - tmp)));
+                lom += this->transposebits(d32 & (0xffffffff << (32 - tmp)));
             }
             d32       <<= tmp;
             bits_left -=  tmp;
@@ -571,7 +573,7 @@ public:
                     tmp       -= cur_bits_left;
                     if (cptr < cbuf + len) {
                         /* more compressed data available */
-                        cur_uint8_t   = rdp_mppc_60_dec::transposebits(*cptr++);
+                        cur_uint8_t   = this->transposebits(*cptr++);
                         cur_bits_left = 8;
                     }
                     else {
@@ -593,7 +595,7 @@ public:
                     d32       |= cur_uint8_t >> (8 - tmp);
                     bits_left =  32;
                     if (cptr < cbuf + len) {
-                        cur_uint8_t   = rdp_mppc_60_dec::transposebits(*cptr++);
+                        cur_uint8_t   = this->transposebits(*cptr++);
                         cur_bits_left = 8;
                     }
                     else {

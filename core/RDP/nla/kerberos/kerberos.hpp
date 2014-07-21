@@ -107,7 +107,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             return SEC_E_INSUFFICIENT_MEMORY;
         }
         if (ulAttribute == SECPKG_ATTR_SIZES) {
-            SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*) pBuffer;
+            SecPkgContext_Sizes* ContextSizes = static_cast<SecPkgContext_Sizes*>(pBuffer);
             ContextSizes->cbMaxToken = 4096;
             ContextSizes->cbMaxSignature = 0;
             ContextSizes->cbBlockSize = 0;
@@ -130,7 +130,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                                 TimeStamp * ptsExpiry) {
 
         if (pszPrincipal && pvLogonID) {
-            Array * spn = (Array *) pvLogonID;
+            Array * spn = static_cast<Array *>(pvLogonID);
             const char * p = pszPrincipal;
             size_t length = 0;
             if (p) {
@@ -146,7 +146,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 
         SEC_WINNT_AUTH_IDENTITY* identity = NULL;
         if (pAuthData != NULL) {
-            identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+            identity = static_cast<SEC_WINNT_AUTH_IDENTITY*>(pAuthData);
         }
         // set KRB5CCNAME cache name to specific with PID,
         // call kinit to get tgt with identity credentials
@@ -172,7 +172,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         if (!phCredential) {
             return SEC_E_INVALID_HANDLE;
         }
-        Krb5Creds* credentials = (Krb5Creds*) phCredential->SecureHandleGetLowerPointer();
+        Krb5Creds* credentials = static_cast<Krb5Creds*>(phCredential->SecureHandleGetLowerPointer());
         if (!credentials) {
             return SEC_E_INVALID_HANDLE;
         }
@@ -227,7 +227,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
         KERBEROSContext * krb_ctx = NULL;
         if (phContext) {
-            krb_ctx = (KERBEROSContext*) phContext->SecureHandleGetLowerPointer();
+            krb_ctx = static_cast<KERBEROSContext*>(phContext->SecureHandleGetLowerPointer());
         }
         if (!krb_ctx) {
             // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
@@ -349,7 +349,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
         KERBEROSContext * krb_ctx = NULL;
         if (phContext) {
-            krb_ctx = (KERBEROSContext*) phContext->SecureHandleGetLowerPointer();
+            krb_ctx = static_cast<KERBEROSContext*>(phContext->SecureHandleGetLowerPointer());
         }
         if (!krb_ctx) {
             // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
@@ -453,11 +453,9 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     }
 
     virtual SEC_STATUS FreeContextBuffer(void* pvContextBuffer) {
-        KERBEROSContext* toDelete = (KERBEROSContext*)((PCtxtHandle)pvContextBuffer)->SecureHandleGetLowerPointer();
-        if (toDelete) {
-            delete toDelete;
-            toDelete = NULL;
-        }
+        KERBEROSContext* toDelete = static_cast<KERBEROSContext*>(
+            static_cast<PCtxtHandle>(pvContextBuffer)->SecureHandleGetLowerPointer());
+        delete toDelete;
         return SEC_E_OK;
     }
 
@@ -481,7 +479,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         KERBEROSContext* context = NULL;
 
         if (phContext) {
-            context = (KERBEROSContext*) phContext->SecureHandleGetLowerPointer();
+            context = static_cast<KERBEROSContext*>(phContext->SecureHandleGetLowerPointer());
         }
         if (!context) {
             return SEC_E_NO_CONTEXT;
@@ -538,7 +536,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         KERBEROSContext* context = NULL;
 
         if (phContext) {
-            context = (KERBEROSContext*) phContext->SecureHandleGetLowerPointer();
+            context = static_cast<KERBEROSContext*>(phContext->SecureHandleGetLowerPointer());
         }
         if (!context) {
             return SEC_E_NO_CONTEXT;

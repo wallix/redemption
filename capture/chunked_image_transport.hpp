@@ -77,11 +77,9 @@ private:
             case LAST_IMAGE_CHUNK:
                 LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
                 throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-            break;
             default:
                 LOG(LOG_ERR, "Failed to read embedded image from WRM");
                 throw Error(ERR_TRANSPORT_READ_FAILED);
-            break;
             }
         }
     }

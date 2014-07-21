@@ -26,7 +26,7 @@
 #include "stream.hpp"
 
 #define NTLMSP_NAME "NTLM"
-#define SECBUFFER_VERSION			0
+#define SECBUFFER_VERSION                        0
 
 /* Buffer Types */
 enum buffer_type {
@@ -72,14 +72,14 @@ struct SecBufferDesc
         unsigned long index;
         PSecBuffer pSecBuffer = NULL;
 
-	for (index = 0; index < this->cBuffers; index++) {
+        for (index = 0; index < this->cBuffers; index++) {
             if (this->pBuffers[index].BufferType == BufferType) {
                 pSecBuffer = &(this->pBuffers[index]);
                 break;
             }
         }
 
-	return pSecBuffer;
+        return pSecBuffer;
     }
 
 };
@@ -114,8 +114,8 @@ struct SEC_CHANNEL_BINDINGS
 };
 struct SecPkgContext_Bindings
 {
-	uint32_t BindingsLength;
-	SEC_CHANNEL_BINDINGS* Bindings;
+        uint32_t BindingsLength;
+        SEC_CHANNEL_BINDINGS* Bindings;
 };
 
 struct SecPkgContext_Sizes
@@ -141,9 +141,9 @@ struct SEC_WINNT_AUTH_IDENTITY
     uint32_t Flags;
 
     SEC_WINNT_AUTH_IDENTITY()
-        : User(Array(0))
-        , Domain(Array(0))
-        , Password(Array(0))
+        : User(0)
+        , Domain(0)
+        , Password(0)
         , Flags(0)
     {
     }
@@ -153,10 +153,10 @@ struct SEC_WINNT_AUTH_IDENTITY
             size_t user_len = UTF8Len(user);
             this->User.init(user_len * 2);
             UTF8toUTF16(user, this->User.get_data(), user_len * 2);
-	}
+        }
         else {
             this->User.init(0);
-	}
+        }
     }
 
     void SetDomainFromUtf8(const uint8_t * domain) {
@@ -164,10 +164,10 @@ struct SEC_WINNT_AUTH_IDENTITY
             size_t domain_len = UTF8Len(domain);
             this->Domain.init(domain_len * 2);
             UTF8toUTF16(domain, this->Domain.get_data(), domain_len * 2);
-	}
+        }
         else {
             this->Domain.init(0);
-	}
+        }
     }
 
     void SetPasswordFromUtf8(const uint8_t * password) {
@@ -175,10 +175,10 @@ struct SEC_WINNT_AUTH_IDENTITY
             size_t password_len = UTF8Len(password);
             this->Password.init(password_len * 2);
             UTF8toUTF16(password, this->Password.get_data(), password_len * 2);
-	}
+        }
         else {
             this->Password.init(0);
-	}
+        }
     }
     void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass) {
         if (user) {
@@ -214,28 +214,28 @@ struct SEC_WINNT_AUTH_IDENTITY
             size_t user_len = UTF8Len(user);
             this->User.init(user_len * 2);
             UTF8toUTF16(user, this->User.get_data(), user_len * 2);
-	}
+        }
         else {
             this->User.init(0);
-	}
+        }
 
         if (domain) {
             size_t domain_len = UTF8Len(domain);
             this->Domain.init(domain_len * 2);
             UTF8toUTF16(domain, this->Domain.get_data(), domain_len * 2);
-	}
+        }
         else {
             this->Domain.init(0);
-	}
+        }
 
         if (password) {
             size_t password_len = UTF8Len(password);
             this->Password.init(password_len * 2);
             UTF8toUTF16(password, this->Password.get_data(), password_len * 2);
-	}
+        }
         else {
             this->Password.init(0);
-	}
+        }
 
     }
 
@@ -577,7 +577,7 @@ struct SecurityFunctionTable {
     // GSS_Release_cred
     // FREE_CREDENTIALS_HANDLE_FN FreeCredentialsHandle;
     virtual SEC_STATUS FreeCredentialsHandle(PCredHandle phCredential) {
-	return SEC_E_UNSUPPORTED_FUNCTION;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // void * Reserved2;
@@ -668,7 +668,7 @@ struct SecurityFunctionTable {
     virtual SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
                                                 SecPkgInfo * pPackageInfo) {
 
-	return SEC_E_SECPKG_NOT_FOUND;
+        return SEC_E_SECPKG_NOT_FOUND;
     }
 
     // void* Reserved3;

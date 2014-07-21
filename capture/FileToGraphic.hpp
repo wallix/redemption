@@ -1050,7 +1050,6 @@ public:
             default:
                 LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
                 throw Error(ERR_WRM);
-            break;
         }
     }
 

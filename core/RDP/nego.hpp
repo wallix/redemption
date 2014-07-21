@@ -319,7 +319,7 @@ struct RdpNego
                     }
                     else {
                         LOG(LOG_ERR, "Unknown Exception thrown");
-                        throw e;
+                        throw ;
                     }
                 }
                 if (res != 1) {

@@ -24,6 +24,9 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAPCODECS_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAPCODECS_HPP_
 
+#include <string.h>
+#include "common.hpp"
+
 // 2.2.7.2.10 Bitmap Codecs Capability Set (TS_BITMAPCODECS_CAPABILITYSET)
 // =======================================================================
 // The TS_BITMAPCODECS_CAPABILITYSET structure advertises support for bitmap encoding and
@@ -327,6 +330,7 @@ struct RFXSrvrCaps : public RFXGenCaps {
     uint8_t * reserved;
 
     RFXSrvrCaps()
+    : reserved(0)
     {
     }
 
@@ -411,6 +415,7 @@ struct RFXClntCaps : public RFXGenCaps {
     : length(0)          // Total length in bytes of that structure fields
     , captureFlags(0)    // flag from enum
     , capsLength(0)        // length in bytes of the next field
+    , capsData(0)
     {
     }
 };

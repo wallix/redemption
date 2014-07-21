@@ -79,7 +79,6 @@ void daemonize(const char * pid_file)
             _exit(1);
         }
         close(fd);
-        usleep(1000000);
         open("/dev/null", O_RDONLY, 0); // stdin  0
         open("/dev/null", O_WRONLY, 0); // stdout 1
         open("/dev/null", O_WRONLY, 0); // stderr 2
@@ -91,7 +90,6 @@ void daemonize(const char * pid_file)
 /*****************************************************************************/
 int shutdown(const char * pid_file)
 {
-    int pid;
     int fd;
     char text[256];
 
@@ -118,7 +116,7 @@ int shutdown(const char * pid_file)
         cout << "failed to read pid file\n";
     }
     else{
-        pid = atoi(text);
+        int pid = atoi(text);
         cout << "stopping process id " << pid << "\n";
         if (pid > 0) {
             int res = kill(pid, SIGTERM);

@@ -20,6 +20,8 @@
 #ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMAVPAIR_HPP_
 #define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMAVPAIR_HPP_
 
+#include "log.hpp"
+#include "stream.hpp"
 
 // 2.2.2.1   AV_PAIR
 // ==================================
@@ -129,7 +131,7 @@ struct NtlmAvPair {
     NtlmAvPair(NTLM_AV_ID id, const uint8_t * value, size_t length)
         : AvId(id)
         , AvLen(length)
-        , Value(BStream(length))
+        , Value(length)
     {
         if (value) {
             this->Value.out_copy_bytes(value, length);
@@ -155,7 +157,7 @@ struct NtlmAvPair {
     // }
 
     void print() {
-	LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", this->AvId, this->AvLen);
+        LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", this->AvId, this->AvLen);
         this->Value.print();
     }
 };
@@ -164,26 +166,15 @@ struct NtlmAvPairList {
     NtlmAvPair * list[AV_ID_MAX];
 
     NtlmAvPairList() {
-        this->init();
-    }
-
-    virtual ~NtlmAvPairList() {
-        this->delete_all();
-    }
-
-    void init() {
         for (int i = 0; i < AV_ID_MAX; i++) {
             this->list[i] = NULL;
         }
         this->list[MsvAvEOL] = new NtlmAvPair(MsvAvEOL, NULL, 0);
     }
 
-    void delete_all() {
+    virtual ~NtlmAvPairList() {
         for (int i = 0; i < AV_ID_MAX; i++) {
-            if (this->list[i]) {
-                delete this->list[i];
-                this->list[i] = NULL;
-            }
+            delete this->list[i];
         }
     }
 
@@ -253,7 +244,7 @@ struct NtlmAvPairList {
     }
 
     void print() {
-	LOG(LOG_INFO, "Av Pair List : %zu elements {", this->length());
+        LOG(LOG_INFO, "Av Pair List : %zu elements {", this->length());
 
         for (int i = 0; i < AV_ID_MAX; i++) {
             if (this->list[i]) {
@@ -261,7 +252,7 @@ struct NtlmAvPairList {
             }
         }
 
-	LOG(LOG_INFO, "}");
+        LOG(LOG_INFO, "}");
     }
 
 

@@ -21,6 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_MPPC_61_HPP_
 #define _REDEMPTION_CORE_RDP_MPPC_61_HPP_
 
+#include "mppc_50.hpp"
+
 // [MS-RDPEGDI] 2.2.2.4.1 RDP 6.1 Compressed Data (RDP61_COMPRESSED_DATA)
 // ======================================================================
 
@@ -256,7 +258,7 @@ public:
             const uint8_t * level_1_compressed_data;
             uint32_t        level_1_compressed_data_size;
 
-            int nResult = this->level_2_decompressor.decompress(compressed_data_stream.p,
+            bool nResult = this->level_2_decompressor.decompress(compressed_data_stream.p,
                 compressed_data_stream.in_remain(), Level2ComprFlags, level_1_compressed_data,
                 level_1_compressed_data_size);
             if (nResult != true) {
@@ -403,7 +405,7 @@ struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_matc
             uint16_t        CurrentMatchLength = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH;
             const uint8_t * o = output_data + CurrentMatchLength;
             const uint8_t * h = history_data_begin + CurrentMatchLength;
-            for (; (*o == *h) && (o < output_data + output_data_size) && (h < history_data + history_data_size);
+            for (; (o < output_data + output_data_size) && (h < history_data + history_data_size) && (*o == *h);
                 o++, h++, CurrentMatchLength++);
 
             if (CurrentMatchLength > MatchLength) {

@@ -305,8 +305,11 @@ struct Error
 {
     int id;
     int errnum;
+
+private:
     char errstr[64];
 
+public:
     Error(int id, int errnum = 0) throw()
     : id(id)
     , errnum(errnum)

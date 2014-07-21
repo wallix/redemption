@@ -24,6 +24,7 @@
 #include <cerrno>
 #include <cstddef>
 #include <unistd.h>
+#include <stdio.h>
 
 namespace io {
 namespace posix {
@@ -32,10 +33,9 @@ using std::size_t;
 
 inline ssize_t read_all(int fd, void * data, size_t len) /*noexcept*/
 {
-    ssize_t ret = 0;
     size_t remaining_len = len;
     while (remaining_len) {
-        ret = ::read(fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+        ssize_t ret = ::read(fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
         if (ret < 0){
             if (errno == EINTR){
                 continue;
@@ -57,11 +57,10 @@ inline ssize_t read_all(int fd, void * data, size_t len) /*noexcept*/
 
 inline ssize_t write_all(int fd, const void * data, size_t len) /*noexcept*/
 {
-    ssize_t ret = 0;
     size_t remaining_len = len;
     size_t total_sent = 0;
     while (remaining_len) {
-        ret = ::write(fd, static_cast<const char*>(data) + total_sent, remaining_len);
+        ssize_t ret = ::write(fd, static_cast<const char*>(data) + total_sent, remaining_len);
         if (ret <= 0){
             if (errno == EINTR){
                 continue;

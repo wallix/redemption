@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_DRAWNINEGRIDCACHE_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_DRAWNINEGRIDCACHE_HPP_
 
+#include "common.hpp"
+
 // 2.2.1.2 DrawNineGrid Cache Capability Set (TS_DRAW_NINEGRID_CAPABILITYSET)
 // ==========================================================================
 // The TS_DRAW_NINEGRID_CAPABILITYSET structure is used to advertise support for NineGrid

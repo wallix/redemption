@@ -73,9 +73,9 @@ namespace detail {
 
         ssize_t write(const void * data, size_t len) /*noexcept*/
         {
-            if (!this->wrm().is_open()) {
+            if (!this->buf().is_open()) {
                 const char * filename = this->get_filename_generate();
-                const int res = this->open_wrm(filename);
+                const int res = this->open_filename(filename);
                 if (res < 0) {
                     return res;
                 }
@@ -89,24 +89,24 @@ namespace detail {
                 unsigned char iv[32];
                 if (-1 == urandom_read(iv, 32)) {
                     LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
-                    this->wrm().close();
+                    this->buf().close();
                     return -1;
                 }
 
-                this->encrypt_wrm.open(this->wrm(), trace_key, &this->cctx, iv);
+                this->encrypt_wrm.open(this->buf(), trace_key, &this->cctx, iv);
             }
-            return this->encrypt_wrm.write(this->wrm(), data, len);
+            return this->encrypt_wrm.write(this->buf(), data, len);
         }
 
         int close() /*noexcept*/
         {
-            if (this->wrm().is_open()) {
+            if (this->buf().is_open()) {
                 if (this->next()) {
                     return 1;
                 }
             }
 
-            if (!this->mwrm().is_open()) {
+            if (!this->meta_buf().is_open()) {
                 return 1;
             }
 
@@ -121,7 +121,7 @@ namespace detail {
             unsigned char hash[HASH_LEN + 1] = {0};
             hash[0] = ' ';
 
-            if (this->mwrm().close(hash+1)) {
+            if (this->meta_buf().close(hash+1)) {
                 return 1;
             }
 
@@ -151,11 +151,11 @@ namespace detail {
 
         int next() /*noexcept*/
         {
-            if (this->wrm().is_open()) {
+            if (this->buf().is_open()) {
                 unsigned char hash[HASH_LEN];
                 {
-                    const int res1 = this->encrypt_wrm.close(this->wrm(), hash, this->cctx.hmac_key);
-                    const int res2 = this->wrm().close();
+                    const int res1 = this->encrypt_wrm.close(this->buf(), hash, this->cctx.hmac_key);
+                    const int res2 = this->buf().close();
                     if (res1) {
                         return res1;
                     }
@@ -164,12 +164,12 @@ namespace detail {
                     }
                 }
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                const char * filename = this->rename_wrm();
+                const char * filename = this->rename_filename();
                 if (!filename) {
                     return 1;
                 }
                 ssize_t len = strlen(filename);
-                ssize_t res = this->mwrm().write(filename, len);
+                ssize_t res = this->meta_buf().write(filename, len);
                 if (res == len) {
                     char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + HASH_LEN*2 + 2];
                     len = sprintf(mes, " %u %u", (unsigned)this->start_sec_, (unsigned)this->stop_sec_+1);
@@ -184,7 +184,7 @@ namespace detail {
                     }
                     *p++ = '\n';
                     len = p-mes;
-                    res = this->mwrm().write(mes, len);
+                    res = this->meta_buf().write(mes, len);
                 }
                 if (res < len) {
                     return res < 0 ? res : 1;
@@ -231,7 +231,7 @@ RequestCleaningTransport<
             this->set_authentifier(authentifier);
         }
 
-        detail::write_meta_headers(this->buffer().mwrm(), path, width, height, this->authentifier);
+        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier);
     }
 
     virtual void timestamp(timeval now) /*noexcept*/

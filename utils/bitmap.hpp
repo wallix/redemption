@@ -42,6 +42,7 @@
 #include <error.h>
 #include <errno.h>
 #include <png.h>
+#include <string.h>
 
 #include "log.hpp"
 #include "bitfu.hpp"
@@ -139,7 +140,7 @@ public:
             const size_t & data_width = cx * nbbytes(bpp);
             for (uint16_t i = 0 ; i < this->cy ; i++){
                 memcpy(dest, src, data_width);
-                bzero(dest + this->line_size, this->line_size - data_width);
+                memset(dest + this->line_size, 0, this->line_size - data_width);
                 src += data_width;
                 dest += this->line_size;
             }
@@ -183,7 +184,7 @@ public:
         for (unsigned i = 0; i < this->cy; i++) {
             memcpy(dest, src, line_to_copy);
             if (line_to_copy < this->line_size){
-                bzero(dest + line_to_copy, this->line_size - line_to_copy);
+                memset(dest + line_to_copy, 0, this->line_size - line_to_copy);
             }
             src += src_bmp.line_size;
             dest += this->line_size;
@@ -223,7 +224,7 @@ public:
         for (unsigned i = 0; i < this->cy; i++) {
             memcpy(dest, src, line_to_copy_size);
             if (line_to_copy_size < this->line_size){
-                bzero(dest + line_to_copy_size, this->line_size - line_to_copy_size);
+                memset(dest + line_to_copy_size, 0, this->line_size - line_to_copy_size);
             }
             src -= src_row_size;
             dest += this->line_size;
@@ -455,8 +456,9 @@ public:
                     ::out_bytes_le(dest + y * this->line_size + x * Bpp, Bpp, px);
                 }
                 if (this->line_size > header.image_width * Bpp){
-                    bzero(dest + y * this->line_size + header.image_width * Bpp,
-                          this->line_size - header.image_width * Bpp);
+                    memset(dest + y * this->line_size + header.image_width * Bpp,
+                           0,
+                           this->line_size - header.image_width * Bpp);
                 }
             }
         }
@@ -603,51 +605,51 @@ public:
 private:
     TODO("move that function to external definition")
 
-    const char * get_opcode(uint8_t opcode){
-        enum {
-            FILL    = 0,
-            MIX     = 1,
-            FOM     = 2,
-            COLOR   = 3,
-            COPY    = 4,
-            MIX_SET = 6,
-            FOM_SET = 7,
-            BICOLOR = 8,
-            SPECIAL_FGBG_1 = 9,
-            SPECIAL_FGBG_2 = 10,
-            WHITE = 13,
-            BLACK = 14
-        };
-
-        switch (opcode){
-            case FILL:
-                return "FILL";
-            case MIX:
-                return "MIX";
-            case FOM:
-                return "FOM";
-            case COLOR:
-                return "COLOR";
-            case COPY:
-                return "COPY";
-            case MIX_SET:
-                return "MIX_SET";
-            case FOM_SET:
-                return "FOM_SET";
-            case BICOLOR:
-                return "BICOLOR";
-            case SPECIAL_FGBG_1:
-                return "SPECIAL_FGBG_1";
-            case SPECIAL_FGBG_2:
-                return "SPECIAL_FGBG_2";
-            case WHITE:
-                return "WHITE";
-            case BLACK:
-                return "BLACK";
-            default:
-                return "Unknown Opcode";
-        };
-    }
+    //const char * get_opcode(uint8_t opcode){
+    //    enum {
+    //        FILL    = 0,
+    //        MIX     = 1,
+    //        FOM     = 2,
+    //        COLOR   = 3,
+    //        COPY    = 4,
+    //        MIX_SET = 6,
+    //        FOM_SET = 7,
+    //        BICOLOR = 8,
+    //        SPECIAL_FGBG_1 = 9,
+    //        SPECIAL_FGBG_2 = 10,
+    //        WHITE = 13,
+    //        BLACK = 14
+    //    };
+    //
+    //    switch (opcode){
+    //        case FILL:
+    //            return "FILL";
+    //        case MIX:
+    //            return "MIX";
+    //        case FOM:
+    //            return "FOM";
+    //        case COLOR:
+    //            return "COLOR";
+    //        case COPY:
+    //            return "COPY";
+    //        case MIX_SET:
+    //            return "MIX_SET";
+    //        case FOM_SET:
+    //            return "FOM_SET";
+    //        case BICOLOR:
+    //            return "BICOLOR";
+    //        case SPECIAL_FGBG_1:
+    //            return "SPECIAL_FGBG_1";
+    //        case SPECIAL_FGBG_2:
+    //            return "SPECIAL_FGBG_2";
+    //        case WHITE:
+    //            return "WHITE";
+    //        case BLACK:
+    //            return "BLACK";
+    //        default:
+    //            return "Unknown Opcode";
+    //    };
+    //}
 
     void decompress(const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size) const
     {
@@ -826,7 +828,7 @@ private:
                 out += Bpp;
                 out_x_count += 1;
                 if (out_x_count == dst_cx){
-                    bzero(out, (dst_cx - src_cx) * Bpp);
+                    memset(out, 0, (dst_cx - src_cx) * Bpp);
                     out_x_count = 0;
                 }
             }
@@ -897,7 +899,7 @@ private:
                 out += Bpp;
                 out_x_count += 1;
                 if (out_x_count == dst_cx){
-                    bzero(out, (dst_cx - src_cx) * Bpp);
+                    memset(out, 0, (dst_cx - src_cx) * Bpp);
                     out_x_count = 0;
                 }
             }
@@ -1170,12 +1172,12 @@ public:
 
         if (rle) {
             if (!no_alpha_plane) {
-                Bitmap::decompress_color_plane(src_cx, src_cy, data, data_size, this->cx, red_plane);
+                this->decompress_color_plane(src_cx, src_cy, data, data_size, this->cx, red_plane);
             }
 
-            Bitmap::decompress_color_plane(src_cx, src_cy, data, data_size, this->cx, red_plane);
-            Bitmap::decompress_color_plane(src_cx, src_cy, data, data_size, this->cx, green_plane);
-            Bitmap::decompress_color_plane(src_cx, src_cy, data, data_size, this->cx, blue_plane);
+            this->decompress_color_plane(src_cx, src_cy, data, data_size, this->cx, red_plane);
+            this->decompress_color_plane(src_cx, src_cy, data, data_size, this->cx, green_plane);
+            this->decompress_color_plane(src_cx, src_cy, data, data_size, this->cx, blue_plane);
         }
         else {
             if (!no_alpha_plane) {
@@ -1184,9 +1186,9 @@ public:
                 data_size -= size;
             }
 
-            Bitmap::in_copy_color_plan(src_cx, src_cy, data, data_size, this->cx, red_plane);
-            Bitmap::in_copy_color_plan(src_cx, src_cy, data, data_size, this->cx, green_plane);
-            Bitmap::in_copy_color_plan(src_cx, src_cy, data, data_size, this->cx, blue_plane);
+            this->in_copy_color_plan(src_cx, src_cy, data, data_size, this->cx, red_plane);
+            this->in_copy_color_plan(src_cx, src_cy, data, data_size, this->cx, green_plane);
+            this->in_copy_color_plan(src_cx, src_cy, data, data_size, this->cx, blue_plane);
 
             data_size--;    // Pad
         }
@@ -1995,7 +1997,7 @@ public:
                 uint32_t run_length;
                 uint32_t raw_bytes;
 
-                Bitmap::get_run(xpos, data_size, last_raw, run_length, raw_bytes);
+                get_run(xpos, data_size, last_raw, run_length, raw_bytes);
 
                 //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
 
@@ -2140,9 +2142,9 @@ public:
               (1 << 5)  // No alpha plane
             | (1 << 4)  // RLE
             );
-        Bitmap::compress_color_plane(this->cx, this->cy, outbuffer, red_plane);
-        Bitmap::compress_color_plane(this->cx, this->cy, outbuffer, green_plane);
-        Bitmap::compress_color_plane(this->cx, this->cy, outbuffer, blue_plane);
+        this->compress_color_plane(this->cx, this->cy, outbuffer, red_plane);
+        this->compress_color_plane(this->cx, this->cy, outbuffer, green_plane);
+        this->compress_color_plane(this->cx, this->cy, outbuffer, blue_plane);
 
         // Memoize result of compression
         this->data_compressed_size = outbuffer.p - tmp_data_compressed;
@@ -2210,7 +2212,7 @@ public:
                 TODO("padding code should not be necessary as source bmp width is already aligned");
                 if (this->line_size < bmp.cx * Bpp){
                     uint16_t padding = this->line_size - bmp.cx * Bpp;
-                    bzero(dest, padding);
+                    memset(dest, 0, padding);
                     dest += padding;
                 }
                 TODO("padding code should not be necessary for source either as source bmp width is already aligned");

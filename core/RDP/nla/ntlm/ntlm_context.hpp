@@ -124,10 +124,10 @@ struct NTLMContext {
     uint32_t verbose;
 
     NTLMContext()
-        : randgen(UdevRandom())
-        , lcgrand(LCGRandom(0))
-        , timesys(TimeSystem())
-        , lcgtime(LCGTime())
+        : randgen()
+        , lcgrand(0)
+        , timesys()
+        , lcgtime()
         , timeobj(&this->timesys)
         , rand(&this->randgen)
         , hardcoded_tests(false)
@@ -140,8 +140,8 @@ struct NTLMContext {
         , MachineID()
         , SendVersionInfo(true)
         , confidentiality(true)
-        , SendRc4Seal(SslRC4())
-        , RecvRc4Seal(SslRC4())
+        , SendRc4Seal()
+        , RecvRc4Seal()
         , SendSigningKey(NULL)
         , RecvSigningKey(NULL)
         , SendSealingKey(NULL)
@@ -149,11 +149,11 @@ struct NTLMContext {
         , NegotiateFlags(0)
         , LmCompatibilityLevel(3)
         , SendWorkstationName(true)
-        , Workstation(Array(0))
-        , ServicePrincipalName(Array(0))
-        , SavedNegotiateMessage(Array(0))
-        , SavedChallengeMessage(Array(0))
-        , SavedAuthenticateMessage(Array(0))
+        , Workstation(0)
+        , ServicePrincipalName(0)
+        , SavedNegotiateMessage(0)
+        , SavedChallengeMessage(0)
+        , SavedAuthenticateMessage(0)
         , Timestamp()
         , ChallengeTimestamp()
         , ServerChallenge()
@@ -919,9 +919,7 @@ struct NTLMContext {
         if (!this->server) {
             return;
         }
-        bool result = false;
-        result = this->ntlm_check_nego();
-        if (!result) {
+        if (!this->ntlm_check_nego()) {
             LOG(LOG_ERR, "ERROR CHECK NEGO FLAGS");
         }
         this->ntlm_generate_server_challenge();
@@ -1023,14 +1021,11 @@ struct NTLMContext {
         if (!this->server) {
             return SEC_E_INTERNAL_ERROR;
         }
-        bool result = false;
-        result = this->ntlm_check_nt_response_from_authenticate(hash, 16);
-        if (!result) {
+        if (!this->ntlm_check_nt_response_from_authenticate(hash, 16)) {
             LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
             return SEC_E_LOGON_DENIED;
         }
-        result = this->ntlm_check_lm_response_from_authenticate(hash, 16);
-        if (!result) {
+        if (!this->ntlm_check_lm_response_from_authenticate(hash, 16)) {
             LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
             return SEC_E_LOGON_DENIED;
         }

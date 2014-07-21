@@ -27,11 +27,11 @@
 #include "transport.hpp"
 
 static inline void png_write_data(png_structp png_ptr, png_bytep data, png_size_t length){
-    ((Transport *)(png_ptr->io_ptr))->send(data, length);
+    static_cast<Transport*>(png_ptr->io_ptr)->send(data, length);
 }
 
 static inline void png_flush_data(png_structp png_ptr){
-    ((Transport *)(png_ptr->io_ptr))->flush();
+    static_cast<Transport*>(png_ptr->io_ptr)->flush();
 }
 
 static inline void transport_dump_png24(Transport * trans, const uint8_t * data,
@@ -168,8 +168,7 @@ inline void read_png24(FILE * fd, const uint8_t * data,
 
 static inline void png_read_data_fn(png_structp png_ptr, png_bytep data, png_size_t length) {
     uint8_t * tmp_data = data;
-    ((Transport *)(png_ptr->io_ptr))->recv(&tmp_data, length);
-
+    static_cast<Transport*>(png_ptr->io_ptr)->recv(&tmp_data, length);
 }
 
 

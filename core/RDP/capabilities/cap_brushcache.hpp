@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BRUSHCACHE_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BRUSHCACHE_HPP_
 
+#include "common.hpp"
+
 // 2.2.7.1.7 Brush Capability Set (TS_BRUSH_CAPABILITYSET)
 // ======================================================
 // The TS_BRUSH_CAPABILITYSET advertises client brush support. This capability is only sent from

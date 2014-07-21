@@ -63,6 +63,11 @@ class Array {
         }
     }
 
+private:
+    Array(Array const &) /* = delete*/;
+    Array& operator=(Array const &) /* = delete*/;
+
+public:
     size_t size() const {
         return this->capacity;
     }
@@ -79,24 +84,22 @@ class Array {
     // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
     void init(size_t v) {
         if (v != this->capacity) {
-            try {
-                // <this->data> is allocated dynamically.
-                if (this->capacity > AUTOSIZE){
-                    delete [] this->data;
-                }
-                if (v > AUTOSIZE){
-                    this->data = new uint8_t[v];
-                }
-                else {
-                    this->data = &(this->autobuffer[0]);
-                }
-                this->capacity = v;
+            // <this->data> is allocated dynamically.
+            if (this->capacity > AUTOSIZE){
+                delete [] this->data;
             }
-            catch (...) {
-                this->data = 0;
-                this->capacity = 0;
-                LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", static_cast<int>(v));
-                throw Error(ERR_STREAM_MEMORY_ALLOCATION_ERROR);
+
+            this->capacity = v;
+            if (v > AUTOSIZE){
+                this->data = new(std::nothrow) uint8_t[v];
+                if (!this->data) {
+                    this->capacity = 0;
+                    LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", static_cast<int>(v));
+                    throw Error(ERR_STREAM_MEMORY_ALLOCATION_ERROR);
+                }
+            }
+            else {
+                this->data = &(this->autobuffer[0]);
             }
         }
     }
@@ -850,10 +853,9 @@ public:
 
 // BStream is for "buffering stream", as this stream allocate a work buffer.
 class BStream : public Stream {
-    private:
     uint8_t autobuffer[AUTOSIZE];
 
-    public:
+public:
     BStream(size_t size = AUTOSIZE)
         : autobuffer()
     {
@@ -874,24 +876,22 @@ class BStream : public Stream {
     // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
     virtual void init(size_t v) {
         if (v != this->capacity) {
-            try {
-                // <this->data> is allocated dynamically.
-                if (this->capacity > AUTOSIZE){
-                    delete [] this->data;
-                }
-                if (v > AUTOSIZE){
-                    this->data = new uint8_t[v];
-                }
-                else {
-                    this->data = &(this->autobuffer[0]);
-                }
-                this->capacity = v;
+            // <this->data> is allocated dynamically.
+            if (this->capacity > AUTOSIZE){
+                delete [] this->data;
             }
-            catch (...) {
-                this->data = 0;
-                this->capacity = 0;
-                LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", static_cast<int>(v));
-                throw Error(ERR_STREAM_MEMORY_ALLOCATION_ERROR);
+
+            this->capacity = v;
+            if (v > AUTOSIZE){
+                this->data = new(std::nothrow) uint8_t[v];
+                if (!this->data) {
+                    this->capacity = 0;
+                    LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", static_cast<int>(v));
+                    throw Error(ERR_STREAM_MEMORY_ALLOCATION_ERROR);
+                }
+            }
+            else {
+                this->data = &(this->autobuffer[0]);
             }
         }
         this->p = this->data;

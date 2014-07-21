@@ -22,27 +22,27 @@
 #define _REDEMPTION_CORE_RDP_MPPC_40_HPP_
 
 #define RDP_40_HIST_BUF_LEN (1024 * 8)  /* RDP 4.0 uses 8K history buf */
+#include "mppc.hpp"
 
 struct rdp_mppc_40_dec : public rdp_mppc_dec {
-    uint8_t  * history_buf;
+    uint8_t    history_buf[RDP_40_HIST_BUF_LEN];
     uint8_t  * history_buf_end;
     uint8_t  * history_ptr;
 
     /**
      * Initialize rdp_mppc_40_dec structure
      */
-    rdp_mppc_40_dec() {
-        this->history_buf = static_cast<uint8_t *>(calloc(RDP_40_HIST_BUF_LEN, 1));
-
-        this->history_ptr     = this->history_buf;
-        this->history_buf_end = this->history_buf + RDP_40_HIST_BUF_LEN - 1;
+    rdp_mppc_40_dec()
+    : history_buf_end(this->history_buf)
+    , history_ptr(this->history_buf + RDP_40_HIST_BUF_LEN - 1)
+    {
+        memset(this->history_buf, 0, sizeof(this->history_buf));
     }
 
     /**
      * Deinitialize rdp_mppc_50_dec structure
      */
     virtual ~rdp_mppc_40_dec() {
-        free(this->history_buf);
     }
 
     virtual void mini_dump()

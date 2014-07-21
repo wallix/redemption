@@ -23,6 +23,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_COLCACHE_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_COLCACHE_HPP_
 
+#include "common.hpp"
+
 // 2.2.1.1  Color Table Cache Capability Set (TS_COLORTABLE_CAPABILITYSET)
 
 //    The TS_COLORTABLE_CAPABILITYSET structure is an unused capability set that advertises the size

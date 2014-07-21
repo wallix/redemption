@@ -67,7 +67,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             return SEC_E_INSUFFICIENT_MEMORY;
         }
         if (ulAttribute == SECPKG_ATTR_SIZES) {
-            SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*) pBuffer;
+            SecPkgContext_Sizes* ContextSizes = static_cast<SecPkgContext_Sizes*>(pBuffer);
             ContextSizes->cbMaxToken = 2010;
             ContextSizes->cbMaxSignature = 16;
             ContextSizes->cbBlockSize = 0;
@@ -92,7 +92,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         if (fCredentialUse == SECPKG_CRED_OUTBOUND) {
             credentials = new CREDENTIALS;
 
-            identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+            identity = static_cast<SEC_WINNT_AUTH_IDENTITY*>(pAuthData);
 
             if (identity != NULL) {
                 credentials->identity.CopyAuthIdentity(*identity);
@@ -106,7 +106,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         else if (fCredentialUse == SECPKG_CRED_INBOUND) {
             credentials = new CREDENTIALS;
 
-            identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+            identity = static_cast<SEC_WINNT_AUTH_IDENTITY*>(pAuthData);
 
             if (identity) {
                 credentials->identity.CopyAuthIdentity(*identity);
@@ -129,7 +129,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         if (!phCredential) {
             return SEC_E_INVALID_HANDLE;
         }
-        credentials = (CREDENTIALS*) phCredential->SecureHandleGetLowerPointer();
+        credentials = static_cast<CREDENTIALS*>(phCredential->SecureHandleGetLowerPointer());
 
         if (credentials) {
             delete credentials;
@@ -152,16 +152,13 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                                                  SecBufferDesc * pOutput,
                                                  unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) {
-        NTLMContext* context = NULL;
-        CREDENTIALS* credentials = NULL;
-        PSecBuffer input_buffer = NULL;
-        PSecBuffer output_buffer = NULL;
         if (Reserved2 & 0x400) {
             LOG(LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
         }
 
+        NTLMContext* context = NULL;
         if (phContext) {
-            context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+            context = static_cast<NTLMContext*>(phContext->SecureHandleGetLowerPointer());
         }
 
         if (!context) {
@@ -180,7 +177,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (fContextReq & ISC_REQ_CONFIDENTIALITY) {
                 context->confidentiality = true;
             }
-            credentials = (CREDENTIALS*) phCredential->SecureHandleGetLowerPointer();
+            CREDENTIALS* credentials = static_cast<CREDENTIALS*>(phCredential->SecureHandleGetLowerPointer());
 
             // if (context->Workstation.size() < 1)
             //     context->ntlm_SetContextWorkstation(NULL);
@@ -203,7 +200,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (pOutput->cBuffers < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
-            output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
+            PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
             if (!output_buffer) {
                 return SEC_E_INVALID_TOKEN;
             }
@@ -222,7 +219,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (pInput->cBuffers < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
-            input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
+            PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
 
             if (!input_buffer) {
                 return SEC_E_INVALID_TOKEN;
@@ -246,7 +243,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 if (pOutput->cBuffers < 1) {
                     return SEC_E_INVALID_TOKEN;
                 }
-                output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
+                PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
 
                 if (!output_buffer) {
                     return SEC_E_INVALID_TOKEN;
@@ -277,13 +274,8 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                                              unsigned long * pfContextAttr,
                                              TimeStamp * ptsTimeStamp) {
         NTLMContext* context = NULL;
-        SEC_STATUS status;
-        CREDENTIALS* credentials = NULL;
-        PSecBuffer input_buffer = NULL;
-        PSecBuffer output_buffer = NULL;
-
         if (phContext) {
-            context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+            context = static_cast<NTLMContext*>(phContext->SecureHandleGetLowerPointer());
         }
 
         if (!context) {
@@ -300,7 +292,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (fContextReq & ASC_REQ_CONFIDENTIALITY) {
                 context->confidentiality = true;
             }
-            credentials = (CREDENTIALS*)phCredential->SecureHandleGetLowerPointer();
+            CREDENTIALS* credentials = static_cast<CREDENTIALS*>(phCredential->SecureHandleGetLowerPointer());
             if (!credentials) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
@@ -321,7 +313,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (pInput->cBuffers < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
-            input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
+            PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
 
             if (!input_buffer) {
                 return SEC_E_INVALID_TOKEN;
@@ -329,7 +321,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (input_buffer->Buffer.size() < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
-            status = context->read_negotiate(input_buffer);
+            /*SEC_STATUS status = */context->read_negotiate(input_buffer);
 
             if (context->state == NTLM_STATE_CHALLENGE) {
                 if (!pOutput) {
@@ -338,7 +330,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 if (pOutput->cBuffers < 1) {
                     return SEC_E_INVALID_TOKEN;
                 }
-                output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
+                PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
 
                 if (!output_buffer->BufferType) {
                     return SEC_E_INVALID_TOKEN;
@@ -358,7 +350,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (pInput->cBuffers < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
-            input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
+            PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
 
             if (!input_buffer) {
                 return SEC_E_INVALID_TOKEN;
@@ -366,7 +358,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (input_buffer->Buffer.size() < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
-            status = context->read_authenticate(input_buffer);
+            SEC_STATUS status = context->read_authenticate(input_buffer);
 
             if (pOutput) {
                 size_t i;
@@ -382,11 +374,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
     }
 
     virtual SEC_STATUS FreeContextBuffer(void* pvContextBuffer) {
-        NTLMContext * toDelete = (NTLMContext*) ((PSecHandle)pvContextBuffer)->SecureHandleGetLowerPointer();
-        if (toDelete) {
-            delete toDelete;
-            toDelete = NULL;
-        }
+        NTLMContext * toDelete = static_cast<NTLMContext*>(
+            static_cast<PSecHandle>(pvContextBuffer)->SecureHandleGetLowerPointer());
+        delete toDelete;
         return SEC_E_OK;
     }
 
@@ -408,7 +398,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         SeqNo = MessageSeqNo;
         if (phContext) {
-            context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+            context = static_cast<NTLMContext*>(phContext->SecureHandleGetLowerPointer());
         }
         if (!context) {
             return SEC_E_NO_CONTEXT;
@@ -511,7 +501,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         SeqNo = (uint32_t) MessageSeqNo;
         if (phContext) {
-            context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+            context = static_cast<NTLMContext*>(phContext->SecureHandleGetLowerPointer());
         }
         if (!context) {
             return SEC_E_NO_CONTEXT;

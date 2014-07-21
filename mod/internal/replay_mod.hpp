@@ -96,7 +96,6 @@ public:
             // thow an Error ?
             LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
             throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
-            break;
         }
 
         this->reader->add_consumer((RDPGraphicDevice *)&this->front, NULL);

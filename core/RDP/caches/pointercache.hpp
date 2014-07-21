@@ -34,14 +34,19 @@ enum {
 };
 
 /* difference caches */
-struct PointerCache {
+class PointerCache {
     int pointer_cache_entries;
 
     /* pointer */
     int pointer_stamp;
-    struct Pointer Pointers[32];
+
+public:
+    Pointer Pointers[32];
+
+private:
     int stamps[32];
 
+public:
     PointerCache() {
         this->pointer_cache_entries = 0;
         this->pointer_stamp = 0;

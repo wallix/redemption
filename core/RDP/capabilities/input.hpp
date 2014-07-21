@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_INPUT_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_INPUT_HPP_
 
+#include "common.hpp"
+
 //2.2.7.1.6 Input Capability Set (TS_INPUT_CAPABILITYSET)
 //=======================================================
 
@@ -99,7 +101,7 @@ struct InputCaps : public Capability {
     , keyboardFunctionKey(0x000C) // 0C = 12 function keys
 //    , imeFileName = ""
     {
-        bzero(this->imeFileName, 64);
+        memset(this->imeFileName, 0, 64);
     }
 
     void emit(Stream & stream){

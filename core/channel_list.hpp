@@ -339,37 +339,6 @@ namespace CHANNELS {
         , CompressionTypeMask        = 0x000F0000
     };
 
-    // If neither the CHANNEL_FLAG_FIRST (0x00000001) nor the CHANNEL_FLAG_LAST
-    //  (0x00000002) flag is present, the chunk is from the middle of a sequence.
-
-    //  Instructions specifying how to set the compression flags can be found in
-    //  section 3.1.8.2.1.
-
-    // Possible compression types are as follows.
-
-    // +-------------------------+-------------------------------------------------+
-    // | Value                   | Meaning                                         |
-    // +-------------------------+-------------------------------------------------+
-    // | PACKET_COMPR_TYPE_8K    | RDP 4.0 bulk compression (see section           |
-    // | 0x0                     | 3.1.8.4.1).                                     |
-    // +-------------------------+-------------------------------------------------+
-    // | PACKET_COMPR_TYPE_64K   | RDP 5.0 bulk compression (see section           |
-    // | 0x1                     | 3.1.8.4.2).                                     |
-    // +-------------------------+-------------------------------------------------+
-    // | PACKET_COMPR_TYPE_RDP6  | RDP 6.0 bulk compression (see [MS-RDPEGDI]      |
-    // | 0x2                     | section 3.1.8.1).                               |
-    // +-------------------------+-------------------------------------------------+
-    // | PACKET_COMPR_TYPE_RDP61 | RDP 6.1 bulk compression (see [MS-RDPEGDI]      |
-    // | 0x3                     | section 3.1.8.2).                               |
-    // +-------------------------+-------------------------------------------------+
-
-    enum {
-          PACKET_COMPR_TYPE_8K    = 0x0
-        , PACKET_COMPR_TYPE_64K   = 0x1
-        , PACKET_COMPR_TYPE_RDP6  = 0x2
-        , PACKET_COMPR_TYPE_RDP61 = 0x3
-    };
-
     // Instructions detailing how to compress a data stream are listed in section
     //  3.1.8.2, while decompression of a data stream is described in section
     //  3.1.8.3.

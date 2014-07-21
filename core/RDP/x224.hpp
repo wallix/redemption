@@ -375,7 +375,6 @@ namespace X224
                 this->type = 0;
                 LOG(LOG_ERR, "Bad X224 header, unknown TPDU type (code = %u)", tpdu_type);
                 throw Error(ERR_X224);
-            break;
             }
         }
     };
@@ -1043,23 +1042,18 @@ namespace X224
                 case X224::SSL_REQUIRED_BY_SERVER:
                     LOG(LOG_INFO, "SSL_REQUIRED_BY_SERVER");
                     throw Error(ERR_NEGO_SSL_REQUIRED_BY_SERVER);
-                    break;
                 case X224::SSL_NOT_ALLOWED_BY_SERVER:
                     LOG(LOG_INFO, "SSL_NOT_ALLOWED_BY_SERVER");
                     throw Error(ERR_NEGO_SSL_NOT_ALLOWED_BY_SERVER);
-                    break;
                 case X224::SSL_CERT_NOT_ON_SERVER:
                     LOG(LOG_INFO, "SSL_CERT_NOT_ON_SERVER");
                     throw Error(ERR_NEGO_SSL_CERT_NOT_ON_SERVER);
-                    break;
                 case X224::INCONSISTENT_FLAGS:
                     LOG(LOG_INFO, "INCONSISTENT_FLAGS");
                     throw Error(ERR_NEGO_INCONSISTENT_FLAGS);
-                    break;
                 case X224::HYBRID_REQUIRED_BY_SERVER:
                     LOG(LOG_INFO, "HYBRID_REQUIRED_BY_SERVER");
                     throw Error(ERR_NEGO_HYBRID_REQUIRED_BY_SERVER);
-                    break;
                 default:
                     LOG(LOG_INFO, "Unknown failure code %u", this->rdp_neg_code);
                     break;
@@ -1362,11 +1356,6 @@ namespace X224
             uint8_t code;
             uint8_t eot;
         } tpdu_hdr;
-
-        enum {
-            EOT_MORE_DATA        = 0x00,
-            EOT_EOT             = 0x80
-        };
 
         DT_TPDU_Recv(Transport & t, Stream & stream)
         : Recv(t, stream)

@@ -22,6 +22,8 @@
 #define _REDEMPTION_CORE_RDP_MPPC_50_HPP_
 
 #define RDP_50_HIST_BUF_LEN (1024 * 64) /* RDP 5.0 uses 64K history buf */
+#include <stdint.h>
+#include "mppc.hpp"
 
 struct rdp_mppc_50_dec : public rdp_mppc_dec {
     uint8_t  * history_buf;
@@ -74,7 +76,7 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
      *
      * @return        true on success, False on failure
      */
-    int decompress_50(uint8_t * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
+    bool decompress_50(uint8_t * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
         //LOG(LOG_INFO, "decompress_50");
 
         uint8_t  * history_ptr;     /* points to next free slot in bistory_buf    */

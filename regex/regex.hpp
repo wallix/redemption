@@ -326,63 +326,63 @@ namespace re {
             {}
         };
 
-        class PartOfTextTracer
-        {
-            StateMachine2::DefaultMatchTracer sm_tracer;
-            std::vector<std::string> matches;
-            StateMachine2 & sm;
-            const char * s;
+        //class PartOfTextTracer
+        //{
+        //    StateMachine2::DefaultMatchTracer sm_tracer;
+        //    std::vector<std::string> matches;
+        //    StateMachine2 & sm;
+        //    const char * s;
 
-        public:
-            PartOfTextTracer(StateMachine2 & sm)
-            : sm_tracer(sm)
-            , matches(sm.node_count())
-            , sm(sm)
-            {}
+        //public:
+        //    PartOfTextTracer(StateMachine2 & sm)
+        //    : sm_tracer(sm)
+        //    , matches(sm.node_count())
+        //    , sm(sm)
+        //    {}
 
-            unsigned new_id(unsigned old_id)
-            {
-                const unsigned new_id = this->sm_tracer.new_id(old_id);
-                std::copy(this->matches.begin() + old_id,
-                          this->matches.begin() + old_id + this->sm.mark_count(),
-                          this->matches.begin() + new_id);
-                return new_id;
-            }
+        //    unsigned new_id(unsigned old_id)
+        //    {
+        //        const unsigned new_id = this->sm_tracer.new_id(old_id);
+        //        std::copy(this->matches.begin() + old_id,
+        //                  this->matches.begin() + old_id + this->sm.mark_count(),
+        //                  this->matches.begin() + new_id);
+        //        return new_id;
+        //    }
 
-            bool open(unsigned idx, const char * s, unsigned num_cap) const
-            {
-                (void)idx;
-                (void)s;
-                (void)num_cap;
-                return true;
-            }
+        //    bool open(unsigned idx, const char * s, unsigned num_cap) const
+        //    {
+        //        (void)idx;
+        //        (void)s;
+        //        (void)num_cap;
+        //        return true;
+        //    }
 
-            bool close(unsigned idx, const char * s, unsigned num_cap)
-            {
-                this->matches[idx * this->sm.mark_count() + num_cap].append(this->s, s - this->s);
-                return true;
-            }
+        //    bool close(unsigned idx, const char * s, unsigned num_cap)
+        //    {
+        //        this->matches[idx * this->sm.mark_count() + num_cap].append(this->s, s - this->s);
+        //        return true;
+        //    }
 
-            void fail(unsigned idx)
-            {
-                this->sm_tracer.fail(idx);
-                for (const unsigned last = idx + this->sm.mark_count(); idx != last; ++idx) {
-                    this->matches[idx].clear();
-                }
-            }
+        //    void fail(unsigned idx)
+        //    {
+        //        this->sm_tracer.fail(idx);
+        //        for (const unsigned last = idx + this->sm.mark_count(); idx != last; ++idx) {
+        //            this->matches[idx].clear();
+        //        }
+        //    }
 
-            void good(unsigned idx) const
-            {
-                this->sm_tracer.good(idx);
-            }
-        };
+        //    void good(unsigned idx) const
+        //    {
+        //        this->sm_tracer.good(idx);
+        //    }
+        //};
 
-        typedef StateMachine2::DefaultMatchTracer DefaultTracer;
+        //typedef StateMachine2::DefaultMatchTracer DefaultTracer;
 
 
         ExactPartOfText part_of_text_exact_search(bool str_is_empty)
         {
-            return ExactPartOfText(*this, str_is_empty ? "" : " ");
+           return ExactPartOfText(*this, str_is_empty ? "" : " ");
         }
 
         PartOfText part_of_text_search(bool str_is_empty)

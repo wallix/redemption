@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_COMPDESK_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_COMPDESK_HPP_
 
+#include "common.hpp"
+
 // 2.2.7.2.8 Desktop Composition Capability Set (TS_COMPDESK_CAPABILITYSET)
 // ========================================================================
 // The TS_COMPDESK_CAPABILITYSET structure is used to support desktop composition. This

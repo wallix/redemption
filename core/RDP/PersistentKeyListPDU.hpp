@@ -416,7 +416,7 @@ struct PersistentKeyListPDUData {
             lg += snprintf(buffer + lg, sz - lg, "(%02X%02X%02X%02X%02X%02X%02X%02X)", keys[0], keys[1],
                 keys[2], keys[3], keys[4], keys[5], keys[6], keys[7]);
         }
-        lg += snprintf(buffer + lg, sz - lg, "))");
+        /*lg +=*/ snprintf(buffer + lg, sz - lg, "))");
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, buffer);
     }

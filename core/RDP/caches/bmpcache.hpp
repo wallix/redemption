@@ -230,8 +230,8 @@ struct BmpCache {
                 for (uint16_t cidx = 0; cidx < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cidx++) {
                     this->cache[cid][cidx].reset();
                     this->stamps[cid][cidx] = 0;
-                    bzero(this->sha1[cid][cidx], sizeof(this->sha1[cid][cidx]));
-                    bzero(this->sig[cid][cidx].sig_8, sizeof(this->sig[cid][cidx].sig_8));
+                    memset(this->sha1[cid][cidx], 0, sizeof(this->sha1[cid][cidx]));
+                    memset(this->sig[cid][cidx].sig_8, 0, sizeof(this->sig[cid][cidx].sig_8));
                 }
                 this->finders[cid].clear();
             }
@@ -474,8 +474,9 @@ struct BmpCache {
                 else {
                     this->cache [MAXIMUM_NUMBER_OF_CACHES][cache_index_32].reset();
                     this->stamps[MAXIMUM_NUMBER_OF_CACHES][cache_index_32] = 0;
-                    bzero(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cache_index_32],
-                          sizeof(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cache_index_32]));
+                    memset(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cache_index_32],
+                           0,
+                           sizeof(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cache_index_32]));
 
                     wait_list_finder.remove(bmp_sha1, bmp->cx, bmp->cy);
 

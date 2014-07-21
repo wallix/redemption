@@ -78,7 +78,7 @@ namespace detail
     }
 
 
-    template<class BufWrmParams = no_param>
+    template<class BufParams = no_param>
     struct out_sequence_filename_buf_param
     {
         FilenameGenerator::Format format;
@@ -86,7 +86,7 @@ namespace detail
         const char * const filename;
         const char * const extension;
         const int groupid;
-        BufWrmParams wrm;
+        BufParams buf_params;
 
         out_sequence_filename_buf_param(
             FilenameGenerator::Format format,
@@ -94,31 +94,33 @@ namespace detail
             const char * const filename,
             const char * const extension,
             const int groupid,
-            const BufWrmParams & wrm_params = BufWrmParams())
+            const BufParams & buf_params = BufParams())
         : format(format)
         , prefix(prefix)
         , filename(filename)
         , extension(extension)
         , groupid(groupid)
-        , wrm(wrm_params)
+        , buf_params(buf_params)
         {}
     };
 
-    template<class BufWrm>
+    template<class Buf>
     class out_sequence_filename_buf
     {
         char current_filename_[1024];
         FilenameGenerator filegen_;
-        BufWrm wrm_;
+        Buf buf_;
         unsigned num_file_;
 
     public:
-        template<class BufWrmParams>
-        out_sequence_filename_buf(out_sequence_filename_buf_param<BufWrmParams> const & params)
+        template<class BufParams>
+        out_sequence_filename_buf(out_sequence_filename_buf_param<BufParams> const & params)
         : filegen_(params.format, params.prefix, params.filename, params.extension, params.groupid)
-        , wrm_(params.wrm)
+        , buf_(params.buf_params)
         , num_file_(0)
-        {}
+        {
+            this->current_filename_[0] = 0;
+        }
 
         ~out_sequence_filename_buf()
         {
@@ -130,22 +132,22 @@ namespace detail
 
         ssize_t write(const void * data, size_t len) /*noexcept*/
         {
-            if (!this->wrm_.is_open()) {
-                const int res = this->open_wrm(this->filegen_.get(this->num_file_));
+            if (!this->buf_.is_open()) {
+                const int res = this->open_filename(this->filegen_.get(this->num_file_));
                 if (res < 0) {
                     return res;
                 }
             }
-            return this->wrm_.write(data, len);
+            return this->buf_.write(data, len);
         }
 
         /// \return 0 if success
         int next() /*noexcept*/
         {
-            if (this->wrm_.is_open()) {
-                this->wrm_.close();
+            if (this->buf_.is_open()) {
+                this->buf_.close();
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                return this->rename_wrm() ? 0 : 1;
+                return this->rename_filename() ? 0 : 1;
             }
             return 1;
         }
@@ -155,19 +157,19 @@ namespace detail
             unsigned i = this->num_file_ + 1;
             while (i > 0 && !::unlink(this->filegen_.get(--i))) {
             }
-            if (this->wrm_.is_open()) {
-                this->wrm_.close();
+            if (this->buf_.is_open()) {
+                this->buf_.close();
             }
         }
 
         off_t seek(int64_t offset, int whence) /*noexcept*/
-        { return this->wrm_.seek(offset, whence); }
+        { return this->buf_.seek(offset, whence); }
 
         const FilenameGenerator & seqgen() const /*noexcept*/
         { return this->filegen_; }
 
-        BufWrm & wrm()
-        { return this->wrm_; }
+        Buf & buf()
+        { return this->buf_; }
 
         const char * current_path() const
         {
@@ -178,7 +180,7 @@ namespace detail
         }
 
     protected:
-        ssize_t open_wrm(const char * filename) /*noexcept*/
+        ssize_t open_filename(const char * filename) /*noexcept*/
         {
             snprintf(this->current_filename_, sizeof(this->current_filename_),
                         "%sred-XXXXXX.tmp", filename);
@@ -192,10 +194,10 @@ namespace detail
                    , this->filegen_.groupid ? "u+r, g+r" : "u+r");
             }
             this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-            return this->wrm_.open(fd);
+            return this->buf_.open(fd);
         }
 
-        const char * rename_wrm()
+        const char * rename_filename()
         {
             const char * filename = this->get_filename_generate();
             const int res = ::rename(this->current_filename_, filename);
@@ -226,7 +228,7 @@ namespace detail
     {
         out_sequence_filename_buf_param<> sq_params;
         time_t sec;
-        T mwrm_param;
+        T meta_buf_params;
 
         out_meta_sequence_filename_buf_param(
             time_t start_sec,
@@ -235,21 +237,21 @@ namespace detail
             const char * const filename,
             const char * const extension,
             const int groupid,
-            T const & mwrm_param = T())
+            T const & meta_buf_params = T())
         : sq_params(format, prefix, filename, extension, groupid)
         , sec(start_sec)
-        , mwrm_param(mwrm_param)
+        , meta_buf_params(meta_buf_params)
         {}
     };
 
 
-    template<class BufWrm, class BufMwrm>
+    template<class Buf, class BufMeta>
     class out_meta_sequence_filename_buf
-    : public out_sequence_filename_buf<BufWrm>
+    : public out_sequence_filename_buf<Buf>
     {
-        typedef out_sequence_filename_buf<BufWrm> sequence_base_type;
+        typedef out_sequence_filename_buf<Buf> sequence_base_type;
 
-        BufMwrm mwrm_;
+        BufMeta meta_buf_;
 
     protected:
         detail::MetaFilename mf_;
@@ -260,12 +262,12 @@ namespace detail
         template<class T>
         out_meta_sequence_filename_buf(out_meta_sequence_filename_buf_param<T> const & params)
         : sequence_base_type(params.sq_params)
-        , mwrm_(params.mwrm_param)
+        , meta_buf_(params.meta_buf_params)
         , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
         , start_sec_(params.sec)
         , stop_sec_(params.sec)
         {
-            if (this->mwrm_.open(this->mf_.filename, S_IRUSR) < 0) {
+            if (this->meta_buf_.open(this->mf_.filename, S_IRUSR) < 0) {
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
         }
@@ -278,26 +280,26 @@ namespace detail
         int close() /*noexcept*/
         {
             const int res1 = this->next();
-            const int res2 = this->mwrm_.close();
+            const int res2 = this->meta_buf_.close();
             return res1 ? res1 : res2;
         }
 
         /// \return 0 if success
         int next() /*noexcept*/
         {
-            if (this->wrm().is_open()) {
-                this->wrm().close();
+            if (this->buf().is_open()) {
+                this->buf().close();
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                const char * filename = this->rename_wrm();
+                const char * filename = this->rename_filename();
                 if (!filename) {
                     return 1;
                 }
                 ssize_t len = strlen(filename);
-                ssize_t res = this->mwrm_.write(filename, len);
+                ssize_t res = this->meta_buf_.write(filename, len);
                 if (res == len) {
                     char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4];
                     len = sprintf(mes, " %u %u\n", (unsigned)this->start_sec_, (unsigned)this->stop_sec_+1);
-                    res = this->mwrm_.write(mes, len);
+                    res = this->meta_buf_.write(mes, len);
                 }
                 if (res < len) {
                     return res < 0 ? res : 1;
@@ -314,8 +316,8 @@ namespace detail
             ::unlink(this->mf_.filename);
         }
 
-        BufMwrm & mwrm()
-        { return this->mwrm_; }
+        BufMeta & meta_buf()
+        { return this->meta_buf_; }
 
         void update_sec(time_t sec) /*noexcept*/
         { this->stop_sec_ = sec; }

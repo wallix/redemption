@@ -969,7 +969,6 @@ class RDPBmpCache {
             default:
                 LOG(LOG_ERR, "RDPBmpCache::receive_raw_v2: Unsupported bitsPerPixelId(0x%X)", cbr2_bpp);
                 throw Error(ERR_RDP_PROTOCOL);
-            break;
         }
         uint8_t cbr2_flags  = ((extraFlags & 0xFF80) >> 7);
         //LOG(LOG_INFO, "RDPBmpCache::receive_raw_v2: cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
@@ -1123,7 +1122,6 @@ class RDPBmpCache {
             default:
                 LOG(LOG_ERR, "RDPBmpCache::receive_compressed_v2: Unsupported bitsPerPixelId(0x%X)", cbr2_bpp);
                 throw Error(ERR_RDP_PROTOCOL);
-            break;
         }
         uint8_t cbr2_flags  = ((extraFlags & 0xFF80) >> 7);
         //LOG(LOG_INFO, "RDPBmpCache::receive_compressed_v2: cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);

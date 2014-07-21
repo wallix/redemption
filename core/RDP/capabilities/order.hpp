@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_ORDER_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_ORDER_HPP_
 
+#include "common.hpp"
+
 // 2.2.7.1.3 Order Capability Set (TS_ORDER_CAPABILITYSET)
 // =======================================================
 

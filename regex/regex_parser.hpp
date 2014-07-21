@@ -384,7 +384,7 @@ namespace re {
         if (*s == '}') {
             return true;
         }
-        begin = ++s;
+        ++s;
         while (*s && '0' <= *s && *s <= '9') {
             ++s;
         }

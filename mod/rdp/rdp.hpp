@@ -1688,7 +1688,6 @@ struct mod_rdp : public mod_api {
                                        , "mod::rdp: received unexpected fast-path PUD, updateCode = %u"
                                        , upd.updateCode);
                                     throw Error(ERR_RDP_FASTPATH);
-                                    break;
                                 }
                             }
                             break;
@@ -1820,7 +1819,6 @@ struct mod_rdp : public mod_api {
                                     case EARLY:
                                         LOG(LOG_WARNING, "Rdp::finalization is early");
                                         throw Error(ERR_SEC);
-                                        break;
                                     case WAITING_SYNCHRONIZE:
                                         if (this->verbose & 1){
                                             LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
@@ -2457,11 +2455,6 @@ struct mod_rdp : public mod_api {
             this->process_system_pointer_pdu(stream);
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Process pointer system done");
-            }
-            break;
-            this->process_color_pointer_pdu(stream);
-            if (this->verbose & 4){
-                LOG(LOG_INFO, "Process pointer color done");
             }
             break;
         case RDP_POINTER_NEW:
@@ -4144,27 +4137,20 @@ public:
 
         switch (message_type) {
         case RDP_INPUT_SCANCODE:
-            {
-                FastPath::KeyboardEvent_Send ke(stream, (uint16_t)device_flags, param1);
-            }
+            FastPath::KeyboardEvent_Send(stream, (uint16_t)device_flags, param1);
             break;
 
         case RDP_INPUT_SYNCHRONIZE:
-            {
-                FastPath::SynchronizeEvent_Send se(stream, param1);
-            }
+            FastPath::SynchronizeEvent_Send(stream, param1);
             break;
 
         case RDP_INPUT_MOUSE:
-            {
-                FastPath::MouseEvent_Send me(stream, (uint16_t)device_flags, param1, param2);
-            }
+            FastPath::MouseEvent_Send(stream, (uint16_t)device_flags, param1, param2);
             break;
 
         default:
             LOG(LOG_WARNING, "unsupported fast-path input message type 0x%x", message_type);
             throw Error(ERR_RDP_FASTPATH);
-            break;
         }
 
         FastPath::ClientInputEventPDU_Send out_cie(fastpath_header, stream, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
@@ -4178,10 +4164,10 @@ public:
 
     void send_input(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
         if (this->enable_fastpath_client_input_event == false) {
-            send_input_slowpath(time, message_type, device_flags, param1, param2);
+            this->send_input_slowpath(time, message_type, device_flags, param1, param2);
         }
         else {
-            send_input_fastpath(time, message_type, device_flags, param1, param2);
+            this->send_input_fastpath(time, message_type, device_flags, param1, param2);
         }
     }
 

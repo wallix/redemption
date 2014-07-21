@@ -57,12 +57,11 @@ struct DrawablePointer {
         this->hotspot_y = hotspot_y;
 
         bool               non_transparent_pixel;
-        bool               in_contiguous_mouse_pixels = false;
         uint8_t          * current_data               = this->data;
         ContiguousPixels * current_contiguous_pixels  = this->contiguous_pixels - 1;
 
         for (unsigned int line = 0; line < 32; line++) {
-            in_contiguous_mouse_pixels = false;
+            bool in_contiguous_mouse_pixels = false;
 
             for (unsigned int column = 0; column < 32; column++) {
                 const div_t        res = div(column, 8);
@@ -1114,7 +1113,7 @@ public:
         const size_t step = this->rowsize;
         const size_t rect_rowsize = trect.cx * this->Bpp;
         for (int j = 0; j < trect.cy ; j++, p += step) {
-            bzero(p, rect_rowsize);
+            memset(p, 0, rect_rowsize);
         }
     }
 

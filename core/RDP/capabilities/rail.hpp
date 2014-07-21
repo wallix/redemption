@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_RAIL_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_RAIL_HPP_
 
+#include "common.hpp"
+
 // 2.2.1.1.1 Remote Programs Capability Set
 // ========================================
 //  The Remote Programs Capability Set is sent by the server in the Demand Active PDU and by the

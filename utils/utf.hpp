@@ -352,6 +352,7 @@ static inline size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, size_
                 i+=2;
             break;
             case 0xF:
+                TODO("Value stored to 'c' is never read")
                 c = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
                 i+=3;
             break;
@@ -402,6 +403,7 @@ static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, 
                 i+=2;
             break;
             case 0xF:
+                TODO("Value stored to 'c' is never read")
                 c = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
                 i+=3;
             break;

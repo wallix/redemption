@@ -27,7 +27,7 @@
 
 #define LOGNULL
 #include "log.hpp"
-#include "RDP/capabilities.hpp"
+#include "RDP/capabilities/largepointer.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityLargePointerEmit)
 {

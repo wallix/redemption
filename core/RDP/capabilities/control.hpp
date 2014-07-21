@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_CONTROL_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_CONTROL_HPP_
 
+#include "common.hpp"
+
 // 2.2.7.2.2     Control Capability Set (TS_CONTROL_CAPABILITYSET)
 
 //  The TS_CONTROL_CAPABILITYSET structure is used by the client to advertise control capabilities

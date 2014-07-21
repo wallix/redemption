@@ -28,6 +28,7 @@
 #include "log.hpp"
 
 #include "RDP/mppc.hpp"
+#include "RDP/mppc_61.hpp"
 
 BOOST_AUTO_TEST_CASE(TestRDP61BlukCompression)
 {

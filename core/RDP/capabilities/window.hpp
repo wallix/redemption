@@ -24,6 +24,9 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_WINDOW_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_WINDOW_HPP_
 
+#include "common.hpp"
+#include "virchan.hpp"
+
 // 2.2.1.1.2  Window List Capability Set
 // =====================================
 

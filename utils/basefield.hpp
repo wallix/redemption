@@ -242,7 +242,6 @@ struct FieldObserver : public ConfigurationHolder {
      ************************************************
      */
     class UnsignedField : public BaseField {
-    protected:
         uint32_t data;
         char buff[20];
     public:

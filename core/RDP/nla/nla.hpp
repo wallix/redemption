@@ -101,6 +101,11 @@ struct rdpCredssp
         }
     }
 
+private:
+    rdpCredssp(const rdpCredssp &) /*= delete*/;
+    rdpCredssp&operator=(const rdpCredssp &) /*= delete*/;
+
+public:
     void set_credentials(uint8_t * user, uint8_t * domain,
                          uint8_t * pass, uint8_t * hostname) {
         if (this->verbose & 0x400) {
@@ -186,7 +191,7 @@ struct rdpCredssp
         this->PublicKey.init(this->trans.get_public_key_length());
         this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
 
-	return 1;
+        return 1;
     }
 
 
