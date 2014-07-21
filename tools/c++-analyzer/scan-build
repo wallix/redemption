@@ -1,0 +1,68 @@
+#!/bin/sh
+
+cd "$(dirname "$0")"/../..
+
+for f in main/*.cpp ; do
+  scan-build "clang++" \
+  -fcolor-diagnostics \
+  -Wall \
+  -Wcast-align \
+  -Wcast-qual \
+  -Wchar-subscripts \
+  -Wextra \
+  -Wfloat-equal \
+  -Winit-self \
+  -Wno-char-subscripts \
+  -Wno-dynamic-class-memaccess \
+  -Wno-inline \
+  -Wno-long-long \
+  -Wno-mismatched-tags \
+  -Wno-unused-parameter \
+  -Wno-unused-private-field \
+  -Wno-unused-variable \
+  -Wnon-virtual-dtor \
+  -Woverloaded-virtual \
+  -Wpacked \
+  -Wpointer-arith \
+  -Wredundant-decls \
+  -Wreturn-type \
+  -Wsequence-point \
+  -Wsign-compare \
+  -Wstrict-aliasing=2 \
+  -Wtype-limits \
+  -Wundef \
+  -Wuninitialized \
+  -Wvla \
+  -finline-functions \
+  -fpie \
+  -pedantic \
+  -DCERTIF_PATH='"/etc/rdpproxy/cert/rdp"' \
+  -DCFG_PATH='"/etc/rdpproxy"' \
+  -DFIXTURES_PATH='"./tests/fixtures"' \
+  -DFLV_PATH='"/var/rdpproxy/tmp"' \
+  -DHASH_PATH='"/var/rdpproxy/hash"' \
+  -DLICENSE_PATH='"/etc/rdpproxy/cert/rdplicense"' \
+  -DNDEBUG \
+  -DOCR_PATH='"/var/rdpproxy/tmp"' \
+  -DPERSISTENT_PATH='"/var/lib/redemption/cache"' \
+  -DPNG_PATH='"/var/rdpproxy/tmp"' \
+  -DPUBLIC \
+  -DRECORD_PATH='"/var/rdpproxy/recorded"' \
+  -DRECORD_TMP_PATH='"/var/rdpproxy/tmp"' \
+  -DSHARE_PATH='"/usr/local/share/rdpproxy"' \
+  -DWRM_PATH='"/var/rdpproxy/recorded"' \
+  -I"capture" \
+  -I"core" \
+  -I"front" \
+  -I"headers" \
+  -I"keyboard" \
+  -I"main" \
+  -I"mod" \
+  -I"regex" \
+  -I"tests" \
+  -I"transport" \
+  -I"utils" \
+  -I"acl" \
+  -I"capture" \
+  "$f" -o /tmp/sbtmp.o -c
+done;
