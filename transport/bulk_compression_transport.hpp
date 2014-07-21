@@ -193,6 +193,10 @@ public:
 
         return this->target_transport.next();
     }
+
+    virtual void timestamp(timeval now) {
+        this->target_transport.timestamp(now);
+    }
 };  // class BulkCompressionOutTransport
 
 #endif  // #ifndef REDEMPTION_TRANSPORT_BULK_COMPRESSION_TRANSPORT_HPP
