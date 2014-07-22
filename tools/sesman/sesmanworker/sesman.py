@@ -414,6 +414,9 @@ class Sesman():
             try:
                 # Then get user rights (reachable targets)
                 self.engine.get_proxy_rights([u'RDP', u'VNC'])
+            except engine.MustChangePassword, e:
+                self.send_data({u'rejected': TR(u'changepassword')})
+                return False, TR(u'changepassword')
             except Exception, e:
                 if DEBUG:
                     import traceback
