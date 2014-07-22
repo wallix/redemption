@@ -978,7 +978,7 @@ struct NTLMContext {
             workstationbuff.mark_end();
         }
 
-        flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
+        //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
         BStream & domain = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
         domain.reset();
         domain.out_copy_bytes(userDomain, domain_size);
@@ -992,8 +992,6 @@ struct NTLMContext {
         // this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
 
         this->state = NTLM_STATE_FINAL;
-
-
     }
 
     void ntlm_server_fetch_hash(uint8_t * hash) {

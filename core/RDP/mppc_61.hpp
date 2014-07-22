@@ -22,6 +22,7 @@
 #define _REDEMPTION_CORE_RDP_MPPC_61_HPP_
 
 #include "mppc_50.hpp"
+#include <string.h>
 
 // [MS-RDPEGDI] 2.2.2.4.1 RDP 6.1 Compressed Data (RDP61_COMPRESSED_DATA)
 // ======================================================================
@@ -167,7 +168,7 @@ static const size_t RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE        =
 
 
 struct rdp_mppc_61_dec : public rdp_mppc_dec {
-    uint8_t * historyBuffer;    // Livel-1 history buffer.
+    uint8_t   historyBuffer[RDP_61_HISTORY_BUFFER_LENGTH];    // Livel-1 history buffer.
     size_t    historyOffset;    // Livel-1 history buffer associated history offset.
 
     rdp_mppc_50_dec level_2_decompressor;
@@ -176,16 +177,15 @@ struct rdp_mppc_61_dec : public rdp_mppc_dec {
      * Initialize rdp_mppc_61_dec structure
      */
     rdp_mppc_61_dec() : rdp_mppc_dec()
+    , historyOffset(0)
     {
-        this->historyBuffer = static_cast<uint8_t *>(calloc(RDP_61_HISTORY_BUFFER_LENGTH, sizeof(uint8_t)));
-        this->historyOffset = 0;
+        ::memset(this->historyBuffer, 0, sizeof(this->historyBuffer));
     }
 
     /**
      * Deinitialize rdp_mppc_61_dec structure
      */
     virtual ~rdp_mppc_61_dec() {
-        free(this->historyBuffer);
     }
 
 private:
@@ -270,12 +270,12 @@ public:
             StaticStream level_1_compressed_data_stream(level_1_compressed_data,
                 level_1_compressed_data_size);
 
-            rdp_mppc_61_dec::prepare_compressed_data(level_1_compressed_data_stream,
+            prepare_compressed_data(level_1_compressed_data_stream,
                 !(Level1ComprFlags & L1_NO_COMPRESSION),
                 MatchCount, MatchDetails, Literals, literals_length);
         }
         else {
-            rdp_mppc_61_dec::prepare_compressed_data(compressed_data_stream,
+            prepare_compressed_data(compressed_data_stream,
                 !(Level1ComprFlags & L1_NO_COMPRESSION),
                 MatchCount, MatchDetails, Literals, literals_length);
         }
@@ -561,12 +561,12 @@ public:
 };
 
 struct rdp_mppc_61_enc : public rdp_mppc_enc {
-    uint8_t  * historyBuffer;   // Level-1 history buffer.
+    uint8_t    historyBuffer[RDP_61_HISTORY_BUFFER_LENGTH];   // Level-1 history buffer.
     uint32_t   historyOffset;   // Level-1 history buffer associated history offset.
 
     rdp_mppc_50_enc level_2_compressor;
 
-    uint8_t  * level_1_output_buffer;
+    uint8_t    level_1_output_buffer[RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE];
     uint16_t   level_1_compressed_data_size;
 
     uint8_t level_1_compr_flags_hold;
@@ -583,9 +583,7 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
      */
     rdp_mppc_61_enc(rdp_mppc_enc_match_finder * match_finder, uint32_t verbose = 0)
         : rdp_mppc_enc(verbose)
-        , historyBuffer(NULL)
         , historyOffset(0)
-        , level_1_output_buffer(NULL)
         , level_1_compressed_data_size(0)
         , level_1_compr_flags_hold(L1_PACKET_AT_FRONT)
         , Level1ComprFlags(0)
@@ -594,28 +592,14 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
         , bytes_in_output_buffer(0)
         , match_finder(match_finder)
     {
-        this->historyBuffer = static_cast<uint8_t *>(calloc(RDP_61_HISTORY_BUFFER_LENGTH, sizeof(uint8_t)));
-        //this->historyOffset = 0;
-
-        this->level_1_output_buffer = static_cast<uint8_t *>(calloc(RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE,
-            sizeof(uint8_t)));
-        //this->level_1_compressed_data_size = 0;
-
-        //this->level_1_compr_flags_hold = L1_PACKET_AT_FRONT;
-        //this->Level1ComprFlags         = 0;
-        //this->Level2ComprFlags         = 0;
-
-        //this->outputBuffer           = NULL;
-        //this->bytes_in_output_buffer = 0;
+        ::memset(this->historyBuffer, 0, sizeof(this->historyBuffer));
+        ::memset(this->level_1_output_buffer, 0, sizeof(this->level_1_output_buffer));
     }
 
     /**
      * Deinitialize rdp_mppc_61_enc structure
      */
     virtual ~rdp_mppc_61_enc() {
-        free(this->historyBuffer);
-
-        free(this->level_1_output_buffer);
     }
 
 private:

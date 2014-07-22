@@ -26,7 +26,7 @@
 #include "mppc.hpp"
 
 struct rdp_mppc_50_dec : public rdp_mppc_dec {
-    uint8_t  * history_buf;
+    uint8_t    history_buf[RDP_50_HIST_BUF_LEN];
     uint8_t  * history_buf_end;
     uint8_t  * history_ptr;
 
@@ -34,8 +34,7 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
      * Initialize rdp_mppc_50_dec structure
      */
     rdp_mppc_50_dec() {
-        this->history_buf = static_cast<uint8_t *>(calloc(RDP_50_HIST_BUF_LEN, 1));
-
+        ::memset(this->history_buf, 0, sizeof(this->history_buf));
         this->history_ptr     = this->history_buf;
         this->history_buf_end = this->history_buf + RDP_50_HIST_BUF_LEN - 1;
     }
@@ -44,7 +43,6 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
      * Deinitialize rdp_mppc_50_dec structure
      */
     virtual ~rdp_mppc_50_dec() {
-        free(this->history_buf);
     }
 
     virtual void mini_dump()
@@ -92,10 +90,8 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
 
         src_ptr       = 0;
         cptr          = cbuf;
-        copy_offset   = 0;
         lom           = 0;
         bits_left     = 0;
-        cur_bits_left = 0;
         d32           = 0;
         cur_uint8_t   = 0;
         *rlen         = 0;
@@ -486,9 +482,9 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
     typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
     typedef hash_table_manager::hash_type                hash_type;
 
-    uint8_t  * historyBuffer;       /* contains uncompressed data */
+    uint8_t    historyBuffer[RDP_50_HIST_BUF_LEN];       /* contains uncompressed data */
     uint8_t  * outputBuffer;        /* contains compressed data */
-    uint8_t  * outputBufferPlus;
+    uint8_t    outputBufferPlus[RDP_50_HIST_BUF_LEN + 64 + 8];
     uint16_t   outputBufferSize;
     uint16_t   historyOffset;       /* next free slot in historyBuffer */
     uint16_t   bytes_in_opb;        /* compressed bytes available in outputBuffer */
@@ -503,9 +499,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
      */
     rdp_mppc_50_enc(uint32_t verbose = 0)
         : rdp_mppc_enc(verbose)
-        , historyBuffer(NULL)       /* contains uncompressed data */
         , outputBuffer(NULL)        /* contains compressed data */
-        , outputBufferPlus(NULL)
         , outputBufferSize(RDP_50_HIST_BUF_LEN - 1)
         , historyOffset(0)          /* next free slot in historyBuffer */
         , bytes_in_opb(0)           /* compressed bytes available in outputBuffer */
@@ -516,17 +510,15 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
               MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
     {
         TODO("making it static and large enough should be good for both RDP4 and RDP5");
-        this->historyBuffer    = static_cast<uint8_t *>(calloc(RDP_50_HIST_BUF_LEN, sizeof(uint8_t)));
-        this->outputBufferPlus = static_cast<uint8_t *>(calloc(RDP_50_HIST_BUF_LEN + 64 + 8, sizeof(uint8_t)));
-        this->outputBuffer     = this->outputBufferPlus + 64;
+        ::memset(this->historyBuffer, 0, sizeof(this->historyBuffer));
+        ::memset(this->outputBufferPlus, 0, sizeof(this->outputBufferPlus));
+        this->outputBuffer = this->outputBufferPlus + 64;
     }
 
     /**
      * Deinitialize rdp_mppc_50_enc structure
      */
     virtual ~rdp_mppc_50_enc() {
-        free(this->historyBuffer);
-        free(this->outputBufferPlus);
     }
 
     virtual void dump(bool mini_dump) const {

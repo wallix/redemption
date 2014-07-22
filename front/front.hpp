@@ -478,8 +478,6 @@ public:
             );
 
             this->draw(glyphindex, clip, NULL);
-
-            x += total_width;
         }
     }
 

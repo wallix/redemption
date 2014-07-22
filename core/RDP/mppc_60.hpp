@@ -347,10 +347,7 @@ public:
 
         src_ptr       = 0;
         cptr          = cbuf;
-        copy_offset   = 0;
-        lom           = 0;
         bits_left     = 0;
-        cur_bits_left = 0;
         d32           = 0;
         cur_uint8_t   = 0;
         *rlen         = 0;
@@ -689,7 +686,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
     //     a history buffer and a current offset into the history buffer
     //    (HistoryOffset).
 
-    uint8_t  * historyBuffer;   /* contains uncompressed data */
+    uint8_t    historyBuffer[RDP_60_HIST_BUF_LEN];   /* contains uncompressed data */
     uint16_t   historyOffset;   /* next free slot in historyBuffer */
 
     // In addition to the history buffer and HistoryOffset, a small cache
@@ -701,7 +698,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
     //     copy-offsets.
     uint16_t offsetCache[CACHED_OFFSET_COUNT];
 
-    uint8_t  * outputBuffer;    /* contains compressed data              */
+    uint8_t    outputBuffer[RDP_60_HIST_BUF_LEN];    /* contains compressed data              */
     uint16_t   bytes_in_opb;    /* compressed bytes available in         */
                                 /*     outputBuffer                      */
 
@@ -713,9 +710,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
 
     rdp_mppc_60_enc(uint32_t verbose = 0)
         : rdp_mppc_enc(verbose)
-        , historyBuffer(NULL)
         , historyOffset(0)
-        , outputBuffer(NULL)
         , bytes_in_opb(0)
         , flags(0)
         , flagsHold(PACKET_FLUSHED)
@@ -726,27 +721,17 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         //     history buffer MUST be filled with zeros. After it has been
         //     initialized, the entire history buffer is immediately
         //     regarded as valid.
-        this->historyBuffer = static_cast<uint8_t *>(
-            ::calloc(RDP_60_HIST_BUF_LEN, sizeof(uint8_t)));
-        //this->historyOffset = 0;
+        ::memset(this->historyBuffer, 0, sizeof(this->historyBuffer));
 
         // Whenever the history buffer is initialized or reinitialized, the
         //     OffsetCache MUST be emptied.
         ::memset(this->offsetCache, 0, sizeof(this->offsetCache));
 
-        this->outputBuffer = static_cast<uint8_t *>(
-            ::calloc(RDP_60_HIST_BUF_LEN, sizeof(uint8_t)));
-        //this->bytes_in_opb = 0;
-
-        //this->flags      = 0;
-        //this->flagsHold  = PACKET_FLUSHED;
+        ::memset(this->outputBuffer, 0, sizeof(this->outputBuffer));
     }
 
     virtual ~rdp_mppc_60_enc()
-    {
-        ::free(this->historyBuffer);
-        ::free(this->outputBuffer);
-    }
+    {}
 
     virtual void dump(bool mini_dump) const {
         LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");

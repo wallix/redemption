@@ -205,7 +205,8 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
             buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
         }
 
-        size_t len = offsetof(struct dirent, d_name) + file_len;
+        TODO("size_t len = offsetof(struct dirent, d_name) + NAME_MAX + 1 ?")
+        const size_t len = offsetof(struct dirent, d_name) + file_len;
         struct dirent * entryp = static_cast<struct dirent *>(malloc(len));
         if (!entryp){
             LOG(LOG_WARNING, "Memory allocation failed for entryp, exiting file cleanup code");

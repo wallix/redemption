@@ -47,6 +47,9 @@
 #include "internal/internal_mod.hpp"
 #include "internal/widget2/notify_api.hpp"
 
+#include "unique_ptr.hpp"
+#include "update_lock.hpp"
+
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
@@ -1344,31 +1347,29 @@ public:
             stream_rec.p = stream_rec.get_data();
             stream_rec.end = stream_rec.get_data();
             this->t->recv(&stream_rec.end, 12);
-            uint16_t x = stream_rec.in_uint16_be();
-            uint16_t y = stream_rec.in_uint16_be();
-            uint16_t cx = stream_rec.in_uint16_be();
-            uint16_t cy = stream_rec.in_uint16_be();
-            uint32_t encoding = stream_rec.in_uint32_be();
+            const uint16_t x = stream_rec.in_uint16_be();
+            const uint16_t y = stream_rec.in_uint16_be();
+            const uint16_t cx = stream_rec.in_uint16_be();
+            const uint16_t cy = stream_rec.in_uint16_be();
+            const uint32_t encoding = stream_rec.in_uint32_be();
 
             switch (encoding) {
             case 0: /* raw */
             {
-                uint8_t * raw = (uint8_t *)malloc(cx * 16 * Bpp);
+                unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * 16 * Bpp]);
                 if (!raw) {
                     LOG(LOG_ERR, "Memory allocation failed for raw buffer in VNC");
                     throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
                 }
 
-                this->front.begin_update();
+                update_lock<FrontAPI> lock(this->front);
                 for (uint16_t yy = y ; yy < y + cy ; yy += 16) {
-                    uint8_t * tmp = raw;
+                    uint8_t * tmp = raw.get();
                     uint16_t cyy = std::min<uint16_t>(16, cy-(yy-y));
                     this->t->recv(&tmp, cyy*cx*Bpp);
 //                    LOG(LOG_INFO, "draw vnc: x=%d y=%d cx=%d cy=%d", x, yy, cx, cyy);
-                    this->draw_tile(Rect(x, yy, cx, cyy), raw);
+                    this->draw_tile(Rect(x, yy, cx, cyy), raw.get());
                 }
-                this->front.end_update();
-                free(raw);
             }
             break;
             case 1: /* copy rect */
@@ -1381,7 +1382,7 @@ public:
                 const int srcy = stream_copy_rect.in_uint16_be();
 //                LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
-                this->front.begin_update();
+                update_lock<FrontAPI> lock(this->front);
                 if (this->gd == this) {
                     this->front.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
                 }
@@ -1390,13 +1391,12 @@ public:
                     this->gd->draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
                     this->incr = 1;
                 }
-                this->front.end_update();
             }
             break;
             case 2: /* RRE */
             {
                 //LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-                uint8_t * raw = (uint8_t *)malloc(cx * cy * Bpp);
+                unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * cy * Bpp]);
                 if (!raw) {
                     LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
                     throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
@@ -1425,7 +1425,7 @@ public:
                 bytes_per_pixel = reinterpret_cast<char *>(stream_rre.p);
                 stream_rre.in_skip_bytes(Bpp);
 
-                for (point_cur = reinterpret_cast<char *>(raw), point_end = point_cur + cx * cy * Bpp;
+                for (point_cur = reinterpret_cast<char *>(raw.get()), point_end = point_cur + cx * cy * Bpp;
                      point_cur < point_end; point_cur += Bpp) {
                     memcpy(point_cur, bytes_per_pixel, Bpp);
                 }
@@ -1455,7 +1455,7 @@ public:
                         subrec_height   = subrectangles.in_uint16_be();
 
                         for (ling_boundary = cx * Bpp,
-                                 point_line_cur = reinterpret_cast<char *>(raw) + subrec_y * ling_boundary,
+                                 point_line_cur = reinterpret_cast<char *>(raw.get()) + subrec_y * ling_boundary,
                                  point_line_end = point_line_cur + subrec_height * ling_boundary;
                              point_line_cur < point_line_end; point_line_cur += ling_boundary)
                             for (point_cur = point_line_cur + subrec_x * Bpp,
@@ -1466,11 +1466,8 @@ public:
                     }
                 }
 
-                this->front.begin_update();
-                this->draw_tile(Rect(x, y, cx, cy), raw);
-                this->front.end_update();
-
-                free(raw);
+                update_lock<FrontAPI> lock(this->front);
+                this->draw_tile(Rect(x, y, cx, cy), raw.get());
             }
             break;
             case 5: /* Hextile */
@@ -1631,8 +1628,8 @@ public:
                     }
                     /* keep these in 32x32, vnc cursor can be alot bigger */
                     /* (anyway hotspot is usually 0, 0)                   */
-                    if (x > 31) { x = 31; }
-                    if (y > 31) { y = 31; }
+                    //if (x > 31) { x = 31; }
+                    //if (y > 31) { y = 31; }
                 }
                 TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation");
                 this->front.begin_update();

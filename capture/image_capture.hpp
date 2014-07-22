@@ -72,15 +72,14 @@ public:
     }
 
     void scale_dump24() {
-        uint8_t * scaled_data = static_cast<uint8_t *>(malloc(this->scaled_width * this->scaled_height * 3));
-        scale_data(scaled_data, this->drawable.data,
+        unique_ptr<uint8_t[]> scaled_data(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+        scale_data(scaled_data.get(), this->drawable.data,
                    this->scaled_width, this->drawable.width,
                    this->scaled_height, this->drawable.height,
                    this->drawable.rowsize);
-        ::transport_dump_png24(&this->trans, scaled_data,
+        ::transport_dump_png24(&this->trans, scaled_data.get(),
                      this->scaled_width, this->scaled_height,
                      this->scaled_width * 3, true);
-        free(scaled_data);
     }
 
     static void scale_data(uint8_t *dest, const uint8_t *src,

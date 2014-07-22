@@ -539,9 +539,9 @@ protected:
 
                 this->stream_bitmaps.mark_end();
 
-                size_t header_size = FastPath::Update_Send::GetSize(this->compression);
-
                 if (!this->compression) {
+                    size_t header_size = FastPath::Update_Send::GetSize(this->compression);
+
                     SubStream Upd_s(this->stream_bitmaps, 0, header_size);
 
                     FastPath::Update_Send Upd( Upd_s
@@ -574,10 +574,10 @@ protected:
                         compressionFlags, datalen, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
                     uint8_t compression = FastPath::FASTPATH_OUTPUT_COMPRESSION_USED;
-                    header_size = 4;
+                    //header_size = 4;
                     if (!(compressionFlags & PACKET_COMPRESSED)) {
                         datalen     = this->buffer_stream_bitmaps.size();
-                        header_size = 3;
+                        //header_size = 3;
                         compression = 0;
                     }
 

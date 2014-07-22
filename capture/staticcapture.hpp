@@ -161,8 +161,9 @@ public:
     void pause_snapshot(const timeval & now) {
         // Draw Pause message
         time_t rawtime = now.tv_sec;
-        tm *ptm = localtime(&rawtime);
-        this->drawable.trace_pausetimestamp(*ptm);
+        tm ptm;
+        localtime_r(&rawtime, &ptm);
+        this->drawable.trace_pausetimestamp(ptm);
         this->flush_png();
         this->drawable.clear_pausetimestamp();
         this->start_static_capture = now;
@@ -173,8 +174,9 @@ public:
         this->first_picture_capture_delayed = false;
 
         time_t rawtime = now.tv_sec;
-        tm *ptm = localtime(&rawtime);
-        this->drawable.trace_timestamp(*ptm);
+        tm ptm;
+        localtime_r(&rawtime, &ptm);
+        this->drawable.trace_timestamp(ptm);
         this->flush_png();
         this->drawable.clear_timestamp();
     }

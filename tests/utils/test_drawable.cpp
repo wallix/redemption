@@ -1132,10 +1132,10 @@ BOOST_AUTO_TEST_CASE(TestMemblt3)
 
     memcpy(palette, raw_palette, sizeof(palette));
 
-    Bitmap * bmp = new Bitmap(15, 15, &palette, 32, 32, raw_bitmap, sizeof(raw_bitmap), true);
+    Bitmap bmp(15, 15, &palette, 32, 32, raw_bitmap, sizeof(raw_bitmap), true);
 
     // red square
-    gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect, *bmp);
+    gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect, bmp);
 
     //char message[1024];
     //if (!check_sig(gd.drawable, message,

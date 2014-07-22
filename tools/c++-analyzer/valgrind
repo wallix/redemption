@@ -1,0 +1,17 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"/../..
+
+d=./bin/checkvalgrind/debug/
+[ ! -z "$1" ] && d="$1"
+
+find "$d" -maxdepth 1 -mindepth 1 -executable \
+| while read f ; do
+  echo -e "\e[38;5;221;1m$f\e[0m"
+  valgrind \
+    --leak-check=full \
+    --max-stackframe=34234425648 \
+    --track-fds=yes \
+    --suppressions=./tools/valgrind-filter/valgrind-ignore-ssl-snappy \
+    "$f" |& ./tools/valgrind-filter/valgrind-output-color
+done
