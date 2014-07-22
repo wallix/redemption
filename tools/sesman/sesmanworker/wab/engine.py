@@ -5,6 +5,7 @@ from sesmanconf import TR, SESMANCONF, translations
 
 from wabengine.common.exception import AuthenticationFailed
 from wabengine.common.exception import AuthenticationChallenged
+from wabengine.common.exception import MustChangePassword
 from logger import Logger
 
 from model import RightInfo, UserInfo
