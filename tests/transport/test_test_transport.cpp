@@ -25,6 +25,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
 #include <stdlib.h>
@@ -135,7 +136,6 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport)
     BOOST_CHECK(!gt.get_status());
 }
 
-
 BOOST_AUTO_TEST_CASE(TestCheckTransportInputOverflow)
 {
     CheckTransport gt("0123456789ABCDEF", 16);
@@ -178,3 +178,26 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     BOOST_CHECK(!gt.get_status());
 }
 
+BOOST_AUTO_TEST_CASE(TestMemoryTransport)
+{
+    MemoryTransport mt;
+
+    char     s_data[]    = "0123456789ABCDEF";
+    uint32_t s_data_size = strlen(s_data);
+
+    mt.send(reinterpret_cast<char *>(&s_data_size), sizeof(s_data_size));
+    mt.send(s_data, s_data_size);
+
+    char     r_data[32]  = { 0 };
+    uint32_t r_data_size = 0;
+
+    char * r_buffer = reinterpret_cast<char *>(&r_data_size);
+    mt.recv(&r_buffer, sizeof(uint32_t));
+    BOOST_CHECK_EQUAL(r_data_size, s_data_size);
+    //LOG(LOG_INFO, "r_data_size=%u", r_data_size);
+
+    r_buffer = r_data;
+    mt.recv(&r_buffer, r_data_size);
+    BOOST_CHECK_EQUAL(memcmp(r_data, s_data, r_data_size), 0);
+    //LOG(LOG_INFO, "r_data=\"%s\"", r_data);
+}

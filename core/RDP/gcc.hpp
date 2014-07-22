@@ -418,7 +418,7 @@ namespace GCC
             // ConferenceCreateResponse::nodeID
             //  = 0x760a + 1001 = 30218 + 1001 = 31219
             //  (minimum for UserID is 1001)
-            stream.out_uint16_le(0x760a);
+            stream.out_uint16_be(0x760a);
 
             // ConferenceCreateResponse::tag length = 1 byte
             stream.out_uint8(1);
