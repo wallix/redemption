@@ -5,7 +5,7 @@ cd "$(dirname "$0")"/../..
 d=./bin/checkvalgrind/debug/
 [ ! -z "$1" ] && d="$1"
 
-find "$d" -maxdepth 1 -mindepth 1 -executable \
+find "$d" -maxdepth 1 -mindepth 1 -name 'test_*' -executable \
 | while read f ; do
   echo -e "\e[38;5;221;1m$f\e[0m"
   valgrind \
