@@ -84,12 +84,10 @@ project redemption
     <include>utils
     <include>acl
     <include>capture
-    <include>recorder
     <include>keyboard
     <include>transport
     <include>regex
     <include>/usr/include
-    <include>FreeRDP/include
 
     <conditional>@defines
 
