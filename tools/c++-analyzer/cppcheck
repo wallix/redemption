@@ -1,0 +1,34 @@
+#!/bin/sh
+
+cd "$(dirname "$0")"/../..
+
+exec cppcheck -v --enable=all --std=posix --std=c++03 --std=c++11 \
+main/*.cpp \
+-DCERTIF_PATH='"/etc/rdpproxy/cert/rdp"' \
+-DCFG_PATH='"/etc/rdpproxy"' \
+-DFIXTURES_PATH='"./tests/fixtures"' \
+-DFLV_PATH='"/var/rdpproxy/tmp"' \
+-DHASH_PATH='"/var/rdpproxy/hash"' \
+-DLICENSE_PATH='"/etc/rdpproxy/cert/rdplicense"' \
+-DNDEBUG \
+-DOCR_PATH='"/var/rdpproxy/tmp"' \
+-DPERSISTENT_PATH='"/var/lib/redemption/cache"' \
+-DPNG_PATH='"/var/rdpproxy/tmp"' \
+-DPUBLIC \
+-DRECORD_PATH='"/var/rdpproxy/recorded"' \
+-DRECORD_TMP_PATH='"/var/rdpproxy/tmp"' \
+-DSHARE_PATH='"/usr/local/share/rdpproxy"' \
+-DWRM_PATH='"/var/rdpproxy/recorded"' \
+-I"capture" \
+-I"core" \
+-I"front" \
+-I"headers" \
+-I"keyboard" \
+-I"main" \
+-I"mod" \
+-I"regex" \
+-I"tests" \
+-I"transport" \
+-I"utils" \
+-I"acl" \
+-I"capture" 

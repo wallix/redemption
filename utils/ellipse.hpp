@@ -30,8 +30,6 @@
 #include "log.hpp"
 
 
-#define SQ(X) X*X
-
 struct Ellipse {
     int16_t centerx;
     int16_t centery;
@@ -83,10 +81,12 @@ struct Ellipse {
     }
 
     bool contains_pt(int x, int y) const {
-        if (this->radiusy == 0 || this->radiusy == 0)
+        if (this->radiusx == 0 || this->radiusy == 0)
             return false;
+#define SQ(X) (X)*(X)
         return (SQ((x - this->centerx) / this->radiusx) +
                 SQ((y - this->centery) / this->radiusy)) <= 1;
+#undef SQ
     }
     bool equal(const Ellipse & other) const {
         return (other.centerx == this->centerx &&
@@ -94,7 +94,6 @@ struct Ellipse {
                 other.radiusx == this->radiusx &&
                 other.radiusy == this->radiusy);
     }
-
 };
 
 #endif
