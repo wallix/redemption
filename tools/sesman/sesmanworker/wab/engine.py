@@ -270,8 +270,8 @@ class Engine(object):
 #            rrr = RightInfo(r)
 #            Logger().info("%r" % rrr)
 
-    def get_selected_target(self, target_device, target_login, target_protocol):
-        #Logger().info("%s@%s:%s" % (target_device, target_login, target_protocol))
+    def get_selected_target(self, target_device, target_login, target_service):
+        # Logger().info("%s@%s:%s" % (target_device, target_login, target_service))
         selected_target = None
         for r in self.rights:
             if r.resource.application:
@@ -279,7 +279,7 @@ class Engine(object):
                     continue
                 if target_login != r.account.login:
                     continue
-                if target_protocol != u'APP':
+                if target_service != u'APP':
                     continue
             else:
                 #Logger().info("%s@%s:%s host=%s" % (r.account.login, r.resource.device.cn, r.resource.service.cn, r.resource.device.host))
@@ -287,16 +287,16 @@ class Engine(object):
                     if not is_device_in_subnet(target_device, r.resource.device.host):
                         continue
                     #Allow any user
-                    if target_protocol != r.resource.service.cn:
+                    if target_service != r.resource.service.cn:
                         continue
                 else:
                     if target_device != r.resource.device.cn:
                         continue
                     if target_login != r.account.login:
                         continue
-                    if target_protocol != r.resource.service.cn:
+                    if target_service != r.resource.service.cn:
                         continue
-            #Logger().info("Found %s@%s:%s" % (r.account.login, r.resource.device.cn, r.resource.service.cn))
+            # Logger().info("Found %s@%s:%s" % (r.account.login, r.resource.device.cn, r.resource.service.cn))
             selected_target = r
             break
 
@@ -362,12 +362,12 @@ class Engine(object):
             import traceback
             Logger().info("Engine release_target_password failed: (((%s)))" % (traceback.format_exc(e)))
 
-    def start_session(self, auth, pid):
+    def start_session(self, auth, pid, effective_login):
         try:
             from wabengine.common.interface import IPBSessionHandler
             from wabengine.common.utils import ProcessSessionHandler
             wab_engine_session_handler = IPBSessionHandler(ProcessSessionHandler(int(pid)))
-            self.session_id = self.wabengine.start_session(auth, wab_engine_session_handler)
+            self.session_id = self.wabengine.start_session(auth, wab_engine_session_handler, effective_login=effective_login)
         except Exception, e:
             import traceback
             Logger().info("Engine start_session failed: (((%s)))" % (traceback.format_exc(e)))
@@ -423,8 +423,7 @@ class Engine(object):
                 trace.writeframe(str("%s.mwrm" % (video_path.encode('utf-8')) ) )
                 trace.end()
         except Exception, e:
-            import traceback
-            Logger().info("Engine write_trace failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine write_trace failed: %s" % e)
             _status, _error = False, TR(u"Trace writer failed for %s") % video_path
 
         return _status, _error
