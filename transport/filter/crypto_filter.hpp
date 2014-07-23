@@ -305,14 +305,14 @@ namespace transfil {
             }
 
             // HMAC: key^ipad
-            int             blocksize = ::EVP_MD_block_size(md);
-            unsigned char * key_buf   = static_cast<unsigned char *>(::calloc(blocksize, 1));
+            const int     blocksize = ::EVP_MD_block_size(md);
+            unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
             {
-                const unique_ptr<unsigned char, default_free> auto_free(key_buf);
                 if (key_buf == NULL) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc!\n", ::getpid());
                     return -1;
                 }
+                const unique_ptr<unsigned char[]> auto_free(key_buf);
                 ::memset(key_buf, 0, blocksize);
                 if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
                     unsigned char keyhash[MD_HASH_LENGTH];
@@ -496,13 +496,13 @@ namespace transfil {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find MD message digest\n", ::getpid());
                     return -1;
                 }
-                int blocksize = ::EVP_MD_block_size(md);
-                unsigned char * key_buf = static_cast<unsigned char *>(::calloc(blocksize, 1));
-                const unique_ptr<unsigned char, default_free> auto_free(key_buf);
+                const int     blocksize = ::EVP_MD_block_size(md);
+                unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
                 if (key_buf == NULL) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc\n", ::getpid());
                     return -1;
                 }
+                const unique_ptr<unsigned char[]> auto_free(key_buf);
                 ::memset(key_buf, '\0', blocksize);
                 if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
                     unsigned char keyhash[MD_HASH_LENGTH];

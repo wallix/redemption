@@ -1166,9 +1166,10 @@ public:
 
         const uint32_t color_plane_size = sizeof(uint8_t) * this->cx * this->cy;
 
-        uint8_t * red_plane   = static_cast<uint8_t *>(alloca(color_plane_size));
-        uint8_t * green_plane = static_cast<uint8_t *>(alloca(color_plane_size));
-        uint8_t * blue_plane  = static_cast<uint8_t *>(alloca(color_plane_size));
+        uint8_t * mem_color   = static_cast<uint8_t *>(alloca(color_plane_size * 3));
+        uint8_t * red_plane   = mem_color + color_plane_size * 0;
+        uint8_t * green_plane = mem_color + color_plane_size * 1;
+        uint8_t * blue_plane  = mem_color + color_plane_size * 2;
 
         if (rle) {
             if (!no_alpha_plane) {
@@ -2096,9 +2097,10 @@ public:
 
         const uint32_t color_plane_size = sizeof(uint8_t) * this->cx * this->cy;
 
-        uint8_t * red_plane   = static_cast<uint8_t *>(alloca(color_plane_size));
-        uint8_t * green_plane = static_cast<uint8_t *>(alloca(color_plane_size));
-        uint8_t * blue_plane  = static_cast<uint8_t *>(alloca(color_plane_size));
+        uint8_t * mem_color   = static_cast<uint8_t *>(alloca(color_plane_size * 3));
+        uint8_t * red_plane   = mem_color + color_plane_size * 0;
+        uint8_t * green_plane = mem_color + color_plane_size * 1;
+        uint8_t * blue_plane  = mem_color + color_plane_size * 2;
 
         const uint8_t   byte_per_color = nbbytes(this->original_bpp);
         const uint8_t * data = this->data_bitmap.get();
