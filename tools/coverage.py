@@ -45,7 +45,7 @@ TESTSSUBDIR = ''
 if GCCVERSION[:9] in ['gcc-4.6.1']:
     GCCVERSION = GCCVERSION[:9]
     TESTSSUBDIR = 'tests/'
-elif GCCVERSION[:7] in ['gcc-4.6', 'gcc-4.7', 'gcc-4.8']:
+elif GCCVERSION[:7] in ['gcc-4.6', 'gcc-4.7', 'gcc-4.8', 'gcc-4.9']:
     GCCVERSION = GCCVERSION[:7]
     TESTSSUBDIR = 'tests/'
 
