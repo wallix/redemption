@@ -28,27 +28,22 @@
 class BulkCompressionInTransport : public Transport {
     Transport & source_transport;
 
-    rdp_mppc_61_dec * mppc_dec;
+    rdp_mppc_61_dec mppc_dec;
 
     const uint8_t * uncompressed_data;
     uint32_t        uncompressed_data_size;
 
-    BStream buffer_stream;
+    BStream compressed_buffer_stream;
+    BStream uncompressed_buffer_stream;
 
 public:
     BulkCompressionInTransport(Transport & st)
     : Transport()
     , source_transport(st)
-    , mppc_dec(NULL)
     , uncompressed_data(NULL)
     , uncompressed_data_size(0)
-    , buffer_stream(65536) {
-        this->mppc_dec = new rdp_mppc_61_dec();
-    }
-
-    virtual ~BulkCompressionInTransport() {
-        delete this->mppc_dec;
-    }
+    , compressed_buffer_stream(65536)
+    , uncompressed_buffer_stream(65536) {}
 
 private:
     virtual void do_recv(char ** pbuffer, size_t len) {
@@ -56,48 +51,52 @@ private:
         size_t temp_length = len;
 
         while (temp_length) {
-            if (uncompressed_data_size) {
-                REDASSERT(uncompressed_data);
+            if (this->uncompressed_data_size) {
+                REDASSERT(this->uncompressed_data);
 
-                const size_t data_length = std::min<size_t>(temp_length, uncompressed_data_size);
+                const size_t data_length = std::min<size_t>(temp_length, this->uncompressed_data_size);
 
-                ::memcpy(temp_buffer, uncompressed_data, data_length);
+                ::memcpy(temp_buffer, this->uncompressed_data, data_length);
 
-                uncompressed_data      += data_length;
-                uncompressed_data_size -= data_length;
+                this->uncompressed_data      += data_length;
+                this->uncompressed_data_size -= data_length;
 
                 temp_buffer += data_length;
                 temp_length -= data_length;
             }
             else {
-                buffer_stream.reset();
+                this->uncompressed_buffer_stream.reset();
 
                 this->source_transport.recv(
-                      &buffer_stream.end
-                    , 4                     // reset_compressor((1) + compressed_type(1) + data_size(2)
+                      &this->uncompressed_buffer_stream.end
+                    , 4                         // reset_compressor((1) + compressed_type(1) + data_size(2)
                     );
 
-                if (buffer_stream.in_uint8() == 1) {
-                    delete this->mppc_dec;
+                if (this->uncompressed_buffer_stream.in_uint8() == 1) {
+                    this->mppc_dec.~rdp_mppc_61_dec();
 
-                    this->mppc_dec = new rdp_mppc_61_dec();
+                    new (&this->mppc_dec) rdp_mppc_61_dec;
                 }
 
-                uint8_t  compressed_type = buffer_stream.in_uint8();
-                uint16_t data_size       = buffer_stream.in_uint16_le();
+                uint8_t  compressed_type = this->uncompressed_buffer_stream.in_uint8();
+                uint16_t data_size       = this->uncompressed_buffer_stream.in_uint16_le();
                 //LOG(LOG_INFO, "do_recv: data_size=%u", data_size);
 
-                buffer_stream.reset();
+                this->compressed_buffer_stream.reset();
 
-                this->source_transport.recv(&buffer_stream.end, data_size);
+                this->source_transport.recv(&this->compressed_buffer_stream.end, data_size);
+
+                this->uncompressed_buffer_stream.reset();
 
                 if (compressed_type & PACKET_COMPRESSED) {
-                    this->mppc_dec->decompress(buffer_stream.get_data(), data_size,
-                        compressed_type, uncompressed_data, uncompressed_data_size);
+                    this->uncompressed_data = this->uncompressed_buffer_stream.get_data();
+
+                    this->mppc_dec.decompress(this->compressed_buffer_stream.get_data(), data_size,
+                        compressed_type, this->uncompressed_data, this->uncompressed_data_size);
                 }
                 else {
-                    uncompressed_data      = buffer_stream.get_data();
-                    uncompressed_data_size = data_size;
+                    this->uncompressed_data      = this->compressed_buffer_stream.get_data();
+                    this->uncompressed_data_size = data_size;
                 }
             }
         }
@@ -141,7 +140,7 @@ private:
 
         const size_t MAX_DATA_LENGTH = 1024 * 60;
 
-        BStream compressed_buffer_stream(65536);
+        BStream buffer_stream(65536);
 
         while (temp_length) {
             const size_t data_length = (temp_length > MAX_DATA_LENGTH) ? MAX_DATA_LENGTH : temp_length;
@@ -152,26 +151,28 @@ private:
             this->mppc_enc->compress(reinterpret_cast<const uint8_t *>(temp_buffer), data_length,
                 compressed_type, compressed_data_size, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
-            compressed_buffer_stream.reset();
+            buffer_stream.reset();
 
-            compressed_buffer_stream.out_uint8(reset_compressor ? 1 : 0);
-            compressed_buffer_stream.out_uint8(compressed_type);
+            buffer_stream.out_uint8(this->reset_compressor ? 1 : 0);
+            this->reset_compressor = false;
+
+            buffer_stream.out_uint8(compressed_type);
 
             if (compressed_type & PACKET_COMPRESSED) {
-                compressed_buffer_stream.out_uint16_le(compressed_data_size);
+                buffer_stream.out_uint16_le(compressed_data_size);
 
-                this->mppc_enc->get_compressed_data(compressed_buffer_stream);
+                this->mppc_enc->get_compressed_data(buffer_stream);
 
-                compressed_buffer_stream.mark_end();
+                buffer_stream.mark_end();
 
-                this->target_transport.send(compressed_buffer_stream);
+                this->target_transport.send(buffer_stream);
             }
             else {
-                compressed_buffer_stream.out_uint16_le(data_length);
+                buffer_stream.out_uint16_le(data_length);
 
-                compressed_buffer_stream.mark_end();
+                buffer_stream.mark_end();
 
-                this->target_transport.send(compressed_buffer_stream);
+                this->target_transport.send(buffer_stream);
 
                 this->target_transport.send(temp_buffer, data_length);
             }
