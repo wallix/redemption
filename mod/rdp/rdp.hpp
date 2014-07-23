@@ -389,10 +389,10 @@ struct mod_rdp : public mod_api {
 
         LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
 
-        this->nego.set_identity((uint8_t*)this->username,
-                                (uint8_t*)this->domain,
-                                (uint8_t*)this->password,
-                                (uint8_t*)this->hostname);
+        this->nego.set_identity(this->username,
+                                this->domain,
+                                this->password,
+                                this->hostname);
 
         while (UP_AND_RUNNING != this->connection_finalization_state){
             this->draw_event(time(NULL));
