@@ -447,6 +447,9 @@ public:
                 struct Pointer cursor;
                 cursor.x = 3;
                 cursor.y = 3;
+                cursor.bpp = 24;
+                cursor.width = 32;
+                cursor.height = 32;
                 memset(cursor.data + 31 * (32 * 3), 0xff, 9);
                 memset(cursor.data + 30 * (32 * 3), 0xff, 9);
                 memset(cursor.data + 29 * (32 * 3), 0xff, 9);
@@ -1583,7 +1586,9 @@ public:
                 struct Pointer cursor;
                 cursor.x = 3;
                 cursor.y = 3;
-
+                cursor.bpp = 24;
+                cursor.width = 32;
+                cursor.height = 32;
                 // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
                 if (cx == 1 && cy == 1) {
                     TODO("Appearence of this 1x1 cursor looks broken, check what we actually get");
