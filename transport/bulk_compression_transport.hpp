@@ -109,8 +109,8 @@ private:
 class BulkCompressionOutTransport : public Transport {
     Transport & target_transport;
 
-    rdp_mppc_61_enc_hash_based_match_finder * mppc_enc_match_finder;
-    rdp_mppc_61_enc                         * mppc_enc;
+    rdp_mppc_61_enc_hash_based_match_finder mppc_enc_match_finder;
+    rdp_mppc_61_enc                         mppc_enc;
 
     bool reset_compressor;
 
@@ -118,20 +118,10 @@ class BulkCompressionOutTransport : public Transport {
 
 public:
     BulkCompressionOutTransport(Transport & tt, uint32_t verbose_compression = 0)
-    : Transport()
-    , target_transport(tt)
-    , mppc_enc_match_finder(NULL)
-    , mppc_enc(NULL)
+    : target_transport(tt)
+    , mppc_enc(&this->mppc_enc_match_finder, verbose_compression)
     , reset_compressor(false)
-    , verbose_compression(verbose_compression) {
-        this->mppc_enc_match_finder = new rdp_mppc_61_enc_hash_based_match_finder();
-        this->mppc_enc              = new rdp_mppc_61_enc(this->mppc_enc_match_finder, verbose_compression);
-    }
-
-    virtual ~BulkCompressionOutTransport () {
-        delete this->mppc_enc_match_finder;
-        delete this->mppc_enc;
-    }
+    , verbose_compression(verbose_compression) {}
 
 private:
     virtual void do_send(const char * const buffer, size_t len) {
@@ -148,7 +138,7 @@ private:
             uint8_t  compressed_type      = 0;
             uint16_t compressed_data_size = 0;
 
-            this->mppc_enc->compress(reinterpret_cast<const uint8_t *>(temp_buffer), data_length,
+            this->mppc_enc.compress(reinterpret_cast<const uint8_t *>(temp_buffer), data_length,
                 compressed_type, compressed_data_size, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
             buffer_stream.reset();
@@ -161,7 +151,7 @@ private:
             if (compressed_type & PACKET_COMPRESSED) {
                 buffer_stream.out_uint16_le(compressed_data_size);
 
-                this->mppc_enc->get_compressed_data(buffer_stream);
+                this->mppc_enc.get_compressed_data(buffer_stream);
 
                 buffer_stream.mark_end();
 
@@ -186,11 +176,11 @@ public:
     virtual bool next() {
         this->reset_compressor = true;
 
-        delete this->mppc_enc_match_finder;
-        delete this->mppc_enc;
+        this->mppc_enc.~rdp_mppc_61_enc();
+        this->mppc_enc_match_finder.~rdp_mppc_61_enc_hash_based_match_finder();
 
-        this->mppc_enc_match_finder = new rdp_mppc_61_enc_hash_based_match_finder();
-        this->mppc_enc              = new rdp_mppc_61_enc(this->mppc_enc_match_finder, this->verbose_compression);
+        new (&this->mppc_enc_match_finder)rdp_mppc_61_enc_hash_based_match_finder();
+        new (&this->mppc_enc) rdp_mppc_61_enc(&this->mppc_enc_match_finder, this->verbose_compression);
 
         return this->target_transport.next();
     }

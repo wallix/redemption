@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TestBulkCompressionTransport)
           "azert"
         , 21);
 
-    char   in_data[64] = { 0 };
+    char   in_data[128] = { 0 };
     char * in_buffer   = in_data;
 
     in_trans.recv(&in_buffer, 65);
