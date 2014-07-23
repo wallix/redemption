@@ -119,16 +119,12 @@ struct RdpNego
     virtual ~RdpNego() {
     }
 
-    void set_identity(uint8_t * user, uint8_t * domain, uint8_t * pass, uint8_t * hostname) {
+    void set_identity(char const * user, char const * domain, char const * pass, char const * hostname) {
         if (this->nla) {
-            memcpy(this->user, user, sizeof(this->user) - 1);
-            this->user[sizeof(this->user) - 1] = 0;
-            memcpy(this->domain, domain, sizeof(this->domain) - 1);
-            this->domain[sizeof(this->domain) - 1] = 0;
-            memcpy(this->password, pass, sizeof(this->password) - 1);
-            this->password[sizeof(this->password) - 1] = 0;
-            memcpy(this->hostname, hostname, sizeof(this->hostname) - 1);
-            this->hostname[sizeof(this->hostname) - 1] = 0;
+            snprintf(reinterpret_cast<char*>(this->user), sizeof(this->user), "%s", user);
+            snprintf(reinterpret_cast<char*>(this->domain), sizeof(this->domain), "%s", domain);
+            snprintf(reinterpret_cast<char*>(this->password), sizeof(this->password), "%s", pass);
+            snprintf(reinterpret_cast<char*>(this->hostname), sizeof(this->hostname), "%s", hostname);
         }
     }
 

@@ -410,7 +410,7 @@ struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_matc
 
             if (CurrentMatchLength > MatchLength) {
                 if (MatchLength > 0) {
-                    history_data_end = history_data_begin + history_data_size - (CurrentMatchLength - 1);
+                    history_data_end = history_data + history_data_size - (CurrentMatchLength - 1);
                 }
 
                 MatchLength        = CurrentMatchLength;
