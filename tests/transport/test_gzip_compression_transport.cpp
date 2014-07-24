@@ -30,36 +30,50 @@
 #include "gzip_compression_transport.hpp"
 #include "test_transport.hpp"
 
-BOOST_AUTO_TEST_CASE(TestBulkCompressionTransport)
+BOOST_AUTO_TEST_CASE(TestGZipCompressionTransport)
 {
     MemoryTransport mt;
 
-    GZipCompressionInTransport  in_trans(mt);
-    GZipCompressionOutTransport out_trans(mt);
+    {
+        GZipCompressionOutTransport out_trans(mt);
 
-/*
-    out_trans.send(
-          "0123456789ABCDEF"
-          "0123456789ABCDEF"
-          "0123456789ABCDEF"
-          "0123456789ABCDEF"
-        , 65);
-    out_trans.next();
-    out_trans.send(
-          "azert"
-          "azert"
-          "azert"
-          "azert"
-        , 21);
+        out_trans.send(
+              "azert"
+              "azert"
+              "azert"
+              "azert"
+            , 21);
+        out_trans.send(
+              "wallix"
+              "wallix"
+              "wallix"
+              "wallix"
+              "wallix"
+            , 31);
+        out_trans.next();
+        out_trans.send(
+              "0123456789ABCDEF"
+              "0123456789ABCDEF"
+              "0123456789ABCDEF"
+              "0123456789ABCDEF"
+            , 65);
+    }
 
-    char   in_data[64] = { 0 };
-    char * in_buffer   = in_data;
+    {
+        GZipCompressionInTransport  in_trans(mt);
 
-    in_trans.recv(&in_buffer, 65);
-    LOG(LOG_INFO, "in_data=\"%s\"", in_data);
+        char   in_data[128] = { 0 };
+        char * in_buffer   = in_data;
 
-    in_buffer = in_data;
-    in_trans.recv(&in_buffer, 21);
-    LOG(LOG_INFO, "in_data=\"%s\"", in_data);
-*/
+        in_trans.recv(&in_buffer, 21);
+        LOG(LOG_INFO, "in_data=\"%s\"", in_data);
+
+        in_buffer = in_data;
+        in_trans.recv(&in_buffer, 31);
+        LOG(LOG_INFO, "in_data=\"%s\"", in_data);
+
+        in_buffer = in_data;
+        in_trans.recv(&in_buffer, 65);
+        LOG(LOG_INFO, "in_data=\"%s\"", in_data);
+    }
 }
