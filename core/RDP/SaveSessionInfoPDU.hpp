@@ -232,8 +232,8 @@ struct LogonInfoVersion1_Recv {
 
         this->cbDomain = stream.in_uint32_le();
 
-        expected = this->cbDomain +
-                   4;               // cbUserName(4)
+        expected = 52 +	// Domain(52)
+                   4;   // cbUserName(4)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
                 "Truncated Logon Info Version 1 (data): expected=%u remains=%u",
@@ -244,10 +244,13 @@ struct LogonInfoVersion1_Recv {
         stream.in_uni_to_ascii_str(this->Domain, this->cbDomain,
             sizeof(this->Domain));
 
+    stream.in_skip_bytes(52 -  // Domain(52)
+        this->cbDomain);
+
         this->cbUserName = stream.in_uint32_le();
 
-        expected = this->cbUserName +
-                   4;                   // SessionId(4)
+        expected = 512 +    // UserName(512)
+                   4;       // SessionId(4)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
                 "Truncated Logon Info Version 1 (data): expected=%u remains=%u",
@@ -257,6 +260,9 @@ struct LogonInfoVersion1_Recv {
 
         stream.in_uni_to_ascii_str(this->UserName, this->cbUserName,
             sizeof(this->UserName));
+
+    stream.in_skip_bytes(512 - // UserName(512)
+        this->cbUserName);
 
         this->SessionId = stream.in_uint32_le();
 
