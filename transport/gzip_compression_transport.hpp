@@ -127,12 +127,12 @@ private:
                 this->compression_stream.next_out  = reinterpret_cast<unsigned char *>(this->uncompressed_data);
 
                 int ret = ::inflate(&this->compression_stream, Z_NO_FLUSH);
-                if (this->verbose) {
+                if (this->verbose & 0x2) {
                     LOG(LOG_INFO, "GZipCompressionInTransport::do_recv: inflate return %d", ret);
                 }
 (void)ret;
 
-                if (this->verbose) {
+                if (this->verbose & 0x2) {
                     LOG(LOG_INFO, "GZipCompressionInTransport::do_recv: uncompressed_data_capacity=%u avail_out=%u", uncompressed_data_capacity, this->compression_stream.avail_out);
                 }
                 this->uncompressed_data_size = uncompressed_data_capacity - this->compression_stream.avail_out;
@@ -143,6 +143,8 @@ private:
                 this->inflate_pending = ((ret == 0) && (this->compression_stream.avail_out == 0));
             }
         }
+
+        (*pbuffer) = (*pbuffer) + len;
     }
 };  // class GZipCompressionInTransport
 
@@ -178,7 +180,7 @@ public:
 
     virtual ~GZipCompressionOutTransport() {
         if (this->uncompressed_data_size) {
-            if (this->verbose) {
+            if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "GZipCompressionOutTransport::~GZipCompressionOutTransport: Compress");
             }
             this->compress(this->uncompressed_data, this->uncompressed_data_size, true);
@@ -192,9 +194,12 @@ public:
 private:
     void compress(const char * const buffer, size_t len, bool end) {
         if (this->verbose) {
+            LOG(LOG_INFO, "GZipCompressionOutTransport::compress: uncompressed_data_size=%u", len);
+        }
+        if (this->verbose & 0x4) {
             LOG(LOG_INFO, "GZipCompressionOutTransport::compress: end=%s", (end ? "true" : "false"));
         }
-        const int flush = (end ? Z_FINISH : Z_NO_FLUSH);
+        const int flush = (end ? Z_FINISH : /*Z_NO_FLUSH*/Z_SYNC_FLUSH);
 
         this->compression_stream.avail_in = len;
         this->compression_stream.next_in  = reinterpret_cast<unsigned char *>(const_cast<char *>(buffer));
@@ -207,11 +212,14 @@ private:
 
             int ret = ::deflate(&this->compression_stream, flush);
 (void)ret;
-            if (this->verbose) {
+            if (this->verbose & 0x2) {
                 LOG(LOG_INFO, "GZipCompressionOutTransport::compress: deflate return %d", ret);
             }
             REDASSERT(ret != Z_STREAM_ERROR);
 
+            if (this->verbose & 0x2) {
+                LOG(LOG_INFO, "GZipCompressionOutTransport::compress: compressed_data_capacity=%u avail_out=%u", sizeof(compressed_data), this->compression_stream.avail_out);
+            }
             const uint16_t compressed_data_size = sizeof(compressed_data) - this->compression_stream.avail_out;
 
             BStream buffer_stream(128);
@@ -234,7 +242,7 @@ private:
     }
 
     virtual void do_send(const char * const buffer, size_t len) {
-        if (this->verbose) {
+        if (this->verbose & 0x4) {
             LOG(LOG_INFO, "GZipCompressionOutTransport::do_send: len=%u", len);
         }
         const char * temp_buffer = buffer;
@@ -276,7 +284,7 @@ private:
                 }
             }
         }
-        if (this->verbose) {
+        if (this->verbose & 0x4) {
             LOG(LOG_INFO, "GZipCompressionOutTransport::do_send: uncompressed_data_size=%u", this->uncompressed_data_size);
         }
     }
@@ -284,7 +292,7 @@ private:
 public:
     virtual bool next() {
         if (this->uncompressed_data_size) {
-            if (this->verbose) {
+            if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "GZipCompressionOutTransport::next: Compress");
             }
             this->compress(this->uncompressed_data, this->uncompressed_data_size, true);
