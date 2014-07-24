@@ -196,7 +196,7 @@ public:
         if (this->data == 0) {
             throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
         }
-        std::fill<>(this->data, this->data + this->pix_len, 0);
+        std::fill(this->data, this->data + this->pix_len, 0);
 
         memset(this->timestamp_data, 0xFF, sizeof(this->timestamp_data));
         memset(this->previous_timestamp, 0x07, sizeof(this->previous_timestamp));
