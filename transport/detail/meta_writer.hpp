@@ -162,6 +162,14 @@ namespace detail
             }
         }
 
+        int flush() /*noexcept*/
+        {
+            if (this->buf_.is_open()) {
+                return this->buf_.flush();
+            }
+            return 0;
+        }
+
         off_t seek(int64_t offset, int whence) /*noexcept*/
         { return this->buf_.seek(offset, whence); }
 
@@ -314,6 +322,13 @@ namespace detail
         {
             this->sequence_base_type::request_full_cleaning();
             ::unlink(this->mf_.filename);
+        }
+
+        int flush() /*noexcept*/
+        {
+            const int res1 = this->sequence_base_type::flush();
+            const int res2 = this->meta_buf_.flush();
+            return res1 == 0 ? res2 : res1;
         }
 
         BufMeta & meta_buf()

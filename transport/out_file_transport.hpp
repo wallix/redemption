@@ -21,13 +21,20 @@
 #ifndef REDEMPTION_TRANSPORT_OUT_FILE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_OUT_FILE_TRANSPORT_HPP
 
+#include "buffer/buffering_buf.hpp"
 #include "mixin_transport.hpp"
 #include "fdbuf.hpp"
 
 // typedef SeekableTransport<OutputTransport<io::posix::fdbuf> > OutFileTransport;
 
 struct OutFileTransport
-: SeekableTransport<OutputTransport<io::posix::fdbuf> >
+: FlushingTransport<
+SeekableTransport<
+    OutputTransport<
+        transbuf::obuffering_buf<io::posix::fdbuf>
+    >
+>
+>
 {
     OutFileTransport(int fd) /*noexcept*/
     : OutFileTransport::TransportType(fd)

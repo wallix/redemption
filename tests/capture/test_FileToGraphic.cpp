@@ -113,6 +113,9 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     wrm_recorder.flush();
     const char * filename;
 
+    out_png_trans.disconnect();
+    out_wrm_trans.disconnect();
+
     filename = out_png_trans.seqgen()->get(0);
     BOOST_CHECK_EQUAL(21280, ::filesize(filename));
     ::unlink(filename);

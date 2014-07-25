@@ -139,6 +139,9 @@ namespace transbuf {
         off_t seek(off_t offset, int whence) const /*noexcept*/
         { return this->file.seek(offset, whence); }
 
+        int flush() const /*noexcept*/
+        { return this->file.flush(); }
+
     protected:
         CryptoContext * crypto_context() const /*noexcept*/
         { return this->ctx; }
