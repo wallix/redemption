@@ -4091,18 +4091,12 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
             }
 
-            if (!sdata_in.payload.in_check_rem(sdata_in.len)){
-                LOG(LOG_ERR, "Truncated Persistent key list PDU data, need=%u remains=%u",
-                    sdata_in.len, sdata_in.payload.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
             if (this->ini->client.persistent_disk_bitmap_cache &&
                 this->bmp_cache_persister) {
                 RDP::PersistentKeyListPDUData pklpdud;
 
                 pklpdud.receive(sdata_in.payload);
-                if (this->verbose & 8){
+                if (this->verbose & 8) {
                     pklpdud.log(LOG_INFO, "Receiving from client");
                 }
 
