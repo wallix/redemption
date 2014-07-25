@@ -244,8 +244,8 @@ struct LogonInfoVersion1_Recv {
         stream.in_uni_to_ascii_str(this->Domain, this->cbDomain,
             sizeof(this->Domain));
 
-    stream.in_skip_bytes(52 -  // Domain(52)
-        this->cbDomain);
+        stream.in_skip_bytes(52 -  // Domain(52)
+            this->cbDomain);
 
         this->cbUserName = stream.in_uint32_le();
 
@@ -261,8 +261,8 @@ struct LogonInfoVersion1_Recv {
         stream.in_uni_to_ascii_str(this->UserName, this->cbUserName,
             sizeof(this->UserName));
 
-    stream.in_skip_bytes(512 - // UserName(512)
-        this->cbUserName);
+        stream.in_skip_bytes(512 - // UserName(512)
+            this->cbUserName);
 
         this->SessionId = stream.in_uint32_le();
 
