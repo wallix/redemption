@@ -98,6 +98,8 @@ private:
                 }
             }
         }
+
+        (*pbuffer) = (*pbuffer) + len;
     }
 };  // class SnappyCompressionInTransport
 
