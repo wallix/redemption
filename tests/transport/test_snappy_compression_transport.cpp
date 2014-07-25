@@ -23,8 +23,8 @@
 #define BOOST_TEST_MODULE TestSnappyCompressionTransport
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
 #include "snappy_compression_transport.hpp"
@@ -32,11 +32,13 @@
 
 BOOST_AUTO_TEST_CASE(TestSnappyCompressionTransport)
 {
-/*
+    //size_t source_length = 56000;
+    //LOG(LOG_INFO, "snappy_max_compressed_length(%u)=%u", source_length, ::snappy_max_compressed_length(source_length));
+
     MemoryTransport mt;
 
     {
-        GZipCompressionOutTransport out_trans(mt);
+        SnappyCompressionOutTransport out_trans(mt);
 
         out_trans.send(
               "azert"
@@ -61,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TestSnappyCompressionTransport)
     }
 
     {
-        GZipCompressionInTransport  in_trans(mt);
+        SnappyCompressionInTransport  in_trans(mt);
 
         char   in_data[128] = { 0 };
         char * in_buffer   = in_data;
@@ -77,5 +79,4 @@ BOOST_AUTO_TEST_CASE(TestSnappyCompressionTransport)
         in_trans.recv(&in_buffer, 65);
         LOG(LOG_INFO, "in_data=\"%s\"", in_data);
     }
-*/
 }
