@@ -199,6 +199,7 @@ private:
         if (this->verbose & 0x4) {
             LOG(LOG_INFO, "GZipCompressionOutTransport::compress: end=%s", (end ? "true" : "false"));
         }
+
         const int flush = (end ? Z_FINISH : /*Z_NO_FLUSH*/Z_SYNC_FLUSH);
 
         this->compression_stream.avail_in = len;
@@ -245,6 +246,7 @@ private:
         if (this->verbose & 0x4) {
             LOG(LOG_INFO, "GZipCompressionOutTransport::do_send: len=%u", len);
         }
+
         const char * temp_buffer = buffer;
         size_t       temp_length = len;
 
@@ -269,7 +271,7 @@ private:
                 }
             }
             else {
-                if (temp_length > GZipCompressionOutTransport::MAX_DATA_SIZE) {
+                if (temp_length >= GZipCompressionOutTransport::MAX_DATA_SIZE) {
                     this->compress(temp_buffer, GZipCompressionOutTransport::MAX_DATA_SIZE, false);
 
                     temp_buffer += GZipCompressionOutTransport::MAX_DATA_SIZE;
@@ -284,6 +286,7 @@ private:
                 }
             }
         }
+
         if (this->verbose & 0x4) {
             LOG(LOG_INFO, "GZipCompressionOutTransport::do_send: uncompressed_data_size=%u", this->uncompressed_data_size);
         }

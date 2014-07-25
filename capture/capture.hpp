@@ -376,12 +376,8 @@ public:
 
                     RDPBitmapData bitmap_data_compressed = bitmap_data;
 
-                    bitmap_data_compressed.flags         = BITMAP_COMPRESSION;
-                    bitmap_data_compressed.bitmap_length = bmp_stream.size() + 8;
-
-                    bitmap_data_compressed.cb_comp_main_body_size = bmp_stream.size();
-                    bitmap_data_compressed.cb_scan_width          = bmp.cx;
-                    bitmap_data_compressed.cb_uncompressed_size   = bmp.bmp_size;
+                    bitmap_data_compressed.flags         = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                    bitmap_data_compressed.bitmap_length = bmp_stream.size();
 
                     this->gd->draw(bitmap_data_compressed, bmp_stream.get_data(), bmp_stream.size(), bmp);
                 }
