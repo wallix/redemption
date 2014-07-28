@@ -29,16 +29,16 @@
 
 struct OutFilenameSequenceTransport
 : SeekableTransport<
-FlushingTransport<
+// FlushingTransport<
 RequestCleaningTransport<
     OutputNextTransport<
         detail::out_sequence_filename_buf<
-            detail::empty_ctor<transbuf::obuffering_buf<io::posix::fdbuf> >
+            detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/ >
         >/*,
         detail::GetCurrentPath*/
     >
 >
->
+// >
 >
 {
     OutFilenameSequenceTransport(

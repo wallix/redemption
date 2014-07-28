@@ -26,7 +26,7 @@
 #include "mixin_transport.hpp"
 
 struct InFilenameTransport
-: SeekableTransport< InputTransport< transbuf::ibuffering_buf<transbuf::ifile_base> > >
+: SeekableTransport< InputTransport< /*transbuf::ibuffering_buf<*/transbuf::ifile_base/*>*/ > >
 {
     InFilenameTransport(const char * filename)
     {

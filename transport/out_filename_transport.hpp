@@ -29,11 +29,11 @@
 
 struct OutFilenameTransport
 : SeekableTransport<
-FlushingTransport<
+// FlushingTransport<
 OutputTransport<
-    transbuf::obuffering_buf< transbuf::ofile_base >
+    /*transbuf::obuffering_buf<*/ transbuf::ofile_base /*>*/
 >
->
+// >
 >
 {
     OutFilenameTransport(const char * filename)

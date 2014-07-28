@@ -28,7 +28,7 @@
 // typedef SeekableTransport<InputTransport<io::posix::fdbuf> > InFileTransport;
 
 struct InFileTransport
-: SeekableTransport<InputTransport<transbuf::ibuffering_buf<io::posix::fdbuf> > >
+: SeekableTransport<InputTransport</*transbuf::ibuffering_buf<*/io::posix::fdbuf/*>*/ > >
 {
     InFileTransport(int fd) /*noexcept*/
     : InFileTransport::TransportType(fd)

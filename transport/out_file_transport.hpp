@@ -28,13 +28,13 @@
 // typedef SeekableTransport<OutputTransport<io::posix::fdbuf> > OutFileTransport;
 
 struct OutFileTransport
-: FlushingTransport<
+: /*FlushingTransport<*/
 SeekableTransport<
     OutputTransport<
-        transbuf::obuffering_buf<io::posix::fdbuf>
+        /*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/
     >
 >
->
+// >
 {
     OutFileTransport(int fd) /*noexcept*/
     : OutFileTransport::TransportType(fd)

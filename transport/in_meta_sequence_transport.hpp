@@ -29,7 +29,7 @@
 
 struct InMetaSequenceTransport
 : InputNextTransport<detail::in_meta_sequence_buf<
-    detail::empty_ctor<transbuf::ibuffering_buf<transbuf::ifile_base> >,
+    detail::empty_ctor</*transbuf::ibuffering_buf<*/transbuf::ifile_base/*> */>,
     detail::empty_ctor<transbuf::ifile_base>
 > >
 {
