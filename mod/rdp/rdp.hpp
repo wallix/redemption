@@ -3767,20 +3767,6 @@ struct mod_rdp : public mod_api {
                     this->front_width = bitmap_caps.desktopWidth;
                     this->front_height = bitmap_caps.desktopHeight;
 
-/*
-                    if (this->enable_persistent_disk_bitmap_cache) {
-                        this->orders.create_cache_bitmap(this->bpp,
-                            120,  nbbytes(this->bpp) * 16 * 16, false,
-                            120,  nbbytes(this->bpp) * 32 * 32, false,
-                            2553, nbbytes(this->bpp) * 64 * 64, true,
-                            this->cache_verbose);
-                    }
-                    else {
-                        this->orders.create_cache_bitmap(this->bpp, 0x258, nbbytes(this->bpp) * 0x100, false,
-                            0x12c, nbbytes(this->bpp) * 0x400, false, 0x106, nbbytes(this->bpp) * 0x1000, false,
-                            this->cache_verbose);
-                    }
-*/
                     this->orders.create_cache_bitmap(this->bpp,
                         120,  nbbytes(this->bpp) * 16 * 16, false,
                         120,  nbbytes(this->bpp) * 32 * 32, false,
