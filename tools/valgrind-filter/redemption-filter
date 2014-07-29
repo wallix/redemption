@@ -1,0 +1,161 @@
+{
+   SLL
+   Memcheck:Leak
+   fun:malloc
+   fun:CRYPTO_malloc
+}
+{
+   SSL
+   Memcheck:Leak
+   fun:realloc
+   fun:CRYPTO_realloc
+}
+
+{
+   SSL
+   Memcheck:Cond
+   fun:*
+   fun:*
+   fun:*
+   fun:*
+   fun:*
+   fun:ssl3_connect
+}
+{
+   SSL
+   Memcheck:Cond
+   fun:*
+   fun:*
+   fun:*
+   fun:*
+   fun:ssl3_connect
+}
+{
+   SSL
+   Memcheck:Cond
+   fun:*
+   fun:*
+   fun:*
+   fun:ssl3_connect
+}
+{
+   SSL
+   Memcheck:Cond
+   fun:*
+   fun:*
+   fun:ssl3_connect
+}
+{
+   SSL
+   Memcheck:Cond
+   fun:*
+   fun:ssl3_connect
+}
+{
+   SSL
+   Memcheck:Value8
+   fun:*
+   fun:*
+   fun:*
+   fun:*
+   fun:*
+   fun:*
+   fun:*
+   fun:*
+   fun:ssl3_connect
+}
+{
+   SSL
+   Memcheck:Value8
+   fun:*
+   fun:*
+   fun:*
+   fun:*
+   fun:*
+   fun:ssl3_connect
+}
+{
+   SSL
+   Memcheck:Value8
+   fun:*
+   fun:*
+   fun:*
+   fun:*
+   fun:ssl3_connect
+}
+{
+   SSL
+   Memcheck:Value8
+   fun:*
+   fun:*
+   fun:*
+   fun:ssl3_connect
+}
+{
+   SSL
+   Memcheck:Value8
+   fun:*
+   fun:*
+   fun:ssl3_connect
+}
+{
+   SSL
+   Memcheck:Value8
+   fun:bn_sqr4x_mont
+}
+{
+   SSL
+   Memcheck:Value8
+   fun:bn_mul4x_mont
+}
+
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_ZN6snappy21GetUncompressedLengthEPKcmPm
+   fun:snappy_uncompress
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:snappy_uncompress
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_ZN6snappy13RawUncompressEPNS_6SourceEPc
+   fun:_ZN6snappy13RawUncompressEPKcmPc
+   fun:snappy_uncompress
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:_ZN6snappy18SnappyDecompressor9RefillTagEv
+   fun:_ZN6snappy13RawUncompressEPNS_6SourceEPc
+   fun:_ZN6snappy13RawUncompressEPKcmPc
+   fun:snappy_uncompress
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:memcpy@@GLIBC_2.14
+   fun:_ZN6snappy13RawUncompressEPNS_6SourceEPc
+   fun:_ZN6snappy13RawUncompressEPKcmPc
+   fun:snappy_uncompress
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:memcpy@@GLIBC_2.14
+   fun:_ZN6snappy13RawUncompressEPNS_6SourceEPc
+   fun:_ZN6snappy13RawUncompressEPKcmPc
+   fun:snappy_uncompress
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:_ZN6snappy13RawUncompressEPNS_6SourceEPc
+   fun:_ZN6snappy13RawUncompressEPKcmPc
+   fun:snappy_uncompress
+}
