@@ -71,6 +71,9 @@ namespace transbuf {
 
         off_t seek(off_t offset, int whence) const /*noexcept*/
         { return this->fdbuf.seek(offset, whence); }
+
+        int flush() const /*noexcept*/
+        { return 0; }
     };
 }
 

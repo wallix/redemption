@@ -247,4 +247,29 @@ protected:
     typedef RequestCleaningTransport TransportType;
 };
 
+
+template<class TTransport>
+struct FlushingTransport
+: TTransport
+{
+    FlushingTransport()
+    {}
+
+    template<class T>
+    FlushingTransport(const T & params)
+    : TTransport(params)
+    {}
+
+    virtual void flush()
+    {
+        int res = this->buffer().flush();
+        if (res) {
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, res < 0 ? 0 : res);
+        }
+    }
+
+protected:
+    typedef FlushingTransport TransportType;
+};
+
 #endif

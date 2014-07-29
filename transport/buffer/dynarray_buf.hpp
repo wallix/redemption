@@ -60,17 +60,20 @@ namespace transbuf {
             return 0;
         }
 
-        int read(void * buffer, size_t len) /*noexcept*/
+        long int read(void * buffer, size_t len) /*noexcept*/
         { return this->copy(buffer, this->data.get() + this->current, len); }
 
-        int write(const void * buffer, size_t len) /*noexcept*/
+        long int write(const void * buffer, size_t len) /*noexcept*/
         { return this->copy(this->data.get() + this->current, buffer, len); }
 
         bool is_open() const /*noexcept*/
         { return this->data.get(); }
 
+        int flush() const /*noexcept*/
+        { return 0; }
+
     private:
-        int copy(void * dest, const void * src, size_t len)  /*noexcept*/
+        long int copy(void * dest, const void * src, size_t len)  /*noexcept*/
         {
             const size_t rlen = std::min<size_t>(this->len - this->current, len);
             memcpy(dest, src, rlen);

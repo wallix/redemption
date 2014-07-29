@@ -21,13 +21,14 @@
 #ifndef REDEMPTION_TRANSPORT_IN_FILE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_IN_FILE_TRANSPORT_HPP
 
+#include "buffer/buffering_buf.hpp"
 #include "mixin_transport.hpp"
 #include "fdbuf.hpp"
 
 // typedef SeekableTransport<InputTransport<io::posix::fdbuf> > InFileTransport;
 
 struct InFileTransport
-: SeekableTransport<InputTransport<io::posix::fdbuf> >
+: SeekableTransport<InputTransport</*transbuf::ibuffering_buf<*/io::posix::fdbuf/*>*/ > >
 {
     InFileTransport(int fd) /*noexcept*/
     : InFileTransport::TransportType(fd)

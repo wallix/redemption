@@ -23,17 +23,20 @@
 
 #include "detail/meta_writer.hpp"
 #include "mixin_transport.hpp"
+#include "buffer/buffering_buf.hpp"
 #include "buffer/file_buf.hpp"
 #include "fdbuf.hpp"
 
 struct OutMetaSequenceTransport
 : //SeekableTransport<
+// FlushingTransport<
 RequestCleaningTransport<
     OutputNextTransport<detail::out_meta_sequence_filename_buf<
-        detail::empty_ctor<io::posix::fdbuf>,
+        detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/ >,
         detail::empty_ctor<transbuf::ofile_base>
     >, detail::GetCurrentPath>
 >
+// >
 // >
 {
     OutMetaSequenceTransport(

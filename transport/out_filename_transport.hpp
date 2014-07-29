@@ -23,11 +23,18 @@
 #ifndef REDEMPTION_TRANSPORT_OUT_FILENAME_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_OUT_FILENAME_TRANSPORT_HPP
 
+#include "buffer/buffering_buf.hpp"
 #include "buffer/file_buf.hpp"
 #include "mixin_transport.hpp"
 
 struct OutFilenameTransport
-: SeekableTransport< OutputTransport<transbuf::ofile_base> >
+: SeekableTransport<
+// FlushingTransport<
+OutputTransport<
+    /*transbuf::obuffering_buf<*/ transbuf::ofile_base /*>*/
+>
+// >
+>
 {
     OutFilenameTransport(const char * filename)
     {

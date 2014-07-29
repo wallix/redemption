@@ -67,6 +67,9 @@ namespace transbuf {
 
         bool is_open() const /*noexcept*/
         { return this->data.get(); }
+
+        int flush() const /*noexcept*/
+        { return 0; }
     };
 
 }

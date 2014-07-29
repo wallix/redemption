@@ -1,0 +1,23 @@
+#!/bin/bash
+
+cd "`dirname "$0"`"/../..
+
+dirproj='capture core front main mod transport utils acl'
+dirtest='ftests tests'
+
+function find_unused() {
+    while read l ; do
+        grep -oRhm1 "${l//*\//}" "$@" > /dev/null || echo "$l"
+    done
+}
+
+unused=`find $dirproj -name '*.h' -o -name '*.hpp' | find_unused $dirproj`
+
+echo -e "Unused files in ${dirproj// /, }:
+
+$unused
+
+Unused files in ${dirproj// /, }, ${dirtest// /, }:
+"
+
+find_unused $dirtest <<< "$unused"

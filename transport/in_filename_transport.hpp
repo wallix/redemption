@@ -21,11 +21,12 @@
 #ifndef REDEMPTION_TRANSPORT_IN_FILENAME_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_IN_FILENAME_TRANSPORT_HPP
 
+#include "buffer/buffering_buf.hpp"
 #include "buffer/file_buf.hpp"
 #include "mixin_transport.hpp"
 
 struct InFilenameTransport
-: SeekableTransport< InputTransport<transbuf::ifile_base> >
+: SeekableTransport< InputTransport< /*transbuf::ibuffering_buf<*/transbuf::ifile_base/*>*/ > >
 {
     InFilenameTransport(const char * filename)
     {

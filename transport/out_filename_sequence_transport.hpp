@@ -21,6 +21,7 @@
 #ifndef REDEMPTION_TRANSPORT_OUT_FILENAME_SEQUENCE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_OUT_FILENAME_SEQUENCE_TRANSPORT_HPP
 
+#include "buffer/buffering_buf.hpp"
 #include "detail/meta_writer.hpp"
 #include "mixin_transport.hpp"
 #include "fdbuf.hpp"
@@ -28,12 +29,16 @@
 
 struct OutFilenameSequenceTransport
 : SeekableTransport<
+// FlushingTransport<
 RequestCleaningTransport<
-    OutputNextTransport<detail::out_sequence_filename_buf<
-        detail::empty_ctor<io::posix::fdbuf> >/*,
+    OutputNextTransport<
+        detail::out_sequence_filename_buf<
+            detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/ >
+        >/*,
         detail::GetCurrentPath*/
     >
 >
+// >
 >
 {
     OutFilenameSequenceTransport(

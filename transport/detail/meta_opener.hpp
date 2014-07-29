@@ -187,7 +187,7 @@ namespace detail
                     if (const ssize_t err = this->Buf::close()) {
                         return res;
                     }
-                    reinterpret_cast<char*&>(data) += res2;
+                    data = static_cast<char*>(data) + res2;
                     if (const int e = this->open_next()) {
                         return res;
                     }

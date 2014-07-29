@@ -399,6 +399,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
         player.interpret_order();
     }
     png_recorder.flush();
+    out_png_trans.disconnect();
     const char * filename = out_png_trans.seqgen()->get(0);
     BOOST_CHECK_EQUAL(107, ::filesize(filename));
     ::unlink(filename);
