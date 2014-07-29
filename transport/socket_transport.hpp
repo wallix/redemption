@@ -1137,7 +1137,7 @@ public:
         }
 
         TODO("move that to base class : accounting_recv(len)");
-        this->last_quantum_received = len;
+        this->last_quantum_received += len;
     }
 
     virtual void do_send(const char * const buffer, size_t len)
@@ -1162,7 +1162,7 @@ public:
         }
 
         TODO("move that to base class : accounting_send(len)");
-        this->last_quantum_sent = len;
+        this->last_quantum_sent += len;
     }
 
     virtual void seek(int64_t offset, int whence) throw (Error) {

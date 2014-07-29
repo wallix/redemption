@@ -855,6 +855,56 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
+        'rec_w2k12_administrateur@10.10.47.132:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'administrateur',
+                password = PASSWORD3,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win2012'
+                )
+            ],
+            target_groups = u'win2012',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.47.132',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.47.132',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = True,
+                isRecorded = True
+            ),
+            service_login = u'administrateur@10.10.47.132:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
+        ),
         'w2k_administrateur@10.10.46.64:RDP' : RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
@@ -1772,7 +1822,8 @@ class Engine(object):
                 'rec_w2k3_any@10.10.46.70:VNC',
                 'rec_w2k3_qa\\administrateur@10.10.46.70:RDP',
                 'rec_w2k8_qa\\administrateur@10.10.46.78:RDP',
-                'rec_wxp_administrateur@10.10.47.175:RDP'
+                'rec_wxp_administrateur@10.10.47.175:RDP',
+                'rec_w2k12_administrateur@10.10.47.132:RDP'
             ]
         },
         'x':
