@@ -33,8 +33,8 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
      * Initialize rdp_mppc_40_dec structure
      */
     rdp_mppc_40_dec()
-    : history_buf_end(this->history_buf)
-    , history_ptr(this->history_buf + RDP_40_HIST_BUF_LEN - 1)
+    : history_buf_end(this->history_buf + RDP_40_HIST_BUF_LEN - 1)
+    , history_ptr(this->history_buf)
     {
         ::memset(this->history_buf, 0, sizeof(this->history_buf));
     }

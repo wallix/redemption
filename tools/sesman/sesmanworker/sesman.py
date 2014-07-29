@@ -702,7 +702,7 @@ class Sesman():
                     random.seed(self.pid)
 
                     #keeping code synchronized with wabengine/src/common/data.py
-                    video_path =  u"%s@%s," % (user, self.shared.get(u'ip_client'))
+                    video_path =  u"%s@%s," % (user.decode('utf-8'), self.shared.get(u'ip_client'))
                     video_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
                     video_path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
                     video_path += u"%s," % gethostname()

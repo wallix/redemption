@@ -673,6 +673,7 @@ public:
         }
     }
 
+private:
     virtual void reset(){
         if (this->verbose & 1){
             LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->client_info.use_bitmap_comp);
@@ -797,6 +798,7 @@ public:
         this->glyph_cache.reset(this->client_info);
     }
 
+public:
     void init_pointers()
     {
         Pointer pointer0(Pointer::POINTER_CURSOR0);
