@@ -81,12 +81,13 @@ private:
         };
 
         class map_key {
+            std::size_t len;
             char key[51];
 
         public:
             map_key(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy)
             {
-                ::snprintf(
+                this->len = ::snprintf(
                     this->key, sizeof(this->key)
                   , "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"
                     "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"
@@ -103,7 +104,7 @@ private:
             {
                 typedef std::pair<const char *, const char *> iterator_pair;
                 iterator_pair p = std::mismatch(this->begin(), this->end(), other.begin());
-                return p.first == this->end() ? false : p.first < p.second;
+                return p.first < p.second;
             }
 
         private:
@@ -111,7 +112,7 @@ private:
             { return this->key; }
 
             char const * end() const
-            { return this->key + sizeof(this->key); }
+            { return this->key + len; }
         };
 
         typedef std::map<map_key, map_value> container_type;
