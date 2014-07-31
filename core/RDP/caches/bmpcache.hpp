@@ -63,6 +63,7 @@ struct BmpCache {
         uint32_t sig_32[2];
     }                        sig   [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
 
+private:
     // Map based bitmap finder.
     class Finder {
     public:
@@ -72,49 +73,66 @@ struct BmpCache {
         struct map_value {
             const Bitmap * bmp;
             uint16_t       cache_index;
+
+            map_value(const Bitmap * bmp, uint16_t cache_index)
+            : bmp(bmp)
+            , cache_index(cache_index)
+            {}
         };
 
-        typedef std::map<std::string, map_value> container_type;
+        class map_key {
+            char key[51];
+
+        public:
+            map_key(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy)
+            {
+                ::snprintf(
+                    this->key, sizeof(this->key)
+                  , "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"
+                    "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"
+                    "_%dx%d"
+                  , sha1[ 0], sha1[ 1], sha1[ 2], sha1[ 3], sha1[ 4]
+                  , sha1[ 5], sha1[ 6], sha1[ 7], sha1[ 8], sha1[ 9]
+                  , sha1[10], sha1[11], sha1[12], sha1[13], sha1[14]
+                  , sha1[15], sha1[16], sha1[17], sha1[18], sha1[19]
+                  , cx, cy
+                );
+            }
+
+            bool operator<(const map_key & other) const /*noexcept*/
+            {
+                typedef std::pair<const char *, const char *> iterator_pair;
+                iterator_pair p = std::mismatch(this->begin(), this->end(), other.begin());
+                return p.first == this->end() ? false : p.first < p.second;
+            }
+
+        private:
+            char const * begin() const
+            { return this->key; }
+
+            char const * end() const
+            { return this->key + sizeof(this->key); }
+        };
+
+        typedef std::map<map_key, map_value> container_type;
 
         container_type bmp_map;
-
-        inline void get_key(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy, char (& key)[51]) {
-            ::snprintf( key, sizeof(key)
-                      , "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"
-                        "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"
-                        "_%dx%d"
-                      , sha1[ 0], sha1[ 1], sha1[ 2], sha1[ 3], sha1[ 4]
-                      , sha1[ 5], sha1[ 6], sha1[ 7], sha1[ 8], sha1[ 9]
-                      , sha1[10], sha1[11], sha1[12], sha1[13], sha1[14]
-                      , sha1[15], sha1[16], sha1[17], sha1[18], sha1[19]
-                      , cx, cy
-                      );
-        }
 
     public:
         inline void add( const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy, const Bitmap * bmp
                        , uint16_t cache_index) {
-            char key[51];
-            get_key(sha1, cx, cy, key);
-
-            map_value val;
-            val.bmp         = bmp;
-            val.cache_index = cache_index;
-
-            bmp_map[key] = val;
+            bmp_map.insert(container_type::value_type(
+                map_key(sha1, cx, cy)
+              , map_value(bmp, cache_index))
+            );
         }
 
         inline void clear() {
             bmp_map.clear();
         }
 
-        inline uint32_t get_cache_index(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy) {
-            char key[51];
-            get_key(sha1, cx, cy, key);
-
-            container_type::const_iterator it;
-
-            it = bmp_map.find(key);
+        inline uint32_t get_cache_index(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy) const {
+            container_type::const_iterator it = bmp_map.find(map_key(sha1, cx, cy));
             if (it == bmp_map.end()) {
                 return invalid_cache_index;
             }
@@ -123,15 +141,7 @@ struct BmpCache {
         }
 
         inline void remove(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy) {
-            char key[51];
-            get_key(sha1, cx, cy, key);
-
-            container_type::iterator it;
-
-            it = bmp_map.find(key);
-            if (it != bmp_map.end()) {
-                bmp_map.erase(it);
-            }
+            bmp_map.erase(map_key(sha1, cx, cy));
         }
     };
 
