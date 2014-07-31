@@ -345,6 +345,22 @@ struct BmpCache {
                , get_cache_usage(4), this->cache_entries[4], (this->cache_persistent[4] ? ", persistent" : ""));
         }
 
+private:
+        struct Deleter {
+            const Bitmap & r;
+            Deleter(const Bitmap & bmp)
+            : r(bmp)
+            {}
+
+            void operator()(const Bitmap * bmp) const
+            {
+                if (bmp != &this->r) {
+                    delete bmp;
+                }
+            }
+        };
+
+public:
         TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap")
         uint32_t cache_bitmap(const Bitmap & oldbmp) {
             REDASSERT(this->owner != Mod_rdp);
@@ -367,9 +383,13 @@ struct BmpCache {
             //        this->finding_counter, oldbmp.bmp_size);
             //}
 
-            unique_ptr<const Bitmap> bmp(new Bitmap(
-                 (((this->owner == Recorder) || (oldbmp.original_bpp > this->bpp)) ? this->bpp : oldbmp.original_bpp)
-                , oldbmp));
+            unique_ptr<const Bitmap, Deleter> bmp(
+                (this->bpp == oldbmp.original_bpp
+                || !((this->owner == Recorder) || (oldbmp.original_bpp > this->bpp)))
+                ? &oldbmp
+                : new Bitmap(this->bpp, oldbmp)
+                , Deleter(oldbmp)
+            );
 
             uint8_t bmp_sha1[20];
             bmp->compute_sha1(bmp_sha1);
@@ -501,7 +521,11 @@ struct BmpCache {
             this->put_counter[id_real]++;
             ::memcpy(this->sha1[id_real][oldest_cidx], bmp_sha1, 20);
             this->finders[id_real].add(bmp_sha1, bmp->cx, bmp->cy, bmp.get(), oldest_cidx);
-            this->cache [id_real][oldest_cidx] = move(bmp);
+            this->cache [id_real][oldest_cidx].reset(
+                (&bmp.get_deleter().r == &oldbmp)
+                ? new Bitmap(oldbmp.original_bpp, oldbmp)
+                : bmp.release()
+            );
             this->stamps[id_real][oldest_cidx] = ++this->stamp;
             // Generating source code for unit test.
             //if (this->verbose & 8192) {
@@ -514,6 +538,7 @@ struct BmpCache {
             //    LOG(LOG_INFO, "delete bmp_%d;", this->finding_counter - 1);
             //    LOG(LOG_INFO, "");
             //}
+
             return (BITMAP_ADDED_TO_CACHE << 24) | (id << 16) | oldest_cidx;
         }
 };
