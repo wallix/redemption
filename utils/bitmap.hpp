@@ -158,14 +158,19 @@ public:
         , bmp_size(this->line_size * this->cy)
         , data_bitmap()
         , data_compressed_size(0)
-
     {
-        this->data_bitmap.alloc(this->bmp_size);
-
         //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
         if (this->original_bpp == 8){
             memcpy(this->original_palette, src_bmp.original_palette, sizeof(BGRPalette));
         }
+
+        if (0 == r.x && 0 == r.y && this->cx == src_bmp.cx && this->cy == src_bmp.cy) {
+            this->data_bitmap.use(src_bmp.data_bitmap);
+
+            return ;
+        }
+
+        this->data_bitmap.alloc(this->bmp_size);
 
         // bitmapDataStream (variable): A variable-sized array of bytes.
         //  Uncompressed bitmap data represents a bitmap as a bottom-up,
@@ -2088,6 +2093,7 @@ public:
         //LOG(LOG_INFO, "compress_color_plane: exit");
     }
 
+private:
     void compress60(Stream & outbuffer) const {
         //LOG(LOG_INFO, "bmp compress60");
 
@@ -2159,6 +2165,7 @@ public:
         //LOG(LOG_INFO, "bmp compress60: done");
     }
 
+public:
     void compute_sha1(uint8_t (&sig)[20]) const
     {
         SslSha1 sha1;
@@ -2319,6 +2326,10 @@ public:
         this->line_size = 16 * 3;
         this->bmp_size = this->line_size * this->cy;
     }
+
+private:
+    Bitmap(const Bitmap &);
+    Bitmap&operator=(const Bitmap &);
 };
 
 #endif
