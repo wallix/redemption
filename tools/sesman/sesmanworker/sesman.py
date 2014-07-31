@@ -47,6 +47,14 @@ def mundane(value):
     return value
 
 DEBUG = False
+def mdecode(item):
+    if not item:
+        return ""
+    try:
+        item = item.decode('utf8')
+    except:
+        pass
+    return item
 
 class AuthentifierSocketClosed(Exception):
     pass
@@ -702,7 +710,7 @@ class Sesman():
                     random.seed(self.pid)
 
                     #keeping code synchronized with wabengine/src/common/data.py
-                    video_path =  u"%s@%s," % (user.decode('utf-8'), self.shared.get(u'ip_client'))
+                    video_path =  u"%s@%s," % (user, self.shared.get(u'ip_client'))
                     video_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
                     video_path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
                     video_path += u"%s," % gethostname()
@@ -838,7 +846,7 @@ class Sesman():
 
             _status, _error = self.check_video_recording(
                 selected_target.authorization.isRecorded,
-                self.engine.user.cn if self.engine.user.cn else self.shared.get(u'login'))
+                mdecode(self.engine.user.cn) if self.engine.user.cn else self.shared.get(u'login'))
 
             Logger().info(u"Fetching protocol")
 
