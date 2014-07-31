@@ -212,7 +212,9 @@ private:
                 throw Error(ERR_RDP_PROTOCOL);
             }
 
-            this->reset_values();
+            memset(this->stamps, 0, sizeof(this->stamps));
+            memset(this->sha1, 0, sizeof(this->sha1));
+            memset(this->sig, 0, sizeof(this->sig));
         }
 
         ~BmpCache() {
@@ -221,36 +223,20 @@ private:
             }
         }
 
-    private:
-        void destroy_cache() {
+        void reset() {
             if (this->verbose) {
                 this->log();
             }
-            for (uint8_t cid = 0; cid < MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */; cid++) {
-                for (uint16_t cidx = 0; cidx < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cidx++) {
-                    this->cache[cid][cidx].reset();
-                }
-                this->finders[cid].clear();
-            }
-        }
-
-        void reset_values() {
             this->stamp = 0;
+            memset(this->stamps, 0, sizeof(this->stamps));
+            memset(this->sha1, 0, sizeof(this->sha1));
+            memset(this->sig, 0, sizeof(this->sig));
             for (uint8_t cid = 0; cid < MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */; cid++) {
                 for (uint16_t cidx = 0; cidx < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cidx++) {
                     this->cache[cid][cidx].reset();
-                    this->stamps[cid][cidx] = 0;
-                    memset(this->sha1[cid][cidx], 0, sizeof(this->sha1[cid][cidx]));
-                    memset(this->sig[cid][cidx].sig_8, 0, sizeof(this->sig[cid][cidx].sig_8));
                 }
                 this->finders[cid].clear();
             }
-        }
-
-    public:
-        void reset() {
-            this->destroy_cache();
-            this->reset_values();
         }
 
         void put(uint8_t id, uint16_t idx, const Bitmap * const bmp, uint32_t key1, uint32_t key2) {
