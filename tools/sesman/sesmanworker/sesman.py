@@ -380,7 +380,7 @@ class Sesman():
                 not self.target_service_name == MAGICASK):
                 target_info = u"%s@%s:%s" % (target_login, target_device, self.target_service_name)
             try:
-                target_info = target_info.decode('utf8')
+                target_info = target_info.encode('utf8')
             except Exception, e:
                 target_info = None
             #Check if X509 Authentication is active
@@ -391,7 +391,7 @@ class Sesman():
                         target_info,
                         self.shared.get(u'ip_target')):
                 # Prompt the user in proxy window
-                 # Wait for confirmation from GUI (or timeout)
+                # Wait for confirmation from GUI (or timeout)
                 if not (self.interactive_ask_x509_connection() and self.engine.x509_authenticate()):
                     return False, TR(u"x509 browser authentication not validated by user")
             elif SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
