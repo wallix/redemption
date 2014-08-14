@@ -373,12 +373,22 @@ class Sesman():
         Logger().info(u"Continue with authentication (%s) -> %s" % (self.shared.get(u'login'), wab_login))
 
         try:
+            target_info = None
+            if (target_login and target_device and self.target_service_name and
+                not target_login == MAGICASK and
+                not target_device == MAGICASK and
+                not self.target_service_name == MAGICASK):
+                target_info = u"%s@%s:%s" % (target_login, target_device, self.target_service_name)
+            try:
+                target_info = target_info.decode('utf8')
+            except Exception, e:
+                target_info = None
             #Check if X509 Authentication is active
             if self.engine.is_x509_connected(
                         wab_login,
                         self.shared.get(u'ip_client'),
                         self.shared.get(u'proxy_type'),
-                        None if target_device == MAGICASK else target_device,
+                        target_info,
                         self.shared.get(u'ip_target')):
                 # Prompt the user in proxy window
                  # Wait for confirmation from GUI (or timeout)
