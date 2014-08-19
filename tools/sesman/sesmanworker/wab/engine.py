@@ -37,10 +37,23 @@ def is_device_in_subnet(device, subnet):
 class Engine(object):
     def __init__(self):
         self.wabengine = None
+        self.wabuser = None
         self.session_id  = None
         self.auth_x509 = None
         self._trace_encryption = None
         self.challenge = None
+
+    def get_language(self):
+        try:
+            return self.wabuser.preferredLanguage
+        except Exception, e:
+            return 'en'
+
+    def mustChangePassword(self):
+        try:
+            return self.wabuser.forceChangePwd
+        except Exception, e:
+            return True
 
     def get_trace_encryption(self):
         try:
@@ -88,7 +101,7 @@ class Engine(object):
         try:
             self.wabengine = self.auth_x509.get_proxy()
             if self.wabengine is not None:
-                self.user = self.wabengine.who_am_i()
+                self.wabuser = self.wabengine.who_am_i()
                 return True
         except AuthenticationFailed, e:
             pass
@@ -108,7 +121,7 @@ class Engine(object):
                                                       server_ip = server_ip)
             self.challenge = None
             if self.wabengine is not None:
-                self.user = self.wabengine.who_am_i()
+                self.wabuser = self.wabengine.who_am_i()
                 return True
         except AuthenticationChallenged, e:
             self.challenge = e.challenge
@@ -130,7 +143,7 @@ class Engine(object):
                                                              ip_source = ip_client,
                                                              server_ip = server_ip)
             if self.wabengine is not None:
-                self.user = self.wabengine.who_am_i()
+                self.wabuser = self.wabengine.who_am_i()
                 return True
         except AuthenticationFailed, e:
             pass
@@ -254,7 +267,7 @@ class Engine(object):
     def get_proxy_rights(self, protocols):
         self.proxy_rights = self.wabengine.get_proxy_rights(protocols)
 
-        self.user = self.proxy_rights.user
+        # self.wabuser = self.proxy_rights.user
         #u = UserInfo(user)
         #Logger().info("%r" % u)
 

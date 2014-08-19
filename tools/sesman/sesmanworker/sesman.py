@@ -414,27 +414,23 @@ class Sesman():
                         self.engine.challenge = None
                     return None, TR(u"auth_failed_wab %s") % wab_login
 
-            try:
-                if self.engine.user:
-                    self.language = self.engine.user.preferredLanguage
-            except Exception, e:
-                if DEBUG:
-                    import traceback
-                    Logger().info("<<<%s>>>" % traceback.format_exc(e))
+            if self.engine.wabuser:
+                self.language = self.engine.get_language()
+                if self.engine.mustChangePassword():
+                    self.send_data({u'rejected': TR(u'changepassword')})
+                    return False, TR(u'changepassword')
 
-            Logger().info(u'lang=%s sesman=%s' % (self.language, self.engine.user.preferredLanguage))
+            Logger().info(u'lang=%s' % self.language)
 
             # When user is authentified check if licence tokens are available
             Logger().info(u"Checking licence")
             if not self.engine.get_license_status():
                 return False, TR(u'licence_blocker')
 
+
             try:
                 # Then get user rights (reachable targets)
                 self.engine.get_proxy_rights([u'RDP', u'VNC'])
-            except engine.MustChangePassword, e:
-                self.send_data({u'rejected': TR(u'changepassword')})
-                return False, TR(u'changepassword')
             except Exception, e:
                 if DEBUG:
                     import traceback
@@ -856,7 +852,7 @@ class Sesman():
 
             _status, _error = self.check_video_recording(
                 selected_target.authorization.isRecorded,
-                mdecode(self.engine.user.cn) if self.engine.user.cn else self.shared.get(u'login'))
+                mdecode(self.engine.wabuser.cn) if self.engine.wabuser.cn else self.shared.get(u'login'))
 
             Logger().info(u"Fetching protocol")
 
