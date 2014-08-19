@@ -49,11 +49,17 @@ class Engine(object):
         except Exception, e:
             return 'en'
 
-    def mustChangePassword(self):
+    def get_wabuser_name(self):
+        try:
+            return self.wabuser.cn
+        except Exception, e:
+            return ""
+
+    def get_force_change_password(self):
         try:
             return self.wabuser.forceChangePwd
         except Exception, e:
-            return True
+            return False
 
     def get_trace_encryption(self):
         try:

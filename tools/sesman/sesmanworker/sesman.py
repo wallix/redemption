@@ -416,7 +416,7 @@ class Sesman():
 
             if self.engine.wabuser:
                 self.language = self.engine.get_language()
-                if self.engine.mustChangePassword():
+                if self.engine.get_force_change_password():
                     self.send_data({u'rejected': TR(u'changepassword')})
                     return False, TR(u'changepassword')
 
@@ -438,12 +438,11 @@ class Sesman():
                 # NB : this exception may be raised because the user must change his password
                 return False, TR(u"Error while retreiving rights for user %s") % wab_login
 
-        except engine.AuthenticationFailed, e:
-            if DEBUG:
-                import traceback
-                Logger().info("<<<%s>>>" % traceback.format_exc(e))
-            _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
-
+        # except engine.AuthenticationFailed, e:
+        #     if DEBUG:
+        #         import traceback
+        #         Logger().info("<<<%s>>>" % traceback.format_exc(e))
+        #     _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
         except Exception, e:
             if DEBUG:
                 import traceback
@@ -852,7 +851,7 @@ class Sesman():
 
             _status, _error = self.check_video_recording(
                 selected_target.authorization.isRecorded,
-                mdecode(self.engine.wabuser.cn) if self.engine.wabuser.cn else self.shared.get(u'login'))
+                mdecode(self.engine.get_wabuser_name()) if self.engine.get_wabuser_name() else self.shared.get(u'login'))
 
             Logger().info(u"Fetching protocol")
 
