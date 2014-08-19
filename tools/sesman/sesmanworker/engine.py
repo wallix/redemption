@@ -2140,3 +2140,49 @@ class Engine(object):
 
     def write_trace(self, video_path):
         return True, ""
+
+    def get_targets_list(self, group_filter, device_filter, protocol_filter,
+                         real_target_device):
+        targets = []
+        item_filtered = False
+        for right in self.rights:
+            if not right.resource.application:
+                if (right.resource.device.host == u'autotest' or
+                    right.resource.device.host == u'bouncer2' or
+                    right.resource.device.host == u'widget2_message' or
+                    right.resource.device.host == u'widgettest' or
+                    right.resource.device.host == u'test_card'):
+                    temp_service_login                = right.service_login.replace(u':RDP', u':INTERNAL', 1)
+                    temp_resource_service_protocol_cn = 'INTERNAL'
+                    temp_resource_device_cn           = right.resource.device.cn
+                else:
+                    temp_service_login                = right.service_login
+                    temp_resource_service_protocol_cn = right.resource.service.protocol.cn
+                    temp_resource_device_cn           = right.resource.device.cn
+            else:
+                temp_service_login                = right.service_login + u':APP'
+                temp_resource_service_protocol_cn = u'APP'
+                temp_resource_device_cn           = right.resource.application.cn
+
+            if ((right.target_groups.find(group_filter) == -1)
+                or (temp_service_login.find(device_filter) == -1)
+                or (temp_resource_service_protocol_cn.find(protocol_filter) == -1)):
+                item_filtered = True
+                continue
+
+            if real_target_device:
+                if right.resource.application:
+                    continue
+                if (right.resource.device
+                    and (not is_device_in_subnet(real_target_device,
+                                                 right.resource.device.host))):
+                    continue
+
+            targets.append((right.target_groups # ( = concatenated list)
+                            , temp_service_login
+                            , temp_resource_service_protocol_cn
+                            , (right.deconnection_time if right.deconnection_time[0:4] < "2034" else u"-")
+                            , temp_resource_device_cn
+                            )
+                           )
+        return targets, item_filtered

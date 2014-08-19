@@ -414,21 +414,22 @@ class Sesman():
                         self.engine.challenge = None
                     return None, TR(u"auth_failed_wab %s") % wab_login
 
-            if self.engine.wabuser:
-                self.language = self.engine.get_language()
-                if self.engine.get_force_change_password():
-                    self.send_data({u'rejected': TR(u'changepassword')})
-                    return False, TR(u'changepassword')
+            # At this point, User is authentified.
+            self.language = self.engine.get_language()
+            if self.engine.get_force_change_password():
+                self.send_data({u'rejected': TR(u'changepassword')})
+                return False, TR(u'changepassword')
 
             Logger().info(u'lang=%s' % self.language)
 
+            # TODO: Should be done by authentication methods
             # When user is authentified check if licence tokens are available
             Logger().info(u"Checking licence")
             if not self.engine.get_license_status():
                 return False, TR(u'licence_blocker')
 
-
             try:
+                # might be too early, should be done just before accessing Right structure
                 # Then get user rights (reachable targets)
                 self.engine.get_proxy_rights([u'RDP', u'VNC'])
             except Exception, e:
@@ -437,12 +438,6 @@ class Sesman():
                     Logger().info("<<<%s>>>" % traceback.format_exc(e))
                 # NB : this exception may be raised because the user must change his password
                 return False, TR(u"Error while retreiving rights for user %s") % wab_login
-
-        # except engine.AuthenticationFailed, e:
-        #     if DEBUG:
-        #         import traceback
-        #         Logger().info("<<<%s>>>" % traceback.format_exc(e))
-        #     _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
         except Exception, e:
             if DEBUG:
                 import traceback
@@ -479,6 +474,7 @@ class Sesman():
 
             if (target_device and target_device != MAGICASK
             and (target_login or SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true') and target_login != MAGICASK):
+                # Target is provided at login
                 self._full_user_device_account = u"%s@%s:%s" % ( target_login
                                                                , target_device
                                                                , wab_login
@@ -495,49 +491,11 @@ class Sesman():
                 _status = True
             elif self.shared.get(u'selector') == MAGICASK:
                 # filters ("Group" and "Account/Device") entered by user in selector are applied to raw services list
-                item_filtered = False
-                services = []
-                for right in self.engine.rights:
-                    if not right.resource.application:
-                        if (right.resource.device.host == u'autotest' or
-                            right.resource.device.host == u'bouncer2' or
-                            right.resource.device.host == u'widget2_message' or
-                            right.resource.device.host == u'widgettest' or
-                            right.resource.device.host == u'test_card'):
-                            temp_service_login                = right.service_login.replace(u':RDP', u':INTERNAL', 1)
-                            temp_resource_service_protocol_cn = 'INTERNAL'
-                            temp_resource_device_cn           = right.resource.device.cn
-                        else:
-                            temp_service_login                = right.service_login
-                            temp_resource_service_protocol_cn = right.resource.service.protocol.cn
-                            temp_resource_device_cn           = right.resource.device.cn
-                    else:
-                        temp_service_login                = right.service_login + u':APP'
-                        temp_resource_service_protocol_cn = u'APP'
-                        temp_resource_device_cn           = right.resource.application.cn
-
-                    if (  (right.target_groups.find(self.shared.get(u'selector_group_filter')) == -1)
-                       or (temp_service_login.find(self.shared.get(u'selector_device_filter')) == -1)
-                       or (temp_resource_service_protocol_cn.find(self.shared.get(u'selector_proto_filter')) == -1)):
-                        item_filtered = True
-                        continue
-
-                    if self.shared.get(u'real_target_device'):
-                       if right.resource.application:
-                           continue
-                       if (right.resource.device
-                           and (not engine.is_device_in_subnet(
-                               self.shared.get(u'real_target_device'),
-                               right.resource.device.host))):
-                           continue
-
-                    services.append(( right.target_groups # ( = concatenated list)
-                                    , temp_service_login
-                                    , temp_resource_service_protocol_cn
-                                    , (right.deconnection_time if right.deconnection_time[0:4] < "2034" else u"-")
-                                    , temp_resource_device_cn
-                                    )
-                                   )
+                services, item_filtered = self.engine.get_targets_list(
+                    group_filter = self.shared.get(u'selector_group_filter'),
+                    device_filter = self.shared.get(u'selector_device_filter'),
+                    protocol_filter = self.shared.get(u'selector_proto_filter'),
+                    real_target_device = self.shared.get(u'real_target_device'))
 
                 if (len(services) > 1) or item_filtered:
                     try:
