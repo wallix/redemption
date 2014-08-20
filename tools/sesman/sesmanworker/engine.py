@@ -2189,3 +2189,6 @@ class Engine(object):
                             )
                            )
         return targets, item_filtered
+
+    def read_session_parameters(self, key=None):
+        return {}

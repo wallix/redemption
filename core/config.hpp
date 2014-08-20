@@ -273,6 +273,8 @@ typedef enum
 
         AUTHID_DISABLE_KEYBOARD_LOG,
 
+        AUTHID_RT_DISPLAY,
+
         MAX_AUTHID
     } authid_t;
 
@@ -372,7 +374,7 @@ typedef enum
 #define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS        "disable_tsk_switch_shortcuts"
 
 #define STRAUTHID_DISABLE_KEYBOARD_LOG     "disable_keyboard_log"
-
+#define STRAUTHID_RT_DISPLAY               "rt_display"
 static const std::string authstr[MAX_AUTHID - 1] = {
     // Translation text
     STRAUTHID_TRANS_BUTTON_OK,
@@ -478,6 +480,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
 
     STRAUTHID_DISABLE_KEYBOARD_LOG,
+    STRAUTHID_RT_DISPLAY
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
@@ -666,6 +669,8 @@ struct Inifile : public FieldObserver {
         bool disable_keyboard_log_syslog;
         bool disable_keyboard_log_wrm;
         bool disable_keyboard_log_ocr;
+        UnsignedField     rt_display;          // AUTHID_RT_DISPLAY
+                                               // 0: disable, 1: enable
     } video;
 
     // Section "Crypto"
@@ -1003,6 +1008,8 @@ public:
 
         this->video.disable_keyboard_log.attach_ini(this, AUTHID_DISABLE_KEYBOARD_LOG);
         this->video.disable_keyboard_log.set(0);
+        this->video.rt_display.attach_ini(this, AUTHID_RT_DISPLAY);
+        this->video.rt_display.set(0);
         this->to_send_set.insert(AUTHID_DISABLE_KEYBOARD_LOG);
         this->video.disable_keyboard_log_syslog = false;
         this->video.disable_keyboard_log_wrm    = false;

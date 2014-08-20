@@ -114,6 +114,7 @@ class Sesman():
         self.shared[u'auth_channel_target'] = u''
 
         self.internal_mod = False
+        self.check_session_parameters = False
 
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
@@ -826,6 +827,7 @@ class Sesman():
 
                 # register signal
                 signal.signal(signal.SIGUSR1, self.kill_handler)
+                signal.signal(signal.SIGUSR2, self.check_handler)
 
                 Logger().info(u"Starting Session")
                 # Add connection to the observer
@@ -981,8 +983,15 @@ class Sesman():
                         # Looping on keepalived socket
                         while True:
                             Logger().info(u"Waiting on proxy")
-                            r, w, x = select([self.proxy_conx], [], [], 60)
-
+                            try:
+                                r, w, x = select([self.proxy_conx], [], [], 60)
+                            except Exception as e:
+                                Logger().info("exception: %s" % e)
+                                if e[0] != 4:
+                                    raise
+                            if self.check_session_parameters:
+                                self.update_session_parameters()
+                                self.check_session_parameters = False
                             if self.proxy_conx in r:
                                 _status, _error = self.receive_data();
 
@@ -1140,12 +1149,26 @@ class Sesman():
         if signum == signal.SIGUSR1:
             self.kill()
 
+    def check_handler(self, signum, frame):
+        if signum == signal.SIGUSR2:
+            self.check_session_parameters = True
+
     def kill(self):
         try:
             Logger().info(u"Closing a RDP/VNC connection")
             self.proxy_conx.close()
         except Exception:
             pass
+
+    def update_session_parameters(self):
+        params = self.engine.read_session_parameters()
+        res = params.get("rt_display")
+        Logger().info("rt_display=%s" % res)
+        if res:
+            Logger().info("shared rt_display=%s" % self.shared.get("rt_display"))
+            if self.shared.get("rt_display") != res:
+                Logger().info("sending rt_display=%s !" % res)
+                self.send_data({ "rt_display": res })
 
 # END CLASS - Sesman
 

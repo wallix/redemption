@@ -494,3 +494,6 @@ class Engine(object):
             _status, _error = False, TR(u"Trace writer failed for %s") % video_path
 
         return _status, _error
+
+    def read_session_parameters(self, key=None):
+        return self.engine.read_session_parameters(self.session_id, key=None)
