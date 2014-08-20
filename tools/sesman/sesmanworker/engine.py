@@ -1905,6 +1905,7 @@ class Engine(object):
         self.user = User()
         self._trace_encryption = False
         self.challenge = None
+        self.rights = None
 
     def get_trace_encryption(self):
         return self._trace_encryption
@@ -2044,6 +2045,8 @@ class Engine(object):
         Logger().info(u"NotifyFindPatternInRDPFlow: %r" % notif_data)
 
     def get_proxy_rights(self, protocols):
+        if self.right:
+            return
         self.rights = [ self.config_rights[r] for r in self.config_users[self.wab_login]['rights']]
         return self.rights
 

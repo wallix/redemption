@@ -42,6 +42,7 @@ class Engine(object):
         self.auth_x509 = None
         self._trace_encryption = None
         self.challenge = None
+        self.proxy_rights = None
 
     def get_language(self):
         try:
@@ -316,12 +317,10 @@ class Engine(object):
                            )
         return targets, item_filtered
 
-    def get_proxy_rights(self, protocols):
-        self.proxy_rights = self.wabengine.get_proxy_rights(protocols)
-
-        # self.wabuser = self.proxy_rights.user
-        #u = UserInfo(user)
-        #Logger().info("%r" % u)
+    def get_proxy_rights(self, protocols, target_device=None):
+        if self.proxy_rights is not None:
+            return
+        self.proxy_rights = self.wabengine.get_proxy_rights(protocols, target_device)
 
         self.rights = self.proxy_rights.rights
         # gather target group names in one string
@@ -335,9 +334,12 @@ class Engine(object):
 #            rrr = RightInfo(r)
 #            Logger().info("%r" % rrr)
 
-    def get_selected_target(self, target_device, target_login, target_service):
+    def get_selected_target(self, target_login, target_device, target_service):
         # Logger().info("%s@%s:%s" % (target_device, target_login, target_service))
+        if target_service == '':
+            target_service = None
         selected_target = None
+        self.get_proxy_rights([u'RDP', u'VNC'], target_device)
         for r in self.rights:
             if r.resource.application:
                 if target_device != r.resource.application.cn:

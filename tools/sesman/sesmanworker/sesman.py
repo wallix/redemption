@@ -428,16 +428,16 @@ class Sesman():
             if not self.engine.get_license_status():
                 return False, TR(u'licence_blocker')
 
-            try:
-                # might be too early, should be done just before accessing Right structure
-                # Then get user rights (reachable targets)
-                self.engine.get_proxy_rights([u'RDP', u'VNC'])
-            except Exception, e:
-                if DEBUG:
-                    import traceback
-                    Logger().info("<<<%s>>>" % traceback.format_exc(e))
-                # NB : this exception may be raised because the user must change his password
-                return False, TR(u"Error while retreiving rights for user %s") % wab_login
+            # try:
+            #     # might be too early, should be done just before accessing Right structure
+            #     # Then get user rights (reachable targets)
+            #     self.engine.get_proxy_rights([u'RDP', u'VNC'])
+            # except Exception, e:
+            #     if DEBUG:
+            #         import traceback
+            #         Logger().info("<<<%s>>>" % traceback.format_exc(e))
+            #     # NB : this exception may be raised because the user must change his password
+            #     return False, TR(u"Error while retreiving rights for user %s") % wab_login
         except Exception, e:
             if DEBUG:
                 import traceback
@@ -491,6 +491,7 @@ class Sesman():
                 _status = True
             elif self.shared.get(u'selector') == MAGICASK:
                 # filters ("Group" and "Account/Device") entered by user in selector are applied to raw services list
+                self.engine.get_proxy_rights([u'RDP', u'VNC'])
                 services, item_filtered = self.engine.get_targets_list(
                     group_filter = self.shared.get(u'selector_group_filter'),
                     device_filter = self.shared.get(u'selector_device_filter'),
@@ -793,7 +794,9 @@ class Sesman():
 
             found = False
             for service_name in services:
-                selected_target = self.engine.get_selected_target(target_device, target_login, service_name)
+                selected_target = self.engine.get_selected_target(target_login,
+                                                                  target_device,
+                                                                  service_name)
                 if selected_target:
                     found = True
                     break
