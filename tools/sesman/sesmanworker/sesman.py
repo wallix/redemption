@@ -981,14 +981,19 @@ class Sesman():
                         Logger().info(u"Added connection to active WAB services")
 
                         # Looping on keepalived socket
-                        while True:
+                       while True:
+                            r = []
                             Logger().info(u"Waiting on proxy")
                             try:
                                 r, w, x = select([self.proxy_conx], [], [], 60)
                             except Exception as e:
-                                Logger().info("exception: %s" % e)
+                                if DEBUG:
+                                    Logger().info("exception: '%s'" % e)
+                                    import traceback
+                                    Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
                                 if e[0] != 4:
                                     raise
+                                Logger().info("Got Signal %s" % e)
                             if self.check_session_parameters:
                                 self.update_session_parameters()
                                 self.check_session_parameters = False
@@ -1046,14 +1051,14 @@ class Sesman():
                                     Logger().info(u"Sending of auth channel answer ok")
 
                                     self.shared[u'auth_channel_target'] = u''
-
-                            else: # (if self.proxy_conx in r)
-                                if not self.internal_mod:
-                                    Logger().error(u'break connection')
-                                    release_reason = u'Break connection'
-                                    break
-
+                            # r can be empty
+                            # else: # (if self.proxy_conx in r)
+                            #     if not self.internal_mod:
+                            #         Logger().error(u'break connection')
+                            #         release_reason = u'Break connection'
+                            #         break
                         Logger().debug(u"End Of Keep Alive")
+
 
                     except AuthentifierSocketClosed, e:
                         if DEBUG:
@@ -1061,7 +1066,6 @@ class Sesman():
                             Logger().info(u"RDP/VNC connection terminated by client")
                             Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
                         release_reason = u"RDP/VNC connection terminated by client"
-
                     except Exception, e:
                         if DEBUG:
                             import traceback
@@ -1146,10 +1150,12 @@ class Sesman():
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))
 
     def kill_handler(self, signum, frame):
+        # Logger().info("KILL_HANDLER = %s" % signum)
         if signum == signal.SIGUSR1:
             self.kill()
 
     def check_handler(self, signum, frame):
+        # Logger().info("CHECK_HANDLER = %s" % signum)
         if signum == signal.SIGUSR2:
             self.check_session_parameters = True
 
