@@ -981,7 +981,7 @@ class Sesman():
                         Logger().info(u"Added connection to active WAB services")
 
                         # Looping on keepalived socket
-                       while True:
+                        while True:
                             r = []
                             Logger().info(u"Waiting on proxy")
                             try:

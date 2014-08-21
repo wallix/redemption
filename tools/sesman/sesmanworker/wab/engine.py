@@ -496,4 +496,4 @@ class Engine(object):
         return _status, _error
 
     def read_session_parameters(self, key=None):
-        return self.engine.read_session_parameters(self.session_id, key=None)
+        return self.wabengine.read_session_parameters(self.session_id, key=None)
