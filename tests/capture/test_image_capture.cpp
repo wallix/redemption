@@ -308,6 +308,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "xxxtest", ".png", groupid);
     Inifile ini;
+    ini.video.rt_display.set(1);
     ini.video.png_interval = 1;
     ini.video.png_limit = 3;
     RDPDrawable drawable(800, 600);
