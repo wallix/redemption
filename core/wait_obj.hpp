@@ -125,6 +125,9 @@ public:
     // Idle time in microsecond
     void update(uint64_t idle_usec)
     {
+        if (!idle_usec) {
+            return;
+        }
         if (this->set_state) {
             timeval now = tvtime();
             timeval new_trigger = addusectimeval(idle_usec, now);
