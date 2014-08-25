@@ -37,10 +37,30 @@ def is_device_in_subnet(device, subnet):
 class Engine(object):
     def __init__(self):
         self.wabengine = None
+        self.wabuser = None
         self.session_id  = None
         self.auth_x509 = None
         self._trace_encryption = None
         self.challenge = None
+        self.proxy_rights = None
+
+    def get_language(self):
+        try:
+            return self.wabuser.preferredLanguage
+        except Exception, e:
+            return 'en'
+
+    def get_wabuser_name(self):
+        try:
+            return self.wabuser.cn
+        except Exception, e:
+            return ""
+
+    def get_force_change_password(self):
+        try:
+            return self.wabuser.forceChangePwd
+        except Exception, e:
+            return False
 
     def get_trace_encryption(self):
         try:
@@ -88,7 +108,7 @@ class Engine(object):
         try:
             self.wabengine = self.auth_x509.get_proxy()
             if self.wabengine is not None:
-                self.user = self.wabengine.who_am_i()
+                self.wabuser = self.wabengine.who_am_i()
                 return True
         except AuthenticationFailed, e:
             pass
@@ -108,7 +128,7 @@ class Engine(object):
                                                       server_ip = server_ip)
             self.challenge = None
             if self.wabengine is not None:
-                self.user = self.wabengine.who_am_i()
+                self.wabuser = self.wabengine.who_am_i()
                 return True
         except AuthenticationChallenged, e:
             self.challenge = e.challenge
@@ -130,7 +150,7 @@ class Engine(object):
                                                              ip_source = ip_client,
                                                              server_ip = server_ip)
             if self.wabengine is not None:
-                self.user = self.wabengine.who_am_i()
+                self.wabuser = self.wabengine.who_am_i()
                 return True
         except AuthenticationFailed, e:
             pass
@@ -251,12 +271,56 @@ class Engine(object):
             import traceback
             Logger().info("Engine NotifyFindPatternInRDPFlow failed: (((%s)))" % (traceback.format_exc(e)))
 
-    def get_proxy_rights(self, protocols):
-        self.proxy_rights = self.wabengine.get_proxy_rights(protocols)
+    def get_targets_list(self, group_filter, device_filter, protocol_filter,
+                         real_target_device):
+        targets = []
+        item_filtered = False
+        for right in self.rights:
+            if not right.resource.application:
+                if (right.resource.device.host == u'autotest' or
+                    right.resource.device.host == u'bouncer2' or
+                    right.resource.device.host == u'widget2_message' or
+                    right.resource.device.host == u'widgettest' or
+                    right.resource.device.host == u'test_card'):
+                    temp_service_login                = right.service_login.replace(u':RDP', u':INTERNAL', 1)
+                    temp_resource_service_protocol_cn = 'INTERNAL'
+                    temp_resource_device_cn           = right.resource.device.cn
+                else:
+                    temp_service_login                = right.service_login
+                    temp_resource_service_protocol_cn = right.resource.service.protocol.cn
+                    temp_resource_device_cn           = right.resource.device.cn
+            else:
+                temp_service_login                = right.service_login + u':APP'
+                temp_resource_service_protocol_cn = u'APP'
+                temp_resource_device_cn           = right.resource.application.cn
 
-        self.user = self.proxy_rights.user
-        #u = UserInfo(user)
-        #Logger().info("%r" % u)
+            if ((right.target_groups.find(group_filter) == -1)
+                or (temp_service_login.find(device_filter) == -1)
+                or (temp_resource_service_protocol_cn.find(protocol_filter) == -1)):
+                item_filtered = True
+                continue
+
+            if real_target_device:
+                if right.resource.application:
+                    continue
+                if (right.resource.device
+                    and (not is_device_in_subnet(real_target_device,
+                                                 right.resource.device.host))):
+                    continue
+
+            targets.append((right.target_groups # ( = concatenated list)
+                            , temp_service_login
+                            , temp_resource_service_protocol_cn
+                            , (right.deconnection_time if right.deconnection_time[0:4] < "2034" else u"-")
+                            , temp_resource_device_cn
+                            )
+                           )
+        return targets, item_filtered
+
+    def get_proxy_rights(self, protocols, target_device=None):
+        if self.proxy_rights is not None:
+            return
+        self.proxy_rights = self.wabengine.get_proxy_rights(protocols, target_device)
 
         self.rights = self.proxy_rights.rights
         # gather target group names in one string
@@ -270,9 +334,12 @@ class Engine(object):
 #            rrr = RightInfo(r)
 #            Logger().info("%r" % rrr)
 
-    def get_selected_target(self, target_device, target_login, target_service):
+    def get_selected_target(self, target_login, target_device, target_service):
         # Logger().info("%s@%s:%s" % (target_device, target_login, target_service))
+        if target_service == '':
+            target_service = None
         selected_target = None
+        self.get_proxy_rights([u'RDP', u'VNC'], target_device)
         for r in self.rights:
             if r.resource.application:
                 if target_device != r.resource.application.cn:
@@ -427,3 +494,6 @@ class Engine(object):
             _status, _error = False, TR(u"Trace writer failed for %s") % video_path
 
         return _status, _error
+
+    def read_session_parameters(self, key=None):
+        return self.wabengine.read_session_parameters(self.session_id, key=None)

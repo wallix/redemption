@@ -95,6 +95,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     now.tv_usec = 0;
 
     Inifile ini;
+    ini.video.rt_display.set(1);
     ini.video.png_limit = -1;
     ini.video.png_interval = 0;
     StaticCapture consumer(now, trans, trans.seqgen(), screen_rect.cx, screen_rect.cy, false, ini, drawable.drawable);

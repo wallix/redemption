@@ -67,7 +67,7 @@ public:
 
     bool    first_picture_capture_delayed;
     timeval first_picture_capture_now;
-
+    uint32_t rt_display;
 
     StaticCapture(const timeval & now, Transport & trans, SequenceGenerator const * seq, unsigned width, unsigned height,
                   bool clear_png, const Inifile & ini, Drawable & drawable)
@@ -76,7 +76,9 @@ public:
     , seq(seq)
     , time_to_wait(0)
     , first_picture_capture_delayed(true)
-    , first_picture_capture_now() {
+    , first_picture_capture_now()
+    , rt_display(0)
+    {
         this->start_static_capture = now;
         this->conf.png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
         this->inter_frame_interval_static_capture       = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
@@ -119,9 +121,14 @@ public:
             this->conf.png_interval = ini.video.png_interval;
             this->inter_frame_interval_static_capture = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
         }
+        this->rt_display = ini.video.rt_display.get();
     }
 
     virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
+        if (!this->rt_display) {
+            this->time_to_wait = 0;
+            return;
+        }
         unsigned diff_time_val = static_cast<unsigned>(difftimeval(now, this->start_static_capture));
         if (diff_time_val >= static_cast<unsigned>(this->inter_frame_interval_static_capture)) {
             if (   this->drawable.logical_frame_ended

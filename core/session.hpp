@@ -200,6 +200,10 @@ struct Session {
                                 mm.mod->get_event().reset();
                             }
                         }
+                        // TODO: update only when new value incoming
+                        if (this->ini->check_from_acl()) {
+                            this->front->update_config(*this->ini);
+                        }
                         if (this->front->capture
                             && this->front->capture->capture_event.is_set(rfds)) {
                             this->front->periodic_snapshot();

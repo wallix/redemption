@@ -47,6 +47,14 @@ def mundane(value):
     return value
 
 DEBUG = False
+def mdecode(item):
+    if not item:
+        return ""
+    try:
+        item = item.decode('utf8')
+    except:
+        pass
+    return item
 
 class AuthentifierSocketClosed(Exception):
     pass
@@ -106,6 +114,7 @@ class Sesman():
         self.shared[u'auth_channel_target'] = u''
 
         self.internal_mod = False
+        self.check_session_parameters = False
 
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
@@ -365,15 +374,25 @@ class Sesman():
         Logger().info(u"Continue with authentication (%s) -> %s" % (self.shared.get(u'login'), wab_login))
 
         try:
+            target_info = None
+            if (target_login and target_device and self.target_service_name and
+                not target_login == MAGICASK and
+                not target_device == MAGICASK and
+                not self.target_service_name == MAGICASK):
+                target_info = u"%s@%s:%s" % (target_login, target_device, self.target_service_name)
+            try:
+                target_info = target_info.encode('utf8')
+            except Exception, e:
+                target_info = None
             #Check if X509 Authentication is active
             if self.engine.is_x509_connected(
                         wab_login,
                         self.shared.get(u'ip_client'),
                         self.shared.get(u'proxy_type'),
-                        None if target_device == MAGICASK else target_device,
+                        target_info,
                         self.shared.get(u'ip_target')):
                 # Prompt the user in proxy window
-                 # Wait for confirmation from GUI (or timeout)
+                # Wait for confirmation from GUI (or timeout)
                 if not (self.interactive_ask_x509_connection() and self.engine.x509_authenticate()):
                     return False, TR(u"x509 browser authentication not validated by user")
             elif SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
@@ -396,40 +415,30 @@ class Sesman():
                         self.engine.challenge = None
                     return None, TR(u"auth_failed_wab %s") % wab_login
 
-            try:
-                if self.engine.user:
-                    self.language = self.engine.user.preferredLanguage
-            except Exception, e:
-                if DEBUG:
-                    import traceback
-                    Logger().info("<<<%s>>>" % traceback.format_exc(e))
+            # At this point, User is authentified.
+            self.language = self.engine.get_language()
+            if self.engine.get_force_change_password():
+                self.send_data({u'rejected': TR(u'changepassword')})
+                return False, TR(u'changepassword')
 
-            Logger().info(u'lang=%s sesman=%s' % (self.language, self.engine.user.preferredLanguage))
+            Logger().info(u'lang=%s' % self.language)
 
+            # TODO: Should be done by authentication methods
             # When user is authentified check if licence tokens are available
             Logger().info(u"Checking licence")
             if not self.engine.get_license_status():
                 return False, TR(u'licence_blocker')
 
-            try:
-                # Then get user rights (reachable targets)
-                self.engine.get_proxy_rights([u'RDP', u'VNC'])
-            except engine.MustChangePassword, e:
-                self.send_data({u'rejected': TR(u'changepassword')})
-                return False, TR(u'changepassword')
-            except Exception, e:
-                if DEBUG:
-                    import traceback
-                    Logger().info("<<<%s>>>" % traceback.format_exc(e))
-                # NB : this exception may be raised because the user must change his password
-                return False, TR(u"Error while retreiving rights for user %s") % wab_login
-
-        except engine.AuthenticationFailed, e:
-            if DEBUG:
-                import traceback
-                Logger().info("<<<%s>>>" % traceback.format_exc(e))
-            _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
-
+            # try:
+            #     # might be too early, should be done just before accessing Right structure
+            #     # Then get user rights (reachable targets)
+            #     self.engine.get_proxy_rights([u'RDP', u'VNC'])
+            # except Exception, e:
+            #     if DEBUG:
+            #         import traceback
+            #         Logger().info("<<<%s>>>" % traceback.format_exc(e))
+            #     # NB : this exception may be raised because the user must change his password
+            #     return False, TR(u"Error while retreiving rights for user %s") % wab_login
         except Exception, e:
             if DEBUG:
                 import traceback
@@ -466,6 +475,7 @@ class Sesman():
 
             if (target_device and target_device != MAGICASK
             and (target_login or SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true') and target_login != MAGICASK):
+                # Target is provided at login
                 self._full_user_device_account = u"%s@%s:%s" % ( target_login
                                                                , target_device
                                                                , wab_login
@@ -482,49 +492,12 @@ class Sesman():
                 _status = True
             elif self.shared.get(u'selector') == MAGICASK:
                 # filters ("Group" and "Account/Device") entered by user in selector are applied to raw services list
-                item_filtered = False
-                services = []
-                for right in self.engine.rights:
-                    if not right.resource.application:
-                        if (right.resource.device.host == u'autotest' or
-                            right.resource.device.host == u'bouncer2' or
-                            right.resource.device.host == u'widget2_message' or
-                            right.resource.device.host == u'widgettest' or
-                            right.resource.device.host == u'test_card'):
-                            temp_service_login                = right.service_login.replace(u':RDP', u':INTERNAL', 1)
-                            temp_resource_service_protocol_cn = 'INTERNAL'
-                            temp_resource_device_cn           = right.resource.device.cn
-                        else:
-                            temp_service_login                = right.service_login
-                            temp_resource_service_protocol_cn = right.resource.service.protocol.cn
-                            temp_resource_device_cn           = right.resource.device.cn
-                    else:
-                        temp_service_login                = right.service_login + u':APP'
-                        temp_resource_service_protocol_cn = u'APP'
-                        temp_resource_device_cn           = right.resource.application.cn
-
-                    if (  (right.target_groups.find(self.shared.get(u'selector_group_filter')) == -1)
-                       or (temp_service_login.find(self.shared.get(u'selector_device_filter')) == -1)
-                       or (temp_resource_service_protocol_cn.find(self.shared.get(u'selector_proto_filter')) == -1)):
-                        item_filtered = True
-                        continue
-
-                    if self.shared.get(u'real_target_device'):
-                       if right.resource.application:
-                           continue
-                       if (right.resource.device
-                           and (not engine.is_device_in_subnet(
-                               self.shared.get(u'real_target_device'),
-                               right.resource.device.host))):
-                           continue
-
-                    services.append(( right.target_groups # ( = concatenated list)
-                                    , temp_service_login
-                                    , temp_resource_service_protocol_cn
-                                    , (right.deconnection_time if right.deconnection_time[0:4] < "2034" else u"-")
-                                    , temp_resource_device_cn
-                                    )
-                                   )
+                self.engine.get_proxy_rights([u'RDP', u'VNC'])
+                services, item_filtered = self.engine.get_targets_list(
+                    group_filter = self.shared.get(u'selector_group_filter'),
+                    device_filter = self.shared.get(u'selector_device_filter'),
+                    protocol_filter = self.shared.get(u'selector_proto_filter'),
+                    real_target_device = self.shared.get(u'real_target_device'))
 
                 if (len(services) > 1) or item_filtered:
                     try:
@@ -702,7 +675,7 @@ class Sesman():
                     random.seed(self.pid)
 
                     #keeping code synchronized with wabengine/src/common/data.py
-                    video_path =  u"%s@%s," % (user.decode('utf-8'), self.shared.get(u'ip_client'))
+                    video_path =  u"%s@%s," % (user, self.shared.get(u'ip_client'))
                     video_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
                     video_path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
                     video_path += u"%s," % gethostname()
@@ -822,7 +795,9 @@ class Sesman():
 
             found = False
             for service_name in services:
-                selected_target = self.engine.get_selected_target(target_device, target_login, service_name)
+                selected_target = self.engine.get_selected_target(target_login,
+                                                                  target_device,
+                                                                  service_name)
                 if selected_target:
                     found = True
                     break
@@ -838,7 +813,7 @@ class Sesman():
 
             _status, _error = self.check_video_recording(
                 selected_target.authorization.isRecorded,
-                self.engine.user.cn if self.engine.user.cn else self.shared.get(u'login'))
+                mdecode(self.engine.get_wabuser_name()) if self.engine.get_wabuser_name() else self.shared.get(u'login'))
 
             Logger().info(u"Fetching protocol")
 
@@ -852,6 +827,7 @@ class Sesman():
 
                 # register signal
                 signal.signal(signal.SIGUSR1, self.kill_handler)
+                signal.signal(signal.SIGUSR2, self.check_handler)
 
                 Logger().info(u"Starting Session")
                 # Add connection to the observer
@@ -1006,9 +982,21 @@ class Sesman():
 
                         # Looping on keepalived socket
                         while True:
+                            r = []
                             Logger().info(u"Waiting on proxy")
-                            r, w, x = select([self.proxy_conx], [], [], 60)
-
+                            try:
+                                r, w, x = select([self.proxy_conx], [], [], 60)
+                            except Exception as e:
+                                if DEBUG:
+                                    Logger().info("exception: '%s'" % e)
+                                    import traceback
+                                    Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                                if e[0] != 4:
+                                    raise
+                                Logger().info("Got Signal %s" % e)
+                            if self.check_session_parameters:
+                                self.update_session_parameters()
+                                self.check_session_parameters = False
                             if self.proxy_conx in r:
                                 _status, _error = self.receive_data();
 
@@ -1063,14 +1051,14 @@ class Sesman():
                                     Logger().info(u"Sending of auth channel answer ok")
 
                                     self.shared[u'auth_channel_target'] = u''
-
-                            else: # (if self.proxy_conx in r)
-                                if not self.internal_mod:
-                                    Logger().error(u'break connection')
-                                    release_reason = u'Break connection'
-                                    break
-
+                            # r can be empty
+                            # else: # (if self.proxy_conx in r)
+                            #     if not self.internal_mod:
+                            #         Logger().error(u'break connection')
+                            #         release_reason = u'Break connection'
+                            #         break
                         Logger().debug(u"End Of Keep Alive")
+
 
                     except AuthentifierSocketClosed, e:
                         if DEBUG:
@@ -1078,7 +1066,6 @@ class Sesman():
                             Logger().info(u"RDP/VNC connection terminated by client")
                             Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
                         release_reason = u"RDP/VNC connection terminated by client"
-
                     except Exception, e:
                         if DEBUG:
                             import traceback
@@ -1163,8 +1150,14 @@ class Sesman():
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))
 
     def kill_handler(self, signum, frame):
+        # Logger().info("KILL_HANDLER = %s" % signum)
         if signum == signal.SIGUSR1:
             self.kill()
+
+    def check_handler(self, signum, frame):
+        # Logger().info("CHECK_HANDLER = %s" % signum)
+        if signum == signal.SIGUSR2:
+            self.check_session_parameters = True
 
     def kill(self):
         try:
@@ -1172,6 +1165,16 @@ class Sesman():
             self.proxy_conx.close()
         except Exception:
             pass
+
+    def update_session_parameters(self):
+        params = self.engine.read_session_parameters()
+        res = params.get("rt_display")
+        Logger().info("rt_display=%s" % res)
+        if res:
+            Logger().info("shared rt_display=%s" % self.shared.get("rt_display"))
+            if self.shared.get("rt_display") != res:
+                Logger().info("sending rt_display=%s !" % res)
+                self.send_data({ "rt_display": res })
 
 # END CLASS - Sesman
 

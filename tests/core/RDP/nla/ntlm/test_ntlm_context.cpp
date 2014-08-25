@@ -39,6 +39,7 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
     context.confidentiality = true;
     context.ntlm_set_negotiate_flags();
     context.set_tests();
+    context.verbose = 0x400;
     // context.hardcoded_tests = true;
 
     // NtlmNegotiateFlags ntlm_nego_flag;
@@ -308,7 +309,8 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
 
     NTLMContext client_context;
     NTLMContext server_context;
-
+    client_context.verbose = 0x400;
+    server_context.verbose = 0x400;
     const uint8_t password[] = {
         0x50, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
         0x77, 0x00, 0x6f, 0x00, 0x72, 0x00, 0x64, 0x00,

@@ -39,9 +39,9 @@ struct FieldObserver : public ConfigurationHolder {
 
     class BaseField {
     protected:
-        bool              asked;         // the value is asked in the context
-        bool              modified;      // the value has been modified since last use
-        bool              read;          // the value has been read since last set (modified)
+        mutable bool      asked;         // the value is asked in the context
+        mutable bool      modified;      // the value has been modified since last use
+        mutable bool      read;          // the value has been read since last set (modified)
         FieldObserver *   ini;           // Inifile to which the field is attached
         authid_t          authid;        // Auth Id of the field in the Inifile
         BaseField()
@@ -60,6 +60,10 @@ struct FieldObserver : public ConfigurationHolder {
         /**********************
          * notify the Inifile that the field has been changed
          */
+        void modify_from_acl() {
+            if (this->ini)
+                this->ini->notify_from_acl(this);
+        }
         void modify() {
             this->modified = true;
             if (this->ini)
@@ -205,8 +209,9 @@ struct FieldObserver : public ConfigurationHolder {
             }
         }
         virtual void set_from_acl(const char * cstr) {
-            this->asked = false;
+            this->modify_from_acl();
             this->data.copy_c_str(cstr);
+            this->asked = false;
         }
         virtual void set_from_cstr(const char * cstr) {
             if (this->asked || strcmp(this->data.c_str(),cstr)) {
@@ -219,7 +224,7 @@ struct FieldObserver : public ConfigurationHolder {
         bool is_empty(){
             return this->data.is_empty();
         }
-        const redemption::string & get() {
+        const redemption::string & get() const {
             this->read = true;
             return this->data;
         }
@@ -259,8 +264,9 @@ struct FieldObserver : public ConfigurationHolder {
         }
 
         virtual void set_from_acl(const char * cstr) {
-            this->asked = false;
+            this->modify_from_acl();
             this->data = ulong_from_cstr(cstr);
+            this->asked = false;
         }
         virtual void set_from_cstr(const char * cstr) {
             this->set(ulong_from_cstr(cstr));
@@ -274,7 +280,7 @@ struct FieldObserver : public ConfigurationHolder {
             this->set(logtype_from_cstr(cstr));
         }
 
-        uint32_t get() {
+        uint32_t get() const {
             this->read = true;
             return this->data;
         }
@@ -311,15 +317,16 @@ struct FieldObserver : public ConfigurationHolder {
             this->asked = false;
         }
         virtual void set_from_acl(const char * cstr) {
-            this->asked = false;
+            this->modify_from_acl();
             this->data = _long_from_cstr(cstr);
+            this->asked = false;
         }
 
         virtual void set_from_cstr(const char * cstr) {
             this->set(_long_from_cstr(cstr));
         }
 
-        signed get() {
+        signed get() const {
             this->read = true;
             return this->data;
         }
@@ -353,14 +360,15 @@ struct FieldObserver : public ConfigurationHolder {
             this->asked = false;
         }
         virtual void set_from_acl(const char * cstr) {
-            this->asked = false;
+            this->modify_from_acl();
             this->data = bool_from_cstr(cstr);
+            this->asked = false;
         }
         virtual void set_from_cstr(const char * cstr) {
             this->set(bool_from_cstr(cstr));
         }
 
-        bool get() {
+        bool get() const {
             this->read = true;
             return this->data;
         }
@@ -425,7 +433,8 @@ struct FieldObserver : public ConfigurationHolder {
 
 protected:
     // flag indicating if a Field attached to this inifile has been changed
-    bool something_changed;
+    bool something_changed;       // value has changed within proxy
+    bool new_from_acl;            // value has changed from acl (sesman)
 
     // list of Field which has been changed
     //std::set< BaseField * > changed_set;
@@ -456,12 +465,20 @@ public:
             this->changed_set.insert(field);
         }
     }
-
     void use_notify(BaseField * field) {
         this->changed_set.erase(field);
         if (this->changed_set.empty()) {
             this->something_changed = false;
         }
+    }
+
+    void notify_from_acl(BaseField * field) {
+        this->new_from_acl = true;
+    }
+    bool check_from_acl() {
+        bool res = this->new_from_acl;
+        this->new_from_acl = false;
+        return res;
     }
 
     bool check() {

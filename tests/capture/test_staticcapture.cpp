@@ -46,6 +46,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     now.tv_usec = 0;
 
     Inifile ini;
+    ini.video.rt_display.set(1);
     ini.video.png_limit = 3;
     ini.video.png_interval = 20;
     RDPDrawable drawable(800, 600);
@@ -91,6 +92,7 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     now.tv_usec = 0;
 
     Inifile ini;
+    ini.video.rt_display.set(1);
     ini.video.png_limit = 3;
     ini.video.png_interval = 20;
     RDPDrawable drawable(800, 600);
