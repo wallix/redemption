@@ -41,32 +41,43 @@ private:
     };
 
     class map_key {
-        char key[17];
+        uint8_t key[8];
 
     public:
-        map_key(const uint8_t (& sig)[8])
-        {
-            snprintf( this->key, sizeof(this->key), "%02X%02X%02X%02X%02X%02X%02X%02X"
-                    , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+        map_key(const uint8_t (& sig)[8]) {
+            memcpy(this->key, sig, sizeof(this->key));
         }
 
-        bool operator<(const map_key & other) const /*noexcept*/
-        {
-            typedef std::pair<const char *, const char *> iterator_pair;
+        bool operator<(const map_key & other) const /*noexcept*/ {
+            typedef std::pair<const uint8_t *, const uint8_t *> iterator_pair;
             iterator_pair p = std::mismatch(this->begin(), this->end(), other.begin());
-            return p.first < p.second;
+            return p.first == this->end() ? false : *p.first < *p.second;
         }
 
-        const char * c_str() const {
-            return this->key;
+        struct CString
+        {
+            CString(const uint8_t (& sig)[8]) {
+                snprintf( this->s, sizeof(this->s), "%02X%02X%02X%02X%02X%02X%02X%02X"
+                        , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+            }
+
+            const char * c_str() const
+            { return this->s; }
+
+        private:
+            char s[17];
+        };
+
+        CString str() const {
+            return CString(this->key);
         }
 
     private:
-        char const * begin() const
+        uint8_t const * begin() const
         { return this->key; }
 
-        char const * end() const
-        { return this->key + sizeof(this->key) - 1; }
+        uint8_t const * end() const
+        { return this->key + sizeof(this->key); }
     };
 
     typedef std::map<map_key, map_value> container_type;
@@ -158,7 +169,7 @@ private:
                 if (this->verbose & 0x100000) {
                     LOG( LOG_INFO
                        , "BmpCachePersister::preload_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                       , key.c_str(), original_bpp, cx, cy, bmp_size);
+                       , key.str().c_str(), original_bpp, cx, cy, bmp_size);
                 }
 
                 REDASSERT(this->bmp_map[cache_id][key].bmp == NULL);
@@ -204,7 +215,7 @@ public:
             container_type::iterator it = this->bmp_map[cache_id].find(key);
             if (it != this->bmp_map[cache_id].end()) {
                 if (this->verbose & 0x100000) {
-                    LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key.c_str());
+                    LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key.str().c_str());
                 }
 
                 if (this->bmp_cache.cache_entries[cache_id] > cache_index) {
@@ -215,7 +226,7 @@ public:
                 this->bmp_map[cache_id].erase(it);
             }
             else if (this->verbose & 0x100000) {
-                LOG(LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key.c_str());
+                LOG(LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key.str().c_str());
             }
         }
     }
@@ -305,7 +316,7 @@ private:
                     if (verbose & 0x100000) {
                         LOG( LOG_INFO
                            , "BmpCachePersister::load_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                           , key.c_str(), original_bpp, cx, cy, bmp_size);
+                           , key.str().c_str(), original_bpp, cx, cy, bmp_size);
                     }
                 }
 
@@ -393,7 +404,7 @@ private:
                 if (verbose & 0x100000) {
                     LOG( LOG_INFO
                        , "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                       , key.c_str(), bmp->original_bpp, bmp->cx, bmp->cy, bmp_size);
+                       , key.str().c_str(), bmp->original_bpp, bmp->cx, bmp->cy, bmp_size);
                 }
 
                 stream.out_copy_bytes(sig, 8);

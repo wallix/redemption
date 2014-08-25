@@ -62,36 +62,53 @@ public:
     size_t line_size;
     size_t bmp_size;
 
-    struct CountdownData {
+    class CountdownData
+    {
         uint8_t * ptr;
-        CountdownData(uint8_t * p = 0)
-        : ptr(p)
+
+        CountdownData(CountdownData const &);
+        CountdownData & operator=(CountdownData const &);
+
+    public:
+        CountdownData()
+        : ptr(0)
         {}
+
         ~CountdownData(){
             this->reset();
         }
+
         uint8_t * get() const {
             return this->ptr + 128;
         }
+
+    private:
+        unsigned & counter() const {
+            return *reinterpret_cast<unsigned*>(this->ptr);
+        }
+
+    public:
         void alloc(uint32_t size) {
             this->reset();
-            this->ptr = static_cast<uint8_t*>(malloc(size+128));
-            this->ptr[0] = 1;
+            this->ptr = new uint8_t[size+128];
+            this->counter() = 1;
         }
-        void use(const CountdownData & other)
-        {
-            other.ptr[0]++;
+
+        void use(const CountdownData & other) {
+            if (other.ptr) {
+                other.counter()++;
+            }
             this->reset();
             this->ptr = other.ptr;
         }
+
         void reset() {
             if (this->ptr){
-                this->ptr[0]--;
-                if (!this->ptr[0]){
-                    free(this->ptr);
+                if (!--this->counter()){
+                    delete[] this->ptr;
                 }
+                this->ptr = 0;
             }
-            this->ptr = 0;
         }
     } data_bitmap;
 
@@ -107,7 +124,6 @@ public:
         , cy(cy)
         , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(this->line_size * cy)
-        , data_bitmap()
         , data_compressed_size(0)
     {
         this->data_bitmap.alloc(this->bmp_size);
@@ -156,7 +172,6 @@ public:
         , cy(r.cy)
         , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(this->line_size * this->cy)
-        , data_bitmap()
         , data_compressed_size(0)
     {
         //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
@@ -203,7 +218,6 @@ public:
         , cy(tile.cy)
         , line_size(align4(this->cx * nbbytes(this->original_bpp)))
         , bmp_size(this->line_size * this->cy)
-        , data_bitmap()
         , data_compressed_size(0)
 
     {
@@ -242,7 +256,6 @@ public:
         , cy(0)
         , line_size(0)
         , bmp_size(0)
-        , data_bitmap()
         , data_compressed_size(0)
 
     {
@@ -2183,16 +2196,12 @@ public:
         sha1.final(sig, 20);
     }
 
-    ~Bitmap(){
-    }
-
     Bitmap(uint8_t out_bpp, const Bitmap& bmp)
     : original_bpp(out_bpp)
     , cx(align4(bmp.cx))
     , cy(bmp.cy)
     , line_size(this->cx * nbbytes(this->original_bpp))
     , bmp_size(this->line_size * cy)
-    , data_bitmap()
     , data_compressed_size(0)
     {
         //LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
@@ -2248,7 +2257,6 @@ public:
         , cy(cy)
         , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(this->line_size * cy)
-        , data_bitmap()
         , data_compressed_size(0)
     {
         this->data_bitmap.alloc(this->bmp_size);

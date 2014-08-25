@@ -81,38 +81,45 @@ private:
         };
 
         class map_key {
-            std::size_t len;
-            char key[51];
+            uint16_t cx;
+            uint16_t cy;
+            uint8_t key[20];
 
         public:
             map_key(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy)
+            : cx(cx)
+            , cy(cy)
             {
-                this->len = ::snprintf(
-                    this->key, sizeof(this->key)
-                  , "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"
-                    "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"
-                    "_%dx%d"
-                  , sha1[ 0], sha1[ 1], sha1[ 2], sha1[ 3], sha1[ 4]
-                  , sha1[ 5], sha1[ 6], sha1[ 7], sha1[ 8], sha1[ 9]
-                  , sha1[10], sha1[11], sha1[12], sha1[13], sha1[14]
-                  , sha1[15], sha1[16], sha1[17], sha1[18], sha1[19]
-                  , cx, cy
-                );
+                memcpy(this->key, sha1, sizeof(this->key));
             }
 
             bool operator<(const map_key & other) const /*noexcept*/
             {
-                typedef std::pair<const char *, const char *> iterator_pair;
+                if (this->cx < other.cx) {
+                    return true;
+                }
+                else if (this->cx > other.cx) {
+                    return false;
+                }
+
+                if (this->cy < other.cy) {
+                    return true;
+                }
+                else if (this->cy > other.cy) {
+                    return false;
+                }
+
+                typedef std::pair<const uint8_t *, const uint8_t *> iterator_pair;
                 iterator_pair p = std::mismatch(this->begin(), this->end(), other.begin());
-                return p.first < p.second;
+                return p.first == this->end() ? false : *p.first < *p.second;
             }
 
         private:
-            char const * begin() const
+            uint8_t const * begin() const
             { return this->key; }
 
-            char const * end() const
-            { return this->key + len; }
+            uint8_t const * end() const
+            { return this->key + sizeof(this->key); }
         };
 
         typedef std::map<map_key, map_value> container_type;
@@ -518,7 +525,7 @@ public:
             this->put_counter[id_real]++;
             ::memcpy(this->sha1[id_real][oldest_cidx], bmp_sha1, 20);
             this->finders[id_real].add(bmp_sha1, bmp->cx, bmp->cy, bmp.get(), oldest_cidx);
-            this->cache [id_real][oldest_cidx].reset(
+            this->cache[id_real][oldest_cidx].reset(
                 (&bmp.get_deleter().r == &oldbmp)
                 ? new Bitmap(oldbmp.original_bpp, oldbmp)
                 : bmp.release()
