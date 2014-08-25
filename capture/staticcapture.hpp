@@ -61,7 +61,7 @@ public:
     SequenceGenerator const * seq;
     StaticCaptureConfig conf;
 
-    struct timeval start_static_capture;
+    timeval start_static_capture;
     uint64_t inter_frame_interval_static_capture;
     uint64_t time_to_wait;
 
@@ -74,17 +74,15 @@ public:
     : ImageCapture(trans, width, height, drawable)
     , clear_png(clear_png)
     , seq(seq)
+    , start_static_capture(now)
     , time_to_wait(0)
     , first_picture_capture_delayed(true)
-    , first_picture_capture_now()
+    , first_picture_capture_now(now)
     , rt_display(0)
     {
-        this->start_static_capture = now;
         this->conf.png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
-        this->inter_frame_interval_static_capture       = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
+        this->inter_frame_interval_static_capture = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
         this->update_config(ini);
-
-        ::memcpy(&this->first_picture_capture_now, &now, sizeof(this->first_picture_capture_now));
     }
 
     virtual ~StaticCapture() {
