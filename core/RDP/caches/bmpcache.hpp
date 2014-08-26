@@ -22,6 +22,7 @@
 #define _REDEMPTION_CORE_RDP_CACHES_BMPCACHE_HPP_
 
 #include <map>
+#include <set>
 
 #include "bitmap.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
@@ -29,23 +30,32 @@
 #include "fileutils.hpp"
 #include "unique_ptr.hpp"
 
+#include <boost/type_traits/aligned_storage.hpp>
+#include <boost/type_traits/alignment_of.hpp>
+
 enum {
       BITMAP_FOUND_IN_CACHE
     , BITMAP_ADDED_TO_CACHE
 };
 
-struct BmpCache {
+class BmpCache {
 
+public:
     static const uint8_t  MAXIMUM_NUMBER_OF_CACHES        = 5;
+
+private:
     static const uint16_t MAXIMUM_NUMBER_OF_CACHE_ENTRIES = 8192;
 
     static const uint8_t IN_WAIT_LIST = 0x80;
 
+public:
     const enum Owner {
           Front
         , Mod_rdp
         , Recorder
     } owner;
+
+private:
     const uint8_t bpp;
 
     const uint8_t number_of_cache;
@@ -55,111 +65,351 @@ struct BmpCache {
     uint16_t cache_size[MAXIMUM_NUMBER_OF_CACHES];
     bool     cache_persistent[MAXIMUM_NUMBER_OF_CACHES];
 
-    unique_ptr<const Bitmap> cache [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
-    uint32_t                 stamps[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
-    uint8_t                  sha1  [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES][20];
-    union {
-        uint8_t  sig_8[8];
-        uint32_t sig_32[2];
-    }                        sig   [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
-
-private:
-    // Map based bitmap finder.
-    class Finder {
-    public:
-        static const uint32_t invalid_cache_index = 0xFFFFFFFF;
-
-    private:
-        struct map_value {
-            const Bitmap * bmp;
-            uint16_t       cache_index;
-
-            map_value(const Bitmap * bmp, uint16_t cache_index)
-            : bmp(bmp)
-            , cache_index(cache_index)
+    struct cache_element {
+        struct bitmap_memory {
+            bitmap_memory()
+            : stamp(0)
+            , bmp(0)
             {}
-        };
 
-        class map_key {
-            uint16_t cx;
-            uint16_t cy;
-            uint8_t key[20];
-
-        public:
-            map_key(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy)
-            : cx(cx)
-            , cy(cy)
-            {
-                memcpy(this->key, sha1, sizeof(this->key));
+            const Bitmap * get() const {
+                return this->bmp;
             }
 
-            bool operator<(const map_key & other) const /*noexcept*/
+            bool valid() const {
+                return this->bmp;
+            }
+
+            const Bitmap * operator->() const {
+                return this->get();
+            }
+
+            void reset(const Bitmap * bmp) {
+                this->bmp = bmp;
+                this->stamp = 0;
+            }
+
+            void clear() {
+                this->bmp = 0;
+            }
+
+        public:
+            uint32_t stamp;
+        private:
+            const Bitmap * bmp;
+        } bmp;
+        union {
+            uint8_t  sig_8[8];
+            uint32_t sig_32[2];
+        } sig;
+        uint8_t sha1[20];
+
+        void reset()
+        {
+            this->bmp.clear();
+        }
+
+        bool empty() const
+        {
+            return !this->bmp.valid();
+        }
+    };
+
+    class cache_2d {
+        class storage_value_set {
+            size_t elem_size;
+            uint8_t * data;
+            void* * free_list;
+            void* * free_list_cur;
+
+            storage_value_set(storage_value_set const &);
+            storage_value_set& operator=(storage_value_set const &);
+
+        public:
+            storage_value_set()
+            : elem_size(0)
+            , data(0)
+            , free_list(0)
+            {}
+
+            ~storage_value_set() {
+                delete [] this->data;
+                delete [] this->free_list;
+            }
+
+            template<class T>
+            void update() {
+                this->elem_size = std::max(this->elem_size, sizeof(T));
+            }
+
+            void reserve(size_t sz) {
+                assert(!this->data);
+                this->data = new uint8_t[sz * this->elem_size];
+                this->free_list = new void*[sz];
+                this->free_list_cur = this->free_list;
+
+                uint8_t * p = this->data;
+                uint8_t * pe = this->data + sz * this->elem_size;
+                for (; p != pe; p += this->elem_size, ++this->free_list_cur) {
+                    *this->free_list_cur = p;
+                }
+            }
+
+            void * pop() {
+                return *--this->free_list_cur;
+            }
+
+            void push(void * p) {
+                *this->free_list_cur = p;
+                ++this->free_list_cur;
+            }
+        };
+
+        template<class T>
+        class aligned_set_allocator
+        : public std::allocator<T>
+        {
+        public:
+            storage_value_set & storage;
+
+            typedef typename std::allocator<T>::pointer pointer;
+            typedef typename std::allocator<T>::size_type size_type;
+
+            template<class U>
+            struct rebind {
+                typedef aligned_set_allocator<U> other;
+            };
+
+            aligned_set_allocator(storage_value_set & storage)
+            : storage(storage)
             {
-                if (this->cx < other.cx) {
+                this->storage.template update<T>();
+            }
+
+            template<class U>
+            aligned_set_allocator(aligned_set_allocator<U> const & other)
+            : std::allocator<T>(other)
+            , storage(other.storage)
+            {
+                this->storage.template update<T>();
+            }
+
+            T * allocate(size_type /*n*/, std::allocator<void>::const_pointer /*hint*/ = 0)
+            {
+                return static_cast<T*>(this->storage.pop());
+            }
+
+            void deallocate(pointer p, size_type /*n*/)
+            {
+                this->storage.push(p);
+            }
+        };
+
+        struct value_set
+        {
+            cache_element const & elem;
+
+            value_set(cache_element const & elem)
+            : elem(elem)
+            {}
+
+            bool operator<(value_set const & other) const {
+                if (this->elem.bmp->cx < other.elem.bmp->cx) {
                     return true;
                 }
-                else if (this->cx > other.cx) {
+                else if (this->elem.bmp->cx > other.elem.bmp->cx) {
                     return false;
                 }
 
-                if (this->cy < other.cy) {
+                if (this->elem.bmp->cy < other.elem.bmp->cy) {
                     return true;
                 }
-                else if (this->cy > other.cy) {
+                else if (this->elem.bmp->cy > other.elem.bmp->cy) {
                     return false;
                 }
 
                 typedef std::pair<const uint8_t *, const uint8_t *> iterator_pair;
-                iterator_pair p = std::mismatch(this->begin(), this->end(), other.begin());
-                return p.first == this->end() ? false : *p.first < *p.second;
+                const uint8_t * e = this->elem.sha1 + sizeof(this->elem.sha1);
+                iterator_pair p = std::mismatch(this->elem.sha1 + 0, e, other.elem.sha1 + 0);
+                return p.first == e ? false : *p.first < *p.second;
+            }
+        };
+
+    public:
+        class cache_range {
+            cache_element * first;
+            cache_element * last; /// TODO used ?
+            cache_element * pos;
+
+            typedef aligned_set_allocator<value_set> set_allocator;
+            typedef std::less<value_set> set_compare;
+            typedef std::set<value_set, set_compare, set_allocator> set_type;
+            typedef set_type::iterator set_iterator;
+            typedef set_type::const_iterator set_const_iterator;
+
+            set_type sorted_elements;
+
+            friend class cache_2d;
+
+        public:
+            cache_range(cache_element * first, size_t sz, storage_value_set & storage)
+            : first(first)
+            , last(first + sz)
+            , pos(first)
+            , sorted_elements(set_compare(), storage)
+            {}
+
+            cache_element & operator[](size_t i) const {
+                return this->first[i];
+            }
+
+            size_t size() const {
+                return this->last - this->first;
+            }
+
+            void clear() {
+                this->sorted_elements.clear();
+                this->pos = this->first;
+                for (cache_element * p = this->first; p != this->last; ++p) {
+                    p->reset();
+                }
+            }
+
+            uint16_t get_index(uint16_t cidx_default, uint16_t entries_max) const {
+                unsigned oldstamp = this->first->bmp.stamp;
+                for (uint16_t cidx = 1; cidx < entries_max; ++cidx) {
+                    if (this->first[cidx].bmp.stamp < oldstamp) {
+                        cidx_default = cidx;
+                        oldstamp     = this->first[cidx].bmp.stamp;
+                    }
+                }
+                return cidx_default;
+            }
+
+            static const uint32_t invalid_cache_index = 0xFFFFFFFF;
+
+            uint32_t get_cache_index(const cache_element & e) const {
+                set_const_iterator it = this->sorted_elements.find(e);
+                if (it == this->sorted_elements.end()) {
+                    return invalid_cache_index;
+                }
+
+                return &it->elem - this->first;
+            }
+
+            void remove(cache_element const & e) {
+                this->sorted_elements.erase(e);
+            }
+
+            void add(cache_element const & e) {
+                this->sorted_elements.insert(e);
             }
 
         private:
-            uint8_t const * begin() const
-            { return this->key; }
-
-            uint8_t const * end() const
-            { return this->key + sizeof(this->key); }
+            cache_range(cache_range const &);
+            cache_range& operator=(cache_range const &);
         };
 
-        typedef std::map<map_key, map_value> container_type;
+    private:
+        cache_element * cache;
+        storage_value_set storage;
+        cache_range range0;
+        cache_range range1;
+        cache_range range2;
+        cache_range range3;
+        cache_range range4;
+        cache_range range_wait_list;
 
-        container_type bmp_map;
+        cache_range * ranges[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */];
 
     public:
-        inline void add( const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy, const Bitmap * bmp
-                       , uint16_t cache_index) {
-            bmp_map.insert(container_type::value_type(
-                map_key(sha1, cx, cy)
-              , map_value(bmp, cache_index))
-            );
+        cache_2d(uint16_t sz0, uint16_t sz1, uint16_t sz2, uint16_t sz3, uint16_t sz4, uint16_t sz_wait_list)
+        : cache(new cache_element[sz0 + sz1 + sz2 + sz3 + sz4 + sz_wait_list])
+        , range0(this->cache, sz0, this->storage)
+        , range1(this->range0.last, sz1, this->storage)
+        , range2(this->range1.last, sz2, this->storage)
+        , range3(this->range2.last, sz3, this->storage)
+        , range4(this->range3.last, sz4, this->storage)
+        , range_wait_list(this->range4.last, sz_wait_list, this->storage)
+        {
+            this->storage.reserve(this->range_wait_list.last - this->cache);
+            this->ranges[0] = &this->range0;
+            this->ranges[1] = &this->range1;
+            this->ranges[2] = &this->range2;
+            this->ranges[3] = &this->range3;
+            this->ranges[4] = &this->range4;
+            this->ranges[5] = &this->range_wait_list;
         }
 
-        inline void clear() {
-            bmp_map.clear();
+        ~cache_2d() {
+            delete[] this->cache;
         }
 
-        inline uint32_t get_cache_index(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy) const {
-            container_type::const_iterator it = bmp_map.find(map_key(sha1, cx, cy));
-            if (it == bmp_map.end()) {
-                return invalid_cache_index;
-            }
-
-            return it->second.cache_index;
+        cache_range & operator[](size_t i) {
+            return *this->ranges[i];
         }
 
-        inline void remove(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy) {
-            bmp_map.erase(map_key(sha1, cx, cy));
+        const cache_range & operator[](size_t i) const {
+            return *this->ranges[i];
+        }
+
+        void reset() {
+            this->range0.clear();
+            this->range1.clear();
+            this->range2.clear();
+            this->range3.clear();
+            this->range4.clear();
+            this->range_wait_list.clear();
         }
     };
 
-    Finder finders[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */];
+    class bitmap_free_list_t {
+        Bitmap * data;
+        Bitmap* * first;
+        Bitmap* * last;
+
+        bitmap_free_list_t(bitmap_free_list_t const &);
+        bitmap_free_list_t& operator=(bitmap_free_list_t const &);
+
+    public:
+        bitmap_free_list_t(size_t sz)
+        : data(static_cast<Bitmap*>(::operator new(sizeof(Bitmap) * (sz + 1))))
+        , first(new Bitmap*[sz + 1])
+        , last(this->first)
+        {
+            Bitmap * p = this->data;
+            Bitmap * pe = this->data + sz + 1;
+            for (; p != pe; ++p, ++this->last) {
+                *this->last = p;
+            }
+        }
+
+        ~bitmap_free_list_t()
+        {
+            ::operator delete(this->data);
+            delete [] this->first;
+        }
+
+        const Bitmap * pop(uint8_t bpp, const Bitmap & bmp) {
+            Bitmap * ret = *--this->last;
+            return new (ret) Bitmap(bpp, bmp);
+        }
+
+        void push(const Bitmap * bmp) {
+            Bitmap * p = this->data + (bmp - this->data);
+            p->~Bitmap();
+            *this->last = p;
+            ++this->last;
+        }
+    };
+
+    typedef cache_2d::cache_range cache_range;
+
+    cache_2d caches;
+    bitmap_free_list_t bitmap_free_list;
 
           uint32_t stamp;
     const uint32_t verbose;
-
-    unsigned ref_counter[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */];
-    unsigned put_counter[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */];
 
     public:
         BmpCache(Owner owner,
@@ -176,10 +426,10 @@ private:
             , bpp(bpp)
             , number_of_cache(number_of_cache)
             , use_waiting_list(use_waiting_list)
+            , caches(cache_0_entries, cache_1_entries, cache_2_entries, cache_3_entries, cache_4_entries, MAXIMUM_NUMBER_OF_CACHE_ENTRIES)
+            , bitmap_free_list(cache_0_entries + cache_1_entries + cache_2_entries + cache_3_entries + cache_4_entries + MAXIMUM_NUMBER_OF_CACHE_ENTRIES)
             , stamp(0)
             , verbose(verbose)
-            , ref_counter()
-            , put_counter()
         {
             this->cache_entries   [0] = cache_0_entries;
             this->cache_size      [0] = cache_0_size;
@@ -219,10 +469,6 @@ private:
                    , MAXIMUM_NUMBER_OF_CACHES);
                 throw Error(ERR_RDP_PROTOCOL);
             }
-
-            memset(this->stamps, 0, sizeof(this->stamps));
-            memset(this->sha1, 0, sizeof(this->sha1));
-            memset(this->sig, 0, sizeof(this->sig));
         }
 
         ~BmpCache() {
@@ -236,15 +482,7 @@ private:
                 this->log();
             }
             this->stamp = 0;
-            memset(this->stamps, 0, sizeof(this->stamps));
-            memset(this->sha1, 0, sizeof(this->sha1));
-            memset(this->sig, 0, sizeof(this->sig));
-            for (uint8_t cid = 0; cid < MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */; cid++) {
-                for (uint16_t cidx = 0; cidx < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cidx++) {
-                    this->cache[cid][cidx].reset();
-                }
-                this->finders[cid].clear();
-            }
+            this->caches.reset();
         }
 
         void put(uint8_t id, uint16_t idx, const Bitmap * const bmp, uint32_t key1, uint32_t key2) {
@@ -253,66 +491,57 @@ private:
                 // Last bitmap cache entry is used by waiting list.
                 //LOG(LOG_INFO, "BmpCache: Put bitmap to waiting list.");
                 idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
-                this->put_counter[MAXIMUM_NUMBER_OF_CACHES]++;  // Wait list
             }
-            else {
-                this->put_counter[id]++;
+
+            cache_range & r = this->caches[id];
+            cache_element & e = r[idx];
+            if (!e.empty()) {
+                r.remove(e);
+                this->bitmap_free_list.push(e.bmp.get()); //TODO only if free_list allocated
             }
-            if (this->cache[id][idx]) {
-                this->finders[id].remove(this->sha1[id][idx], this->cache[id][idx]->cx, this->cache[id][idx]->cy);
-            }
-            this->cache[id][idx].reset(bmp);
-            this->stamps[id][idx] = ++this->stamp;
-            bmp->compute_sha1(this->sha1[id][idx]);
+            e.bmp.reset(this->bitmap_free_list.pop(bmp->original_bpp, *bmp));
+            e.bmp.stamp = ++this->stamp;
+
+            e.bmp->compute_sha1(e.sha1);
             if (this->cache_persistent[id]) {
                 REDASSERT(key1 && key2);
-                this->sig[id][idx].sig_32[0] = key1;
-                this->sig[id][idx].sig_32[1] = key2;
+                e.sig.sig_32[0] = key1;
+                e.sig.sig_32[1] = key2;
             }
             REDASSERT(this->cache_persistent[id] || (!key1 && !key2));
-            this->finders[id].add(this->sha1[id][idx], bmp->cx, bmp->cy, bmp, idx);
+            r.add(e);
         }
 
         void restamp(uint8_t id, uint16_t idx) {
             REDASSERT((id & IN_WAIT_LIST) == 0);
-            this->stamps[id][idx] = ++this->stamp;
+            this->caches[id][idx].bmp.stamp = ++this->stamp;
         }
 
         const Bitmap * get(uint8_t id, uint16_t idx) {
             if (id & IN_WAIT_LIST) {
                 REDASSERT(this->owner != Mod_rdp);
-                this->ref_counter[MAXIMUM_NUMBER_OF_CACHES]++;
-                return this->cache[MAXIMUM_NUMBER_OF_CACHES][idx].get();
+                return this->caches[MAXIMUM_NUMBER_OF_CACHES][idx].bmp.get();
             }
             if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
                 REDASSERT(this->owner != Front);
                 // Last bitmap cache entry is used by waiting list.
                 //LOG(LOG_INFO, "BmpCache: Get bitmap from waiting list.");
                 idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
-                this->ref_counter[MAXIMUM_NUMBER_OF_CACHES]++;
             }
-            else {
-                this->ref_counter[id]++;
-            }
-            return this->cache[id][idx].get();
+            return this->caches[id][idx].bmp.get();
         }
 
         unsigned get_stamp(uint8_t id, uint16_t idx) {
             REDASSERT((id & IN_WAIT_LIST) == 0);
-            return this->stamps[id][idx];
+            return this->caches[id][idx].bmp.stamp;
         }
 
         bool is_cache_persistent(uint8_t id) {
-            if (id < MAXIMUM_NUMBER_OF_CACHES)
-            switch (id) {
-                case 0:
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                    return this->cache_persistent[id];
-                // Wait list.
-                case MAXIMUM_NUMBER_OF_CACHES: return true;
+            if (id < MAXIMUM_NUMBER_OF_CACHES) {
+                return this->cache_persistent[id];
+            }
+            if (id == MAXIMUM_NUMBER_OF_CACHES) {
+                return true;
             }
 
             LOG( LOG_ERR, "BmpCache: %s index_of_cache(%u) > %u"
@@ -322,26 +551,24 @@ private:
             return false;
         }
 
-        inline uint16_t get_cache_usage(uint8_t cache_id) const {
+        uint16_t get_cache_usage(uint8_t cache_id) const {
             REDASSERT((cache_id & IN_WAIT_LIST) == 0);
-
             uint16_t cache_entries = 0;
-            for (unsigned cache_index = 0; cache_index < this->cache_entries[cache_id]; cache_index++) {
-                if (this->cache[cache_id][cache_index]) {
-                    cache_entries++;
+            unsigned cache_index = 0;
+            const cache_range & r = this->caches[cache_id];
+            const unsigned last_index = this->cache_entries[cache_id];
+            for (; cache_index < last_index; ++cache_index) {
+                if (!r[cache_index].empty()) {
+                    ++cache_entries;
                 }
             }
-
             return cache_entries;
         }
 
         void log() const {
             LOG( LOG_INFO
-               , "BmpCache: %s ref_counter=(%u %u %u ... %u) put_counter=(%u %u %u ... %u) "
-                 "(0=>%u, %u%s) (1=>%u, %u%s) (2=>%u, %u%s) (3=>%u, %u%s) (4=>%u, %u%s)"
+               , "BmpCache: %s (0=>%u, %u%s) (1=>%u, %u%s) (2=>%u, %u%s) (3=>%u, %u%s) (4=>%u, %u%s)"
                , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-               , this->ref_counter[0], this->ref_counter[1], this->ref_counter[2], this->ref_counter[MAXIMUM_NUMBER_OF_CACHES]
-               , this->put_counter[0], this->put_counter[1], this->put_counter[2], this->put_counter[MAXIMUM_NUMBER_OF_CACHES]
                , get_cache_usage(0), this->cache_entries[0], (this->cache_persistent[0] ? ", persistent" : "")
                , get_cache_usage(1), this->cache_entries[1], (this->cache_persistent[1] ? ", persistent" : "")
                , get_cache_usage(2), this->cache_entries[2], (this->cache_persistent[2] ? ", persistent" : "")
@@ -352,14 +579,17 @@ private:
 private:
         struct Deleter {
             const Bitmap & r;
-            Deleter(const Bitmap & bmp)
+            bitmap_free_list_t & bmp_free_list;
+
+            Deleter(const Bitmap & bmp, bitmap_free_list_t & bitmap_free_list)
             : r(bmp)
+            , bmp_free_list(bitmap_free_list)
             {}
 
             void operator()(const Bitmap * bmp) const
             {
                 if (bmp != &this->r) {
-                    delete bmp;
+                    this->bmp_free_list.push(bmp);
                 }
             }
         };
@@ -391,31 +621,28 @@ public:
                 (this->bpp == oldbmp.original_bpp
                 || !((this->owner == Recorder) || (oldbmp.original_bpp > this->bpp)))
                 ? &oldbmp
-                : new Bitmap(this->bpp, oldbmp)
-                , Deleter(oldbmp)
+                : this->bitmap_free_list.pop(this->bpp, oldbmp)
+                , Deleter(oldbmp, this->bitmap_free_list)
             );
 
-            uint8_t bmp_sha1[20];
-            bmp->compute_sha1(bmp_sha1);
+            uint8_t        id_real  = 0;
 
-            uint16_t oldest_cidx = 0;
-
-            uint16_t   entries    = 0;
-            uint8_t    id_real    = 0;
-            bool       persistent = false;
-            uint32_t   bmp_size   = bmp->bmp_size;
-
-            for (id_real = 0; id_real < MAXIMUM_NUMBER_OF_CACHES; id_real++) {
+            for (const uint32_t bmp_size = bmp->bmp_size; id_real < MAXIMUM_NUMBER_OF_CACHES; ++id_real) {
                 if (this->cache_entries[id_real] && (bmp_size <= this->cache_size[id_real])) {
                     break;
                 }
             }
 
+            uint16_t oldest_cidx = 0;
+
+            uint16_t entries    = 0;
+            bool     persistent = false;
+
             if (id_real == MAXIMUM_NUMBER_OF_CACHES) {
                 LOG( LOG_ERR
                    , "BmpCache: %s bitmap size(%u) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u"
                    , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-                   , bmp_size
+                   , bmp->bmp_size
                    , (this->cache_entries[0] ? this->cache_size[0] : 0)
                    , (this->cache_entries[1] ? this->cache_size[1] : 0)
                    , (this->cache_entries[2] ? this->cache_size[2] : 0)
@@ -432,18 +659,16 @@ public:
                 entries--;
             }
 
-            uint8_t   id     = id_real;
-            Finder  & finder = this->finders[id];
+            cache_element e_compare;
+            e_compare.bmp.reset(bmp.get());
+            bmp->compute_sha1(e_compare.sha1);
 
-            uint32_t cache_index_32 = finder.get_cache_index(bmp_sha1, bmp->cx, bmp->cy);
-            if (cache_index_32 == Finder::invalid_cache_index) {
-                unsigned oldstamp = this->stamps[id][0];
-                for (uint16_t cidx = 0 ; cidx < entries; cidx++) {
-                    if (this->stamps[id][cidx] < oldstamp) {
-                        oldest_cidx = cidx;
-                        oldstamp    = this->stamps[id][cidx];
-                    }
-                }
+            uint8_t   id     = id_real;
+            cache_range & cache = this->caches[id];
+
+            uint32_t cache_index_32 = cache.get_cache_index(e_compare);
+            if (cache_index_32 == cache_range::invalid_cache_index) {
+                oldest_cidx = cache.get_index(oldest_cidx, entries);
             }
             else {
                 if (this->verbose & 512) {
@@ -451,11 +676,11 @@ public:
                         LOG( LOG_INFO
                            , "BmpCache: %s use bitmap %02X%02X%02X%02X%02X%02X%02X%02X stored in persistent disk bitmap cache"
                            , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-                           , bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3]
-                           , bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7]);
+                           , e_compare.sha1[0], e_compare.sha1[1], e_compare.sha1[2], e_compare.sha1[3]
+                           , e_compare.sha1[4], e_compare.sha1[5], e_compare.sha1[6], e_compare.sha1[7]);
                     }
                 }
-                this->stamps[id][cache_index_32] = ++this->stamp;
+                cache[cache_index_32].bmp.stamp = ++this->stamp;
                 // Generating source code for unit test.
                 //if (this->verbose & 8192) {
                 //    LOG(LOG_INFO, "cache_id    = %u;", id);
@@ -467,70 +692,55 @@ public:
                 //    LOG(LOG_INFO, "delete bmp_%d;", this->finding_counter - 1);
                 //    LOG(LOG_INFO, "");
                 //}
-                this->ref_counter[id]++;
                 return (BITMAP_FOUND_IN_CACHE << 24) | (id << 16) | cache_index_32;
             }
 
             if (persistent && this->use_waiting_list) {
                 // The bitmap cache is persistent.
 
-                Finder & wait_list_finder = this->finders[MAXIMUM_NUMBER_OF_CACHES];
+                cache_range & cache_max = this->caches[MAXIMUM_NUMBER_OF_CACHES];
 
-                cache_index_32 = wait_list_finder.get_cache_index(bmp_sha1, bmp->cx, bmp->cy);
-                if (cache_index_32 == Finder::invalid_cache_index) {
-                    unsigned oldstamp = this->stamps[MAXIMUM_NUMBER_OF_CACHES][0];
-                    for (uint16_t cidx = 0 ; cidx < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cidx++) {
-                        if (this->stamps[MAXIMUM_NUMBER_OF_CACHES][cidx] < oldstamp) {
-                            oldest_cidx = cidx;
-                            oldstamp    = this->stamps[MAXIMUM_NUMBER_OF_CACHES][cidx];
-                        }
-                    }
-
+                cache_index_32 = cache_max.get_cache_index(e_compare);
+                if (cache_index_32 == cache_range::invalid_cache_index) {
+                    oldest_cidx = cache_max.get_index(oldest_cidx, MAXIMUM_NUMBER_OF_CACHE_ENTRIES);
                     id_real     =  MAXIMUM_NUMBER_OF_CACHES;
                     id          |= IN_WAIT_LIST;
 
                     if (this->verbose & 512) {
                         LOG( LOG_INFO, "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into wait list."
-                           , bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3]
-                           , bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7]);
+                           , e_compare.sha1[0], e_compare.sha1[1], e_compare.sha1[2], e_compare.sha1[3]
+                           , e_compare.sha1[4], e_compare.sha1[5], e_compare.sha1[6], e_compare.sha1[7]);
                     }
                 }
                 else {
-                    this->cache [MAXIMUM_NUMBER_OF_CACHES][cache_index_32].reset();
-                    this->stamps[MAXIMUM_NUMBER_OF_CACHES][cache_index_32] = 0;
-                    memset(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cache_index_32],
-                           0,
-                           sizeof(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cache_index_32]));
-
-                    wait_list_finder.remove(bmp_sha1, bmp->cx, bmp->cy);
+                    cache_max[cache_index_32].reset();
+                    cache_max.remove(e_compare);
 
                     if (this->verbose & 512) {
                         LOG( LOG_INFO
                            , "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into persistent cache, cache_index=%u"
-                           , bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3]
-                           , bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7], oldest_cidx);
+                           , e_compare.sha1[0], e_compare.sha1[1], e_compare.sha1[2], e_compare.sha1[3]
+                           , e_compare.sha1[4], e_compare.sha1[5], e_compare.sha1[6], e_compare.sha1[7], oldest_cidx);
                     }
                 }
             }
 
             // find oldest stamp (or 0) and replace bitmap
-            if (this->cache[id_real][oldest_cidx]) {
-                this->finders[id_real].remove(this->sha1[id_real][oldest_cidx],
-                                              this->cache[id_real][oldest_cidx]->cx,
-                                              this->cache[id_real][oldest_cidx]->cy);
+            cache_element & e = this->caches[id_real][oldest_cidx];
+            if (!e.empty()) {
+                this->caches[id_real].remove(e);
             }
             if (id_real == id) {
-                ::memcpy(this->sig[id_real][oldest_cidx].sig_8, bmp_sha1, sizeof(this->sig[id_real][oldest_cidx].sig_8));
+                ::memcpy(e.sig.sig_8, e_compare.sha1, sizeof(e.sig.sig_8));
             }
-            this->put_counter[id_real]++;
-            ::memcpy(this->sha1[id_real][oldest_cidx], bmp_sha1, 20);
-            this->finders[id_real].add(bmp_sha1, bmp->cx, bmp->cy, bmp.get(), oldest_cidx);
-            this->cache[id_real][oldest_cidx].reset(
+            ::memcpy(e.sha1, e_compare.sha1, 20);
+            this->caches[id_real].add(e);
+            e.bmp.reset(
                 (&bmp.get_deleter().r == &oldbmp)
-                ? new Bitmap(oldbmp.original_bpp, oldbmp)
+                ? this->bitmap_free_list.pop(oldbmp.original_bpp, oldbmp)
                 : bmp.release()
             );
-            this->stamps[id_real][oldest_cidx] = ++this->stamp;
+            e.bmp.stamp = ++this->stamp;
             // Generating source code for unit test.
             //if (this->verbose & 8192) {
             //    LOG(LOG_INFO, "cache_id    = %u;", id);
