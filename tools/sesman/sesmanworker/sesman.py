@@ -897,6 +897,7 @@ class Sesman():
                     kv[u'target_device'] = self.shared.get(u'real_target_device')
                 else:
                     kv[u'target_device'] = physical_target.resource.device.host
+                    kv[u'target_port'] = physical_target.resource.service.port
 
                 if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() != u'true':
                     kv[u'target_login'] = physical_target.account.login
