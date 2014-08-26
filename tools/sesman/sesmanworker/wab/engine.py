@@ -43,6 +43,7 @@ class Engine(object):
         self._trace_encryption = None
         self.challenge = None
         self.proxy_rights = None
+        self.rights = None
         # Logger().info("=========================")
         # Logger().info("==== RDP ENGINE (WAB) ===")
         # Logger().info("=========================")
@@ -320,6 +321,10 @@ class Engine(object):
                            )
         return targets, item_filtered
 
+    def reset_proxy_rights(self):
+        self.proxy_rights = None
+        self.rights = None
+
     def get_proxy_rights(self, protocols, target_device=None):
         if self.proxy_rights is not None:
             return
@@ -444,7 +449,10 @@ class Engine(object):
 
         return self.session_id
 
-    def update_session(self, hosttarget):
+    def update_session(self, physical_target):
+        hosttarget = u"%s@%s:%s" % ( physical_target.account.login
+                                   , physical_target.resource.device.cn
+                                   , physical_target.resource.service.protocol.cn)
         try:
             if self.session_id:
                 self.wabengine.update_session(self.session_id, hosttarget)
