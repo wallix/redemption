@@ -25,6 +25,9 @@ class Engine(object):
         self._trace_encryption = False
         self.challenge = None
         self.rights = None
+        # Logger().info("=========================")
+        # Logger().info("==== PROXY RDP ENGINE ===")
+        # Logger().info("=========================")
 
     def get_force_change_password(self):
         return False

@@ -43,6 +43,9 @@ class Engine(object):
         self._trace_encryption = None
         self.challenge = None
         self.proxy_rights = None
+        # Logger().info("=========================")
+        # Logger().info("==== RDP ENGINE (WAB) ===")
+        # Logger().info("=========================")
 
     def get_language(self):
         try:
