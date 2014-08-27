@@ -156,6 +156,7 @@ private:
             }
 
             void * pop() {
+                assert(this->free_list_cur != this->free_list);
                 return *--this->free_list_cur;
             }
 
@@ -185,6 +186,11 @@ private:
             {
                 this->storage.template update<T>();
             }
+
+            aligned_set_allocator(aligned_set_allocator const & other)
+            : std::allocator<T>(other)
+            , storage(other.storage)
+            {}
 
             template<class U>
             aligned_set_allocator(aligned_set_allocator<U> const & other)
@@ -276,8 +282,14 @@ private:
             }
 
             uint16_t get_index(uint16_t cidx_default, uint16_t entries_max) const {
+                if (this->first->empty()) {
+                    return 0;
+                }
                 unsigned oldstamp = this->first->bmp.stamp;
                 for (uint16_t cidx = 1; cidx < entries_max; ++cidx) {
+                    if (this->first[cidx].empty()) {
+                        return cidx;
+                    }
                     if (this->first[cidx].bmp.stamp < oldstamp) {
                         cidx_default = cidx;
                         oldstamp     = this->first[cidx].bmp.stamp;
@@ -713,8 +725,8 @@ public:
                     }
                 }
                 else {
-                    cache_max[cache_index_32].reset();
                     cache_max.remove(e_compare);
+                    cache_max[cache_index_32].reset();
 
                     if (this->verbose & 512) {
                         LOG( LOG_INFO
@@ -734,13 +746,13 @@ public:
                 ::memcpy(e.sig.sig_8, e_compare.sha1, sizeof(e.sig.sig_8));
             }
             ::memcpy(e.sha1, e_compare.sha1, 20);
-            this->caches[id_real].add(e);
             e.bmp.reset(
                 (&bmp.get_deleter().r == &oldbmp)
                 ? this->bitmap_free_list.pop(oldbmp.original_bpp, oldbmp)
                 : bmp.release()
             );
             e.bmp.stamp = ++this->stamp;
+            this->caches[id_real].add(e);
             // Generating source code for unit test.
             //if (this->verbose & 8192) {
             //    LOG(LOG_INFO, "cache_id    = %u;", id);
