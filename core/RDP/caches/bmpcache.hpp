@@ -135,9 +135,14 @@ private:
         } sig;
         uint8_t sha1[20];
 
+        cache_element()
+        : bmp(0)
+        , stamp(0)
+        {}
+
         void reset() {
-            this->bmp = 0;
             this->stamp = 0;
+            this->bmp = 0;
         }
 
         operator bool () const {
@@ -297,17 +302,29 @@ private:
 
         static const uint32_t invalid_cache_index = 0xFFFFFFFF;
 
-        inline uint16_t get_index(int_fast16_t cidx_default, int_fast16_t entries_max) const {
-            int_fast32_t oldstamp = this->first->stamp;
-            for (int_fast16_t cidx = 1; cidx < entries_max; ++cidx) {
-                if (this->first[cidx].stamp < oldstamp) {
-                    cidx_default = cidx;
-                    oldstamp     = this->first[cidx].stamp;
-                }
-            }
-            return cidx_default;
+        uint16_t get_old_index() const {
+            return this->priv_get_old_index(this->size());
         }
 
+        uint16_t get_old_index(bool use_waiting_list) const {
+            const int_fast16_t entries_max = this->size();
+            return this->priv_get_old_index(use_waiting_list ? entries_max - 1 : entries_max);
+        }
+
+    private:
+        inline uint16_t priv_get_old_index(int_fast16_t entries_max) const {
+            cache_element * first = this->first;
+            cache_element * last = first + entries_max;
+            cache_element * current = first;
+            while (++first < last) {
+                if (first->stamp < current->stamp) {
+                    current = first;
+                }
+            }
+            return current - this->first;
+        }
+
+    public:
         uint32_t get_cache_index(const cache_element & e) const {
             set_type::const_iterator it = this->sorted_elements.find(e);
             if (it == this->sorted_elements.end()) {
@@ -333,42 +350,30 @@ private:
 public:
     struct CacheOption {
         uint16_t entries;
-        uint16_t size;
+        uint16_t bmp_size;
         bool is_persistent;
 
-        CacheOption(uint16_t entries = 0, uint16_t size = 0, bool is_persistent = false)
+        CacheOption(uint16_t entries = 0, uint16_t bmp_size = 0, bool is_persistent = false)
         : entries(entries)
-        , size(size)
+        , bmp_size(bmp_size)
         , is_persistent(is_persistent)
         {}
     };
 
 private:
     class Cache : public cache_range {
-        uint16_t size_;
+        uint16_t bmp_size_;
         bool is_persistent_;
 
     public:
         Cache(cache_element * pdata, const CacheOption & opt, storage_value_set & storage)
         : cache_range(pdata, opt.entries, storage)
-        , size_(opt.size)
+        , bmp_size_(opt.bmp_size)
         , is_persistent_(opt.is_persistent)
         {}
 
-        cache_range & range() {
-            return static_cast<cache_range&>(*this);
-        }
-
-        const cache_range & range() const {
-            return static_cast<const cache_range&>(*this);
-        }
-
-        uint16_t entries() const {
-            return this->range().size();
-        }
-
-        uint16_t size() const {
-            return this->size_;
+        uint16_t bmp_size() const {
+            return this->bmp_size_;
         }
 
         bool persistent() const {
@@ -461,11 +466,11 @@ public:
                     "cache_3(%u, %u, %s) cache_4(%u, %u, %s)"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                 , this->bpp, this->number_of_cache, (this->use_waiting_list ? "yes" : "no")
-                , this->cache0.entries(), this->cache0.size(), (cache0.persistent() ? "yes" : "no")
-                , this->cache1.entries(), this->cache1.size(), (cache1.persistent() ? "yes" : "no")
-                , this->cache2.entries(), this->cache2.size(), (cache2.persistent() ? "yes" : "no")
-                , this->cache3.entries(), this->cache3.size(), (cache3.persistent() ? "yes" : "no")
-                , this->cache4.entries(), this->cache4.size(), (cache4.persistent() ? "yes" : "no")
+                , this->cache0.size(), this->cache0.bmp_size(), (cache0.persistent() ? "yes" : "no")
+                , this->cache1.size(), this->cache1.bmp_size(), (cache1.persistent() ? "yes" : "no")
+                , this->cache2.size(), this->cache2.bmp_size(), (cache2.persistent() ? "yes" : "no")
+                , this->cache3.size(), this->cache3.bmp_size(), (cache3.persistent() ? "yes" : "no")
+                , this->cache4.size(), this->cache4.bmp_size(), (cache4.persistent() ? "yes" : "no")
                 );
         }
 
@@ -489,12 +494,12 @@ public:
             this->log();
         }
         this->stamp = 0;
-        this->cache0.range().clear();
-        this->cache1.range().clear();
-        this->cache2.range().clear();
-        this->cache3.range().clear();
-        this->cache4.range().clear();
-        this->cache_wait_list.range().clear();
+        this->cache0.clear();
+        this->cache1.clear();
+        this->cache2.clear();
+        this->cache3.clear();
+        this->cache4.clear();
+        this->cache_wait_list.clear();
         this->bitmap_free_list.clear();
     }
 
@@ -506,34 +511,29 @@ public:
             idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
         }
 
-        cache_range & r = this->caches[id].range();
+        Cache & r = this->caches[id];
         cache_element & e = r[idx];
         if (e) {
             r.remove(e);
-            this->bitmap_free_list.push(e.bmp); //TODO only if free_list allocated
+            this->bitmap_free_list.push(e.bmp);
         }
         e.bmp = this->bitmap_free_list.pop(bmp->original_bpp, *bmp);
+        e.bmp->compute_sha1(e.sha1);
         e.stamp = ++this->stamp;
 
-        e.bmp->compute_sha1(e.sha1);
-        if (this->caches[id].persistent()) {
+        if (r.persistent()) {
             REDASSERT(key1 && key2);
             e.sig.sig_32[0] = key1;
             e.sig.sig_32[1] = key2;
         }
-        REDASSERT(this->caches[id].persistent() || (!key1 && !key2));
+        REDASSERT(r.persistent() || (!key1 && !key2));
         r.add(e);
-    }
-
-    void restamp(uint8_t id, uint16_t idx) {
-        REDASSERT((id & IN_WAIT_LIST) == 0);
-        this->caches[id].range()[idx].stamp = ++this->stamp;
     }
 
     const Bitmap * get(uint8_t id, uint16_t idx) {
         if (id & IN_WAIT_LIST) {
             REDASSERT(this->owner != Mod_rdp);
-            return this->caches[MAXIMUM_NUMBER_OF_CACHES].range()[idx].bmp;
+            return this->caches[MAXIMUM_NUMBER_OF_CACHES][idx].bmp;
         }
         if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
             REDASSERT(this->owner != Front);
@@ -541,12 +541,7 @@ public:
             //LOG(LOG_INFO, "BmpCache: Get bitmap from waiting list.");
             idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
         }
-        return this->caches[id].range()[idx].bmp;
-    }
-
-    unsigned get_stamp(uint8_t id, uint16_t idx) {
-        REDASSERT((id & IN_WAIT_LIST) == 0);
-        return this->caches[id].range()[idx].stamp;
+        return this->caches[id][idx].bmp;
     }
 
     bool is_cache_persistent(uint8_t id) {
@@ -568,7 +563,7 @@ public:
         REDASSERT((cache_id & IN_WAIT_LIST) == 0);
         uint16_t cache_entries = 0;
         unsigned cache_index = 0;
-        const cache_range & r = this->caches[cache_id].range();
+        const cache_range & r = this->caches[cache_id];
         const unsigned last_index = this->caches[cache_id].persistent();
         for (; cache_index < last_index; ++cache_index) {
             if (r[cache_index]) {
@@ -582,11 +577,11 @@ public:
         LOG( LOG_INFO
             , "BmpCache: %s (0=>%u, %u%s) (1=>%u, %u%s) (2=>%u, %u%s) (3=>%u, %u%s) (4=>%u, %u%s)"
             , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-            , get_cache_usage(0), this->cache0.entries(), (this->cache0.persistent() ? ", persistent" : "")
-            , get_cache_usage(1), this->cache1.entries(), (this->cache1.persistent() ? ", persistent" : "")
-            , get_cache_usage(2), this->cache2.entries(), (this->cache2.persistent() ? ", persistent" : "")
-            , get_cache_usage(3), this->cache3.entries(), (this->cache3.persistent() ? ", persistent" : "")
-            , get_cache_usage(4), this->cache4.entries(), (this->cache4.persistent() ? ", persistent" : ""));
+            , get_cache_usage(0), this->cache0.size(), (this->cache0.persistent() ? ", persistent" : "")
+            , get_cache_usage(1), this->cache1.size(), (this->cache1.persistent() ? ", persistent" : "")
+            , get_cache_usage(2), this->cache2.size(), (this->cache2.persistent() ? ", persistent" : "")
+            , get_cache_usage(3), this->cache3.size(), (this->cache3.persistent() ? ", persistent" : "")
+            , get_cache_usage(4), this->cache4.size(), (this->cache4.persistent() ? ", persistent" : ""));
     }
 
 private:
@@ -641,49 +636,35 @@ public:
         uint8_t        id_real  = 0;
 
         for (const uint32_t bmp_size = bmp->bmp_size; id_real < MAXIMUM_NUMBER_OF_CACHES; ++id_real) {
-            if (this->caches[id_real].entries() && (bmp_size <= this->caches[id_real].size())) {
+            if (this->caches[id_real].size() && (bmp_size <= this->caches[id_real].bmp_size())) {
                 break;
             }
         }
-
-        uint16_t oldest_cidx = 0;
-
-        uint16_t entries    = 0;
-        bool     persistent = false;
 
         if (id_real == MAXIMUM_NUMBER_OF_CACHES) {
             LOG( LOG_ERR
                 , "BmpCache: %s bitmap size(%u) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                 , bmp->bmp_size
-                , (this->cache0.entries() ? this->cache0.size() : 0)
-                , (this->cache1.entries() ? this->cache1.size() : 1)
-                , (this->cache2.entries() ? this->cache2.size() : 2)
-                , (this->cache3.entries() ? this->cache3.size() : 3)
-                , (this->cache4.entries() ? this->cache4.size() : 4)
+                , (this->cache0.size() ? this->cache0.bmp_size() : 0)
+                , (this->cache1.size() ? this->cache1.bmp_size() : 1)
+                , (this->cache2.size() ? this->cache2.bmp_size() : 2)
+                , (this->cache3.size() ? this->cache3.bmp_size() : 3)
+                , (this->cache4.size() ? this->cache4.bmp_size() : 4)
                 );
             REDASSERT(0);
             throw Error(ERR_BITMAP_CACHE_TOO_BIG);
         }
-        entries    = this->caches[id_real].entries();
-        persistent = this->caches[id_real].persistent();
-        if (this->use_waiting_list) {
-            // Last bitmap cache entry is used by waiting list.
-            entries--;
-        }
+
+        Cache & cache = this->caches[id_real];
+        const bool persistent = cache.persistent();
 
         cache_element e_compare;
         e_compare.bmp = bmp.get();
         bmp->compute_sha1(e_compare.sha1);
 
-        uint8_t   id     = id_real;
-        cache_range & cache = this->caches[id].range();
-
-        uint32_t cache_index_32 = cache.get_cache_index(e_compare);
-        if (cache_index_32 == cache_range::invalid_cache_index) {
-            oldest_cidx = cache.get_index(oldest_cidx, entries);
-        }
-        else {
+        const uint32_t cache_index_32 = cache.get_cache_index(e_compare);
+        if (cache_index_32 != cache_range::invalid_cache_index) {
             if (this->verbose & 512) {
                 if (persistent) {
                     LOG( LOG_INFO
@@ -696,7 +677,7 @@ public:
             cache[cache_index_32].stamp = ++this->stamp;
             // Generating source code for unit test.
             //if (this->verbose & 8192) {
-            //    LOG(LOG_INFO, "cache_id    = %u;", id);
+            //    LOG(LOG_INFO, "cache_id    = %u;", id_real);
             //    LOG(LOG_INFO, "cache_index = %u;", cache_index_32);
             //    LOG(LOG_INFO,
             //        "BOOST_CHECK_EQUAL(((BITMAP_FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), "
@@ -705,17 +686,18 @@ public:
             //    LOG(LOG_INFO, "delete bmp_%d;", this->finding_counter - 1);
             //    LOG(LOG_INFO, "");
             //}
-            return (BITMAP_FOUND_IN_CACHE << 24) | (id << 16) | cache_index_32;
+            return (BITMAP_FOUND_IN_CACHE << 24) | (id_real << 16) | cache_index_32;
         }
+
+        uint8_t  id = id_real;
+        uint16_t oldest_cidx = cache.get_old_index(this->use_waiting_list);
 
         if (persistent && this->use_waiting_list) {
             // The bitmap cache is persistent.
 
-            cache_range & cache_max = this->caches[MAXIMUM_NUMBER_OF_CACHES].range();
-
-            cache_index_32 = cache_max.get_cache_index(e_compare);
+            const uint32_t cache_index_32 = this->cache_wait_list.get_cache_index(e_compare);
             if (cache_index_32 == cache_range::invalid_cache_index) {
-                oldest_cidx = cache_max.get_index(oldest_cidx, MAXIMUM_NUMBER_OF_CACHE_ENTRIES);
+                oldest_cidx = this->cache_wait_list.get_old_index();
                 id_real     =  MAXIMUM_NUMBER_OF_CACHES;
                 id          |= IN_WAIT_LIST;
 
@@ -726,8 +708,11 @@ public:
                 }
             }
             else {
-                cache_max.remove(e_compare);
-                cache_max[cache_index_32].reset();
+                this->cache_wait_list.remove(e_compare);
+                this->cache_wait_list[cache_index_32].reset();
+                if (&bmp.get_deleter().r != &oldbmp) {
+                    this->bitmap_free_list.push(e_compare.bmp);
+                }
 
                 if (this->verbose & 512) {
                     LOG( LOG_INFO
@@ -739,9 +724,10 @@ public:
         }
 
         // find oldest stamp (or 0) and replace bitmap
-        cache_element & e = this->caches[id_real].range()[oldest_cidx];
+        Cache & cache_real = this->caches[id_real];
+        cache_element & e = cache_real[oldest_cidx];
         if (e) {
-            this->caches[id_real].remove(e);
+            cache_real.remove(e);
             this->bitmap_free_list.push(e.bmp);
         }
         if (id_real == id) {
@@ -752,7 +738,7 @@ public:
             ? this->bitmap_free_list.pop(oldbmp.original_bpp, oldbmp)
             : bmp.release();
         e.stamp = ++this->stamp;
-        this->caches[id_real].add(e);
+        cache_real.add(e);
         // Generating source code for unit test.
         //if (this->verbose & 8192) {
         //    LOG(LOG_INFO, "cache_id    = %u;", id);
