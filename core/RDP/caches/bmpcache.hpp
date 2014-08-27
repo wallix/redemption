@@ -323,7 +323,7 @@ private:
         };
 
     private:
-        cache_element * cache;
+        const unique_ptr<cache_element[]> cache;
         storage_value_set storage;
         cache_range range0;
         cache_range range1;
@@ -337,24 +337,20 @@ private:
     public:
         cache_2d(uint16_t sz0, uint16_t sz1, uint16_t sz2, uint16_t sz3, uint16_t sz4, uint16_t sz_wait_list)
         : cache(new cache_element[sz0 + sz1 + sz2 + sz3 + sz4 + sz_wait_list])
-        , range0(this->cache, sz0, this->storage)
+        , range0(this->cache.get(), sz0, this->storage)
         , range1(this->range0.last, sz1, this->storage)
         , range2(this->range1.last, sz2, this->storage)
         , range3(this->range2.last, sz3, this->storage)
         , range4(this->range3.last, sz4, this->storage)
         , range_wait_list(this->range4.last, sz_wait_list, this->storage)
         {
-            this->storage.reserve(this->range_wait_list.last - this->cache);
+            this->storage.reserve(this->range_wait_list.last - this->cache.get());
             this->ranges[0] = &this->range0;
             this->ranges[1] = &this->range1;
             this->ranges[2] = &this->range2;
             this->ranges[3] = &this->range3;
             this->ranges[4] = &this->range4;
             this->ranges[5] = &this->range_wait_list;
-        }
-
-        ~cache_2d() {
-            delete[] this->cache;
         }
 
         cache_range & operator[](size_t i) {
@@ -376,9 +372,16 @@ private:
     };
 
     class bitmap_free_list_t {
-        Bitmap * data;
-        Bitmap* * first;
+        struct operator_delete {
+            void operator()(void * data) {
+                ::operator delete(data);
+            }
+        };
+
+        unique_ptr<Bitmap, operator_delete> data;
+        unique_ptr<Bitmap*[]> first;
         Bitmap* * last;
+        size_t sz;
 
         bitmap_free_list_t(bitmap_free_list_t const &);
         bitmap_free_list_t& operator=(bitmap_free_list_t const &);
@@ -387,31 +390,60 @@ private:
         bitmap_free_list_t(size_t sz)
         : data(static_cast<Bitmap*>(::operator new(sizeof(Bitmap) * (sz + 1))))
         , first(new Bitmap*[sz + 1])
-        , last(this->first)
+        , last(this->first.get())
+        , sz(sz + 1)
         {
-            Bitmap * p = this->data;
-            Bitmap * pe = this->data + sz + 1;
-            for (; p != pe; ++p, ++this->last) {
-                *this->last = p;
-            }
+            this->initialize_free_list();
         }
 
-        ~bitmap_free_list_t()
-        {
-            ::operator delete(this->data);
-            delete [] this->first;
+        ~bitmap_free_list_t() {
+            this->destruct_initialized_bitmap();
+        }
+
+        void clear() {
+            this->destruct_initialized_bitmap();
+            this->last = this->first.get();
+            this->initialize_free_list();
         }
 
         const Bitmap * pop(uint8_t bpp, const Bitmap & bmp) {
+            assert(this->last != this->first.get());
             Bitmap * ret = *--this->last;
             return new (ret) Bitmap(bpp, bmp);
         }
 
         void push(const Bitmap * bmp) {
-            Bitmap * p = this->data + (bmp - this->data);
+            Bitmap * p = this->data.get() + (bmp - this->data.get());
             p->~Bitmap();
             *this->last = p;
             ++this->last;
+        }
+
+    private:
+        void initialize_free_list() {
+            Bitmap * p = this->data.get();
+            Bitmap * pe = p + this->sz;
+            for (; p != pe; ++p, ++this->last) {
+                *this->last = p;
+            }
+        }
+
+        void destruct_initialized_bitmap() {
+            std::sort(this->first.get(), this->last);
+
+            Bitmap * pdata = this->data.get();
+            Bitmap * pdata_last = pdata + this->sz;
+            for (Bitmap* * p = this->first.get(); pdata != pdata_last; ++pdata) {
+                if (*p != pdata) {
+                    pdata->~Bitmap();
+                }
+                else if (++p == this->last) {
+                    while (++pdata != pdata_last) {
+                        pdata->~Bitmap();
+                    }
+                    break;
+                }
+            }
         }
     };
 
@@ -495,6 +527,7 @@ private:
             }
             this->stamp = 0;
             this->caches.reset();
+            this->bitmap_free_list.clear();
         }
 
         void put(uint8_t id, uint16_t idx, const Bitmap * const bmp, uint32_t key1, uint32_t key2) {
@@ -741,6 +774,7 @@ public:
             cache_element & e = this->caches[id_real][oldest_cidx];
             if (!e.empty()) {
                 this->caches[id_real].remove(e);
+                this->bitmap_free_list.push(e.bmp.get());
             }
             if (id_real == id) {
                 ::memcpy(e.sig.sig_8, e_compare.sha1, sizeof(e.sig.sig_8));
