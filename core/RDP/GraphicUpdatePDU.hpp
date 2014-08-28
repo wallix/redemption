@@ -102,8 +102,8 @@ struct GraphicsUpdatePDU : public RDPSerializer {
     HStream buffer_stream_orders;
     HStream buffer_stream_bitmaps;
 
-    ShareData    * sdata_orders;
-    ShareData    * sdata_bitmaps;
+    ShareData sdata_orders;
+    ShareData sdata_bitmaps;
 
     uint16_t     & userid;
     int          & shareid;
@@ -140,8 +140,8 @@ struct GraphicsUpdatePDU : public RDPSerializer {
                        , bitmap_cache_version, use_bitmap_comp, op2, ini)
         , buffer_stream_orders(1024, 65536)
         , buffer_stream_bitmaps(1024, 65536)
-        , sdata_orders(NULL)
-        , sdata_bitmaps(NULL)
+        , sdata_orders(this->stream_orders)
+        , sdata_bitmaps(this->stream_bitmaps)
         , userid(userid)
         , shareid(shareid)
         , encryptionLevel(encryptionLevel)
@@ -157,13 +157,13 @@ struct GraphicsUpdatePDU : public RDPSerializer {
     }
 
     ~GraphicsUpdatePDU() {
-        if (this->sdata_orders) { delete this->sdata_orders; }
-        if (this->sdata_bitmaps) { delete this->sdata_bitmaps; }
+        this->sdata_orders.~ShareData();
+        this->sdata_bitmaps.~ShareData();
     }
 
     void init_orders() {
         if (this->fastpath_support == false) {
-            if (this->sdata_orders) { delete this->sdata_orders; this->sdata_orders = 0; }
+            this->sdata_orders.~ShareData();
 
             if (this->ini.debug.primary_orders > 3) {
                 LOG( LOG_INFO
@@ -173,8 +173,8 @@ struct GraphicsUpdatePDU : public RDPSerializer {
             }
 
             if (!this->compression) {
-                this->sdata_orders = new ShareData(this->stream_orders);
-                this->sdata_orders->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
+                new (&this->sdata_orders) ShareData(this->stream_orders);
+                this->sdata_orders.emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
             }
             TODO("this is to kind of header, to be treated like other headers");
             this->stream_orders.out_uint16_le(RDP_UPDATE_ORDERS);
@@ -196,7 +196,7 @@ struct GraphicsUpdatePDU : public RDPSerializer {
 
     void init_bitmaps() {
         if (this->fastpath_support == false) {
-            if (this->sdata_bitmaps) { delete this->sdata_bitmaps; this->sdata_bitmaps = 0; }
+            this->sdata_bitmaps.~ShareData();
 
             if (this->ini.debug.primary_orders > 3) {
                 LOG( LOG_INFO
@@ -206,8 +206,8 @@ struct GraphicsUpdatePDU : public RDPSerializer {
             }
 
             if (!this->compression) {
-                this->sdata_bitmaps = new ShareData(this->stream_bitmaps);
-                this->sdata_bitmaps->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
+                new (&this->sdata_bitmaps) ShareData(this->stream_bitmaps);
+                this->sdata_bitmaps.emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
             }
             TODO("this is to kind of header, to be treated like other headers");
             this->stream_bitmaps.out_uint16_le(RDP_UPDATE_BITMAP);
@@ -247,7 +247,7 @@ protected:
                 }
 
                 if (!this->compression) {
-                    this->sdata_orders->emit_end();
+                    this->sdata_orders.emit_end();
 
                     BStream sctrl_header(256);
                     ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream_orders.size());
@@ -283,16 +283,16 @@ protected:
                     this->mppc_enc->compress(this->buffer_stream_orders.get_data(), this->buffer_stream_orders.size(),
                         compressionFlags, datalen, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
-                    this->sdata_orders = new ShareData(compressed_buffer_stream_orders);
-                    this->sdata_orders->emit_begin( PDUTYPE2_UPDATE, this->shareid
-                                                  , RDP::STREAM_MED
-                                                  , this->buffer_stream_orders.size() + 18  // TS_SHAREDATAHEADER(18)
-                                                  , compressionFlags
-                                                  , (  (compressionFlags & PACKET_COMPRESSED)
-                                                     ? datalen + 18 // TS_SHAREDATAHEADER(18)
-                                                     : 0
-                                                    )
-                                                  );
+                    new (&this->sdata_orders) ShareData(compressed_buffer_stream_orders);
+                    this->sdata_orders.emit_begin( PDUTYPE2_UPDATE, this->shareid
+                                                 , RDP::STREAM_MED
+                                                 , this->buffer_stream_orders.size() + 18  // TS_SHAREDATAHEADER(18)
+                                                 , compressionFlags
+                                                 , (  (compressionFlags & PACKET_COMPRESSED)
+                                                    ? datalen + 18 // TS_SHAREDATAHEADER(18)
+                                                    : 0
+                                                   )
+                                                 );
 
                     if (compressionFlags & PACKET_COMPRESSED) {
                         this->mppc_enc->get_compressed_data(compressed_buffer_stream_orders);
@@ -302,7 +302,7 @@ protected:
                               this->buffer_stream_orders.get_data()
                             , this->buffer_stream_orders.size());
                     }
-                    this->sdata_orders->emit_end();
+                    this->sdata_orders.emit_end();
 
                     BStream sctrl_header(256);
                     ShareControl_Send( sctrl_header, PDUTYPE_DATAPDU
@@ -438,7 +438,7 @@ protected:
                 }
 
                 if (!this->compression) {
-                    this->sdata_bitmaps->emit_end();
+                    this->sdata_bitmaps.emit_end();
 
                     BStream sctrl_header(256);
                     ShareControl_Send( sctrl_header
@@ -484,16 +484,16 @@ protected:
                     this->mppc_enc->compress(this->buffer_stream_bitmaps.get_data(), this->buffer_stream_bitmaps.size(),
                         compressionFlags, datalen, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
-                    this->sdata_bitmaps = new ShareData(compressed_buffer_stream_bitmaps);
-                    this->sdata_bitmaps->emit_begin( PDUTYPE2_UPDATE, this->shareid
-                                                   , RDP::STREAM_MED
-                                                   , this->buffer_stream_bitmaps.size() + 18    // TS_SHAREDATAHEADER(18)
-                                                   , compressionFlags
-                                                   , (  (compressionFlags & PACKET_COMPRESSED)
-                                                      ? datalen + 18    // TS_SHAREDATAHEADER(18)
-                                                      : 0
-                                                     )
-                                                   );
+                    new (&this->sdata_bitmaps) ShareData(compressed_buffer_stream_bitmaps);
+                    this->sdata_bitmaps.emit_begin( PDUTYPE2_UPDATE, this->shareid
+                                                  , RDP::STREAM_MED
+                                                  , this->buffer_stream_bitmaps.size() + 18    // TS_SHAREDATAHEADER(18)
+                                                  , compressionFlags
+                                                  , (  (compressionFlags & PACKET_COMPRESSED)
+                                                     ? datalen + 18    // TS_SHAREDATAHEADER(18)
+                                                     : 0
+                                                    )
+                                                  );
 
                     if (compressionFlags & PACKET_COMPRESSED) {
                         this->mppc_enc->get_compressed_data(compressed_buffer_stream_bitmaps);
@@ -503,7 +503,7 @@ protected:
                               this->buffer_stream_bitmaps.get_data()
                             , this->buffer_stream_bitmaps.size());
                     }
-                    this->sdata_bitmaps->emit_end();
+                    this->sdata_bitmaps.emit_end();
 
                     BStream sctrl_header(256);
                     ShareControl_Send( sctrl_header, PDUTYPE_DATAPDU

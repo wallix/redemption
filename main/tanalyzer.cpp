@@ -147,10 +147,6 @@ public:
     virtual void send_global_palette() throw(Error) { REDASSERT(false); }
     virtual void set_mod_palette(const BGRPalette & palette) { REDASSERT(false); }
 
-    virtual void set_mod_color_depth(uint8_t bpp) {
-        LOG(LOG_INFO, "set_mod_color_depth: bpp=%u", bpp);
-    }
-
     virtual int server_resize(int width, int height, int bpp) {
         LOG(LOG_INFO, "server_resize: width=%u height=%u bpp=%u", width, height, bpp);
         return 1;

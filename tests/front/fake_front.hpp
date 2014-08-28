@@ -167,12 +167,8 @@ public:
 
     virtual void text_metrics(const char * text, int & width, int & height) { width = 0; height = 0; }
 
-    virtual void set_mod_color_depth(uint8_t bpp) {
-        this->mod_bpp = bpp;
-    }
-
     virtual int server_resize(int width, int height, int bpp) {
-        this->set_mod_color_depth(bpp);
+        this->mod_bpp = bpp;
         this->info.bpp = bpp;
         if (verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
