@@ -464,21 +464,21 @@ public:
     , stamp(0)
     , verbose(verbose)
     {
-        REDASSERT(
-            (number_of_cache == (!c0.entries ? 0 :
-            !c1.entries ? 1 :
-            !c2.entries ? 2 :
-            !c3.entries ? 3 :
-            !c4.entries ? 4 : 5))
-        &&
-            (number_of_cache > 1 ? c0.entries <= c1.entries && (
-                number_of_cache > 2 ? c1.entries <= c2.entries && (
-                    number_of_cache > 3 ? c2.entries <= c3.entries && (
-                        number_of_cache > 4 ? c3.entries <= c4.entries : true
-                    ) : true
-                ) : true
-            ) : true)
-        );
+        //REDASSERT(
+        //    (number_of_cache == (!c0.entries ? 0 :
+        //    !c1.entries ? 1 :
+        //    !c2.entries ? 2 :
+        //    !c3.entries ? 3 :
+        //    !c4.entries ? 4 : 5))
+        //&&
+        //    (number_of_cache > 1 ? c0.entries <= c1.entries && (
+        //        number_of_cache > 2 ? c1.entries <= c2.entries && (
+        //            number_of_cache > 3 ? c2.entries <= c3.entries && (
+        //                number_of_cache > 4 ? c3.entries <= c4.entries : true
+        //            ) : true
+        //        ) : true
+        //    ) : true)
+        //);
 
         this->storage.reserve(c0.entries + c1.entries + c2.entries + c3.entries + c4.entries + MAXIMUM_NUMBER_OF_CACHE_ENTRIES);
 

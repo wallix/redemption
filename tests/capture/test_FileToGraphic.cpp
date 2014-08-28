@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         bmp_cache, drawable, ini);
 
     wrm_recorder.update_config(ini);
-    player.add_consumer((RDPGraphicDevice *)&wrm_recorder, (RDPCaptureDevice *)&wrm_recorder);
+    player.add_consumer(&wrm_recorder, &wrm_recorder);
 
     BOOST_CHECK_EQUAL((unsigned)1352304810, (unsigned)player.record_now.tv_sec);
     player.play();
