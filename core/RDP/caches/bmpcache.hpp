@@ -83,7 +83,7 @@ private:
         }
 
         const Bitmap * pop(uint8_t bpp, const Bitmap & bmp) {
-            assert(this->last != this->first.get());
+            //REDASSERT(this->last != this->first.get());
             Bitmap * ret = *--this->last;
             return new (ret) Bitmap(bpp, bmp);
         }
@@ -168,7 +168,7 @@ private:
         }
 
         void reserve(size_t sz) {
-            assert(!this->data.get());
+            REDASSERT(!this->data.get());
             this->data.reset(new uint8_t[sz * this->elem_size]);
             this->free_list.reset(new void*[sz]);
             this->free_list_cur = this->free_list.get();
@@ -181,7 +181,7 @@ private:
         }
 
         void * pop() {
-            assert(this->free_list_cur != this->free_list.get());
+            //REDASSERT(this->free_list_cur != this->free_list.get());
             return *--this->free_list_cur;
         }
 
@@ -362,7 +362,6 @@ public:
         {}
     };
 
-private:
     class Cache : public cache_range {
         uint16_t bmp_size_;
         bool is_persistent_;
@@ -381,8 +380,15 @@ private:
         bool persistent() const {
             return this->is_persistent_;
         }
+
+        size_t entries() const {
+            return this->size();
+        }
+
+        typedef cache_element Element;
     };
 
+private:
     struct Caches {
         Cache * caches[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */];
 
@@ -411,10 +417,9 @@ public:
 
     const uint8_t bpp;
     const uint8_t number_of_cache;
-
-private:
     const bool    use_waiting_list;
 
+private:
     const unique_ptr<cache_element[]> elements;
     storage_value_set storage;
 
@@ -459,7 +464,7 @@ public:
     , stamp(0)
     , verbose(verbose)
     {
-        assert(
+        REDASSERT(
             (number_of_cache == (!c0.entries ? 0 :
             !c1.entries ? 1 :
             !c2.entries ? 2 :
@@ -577,12 +582,21 @@ public:
         return false;
     }
 
+    bool has_cache_persistent() const {
+        for (unsigned i = 0; i < this->number_of_cache; ++i) {
+            if (this->caches[i].persistent()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     uint16_t get_cache_usage(uint8_t cache_id) const {
         REDASSERT((cache_id & IN_WAIT_LIST) == 0);
         uint16_t cache_entries = 0;
         unsigned cache_index = 0;
         const cache_range & r = this->caches[cache_id];
-        const unsigned last_index = this->caches[cache_id].persistent();
+        const unsigned last_index = this->caches[cache_id].size();
         for (; cache_index < last_index; ++cache_index) {
             if (r[cache_index]) {
                 ++cache_entries;

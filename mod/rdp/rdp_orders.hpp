@@ -210,10 +210,12 @@ struct rdp_orders {
         }
 
         this->bmp_cache = new BmpCache(BmpCache::Mod_rdp, bpp, 3, false,
-            small_entries, small_size, small_persistent,
-            medium_entries, medium_size, medium_persistent,
-            big_entries, big_size, big_persistent,
-            0, 0, false, 0, 0, false, verbose);
+                                       BmpCache::CacheOption(small_entries, small_size, small_persistent),
+                                       BmpCache::CacheOption(medium_entries, medium_size, medium_persistent),
+                                       BmpCache::CacheOption(big_entries, big_size, big_persistent),
+                                       BmpCache::CacheOption(),
+                                       BmpCache::CacheOption(),
+                                       verbose);
 
         if (this->enable_persistent_disk_bitmap_cache) {
             // Generates the name of file.

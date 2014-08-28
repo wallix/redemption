@@ -733,24 +733,24 @@ private:
                         this->client_info.number_of_cache,
                         ((this->client_info.cache_flags & ALLOW_CACHE_WAITING_LIST_FLAG) &&
                              this->ini->client.cache_waiting_list),
-                        this->client_info.cache1_entries,
-                        this->client_info.cache1_size,
-                        this->client_info.cache1_persistent,
-                        this->client_info.cache2_entries,
-                        this->client_info.cache2_size,
-                        this->client_info.cache2_persistent,
-                        this->client_info.cache3_entries,
-                        this->client_info.cache3_size,
-                        this->client_info.cache3_persistent,
-                        this->client_info.cache4_entries,
-                        this->client_info.cache4_size,
-                        this->client_info.cache4_persistent,
-                        this->client_info.cache5_entries,
-                        this->client_info.cache5_size,
-                        this->client_info.cache5_persistent,
+                        BmpCache::CacheOption(this->client_info.cache1_entries,
+                                              this->client_info.cache1_size,
+                                              this->client_info.cache1_persistent),
+                        BmpCache::CacheOption(this->client_info.cache2_entries,
+                                              this->client_info.cache2_size,
+                                              this->client_info.cache2_persistent),
+                        BmpCache::CacheOption(this->client_info.cache3_entries,
+                                              this->client_info.cache3_size,
+                                              this->client_info.cache3_persistent),
+                        BmpCache::CacheOption(this->client_info.cache4_entries,
+                                              this->client_info.cache4_size,
+                                              this->client_info.cache4_persistent),
+                        BmpCache::CacheOption(this->client_info.cache5_entries,
+                                              this->client_info.cache5_size,
+                                              this->client_info.cache5_persistent),
                         this->ini->debug.cache);
 
-        if (this->ini->client.persistent_disk_bitmap_cache) {
+        if (this->ini->client.persistent_disk_bitmap_cache && this->bmp_cache->has_cache_persistent()) {
             // Generates the name of file.
             char cache_filename[2048];
             ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",

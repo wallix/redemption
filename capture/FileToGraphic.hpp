@@ -680,11 +680,16 @@ public:
                 if (!this->meta_ok){
                     this->bmp_cache = new BmpCache(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
                         this->info_use_waiting_list,
-                        this->info_cache_0_entries, this->info_cache_0_size, this->info_cache_0_persistent,
-                        this->info_cache_1_entries, this->info_cache_1_size, this->info_cache_1_persistent,
-                        this->info_cache_2_entries, this->info_cache_2_size, this->info_cache_2_persistent,
-                        this->info_cache_3_entries, this->info_cache_3_size, this->info_cache_3_persistent,
-                        this->info_cache_4_entries, this->info_cache_4_size, this->info_cache_4_persistent);
+                        BmpCache::CacheOption(
+                            this->info_cache_0_entries, this->info_cache_0_size, this->info_cache_0_persistent),
+                        BmpCache::CacheOption(
+                            this->info_cache_1_entries, this->info_cache_1_size, this->info_cache_1_persistent),
+                        BmpCache::CacheOption(
+                            this->info_cache_2_entries, this->info_cache_2_size, this->info_cache_2_persistent),
+                        BmpCache::CacheOption(
+                            this->info_cache_3_entries, this->info_cache_3_size, this->info_cache_3_persistent),
+                        BmpCache::CacheOption(
+                            this->info_cache_4_entries, this->info_cache_4_size, this->info_cache_4_persistent));
                     this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
                     this->meta_ok = true;
                 }

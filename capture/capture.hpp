@@ -127,8 +127,10 @@ public:
             TODO("Also we may wonder why we are encrypting wrm and not png"
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
-            this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, 24, 3, false, 600, 768
-                                              , false, 300, 3072, false, 262, 12288, false);
+            this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, 24, 3, false,
+                                                BmpCache::CacheOption(600, 768, false),
+                                                BmpCache::CacheOption(300, 3072, false),
+                                                BmpCache::CacheOption(262, 12288, false));
             if (this->enable_file_encryption) {
                 this->wrm_trans = new CryptoOutMetaSequenceTransport( &this->crypto_ctx, wrm_path, hash_path, basename, now
                                                                     , width, height, ini.video.capture_groupid

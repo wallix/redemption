@@ -3886,8 +3886,13 @@ struct mod_rdp : public mod_api {
         uint16_t totalEntriesCache[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 0, 0, 0, 0, 0 };
 
         for (uint8_t cache_id = 0; cache_id < this->orders.bmp_cache->number_of_cache; cache_id++) {
-            if (this->orders.bmp_cache->cache_persistent[cache_id]) {
-                for (; this->orders.bmp_cache->cache[cache_id][totalEntriesCache[cache_id]]; totalEntriesCache[cache_id]++);
+            const BmpCache::Cache & cache = this->orders.bmp_cache->get_cache(cache_id);
+            if (cache.persistent()) {
+                uint16_t idx = 0;
+                while (idx < cache.size() && cache[idx]) {
+                    ++idx;
+                }
+                totalEntriesCache[cache_id] = idx;
             }
         }
         //LOG(LOG_INFO, "totalEntriesCache0=%u totalEntriesCache1=%u totalEntriesCache2=%u totalEntriesCache3=%u totalEntriesCache4=%u",
@@ -3902,13 +3907,16 @@ struct mod_rdp : public mod_api {
             uint16_t number_of_entries     = 0;
             uint8_t  pdu_number_of_entries = 0;
             for (uint8_t cache_id = 0; cache_id < this->orders.bmp_cache->number_of_cache; cache_id++) {
-                if (!this->orders.bmp_cache->cache_persistent[cache_id]) {
+                const BmpCache::Cache & cache = this->orders.bmp_cache->get_cache(cache_id);
+
+                if (!cache.persistent()) {
                     continue;
                 }
 
-                for (uint16_t cache_index = 0; this->orders.bmp_cache->cache[cache_id][cache_index]; cache_index++) {
-                    pklpdu.entries[pdu_number_of_entries].Key1 = this->orders.bmp_cache->sig[cache_id][cache_index].sig_32[0];
-                    pklpdu.entries[pdu_number_of_entries].Key2 = this->orders.bmp_cache->sig[cache_id][cache_index].sig_32[1];
+                const uint16_t entries_max = totalEntriesCache[cache_id];
+                for (uint16_t cache_index = 0; cache_index < entries_max; cache_index++) {
+                    pklpdu.entries[pdu_number_of_entries].Key1 = cache[cache_index].sig.sig_32[0];
+                    pklpdu.entries[pdu_number_of_entries].Key2 = cache[cache_index].sig.sig_32[1];
 
                     pklpdu.number_entries_cache[cache_id]++;
                     number_of_entries++;
