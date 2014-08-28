@@ -1690,6 +1690,8 @@ struct mod_rdp : public mod_api {
                                     throw Error(ERR_RDP_FASTPATH);
                                 }
                             }
+
+                            TODO("Chech all data in the PDU is consumed");
                             break;
                         }
 
@@ -2278,6 +2280,10 @@ struct mod_rdp : public mod_api {
         this->front.intersect_order_caps(TS_NEG_MULTIOPAQUERECT_INDEX,    order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTIPATBLT_INDEX,        order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTISCRBLT_INDEX,        order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_MEMBLT_INDEX,             order_caps.orderSupport);
+        if ((this->verbose & 1) && (!order_caps.orderSupport[TS_NEG_MEMBLT_INDEX])) {
+            LOG(LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
+        }
         this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX,            order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX, order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_POLYGON_SC_INDEX,         order_caps.orderSupport);

@@ -658,7 +658,7 @@ public:
         //}
 
         unique_ptr<const Bitmap, Deleter> bmp(
-            (this->bpp == oldbmp.original_bpp || !(this->owner == Recorder || oldbmp.original_bpp > this->bpp))
+            this->bpp == oldbmp.original_bpp
                 ? &oldbmp
                 : this->bitmap_free_list.pop(this->bpp, oldbmp)
             , Deleter(oldbmp, this->bitmap_free_list)
@@ -766,10 +766,7 @@ public:
         }
         ::memcpy(e.sha1, e_compare.sha1, 20);
         e.bmp = (&bmp.get_deleter().r == &oldbmp)
-            ? this->bitmap_free_list.pop(
-                this->owner == Recorder || oldbmp.original_bpp > this->bpp
-                ? this->bpp
-                : oldbmp.original_bpp, oldbmp)
+            ? this->bitmap_free_list.pop(this->bpp, oldbmp)
             : bmp.release();
         e.stamp = ++this->stamp;
         cache_real.add(e);

@@ -2390,7 +2390,7 @@ namespace GCC
                     //  key modulus. The length in bytes of this field is given by the keylen field.
                     //  The modulus field contains all (bitlen / 8) bytes of the public key modulus
                     //  and 8 bytes of zero padding (which MUST follow after the modulus bytes).
-                    uint8_t modulus[72];
+                    uint8_t modulus[/*72*/264];
 
                     PublicKeyBlob()
                     : magic(RSA_MAGIC)
@@ -2494,7 +2494,8 @@ namespace GCC
                         stream.out_uint32_le(this->proprietaryCertificate.RSAPK.bitlen);
                         stream.out_uint32_le(this->proprietaryCertificate.RSAPK.datalen);
                         stream.out_copy_bytes(this->proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
-                        stream.out_copy_bytes(this->proprietaryCertificate.RSAPK.modulus, SEC_MODULUS_SIZE);
+                        stream.out_copy_bytes(this->proprietaryCertificate.RSAPK.modulus,
+                                              /*SEC_MODULUS_SIZE*/this->proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
                         stream.out_clear_bytes(SEC_PADDING_SIZE);
 
                         stream.out_uint16_le(this->proprietaryCertificate.wSignatureBlobType);
@@ -2602,11 +2603,13 @@ namespace GCC
                     //  of the PublicKeyBlob field.
                     this->proprietaryCertificate.wPublicKeyBlobLen = stream.in_uint16_le();
 
-                    if (this->proprietaryCertificate.wPublicKeyBlobLen != 92){
-                        LOG(LOG_ERR, "RSA Key blob len too large in certificate %u (expected 92)",
+                    if ((this->proprietaryCertificate.wPublicKeyBlobLen != 92) &&
+                        (this->proprietaryCertificate.wPublicKeyBlobLen != 284)) {
+                        LOG(LOG_ERR, "Unsupported RSA Key blob len in certificate %u (expected 92 or 284)",
                             this->proprietaryCertificate.wPublicKeyBlobLen);
                         throw Error(ERR_GCC);
                     }
+                    LOG(LOG_INFO, "RSA Key blob len in certificate is %u", this->proprietaryCertificate.wPublicKeyBlobLen);
 
                     this->proprietaryCertificate.RSAPK.magic = stream.in_uint32_le();
                     if (this->proprietaryCertificate.RSAPK.magic != RSA_MAGIC) {
@@ -2614,14 +2617,17 @@ namespace GCC
                             throw Error(ERR_GCC);
                     }
                     this->proprietaryCertificate.RSAPK.keylen = stream.in_uint32_le();
-                    if (this->proprietaryCertificate.RSAPK.keylen != 72){
-                        LOG(LOG_WARNING, "Bad server public key len (%u bytes)", this->proprietaryCertificate.RSAPK.keylen);
+                    if ((this->proprietaryCertificate.RSAPK.keylen != 72) &&
+                        (this->proprietaryCertificate.RSAPK.keylen != 264)) {
+                        LOG(LOG_WARNING, "Bad server public key len in certificate %u (expected 72 or 264)",
+                            this->proprietaryCertificate.RSAPK.keylen);
                         throw Error(ERR_GCC);
                     }
                     this->proprietaryCertificate.RSAPK.bitlen = stream.in_uint32_le();
                     this->proprietaryCertificate.RSAPK.datalen = stream.in_uint32_le();
                     stream.in_copy_bytes(this->proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
-                    stream.in_copy_bytes(this->proprietaryCertificate.RSAPK.modulus, SEC_MODULUS_SIZE + SEC_PADDING_SIZE);
+                    stream.in_copy_bytes(this->proprietaryCertificate.RSAPK.modulus,
+                                         /*SEC_MODULUS_SIZE + SEC_PADDING_SIZE*/this->proprietaryCertificate.RSAPK.keylen);
 
 
                     // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data

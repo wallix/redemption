@@ -36,7 +36,7 @@ public:
         , front(front)
         , screen(*this, front_width, front_height, NULL, ini ? &(ini->theme): NULL)
     {
-        this->front.set_mod_color_depth(24);
+        this->front.server_resize(front_width, front_height, 24);
     }
 
     virtual ~InternalMod()

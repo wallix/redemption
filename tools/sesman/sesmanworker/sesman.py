@@ -764,6 +764,8 @@ class Sesman():
 
                 # Get services for identified user
                 _status, _error = self.get_service()
+                if not _status:
+                    self.engine.reset_proxy_rights()
 
         if tries <= 0:
             Logger().info(u"Too many login failures")
@@ -897,6 +899,7 @@ class Sesman():
                     kv[u'target_device'] = self.shared.get(u'real_target_device')
                 else:
                     kv[u'target_device'] = physical_target.resource.device.host
+                    kv[u'target_port'] = physical_target.resource.service.port
 
                 if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() != u'true':
                     kv[u'target_login'] = physical_target.account.login
@@ -946,11 +949,7 @@ class Sesman():
                             )
 
 
-                    self.engine.update_session(
-                                "%s@%s:%s" % ( physical_target.account.login
-                                             , physical_target.resource.device.cn
-                                             , physical_target.resource.service.protocol.cn))
-
+                    self.engine.update_session(physical_target)
 
                     if not _status:
                         Logger().info( u"(%s):%s:REJECTED : User message: \"%s\""

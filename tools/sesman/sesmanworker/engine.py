@@ -25,6 +25,9 @@ class Engine(object):
         self._trace_encryption = False
         self.challenge = None
         self.rights = None
+        # Logger().info("=========================")
+        # Logger().info("==== PROXY RDP ENGINE ===")
+        # Logger().info("=========================")
 
     def get_force_change_password(self):
         return False
@@ -179,6 +182,9 @@ class Engine(object):
         self.rights = [ TargetConf().config_rights[r] for r in TargetConf().config_users[self.wab_login]['rights']]
         return self.rights
 
+    def reset_proxy_rights(self):
+        self.rights = None
+
     def get_selected_target(self, target_login, target_device, target_protocol):
         if target_protocol == '':
             target_protocol = None
@@ -267,7 +273,7 @@ class Engine(object):
         self.pattern_notify = u""
         return
 
-    def update_session(self, target31):
+    def update_session(self, physical_target):
         pass
 
     def stop_session(self, result=True, diag=u"success", title=u"End session"):

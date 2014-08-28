@@ -119,12 +119,17 @@ public:
             this->conf.png_interval = ini.video.png_interval;
             this->inter_frame_interval_static_capture = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
         }
+        uint32_t displayed = this->rt_display;
         this->rt_display = ini.video.rt_display.get();
+        if (displayed && (this->rt_display == 0)) {
+            this->unlink_filegen(0);
+        }
     }
 
     virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
         if (!this->rt_display) {
             this->time_to_wait = 0;
+            this->start_static_capture = now;
             return;
         }
         unsigned diff_time_val = static_cast<unsigned>(difftimeval(now, this->start_static_capture));

@@ -26,7 +26,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-// #define LOGPRINT
+//#define LOGPRINT
 #include "log.hpp"
 
 #include "transport.hpp"
@@ -96,19 +96,19 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     OutPerBStream gcc_header(65536);
     GCC::Create_Request_Send(gcc_header, stream.size());
     t.send(gcc_header);
-    
+
     BStream stream2(65536);
-    stream2.out_copy_bytes(gcc_conference_create_request_expected, 
+    stream2.out_copy_bytes(gcc_conference_create_request_expected,
                   sizeof(gcc_conference_create_request_expected)-1); // -1 to ignore final 0
     stream2.mark_end();
     stream2.rewind();
-    
+
     try {
         GCC::Create_Request_Recv header(stream2);
     } catch(Error & e) {
         BOOST_CHECK(false);
     };
-    
+
 //    BOOST_CHECK(t.get_status());
 }
 
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
     BOOST_CHECK_EQUAL(12, sc_core2.length);
     BOOST_CHECK_EQUAL(0x0080004, sc_core2.version);
     BOOST_CHECK_EQUAL(0, sc_core2.clientRequestedProtocols);
-    
+
     sc_core2.log("Server Received");
 }
 
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
     catch (const Error & e){
         BOOST_CHECK(false);
     };
-    
+
 }
 
 
@@ -224,9 +224,9 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
     BOOST_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                      | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
                      , cs_net.channelDefArray[1].options);
-                     
+
     cs_net.log("Client Received");
-                     
+
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
@@ -244,7 +244,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
     BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
     BOOST_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
     BOOST_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
-    
+
     sc_sec1.log("Server Received");
 }
 
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
     BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
     BOOST_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
     BOOST_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
-    
+
     sc_sec1.log("Server Received");
 }
 
@@ -452,7 +452,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
     BOOST_CHECK_EQUAL(12, cs_cluster.length);
     BOOST_CHECK_EQUAL(13, cs_cluster.flags);
     BOOST_CHECK_EQUAL(0, cs_cluster.redirectedSessionID);
-    
+
     cs_cluster.log("Client Received");
 }
 
@@ -505,7 +505,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
     cs_core.recv(stream);
     BOOST_CHECK_EQUAL(CS_CORE, cs_core.userDataType);
     BOOST_CHECK_EQUAL(216, cs_core.length);
-    
+
     cs_core.log("Client Received");
 }
 
@@ -520,10 +520,10 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
         "\x0c\x00"         // 12 bytes user Data
 
         "\x1b\x00\x00\x00" // TS_UD_CS_SEC::encryptionMethods
-                           // 0x1b = 0x01 | 0x02 | 0x08 | 0x10 
-                           // = 40BIT_ENCRYPTION_FLAG 
-                           // | 128BIT_ENCRYPTION_FLAG 
-                           // | 56BIT_ENCRYPTION_FLAG 
+                           // 0x1b = 0x01 | 0x02 | 0x08 | 0x10
+                           // = 40BIT_ENCRYPTION_FLAG
+                           // | 128BIT_ENCRYPTION_FLAG
+                           // | 56BIT_ENCRYPTION_FLAG
                            // | FIPS_ENCRYPTION_FLAG
         "\x00\x00\x00\x00" // TS_UD_CS_SEC::extEncryptionMethods
     ;
@@ -537,9 +537,70 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
     BOOST_CHECK_EQUAL(12, cs_security.length);
     BOOST_CHECK_EQUAL(27, cs_security.encryptionMethods);
     BOOST_CHECK_EQUAL(0, cs_security.extEncryptionMethods);
-    
+
     cs_security.log("Client Received");
 }
 
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
+{
+    const char indata[] =
+        // SC_SECURITY tag=0c02 length=428
+        /* 0000 */ "\x02\x0c\xac\x01\x02\x00\x00\x00\x02\x00\x00\x00\x20\x00\x00\x00" //............ ...
+        /* 0010 */ "\x78\x01\x00\x00\xd0\x33\x1c\x1c\xd1\x2e\xc6\xe0\xd2\xcf\x8f\x64" //x....3.........d
+        /* 0020 */ "\x15\x44\x44\xed\x5a\x56\x1b\xd5\x26\xb7\xce\x38\x9b\xe1\x76\xe4" //.DD.ZV..&..8..v.
+        /* 0030 */ "\x3b\x35\x37\x9f\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00" //;57.............
+        /* 0040 */ "\x06\x00\x1c\x01\x52\x53\x41\x31\x08\x01\x00\x00\x00\x08\x00\x00" //....RSA1........
+        /* 0050 */ "\xff\x00\x00\x00\x01\x00\x01\x00\xa5\xa9\x3b\x58\xeb\x5b\x52\xfa" //..........;X.[R.
+        /* 0060 */ "\x53\x91\x3f\x23\x8c\xeb\xbe\x0c\x9a\x80\x74\x12\xe7\x2e\x33\xa8" //S.?#......t...3.
+        /* 0070 */ "\x66\xa6\x4c\x4b\xb3\xdb\xdc\xc9\xf1\x71\x99\xba\x1e\x59\x9d\xc4" //f.LK.....q...Y..
+        /* 0080 */ "\x83\xa2\xea\x6d\xd6\x8d\xc6\xb2\xf3\xac\xe4\x10\xb6\xb8\x12\xae" //...m............
+        /* 0090 */ "\x03\x5b\xfd\x9d\x91\x8f\x48\x08\x96\x07\x89\x3a\x51\x54\x76\x39" //.[....H....:QTv9
+        /* 00a0 */ "\x73\x5f\x0a\x3d\x4e\xe1\x9a\x95\x88\x8a\xf8\x90\xf1\x1c\x86\xd6" //s_.=N...........
+        /* 00b0 */ "\x48\xa6\x4d\xe3\x73\xf8\xf7\xa4\xd0\x79\x21\x64\x6a\xcc\x3a\x80" //H.M.s....y!dj.:.
+        /* 00c0 */ "\x1a\x97\x99\x58\xad\x68\xc9\x64\x9d\x04\x35\x32\xf5\x65\x90\x75" //...X.h.d..52.e.u
+        /* 00d0 */ "\x05\x19\xde\x20\x16\xbd\x8b\xa3\xf3\x32\x67\xc1\x0f\x32\xb0\xb9" //... .....2g..2..
+        /* 00e0 */ "\x45\xdb\xdb\xbb\x83\xd9\xe8\xe7\x16\xcc\x47\x75\x0e\xba\xe1\xa2" //E.........Gu....
+        /* 00f0 */ "\x74\x29\x6c\xdb\x2b\x68\x92\xc8\x46\x38\x99\x3c\x52\xf0\x82\xe3" //t)l.+h..F8.<R...
+        /* 0100 */ "\xfa\xfc\x42\xdb\xa2\xc6\xda\xa2\xc3\xef\x1c\x27\x7b\x3d\x76\x31" //..B........'{=v1
+        /* 0110 */ "\x87\x13\xe3\x86\x72\xa6\xfe\xb8\xf7\x62\x44\x19\x62\x8b\x25\x15" //....r....bD.b.%.
+        /* 0120 */ "\x63\xfd\x9e\x49\xdd\x01\x31\x83\x42\xaf\x85\xb9\x27\x3c\x6f\x9f" //c..I..1.B...'<o.
+        /* 0130 */ "\x23\x66\xbd\x28\x21\x74\x88\xe3\x3e\xf8\xca\xd5\x25\x20\x96\x2b" //#f.(!t..>...% .+
+        /* 0140 */ "\xf7\xff\xf2\x55\x15\xf2\xb3\x31\xd5\xc5\x9d\xc0\xe0\xa9\x9f\xea" //...U...1........
+        /* 0150 */ "\x41\x8a\xe5\xa4\xbe\x09\xc7\xaf\x00\x00\x00\x00\x00\x00\x00\x00" //A...............
+        /* 0160 */ "\x08\x00\x48\x00\xff\xad\xca\x1a\x79\xd6\x10\x61\x0c\x65\xf0\x02" //..H.....y..a.e..
+        /* 0170 */ "\xb1\x54\x9f\x8b\x4e\x29\x9f\x09\x6a\x6b\xb7\xfe\xbd\xf3\x8a\x81" //.T..N)..jk......
+        /* 0180 */ "\x78\x3c\xae\x81\xf3\x46\x1d\x4a\x34\xa2\x03\x3b\x4d\xb5\x9d\xb6" //x<...F.J4..;M...
+        /* 0190 */ "\xf3\x69\x95\x17\xd4\x0a\x67\x4f\x84\xf4\x11\xe3\xec\xe8\x93\xa1" //.i....gO........
+        /* 01a0 */ "\xcb\x4c\x09\x25\x00\x00\x00\x00\x00\x00\x00\x00"             //.L.%........
+    ;
 
+    GeneratorTransport gt(indata, sizeof(indata) - 1);
+    BStream stream(8192);
+    gt.recv(&stream.end, sizeof(indata) - 1);
+    GCC::UserData::SCSecurity sc_sec1;
+    sc_sec1.recv(stream);
+    BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    BOOST_CHECK_EQUAL(2, sc_sec1.encryptionMethod);
+    BOOST_CHECK_EQUAL(2, sc_sec1.encryptionLevel);
+    BOOST_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
+    BOOST_CHECK_EQUAL(376, sc_sec1.serverCertLen);
+    //hexdump_c(sc_sec1.serverRandom, 32);
+    BOOST_CHECK_EQUAL(0, memcmp(
+                    "\xd0\x33\x1c\x1c\xd1\x2e\xc6\xe0\xd2\xcf\x8f\x64\x15\x44\x44\xed"
+                    "\x5a\x56\x1b\xd5\x26\xb7\xce\x38\x9b\xe1\x76\xe4\x3b\x35\x37\x9f"
+                             , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
+    BOOST_CHECK_EQUAL((uint32_t)GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1, sc_sec1.dwVersion);
+    BOOST_CHECK_EQUAL(false, sc_sec1.temporary);
+    BOOST_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
 
+    sc_sec1.log("Server Received");
+
+    stream.reset();
+
+    sc_sec1.emit(stream);
+
+    CheckTransport ct(indata, sizeof(indata));
+
+    ct.send(stream);
+}
