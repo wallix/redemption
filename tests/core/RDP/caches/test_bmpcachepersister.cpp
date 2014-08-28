@@ -47,11 +47,11 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
     };
 
     BmpCache bmp_cache( BmpCache::Recorder, bpp, 3, use_waiting_list
-                      , bmp_cache_params[0].entiers, bmp_cache_params[0].size, bmp_cache_params[0].persistent
-                      , bmp_cache_params[1].entiers, bmp_cache_params[1].size, bmp_cache_params[1].persistent
-                      , bmp_cache_params[2].entiers, bmp_cache_params[2].size, bmp_cache_params[2].persistent
-                      , 0,                           0,                        0
-                      , 0,                           0,                        0
+                      , BmpCache::CacheOption(bmp_cache_params[0].entiers, bmp_cache_params[0].size, bmp_cache_params[0].persistent)
+                      , BmpCache::CacheOption(bmp_cache_params[1].entiers, bmp_cache_params[1].size, bmp_cache_params[1].persistent)
+                      , BmpCache::CacheOption(bmp_cache_params[2].entiers, bmp_cache_params[2].size, bmp_cache_params[2].persistent)
+                      , BmpCache::CacheOption()
+                      , BmpCache::CacheOption()
                       , verbose
                       );
 
@@ -326,11 +326,11 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister1)
     };
 
     BmpCache bmp_cache( BmpCache::Recorder, bpp, 3, use_waiting_list
-                      , bmp_cache_params[0].entiers, bmp_cache_params[0].size, bmp_cache_params[0].persistent
-                      , bmp_cache_params[1].entiers, bmp_cache_params[1].size, bmp_cache_params[1].persistent
-                      , bmp_cache_params[2].entiers, bmp_cache_params[2].size, bmp_cache_params[2].persistent
-                      , 0,                           0,                        0
-                      , 0,                           0,                        0
+                      , BmpCache::CacheOption(bmp_cache_params[0].entiers, bmp_cache_params[0].size, bmp_cache_params[0].persistent)
+                      , BmpCache::CacheOption(bmp_cache_params[1].entiers, bmp_cache_params[1].size, bmp_cache_params[1].persistent)
+                      , BmpCache::CacheOption(bmp_cache_params[2].entiers, bmp_cache_params[2].size, bmp_cache_params[2].persistent)
+                      , BmpCache::CacheOption()
+                      , BmpCache::CacheOption()
                       , verbose
                       );
 
@@ -350,14 +350,14 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister1)
     uint16_t first_entry_index = 0;
     bmp_cache_persister.process_key_list(cache_id, persistent_list, number_of_entries, first_entry_index);
 
-    BOOST_CHECK((bmp_cache.sig[cache_id][0].sig_32[0] == 0x99E1C40C) && (bmp_cache.sig[cache_id][0].sig_32[1] == 0x17C187AF));
-    BOOST_CHECK((bmp_cache.sig[cache_id][1].sig_32[0] == 0x03E8896E) && (bmp_cache.sig[cache_id][1].sig_32[1] == 0x5C267FC8));
+    BOOST_CHECK((bmp_cache.get_cache(cache_id)[0].sig.sig_32[0] == 0x99E1C40C) && (bmp_cache.get_cache(cache_id)[0].sig.sig_32[1] == 0x17C187AF));
+    BOOST_CHECK((bmp_cache.get_cache(cache_id)[1].sig.sig_32[0] == 0x03E8896E) && (bmp_cache.get_cache(cache_id)[1].sig.sig_32[1] == 0x5C267FC8));
 
-    BOOST_CHECK(!bmp_cache.cache[cache_id][2]);
+    BOOST_CHECK(!bmp_cache.get_cache(cache_id)[2]);
 
-    BOOST_CHECK((bmp_cache.sig[cache_id][3].sig_32[0] == 0x63D8DC64) && (bmp_cache.sig[cache_id][3].sig_32[1] == 0x0A888EF6));
+    BOOST_CHECK((bmp_cache.get_cache(cache_id)[3].sig.sig_32[0] == 0x63D8DC64) && (bmp_cache.get_cache(cache_id)[3].sig.sig_32[1] == 0x0A888EF6));
 
-    BOOST_CHECK(!bmp_cache.cache[cache_id][4]);
+    BOOST_CHECK(!bmp_cache.get_cache(cache_id)[4]);
 }
 
 BOOST_AUTO_TEST_CASE(TestBmpCachePersister2)
@@ -377,11 +377,11 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister2)
     };
 
     BmpCache bmp_cache( BmpCache::Recorder, bpp, 3, use_waiting_list
-                      , bmp_cache_params[0].entiers, bmp_cache_params[0].size, bmp_cache_params[0].persistent
-                      , bmp_cache_params[1].entiers, bmp_cache_params[1].size, bmp_cache_params[1].persistent
-                      , bmp_cache_params[2].entiers, bmp_cache_params[2].size, bmp_cache_params[2].persistent
-                      , 0,                           0,                        0
-                      , 0,                           0,                        0
+                      , BmpCache::CacheOption(bmp_cache_params[0].entiers, bmp_cache_params[0].size, bmp_cache_params[0].persistent)
+                      , BmpCache::CacheOption(bmp_cache_params[1].entiers, bmp_cache_params[1].size, bmp_cache_params[1].persistent)
+                      , BmpCache::CacheOption(bmp_cache_params[2].entiers, bmp_cache_params[2].size, bmp_cache_params[2].persistent)
+                      , BmpCache::CacheOption()
+                      , BmpCache::CacheOption()
                       , verbose
                       );
 
@@ -391,9 +391,9 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister2)
     BmpCachePersister::load_all_from_disk(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", verbose);
 
     uint8_t cache_id = 2;
-    BOOST_CHECK((bmp_cache.sig[cache_id][0].sig_32[0] == 0x99E1C40C) && (bmp_cache.sig[cache_id][0].sig_32[1] == 0x17C187AF));
-    BOOST_CHECK((bmp_cache.sig[cache_id][1].sig_32[0] == 0x03E8896E) && (bmp_cache.sig[cache_id][1].sig_32[1] == 0x5C267FC8));
-    BOOST_CHECK((bmp_cache.sig[cache_id][2].sig_32[0] == 0x63D8DC64) && (bmp_cache.sig[cache_id][2].sig_32[1] == 0x0A888EF6));
+    BOOST_CHECK((bmp_cache.get_cache(cache_id)[0].sig.sig_32[0] == 0x99E1C40C) && (bmp_cache.get_cache(cache_id)[0].sig.sig_32[1] == 0x17C187AF));
+    BOOST_CHECK((bmp_cache.get_cache(cache_id)[1].sig.sig_32[0] == 0x03E8896E) && (bmp_cache.get_cache(cache_id)[1].sig.sig_32[1] == 0x5C267FC8));
+    BOOST_CHECK((bmp_cache.get_cache(cache_id)[2].sig.sig_32[0] == 0x63D8DC64) && (bmp_cache.get_cache(cache_id)[2].sig.sig_32[1] == 0x0A888EF6));
 
-    BOOST_CHECK(!bmp_cache.cache[cache_id][3]);
+    BOOST_CHECK(!bmp_cache.get_cache(cache_id)[3]);
 }

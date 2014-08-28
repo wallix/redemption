@@ -30,8 +30,6 @@
 #include "fileutils.hpp"
 #include "unique_ptr.hpp"
 
-#include <boost/type_traits/aligned_storage.hpp>
-#include <boost/type_traits/alignment_of.hpp>
 
 enum {
       BITMAP_FOUND_IN_CACHE
@@ -285,7 +283,11 @@ private:
         , sorted_elements(set_compare(), storage)
         {}
 
-        cache_element & operator[](size_t i) const {
+        cache_element & operator[](size_t i) {
+            return this->first[i];
+        }
+
+        const cache_element & operator[](size_t i) const {
             return this->first[i];
         }
 
@@ -407,10 +409,10 @@ public:
         , Recorder
     } owner;
 
-private:
     const uint8_t bpp;
-
     const uint8_t number_of_cache;
+
+private:
     const bool    use_waiting_list;
 
     const unique_ptr<cache_element[]> elements;
@@ -457,6 +459,22 @@ public:
     , stamp(0)
     , verbose(verbose)
     {
+        assert(
+            (number_of_cache == (!c0.entries ? 0 :
+            !c1.entries ? 1 :
+            !c2.entries ? 2 :
+            !c3.entries ? 3 :
+            !c4.entries ? 4 : 5))
+        &&
+            (number_of_cache > 1 ? c0.entries <= c1.entries && (
+                number_of_cache > 2 ? c1.entries <= c2.entries && (
+                    number_of_cache > 3 ? c2.entries <= c3.entries && (
+                        number_of_cache > 4 ? c3.entries <= c4.entries : true
+                    ) : true
+                ) : true
+            ) : true)
+        );
+
         this->storage.reserve(c0.entries + c1.entries + c2.entries + c3.entries + c4.entries + MAXIMUM_NUMBER_OF_CACHE_ENTRIES);
 
         if (this->verbose) {
@@ -635,13 +653,13 @@ public:
 
         uint8_t        id_real  = 0;
 
-        for (const uint32_t bmp_size = bmp->bmp_size; id_real < MAXIMUM_NUMBER_OF_CACHES; ++id_real) {
-            if (this->caches[id_real].size() && (bmp_size <= this->caches[id_real].bmp_size())) {
+        for (const uint32_t bmp_size = bmp->bmp_size; id_real < this->number_of_cache; ++id_real) {
+            if (bmp_size <= this->caches[id_real].bmp_size()) {
                 break;
             }
         }
 
-        if (id_real == MAXIMUM_NUMBER_OF_CACHES) {
+        if (id_real == this->number_of_cache) {
             LOG( LOG_ERR
                 , "BmpCache: %s bitmap size(%u) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
@@ -752,6 +770,10 @@ public:
         //}
 
         return (BITMAP_ADDED_TO_CACHE << 24) | (id << 16) | oldest_cidx;
+    }
+
+    const Cache & get_cache(uint8_t cache_id) const {
+        return this->caches[cache_id];
     }
 };
 

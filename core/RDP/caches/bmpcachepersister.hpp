@@ -163,7 +163,7 @@ private:
 
             t.recv(&stream.end, bmp_size);
 
-            if (bmp_cache.cache_persistent[cache_id]) {
+            if (bmp_cache.get_cache(cache_id).persistent()) {
                 map_key key(sig);
 
                 if (this->verbose & 0x100000) {
@@ -199,16 +199,16 @@ public:
     // Places bitmaps of Persistent Key List into the cache.
     void process_key_list( uint8_t cache_id, RDP::BitmapCachePersistentListEntry * entries
                          , uint8_t number_of_entries, uint16_t first_entry_index) {
-              uint16_t   max_number_of_entries = this->bmp_cache.cache_entries[cache_id];
-              uint16_t   cache_index           = first_entry_index;
+        uint16_t   max_number_of_entries = this->bmp_cache.get_cache(cache_id).size();
+        uint16_t   cache_index           = first_entry_index;
         const union Sig {
             uint8_t  sig_8[8];
             uint32_t sig_32[2];
-        }              * sig                   = reinterpret_cast<const union Sig *>(entries);
+        }              * sig             = reinterpret_cast<const Sig *>(entries);
         for (uint8_t entry_index = 0;
              (entry_index < number_of_entries) && (cache_index < max_number_of_entries);
              entry_index++, cache_index++, sig++) {
-            REDASSERT(!this->bmp_cache.cache[cache_id][cache_index]);
+            REDASSERT(!this->bmp_cache.get_cache(cache_id)[cache_index]);
 
             map_key key(sig->sig_8);
 
@@ -218,11 +218,10 @@ public:
                     LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key.str().c_str());
                 }
 
-                if (this->bmp_cache.cache_entries[cache_id] > cache_index) {
+                if (this->bmp_cache.get_cache(cache_id).size() > cache_index) {
                     this->bmp_cache.put(cache_id, cache_index, it->second.bmp, sig->sig_32[0], sig->sig_32[1]);
                 }
 
-                it->second.bmp = NULL;
                 this->bmp_map[cache_id].erase(it);
             }
             else if (this->verbose & 0x100000) {
@@ -308,8 +307,7 @@ private:
 
             t.recv(&stream.end, bmp_size);
 
-            if ((bmp_cache.cache_persistent[cache_id]) &&
-                (i < bmp_cache.cache_entries[cache_id])) {
+            if (bmp_cache.get_cache(cache_id).persistent() && (i < bmp_cache.get_cache(cache_id).size())) {
                 if (verbose & 1) {
                     map_key key(sig.sig_8);
 
@@ -320,10 +318,9 @@ private:
                     }
                 }
 
-                Bitmap * bmp = new Bitmap( bmp_cache.bpp, original_bpp
-                                         , &original_palette, cx, cy, stream.get_data(), stream.size());
+                Bitmap bmp(bmp_cache.bpp, original_bpp, &original_palette, cx, cy, stream.get_data(), stream.size());
 
-                bmp_cache.put(cache_id, i, bmp, sig.sig_32[0], sig.sig_32[1]);
+                bmp_cache.put(cache_id, i, &bmp, sig.sig_32[0], sig.sig_32[1]);
             }
 
             stream.reset();
@@ -353,9 +350,9 @@ public:
 private:
     static void save_to_disk(const BmpCache & bmp_cache, uint8_t cache_id, Transport & t, uint32_t verbose) {
         uint16_t bitmap_count = 0;
-        if (bmp_cache.cache_persistent[cache_id]) {
-            for (uint16_t cache_index = 0; cache_index < bmp_cache.cache_entries[cache_id]; cache_index++) {
-                if (bmp_cache.cache[cache_id][cache_index]) {
+        if (bmp_cache.get_cache(cache_id).persistent()) {
+            for (uint16_t cache_index = 0; cache_index < bmp_cache.get_cache(cache_id).size(); cache_index++) {
+                if (bmp_cache.get_cache(cache_id)[cache_index]) {
                     bitmap_count++;
                 }
             }
@@ -369,12 +366,12 @@ private:
             return;
         }
 
-        for (uint16_t cache_index = 0; cache_index < bmp_cache.cache_entries[cache_id]; cache_index++) {
-            if (bmp_cache.cache[cache_id][cache_index]) {
+        for (uint16_t cache_index = 0; cache_index < bmp_cache.get_cache(cache_id).size(); cache_index++) {
+            if (bmp_cache.get_cache(cache_id)[cache_index]) {
                 stream.reset();
 
-                const Bitmap   * bmp      = bmp_cache.cache[cache_id][cache_index].get();
-                const uint8_t (& sig)[8]  = bmp_cache.sig[cache_id][cache_index].sig_8;
+                const Bitmap   * bmp      = bmp_cache.get_cache(cache_id)[cache_index].bmp;
+                const uint8_t (& sig)[8]  = bmp_cache.get_cache(cache_id)[cache_index].sig.sig_8;
                 const uint16_t   bmp_size = bmp->bmp_size;
                 const uint8_t  * bmp_data = bmp->data_bitmap.get();
 
