@@ -147,12 +147,12 @@ class Bitmap
         }
 
         BGRPalette & palette() {
-            REDASSERT(this->bpp() == 8);
+            //REDASSERT(this->bpp() == 8);
             return reinterpret_cast<BGRPalette &>(reinterpret_cast<uint8_t*>(this)[palette_index]);
         }
 
         const BGRPalette & palette() const {
-            REDASSERT(this->bpp() == 8);
+            //REDASSERT(this->bpp() == 8);
             return reinterpret_cast<const BGRPalette &>(reinterpret_cast<const uint8_t*>(this)[palette_index]);
         }
 
@@ -2354,45 +2354,35 @@ public:
                 //TODO("padding code should not be necessary for source either as source bmp width is already aligned");
                 //src += bmp.line_size - bmp.cx * src_nbbytes;
             }
+
+            if (out_bpp == 8){
+                std::cout << "this->data_bitmap->bpp(): " << this->data_bitmap->bpp() << std::endl;
+                init_palette332(this->data_bitmap->palette());
+            }
         }
         else {
             this->data_bitmap = bmp.data_bitmap;
             this->data_bitmap->inc();
         }
+    }
 
-        if (out_bpp == 8){
-            if (bmp.bpp() == 8) {
-                memcpy(this->data_bitmap->palette(), bmp.data_bitmap->palette(), sizeof(BGRPalette));
+    Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy)
+    : data_bitmap(DataBitmap::construct(bpp, cx,cy))
+    {
+        //LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
+        if (bpp == 8){
+            if (palette){
+                memcpy(this->data_bitmap->palette(), *palette, sizeof(BGRPalette));
             }
             else {
                 init_palette332(this->data_bitmap->palette());
             }
         }
-    }
 
-//     TODO
-//     Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy)
-//         : bpp(bpp)
-//         , cx(align4(cx))
-//         , cy(cy)
-//         , line_size(this->cx * nbbytes(this->bpp))
-//         , bmp_size(this->line_size * cy)
-//     {
-//         this->data_bitmap->alloc(this->bmp_size);
-//         //LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
-//         if (bpp == 8){
-//             if (palette){
-//                 memcpy(this->data_bitmap->palette(), palette, sizeof(BGRPalette));
-//             }
-//             else {
-//                 init_palette332(this->data_bitmap->palette());
-//             }
-//         }
-//
-//         if (this->cx <= 0 || this->cy <= 0){
-//             LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u bpp=%u", this->cx, this->cy, this->bpp);
-//         }
-//     }
+        if (this->cx() <= 0 || this->cy() <= 0) {
+            LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u bpp=%u", this->cx(), this->cy(), this->bpp());
+        }
+    }
 
 private:
     void load_error_bitmap() {

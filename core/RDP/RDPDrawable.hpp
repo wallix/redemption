@@ -374,9 +374,10 @@ public:
         this->gly_cache.set_glyph(cmd);
     }
 
+private:
     void draw_glyph(Bitmap & bmp, FontChar * fc, size_t offset_x, uint32_t color)
     {
-        uint8_t * bmp_data    = bmp.data_bitmap.get() + (offset_x + 1) * 3 + bmp.line_size * (fc->height - 1);
+        uint8_t * bmp_data    = const_cast<uint8_t*>(bmp.data()) + (offset_x + 1) * 3 + bmp.line_size() * (fc->height - 1);
         uint8_t * fc_data     = fc->data;
         uint8_t   fc_bit_mask = 128;
 
@@ -404,11 +405,12 @@ public:
                 }
             }
 
-            bmp_data -= bmp.line_size;
+            bmp_data -= bmp.line_size();
             //printf("\n");
         }
     }
 
+public:
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
         const GlyphCache * gly_cache)
     {
@@ -417,10 +419,10 @@ public:
         {
             const uint32_t color = this->RGBtoBGR(cmd.fore_color);
 
-            uint8_t * base = glyph_fragments.data_bitmap.get();
+            uint8_t * base = const_cast<uint8_t*>(glyph_fragments.data());
             uint8_t * p    = base;
 
-            for (size_t x = 0; x < glyph_fragments.cx; x++)
+            for (size_t x = 0; x < glyph_fragments.cx(); x++)
             {
                 p[0] = color;
                 p[1] = color >> 8;
@@ -431,10 +433,10 @@ public:
 
             uint8_t * target = base;
 
-            for (size_t y = 1; y < glyph_fragments.cy; y++)
+            for (size_t y = 1; y < glyph_fragments.cy(); y++)
             {
-                target += glyph_fragments.line_size;
-                memcpy(target, base, glyph_fragments.line_size);
+                target += glyph_fragments.line_size();
+                memcpy(target, base, glyph_fragments.line_size());
             }
         }
 

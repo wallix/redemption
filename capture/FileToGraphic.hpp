@@ -334,6 +334,7 @@ public:
                 {
                     RDPBmpCache cmd;
                     cmd.receive(this->info_bpp, this->stream, control, header, this->palette);
+                    unique_ptr<const Bitmap> u(cmd.bmp);
                     if (this->verbose > 32){
                         cmd.log(LOG_INFO);
                     }

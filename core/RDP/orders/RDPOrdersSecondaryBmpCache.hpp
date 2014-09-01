@@ -527,9 +527,9 @@ class RDPBmpCache {
         stream.out_uint8(this->id);
         stream.out_clear_bytes(1); /* pad */
 
-        stream.out_uint8(this->bmp->cx);
-        stream.out_uint8(this->bmp->cy);
-        stream.out_uint8(this->bmp->original_bpp);
+        stream.out_uint8(this->bmp->cx());
+        stream.out_uint8(this->bmp->cy());
+        stream.out_uint8(this->bmp->bpp());
 
         uint32_t offset = stream.get_offset();
         stream.out_uint16_le(0); // placeholder for bufsize
@@ -542,8 +542,8 @@ class RDPBmpCache {
             }
             stream.out_clear_bytes(2); /* pad */
             stream.out_uint16_le(0); // placeholder for bufsize
-            stream.out_uint16_le(this->bmp->bmp_size / this->bmp->cy);
-            stream.out_uint16_le(this->bmp->bmp_size); // final size
+            stream.out_uint16_le(this->bmp->bmp_size() / this->bmp->cy());
+            stream.out_uint16_le(this->bmp->bmp_size()); // final size
         }
 
         uint32_t offset_buf_start = stream.get_offset();
@@ -565,7 +565,7 @@ class RDPBmpCache {
         TODO(" this should become some kind of emit header");
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
-        stream.out_uint16_le(9 + this->bmp->bmp_size  - 7); // length after orderType - 7
+        stream.out_uint16_le(9 + this->bmp->bmp_size()  - 7); // length after orderType - 7
         stream.out_uint16_le(8);        // extraFlags
         stream.out_uint8(TS_CACHE_BITMAP_UNCOMPRESSED); // type
 
@@ -581,12 +581,12 @@ class RDPBmpCache {
 
         // bitmapWidth (1 byte): An 8-bit, unsigned integer. The width of the
         // bitmap in pixels.
-        assert(this->bmp->cx == align4(this->bmp->cx));
-        stream.out_uint8(this->bmp->cx);
+        assert(this->bmp->cx() == align4(this->bmp->cx()));
+        stream.out_uint8(this->bmp->cx());
 
         // bitmapHeight (1 byte): An 8-bit, unsigned integer. The height of the
         //  bitmap in pixels.
-        stream.out_uint8(this->bmp->cy);
+        stream.out_uint8(this->bmp->cy());
 
         // bitmapBitsPerPel (1 byte): An 8-bit, unsigned integer. The color
         //  depth of the bitmap data in bits-per-pixel. This field MUST be one
@@ -595,12 +595,12 @@ class RDPBmpCache {
         //  0x10 16-bit color depth.
         //  0x18 24-bit color depth.
         //  0x20 32-bit color depth.
-        stream.out_uint8(this->bmp->original_bpp);
+        stream.out_uint8(this->bmp->bpp());
 
         // bitmapLength (2 bytes): A 16-bit, unsigned integer. The size in
         //  bytes of the data in the bitmapComprHdr and bitmapDataStream
         //  fields.
-        stream.out_uint16_le(this->bmp->bmp_size);
+        stream.out_uint16_le(this->bmp->bmp_size());
 
         // cacheIndex (2 bytes): A 16-bit, unsigned integer. An entry in the
         // bitmap cache (specified by the cacheId field) where the bitmap MUST
@@ -620,7 +620,7 @@ class RDPBmpCache {
         // (including up to three bytes of padding, as necessary).
 
         // Note: we ensure bitmap with is multiple of 4, thus there won't be any padding ever
-        stream.out_copy_bytes(this->bmp->data(), this->bmp->bmp_size);
+        stream.out_copy_bytes(this->bmp->data(), this->bmp->bmp_size());
     }
 
     enum {
@@ -771,7 +771,7 @@ class RDPBmpCache {
     {
         using namespace RDP;
 
-        int Bpp = nbbytes(this->bmp->original_bpp);
+        int Bpp = nbbytes(this->bmp->bpp());
 
         stream.out_uint8(STANDARD | SECONDARY);
 
@@ -802,8 +802,8 @@ class RDPBmpCache {
             }
         }
 
-        stream.out_2BUE(this->bmp->cx);
-        stream.out_2BUE(this->bmp->cy);
+        stream.out_2BUE(this->bmp->cx());
+        stream.out_2BUE(this->bmp->cy());
         uint32_t offset_bitmapLength = stream.get_offset();
         TODO("define out_4BUE in stream and find a way to predict compressed bitmap size (the problem is to write to it afterward). May be we can keep a compressed version of the bitmap instead of recompressing every time. The first time we would use a conservative encoding for length based on cx and cy.");
         stream.out_uint16_be(0);
@@ -826,7 +826,7 @@ class RDPBmpCache {
         uint32_t offset_header = stream.get_offset();
         stream.out_uint16_le(0); // placeholder for length after type minus 7
 
-        int bitsPerPixelId = nbbytes(this->bmp->original_bpp)+2;
+        int bitsPerPixelId = nbbytes(this->bmp->bpp())+2;
 
         TODO(" some optimisations are possible here if we manage flags  but what will we do with persistant bitmaps ? We definitely do not want to save them on disk from here. There must be some kind of persistant structure where to save them and check if they exist.");
         uint16_t flags = ((this->persistent   ? CBR2_PERSISTENT_KEY_PRESENT : 0) |
@@ -869,18 +869,18 @@ class RDPBmpCache {
         // bitmapWidth (variable): A Two-Byte Unsigned Encoding (section
         //                         2.2.2.2.1.2.1.2) structure. The width of the
         //                         bitmap in pixels.
-        stream.out_2BUE(this->bmp->cx);
+        stream.out_2BUE(this->bmp->cx());
 
         // bitmapHeight (variable): A Two-Byte Unsigned Encoding (section
         //                          2.2.2.2.1.2.1.2) structure. The height of the
         //                          bitmap in pixels.
-        stream.out_2BUE(this->bmp->cy);
+        stream.out_2BUE(this->bmp->cy());
 
         // bitmapLength (variable): A Four-Byte Unsigned Encoding (section
         //                          2.2.2.2.1.2.1.4) structure. The size in bytes
         //                          of the data in the bitmapComprHdr and
         //                          bitmapDataStream fields.
-        stream.out_uint16_be(this->bmp->bmp_size | 0x4000);
+        stream.out_uint16_be(this->bmp->bmp_size() | 0x4000);
 
         // cacheIndex (variable): A Two-Byte Unsigned Encoding (section
         //                        2.2.2.2.1.2.1.2) structure. An entry in the bitmap
@@ -917,7 +917,7 @@ class RDPBmpCache {
         // (including up to three bytes of padding, as necessary).
 
         // for uncompressed bitmaps the format is quite simple
-        stream.out_copy_bytes(this->bmp->data(), this->bmp->bmp_size);
+        stream.out_copy_bytes(this->bmp->data(), this->bmp->bmp_size());
 
         stream.set_out_uint16_le(stream.get_offset() - (offset_header + 12), offset_header);
     }
@@ -1008,7 +1008,7 @@ class RDPBmpCache {
         this->bmp = new Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
             bitmapDataStream, bitmapLength, false);
 
-        if (bitmapLength != this->bmp->bmp_size){
+        if (bitmapLength != this->bmp->bmp_size()){
             LOG( LOG_WARNING
                , "RDPBmpCache::receive_raw_v2: "
                  "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");
@@ -1091,7 +1091,7 @@ class RDPBmpCache {
         }
         this->bmp = new Bitmap(session_color_depth, bpp, &palette, width, height, buf, bufsize);
 
-        if (bufsize != this->bmp->bmp_size){
+        if (bufsize != this->bmp->bmp_size()){
             LOG(LOG_WARNING, "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");
         }
     }
@@ -1183,12 +1183,12 @@ class RDPBmpCache {
             }
             this->bmp = new Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
                 bitmapDataStream, cbCompMainBodySize, true);
-            if (cbScanWidth != (this->bmp->bmp_size / this->bmp->cy)){
+            if (cbScanWidth != (this->bmp->bmp_size() / this->bmp->cy())){
                 LOG( LOG_WARNING
                    , "RDPBmpCache::receive_compressed_v2: "
                      "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");
             }
-            if (cbUncompressedSize != this->bmp->bmp_size){
+            if (cbUncompressedSize != this->bmp->bmp_size()){
                 LOG( LOG_WARNING
                    , "RDPBmpCache::receive_compressed_v2: "
                      "broadcasted final_size should be the same as bmp size computed from cx, cy, bpp and alignment rules");
@@ -1240,10 +1240,10 @@ class RDPBmpCache {
                 LOG(LOG_INFO, "");
             }
             this->bmp = new Bitmap(session_color_depth, bpp, &palette, width, height, data, size, true);
-            if (row_size != (this->bmp->bmp_size / this->bmp->cy)){
+            if (row_size != (this->bmp->bmp_size() / this->bmp->cy())){
                 LOG(LOG_WARNING, "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");
             }
-            if (final_size != this->bmp->bmp_size){
+            if (final_size != this->bmp->bmp_size()){
                 LOG(LOG_WARNING, "broadcasted final_size should be the same as bmp size computed from cx, cy, bpp and alignment rules");
             }
         }
@@ -1259,7 +1259,7 @@ class RDPBmpCache {
         size_t lg = snprintf(buffer, sz,
             "RDPBmpCache(id=%u idx=%u bpp=%u cx=%u cy=%u)",
             this->id, this->idx,
-            this->bmp->original_bpp, this->bmp->cx, this->bmp->cy);
+            this->bmp->bpp(), this->bmp->cx(), this->bmp->cy());
         if (lg >= sz){
             return sz;
         }

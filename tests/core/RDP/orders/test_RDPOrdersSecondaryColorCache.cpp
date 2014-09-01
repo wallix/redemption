@@ -27,6 +27,8 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <algorithm>
 
+#define LOGNULL
+
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 

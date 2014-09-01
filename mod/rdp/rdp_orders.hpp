@@ -270,11 +270,13 @@ public:
         this->recv_bmp_cache_count++;
 
         REDASSERT(bmp.bmp);
+
+        unique_ptr<const Bitmap> u(bmp.bmp);
         this->bmp_cache->put(bmp.id, bmp.idx, bmp.bmp, bmp.key1, bmp.key2);
         if (this->verbose & 64) {
             LOG( LOG_ERR
                , "rdp_orders_process_bmpcache bitmap id=%u idx=%u cx=%u cy=%u bmp_size=%u original_bpp=%u bpp=%u"
-               , bmp.id, bmp.idx, bmp.bmp->cx, bmp.bmp->cy, bmp.bmp->bmp_size, bmp.bmp->original_bpp, bpp);
+               , bmp.id, bmp.idx, bmp.bmp->cx(), bmp.bmp->cy(), bmp.bmp->bmp_size(), bmp.bmp->bpp(), bpp);
         }
     }
 

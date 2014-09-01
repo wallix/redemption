@@ -99,6 +99,22 @@ namespace aux_ {
     template<class T>
     struct add_lvalue_reference<T[]>
     { typedef T& type;};
+
+    template<bool, class T, class U>
+    struct if_
+    { typedef T type; };
+
+    template<class T, class U>
+    struct if_<false, T, U>
+    { typedef U type; };
+
+    template<class T>
+    struct is_reference
+    { static const bool value = false; };
+
+    template<class T>
+    struct is_reference<T&>
+    { static const bool value = true; };
 }
 
 template<class T, class Deleter = default_delete<T> >
@@ -113,10 +129,6 @@ struct unique_ptr
 
     explicit unique_ptr(pointer ptr)
     : data_(ptr)
-    {}
-
-    explicit unique_ptr(pointer ptr, Deleter & deleter)
-    : data_(ptr, deleter)
     {}
 
     explicit unique_ptr(pointer ptr, Deleter const & deleter)
@@ -200,7 +212,24 @@ private:
     template<class U>
     void reset( U );
 
-    struct Data : Deleter {
+    struct DeleterReference {
+        Deleter deleter;
+        DeleterReference(deleter_type const & deleter)
+        : deleter(deleter)
+        {}
+
+        void operator()(pointer p) const {
+            deleter(p);
+        }
+
+        operator Deleter () const {
+            return this->deleter;
+        }
+    };
+
+    typedef typename aux_::if_<aux_::is_reference<Deleter>::value, DeleterReference, Deleter>::type deleter_base;
+
+    struct Data : deleter_base {
         pointer p_;
 
         Data()
@@ -212,12 +241,7 @@ private:
         {}
 
         Data(pointer p, deleter_type const & deleter)
-        : Deleter(deleter)
-        , p_(p)
-        {}
-
-        Data(pointer p, deleter_type & deleter)
-        : Deleter(deleter)
+        : deleter_base(deleter)
         , p_(p)
         {}
 

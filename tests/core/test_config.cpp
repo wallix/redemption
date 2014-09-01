@@ -27,9 +27,9 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <stdio.h>
 
-#include "log.hpp"
 #define LOGNULL
 //#define LOGPRINT
+#include "log.hpp"
 
 #include "config.hpp"
 #include <sstream>

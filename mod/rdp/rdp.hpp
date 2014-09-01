@@ -4762,7 +4762,7 @@ public:
                            );
 
             if (   bmpdata.cb_scan_width
-                   && ((bmpdata.cb_scan_width - bitmap.line_size) >= nbbytes(bitmap.original_bpp))) {
+                   && ((bmpdata.cb_scan_width - bitmap.line_size()) >= nbbytes(bitmap.bpp()))) {
                 LOG( LOG_WARNING
                      , "Bad line size: line_size=%u width=%u height=%u bpp=%u"
                      , bmpdata.cb_scan_width
@@ -4773,11 +4773,11 @@ public:
             }
 
             if (   bmpdata.cb_uncompressed_size
-                   && (bmpdata.cb_uncompressed_size != bitmap.bmp_size)) {
+                   && (bmpdata.cb_uncompressed_size != bitmap.bmp_size())) {
                 LOG( LOG_WARNING
                      , "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u"
                      , bmpdata.cb_uncompressed_size
-                     , bitmap.bmp_size
+                     , bitmap.bmp_size()
                      , bmpdata.width
                      , bmpdata.height
                      , bmpdata.bits_per_pixel

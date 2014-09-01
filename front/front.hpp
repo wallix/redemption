@@ -4396,7 +4396,7 @@ public:
 //        }
 
 
-        if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
+        if (src_tile == Rect(0, 0, bitmap.cx(), bitmap.cy())){
             const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
             this->orders->draw(cmd2, clip, bitmap);
             if (  this->capture
@@ -4417,7 +4417,7 @@ public:
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
     {
-        if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
+        if (bitmap.cx() < cmd.srcx || bitmap.cy() < cmd.srcy){
             return;
         }
 
@@ -4426,7 +4426,7 @@ public:
         const uint8_t palette_id = 0;
         if (this->client_info.bpp == 8){
             if (!this->palette_memblt_sent[palette_id]) {
-                RDPColCache cmd(palette_id, bitmap.original_palette);
+                RDPColCache cmd(palette_id, bitmap.palette());
                 this->orders->draw(cmd);
                 this->palette_memblt_sent[palette_id] = true;
             }
@@ -4435,8 +4435,8 @@ public:
         const uint16_t dst_x = cmd.rect.x;
         const uint16_t dst_y = cmd.rect.y;
         // clip dst as it can be larger than source bitmap
-        const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx - cmd.srcx, cmd.rect.cx);
-        const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy - cmd.srcy, cmd.rect.cy);
+        const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx() - cmd.srcx, cmd.rect.cx);
+        const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy() - cmd.srcy, cmd.rect.cy);
 
         // check if target bitmap can be fully stored inside one front cache entry
         // if so no need to tile it.
@@ -4495,7 +4495,7 @@ public:
         const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
         const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
 
-        if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
+        if (src_tile == Rect(0, 0, bitmap.cx(), bitmap.cy())){
             RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
 
             if (this->client_info.bpp != this->mod_bpp){
@@ -4536,7 +4536,7 @@ public:
 
     void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) {
         // LOG(LOG_INFO, "Mem3Blt::rop = %X", cmd.rop);
-        if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
+        if (bitmap.cx() < cmd.srcx || bitmap.cy() < cmd.srcy){
             return;
         }
 
@@ -4545,7 +4545,7 @@ public:
         const uint8_t palette_id = 0;
         if (this->client_info.bpp == 8){
             if (!this->palette_memblt_sent[palette_id]) {
-                RDPColCache cmd(palette_id, bitmap.original_palette);
+                RDPColCache cmd(palette_id, bitmap.palette());
                 this->orders->draw(cmd);
                 this->palette_memblt_sent[palette_id] = true;
             }
@@ -4554,8 +4554,8 @@ public:
         const uint16_t dst_x = cmd.rect.x;
         const uint16_t dst_y = cmd.rect.y;
         // clip dst as it can be larger than source bitmap
-        const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx - cmd.srcx, cmd.rect.cx);
-        const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy - cmd.srcy, cmd.rect.cy);
+        const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx() - cmd.srcx, cmd.rect.cx);
+        const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy() - cmd.srcy, cmd.rect.cy);
 
         // check if target bitmap can be fully stored inside one front cache entry
         // if so no need to tile it.

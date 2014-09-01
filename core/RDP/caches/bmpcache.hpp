@@ -21,7 +21,6 @@
 #ifndef _REDEMPTION_CORE_RDP_CACHES_BMPCACHE_HPP_
 #define _REDEMPTION_CORE_RDP_CACHES_BMPCACHE_HPP_
 
-#include <map>
 #include <set>
 
 #include "bitmap.hpp"
@@ -126,7 +125,7 @@ private:
     struct cache_element
     {
         const Bitmap * bmp;
-        int_fast32_t stamp;
+        uint_fast32_t stamp;
         union {
             uint8_t  sig_8[8];
             uint32_t sig_32[2];
@@ -245,17 +244,17 @@ private:
         {}
 
         bool operator<(value_set const & other) const {
-            if (this->elem.bmp->cx < other.elem.bmp->cx) {
+            if (this->elem.bmp->cx() < other.elem.bmp->cx()) {
                 return true;
             }
-            else if (this->elem.bmp->cx > other.elem.bmp->cx) {
+            else if (this->elem.bmp->cx() > other.elem.bmp->cx()) {
                 return false;
             }
 
-            if (this->elem.bmp->cy < other.elem.bmp->cy) {
+            if (this->elem.bmp->cy() < other.elem.bmp->cy()) {
                 return true;
             }
-            else if (this->elem.bmp->cy > other.elem.bmp->cy) {
+            else if (this->elem.bmp->cy() > other.elem.bmp->cy()) {
                 return false;
             }
 
@@ -420,6 +419,7 @@ public:
     const bool    use_waiting_list;
 
 private:
+    const size_t size_elements;
     const unique_ptr<cache_element[]> elements;
     storage_value_set storage;
 
@@ -452,7 +452,8 @@ public:
     , bpp(bpp)
     , number_of_cache(number_of_cache)
     , use_waiting_list(use_waiting_list)
-    , elements(new cache_element[c0.entries + c1.entries + c2.entries + c3.entries + c4.entries + MAXIMUM_NUMBER_OF_CACHE_ENTRIES])
+    , size_elements(c0.entries + c1.entries + c2.entries + c3.entries + c4.entries + MAXIMUM_NUMBER_OF_CACHE_ENTRIES)
+    , elements(new cache_element[this->size_elements])
     , cache0(this->elements.get(), c0, this->storage)
     , cache1(this->elements.get() + c0.entries, c1, this->storage)
     , cache2(this->elements.get() + c0.entries + c1.entries, c2, this->storage)
@@ -460,16 +461,16 @@ public:
     , cache4(this->elements.get() + c0.entries + c1.entries + c2.entries + c3.entries, c4, this->storage)
     , cache_wait_list(this->elements.get() + c0.entries + c1.entries + c2.entries + c3.entries + c4.entries, CacheOption(MAXIMUM_NUMBER_OF_CACHE_ENTRIES), this->storage)
     , caches(this->cache0, this->cache1, this->cache2, this->cache3, this->cache4, this->cache_wait_list)
-    , bitmap_free_list(c0.entries + c1.entries + c2.entries + c3.entries + c4.entries + MAXIMUM_NUMBER_OF_CACHE_ENTRIES)
+    , bitmap_free_list(this->size_elements)
     , stamp(0)
     , verbose(verbose)
     {
-        //REDASSERT(
-        //    (number_of_cache == (!c0.entries ? 0 :
-        //    !c1.entries ? 1 :
-        //    !c2.entries ? 2 :
-        //    !c3.entries ? 3 :
-        //    !c4.entries ? 4 : 5))
+        REDASSERT(
+           (number_of_cache == (!c0.entries ? 0 :
+           !c1.entries ? 1 :
+           !c2.entries ? 2 :
+           !c3.entries ? 3 :
+           !c4.entries ? 4 : 5))
         //&&
         //    (number_of_cache > 1 ? c0.entries <= c1.entries && (
         //        number_of_cache > 2 ? c1.entries <= c2.entries && (
@@ -478,9 +479,9 @@ public:
         //            ) : true
         //        ) : true
         //    ) : true)
-        //);
+        );
 
-        this->storage.reserve(c0.entries + c1.entries + c2.entries + c3.entries + c4.entries + MAXIMUM_NUMBER_OF_CACHE_ENTRIES);
+        this->storage.reserve(this->size_elements);
 
         if (this->verbose) {
             LOG( LOG_INFO
@@ -540,7 +541,7 @@ public:
             r.remove(e);
             this->bitmap_free_list.push(e.bmp);
         }
-        e.bmp = this->bitmap_free_list.pop(bmp->original_bpp, *bmp);
+        e.bmp = this->bitmap_free_list.pop(bmp->bpp(), *bmp);
         e.bmp->compute_sha1(e.sha1);
         e.stamp = ++this->stamp;
 
@@ -635,9 +636,19 @@ private:
     };
 
 public:
+    uint32_t quick_find(const Bitmap & oldbmp) {
+        typedef void* voidp;
+        if (voidp(this->elements.get()) < voidp(&oldbmp)
+         && voidp(&oldbmp) < voidp(this->elements.get() + this->size_elements)) {
+            ;
+        }
+        return -1u;
+    }
+
     TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap")
     uint32_t cache_bitmap(const Bitmap & oldbmp) {
         REDASSERT(this->owner != Mod_rdp);
+
         // Generating source code for unit test.
         //if (this->verbose & 8192) {
         //    if (this->finding_counter == 500) {
@@ -658,7 +669,7 @@ public:
         //}
 
         unique_ptr<const Bitmap, Deleter> bmp(
-            this->bpp == oldbmp.original_bpp
+            this->bpp == oldbmp.bpp()
                 ? &oldbmp
                 : this->bitmap_free_list.pop(this->bpp, oldbmp)
             , Deleter(oldbmp, this->bitmap_free_list)
@@ -666,7 +677,7 @@ public:
 
         uint8_t        id_real  = 0;
 
-        for (const uint32_t bmp_size = bmp->bmp_size; id_real < this->number_of_cache; ++id_real) {
+        for (const uint32_t bmp_size = bmp->bmp_size(); id_real < this->number_of_cache; ++id_real) {
             if (bmp_size <= this->caches[id_real].bmp_size()) {
                 break;
             }
@@ -676,7 +687,7 @@ public:
             LOG( LOG_ERR
                 , "BmpCache: %s bitmap size(%u) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-                , bmp->bmp_size
+                , bmp->bmp_size()
                 , (this->cache0.size() ? this->cache0.bmp_size() : 0)
                 , (this->cache1.size() ? this->cache1.bmp_size() : 1)
                 , (this->cache2.size() ? this->cache2.bmp_size() : 2)

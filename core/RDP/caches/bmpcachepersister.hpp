@@ -372,8 +372,8 @@ private:
 
                 const Bitmap   * bmp      = bmp_cache.get_cache(cache_id)[cache_index].bmp;
                 const uint8_t (& sig)[8]  = bmp_cache.get_cache(cache_id)[cache_index].sig.sig_8;
-                const uint16_t   bmp_size = bmp->bmp_size;
-                const uint8_t  * bmp_data = bmp->data_bitmap.get();
+                const uint16_t   bmp_size = bmp->bmp_size();
+                const uint8_t  * bmp_data = bmp->data();
 
                 // if (bmp_cache.owner == BmpCache::Front) {
                 //     uint8_t sha1[20];
@@ -391,7 +391,7 @@ private:
 
                 //     LOG( LOG_INFO
                 //        , "BmpCachePersister::save_to_disk: sig=\"%s\" sha1=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                //        , sig_sig, sig_sha1, bmp->original_bpp, bmp->cx, bmp->cy, bmp_size);
+                //        , sig_sig, sig_sha1, bmp->bpp(), bmp->cx(), bmp->cy(), bmp_size);
 
                 //     REDASSERT(!memcmp(bmp_cache.sig[cache_id][cache_index].sig_8, sha1, sizeof(bmp_cache.sig[cache_id][cache_index].sig_8)));
                 // }
@@ -401,16 +401,16 @@ private:
                 if (verbose & 0x100000) {
                     LOG( LOG_INFO
                        , "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                       , key.str().c_str(), bmp->original_bpp, bmp->cx, bmp->cy, bmp_size);
+                       , key.str().c_str(), bmp->bpp(), bmp->cx(), bmp->cy(), bmp_size);
                 }
 
                 stream.out_copy_bytes(sig, 8);
-                stream.out_uint8(bmp->original_bpp);
-                stream.out_uint16_le(bmp->cx);
-                stream.out_uint16_le(bmp->cy);
-                if (bmp->original_bpp == 8) {
-                    stream.out_copy_bytes( reinterpret_cast<const uint8_t *>(bmp->original_palette)
-                                         , sizeof(bmp->original_palette));
+                stream.out_uint8(bmp->bpp());
+                stream.out_uint16_le(bmp->cx());
+                stream.out_uint16_le(bmp->cy());
+                if (bmp->bpp() == 8) {
+                    stream.out_copy_bytes( reinterpret_cast<const uint8_t *>(bmp->palette())
+                                         , sizeof(bmp->palette()));
                 }
                 stream.out_uint16_le(bmp_size);
                 stream.mark_end();

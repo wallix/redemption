@@ -116,10 +116,10 @@ class mod_osd : public mod_api
 public:
     mod_osd(mod_api & mod, const Bitmap& bmp, int x = 0, int y = 0)
     : mod_api(mod.get_front_width(), mod.get_front_height())
-    , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(Rect(x,y,bmp.cx,bmp.cy)))
+    , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(Rect(x,y,bmp.cx(),bmp.cy())))
     , bmp_srcx(x - this->fg_rect.x)
     , bmp_srcy(y - this->fg_rect.y)
-    , bmp(bmp.original_bpp, bmp)
+    , bmp(bmp.bpp(), bmp)
     , mod(mod)
     {
         this->draw_fg(this->fg_rect);
