@@ -637,7 +637,7 @@ private:
 
 public:
     uint32_t quick_find(const Bitmap & oldbmp) {
-        typedef void* voidp;
+        typedef void const * voidp;
         if (voidp(this->elements.get()) < voidp(&oldbmp)
          && voidp(&oldbmp) < voidp(this->elements.get() + this->size_elements)) {
             ;
@@ -689,10 +689,10 @@ public:
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                 , bmp->bmp_size()
                 , (this->cache0.size() ? this->cache0.bmp_size() : 0)
-                , (this->cache1.size() ? this->cache1.bmp_size() : 1)
-                , (this->cache2.size() ? this->cache2.bmp_size() : 2)
-                , (this->cache3.size() ? this->cache3.bmp_size() : 3)
-                , (this->cache4.size() ? this->cache4.bmp_size() : 4)
+                , (this->cache1.size() ? this->cache1.bmp_size() : 0)
+                , (this->cache2.size() ? this->cache2.bmp_size() : 0)
+                , (this->cache3.size() ? this->cache3.bmp_size() : 0)
+                , (this->cache4.size() ? this->cache4.bmp_size() : 0)
                 );
             REDASSERT(0);
             throw Error(ERR_BITMAP_CACHE_TOO_BIG);

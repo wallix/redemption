@@ -81,12 +81,29 @@ class Bitmap
         , size_compressed_(0)
         , sha1_is_init_(false)
         {}
+
+        DataBitmapBase(uint16_t cx, uint16_t cy, uint8_t * ptr)
+        : cx_(cx)
+        , cy_(cy)
+        , bpp_(24)
+        , counter_(1)
+        , line_size_(this->cx_ * 3)
+        , bmp_size_(this->line_size_ * cy)
+        , ptr_(ptr)
+        , data_compressed_(0)
+        , size_compressed_(0)
+        , sha1_is_init_(false)
+        {}
     };
 
     class DataBitmap : DataBitmapBase
     {
         DataBitmap(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr)
         : DataBitmapBase(bpp, cx, cy, ptr)
+        {}
+
+        DataBitmap(uint16_t cx, uint16_t cy, uint8_t * ptr)
+        : DataBitmapBase(cx, cy, ptr)
         {}
 
         ~DataBitmap()
@@ -117,6 +134,14 @@ class Bitmap
             return new (p) DataBitmap(bpp, cx, cy, p + sz_struct);
         }
 
+        static DataBitmap * construct_png(uint16_t cx, uint16_t cy)
+        {
+            const size_t sz = cx * cy * 3;
+            const size_t sz_struct = sizeof(DataBitmap);
+            uint8_t * p = static_cast<uint8_t*>(::operator new (sz_struct + sz));
+            return new (p) DataBitmap(cx, cy, p + sz_struct);
+        }
+
         static void destruct(DataBitmap * cdata) {
             cdata->~DataBitmap();
             ::operator delete(cdata);
@@ -129,7 +154,7 @@ class Bitmap
                 if (this->bpp_ == 8) {
                     sha1.update(reinterpret_cast<const uint8_t *>(this->palette()), sizeof(BGRPalette));
                 }
-                //sha1.update(&this->bpp_, sizeof(this->bpp_));
+                sha1.update(&this->bpp_, sizeof(this->bpp_));
                 sha1.update(reinterpret_cast<const uint8_t *>(&this->cx_), sizeof(this->cx_));
                 sha1.update(reinterpret_cast<const uint8_t *>(&this->cy_), sizeof(this->cy_));
                 const uint8_t * first = this->get();
@@ -731,9 +756,9 @@ public:
             png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
             return false;
         }
-        this->data_bitmap = DataBitmap::construct(24, static_cast<uint16_t>(width), static_cast<uint16_t>(height));
-        png_uint_32 img_size = rowbytes * height;
-        png_bytep row = this->data_bitmap->get() + img_size - rowbytes;
+
+        this->data_bitmap = DataBitmap::construct_png(static_cast<uint16_t>(width), static_cast<uint16_t>(height));
+        png_bytep row = this->data_bitmap->get() + rowbytes * height - rowbytes;
         png_bytep * row_pointers = new png_bytep[height];
         for (uint i = 0; i < height; ++i) {
             row_pointers[i] = row - i * rowbytes;
