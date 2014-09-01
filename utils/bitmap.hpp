@@ -30,118 +30,247 @@
 #ifndef _REDEMPTION_UTILS_BITMAP_HPP__
 #define _REDEMPTION_UTILS_BITMAP_HPP__
 
-#include <unistd.h>
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <algorithm>
-#include <inttypes.h>
-#include <error.h>
-#include <errno.h>
+#include <unistd.h>
+
 #include <png.h>
 #include <string.h>
 
+#include <cerrno>
+#include <cassert>
+#include <cstddef>
+#include <algorithm>
+
+#include "error.h"
 #include "log.hpp"
 #include "bitfu.hpp"
 #include "colors.hpp"
 #include "stream.hpp"
 #include "ssl_calls.hpp"
 #include "rect.hpp"
-#include "unique_ptr.hpp"
 
-class Bitmap {
-public:
-    uint8_t original_bpp;
-    BGRPalette original_palette;
-    uint16_t cx;
-    uint16_t cy;
 
-    size_t line_size;
-    size_t bmp_size;
+class Bitmap
+{
+    struct DataBitmapBase {
+        const uint16_t cx_;
+        const uint16_t cy_;
+        const uint8_t bpp_;
+        uint_fast8_t counter_;
 
-    class CountdownData
+        const size_t line_size_;
+        const size_t bmp_size_;
+        uint8_t * const ptr_;
+        // Memoize compressed bitmap
+        /*mutable*/ uint8_t * data_compressed_;
+        size_t size_compressed_;
+        mutable uint8_t sha1_[20];
+        mutable bool sha1_is_init_;
+
+        DataBitmapBase(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr)
+        : cx_(align4(cx))
+        , cy_(cy)
+        , bpp_(bpp)
+        , counter_(1)
+        , line_size_(this->cx_ * nbbytes(this->bpp_))
+        , bmp_size_(this->line_size_ * cy)
+        , ptr_(ptr)
+        , data_compressed_(0)
+        , size_compressed_(0)
+        , sha1_is_init_(false)
+        {}
+    };
+
+    class DataBitmap : DataBitmapBase
     {
-        uint8_t * ptr;
-
-        CountdownData(CountdownData const &);
-        CountdownData & operator=(CountdownData const &);
-
-    public:
-        CountdownData()
-        : ptr(0)
+        DataBitmap(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr)
+        : DataBitmapBase(bpp, cx, cy, ptr)
         {}
 
-        ~CountdownData(){
-            this->reset();
+        ~DataBitmap()
+        {
+            void * p = this->data_compressed_;
+            if (p > this->ptr_ || this < p) {
+                delete [] this->data_compressed_;
+            }
+        }
+
+        DataBitmap(DataBitmap const &);
+        DataBitmap & operator=(DataBitmap const &);
+
+        static const size_t palette_aligned_of = sizeof(BGRColor)*8-1;
+        static const size_t palette_index = (sizeof(DataBitmapBase) + palette_aligned_of - 1) & ~(palette_aligned_of - 1);
+
+    public:
+        static size_t compute_bmp_size(uint8_t bpp, uint16_t cx, uint16_t cy)
+        {
+            return align4(cx) * nbbytes(bpp) * cy;
+        }
+
+        static DataBitmap * construct(uint8_t bpp, uint16_t cx, uint16_t cy)
+        {
+            const size_t sz = compute_bmp_size(bpp, cx, cy);
+            const size_t sz_struct = bpp == 8 ? palette_index + sizeof(BGRPalette) : sizeof(DataBitmap);
+            uint8_t * p = static_cast<uint8_t*>(::operator new (sz_struct + sz));
+            return new (p) DataBitmap(bpp, cx, cy, p + sz_struct);
+        }
+
+        static void destruct(DataBitmap * cdata) {
+            cdata->~DataBitmap();
+            ::operator delete(cdata);
+        }
+
+        void copy_sha1(uint8_t (&sig)[20]) const {
+            if (!this->sha1_is_init_) {
+                this->sha1_is_init_ = true;
+                SslSha1 sha1;
+                if (this->bpp_ == 8) {
+                    sha1.update(reinterpret_cast<const uint8_t *>(this->palette()), sizeof(BGRPalette));
+                }
+                //sha1.update(&this->bpp_, sizeof(this->bpp_));
+                sha1.update(reinterpret_cast<const uint8_t *>(&this->cx_), sizeof(this->cx_));
+                sha1.update(reinterpret_cast<const uint8_t *>(&this->cy_), sizeof(this->cy_));
+                const uint8_t * first = this->get();
+                const uint8_t * last = first + this->cy_ * this->line_size_;
+                for (; first != last; first += this->line_size_) {
+                    sha1.update(first, this->line_size_);
+                }
+                sha1.final(this->sha1_, 20);
+            }
+            memcpy(sig, this->sha1_, sizeof(this->sha1_));
         }
 
         uint8_t * get() const {
-            return this->ptr + 128;
+            return this->ptr_;
         }
 
-    private:
-        unsigned & counter() const {
-            return *reinterpret_cast<unsigned*>(this->ptr);
+        BGRPalette & palette() {
+            REDASSERT(this->bpp() == 8);
+            return reinterpret_cast<BGRPalette &>(reinterpret_cast<uint8_t*>(this)[palette_index]);
         }
 
-    public:
-        void alloc(uint32_t size) {
-            this->reset();
-            this->ptr = new uint8_t[size+128];
-            this->counter() = 1;
+        const BGRPalette & palette() const {
+            REDASSERT(this->bpp() == 8);
+            return reinterpret_cast<const BGRPalette &>(reinterpret_cast<const uint8_t*>(this)[palette_index]);
         }
 
-        void use(const CountdownData & other) {
-            if (other.ptr) {
-                other.counter()++;
+        uint16_t cx() const {
+            return this->cx_;
+        }
+
+        uint16_t cy() const {
+            return this->cy_;
+        }
+
+        size_t line_size() const {
+            return this->line_size_;
+        }
+
+        uint8_t bpp() const {
+            return this->bpp_;
+        }
+
+        size_t bmp_size() const {
+            return this->bmp_size_;
+        }
+
+        void set_owner_compressed_buffer(void * data, size_t n) {
+            REDASSERT(this->compressed_size() == 0);
+            this->data_compressed_ = static_cast<uint8_t*>(data);
+            this->size_compressed_ = n;
+        }
+
+        void copy_compressed_buffer(void const * data, size_t n) {
+            this->set_owner_compressed_buffer(memcpy(new uint8_t[n], data, n), n);
+        }
+
+        const uint8_t * compressed_data() const {
+            return this->data_compressed_;
+        }
+
+        size_t compressed_size() const {
+            return this->size_compressed_;
+        }
+
+        void inc() {
+            ++this->counter_;
+        }
+
+        void dec() {
+            --this->counter_;
+        }
+
+        uint_fast8_t count() const {
+            return this->counter_;
+        }
+    };
+
+    DataBitmap * data_bitmap;
+
+public:
+    Bitmap()
+    : data_bitmap(0)
+    {}
+
+    bool is_valid() const {
+        return this->data_bitmap;
+    }
+
+    Bitmap(const Bitmap & other)
+    : data_bitmap(other.data_bitmap)
+    {
+        this->data_bitmap->inc();
+    }
+
+    ~Bitmap() {
+        this->reset();
+    }
+
+    void reset() {
+        if (this->data_bitmap) {
+            this->data_bitmap->dec();
+            if (this->data_bitmap->count() == 0) {
+                DataBitmap::destruct(this->data_bitmap);
             }
-            this->reset();
-            this->ptr = other.ptr;
+            this->data_bitmap = 0;
         }
+    }
 
-        void reset() {
-            if (this->ptr){
-                if (!--this->counter()){
-                    delete[] this->ptr;
-                }
-                this->ptr = 0;
-            }
-        }
-    } data_bitmap;
+    void swap(Bitmap & other) /*noexcept*/ {
+        using std::swap;
+        swap(this->data_bitmap, other.data_bitmap);
+    }
 
-    // Memoize compressed bitmap
-    mutable unique_ptr<uint8_t[]> data_compressed;
-    mutable size_t data_compressed_size;
+    //Bitmap(uint8_t bpp, uint16_t cx, uint16_t cy, const BGRPalette * palette);
 
     Bitmap(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
            uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size,
-           bool compressed = false)
-        : original_bpp(bpp)
-        , cx(align4(cx))
-        , cy(cy)
-        , line_size(this->cx * nbbytes(this->original_bpp))
-        , bmp_size(this->line_size * cy)
-        , data_compressed_size(0)
+           bool compressed = false, bool owner_compressed_data = false)
+    : data_bitmap(DataBitmap::construct(bpp, cx, cy))
     {
-        this->data_bitmap.alloc(this->bmp_size);
-        //LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
+        if (cx <= 0 || cy <= 0){
+            LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u size=%u bpp=%u", cx, cy, size, bpp);
+        }
+
         if (bpp == 8){
             if (palette){
-                memcpy(&this->original_palette, palette, sizeof(BGRPalette));
+                memcpy(this->data_bitmap->palette(), *palette, sizeof(BGRPalette));
             }
             else {
-                init_palette332(this->original_palette);
+                init_palette332(this->data_bitmap->palette());
             }
         }
 
+        //LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
+
         if (compressed) {
-            this->data_compressed_size = size;
-            this->data_compressed.reset(new uint8_t[size]);
-            if (this->data_compressed) {
-                memcpy(this->data_compressed.get(), data, size);
+            if (owner_compressed_data) {
+                this->data_bitmap->set_owner_compressed_buffer(const_cast<uint8_t*>(data), size);
+            }
+            else {
+                this->data_bitmap->copy_compressed_buffer(data, size);
             }
 
             if ((session_color_depth == 32) && ((bpp == 24) || (bpp == 32))) {
@@ -151,41 +280,34 @@ public:
                 this->decompress(data, cx, cy, size);
             }
         } else {
-            uint8_t * dest = this->data_bitmap.get();
+            uint8_t * dest = this->data_bitmap->get();
             const uint8_t * src = data;
-            const size_t & data_width = cx * nbbytes(bpp);
-            for (uint16_t i = 0 ; i < this->cy ; i++){
+            const size_t data_width = cx * nbbytes(bpp);
+            const size_t line_size = this->line_size();
+            const uint16_t cy = this->cy();
+            for (uint16_t i = 0; i < cy ; i++){
                 memcpy(dest, src, data_width);
-                memset(dest + this->line_size, 0, this->line_size - data_width);
+                memset(dest + line_size, 0, line_size - data_width);
                 src += data_width;
-                dest += this->line_size;
+                dest += line_size;
             }
-        }
-        if (this->cx <= 0 || this->cy <= 0){
-            LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u size=%u bpp=%u", this->cx, this->cy, size, this->original_bpp);
         }
     }
 
     Bitmap(const Bitmap & src_bmp, const Rect & r)
-        : original_bpp(src_bmp.original_bpp)
-        , cx(align4(r.cx))
-        , cy(r.cy)
-        , line_size(this->cx * nbbytes(this->original_bpp))
-        , bmp_size(this->line_size * this->cy)
-        , data_compressed_size(0)
+    : data_bitmap(src_bmp.data_bitmap)
     {
         //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
-        if (this->original_bpp == 8){
-            memcpy(this->original_palette, src_bmp.original_palette, sizeof(BGRPalette));
-        }
 
-        if (0 == r.x && 0 == r.y && this->cx == src_bmp.cx && this->cy == src_bmp.cy) {
-            this->data_bitmap.use(src_bmp.data_bitmap);
-
+        if (0 == r.x && 0 == r.y && this->cx() == src_bmp.cx() && this->cy() == src_bmp.cy()) {
+            this->data_bitmap->inc();
             return ;
         }
 
-        this->data_bitmap.alloc(this->bmp_size);
+        this->data_bitmap = DataBitmap::construct(src_bmp.original_bpp(), r.cx, r.cy);
+        if (this->original_bpp() == 8){
+            memcpy(this->data_bitmap->palette(), src_bmp.data_bitmap->palette(), sizeof(BGRPalette));
+        }
 
         // bitmapDataStream (variable): A variable-sized array of bytes.
         //  Uncompressed bitmap data represents a bitmap as a bottom-up,
@@ -196,34 +318,30 @@ public:
         // In redemption we ensure a more constraint restriction to avoid padding
         // bitmap width must always be a multiple of 4
 
-        const uint8_t Bpp = nbbytes(this->original_bpp);
-        uint8_t *dest = this->data_bitmap.get();
-        const uint8_t *src = src_bmp.data_bitmap.get() + src_bmp.line_size * (src_bmp.cy - r.y - this->cy) + r.x * Bpp;
-        const unsigned line_to_copy = r.cx * nbbytes(src_bmp.original_bpp);
+        const uint8_t Bpp = nbbytes(this->original_bpp());
+        uint8_t *dest = this->data_bitmap->get();
+        const size_t line_size = this->line_size();
+        const size_t src_line_size = src_bmp.line_size();
+        const uint16_t cy = this->cy();
+        const uint16_t src_cy = src_bmp.cy();
+        const uint8_t *src = src_bmp.data_bitmap->get() + src_line_size * (src_cy - r.y - cy) + r.x * Bpp;
+        const unsigned line_to_copy = r.cx * Bpp;
 
-        for (unsigned i = 0; i < this->cy; i++) {
+        for (uint16_t i = 0; i < cy; i++) {
             memcpy(dest, src, line_to_copy);
-            if (line_to_copy < this->line_size){
-                memset(dest + line_to_copy, 0, this->line_size - line_to_copy);
+            if (line_to_copy < line_size){
+                memset(dest + line_to_copy, 0, line_size - line_to_copy);
             }
-            src += src_bmp.line_size;
-            dest += this->line_size;
+            src += src_line_size;
+            dest += line_size;
         }
     }
 
     TODO("add palette support")
-    Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, uint8_t vnc_bpp, const Rect & tile)
-        : original_bpp(vnc_bpp)
-        , cx(align4(tile.cx))
-        , cy(tile.cy)
-        , line_size(align4(this->cx * nbbytes(this->original_bpp)))
-        , bmp_size(this->line_size * this->cy)
-        , data_compressed_size(0)
-
+    Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t /*vnc_cy*/, uint8_t vnc_bpp, const Rect & tile)
+    : data_bitmap(DataBitmap::construct(vnc_bpp, tile.cx, tile.cy))
     {
         //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
-
-        this->data_bitmap.alloc(this->bmp_size);
 
         // raw: vnc data is a bunch of pixels of size cx * cy * nbbytes(bpp)
         // line 0 is the first line (top-up)
@@ -234,34 +352,30 @@ public:
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        const uint8_t Bpp = nbbytes(this->original_bpp);
+        const uint8_t Bpp = nbbytes(this->original_bpp());
         const unsigned src_row_size = vnc_cx * Bpp;
-        uint8_t *dest = this->data_bitmap.get();
+        uint8_t *dest = this->data_bitmap->get();
         const uint8_t *src = vnc_raw + src_row_size * (tile.y + tile.cy - 1) + tile.x * Bpp;
         const uint16_t line_to_copy_size = tile.cx * Bpp;
+        const size_t line_size = this->line_size();
+        const uint16_t cy = this->cy();
 
-        for (unsigned i = 0; i < this->cy; i++) {
+        for (uint16_t i = 0; i < cy; i++) {
             memcpy(dest, src, line_to_copy_size);
-            if (line_to_copy_size < this->line_size){
-                memset(dest + line_to_copy_size, 0, this->line_size - line_to_copy_size);
+            if (line_to_copy_size < line_size){
+                memset(dest + line_to_copy_size, 0, line_size - line_to_copy_size);
             }
             src -= src_row_size;
-            dest += this->line_size;
+            dest += line_size;
         }
     }
 
     Bitmap(const char* filename)
-        : original_bpp(24)
-        , cx(0)
-        , cy(0)
-        , line_size(0)
-        , bmp_size(0)
-        , data_compressed_size(0)
-
+    : data_bitmap(0)
     {
         //LOG(LOG_INFO, "loading bitmap %s", filename);
 
-        openfile_t res = this->check_file_type(filename);
+        openfile_t res = check_file_type(filename);
 
         if (res == OPEN_FILE_UNKNOWN) {
             LOG(LOG_ERR, "loading bitmap %s failed, Unknown format type", filename);
@@ -433,16 +547,13 @@ public:
             }
 
             const uint8_t Bpp = 3;
-            this->cx = align4(static_cast<uint16_t>(header.image_width));
-            this->cy = static_cast<uint16_t>(header.image_height);
-            this->line_size = this->cx * Bpp;
-            this->bmp_size = this->line_size * this->cy;
+            this->data_bitmap = DataBitmap::construct(
+                24, static_cast<uint16_t>(header.image_width), static_cast<uint16_t>(header.image_height));
+            uint8_t * dest = this->data_bitmap->get();
 
-            this->data_bitmap.alloc(this->bmp_size);
-            uint8_t * dest = this->data_bitmap.get();
-
+            const size_t line_size = this->line_size();
             int k = 0;
-            for (unsigned y = 0; y < this->cy ; y++) {
+            for (unsigned y = 0; y < header.image_height ; y++) {
                 for (unsigned x = 0 ; x < header.image_width; x++) {
                     uint32_t pixel = 0;
                     switch (header.bit_count){
@@ -471,21 +582,17 @@ public:
 
                     uint32_t px = color_decode(pixel, static_cast<uint8_t>(header.bit_count),
                                                palette1);
-                    ::out_bytes_le(dest + y * this->line_size + x * Bpp, Bpp, px);
+                    ::out_bytes_le(dest + y * line_size + x * Bpp, Bpp, px);
                 }
-                if (this->line_size > header.image_width * Bpp){
-                    memset(dest + y * this->line_size + header.image_width * Bpp,
+                if (line_size > header.image_width * Bpp){
+                    memset(dest + y * line_size + header.image_width * Bpp,
                            0,
-                           this->line_size - header.image_width * Bpp);
+                           line_size - header.image_width * Bpp);
                 }
             }
         }
     }
 
-    const uint8_t* data() const
-    {
-        return this->data_bitmap.get();
-    }
 
     enum openfile_t {
         OPEN_FILE_UNKNOWN,
@@ -493,7 +600,7 @@ public:
         OPEN_FILE_PNG
     };
 
-    openfile_t check_file_type(const char * filename) {
+    static openfile_t check_file_type(const char * filename) {
         openfile_t res = OPEN_FILE_UNKNOWN;
         char type1[8];
         int fd = open(filename, O_RDONLY);
@@ -521,9 +628,39 @@ public:
         close(fd);
 
         return res;
-    } // openfile_t check_file_type(const char * filename)
+    }
+
+    const uint8_t* data() const {
+        return this->data_bitmap->get();
+    }
+
+    const BGRPalette & palette() const {
+        return this->data_bitmap->palette();
+    }
+
+    uint16_t cx() const {
+        return this->data_bitmap->cx();
+    }
+
+    uint16_t cy() const {
+        return this->data_bitmap->cy();
+    }
+
+    size_t line_size() const {
+        return this->data_bitmap->line_size();
+    }
+
+    uint8_t original_bpp() const {
+        return this->data_bitmap->bpp();
+    }
+
+    size_t bmp_size() const {
+        return this->data_bitmap->bmp_size();
+    }
 
     bool open_png_file(const char * filename) {
+        this->reset();
+
         png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
                                                      NULL, NULL, NULL);
         if (!png_ptr) {
@@ -580,11 +717,16 @@ public:
         png_read_update_info(png_ptr, info_ptr);
 
         TODO("Looks like there's a shift when width is not divisible by 4");
-        png_bytep * row_pointers = static_cast<png_bytep *>(malloc(sizeof(png_bytep) * height));
         png_uint_32 rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+        if (static_cast<uint16_t>(width) * 3 != rowbytes) {
+            LOG(LOG_ERR, "PNG Image has bad type");
+            png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+            return false;
+        }
+        this->data_bitmap = DataBitmap::construct(24, static_cast<uint16_t>(width), static_cast<uint16_t>(height));
         png_uint_32 img_size = rowbytes * height;
-        this->data_bitmap.alloc(img_size);
-        png_bytep row = this->data_bitmap.get() + img_size - rowbytes;
+        png_bytep row = this->data_bitmap->get() + img_size - rowbytes;
+        png_bytep * row_pointers = new png_bytep[height];
         for (uint i = 0; i < height; ++i) {
             row_pointers[i] = row - i * rowbytes;
         }
@@ -592,37 +734,16 @@ public:
         png_read_end(png_ptr, info_ptr);
         png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
         fclose(fd);
-        free(row_pointers);
+        delete [] row_pointers;
 
-        int Bpp = 3;
-        this->cx = static_cast<uint16_t>(width);
-        this->cy = static_cast<uint16_t>(height);
-        this->line_size = this->cx * Bpp;
-        this->bmp_size = this->line_size * this->cy;
-        if (this->line_size != rowbytes) {
-            LOG(LOG_ERR, "PNG Image has bad type");
-            return false;
-        }
-
-        // this->data_bitmap.alloc(this->bmp_size);
-        // uint8_t * row = this->data_bitmap.get() + this->bmp_size;
-        // for (size_t k = 0 ; k < this->cy ; ++k) {
-        //     row -= this->line_size;
-        //     png_read_row(png_ptr, row, NULL);
-        // }
-        // png_read_end(png_ptr, info_ptr);
-        // png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-        // fclose(fd);
-
-        // hexdump_d(this->data_bitmap.get(), this->bmp_size);
+        // hexdump_d(this->data_bitmap->get(), this->bmp_size);
 
         return true;
-    } // bool open_png_file2(const char * filename)
+    } // bool open_png_file(const char * filename)
 
 
 private:
-    TODO("move that function to external definition")
-
+    //TODO("move that function to external definition")
     //const char * get_opcode(uint8_t opcode){
     //    enum {
     //        FILL    = 0,
@@ -671,10 +792,11 @@ private:
 
     void decompress(const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size) const
     {
-        const uint8_t Bpp = nbbytes(this->original_bpp);
-        const uint16_t & dst_cx = this->cx;
-        uint8_t* pmin = this->data_bitmap.get();
-        uint8_t* pmax = pmin + this->bmp_size;
+        const uint8_t Bpp = nbbytes(this->original_bpp());
+        const uint16_t dst_cx = this->cx();
+        uint8_t* pmin = this->data_bitmap->get();
+        uint8_t* pmax = pmin + this->bmp_size();
+        const size_t line_size = this->line_size();
         uint16_t out_x_count = 0;
         unsigned yprev = 0;
         uint8_t* out = pmin;
@@ -839,8 +961,8 @@ private:
             // MAGIC MIX of one pixel to comply with crap in Bitmap RLE compression
             if ((opcode == FILL)
             && (opcode == lastopcode)
-            && (out != pmin + this->line_size)){
-                yprev = (out - this->line_size < pmin) ? 0 : this->get_pixel(Bpp, out - this->line_size);
+            && (out != pmin + line_size)){
+                yprev = (out - line_size < pmin) ? 0 : this->get_pixel(Bpp, out - line_size);
                 out_bytes_le(out, Bpp, yprev ^ mix);
                 count--;
                 out += Bpp;
@@ -860,7 +982,7 @@ private:
                     LOG(LOG_WARNING, "Decompressed bitmap too large. Dying.");
                     throw Error(ERR_BITMAP_DECOMPRESSED_DATA_TOO_LARGE);
                 }
-                yprev = (out - this->line_size < pmin) ? 0 : this->get_pixel(Bpp, out - this->line_size);
+                yprev = (out - line_size < pmin) ? 0 : this->get_pixel(Bpp, out - line_size);
 
                 switch (opcode) {
                 case FILL:
@@ -1143,6 +1265,7 @@ public:
         }
     }
 
+private:
     static inline void in_copy_color_plan(uint16_t src_cx, uint16_t src_cy, const uint8_t * & data,
          size_t & data_size, uint16_t cx, uint8_t * color_plane)
     {
@@ -1161,7 +1284,7 @@ public:
     {
         //LOG(LOG_INFO, "bmp decompress60: cx=%u cy=%u data_size=%u", src_cx, src_cy, data_size);
 
-        REDASSERT((this->original_bpp == 24) || (this->original_bpp == 32));
+        REDASSERT((this->original_bpp() == 24) || (this->original_bpp() == 32));
 
         //LOG(LOG_INFO, "data_size=%u src_cx=%u src_cy=%u", data_size, src_cx, src_cy);
         //hexdump_d(data, data_size);
@@ -1182,7 +1305,10 @@ public:
             return;
         }
 
-        const uint32_t color_plane_size = sizeof(uint8_t) * this->cx * this->cy;
+        const uint16_t cx = this->cx();
+        const uint16_t cy = this->cy();
+
+        const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
 
         uint8_t * mem_color   = static_cast<uint8_t *>(alloca(color_plane_size * 3));
         uint8_t * red_plane   = mem_color + color_plane_size * 0;
@@ -1191,12 +1317,12 @@ public:
 
         if (rle) {
             if (!no_alpha_plane) {
-                this->decompress_color_plane(src_cx, src_cy, data, data_size, this->cx, red_plane);
+                this->decompress_color_plane(src_cx, src_cy, data, data_size, cx, red_plane);
             }
 
-            this->decompress_color_plane(src_cx, src_cy, data, data_size, this->cx, red_plane);
-            this->decompress_color_plane(src_cx, src_cy, data, data_size, this->cx, green_plane);
-            this->decompress_color_plane(src_cx, src_cy, data, data_size, this->cx, blue_plane);
+            this->decompress_color_plane(src_cx, src_cy, data, data_size, cx, red_plane);
+            this->decompress_color_plane(src_cx, src_cy, data, data_size, cx, green_plane);
+            this->decompress_color_plane(src_cx, src_cy, data, data_size, cx, blue_plane);
         }
         else {
             if (!no_alpha_plane) {
@@ -1205,9 +1331,9 @@ public:
                 data_size -= size;
             }
 
-            this->in_copy_color_plan(src_cx, src_cy, data, data_size, this->cx, red_plane);
-            this->in_copy_color_plan(src_cx, src_cy, data, data_size, this->cx, green_plane);
-            this->in_copy_color_plan(src_cx, src_cy, data, data_size, this->cx, blue_plane);
+            this->in_copy_color_plan(src_cx, src_cy, data, data_size, cx, red_plane);
+            this->in_copy_color_plan(src_cx, src_cy, data, data_size, cx, green_plane);
+            this->in_copy_color_plan(src_cx, src_cy, data, data_size, cx, blue_plane);
 
             data_size--;    // Pad
         }
@@ -1219,11 +1345,11 @@ public:
         uint8_t * r     = red_plane;
         uint8_t * g     = green_plane;
         uint8_t * b     = blue_plane;
-        uint8_t * pixel = this->data_bitmap.get();
-        uint8_t   bpp   = nbbytes(this->original_bpp);
+        uint8_t * pixel = this->data_bitmap->get();
+        uint8_t   bpp   = nbbytes(this->original_bpp());
 
-        for (uint16_t y = 0; y < this->cy; y++) {
-            for (uint16_t x = 0; x < this->cx; x++) {
+        for (uint16_t y = 0; y < cy; y++) {
+            for (uint16_t x = 0; x < cx; x++) {
                 uint32_t color = (0xFF << 24) | ((*r++) << 16) | ((*g++) << 8) | (*b++);
 
                 ::out_bytes_le(pixel, bpp, color);
@@ -1253,9 +1379,9 @@ public:
 
     unsigned get_pixel_above(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * const p) const
     {
-        return ((p-this->line_size) < pmin)
+        return ((p-this->line_size()) < pmin)
         ? 0
-        : this->get_pixel(Bpp, p - this->line_size);
+        : this->get_pixel(Bpp, p - this->line_size());
     }
 
     unsigned get_color_count(const uint8_t Bpp, const uint8_t * pmax, const uint8_t * p, unsigned color) const
@@ -1391,12 +1517,12 @@ public:
     TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")
     void compress(uint8_t session_color_depth, Stream & outbuffer) const
     {
-        if (this->data_compressed) {
-            outbuffer.out_copy_bytes(this->data_compressed.get(), this->data_compressed_size);
+        if (this->data_bitmap->compressed_size()) {
+            outbuffer.out_copy_bytes(this->data_bitmap->compressed_data(), this->data_bitmap->compressed_size());
             return;
         }
 
-        if ((session_color_depth == 32) && ((this->original_bpp == 24) || (this->original_bpp == 32))) {
+        if ((session_color_depth == 32) && ((this->original_bpp() == 24) || (this->original_bpp() == 32))) {
             return this->compress60(outbuffer);
         }
 
@@ -1404,8 +1530,7 @@ public:
             Stream & stream;
             RLE_OutStream(Stream & outbuffer)
             : stream(outbuffer)
-            {
-            }
+            {}
 
             // =========================================================================
             // Helper methods for RDP RLE bitmap compression support
@@ -1779,8 +1904,8 @@ public:
 
         uint8_t * tmp_data_compressed = out.stream.p;
 
-        const uint8_t Bpp = nbbytes(this->original_bpp);
-        const uint8_t * pmin = this->data_bitmap.get();
+        const uint8_t Bpp = nbbytes(this->original_bpp());
+        const uint8_t * pmin = this->data_bitmap->get();
         const uint8_t * p = pmin;
 
         // white with the right length : either 0xFF or 0xFFFF or 0xFFFFFF
@@ -1794,6 +1919,9 @@ public:
         uint32_t color = 0;
         uint32_t color2 = 0;
 
+        const size_t bmp_size = this->bmp_size();
+        const size_t align4_cx_bpp = align4(this->cx() * Bpp);
+
         for (int part = 0 ; part < 2 ; part++){
             // As far as I can see the specs of bitmap RLE compressor is crap here
             // Fill orders between first scanline and all others must be splitted
@@ -1804,10 +1932,10 @@ public:
             // orders, a magic MIX pixel is inserted between fills.
             // This explains the surprising loop above and the test below.pp
             if (part){
-                pmax = pmin + this->bmp_size;
+                pmax = pmin + bmp_size;
             }
             else {
-                pmax = pmin + align4(this->cx * nbbytes(this->original_bpp));
+                pmax = pmin + align4_cx_bpp;
             }
             while (p < pmax)
             {
@@ -1925,11 +2053,7 @@ public:
         }
 
         // Memoize result of compression
-        this->data_compressed_size = out.stream.p - tmp_data_compressed;
-        this->data_compressed.reset(new uint8_t[this->data_compressed_size]);
-        if (this->data_compressed) {
-            memcpy(this->data_compressed.get(), tmp_data_compressed, this->data_compressed_size);
-        }
+        this->data_bitmap->copy_compressed_buffer(tmp_data_compressed, out.stream.p - tmp_data_compressed);
     }
 
     static void get_run(const uint8_t * data, uint16_t data_size, uint8_t last_raw, uint32_t & run_length,
@@ -2110,26 +2234,29 @@ private:
     void compress60(Stream & outbuffer) const {
         //LOG(LOG_INFO, "bmp compress60");
 
-        REDASSERT((this->original_bpp == 24) || (this->original_bpp == 32));
+        REDASSERT((this->original_bpp() == 24) || (this->original_bpp() == 32));
 
         uint8_t * tmp_data_compressed = outbuffer.p;
 
-        const uint32_t color_plane_size = sizeof(uint8_t) * this->cx * this->cy;
+        const uint16_t cx = this->cx();
+        const uint16_t cy = this->cy();
+
+        const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
 
         uint8_t * mem_color   = static_cast<uint8_t *>(alloca(color_plane_size * 3));
         uint8_t * red_plane   = mem_color + color_plane_size * 0;
         uint8_t * green_plane = mem_color + color_plane_size * 1;
         uint8_t * blue_plane  = mem_color + color_plane_size * 2;
 
-        const uint8_t   byte_per_color = nbbytes(this->original_bpp);
-        const uint8_t * data = this->data_bitmap.get();
+        const uint8_t   byte_per_color = nbbytes(this->original_bpp());
+        const uint8_t * data = this->data_bitmap->get();
 
         uint8_t * pixel_over_red_plane   = red_plane;
         uint8_t * pixel_over_green_plane = green_plane;
         uint8_t * pixel_over_blue_plane  = blue_plane;
 
-        for (size_t y = 0; y < this->cy; y++) {
-            for (size_t x = 0; x < this->cx; x++) {
+        for (uint16_t y = 0; y < cy; y++) {
+            for (uint16_t x = 0; x < cx; x++) {
                 uint32_t pixel = in_uint32_from_nb_bytes_le(byte_per_color, data);
 
                 uint8_t b =  ( pixel        & 0xFF);
@@ -2163,61 +2290,44 @@ private:
               (1 << 5)  // No alpha plane
             | (1 << 4)  // RLE
             );
-        this->compress_color_plane(this->cx, this->cy, outbuffer, red_plane);
-        this->compress_color_plane(this->cx, this->cy, outbuffer, green_plane);
-        this->compress_color_plane(this->cx, this->cy, outbuffer, blue_plane);
+        this->compress_color_plane(cx, cy, outbuffer, red_plane);
+        this->compress_color_plane(cx, cy, outbuffer, green_plane);
+        this->compress_color_plane(cx, cy, outbuffer, blue_plane);
 
         // Memoize result of compression
-        this->data_compressed_size = outbuffer.p - tmp_data_compressed;
-        //LOG(LOG_INFO, "data_compressed_size=%u", this->data_compressed_size);
-        this->data_compressed.reset(new uint8_t[this->data_compressed_size]);
-        if (this->data_compressed) {
-            memcpy(this->data_compressed.get(), tmp_data_compressed, this->data_compressed_size);
-        }
-
+        this->data_bitmap->copy_compressed_buffer(tmp_data_compressed, outbuffer.p - tmp_data_compressed);
+        //LOG(LOG_INFO, "data_compressedsize=%u", this->data_compressedsize);
         //LOG(LOG_INFO, "bmp compress60: done");
     }
 
 public:
     void compute_sha1(uint8_t (&sig)[20]) const
     {
-        SslSha1 sha1;
-        if (this->original_bpp == 8) {
-            sha1.update(reinterpret_cast<const uint8_t *>(this->original_palette),
-                sizeof(this->original_palette));
-        }
-        sha1.update(&this->original_bpp, sizeof(this->original_bpp));
-        sha1.update(reinterpret_cast<const uint8_t *>(&this->cx), sizeof(this->cx));
-        sha1.update(reinterpret_cast<const uint8_t *>(&this->cy), sizeof(this->cy));
-        uint16_t rowsize = static_cast<uint16_t>(this->cx * nbbytes(this->original_bpp));
-        for (size_t y = 0; y < static_cast<size_t>(this->cy); y++){
-            sha1.update(this->data_bitmap.get() + y * rowsize, rowsize);
-        }
-        sha1.final(sig, 20);
+        this->data_bitmap->copy_sha1(sig);
+    }
+
+    static size_t compute_bmp_size(uint8_t bpp, uint16_t cx, uint16_t cy)
+    {
+        return DataBitmap::compute_bmp_size(bpp, cx, cy);
     }
 
     Bitmap(uint8_t out_bpp, const Bitmap& bmp)
-    : original_bpp(out_bpp)
-    , cx(align4(bmp.cx))
-    , cy(bmp.cy)
-    , line_size(this->cx * nbbytes(this->original_bpp))
-    , bmp_size(this->line_size * cy)
-    , data_compressed_size(0)
     {
         //LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
 
-        if (out_bpp != bmp.original_bpp) {
-            this->data_bitmap.alloc(this->bmp_size);
-            uint8_t * dest = this->data_bitmap.get();
-            const uint8_t * src = bmp.data_bitmap.get();
-            const uint8_t src_nbbytes = nbbytes(bmp.original_bpp);
+        if (out_bpp != bmp.original_bpp()) {
+            this->data_bitmap = DataBitmap::construct(out_bpp, bmp.cx(), bmp.cy());
+
+            uint8_t * dest = this->data_bitmap->get();
+            const uint8_t * src = bmp.data_bitmap->get();
+            const uint8_t src_nbbytes = nbbytes(bmp.original_bpp());
             const uint8_t Bpp = nbbytes(out_bpp);
 
-            for (size_t y = 0; y < bmp.cy ; y++) {
-                for (size_t x = 0; x < bmp.cx ; x++) {
+            for (size_t y = 0; y < bmp.cy() ; y++) {
+                for (size_t x = 0; x < bmp.cx() ; x++) {
                     uint32_t pixel = in_uint32_from_nb_bytes_le(src_nbbytes, src);
 
-                    pixel = color_decode(pixel, bmp.original_bpp, bmp.original_palette);
+                    pixel = color_decode(pixel, bmp.original_bpp(), bmp.palette());
                     if (out_bpp == 16 || out_bpp == 15 || out_bpp == 8){
                         pixel = RGBtoBGR(pixel);
                     }
@@ -2227,54 +2337,51 @@ public:
                     src += src_nbbytes;
                     dest += Bpp;
                 }
-                TODO("padding code should not be necessary as source bmp width is already aligned");
-                if (this->line_size < bmp.cx * Bpp){
-                    uint16_t padding = this->line_size - bmp.cx * Bpp;
-                    memset(dest, 0, padding);
-                    dest += padding;
-                }
-                TODO("padding code should not be necessary for source either as source bmp width is already aligned");
-                src += bmp.line_size - bmp.cx * nbbytes(bmp.original_bpp);
+                //TODO("padding code should not be necessary as source bmp width is already aligned");
+                //if (this->line_size < bmp.cx() * Bpp){
+                //    uint16_t padding = this->line_size - bmp.cx() * Bpp;
+                //    memset(dest, 0, padding);
+                //    dest += padding;
+                //}
+                //TODO("padding code should not be necessary for source either as source bmp width is already aligned");
+                //src += bmp.line_size - bmp.cx * src_nbbytes;
             }
         }
         else {
-            this->data_bitmap.use(bmp.data_bitmap);
+            this->data_bitmap = bmp.data_bitmap;
+            this->data_bitmap->inc();
         }
 
         if (out_bpp == 8){
-            if (bmp.original_palette){
-                memcpy(&this->original_palette, bmp.original_palette, sizeof(BGRPalette));
-            }
-            else {
-                init_palette332(this->original_palette);
-            }
+            memcpy(this->data_bitmap->palette(), bmp.data_bitmap->palette(), sizeof(BGRPalette));
         }
     }
 
-    Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy)
-        : original_bpp(bpp)
-        , cx(align4(cx))
-        , cy(cy)
-        , line_size(this->cx * nbbytes(this->original_bpp))
-        , bmp_size(this->line_size * cy)
-        , data_compressed_size(0)
-    {
-        this->data_bitmap.alloc(this->bmp_size);
-        //LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
-        if (bpp == 8){
-            if (palette){
-                memcpy(&this->original_palette, palette, sizeof(BGRPalette));
-            }
-            else {
-                init_palette332(this->original_palette);
-            }
-        }
+//     TODO
+//     Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy)
+//         : original_bpp(bpp)
+//         , cx(align4(cx))
+//         , cy(cy)
+//         , line_size(this->cx * nbbytes(this->original_bpp))
+//         , bmp_size(this->line_size * cy)
+//     {
+//         this->data_bitmap->alloc(this->bmp_size);
+//         //LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
+//         if (bpp == 8){
+//             if (palette){
+//                 memcpy(this->data_bitmap->palette(), palette, sizeof(BGRPalette));
+//             }
+//             else {
+//                 init_palette332(this->data_bitmap->palette());
+//             }
+//         }
+//
+//         if (this->cx <= 0 || this->cy <= 0){
+//             LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u bpp=%u", this->cx, this->cy, this->original_bpp);
+//         }
+//     }
 
-        if (this->cx <= 0 || this->cy <= 0){
-            LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u bpp=%u", this->cx, this->cy, this->original_bpp);
-        }
-    }
-
+private:
     void load_error_bitmap() {
         const uint8_t errorbmp[] = {
 /* 0000 */ 0x00, 0x00, 0x00, 0x2d, 0x2d, 0xb6, 0x30, 0x30, 0xb8, 0x20, 0x20, 0x80, 0x07, 0x07, 0x33, 0x00,  // ...--.00.  ...3.
@@ -2326,18 +2433,19 @@ public:
 /* 02e0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................
 /* 02f0 */ 0x00, 0x08, 0x08, 0xcf, 0x0a, 0x0a, 0xcf, 0x06, 0x06, 0xbe, 0x02, 0x02, 0xa9, 0x00, 0x00, 0x00  // ................
         };
-        this->data_bitmap.reset();
-        this->data_bitmap.alloc(sizeof(errorbmp));
-        memcpy(this->data_bitmap.get(), errorbmp, sizeof(errorbmp));
-        this->cx = 16;
-        this->cy = 16;
-        this->line_size = 16 * 3;
-        this->bmp_size = this->line_size * this->cy;
+
+        REDASSERT(!this->data_bitmap);
+
+        this->data_bitmap = DataBitmap::construct(24, 16, 16);
+        memcpy(this->data_bitmap->get(), errorbmp, sizeof(errorbmp));
     }
 
 private:
-    Bitmap(const Bitmap &);
     Bitmap&operator=(const Bitmap &);
 };
+
+void swap(Bitmap & a, Bitmap & b) /*noexcept*/ {
+    a.swap(b);
+}
 
 #endif
