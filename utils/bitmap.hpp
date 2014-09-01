@@ -214,6 +214,14 @@ public:
     : data_bitmap(0)
     {}
 
+    Bitmap & operator=(const Bitmap & other)
+    {
+        other.data_bitmap->inc();
+        this->reset();
+        this->data_bitmap = other.data_bitmap;
+        return *this;
+    }
+
     bool is_valid() const {
         return this->data_bitmap;
     }
@@ -297,15 +305,15 @@ public:
     Bitmap(const Bitmap & src_bmp, const Rect & r)
     : data_bitmap(src_bmp.data_bitmap)
     {
-        //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
+        //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
 
         if (0 == r.x && 0 == r.y && this->cx() == src_bmp.cx() && this->cy() == src_bmp.cy()) {
             this->data_bitmap->inc();
             return ;
         }
 
-        this->data_bitmap = DataBitmap::construct(src_bmp.original_bpp(), r.cx, r.cy);
-        if (this->original_bpp() == 8){
+        this->data_bitmap = DataBitmap::construct(src_bmp.bpp(), r.cx, r.cy);
+        if (this->bpp() == 8){
             memcpy(this->data_bitmap->palette(), src_bmp.data_bitmap->palette(), sizeof(BGRPalette));
         }
 
@@ -318,7 +326,7 @@ public:
         // In redemption we ensure a more constraint restriction to avoid padding
         // bitmap width must always be a multiple of 4
 
-        const uint8_t Bpp = nbbytes(this->original_bpp());
+        const uint8_t Bpp = nbbytes(this->bpp());
         uint8_t *dest = this->data_bitmap->get();
         const size_t line_size = this->line_size();
         const size_t src_line_size = src_bmp.line_size();
@@ -341,7 +349,7 @@ public:
     Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t /*vnc_cy*/, uint8_t vnc_bpp, const Rect & tile)
     : data_bitmap(DataBitmap::construct(vnc_bpp, tile.cx, tile.cy))
     {
-        //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
+        //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
 
         // raw: vnc data is a bunch of pixels of size cx * cy * nbbytes(bpp)
         // line 0 is the first line (top-up)
@@ -352,7 +360,7 @@ public:
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        const uint8_t Bpp = nbbytes(this->original_bpp());
+        const uint8_t Bpp = nbbytes(this->bpp());
         const unsigned src_row_size = vnc_cx * Bpp;
         uint8_t *dest = this->data_bitmap->get();
         const uint8_t *src = vnc_raw + src_row_size * (tile.y + tile.cy - 1) + tile.x * Bpp;
@@ -650,7 +658,7 @@ public:
         return this->data_bitmap->line_size();
     }
 
-    uint8_t original_bpp() const {
+    uint8_t bpp() const {
         return this->data_bitmap->bpp();
     }
 
@@ -792,7 +800,7 @@ private:
 
     void decompress(const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size) const
     {
-        const uint8_t Bpp = nbbytes(this->original_bpp());
+        const uint8_t Bpp = nbbytes(this->bpp());
         const uint16_t dst_cx = this->cx();
         uint8_t* pmin = this->data_bitmap->get();
         uint8_t* pmax = pmin + this->bmp_size();
@@ -1284,7 +1292,7 @@ private:
     {
         //LOG(LOG_INFO, "bmp decompress60: cx=%u cy=%u data_size=%u", src_cx, src_cy, data_size);
 
-        REDASSERT((this->original_bpp() == 24) || (this->original_bpp() == 32));
+        REDASSERT((this->bpp() == 24) || (this->bpp() == 32));
 
         //LOG(LOG_INFO, "data_size=%u src_cx=%u src_cy=%u", data_size, src_cx, src_cy);
         //hexdump_d(data, data_size);
@@ -1346,7 +1354,7 @@ private:
         uint8_t * g     = green_plane;
         uint8_t * b     = blue_plane;
         uint8_t * pixel = this->data_bitmap->get();
-        uint8_t   bpp   = nbbytes(this->original_bpp());
+        uint8_t   bpp   = nbbytes(this->bpp());
 
         for (uint16_t y = 0; y < cy; y++) {
             for (uint16_t x = 0; x < cx; x++) {
@@ -1522,7 +1530,7 @@ public:
             return;
         }
 
-        if ((session_color_depth == 32) && ((this->original_bpp() == 24) || (this->original_bpp() == 32))) {
+        if ((session_color_depth == 32) && ((this->bpp() == 24) || (this->bpp() == 32))) {
             return this->compress60(outbuffer);
         }
 
@@ -1904,7 +1912,7 @@ public:
 
         uint8_t * tmp_data_compressed = out.stream.p;
 
-        const uint8_t Bpp = nbbytes(this->original_bpp());
+        const uint8_t Bpp = nbbytes(this->bpp());
         const uint8_t * pmin = this->data_bitmap->get();
         const uint8_t * p = pmin;
 
@@ -2234,7 +2242,7 @@ private:
     void compress60(Stream & outbuffer) const {
         //LOG(LOG_INFO, "bmp compress60");
 
-        REDASSERT((this->original_bpp() == 24) || (this->original_bpp() == 32));
+        REDASSERT((this->bpp() == 24) || (this->bpp() == 32));
 
         uint8_t * tmp_data_compressed = outbuffer.p;
 
@@ -2248,7 +2256,7 @@ private:
         uint8_t * green_plane = mem_color + color_plane_size * 1;
         uint8_t * blue_plane  = mem_color + color_plane_size * 2;
 
-        const uint8_t   byte_per_color = nbbytes(this->original_bpp());
+        const uint8_t   byte_per_color = nbbytes(this->bpp());
         const uint8_t * data = this->data_bitmap->get();
 
         uint8_t * pixel_over_red_plane   = red_plane;
@@ -2313,21 +2321,21 @@ public:
 
     Bitmap(uint8_t out_bpp, const Bitmap& bmp)
     {
-        //LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
+        //LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
 
-        if (out_bpp != bmp.original_bpp()) {
+        if (out_bpp != bmp.bpp()) {
             this->data_bitmap = DataBitmap::construct(out_bpp, bmp.cx(), bmp.cy());
 
             uint8_t * dest = this->data_bitmap->get();
             const uint8_t * src = bmp.data_bitmap->get();
-            const uint8_t src_nbbytes = nbbytes(bmp.original_bpp());
+            const uint8_t src_nbbytes = nbbytes(bmp.bpp());
             const uint8_t Bpp = nbbytes(out_bpp);
 
             for (size_t y = 0; y < bmp.cy() ; y++) {
                 for (size_t x = 0; x < bmp.cx() ; x++) {
                     uint32_t pixel = in_uint32_from_nb_bytes_le(src_nbbytes, src);
 
-                    pixel = color_decode(pixel, bmp.original_bpp(), bmp.palette());
+                    pixel = color_decode(pixel, bmp.bpp(), bmp.palette());
                     if (out_bpp == 16 || out_bpp == 15 || out_bpp == 8){
                         pixel = RGBtoBGR(pixel);
                     }
@@ -2353,16 +2361,21 @@ public:
         }
 
         if (out_bpp == 8){
-            memcpy(this->data_bitmap->palette(), bmp.data_bitmap->palette(), sizeof(BGRPalette));
+            if (bmp.bpp() == 8) {
+                memcpy(this->data_bitmap->palette(), bmp.data_bitmap->palette(), sizeof(BGRPalette));
+            }
+            else {
+                init_palette332(this->data_bitmap->palette());
+            }
         }
     }
 
 //     TODO
 //     Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy)
-//         : original_bpp(bpp)
+//         : bpp(bpp)
 //         , cx(align4(cx))
 //         , cy(cy)
-//         , line_size(this->cx * nbbytes(this->original_bpp))
+//         , line_size(this->cx * nbbytes(this->bpp))
 //         , bmp_size(this->line_size * cy)
 //     {
 //         this->data_bitmap->alloc(this->bmp_size);
@@ -2377,7 +2390,7 @@ public:
 //         }
 //
 //         if (this->cx <= 0 || this->cy <= 0){
-//             LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u bpp=%u", this->cx, this->cy, this->original_bpp);
+//             LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u bpp=%u", this->cx, this->cy, this->bpp);
 //         }
 //     }
 
@@ -2439,9 +2452,6 @@ private:
         this->data_bitmap = DataBitmap::construct(24, 16, 16);
         memcpy(this->data_bitmap->get(), errorbmp, sizeof(errorbmp));
     }
-
-private:
-    Bitmap&operator=(const Bitmap &);
 };
 
 void swap(Bitmap & a, Bitmap & b) /*noexcept*/ {
