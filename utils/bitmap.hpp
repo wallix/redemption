@@ -108,10 +108,7 @@ class Bitmap
 
         ~DataBitmap()
         {
-            void * p = this->data_compressed_;
-            if (p > this->ptr_ || this < p) {
-                delete [] this->data_compressed_;
-            }
+            delete [] this->data_compressed_;
         }
 
         DataBitmap(DataBitmap const &);
