@@ -943,6 +943,8 @@ public:
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
 
+            this->flush();
+
             if (this->server_fastpath_update_support == false) {
                 BStream stream(65536);
 
