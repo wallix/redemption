@@ -332,7 +332,7 @@ public:
     {
         //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
 
-        if (0 == r.x && 0 == r.y && this->cx() == src_bmp.cx() && this->cy() == src_bmp.cy()) {
+        if (0 == r.x && 0 == r.y && r.cx == src_bmp.cx() && r.cy == src_bmp.cy()) {
             this->data_bitmap->inc();
             return ;
         }
@@ -2381,7 +2381,6 @@ public:
             }
 
             if (out_bpp == 8){
-                std::cout << "this->data_bitmap->bpp(): " << this->data_bitmap->bpp() << std::endl;
                 init_palette332(this->data_bitmap->palette());
             }
         }
