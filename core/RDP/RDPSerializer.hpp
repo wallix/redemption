@@ -155,10 +155,11 @@ struct RDPSerializer : public RDPGraphicDevice
 
     // state variables for gathering batch of orders
     size_t order_count;
+    size_t bitmap_count;
+
     size_t chunk_flags;
     BmpCache & bmp_cache;
 
-    size_t bitmap_count;
 
     uint32_t verbose;
 
@@ -200,8 +201,8 @@ struct RDPSerializer : public RDPGraphicDevice
     , ellipseCB(Rect(), 0, 0, 0, 0, RDPBrush())
     // state variables for a batch of orders
     , order_count(0)
-    , bmp_cache(bmp_cache)
     , bitmap_count(0)
+    , bmp_cache(bmp_cache)
     , verbose(verbose) {}
 
     ~RDPSerializer() {}
@@ -237,6 +238,8 @@ public:
                , max_packet_size);
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
+        REDASSERT(!this->bitmap_count);
+        if (this->bitmap_count) { this->flush_bitmaps(); }
         const size_t max_order_batch = 4096;
         if (   (this->order_count >= max_order_batch)
             || ((used_size + asked_size + 106) > max_packet_size)) {
@@ -531,6 +534,8 @@ public:
                );
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
+        REDASSERT(!this->order_count);
+        if (this->order_count) { this->flush_orders(); }
         const size_t max_image_batch = 4096;
         if (   (this->bitmap_count >= max_image_batch)
             || ((used_size + asked_size + 106) > max_packet_size)) {

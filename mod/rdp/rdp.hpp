@@ -3998,7 +3998,7 @@ struct mod_rdp : public mod_api {
             }
             catch (Error e)
             {
-                if (e.id != ERR_TRANSPORT_READ_FAILED) {
+                if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
                     LOG(LOG_ERR, "mod_rdp::send_persistent_key_list_transparent: error=%u", e.id);
                     throw;
                 }
