@@ -890,12 +890,13 @@ public:
         stream.out_uint32_le(256); /* # of colors */
         for (int i = 0; i < 256; i++) {
             int color = palette[i];
-            uint8_t r = color >> 16;
+            // Palette entries is in BGR triplet format.
+            uint8_t b = color >> 16;
             uint8_t g = color >> 8;
-            uint8_t b = color;
-            stream.out_uint8(b);
-            stream.out_uint8(g);
+            uint8_t r = color;
             stream.out_uint8(r);
+            stream.out_uint8(g);
+            stream.out_uint8(b);
         }
         stream.mark_end();
     }
@@ -942,6 +943,8 @@ public:
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
+
+            this->flush();
 
             if (this->server_fastpath_update_support == false) {
                 BStream stream(65536);
