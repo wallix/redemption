@@ -122,10 +122,11 @@ public:
 
     bool palette_sent;
     bool palette_memblt_sent[6];
-    BGRPalette palette332;
+private:
+    BGRPalette palette332_rgb;
+public:
     BGRPalette mod_palette;
     uint8_t mod_bpp;
-    BGRPalette memblt_mod_palette;
     bool mod_palette_setted;
 
     enum {
@@ -242,7 +243,14 @@ public:
 
         // --------------------------------------------------------
 
-        init_palette332(this->palette332);
+        {
+            BGRPalette palette_local;
+            init_palette332(palette_local);
+            for (unsigned i = 0; i < 256 ; i++){
+                this->palette332_rgb[i] = RGBtoBGR(palette_local[i]);
+            }
+        }
+
         this->mod_palette_setted = false;
         this->palette_sent = false;
         for (size_t i = 0; i < 6 ; i++){
@@ -881,7 +889,7 @@ public:
     // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
 
     void GeneratePaletteUpdateData(Stream & stream) {
-        const BGRPalette & palette = (this->mod_bpp == 8)?this->memblt_mod_palette:this->palette332;
+        const BGRPalette & palette = (this->mod_bpp == 8)?this->mod_palette:this->palette332_rgb;
 
         // Payload
         stream.out_uint16_le(RDP_UPDATE_PALETTE);
@@ -891,9 +899,9 @@ public:
         for (int i = 0; i < 256; i++) {
             int color = palette[i];
             // Palette entries is in BGR triplet format.
-            uint8_t b = color >> 16;
+            uint8_t r = color >> 16;
             uint8_t g = color >> 8;
-            uint8_t r = color;
+            uint8_t b = color;
             stream.out_uint8(r);
             stream.out_uint8(g);
             stream.out_uint8(b);
@@ -2656,10 +2664,10 @@ public:
                             // reset caches, etc.
                             this->reset();
                             // resizing done
-                            BGRPalette palette;
-                            init_palette332(palette);
                             {
-                                RDPColCache cmd(0, palette);
+                                BGRPalette palette_local;
+                                init_palette332(palette_local);
+                                RDPColCache cmd(0, palette_local);
                                 this->orders->draw(cmd);
                             }
                             this->init_pointers();
@@ -4030,9 +4038,9 @@ public:
                 this->send_data_update_sync();
 
                 if (this->client_info.bpp == 8){
-                    BGRPalette palette;
-                    init_palette332(palette);
-                    RDPColCache cmd(0, palette);
+                    BGRPalette palette_local;
+                    init_palette332(palette_local);
+                    RDPColCache cmd(0, palette_local);
                     this->orders->draw(cmd);
                 }
                 this->init_pointers();
@@ -4919,7 +4927,6 @@ public:
         this->mod_palette_setted = true;
         for (unsigned i = 0; i < 256 ; i++){
             this->mod_palette[i] = palette[i];
-            this->memblt_mod_palette[i] = RGBtoBGR(palette[i]);
         }
         this->palette_sent = false;
     }
