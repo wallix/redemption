@@ -334,7 +334,6 @@ public:
                 {
                     RDPBmpCache cmd;
                     cmd.receive(this->info_bpp, this->stream, control, header, this->palette);
-                    unique_ptr<const Bitmap> u(cmd.bmp);
                     if (this->verbose > 32){
                         cmd.log(LOG_INFO);
                     }
@@ -473,14 +472,14 @@ public:
                         if (this->verbose > 32){
                             this->memblt.log(LOG_INFO, clip);
                         }
-                        const Bitmap * bmp = this->bmp_cache->get(this->memblt.cache_id, this->memblt.cache_idx);
-                        if (!bmp){
+                        const Bitmap & bmp = this->bmp_cache->get(this->memblt.cache_id, this->memblt.cache_idx);
+                        if (!bmp.is_valid()){
                             LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->memblt.cache_id, this->memblt.cache_idx);
                             throw Error(ERR_WRM);
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers ; i++){
-                                this->consumers[i].graphic_device->draw(this->memblt, clip, *bmp);
+                                this->consumers[i].graphic_device->draw(this->memblt, clip, bmp);
                             }
                         }
                     }
@@ -491,14 +490,14 @@ public:
                         if (this->verbose > 32){
                             this->mem3blt.log(LOG_INFO, clip);
                         }
-                        const Bitmap * bmp = this->bmp_cache->get(this->mem3blt.cache_id, this->mem3blt.cache_idx);
-                        if (!bmp){
+                        const Bitmap & bmp = this->bmp_cache->get(this->mem3blt.cache_id, this->mem3blt.cache_idx);
+                        if (!bmp.is_valid()){
                             LOG(LOG_ERR, "Mem3blt bitmap not found in cache at (%u, %u)", this->mem3blt.cache_id, this->mem3blt.cache_idx);
                             throw Error(ERR_WRM);
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers ; i++){
-                                this->consumers[i].graphic_device->draw(this->mem3blt, clip, *bmp);
+                                this->consumers[i].graphic_device->draw(this->mem3blt, clip, bmp);
                             }
                         }
                     }

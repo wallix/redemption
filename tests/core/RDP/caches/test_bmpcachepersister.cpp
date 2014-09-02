@@ -56,7 +56,6 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
                       );
 
     BGRPalette   palette;
-    Bitmap     * bmp;
     int          result;
 
 
@@ -133,9 +132,9 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
 /* 0030 */ 0x41, 0x0d, 0x00, 0x19, 0xf3, 0x03, 0x08, 0xf7,                          // A.......
     };
     memcpy(palette, raw_palette_0, sizeof(palette));
-    bmp = new Bitmap(8, 8, &palette, 64, 64, raw_bitmap_0, sizeof(raw_bitmap_0), true);
-    result = bmp_cache.cache_bitmap(*bmp);
-    delete bmp;
+    {Bitmap bmp(8, 8, &palette, 64, 64, raw_bitmap_0, sizeof(raw_bitmap_0), true);
+    result = bmp_cache.cache_bitmap(bmp);
+    }
 
 
     uint8_t raw_palette_1[] = {
@@ -217,9 +216,9 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
 /* 0090 */ 0xd5, 0x22, 0x00, 0x82, 0xc3, 0xc7, 0x8f, 0xc7, 0xe3, 0xc1, 0x98, 0x31, 0xf0, 0x00, 0x08,     // .".........1...
     };
     memcpy(palette, raw_palette_1, sizeof(palette));
-    bmp = new Bitmap(8, 8, &palette, 64, 64, raw_bitmap_1, sizeof(raw_bitmap_1), true);
-    result = bmp_cache.cache_bitmap(*bmp);
-    delete bmp;
+    {Bitmap bmp(8, 8, &palette, 64, 64, raw_bitmap_1, sizeof(raw_bitmap_1), true);
+    result = bmp_cache.cache_bitmap(bmp);
+    }
 
 
     uint8_t raw_palette_2[] = {
@@ -295,10 +294,9 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
 /* 0030 */ 0x40, 0x08, 0xf7,                                         // @..
     };
     memcpy(palette, raw_palette_2, sizeof(palette));
-    bmp = new Bitmap(8, 8, &palette, 64, 64, raw_bitmap_2, sizeof(raw_bitmap_2), true);
-    result = bmp_cache.cache_bitmap(*bmp);
-(void)result;
-    delete bmp;
+    {Bitmap bmp(8, 8, &palette, 64, 64, raw_bitmap_2, sizeof(raw_bitmap_2), true);
+    result = bmp_cache.cache_bitmap(bmp);
+    }
     // result is to use !
     (void)result;
     //LogTransport t;

@@ -45,86 +45,9 @@ private:
 
     static const uint8_t IN_WAIT_LIST = 0x80;
 
-
-    class bitmap_free_list_t {
-        struct operator_delete {
-            void operator()(void * data) {
-                ::operator delete(data);
-            }
-        };
-
-        unique_ptr<Bitmap, operator_delete> data;
-        unique_ptr<Bitmap*[]> first;
-        Bitmap* * last;
-        size_t sz;
-
-        bitmap_free_list_t(bitmap_free_list_t const &);
-        bitmap_free_list_t& operator=(bitmap_free_list_t const &);
-
-    public:
-        bitmap_free_list_t(size_t sz)
-        : data(static_cast<Bitmap*>(::operator new(sizeof(Bitmap) * (sz + 1))))
-        , first(new Bitmap*[sz + 1])
-        , last(this->first.get())
-        , sz(sz + 1)
-        {
-            this->initialize_free_list();
-        }
-
-        ~bitmap_free_list_t() {
-            this->destruct_initialized_bitmap();
-        }
-
-        void clear() {
-            this->destruct_initialized_bitmap();
-            this->last = this->first.get();
-            this->initialize_free_list();
-        }
-
-        const Bitmap * pop(uint8_t bpp, const Bitmap & bmp) {
-            //REDASSERT(this->last != this->first.get());
-            Bitmap * ret = *--this->last;
-            return new (ret) Bitmap(bpp, bmp);
-        }
-
-        void push(const Bitmap * bmp) {
-            Bitmap * p = this->data.get() + (bmp - this->data.get());
-            p->~Bitmap();
-            *this->last = p;
-            ++this->last;
-        }
-
-    private:
-        void initialize_free_list() {
-            Bitmap * p = this->data.get();
-            Bitmap * pe = p + this->sz;
-            for (; p != pe; ++p, ++this->last) {
-                *this->last = p;
-            }
-        }
-
-        void destruct_initialized_bitmap() {
-            std::sort(this->first.get(), this->last);
-
-            Bitmap * pdata = this->data.get();
-            Bitmap * pdata_last = pdata + this->sz;
-            for (Bitmap* * p = this->first.get(); pdata != pdata_last; ++pdata) {
-                if (*p != pdata) {
-                    pdata->~Bitmap();
-                }
-                else if (++p == this->last) {
-                    while (++pdata != pdata_last) {
-                        pdata->~Bitmap();
-                    }
-                    break;
-                }
-            }
-        }
-    };
-
     struct cache_element
     {
-        const Bitmap * bmp;
+        Bitmap bmp;
         uint_fast32_t stamp;
         union {
             uint8_t  sig_8[8];
@@ -133,17 +56,21 @@ private:
         uint8_t sha1[20];
 
         cache_element()
-        : bmp(0)
+        : stamp(0)
+        {}
+
+        cache_element(Bitmap const & bmp)
+        : bmp(bmp)
         , stamp(0)
         {}
 
         void reset() {
             this->stamp = 0;
-            this->bmp = 0;
+            this->bmp.reset();
         }
 
         operator bool () const {
-            return this->bmp;
+            return this->bmp.is_valid();
         }
     };
 
@@ -244,17 +171,17 @@ private:
         {}
 
         bool operator<(value_set const & other) const {
-            if (this->elem.bmp->cx() < other.elem.bmp->cx()) {
+            if (this->elem.bmp.cx() < other.elem.bmp.cx()) {
                 return true;
             }
-            else if (this->elem.bmp->cx() > other.elem.bmp->cx()) {
+            else if (this->elem.bmp.cx() > other.elem.bmp.cx()) {
                 return false;
             }
 
-            if (this->elem.bmp->cy() < other.elem.bmp->cy()) {
+            if (this->elem.bmp.cy() < other.elem.bmp.cy()) {
                 return true;
             }
-            else if (this->elem.bmp->cy() > other.elem.bmp->cy()) {
+            else if (this->elem.bmp.cy() > other.elem.bmp.cy()) {
                 return false;
             }
 
@@ -432,8 +359,6 @@ private:
 
     Caches caches;
 
-    bitmap_free_list_t bitmap_free_list;
-
           uint32_t stamp;
     const uint32_t verbose;
 
@@ -461,7 +386,6 @@ public:
     , cache4(this->elements.get() + c0.entries + c1.entries + c2.entries + c3.entries, c4, this->storage)
     , cache_wait_list(this->elements.get() + c0.entries + c1.entries + c2.entries + c3.entries + c4.entries, CacheOption(MAXIMUM_NUMBER_OF_CACHE_ENTRIES), this->storage)
     , caches(this->cache0, this->cache1, this->cache2, this->cache3, this->cache4, this->cache_wait_list)
-    , bitmap_free_list(this->size_elements)
     , stamp(0)
     , verbose(verbose)
     {
@@ -524,10 +448,9 @@ public:
         this->cache3.clear();
         this->cache4.clear();
         this->cache_wait_list.clear();
-        this->bitmap_free_list.clear();
     }
 
-    void put(uint8_t id, uint16_t idx, const Bitmap * const bmp, uint32_t key1, uint32_t key2) {
+    void put(uint8_t id, uint16_t idx, const Bitmap & bmp, uint32_t key1, uint32_t key2) {
         REDASSERT((id & IN_WAIT_LIST) == 0);
         if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
             // Last bitmap cache entry is used by waiting list.
@@ -539,10 +462,9 @@ public:
         cache_element & e = r[idx];
         if (e) {
             r.remove(e);
-            this->bitmap_free_list.push(e.bmp);
         }
-        e.bmp = this->bitmap_free_list.pop(bmp->bpp(), *bmp);
-        e.bmp->compute_sha1(e.sha1);
+        e.bmp = bmp;
+        e.bmp.compute_sha1(e.sha1);
         e.stamp = ++this->stamp;
 
         if (r.persistent()) {
@@ -554,7 +476,7 @@ public:
         r.add(e);
     }
 
-    const Bitmap * get(uint8_t id, uint16_t idx) {
+    const Bitmap & get(uint8_t id, uint16_t idx) {
         if (id & IN_WAIT_LIST) {
             REDASSERT(this->owner != Mod_rdp);
             return this->caches[MAXIMUM_NUMBER_OF_CACHES][idx].bmp;
@@ -575,11 +497,7 @@ public:
         if (id == MAXIMUM_NUMBER_OF_CACHES) {
             return true;
         }
-
-        LOG( LOG_ERR, "BmpCache: %s index_of_cache(%u) > %u"
-            , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-            , id, MAXIMUM_NUMBER_OF_CACHES);
-        throw Error(ERR_RDP_PROTOCOL);
+        REDASSERT(id <= MAXIMUM_NUMBER_OF_CACHES);
         return false;
     }
 
@@ -617,34 +535,6 @@ public:
             , get_cache_usage(4), this->cache4.size(), (this->cache4.persistent() ? ", persistent" : ""));
     }
 
-private:
-    struct Deleter {
-        const Bitmap & r;
-        bitmap_free_list_t & bmp_free_list;
-
-        Deleter(const Bitmap & bmp, bitmap_free_list_t & bitmap_free_list)
-        : r(bmp)
-        , bmp_free_list(bitmap_free_list)
-        {}
-
-        void operator()(const Bitmap * bmp) const
-        {
-            if (bmp && bmp != &this->r) {
-                this->bmp_free_list.push(bmp);
-            }
-        }
-    };
-
-public:
-    uint32_t quick_find(const Bitmap & oldbmp) {
-        typedef void const * voidp;
-        if (voidp(this->elements.get()) < voidp(&oldbmp)
-         && voidp(&oldbmp) < voidp(this->elements.get() + this->size_elements)) {
-            ;
-        }
-        return -1u;
-    }
-
     TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap")
     uint32_t cache_bitmap(const Bitmap & oldbmp) {
         REDASSERT(this->owner != Mod_rdp);
@@ -663,21 +553,16 @@ public:
         //    LOG(LOG_INFO, "memcpy(palette, palette_data_%d, sizeof(palette));", this->finding_counter);
         //    LOG(LOG_INFO, "init_palette332(palette);", this->finding_counter);
         //    LOG(LOG_INFO,
-        //        "Bitmap * bmp_%d = new Bitmap(%u, %u, &palette, %u, %u, bitmap_data_%d, %u, false);",
+        //        "{Bitmap bmp_%d(%u, %u, &palette, %u, %u, bitmap_data_%d, %u, false);",
         //        this->finding_counter, this->bpp, oldbmp.original_bpp, oldbmp.cx, oldbmp.cy,
         //        this->finding_counter, oldbmp.bmp_size);
         //}
 
-        unique_ptr<const Bitmap, Deleter> bmp(
-            this->bpp == oldbmp.bpp()
-                ? &oldbmp
-                : this->bitmap_free_list.pop(this->bpp, oldbmp)
-            , Deleter(oldbmp, this->bitmap_free_list)
-        );
+        Bitmap bmp(this->bpp, oldbmp);
 
-        uint8_t        id_real  = 0;
+        uint8_t id_real  = 0;
 
-        for (const uint32_t bmp_size = bmp->bmp_size(); id_real < this->number_of_cache; ++id_real) {
+        for (const uint32_t bmp_size = bmp.bmp_size(); id_real < this->number_of_cache; ++id_real) {
             if (bmp_size <= this->caches[id_real].bmp_size()) {
                 break;
             }
@@ -687,7 +572,7 @@ public:
             LOG( LOG_ERR
                 , "BmpCache: %s bitmap size(%u) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-                , bmp->bmp_size()
+                , bmp.bmp_size()
                 , (this->cache0.size() ? this->cache0.bmp_size() : 0)
                 , (this->cache1.size() ? this->cache1.bmp_size() : 0)
                 , (this->cache2.size() ? this->cache2.bmp_size() : 0)
@@ -701,9 +586,8 @@ public:
         Cache & cache = this->caches[id_real];
         const bool persistent = cache.persistent();
 
-        cache_element e_compare;
-        e_compare.bmp = bmp.get();
-        bmp->compute_sha1(e_compare.sha1);
+        cache_element e_compare(bmp);
+        bmp.compute_sha1(e_compare.sha1);
 
         const uint32_t cache_index_32 = cache.get_cache_index(e_compare);
         if (cache_index_32 != cache_range::invalid_cache_index) {
@@ -752,9 +636,6 @@ public:
             else {
                 this->cache_wait_list.remove(e_compare);
                 this->cache_wait_list[cache_index_32].reset();
-                if (&bmp.get_deleter().r != &oldbmp) {
-                    this->bitmap_free_list.push(e_compare.bmp);
-                }
 
                 if (this->verbose & 512) {
                     LOG( LOG_INFO
@@ -770,15 +651,12 @@ public:
         cache_element & e = cache_real[oldest_cidx];
         if (e) {
             cache_real.remove(e);
-            this->bitmap_free_list.push(e.bmp);
         }
         if (id_real == id) {
             ::memcpy(e.sig.sig_8, e_compare.sha1, sizeof(e.sig.sig_8));
         }
         ::memcpy(e.sha1, e_compare.sha1, 20);
-        e.bmp = (&bmp.get_deleter().r == &oldbmp)
-            ? this->bitmap_free_list.pop(this->bpp, oldbmp)
-            : bmp.release();
+        e.bmp = bmp;
         e.stamp = ++this->stamp;
         cache_real.add(e);
         // Generating source code for unit test.
@@ -787,9 +665,9 @@ public:
         //    LOG(LOG_INFO, "cache_index = %u;", oldest_cidx);
         //    LOG(LOG_INFO,
         //        "BOOST_CHECK_EQUAL(((BITMAP_ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), "
-        //            "bmp_cache.cache_bitmap(*bmp_%d));",
+        //            "bmp_cache.cache_bitmap(bmp_%d));",
         //        this->finding_counter - 1);
-        //    LOG(LOG_INFO, "delete bmp_%d;", this->finding_counter - 1);
+        //    LOG(LOG_INFO, "}");
         //    LOG(LOG_INFO, "");
         //}
 

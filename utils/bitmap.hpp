@@ -201,14 +201,10 @@ class Bitmap
             return this->bmp_size_;
         }
 
-        void set_owner_compressed_buffer(void * data, size_t n) {
-            REDASSERT(this->compressed_size() == 0);
-            this->data_compressed_ = static_cast<uint8_t*>(data);
-            this->size_compressed_ = n;
-        }
-
         void copy_compressed_buffer(void const * data, size_t n) {
-            this->set_owner_compressed_buffer(memcpy(new uint8_t[n], data, n), n);
+            REDASSERT(this->compressed_size() == 0);
+            this->data_compressed_ = static_cast<uint8_t*>(memcpy(new uint8_t[n], data, n));
+            this->size_compressed_ = n;
         }
 
         const uint8_t * compressed_data() const {
@@ -234,6 +230,8 @@ class Bitmap
 
     DataBitmap * data_bitmap;
 
+    void * operator new(size_t n)/* = delete*/;
+
 public:
     Bitmap()
     : data_bitmap(0)
@@ -254,7 +252,9 @@ public:
     Bitmap(const Bitmap & other)
     : data_bitmap(other.data_bitmap)
     {
-        this->data_bitmap->inc();
+        if (this->data_bitmap) {
+            this->data_bitmap->inc();
+        }
     }
 
     ~Bitmap() {
@@ -280,7 +280,7 @@ public:
 
     Bitmap(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
            uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size,
-           bool compressed = false, bool owner_compressed_data = false)
+           bool compressed = false)
     : data_bitmap(DataBitmap::construct(bpp, cx, cy))
     {
         if (cx <= 0 || cy <= 0){
@@ -299,12 +299,7 @@ public:
         //LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
 
         if (compressed) {
-            if (owner_compressed_data) {
-                this->data_bitmap->set_owner_compressed_buffer(const_cast<uint8_t*>(data), size);
-            }
-            else {
-                this->data_bitmap->copy_compressed_buffer(data, size);
-            }
+            this->data_bitmap->copy_compressed_buffer(data, size);
 
             if ((session_color_depth == 32) && ((bpp == 24) || (bpp == 32))) {
                 this->decompress60(cx, cy, data, size);

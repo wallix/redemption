@@ -29,16 +29,7 @@ class BmpCachePersister
 private:
     static const uint8_t CURRENT_VERSION = 1;
 
-    struct map_value {
-        const Bitmap * bmp;
-
-        map_value() : bmp(NULL) {
-        }
-
-        ~map_value() {
-            delete this->bmp;
-        }
-    };
+    typedef Bitmap map_value;
 
     class map_key {
         uint8_t key[8];
@@ -172,22 +163,21 @@ private:
                        , key.str().c_str(), original_bpp, cx, cy, bmp_size);
                 }
 
-                REDASSERT(this->bmp_map[cache_id][key].bmp == NULL);
+                REDASSERT(this->bmp_map[cache_id][key].is_valid() == false);
 
-                Bitmap * bmp = new Bitmap( this->bmp_cache.bpp, original_bpp
-                                         , &original_palette, cx, cy, stream.get_data()
-                                         , bmp_size);
+                Bitmap bmp( this->bmp_cache.bpp, original_bpp
+                          , &original_palette, cx, cy, stream.get_data()
+                          , bmp_size);
 
                 uint8_t sha1[20];
-                bmp->compute_sha1(sha1);
+                bmp.compute_sha1(sha1);
                 if (memcmp(sig, sha1, sizeof(sig))) {
                     LOG( LOG_ERR
                        , "BmpCachePersister::preload_from_disk: Preload failed. Cause: bitmap or key corruption.");
                     REDASSERT(false);
-                    delete bmp;
                 }
                 else {
-                    this->bmp_map[cache_id][key].bmp = bmp;
+                    this->bmp_map[cache_id][key] = bmp;
                 }
             }
 
@@ -219,7 +209,7 @@ public:
                 }
 
                 if (this->bmp_cache.get_cache(cache_id).size() > cache_index) {
-                    this->bmp_cache.put(cache_id, cache_index, it->second.bmp, sig->sig_32[0], sig->sig_32[1]);
+                    this->bmp_cache.put(cache_id, cache_index, it->second, sig->sig_32[0], sig->sig_32[1]);
                 }
 
                 this->bmp_map[cache_id].erase(it);
@@ -320,7 +310,7 @@ private:
 
                 Bitmap bmp(bmp_cache.bpp, original_bpp, &original_palette, cx, cy, stream.get_data(), stream.size());
 
-                bmp_cache.put(cache_id, i, &bmp, sig.sig_32[0], sig.sig_32[1]);
+                bmp_cache.put(cache_id, i, bmp, sig.sig_32[0], sig.sig_32[1]);
             }
 
             stream.reset();
@@ -350,9 +340,11 @@ public:
 private:
     static void save_to_disk(const BmpCache & bmp_cache, uint8_t cache_id, Transport & t, uint32_t verbose) {
         uint16_t bitmap_count = 0;
-        if (bmp_cache.get_cache(cache_id).persistent()) {
-            for (uint16_t cache_index = 0; cache_index < bmp_cache.get_cache(cache_id).size(); cache_index++) {
-                if (bmp_cache.get_cache(cache_id)[cache_index]) {
+        BmpCache::Cache const & cache = bmp_cache.get_cache(cache_id);
+
+        if (cache.persistent()) {
+            for (uint16_t cache_index = 0; cache_index < cache.size(); cache_index++) {
+                if (cache[cache_index]) {
                     bitmap_count++;
                 }
             }
@@ -366,18 +358,18 @@ private:
             return;
         }
 
-        for (uint16_t cache_index = 0; cache_index < bmp_cache.get_cache(cache_id).size(); cache_index++) {
-            if (bmp_cache.get_cache(cache_id)[cache_index]) {
+        for (uint16_t cache_index = 0; cache_index < cache.size(); cache_index++) {
+            if (cache[cache_index]) {
                 stream.reset();
 
-                const Bitmap   * bmp      = bmp_cache.get_cache(cache_id)[cache_index].bmp;
-                const uint8_t (& sig)[8]  = bmp_cache.get_cache(cache_id)[cache_index].sig.sig_8;
-                const uint16_t   bmp_size = bmp->bmp_size();
-                const uint8_t  * bmp_data = bmp->data();
+                const Bitmap &   bmp      = cache[cache_index].bmp;
+                const uint8_t (& sig)[8]  = cache[cache_index].sig.sig_8;
+                const uint16_t   bmp_size = bmp.bmp_size();
+                const uint8_t  * bmp_data = bmp.data();
 
                 // if (bmp_cache.owner == BmpCache::Front) {
                 //     uint8_t sha1[20];
-                //     bmp->compute_sha1(sha1);
+                //     bmp.compute_sha1(sha1);
 
                 //     char sig_sig[20];
 
@@ -391,7 +383,7 @@ private:
 
                 //     LOG( LOG_INFO
                 //        , "BmpCachePersister::save_to_disk: sig=\"%s\" sha1=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                //        , sig_sig, sig_sha1, bmp->bpp(), bmp->cx(), bmp->cy(), bmp_size);
+                //        , sig_sig, sig_sha1, bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);
 
                 //     REDASSERT(!memcmp(bmp_cache.sig[cache_id][cache_index].sig_8, sha1, sizeof(bmp_cache.sig[cache_id][cache_index].sig_8)));
                 // }
@@ -401,16 +393,16 @@ private:
                 if (verbose & 0x100000) {
                     LOG( LOG_INFO
                        , "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                       , key.str().c_str(), bmp->bpp(), bmp->cx(), bmp->cy(), bmp_size);
+                       , key.str().c_str(), bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);
                 }
 
                 stream.out_copy_bytes(sig, 8);
-                stream.out_uint8(bmp->bpp());
-                stream.out_uint16_le(bmp->cx());
-                stream.out_uint16_le(bmp->cy());
-                if (bmp->bpp() == 8) {
-                    stream.out_copy_bytes( reinterpret_cast<const uint8_t *>(bmp->palette())
-                                         , sizeof(bmp->palette()));
+                stream.out_uint8(bmp.bpp());
+                stream.out_uint16_le(bmp.cx());
+                stream.out_uint16_le(bmp.cy());
+                if (bmp.bpp() == 8) {
+                    stream.out_copy_bytes( reinterpret_cast<const uint8_t *>(bmp.palette())
+                                         , sizeof(bmp.palette()));
                 }
                 stream.out_uint16_le(bmp_size);
                 stream.mark_end();

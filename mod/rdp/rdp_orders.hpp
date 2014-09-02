@@ -269,14 +269,13 @@ public:
 
         this->recv_bmp_cache_count++;
 
-        REDASSERT(bmp.bmp);
+        REDASSERT(bmp.bmp.is_valid());
 
-        unique_ptr<const Bitmap> u(bmp.bmp);
         this->bmp_cache->put(bmp.id, bmp.idx, bmp.bmp, bmp.key1, bmp.key2);
         if (this->verbose & 64) {
             LOG( LOG_ERR
                , "rdp_orders_process_bmpcache bitmap id=%u idx=%u cx=%u cy=%u bmp_size=%u original_bpp=%u bpp=%u"
-               , bmp.id, bmp.idx, bmp.bmp->cx(), bmp.bmp->cy(), bmp.bmp->bmp_size(), bmp.bmp->bpp(), bpp);
+               , bmp.id, bmp.idx, bmp.bmp.cx(), bmp.bmp.cy(), bmp.bmp.bmp_size(), bmp.bmp.bpp(), bpp);
         }
     }
 
@@ -450,12 +449,12 @@ public:
                             this->memblt.log(LOG_INFO, cmd_clip);
                             assert(false);
                         }
-                        const Bitmap * bitmap =
+                        const Bitmap & bitmap =
                             this->bmp_cache->get(this->memblt.cache_id & 0x3, this->memblt.cache_idx);
                         TODO("CGR: check if bitmap has the right palette...");
                         TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps");
-                        if (bitmap) {
-                            gd.draw(this->memblt, cmd_clip, *bitmap);
+                        if (bitmap.is_valid()) {
+                            gd.draw(this->memblt, cmd_clip, bitmap);
                         }
                         else {
                             LOG(LOG_ERR, "rdp_orders::process_orders: MEMBLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
@@ -473,12 +472,12 @@ public:
                             this->mem3blt.log(LOG_INFO, cmd_clip);
                             assert(false);
                         }
-                        const Bitmap * bitmap =
+                        const Bitmap & bitmap =
                             this->bmp_cache->get(this->mem3blt.cache_id & 0x3, this->mem3blt.cache_idx);
                         TODO("CGR: check if bitmap has the right palette...");
                         TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps");
-                        if (bitmap) {
-                            gd.draw(this->mem3blt, cmd_clip, *bitmap);
+                        if (bitmap.is_valid()) {
+                            gd.draw(this->mem3blt, cmd_clip, bitmap);
                         }
                         else {
                             LOG(LOG_ERR, "rdp_orders::process_orders: MEM3BLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
