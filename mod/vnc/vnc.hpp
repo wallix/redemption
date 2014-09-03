@@ -31,6 +31,7 @@
 
 #include "colors.hpp"
 
+#include "array.hpp"
 #include "stream.hpp"
 #include "array.hpp"
 #include "d3des.hpp"
