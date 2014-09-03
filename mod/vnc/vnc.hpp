@@ -32,6 +32,7 @@
 #include "colors.hpp"
 
 #include "stream.hpp"
+#include "array.hpp"
 #include "d3des.hpp"
 #include "keymap2.hpp"
 #include "keymapSym.hpp"
