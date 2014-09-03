@@ -127,7 +127,6 @@ private:
 public:
     BGRPalette mod_palette;
     uint8_t mod_bpp;
-    bool mod_palette_setted;
 
     enum {
         CONNECTION_INITIATION,
@@ -251,7 +250,6 @@ public:
             }
         }
 
-        this->mod_palette_setted = false;
         this->palette_sent = false;
         for (size_t i = 0; i < 6 ; i++){
             this->palette_memblt_sent[i] = false;
@@ -312,7 +310,6 @@ public:
 
         this->mod_bpp = bpp;
         if (bpp == 8){
-            this->mod_palette_setted = false;
             this->palette_sent = false;
             for (size_t i = 0; i < 6 ; i++){
                 this->palette_memblt_sent[i] = false;
@@ -4924,7 +4921,6 @@ public:
 
     void set_mod_palette(const BGRPalette & palette)
     {
-        this->mod_palette_setted = true;
         for (unsigned i = 0; i < 256 ; i++){
             this->mod_palette[i] = palette[i];
         }
