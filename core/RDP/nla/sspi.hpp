@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include "utf.hpp"
 #include "stream.hpp"
+#include "array.hpp"
 
 #define NTLMSP_NAME "NTLM"
 #define SECBUFFER_VERSION                        0
