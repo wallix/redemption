@@ -31,6 +31,7 @@
 
 #include "colors.hpp"
 
+#include "array.hpp"
 #include "stream.hpp"
 #include "d3des.hpp"
 #include "keymap2.hpp"
