@@ -815,7 +815,7 @@ class Sesman():
 
             _status, _error = self.check_video_recording(
                 selected_target.authorization.isRecorded,
-                mdecode(self.engine.get_wabuser_name()) if self.engine.get_wabuser_name() else self.shared.get(u'login'))
+                mdecode(self.engine.get_username()) if self.engine.get_username() else self.shared.get(u'login'))
 
             Logger().info(u"Fetching protocol")
 
