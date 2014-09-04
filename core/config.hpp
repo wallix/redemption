@@ -665,12 +665,14 @@ struct Inifile : public FieldObserver {
         // 1 - Disable keyboard event logging in syslog
         // 2 - Disable keyboard event logging in WRM
         // 4 - Disable keyboard event logging in META
-        UnsignedField disable_keyboard_log;    // AUTHID_DISABLE_KEYBOARD_LOG
+        UnsignedField disable_keyboard_log;     // AUTHID_DISABLE_KEYBOARD_LOG
         bool disable_keyboard_log_syslog;
         bool disable_keyboard_log_wrm;
         bool disable_keyboard_log_ocr;
-        UnsignedField     rt_display;          // AUTHID_RT_DISPLAY
-                                               // 0: disable, 1: enable
+        UnsignedField     rt_display;           // AUTHID_RT_DISPLAY
+                                                // 0: disable, 1: enable
+
+        int wrm_color_depth_selection_strategy; // 0: 24-bit, 1: 16-bit
     } video;
 
     // Section "Crypto"
@@ -1014,6 +1016,8 @@ public:
         this->video.disable_keyboard_log_syslog = false;
         this->video.disable_keyboard_log_wrm    = false;
         this->video.disable_keyboard_log_ocr    = false;
+
+        this->video.wrm_color_depth_selection_strategy = 0;
         // End section "video"
 
         // Init crypto
@@ -1557,6 +1561,9 @@ public:
                 this->video.disable_keyboard_log_syslog = 0 != (this->video.disable_keyboard_log.get() & 1);
                 this->video.disable_keyboard_log_wrm    = 0 != (this->video.disable_keyboard_log.get() & 2);
                 this->video.disable_keyboard_log_ocr    = 0 != (this->video.disable_keyboard_log.get() & 4);
+            }
+            else if (0 == strcmp(key, "wrm_color_depth_selection_strategy")) {
+                this->video.wrm_color_depth_selection_strategy = ulong_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

@@ -99,6 +99,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         out_wrm_trans,
         player.screen_rect.cx,
         player.screen_rect.cy,
+        24,
         bmp_cache, drawable, ini);
 
     wrm_recorder.update_config(ini);

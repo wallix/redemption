@@ -36,7 +36,6 @@ class FrontAPI : public DrawApi {
                                 , size_t length, size_t chunk_size, int flags) = 0;
 
     virtual void send_global_palette() throw(Error) = 0;
-    virtual void set_mod_palette(const BGRPalette & palette) = 0;
 
     virtual int server_resize(int width, int height, int bpp) = 0;
     //virtual void update_config(const timeval & now, const Inifile & ini) {}

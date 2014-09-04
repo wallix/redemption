@@ -57,15 +57,27 @@ public:
 
     int frame_start_count;
 
-    RDPDrawable(const uint16_t width, const uint16_t height)
+    int mod_bpp;
+
+    BGRPalette mod_palette_rgb;
+
+    RDPDrawable(const uint16_t width, const uint16_t height, int mod_bpp)
     : drawable(width, height)
     , frame_start_count(0)
+    , mod_bpp(mod_bpp)
     {
+        REDASSERT(mod_bpp)
         Pointer pointer0(Pointer::POINTER_CURSOR0);
         this->drawable.cache_pointer(pointer0.x, pointer0.y, pointer0.data, pointer0.mask, 0);
 
         Pointer pointer1(Pointer::POINTER_CURSOR1);
         this->drawable.cache_pointer(pointer1.x, pointer1.y, pointer1.data, pointer1.mask, 1);
+
+        BGRPalette palette_local;
+        init_palette332(palette_local);
+        for (unsigned i = 0; i < 256 ; i++){
+            this->mod_palette_rgb[i] = RGBtoBGR(palette_local[i]);
+        }
     }
 
     virtual void set_row(size_t rownum, const uint8_t * data)
@@ -91,7 +103,7 @@ public:
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         const Rect & trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
-        const uint32_t color = this->RGBtoBGR(cmd.color);
+        const uint32_t color = ::RGBtoBGR(color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb));
         this->drawable.opaquerect(trect, color);
     }
 
@@ -147,13 +159,15 @@ public:
 
         Rect cmd_rect(0, 0, 0, 0);
 
+        const uint32_t color = ::RGBtoBGR(color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb));
+
         for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
             cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
             cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
             cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
             cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
             const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
-            const uint32_t color = this->RGBtoBGR(cmd._Color);
+            //const uint32_t color = this->RGBtoBGR(cmd._Color);
             this->drawable.opaquerect(trect, color);
         }
     }
@@ -644,6 +658,12 @@ public:
 
     virtual void set_pointer(int cache_idx) {
         this->drawable.use_cached_pointer(cache_idx);
+    }
+
+    virtual void set_mod_palette(const BGRPalette & palette) {
+        for (unsigned i = 0; i < 256 ; i++){
+            this->mod_palette_rgb[i] = palette[i];
+        }
     }
 
     virtual void dump_png24(Transport * trans, bool bgr) {
