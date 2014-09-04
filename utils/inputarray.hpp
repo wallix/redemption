@@ -72,8 +72,24 @@ public:
     uint8_t get_uint8(size_t offset) {
         return array[offset];
     }
+};
 
-    
+template <size_t AUTOSIZE>
+class StaticBufferArray
+{
+private:
+    StaticInputArray<AUTOSIZE> ia;
+    uint64_t p;
+public:
+    StaticBufferArray(DataSource & source)
+    : ia(source)
+    {
+        this->p = 0;
+    }
+
+    uint64_t capacity() { return this->ia.capacity(); }
+    uint64_t size() { return this->ia.size(); }    
+    uint8_t get_uint8() { p += 1; return this->ia.get_uint8(p - 1); }
 };
 
 #endif
