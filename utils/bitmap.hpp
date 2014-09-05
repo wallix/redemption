@@ -51,6 +51,131 @@
 #include "ssl_calls.hpp"
 #include "rect.hpp"
 
+namespace aux_ {
+    class BmpMemAlloc {
+        class Memory {
+            void * mem_first;
+            void * mem_last;
+            char * * first;
+            char * * last;
+            char * * pos;
+            size_t size;
+
+        public:
+            Memory()
+            : mem_first(0)
+            , mem_last(0)
+            , first(0)
+            , last(0)
+            , pos(0)
+            , size(0)
+            {}
+
+            void init(char * * beg, char * * end, size_t sz) {
+                this->mem_first = *beg;
+                this->mem_last = *(end-1) + sz;
+                this->first = beg;
+                this->last = end;
+                this->pos = end;
+                this->size = sz;
+            }
+
+            bool contains(void const * p) const {
+                return this->mem_first <= p && p < this->mem_last;
+            }
+
+            bool empty() const {
+                return this->pos == this->first;
+            }
+
+            size_t size_element() const {
+                return this->size;
+            }
+
+            void * pop() {
+                return *--this->pos;
+            }
+
+            void push(void * p) {
+                *this->pos = static_cast<char*>(p);
+                ++this->pos;
+            }
+        };
+
+        Memory mems[5];
+        void * data;
+
+    public:
+        BmpMemAlloc()
+        : data(0)
+        {}
+
+        ~BmpMemAlloc() {
+            ::operator delete(this->data);
+        }
+
+        void * alloc(size_t n) {
+            //std::cout << "n: " << n << std::endl;
+            for (unsigned i = 0; i < sizeof(this->mems)/sizeof(this->mems[0]); ++i) {
+                if (n <= this->mems[i].size_element()) {
+                    if (!this->mems[i].empty()) {
+                        //std::cout << "mem " << this->mems[i].size_element() << std::endl;
+                        return this->mems[i].pop();
+                    }
+                }
+            }
+            //std::cout << "op new" << std::endl;
+            return ::operator new(n);
+        }
+
+        void dealloc(void * p) {
+            for (unsigned i = 0; i < sizeof(this->mems)/sizeof(this->mems[0]); ++i) {
+                if (this->mems[i].contains(p)) {
+                    this->mems[i].push(p);
+                    return ;
+                }
+            }
+            ::operator delete(p);
+        }
+
+        struct MemoryDef {
+            size_t cel;
+            size_t sz;
+
+        private:
+            static const size_t align = sizeof(void*) > sizeof(size_t) ? sizeof(void*) : sizeof(size_t);
+
+        public:
+            MemoryDef(size_t cel, size_t sz)
+            : cel(cel)
+            , sz((sz + (align-1)) & ~(align-1))
+            {}
+        };
+
+        void reserve(MemoryDef const & m1, MemoryDef const & m2, MemoryDef const & m3, MemoryDef const & m4, MemoryDef const & m5) {
+            if (!this->data) {
+                const size_t mem_size = m1.cel * m1.sz + m2.cel * m2.sz + m3.cel * m3.sz + m4.cel * m4.sz + m5.cel * m5.sz;
+                const size_t ntotal = (m1.cel + m2.cel + m3.cel + m4.cel + m5.cel);
+                this->data = ::operator new(mem_size + ntotal * sizeof(void*));
+                char * p = static_cast<char*>(this->data);
+                char * * pp = reinterpret_cast<char * *>(p + mem_size);
+                const size_t cels[] = {m1.cel, m2.cel, m3.cel, m4.cel, m5.cel};
+                const size_t szs[] = {m1.sz, m2.sz, m3.sz, m4.sz, m5.sz};
+                for (unsigned i = 0; i < sizeof(this->mems)/sizeof(this->mems[0]); ++i) {
+                    if (szs[i] * cels[i] == 0) {
+                        continue;
+                    }
+                    char * * pp_tmp = pp;
+                    char * * epp = pp + cels[i];
+                    for (; pp < epp; ++pp, p += szs[i]) {
+                        *pp = p;
+                    }
+                    this->mems[i].init(pp_tmp, epp, szs[i]);
+                }
+            }
+        }
+    } bitmap_data_allocator;
+}
 
 class Bitmap
 {
@@ -108,7 +233,7 @@ class Bitmap
 
         ~DataBitmap()
         {
-            delete [] this->data_compressed_;
+            aux_::bitmap_data_allocator.dealloc(this->data_compressed_);
         }
 
         DataBitmap(DataBitmap const &);
@@ -127,7 +252,7 @@ class Bitmap
         {
             const size_t sz = compute_bmp_size(bpp, cx, cy);
             const size_t sz_struct = bpp == 8 ? palette_index + sizeof(BGRPalette) : sizeof(DataBitmap);
-            uint8_t * p = static_cast<uint8_t*>(::operator new (sz_struct + sz));
+            uint8_t * p = static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(sz_struct + sz));
             return new (p) DataBitmap(bpp, cx, cy, p + sz_struct);
         }
 
@@ -135,13 +260,13 @@ class Bitmap
         {
             const size_t sz = cx * cy * 3;
             const size_t sz_struct = sizeof(DataBitmap);
-            uint8_t * p = static_cast<uint8_t*>(::operator new (sz_struct + sz));
+            uint8_t * p = static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(sz_struct + sz));
             return new (p) DataBitmap(cx, cy, p + sz_struct);
         }
 
         static void destruct(DataBitmap * cdata) {
             cdata->~DataBitmap();
-            ::operator delete(cdata);
+            aux_::bitmap_data_allocator.dealloc(cdata);
         }
 
         void copy_sha1(uint8_t (&sig)[20]) const {
@@ -200,7 +325,8 @@ class Bitmap
 
         void copy_compressed_buffer(void const * data, size_t n) {
             REDASSERT(this->compressed_size() == 0);
-            this->data_compressed_ = static_cast<uint8_t*>(memcpy(new uint8_t[n], data, n));
+            uint8_t * p = static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(n));
+            this->data_compressed_ = static_cast<uint8_t*>(memcpy(p, data, n));
             this->size_compressed_ = n;
         }
 

@@ -22,6 +22,7 @@
 #define _REDEMPTION_CORE_RDP_CACHES_BMPCACHE_HPP_
 
 #include <set>
+#include <algorithm>
 
 #include "bitmap.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
@@ -377,14 +378,14 @@ public:
     , bpp(bpp)
     , number_of_cache(number_of_cache)
     , use_waiting_list(use_waiting_list)
-    , size_elements(c0.entries + c1.entries + c2.entries + c3.entries + c4.entries + MAXIMUM_NUMBER_OF_CACHE_ENTRIES)
+    , size_elements(c0.entries + c1.entries + c2.entries + c3.entries + c4.entries + (use_waiting_list ? MAXIMUM_NUMBER_OF_CACHE_ENTRIES : 0))
     , elements(new cache_element[this->size_elements])
     , cache0(this->elements.get(), c0, this->storage)
     , cache1(this->elements.get() + c0.entries, c1, this->storage)
     , cache2(this->elements.get() + c0.entries + c1.entries, c2, this->storage)
     , cache3(this->elements.get() + c0.entries + c1.entries + c2.entries, c3, this->storage)
     , cache4(this->elements.get() + c0.entries + c1.entries + c2.entries + c3.entries, c4, this->storage)
-    , cache_wait_list(this->elements.get() + c0.entries + c1.entries + c2.entries + c3.entries + c4.entries, CacheOption(MAXIMUM_NUMBER_OF_CACHE_ENTRIES), this->storage)
+    , cache_wait_list(this->elements.get() + c0.entries + c1.entries + c2.entries + c3.entries + c4.entries, CacheOption(use_waiting_list ? MAXIMUM_NUMBER_OF_CACHE_ENTRIES : 0), this->storage)
     , caches(this->cache0, this->cache1, this->cache2, this->cache3, this->cache4, this->cache_wait_list)
     , stamp(0)
     , verbose(verbose)
@@ -429,6 +430,34 @@ public:
                 , MAXIMUM_NUMBER_OF_CACHES);
             throw Error(ERR_RDP_PROTOCOL);
         }
+
+        const size_t max_entries = std::min(std::max({
+            this->cache0.size(), this->cache1.size(), this->cache2.size(), this->cache3.size(), this->cache4.size()
+        })*2, size_t(MAXIMUM_NUMBER_OF_CACHE_ENTRIES));
+
+        aux_::BmpMemAlloc::MemoryDef mems[] {
+            aux_::BmpMemAlloc::MemoryDef(max_entries + 2048, 128),
+            aux_::BmpMemAlloc::MemoryDef(max_entries + 2048, 1024),
+            aux_::BmpMemAlloc::MemoryDef(max_entries + 2048, 4096),
+            aux_::BmpMemAlloc::MemoryDef(max_entries + 1028, 8192),
+            aux_::BmpMemAlloc::MemoryDef(std::min<size_t>(100, max_entries), 16384)
+        };
+
+        const size_t coef = this->use_waiting_list ? 3 : 2; /*+ compressed*/
+        const size_t add_mem = (this->bpp == 8 ? sizeof(BGRPalette) : 0) + 32 /*arbitrary*/;
+
+        for (unsigned i_cache = 0; i_cache < 5; ++i_cache) {
+            if (this->caches[i_cache].size()) {
+                for (aux_::BmpMemAlloc::MemoryDef & mem: mems) {
+                    if (this->caches[i_cache].bmp_size() + add_mem <= mem.sz) {
+                        mem.cel += this->caches[i_cache].size() * coef;
+                        break;
+                    }
+                }
+            }
+        }
+
+        aux_::bitmap_data_allocator.reserve(mems[0], mems[1], mems[2], mems[3], mems[4]);
     }
 
     ~BmpCache() {

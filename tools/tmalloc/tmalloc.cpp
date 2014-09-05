@@ -6,19 +6,22 @@
 
 namespace {
     std::atomic<std::size_t> n_alloc{};
+    std::atomic<std::size_t> total_alloc{};
 }
 
 void* malloc(size_t sz)
 {
-    std::cout << "a" << std::endl;
-
     static auto libc_malloc = reinterpret_cast<void*(*)(size_t)>(dlsym(RTLD_NEXT, "malloc"));
 
     if (sz > -1u/4) {
         abort();
     }
     void * ptr = libc_malloc(sz);
-    std::cout << "malloc: " << ptr << "   " << sz << "    (" << ++n_alloc << ")" << std::endl;
+    std::cout 
+      << "malloc: " << ptr << "   " << sz << "    ("
+      << ++n_alloc << ") (total: "
+      << ++total_alloc << ")"
+    << std::endl;
     return ptr;
 }
 

@@ -91,6 +91,7 @@ project redemption
 
     <conditional>@defines
 
+    <cxxflags>-std=c++11
     <cxxflags>-pedantic
 #    <cxxflags>-Wconversion
     <cxxflags>-Wvla

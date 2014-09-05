@@ -26,7 +26,6 @@
 #define _REDEMPTION_UTILS_UTF_HPP_
 
 #include <stdint.h>
-#define LOGNULL
 #include "log.hpp"
 
 // bool UTF32isValid(uint32_t c):
