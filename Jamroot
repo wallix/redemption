@@ -348,6 +348,7 @@ import testing ;
 
 unit-test test_unique_ptr : tests/utils/test_unique_ptr.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_stream : tests/utils/test_stream.cpp cryptofile openssl crypto png z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_inputarray : tests/utils/test_inputarray.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_utf : tests/utils/test_utf.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rect : tests/utils/test_rect.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_ellipse : tests/utils/test_ellipse.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

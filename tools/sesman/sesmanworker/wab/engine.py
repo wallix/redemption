@@ -54,7 +54,7 @@ class Engine(object):
         except Exception, e:
             return 'en'
 
-    def get_wabuser_name(self):
+    def get_username(self):
         try:
             return self.wabuser.cn
         except Exception, e:
