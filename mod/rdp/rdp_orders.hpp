@@ -282,12 +282,12 @@ public:
     void server_add_char( int font, int character
                         , int offset, int baseline
                         , int width, int height, const uint8_t * data
-                        , RDPGraphicDevice & gd) {
-        struct FontChar fi(offset, baseline, width, height, 0);
-        memcpy(fi.data, data, fi.datasize());
-
-        RDPGlyphCache cmd(font, 1, character, fi.offset, fi.baseline, fi.width, fi.height, fi.data);
-        this->gly_cache.set_glyph(cmd);
+                        , RDPGraphicDevice & gd)
+    {
+        FontChar fi(offset, baseline, width, height, 0);
+        memcpy(fi.data.get(), data, fi.datasize());
+        RDPGlyphCache cmd(font, 1, character, fi.offset, fi.baseline, fi.width, fi.height, fi.data.get());
+        this->gly_cache.set_glyph(std::move(fi), cmd.cacheId, cmd.glyphData_cacheIndex);
         gd.draw(cmd);
     }
 

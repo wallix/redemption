@@ -353,7 +353,7 @@ class Bitmap
 
     DataBitmap * data_bitmap;
 
-    void * operator new(size_t n)/* = delete*/;
+    void * operator new(size_t n) = delete;
 
 public:
     Bitmap()

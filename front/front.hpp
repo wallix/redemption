@@ -381,10 +381,10 @@ public:
         if (len_uni){
             for (size_t index = 0; index < len_uni; index++) {
                 uint32_t charnum = uni[index]; //
-                FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
+                FontChar *font_item = this->font.glyph_defined(charnum)?&this->font.font_items[charnum]:nullptr;
                 if (!font_item) {
                     LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                    font_item = this->font.font_items[static_cast<unsigned>('?')];
+                    font_item = &this->font.font_items[static_cast<unsigned>('?')];
                 }
                 width += font_item->incby;
                 height = std::max(height, font_item->height);
@@ -415,22 +415,23 @@ public:
             for (size_t index = 0; index < part_len; index++) {
                 int c = 0;
                 uint32_t charnum = uni[index];
-                FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
-                if (!font_item) {
+                FontChar & font_item = this->font.glyph_defined(charnum) && this->font.font_items[charnum]
+                ? this->font.font_items[charnum]
+                : [&]() {
                     LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                    font_item = this->font.font_items[static_cast<unsigned>('?')];
-                }
+                    return std::ref(this->font.font_items[static_cast<unsigned>('?')]);
+                }().get();
                 TODO(" avoid passing parameters by reference to get results")
                 switch (this->glyph_cache.add_glyph(font_item, f, c))
                 {
                     case GlyphCache::GLYPH_ADDED_TO_CACHE:
                     {
                         RDPGlyphCache cmd(f, 1, c,
-                            font_item->offset,
-                            font_item->baseline,
-                            font_item->width,
-                            font_item->height,
-                            font_item->data);
+                            font_item.offset,
+                            font_item.baseline,
+                            font_item.width,
+                            font_item.height,
+                            font_item.data.get());
 
                         this->orders->draw(cmd);
 
@@ -445,9 +446,9 @@ public:
                 }
                 data[index * 2] = c;
                 data[index * 2 + 1] = distance_from_previous_fragment;
-                distance_from_previous_fragment = font_item->incby;
-                total_width += font_item->incby;
-                total_height = std::max(total_height, font_item->height);
+                distance_from_previous_fragment = font_item.incby;
+                total_width += font_item.incby;
+                total_height = std::max(total_height, font_item.height);
             }
 
             const Rect bk(x, y, total_width + 1, total_height + 1);
@@ -2324,8 +2325,8 @@ public:
                         uint32_t share_id = sctrl.payload.in_uint32_le();
                         uint16_t originatorId = sctrl.payload.in_uint16_le();
                         this->process_confirm_active(sctrl.payload);
-(void)share_id;
-(void)originatorId;
+                        (void)share_id;
+                        (void)originatorId;
                     }
                     if (!sctrl.payload.check_end()){
                         LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u",
@@ -4650,7 +4651,7 @@ public:
                     if (new_cmd.data[i] <= 0xFD)
                     {
                         //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
-                        FontChar * fc = gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item;
+                        FontChar & fc = const_cast<FontChar&>(gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item);
                         REDASSERT(fc);
                         int g_idx = this->glyph_cache.find_glyph(fc, new_cmd.cache_id);
                         REDASSERT(g_idx >= 0);
@@ -4699,11 +4700,11 @@ public:
     {
         FontChar font_item(cmd.glyphData_x, cmd.glyphData_y,
             cmd.glyphData_cx, cmd.glyphData_cy, -1);
-        memcpy(font_item.data, cmd.glyphData_aj, font_item.datasize());
+        memcpy(font_item.data.get(), cmd.glyphData_aj, font_item.datasize());
 
         int cacheidx = 0;
 
-        if (this->glyph_cache.add_glyph(&font_item, cmd.cacheId, cacheidx) ==
+        if (this->glyph_cache.add_glyph(std::move(font_item), cmd.cacheId, cacheidx) ==
             GlyphCache::GLYPH_ADDED_TO_CACHE)
         {
             RDPGlyphCache cmd2(cmd.cacheId, 1, cacheidx,

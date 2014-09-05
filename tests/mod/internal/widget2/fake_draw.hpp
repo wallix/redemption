@@ -157,10 +157,10 @@ struct TestDraw : DrawApi
         size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
         if (len_uni){
             for (size_t index = 0; index < len_uni; index++) {
-                FontChar *font_item = this->gd.get_font(this->font, uni[index]);
+                FontChar & font_item = this->gd.get_font(this->font, uni[index]);
                 // width += font_item->incby;
-                width += font_item->width + 2;
-                height = std::max(height, font_item->height);
+                width += font_item.width + 2;
+                height = std::max(height, font_item.height);
             }
             width -= 2;
         }
