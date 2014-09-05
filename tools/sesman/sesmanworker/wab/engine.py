@@ -1,15 +1,17 @@
 #!/usr/bin/python
 
-from sesmanconf import TR
 from sesmanconf import TR, SESMANCONF, translations
 
+from logger import Logger
 from wabengine.common.exception import AuthenticationFailed
 from wabengine.common.exception import AuthenticationChallenged
 from wabengine.common.exception import MustChangePassword
-from logger import Logger
+from wallixgenericnotifier import Notify, CX_EQUIPMENT, PATTERN_FOUND, PRIMARY_CX_FAILED, SECONDARY_CX_FAILED, NEW_FINGERPRINT, WRONG_FINGERPRINT, RDP_PATTERN_FOUND, FILESYSTEM_FULL
+from wallixgenericnotifier import LICENCE_EXPIRED, LICENCE_PRIMARY_CX_ERROR, LICENCE_SECONDARY_CX_ERROR
+from wabconfig import Config
+from wabengine.client.sync_client import SynClient
+from wabx509 import AuthX509
 
-from model import RightInfo, UserInfo
-from sesmanconf import TR, SESMANCONF, translations
 
 def _binary_ip(network, bits):
     # TODO need Ipv6 support
@@ -38,6 +40,7 @@ class Engine(object):
     def __init__(self):
         self.wabengine = None
         self.wabuser = None
+        self.client = SynClient('localhost', 'tcp:8803')
         self.session_id  = None
         self.auth_x509 = None
         self._trace_encryption = None
@@ -68,7 +71,6 @@ class Engine(object):
 
     def get_trace_encryption(self):
         try:
-            from wabconfig import Config
             conf = Config("wabengine")
             self._trace_encryption = True if conf['trace'] == u'cryptofile' else False # u'localfile'
             return self._trace_encryption
@@ -95,7 +97,6 @@ class Engine(object):
         session ticket will be asked later in x509_authenticate)
         """
         try:
-            from wabx509 import AuthX509
             self.auth_x509 = AuthX509(username = wab_login,
                                       ip = ip_client,
                                       requestor = proxy_type,
@@ -123,8 +124,6 @@ class Engine(object):
 
     def password_authenticate(self, wab_login, ip_client, password, server_ip):
         try:
-            from wabengine.client.sync_client import SynClient
-            self.client = SynClient('localhost', 'tcp:8803')
             self.wabengine = self.client.authenticate(username = wab_login,
                                                       password = password,
                                                       ip_source = ip_client,
@@ -147,8 +146,6 @@ class Engine(object):
 
     def passthrough_authenticate(self, wab_login, ip_client, server_ip):
         try:
-            from wabengine.client.sync_client import SynClient
-            self.client = SynClient('localhost', 'tcp:8803')
             self.wabengine = self.client.authenticate_gssapi(username = wab_login,
                                                              realm = "realm",
                                                              ip_source = ip_client,
@@ -171,7 +168,6 @@ class Engine(object):
         """
         license_ok = True
         try:
-            from wallixgenericnotifier import Notify, LICENCE_EXPIRED, LICENCE_PRIMARY_CX_ERROR, LICENCE_SECONDARY_CX_ERROR
             lic_status = self.wabengine.get_license_status()
 
             if lic_status.is_expired():
@@ -195,7 +191,8 @@ class Engine(object):
         return license_ok
 
     def NotifyConnectionToCriticalEquipment(self, protocol, user, source,
-            ip_source, login, device, ip, time, url):
+                                            ip_source, login, device, ip,
+                                            time, url):
         try:
             notif_data = {
                    u'protocol' : protocol
@@ -211,7 +208,6 @@ class Engine(object):
             if not (url is None):
                 notif_data[u'url'] = url
 
-            from wallixgenericnotifier import Notify, CX_EQUIPMENT
             Notify(self.wabengine, CX_EQUIPMENT, notif_data)
         except Exception, e:
             import traceback
@@ -224,7 +220,6 @@ class Engine(object):
                  , u'ip'   : ip
              }
 
-            from wallixgenericnotifier import Notify, PRIMARY_CX_FAILED
             Notify(self.wabengine, PRIMARY_CX_FAILED, notif_data)
         except Exception, e:
             import traceback
@@ -239,7 +234,6 @@ class Engine(object):
                  , u'device' : device
              }
 
-            from wallixgenericnotifier import Notify, SECONDARY_CX_FAILED
             Notify(self.wabengine, SECONDARY_CX_FAILED, notif_data)
         except Exception, e:
             import traceback
@@ -252,7 +246,6 @@ class Engine(object):
                  , u'used'       : used
              }
 
-            from wallixgenericnotifier import Notify, FILESYSTEM_FULL
             Notify(self.wabengine, FILESYSTEM_FULL, notif_data)
         except Exception, e:
             import traceback
@@ -269,7 +262,6 @@ class Engine(object):
                  , u'device'     : cn
              }
 
-            from wallixgenericnotifier import Notify, RDP_PATTERN_FOUND
             Notify(self.wabengine, RDP_PATTERN_FOUND, notif_data)
         except Exception, e:
             import traceback
