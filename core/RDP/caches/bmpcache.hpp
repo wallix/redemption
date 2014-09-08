@@ -272,8 +272,8 @@ private:
         }
 
     private:
-        cache_range(cache_range const &);
-        cache_range& operator=(cache_range const &);
+        cache_range(cache_range const &) = delete;
+        cache_range& operator=(cache_range const &) = delete;
     };
 
 public:
@@ -315,27 +315,7 @@ public:
         typedef cache_element Element;
     };
 
-private:
-    struct Caches {
-        Cache * caches[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */];
 
-        Caches(Cache & c0, Cache & c1, Cache & c2, Cache & c3, Cache & c4, Cache & wait_list)
-        {
-            this->caches[0] = &c0;
-            this->caches[1] = &c1;
-            this->caches[2] = &c2;
-            this->caches[3] = &c3;
-            this->caches[4] = &c4;
-            this->caches[5] = &wait_list;
-        }
-
-        Cache & operator[](size_t i) const {
-            return *this->caches[i];
-        }
-    };
-
-
-public:
     const enum Owner {
           Front
         , Mod_rdp
@@ -351,14 +331,8 @@ private:
     const unique_ptr<cache_element[]> elements;
     storage_value_set storage;
 
-    Cache cache0;
-    Cache cache1;
-    Cache cache2;
-    Cache cache3;
-    Cache cache4;
-    Cache cache_wait_list;
-
-    Caches caches;
+    static const size_t WAIT_LIST_INDEX = MAXIMUM_NUMBER_OF_CACHES;
+    Cache caches[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */];
 
           uint32_t stamp;
     const uint32_t verbose;
@@ -380,13 +354,14 @@ public:
     , use_waiting_list(use_waiting_list)
     , size_elements(c0.entries + c1.entries + c2.entries + c3.entries + c4.entries + (use_waiting_list ? MAXIMUM_NUMBER_OF_CACHE_ENTRIES : 0))
     , elements(new cache_element[this->size_elements])
-    , cache0(this->elements.get(), c0, this->storage)
-    , cache1(this->elements.get() + c0.entries, c1, this->storage)
-    , cache2(this->elements.get() + c0.entries + c1.entries, c2, this->storage)
-    , cache3(this->elements.get() + c0.entries + c1.entries + c2.entries, c3, this->storage)
-    , cache4(this->elements.get() + c0.entries + c1.entries + c2.entries + c3.entries, c4, this->storage)
-    , cache_wait_list(this->elements.get() + c0.entries + c1.entries + c2.entries + c3.entries + c4.entries, CacheOption(use_waiting_list ? MAXIMUM_NUMBER_OF_CACHE_ENTRIES : 0), this->storage)
-    , caches(this->cache0, this->cache1, this->cache2, this->cache3, this->cache4, this->cache_wait_list)
+    , caches{
+        {this->elements.get(), c0, this->storage},
+        {this->elements.get() + c0.entries, c1, this->storage},
+        {this->elements.get() + c0.entries + c1.entries, c2, this->storage},
+        {this->elements.get() + c0.entries + c1.entries + c2.entries, c3, this->storage},
+        {this->elements.get() + c0.entries + c1.entries + c2.entries + c3.entries, c4, this->storage},
+        {this->elements.get() + c0.entries + c1.entries + c2.entries + c3.entries + c4.entries, CacheOption(use_waiting_list ? MAXIMUM_NUMBER_OF_CACHE_ENTRIES : 0), this->storage}
+    }
     , stamp(0)
     , verbose(verbose)
     {
@@ -415,11 +390,11 @@ public:
                     "cache_3(%u, %u, %s) cache_4(%u, %u, %s)"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                 , this->bpp, this->number_of_cache, (this->use_waiting_list ? "yes" : "no")
-                , this->cache0.size(), this->cache0.bmp_size(), (cache0.persistent() ? "yes" : "no")
-                , this->cache1.size(), this->cache1.bmp_size(), (cache1.persistent() ? "yes" : "no")
-                , this->cache2.size(), this->cache2.bmp_size(), (cache2.persistent() ? "yes" : "no")
-                , this->cache3.size(), this->cache3.bmp_size(), (cache3.persistent() ? "yes" : "no")
-                , this->cache4.size(), this->cache4.bmp_size(), (cache4.persistent() ? "yes" : "no")
+                , this->caches[0].size(), this->caches[0].bmp_size(), (caches[0].persistent() ? "yes" : "no")
+                , this->caches[1].size(), this->caches[1].bmp_size(), (caches[1].persistent() ? "yes" : "no")
+                , this->caches[2].size(), this->caches[2].bmp_size(), (caches[2].persistent() ? "yes" : "no")
+                , this->caches[3].size(), this->caches[3].bmp_size(), (caches[3].persistent() ? "yes" : "no")
+                , this->caches[4].size(), this->caches[4].bmp_size(), (caches[4].persistent() ? "yes" : "no")
                 );
         }
 
@@ -432,7 +407,11 @@ public:
         }
 
         const size_t max_entries = std::min(std::max({
-            this->cache0.size(), this->cache1.size(), this->cache2.size(), this->cache3.size(), this->cache4.size()
+            this->caches[0].size()
+          , this->caches[1].size()
+          , this->caches[2].size()
+          , this->caches[3].size()
+          , this->caches[4].size()
         })*2, size_t(MAXIMUM_NUMBER_OF_CACHE_ENTRIES));
 
         aux_::BmpMemAlloc::MemoryDef mems[] {
@@ -446,7 +425,7 @@ public:
         const size_t coef = this->use_waiting_list ? 3 : 2; /*+ compressed*/
         const size_t add_mem = (this->bpp == 8 ? sizeof(BGRPalette) : 0) + 32 /*arbitrary*/;
 
-        for (unsigned i_cache = 0; i_cache < 5; ++i_cache) {
+        for (unsigned i_cache = 0; i_cache < MAXIMUM_NUMBER_OF_CACHES; ++i_cache) {
             if (this->caches[i_cache].size()) {
                 for (aux_::BmpMemAlloc::MemoryDef & mem: mems) {
                     if (this->caches[i_cache].bmp_size() + add_mem <= mem.sz) {
@@ -471,12 +450,9 @@ public:
             this->log();
         }
         this->stamp = 0;
-        this->cache0.clear();
-        this->cache1.clear();
-        this->cache2.clear();
-        this->cache3.clear();
-        this->cache4.clear();
-        this->cache_wait_list.clear();
+        for (Cache & cache : this->caches) {
+            cache.clear();
+        }
     }
 
     void put(uint8_t id, uint16_t idx, const Bitmap & bmp, uint32_t key1, uint32_t key2) {
@@ -557,11 +533,11 @@ public:
         LOG( LOG_INFO
             , "BmpCache: %s (0=>%u, %u%s) (1=>%u, %u%s) (2=>%u, %u%s) (3=>%u, %u%s) (4=>%u, %u%s)"
             , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-            , get_cache_usage(0), this->cache0.size(), (this->cache0.persistent() ? ", persistent" : "")
-            , get_cache_usage(1), this->cache1.size(), (this->cache1.persistent() ? ", persistent" : "")
-            , get_cache_usage(2), this->cache2.size(), (this->cache2.persistent() ? ", persistent" : "")
-            , get_cache_usage(3), this->cache3.size(), (this->cache3.persistent() ? ", persistent" : "")
-            , get_cache_usage(4), this->cache4.size(), (this->cache4.persistent() ? ", persistent" : ""));
+            , get_cache_usage(0), this->caches[0].size(), (this->caches[0].persistent() ? ", persistent" : "")
+            , get_cache_usage(1), this->caches[1].size(), (this->caches[1].persistent() ? ", persistent" : "")
+            , get_cache_usage(2), this->caches[2].size(), (this->caches[2].persistent() ? ", persistent" : "")
+            , get_cache_usage(3), this->caches[3].size(), (this->caches[3].persistent() ? ", persistent" : "")
+            , get_cache_usage(4), this->caches[4].size(), (this->caches[4].persistent() ? ", persistent" : ""));
     }
 
     TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap")
@@ -602,11 +578,11 @@ public:
                 , "BmpCache: %s bitmap size(%u) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                 , bmp.bmp_size()
-                , (this->cache0.size() ? this->cache0.bmp_size() : 0)
-                , (this->cache1.size() ? this->cache1.bmp_size() : 0)
-                , (this->cache2.size() ? this->cache2.bmp_size() : 0)
-                , (this->cache3.size() ? this->cache3.bmp_size() : 0)
-                , (this->cache4.size() ? this->cache4.bmp_size() : 0)
+                , (this->caches[0].size() ? this->caches[0].bmp_size() : 0)
+                , (this->caches[1].size() ? this->caches[1].bmp_size() : 0)
+                , (this->caches[2].size() ? this->caches[2].bmp_size() : 0)
+                , (this->caches[3].size() ? this->caches[3].bmp_size() : 0)
+                , (this->caches[4].size() ? this->caches[4].bmp_size() : 0)
                 );
             REDASSERT(0);
             throw Error(ERR_BITMAP_CACHE_TOO_BIG);
@@ -650,9 +626,9 @@ public:
         if (persistent && this->use_waiting_list) {
             // The bitmap cache is persistent.
 
-            const uint32_t cache_index_32 = this->cache_wait_list.get_cache_index(e_compare);
+            const uint32_t cache_index_32 = this->caches[WAIT_LIST_INDEX].get_cache_index(e_compare);
             if (cache_index_32 == cache_range::invalid_cache_index) {
-                oldest_cidx = this->cache_wait_list.get_old_index();
+                oldest_cidx = this->caches[WAIT_LIST_INDEX].get_old_index();
                 id_real     =  MAXIMUM_NUMBER_OF_CACHES;
                 id          |= IN_WAIT_LIST;
 
@@ -663,8 +639,8 @@ public:
                 }
             }
             else {
-                this->cache_wait_list.remove(e_compare);
-                this->cache_wait_list[cache_index_32].reset();
+                this->caches[WAIT_LIST_INDEX].remove(e_compare);
+                this->caches[WAIT_LIST_INDEX][cache_index_32].reset();
 
                 if (this->verbose & 512) {
                     LOG( LOG_INFO

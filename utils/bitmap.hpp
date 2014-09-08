@@ -100,6 +100,9 @@ namespace aux_ {
                 *this->pos = static_cast<char*>(p);
                 ++this->pos;
             }
+
+            Memory(Memory const &) = delete;
+            Memory operator=(Memory const &) = delete;
         };
 
         Memory mems[5];
@@ -116,11 +119,11 @@ namespace aux_ {
 
         void * alloc(size_t n) {
             //std::cout << "n: " << n << std::endl;
-            for (unsigned i = 0; i < sizeof(this->mems)/sizeof(this->mems[0]); ++i) {
-                if (n <= this->mems[i].size_element()) {
-                    if (!this->mems[i].empty()) {
-                        //std::cout << "mem " << this->mems[i].size_element() << std::endl;
-                        return this->mems[i].pop();
+            for (Memory & mem : this->mems) {
+                if (n <= mem.size_element()) {
+                    if (!mem.empty()) {
+                        //std::cout << "mem " << mem.size_element() << std::endl;
+                        return mem.pop();
                     }
                 }
             }
@@ -129,9 +132,9 @@ namespace aux_ {
         }
 
         void dealloc(void * p) {
-            for (unsigned i = 0; i < sizeof(this->mems)/sizeof(this->mems[0]); ++i) {
-                if (this->mems[i].contains(p)) {
-                    this->mems[i].push(p);
+            for (Memory & mem : this->mems) {
+                if (mem.contains(p)) {
+                    mem.push(p);
                     return ;
                 }
             }
