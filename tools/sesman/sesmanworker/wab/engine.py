@@ -54,6 +54,8 @@ class Engine(object):
         self.auth_x509 = None
         self._trace_encryption = None
         self.challenge = None
+        self.deconnection_epoch = 0xffffffff
+        self.deconnection_time = u"-"
         self.proxy_rights = None
         self.rights = None
         self.targets = {}
@@ -472,7 +474,17 @@ class Engine(object):
             import traceback
             Logger().info("Engine update_session failed: (((%s)))" % (traceback.format_exc(e)))
 
-    def get_restrictions(self, auth):
+    def get_restrictions(self, auth, proxytype):
+        if proxytype == "RDP":
+            separator = u"\x01"
+            matchproto = lambda x: x == u"RDP"
+        elif proxytype == "SSH":
+            separator = u"|"
+            matchproto = lambda x: (x == self.subprotocol
+                                    or (x == u'SSH_SHELL_SESSION'
+                                        and self.subprotocol == u'SSH_X11_SESSION'))
+        else:
+            return None, None
         try:
             restrictions = self.wabengine.get_proxy_restrictions(auth)
             kill_patterns = []
@@ -481,20 +493,23 @@ class Engine(object):
                 if not restriction.subprotocol:
                     Logger().error("No subprotocol in restriction!")
                     continue
-                if restriction.subprotocol.cn == u'RDP':
+                if matchproto(restriction.subprotocol.cn):
                     Logger().debug("adding restriction %s %s %s" % (restriction.action, restriction.data, restriction.subprotocol.cn))
                     if restriction.action == 'kill':
                         kill_patterns.append(restriction.data)
                     elif restriction.action == 'notify':
                         notify_patterns.append(restriction.data)
 
-            self.pattern_kill = u"\x01".join(kill_patterns)
-            self.pattern_notify = u"\x01".join(notify_patterns)
+            self.pattern_kill = separator.join(kill_patterns)
+            self.pattern_notify = separator.join(notify_patterns)
             Logger().info("pattern_kill = [%s]" % (self.pattern_kill))
             Logger().info("pattern_notify = [%s]" % (self.pattern_notify))
         except Exception, e:
+            self.pattern_kill = None
+            self.pattern_notify = None
             import traceback
             Logger().info("Engine get_restrictions failed: (((%s)))" % (traceback.format_exc(e)))
+        return (self.pattern_kill, self.pattern_notify)
 
     def stop_session(self, result=True, diag=u"success", title=u"End session"):
         try:

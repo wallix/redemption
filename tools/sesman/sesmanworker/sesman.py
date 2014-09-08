@@ -835,11 +835,11 @@ class Sesman():
                 kv[u'session_id'] = self.engine.start_session(selected_target, self.pid,
                                                               self.effective_login)
                 _status, _error = self.engine.write_trace(self.full_path)
-                self.engine.get_restrictions(selected_target)
-                if self.engine.pattern_kill:
-                    self.send_data({ u'module' : u'transitory', u'pattern_kill': self.engine.pattern_kill })
-                if self.engine.pattern_notify:
-                    self.send_data({ u'module' : u'transitory', u'pattern_notify': self.engine.pattern_notify })
+                pattern_kill, pattern_notify = self.engine.get_restrictions(selected_target, "RDP")
+                if pattern_kill:
+                    self.send_data({ u'module' : u'transitory', u'pattern_kill': pattern_kill })
+                if pattern_notify:
+                    self.send_data({ u'module' : u'transitory', u'pattern_notify': pattern_notify })
 
             if _status:
                 Logger().info(u"Checking timeframe")
