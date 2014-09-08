@@ -4254,12 +4254,19 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->send_global_palette();
 
-            RDPOpaqueRect new_cmd = cmd;
-            if (this->client_info.bpp != this->mod_bpp){
+//            RDPOpaqueRect new_cmd = cmd;
+            if (this->client_info.bpp != this->mod_bpp) {
+                RDPOpaqueRect new_cmd = cmd;
+
                 const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
                 new_cmd.color = color_encode(color24, this->client_info.bpp);
+
+                this->orders->draw(new_cmd, clip);
             }
-            this->orders->draw(new_cmd, clip);
+//            this->orders->draw(new_cmd, clip);
+            else {
+                this->orders->draw(cmd, clip);
+            }
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
@@ -4310,12 +4317,19 @@ public:
             !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
             this->send_global_palette();
 
-            RDPMultiOpaqueRect new_cmd = cmd;
+//            RDPMultiOpaqueRect new_cmd = cmd;
             if (this->client_info.bpp != this->mod_bpp) {
+                RDPMultiOpaqueRect new_cmd = cmd;
+
                 const BGRColor color24 = color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb);
                 new_cmd._Color = color_encode(color24, this->client_info.bpp);
+
+                this->orders->draw(new_cmd, clip);
             }
-            this->orders->draw(new_cmd, clip);
+//            this->orders->draw(new_cmd, clip);
+            else {
+                this->orders->draw(cmd, clip);
+            }
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {

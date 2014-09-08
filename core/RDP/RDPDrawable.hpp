@@ -103,8 +103,9 @@ public:
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         const Rect & trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
-        const uint32_t color = ::RGBtoBGR(color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb));
-        this->drawable.opaquerect(trect, color);
+        this->drawable.opaquerect(trect
+            , ::RGBtoBGR(((this->mod_bpp == 24) ? cmd.color
+                                                : ::color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb))));
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) {
@@ -159,8 +160,6 @@ public:
 
         Rect cmd_rect(0, 0, 0, 0);
 
-        const uint32_t color = ::RGBtoBGR(color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb));
-
         for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
             cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
             cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
@@ -168,7 +167,9 @@ public:
             cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
             const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
             //const uint32_t color = this->RGBtoBGR(cmd._Color);
-            this->drawable.opaquerect(trect, color);
+            this->drawable.opaquerect(trect
+                , ::RGBtoBGR(((this->mod_bpp == 24) ? cmd._Color
+                                                    : ::color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb))));
         }
     }
 
