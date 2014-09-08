@@ -4345,11 +4345,14 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->send_global_palette();
 
-            const BGRColor back_color24 = color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb);
-            const BGRColor fore_color24 = color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette_rgb);
+//            const BGRColor back_color24 = color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb);
+//            const BGRColor fore_color24 = color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette_rgb);
 
             RDP::RDPMultiPatBlt new_cmd = cmd;
-            if (this->client_info.bpp != this->mod_bpp){
+            if (this->client_info.bpp != this->mod_bpp) {
+                const BGRColor back_color24 = color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb);
+                const BGRColor fore_color24 = color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette_rgb);
+
                 new_cmd.BackColor= color_encode(back_color24, this->client_info.bpp);
                 new_cmd.ForeColor= color_encode(fore_color24, this->client_info.bpp);
                 // this may change the brush add send it to to remote cache
@@ -4359,10 +4362,11 @@ public:
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-                RDP::RDPMultiPatBlt new_cmd24 = cmd;
-                new_cmd24.BackColor = back_color24;
-                new_cmd24.ForeColor = fore_color24;
-                this->capture->draw(new_cmd24, clip);
+//                RDP::RDPMultiPatBlt new_cmd24 = cmd;
+//                new_cmd24.BackColor = back_color24;
+//                new_cmd24.ForeColor = fore_color24;
+//                this->capture->draw(new_cmd24, clip);
+                this->capture->draw(cmd, clip);
             }
         }
     }
@@ -4383,11 +4387,14 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->send_global_palette();
 
-            const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-            const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+//            const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+//            const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
 
             RDPPatBlt new_cmd = cmd;
             if (this->client_info.bpp != this->mod_bpp){
+                const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+                const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+
                 new_cmd.back_color= color_encode(back_color24, this->client_info.bpp);
                 new_cmd.fore_color= color_encode(fore_color24, this->client_info.bpp);
                 // this may change the brush add send it to to remote cache
@@ -4397,10 +4404,11 @@ public:
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-                RDPPatBlt new_cmd24 = cmd;
-                new_cmd24.back_color = back_color24;
-                new_cmd24.fore_color = fore_color24;
-                this->capture->draw(new_cmd24, clip);
+//                RDPPatBlt new_cmd24 = cmd;
+//                new_cmd24.back_color = back_color24;
+//                new_cmd24.fore_color = fore_color24;
+//                this->capture->draw(new_cmd24, clip);
+                this->capture->draw(cmd, clip);
             }
         }
     }
@@ -4517,23 +4525,28 @@ public:
 //            return;
 //        }
 
-        const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-        const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+//        const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+//        const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
 
         if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
             RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
 
             if (this->client_info.bpp != this->mod_bpp){
+                const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+                const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+
                 cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
                 cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
                 // this may change the brush add send it to to remote cache
             }
-
             this->orders->draw(cmd2, clip, bitmap);
+
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-                cmd2.back_color= back_color24;
-                cmd2.fore_color= fore_color24;
+//                cmd2.back_color= back_color24;
+//                cmd2.fore_color= fore_color24;
+                cmd2.back_color= cmd.back_color;
+                cmd2.fore_color= cmd.fore_color;
 
                 this->capture->draw(cmd2, clip, bitmap);
             }
@@ -4543,16 +4556,21 @@ public:
             RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
 
             if (this->client_info.bpp != this->mod_bpp){
+                const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+                const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+
                 cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
                 cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
                 // this may change the brush add send it to to remote cache
             }
-
             this->orders->draw(cmd2, clip, tiled_bmp);
+
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-                cmd2.back_color= back_color24;
-                cmd2.fore_color= fore_color24;
+//                cmd2.back_color= back_color24;
+//                cmd2.fore_color= fore_color24;
+                cmd2.back_color= cmd.back_color;
+                cmd2.fore_color= cmd.fore_color;
 
                 this->capture->draw(cmd2, clip, tiled_bmp);
             }
@@ -4631,22 +4649,29 @@ public:
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()){
 
-            RDPLineTo new_cmd = cmd;
             if (this->client_info.bpp != this->mod_bpp){
+                RDPLineTo new_cmd = cmd;
+
                 const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
                 new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
                 const BGRColor pen_color24 = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette_rgb);
                 new_cmd.pen.color = color_encode(pen_color24, this->client_info.bpp);
+
+                this->orders->draw(new_cmd, clip);
+            }
+//            this->orders->draw(new_cmd, clip);
+            else {
+                this->orders->draw(cmd, clip);
             }
 
-            this->orders->draw(new_cmd, clip);
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-                RDPLineTo new_cmd24 = cmd;
-                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                new_cmd24.pen.color = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette_rgb);
-                this->capture->draw(new_cmd24, clip);
+//                RDPLineTo new_cmd24 = cmd;
+//                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+//                new_cmd24.pen.color = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette_rgb);
+//                this->capture->draw(new_cmd24, clip);
+                this->capture->draw(cmd, clip);
             }
         }
     }
@@ -4709,10 +4734,13 @@ public:
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-                RDPGlyphIndex new_cmd24 = /*cmd*/new_cmd;
-                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-                this->capture->draw(new_cmd24, clip, gly_cache);
+//                RDPGlyphIndex new_cmd24 = new_cmd;
+//                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+//                new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+//                this->capture->draw(new_cmd24, clip, gly_cache);
+                new_cmd.back_color = cmd.back_color;
+                new_cmd.fore_color = cmd.fore_color;
+                this->capture->draw(new_cmd, clip, gly_cache);
             }
         }
     }
@@ -4773,9 +4801,10 @@ public:
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                RDPPolygonSC new_cmd24 = cmd;
-                new_cmd24.BrushColor = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb);
-                this->capture->draw(new_cmd24, clip);
+//                RDPPolygonSC new_cmd24 = cmd;
+//                new_cmd24.BrushColor = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb);
+//                this->capture->draw(new_cmd24, clip);
+                this->capture->draw(cmd, clip);
             }
         }
     }
@@ -4799,22 +4828,27 @@ public:
         const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            RDPPolygonCB new_cmd = cmd;
+//            RDPPolygonCB new_cmd = cmd;
             if (this->client_info.bpp != this->mod_bpp) {
+                RDPPolygonCB new_cmd = cmd;
                 const BGRColor fore_pen_color24 = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb);
                 new_cmd.foreColor = color_encode(fore_pen_color24, this->client_info.bpp);
                 const BGRColor back_pen_color24 = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette_rgb);
                 new_cmd.backColor = color_encode(back_pen_color24, this->client_info.bpp);
+                this->orders->draw(new_cmd, clip);
             }
-
-            this->orders->draw(new_cmd, clip);
+//            this->orders->draw(new_cmd, clip);
+            else {
+                this->orders->draw(cmd, clip);
+            }
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                RDPPolygonCB new_cmd24 = cmd;
-                new_cmd24.foreColor = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb);
-                new_cmd24.backColor = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette_rgb);
-                this->capture->draw(new_cmd24, clip);
+//                RDPPolygonCB new_cmd24 = cmd;
+//                new_cmd24.foreColor = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb);
+//                new_cmd24.backColor = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette_rgb);
+//                this->capture->draw(new_cmd24, clip);
+                this->capture->draw(cmd, clip);
             }
         }
     }

@@ -180,6 +180,17 @@ public:
 
         Rect cmd_rect(0, 0, 0, 0);
 
+        uint32_t BackColor;
+        uint32_t ForeColor;
+        if (this->mod_bpp == 24) {
+            BackColor = ::RGBtoBGR(cmd.BackColor);
+            ForeColor = ::RGBtoBGR(cmd.ForeColor);
+        }
+        else {
+            BackColor = ::RGBtoBGR(::color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb));
+            ForeColor = ::RGBtoBGR(::color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette_rgb));
+        }
+
         for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
             cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
             cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
@@ -193,14 +204,15 @@ public:
                 memcpy(brush_data, cmd.BrushExtra, 7);
                 brush_data[7] = cmd.BrushHatch;
 
-                const uint32_t BackColor = this->RGBtoBGR(cmd.BackColor);
-                const uint32_t ForeColor = this->RGBtoBGR(cmd.ForeColor);
+//                const uint32_t BackColor = this->RGBtoBGR(cmd.BackColor);
+//                const uint32_t ForeColor = this->RGBtoBGR(cmd.ForeColor);
                 this->drawable.patblt_ex(trect, cmd.bRop, BackColor, ForeColor, brush_data);
             }
             else
             {
-                const uint32_t color = this->RGBtoBGR(cmd.BackColor);
-                this->drawable.patblt(trect, cmd.bRop, color);
+//                const uint32_t color = this->RGBtoBGR(cmd.BackColor);
+//                this->drawable.patblt(trect, cmd.bRop, color);
+                this->drawable.patblt(trect, cmd.bRop, BackColor);
             }
         }
     }
@@ -231,20 +243,33 @@ public:
     {
         const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         TODO("PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
+
+        uint32_t back_color;
+        uint32_t fore_color;
+        if (this->mod_bpp == 24) {
+            back_color = ::RGBtoBGR(cmd.back_color);
+            fore_color = ::RGBtoBGR(cmd.fore_color);
+        }
+        else {
+            back_color = ::RGBtoBGR(::color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb));
+            fore_color = ::RGBtoBGR(::color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb));
+        }
+
         if ((cmd.rop == 0xF0) && (cmd.brush.style == 0x03))
         {
             uint8_t brush_data[8];
             memcpy(brush_data, cmd.brush.extra, 7);
             brush_data[7] = cmd.brush.hatch;
 
-            const uint32_t back_color = this->RGBtoBGR(cmd.back_color);
-            const uint32_t fore_color = this->RGBtoBGR(cmd.fore_color);
+//            const uint32_t back_color = this->RGBtoBGR(cmd.back_color);
+//            const uint32_t fore_color = this->RGBtoBGR(cmd.fore_color);
             this->drawable.patblt_ex(trect, cmd.rop, back_color, fore_color, brush_data);
         }
         else
         {
-            const uint32_t color = this->RGBtoBGR(cmd.back_color);
-            this->drawable.patblt(trect, cmd.rop, color);
+//            const uint32_t color = this->RGBtoBGR(cmd.back_color);
+//            this->drawable.patblt(trect, cmd.rop, color);
+            this->drawable.patblt(trect, cmd.rop, back_color);
         }
     }
 
@@ -300,7 +325,11 @@ public:
         this->drawable.mem_3_blt(rect, bmp
             , cmd.srcx + (rect.x  - cmd.rect.x)
             , cmd.srcy + (rect.y  - cmd.rect.y)
-            , cmd.rop, cmd.fore_color, false);
+//            , cmd.rop, cmd.fore_color, false);
+            , cmd.rop
+            , ((this->mod_bpp == 24) ? cmd.fore_color
+                                     : ::color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb))
+            , false);
     }
 
     /*
@@ -321,8 +350,11 @@ public:
      */
     void draw(const RDPLineTo & lineto, const Rect & clip)
     {
-        drew_line(lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy, lineto.rop2,
-            lineto.pen.color, clip);
+        this->drew_line(lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy, lineto.rop2,
+//            lineto.pen.color, clip);
+            ((this->mod_bpp == 24) ? lineto.pen.color
+                                   : ::color_decode_opaquerect(lineto.pen.color, this->mod_bpp, this->mod_palette_rgb)),
+            clip);
     }
 
     void drew_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart,
@@ -430,7 +462,9 @@ public:
         Bitmap glyph_fragments(24, NULL, cmd.bk.cx, cmd.bk.cy);
 
         {
-            const uint32_t color = this->RGBtoBGR(cmd.fore_color);
+//            const uint32_t color = this->RGBtoBGR(cmd.fore_color);
+            const uint32_t color = ::RGBtoBGR(((this->mod_bpp == 24) ? cmd.fore_color
+                                                                     : ::color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb)));
 
             uint8_t * base = glyph_fragments.data_bitmap.get();
             uint8_t * p    = base;
@@ -487,7 +521,11 @@ public:
 
                     if (fc)
                     {
-                        this->draw_glyph(glyph_fragments, fc, draw_pos, this->RGBtoBGR(cmd.back_color));
+//                        this->draw_glyph(glyph_fragments, fc, draw_pos, this->RGBtoBGR(cmd.back_color));
+                        this->draw_glyph(glyph_fragments, fc, draw_pos,
+                            ::RGBtoBGR(((this->mod_bpp == 24) ? cmd.back_color
+                                                              : ::color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb)))
+                            );
                     }
                 }
                 else if (data == 0xFE)
@@ -580,7 +618,7 @@ public:
             endx = startx + cmd.deltaEncodedPoints[i].xDelta;
             endy = starty + cmd.deltaEncodedPoints[i].yDelta;
 
-            drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.PenColor, clip);
+            this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.PenColor, clip);
 
             startx = endx;
             starty = endy;
@@ -596,18 +634,24 @@ public:
         int16_t endx;
         int16_t endy;
 
+        uint32_t BrushColor =
+            ((this->mod_bpp == 24) ? cmd.BrushColor
+                                   : ::color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb));
+
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
             endx = startx + cmd.deltaPoints[i].xDelta;
             endy = starty + cmd.deltaPoints[i].yDelta;
 
-            drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.BrushColor, clip);
+//            this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.BrushColor, clip);
+            this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
 
             startx = endx;
             starty = endy;
         }
         endx = cmd.xStart;
         endy = cmd.yStart;
-        drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.BrushColor, clip);
+//        this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.BrushColor, clip);
+        this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
     }
 
     TODO("this functions only draw polygon borders but do not fill "
@@ -619,18 +663,24 @@ public:
         int16_t endx;
         int16_t endy;
 
+        uint32_t foreColor =
+            ((this->mod_bpp == 24) ? cmd.foreColor
+                                   : ::color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb));
+
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
             endx = startx + cmd.deltaPoints[i].xDelta;
             endy = starty + cmd.deltaPoints[i].yDelta;
 
-            drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.foreColor, clip);
+//            this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.foreColor, clip);
+            this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
 
             startx = endx;
             starty = endy;
         }
         endx = cmd.xStart;
         endy = cmd.yStart;
-        drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.foreColor, clip);
+//        this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.foreColor, clip);
+        this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
