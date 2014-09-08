@@ -74,29 +74,33 @@ namespace SlowPath {
         SubStream payload;
 
         ClientInputEventPDU_Recv(Stream & stream)
-        : numEvents(0)
-        , payload(stream) {
-            if (!stream.in_check_rem(2)) {
-                LOG(LOG_ERR, "SlowPath::ClientInputEventPDU: data truncated (numEvents)");
-                throw Error(ERR_RDP_SLOWPATH);
-            }
 
-            this->numEvents = stream.in_uint16_le();
+        : numEvents(
+            [&stream](){
+                if (!stream.in_check_rem(2)) {
+                    LOG(LOG_ERR, "SlowPath::ClientInputEventPDU: data truncated (numEvents)");
+                    throw Error(ERR_RDP_SLOWPATH);
+                }
 
-            const unsigned expected =
-                  2                    // pad(2)
-                + this->numEvents * 12 // (time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)) * 12
-                ;
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "SlowPath::ClientInputEventPDU: data truncated, expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDP_SLOWPATH);
-            }
+                auto numEvents = stream.in_uint16_le();
+                const unsigned expected =
+                      2                    // pad(2)
+                    + numEvents * 12 // (time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)) * 12
+                    ;
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR, "SlowPath::ClientInputEventPDU: data truncated, expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RDP_SLOWPATH);
+                }
 
-            stream.in_skip_bytes(2); // pad
-
-            this->payload.resize(stream,
-                this->numEvents * 12); // (time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)) * 12
+                stream.in_skip_bytes(2); // pad
+                return numEvents;
+            }()
+        )
+        // (time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)) * 12
+        , payload(stream, stream.get_offset(), this->numEvents * 12) 
+        {
+            // This is the constructor body, we skip payload now that it is packaged
 
             stream.in_skip_bytes(this->numEvents * 12);
         }

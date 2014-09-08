@@ -513,7 +513,6 @@ class Sesman():
                                            , u'target_login'            : target_login
                                            , u'target_device'           : target_device
                                            , u'proto_dest'              : proto_dest
-                                           , u'end_time'                : u""
                                            # , u'selector'                : u"True"
                                            , u'ip_client'               : self.shared.get(u'ip_client')
                                            , u'proxy_type'              : self.shared.get(u'proxy_type')
@@ -539,7 +538,6 @@ class Sesman():
                             all_target_login  = [s[0] for s in services]
                             all_target_device = [s[1] for s in services]
                             all_proto_dest    = [s[2] for s in services]
-                            all_end_time      = [s[3] for s in services]
 
                             target_login = u"\x01".join(all_target_login)
                             target_device = u"\x01".join(all_target_device)
@@ -549,7 +547,6 @@ class Sesman():
                                            , u'target_login'            : target_login
                                            , u'target_device'           : target_device
                                            , u'proto_dest'              : proto_dest
-                                           , u'end_time'                : u";".join(all_end_time)
                                            # , u'selector'                : u'True'
                                            , u'ip_client'               : self.shared.get(u'ip_client')
                                            , u'proxy_type'              : self.shared.get(u'proxy_type')

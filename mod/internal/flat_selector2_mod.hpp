@@ -185,7 +185,6 @@ public:
         char * groups    = const_cast<char *>(this->ini.globals.target_user.get_cstr());
         char * targets   = const_cast<char *>(this->ini.globals.target_device.get_cstr());
         char * protocols = const_cast<char *>(this->ini.context.target_protocol.get_cstr());
-        char * endtimes  = const_cast<char *>(this->ini.context.end_time.get_cstr());
         for (unsigned index = 0; index < this->ini.context.selector_lines_per_page.get();
              index++) {
             size_t size_groups = proceed_item(groups, '\x01');
@@ -193,29 +192,24 @@ public:
                 break;
             size_t size_targets = proceed_item(targets, '\x01');
             size_t size_protocols = proceed_item(protocols, '\x01');
-            size_t size_endtimes = proceed_item(endtimes, ';');
 
             char c_group = groups[size_groups];
             char c_target = targets[size_targets];
             char c_protocol = protocols[size_protocols];
-            char c_endtime = endtimes[size_endtimes];
 
             groups[size_groups] = '\0';
             targets[size_targets] = '\0';
             protocols[size_protocols] = '\0';
-            endtimes[size_endtimes] = '\0';
 
             this->selector.add_device(groups, targets, protocols);
 
             groups[size_groups] = c_group;
             targets[size_targets] = c_target;
             protocols[size_protocols] = c_protocol;
-            endtimes[size_endtimes] = c_endtime;
 
             if (c_group    == '\n' || !c_group
                 ||  c_target   == '\n' || !c_target
                 ||  c_protocol == '\n' || !c_protocol
-                ||  c_endtime  == '\n' || !c_endtime
                 ){
                 break;
             }
@@ -223,7 +217,6 @@ public:
             groups += size_groups + 1;
             targets += size_targets + 1;
             protocols += size_protocols + 1;
-            endtimes += size_endtimes + 1;
 
         }
 
