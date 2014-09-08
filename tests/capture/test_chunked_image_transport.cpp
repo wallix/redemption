@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
         Inifile ini;
         BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
-        RDPDrawable drawable(scr.cx, scr.cy);
+        RDPDrawable drawable(scr.cx, scr.cy, 24);
         GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
         consumer.draw(RDPOpaqueRect(scr, RED), scr);
         consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
-    RDPDrawable drawable(scr.cx, scr.cy);
+    RDPDrawable drawable(scr.cx, scr.cy, 24);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
-    RDPDrawable drawable(scr.cx, scr.cy);
+    RDPDrawable drawable(scr.cx, scr.cy, 24);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
@@ -263,7 +263,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
         "\xae\x42\x60\x82"                                                 //.B`.
     ;
 
-    RDPDrawable d(20, 10);
+    RDPDrawable d(20, 10, 24);
     GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
     ::transport_read_png24(&in_png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
@@ -323,7 +323,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     InChunkedImageTransport chunk_trans(chunk_type, chunk_size, &in_png_trans);
 
 
-    RDPDrawable d(20, 10);
+    RDPDrawable d(20, 10, 24);
     ::transport_read_png24(&chunk_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
@@ -390,7 +390,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
     player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
@@ -462,7 +462,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
     OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid);
@@ -545,7 +545,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
     player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);

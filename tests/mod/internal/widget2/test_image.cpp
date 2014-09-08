@@ -43,7 +43,7 @@ struct TestDraw : DrawApi
     RDPDrawable gd;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h)
+    : gd(w, h, 24)
     {}
 
     virtual void draw(const RDPOpaqueRect&, const Rect&)

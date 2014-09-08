@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 600, 768, false, 300, 3072, false, 262, 12288, false);
     Inifile ini;
-    RDPDrawable drawable(800, 600);
+    RDPDrawable drawable(800, 600, 24);
     NativeCapture consumer(now, trans, 800, 600, 24, bmp_cache, drawable, ini);
 
 //    consumer.set_pointer_display();

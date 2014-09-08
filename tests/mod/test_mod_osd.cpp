@@ -39,7 +39,7 @@ struct FakeMod : mod_api
 
     FakeMod(const uint16_t front_width, const uint16_t front_height)
     : mod_api(front_width, front_height)
-    , gd(front_width, front_height)
+    , gd(front_width, front_height, 24)
     {}
 
     virtual void draw_event(time_t now) {}
