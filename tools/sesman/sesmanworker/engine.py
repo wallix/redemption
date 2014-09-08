@@ -35,7 +35,7 @@ class Engine(object):
     def get_language(self):
         return self.user.preferredLanguage
 
-    def get_wabuser_name(self):
+    def get_username(self):
         return self.wab_login
 
     def get_trace_encryption(self):
