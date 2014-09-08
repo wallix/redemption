@@ -4872,19 +4872,24 @@ public:
         const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            RDPPolyline new_cmd = cmd;
+//            RDPPolyline new_cmd = cmd;
             if (this->client_info.bpp != this->mod_bpp) {
+                RDPPolyline new_cmd = cmd;
                 const BGRColor pen_color24 = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb);
                 new_cmd.PenColor = color_encode(pen_color24, this->client_info.bpp);
+                this->orders->draw(new_cmd, clip);
             }
-
-            this->orders->draw(new_cmd, clip);
+//            this->orders->draw(new_cmd, clip);
+            else {
+                this->orders->draw(cmd, clip);
+            }
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                RDPPolyline new_cmd24 = cmd;
-                new_cmd24.PenColor = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb);
-                this->capture->draw(new_cmd24, clip);
+//                RDPPolyline new_cmd24 = cmd;
+//                new_cmd24.PenColor = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb);
+//                this->capture->draw(new_cmd24, clip);
+                this->capture->draw(cmd, clip);
             }
         }
     }
@@ -4895,18 +4900,24 @@ public:
 
             this->send_global_palette();
 
-            RDPEllipseSC new_cmd = cmd;
+//            RDPEllipseSC new_cmd = cmd;
             if (this->client_info.bpp != this->mod_bpp){
+                RDPEllipseSC new_cmd = cmd;
                 const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
                 new_cmd.color = color_encode(color24, this->client_info.bpp);
+                this->orders->draw(new_cmd, clip);
             }
-            this->orders->draw(new_cmd, clip);
+//            this->orders->draw(new_cmd, clip);
+            else {
+                this->orders->draw(cmd, clip);
+            }
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-                RDPEllipseSC new_cmd24 = cmd;
-                new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
-                this->capture->draw(new_cmd24, clip);
+//                RDPEllipseSC new_cmd24 = cmd;
+//                new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
+//                this->capture->draw(new_cmd24, clip);
+                this->capture->draw(cmd, clip);
             }
         }
     }
@@ -4914,26 +4925,31 @@ public:
     void draw(const RDPEllipseCB & cmd, const Rect & clip)
     {
         if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()){
-
             this->send_global_palette();
 
-            RDPEllipseCB new_cmd = cmd;
+//            RDPEllipseCB new_cmd = cmd;
             if (this->client_info.bpp != this->mod_bpp){
+                RDPEllipseCB new_cmd = cmd;
                 const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
                 new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
 
                 const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
                 new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
 
+                this->orders->draw(new_cmd, clip);
             }
-            this->orders->draw(new_cmd, clip);
+//            this->orders->draw(new_cmd, clip);
+            else {
+                this->orders->draw(cmd, clip);
+            }
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-                RDPEllipseCB new_cmd24 = cmd;
-                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-                this->capture->draw(new_cmd24, clip);
+//                RDPEllipseCB new_cmd24 = cmd;
+//                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+//                new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+//                this->capture->draw(new_cmd24, clip);
+                this->capture->draw(cmd, clip);
             }
         }
     }

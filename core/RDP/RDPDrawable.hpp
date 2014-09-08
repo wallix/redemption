@@ -109,13 +109,19 @@ public:
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) {
-        uint32_t bgrcolor = this->RGBtoBGR(cmd.color);
+//        uint32_t bgrcolor = this->RGBtoBGR(cmd.color);
+        uint32_t bgrcolor =
+            ::RGBtoBGR(((this->mod_bpp == 24) ? cmd.color
+                                              : ::color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb)));
         this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, bgrcolor);
     }
 
     TODO("This will draw a standard ellipse without brush style")
     void draw(const RDPEllipseCB & cmd, const Rect & clip) {
-        uint32_t bgrcolor = this->RGBtoBGR(cmd.back_color);
+//        uint32_t bgrcolor = this->RGBtoBGR(cmd.back_color);
+        uint32_t bgrcolor =
+            ::RGBtoBGR(((this->mod_bpp == 24) ? cmd.back_color
+                                              : ::color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb)));
         this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, bgrcolor);
     }
 
@@ -618,7 +624,11 @@ public:
             endx = startx + cmd.deltaEncodedPoints[i].xDelta;
             endy = starty + cmd.deltaEncodedPoints[i].yDelta;
 
-            this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.PenColor, clip);
+//            this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.PenColor, clip);
+            this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2,
+                ((this->mod_bpp == 24) ? cmd.PenColor
+                                       : ::color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb)),
+                clip);
 
             startx = endx;
             starty = endy;
