@@ -273,7 +273,7 @@ class Engine(object):
     def get_restrictions(self, target, proxytype):
         self.pattern_kill = u""
         self.pattern_notify = u""
-        return
+        return None, None
 
     def update_session(self, physical_target):
         pass
