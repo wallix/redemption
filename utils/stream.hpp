@@ -956,7 +956,7 @@ class SubStream : public Stream {
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_RESIZE);
         }
-        this->data = this->p = stream.p;
+        this->data = this->p = stream.get_data()+stream.get_offset();
         this->capacity = new_size;
         this->end = this->data + new_size;
     }

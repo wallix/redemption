@@ -382,15 +382,13 @@ namespace X224
     // ################################### COMMON CODE #################################
     struct Recv
     {
-        size_t _header_size;
-
         struct Tpkt
         {
             uint8_t version;
             uint16_t len;
         } tpkt;
 
-        Recv(Transport & t, Stream & stream) : _header_size(4)
+        Recv(Transport & t, Stream & stream)
         {
             uint16_t length = stream.size();
             if (length < 4){
@@ -444,7 +442,7 @@ namespace X224
     // (used for load balancing) terminated by a carriage-return (CR) and line-feed
     // (LF) ANSI sequence. For more information about Terminal Server load balancing
     // and the routing token format, see [MSFT-SDLBTS]. The length of the routing
-    // token and CR+LF sequence is include " in the X.224 Connection Request Length
+    // token and CR+LF sequence is included in the X.224 Connection Request Length
     // Indicator field. If this field is present, then the cookie field MUST NOT be
     //  present.
 
@@ -572,7 +570,7 @@ namespace X224
 
     struct CR_TPDU_Recv : public Recv
     {
-        struct TPDUHeader
+        struct CR_Header
         {
             uint8_t LI;
             uint8_t code;
@@ -581,6 +579,8 @@ namespace X224
             uint16_t src_ref;
             uint8_t class_option;
         } tpdu_hdr;
+
+        size_t _header_size;
 
         size_t cookie_len;
         char cookie[1024];
@@ -597,6 +597,29 @@ namespace X224
 
         CR_TPDU_Recv(Transport & t, Stream & stream, bool bogus_neg_req, uint32_t verbose = 0)
         : Recv(t, stream)
+        , tpdu_hdr([&]()
+            {
+                /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
+                if (!stream.in_check_rem(7)){
+                    LOG(LOG_ERR, "Truncated TPDU header: expected=7 remains=%u", stream.in_remain());
+                    throw Error(ERR_X224);
+                }
+
+                uint8_t LI = stream.in_uint8();
+                uint8_t code = stream.in_uint8();
+
+                if (!(code == X224::CR_TPDU)){
+                    LOG(LOG_ERR, "Unexpected TPDU opcode, expected CR_TPDU, got %u", code);
+                    throw Error(ERR_X224);
+                }
+
+                uint16_t dst_ref = stream.in_uint16_le();
+                uint16_t src_ref = stream.in_uint16_le();
+                uint8_t class_option = stream.in_uint8();
+
+                return CR_TPDU_Recv::CR_Header({LI, code, dst_ref, src_ref, class_option});
+            }())
+        , _header_size(X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1)
         , rdp_neg_type(0)
         , rdp_neg_flags(0)
         , rdp_neg_length(0)
@@ -606,32 +629,14 @@ namespace X224
         , rdp_cinfo_length(0)
         , rdp_cinfo_correlationid()
         {
-            const unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated TPDU header: expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_X224);
-            }
 
-            this->tpdu_hdr.LI = stream.in_uint8();
-            this->tpdu_hdr.code = stream.in_uint8();
-
-            if (!(this->tpdu_hdr.code == X224::CR_TPDU)){
-                LOG(LOG_ERR, "Unexpected TPDU opcode, expected CR_TPDU, got %u",
-                    this->tpdu_hdr.code);
-                throw Error(ERR_X224);
-            }
-
-            this->tpdu_hdr.dst_ref = stream.in_uint16_le();
-            this->tpdu_hdr.src_ref = stream.in_uint16_le();
-            this->tpdu_hdr.class_option = stream.in_uint8();
-
-            const unsigned expected2 = X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI;
-            if (stream.size() < expected2){
+            if (stream.size() < this->_header_size){
                 LOG(LOG_ERR, "Truncated CR TPDU header: expected %u, got %u",
-                    expected2, stream.size());
+                    this->_header_size, stream.size());
                 throw Error(ERR_X224);
             }
+
+            TODO("CGR: we should fix the code here to support routingtoken (or we may have some troubles with load balancing RDP hardware")
 
             // extended negotiation header
             this->cookie_len = 0;
@@ -902,7 +907,7 @@ namespace X224
 
     struct CC_TPDU_Recv : public Recv
     {
-        struct TPDUHeader
+        struct CC_Header
         {
             uint8_t LI;
             uint8_t code;
@@ -911,35 +916,40 @@ namespace X224
             uint16_t src_ref;
             uint8_t class_option;
         } tpdu_hdr;
+        
+        size_t _header_size;
 
         uint8_t rdp_neg_type;
         uint8_t rdp_neg_flags;
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_code; // selected_protocol or failure_code
 
-        CC_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0) : Recv(t, stream)
+        CC_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0) 
+            : Recv(t, stream)
+            , tpdu_hdr([&]()
+            {
+                /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
+                if (!stream.in_check_rem(7)){
+                    LOG(LOG_ERR, "Truncated TPDU header: expected=7 remains=%u", stream.in_remain());
+                    throw Error(ERR_X224);
+                }
+
+                uint8_t LI = stream.in_uint8();
+                uint8_t code = stream.in_uint8();
+
+                if (!(code == X224::CC_TPDU)){
+                    LOG(LOG_ERR, "Unexpected TPDU opcode, expected CC_TPDU, got %u", code);
+                    throw Error(ERR_X224);
+                }
+
+                uint16_t dst_ref = stream.in_uint16_le();
+                uint16_t src_ref = stream.in_uint16_le();
+                uint8_t class_option = stream.in_uint8();
+                return CC_TPDU_Recv::CC_Header({LI, code, dst_ref, src_ref, class_option});
+            }())
+            , _header_size(X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1)
         {
-            unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated TPDU header: expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_X224);
-            }
-
-            this->tpdu_hdr.LI = stream.in_uint8();
-            this->tpdu_hdr.code = stream.in_uint8();
-
-            if (!(this->tpdu_hdr.code == X224::CC_TPDU)){
-                LOG(LOG_ERR, "Unexpected TPDU opcode, expected CC_TPDU, got %u",
-                    this->tpdu_hdr.code);
-                throw Error(ERR_X224);
-            }
-
-            this->tpdu_hdr.dst_ref = stream.in_uint16_le();
-            this->tpdu_hdr.src_ref = stream.in_uint16_le();
-            this->tpdu_hdr.class_option = stream.in_uint8();
-
-            expected = X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI;
+            unsigned expected = X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI;
             if (stream.size() < expected){
                 LOG(LOG_ERR, "Truncated CC TPDU header: expected %u, got %u",
                     expected, stream.size());
@@ -1030,7 +1040,7 @@ namespace X224
                 }
             }
             if (end_of_header != stream.p){
-                LOG(LOG_ERR, "CC TPDU header should be tertminated, got trailing data %u", end_of_header - stream.p);
+                LOG(LOG_ERR, "CC TPDU header should be terminated, got trailing data %u", end_of_header - stream.p);
                 throw Error(ERR_X224);
             }
             this->_header_size = stream.get_offset();
@@ -1152,7 +1162,7 @@ namespace X224
 
     struct DR_TPDU_Recv : public Recv
     {
-        struct TPDUHeader
+        struct DR_Header
         {
             uint8_t LI;
             uint8_t code;
@@ -1161,35 +1171,39 @@ namespace X224
             uint16_t src_ref;
             uint8_t reason;
         } tpdu_hdr;
+        
+        size_t _header_size;
 
-        DR_TPDU_Recv(Transport & t, Stream & stream) : Recv(t, stream)
+        DR_TPDU_Recv(Transport & t, Stream & stream) 
+            : Recv(t, stream)
+            , tpdu_hdr([&]()
+            {
+                /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + reason(1) */
+                if (!stream.in_check_rem(7)){
+                    LOG(LOG_ERR, "Truncated TPDU header: expected=7 remains=%u", stream.in_remain());
+                    throw Error(ERR_X224);
+                }
+
+                uint8_t LI = stream.in_uint8();
+                uint8_t code = stream.in_uint8();
+
+                if (!(code == X224::DR_TPDU)){
+                    LOG(LOG_ERR, "Unexpected TPDU opcode, expected DR_TPDU, got %u", code);
+                    throw Error(ERR_X224);
+                }
+
+                uint16_t dst_ref = stream.in_uint16_le();
+                uint16_t src_ref = stream.in_uint16_le();
+                uint8_t reason = stream.in_uint8();
+                return DR_TPDU_Recv::DR_Header({LI, code, dst_ref, src_ref, reason});
+            }())
+            , _header_size(X224::TPKT_HEADER_LEN + 1 + this->tpdu_hdr.LI)            
         {
-            const unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + reason(1) */
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated TPDU header: expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_X224);
-            }
-
-            this->tpdu_hdr.LI = stream.in_uint8();
-            this->tpdu_hdr.code = stream.in_uint8();
-
-            if (!(this->tpdu_hdr.code == X224::DR_TPDU)){
-                LOG(LOG_ERR, "Unexpected TPDU opcode, expected DR_TPDU, got %u",
-                    this->tpdu_hdr.code);
-                throw Error(ERR_X224);
-            }
-
-            this->tpdu_hdr.dst_ref = stream.in_uint16_le();
-            this->tpdu_hdr.src_ref = stream.in_uint16_le();
-            this->tpdu_hdr.reason = stream.in_uint8();
-
             uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             if (end_of_header != stream.p){
-                LOG(LOG_ERR, "DR TPDU header should be tertminated, got trailing data %u", end_of_header - stream.p);
+                LOG(LOG_ERR, "DR TPDU header should be terminated, got trailing data %u", end_of_header - stream.p);
                 throw Error(ERR_X224);
             }
-            this->_header_size = stream.get_offset();
         }
     }; // END CLASS DR_TPDU_Recv
 
@@ -1233,7 +1247,7 @@ namespace X224
 
     struct ER_TPDU_Recv  : public Recv
     {
-        struct TPDUHeader
+        struct ER_Header
         {
             uint8_t LI;
             uint8_t code;
@@ -1243,71 +1257,79 @@ namespace X224
             uint8_t invalid_tpdu_var;
             uint8_t invalid_tpdu_vl;
             uint8_t invalid[256];
+            
+            ER_Header(Stream & stream)
+            {
+                /* LI(1) + code(1) + dst_ref(2) + reject_cause(1) */
+                if (!stream.in_check_rem(5)){
+                    LOG(LOG_ERR, "Truncated TPDU header: expected=5 remains=%u", stream.in_remain());
+                    throw Error(ERR_X224);
+                }
+
+                // TPDU
+                this->LI = stream.in_uint8();
+                this->code = stream.in_uint8();
+
+                if (!(this->code == X224::ER_TPDU)){
+                    LOG(LOG_ERR, "Unexpected TPDU opcode, expected ER_TPDU, got %u", this->code);
+                    throw Error(ERR_X224);
+                }
+
+                this->dst_ref = stream.in_uint16_le();
+                this->reject_cause = stream.in_uint8();
+
+                unsigned expected = X224::TPKT_HEADER_LEN + this->LI;
+                if (stream.size() < expected){
+                    LOG(LOG_ERR, "Truncated ER TPDU header: expected %u, got %u",
+                        expected, stream.size());
+                    throw Error(ERR_X224);
+                }
+
+                uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->LI + 1;
+                if (end_of_header - stream.p >= 2){
+                    this->invalid_tpdu_var = stream.in_uint8();
+                    if (this->invalid_tpdu_var != 0xC1){
+                        LOG(LOG_ERR, "Unexpected ER TPDU, variable code, expected C1 (invalid TPDU details), got %x",
+                            this->invalid_tpdu_var);
+                        throw Error(ERR_X224);
+                    }
+                    this->invalid_tpdu_vl = stream.in_uint8();
+                    if (this->invalid_tpdu_vl > this->LI - 6){
+                        LOG(LOG_ERR, "Invalid TPDU details too large, max=%u got %x",
+                            this->LI - 6, this->invalid_tpdu_vl);
+                        throw Error(ERR_X224);
+                    }
+
+                    if (!stream.in_check_rem(this->invalid_tpdu_vl)){
+                        LOG(LOG_ERR, "Truncated ER TPDU invalid: expected %u, got %u",
+                            this->invalid_tpdu_vl, stream.size());
+                        throw Error(ERR_X224);
+                    }
+
+                    stream.in_copy_bytes(this->invalid, this->invalid_tpdu_vl);
+                    if (this->LI - 6 - this->invalid_tpdu_vl != 0){
+                        LOG(LOG_ERR, "Trailing variable data in ER_TPDU, %u bytes",
+                            this->LI - 6 - this->invalid_tpdu_vl);
+                        throw Error(ERR_X224);
+                    }
+
+                }
+                const size_t _header_size = X224::TPKT_HEADER_LEN + 1 + this->LI;
+                if (_header_size != stream.get_offset()){
+                    LOG(LOG_ERR, "ER TPDU header should be terminated, got trailing data %u", 
+                        stream.get_offset() - _header_size);
+                    throw Error(ERR_X224);
+                }
+            }
         } tpdu_hdr;
+        
+        size_t _header_size;
 
-        ER_TPDU_Recv(Transport & t, Stream & stream) : Recv(t, stream)
+        ER_TPDU_Recv(Transport & t, Stream & stream)
+            : Recv(t, stream)
+            , tpdu_hdr(stream)
+            , _header_size(X224::TPKT_HEADER_LEN + 1 + this->tpdu_hdr.LI)
         {
-            unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + reject_cause(1) */
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated TPDU header: expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_X224);
-            }
-
-            // TPDU
-            this->tpdu_hdr.LI = stream.in_uint8();
-            this->tpdu_hdr.code = stream.in_uint8();
-
-            if (!(this->tpdu_hdr.code == X224::ER_TPDU)){
-                LOG(LOG_ERR, "Unexpected TPDU opcode, expected ER_TPDU, got %u",
-                    this->tpdu_hdr.code);
-                throw Error(ERR_X224);
-            }
-
-            this->tpdu_hdr.dst_ref = stream.in_uint16_le();
-            this->tpdu_hdr.reject_cause = stream.in_uint8();
-
-            expected = X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI;
-            if (stream.size() < expected){
-                LOG(LOG_ERR, "Truncated ER TPDU header: expected %u, got %u",
-                    expected, stream.size());
-                throw Error(ERR_X224);
-            }
-
-            uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-            if (end_of_header - stream.p >= 2){
-                this->tpdu_hdr.invalid_tpdu_var = stream.in_uint8();
-                if (this->tpdu_hdr.invalid_tpdu_var != 0xC1){
-                    LOG(LOG_ERR, "Unexpected ER TPDU, variable code, expected C1 (invalid TPDU details), got %x",
-                        this->tpdu_hdr.invalid_tpdu_var);
-                    throw Error(ERR_X224);
-                }
-                this->tpdu_hdr.invalid_tpdu_vl = stream.in_uint8();
-                if (this->tpdu_hdr.invalid_tpdu_vl > this->tpdu_hdr.LI - 6){
-                    LOG(LOG_ERR, "Invalid TPDU details too large, max=%u got %x",
-                        this->tpdu_hdr.LI - 6, this->tpdu_hdr.invalid_tpdu_vl);
-                    throw Error(ERR_X224);
-                }
-
-                if (!stream.in_check_rem(this->tpdu_hdr.invalid_tpdu_vl)){
-                    LOG(LOG_ERR, "Truncated ER TPDU invalid: expected %u, got %u",
-                        this->tpdu_hdr.invalid_tpdu_vl, stream.size());
-                    throw Error(ERR_X224);
-                }
-
-                stream.in_copy_bytes(this->tpdu_hdr.invalid, this->tpdu_hdr.invalid_tpdu_vl);
-                if (this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl != 0){
-                    LOG(LOG_ERR, "Trailing variable data in ER_TPDU, %u bytes",
-                        this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl);
-                    throw Error(ERR_X224);
-                }
-
-            }
-            if (end_of_header != stream.p){
-                LOG(LOG_ERR, "ER TPDU header should be terminated, got trailing data %u", end_of_header - stream.p);
-                throw Error(ERR_X224);
-            }
-            this->_header_size = stream.get_offset();
         }
     }; // END CLASS ER_TPDU_Recv
 
@@ -1347,48 +1369,49 @@ namespace X224
 
     struct DT_TPDU_Recv : public Recv
     {
-        size_t payload_size;
-        SubStream payload;
-
-        struct TPDUHeader
+        struct DT_Header
         {
             uint8_t LI;
             uint8_t code;
             uint8_t eot;
         } tpdu_hdr;
 
+        size_t _header_size;
+
+        size_t payload_size;
+        SubStream payload;
+
         DT_TPDU_Recv(Transport & t, Stream & stream)
         : Recv(t, stream)
+        , tpdu_hdr([&]()
+            {
+                if (!stream.in_check_rem(3)){
+                    LOG(LOG_ERR, "Truncated TPDU header: expected=3 remains=%u", stream.in_remain());
+                    throw Error(ERR_X224);
+                }
+
+                uint8_t LI = stream.in_uint8();
+                uint8_t  code = stream.in_uint8();
+                if (!(code == X224::DT_TPDU)){
+                    LOG(LOG_ERR, "Unexpected TPDU opcode, expected DT_TPDU, got %u", code);
+                    throw Error(ERR_X224);
+                }
+
+                uint8_t eot = stream.in_uint8();
+                if (eot != EOT_EOT){
+                    LOG(LOG_ERR, "DT TPDU should say EOT, got=%x", this->tpdu_hdr.eot);
+                    throw Error(ERR_X224);
+                }
+                return DT_TPDU_Recv::DT_Header({LI, code, eot});
+            }())
+        , _header_size(X224::TPKT_HEADER_LEN + 1 + this->tpdu_hdr.LI)
         , payload(stream, 0)
         {
-            const unsigned expected = 3; /* LI(1) + code(1) + eot(1) */
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated TPDU header: expected=%u remains=%u",
-                    expected, stream.in_remain());
+            if (this->_header_size != stream.get_offset()){
+                LOG(LOG_ERR, "DT TPDU header should be terminated, got trailing data %u", 
+                    stream.get_offset() - this->_header_size);
                 throw Error(ERR_X224);
             }
-
-            this->tpdu_hdr.LI = stream.in_uint8();
-
-            this->tpdu_hdr.code = stream.in_uint8();
-            if (!(this->tpdu_hdr.code == X224::DT_TPDU)){
-                LOG(LOG_ERR, "Unexpected TPDU opcode, expected DT_TPDU, got %u",
-                    this->tpdu_hdr.code);
-                throw Error(ERR_X224);
-            }
-
-            this->tpdu_hdr.eot = stream.in_uint8();
-            if (this->tpdu_hdr.eot != EOT_EOT){
-                LOG(LOG_ERR, "DT TPDU should say EOT, got=%x", this->tpdu_hdr.eot);
-                throw Error(ERR_X224);
-            }
-
-            uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-            if (end_of_header != stream.p){
-                LOG(LOG_ERR, "DT TPDU header should be tertminated, got trailing data %u", end_of_header - stream.p);
-                throw Error(ERR_X224);
-            }
-            this->_header_size = stream.get_offset();
             this->payload_size = stream.size() - this->_header_size;
 
             if (!stream.in_check_rem(this->payload_size)){
