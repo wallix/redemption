@@ -197,27 +197,35 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.out_uint16_le(this->width);
         payload.out_uint16_le(this->height);
         payload.out_uint16_le(this->capture_bpp);
-        payload.out_uint16_le(this->bmp_cache.cache_entries[0]);
-        payload.out_uint16_le(this->bmp_cache.cache_size[0]);
-        payload.out_uint16_le(this->bmp_cache.cache_entries[1]);
-        payload.out_uint16_le(this->bmp_cache.cache_size[1]);
-        payload.out_uint16_le(this->bmp_cache.cache_entries[2]);
-        payload.out_uint16_le(this->bmp_cache.cache_size[2]);
+
+        const BmpCache::Cache & c0 = this->bmp_cache.get_cache(0);
+        const BmpCache::Cache & c1 = this->bmp_cache.get_cache(1);
+        const BmpCache::Cache & c2 = this->bmp_cache.get_cache(2);
+
+        payload.out_uint16_le(c0.entries());
+        payload.out_uint16_le(c0.bmp_size());
+        payload.out_uint16_le(c1.entries());
+        payload.out_uint16_le(c1.bmp_size());
+        payload.out_uint16_le(c2.entries());
+        payload.out_uint16_le(c2.bmp_size());
 
         if (wrm_format_version > 3) {
             payload.out_uint8(this->bmp_cache.number_of_cache);
             payload.out_uint8(this->bmp_cache.use_waiting_list ? 1 : 0);
 
-            payload.out_uint8(this->bmp_cache.cache_persistent[0] ? 1 : 0);
-            payload.out_uint8(this->bmp_cache.cache_persistent[1] ? 1 : 0);
-            payload.out_uint8(this->bmp_cache.cache_persistent[2] ? 1 : 0);
+            payload.out_uint8(c0.persistent() ? 1 : 0);
+            payload.out_uint8(c1.persistent() ? 1 : 0);
+            payload.out_uint8(c2.persistent() ? 1 : 0);
 
-            payload.out_uint16_le(this->bmp_cache.cache_entries[3]);
-            payload.out_uint16_le(this->bmp_cache.cache_size[3]);
-            payload.out_uint8(this->bmp_cache.cache_persistent[3] ? 1 : 0);
-            payload.out_uint16_le(this->bmp_cache.cache_entries[4]);
-            payload.out_uint16_le(this->bmp_cache.cache_size[4]);
-            payload.out_uint8(this->bmp_cache.cache_persistent[4] ? 1 : 0);
+            const BmpCache::Cache & c3 = this->bmp_cache.get_cache(3);
+            const BmpCache::Cache & c4 = this->bmp_cache.get_cache(4);
+
+            payload.out_uint16_le(c3.entries());
+            payload.out_uint16_le(c3.bmp_size());
+            payload.out_uint8(c3.persistent() ? 1 : 0);
+            payload.out_uint16_le(c4.entries());
+            payload.out_uint16_le(c4.bmp_size());
+            payload.out_uint8(c4.persistent() ? 1 : 0);
         }
 
         payload.mark_end();
@@ -466,29 +474,12 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void save_bmp_caches()
     {
-        if (this->bmp_cache.number_of_cache > 0) {
-            for (size_t i = 0; i < this->bmp_cache.cache_entries[0]; i++){
-                this->emit_bmp_cache(0, i, false);
-            }
-        }
-        if (this->bmp_cache.number_of_cache > 1) {
-            for (size_t i = 0; i < this->bmp_cache.cache_entries[1]; i++){
-                this->emit_bmp_cache(1, i, false);
-            }
-        }
-        if (this->bmp_cache.number_of_cache > 2) {
-            for (size_t i = 0; i < this->bmp_cache.cache_entries[2]; i++){
-                this->emit_bmp_cache(2, i, false);
-            }
-        }
-        if (this->bmp_cache.number_of_cache > 3) {
-            for (size_t i = 0; i < this->bmp_cache.cache_entries[3]; i++){
-                this->emit_bmp_cache(3, i, false);
-            }
-        }
-        if (this->bmp_cache.number_of_cache > 4) {
-            for (size_t i = 0; i < this->bmp_cache.cache_entries[4]; i++){
-                this->emit_bmp_cache(4, i, false);
+        for (uint8_t cache_id = 0
+        ; cache_id < BmpCache::MAXIMUM_NUMBER_OF_CACHES && this->bmp_cache.number_of_cache > cache_id
+        ; ++cache_id) {
+            const size_t entries = this->bmp_cache.get_cache(cache_id).entries();
+            for (size_t i = 0; i < entries; i++){
+                this->emit_bmp_cache(cache_id, i, false);
             }
         }
     }

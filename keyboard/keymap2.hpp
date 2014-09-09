@@ -138,9 +138,9 @@ struct Keymap2
     uint32_t nbuf_kevent; // number of char in char buffer
     uint32_t buffer_kevent[SIZE_KEYBUF_KEVENT]; // actual char buffer
 
-    uint32_t last_char_key;
+    //uint32_t last_char_key;
 
-    int last_chr_unicode;
+    //int last_chr_unicode;
 
     uint8_t deadkey;
 
@@ -173,7 +173,7 @@ struct Keymap2
         memset(this->keys_down, 0, SIZE_KEYBUF * sizeof(uint32_t));
 
         this->key_flags = 0;
-        this->last_chr_unicode = 0;
+        //this->last_chr_unicode = 0;
     } // END Constructor
 
 
@@ -329,7 +329,7 @@ struct Keymap2
                         LOG(LOG_INFO, "Event is Make for key: Ox%#02x", extendedKeyCode);
                     }
                         const Keylayout::KeyLayout_t * layout = &this->keylayout_WORK->noMod;
-                        this->last_char_key = extendedKeyCode;
+                        //this->last_char_key = extendedKeyCode;
 
                     //-------------------------------------------------------------------------
                     // KEYPAD : Keypad keys whose meanings depends on Numlock are handled apart

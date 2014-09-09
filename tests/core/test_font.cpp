@@ -28,9 +28,9 @@
 #define BOOST_TEST_MODULE TestFont
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
 #define LOGNULL
 
+#include "log.hpp"
 #include "font.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCreateFont)
@@ -46,5 +46,5 @@ BOOST_AUTO_TEST_CASE(TestCreateFont)
     BOOST_CHECK_EQUAL(10, f.size);
     BOOST_CHECK(!f.font_items[31]);
     BOOST_CHECK(f.font_items[32]);
-    BOOST_CHECK((uint64_t)f.font_items[0x4dff]);
+    BOOST_CHECK(f.font_items[0x4dff]);
 }

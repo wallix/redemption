@@ -820,12 +820,12 @@ public:
      * image cache (this->data) a the given position (rect).
      */
     void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, const uint32_t xormask, const bool bgr) {
-        if (bmp.cx < srcx || bmp.cy < srcy) {
+        if (bmp.cx() < srcx || bmp.cy() < srcy) {
             return ;
         }
 
-        const int16_t mincx = std::min<int16_t>(bmp.cx - srcx, std::min<int16_t>(this->width - rect.x, rect.cx));
-        const int16_t mincy = std::min<int16_t>(bmp.cy - srcy, std::min<int16_t>(this->height - rect.y, rect.cy));
+        const int16_t mincx = std::min<int16_t>(bmp.cx() - srcx, std::min<int16_t>(this->width - rect.x, rect.cx));
+        const int16_t mincy = std::min<int16_t>(bmp.cy() - srcy, std::min<int16_t>(this->height - rect.y, rect.cy));
 
         if (mincx <= 0 || mincy <= 0) {
             return;
@@ -836,11 +836,11 @@ public:
             this->tracked_area_changed = true;
         }
 
-        const uint8_t Bpp = ::nbbytes(bmp.original_bpp);
+        const uint8_t Bpp = ::nbbytes(bmp.bpp());
         uint8_t * target = this->first_pixel(trect);
-        const uint8_t * source = bmp.data() + (bmp.cy - srcy - 1) * (bmp.bmp_size / bmp.cy) + srcx * Bpp;
+        const uint8_t * source = bmp.data() + (bmp.cy() - srcy - 1) * (bmp.bmp_size() / bmp.cy()) + srcx * Bpp;
         int steptarget = (this->width - trect.cx) * 3;
-        int stepsource = (bmp.bmp_size / bmp.cy) + trect.cx * Bpp;
+        int stepsource = (bmp.bmp_size() / bmp.cy()) + trect.cx * Bpp;
 
         for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource) {
             for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp) {
@@ -848,7 +848,7 @@ public:
                 for (int b = 1 ; b < Bpp ; b++) {
                     px = (px << 8) + source[Bpp-1-b];
                 }
-                uint32_t color = xormask ^ color_decode(px, bmp.original_bpp, bmp.original_palette);
+                uint32_t color = xormask ^ color_decode(px, bmp.bpp(), bmp.palette());
                 if (bgr) {
                     color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
                 }
@@ -867,13 +867,13 @@ public:
                   , const bool bgr) {
         Op op;
 
-        if (bmp.cx < srcx || bmp.cy < srcy) {
+        if (bmp.cx() < srcx || bmp.cy() < srcy) {
             return ;
         }
 
-        const int16_t mincx = std::min<int16_t>(bmp.cx - srcx,
+        const int16_t mincx = std::min<int16_t>(bmp.cx() - srcx,
             std::min<int16_t>(this->width - rect.x, rect.cx));
-        const int16_t mincy = std::min<int16_t>(bmp.cy - srcy,
+        const int16_t mincy = std::min<int16_t>(bmp.cy() - srcy,
             std::min<int16_t>(this->height - rect.y, rect.cy));
 
         if (mincx <= 0 || mincy <= 0) {
@@ -885,13 +885,13 @@ public:
             this->tracked_area_changed = true;
         }
 
-        const uint8_t   Bpp = ::nbbytes(bmp.original_bpp);
+        const uint8_t   Bpp = ::nbbytes(bmp.bpp());
         uint8_t       * target = this->first_pixel(trect);
-        const uint8_t * source = bmp.data() + (bmp.cy - srcy - 1) * (bmp.bmp_size / bmp.cy) +
+        const uint8_t * source = bmp.data() + (bmp.cy() - srcy - 1) * (bmp.bmp_size() / bmp.cy()) +
             srcx * Bpp;
 
         int steptarget = (this->width - trect.cx) * 3;
-        int stepsource = (bmp.bmp_size / bmp.cy) + trect.cx * Bpp;
+        int stepsource = (bmp.bmp_size() / bmp.cy()) + trect.cx * Bpp;
 
         uint8_t s0, s1, s2;
 
@@ -901,7 +901,7 @@ public:
                 for (int b = 1 ; b < Bpp ; b++) {
                     px = (px << 8) + source[Bpp-1-b];
                 }
-                uint32_t color = color_decode(px, bmp.original_bpp, bmp.original_palette);
+                uint32_t color = color_decode(px, bmp.bpp(), bmp.palette());
                 if (bgr) {
                     color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
                 }
@@ -968,9 +968,9 @@ public:
 
     void draw_bitmap(const Rect & rect, const Bitmap & bmp, bool bgr) {
         const int16_t mincx =
-            std::min<int16_t>(bmp.cx, std::min<int16_t>(this->width  - rect.x, rect.cx));
+            std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->width  - rect.x, rect.cx));
         const int16_t mincy =
-            std::min<int16_t>(bmp.cy, std::min<int16_t>(this->height - rect.y, rect.cy));
+            std::min<int16_t>(bmp.cy(), std::min<int16_t>(this->height - rect.y, rect.cy));
 
         if (mincx <= 0 || mincy <= 0) {
             return;
@@ -981,12 +981,12 @@ public:
             this->tracked_area_changed = true;
         }
 
-        const uint8_t   Bpp    = ::nbbytes(bmp.original_bpp);
+        const uint8_t   Bpp    = ::nbbytes(bmp.bpp());
         uint8_t       * target = this->first_pixel(trect);
-        const uint8_t * source = bmp.data() + (bmp.cy - 1) * (bmp.bmp_size / bmp.cy);
+        const uint8_t * source = bmp.data() + (bmp.cy() - 1) * (bmp.bmp_size() / bmp.cy());
 
         int steptarget = (this->width - trect.cx) * 3;
-        int stepsource = (bmp.bmp_size / bmp.cy) + trect.cx * Bpp;
+        int stepsource = (bmp.bmp_size() / bmp.cy()) + trect.cx * Bpp;
 
         for (int y = 0; y < trect.cy; y++, target += steptarget, source -= stepsource) {
             for (int x = 0; x < trect.cx; x++, target += 3, source += Bpp) {
@@ -994,7 +994,7 @@ public:
                 for (int b = 1; b < Bpp; b++) {
                     px = (px << 8) + source[Bpp - 1 - b];
                 }
-                uint32_t color = color_decode(px, bmp.original_bpp, bmp.original_palette);
+                uint32_t color = color_decode(px, bmp.bpp(), bmp.palette());
                 if (bgr) {
                     color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
                 }
@@ -1022,13 +1022,13 @@ public:
                    , const bool bgr) {
         Op op;
 
-        if (bmp.cx < srcx || bmp.cy < srcy) {
+        if (bmp.cx() < srcx || bmp.cy() < srcy) {
             return;
         }
 
-        const int16_t mincx = std::min<int16_t>(bmp.cx - srcx,
+        const int16_t mincx = std::min<int16_t>(bmp.cx() - srcx,
             std::min<int16_t>(this->width - rect.x, rect.cx));
-        const int16_t mincy = std::min<int16_t>(bmp.cy - srcy,
+        const int16_t mincy = std::min<int16_t>(bmp.cy() - srcy,
             std::min<int16_t>(this->height - rect.y, rect.cy));
 
         if (mincx <= 0 || mincy <= 0) {
@@ -1040,13 +1040,13 @@ public:
             this->tracked_area_changed = true;
         }
 
-        const uint8_t   Bpp    = ::nbbytes(bmp.original_bpp);
+        const uint8_t   Bpp    = ::nbbytes(bmp.bpp());
         uint8_t *       target = this->first_pixel(trect);
-        const uint8_t * source = bmp.data() + (bmp.cy - srcy - 1) * (bmp.bmp_size / bmp.cy) +
+        const uint8_t * source = bmp.data() + (bmp.cy() - srcy - 1) * (bmp.bmp_size() / bmp.cy()) +
             srcx * Bpp;
 
         int steptarget = (this->width - trect.cx) * 3;
-        int stepsource = (bmp.bmp_size / bmp.cy) + trect.cx * Bpp;
+        int stepsource = (bmp.bmp_size() / bmp.cy()) + trect.cx * Bpp;
 
         uint8_t s0, s1, s2;
         uint8_t p0, p1, p2;
@@ -1057,7 +1057,7 @@ public:
                 for (int b = 1 ; b < Bpp ; b++) {
                     px = (px << 8) + source[Bpp-1-b];
                 }
-                uint32_t color = color_decode(px, bmp.original_bpp, bmp.original_palette);
+                uint32_t color = color_decode(px, bmp.bpp(), bmp.palette());
                 if (bgr) {
                     color =   ((color << 16) & 0xFF0000)
                             | ( color        & 0xFF00)

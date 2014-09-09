@@ -59,7 +59,12 @@ namespace aux_ {
 #ifdef NDEBUG
 #define REDASSERT(x)
 #else
-#define REDASSERT(x) if(!(x)){BOOM;}
+# ifdef LOGPRINT
+#  include <cassert>
+#  define REDASSERT(x) assert(x)
+# else
+#  define REDASSERT(x) if(!(x)){BOOM;}
+# endif
 #endif
 
 #include <stdio.h>

@@ -424,18 +424,21 @@ public:
 
     virtual void draw(const RDPGlyphCache & cmd)
     {
-        this->gly_cache.set_glyph(cmd);
+        FontChar fc(cmd.glyphData_x, cmd.glyphData_y, cmd.glyphData_cx, cmd.glyphData_cy, -1);
+        memcpy(fc.data.get(), cmd.glyphData_aj, fc.datasize());
+        this->gly_cache.set_glyph(std::move(fc), cmd.cacheId, cmd.glyphData_cacheIndex);
     }
 
-    void draw_glyph(Bitmap & bmp, FontChar * fc, size_t offset_x, uint32_t color)
+private:
+    void draw_glyph(Bitmap & bmp, FontChar const & fc, size_t offset_x, uint32_t color) const
     {
-        uint8_t * bmp_data    = bmp.data_bitmap.get() + (offset_x + 1) * 3 + bmp.line_size * (fc->height - 1);
-        uint8_t * fc_data     = fc->data;
+        uint8_t * bmp_data    = const_cast<uint8_t*>(bmp.data()) + (offset_x + 1) * 3 + bmp.line_size() * (fc.height - 1);
         uint8_t   fc_bit_mask = 128;
+        const uint8_t * fc_data     = fc.data.get();
 
-        for (int y = 0; y < fc->height; y++)
+        for (int y = 0; y < fc.height; y++)
         {
-            for (int x = 0; x < fc->width; x++)
+            for (int x = 0; x < fc.width; x++)
             {
                 if (fc_bit_mask & (*fc_data))
                 {
@@ -457,11 +460,12 @@ public:
                 }
             }
 
-            bmp_data -= bmp.line_size;
+            bmp_data -= bmp.line_size();
             //printf("\n");
         }
     }
 
+public:
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
         const GlyphCache * gly_cache)
     {
@@ -472,10 +476,10 @@ public:
             const uint32_t color = ::RGBtoBGR(((this->capture_bpp == 24) ? cmd.fore_color
                                                                          : ::color_decode_opaquerect(cmd.fore_color, this->capture_bpp, this->mod_palette_rgb)));
 
-            uint8_t * base = glyph_fragments.data_bitmap.get();
+            uint8_t * base = const_cast<uint8_t*>(glyph_fragments.data());
             uint8_t * p    = base;
 
-            for (size_t x = 0; x < glyph_fragments.cx; x++)
+            for (size_t x = 0; x < glyph_fragments.cx(); x++)
             {
                 p[0] = color;
                 p[1] = color >> 8;
@@ -486,10 +490,10 @@ public:
 
             uint8_t * target = base;
 
-            for (size_t y = 1; y < glyph_fragments.cy; y++)
+            for (size_t y = 1; y < glyph_fragments.cy(); y++)
             {
-                target += glyph_fragments.line_size;
-                memcpy(target, base, glyph_fragments.line_size);
+                target += glyph_fragments.line_size();
+                memcpy(target, base, glyph_fragments.line_size());
             }
         }
 
@@ -505,7 +509,7 @@ public:
                 uint8_t  data     = aj.in_uint8();
                 if (data <= 0xFD)
                 {
-                    FontChar * fc = this->gly_cache.char_items[cmd.cache_id][data].font_item;
+                    FontChar const & fc = this->gly_cache.char_items[cmd.cache_id][data].font_item;
                     if (!fc)
                     {
                         LOG(LOG_INFO, "RDPDrawable::draw(RDPGlyphIndex, ...): Unknown glyph=%u", data);
@@ -557,14 +561,13 @@ public:
 
     virtual void flush() {}
 
-    static FontChar * get_font(Font& font, uint32_t c)
+    static FontChar & get_font(Font& font, uint32_t c)
     {
-        FontChar *font_item = font.glyph_defined(c) ? font.font_items[c] : 0;
-        if (!font_item) {
+        if (!font.glyph_defined(c) || !font.font_items[c]) {
             LOG(LOG_WARNING, "RDPDrawable::get_font() - character not defined >0x%02x<", c);
-            font_item = font.font_items[unsigned('?')];
+            return font.font_items[unsigned('?')];
         }
-        return font_item;
+        return font.font_items[c];
     }
 
     void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip, Font& font)
@@ -582,9 +585,9 @@ public:
             size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
 
             size_t index = 0;
-            FontChar *font_item = 0;
+            FontChar * font_item = 0;
             for (; index < part_len && x < screen_rect.x; index++) {
-                font_item = this->get_font(font, uni[index]);
+                font_item = &this->get_font(font, uni[index]);
                 if (x + font_item->width > screen_rect.x) {
                     break ;
                 }
@@ -592,7 +595,7 @@ public:
             }
 
             for (; index < part_len && x < screen_rect.right(); index++) {
-                font_item = this->get_font(font, uni[index]);
+                font_item = &this->get_font(font, uni[index]);
                 int16_t cy = std::min<int16_t>(y + font_item->height, screen_rect.bottom()) - y;
                 int i = 0;
                 for (int yy = 0 ; yy < cy; yy++) {

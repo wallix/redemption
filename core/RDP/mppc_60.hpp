@@ -200,7 +200,7 @@ static const size_t RDP_60_OFFSET_CACHE_SIZE = 8;
 static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset) {
     REDASSERT(copy_offset);
     REDASSERT((copy_offset != offset_cache[0]) && (copy_offset != offset_cache[1]) &&
-        (copy_offset != offset_cache[2]) && (copy_offset != offset_cache[3]))
+        (copy_offset != offset_cache[2]) && (copy_offset != offset_cache[3]));
 
     *(offset_cache+3) = *(offset_cache+2);
     *(offset_cache+2) = *(offset_cache+1);

@@ -29,20 +29,49 @@ class BmpCachePersister
 private:
     static const uint8_t CURRENT_VERSION = 1;
 
-    struct map_value {
-        const Bitmap * bmp;
+    typedef Bitmap map_value;
 
-        map_value() : bmp(NULL) {
+    class map_key {
+        uint8_t key[8];
+
+    public:
+        map_key(const uint8_t (& sig)[8]) {
+            memcpy(this->key, sig, sizeof(this->key));
         }
 
-        ~map_value() {
-            if (this->bmp) {
-                delete this->bmp;
+        bool operator<(const map_key & other) const /*noexcept*/ {
+            typedef std::pair<const uint8_t *, const uint8_t *> iterator_pair;
+            iterator_pair p = std::mismatch(this->begin(), this->end(), other.begin());
+            return p.first == this->end() ? false : *p.first < *p.second;
+        }
+
+        struct CString
+        {
+            CString(const uint8_t (& sig)[8]) {
+                snprintf( this->s, sizeof(this->s), "%02X%02X%02X%02X%02X%02X%02X%02X"
+                        , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
             }
+
+            const char * c_str() const
+            { return this->s; }
+
+        private:
+            char s[17];
+        };
+
+        CString str() const {
+            return CString(this->key);
         }
+
+    private:
+        uint8_t const * begin() const
+        { return this->key; }
+
+        uint8_t const * end() const
+        { return this->key + sizeof(this->key); }
     };
 
-    typedef std::map<std::string, map_value> container_type;
+    typedef std::map<map_key, map_value> container_type;
 
     container_type bmp_map[BmpCache::MAXIMUM_NUMBER_OF_CACHES];
 
@@ -125,34 +154,30 @@ private:
 
             t.recv(&stream.end, bmp_size);
 
-            if (bmp_cache.cache_persistent[cache_id]) {
-                char key[20];
-
-                snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
-                        , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+            if (bmp_cache.get_cache(cache_id).persistent()) {
+                map_key key(sig);
 
                 if (this->verbose & 0x100000) {
                     LOG( LOG_INFO
                        , "BmpCachePersister::preload_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                       , key, original_bpp, cx, cy, bmp_size);
+                       , key.str().c_str(), original_bpp, cx, cy, bmp_size);
                 }
 
-                REDASSERT(this->bmp_map[cache_id][key].bmp == NULL);
+                REDASSERT(this->bmp_map[cache_id][key].is_valid() == false);
 
-                Bitmap * bmp = new Bitmap( this->bmp_cache.bpp, original_bpp
-                                         , &original_palette, cx, cy, stream.get_data()
-                                         , bmp_size);
+                Bitmap bmp( this->bmp_cache.bpp, original_bpp
+                          , &original_palette, cx, cy, stream.get_data()
+                          , bmp_size);
 
                 uint8_t sha1[20];
-                bmp->compute_sha1(sha1);
+                bmp.compute_sha1(sha1);
                 if (memcmp(sig, sha1, sizeof(sig))) {
                     LOG( LOG_ERR
                        , "BmpCachePersister::preload_from_disk: Preload failed. Cause: bitmap or key corruption.");
                     REDASSERT(false);
-                    delete bmp;
                 }
                 else {
-                    this->bmp_map[cache_id][key].bmp = bmp;
+                    this->bmp_map[cache_id][key] = bmp;
                 }
             }
 
@@ -164,38 +189,33 @@ public:
     // Places bitmaps of Persistent Key List into the cache.
     void process_key_list( uint8_t cache_id, RDP::BitmapCachePersistentListEntry * entries
                          , uint8_t number_of_entries, uint16_t first_entry_index) {
-              uint16_t   max_number_of_entries = this->bmp_cache.cache_entries[cache_id];
-              uint16_t   cache_index           = first_entry_index;
+        uint16_t   max_number_of_entries = this->bmp_cache.get_cache(cache_id).size();
+        uint16_t   cache_index           = first_entry_index;
         const union Sig {
             uint8_t  sig_8[8];
             uint32_t sig_32[2];
-        }              * sig                   = reinterpret_cast<const union Sig *>(entries);
+        }              * sig             = reinterpret_cast<const Sig *>(entries);
         for (uint8_t entry_index = 0;
              (entry_index < number_of_entries) && (cache_index < max_number_of_entries);
              entry_index++, cache_index++, sig++) {
-            REDASSERT(!this->bmp_cache.cache[cache_id][cache_index]);
+            REDASSERT(!this->bmp_cache.get_cache(cache_id)[cache_index]);
 
-            char key[20];
-
-            snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
-                    , sig->sig_8[0], sig->sig_8[1], sig->sig_8[2], sig->sig_8[3]
-                    , sig->sig_8[4], sig->sig_8[5], sig->sig_8[6], sig->sig_8[7]);
+            map_key key(sig->sig_8);
 
             container_type::iterator it = this->bmp_map[cache_id].find(key);
             if (it != this->bmp_map[cache_id].end()) {
                 if (this->verbose & 0x100000) {
-                    LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key);
+                    LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key.str().c_str());
                 }
 
-                if (this->bmp_cache.cache_entries[cache_id] > cache_index) {
-                    this->bmp_cache.put(cache_id, cache_index, it->second.bmp, sig->sig_32[0], sig->sig_32[1]);
+                if (this->bmp_cache.get_cache(cache_id).size() > cache_index) {
+                    this->bmp_cache.put(cache_id, cache_index, it->second, sig->sig_32[0], sig->sig_32[1]);
                 }
 
-                it->second.bmp = NULL;
                 this->bmp_map[cache_id].erase(it);
             }
             else if (this->verbose & 0x100000) {
-                LOG(LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key);
+                LOG(LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key.str().c_str());
             }
         }
     }
@@ -277,24 +297,18 @@ private:
 
             t.recv(&stream.end, bmp_size);
 
-            if ((bmp_cache.cache_persistent[cache_id]) &&
-                (i < bmp_cache.cache_entries[cache_id])) {
+            if (bmp_cache.get_cache(cache_id).persistent() && (i < bmp_cache.get_cache(cache_id).size())) {
                 if (verbose & 1) {
-                    char key[20];
-
-                    snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
-                            , sig.sig_8[0], sig.sig_8[1], sig.sig_8[2], sig.sig_8[3]
-                            , sig.sig_8[4], sig.sig_8[5], sig.sig_8[6], sig.sig_8[7]);
+                    map_key key(sig.sig_8);
 
                     if (verbose & 0x100000) {
                         LOG( LOG_INFO
                            , "BmpCachePersister::load_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                           , key, original_bpp, cx, cy, bmp_size);
+                           , key.str().c_str(), original_bpp, cx, cy, bmp_size);
                     }
                 }
 
-                Bitmap * bmp = new Bitmap( bmp_cache.bpp, original_bpp
-                                         , &original_palette, cx, cy, stream.get_data(), stream.size());
+                Bitmap bmp(bmp_cache.bpp, original_bpp, &original_palette, cx, cy, stream.get_data(), stream.size());
 
                 bmp_cache.put(cache_id, i, bmp, sig.sig_32[0], sig.sig_32[1]);
             }
@@ -326,9 +340,11 @@ public:
 private:
     static void save_to_disk(const BmpCache & bmp_cache, uint8_t cache_id, Transport & t, uint32_t verbose) {
         uint16_t bitmap_count = 0;
-        if (bmp_cache.cache_persistent[cache_id]) {
-            for (uint16_t cache_index = 0; cache_index < bmp_cache.cache_entries[cache_id]; cache_index++) {
-                if (bmp_cache.cache[cache_id][cache_index]) {
+        BmpCache::Cache const & cache = bmp_cache.get_cache(cache_id);
+
+        if (cache.persistent()) {
+            for (uint16_t cache_index = 0; cache_index < cache.size(); cache_index++) {
+                if (cache[cache_index]) {
                     bitmap_count++;
                 }
             }
@@ -342,18 +358,18 @@ private:
             return;
         }
 
-        for (uint16_t cache_index = 0; cache_index < bmp_cache.cache_entries[cache_id]; cache_index++) {
-            if (bmp_cache.cache[cache_id][cache_index]) {
+        for (uint16_t cache_index = 0; cache_index < cache.size(); cache_index++) {
+            if (cache[cache_index]) {
                 stream.reset();
 
-                const Bitmap   * bmp      = bmp_cache.cache[cache_id][cache_index].get();
-                const uint8_t  * sig      = bmp_cache.sig[cache_id][cache_index].sig_8;
-                const uint16_t   bmp_size = bmp->bmp_size;
-                const uint8_t  * bmp_data = bmp->data_bitmap.get();
+                const Bitmap &   bmp      = cache[cache_index].bmp;
+                const uint8_t (& sig)[8]  = cache[cache_index].sig.sig_8;
+                const uint16_t   bmp_size = bmp.bmp_size();
+                const uint8_t  * bmp_data = bmp.data();
 
                 // if (bmp_cache.owner == BmpCache::Front) {
                 //     uint8_t sha1[20];
-                //     bmp->compute_sha1(sha1);
+                //     bmp.compute_sha1(sha1);
 
                 //     char sig_sig[20];
 
@@ -367,29 +383,26 @@ private:
 
                 //     LOG( LOG_INFO
                 //        , "BmpCachePersister::save_to_disk: sig=\"%s\" sha1=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                //        , sig_sig, sig_sha1, bmp->original_bpp, bmp->cx, bmp->cy, bmp_size);
+                //        , sig_sig, sig_sha1, bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);
 
                 //     REDASSERT(!memcmp(bmp_cache.sig[cache_id][cache_index].sig_8, sha1, sizeof(bmp_cache.sig[cache_id][cache_index].sig_8)));
                 // }
 
-                char key[20];
-
-                snprintf( key, sizeof(key), "%02X%02X%02X%02X%02X%02X%02X%02X"
-                        , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+                map_key key(sig);
 
                 if (verbose & 0x100000) {
                     LOG( LOG_INFO
                        , "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                       , key, bmp->original_bpp, bmp->cx, bmp->cy, bmp_size);
+                       , key.str().c_str(), bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);
                 }
 
                 stream.out_copy_bytes(sig, 8);
-                stream.out_uint8(bmp->original_bpp);
-                stream.out_uint16_le(bmp->cx);
-                stream.out_uint16_le(bmp->cy);
-                if (bmp->original_bpp == 8) {
-                    stream.out_copy_bytes( reinterpret_cast<const uint8_t *>(bmp->original_palette)
-                                         , sizeof(bmp->original_palette));
+                stream.out_uint8(bmp.bpp());
+                stream.out_uint16_le(bmp.cx());
+                stream.out_uint16_le(bmp.cy());
+                if (bmp.bpp() == 8) {
+                    stream.out_copy_bytes( reinterpret_cast<const uint8_t *>(bmp.palette())
+                                         , sizeof(bmp.palette()));
                 }
                 stream.out_uint16_le(bmp_size);
                 stream.mark_end();

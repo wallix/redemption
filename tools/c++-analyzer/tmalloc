@@ -1,0 +1,3 @@
+#!/bin/sh
+
+LD_PRELOAD="`dirname "$0"`"/../tmalloc/libtmalloc.so "$@"

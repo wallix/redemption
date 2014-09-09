@@ -96,9 +96,9 @@ public:
         Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.png");
         //Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.bmp");
         this->front.draw(RDPMemBlt(0,
-            Rect(winrect.x + (winrect.cx - bitmap.cx)/2,
-                 winrect.y + (winrect.cy - bitmap.cy)/2,
-                 bitmap.cx, bitmap.cy),
+            Rect(winrect.x + (winrect.cx - bitmap.cx())/2,
+                 winrect.y + (winrect.cy - bitmap.cy())/2,
+                 bitmap.cx(), bitmap.cy()),
                  0xCC,
              0, 0, 0), clip, bitmap);
 
@@ -143,8 +143,8 @@ public:
 
         Bitmap card(SHARE_PATH "/" REDEMPTION_LOGO24);
         this->front.draw(RDPMemBlt(0,
-            Rect(this->get_screen_rect().cx - card.cx - 30,
-                 this->get_screen_rect().cy - card.cy - 30, card.cx, card.cy),
+            Rect(this->get_screen_rect().cx - card.cx() - 30,
+                 this->get_screen_rect().cy - card.cy() - 30, card.cx(), card.cy()),
                  0xCC,
              0, 0, 0), clip, card);
 
@@ -156,7 +156,7 @@ public:
 
         Bitmap bloc64x64(24, 24, &this->palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true);
         this->front.draw(RDPMemBlt(0,
-            Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx, bloc64x64.cy), 0xCC,
+            Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx(), bloc64x64.cy()), 0xCC,
              32, 32, 0), clip, bloc64x64);
 
         //Bitmap logo(SHARE_PATH "/ad8b.bmp");
@@ -178,11 +178,11 @@ public:
 
             const uint16_t tile_width_height = 32;
 
-            for (uint16_t y = 0; y < wab_logo_blue.cy; y += tile_width_height) {
-                uint16_t cy = std::min<uint16_t>(tile_width_height, wab_logo_blue.cy - y);
+            for (uint16_t y = 0; y < wab_logo_blue.cy(); y += tile_width_height) {
+                uint16_t cy = std::min<uint16_t>(tile_width_height, wab_logo_blue.cy() - y);
 
-                for (uint16_t x = 0; x < wab_logo_blue.cx; x += tile_width_height) {
-                    uint16_t cx = std::min<uint16_t>(tile_width_height, wab_logo_blue.cx - x);
+                for (uint16_t x = 0; x < wab_logo_blue.cx(); x += tile_width_height) {
+                    uint16_t cx = std::min<uint16_t>(tile_width_height, wab_logo_blue.cx() - x);
 
                     Bitmap tile(wab_logo_blue, Rect(x, y, cx, cy));
 
@@ -192,15 +192,15 @@ public:
                     bitmap_data.dest_top        = starty + y;
                     bitmap_data.dest_right      = bitmap_data.dest_left + cx - 1;
                     bitmap_data.dest_bottom     = bitmap_data.dest_top + cy - 1;
-                    bitmap_data.width           = tile.cx;
-                    bitmap_data.height          = tile.cy;
+                    bitmap_data.width           = tile.cx();
+                    bitmap_data.height          = tile.cy();
                     bitmap_data.bits_per_pixel  = 24;
                     bitmap_data.flags           = 0;
-                    bitmap_data.bitmap_length   = tile.bmp_size;
+                    bitmap_data.bitmap_length   = tile.bmp_size();
 
                     bitmap_data.log(LOG_INFO, "replay");
 
-                    this->front.draw(bitmap_data, tile.data_bitmap.get(), tile.bmp_size, tile);
+                    this->front.draw(bitmap_data, tile.data(), tile.bmp_size(), tile);
                 }
             }
         }

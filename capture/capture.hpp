@@ -127,8 +127,10 @@ public:
             TODO("Also we may wonder why we are encrypting wrm and not png"
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
-            this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, capture_bpp, 3, false, 600, 768
-                                              , false, 300, 3072, false, 262, 12288, false);
+            this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, capture_bpp, 3, false,
+                                                BmpCache::CacheOption(600, 768, false),
+                                                BmpCache::CacheOption(300, 3072, false),
+                                                BmpCache::CacheOption(262, 12288, false));
             if (this->enable_file_encryption) {
                 this->wrm_trans = new CryptoOutMetaSequenceTransport( &this->crypto_ctx, wrm_path, hash_path, basename, now
                                                                     , width, height, ini.video.capture_groupid
@@ -350,7 +352,7 @@ public:
 
     void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) {
         if (this->gd) {
-            if (bmp.original_bpp == 8) {
+            if (bmp.bpp() == 8) {
                 Bitmap bmp_24(24, bmp);
 
                 BStream bmp_stream(65535);
@@ -363,8 +365,8 @@ public:
                 bitmap_data_24.bitmap_length  = bmp_stream.size() + 8;
 
                 bitmap_data_24.cb_comp_main_body_size = bmp_stream.size();
-                bitmap_data_24.cb_scan_width          = bmp_24.cx;
-                bitmap_data_24.cb_uncompressed_size   = bmp_24.bmp_size;
+                bitmap_data_24.cb_scan_width          = bmp_24.cx();
+                bitmap_data_24.cb_uncompressed_size   = bmp_24.bmp_size();
 
                 this->gd->draw(bitmap_data_24, bmp_stream.get_data(), bmp_stream.size(), bmp_24);
             }
