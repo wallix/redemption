@@ -197,14 +197,14 @@ class Engine(object):
                     continue
                 if target_login != r.account.login:
                     continue
-                if target_protocol != u'APP':
+                if target_protocol and target_protocol != u'APP':
                     continue
             else:
                 if target_device != r.resource.device.cn:
                     continue
                 if target_login != r.account.login:
                     continue
-                if target_protocol != r.resource.service.cn:
+                if target_protocol and target_protocol != r.resource.service.cn:
                     continue
             selected_target = r
             break
