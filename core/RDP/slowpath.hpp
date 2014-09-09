@@ -178,22 +178,19 @@ namespace SlowPath {
         SubStream payload;
 
         InputEvent_Recv(Stream & stream)
-        : eventTime(0)
-        , messageType(0)
-        , payload(stream) {
-            const unsigned expected =
-                12; // time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "SlowPath::InputEvent: data truncated, expected=%u remains=%u",
-                    expected, stream.in_remain());
+        : eventTime([&stream](){
+            // time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)
+            if (!stream.in_check_rem(12)) {
+                LOG(LOG_ERR, "SlowPath::InputEvent: data truncated, expected=12 remains=%u", stream.in_remain());
                 throw Error(ERR_RDP_SLOWPATH);
             }
-
-            this->eventTime   = stream.in_uint32_le();
-            this->messageType = stream.in_uint16_le();
-
-            this->payload.resize(stream, 6); // device_flags(2) + param1(2) + param2(2)
-
+            return stream.in_uint32_le();
+        }())
+        , messageType([&stream](){ return stream.in_uint16_le(); }())
+         // device_flags(2) + param1(2) + param2(2)
+        , payload(stream, 0, 6)
+        // Body of constructor
+        {
             stream.in_skip_bytes(6);
         }
     };

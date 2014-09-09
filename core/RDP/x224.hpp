@@ -1420,6 +1420,7 @@ namespace X224
         }())
         // ========= Constructor's body ============
         {
+            stream.in_skip_bytes(stream.size() - this->_header_size);
         }
     }; // END CLASS DT_TPDU_Recv
 
