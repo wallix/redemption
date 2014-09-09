@@ -186,9 +186,9 @@ namespace SlowPath {
             }
             return stream.in_uint32_le();
         }())
-        , messageType([&stream](){ return stream.in_uint16_le(); }())
+        , messageType(stream.in_uint16_le())
          // device_flags(2) + param1(2) + param2(2)
-        , payload(stream, 0, 6)
+        , payload(stream, stream.get_offset(), 6)
         // Body of constructor
         {
             stream.in_skip_bytes(6);
