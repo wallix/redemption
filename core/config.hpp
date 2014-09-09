@@ -703,6 +703,7 @@ struct Inifile : public FieldObserver {
         uint32_t password;
         uint32_t compression;
         uint32_t cache;
+	uint32_t bitmap_update;
 
         uint32_t pass_dialog_box;
         int log_type;
@@ -1057,6 +1058,7 @@ public:
         this->debug.password          = 0;
         this->debug.compression       = 0;
         this->debug.cache             = 0;
+	this->debug.bitmap_update     = 0;
 
         this->debug.log_type          = 2; // syslog by default
         this->debug.log_file_path[0]  = 0;
@@ -1656,6 +1658,9 @@ public:
             }
             else if (0 == strcmp(key, "cache")) {
                 this->debug.cache             = ulong_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "bitmap_update")) {
+                this->debug.bitmap_update     = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "log_type")) {
                 this->debug.log_type = logtype_from_cstr(value);
