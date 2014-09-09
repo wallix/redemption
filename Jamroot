@@ -404,6 +404,7 @@ unit-test test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister.
 unit-test test_brushcache : tests/core/RDP/caches/test_brushcache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_fontcache : tests/core/RDP/caches/test_fontcache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_bmpcache_put_get : tests/core/RDP/caches/test_bmpcache_put_get.cpp crypto dl libboost_unit_test png z : <variant>coverage:<library>gcov ;
 
 ## Capabilities tests
 ## @{

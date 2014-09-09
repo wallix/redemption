@@ -42,6 +42,7 @@
 #include <cassert>
 #include <cstddef>
 #include <algorithm>
+#include <type_traits> // aligned_storage
 
 #include "error.h"
 #include "log.hpp"
@@ -242,8 +243,7 @@ class Bitmap
         DataBitmap(DataBitmap const &);
         DataBitmap & operator=(DataBitmap const &);
 
-        static const size_t palette_aligned_of = sizeof(BGRColor)*8-1;
-        static const size_t palette_index = (sizeof(DataBitmapBase) + palette_aligned_of - 1) & ~(palette_aligned_of - 1);
+        static const size_t palette_index = sizeof(typename std::aligned_storage<sizeof(DataBitmapBase), alignof(BGRColor)>::type);
 
     public:
         static size_t compute_bmp_size(uint8_t bpp, uint16_t cx, uint16_t cy)

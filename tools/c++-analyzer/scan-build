@@ -4,6 +4,7 @@ cd "$(dirname "$0")"/../..
 
 for f in main/*.cpp ; do
   scan-build "clang++" \
+  -std=c++11 \
   -fcolor-diagnostics \
   -Wall \
   -Wcast-align \

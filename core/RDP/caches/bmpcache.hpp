@@ -91,7 +91,9 @@ private:
 
         template<class T>
         void update() {
-            this->elem_size = std::max(this->elem_size, sizeof(T));
+            this->elem_size = std::max(
+                this->elem_size, sizeof(typename std::aligned_storage<sizeof(T), alignof(T)>::type)
+            );
         }
 
         void reserve(size_t sz) {
@@ -108,7 +110,7 @@ private:
         }
 
         void * pop() {
-            //REDASSERT(this->free_list_cur != this->free_list.get());
+            REDASSERT(this->free_list_cur != this->free_list.get());
             return *--this->free_list_cur;
         }
 
@@ -199,7 +201,7 @@ private:
 
         typedef aligned_set_allocator<value_set> set_allocator;
         typedef std::less<value_set> set_compare;
-        typedef std::set<value_set, set_compare, set_allocator> set_type;
+        typedef std::set<value_set, set_compare/*, set_allocator*/> set_type;
 
         set_type sorted_elements;
 
@@ -207,7 +209,7 @@ private:
         cache_range(cache_element * first, size_t sz, storage_value_set & storage)
         : first(first)
         , last(first + sz)
-        , sorted_elements(set_compare(), storage)
+//         , sorted_elements(set_compare(), storage)
         {}
 
         cache_element & operator[](size_t i) {
@@ -271,7 +273,7 @@ private:
             this->sorted_elements.insert(e);
         }
 
-    private:
+        cache_range(cache_range &&) = default;
         cache_range(cache_range const &) = delete;
         cache_range& operator=(cache_range const &) = delete;
     };
@@ -457,13 +459,13 @@ public:
 
     void put(uint8_t id, uint16_t idx, const Bitmap & bmp, uint32_t key1, uint32_t key2) {
         REDASSERT((id & IN_WAIT_LIST) == 0);
+        Cache & r = this->caches[id];
         if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
             // Last bitmap cache entry is used by waiting list.
             //LOG(LOG_INFO, "BmpCache: Put bitmap to waiting list.");
-            idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
+            idx = r.size() - 1;
         }
 
-        Cache & r = this->caches[id];
         cache_element & e = r[idx];
         if (e) {
             r.remove(e);
@@ -486,13 +488,14 @@ public:
             REDASSERT(this->owner != Mod_rdp);
             return this->caches[MAXIMUM_NUMBER_OF_CACHES][idx].bmp;
         }
+        Cache & r = this->caches[id];
         if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
             REDASSERT(this->owner != Front);
             // Last bitmap cache entry is used by waiting list.
             //LOG(LOG_INFO, "BmpCache: Get bitmap from waiting list.");
-            idx = MAXIMUM_NUMBER_OF_CACHE_ENTRIES - 1;
+            idx = r.size() - 1;
         }
-        return this->caches[id][idx].bmp;
+        return r[idx].bmp;
     }
 
     bool is_cache_persistent(uint8_t id) {
