@@ -73,6 +73,8 @@ def standalone():
         sys.exit(1)
     except socket.error, e:
         pass
+    except AuthentifierSocketClosed, e:
+        Logger().info("Authentifier Socket Closed")
     except Exception, e:
         Logger().exception("%s" % e)
 

@@ -191,6 +191,9 @@ class Sesman():
                 _packet_size, = unpack(">L", self.proxy_conx.recv(4))
                 _data = self.proxy_conx.recv(_packet_size)
             except Exception, e:
+                if DEBUG:
+                    import traceback
+                    Logger().info(u"Socket Closed : %s" % traceback.format_exc(e))
                 raise AuthentifierSocketClosed()
             _data = _data.decode('utf-8')
         except AuthentifierSocketClosed, e:
@@ -254,7 +257,7 @@ class Sesman():
                     Logger().info(u"username parse error %s" % wab_login)
                     return False, (TR(u'Username_parse_error %s') % wab_login), wab_login, target_login, target_device, target_service, effective_login
 
-                target_service = u'RDP' if len(level_0_items) <= 2 else level_0_items[-2]
+                target_service = u'' if len(level_0_items) <= 2 else level_0_items[-2]
                 level_1_items, wab_login       = level_0_items[0].split(u'@'), level_0_items[-1]
                 target_login, target_device = '@'.join(level_1_items[:-1]), level_1_items[-1]
         if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
@@ -375,11 +378,14 @@ class Sesman():
 
         try:
             target_info = None
-            if (target_login and target_device and self.target_service_name and
+            if (target_login and target_device and
                 not target_login == MAGICASK and
-                not target_device == MAGICASK and
-                not self.target_service_name == MAGICASK):
-                target_info = u"%s@%s:%s" % (target_login, target_device, self.target_service_name)
+                not target_device == MAGICASK):
+                if (self.target_service_name and
+                    not self.target_service_name == MAGICASK):
+                    target_info = u"%s@%s:%s" % (target_login, target_device, self.target_service_name)
+                else:
+                    target_info = u"%s@%s" % (target_login, target_device)
             try:
                 target_info = target_info.encode('utf8')
             except Exception, e:
@@ -781,28 +787,23 @@ class Sesman():
             ### FIND_TARGET ###
             ###################
 
-            # The purpose of the snippet below is electing the first right that match the login AND device
-            # AND service that have been passed in the connection string.
-            # If service is blank take the first right that match login AND device (may happen with a command
-            #  line or a mstsc '.rdp' file connections ; never happens if the selector is used).
+            # The purpose of the snippet below is electing the first right that match
+            # the login AND device AND service that have been passed in the connection
+            # string.
+            # If service is blank take the first right that match login AND device
+            # (may happen with a command line or a mstsc '.rdp' file connections ;
+            # never happens if the selector is used).
             # NB : service names are supposed to be in alphabetical ascending order.
             selected_target = None
-            target_device =  self.shared.get(u'target_device')
+            target_device = self.shared.get(u'target_device')
             target_login = self.shared.get(u'target_login')
             target_service = self.target_service_name if self.target_service_name != u'INTERNAL' else u'RDP'
-            # proto_dest = self.shared.get(u'proto_dest')
-            # protocols = [proto_dest] if proto_dest else [ u'APP', u'RDP', u'VNC']
-            services = [target_service] if target_service else [ u'APP', u'RDP', u'VNC']
 
-            found = False
-            for service_name in services:
-                selected_target = self.engine.get_selected_target(target_login,
-                                                                  target_device,
-                                                                  service_name)
-                if selected_target:
-                    found = True
-                    break
-            if not found:
+            # Logger().info("selected target ==> %s %s %s" % (target_login, target_device, target_service))
+            selected_target = self.engine.get_selected_target(target_login,
+                                                              target_device,
+                                                              target_service)
+            if not selected_target:
                 _target = u"%s@%s:%s" % ( target_login, target_device, target_service )
                 _error_log = u"Targets %s not found in user rights" % _target
                 _status, _error = False, TR(u"Target %s not found in user rights") % _target
@@ -811,9 +812,9 @@ class Sesman():
         #TODO: looks like the code below should be done in the instance of some "selected_target" class
         if _status:
             session_started = False
-
+            extra_info = self.engine.get_target_extra_info()
             _status, _error = self.check_video_recording(
-                selected_target.authorization.isRecorded,
+                extra_info.is_recorded,
                 mdecode(self.engine.get_username()) if self.engine.get_username() else self.shared.get(u'login'))
 
             Logger().info(u"Fetching protocol")
