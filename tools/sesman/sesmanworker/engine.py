@@ -25,6 +25,7 @@ class Engine(object):
         self._trace_encryption = False
         self.challenge = None
         self.rights = None
+        self.target_right = None
         # Logger().info("=========================")
         # Logger().info("==== PROXY RDP ENGINE ===")
         # Logger().info("=========================")
@@ -208,6 +209,7 @@ class Engine(object):
             selected_target = r
             break
 
+        self.target_right = selected_target
         return selected_target
 
     def get_effective_target(self, selected_target):
@@ -268,7 +270,7 @@ class Engine(object):
     def start_session(self, target, pid, effective_login):
         return "SESSIONID-0000"
 
-    def get_restrictions(self, target):
+    def get_restrictions(self, target, proxytype):
         self.pattern_kill = u""
         self.pattern_notify = u""
         return
@@ -330,3 +332,16 @@ class Engine(object):
 
     def read_session_parameters(self, key=None):
         return {"rt_display": "1"}
+
+    def get_target_extra_info(self):
+        if not self.target_right:
+            return None
+        isRecorded = self.target_right.authorization.isRecorded
+        isCritical = self.target_right.authorization.isCritical
+        return ExtraInfo(isRecorded, isCritical)
+
+
+class ExtraInfo(object):
+    def __init__(self, is_recorded, is_critical):
+        self.is_recorded = is_recorded
+        self.is_critical = is_critical
