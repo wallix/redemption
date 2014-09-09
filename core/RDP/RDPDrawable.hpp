@@ -57,16 +57,16 @@ public:
 
     int frame_start_count;
 
-    int mod_bpp;
+    int capture_bpp;
 
     BGRPalette mod_palette_rgb;
 
-    RDPDrawable(const uint16_t width, const uint16_t height, int mod_bpp)
+    RDPDrawable(const uint16_t width, const uint16_t height, int capture_bpp)
     : drawable(width, height)
     , frame_start_count(0)
-    , mod_bpp(mod_bpp)
+    , capture_bpp(capture_bpp)
     {
-        REDASSERT(mod_bpp)
+        REDASSERT(capture_bpp);
         Pointer pointer0(Pointer::POINTER_CURSOR0);
         this->drawable.cache_pointer(pointer0.x, pointer0.y, pointer0.data, pointer0.mask, 0);
 
@@ -104,15 +104,15 @@ public:
     {
         const Rect & trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         this->drawable.opaquerect(trect
-            , ::RGBtoBGR(((this->mod_bpp == 24) ? cmd.color
-                                                : ::color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb))));
+            , ::RGBtoBGR(((this->capture_bpp == 24) ? cmd.color
+                                                    : ::color_decode_opaquerect(cmd.color, this->capture_bpp, this->mod_palette_rgb))));
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) {
 //        uint32_t bgrcolor = this->RGBtoBGR(cmd.color);
         uint32_t bgrcolor =
-            ::RGBtoBGR(((this->mod_bpp == 24) ? cmd.color
-                                              : ::color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb)));
+            ::RGBtoBGR(((this->capture_bpp == 24) ? cmd.color
+                                                  : ::color_decode_opaquerect(cmd.color, this->capture_bpp, this->mod_palette_rgb)));
         this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, bgrcolor);
     }
 
@@ -120,8 +120,8 @@ public:
     void draw(const RDPEllipseCB & cmd, const Rect & clip) {
 //        uint32_t bgrcolor = this->RGBtoBGR(cmd.back_color);
         uint32_t bgrcolor =
-            ::RGBtoBGR(((this->mod_bpp == 24) ? cmd.back_color
-                                              : ::color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb)));
+            ::RGBtoBGR(((this->capture_bpp == 24) ? cmd.back_color
+                                                  : ::color_decode_opaquerect(cmd.back_color, this->capture_bpp, this->mod_palette_rgb)));
         this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, bgrcolor);
     }
 
@@ -174,8 +174,8 @@ public:
             const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
             //const uint32_t color = this->RGBtoBGR(cmd._Color);
             this->drawable.opaquerect(trect
-                , ::RGBtoBGR(((this->mod_bpp == 24) ? cmd._Color
-                                                    : ::color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb))));
+                , ::RGBtoBGR(((this->capture_bpp == 24) ? cmd._Color
+                                                        : ::color_decode_opaquerect(cmd._Color, this->capture_bpp, this->mod_palette_rgb))));
         }
     }
 
@@ -188,13 +188,13 @@ public:
 
         uint32_t BackColor;
         uint32_t ForeColor;
-        if (this->mod_bpp == 24) {
+        if (this->capture_bpp == 24) {
             BackColor = ::RGBtoBGR(cmd.BackColor);
             ForeColor = ::RGBtoBGR(cmd.ForeColor);
         }
         else {
-            BackColor = ::RGBtoBGR(::color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb));
-            ForeColor = ::RGBtoBGR(::color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette_rgb));
+            BackColor = ::RGBtoBGR(::color_decode_opaquerect(cmd.BackColor, this->capture_bpp, this->mod_palette_rgb));
+            ForeColor = ::RGBtoBGR(::color_decode_opaquerect(cmd.ForeColor, this->capture_bpp, this->mod_palette_rgb));
         }
 
         for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
@@ -252,13 +252,13 @@ public:
 
         uint32_t back_color;
         uint32_t fore_color;
-        if (this->mod_bpp == 24) {
+        if (this->capture_bpp == 24) {
             back_color = ::RGBtoBGR(cmd.back_color);
             fore_color = ::RGBtoBGR(cmd.fore_color);
         }
         else {
-            back_color = ::RGBtoBGR(::color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb));
-            fore_color = ::RGBtoBGR(::color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb));
+            back_color = ::RGBtoBGR(::color_decode_opaquerect(cmd.back_color, this->capture_bpp, this->mod_palette_rgb));
+            fore_color = ::RGBtoBGR(::color_decode_opaquerect(cmd.fore_color, this->capture_bpp, this->mod_palette_rgb));
         }
 
         if ((cmd.rop == 0xF0) && (cmd.brush.style == 0x03))
@@ -333,8 +333,8 @@ public:
             , cmd.srcy + (rect.y  - cmd.rect.y)
 //            , cmd.rop, cmd.fore_color, false);
             , cmd.rop
-            , ((this->mod_bpp == 24) ? cmd.fore_color
-                                     : ::color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb))
+            , ((this->capture_bpp == 24) ? cmd.fore_color
+                                         : ::color_decode_opaquerect(cmd.fore_color, this->capture_bpp, this->mod_palette_rgb))
             , false);
     }
 
@@ -358,8 +358,8 @@ public:
     {
         this->drew_line(lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy, lineto.rop2,
 //            lineto.pen.color, clip);
-            ((this->mod_bpp == 24) ? lineto.pen.color
-                                   : ::color_decode_opaquerect(lineto.pen.color, this->mod_bpp, this->mod_palette_rgb)),
+            ((this->capture_bpp == 24) ? lineto.pen.color
+                                       : ::color_decode_opaquerect(lineto.pen.color, this->capture_bpp, this->mod_palette_rgb)),
             clip);
     }
 
@@ -469,8 +469,8 @@ public:
 
         {
 //            const uint32_t color = this->RGBtoBGR(cmd.fore_color);
-            const uint32_t color = ::RGBtoBGR(((this->mod_bpp == 24) ? cmd.fore_color
-                                                                     : ::color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb)));
+            const uint32_t color = ::RGBtoBGR(((this->capture_bpp == 24) ? cmd.fore_color
+                                                                         : ::color_decode_opaquerect(cmd.fore_color, this->capture_bpp, this->mod_palette_rgb)));
 
             uint8_t * base = glyph_fragments.data_bitmap.get();
             uint8_t * p    = base;
@@ -529,8 +529,8 @@ public:
                     {
 //                        this->draw_glyph(glyph_fragments, fc, draw_pos, this->RGBtoBGR(cmd.back_color));
                         this->draw_glyph(glyph_fragments, fc, draw_pos,
-                            ::RGBtoBGR(((this->mod_bpp == 24) ? cmd.back_color
-                                                              : ::color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb)))
+                            ::RGBtoBGR(((this->capture_bpp == 24) ? cmd.back_color
+                                                                  : ::color_decode_opaquerect(cmd.back_color, this->capture_bpp, this->mod_palette_rgb)))
                             );
                     }
                 }
@@ -626,8 +626,8 @@ public:
 
 //            this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.PenColor, clip);
             this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2,
-                ((this->mod_bpp == 24) ? cmd.PenColor
-                                       : ::color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb)),
+                ((this->capture_bpp == 24) ? cmd.PenColor
+                                           : ::color_decode_opaquerect(cmd.PenColor, this->capture_bpp, this->mod_palette_rgb)),
                 clip);
 
             startx = endx;
@@ -645,8 +645,8 @@ public:
         int16_t endy;
 
         uint32_t BrushColor =
-            ((this->mod_bpp == 24) ? cmd.BrushColor
-                                   : ::color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb));
+            ((this->capture_bpp == 24) ? cmd.BrushColor
+                                       : ::color_decode_opaquerect(cmd.BrushColor, this->capture_bpp, this->mod_palette_rgb));
 
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
             endx = startx + cmd.deltaPoints[i].xDelta;
@@ -674,8 +674,8 @@ public:
         int16_t endy;
 
         uint32_t foreColor =
-            ((this->mod_bpp == 24) ? cmd.foreColor
-                                   : ::color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb));
+            ((this->capture_bpp == 24) ? cmd.foreColor
+                                       : ::color_decode_opaquerect(cmd.foreColor, this->capture_bpp, this->mod_palette_rgb));
 
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
             endx = startx + cmd.deltaPoints[i].xDelta;

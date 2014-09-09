@@ -122,12 +122,18 @@ public:
 
     bool palette_sent;
     bool palette_memblt_sent[6];
+
 private:
     BGRPalette palette332_rgb;
+
 public:
     BGRPalette mod_palette_rgb;
     uint8_t mod_bpp;
 
+private:
+    uint8_t capture_bpp;
+
+public:
     enum {
         CONNECTION_INITIATION,
         WAITING_FOR_LOGON_INFO,
@@ -192,6 +198,7 @@ public:
         , pointer_cache()
         , glyph_cache()
         , mod_bpp(0)
+        , capture_bpp(0)
         , state(CONNECTION_INITIATION)
         , gen(gen)
         , fastpath_support(fp_support)
@@ -530,8 +537,8 @@ public:
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
-        int capture_bpp = ((ini.video.wrm_color_depth_selection_strategy == 1) ? 16 : 24);
-        this->capture = new Capture( now, width, height, this->mod_bpp, capture_bpp
+        this->capture_bpp = ((ini.video.wrm_color_depth_selection_strategy == 1) ? 16 : 24);
+        this->capture = new Capture( now, width, height, this->mod_bpp, this->capture_bpp
                                    , ini.video.record_path
                                    , ini.video.record_tmp_path
                                    , ini.video.hash_path, basename
@@ -4273,7 +4280,18 @@ public:
 //                RDPOpaqueRect new_cmd24 = cmd;
 //                new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
 //                this->capture->draw(new_cmd24, clip);
-                this->capture->draw(cmd, clip);
+
+                if (this->capture_bpp != this->mod_bpp) {
+                    RDPOpaqueRect capture_cmd = cmd;
+
+                    const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
+                    capture_cmd.color = color_encode(color24, this->capture_bpp);
+
+                    this->capture->draw(capture_cmd, clip);
+                }
+                else {
+                    this->capture->draw(cmd, clip);
+                }
             }
         }
     }
@@ -4336,7 +4354,17 @@ public:
 //                RDPMultiOpaqueRect new_cmd24 = cmd;
 //                new_cmd24._Color = color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb);
 //                this->capture->draw(new_cmd24, clip);
-                this->capture->draw(cmd, clip);
+                if (this->capture_bpp != this->mod_bpp) {
+                    RDPMultiOpaqueRect capture_cmd = cmd;
+
+                    const BGRColor color24 = color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb);
+                    capture_cmd._Color = color_encode(color24, this->capture_bpp);
+
+                    this->capture->draw(capture_cmd, clip);
+                }
+                else {
+                    this->capture->draw(cmd, clip);
+                }
             }
         }
     }
@@ -4366,7 +4394,20 @@ public:
 //                new_cmd24.BackColor = back_color24;
 //                new_cmd24.ForeColor = fore_color24;
 //                this->capture->draw(new_cmd24, clip);
-                this->capture->draw(cmd, clip);
+                if (this->capture_bpp != this->mod_bpp) {
+                    RDP::RDPMultiPatBlt capture_cmd = cmd;
+
+                    const BGRColor back_color24 = color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette_rgb);
+
+                    capture_cmd.BackColor= color_encode(back_color24, this->capture_bpp);
+                    capture_cmd.ForeColor= color_encode(fore_color24, this->capture_bpp);
+
+                    this->capture->draw(capture_cmd, clip);
+                }
+                else {
+                    this->capture->draw(cmd, clip);
+                }
             }
         }
     }
@@ -4408,7 +4449,20 @@ public:
 //                new_cmd24.back_color = back_color24;
 //                new_cmd24.fore_color = fore_color24;
 //                this->capture->draw(new_cmd24, clip);
-                this->capture->draw(cmd, clip);
+                if (this->capture_bpp != this->mod_bpp) {
+                    RDPPatBlt capture_cmd = cmd;
+
+                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+
+                    capture_cmd.back_color = color_encode(back_color24, this->capture_bpp);
+                    capture_cmd.fore_color = color_encode(fore_color24, this->capture_bpp);
+
+                    this->capture->draw(capture_cmd, clip);
+                }
+                else {
+                    this->capture->draw(cmd, clip);
+                }
             }
         }
     }
@@ -4545,8 +4599,17 @@ public:
                && (this->capture_state == CAPTURE_STATE_STARTED)){
 //                cmd2.back_color= back_color24;
 //                cmd2.fore_color= fore_color24;
-                cmd2.back_color= cmd.back_color;
-                cmd2.fore_color= cmd.fore_color;
+                if (this->capture_bpp != this->mod_bpp) {
+                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+
+                    cmd2.back_color= color_encode(back_color24, this->capture_bpp);
+                    cmd2.fore_color= color_encode(fore_color24, this->capture_bpp);
+                }
+                else {
+                    cmd2.back_color= cmd.back_color;
+                    cmd2.fore_color= cmd.fore_color;
+                }
 
                 this->capture->draw(cmd2, clip, bitmap);
             }
@@ -4569,10 +4632,20 @@ public:
                && (this->capture_state == CAPTURE_STATE_STARTED)){
 //                cmd2.back_color= back_color24;
 //                cmd2.fore_color= fore_color24;
-                cmd2.back_color= cmd.back_color;
-                cmd2.fore_color= cmd.fore_color;
 
-                this->capture->draw(cmd2, clip, tiled_bmp);
+                if (this->capture_bpp != this->mod_bpp) {
+                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+
+                    cmd2.back_color= color_encode(back_color24, this->capture_bpp);
+                    cmd2.fore_color= color_encode(fore_color24, this->capture_bpp);
+                }
+                else {
+                    cmd2.back_color= cmd.back_color;
+                    cmd2.fore_color= cmd.fore_color;
+
+                    this->capture->draw(cmd2, clip, tiled_bmp);
+                }
             }
         }
     }
@@ -4671,7 +4744,20 @@ public:
 //                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
 //                new_cmd24.pen.color = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette_rgb);
 //                this->capture->draw(new_cmd24, clip);
-                this->capture->draw(cmd, clip);
+                if (this->capture_bpp != this->mod_bpp){
+                    RDPLineTo capture_cmd = cmd;
+
+                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor pen_color24 = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette_rgb);
+
+                    capture_cmd.back_color = color_encode(back_color24, this->capture_bpp);
+                    capture_cmd.pen.color = color_encode(pen_color24, this->capture_bpp);
+
+                    this->orders->draw(capture_cmd, clip);
+                }
+                else {
+                    this->capture->draw(cmd, clip);
+                }
             }
         }
     }
@@ -4738,8 +4824,16 @@ public:
 //                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
 //                new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
 //                this->capture->draw(new_cmd24, clip, gly_cache);
-                new_cmd.back_color = cmd.back_color;
-                new_cmd.fore_color = cmd.fore_color;
+                if (this->capture_bpp != this->mod_bpp){
+                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+                    new_cmd.back_color = color_encode(back_color24, this->capture_bpp);
+                    new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
+                }
+                else {
+                    new_cmd.back_color = cmd.back_color;
+                    new_cmd.fore_color = cmd.fore_color;
+                }
                 this->capture->draw(new_cmd, clip, gly_cache);
             }
         }
@@ -4804,7 +4898,15 @@ public:
 //                RDPPolygonSC new_cmd24 = cmd;
 //                new_cmd24.BrushColor = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb);
 //                this->capture->draw(new_cmd24, clip);
-                this->capture->draw(cmd, clip);
+                if (this->capture_bpp != this->mod_bpp) {
+                    RDPPolygonSC capture_cmd = cmd;
+                    const BGRColor pen_color24 = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb);
+                    capture_cmd.BrushColor = color_encode(pen_color24, this->capture_bpp);
+                    this->capture->draw(capture_cmd, clip);
+                }
+                else {
+                    this->capture->draw(cmd, clip);
+                }
             }
         }
     }
@@ -4848,7 +4950,18 @@ public:
 //                new_cmd24.foreColor = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb);
 //                new_cmd24.backColor = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette_rgb);
 //                this->capture->draw(new_cmd24, clip);
-                this->capture->draw(cmd, clip);
+                if (this->capture_bpp != this->mod_bpp) {
+                    RDPPolygonCB capture_cmd = cmd;
+                    const BGRColor fore_pen_color24 = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor back_pen_color24 = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette_rgb);
+
+                    capture_cmd.foreColor = color_encode(fore_pen_color24, this->capture_bpp);
+                    capture_cmd.backColor = color_encode(back_pen_color24, this->capture_bpp);
+                    this->orders->draw(capture_cmd, clip);
+                }
+                else {
+                    this->capture->draw(cmd, clip);
+                }
             }
         }
     }
@@ -4889,7 +5002,15 @@ public:
 //                RDPPolyline new_cmd24 = cmd;
 //                new_cmd24.PenColor = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb);
 //                this->capture->draw(new_cmd24, clip);
-                this->capture->draw(cmd, clip);
+                if (this->capture_bpp != this->mod_bpp) {
+                    RDPPolyline capture_cmd = cmd;
+                    const BGRColor pen_color24 = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb);
+                    capture_cmd.PenColor = color_encode(pen_color24, this->capture_bpp);
+                    this->orders->draw(capture_cmd, clip);
+                }
+                else {
+                    this->capture->draw(cmd, clip);
+                }
             }
         }
     }
@@ -4917,7 +5038,15 @@ public:
 //                RDPEllipseSC new_cmd24 = cmd;
 //                new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
 //                this->capture->draw(new_cmd24, clip);
-                this->capture->draw(cmd, clip);
+                if (this->capture_bpp != this->mod_bpp){
+                    RDPEllipseSC capture_cmd = cmd;
+                    const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
+                    capture_cmd.color = color_encode(color24, this->capture_bpp);
+                    this->orders->draw(capture_cmd, clip);
+                }
+                else {
+                    this->capture->draw(cmd, clip);
+                }
             }
         }
     }
@@ -4949,7 +5078,19 @@ public:
 //                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
 //                new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
 //                this->capture->draw(new_cmd24, clip);
-                this->capture->draw(cmd, clip);
+                if (this->capture_bpp != this->mod_bpp){
+                    RDPEllipseCB capture_cmd = cmd;
+                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+
+                    capture_cmd.back_color = color_encode(back_color24, this->capture_bpp);
+                    capture_cmd.fore_color = color_encode(fore_color24, this->capture_bpp);
+
+                    this->orders->draw(capture_cmd, clip);
+                }
+                else {
+                    this->capture->draw(cmd, clip);
+                }
             }
         }
     }
