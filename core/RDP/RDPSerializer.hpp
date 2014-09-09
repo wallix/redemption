@@ -433,6 +433,9 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->lineto);
         this->common = newcommon;
         this->lineto = cmd;
+        if (this->ini.debug.primary_orders){
+            cmd.log(LOG_INFO, common.clip);
+        }
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
@@ -485,6 +488,9 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->polyline);
         this->common   = newcommon;
         this->polyline = cmd;
+        if (this->ini.debug.primary_orders){
+            cmd.log(LOG_INFO, common.clip);
+        }
     }
 
     virtual void draw(const RDPEllipseSC & cmd, const Rect & clip)
@@ -550,6 +556,9 @@ public:
 
         bitmap_data.emit(this->stream_bitmaps);
         this->stream_bitmaps.out_copy_bytes(data, size);
+        if (this->ini.debug.bitmap_update){
+            bitmap_data.log(LOG_INFO, "RDPSerializer");
+        }
     }
 };
 
