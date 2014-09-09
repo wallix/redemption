@@ -1511,7 +1511,7 @@ public:
             // -------------
             SubStream & gcc_data = mcs_ci.payload;
             GCC::Create_Request_Recv gcc_cr(gcc_data);
-
+            TODO("ensure gcc_data substream is fully consumed")
 
             while (gcc_cr.payload.in_check_rem(4)) {
                 GCC::UserData::RecvFactory f(gcc_cr.payload);
