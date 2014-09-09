@@ -241,39 +241,43 @@ namespace GCC
         public:
         SubStream payload;
 
-        Create_Request_Recv(Stream & stream) {
-            if (!stream.in_check_rem(23)){
-                LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %u)", stream.size());
-                throw Error(ERR_GCC);
-            }
+        Create_Request_Recv(Stream & stream) 
+            : payload([&stream](){
+                if (!stream.in_check_rem(23)){
+                    LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %u)", stream.size());
+                    throw Error(ERR_GCC);
+                }
 
-            // Key select object (0) of type OBJECT_IDENTIFIER
-            // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
-            stream.in_skip_bytes(7);
+                // Key select object (0) of type OBJECT_IDENTIFIER
+                // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
+                stream.in_skip_bytes(7);
 
-            uint16_t length_with_header = stream.in_2BUE();
+                uint16_t length_with_header = stream.in_2BUE();
 
-            // ConnectGCCPDU
-            // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
-            // select optional userData from ConferenceCreateRequest
-            // ConferenceCreateRequest::conferenceName
-            // UserData (SET OF SEQUENCE), one set of UserData
-            // UserData::value present + select h221NonStandard (1)
-            // h221NonStandard, client-to-server H.221 key, "Duca"
+                // ConnectGCCPDU
+                // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
+                // select optional userData from ConferenceCreateRequest
+                // ConferenceCreateRequest::conferenceName
+                // UserData (SET OF SEQUENCE), one set of UserData
+                // UserData::value present + select h221NonStandard (1)
+                // h221NonStandard, client-to-server H.221 key, "Duca"
 
-            stream.in_skip_bytes(12);
-            uint16_t length = stream.in_2BUE();
+                stream.in_skip_bytes(12);
+                uint16_t length = stream.in_2BUE();
 
-            if (length_with_header != length + 14){
-                LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header+data length %u %u", length, length_with_header);
-                throw Error(ERR_GCC);
-            }
+                if (length_with_header != length + 14){
+                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header+data length %u %u", length, length_with_header);
+                    throw Error(ERR_GCC);
+                }
 
-            if (length != stream.size() - stream.get_offset()){
-                LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %u %u", length, stream.size() - stream.get_offset());
-                throw Error(ERR_GCC);
-            }
-            this->payload.resize(stream, stream.size() - stream.get_offset());
+                if (length != stream.size() - stream.get_offset()){
+                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %u %u", length, stream.size() - stream.get_offset());
+                    throw Error(ERR_GCC);
+                }
+                return SubStream(stream, stream.get_offset(), length);
+            }())            
+        // Body of constructor
+        {
         }
     };
 

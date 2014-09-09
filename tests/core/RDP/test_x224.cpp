@@ -535,9 +535,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
 
     BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
     BOOST_CHECK_EQUAL(7, x224._header_size);
-    BOOST_CHECK_EQUAL(x224._header_size + x224.payload_size, stream.size());
+    BOOST_CHECK_EQUAL(x224._header_size + x224.payload.size(), stream.size());
 
-    BOOST_CHECK_EQUAL(5, x224.payload_size);
+    BOOST_CHECK_EQUAL(5, x224.payload.size());
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_wrong_opcode)
