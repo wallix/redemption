@@ -348,7 +348,8 @@ public:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
             this->mod = new TestCardMod(this->front,
                                         this->front.client_info.width,
-                                        this->front.client_info.height
+                                        this->front.client_info.height,
+                                        false
                                         );
             LOG(LOG_INFO, "ModuleManager::internal module 'test_card' ready");
             break;
