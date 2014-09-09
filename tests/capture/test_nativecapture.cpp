@@ -47,7 +47,10 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     now.tv_sec = 1000;
     now.tv_usec = 0;
 
-    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false, 600, 768, false, 300, 3072, false, 262, 12288, false);
+    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
+                       BmpCache::CacheOption(600, 768, false),
+                       BmpCache::CacheOption(300, 3072, false),
+                       BmpCache::CacheOption(262, 12288, false));
     Inifile ini;
     RDPDrawable drawable(800, 600);
     NativeCapture consumer(now, trans, 800, 600, bmp_cache, drawable, ini);

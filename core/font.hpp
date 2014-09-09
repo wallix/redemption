@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <limits.h>
+#include "unique_ptr.hpp"
 #include <bits/posix1_lim.h>
 
 #include "log.hpp"
@@ -42,51 +43,58 @@
 struct FontChar
 //##############################################################################
 {
-    int       offset;   // leading whistespace before char
-    int       baseline; // real -height (probably unused for now)
-    int       width;    // width of glyph actually containing pixels
-    int       height;   // height of glyph (in pixels)
-    int       incby;    // width of glyph (in pixels) including leading and trailing whitespaces
-    uint8_t * data;
+    int       offset = 0;   // leading whistespace before char
+    int       baseline = 0; // real -height (probably unused for now)
+    int       width = 0;    // width of glyph actually containing pixels
+    int       height = 0;   // height of glyph (in pixels)
+    int       incby = 0;    // width of glyph (in pixels) including leading and trailing whitespaces
+    std::unique_ptr<uint8_t[]> data;
 
-    // Constructor
-    //==============================================================================
     FontChar(int offset, int baseline, int width, int height, int incby)
-    //==============================================================================
         : offset(offset)
         , baseline(baseline)
         , width(width)
         , height(height)
         , incby(incby)
-        , data(new uint8_t[this->datasize()])
-    //------------------------------------------------------------------------------
+        , data(std::make_unique<uint8_t[]>(this->datasize()))
     {
     }
 
-    // Copy constructor
-    //==============================================================================
+    FontChar() = default;
+
+    FontChar(FontChar && other) = default;
+    void * operator new (size_t) = delete;
+
+    FontChar & operator=(FontChar const & other) {
+        this->offset = other.offset;
+        this->baseline = other.baseline;
+        this->width = other.width;
+        this->height = other.height;
+        this->incby = other.incby;
+        this->data = std::make_unique<uint8_t[]>(other.datasize());
+        memcpy(this->data.get(), other.data.get(), other.datasize());
+        return *this;
+    }
+
+    FontChar & operator=(FontChar &&) = default;
+
     FontChar(const FontChar & other)
-    //==============================================================================
         : offset(other.offset)
         , baseline(other.baseline)
         , width(other.width)
         , height(other.height)
         , incby(other.incby)
-        , data(new uint8_t[other.datasize()])
-    //------------------------------------------------------------------------------
+        , data(std::make_unique<uint8_t[]>(other.datasize()))
     {
-        memcpy(this->data, other.data, other.datasize());
+        memcpy(this->data.get(), other.data.get(), other.datasize());
     }
 
-    // Destructor
-    //==============================================================================
-    ~FontChar(){
-    //==============================================================================
-        delete [] this->data;
+    explicit operator bool () const noexcept {
+        return bool(this->data);
     }
 
     //==============================================================================
-    inline int datasize() const
+    inline int datasize() const noexcept
     //==============================================================================
     {
         return align4(nbbytes(this->width) * this->height);
@@ -94,27 +102,27 @@ struct FontChar
 
     /* compare the two font items returns 1 if they match */
     //==============================================================================
-    int item_compare(struct FontChar * glyph, bool ignore_incby = false)
+    int item_compare(FontChar & glyph, bool ignore_incby = false) noexcept
     //==============================================================================
     {
         bool result =
                glyph
-            && (this->offset == glyph->offset)
-            && (this->baseline == glyph->baseline)
-            && (this->width == glyph->width)
-            && (this->height == glyph->height)
-            && (!ignore_incby || (this->incby == glyph->incby))
-            && (0 == memcmp(this->data, glyph->data, glyph->datasize()));
+            && (this->offset == glyph.offset)
+            && (this->baseline == glyph.baseline)
+            && (this->width == glyph.width)
+            && (this->height == glyph.height)
+            && (!ignore_incby || (this->incby == glyph.incby))
+            && (0 == memcmp(this->data.get(), glyph.data.get(), glyph.datasize()));
 
         if (result && !ignore_incby)
         {
-            if ((this->incby < 0) && (glyph->incby >= 0))
+            if ((this->incby < 0) && (glyph.incby >= 0))
             {
-                this->incby = glyph->incby;
+                this->incby = glyph.incby;
             }
-            else if ((this->incby >= 0) && (glyph->incby < 0))
+            else if ((this->incby >= 0) && (glyph.incby < 0))
             {
-                glyph->incby = this->incby;
+                glyph.incby = this->incby;
             }
         }
 
@@ -158,7 +166,7 @@ struct Font
            NUM_GLYPHS = 0x4e00
     };
 
-    struct FontChar * font_items[NUM_GLYPHS];
+    FontChar font_items[NUM_GLYPHS];
     char name[32];
     int size;
     int style;
@@ -177,9 +185,6 @@ struct Font
 
         LOG(LOG_INFO, "Reading font file %s", file_path);
         // RAZ of font chars table
-        for (int i = 0; i < NUM_GLYPHS ; i++){
-            this->font_items[i] = 0;
-        }
 
         // Does font definition file exist and is it accessible ?
         if (access(file_path, F_OK)) {
@@ -290,16 +295,16 @@ struct Font
                 int offset = stream.in_sint16_le(); // >>> 2 bytes for glyph offset
                 int incby = stream.in_sint16_le(); // >>> 2 bytes for glyph incby
                 stream.in_skip_bytes(6); // >>> 6 bytes for PAD (dropped)
-                this->font_items[index] = new FontChar(offset, baseline, width, height, incby);
+                this->font_items[index] = FontChar(offset, baseline, width, height, incby);
 
                 // Check if glyph data size make sense
-                unsigned datasize = this->font_items[index]->datasize();
+                unsigned datasize = this->font_items[index].datasize();
                 if (datasize > 512) { // shouldn't happen, implies broken font file
                     LOG(LOG_WARNING,
                         "Error loading font %s. Wrong size for glyph %d"
                         "width %d height %d \n", file_path, index,
-                        this->font_items[index]->width,
-                        this->font_items[index]->height);
+                        this->font_items[index].width,
+                        this->font_items[index].height);
                     // one glyph is broken but we continue with other glyphs
                     continue;
                 }
@@ -314,7 +319,7 @@ struct Font
                 }
 
                 // >>> <datasize> bytes for glyph data (bitmap)
-                stream.in_copy_bytes(this->font_items[index]->data, datasize);
+                stream.in_copy_bytes(this->font_items[index].data.get(), datasize);
             }
         }
         return;
@@ -324,24 +329,12 @@ ErrorReadingFontFile:
         return;
     }
 
-    // Destructor
-    //==============================================================================
-    ~Font()
-    //==============================================================================
-    {
-        for (int i = 0; i < NUM_GLYPHS ; i++){
-            if (this->font_items[i]) {
-                delete this->font_items[i];
-            }
-        }
-    }
-
     bool glyph_defined(uint32_t charnum)
     {
         if ((charnum < 32)||(charnum >= NUM_GLYPHS)){
             return false;
         }
-        return this->font_items[charnum] != NULL;
+        return bool(this->font_items[charnum]);
     }
 }; // END STRUCT - Font
 

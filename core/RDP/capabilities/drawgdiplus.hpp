@@ -207,9 +207,9 @@ struct DrawGdiPlusCaps : public Capability {
     uint32_t GdipVersion;
     uint32_t drawGdiplusCacheLevel;
 
-    GdiPCacheEntries * gdiPCacheEntries;
-    GdiPCacheChunkSize * gdiPCacheChunkSize;
-    GdiPImageCacheProperties * gdiPImageCacheProperties;
+    GdiPCacheEntries gdiPCacheEntries;
+    GdiPCacheChunkSize gdiPCacheChunkSize;
+    GdiPImageCacheProperties gdiPImageCacheProperties;
 
 
     DrawGdiPlusCaps()
@@ -219,17 +219,8 @@ struct DrawGdiPlusCaps : public Capability {
                      // SC : whatever (not used)
     , drawGdiplusCacheLevel(TS_DRAW_GDIPLUS_CACHE_LEVEL_DEFAULT) // from a specific list of values (see enum)
     {
-        this->gdiPCacheEntries = new GdiPCacheEntries;
-        this->gdiPCacheChunkSize = new GdiPCacheChunkSize;
-        this->gdiPImageCacheProperties = new GdiPImageCacheProperties;
     }
 
-
-    ~DrawGdiPlusCaps() {
-        delete this->gdiPCacheEntries;
-        delete this->gdiPCacheChunkSize;
-        delete this->gdiPImageCacheProperties;
-    }
     void emit(Stream & stream) {
 //        LOG(LOG_INFO, "DrawGdiPlus caps emit not implemented");
         stream.out_uint16_le(this->capabilityType);
@@ -238,20 +229,20 @@ struct DrawGdiPlusCaps : public Capability {
         stream.out_uint32_le(this->GdipVersion);
         stream.out_uint32_le(this->drawGdiplusCacheLevel);
 
-        stream.out_uint16_le(this->gdiPCacheEntries->GdipGraphicsCacheEntries);
-        stream.out_uint16_le(this->gdiPCacheEntries->GdipBrushCacheEntries);
-        stream.out_uint16_le(this->gdiPCacheEntries->GdipPenCacheEntries);
-        stream.out_uint16_le(this->gdiPCacheEntries->GdipImageCacheEntries);
-        stream.out_uint16_le(this->gdiPCacheEntries->GdipImageAttributesCacheEntries);
+        stream.out_uint16_le(this->gdiPCacheEntries.GdipGraphicsCacheEntries);
+        stream.out_uint16_le(this->gdiPCacheEntries.GdipBrushCacheEntries);
+        stream.out_uint16_le(this->gdiPCacheEntries.GdipPenCacheEntries);
+        stream.out_uint16_le(this->gdiPCacheEntries.GdipImageCacheEntries);
+        stream.out_uint16_le(this->gdiPCacheEntries.GdipImageAttributesCacheEntries);
 
-        stream.out_uint16_le(this->gdiPCacheChunkSize->GdipGraphicsCacheChunkSize);
-        stream.out_uint16_le(this->gdiPCacheChunkSize->GdipObjectBrushCacheChunkSize);
-        stream.out_uint16_le(this->gdiPCacheChunkSize->GdipObjectPenCacheChunkSize);
-        stream.out_uint16_le(this->gdiPCacheChunkSize->GdipObjectImageAttributesCacheChunkSize);
+        stream.out_uint16_le(this->gdiPCacheChunkSize.GdipGraphicsCacheChunkSize);
+        stream.out_uint16_le(this->gdiPCacheChunkSize.GdipObjectBrushCacheChunkSize);
+        stream.out_uint16_le(this->gdiPCacheChunkSize.GdipObjectPenCacheChunkSize);
+        stream.out_uint16_le(this->gdiPCacheChunkSize.GdipObjectImageAttributesCacheChunkSize);
 
-        stream.out_uint16_le(this->gdiPImageCacheProperties->GdipObjectImageCacheChunkSize);
-        stream.out_uint16_le(this->gdiPImageCacheProperties->GdipObjectImageCacheTotalSize);
-        stream.out_uint16_le(this->gdiPImageCacheProperties->GdipObjectImageCacheMaxSize);
+        stream.out_uint16_le(this->gdiPImageCacheProperties.GdipObjectImageCacheChunkSize);
+        stream.out_uint16_le(this->gdiPImageCacheProperties.GdipObjectImageCacheTotalSize);
+        stream.out_uint16_le(this->gdiPImageCacheProperties.GdipObjectImageCacheMaxSize);
     }
 
     void recv(Stream & stream, uint16_t len) {
@@ -260,20 +251,20 @@ struct DrawGdiPlusCaps : public Capability {
         this->GdipVersion = stream.in_uint32_le();
         this->drawGdiplusCacheLevel = stream.in_uint32_le();
 
-        this->gdiPCacheEntries->GdipGraphicsCacheEntries = stream.in_uint16_le();
-        this->gdiPCacheEntries->GdipBrushCacheEntries = stream.in_uint16_le();
-        this->gdiPCacheEntries->GdipPenCacheEntries = stream.in_uint16_le();
-        this->gdiPCacheEntries->GdipImageCacheEntries = stream.in_uint16_le();
-        this->gdiPCacheEntries->GdipImageAttributesCacheEntries = stream.in_uint16_le();
+        this->gdiPCacheEntries.GdipGraphicsCacheEntries = stream.in_uint16_le();
+        this->gdiPCacheEntries.GdipBrushCacheEntries = stream.in_uint16_le();
+        this->gdiPCacheEntries.GdipPenCacheEntries = stream.in_uint16_le();
+        this->gdiPCacheEntries.GdipImageCacheEntries = stream.in_uint16_le();
+        this->gdiPCacheEntries.GdipImageAttributesCacheEntries = stream.in_uint16_le();
 
-        this->gdiPCacheChunkSize->GdipGraphicsCacheChunkSize = stream.in_uint16_le();
-        this->gdiPCacheChunkSize->GdipObjectBrushCacheChunkSize = stream.in_uint16_le();
-        this->gdiPCacheChunkSize->GdipObjectPenCacheChunkSize = stream.in_uint16_le();
-        this->gdiPCacheChunkSize->GdipObjectImageAttributesCacheChunkSize = stream.in_uint16_le();
+        this->gdiPCacheChunkSize.GdipGraphicsCacheChunkSize = stream.in_uint16_le();
+        this->gdiPCacheChunkSize.GdipObjectBrushCacheChunkSize = stream.in_uint16_le();
+        this->gdiPCacheChunkSize.GdipObjectPenCacheChunkSize = stream.in_uint16_le();
+        this->gdiPCacheChunkSize.GdipObjectImageAttributesCacheChunkSize = stream.in_uint16_le();
 
-        this->gdiPImageCacheProperties->GdipObjectImageCacheChunkSize = stream.in_uint16_le();
-        this->gdiPImageCacheProperties->GdipObjectImageCacheTotalSize = stream.in_uint16_le();
-        this->gdiPImageCacheProperties->GdipObjectImageCacheMaxSize = stream.in_uint16_le();
+        this->gdiPImageCacheProperties.GdipObjectImageCacheChunkSize = stream.in_uint16_le();
+        this->gdiPImageCacheProperties.GdipObjectImageCacheTotalSize = stream.in_uint16_le();
+        this->gdiPImageCacheProperties.GdipObjectImageCacheMaxSize = stream.in_uint16_le();
     }
 
     void log(const char * msg) {
@@ -283,20 +274,20 @@ struct DrawGdiPlusCaps : public Capability {
         LOG(LOG_INFO, "DrawGdiPlus caps::GdipVersion %u", this->GdipVersion);
         LOG(LOG_INFO, "DrawGdiPlus caps::drawGdiplusCacheLevel %u", this->drawGdiplusCacheLevel);
 
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries->GdipGraphicsCacheEntries %u", this->gdiPCacheEntries->GdipGraphicsCacheEntries);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries->GdipBrushCacheEntries %u", this->gdiPCacheEntries->GdipBrushCacheEntries);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries->GdipPenCacheEntries %u", this->gdiPCacheEntries->GdipPenCacheEntries);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries->GdipImageCacheEntries %u", this->gdiPCacheEntries->GdipImageCacheEntries);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries->GdipImageAttributesCacheEntries %u", this->gdiPCacheEntries->GdipImageAttributesCacheEntries);
+        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries.GdipGraphicsCacheEntries %u", this->gdiPCacheEntries.GdipGraphicsCacheEntries);
+        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries.GdipBrushCacheEntries %u", this->gdiPCacheEntries.GdipBrushCacheEntries);
+        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries.GdipPenCacheEntries %u", this->gdiPCacheEntries.GdipPenCacheEntries);
+        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries.GdipImageCacheEntries %u", this->gdiPCacheEntries.GdipImageCacheEntries);
+        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries.GdipImageAttributesCacheEntries %u", this->gdiPCacheEntries.GdipImageAttributesCacheEntries);
 
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheChunkSize->GdipGraphicsCacheChunkSize %u", this->gdiPCacheChunkSize->GdipGraphicsCacheChunkSize);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheChunkSize->GdipObjectBrushCacheChunkSize %u", this->gdiPCacheChunkSize->GdipObjectBrushCacheChunkSize);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheChunkSize->GdipObjectPenCacheChunkSize %u", this->gdiPCacheChunkSize->GdipObjectPenCacheChunkSize);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheChunkSize->GdipObjectImageAttributesCacheChunkSize %u", this->gdiPCacheChunkSize->GdipObjectImageAttributesCacheChunkSize);
+        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheChunkSize.GdipGraphicsCacheChunkSize %u", this->gdiPCacheChunkSize.GdipGraphicsCacheChunkSize);
+        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheChunkSize.GdipObjectBrushCacheChunkSize %u", this->gdiPCacheChunkSize.GdipObjectBrushCacheChunkSize);
+        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheChunkSize.GdipObjectPenCacheChunkSize %u", this->gdiPCacheChunkSize.GdipObjectPenCacheChunkSize);
+        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheChunkSize.GdipObjectImageAttributesCacheChunkSize %u", this->gdiPCacheChunkSize.GdipObjectImageAttributesCacheChunkSize);
 
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheChunkSize %u", this->gdiPImageCacheProperties->GdipObjectImageCacheChunkSize);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheTotalSize %u", this->gdiPImageCacheProperties->GdipObjectImageCacheTotalSize);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheMaxSize %u", this->gdiPImageCacheProperties->GdipObjectImageCacheMaxSize);
+        LOG(LOG_INFO, "DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheChunkSize %u", this->gdiPImageCacheProperties.GdipObjectImageCacheChunkSize);
+        LOG(LOG_INFO, "DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheTotalSize %u", this->gdiPImageCacheProperties.GdipObjectImageCacheTotalSize);
+        LOG(LOG_INFO, "DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheMaxSize %u", this->gdiPImageCacheProperties.GdipObjectImageCacheMaxSize);
     }
 };
 

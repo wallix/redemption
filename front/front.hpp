@@ -381,10 +381,10 @@ public:
         if (len_uni){
             for (size_t index = 0; index < len_uni; index++) {
                 uint32_t charnum = uni[index]; //
-                FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
+                FontChar *font_item = this->font.glyph_defined(charnum)?&this->font.font_items[charnum]:nullptr;
                 if (!font_item) {
                     LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                    font_item = this->font.font_items[static_cast<unsigned>('?')];
+                    font_item = &this->font.font_items[static_cast<unsigned>('?')];
                 }
                 width += font_item->incby;
                 height = std::max(height, font_item->height);
@@ -415,22 +415,23 @@ public:
             for (size_t index = 0; index < part_len; index++) {
                 int c = 0;
                 uint32_t charnum = uni[index];
-                FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
-                if (!font_item) {
+                FontChar & font_item = this->font.glyph_defined(charnum) && this->font.font_items[charnum]
+                ? this->font.font_items[charnum]
+                : [&]() {
                     LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                    font_item = this->font.font_items[static_cast<unsigned>('?')];
-                }
+                    return std::ref(this->font.font_items[static_cast<unsigned>('?')]);
+                }().get();
                 TODO(" avoid passing parameters by reference to get results")
                 switch (this->glyph_cache.add_glyph(font_item, f, c))
                 {
                     case GlyphCache::GLYPH_ADDED_TO_CACHE:
                     {
                         RDPGlyphCache cmd(f, 1, c,
-                            font_item->offset,
-                            font_item->baseline,
-                            font_item->width,
-                            font_item->height,
-                            font_item->data);
+                            font_item.offset,
+                            font_item.baseline,
+                            font_item.width,
+                            font_item.height,
+                            font_item.data.get());
 
                         this->orders->draw(cmd);
 
@@ -445,9 +446,9 @@ public:
                 }
                 data[index * 2] = c;
                 data[index * 2 + 1] = distance_from_previous_fragment;
-                distance_from_previous_fragment = font_item->incby;
-                total_width += font_item->incby;
-                total_height = std::max(total_height, font_item->height);
+                distance_from_previous_fragment = font_item.incby;
+                total_width += font_item.incby;
+                total_height = std::max(total_height, font_item.height);
             }
 
             const Rect bk(x, y, total_width + 1, total_height + 1);
@@ -726,24 +727,24 @@ private:
                         this->client_info.number_of_cache,
                         ((this->client_info.cache_flags & ALLOW_CACHE_WAITING_LIST_FLAG) &&
                              this->ini->client.cache_waiting_list),
-                        this->client_info.cache1_entries,
-                        this->client_info.cache1_size,
-                        this->client_info.cache1_persistent,
-                        this->client_info.cache2_entries,
-                        this->client_info.cache2_size,
-                        this->client_info.cache2_persistent,
-                        this->client_info.cache3_entries,
-                        this->client_info.cache3_size,
-                        this->client_info.cache3_persistent,
-                        this->client_info.cache4_entries,
-                        this->client_info.cache4_size,
-                        this->client_info.cache4_persistent,
-                        this->client_info.cache5_entries,
-                        this->client_info.cache5_size,
-                        this->client_info.cache5_persistent,
+                        BmpCache::CacheOption(this->client_info.cache1_entries,
+                                              this->client_info.cache1_size,
+                                              this->client_info.cache1_persistent),
+                        BmpCache::CacheOption(this->client_info.cache2_entries,
+                                              this->client_info.cache2_size,
+                                              this->client_info.cache2_persistent),
+                        BmpCache::CacheOption(this->client_info.cache3_entries,
+                                              this->client_info.cache3_size,
+                                              this->client_info.cache3_persistent),
+                        BmpCache::CacheOption(this->client_info.cache4_entries,
+                                              this->client_info.cache4_size,
+                                              this->client_info.cache4_persistent),
+                        BmpCache::CacheOption(this->client_info.cache5_entries,
+                                              this->client_info.cache5_size,
+                                              this->client_info.cache5_persistent),
                         this->ini->debug.cache);
 
-        if (this->ini->client.persistent_disk_bitmap_cache) {
+        if (this->ini->client.persistent_disk_bitmap_cache && this->bmp_cache->has_cache_persistent()) {
             // Generates the name of file.
             char cache_filename[2048];
             ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
@@ -2324,8 +2325,8 @@ public:
                         uint32_t share_id = sctrl.payload.in_uint32_le();
                         uint16_t originatorId = sctrl.payload.in_uint16_le();
                         this->process_confirm_active(sctrl.payload);
-(void)share_id;
-(void)originatorId;
+                        (void)share_id;
+                        (void)originatorId;
                     }
                     if (!sctrl.payload.check_end()){
                         LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u",
@@ -4398,29 +4399,30 @@ public:
 //            return;
 //        }
 
-
-        if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
-            const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
-            this->orders->draw(cmd2, clip, bitmap);
-            if (  this->capture
-               && (this->capture_state == CAPTURE_STATE_STARTED)){
-                this->capture->draw(cmd2, clip, bitmap);
-            }
-        }
-        else {
-            const Bitmap tiled_bmp(bitmap, src_tile);
-            const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
-            this->orders->draw(cmd2, clip, tiled_bmp);
-            if (  this->capture
-               && (this->capture_state == CAPTURE_STATE_STARTED)){
-                this->capture->draw(cmd2, clip, tiled_bmp);
-            }
+        const Bitmap tiled_bmp(bitmap, src_tile);
+        const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
+        this->orders->draw(cmd2, clip, tiled_bmp);
+        if (  this->capture
+            && (this->capture_state == CAPTURE_STATE_STARTED)){
+            this->capture->draw(cmd2, clip, tiled_bmp);
         }
     }
 
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
+private:
+    void priv_draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
-        if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
+        this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
+    }
+
+    void priv_draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, const Rect & clip)
+    {
+        this->draw_tile3(dst_tile, src_tile, cmd, bitmap, clip);
+    }
+
+    template<class MemBlt>
+    void priv_draw_memblt(const MemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
+    {
+        if (bitmap.cx() < cmd.srcx || bitmap.cy() < cmd.srcy){
             return;
         }
 
@@ -4429,7 +4431,7 @@ public:
         const uint8_t palette_id = 0;
         if (this->client_info.bpp == 8){
             if (!this->palette_memblt_sent[palette_id]) {
-                RDPColCache cmd(palette_id, bitmap.original_palette);
+                RDPColCache cmd(palette_id, bitmap.palette());
                 this->orders->draw(cmd);
                 this->palette_memblt_sent[palette_id] = true;
             }
@@ -4438,8 +4440,8 @@ public:
         const uint16_t dst_x = cmd.rect.x;
         const uint16_t dst_y = cmd.rect.y;
         // clip dst as it can be larger than source bitmap
-        const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx - cmd.srcx, cmd.rect.cx);
-        const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy - cmd.srcy, cmd.rect.cy);
+        const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx() - cmd.srcx, cmd.rect.cx);
+        const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy() - cmd.srcy, cmd.rect.cy);
 
         // check if target bitmap can be fully stored inside one front cache entry
         // if so no need to tile it.
@@ -4459,7 +4461,7 @@ public:
             // clip dst as it can be larger than source bitmap
             const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
             const Rect src_tile(cmd.srcx, cmd.srcy, dst_cx, dst_cy);
-            this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
+            this->priv_draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
         }
         else {
             // if not we have to split it
@@ -4474,10 +4476,16 @@ public:
 
                     const Rect dst_tile(dst_x + x, dst_y + y, cx, cy);
                     const Rect src_tile(cmd.srcx + x, cmd.srcy + y, cx, cy);
-                    this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
+                    this->priv_draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
                 }
             }
         }
+    }
+
+public:
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
+    {
+        this->priv_draw_memblt(cmd, clip, bitmap);
     }
 
     void draw_tile3(const Rect & dst_tile, const Rect & src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, const Rect & clip)
@@ -4498,105 +4506,28 @@ public:
         const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
         const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
 
-        if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
-            RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
+        const Bitmap tiled_bmp(bitmap, src_tile);
+        RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
 
-            if (this->client_info.bpp != this->mod_bpp){
-                cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
-                cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
-                // this may change the brush add send it to to remote cache
-            }
-
-            this->orders->draw(cmd2, clip, bitmap);
-            if (  this->capture
-               && (this->capture_state == CAPTURE_STATE_STARTED)){
-                cmd2.back_color= back_color24;
-                cmd2.fore_color= fore_color24;
-
-                this->capture->draw(cmd2, clip, bitmap);
-            }
+        if (this->client_info.bpp != this->mod_bpp){
+            cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
+            cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
+            // this may change the brush add send it to to remote cache
         }
-        else {
-            const Bitmap tiled_bmp(bitmap, src_tile);
-            RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
 
-            if (this->client_info.bpp != this->mod_bpp){
-                cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
-                cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
-                // this may change the brush add send it to to remote cache
-            }
+        this->orders->draw(cmd2, clip, tiled_bmp);
+        if (  this->capture
+            && (this->capture_state == CAPTURE_STATE_STARTED)){
+            cmd2.back_color= back_color24;
+            cmd2.fore_color= fore_color24;
 
-            this->orders->draw(cmd2, clip, tiled_bmp);
-            if (  this->capture
-               && (this->capture_state == CAPTURE_STATE_STARTED)){
-                cmd2.back_color= back_color24;
-                cmd2.fore_color= fore_color24;
-
-                this->capture->draw(cmd2, clip, tiled_bmp);
-            }
+            this->capture->draw(cmd2, clip, tiled_bmp);
         }
     }
 
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) {
-        // LOG(LOG_INFO, "Mem3Blt::rop = %X", cmd.rop);
-        if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
-            return;
-        }
-
-        this->send_global_palette();
-
-        const uint8_t palette_id = 0;
-        if (this->client_info.bpp == 8){
-            if (!this->palette_memblt_sent[palette_id]) {
-                RDPColCache cmd(palette_id, bitmap.original_palette);
-                this->orders->draw(cmd);
-                this->palette_memblt_sent[palette_id] = true;
-            }
-        }
-
-        const uint16_t dst_x = cmd.rect.x;
-        const uint16_t dst_y = cmd.rect.y;
-        // clip dst as it can be larger than source bitmap
-        const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx - cmd.srcx, cmd.rect.cx);
-        const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy - cmd.srcy, cmd.rect.cy);
-
-        // check if target bitmap can be fully stored inside one front cache entry
-        // if so no need to tile it.
-        uint32_t front_bitmap_size = ::nbbytes(this->client_info.bpp) * align4(dst_cx) * dst_cy;
-        // even if cache seems to be large enough, cache entries cant be used
-        // for values whose width is larger or equal to 256 after alignment
-        // hence, we check for this case. There does not seem to exist any
-        // similar restriction on cy actual reason of this is unclear
-        // (I don't even know if it's related to redemption code or client code).
-//        LOG(LOG_INFO, "cache1=%u cache2=%u cache3=%u bmp_size==%u",
-//            this->client_info.cache1_size,
-//            this->client_info.cache2_size,
-//            this->client_info.cache3_size,
-//            front_bitmap_size);
-        if (front_bitmap_size <= this->client_info.cache3_size
-            && align4(dst_cx) < 128 && dst_cy < 128){
-            // clip dst as it can be larger than source bitmap
-            const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
-            const Rect src_tile(cmd.srcx, cmd.srcy, dst_cx, dst_cy);
-            this->draw_tile3(dst_tile, src_tile, cmd, bitmap, clip);
-        }
-        else {
-            // if not we have to split it
-            const uint16_t TILE_CX = ((::nbbytes(this->client_info.bpp) * 64 * 64 < RDPSerializer::MAX_ORDERS_SIZE) ? 64 : 32);
-            const uint16_t TILE_CY = TILE_CX;
-
-            for (int y = 0; y < dst_cy ; y += TILE_CY) {
-                int cy = std::min(TILE_CY, (uint16_t)(dst_cy - y));
-
-                for (int x = 0; x < dst_cx ; x += TILE_CX) {
-                    int cx = std::min(TILE_CX, (uint16_t)(dst_cx - x));
-
-                    const Rect dst_tile(dst_x + x, dst_y + y, cx, cy);
-                    const Rect src_tile(cmd.srcx + x, cmd.srcy + y, cx, cy);
-                    this->draw_tile3(dst_tile, src_tile, cmd, bitmap, clip);
-                }
-            }
-        }
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap)
+    {
+        this->priv_draw_memblt(cmd, clip, bitmap);
     }
 
     void draw(const RDPLineTo & cmd, const Rect & clip)
@@ -4650,7 +4581,7 @@ public:
                     if (new_cmd.data[i] <= 0xFD)
                     {
                         //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
-                        FontChar * fc = gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item;
+                        FontChar & fc = const_cast<FontChar&>(gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item);
                         REDASSERT(fc);
                         int g_idx = this->glyph_cache.find_glyph(fc, new_cmd.cache_id);
                         REDASSERT(g_idx >= 0);
@@ -4699,11 +4630,11 @@ public:
     {
         FontChar font_item(cmd.glyphData_x, cmd.glyphData_y,
             cmd.glyphData_cx, cmd.glyphData_cy, -1);
-        memcpy(font_item.data, cmd.glyphData_aj, font_item.datasize());
+        memcpy(font_item.data.get(), cmd.glyphData_aj, font_item.datasize());
 
         int cacheidx = 0;
 
-        if (this->glyph_cache.add_glyph(&font_item, cmd.cacheId, cacheidx) ==
+        if (this->glyph_cache.add_glyph(std::move(font_item), cmd.cacheId, cacheidx) ==
             GlyphCache::GLYPH_ADDED_TO_CACHE)
         {
             RDPGlyphCache cmd2(cmd.cacheId, 1, cacheidx,

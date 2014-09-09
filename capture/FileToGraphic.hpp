@@ -353,7 +353,9 @@ public:
                     if (this->verbose > 32){
                         cmd.log(LOG_INFO);
                     }
-                    this->gly_cache.set_glyph(cmd);
+                    FontChar fc(cmd.glyphData_x, cmd.glyphData_y, cmd.glyphData_cx, cmd.glyphData_cy, -1);
+                    memcpy(fc.data.get(), cmd.glyphData_aj, fc.datasize());
+                    this->gly_cache.set_glyph(std::move(fc), cmd.cacheId, cmd.glyphData_cacheIndex);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i].graphic_device->draw(cmd);
                     }
@@ -472,14 +474,14 @@ public:
                         if (this->verbose > 32){
                             this->memblt.log(LOG_INFO, clip);
                         }
-                        const Bitmap * bmp = this->bmp_cache->get(this->memblt.cache_id, this->memblt.cache_idx);
-                        if (!bmp){
+                        const Bitmap & bmp = this->bmp_cache->get(this->memblt.cache_id, this->memblt.cache_idx);
+                        if (!bmp.is_valid()){
                             LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->memblt.cache_id, this->memblt.cache_idx);
                             throw Error(ERR_WRM);
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers ; i++){
-                                this->consumers[i].graphic_device->draw(this->memblt, clip, *bmp);
+                                this->consumers[i].graphic_device->draw(this->memblt, clip, bmp);
                             }
                         }
                     }
@@ -490,14 +492,14 @@ public:
                         if (this->verbose > 32){
                             this->mem3blt.log(LOG_INFO, clip);
                         }
-                        const Bitmap * bmp = this->bmp_cache->get(this->mem3blt.cache_id, this->mem3blt.cache_idx);
-                        if (!bmp){
+                        const Bitmap & bmp = this->bmp_cache->get(this->mem3blt.cache_id, this->mem3blt.cache_idx);
+                        if (!bmp.is_valid()){
                             LOG(LOG_ERR, "Mem3blt bitmap not found in cache at (%u, %u)", this->mem3blt.cache_id, this->mem3blt.cache_idx);
                             throw Error(ERR_WRM);
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers ; i++){
-                                this->consumers[i].graphic_device->draw(this->mem3blt, clip, *bmp);
+                                this->consumers[i].graphic_device->draw(this->mem3blt, clip, bmp);
                             }
                         }
                     }
@@ -680,11 +682,16 @@ public:
                 if (!this->meta_ok){
                     this->bmp_cache = new BmpCache(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
                         this->info_use_waiting_list,
-                        this->info_cache_0_entries, this->info_cache_0_size, this->info_cache_0_persistent,
-                        this->info_cache_1_entries, this->info_cache_1_size, this->info_cache_1_persistent,
-                        this->info_cache_2_entries, this->info_cache_2_size, this->info_cache_2_persistent,
-                        this->info_cache_3_entries, this->info_cache_3_size, this->info_cache_3_persistent,
-                        this->info_cache_4_entries, this->info_cache_4_size, this->info_cache_4_persistent);
+                        BmpCache::CacheOption(
+                            this->info_cache_0_entries, this->info_cache_0_size, this->info_cache_0_persistent),
+                        BmpCache::CacheOption(
+                            this->info_cache_1_entries, this->info_cache_1_size, this->info_cache_1_persistent),
+                        BmpCache::CacheOption(
+                            this->info_cache_2_entries, this->info_cache_2_size, this->info_cache_2_persistent),
+                        BmpCache::CacheOption(
+                            this->info_cache_3_entries, this->info_cache_3_size, this->info_cache_3_persistent),
+                        BmpCache::CacheOption(
+                            this->info_cache_4_entries, this->info_cache_4_size, this->info_cache_4_persistent));
                     this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
                     this->meta_ok = true;
                 }

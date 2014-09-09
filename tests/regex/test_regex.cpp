@@ -56,6 +56,13 @@ void regex_test(Regex & p_regex,
 }
 
 #include <iostream>
+
+#ifdef LOGPRINT
+# define TEST_REGEX_TRACE_LINE std::cout << "l." << __LINE__ << std::endl
+#else
+# define TEST_REGEX_TRACE_LINE
+#endif
+
 #define regex_test(p_regex,\
                    p_str,\
                    p_exact_result_search,\
@@ -64,7 +71,7 @@ void regex_test(Regex & p_regex,
                    p_exact_match_result,\
                    p_result_match,\
                    p_match_result)\
-std::cout << "l." << __LINE__ << std::endl; \
+TEST_REGEX_TRACE_LINE; \
 regex_test(p_regex, p_str, p_exact_result_search, p_result_search, p_exact_result_match, p_exact_match_result, p_result_match, p_match_result)
 
 void test_re(re::Regex::flag_t flags)

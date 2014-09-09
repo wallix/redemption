@@ -26,9 +26,9 @@
 #define BOOST_TEST_MODULE TestBitmapPerf
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
 #define LOGNULL
 
+#include "log.hpp"
 #include "bitmap.hpp"
 #include "colors.hpp"
 #include "config.hpp"
@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 
         BOOST_CHECK(true);
         // make it large enough to hold any image
-        BStream out(2*bigbmp.bmp_size);
+        BStream out(2*bigbmp.bmp_size());
         BOOST_CHECK(true);
         uint64_t usec = ustime();
         uint64_t cycles = rdtsc();
@@ -55,33 +55,33 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
         uint64_t elapusec = ustime() - usec;
         uint64_t elapcyc = rdtsc() - cycles;
         printf("initial_size = %lu, compressed size: %lu\n",
-            (long)bigbmp.bmp_size,
+            (long)bigbmp.bmp_size(),
             (long)(out.p - out.get_data()));
         printf("elapsed time = %lu %lu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
 
-        Bitmap bmp2(24, 24, (BGRPalette *)NULL, bigbmp.cx, bigbmp.cy, out.get_data(), out.p - out.get_data(), true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size, bigbmp.bmp_size);
-        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size));
+        Bitmap bmp2(24, 24, (BGRPalette *)NULL, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.p - out.get_data(), true);
+        BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
+        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
 
     {
         int bpp = 24;
         Bitmap bigbmp(FIXTURES_PATH "/logo-redemption.bmp");
         // make it large enough to hold any image
-        BStream out(2*bigbmp.bmp_size);
+        BStream out(2*bigbmp.bmp_size());
         uint64_t usec = ustime();
         uint64_t cycles = rdtsc();
         bigbmp.compress(bpp, out);
         uint64_t elapusec = ustime() - usec;
         uint64_t elapcyc = rdtsc() - cycles;
         printf("initial_size = %lu, compressed size: %lu\n",
-            (long)bigbmp.bmp_size,
+            (long)bigbmp.bmp_size(),
             (long)(out.p - out.get_data()));
         printf("elapsed time = %lu %lu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
 
-        Bitmap bmp2(bpp, bpp, (BGRPalette *)NULL, bigbmp.cx, bigbmp.cy, out.get_data(), out.p - out.get_data(), true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size, bigbmp.bmp_size);
-        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size));
+        Bitmap bmp2(bpp, bpp, (BGRPalette *)NULL, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.p - out.get_data(), true);
+        BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
+        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
 }
 
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
 
         BOOST_CHECK(true);
         // make it large enough to hold any image
-        BStream out(2*bigbmp.bmp_size);
+        BStream out(2*bigbmp.bmp_size());
         BOOST_CHECK(true);
         uint64_t usec = ustime();
         uint64_t cycles = rdtsc();
@@ -101,32 +101,32 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
         uint64_t elapusec = ustime() - usec;
         uint64_t elapcyc = rdtsc() - cycles;
         printf("initial_size = %lu, compressed size: %lu\n",
-            (long)bigbmp.bmp_size,
+            (long)bigbmp.bmp_size(),
             (long)(out.p - out.get_data()));
         printf("elapsed time = %lu %lu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
 
-        Bitmap bmp2(24, 24, (BGRPalette *)NULL, bigbmp.cx, bigbmp.cy, out.get_data(), out.p - out.get_data(), true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size, bigbmp.bmp_size);
-        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size));
+        Bitmap bmp2(24, 24, (BGRPalette *)NULL, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.p - out.get_data(), true);
+        BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
+        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
 
     {
         int bpp = 24;
         Bitmap bigbmp(FIXTURES_PATH "/logo-redemption.png");
         // make it large enough to hold any image
-        BStream out(2*bigbmp.bmp_size);
+        BStream out(2*bigbmp.bmp_size());
         uint64_t usec = ustime();
         uint64_t cycles = rdtsc();
         bigbmp.compress(bpp, out);
         uint64_t elapusec = ustime() - usec;
         uint64_t elapcyc = rdtsc() - cycles;
         printf("initial_size = %lu, compressed size: %lu\n",
-            (long)bigbmp.bmp_size,
+            (long)bigbmp.bmp_size(),
             (long)(out.p - out.get_data()));
         printf("elapsed time = %lu %lu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
 
-        Bitmap bmp2(bpp, bpp, (BGRPalette *)NULL, bigbmp.cx, bigbmp.cy, out.get_data(), out.p - out.get_data(), true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size, bigbmp.bmp_size);
-        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size));
+        Bitmap bmp2(bpp, bpp, (BGRPalette *)NULL, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.p - out.get_data(), true);
+        BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
+        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
 }

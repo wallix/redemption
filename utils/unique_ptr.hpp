@@ -32,12 +32,45 @@ struct default_free
 };
 
 
-#if __cplusplus >= 201103L && !defined(IN_IDE_PARSER)
+#if __cplusplus >= 201103L
 
 #include <memory>
 
 using std::unique_ptr;
 using std::default_delete;
+
+#if __cplusplus == 201103L
+namespace std {
+    template<typename _Tp>
+    struct _MakeUniq
+    { typedef unique_ptr<_Tp> __single_object; };
+
+    template<typename _Tp>
+    struct _MakeUniq<_Tp[]>
+    { typedef unique_ptr<_Tp[]> __array; };
+
+    template<typename _Tp, size_t _Bound>
+    struct _MakeUniq<_Tp[_Bound]>
+    { struct __invalid_type { }; };
+
+    /// std::make_unique for single objects
+    template<typename _Tp, typename... _Args>
+    inline typename _MakeUniq<_Tp>::__single_object
+    make_unique(_Args&&... __args)
+    { return unique_ptr<_Tp>(new _Tp(std::forward<_Args>(__args)...)); }
+
+    /// std::make_unique for arrays of unknown bound
+    template<typename _Tp>
+    inline typename _MakeUniq<_Tp>::__array
+    make_unique(size_t __num)
+    { return unique_ptr<_Tp>(new typename remove_extent<_Tp>::type[__num]()); }
+
+    /// Disable std::make_unique for arrays of known bound
+    template<typename _Tp, typename... _Args>
+    inline typename _MakeUniq<_Tp>::__invalid_type
+    make_unique(_Args&&...) = delete;
+}
+#endif
 
 #else
 
@@ -99,6 +132,22 @@ namespace aux_ {
     template<class T>
     struct add_lvalue_reference<T[]>
     { typedef T& type;};
+
+    template<bool, class T, class U>
+    struct if_
+    { typedef T type; };
+
+    template<class T, class U>
+    struct if_<false, T, U>
+    { typedef U type; };
+
+    template<class T>
+    struct is_reference
+    { static const bool value = false; };
+
+    template<class T>
+    struct is_reference<T&>
+    { static const bool value = true; };
 }
 
 template<class T, class Deleter = default_delete<T> >
@@ -113,10 +162,6 @@ struct unique_ptr
 
     explicit unique_ptr(pointer ptr)
     : data_(ptr)
-    {}
-
-    explicit unique_ptr(pointer ptr, Deleter & deleter)
-    : data_(ptr, deleter)
     {}
 
     explicit unique_ptr(pointer ptr, Deleter const & deleter)
@@ -200,7 +245,24 @@ private:
     template<class U>
     void reset( U );
 
-    struct Data : Deleter {
+    struct DeleterReference {
+        Deleter deleter;
+        DeleterReference(deleter_type const & deleter)
+        : deleter(deleter)
+        {}
+
+        void operator()(pointer p) const {
+            deleter(p);
+        }
+
+        operator Deleter () const {
+            return this->deleter;
+        }
+    };
+
+    typedef typename aux_::if_<aux_::is_reference<Deleter>::value, DeleterReference, Deleter>::type deleter_base;
+
+    struct Data : deleter_base {
         pointer p_;
 
         Data()
@@ -212,12 +274,7 @@ private:
         {}
 
         Data(pointer p, deleter_type const & deleter)
-        : Deleter(deleter)
-        , p_(p)
-        {}
-
-        Data(pointer p, deleter_type & deleter)
-        : Deleter(deleter)
+        : deleter_base(deleter)
         , p_(p)
         {}
 

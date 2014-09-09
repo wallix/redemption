@@ -93,9 +93,9 @@ public:
         Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.png");
         //Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.bmp");
         this->front.draw(RDPMemBlt(0,
-            Rect(winrect.x + (winrect.cx - bitmap.cx)/2,
-                 winrect.y + (winrect.cy - bitmap.cy)/2,
-                 bitmap.cx, bitmap.cy),
+            Rect(winrect.x + (winrect.cx - bitmap.cx())/2,
+                 winrect.y + (winrect.cy - bitmap.cy())/2,
+                 bitmap.cx(), bitmap.cy()),
                  0xCC,
              0, 0, 0), clip, bitmap);
 
@@ -140,8 +140,8 @@ public:
 
         Bitmap card(SHARE_PATH "/" REDEMPTION_LOGO24);
         this->front.draw(RDPMemBlt(0,
-            Rect(this->get_screen_rect().cx - card.cx - 30,
-                 this->get_screen_rect().cy - card.cy - 30, card.cx, card.cy),
+            Rect(this->get_screen_rect().cx - card.cx() - 30,
+                 this->get_screen_rect().cy - card.cy() - 30, card.cx(), card.cy()),
                  0xCC,
              0, 0, 0), clip, card);
 
@@ -153,7 +153,7 @@ public:
 
         Bitmap bloc64x64(24, 24, &this->palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true);
         this->front.draw(RDPMemBlt(0,
-            Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx, bloc64x64.cy), 0xCC,
+            Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx(), bloc64x64.cy()), 0xCC,
              32, 32, 0), clip, bloc64x64);
 
         //Bitmap logo(SHARE_PATH "/ad8b.bmp");

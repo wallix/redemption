@@ -71,26 +71,23 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     ini.video.frame_interval = 10;
     ini.video.break_interval = 20;
 
+    const struct ToCacheOption {
+        ToCacheOption(){}
+        BmpCache::CacheOption operator()(const BmpCache::Cache & cache) const {
+            return BmpCache::CacheOption(cache.entries(), cache.bmp_size(), cache.persistent());
+        }
+    } to_cache_option;
+
     BmpCache bmp_cache(
         BmpCache::Recorder,
         player.bmp_cache->bpp,
         player.bmp_cache->number_of_cache,
         player.bmp_cache->use_waiting_list,
-        player.bmp_cache->cache_entries[0],
-        player.bmp_cache->cache_size[0],
-        player.bmp_cache->cache_persistent[0],
-        player.bmp_cache->cache_entries[1],
-        player.bmp_cache->cache_size[1],
-        player.bmp_cache->cache_persistent[1],
-        player.bmp_cache->cache_entries[2],
-        player.bmp_cache->cache_size[2],
-        player.bmp_cache->cache_persistent[2],
-        player.bmp_cache->cache_entries[3],
-        player.bmp_cache->cache_size[3],
-        player.bmp_cache->cache_persistent[3],
-        player.bmp_cache->cache_entries[4],
-        player.bmp_cache->cache_size[4],
-        player.bmp_cache->cache_persistent[4]
+        to_cache_option(player.bmp_cache->get_cache(0)),
+        to_cache_option(player.bmp_cache->get_cache(1)),
+        to_cache_option(player.bmp_cache->get_cache(2)),
+        to_cache_option(player.bmp_cache->get_cache(3)),
+        to_cache_option(player.bmp_cache->get_cache(4))
     );
 
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
@@ -102,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         bmp_cache, drawable, ini);
 
     wrm_recorder.update_config(ini);
-    player.add_consumer((RDPGraphicDevice *)&wrm_recorder, (RDPCaptureDevice *)&wrm_recorder);
+    player.add_consumer(&wrm_recorder, &wrm_recorder);
 
     BOOST_CHECK_EQUAL((unsigned)1352304810, (unsigned)player.record_now.tv_sec);
     player.play();
