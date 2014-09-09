@@ -231,6 +231,7 @@ public:
         }
     }
 
+    TODO("I could use some data provider lambda instead of filename")
     Bitmap(const char* filename)
         : original_bpp(24)
         , cx(0)
@@ -661,18 +662,14 @@ private:
         unsigned yprev = 0;
         uint8_t* out = pmin;
         const uint8_t* end = input + size;
-        unsigned color1;
-        unsigned color2;
-        unsigned mix;
+        unsigned color1 = 0;
+        unsigned color2 = 0;
+        unsigned mix = 0xFFFFFFFF;
         uint8_t code;
         unsigned mask = 0;
         unsigned fom_mask = 0;
         unsigned count = 0;
         int bicolor = 0;
-
-        color1 = 0;
-        color2 = 0;
-        mix = 0xFFFFFFFF;
 
         enum {
             FILL    = 0,
