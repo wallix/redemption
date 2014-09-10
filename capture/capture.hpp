@@ -352,6 +352,7 @@ public:
 
     void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) {
         if (this->gd) {
+/*
             if (bmp.bpp() == 8) {
                 Bitmap bmp_24(24, bmp);
 
@@ -387,6 +388,8 @@ public:
                     this->gd->draw(bitmap_data, data, size, bmp);
                 }
             }
+*/
+            this->gd->draw(bitmap_data, data, size, bmp);
         }
     }
 

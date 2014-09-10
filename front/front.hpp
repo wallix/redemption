@@ -5075,7 +5075,44 @@ public:
         this->orders->draw(bitmap_data, data, size, bmp);
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->draw(bitmap_data, data, size, bmp);
+            if ((bmp.bpp() > this->capture_bpp) || (bmp.bpp() == 8)) {
+                Bitmap capture_bmp(this->capture_bpp, bmp);
+
+                BStream bmp_stream(65535);
+                capture_bmp.compress(this->capture_bpp, bmp_stream);
+                bmp_stream.mark_end();
+
+                RDPBitmapData capture_bitmap_data = bitmap_data;
+
+                capture_bitmap_data.bits_per_pixel = this->capture_bpp;
+                capture_bitmap_data.flags          = BITMAP_COMPRESSION;
+                capture_bitmap_data.bitmap_length  = bmp_stream.size() +
+                                                     8; // Compressed Data Header(8)
+
+                // Compressed Data Header
+                capture_bitmap_data.cb_comp_main_body_size = bmp_stream.size();
+                capture_bitmap_data.cb_scan_width          = capture_bmp.cx();
+                capture_bitmap_data.cb_uncompressed_size   = capture_bmp.bmp_size();
+
+                this->capture->draw(capture_bitmap_data, bmp_stream.get_data(), bmp_stream.size(), capture_bmp);
+            }
+            else {
+                if (!(bitmap_data.flags & BITMAP_COMPRESSION)) {
+                    BStream bmp_stream(65535);
+                    bmp.compress(this->capture_bpp, bmp_stream);
+                    bmp_stream.mark_end();
+
+                    RDPBitmapData bitmap_data_compressed = bitmap_data;
+
+                    bitmap_data_compressed.flags         = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                    bitmap_data_compressed.bitmap_length = bmp_stream.size();
+
+                    this->capture->draw(bitmap_data_compressed, bmp_stream.get_data(), bmp_stream.size(), bmp);
+                }
+                else {
+                    this->capture->draw(bitmap_data, data, size, bmp);
+                }
+            }
         }
     }
 };
