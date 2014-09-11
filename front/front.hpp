@@ -5085,14 +5085,8 @@ public:
                 RDPBitmapData capture_bitmap_data = bitmap_data;
 
                 capture_bitmap_data.bits_per_pixel = this->capture_bpp;
-                capture_bitmap_data.flags          = BITMAP_COMPRESSION;
-                capture_bitmap_data.bitmap_length  = bmp_stream.size() +
-                                                     8; // Compressed Data Header(8)
-
-                // Compressed Data Header
-                capture_bitmap_data.cb_comp_main_body_size = bmp_stream.size();
-                capture_bitmap_data.cb_scan_width          = capture_bmp.cx();
-                capture_bitmap_data.cb_uncompressed_size   = capture_bmp.bmp_size();
+                capture_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                capture_bitmap_data.bitmap_length  = bmp_stream.size();
 
                 this->capture->draw(capture_bitmap_data, bmp_stream.get_data(), bmp_stream.size(), capture_bmp);
             }
