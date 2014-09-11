@@ -2403,7 +2403,6 @@ namespace MCS
         uint8_t segmentation;
 
         uint16_t _header_size;
-        uint16_t payload_size;
 
 
         SendDataRequest_Recv(Stream & stream, int encoding)
@@ -2447,16 +2446,16 @@ namespace MCS
                     LOG(LOG_ERR, "Truncated SendDataRequest data: payload length");
                     throw Error(ERR_MCS);
                 }
-                this->payload_size = stream.in_2BUE();
+                uint16_t payload_size = stream.in_2BUE();
                 this->_header_size = stream.get_offset();
 
-                if (!stream.in_check_rem(this->payload_size)){
-                    LOG(LOG_ERR, "Truncated SendDataRequest data: expected=%u remains=%u",
-                        this->payload_size, stream.in_remain());
+                if (!stream.in_remain() == payload_size){
+                    LOG(LOG_ERR, "Mismatching SendDataRequest data: expected=%u remains=%u",
+                        payload_size, stream.in_remain());
                     throw Error(ERR_MCS);
                 }
 
-                this->payload.resize(stream, this->payload_size);
+                this->payload.resize(stream, stream.in_remain());
             }
             else{
                 LOG(LOG_ERR, "SendDataRequest tag (%u) expected, got %u", MCS::MCSPDU_SendDataRequest, tag);
