@@ -109,20 +109,18 @@ struct SaveSessionInfoPDUData_Recv {
     SubStream payload;
 
     SaveSessionInfoPDUData_Recv(Stream & stream) :
-    infoType(INFOTYPE_LOGON),
-    payload(stream) {
-        const unsigned expected = 4;    // infoType(4)
-
-        if (!stream.in_check_rem(expected)) {
+    infoType([&stream](){
+        if (!stream.in_check_rem(4)) {
             LOG(LOG_ERR,
-                "Truncated Save Session Info PDU (data): expected=%u remains=%u",
-                expected, stream.in_remain());
+                "Truncated Save Session Info PDU (data): expected=4 remains=%u",
+                 stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
-
-        this->infoType = stream.in_uint32_le();
-
-        this->payload.resize(stream, stream.in_remain());
+        return stream.in_uint32_le();    
+    }()),
+    payload(stream, stream.get_offset(), stream.in_remain()) 
+    {
+        stream.in_skip_bytes(this->payload.size());
     }
 };
 
@@ -570,10 +568,8 @@ struct LogonInfoExtended_Recv {
 
     SubStream payload;
 
-    LogonInfoExtended_Recv(Stream & stream) :
-    Length(0),
-    FieldsPresent(0),
-    payload(stream) {
+    LogonInfoExtended_Recv(Stream & stream) 
+    : Length([&stream](){
         const unsigned expected = 2 +   // Length(2)
                                   4;    // FieldsPresent(4)
         if (!stream.in_check_rem(expected)) {
@@ -581,12 +577,13 @@ struct LogonInfoExtended_Recv {
                 "Truncated Logon Info Extended (data): expected=%u remains=%u",
                 expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
-        this->Length        = stream.in_uint16_le();
-        this->FieldsPresent = stream.in_uint32_le();
-
-        this->payload.resize(stream, stream.in_remain());
+        }    
+        return stream.in_uint16_le();
+    }())
+    , FieldsPresent(stream.in_uint32_le())
+    , payload(stream, stream.get_offset(), stream.in_remain()) 
+    {
+        stream.in_skip_bytes(this->payload.size());
     }
 };
 
@@ -619,9 +616,8 @@ struct LogonInfoField_Recv {
 
     SubStream payload;
 
-    LogonInfoField_Recv(Stream & stream) :
-    cbFieldData(0),
-    payload(stream) {
+    LogonInfoField_Recv(Stream & stream) 
+    : cbFieldData([&stream](){
         const unsigned expected = 4;    // cbFieldData(4)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
@@ -630,9 +626,11 @@ struct LogonInfoField_Recv {
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        this->cbFieldData = stream.in_uint32_le();
-
-        this->payload.resize(stream, stream.in_remain());
+        return stream.in_uint32_le();
+    }())
+    , payload(stream, stream.get_offset(), stream.in_remain()) 
+    {
+        stream.in_skip_bytes(this->payload.size());
     }
 };
 
