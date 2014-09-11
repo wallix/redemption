@@ -112,6 +112,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
+
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
@@ -651,6 +653,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
+
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
@@ -898,6 +902,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
+
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
@@ -1124,6 +1130,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
+
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
@@ -1256,6 +1264,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "rdp_compression=0\n"
                           "[video]\n"
                           "disable_keyboard_log=4\n"
+                          "wrm_color_depth_selection_strategy=1\n"
                           "\n"
                           );
 
@@ -1332,6 +1341,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_ocr);
+
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1524,6 +1535,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
+
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
@@ -1703,6 +1716,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
+
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
@@ -1879,6 +1894,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
+
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
@@ -2054,6 +2071,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
+
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
@@ -2217,6 +2236,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+
+    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);

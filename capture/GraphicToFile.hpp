@@ -117,7 +117,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     timeval timer;
     const uint16_t width;
     const uint16_t height;
-    const uint8_t  bpp;
+    const uint8_t  capture_bpp;
     uint16_t mouse_x;
     uint16_t mouse_y;
     bool send_input;
@@ -129,12 +129,12 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
                 , Transport * trans
                 , const uint16_t width
                 , const uint16_t height
-                , const uint8_t  bpp
+                , const uint8_t  capture_bpp
                 , BmpCache & bmp_cache
                 , RDPDrawable & drawable
                 , const Inifile & ini)
     : RDPSerializer( trans, this->buffer_stream_orders
-                   , this->buffer_stream_bitmaps, bpp, bmp_cache, 0, 1, 1, ini)
+                   , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, 0, 1, 1, ini)
     , RDPCaptureDevice()
     , trans(trans)
     , buffer_stream_orders(65536)
@@ -143,7 +143,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     , timer(now)
     , width(width)
     , height(height)
-    , bpp(bpp)
+    , capture_bpp(capture_bpp)
     , mouse_x(0)
     , mouse_y(0)
     , send_input(false)
@@ -196,7 +196,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.out_uint16_le(wrm_format_version);
         payload.out_uint16_le(this->width);
         payload.out_uint16_le(this->height);
-        payload.out_uint16_le(this->bpp);
+        payload.out_uint16_le(this->capture_bpp);
 
         const BmpCache::Cache & c0 = this->bmp_cache.get_cache(0);
         const BmpCache::Cache & c1 = this->bmp_cache.get_cache(1);

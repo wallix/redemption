@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
                        BmpCache::CacheOption(2, 256, false),
                        BmpCache::CacheOption(2, 1024, false),
                        BmpCache::CacheOption(2, 4096, false));
-    RDPDrawable drawable(scr.cx, scr.cy);
+    RDPDrawable drawable(scr.cx, scr.cy, 24);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.timestamp(now);
 
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
     player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
                        BmpCache::CacheOption(2, 256, false),
                        BmpCache::CacheOption(2, 1024, false),
                        BmpCache::CacheOption(2, 4096, false));
-    RDPDrawable drawable(scr.cx, scr.cy);
+    RDPDrawable drawable(scr.cx, scr.cy, 24);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.timestamp(now);
 
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
     player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
@@ -353,7 +353,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid);
     const SequenceGenerator * seq = out_png_trans.seqgen();
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
     player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);

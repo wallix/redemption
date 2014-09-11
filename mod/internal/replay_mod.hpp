@@ -38,6 +38,8 @@ class ReplayMod : public InternalMod {
     InMetaSequenceTransport * in_trans;
     FileToGraphic           * reader;
 
+    bool end_of_data;
+
 public:
     ReplayMod( FrontAPI & front
              , char * replay_path
@@ -47,6 +49,7 @@ public:
              , redemption::string & auth_error_message)
     : InternalMod(front, width, height)
     , auth_error_message(auth_error_message)
+    , end_of_data(false)
     {
         strncpy(this->movie, replay_path, sizeof(this->movie)-1);
         strncat(this->movie, movie, sizeof(this->movie)-1);
@@ -118,8 +121,13 @@ public:
     }
 
     virtual void rdp_input_scancode(long /*param1*/, long /*param2*/,
-                                    long /*param3*/, long /*param4*/, Keymap2 * /*keymap*/)
+                                    long /*param3*/, long /*param4*/, Keymap2 * keymap)
     {
+        if (keymap->nb_kevent_available() > 0
+         && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
+            this->event.signal = BACK_EVENT_STOP;
+            this->event.set();
+        }
     }
 
     virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
@@ -134,30 +142,34 @@ public:
     {
         TODO("use system constants for sizes");
         TODO("RZ: Support encrypted recorded file.");
-        try
-        {
-            int i;
-            for (i = 0; (i < 500) && this->reader->next_order(); i++) {
-                this->reader->interpret_order();
+        if (!this->end_of_data) {
+            try
+            {
+                int i;
+                for (i = 0; (i < 500) && this->reader->next_order(); i++) {
+                    this->reader->interpret_order();
+                    //sleep(1);
+                }
+                if (i == 500) {
+                    this->event.set(1);
+                }
+                else {
+                    this->front.flush();
+//                    this->event.signal = BACK_EVENT_STOP;
+//                    this->event.set(1);
+                    this->end_of_data = true;
+                }
             }
-            if (i == 500) {
-                this->event.set(1);
-            }
-            else {
-                this->front.flush();
-                this->event.signal = BACK_EVENT_STOP;
-                this->event.set(1);
-            }
-        }
-        catch (Error & e) {
-            if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
-                this->auth_error_message.copy_c_str("The recorded file is inaccessible or corrupted!");
+            catch (Error & e) {
+                if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
+                    this->auth_error_message.copy_c_str("The recorded file is inaccessible or corrupted!");
 
-                this->event.signal = BACK_EVENT_NEXT;
-                this->event.set(1);
-            }
-            else {
-                throw;
+                    this->event.signal = BACK_EVENT_NEXT;
+                    this->event.set(1);
+                }
+                else {
+                    throw;
+                }
             }
         }
     }

@@ -49,7 +49,7 @@ struct TestDraw : DrawApi
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h)
+    : gd(w, h, 24)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 

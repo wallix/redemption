@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
+    RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
     GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, drawable, ini);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
@@ -356,7 +356,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
+    RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
     GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, drawable, ini);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
@@ -405,7 +405,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
+    RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
     GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, drawable, ini);
     BOOST_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, GREEN);
@@ -450,7 +450,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
     player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
 
