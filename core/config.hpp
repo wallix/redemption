@@ -672,7 +672,9 @@ struct Inifile : public FieldObserver {
         UnsignedField     rt_display;           // AUTHID_RT_DISPLAY
                                                 // 0: disable, 1: enable
 
-        int wrm_color_depth_selection_strategy; // 0: 24-bit, 1: 16-bit
+        unsigned wrm_color_depth_selection_strategy; // 0: 24-bit, 1: 16-bit
+
+        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip
     } video;
 
     // Section "Crypto"
@@ -1019,6 +1021,7 @@ public:
         this->video.disable_keyboard_log_ocr    = false;
 
         this->video.wrm_color_depth_selection_strategy = 0;
+        this->video.wrm_compression_algorithm          = 0;
         // End section "video"
 
         // Init crypto
@@ -1566,6 +1569,9 @@ public:
             }
             else if (0 == strcmp(key, "wrm_color_depth_selection_strategy")) {
                 this->video.wrm_color_depth_selection_strategy = ulong_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "wrm_compression_algorithm")) {
+                this->video.wrm_compression_algorithm = ulong_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
