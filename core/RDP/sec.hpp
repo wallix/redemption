@@ -797,48 +797,50 @@ enum {
     class Sec_Recv
     {
         public:
+        uint32_t verbose;
         uint32_t flags;
         SubStream payload;
-        uint32_t verbose;
         Sec_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel)
-            : flags(0), payload(stream), verbose(0)
-        {
-            if (encryptionLevel){
-                const unsigned need = 4; /* flags(4) */
-                if (!stream.in_check_rem(need))
-                {
-                    LOG(LOG_ERR, "flags expected: need=%u remains=%u",
-                        need, stream.in_remain());
-                    throw Error(ERR_SEC);
-                }
-                this->flags = stream.in_uint32_le();
-                if (this->flags & SEC::SEC_ENCRYPT){
-
-                    const unsigned need = 8; /* signature(8) */
+            : verbose(0)
+            , flags([&stream, this, encryptionLevel, &crypt](){
+                uint32_t flags = 0;
+                if (encryptionLevel){
+                    const unsigned need = 4; /* flags(4) */
                     if (!stream.in_check_rem(need))
                     {
-                        LOG(LOG_ERR, "signature expected: need=%u remains=%u",
+                        LOG(LOG_ERR, "flags expected: need=%u remains=%u",
                             need, stream.in_remain());
                         throw Error(ERR_SEC);
                     }
+                    flags = stream.in_uint32_le();
+                    if (flags & SEC::SEC_ENCRYPT){
+                        const unsigned need = 8; /* signature(8) */
+                        if (!stream.in_check_rem(need))
+                        {
+                            LOG(LOG_ERR, "signature expected: need=%u remains=%u",
+                                need, stream.in_remain());
+                            throw Error(ERR_SEC);
+                        }
 
-                    TODO("shouldn't we check signature ?");
-                    stream.in_skip_bytes(8); /* signature */
-                    this->payload.resize(stream, stream.in_remain());
-                    if (this->verbose >= 0x200){
-                        LOG(LOG_INFO, "Receiving encrypted TPDU");
-                        hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
-                    }
-                    crypt.decrypt(this->payload.get_data(), this->payload.size());
-                    if (this->verbose >= 0x80){
-                        LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
-                        hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
+                        TODO("shouldn't we check signature ?");
+                        stream.in_skip_bytes(8); /* signature */
+                        if (this->verbose >= 0x200){
+                            LOG(LOG_INFO, "Receiving encrypted TPDU");
+                            hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());
+                        }
+                        crypt.decrypt(stream.get_data()+stream.get_offset(), stream.in_remain());
+                        if (this->verbose >= 0x80){
+                            LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
+                            hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());
+                        }
                     }
                 }
-                else {
-                    this->payload.resize(stream, stream.in_remain());
-                }
-            }
+                return flags;
+            }())
+            , payload(stream, stream.get_offset(), stream.in_remain()) 
+        // Constructor Body
+        {
+            stream.in_skip_bytes(this->payload.size());
         }
     };
 
