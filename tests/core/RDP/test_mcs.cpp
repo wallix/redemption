@@ -111,9 +111,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     BOOST_CHECK_EQUAL(true, mcs.upwardFlag);
 
     BOOST_CHECK_EQUAL(106, mcs._header_size); // everything up to USER_DATA
-    BOOST_CHECK_EQUAL(263, mcs.payload_size); // USER_DATA (after len)
     BOOST_CHECK_EQUAL(263, mcs.payload.size()); // USER_DATA (after len)
-    BOOST_CHECK_EQUAL(mcs.payload_size, payload.end - payload.get_data() - mcs._header_size);
+    BOOST_CHECK_EQUAL(mcs.payload.size(), payload.end - payload.get_data() - mcs._header_size);
 }
 
 
