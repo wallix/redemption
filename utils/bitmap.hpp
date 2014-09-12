@@ -103,7 +103,7 @@ namespace aux_ {
             }
 
             Memory(Memory const &) = delete;
-            Memory operator=(Memory const &) = delete;
+            Memory & operator=(Memory const &) = delete;
         };
 
         Memory mems[5];

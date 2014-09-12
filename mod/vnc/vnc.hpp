@@ -151,7 +151,7 @@ public:
     , keymapSym(verbose)
     , incr(0)
     , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
-    , opt_clipboard(clipboard)
+    , opt_clipboard(clipboard||1)
     , state(WAIT_SECURITY_TYPES)
     , ini(ini)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
@@ -1692,6 +1692,40 @@ public:
             chanlist.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
         if (channel) {
+            {
+                struct ServerClipCapsPDU : public RDPECLIP::CliprdrHeader {
+                    ServerClipCapsPDU() : CliprdrHeader(RDPECLIP::CB_CLIP_CAPS, 0, 0) {
+                    }   // ServerClipCapsPDU(bool response_ok)
+
+                    void emit(Stream & stream) {
+                        RDPECLIP::CliprdrHeader::emit(stream);
+                        stream.out_uint32_le(0);
+                        stream.mark_end();
+                    }   // void emit(Stream & stream)
+
+                    using CliprdrHeader::emit;
+                    using CliprdrHeader::recv;
+
+                };
+                BStream out_s(64);
+                std::cout << "mod -> front ; msgType: " << RDPECLIP::CB_CLIP_CAPS << std::endl;
+                ServerClipCapsPDU().emit(out_s);
+
+                size_t length     = out_s.size();
+                size_t chunk_size = length;
+
+                this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                                           , out_s.get_data()
+                                           , length
+                                           , chunk_size
+                                           ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                               | CHANNELS::CHANNEL_FLAG_LAST
+                                           );
+            }
+
+
+
+
             // Monitor ready PDU send to front
             RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
             BStream                         out_s(64);
@@ -1707,6 +1741,9 @@ public:
             out_s.out_clear_bytes(4);
             out_s.mark_end();
 */
+
+            std::cout << "mod -> front ; msgType: " << server_monitor_ready_pdu.msgType() << std::endl;
+
             server_monitor_ready_pdu.emit(out_s);
 
             size_t length     = out_s.size();
@@ -1779,6 +1816,8 @@ public:
 
             RDPECLIP::FormatDataResponsePDU format_data_response_pdu(response_ok);
 
+            std::cout << "emit rdp_clipboard" << std::endl;
+
             format_data_response_pdu.emit(this->to_rdp_clipboard_data, reinterpret_cast<const char *>(stream.p));
         }
 
@@ -1800,6 +1839,8 @@ public:
 
             RDPECLIP::FormatListPDU format_list_pdu;
             BStream                 out_s(16384);
+
+            std::cout << "mod -> front ; msgType: " << format_list_pdu.msgType() << std::endl;
 
             format_list_pdu.emit(out_s);
 
@@ -1860,6 +1901,12 @@ private:
         // specific treatement depending on msgType
         SubStream stream(chunk, 0, chunk.size());
 
+        {
+            const uint16_t msgType = chunk.in_uint16_le();
+            chunk.p -= 2;
+            std::cout << "front -> mod ; msgType: " << msgType << std::endl;
+        }
+
         RDPECLIP::RecvFactory recv_factory(stream);
 
         switch (recv_factory.msgType) {
@@ -1886,6 +1933,8 @@ private:
                     RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
                     BStream                         out_s(256);
 
+                    std::cout << "mod -> front ; msgType: " << format_list_response_pdu.msgType() << std::endl;
+
                     format_list_response_pdu.emit(out_s);
 
                     size_t length     = out_s.size();
@@ -1900,24 +1949,30 @@ private:
                                                );
 
 
-                    // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_UNICODETEXT)
-                    // 04 00 00 00 04 00 00 00 0d 00 00 00
-                    // 00 00 00 00
-                    RDPECLIP::FormatDataRequestPDU format_data_request_pdu(RDPECLIP::CF_UNICODETEXT);
-                    BStream                        out_s2(256);
-
-                    format_data_request_pdu.emit(out_s2);
-
-                    length     = out_s2.size();
-                    chunk_size = length;
-
-                    this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                               , out_s2.get_data()
-                                               , length
-                                               , chunk_size
-                                               , CHANNELS::CHANNEL_FLAG_FIRST
-                                               | CHANNELS::CHANNEL_FLAG_LAST
-                                               );
+//                     static bool first_call = true;
+//                     if (!first_call) {
+//                     // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_UNICODETEXT)
+//                     // 04 00 00 00 04 00 00 00 0d 00 00 00
+//                     // 00 00 00 00
+//                     RDPECLIP::FormatDataRequestPDU format_data_request_pdu(RDPECLIP::CF_UNICODETEXT);
+//                     BStream                        out_s2(256);
+//
+//                     std::cout << "mod -> front ; msgType: " << format_data_request_pdu.msgType() << std::endl;
+//
+//                     format_data_request_pdu.emit(out_s2);
+//
+//                     length     = out_s2.size();
+//                     chunk_size = length;
+//
+//                     this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+//                                                , out_s2.get_data()
+//                                                , length
+//                                                , chunk_size
+//                                                , CHANNELS::CHANNEL_FLAG_FIRST
+//                                                | CHANNELS::CHANNEL_FLAG_LAST
+//                                                );
+//                     }
+//                     first_call=false;
                 }
                 else {
                     TODO("RZ: Don't reject clipboard update, this can block rdesktop.");
@@ -1929,6 +1984,8 @@ private:
                     // 03 00 02 00 00 00 00 00
                     RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
                     BStream                         out_s(256);
+
+                    std::cout << "mod -> front ; msgType: " << format_list_response_pdu.msgType() << std::endl;
 
                     format_list_response_pdu.emit(out_s);
 
@@ -1990,19 +2047,19 @@ private:
                     size_t PDU_remain = length;
 
                     uint8_t *chunk_data = this->to_rdp_clipboard_data.get_data();
-                    uint32_t chunk_size;
 
                     int send_flags = CHANNELS::CHANNEL_FLAG_FIRST;
 
                     do {
-                        chunk_size  = std::min<size_t>( CHANNELS::CHANNEL_CHUNK_LENGTH
-                                                      , PDU_remain);
+                        const uint32_t chunk_size = std::min<size_t>( CHANNELS::CHANNEL_CHUNK_LENGTH, PDU_remain);
                         PDU_remain -= chunk_size;
 
-                        send_flags |= (   (chunk_size <= 0)
+                        send_flags |= (   (PDU_remain == 0)
                                         ? CHANNELS::CHANNEL_FLAG_LAST
                                         : CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                       );
+
+                        std::cout << "mod -> front ; msgType: " << RDPECLIP::CB_FORMAT_DATA_RESPONSE << std::endl;
 
                         this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                                    , chunk_data
@@ -2011,7 +2068,7 @@ private:
                                                    , send_flags
                                                    );
 
-                        if ((send_flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
+                        if (PDU_remain == 0) {
                             break;
                         }
 

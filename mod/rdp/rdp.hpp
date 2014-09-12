@@ -589,6 +589,12 @@ struct mod_rdp : public mod_api {
             LOG(LOG_INFO, "sending to channel %s", front_channel_name);
         }
 
+        {
+            const uint16_t msgType = chunk.in_uint16_le();
+            chunk.p -= 2;
+            std::cout << "front -> mod ; msgType: " << msgType << std::endl;
+        }
+
         // Clipboard is unavailable and is a Clipboard PDU
         if (!this->enable_clipboard && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
             if (this->verbose & 1) {
@@ -794,7 +800,7 @@ struct mod_rdp : public mod_api {
                             for (size_t i = 0; i < maxhostlen ; i++){
                                 cs_core.clientName[i] = hostname[i];
                             }
-                            bzero(&(cs_core.clientName[hostlen]), 16-hostlen);
+                            memset(&(cs_core.clientName[hostlen]), 0, 16-hostlen);
 
                             if (this->nego.tls){
                                 cs_core.serverSelectedProtocol = this->nego.selected_protocol;
@@ -1727,6 +1733,12 @@ struct mod_rdp : public mod_api {
                             int flags = sec.payload.in_uint32_le();
                             size_t chunk_size = sec.payload.in_remain();
 
+                            {
+                                const uint16_t msgType = sec.payload.in_uint16_le();
+                                sec.payload.p -= 2;
+                                std::cout << "mod -> front ; msgType: " << msgType << std::endl;
+                            }
+
                             // If channel name is our virtual channel, then don't send data to front
                             if (this->auth_channel[0] /*&& this->acl */&& !strcmp(mod_channel.name, this->auth_channel)){
                                 uint32_t ulDataLength = sec.payload.in_uint32_le();
@@ -1758,7 +1770,7 @@ struct mod_rdp : public mod_api {
                             else if (!this->enable_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
                                 // Clipboard is unavailable and is a Clipboard PDU
 
-                                TODO("RZ: Don't reject clipboard update, this can block rdesktop.");
+                                TODO("RZ: Don't reject clipboard update, this can block rdesktop. (until 1.7.1 ?)");
 
                                 if (this->verbose & 1) {
                                     LOG(LOG_INFO, "mod_rdp clipboard PDU");
@@ -1773,8 +1785,8 @@ struct mod_rdp : public mod_api {
 
                                     bool response_ok = true;
 
-                                    // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
-                                    // 03 00 02 00 00 00 00 00
+                                    // Build and send the CB_FORMAT_LIST_RESPONSE (with status = OK)
+                                    // 03 00 01 00 00 00 00 00
                                     RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
                                     BStream                         out_s(256);
 
@@ -1787,7 +1799,7 @@ struct mod_rdp : public mod_api {
                                         this->send_to_channel(*mod_channel
                                                               , out_s
                                                               , out_s.size()
-                                                              ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                                              , CHANNELS::CHANNEL_FLAG_FIRST
                                                               | CHANNELS::CHANNEL_FLAG_LAST
                                                               );
                                     }
