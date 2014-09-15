@@ -533,20 +533,23 @@ namespace GCC
 
     namespace UserData
     {
+
         struct RecvFactory
         {
             uint16_t tag;
             uint16_t length;
             SubStream payload;
 
-            RecvFactory(Stream & stream) : payload(stream, stream.get_offset())
-            {
+            RecvFactory(Stream & stream)
+            : tag([&stream](){
                 if (!stream.in_check_rem(4)){
                     LOG(LOG_WARNING, "Incomplete GCC::UserData data block header");
                     throw Error(ERR_GCC);
                 }
-                this->tag = stream.in_uint16_le();
-                this->length = stream.in_uint16_le();
+                return stream.in_uint16_le();            
+            }())
+            , length(stream.in_uint16_le())
+            , payload([&stream, this](){
                 LOG(LOG_INFO, "GCC::UserData tag=%0.4x length=%u", tag, length);
                 if (!stream.in_check_rem(length - 4)){
                     LOG(LOG_WARNING, "Incomplete GCC::UserData data block"
@@ -554,8 +557,10 @@ namespace GCC
                                      tag, length, stream.size() - 4);
                     throw Error(ERR_GCC);
                 }
-                stream.in_skip_bytes(length - 4);
-                this->payload.resize(this->payload, length);
+                return SubStream(stream, stream.get_offset() - 4, this->length);
+            }())
+            {
+                stream.in_skip_bytes(this->length - 4);
             }
         };
 
