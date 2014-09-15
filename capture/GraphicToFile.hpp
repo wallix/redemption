@@ -41,6 +41,7 @@
 #include "RDP/caches/bmpcache.hpp"
 #include "colors.hpp"
 #include "gzip_compression_transport.hpp"
+#include "snappy_compression_transport.hpp"
 #include "RDP/RDPDrawable.hpp"
 
 class WRMChunk_Send
@@ -128,7 +129,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     const Inifile & ini;
 
-    GZipCompressionOutTransport gzcot;
+    GZipCompressionOutTransport   gzcot;
+    SnappyCompressionOutTransport scot;
 
     const uint8_t wrm_format_version;
 
@@ -159,7 +161,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     , keyboard_buffer_32(GTF_SIZE_KEYBUF_REC * sizeof(uint32_t))
     , ini(ini)
     , gzcot(*trans)
-    , wrm_format_version((ini.video.wrm_compression_algorithm == 1) ? 4 : 3)
+    , scot(*trans)
+    , wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 3)) ? 4 : 3)
     {
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
@@ -167,6 +170,9 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
         if (this->ini.video.wrm_compression_algorithm == 1) {
             this->trans = &this->gzcot;
+        }
+        else if (this->ini.video.wrm_compression_algorithm == 2) {
+            this->trans = &this->scot;
         }
 
         this->send_meta_chunk();
@@ -240,7 +246,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             payload.out_uint16_le(c4.bmp_size());
             payload.out_uint8(c4.persistent() ? 1 : 0);
 
-            payload.out_uint8((this->ini.video.wrm_compression_algorithm == 1) ? 1 : 0);   // Compression algorithm
+            payload.out_uint8((this->ini.video.wrm_compression_algorithm < 3) ? this->ini.video.wrm_compression_algorithm : 0);   // Compression algorithm
         }
 
         payload.mark_end();
@@ -518,7 +524,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     {
         this->flush_orders();
         this->flush_bitmaps();
-        if (this->ini.video.wrm_compression_algorithm == 1) {
+        if ((this->ini.video.wrm_compression_algorithm > 0) && (this->ini.video.wrm_compression_algorithm < 3)) {
             this->send_reset_chunk();
         }
         this->trans->next();
