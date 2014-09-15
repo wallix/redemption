@@ -37,6 +37,7 @@
 #include "RDP/share.hpp"
 #include "difftimeval.hpp"
 #include "gzip_compression_transport.hpp"
+#include "snappy_compression_transport.hpp"
 #include "chunked_image_transport.hpp"
 
 struct FileToGraphic
@@ -141,7 +142,8 @@ public:
 
     bool ignore_frame_in_timeval;
 
-    GZipCompressionInTransport gzcit;
+    GZipCompressionInTransport   gzcit;
+    SnappyCompressionInTransport scit;
 
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
         : stream(65536)
@@ -210,6 +212,7 @@ public:
         , info_compression_algorithm(0)
         , ignore_frame_in_timeval(false)
         , gzcit(*trans)
+        , scit(*trans)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
 
@@ -686,9 +689,19 @@ public:
                     this->info_cache_4_persistent = (this->stream.in_uint8() ? true : false);
 
                     this->info_compression_algorithm = this->stream.in_uint8();
-                    REDASSERT(this->info_compression_algorithm <= 1);
+                    REDASSERT(this->info_compression_algorithm <= 2);
 
-                    this->trans = ((this->info_compression_algorithm == 1) ? &this->gzcit : this->trans_source);
+                    switch (this->info_compression_algorithm) {
+                        case 1:
+                            this->trans = &this->gzcit;
+                            break;
+                        case 2:
+                            this->trans = &this->scit;
+                            break;
+                        default:
+                            this->trans = this->trans_source;
+                            break;
+                    }
                 }
 
                 this->stream.p = this->stream.end;
