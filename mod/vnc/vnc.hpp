@@ -70,7 +70,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
     int vnc_desktop;
     char username[256];
     char password[256];
-    public:
+public:
     Transport *t;
 
     uint16_t width;
@@ -123,6 +123,10 @@ private:
     bool is_first_membelt;
     bool is_first_incr;
     bool left_ctrl_pressed;
+
+    enum class StateCopy : bool { Request, Receive, Start = Receive };
+    StateCopy state_copy = StateCopy::Start;
+    StateCopy state_paste = StateCopy::Start;
 
 public:
     //==============================================================================================================
@@ -1692,37 +1696,38 @@ public:
             chanlist.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
         if (channel) {
-            {
-                struct ServerClipCapsPDU : public RDPECLIP::CliprdrHeader {
-                    ServerClipCapsPDU() : CliprdrHeader(RDPECLIP::CB_CLIP_CAPS, 0, 0) {
-                    }   // ServerClipCapsPDU(bool response_ok)
-
-                    void emit(Stream & stream) {
-                        RDPECLIP::CliprdrHeader::emit(stream);
-                        stream.out_uint32_le(0);
-                        stream.mark_end();
-                    }   // void emit(Stream & stream)
-
-                    using CliprdrHeader::emit;
-                    using CliprdrHeader::recv;
-
-                };
-                BStream out_s(64);
-                std::cout << "mod -> front ; msgType: " << RDPECLIP::CB_CLIP_CAPS << std::endl;
-                ServerClipCapsPDU().emit(out_s);
-
-                size_t length     = out_s.size();
-                size_t chunk_size = length;
-
-                this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                           , out_s.get_data()
-                                           , length
-                                           , chunk_size
-                                           ,   CHANNELS::CHANNEL_FLAG_FIRST
-                                               | CHANNELS::CHANNEL_FLAG_LAST
-                                           );
-            }
-
+//             {
+//                 struct ServerClipCapsPDU : public RDPECLIP::CliprdrHeader {
+//                     ServerClipCapsPDU() : CliprdrHeader(RDPECLIP::CB_CLIP_CAPS, 0, 0) {
+//                     }   // ServerClipCapsPDU(bool response_ok)
+//
+//                     void emit(Stream & stream) {
+//                         RDPECLIP::CliprdrHeader::emit(stream);
+//                         stream.out_uint32_le(0);
+//                         stream.mark_end();
+//                     }   // void emit(Stream & stream)
+//
+//                     using CliprdrHeader::emit;
+//                     using CliprdrHeader::recv;
+//
+//                 };
+//                 BStream out_s(64);
+//                 std::cout << "mod -> front ; msgType: " << RDPECLIP::CB_CLIP_CAPS << std::endl;
+//                 ServerClipCapsPDU().emit(out_s);
+//                 //hexdump(out_s.p, out_s.size());
+//
+//                 size_t length     = out_s.size();
+//                 size_t chunk_size = length;
+//
+//                 this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+//                                            , out_s.get_data()
+//                                            , length
+//                                            , chunk_size
+//                                            ,   CHANNELS::CHANNEL_FLAG_FIRST
+//                                                | CHANNELS::CHANNEL_FLAG_LAST
+//                                            );
+//             }
+//
 
 
 
@@ -1745,6 +1750,7 @@ public:
             std::cout << "mod -> front ; msgType: " << server_monitor_ready_pdu.msgType() << std::endl;
 
             server_monitor_ready_pdu.emit(out_s);
+            //hexdump(out_s.p, out_s.size());
 
             size_t length     = out_s.size();
             size_t chunk_size = length;
@@ -1847,6 +1853,9 @@ public:
             size_t length     = out_s.size();
             size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
+            //hexdump(out_s.get_data(), length);
+
+
             this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                        , out_s.get_data()
                                        , length
@@ -1905,6 +1914,7 @@ private:
             const uint16_t msgType = chunk.in_uint16_le();
             chunk.p -= 2;
             std::cout << "front -> mod ; msgType: " << msgType << std::endl;
+            //hexdump(chunk.p, 8);
         }
 
         RDPECLIP::RecvFactory recv_factory(stream);
@@ -1936,6 +1946,8 @@ private:
                     std::cout << "mod -> front ; msgType: " << format_list_response_pdu.msgType() << std::endl;
 
                     format_list_response_pdu.emit(out_s);
+                    //hexdump(out_s.p, out_s.size());
+
 
                     size_t length     = out_s.size();
                     size_t chunk_size = length;
@@ -1948,31 +1960,61 @@ private:
                                                  | CHANNELS::CHANNEL_FLAG_LAST
                                                );
 
+                    if (this->state_copy == StateCopy::Request) {
+                        // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_UNICODETEXT)
+                        // 04 00 00 00 04 00 00 00 0d 00 00 00
+                        // 00 00 00 00
+                        RDPECLIP::FormatDataRequestPDU format_data_request_pdu(RDPECLIP::CF_UNICODETEXT);
+                        BStream                        out_s2(256);
 
-//                     static bool first_call = true;
-//                     if (!first_call) {
-//                     // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_UNICODETEXT)
-//                     // 04 00 00 00 04 00 00 00 0d 00 00 00
-//                     // 00 00 00 00
-//                     RDPECLIP::FormatDataRequestPDU format_data_request_pdu(RDPECLIP::CF_UNICODETEXT);
-//                     BStream                        out_s2(256);
-//
-//                     std::cout << "mod -> front ; msgType: " << format_data_request_pdu.msgType() << std::endl;
-//
-//                     format_data_request_pdu.emit(out_s2);
-//
-//                     length     = out_s2.size();
-//                     chunk_size = length;
-//
-//                     this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
-//                                                , out_s2.get_data()
-//                                                , length
-//                                                , chunk_size
-//                                                , CHANNELS::CHANNEL_FLAG_FIRST
-//                                                | CHANNELS::CHANNEL_FLAG_LAST
-//                                                );
-//                     }
-//                     first_call=false;
+                        std::cout << "mod -> front ; msgType: " << format_data_request_pdu.msgType() << std::endl;
+
+                        format_data_request_pdu.emit(out_s2);
+                        //hexdump(out_s2.p, out_s2.size());
+
+                        length     = out_s2.size();
+                        chunk_size = length;
+
+                        this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                                                , out_s2.get_data()
+                                                , length
+                                                , chunk_size
+                                                , CHANNELS::CHANNEL_FLAG_FIRST
+                                                | CHANNELS::CHANNEL_FLAG_LAST
+                                                );
+
+                        this->state_copy = StateCopy::Receive;
+                    }
+                    else if (this->state_copy == StateCopy::Receive) {
+                        this->state_copy = StateCopy::Request;
+
+                        if (this->state_paste == StateCopy::Request && 0) {
+                            RDPECLIP::FormatListPDU format_list_pdu;
+                            BStream                 out_s(16384);
+
+                            std::cout << "mod -> front ; msgType: " << format_list_pdu.msgType() << std::endl;
+
+                            format_list_pdu.emit(out_s);
+
+                            size_t length     = out_s.size();
+                            size_t chunk_size = length;
+
+                            //hexdump(out_s.get_data(), length);
+
+                            this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                                                       , out_s.get_data()
+                                                       , length
+                                                       , chunk_size
+                                                       ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                                         | CHANNELS::CHANNEL_FLAG_LAST
+                                                       );
+
+//                             this->state_paste = StateCopy::Receive;
+                        }
+                        else if (this->state_paste == StateCopy::Receive) {
+                            this->state_paste = StateCopy::Request;
+                        }
+                    }
                 }
                 else {
                     TODO("RZ: Don't reject clipboard update, this can block rdesktop.");
@@ -1988,6 +2030,7 @@ private:
                     std::cout << "mod -> front ; msgType: " << format_list_response_pdu.msgType() << std::endl;
 
                     format_list_response_pdu.emit(out_s);
+                    //hexdump(out_s.p, out_s.size());
 
                     size_t length     = out_s.size();
                     size_t chunk_size = length;
@@ -2060,6 +2103,7 @@ private:
                                       );
 
                         std::cout << "mod -> front ; msgType: " << RDPECLIP::CB_FORMAT_DATA_RESPONSE << std::endl;
+                        //hexdump(chunk_data, length);
 
                         this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                                    , chunk_data
@@ -2145,6 +2189,7 @@ private:
                         this->to_vnc_large_clipboard_data.out_copy_bytes(stream.p, dataLenU16);
                     }
                 }
+
                 break;
             }
 
