@@ -270,14 +270,15 @@ namespace GCC
                     throw Error(ERR_GCC);
                 }
 
-                if (length != stream.size() - stream.get_offset()){
-                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %u %u", length, stream.size() - stream.get_offset());
+                if (length != stream.in_remain()){
+                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %u %u", length, stream.in_remain());
                     throw Error(ERR_GCC);
                 }
-                return SubStream(stream, stream.get_offset(), length);
-            }())            
+                return SubStream(stream, stream.get_offset(), stream.in_remain());
+            }())
         // Body of constructor
         {
+            stream.in_skip_bytes(this->payload.size());
         }
     };
 
@@ -473,21 +474,24 @@ namespace GCC
         public:
         SubStream payload;
 
-        Create_Response_Recv(Stream & stream) {
-            if (!stream.in_check_rem(23)){
-                LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.size());
-                throw Error(ERR_GCC);
-            }
-            TODO("We should actually read and decode data here. Merely skipping the block is evil")
-            stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
-            size_t length = stream.in_2BUE();
-            if (length != stream.size() - stream.get_offset()){
-                LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %u %u",
-                    length, stream.size() - stream.get_offset());
-                throw Error(ERR_GCC);
-            }
+        Create_Response_Recv(Stream & stream) 
+            : payload([&stream](){
+                if (!stream.in_check_rem(23)){
+                    LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.size());
+                    throw Error(ERR_GCC);
+                }
+                TODO("We should actually read and decode data here. Merely skipping the block is evil")
+                stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
+                size_t length = stream.in_2BUE();
+                if (length != stream.in_remain()){
+                    LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %u %u",
+                        length, stream.in_remain());
+                    throw Error(ERR_GCC);
+                }
 
-            this->payload.resize(stream, stream.size() - stream.get_offset());
+                return SubStream(stream, stream.get_offset(), stream.in_remain());
+            }())
+        {
         }
     };
 
