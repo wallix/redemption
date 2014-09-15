@@ -627,3 +627,9 @@ unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp krb5 gss
 
 
 unit-test test_darray : tests/utils/test_darray.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+
+
+# Widget for workflow
+unit-test test_flat_wait : tests/mod/internal/widget2/test_flat_wait.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_flat_form : tests/mod/internal/widget2/test_flat_form.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
