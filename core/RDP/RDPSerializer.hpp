@@ -108,6 +108,7 @@ enum {
     LAST_IMAGE_CHUNK    = 0x1000,   // 4096
     PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
     SAVE_STATE          = 0x1002,   // 4098
+    RESET_CHUNK         = 0x1003,   // 4099
 
     INVALID_CHUNK       = 0x8000
 };
