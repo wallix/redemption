@@ -657,33 +657,40 @@ enum {
     struct SecExchangePacket_Recv
     {
         uint32_t basicSecurityHeader;
+        uint32_t length;
         SubStream payload;
 
-        SecExchangePacket_Recv(Stream & stream, uint16_t available_len)
-            : payload(stream)
+        SecExchangePacket_Recv(Stream & stream)
+            : basicSecurityHeader([&stream](){
+                const unsigned expected = 8; /* basicSecurityHeader(4) + length(4) */
+                if (!stream.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated SEC_EXCHANGE_PKT, expected=%u remains %u",
+                       expected, stream.in_remain());
+                    throw Error(ERR_SEC);
+                }
+
+                uint32_t basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
+                if (!(basicSecurityHeader & SEC_EXCHANGE_PKT)) {
+                    LOG(LOG_ERR, "Expecting SEC_EXCHANGE_PKT, got (%x)", basicSecurityHeader);
+                    throw Error(ERR_SEC);
+                }
+                return basicSecurityHeader;
+            }())
+            , length([&stream](){
+                uint32_t length = stream.in_uint32_le();
+                if (length != stream.in_remain()){
+                    LOG(LOG_ERR, "Bad SEC_EXCHANGE_PKT length, header say length=%u available=%u", length, stream.in_remain());
+                }
+                return length;
+            }())
+            , payload(stream, stream.get_offset(), stream.in_remain() - 8)
         {
-            const unsigned expected = 8; /* basicSecurityHeader(4) + length(4) */
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated SEC_EXCHANGE_PKT, expected=%u remains %u",
-                   expected, stream.in_remain());
-                throw Error(ERR_SEC);
-            }
-
-            this->basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
-
-            if (!(this->basicSecurityHeader & SEC_EXCHANGE_PKT)) {
-                LOG(LOG_ERR, "Expecting SEC_EXCHANGE_PKT, got (%x)", this->basicSecurityHeader);
-                throw Error(ERR_SEC);
-            }
-            uint32_t length = stream.in_uint32_le();
-            if (length + 8 != available_len){
-                LOG(LOG_ERR, "Bad SEC_EXCHANGE_PKT length, header say length=%u available=%u", length, available_len-8);
-            }
-            this->payload.resize(stream, stream.in_remain());
-            if (this->payload.size() != 64 + 8){
-                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", this->payload.size()-8);
+            if (this->payload.size() != 64){
+                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", this->payload.size());
                 throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
             }
+            // Skip payload and 8 bytes trailing padding
+            stream.in_skip_bytes(this->payload.size() + 8);
         }
     };
 
@@ -702,30 +709,37 @@ enum {
     struct SecInfoPacket_Recv
     {
         uint32_t basicSecurityHeader;
+        SubStream signature;
         SubStream payload;
 
         SecInfoPacket_Recv(Stream & stream, uint16_t available_len, CryptContext & crypt)
-        : payload(stream, 4 + 8)
-        {
+        : basicSecurityHeader([&stream](){
             const unsigned expected = 12; /* basicSecurityHeader(4) + signature(8) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated SEC_INFO_PKT, expected=%u remains %u",
                    expected, stream.in_remain());
                 throw Error(ERR_SEC);
             }
-
-            this->basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
-            if (0 == (this->basicSecurityHeader & SEC::SEC_INFO_PKT)){
-                LOG(LOG_INFO, "SEC_INFO_PKT expected, got %x", this->basicSecurityHeader);
+            uint32_t basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
+            if (0 == (basicSecurityHeader & SEC::SEC_INFO_PKT)){
+                LOG(LOG_INFO, "SEC_INFO_PKT expected, got %x", basicSecurityHeader);
             }
-            if (0 == (this->basicSecurityHeader & SEC::SEC_ENCRYPT)){
-                LOG(LOG_INFO, "SEC_ENCRYPT expected, got %x", this->basicSecurityHeader);
+            if (0 == (basicSecurityHeader & SEC::SEC_ENCRYPT)){
+                LOG(LOG_INFO, "SEC_ENCRYPT expected, got %x", basicSecurityHeader);
             }
-
-            // skip signature
-            stream.in_skip_bytes(8);
-            this->payload.resize(stream, stream.in_remain());
-            crypt.decrypt(this->payload.get_data(), this->payload.size());
+            return basicSecurityHeader;
+        }())
+        , signature(stream, stream.get_offset(), 8)
+        , payload([&stream, this, &crypt](){
+            stream.in_skip_bytes(this->signature.size());
+            crypt.decrypt(stream.get_data() + stream.get_offset(), stream.in_remain());
+            return SubStream(stream, stream.get_offset(), stream.in_remain());
+        }())
+        // Body of constructor
+        {
+            TODO("We should not decrypt inplace, it's a bad idea for optimisations");
+            TODO("Signature should be checked");
+            stream.in_skip_bytes(this->payload.size());
         }
     };
 
@@ -737,44 +751,45 @@ enum {
         SubStream payload;
         uint32_t verbose;
         SecSpecialPacket_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel)
-            : flags(0), payload(stream), verbose(0)
-        {
-            const unsigned need = 4; /* flags(4) */
-            if (!stream.in_check_rem(need)){
-                LOG(LOG_ERR, "flags expected: need=%u remains=%u", need, stream.in_remain());
-                throw Error(ERR_SEC);
-            }
-            this->flags = stream.in_uint32_le();
-
-            if (encryptionLevel > 0 && this->flags & SEC::SEC_ENCRYPT){
-                if (encryptionLevel == 0){
-                    LOG(LOG_ERR, "RDP Packet headers says packet is encrypted, but RDP encryption is disabled");
-                    throw Error(ERR_SEC);
-                }
-                const unsigned need = 8; /* signature(8) */
+            : flags([&stream](){
+                const unsigned need = 4; /* flags(4) */
                 if (!stream.in_check_rem(need)){
-                    LOG(LOG_ERR, "signature expected: need=%u remains=%u", need, stream.in_remain());
+                    LOG(LOG_ERR, "flags expected: need=%u remains=%u", need, stream.in_remain());
                     throw Error(ERR_SEC);
                 }
+                return stream.in_uint32_le();
+            }())
+            //, signature() => we should also check signature
+            , payload([&stream, this, encryptionLevel, &crypt](){
+                if (encryptionLevel > 0 && this->flags & SEC::SEC_ENCRYPT){
+                    if (encryptionLevel == 0){
+                        LOG(LOG_ERR, "RDP Packet headers says packet is encrypted, but RDP encryption is disabled");
+                        throw Error(ERR_SEC);
+                    }
+                    const unsigned need = 8; /* signature(8) */
+                    if (!stream.in_check_rem(need)){
+                        LOG(LOG_ERR, "signature expected: need=%u remains=%u", need, stream.in_remain());
+                        throw Error(ERR_SEC);
+                    }
 
-                TODO("we should check signature");
-                stream.in_skip_bytes(8); /* signature */
-                this->payload.resize(stream, stream.in_remain());
-                if (this->verbose >= 0x200){
-                    LOG(LOG_INFO, "Receiving encrypted TPDU");
-                    hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
+                    TODO("we should check signature");
+                    stream.in_skip_bytes(8); /* signature */
+                    if (this->verbose >= 0x200){
+                        LOG(LOG_INFO, "Receiving encrypted TPDU");
+                        hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());
+                    }
+                    crypt.decrypt(stream.get_data()+stream.get_offset(), stream.in_remain());
+                    if (this->verbose >= 0x80){
+                        LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
+                        hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());
+                    }
                 }
-                crypt.decrypt(this->payload.get_data(), this->payload.size());
-                if (this->verbose >= 0x80){
-                    LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
-                    hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
-                }
-            }
-            else{
-                TODO("find a better name instead of resize: the function resize is used to set payload to remaining data in stream (start at stream.p, size in_remain)"
-                     "maybe something like resize(stream, stream.get_offset(), stream.in_remain())")
-                this->payload.resize(stream, stream.in_remain());
-            }
+                return SubStream(stream, stream.get_offset(), stream.in_remain());
+            }())
+            , verbose(0)
+        // Constructor
+        {
+            stream.in_skip_bytes(this->payload.size());
         }
     };
 
@@ -782,48 +797,50 @@ enum {
     class Sec_Recv
     {
         public:
+        uint32_t verbose;
         uint32_t flags;
         SubStream payload;
-        uint32_t verbose;
         Sec_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel)
-            : flags(0), payload(stream), verbose(0)
-        {
-            if (encryptionLevel){
-                const unsigned need = 4; /* flags(4) */
-                if (!stream.in_check_rem(need))
-                {
-                    LOG(LOG_ERR, "flags expected: need=%u remains=%u",
-                        need, stream.in_remain());
-                    throw Error(ERR_SEC);
-                }
-                this->flags = stream.in_uint32_le();
-                if (this->flags & SEC::SEC_ENCRYPT){
-
-                    const unsigned need = 8; /* signature(8) */
+            : verbose(0)
+            , flags([&stream, this, encryptionLevel, &crypt](){
+                uint32_t flags = 0;
+                if (encryptionLevel){
+                    const unsigned need = 4; /* flags(4) */
                     if (!stream.in_check_rem(need))
                     {
-                        LOG(LOG_ERR, "signature expected: need=%u remains=%u",
+                        LOG(LOG_ERR, "flags expected: need=%u remains=%u",
                             need, stream.in_remain());
                         throw Error(ERR_SEC);
                     }
+                    flags = stream.in_uint32_le();
+                    if (flags & SEC::SEC_ENCRYPT){
+                        const unsigned need = 8; /* signature(8) */
+                        if (!stream.in_check_rem(need))
+                        {
+                            LOG(LOG_ERR, "signature expected: need=%u remains=%u",
+                                need, stream.in_remain());
+                            throw Error(ERR_SEC);
+                        }
 
-                    TODO("shouldn't we check signature ?");
-                    stream.in_skip_bytes(8); /* signature */
-                    this->payload.resize(stream, stream.in_remain());
-                    if (this->verbose >= 0x200){
-                        LOG(LOG_INFO, "Receiving encrypted TPDU");
-                        hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
-                    }
-                    crypt.decrypt(this->payload.get_data(), this->payload.size());
-                    if (this->verbose >= 0x80){
-                        LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
-                        hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
+                        TODO("shouldn't we check signature ?");
+                        stream.in_skip_bytes(8); /* signature */
+                        if (this->verbose >= 0x200){
+                            LOG(LOG_INFO, "Receiving encrypted TPDU");
+                            hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());
+                        }
+                        crypt.decrypt(stream.get_data()+stream.get_offset(), stream.in_remain());
+                        if (this->verbose >= 0x80){
+                            LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
+                            hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());
+                        }
                     }
                 }
-                else {
-                    this->payload.resize(stream, stream.in_remain());
-                }
-            }
+                return flags;
+            }())
+            , payload(stream, stream.get_offset(), stream.in_remain()) 
+        // Constructor Body
+        {
+            stream.in_skip_bytes(this->payload.size());
         }
     };
 

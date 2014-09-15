@@ -60,9 +60,9 @@
 class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice
 {
 public:
-    int width;
-    int height;
-    int bpp;
+//    int width;
+//    int height;
+//    int capture_bpp;
 
     uint64_t frame_interval;
     timeval start_native_capture;
@@ -79,13 +79,13 @@ public:
 
     bool disable_keyboard_log_wrm;
 
-    NativeCapture(const timeval & now, Transport & trans, int width, int height, BmpCache & bmp_cache, RDPDrawable & drawable,
-                  const Inifile & ini)
-    : width(width)
-    , height(height)
-    , bpp(24)
-    , bmp_cache(bmp_cache)
-    , recorder(now, &trans, width, height, 24, bmp_cache, drawable, ini)
+    NativeCapture(const timeval & now, Transport & trans, int width, int height, int capture_bpp, BmpCache & bmp_cache,
+                  RDPDrawable & drawable, const Inifile & ini)
+//    : width(width)
+//    , height(height)
+//    , capture_bpp(capture_bpp)
+    : bmp_cache(bmp_cache)
+    , recorder(now, &trans, width, height, capture_bpp, bmp_cache, drawable, ini)
     , nb_file(0)
     , time_to_wait(0)
     , disable_keyboard_log_wrm(ini.video.disable_keyboard_log_wrm)

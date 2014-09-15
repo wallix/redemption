@@ -77,10 +77,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
     GeneratorTransport t(sec_pkt, length);
     t.recv(&stream.end, length);
 
-    SEC::SecExchangePacket_Recv sec(stream, length);
+    SEC::SecExchangePacket_Recv sec(stream);
     BOOST_CHECK_EQUAL((uint32_t)SEC::SEC_EXCHANGE_PKT, sec.basicSecurityHeader);
-    BOOST_CHECK_EQUAL(length - 8, sec.payload.size());
-    BOOST_CHECK_EQUAL(72, sec.payload.size());
+    BOOST_CHECK_EQUAL(length - 16, sec.payload.size());
+    BOOST_CHECK_EQUAL(64, sec.payload.size());
+    // We won't compare padding
     BOOST_CHECK_EQUAL(0, memcmp(sec_pkt+8, sec.payload.get_data(), sec.payload.size()));
 }
 

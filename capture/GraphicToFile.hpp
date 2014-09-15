@@ -40,7 +40,8 @@
 #include "config.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "colors.hpp"
-
+#include "gzip_compression_transport.hpp"
+#include "snappy_compression_transport.hpp"
 #include "RDP/RDPDrawable.hpp"
 
 class WRMChunk_Send
@@ -109,6 +110,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         GTF_SIZE_KEYBUF_REC = 1024
     };
 
+    Transport * trans_target;
     Transport * trans;
     BStream buffer_stream_orders;
     BStream buffer_stream_bitmaps;
@@ -117,7 +119,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     timeval timer;
     const uint16_t width;
     const uint16_t height;
-    const uint8_t  bpp;
+    const uint8_t  capture_bpp;
     uint16_t mouse_x;
     uint16_t mouse_y;
     bool send_input;
@@ -125,17 +127,25 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     BStream keyboard_buffer_32;
 
+    const Inifile & ini;
+
+    GZipCompressionOutTransport   gzcot;
+    SnappyCompressionOutTransport scot;
+
+    const uint8_t wrm_format_version;
+
     GraphicToFile(const timeval& now
                 , Transport * trans
                 , const uint16_t width
                 , const uint16_t height
-                , const uint8_t  bpp
+                , const uint8_t  capture_bpp
                 , BmpCache & bmp_cache
                 , RDPDrawable & drawable
                 , const Inifile & ini)
     : RDPSerializer( trans, this->buffer_stream_orders
-                   , this->buffer_stream_bitmaps, bpp, bmp_cache, 0, 1, 1, ini)
+                   , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, 0, 1, 1, ini)
     , RDPCaptureDevice()
+    , trans_target(trans)
     , trans(trans)
     , buffer_stream_orders(65536)
     , buffer_stream_bitmaps(65536)
@@ -143,16 +153,27 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     , timer(now)
     , width(width)
     , height(height)
-    , bpp(bpp)
+    , capture_bpp(capture_bpp)
     , mouse_x(0)
     , mouse_y(0)
     , send_input(false)
     , drawable(drawable)
     , keyboard_buffer_32(GTF_SIZE_KEYBUF_REC * sizeof(uint32_t))
+    , ini(ini)
+    , gzcot(*trans)
+    , scot(*trans)
+    , wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 3)) ? 4 : 3)
     {
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
         this->order_count = 0;
+
+        if (this->ini.video.wrm_compression_algorithm == 1) {
+            this->trans = &this->gzcot;
+        }
+        else if (this->ini.video.wrm_compression_algorithm == 2) {
+            this->trans = &this->scot;
+        }
 
         this->send_meta_chunk();
         this->send_image_chunk();
@@ -189,14 +210,12 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void send_meta_chunk(void)
     {
-        uint8_t wrm_format_version = 3;
-
         BStream header(8);
-        BStream payload(35);
-        payload.out_uint16_le(wrm_format_version);
+        BStream payload(36);
+        payload.out_uint16_le(this->wrm_format_version);
         payload.out_uint16_le(this->width);
         payload.out_uint16_le(this->height);
-        payload.out_uint16_le(this->bpp);
+        payload.out_uint16_le(this->capture_bpp);
 
         const BmpCache::Cache & c0 = this->bmp_cache.get_cache(0);
         const BmpCache::Cache & c1 = this->bmp_cache.get_cache(1);
@@ -209,7 +228,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.out_uint16_le(c2.entries());
         payload.out_uint16_le(c2.bmp_size());
 
-        if (wrm_format_version > 3) {
+        if (this->wrm_format_version > 3) {
             payload.out_uint8(this->bmp_cache.number_of_cache);
             payload.out_uint8(this->bmp_cache.use_waiting_list ? 1 : 0);
 
@@ -226,14 +245,16 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             payload.out_uint16_le(c4.entries());
             payload.out_uint16_le(c4.bmp_size());
             payload.out_uint8(c4.persistent() ? 1 : 0);
+
+            payload.out_uint8((this->ini.video.wrm_compression_algorithm < 3) ? this->ini.video.wrm_compression_algorithm : 0);   // Compression algorithm
         }
 
         payload.mark_end();
 
         WRMChunk_Send chunk(header, META_FILE, payload.size(), 1);
 
-        this->trans->send(header);
-        this->trans->send(payload);
+        this->trans_target->send(header);
+        this->trans_target->send(payload);
     }
 
     // this one is used to store some embedded image inside WRM
@@ -242,6 +263,13 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         OutChunkedBufferingTransport<65536> png_trans(trans);
 
         this->drawable.dump_png24(&png_trans, false);
+    }
+
+    void send_reset_chunk()
+    {
+        BStream header(8);
+        WRMChunk_Send chunk(header, RESET_CHUNK, 0, 1);
+        this->trans->send(header);
     }
 
     void send_timestamp_chunk(bool ignore_time_interval = false)
@@ -496,6 +524,9 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     {
         this->flush_orders();
         this->flush_bitmaps();
+        if ((this->ini.video.wrm_compression_algorithm > 0) && (this->ini.video.wrm_compression_algorithm < 3)) {
+            this->send_reset_chunk();
+        }
         this->trans->next();
         this->send_meta_chunk();
         this->send_timestamp_chunk();

@@ -62,6 +62,7 @@ int main(int argc, char** argv)
     uint32_t wrm_break_interval = 86400;
     uint32_t order_count = 0;
     unsigned zoom = 100;
+    bool     show_file_metadata = false;
 
     boost::program_options::options_description desc("Options");
     desc.add_options()
@@ -86,6 +87,7 @@ int main(int argc, char** argv)
     ("clear", boost::program_options::value<uint32_t>(&clear), "Clear old capture files with same prefix (default on)")
     ("verbose", boost::program_options::value<uint32_t>(&verbose), "more logs")
     ("zoom", boost::program_options::value<uint32_t>(&zoom), "scaling factor for png capture (default 100%)")
+    ("meta,m", "show file metadata")
     ;
 
     Inifile ini;
@@ -100,6 +102,20 @@ int main(int argc, char** argv)
         );
         boost::program_options::notify(options);
 
+        if (options.count("help") > 0) {
+            cout << copyright_notice;
+            cout << "Usage: redrec [options]\n\n";
+            cout << desc << endl;
+            exit(-1);
+        }
+
+        if (options.count("version") > 0) {
+            cout << copyright_notice;
+            exit(-1);
+        }
+
+        show_file_metadata = (options.count("meta") > 0);
+
         if (input_filename.c_str()[0] == 0){
             cout << "Missing input filename\n\n";
             cout << copyright_notice;
@@ -108,7 +124,7 @@ int main(int argc, char** argv)
             exit(-1);
         }
 
-        if (output_filename.c_str()[0] == 0){
+        if (!show_file_metadata && (output_filename.c_str()[0] == 0)){
             cout << "Missing output filename\n\n";
             cout << copyright_notice;
             cout << "Usage: redrec [options]\n\n";
@@ -122,7 +138,6 @@ int main(int argc, char** argv)
         ini.video.break_interval = wrm_break_interval;
         ini.video.capture_wrm = options.count("wrm") > 0;
         ini.video.capture_png = (options.count("png") > 0);
-
     }
     catch(boost::program_options::error& error) {
         cout << error.what() << endl;
@@ -192,6 +207,31 @@ int main(int argc, char** argv)
     }
 
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
+    if (show_file_metadata) {
+        cout << endl;
+        cout << "WRM file version      : " << player.info_version         << endl;
+        cout << "Width                 : " << player.info_width           << endl;
+        cout << "Height                : " << player.info_height          << endl;
+        cout << "Bpp                   : " << player.info_bpp             << endl;
+        cout << "Cache 0 entries       : " << player.info_cache_0_entries << endl;
+        cout << "Cache 0 size          : " << player.info_cache_0_size    << endl;
+        cout << "Cache 1 entries       : " << player.info_cache_1_entries << endl;
+        cout << "Cache 1 size          : " << player.info_cache_1_size    << endl;
+        cout << "Cache 2 entries       : " << player.info_cache_2_entries << endl;
+        cout << "Cache 2 size          : " << player.info_cache_2_size    << endl;
+        if (player.info_version > 3) {
+            //cout << "Cache 3 entries       : " << player.info_cache_3_entries                         << endl;
+            //cout << "Cache 3 size          : " << player.info_cache_3_size                            << endl;
+            //cout << "Cache 4 entries       : " << player.info_cache_4_entries                         << endl;
+            //cout << "Cache 4 size          : " << player.info_cache_4_size                            << endl;
+            cout << "Compression algorithm : " << static_cast<int>(player.info_compression_algorithm) << endl;
+        }
+        cout << endl;
+
+        if (!output_filename.length()) {
+            return 0;
+        }
+    }
     player.max_order_count = order_count;
 
     const char * outfile_fullpath = output_filename.c_str();
@@ -209,7 +249,7 @@ int main(int argc, char** argv)
         clear_files_flv_meta_png(outfile_path, outfile_basename);
     }
 
-    Capture capture( player.record_now, player.screen_rect.cx, player.screen_rect.cy
+    Capture capture( player.record_now, player.screen_rect.cx, player.screen_rect.cy, player.info_bpp, 24
                    , outfile_path, outfile_path, ini.video.hash_path, outfile_basename, false
                    , false, NULL, ini);
     if (capture.capture_png){
