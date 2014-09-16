@@ -4688,10 +4688,6 @@ public:
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-//                RDPGlyphIndex new_cmd24 = new_cmd;
-//                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-//                new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-//                this->capture->draw(new_cmd24, clip, gly_cache);
                 if (this->capture_bpp != this->mod_bpp){
                     const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
                     const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
@@ -5020,30 +5016,11 @@ public:
             if ((bmp.bpp() > this->capture_bpp) || (bmp.bpp() == 8)) {
                 Bitmap capture_bmp(this->capture_bpp, bmp);
 
-                BStream bmp_stream(65535);
-                capture_bmp.compress(this->capture_bpp, bmp_stream);
-                bmp_stream.mark_end();
-
-                RDPBitmapData capture_bitmap_data = bitmap_data;
-
-                capture_bitmap_data.bits_per_pixel = this->capture_bpp;
-                capture_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
-                capture_bitmap_data.bitmap_length  = bmp_stream.size();
-
-                this->capture->draw(capture_bitmap_data, bmp_stream.get_data(), bmp_stream.size(), capture_bmp);
+                ::compress_and_draw_bitmap_update(bitmap_data, capture_bmp, this->capture_bpp, *this->capture);
             }
             else {
                 if (!(bitmap_data.flags & BITMAP_COMPRESSION)) {
-                    BStream bmp_stream(65535);
-                    bmp.compress(this->capture_bpp, bmp_stream);
-                    bmp_stream.mark_end();
-
-                    RDPBitmapData bitmap_data_compressed = bitmap_data;
-
-                    bitmap_data_compressed.flags         = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
-                    bitmap_data_compressed.bitmap_length = bmp_stream.size();
-
-                    this->capture->draw(bitmap_data_compressed, bmp_stream.get_data(), bmp_stream.size(), bmp);
+                    ::compress_and_draw_bitmap_update(bitmap_data, bmp, this->capture_bpp, *this->capture);
                 }
                 else {
                     this->capture->draw(bitmap_data, data, size, bmp);
