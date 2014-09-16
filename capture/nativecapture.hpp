@@ -60,10 +60,6 @@
 class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice
 {
 public:
-//    int width;
-//    int height;
-//    int capture_bpp;
-
     uint64_t frame_interval;
     timeval start_native_capture;
     uint64_t inter_frame_interval_native_capture;
@@ -81,9 +77,6 @@ public:
 
     NativeCapture(const timeval & now, Transport & trans, int width, int height, int capture_bpp, BmpCache & bmp_cache,
                   RDPDrawable & drawable, const Inifile & ini)
-//    : width(width)
-//    , height(height)
-//    , capture_bpp(capture_bpp)
     : bmp_cache(bmp_cache)
     , recorder(now, &trans, width, height, capture_bpp, bmp_cache, drawable, ini)
     , nb_file(0)
