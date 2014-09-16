@@ -260,7 +260,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     // this one is used to store some embedded image inside WRM
     void send_image_chunk(void)
     {
-        OutChunkedBufferingTransport<65536> png_trans(trans);
+        OutChunkedBufferingTransport<65536> png_trans(this->trans);
 
         this->drawable.dump_png24(&png_trans, false);
     }

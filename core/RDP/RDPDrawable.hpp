@@ -109,7 +109,6 @@ public:
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) {
-//        uint32_t bgrcolor = this->RGBtoBGR(cmd.color);
         uint32_t bgrcolor =
             ::RGBtoBGR(((this->capture_bpp == 24) ? cmd.color
                                                   : ::color_decode_opaquerect(cmd.color, this->capture_bpp, this->mod_palette_rgb)));
@@ -118,7 +117,6 @@ public:
 
     TODO("This will draw a standard ellipse without brush style")
     void draw(const RDPEllipseCB & cmd, const Rect & clip) {
-//        uint32_t bgrcolor = this->RGBtoBGR(cmd.back_color);
         uint32_t bgrcolor =
             ::RGBtoBGR(((this->capture_bpp == 24) ? cmd.back_color
                                                   : ::color_decode_opaquerect(cmd.back_color, this->capture_bpp, this->mod_palette_rgb)));
@@ -172,7 +170,6 @@ public:
             cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
             cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
             const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
-            //const uint32_t color = this->RGBtoBGR(cmd._Color);
             this->drawable.opaquerect(trect
                 , ::RGBtoBGR(((this->capture_bpp == 24) ? cmd._Color
                                                         : ::color_decode_opaquerect(cmd._Color, this->capture_bpp, this->mod_palette_rgb))));
@@ -204,20 +201,14 @@ public:
             cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
             const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
             TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
-            if ((cmd.bRop == 0xF0) && (cmd.BrushStyle == 0x03))
-            {
+            if ((cmd.bRop == 0xF0) && (cmd.BrushStyle == 0x03)) {
                 uint8_t brush_data[8];
                 memcpy(brush_data, cmd.BrushExtra, 7);
                 brush_data[7] = cmd.BrushHatch;
 
-//                const uint32_t BackColor = this->RGBtoBGR(cmd.BackColor);
-//                const uint32_t ForeColor = this->RGBtoBGR(cmd.ForeColor);
                 this->drawable.patblt_ex(trect, cmd.bRop, BackColor, ForeColor, brush_data);
             }
-            else
-            {
-//                const uint32_t color = this->RGBtoBGR(cmd.BackColor);
-//                this->drawable.patblt(trect, cmd.bRop, color);
+            else {
                 this->drawable.patblt(trect, cmd.bRop, BackColor);
             }
         }
@@ -261,20 +252,14 @@ public:
             fore_color = ::RGBtoBGR(::color_decode_opaquerect(cmd.fore_color, this->capture_bpp, this->mod_palette_rgb));
         }
 
-        if ((cmd.rop == 0xF0) && (cmd.brush.style == 0x03))
-        {
+        if ((cmd.rop == 0xF0) && (cmd.brush.style == 0x03)) {
             uint8_t brush_data[8];
             memcpy(brush_data, cmd.brush.extra, 7);
             brush_data[7] = cmd.brush.hatch;
 
-//            const uint32_t back_color = this->RGBtoBGR(cmd.back_color);
-//            const uint32_t fore_color = this->RGBtoBGR(cmd.fore_color);
             this->drawable.patblt_ex(trect, cmd.rop, back_color, fore_color, brush_data);
         }
-        else
-        {
-//            const uint32_t color = this->RGBtoBGR(cmd.back_color);
-//            this->drawable.patblt(trect, cmd.rop, color);
+        else {
             this->drawable.patblt(trect, cmd.rop, back_color);
         }
     }
@@ -331,7 +316,6 @@ public:
         this->drawable.mem_3_blt(rect, bmp
             , cmd.srcx + (rect.x  - cmd.rect.x)
             , cmd.srcy + (rect.y  - cmd.rect.y)
-//            , cmd.rop, cmd.fore_color, false);
             , cmd.rop
             , ((this->capture_bpp == 24) ? cmd.fore_color
                                          : ::color_decode_opaquerect(cmd.fore_color, this->capture_bpp, this->mod_palette_rgb))
@@ -357,7 +341,6 @@ public:
     void draw(const RDPLineTo & lineto, const Rect & clip)
     {
         this->drew_line(lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy, lineto.rop2,
-//            lineto.pen.color, clip);
             ((this->capture_bpp == 24) ? lineto.pen.color
                                        : ::color_decode_opaquerect(lineto.pen.color, this->capture_bpp, this->mod_palette_rgb)),
             clip);
@@ -472,7 +455,6 @@ public:
         Bitmap glyph_fragments(24, NULL, cmd.bk.cx, cmd.bk.cy);
 
         {
-//            const uint32_t color = this->RGBtoBGR(cmd.fore_color);
             const uint32_t color = ::RGBtoBGR(((this->capture_bpp == 24) ? cmd.fore_color
                                                                          : ::color_decode_opaquerect(cmd.fore_color, this->capture_bpp, this->mod_palette_rgb)));
 
@@ -531,7 +513,6 @@ public:
 
                     if (fc)
                     {
-//                        this->draw_glyph(glyph_fragments, fc, draw_pos, this->RGBtoBGR(cmd.back_color));
                         this->draw_glyph(glyph_fragments, fc, draw_pos,
                             ::RGBtoBGR(((this->capture_bpp == 24) ? cmd.back_color
                                                                   : ::color_decode_opaquerect(cmd.back_color, this->capture_bpp, this->mod_palette_rgb)))
@@ -580,7 +561,7 @@ public:
             }
 
             fgcolor = RGBtoBGR(fgcolor);
-            //bgcolor = RGBtoBGR(bgcolor);
+
             uint32_t uni[128];
             size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
 
@@ -627,7 +608,6 @@ public:
             endx = startx + cmd.deltaEncodedPoints[i].xDelta;
             endy = starty + cmd.deltaEncodedPoints[i].yDelta;
 
-//            this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.PenColor, clip);
             this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2,
                 ((this->capture_bpp == 24) ? cmd.PenColor
                                            : ::color_decode_opaquerect(cmd.PenColor, this->capture_bpp, this->mod_palette_rgb)),
@@ -655,7 +635,6 @@ public:
             endx = startx + cmd.deltaPoints[i].xDelta;
             endy = starty + cmd.deltaPoints[i].yDelta;
 
-//            this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.BrushColor, clip);
             this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
 
             startx = endx;
@@ -663,7 +642,7 @@ public:
         }
         endx = cmd.xStart;
         endy = cmd.yStart;
-//        this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.BrushColor, clip);
+
         this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
     }
 
@@ -684,7 +663,6 @@ public:
             endx = startx + cmd.deltaPoints[i].xDelta;
             endy = starty + cmd.deltaPoints[i].yDelta;
 
-//            this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.foreColor, clip);
             this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
 
             startx = endx;
@@ -692,7 +670,7 @@ public:
         }
         endx = cmd.xStart;
         endy = cmd.yStart;
-//        this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.foreColor, clip);
+
         this->drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
     }
 
