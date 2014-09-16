@@ -589,12 +589,6 @@ struct mod_rdp : public mod_api {
             LOG(LOG_INFO, "sending to channel %s", front_channel_name);
         }
 
-        {
-            const uint16_t msgType = chunk.in_uint16_le();
-            chunk.p -= 2;
-            std::cout << "front -> mod ; msgType: " << msgType << std::endl;
-        }
-
         // Clipboard is unavailable and is a Clipboard PDU
         if (!this->enable_clipboard && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
             if (this->verbose & 1) {
@@ -1732,12 +1726,6 @@ struct mod_rdp : public mod_api {
                             uint32_t length = sec.payload.in_uint32_le();
                             int flags = sec.payload.in_uint32_le();
                             size_t chunk_size = sec.payload.in_remain();
-
-                            {
-                                const uint16_t msgType = sec.payload.in_uint16_le();
-                                sec.payload.p -= 2;
-                                std::cout << "mod -> front ; msgType: " << msgType << std::endl;
-                            }
 
                             // If channel name is our virtual channel, then don't send data to front
                             if (this->auth_channel[0] /*&& this->acl */&& !strcmp(mod_channel.name, this->auth_channel)){
