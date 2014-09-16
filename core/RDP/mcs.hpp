@@ -2425,36 +2425,40 @@ namespace MCS
 
     struct SendDataRequest_Recv
     {
-        SubStream payload;
 
         uint8_t type;
         uint16_t initiator;
         uint16_t channelId;
+        uint8_t magic;
         uint8_t dataPriority;
         uint8_t segmentation;
 
         uint16_t _header_size;
 
+        SubStream payload;
 
         SendDataRequest_Recv(Stream & stream, int encoding)
-            : payload(stream, 0)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "SendDataRequest PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
+            : type([&stream, encoding](){
+                if (encoding != PER_ENCODING){
+                    LOG(LOG_ERR, "SendDataRequest PER_ENCODING mandatory");
+                    throw Error(ERR_MCS);
+                }
 
-            if (!stream.in_check_rem(1)){ // tag
-                LOG(LOG_ERR, "SendDataRequest: truncated MCS PDU, expected=1 remains=%u",
-                    stream.in_remain());
-                throw Error(ERR_MCS);
-            }
+                if (!stream.in_check_rem(1)){ // tag
+                    LOG(LOG_ERR, "SendDataRequest: truncated MCS PDU, expected=1 remains=%u",
+                        stream.in_remain());
+                    throw Error(ERR_MCS);
+                }
 
-            uint8_t first_byte = stream.in_uint8();
-            uint8_t tag = first_byte >> 2;
-            if (tag == MCS::MCSPDU_SendDataRequest){
-                this->type = MCS::MCSPDU_SendDataRequest;
-
+                uint8_t first_byte = stream.in_uint8();
+                uint8_t tag = first_byte >> 2;
+                if (tag != MCS::MCSPDU_SendDataRequest){
+                    LOG(LOG_ERR, "SendDataRequest tag (%u) expected, got %u", MCS::MCSPDU_SendDataRequest, tag);
+                    throw Error(ERR_MCS);
+                }
+                return MCS::MCSPDU_SendDataRequest;
+            }())
+            , initiator([&stream](){
                 const unsigned expected =
                       6; // initiator(2) + channelId(2) + magic(1) + first byte of PER length(1)
                 if (!stream.in_check_rem(expected)){
@@ -2462,36 +2466,33 @@ namespace MCS
                         expected, stream.in_remain());
                     throw Error(ERR_MCS);
                 }
+                return stream.in_uint16_be();
+            }())
+            , channelId(stream.in_uint16_be())
+            // low 4 bits of magic are padding
+            , magic(stream.in_uint8())
+            // dataPriority = high 2 bits,
+            , dataPriority((magic >> 6) & 3)
+            // segmentation = next 2 bits
+            , segmentation((magic >> 4) & 3)
 
-                this->initiator = stream.in_uint16_be();
-                this->channelId = stream.in_uint16_be();
-                uint8_t magic = stream.in_uint8();
-                // dataPriority = high 2 bits,
-                this->dataPriority = (magic >> 6) & 3;
-                // segmentation = end 2 bits
-                this->segmentation = (magic >> 4) & 3;
-                // low 4 bits of magic are padding
-
-                // length of payload, per_encoded
+            , payload([&stream](){
                 if (!stream.in_check_rem(2)){
                     LOG(LOG_ERR, "Truncated SendDataRequest data: payload length");
                     throw Error(ERR_MCS);
                 }
+                // length of payload, per_encoded
                 uint16_t payload_size = stream.in_2BUE();
-                this->_header_size = stream.get_offset();
 
                 if (stream.in_remain() != payload_size){
                     LOG(LOG_ERR, "Mismatching SendDataRequest data: expected=%u remains=%u",
                         payload_size, stream.in_remain());
                     throw Error(ERR_MCS);
                 }
-
-                this->payload.resize(stream, stream.in_remain());
-            }
-            else{
-                LOG(LOG_ERR, "SendDataRequest tag (%u) expected, got %u", MCS::MCSPDU_SendDataRequest, tag);
-                throw Error(ERR_MCS);
-            }
+                return SubStream(stream, stream.get_offset(), stream.in_remain());
+            }())
+        {
+            stream.in_skip_bytes(this->payload.size());
         }
     };
 
