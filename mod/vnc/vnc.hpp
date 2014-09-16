@@ -78,6 +78,7 @@ public:
     uint8_t  bpp;
     uint8_t  depth;
 
+private:
     uint8_t endianess;
     uint8_t true_color_flag;
 
@@ -97,6 +98,7 @@ public:
     BStream to_rdp_clipboard_data;
     BStream to_vnc_large_clipboard_data;
 
+private:
     bool opt_clipboard;  // true clipboard available, false clipboard unavailable
 
     z_stream zstrm;
@@ -111,8 +113,10 @@ public:
         WAIT_CLIENT_UP_AND_RUNNING
     };
 
+public:
     redemption::string encodings;
 
+private:
     int state;
 
     Inifile & ini;
@@ -151,7 +155,7 @@ public:
     , keymapSym(verbose)
     , incr(0)
     , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
-    , opt_clipboard(clipboard||1)
+    , opt_clipboard(clipboard)
     , state(WAIT_SECURITY_TYPES)
     , ini(ini)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
@@ -485,7 +489,7 @@ public:
                 this->t->connect();
                 this->event.st = static_cast<SocketTransport *>(this->t);
             }
-            catch (Error e)
+            catch (Error const & e)
             {
                 throw Error(ERR_VNC_CONNECTION_ERROR);
             }
@@ -613,7 +617,7 @@ public:
 
                                 LOG(LOG_INFO, "Reason for the connection failure: %s", preason);
                             }
-                            catch (Error e)
+                            catch (const Error & e)
                             {
                             }
 
@@ -1709,6 +1713,7 @@ public:
 */
 
             server_monitor_ready_pdu.emit(out_s);
+
             size_t length     = out_s.size();
             size_t chunk_size = length;
 
@@ -1857,6 +1862,42 @@ private:
                , (unsigned)length, (unsigned)chunk.size(), flags);
         }
 
+        /*
+         * rdp message :
+         *
+         *   -------------------------------------------------------------------------------------------
+         *                    rdesktop                    |             freerdp / mstsc
+         *   -------------------------------------------------------------------------------------------
+         *                                          serveur paste
+         *   -------------------------------------------------------------------------------------------
+         *    mod   -> front : (4) format_data_resquest   |   mod   -> front : (4) format_data_resquest
+         *  _ front -> mod   : (5) format_data_response   |   front -> mod   : (5) format_data_response
+         * |  front -> mod   : (2) format_list            |
+         * |_ mod   -> front : (3) format_list_response   |
+         *   -------------------------------------------------------------------------------------------
+         *                                          serveur copy
+         *   -------------------------------------------------------------------------------------------
+         *    mod   -> front : (2) format_list            |   mod   -> front : (2) format_list
+         *    front -> mod   : (3) format_list_response   |   front -> mod   : (3) format_list_response
+         *    front -> mod   : (4) format_data_resquest   |   front -> mod   : (4) format_data_resquest
+         *    mod   -> front : (5) format_data_response   |   mod   -> front : (5) format_data_response
+         *    front -> mod   : (4) format_data_resquest   |
+         *    mod   -> front : (5) format_data_response   |
+         *   -------------------------------------------------------------------------------------------
+         *                                            host copy
+         *  _-------------------------------------------------------------------------------------------
+         * |  front -> mod   : (2) format_list            |   front -> mod   : (2) format_list
+         * |_ mod   -> front : (3) format_list_response   |   mod   -> front : (3) format_list_response
+         *   -------------------------------------------------------------------------------------------
+         *                                            host paste
+         *   -------------------------------------------------------------------------------------------
+         *    front -> mod   : (4) format_data_resquest   |   front -> mod   : (4) format_data_resquest
+         *    mod   -> front : (5) format_data_response   |   mod   -> front : (5) format_data_response
+         *   -------------------------------------------------------------------------------------------
+         *
+         * rdesktop : paste serveur = paste serveur + host copy
+         */
+
         // specific treatement depending on msgType
         SubStream stream(chunk, 0, chunk.size());
 
@@ -1918,30 +1959,31 @@ private:
                                             | CHANNELS::CHANNEL_FLAG_LAST
                                             );
                 }
-                else {
-                    TODO("RZ: Don't reject clipboard update, this can block rdesktop.");
-                    TODO("RZ: Create a unit tested class for clipboard messages");
+                //else {
+                // NOTE block freerdp
+                //    TODO("RZ: Don't reject clipboard update, this can block rdesktop.");
+                //    TODO("RZ: Create a unit tested class for clipboard messages");
 
-                    bool response_ok = false;
+                //    bool response_ok = false;
 
-                    // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
-                    // 03 00 02 00 00 00 00 00
-                    RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
-                    BStream                         out_s(256);
+                //    // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
+                //    // 03 00 02 00 00 00 00 00
+                //    RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
+                //    BStream                         out_s(256);
 
-                    format_list_response_pdu.emit(out_s);
+                //    format_list_response_pdu.emit(out_s);
 
-                    size_t length     = out_s.size();
-                    size_t chunk_size = length;
+                //    size_t length     = out_s.size();
+                //    size_t chunk_size = length;
 
-                    this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                               , out_s.get_data()
-                                               , length
-                                               , chunk_size
-                                               , CHANNELS::CHANNEL_FLAG_FIRST
-                                               | CHANNELS::CHANNEL_FLAG_LAST
-                                               );
-                }
+                //    this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                //                               , out_s.get_data()
+                //                               , length
+                //                               , chunk_size
+                //                               , CHANNELS::CHANNEL_FLAG_FIRST
+                //                               | CHANNELS::CHANNEL_FLAG_LAST
+                //                               );
+                //}
                 break;
             }
 
