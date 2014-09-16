@@ -172,9 +172,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
     BOOST_CHECK_EQUAL(65528, mcs.domainParameters.maxMCSPDUsize);
     BOOST_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);
 
-    BOOST_CHECK_EQUAL(54, mcs.payload_size);
     BOOST_CHECK_EQUAL(54, mcs.payload.size());
-    BOOST_CHECK_EQUAL(39, mcs._header_size);
+    BOOST_CHECK_EQUAL(39, payload_length - mcs.payload.size());
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
