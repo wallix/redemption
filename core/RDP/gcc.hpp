@@ -270,14 +270,15 @@ namespace GCC
                     throw Error(ERR_GCC);
                 }
 
-                if (length != stream.size() - stream.get_offset()){
-                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %u %u", length, stream.size() - stream.get_offset());
+                if (length != stream.in_remain()){
+                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %u %u", length, stream.in_remain());
                     throw Error(ERR_GCC);
                 }
-                return SubStream(stream, stream.get_offset(), length);
-            }())            
+                return SubStream(stream, stream.get_offset(), stream.in_remain());
+            }())
         // Body of constructor
         {
+            stream.in_skip_bytes(this->payload.size());
         }
     };
 
@@ -473,21 +474,24 @@ namespace GCC
         public:
         SubStream payload;
 
-        Create_Response_Recv(Stream & stream) {
-            if (!stream.in_check_rem(23)){
-                LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.size());
-                throw Error(ERR_GCC);
-            }
-            TODO("We should actually read and decode data here. Merely skipping the block is evil")
-            stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
-            size_t length = stream.in_2BUE();
-            if (length != stream.size() - stream.get_offset()){
-                LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %u %u",
-                    length, stream.size() - stream.get_offset());
-                throw Error(ERR_GCC);
-            }
+        Create_Response_Recv(Stream & stream) 
+            : payload([&stream](){
+                if (!stream.in_check_rem(23)){
+                    LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.size());
+                    throw Error(ERR_GCC);
+                }
+                TODO("We should actually read and decode data here. Merely skipping the block is evil")
+                stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
+                size_t length = stream.in_2BUE();
+                if (length != stream.in_remain()){
+                    LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %u %u",
+                        length, stream.in_remain());
+                    throw Error(ERR_GCC);
+                }
 
-            this->payload.resize(stream, stream.size() - stream.get_offset());
+                return SubStream(stream, stream.get_offset(), stream.in_remain());
+            }())
+        {
         }
     };
 
@@ -529,20 +533,23 @@ namespace GCC
 
     namespace UserData
     {
+
         struct RecvFactory
         {
             uint16_t tag;
             uint16_t length;
             SubStream payload;
 
-            RecvFactory(Stream & stream) : payload(stream, stream.get_offset())
-            {
+            RecvFactory(Stream & stream)
+            : tag([&stream](){
                 if (!stream.in_check_rem(4)){
                     LOG(LOG_WARNING, "Incomplete GCC::UserData data block header");
                     throw Error(ERR_GCC);
                 }
-                this->tag = stream.in_uint16_le();
-                this->length = stream.in_uint16_le();
+                return stream.in_uint16_le();            
+            }())
+            , length(stream.in_uint16_le())
+            , payload([&stream, this](){
                 LOG(LOG_INFO, "GCC::UserData tag=%0.4x length=%u", tag, length);
                 if (!stream.in_check_rem(length - 4)){
                     LOG(LOG_WARNING, "Incomplete GCC::UserData data block"
@@ -550,8 +557,10 @@ namespace GCC
                                      tag, length, stream.size() - 4);
                     throw Error(ERR_GCC);
                 }
-                stream.in_skip_bytes(length - 4);
-                this->payload.resize(this->payload, length);
+                return SubStream(stream, stream.get_offset() - 4, this->length);
+            }())
+            {
+                stream.in_skip_bytes(this->length - 4);
             }
         };
 
