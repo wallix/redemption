@@ -52,10 +52,9 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
                        BmpCache::CacheOption(300, 3072, false),
                        BmpCache::CacheOption(262, 12288, false));
     Inifile ini;
-    RDPDrawable drawable(800, 600);
-    NativeCapture consumer(now, trans, 800, 600, bmp_cache, drawable, ini);
+    RDPDrawable drawable(800, 600, 24);
+    NativeCapture consumer(now, trans, 800, 600, 24, bmp_cache, drawable, ini);
 
-//    consumer.set_pointer_display();
     drawable.drawable.dont_show_mouse_cursor = true;
 
     ini.video.frame_interval = 100; // one snapshot by second

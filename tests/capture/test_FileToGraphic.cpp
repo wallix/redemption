@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
-    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
 //    png_recorder.update_config(ini);
@@ -90,12 +90,13 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         to_cache_option(player.bmp_cache->get_cache(4))
     );
 
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     NativeCapture wrm_recorder(
         player.record_now,
         out_wrm_trans,
         player.screen_rect.cx,
         player.screen_rect.cy,
+        24,
         bmp_cache, drawable, ini);
 
     wrm_recorder.update_config(ini);
@@ -156,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
 //    const int groupid = 0;
 //    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".png", groupid);
-//    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
+//    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
 //    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
 //    png_recorder.update_config(ini);
@@ -187,7 +188,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //        player.bmp_cache->cache_4_size,
 //        player.bmp_cache->cache_4_persistent);
 
-//    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
+//    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
 //    NativeCapture wrm_recorder(
 //        player.record_now,
 //        out_wrm_trans,

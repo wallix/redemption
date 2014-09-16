@@ -36,7 +36,8 @@
 #include "RDP/RDPSerializer.hpp"
 #include "RDP/share.hpp"
 #include "difftimeval.hpp"
-
+#include "gzip_compression_transport.hpp"
+#include "snappy_compression_transport.hpp"
 #include "chunked_image_transport.hpp"
 
 struct FileToGraphic
@@ -46,6 +47,7 @@ struct FileToGraphic
     };
     BStream stream;
 
+    Transport * trans_source;
     Transport * trans;
 
     Rect screen_rect;
@@ -136,11 +138,16 @@ public:
     uint16_t info_cache_4_entries;
     uint16_t info_cache_4_size;
     bool     info_cache_4_persistent;
+    uint8_t  info_compression_algorithm;
 
     bool ignore_frame_in_timeval;
 
+    GZipCompressionInTransport   gzcit;
+    SnappyCompressionInTransport scit;
+
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
         : stream(65536)
+        , trans_source(trans)
         , trans(trans)
         , common(RDP::PATBLT, Rect(0, 0, 1, 1))
         , destblt(Rect(), 0)
@@ -202,7 +209,10 @@ public:
         , info_cache_4_entries(0)
         , info_cache_4_size(0)
         , info_cache_4_persistent(false)
+        , info_compression_algorithm(0)
         , ignore_frame_in_timeval(false)
+        , gzcit(*trans)
+        , scit(*trans)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
 
@@ -269,7 +279,9 @@ public:
                         return false;
                     }
                     this->stream.reset();
-                    this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                    if (this->chunk_size - HEADER_SIZE > 0) {
+                        this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                    }
                 }
             }
             catch (Error & e){
@@ -675,6 +687,21 @@ public:
                     this->info_cache_4_entries    = this->stream.in_uint16_le();
                     this->info_cache_4_size       = this->stream.in_uint16_le();
                     this->info_cache_4_persistent = (this->stream.in_uint8() ? true : false);
+
+                    this->info_compression_algorithm = this->stream.in_uint8();
+                    REDASSERT(this->info_compression_algorithm <= 2);
+
+                    switch (this->info_compression_algorithm) {
+                        case 1:
+                            this->trans = &this->gzcit;
+                            break;
+                        case 2:
+                            this->trans = &this->scit;
+                            break;
+                        default:
+                            this->trans = this->trans_source;
+                            break;
+                    }
                 }
 
                 this->stream.p = this->stream.end;
@@ -1053,6 +1080,11 @@ public:
                     }
                 }
             }
+            break;
+            case RESET_CHUNK:
+                this->info_compression_algorithm = 0;
+
+                this->trans = this->trans_source;
             break;
             default:
                 LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);

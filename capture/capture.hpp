@@ -71,7 +71,7 @@ private:
     int     last_y;
 
 public:
-    Capture( const timeval & now, int width, int height, const char * wrm_path
+    Capture( const timeval & now, int width, int height, int mod_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
            , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini)
     : capture_wrm(ini.video.capture_wrm)
@@ -93,7 +93,7 @@ public:
     , last_y(height / 2)
     {
         if (this->capture_drawable) {
-            this->drawable = new RDPDrawable(width, height);
+            this->drawable = new RDPDrawable(width, height, mod_bpp);
         }
 
         if (this->capture_png) {
@@ -127,7 +127,7 @@ public:
             TODO("Also we may wonder why we are encrypting wrm and not png"
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
-            this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, 24, 3, false,
+            this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, capture_bpp, 3, false,
                                                 BmpCache::CacheOption(600, 768, false),
                                                 BmpCache::CacheOption(300, 3072, false),
                                                 BmpCache::CacheOption(262, 12288, false));
@@ -140,7 +140,7 @@ public:
                 this->wrm_trans = new OutMetaSequenceTransport( wrm_path, basename, now
                                                               , width, height, ini.video.capture_groupid, authentifier);
             }
-            this->pnc = new NativeCapture( now, *this->wrm_trans, width, height
+            this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
                                          , *this->pnc_bmp_cache, *this->drawable, ini);
             this->pnc->recorder.send_input = true;
         }
@@ -352,41 +352,7 @@ public:
 
     void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) {
         if (this->gd) {
-            if (bmp.bpp() == 8) {
-                Bitmap bmp_24(24, bmp);
-
-                BStream bmp_stream(65535);
-                bmp_24.compress(24, bmp_stream);
-                bmp_stream.mark_end();
-
-                RDPBitmapData bitmap_data_24 = bitmap_data;
-                bitmap_data_24.bits_per_pixel = 24;
-                bitmap_data_24.flags          = BITMAP_COMPRESSION;
-                bitmap_data_24.bitmap_length  = bmp_stream.size() + 8;
-
-                bitmap_data_24.cb_comp_main_body_size = bmp_stream.size();
-                bitmap_data_24.cb_scan_width          = bmp_24.cx();
-                bitmap_data_24.cb_uncompressed_size   = bmp_24.bmp_size();
-
-                this->gd->draw(bitmap_data_24, bmp_stream.get_data(), bmp_stream.size(), bmp_24);
-            }
-            else {
-                if (!(bitmap_data.flags & BITMAP_COMPRESSION)) {
-                    BStream bmp_stream(65535);
-                    bmp.compress(24, bmp_stream);
-                    bmp_stream.mark_end();
-
-                    RDPBitmapData bitmap_data_compressed = bitmap_data;
-
-                    bitmap_data_compressed.flags         = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
-                    bitmap_data_compressed.bitmap_length = bmp_stream.size();
-
-                    this->gd->draw(bitmap_data_compressed, bmp_stream.get_data(), bmp_stream.size(), bmp);
-                }
-                else {
-                    this->gd->draw(bitmap_data, data, size, bmp);
-                }
-            }
+            this->gd->draw(bitmap_data, data, size, bmp);
         }
     }
 
@@ -455,6 +421,12 @@ public:
     virtual void set_pointer(int cache_idx) {
         if (this->gd) {
             this->gd->set_pointer(cache_idx);
+        }
+    }
+
+    virtual void set_mod_palette(const BGRPalette & palette) {
+        if (this->capture_drawable) {
+            this->drawable->set_mod_palette(palette);
         }
     }
 

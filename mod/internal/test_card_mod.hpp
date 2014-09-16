@@ -30,9 +30,12 @@ class TestCardMod : public InternalMod
 {
     BGRPalette palette332;
 
+    bool unit_test;
+
 public:
-    TestCardMod(FrontAPI & front, uint16_t width, uint16_t height)
+    TestCardMod(FrontAPI & front, uint16_t width, uint16_t height, bool unit_test = true)
     : InternalMod(front, width, height)
+    , unit_test(unit_test)
     {
         init_palette332(this->palette332);
     }
@@ -162,6 +165,45 @@ public:
             Rect(100, 100, 26, 32),
             0xCC,
             80, 50, 0), clip, logo);
+
+        if (!unit_test) {
+            //this->front.draw(RDPOpaqueRect(this->get_screen_rect(), RED), clip);
+            this->front.flush();
+
+            Bitmap wab_logo_blue(SHARE_PATH "/" "wablogoblue.png");
+
+
+            const uint16_t startx = 5;
+            const uint16_t starty = 5;
+
+            const uint16_t tile_width_height = 32;
+
+            for (uint16_t y = 0; y < wab_logo_blue.cy(); y += tile_width_height) {
+                uint16_t cy = std::min<uint16_t>(tile_width_height, wab_logo_blue.cy() - y);
+
+                for (uint16_t x = 0; x < wab_logo_blue.cx(); x += tile_width_height) {
+                    uint16_t cx = std::min<uint16_t>(tile_width_height, wab_logo_blue.cx() - x);
+
+                    Bitmap tile(wab_logo_blue, Rect(x, y, cx, cy));
+
+                    RDPBitmapData bitmap_data;
+
+                    bitmap_data.dest_left       = startx + x;
+                    bitmap_data.dest_top        = starty + y;
+                    bitmap_data.dest_right      = bitmap_data.dest_left + cx - 1;
+                    bitmap_data.dest_bottom     = bitmap_data.dest_top + cy - 1;
+                    bitmap_data.width           = tile.cx();
+                    bitmap_data.height          = tile.cy();
+                    bitmap_data.bits_per_pixel  = 24;
+                    bitmap_data.flags           = 0;
+                    bitmap_data.bitmap_length   = tile.bmp_size();
+
+                    bitmap_data.log(LOG_INFO, "replay");
+
+                    this->front.draw(bitmap_data, tile.data(), tile.bmp_size(), tile);
+                }
+            }
+        }
 
         this->front.end_update();
     }
