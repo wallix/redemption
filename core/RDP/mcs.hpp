@@ -155,7 +155,8 @@ namespace MCS
     struct RecvFactory
     {
         int type;
-        RecvFactory(Stream & stream, int encoding)
+        // Factory does not consume stream data
+        RecvFactory(const Stream & stream, int encoding)
         {
             switch (encoding){
             case PER_ENCODING:
@@ -2524,36 +2525,38 @@ namespace MCS
 
     struct SendDataIndication_Recv
     {
-        SubStream payload;
 
         uint8_t type;
         uint16_t initiator;
         uint16_t channelId;
+        uint8_t magic;
         uint8_t dataPriority;
         uint8_t segmentation;
 
-        uint16_t _header_size;
-        uint16_t payload_size;
+        SubStream payload;
 
         SendDataIndication_Recv(Stream & stream, int encoding)
-            : payload(stream, 0)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "SendDataIndication PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
+            : type([&stream, encoding](){
+                if (encoding != PER_ENCODING){
+                    LOG(LOG_ERR, "SendDataIndication PER_ENCODING mandatory");
+                    throw Error(ERR_MCS);
+                }
 
-            if (!stream.in_check_rem(1)){ // tag
-                LOG(LOG_ERR, "SendDataIndication: truncated MCS PDU, expected=1 remains=%u",
-                    stream.in_remain());
-                throw Error(ERR_MCS);
-            }
+                if (!stream.in_check_rem(1)){ // tag
+                    LOG(LOG_ERR, "SendDataIndication: truncated MCS PDU, expected=1 remains=%u",
+                        stream.in_remain());
+                    throw Error(ERR_MCS);
+                }
 
-            uint8_t first_byte = stream.in_uint8();
-            uint8_t tag = first_byte >> 2;
-            if (tag == MCS::MCSPDU_SendDataIndication){
-                this->type = MCS::MCSPDU_SendDataIndication;
-
+                uint8_t first_byte = stream.in_uint8();
+                uint8_t tag = first_byte >> 2;
+                if (tag != MCS::MCSPDU_SendDataIndication){
+                    LOG(LOG_ERR, "SendDataIndication tag (%u) expected, got %u", MCS::MCSPDU_SendDataIndication, tag);
+                    throw Error(ERR_MCS);
+                }
+                return MCS::MCSPDU_SendDataIndication;
+            }())
+            , initiator([&stream](){
                 const unsigned expected = 5; /* initiator(2) + channelId(2) + magic(1) */
                 if (!stream.in_check_rem(expected)){
                     LOG(LOG_ERR, "Truncated SendDataIndication data: expected=%u, remains=%u",
@@ -2561,38 +2564,32 @@ namespace MCS
                     throw Error(ERR_MCS);
                 }
 
-                this->initiator = stream.in_uint16_be();
-                this->channelId = stream.in_uint16_be();
-                uint8_t magic = stream.in_uint8();
-                // dataPriority = high 2 bits,
-                this->dataPriority = (magic >> 6) & 3;
-                // segmentation = end 2 bits
-                this->segmentation = (magic >> 4) & 3;
-                // low 4 bits of magic are padding
-
-                // length of payload, per_encoded
+                return stream.in_uint16_be();
+            }())
+            , channelId(stream.in_uint16_be())
+            // low 4 bits of magic are padding
+            , magic(stream.in_uint8())
+            // dataPriority = high 2 bits,
+            , dataPriority((magic >> 6) & 3)
+            // segmentation = next 2 bits
+            , segmentation((magic >> 4) & 3)
+            , payload([&stream](){
                 if (!stream.in_check_rem(2)){
                     LOG(LOG_ERR, "Truncated SendDataIndication data: payload length");
                     throw Error(ERR_MCS);
                 }
-                this->payload_size = stream.in_2BUE();
-                this->_header_size = stream.get_offset();
+                // length of payload, per_encoded
+                size_t payload_size = stream.in_2BUE();
 
-                if (!stream.in_check_rem(this->payload_size)){
+                if (!stream.in_check_rem(payload_size)){
                     LOG(LOG_ERR, "Truncated SendDataIndication payload data: expected=%u remains=%u",
-                        this->payload_size, stream.in_remain());
+                        payload_size, stream.in_remain());
                     throw Error(ERR_MCS);
                 }
-
-                this->payload.resize(stream, this->payload_size);
-            }
-            else if (tag == MCSPDU_DisconnectProviderUltimatum){
-                this->type = MCS::MCSPDU_DisconnectProviderUltimatum;
-            }
-            else{
-                LOG(LOG_ERR, "SendDataIndication tag (%u) expected, got %u", MCS::MCSPDU_SendDataIndication, tag);
-                throw Error(ERR_MCS);
-            }
+                return SubStream(stream, stream.get_offset(), stream.in_remain());
+            }())
+        {
+            stream.in_skip_bytes(this->payload.size());
         }
     };
 

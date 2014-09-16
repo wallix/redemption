@@ -1929,7 +1929,6 @@ public:
                 MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
                 if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
                     LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
-                    x224.payload.rewind();
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
                     LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
@@ -2001,7 +2000,6 @@ public:
             MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
             if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
                 LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
-                x224.payload.rewind();
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
@@ -2184,7 +2182,6 @@ public:
             MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
             if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
                 LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
-                x224.payload.rewind();
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
@@ -2563,7 +2560,6 @@ public:
                 MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
                 if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
                     LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
-                    x224.payload.rewind();
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
                     LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
