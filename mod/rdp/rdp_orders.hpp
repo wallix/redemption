@@ -71,7 +71,9 @@ struct rdp_orders {
     RDPPolyline        polyline;
     RDPEllipseSC       ellipseSC;
 
+private:
     BGRPalette cache_colormap[6];
+public:
     BGRPalette global_palette;
 
     BmpCache * bmp_cache;

@@ -36,7 +36,8 @@
 #include "RDP/RDPSerializer.hpp"
 #include "RDP/share.hpp"
 #include "difftimeval.hpp"
-
+#include "gzip_compression_transport.hpp"
+#include "snappy_compression_transport.hpp"
 #include "chunked_image_transport.hpp"
 
 struct FileToGraphic
@@ -46,6 +47,7 @@ struct FileToGraphic
     };
     BStream stream;
 
+    Transport * trans_source;
     Transport * trans;
 
     Rect screen_rect;
@@ -136,11 +138,16 @@ public:
     uint16_t info_cache_4_entries;
     uint16_t info_cache_4_size;
     bool     info_cache_4_persistent;
+    uint8_t  info_compression_algorithm;
 
     bool ignore_frame_in_timeval;
 
+    GZipCompressionInTransport   gzcit;
+    SnappyCompressionInTransport scit;
+
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
         : stream(65536)
+        , trans_source(trans)
         , trans(trans)
         , common(RDP::PATBLT, Rect(0, 0, 1, 1))
         , destblt(Rect(), 0)
@@ -202,7 +209,10 @@ public:
         , info_cache_4_entries(0)
         , info_cache_4_size(0)
         , info_cache_4_persistent(false)
+        , info_compression_algorithm(0)
         , ignore_frame_in_timeval(false)
+        , gzcit(*trans)
+        , scit(*trans)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
 
@@ -269,7 +279,9 @@ public:
                         return false;
                     }
                     this->stream.reset();
-                    this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                    if (this->chunk_size - HEADER_SIZE > 0) {
+                        this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                    }
                 }
             }
             catch (Error & e){
@@ -342,12 +354,9 @@ public:
                 break;
                 case TS_CACHE_COLOR_TABLE:
                     LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_COLOR_TABLE (%d)", header.type);
-//                    this->process_colormap(this->stream, control, header, mod);
                     break;
                 case TS_CACHE_GLYPH:
                 {
-//                  LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_GLYPH (%d)", header.type);
-//                  this->rdp_orders_process_fontcache(this->stream, header.flags, mod);
                     RDPGlyphCache cmd;
                     cmd.receive(this->stream, control, header);
                     if (this->verbose > 32){
@@ -675,11 +684,26 @@ public:
                     this->info_cache_4_entries    = this->stream.in_uint16_le();
                     this->info_cache_4_size       = this->stream.in_uint16_le();
                     this->info_cache_4_persistent = (this->stream.in_uint8() ? true : false);
+
+                    this->info_compression_algorithm = this->stream.in_uint8();
+                    REDASSERT(this->info_compression_algorithm <= 2);
+
+                    switch (this->info_compression_algorithm) {
+                        case 1:
+                            this->trans = &this->gzcit;
+                            break;
+                        case 2:
+                            this->trans = &this->scit;
+                            break;
+                        default:
+                            this->trans = this->trans_source;
+                            break;
+                    }
                 }
 
                 this->stream.p = this->stream.end;
 
-                if (!this->meta_ok){
+                if (!this->meta_ok) {
                     this->bmp_cache = new BmpCache(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
                         this->info_use_waiting_list,
                         BmpCache::CacheOption(
@@ -697,9 +721,15 @@ public:
                 }
                 else {
                     if (this->screen_rect.cx != this->info_width ||
-                        this->screen_rect.cy != this->info_height){
+                        this->screen_rect.cy != this->info_height) {
                         LOG(LOG_ERR,"Inconsistant redundant meta chunk");
                         throw Error(ERR_WRM);
+                    }
+                }
+
+                for (size_t i = 0; i < this->nbconsumers ; i++) {
+                    if (this->consumers[i].capture_device) {
+                        this->consumers[i].capture_device->external_breakpoint();
                     }
                 }
             }
@@ -1053,6 +1083,11 @@ public:
                     }
                 }
             }
+            break;
+            case RESET_CHUNK:
+                this->info_compression_algorithm = 0;
+
+                this->trans = this->trans_source;
             break;
             default:
                 LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);

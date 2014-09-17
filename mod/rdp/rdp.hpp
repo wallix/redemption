@@ -1358,6 +1358,7 @@ struct mod_rdp : public mod_api {
                         X224::RecvFactory f(*this->nego.trans, stream);
                         X224::DT_TPDU_Recv x224(*this->nego.trans, stream);
                         SubStream & mcs_data = x224.payload;
+                        TODO("We should have some MCS:RecvFactory to manage possible Deconnection Ultimatum here")
                         MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
 
                         SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
@@ -1697,13 +1698,19 @@ struct mod_rdp : public mod_api {
 
                         X224::DT_TPDU_Recv x224(*this->nego.trans, stream);
                         SubStream & mcs_data = x224.payload;
-                        MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
-
-                        if (mcs.type == MCS::MCSPDU_DisconnectProviderUltimatum){
-                            LOG(LOG_ERR, "mod_rdp: got MCS DisconnectProviderUltimatum");
+                        
+                        MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
+                        if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                            LOG(LOG_INFO, "mod::rdp::DisconnectProviderUltimatum received");
+                            x224.payload.rewind();
+                            MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                            const char * reason = MCS::get_reason(mcs.reason);
+                            LOG(LOG_INFO, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
                             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                         }
+                        
 
+                        MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
                         SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
                         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){

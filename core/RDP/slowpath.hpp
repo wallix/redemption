@@ -102,7 +102,7 @@ namespace SlowPath {
         {
             // This is the constructor body, we skip payload now that it is packaged
 
-            stream.in_skip_bytes(this->numEvents * 12);
+            stream.in_skip_bytes(this->payload.size());
         }
     };
 
@@ -191,7 +191,7 @@ namespace SlowPath {
         , payload(stream, stream.get_offset(), 6)
         // Body of constructor
         {
-            stream.in_skip_bytes(6);
+            stream.in_skip_bytes(this->payload.size());
         }
     };
 
@@ -808,19 +808,13 @@ struct GraphicsUpdate_Recv {
         SubStream payload;
 
         PaletteUpdateData_Recv(Stream & stream)
-        : numberColors(0)
-        , payload(stream) {
+        : numberColors([&](){
             stream.in_skip_bytes(2); // pad2Octets
-
-            this->numberColors = stream.in_uint32_le();
-
-            payload.resize(stream,
-                this->numberColors * 3 // red(1) + green(1) + blue(1)
-                );
-
-            stream.in_skip_bytes(
-                this->numberColors * 3 // red(1) + green(1) + blue(1)
-                );
+            return stream.in_uint32_le();})
+        // red(1) + green(1) + blue(1)
+        , payload(stream, stream.get_offset(), this->numberColors * 3) 
+        {
+            stream.in_skip_bytes(this->payload.size());
         }
     };
 */

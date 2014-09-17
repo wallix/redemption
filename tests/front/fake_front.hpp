@@ -196,7 +196,7 @@ public:
             , mouse_y(0)
             , notimestamp(true)
             , nomouse(true)
-            , gd(info.width, info.height) {
+            , gd(info.width, info.height, 24) {
         // -------- Start of system wide SSL_Ctx option ------------------------------
 
         // ERR_load_crypto_strings() registers the error strings for all libcrypto

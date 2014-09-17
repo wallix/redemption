@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
 
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
 
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), GREEN), screen_rect);
 
@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), GREEN), screen_rect);
 
@@ -269,7 +269,7 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
     uint16_t width = 1280;
     uint16_t height = 1024;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), LIGHT_GREEN), screen_rect);
 
@@ -404,7 +404,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
     gd.draw(RDPPatBlt(screen_rect.shrink(5), 0x00, WHITE, WHITE, RDPBrush()), screen_rect);
 
@@ -474,7 +474,7 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     //gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
     gd.draw(RDPDestBlt(screen_rect, 0xFF), screen_rect); // WHITENESS
     gd.draw(RDPDestBlt(screen_rect.shrink(5), 0x00), screen_rect); // BLACKNESS
@@ -499,7 +499,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
 
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
     gd.drawable.set_mouse_cursor_pos(100, 100);
@@ -538,7 +538,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse2)
     uint16_t width  = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
 
     gd.draw(RDPOpaqueRect(screen_rect, BLACK), screen_rect); // BLACK
     gd.drawable.set_mouse_cursor_pos(638, 470);
@@ -577,7 +577,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse3)
     uint16_t width  = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
 
     gd.drawable.default_pointer.hotspot_x = 8;
     gd.drawable.default_pointer.hotspot_y = 8;
@@ -619,7 +619,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
 
     time_t rawtime;
@@ -698,7 +698,7 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(Rect(90, 90, 120, 120), RED), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
     gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
@@ -721,7 +721,7 @@ bool test_scrblt2(const uint8_t rop, const int cx, const int cy, const char * na
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(Rect(90, 90, 120, 120), RED), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
     gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
@@ -861,7 +861,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     BGRPalette palette;
     init_palette332(palette);
 
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(screen_rect, 0x2F2F2F), screen_rect);
     gd.draw(RDPOpaqueRect(Rect(100,100,20, 20), BLUE), screen_rect);
 
@@ -898,7 +898,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt2)
     Rect screen_rect(0, 0, width, height);
     BGRPalette palette;
 
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(screen_rect, 0x2F2F2F), screen_rect);
 
     uint8_t raw_palette[] = {
@@ -1033,7 +1033,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt3)
     Rect screen_rect(0, 0, width, height);
     BGRPalette palette;
 
-    RDPDrawable gd(width, height);
+    RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(screen_rect, 0x2F2F2F), screen_rect);
 
     uint8_t raw_palette[] = {

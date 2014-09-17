@@ -49,10 +49,9 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     ini.video.rt_display.set(1);
     ini.video.png_limit = 3;
     ini.video.png_interval = 20;
-    RDPDrawable drawable(800, 600);
+    RDPDrawable drawable(800, 600, 24);
     StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.drawable);
 
-//    consumer.set_pointer_display();
     drawable.drawable.dont_show_mouse_cursor = true;
 
     bool ignore_frame_in_timeval = false;
@@ -95,10 +94,9 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     ini.video.rt_display.set(1);
     ini.video.png_limit = 3;
     ini.video.png_interval = 20;
-    RDPDrawable drawable(800, 600);
+    RDPDrawable drawable(800, 600, 24);
     StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.drawable);
 
-//    consumer.set_pointer_display();
     drawable.drawable.dont_show_mouse_cursor = true;
 
     bool ignore_frame_in_timeval = false;

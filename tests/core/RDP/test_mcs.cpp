@@ -111,9 +111,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     BOOST_CHECK_EQUAL(true, mcs.upwardFlag);
 
     BOOST_CHECK_EQUAL(106, mcs._header_size); // everything up to USER_DATA
-    BOOST_CHECK_EQUAL(263, mcs.payload_size); // USER_DATA (after len)
     BOOST_CHECK_EQUAL(263, mcs.payload.size()); // USER_DATA (after len)
-    BOOST_CHECK_EQUAL(mcs.payload_size, payload.end - payload.get_data() - mcs._header_size);
+    BOOST_CHECK_EQUAL(mcs.payload.size(), payload.end - payload.get_data() - mcs._header_size);
 }
 
 
@@ -173,9 +172,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
     BOOST_CHECK_EQUAL(65528, mcs.domainParameters.maxMCSPDUsize);
     BOOST_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);
 
-    BOOST_CHECK_EQUAL(54, mcs.payload_size);
     BOOST_CHECK_EQUAL(54, mcs.payload.size());
-    BOOST_CHECK_EQUAL(39, mcs._header_size);
+    BOOST_CHECK_EQUAL(39, payload_length - mcs.payload.size());
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
@@ -618,7 +616,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(1) , mcs.dataPriority);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(3) , mcs.segmentation);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload_size);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload.size());
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
@@ -687,7 +685,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(1) , mcs.dataPriority);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(3) , mcs.segmentation);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload_size);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload.size());
 }
 
 
@@ -737,7 +735,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication2)
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004),             mcs.channelId);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(1),                 mcs.dataPriority);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(3),                 mcs.segmentation);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(363),              mcs.payload_size);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(363),              mcs.payload.size());
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
