@@ -327,6 +327,7 @@ namespace X224
         RecvFactory(Transport & t, Stream & stream, bool support_fast_path = false)
                 : fast_path(false) {
             /* 1 byte */
+            TODO("Factory should not consume any Data")
             uint16_t stream_length = stream.size();
             if (stream_length < 1) {
                 t.recv(&stream.end, 1);

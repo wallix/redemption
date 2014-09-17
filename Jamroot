@@ -327,12 +327,6 @@ exe tls_test_server
     <variant>coverage:<library>gcov
     <variant>coverage:<build>no
 ;
-exe rgx_cmp
-    : ftests/rgx_cmp.cpp
-    : <link>static
-    <variant>coverage:<library>gcov
-    <variant>coverage:<build>no
-;
 
 #exe freetype_draw : ftests/freetype_draw.cpp freetype
 #    : <link>static <variant>coverage:<library>gcov
