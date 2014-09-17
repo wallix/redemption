@@ -318,7 +318,8 @@ namespace X224
         SSL_WITH_USER_AUTH_REQUIRED_BY_SERVER = 0x00000006
     };
 
-    // Factory just read enough data to know the type of packet we are dealing with
+    // Factory read full TPDU, other layers are just using what was read by factory
+    // Also decode enough data to know the type of packet we are dealing with (TPDU type or fastpath)
     struct RecvFactory {
         int    type;
         size_t length;
@@ -362,6 +363,12 @@ namespace X224
                         throw Error(ERR_RDP_FASTPATH);
                     }
 
+                    if (stream.endroom()  < length - stream.size()){
+                        LOG(LOG_ERR, "TPKT too long: stream=%u tpkt=%u",
+                            stream.endroom(), length - stream.size());
+                        throw Error(ERR_RDP_FASTPATH);
+                    }
+
                     t.recv(&stream.end, length - stream.size());
                     stream.p = stream.get_data();
 
@@ -389,6 +396,12 @@ namespace X224
             }
             this->length = tpkt_len;
             stream_length = stream.size();
+            if (stream.endroom() + stream_length  < tpkt_len){
+                LOG(LOG_ERR, "TPKT too long: stream=%u tpkt=%u",
+                    stream.endroom(), tpkt_len - stream_length);
+                throw Error(ERR_X224);
+            }
+
             if (stream_length < tpkt_len) {
                 t.recv(&stream.end, tpkt_len - stream_length );
             }
@@ -420,7 +433,33 @@ namespace X224
             uint16_t len;
         } tpkt;
 
-        Recv(Transport & t, Stream & stream)
+        Recv(Stream & stream)
+        {
+            uint16_t length = stream.size();
+            if (length < 4){
+                LOG(LOG_ERR, "Truncated TPKT: stream=%u", length);
+            }
+
+            // TPKT
+            this->tpkt.version = stream.in_uint8();
+            stream.in_skip_bytes(1);
+            this->tpkt.len = stream.in_uint16_be();
+            if (length < this->tpkt.len){
+                LOG(LOG_ERR, "Truncated TPKT: stream=%u tpkt=%u",
+                    length, this->tpkt.len);
+            }
+        }
+    };
+
+    struct Recv3
+    {
+        struct Tpkt
+        {
+            uint8_t version;
+            uint16_t len;
+        } tpkt;
+
+        Recv3(Transport & t, Stream & stream)
         {
             uint16_t length = stream.size();
             if (length < 4){
@@ -627,8 +666,8 @@ namespace X224
         uint16_t rdp_cinfo_length;
         uint8_t rdp_cinfo_correlationid[16];
 
-        CR_TPDU_Recv(Transport & t, Stream & stream, bool bogus_neg_req, uint32_t verbose = 0)
-        : Recv(t, stream)
+        CR_TPDU_Recv(Stream & stream, bool bogus_neg_req, uint32_t verbose = 0)
+        : Recv(stream)
         , tpdu_hdr([&]()
             {
                 /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
@@ -956,8 +995,8 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_code; // selected_protocol or failure_code
 
-        CC_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0) 
-            : Recv(t, stream)
+        CC_TPDU_Recv(Stream & stream, uint32_t verbose = 0) 
+            : Recv(stream)
             , tpdu_hdr([&]()
             {
                 /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
@@ -1206,8 +1245,8 @@ namespace X224
         
         size_t _header_size;
 
-        DR_TPDU_Recv(Transport & t, Stream & stream) 
-            : Recv(t, stream)
+        DR_TPDU_Recv(Stream & stream) 
+            : Recv(stream)
             , tpdu_hdr([&]()
             {
                 /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + reason(1) */
@@ -1242,7 +1281,7 @@ namespace X224
 
     struct DR_TPDU_Send
     {
-         DR_TPDU_Send( Stream & stream, uint8_t reason)
+         DR_TPDU_Send(Stream & stream, uint8_t reason)
         {
             stream.out_uint8(0x03); // version 3
             stream.out_uint8(0x00);
@@ -1357,8 +1396,8 @@ namespace X224
         
         size_t _header_size;
 
-        ER_TPDU_Recv(Transport & t, Stream & stream)
-            : Recv(t, stream)
+        ER_TPDU_Recv(Stream & stream)
+            : Recv(stream)
             , tpdu_hdr(stream)
             , _header_size(X224::TPKT_HEADER_LEN + 1 + this->tpdu_hdr.LI)
         {
@@ -1411,8 +1450,8 @@ namespace X224
         size_t _header_size;
         SubStream payload;
 
-        DT_TPDU_Recv(Transport & t, Stream & stream)
-        : Recv(t, stream)
+        DT_TPDU_Recv(Stream & stream)
+        : Recv(stream)
         , tpdu_hdr([&](){
             if (!stream.in_check_rem(3)){
                 LOG(LOG_ERR, "Truncated TPDU header: expected=3 remains=%u", stream.in_remain());
