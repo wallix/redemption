@@ -186,22 +186,22 @@ namespace FastPath {
 //  it is present).
 
     struct ClientInputEventPDU_Recv {
-        uint8_t   numEvents;
         uint8_t   secFlags;
         uint32_t  fipsInformation;
         uint8_t   dataSignature[8];
         SubStream payload;
+        uint8_t   numEvents;
 
         ClientInputEventPDU_Recv( Transport & trans
                                 , Stream & stream
                                 , CryptContext & decrypt)
-        : numEvents(0)
-        , secFlags(0)
+        : secFlags(0)
         , fipsInformation(0)
-        , payload(stream) {
-            ::memset(dataSignature, 0, sizeof(dataSignature));
-
-            stream.rewind();
+        , dataSignature{}
+        , payload(stream) 
+        , numEvents(0)
+        {
+//            ::memset(dataSignature, 0, sizeof(dataSignature));
 
             if (stream.size() < 1)
                 trans.recv(&stream.end, 1);

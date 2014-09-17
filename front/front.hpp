@@ -2425,6 +2425,8 @@ public:
             // Detect fast-path PDU
             this->trans->recv(&stream.end, 1);
             uint8_t byte = stream.in_uint8();
+            TODO("find a way to avoid this rewind")
+            stream.rewind();
 
 
             if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
