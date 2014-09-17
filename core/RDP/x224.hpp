@@ -338,6 +338,32 @@ namespace X224
             if ((tpkt_version & FastPath::FASTPATH_OUTPUT_ACTION_X224) == 0) {
                 if (support_fast_path) {
                     fast_path = true;
+                    
+                    int byte = tpkt_version;
+                    int action = byte & 0x03;
+                    if (action != 0) {
+                        LOG(LOG_ERR, "Fast-path PDU expected: action=0x%X", action);
+                        throw Error(ERR_RDP_FASTPATH);
+                    }
+
+                    t.recv(&stream.end, 1);
+
+                     uint16_t length = stream.in_uint8();
+                     if (length & 0x80){
+                         t.recv(&stream.end, 1);
+                         byte = stream.in_uint8();
+                         length = (length & 0x7F) << 8 | byte;
+                     }
+
+                    if (length < stream.size()){
+                        LOG( LOG_ERR
+                           , "FastPath::ClientInputEventPDU_Recv: inconsistent length in header (length=%u)"
+                           , length);
+                        throw Error(ERR_RDP_FASTPATH);
+                    }
+
+                    t.recv(&stream.end, length - stream.size());
+                    stream.p = stream.get_data();
 
                     return;
                 }
@@ -362,6 +388,10 @@ namespace X224
                 throw Error(ERR_X224);
             }
             this->length = tpkt_len;
+            stream_length = stream.size();
+            if (stream_length < tpkt_len) {
+                t.recv(&stream.end, tpkt_len - stream_length );
+            }
             stream.in_skip_bytes(1);
             uint8_t tpdu_type = stream.in_uint8();
             switch (tpdu_type & 0xF0) {
@@ -377,6 +407,7 @@ namespace X224
                 LOG(LOG_ERR, "Bad X224 header, unknown TPDU type (code = %u)", tpdu_type);
                 throw Error(ERR_X224);
             }
+            stream.p = stream.get_data();
         }
     };
 
