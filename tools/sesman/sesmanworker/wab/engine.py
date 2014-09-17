@@ -12,6 +12,7 @@ try:
     from wallixgenericnotifier import LICENCE_EXPIRED, LICENCE_PRIMARY_CX_ERROR, LICENCE_SECONDARY_CX_ERROR
     from wabconfig import Config
     from wabengine.client.sync_client import SynClient
+    from wabengine.common.const import ACCEPTED, REJECTED, APPROVAL_PENDING, APPROVAL_NONE
     from wabx509 import AuthX509
 except Exception, e:
     Logger().info("================================")
@@ -63,6 +64,7 @@ class Engine(object):
         self.physical_targets = []
         self.displaytargets = []
         self.proxyrightsinput = None
+        self.pidhandler = None
 
     def get_language(self):
         try:
@@ -450,13 +452,8 @@ class Engine(object):
 
     def start_session(self, auth, pid, effective_login):
         try:
-            try:
-                from wabengine.common.interface import IPBSessionHandler
-                from wabengine.common.utils import ProcessSessionHandler
-                wab_engine_session_handler = IPBSessionHandler(ProcessSessionHandler(int(pid)))
-            except Exception, e:
-                wab_engine_session_handler = None
-            self.session_id = self.wabengine.start_session(auth, wab_engine_session_handler, effective_login=effective_login)
+            self.session_id = self.wabengine.start_session(auth, self.get_pidhandler(pid),
+                                                           effective_login=effective_login)
         except Exception, e:
             import traceback
             Logger().info("Engine start_session failed: (((%s)))" % (traceback.format_exc(e)))
@@ -535,6 +532,30 @@ class Engine(object):
 
     def read_session_parameters(self, key=None):
         return self.wabengine.read_session_parameters(self.session_id, key=key)
+
+    def get_pidhandler(self, pid):
+        if not self.pidhandler:
+            try:
+                from wabengine.common.interface import IPBSessionHandler
+                from wabengine.common.utils import ProcessSessionHandler
+                self.pidhandler = IPBSessionHandler(ProcessSessionHandler(int(pid)))
+            except Exception, e:
+                self.pidhandler = None
+        return self.pidhandler
+
+    def check_target(self, target, pid=None, ticket=None):
+        status, infos = self.wabengine.check_target(target, self.get_pidhandler(pid), ticket)
+        if status == ACCEPTED:
+            return None, infos
+        if status == REJECTED:
+            return "REJECTED", infos
+        if status == APPROVAL_PENDING:
+            return "PENDING", infos
+        if status == APPROVAL_NONE:
+            return "APPROVAL", infos
+        return "REJECTED", infos
+
+
 
     def get_target_protocols(self):
         if not self.target_right:

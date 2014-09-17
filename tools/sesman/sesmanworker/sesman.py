@@ -435,16 +435,6 @@ class Sesman():
             if not self.engine.get_license_status():
                 return False, TR(u'licence_blocker')
 
-            # try:
-            #     # might be too early, should be done just before accessing Right structure
-            #     # Then get user rights (reachable targets)
-            #     self.engine.get_proxy_rights([u'RDP', u'VNC'])
-            # except Exception, e:
-            #     if DEBUG:
-            #         import traceback
-            #         Logger().info("<<<%s>>>" % traceback.format_exc(e))
-            #     # NB : this exception may be raised because the user must change his password
-            #     return False, TR(u"Error while retreiving rights for user %s") % wab_login
         except Exception, e:
             if DEBUG:
                 import traceback
@@ -720,6 +710,79 @@ class Sesman():
 
         return _status, _error
 
+    def select_target(self):
+        ###################
+        ### FIND_TARGET ###
+        ###################
+        # The purpose of the snippet below is electing the first right that match
+        # the login AND device AND service that have been passed in the connection
+        # string.
+        # If service is blank take the first right that match login AND device
+        # (may happen with a command line or a mstsc '.rdp' file connections ;
+        # never happens if the selector is used).
+        # NB : service names are supposed to be in alphabetical ascending order.
+        selected_target = None
+        target_device = self.shared.get(u'target_device')
+        target_login = self.shared.get(u'target_login')
+        target_service = self.target_service_name if self.target_service_name != u'INTERNAL' else u'RDP'
+
+        # Logger().info("selected target ==> %s %s %s" % (target_login, target_device, target_service))
+        selected_target = self.engine.get_selected_target(target_login,
+                                                          target_device,
+                                                          target_service)
+        if not selected_target:
+            _target = u"%s@%s:%s" % ( target_login, target_device, target_service )
+            _error_log = u"Targets %s not found in user rights" % _target
+            _status, _error = False, TR(u"Target %s not found in user rights") % _target
+            Logger().info("%s" % _error)
+            return None, _status, _error
+        return selected_target, True, ""
+
+    def check_target(self, selected_target):
+        ticket = None
+        while True:
+            status, infos = self.engine.check_target(selected_target, self.pid, ticket)
+            if not status:
+                return True, ""
+            self.show_waitinfo(status, infos)
+            r = []
+            try:
+                Logger().info(u"Start Select ...")
+                r, w, x = select([self.proxy_conx], [], [], 60)
+            except Exception as e:
+                if DEBUG:
+                    Logger().info("exception: '%s'" % e)
+                    import traceback
+                    Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                    if e[0] != 4:
+                        raise
+                Logger().info("Got Signal %s" % e)
+            if self.proxy_conx in r:
+                _status, _error = self.receive_data();
+                # if self.shared.get(u'waitinforeturn') == "backselector":
+                if self.shared.get(u'display_message') == 'True':
+                    # received back to selector
+                    self.send_data({u'module' : u'selector', u'target_login': '',
+                                    u'target_device' : ''})
+                    return None, ""
+                # if self.shared.get(u'waitinforeturn') == "exit":
+                if self.shared.get(u'display_message') == 'False':
+                    self.send_data({u'module' : u'close'})
+                    # received exit
+                    False, ""
+                if self.shared.get(u'waitinforeturn') == "confirm":
+                    # received ticket
+                    # ticket = trucmuch
+                    continue
+        return False, ""
+
+    def show_waitinfo(self, status, infos):
+        Logger().info("status : %s" % status)
+        Logger().info("infos : %s" % infos)
+        self.send_data({ u'module' : u'waitinfo',
+                         u'message' : cut_message(infos.get('message')),
+                         u'display_message' : MAGICASK })
+
     def start(self):
         _status, tries = None, 5
         while _status is None and tries > 0:
@@ -768,9 +831,22 @@ class Sesman():
                 _status, _error = self.check_password_expiration_date()
 
                 # Get services for identified user
-                _status, _error = self.get_service()
-                if not _status:
-                    self.engine.reset_proxy_rights()
+                _status = None
+                while _status is None:
+                    _status, _error = self.get_service()
+                    Logger().info("get service end :%s" % _status)
+                    if not _status:
+                        # logout or error in selector
+                        self.engine.reset_proxy_rights()
+                        break
+                    selected_target, _status, _error = self.select_target()
+                    Logger().info("select_target end :%s" % _status)
+                    if not _status:
+                        # target not available
+                        self.engine.reset_proxy_rights()
+                        break
+                    _status, _error = self.check_target(selected_target)
+                    Logger().info("check_target end :%s" % _status)
 
         if tries <= 0:
             Logger().info(u"Too many login failures")
@@ -781,36 +857,11 @@ class Sesman():
         if _status:
             Logger().info(u"Asking service %s@%s" % (self.shared.get(u'target_login'), self.shared.get(u'target_device')))
 
-        # Fetch Auth on given target account
-        if _status:
-            ###################
-            ### FIND_TARGET ###
-            ###################
-
-            # The purpose of the snippet below is electing the first right that match
-            # the login AND device AND service that have been passed in the connection
-            # string.
-            # If service is blank take the first right that match login AND device
-            # (may happen with a command line or a mstsc '.rdp' file connections ;
-            # never happens if the selector is used).
-            # NB : service names are supposed to be in alphabetical ascending order.
-            selected_target = None
-            target_device = self.shared.get(u'target_device')
-            target_login = self.shared.get(u'target_login')
-            target_service = self.target_service_name if self.target_service_name != u'INTERNAL' else u'RDP'
-
-            # Logger().info("selected target ==> %s %s %s" % (target_login, target_device, target_service))
-            selected_target = self.engine.get_selected_target(target_login,
-                                                              target_device,
-                                                              target_service)
-            if not selected_target:
-                _target = u"%s@%s:%s" % ( target_login, target_device, target_service )
-                _error_log = u"Targets %s not found in user rights" % _target
-                _status, _error = False, TR(u"Target %s not found in user rights") % _target
-                Logger().info("%s" % _error)
-
         #TODO: looks like the code below should be done in the instance of some "selected_target" class
         if _status:
+            #####################
+            ### START_SESSION ###
+            #####################
             session_started = False
             extra_info = self.engine.get_target_extra_info()
             _status, _error = self.check_video_recording(

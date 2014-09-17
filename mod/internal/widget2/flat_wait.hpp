@@ -42,7 +42,7 @@ public:
     FlatForm form;
     WidgetFlatButton goselector;
     WidgetFlatButton exit;
-
+    bool hasform;
     CompositeArray composite_array;
 
     FlatWait(DrawApi& drawable, int16_t width, int16_t height,
@@ -62,6 +62,7 @@ public:
         , exit(drawable, 0, 0, groupbox, this, "Exit", true, -11,
                theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
                6, 2)
+        , hasform(showform)
     {
         this->impl = &composite_array;
         // this->groupbox.add_widget(&this->title);
