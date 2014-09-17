@@ -201,7 +201,6 @@ namespace FastPath {
         , payload(stream) 
         , numEvents(0)
         {
-//            ::memset(dataSignature, 0, sizeof(dataSignature));
 
             if (stream.size() < 1)
                 trans.recv(&stream.end, 1);
