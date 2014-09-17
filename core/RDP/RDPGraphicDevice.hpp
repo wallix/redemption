@@ -115,6 +115,9 @@ struct RDPCaptureDevice {
 
     virtual void set_pointer_display() {}
 
+    // toggles externally genareted breakpoint.
+    virtual void external_breakpoint() {}
+
 protected:
     // this to avoid calling constructor of base abstract class
     RDPCaptureDevice() {}
