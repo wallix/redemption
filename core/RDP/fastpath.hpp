@@ -30,8 +30,6 @@
 #include "ssl_calls.hpp"
 #include "RDP/mppc.hpp"
 
-TODO("To implement fastpath, the idea is to replace the current layer stack X224->Mcs->Sec with only one FastPath object. The FastPath layer would also handle legacy packets still using several independant layers. That should lead to a much simpler code in both front.hpp and rdp.hpp but still keep a flat easy to test model.")
-
 namespace FastPath {
 
 // 2.2.8.1.2 Client Fast-Path Input Event PDU (TS_FP_INPUT_PDU)
@@ -192,48 +190,35 @@ namespace FastPath {
         SubStream payload;
         uint8_t   numEvents;
 
-        ClientInputEventPDU_Recv( Transport & trans
-                                , Stream & stream
-                                , CryptContext & decrypt)
+        ClientInputEventPDU_Recv(Stream & stream, CryptContext & decrypt)
         : secFlags(0)
         , fipsInformation(0)
         , dataSignature{}
         , payload(stream) 
         , numEvents(0)
         {
-
-            if (stream.size() < 1)
-                trans.recv(&stream.end, 1);
-
             uint8_t byte = stream.in_uint8();
-
             int action = byte & 0x03;
             if (action != 0) {
-                LOG(LOG_ERR, "Fast-path PDU excepted: action=0x%X", action);
+                LOG(LOG_ERR, "Fast-path PDU expected: action=0x%X", action);
                 throw Error(ERR_RDP_FASTPATH);
             }
 
-            this->numEvents = (byte & 0x3C) >> 2;
+            this->numEvents = (byte & 0x3C) >> 2;// ????
             this->secFlags  = (byte & 0xC0) >> 6;
 
-            trans.recv(&stream.end, 1);
 
              uint16_t length = stream.in_uint8();
              if (length & 0x80){
-                 trans.recv(&stream.end, 1);
-                 byte = stream.in_uint8();
-                 length = (length & 0x7F) << 8 | byte;
+                 length = (length & 0x7F) << 8 | stream.in_uint8();
              }
 
-            if (length < stream.size()){
+            if (length != stream.size()){
                 LOG( LOG_ERR
                    , "FastPath::ClientInputEventPDU_Recv: inconsistent length in header (length=%u)"
                    , length);
                 throw Error(ERR_RDP_FASTPATH);
             }
-
-            trans.recv(&stream.end, length - stream.size());
-
             TODO("RZ: Should we treat fipsInformation ?");
 
             if (this->secFlags & FASTPATH_INPUT_ENCRYPTED) {
@@ -260,7 +245,7 @@ namespace FastPath {
             if (this->numEvents == 0) {
                 this->numEvents = payload.in_uint8();
             }
-        }   // ClientInputEventPDU_Recv(Transport & trans, Stream & stream)
+        }   // ClientInputEventPDU_Recv(Stream & stream)
     };  // struct ClientInputEventPDU_Recv
 
     struct ClientInputEventPDU_Send {
@@ -786,7 +771,7 @@ namespace FastPath {
         uint8_t   dataSignature[8];
         SubStream payload;
 
-        ServerUpdatePDU_Recv(Transport & trans, Stream & stream, CryptContext & decrypt)
+        ServerUpdatePDU_Recv(Stream & stream, CryptContext & decrypt)
         : secFlags(0)
         , fipsInformation(0)
         , payload(stream) {
@@ -794,13 +779,7 @@ namespace FastPath {
 
             stream.rewind();
 
-            if (stream.size() < 1)
-                trans.recv(&stream.end, 1);
-
-            uint8_t byte;
-
-            byte = stream.in_uint8();
-
+            uint8_t byte = stream.in_uint8();
             int action = byte & 0x03;
             if (action != 0) {
                 LOG(LOG_ERR, "Fast-path PDU excepted: action=0x%X", action);
@@ -809,22 +788,10 @@ namespace FastPath {
 
             this->secFlags = (byte & 0xC0) >> 6;
 
-            trans.recv(&stream.end, 1);
-
-            uint16_t length;
-            byte = stream.in_uint8();
-            if (byte & 0x80){
-                length = (byte & 0x7F) << 8;
-
-                trans.recv(&stream.end, 1);
-                byte = stream.in_uint8();
-                length += byte;
+            uint16_t length = stream.in_uint8();
+            if (length & 0x80){
+                length = (length & 0x7F) << 8 | stream.in_uint8();
             }
-            else{
-                length = byte;
-            }
-
-            trans.recv(&stream.end, length - stream.size());
 
             TODO("RZ: Should we treat fipsInformation ?");
 
@@ -844,7 +811,7 @@ namespace FastPath {
             if (this->secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
                 decrypt.decrypt(payload.get_data(), payload.size());
             }
-        } // ServerUpdatePDU_Recv(Transport & trans, Stream & stream, CryptContext & decrypt)
+        } // ServerUpdatePDU_Recv(Stream & stream, CryptContext & decrypt)
     }; // struct ServerUpdatePDU_Recv
 
     struct ServerUpdatePDU_Send {

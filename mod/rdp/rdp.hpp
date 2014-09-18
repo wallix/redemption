@@ -1609,7 +1609,7 @@ struct mod_rdp : public mod_api {
                                            );
 
                         if (f.fast_path) {
-                            FastPath::ServerUpdatePDU_Recv su(*this->nego.trans, stream, this->decrypt);
+                            FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt);
                             if (this->enable_transparent_mode) {
                                 //total_data_received += su.payload.size();
                                 //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);

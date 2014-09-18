@@ -2422,15 +2422,14 @@ public:
         {
             BStream stream(65536);
 
-            // Detect fast-path PDU
-            this->trans->recv(&stream.end, 1);
-            uint8_t byte = stream.in_uint8();
-            TODO("find a way to avoid this rewind")
-            stream.rewind();
+            LOG(LOG_ERR, "X224::RecvFactory FP");
+            X224::RecvFactory fx224(*this->trans, stream, true);
+            
 
-
-            if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
-                FastPath::ClientInputEventPDU_Recv cfpie(*this->trans, stream, this->decrypt);
+            if (fx224.fast_path){
+                LOG(LOG_ERR, "X224 is FP");
+                LOG(LOG_ERR, "client event PDU Recv");
+                FastPath::ClientInputEventPDU_Recv cfpie(stream, this->decrypt);
 
                 uint8_t byte;
                 uint8_t eventCode;
@@ -2544,7 +2543,7 @@ public:
                 break;
             }
             else {
-                X224::RecvFactory fx224(*this->trans, stream);
+//                X224::RecvFactory fx224(*this->trans, stream);
                 TODO("We shall put a specific case when we get Disconnect Request")
                 if (fx224.type == X224::DR_TPDU){
                     TODO("What is the clean way to actually disconnect ?")

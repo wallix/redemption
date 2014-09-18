@@ -296,21 +296,25 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
 
     Inifile ini;
 
-    X224::CR_TPDU_Recv x224(stream, false);
+    try {
+        X224::CR_TPDU_Recv x224(stream, false);
 
-    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
-    BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
-    BOOST_CHECK_EQUAL(0x32, x224.tpdu_hdr.LI);
+        BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+        BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
+        BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
+        BOOST_CHECK_EQUAL(0x32, x224.tpdu_hdr.LI);
 
-    BOOST_CHECK_EQUAL(0, strcmp("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie));
-    BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_REQ, x224.rdp_neg_type);
-    BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
-    BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
-    BOOST_CHECK_EQUAL((uint32_t)X224::PROTOCOL_TLS, x224.rdp_neg_requestedProtocols);
+        BOOST_CHECK_EQUAL(0, strcmp("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie));
+        BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_REQ, x224.rdp_neg_type);
+        BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
+        BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
+        BOOST_CHECK_EQUAL((uint32_t)X224::PROTOCOL_TLS, x224.rdp_neg_requestedProtocols);
 
-    BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
-    BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+        BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
+        BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+    } catch(Error & e) {
+        BOOST_CHECK(false);
+    };
 }
 
 
@@ -318,6 +322,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
 {
+
     BStream stream(256);
     X224::CR_TPDU_Send(stream,
             "Cookie: mstshash=administrateur@qa\x0D\x0A",
@@ -334,12 +339,10 @@ BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet_forge)
 {
-    LOG(LOG_INFO, "===================================");
     BStream stream(256);
     X224::CR_TPDU_Send(stream, "", X224::RDP_NEG_REQ, 0, X224::PROTOCOL_TLS);
     stream.mark_end();
     hexdump_d(stream.get_data(), stream.size());
-    LOG(LOG_INFO, "===================================");
 }
 
 
