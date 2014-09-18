@@ -128,6 +128,9 @@ struct Keymap2
         , KEVENT_END = 0x0D
         , KEVENT_PGUP = 0x0E
         , KEVENT_PGDOWN = 0x0F
+        , KEVENT_CUT = 0x10
+        , KEVENT_COPY = 0x11
+        , KEVENT_PASTE = 0x12
     };
 
     uint32_t ibuf; // first free position in char buffer
@@ -632,6 +635,15 @@ struct Keymap2
                                 case 0x9C: // numpad enter
                                     if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x000D); }
                                     this->push_kevent(KEVENT_ENTER);
+                                    break;
+                                case 45: // ctrl+x
+                                    this->push_kevent(KEVENT_CUT);
+                                    break;
+                                case 46: // ctrl+c
+                                    this->push_kevent(KEVENT_COPY);
+                                    break;
+                                case 47: // ctrl+v
+                                    this->push_kevent(KEVENT_PASTE);
                                     break;
                                 default:
                                     break;
