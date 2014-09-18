@@ -276,6 +276,8 @@ public:
             }
         }
         else if (this->remote_answer) {
+            this->remote_answer = false;
+            mm.check_module();
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;

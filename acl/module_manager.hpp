@@ -127,6 +127,7 @@ public:
         return res;
     }
     virtual void record(auth_api * acl) {}
+    virtual void check_module() { }
 };
 
 class MMIni : public MMApi {
@@ -134,7 +135,8 @@ public:
     Inifile & ini;
     uint32_t verbose;
     MMIni(Inifile & _ini) : ini(_ini)
-                          , verbose(ini.debug.auth) {}
+                          , verbose(ini.debug.auth)
+    {}
     virtual ~MMIni() {}
     virtual void remove_mod() {};
     virtual void new_mod(int target_module, time_t now, auth_api * acl) {
@@ -274,6 +276,12 @@ public:
         return MODULE_INTERNAL_CLOSE;
     }
 
+    virtual void check_module() {
+        const char * module_cstr = this->ini.context.module.get_cstr();
+        if (!strcmp(module_cstr, STRMODULE_TRANSITORY)) {
+            this->mod->get_event().signal = BACK_EVENT_NEXT;
+        }
+    }
 };
 
 
@@ -475,6 +483,8 @@ public:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
                 const char * message = this->ini.context.message.get_cstr();
                 const char * caption = "Information";
+                bool showform = this->ini.context.showform.get();
+                uint flag = this->ini.context.formflag.get();
                 this->mod = new FlatWaitMod(
                                             this->ini,
                                             this->front,
@@ -482,7 +492,9 @@ public:
                                             this->front.client_info.height,
                                             caption,
                                             message,
-                                            now);
+                                            now,
+                                            showform,
+                                            flag);
                 LOG(LOG_INFO, "ModuleManager::internal module 'Wait Info Message' ready");
             }
             break;
