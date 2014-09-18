@@ -488,7 +488,8 @@ class Sesman():
                 _status = True
             elif self.shared.get(u'selector') == MAGICASK:
                 # filters ("Group" and "Account/Device") entered by user in selector are applied to raw services list
-                self.engine.get_proxy_rights([u'RDP', u'VNC'])
+                self.engine.get_proxy_rights([u'RDP', u'VNC'],
+                                             check_timeframes=False)
                 services, item_filtered = self.engine.get_targets_list(
                     group_filter = self.shared.get(u'selector_group_filter'),
                     device_filter = self.shared.get(u'selector_device_filter'),
@@ -740,15 +741,24 @@ class Sesman():
 
     def check_target(self, selected_target):
         ticket = None
+        has_wait = False
         while True:
+            Logger().info(u"Begin check_target ticket = %s..." % ticket)
             status, infos = self.engine.check_target(selected_target, self.pid, ticket)
+            ticket = None
+            Logger().info(u"End check_target ...")
             if not status:
-                return True, ""
+                self.send_data({u'module' : "transitory"})
+                if has_wait:
+                    sleep(1)
+                if status is None:
+                    return True, ""
+            has_wait = True
             self.show_waitinfo(status, infos)
             r = []
             try:
                 Logger().info(u"Start Select ...")
-                r, w, x = select([self.proxy_conx], [], [], 60)
+                r, w, x = select([self.proxy_conx], [], [], 10)
             except Exception as e:
                 if DEBUG:
                     Logger().info("exception: '%s'" % e)
@@ -759,29 +769,60 @@ class Sesman():
                 Logger().info("Got Signal %s" % e)
             if self.proxy_conx in r:
                 _status, _error = self.receive_data();
-                # if self.shared.get(u'waitinforeturn') == "backselector":
-                if self.shared.get(u'display_message') == 'True':
+                if self.shared.get(u'waitinforeturn') == "backselector":
                     # received back to selector
                     self.send_data({u'module' : u'selector', u'target_login': '',
                                     u'target_device' : ''})
                     return None, ""
-                # if self.shared.get(u'waitinforeturn') == "exit":
-                if self.shared.get(u'display_message') == 'False':
+                if self.shared.get(u'waitinforeturn') == "exit":
                     self.send_data({u'module' : u'close'})
                     # received exit
                     False, ""
                 if self.shared.get(u'waitinforeturn') == "confirm":
-                    # received ticket
-                    # ticket = trucmuch
+                    # should parse the ticket info
+                    desc = self.shared.get(u'comment')
+                    ticketno = self.shared.get(u'ticket')
+                    duration = self.parse_duration(self.shared.get(u'duration'))
+                    ticket = { u"description": desc if desc else None,
+                               u"ticket": ticketno if ticketno else None,
+                               u"duration": duration}
                     continue
         return False, ""
+
+    def parse_duration(self, duration):
+        if duration:
+            try:
+                import re
+                mpat = re.compile("(\d+)m")
+                hpat = re.compile("(\d+)h")
+                hres = hpat.search(duration)
+                mres = mpat.search(duration)
+                duration = 0
+                if mres:
+                    duration += 60*int(mres.group(1))
+                if hres:
+                    duration += 60*60*int(hres.group(1))
+                if duration == 0:
+                    duration = None
+            except Exception, e:
+                duration = None
+        return duration
 
     def show_waitinfo(self, status, infos):
         Logger().info("status : %s" % status)
         Logger().info("infos : %s" % infos)
-        self.send_data({ u'module' : u'waitinfo',
-                         u'message' : cut_message(infos.get('message')),
-                         u'display_message' : MAGICASK })
+        tosend = { u'module' : u'waitinfo',
+                   u'message' : cut_message(infos.get('message')),
+                   u'display_message' : MAGICASK,
+                   u'waitinforeturn' : MAGICASK
+                   }
+        if status == "APPROVAL":
+            tosend["showform"] = True
+            flag = infos.get("ticketflags")
+            tosend["formflag"] = flag if flag else 0
+        else:
+            tosend["showform"] = False
+        self.send_data(tosend)
 
     def start(self):
         _status, tries = None, 5

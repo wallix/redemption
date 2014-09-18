@@ -13,6 +13,7 @@ try:
     from wabconfig import Config
     from wabengine.client.sync_client import SynClient
     from wabengine.common.const import ACCEPTED, REJECTED, APPROVAL_PENDING, APPROVAL_NONE
+    from wabengine.common.const import REQUIRED, OPTIONAL
     from wabx509 import AuthX509
 except Exception, e:
     Logger().info("================================")
@@ -339,10 +340,11 @@ class Engine(object):
         self.proxy_rights = None
         self.rights = None
 
-    def get_proxy_rights(self, protocols, target_device=None):
+    def get_proxy_rights(self, protocols, target_device=None, check_timeframes=True):
         if self.proxy_rights is not None:
             return
-        self.proxy_rights = self.wabengine.get_proxy_rights(protocols, target_device)
+        self.proxy_rights = self.wabengine.get_proxy_rights(protocols, target_device,
+                                                            check_timeframes=check_timeframes)
 
         self.rights = self.proxy_rights.rights
         self.targets = {}
@@ -376,7 +378,8 @@ class Engine(object):
         if target_service == '':
             target_service = None
         selected_target = None
-        self.get_proxy_rights([u'RDP', u'VNC'], target_device)
+        self.get_proxy_rights([u'RDP', u'VNC'], target_device,
+                              check_timeframes=True if target_device else False)
         right = None
         if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
             for r in self.rights:
@@ -543,17 +546,28 @@ class Engine(object):
                 self.pidhandler = None
         return self.pidhandler
 
-    def check_target(self, target, pid=None, ticket=None):
-        status, infos = self.wabengine.check_target(target, self.get_pidhandler(pid), ticket)
+    def check_target(self, target, pid=None, request_ticket=None):
+        status, infos = self.wabengine.check_target(target, self.get_pidhandler(pid),
+                                                    request_ticket)
+        ticketfields = infos.get("ticket_fields")
+        if ticketfields:
+            flag = 0
+            if ticketfields["description"] == REQUIRED:
+                flag += 1
+            if ticketfields["ticket"] == REQUIRED:
+                flag += 2
+            if ticketfields["duration"] == REQUIRED:
+                flag += 4
+            infos["ticketflags"] = flag
         if status == ACCEPTED:
             return None, infos
         if status == REJECTED:
-            return "REJECTED", infos
+            return False, infos
         if status == APPROVAL_PENDING:
             return "PENDING", infos
         if status == APPROVAL_NONE:
             return "APPROVAL", infos
-        return "REJECTED", infos
+        return False, infos
 
 
 
