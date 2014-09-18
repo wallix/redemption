@@ -49,7 +49,7 @@ public:
              Widget2 & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id,
              Theme & theme, bool showform = false, int required = FlatForm::NONE)
-        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
         , groupbox(drawable, 0, 0, width, height, *this, NULL, caption, -6,
                    theme.global.fgcolor, theme.global.bgcolor)
         , bg_color(theme.global.bgcolor)
@@ -121,6 +121,9 @@ public:
         }
         else if ((event == NOTIFY_SUBMIT) && (widget == &this->goselector)) {
             this->send_notify(NOTIFY_SUBMIT);
+        }
+        else if ((event == NOTIFY_SUBMIT) && (widget->group_id == this->form.group_id)) {
+            this->send_notify(NOTIFY_TEXT_CHANGED);
         }
         else {
             WidgetParent::notify(widget, event);

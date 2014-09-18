@@ -55,32 +55,32 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
 
-    const char * text =
-        "The target trucmuch@machinbidule:serv is invalid<br>"
-        "please enter a valid target<br>"
-        "You can either return to selector<br>"
-        "or exit<br>"
-        "Sorry for the inconvenience";
+    // const char * text =
+    //     "The target trucmuch@machinbidule:serv is invalid<br>"
+    //     "please enter a valid target<br>"
+    //     "You can either return to selector<br>"
+    //     "or exit<br>"
+    //     "Sorry for the inconvenience";
 
-    const char * text_timeframe =
-        "Access to \"trucmuch@machinbidule:serv\" is not allowed because of out of timeframe.<br>"
-        "It will be available on Oct 4 at 7:00 am.<br>"
-        "You can either return to selector or exit.";
+    // const char * text_timeframe =
+    //     "Access to \"trucmuch@machinbidule:serv\" is not allowed because of out of timeframe.<br>"
+    //     "It will be available on Oct 4 at 7:00 am.<br>"
+    //     "You can either return to selector or exit.";
 
     const char * text_invalid =
         "Target \"trucmuch@machinbidule:serv\" is not allowed because you either<br>"
         "has no right to access it or it does not exist.<br>"
         "you can either return to selector or exit.";
 
-    const char * text_pending =
-        "An approbation demand is currently pending for \"trucmuch@machinbidule:serv\".<br>"
-        "Please wait for approbator confirmation.<br>"
-        "Otherwise, you can either return to selector or exit.";
+    // const char * text_pending =
+    //     "An approbation demand is currently pending for \"trucmuch@machinbidule:serv\".<br>"
+    //     "Please wait for approbator confirmation.<br>"
+    //     "Otherwise, you can either return to selector or exit.";
 
-    const char * text_approb =
-        "An approbation is required for \"trucmuch@machinbidule:serv\".<br>"
-        "Please fill following form and enter confirm to ask for an approbation.<br>"
-        "Otherwise, you can either return to selector or exit.";
+    // const char * text_approb =
+    //     "An approbation is required for \"trucmuch@machinbidule:serv\".<br>"
+    //     "Please fill following form and enter confirm to ask for an approbation.<br>"
+    //     "Otherwise, you can either return to selector or exit.";
 
 
     FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Invalid Target",

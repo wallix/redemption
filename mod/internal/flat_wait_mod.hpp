@@ -38,12 +38,13 @@ class FlatWaitMod : public InternalMod, public NotifyApi
 
 public:
     FlatWaitMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
-                  const char * caption, const char * message, time_t now)
+                const char * caption, const char * message, time_t now,
+                bool showform = false, uint32_t flag = 0)
         : InternalMod(front, width, height, &ini)
         , wait_widget(*this, width, height, this->screen, this, caption, message,
-                      0, ini.theme, true)
+                      0, ini.theme, showform, flag)
         , ini(ini)
-        , timeout(Timeout(now, 60))
+        , timeout(Timeout(now, 600))
     {
         this->screen.add_widget(&this->wait_widget);
         if (this->wait_widget.hasform) {
@@ -66,16 +67,30 @@ public:
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
+            case NOTIFY_TEXT_CHANGED: this->confirm(); break;
             default: ;
         }
     }
 
 private:
+    void confirm()
+    {
+        this->ini.context_set_value(AUTHID_WAITINFORETURN,
+                                    "confirm");
+        this->ini.context_set_value(AUTHID_COMMENT,
+                                    this->wait_widget.form.comment_edit.get_text());
+        this->ini.context_set_value(AUTHID_TICKET,
+                                    this->wait_widget.form.ticket_edit.get_text());
+        this->ini.context_set_value(AUTHID_DURATION,
+                                    this->wait_widget.form.duration_edit.get_text());
+        this->event.signal = BACK_EVENT_NEXT;
+        this->event.set();
+    }
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void accepted()
     {
-        this->ini.context_set_value(AUTHID_DISPLAY_MESSAGE,
-                                    "True");
+        this->ini.context_set_value(AUTHID_WAITINFORETURN,
+                                    "backselector");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
@@ -83,8 +98,8 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void refused()
     {
-        this->ini.context_set_value(AUTHID_DISPLAY_MESSAGE,
-                                    "False");
+        this->ini.context_set_value(AUTHID_WAITINFORETURN,
+                                    "exit");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }

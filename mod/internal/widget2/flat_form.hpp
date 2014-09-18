@@ -61,7 +61,7 @@ enum {
     FlatForm(DrawApi& drawable, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier, int group_id,
              Theme & theme, int flags = 0)
-        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
         , comment_label(drawable, 0, 10, *this, NULL, "Comment", true,
                         group_id, theme.global.fgcolor, theme.global.bgcolor)
         , comment_edit(drawable, this->comment_label.lx() + 20, 10, 300, *this, this,
@@ -78,12 +78,12 @@ enum {
                         0, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                         theme.edit.focus_color, -1, 1, 1)
         , duration_format(drawable, 0, 100, *this, NULL,
-                "format \"[days]d[hours]h[mins]m\" each unit is optional.", true,
+                "format \"[hours]h[mins]m\" each unit is optional.", true,
                 group_id, theme.global.fgcolor, theme.global.bgcolor)
         , notes(drawable, 0, 120, *this, NULL,
                 "(*) required fields.", true,
                 group_id, theme.global.fgcolor, theme.global.bgcolor)
-        , confirm(drawable, 0, 0, *this, notifier, "Confirm", true, group_id,
+        , confirm(drawable, 0, 0, *this, this, "Confirm", true, group_id,
                   theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
                   6, 2)
         , flags(flags)
