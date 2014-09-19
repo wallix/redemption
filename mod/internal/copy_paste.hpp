@@ -111,6 +111,10 @@ public:
         this->send_to_front_channel(RDPECLIP::FormatListPDU());
     }
 
+    bool contains_text() const noexcept {
+        return this->has_clipboard_;
+    }
+
     void send_to_mod_channel(Stream & chunk, uint32_t flags)
     {
         SubStream stream(chunk, 0, chunk.size());

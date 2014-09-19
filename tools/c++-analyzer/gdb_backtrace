@@ -1,6 +1,6 @@
 #!/bin/bash
 
-gdb "$@" <<< "r
+exec gdb "$@" <<< "r
 backtrace
 q
 y

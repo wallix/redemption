@@ -1595,6 +1595,8 @@ public:
                             memcpy(channel_item.name, cs_net.channelDefArray[index].name, 8);
                             channel_item.flags = cs_net.channelDefArray[index].options;
                             channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
+                            //std::cout << "channel_item.name: " << channel_item.name << std::endl;
+                            //TODO filtering channel
                             this->channel_list.push_back(channel_item);
                         }
                         if (this->verbose & 1) {

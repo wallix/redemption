@@ -302,23 +302,6 @@ public:
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
     }
-
-private:
-    template<class PDU>
-    void send_to_front_channel(const CHANNELS::ChannelDef * channel, PDU && pdu) {
-        BStream out_s(256);
-        pdu.emit(out_s);
-        const size_t length     = out_s.size();
-        const size_t chunk_size = length;
-        this->front.send_to_channel(*channel, out_s.get_data(), length, chunk_size,
-                                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
-    }
-
-    template<class PDU>
-    void send_to_front_channel(PDU && pdu) {
-        const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
-        this->send_to_front_channel(channel_list.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME), pdu);
-    }
 };
 
 #endif

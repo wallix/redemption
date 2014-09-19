@@ -852,6 +852,7 @@ struct mod_rdp : public mod_api {
                                     if (this->verbose & 16){
                                         def.log(index);
                                     }
+                                    //TODO filtering channel
                                     this->mod_channel_list.push_back(def);
                                 }
 
@@ -1698,7 +1699,7 @@ struct mod_rdp : public mod_api {
 
                         X224::DT_TPDU_Recv x224(*this->nego.trans, stream);
                         SubStream & mcs_data = x224.payload;
-                        
+
                         MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
                         if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
                             LOG(LOG_INFO, "mod::rdp::DisconnectProviderUltimatum received");
@@ -1708,7 +1709,7 @@ struct mod_rdp : public mod_api {
                             LOG(LOG_INFO, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
                             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                         }
-                        
+
 
                         MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
                         SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
@@ -1733,6 +1734,9 @@ struct mod_rdp : public mod_api {
                             uint32_t length = sec.payload.in_uint32_le();
                             int flags = sec.payload.in_uint32_le();
                             size_t chunk_size = sec.payload.in_remain();
+
+                            //std::cout << "mod_channel.name: " << mod_channel.name << std::endl;
+                            //TODO filtering channel
 
                             // If channel name is our virtual channel, then don't send data to front
                             if (this->auth_channel[0] /*&& this->acl */&& !strcmp(mod_channel.name, this->auth_channel)){
