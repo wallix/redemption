@@ -198,7 +198,7 @@ static inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t i
       return RGBtoBGR(palette[static_cast<uint8_t>(c)]);
     case 15:
     {
-        //  b1 b2 b3 b4 b5 g1 g2 g3 g4 g5r1 r2 r3 r4 r5
+        //  b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         const BGRColor b = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
         const BGRColor g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
         const BGRColor r = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
