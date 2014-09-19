@@ -22,11 +22,9 @@
 #define REDEMPTION_MOD_INTERNAL_COPY_PASTE_UTILITY_HPP
 
 #include "RDP/clipboard.hpp"
-#include "RDP/gcc.hpp"
 #include "channel_list.hpp"
-#include "stream.hpp"
-#include "array.hpp"
 #include "front_api.hpp"
+#include "stream.hpp"
 
 #include <utility>
 #include <algorithm>
@@ -34,10 +32,11 @@
 class WidgetEdit;
 
 namespace aux_ {
+    //NOTE: cross reference (WidgetEdit <-> CopyPaste)
     void insert_text_in_widget_edit(const char *, WidgetEdit &);
 }
 
-//TODO Cut
+
 class CopyPaste
 {
     FrontAPI * front_ = nullptr;
@@ -47,11 +46,7 @@ class CopyPaste
     struct LimitString
     {
         char buf[1024 * 4];
-        size_t size;
-
-        LimitString()
-        : size(0)
-        {}
+        size_t size = 0;
 
         /*C++14 constexpr*/ size_t max_size() const {
             return sizeof(this->buf) / sizeof(this->buf[0]) - 1;
@@ -64,12 +59,19 @@ class CopyPaste
             this->buf[this->size] = 0;
         }
 
+        void assign(char const * s, size_t n) {
+            this->size = std::min(n, this->max_size());
+            memcpy(this->buf, s, this->size);
+            this->buf[this->size] = 0;
+        }
+
         const char * c_str() const {
             return this->buf;
         }
     };
 
-    LimitString clipboard_str;
+    LimitString clipboard_str_;
+    bool has_clipboard_ = false;
 
 public:
     CopyPaste() = default;
@@ -93,14 +95,21 @@ public:
     }
 
     void paste(WidgetEdit & edit) {
-        this->clipboard_str.size = 0;
-        this->send_to_front_channel(RDPECLIP::FormatDataRequestPDU(RDPECLIP::CF_UNICODETEXT));
-        this->paste_edit_ = &edit;
+        if (this->has_clipboard_) {
+            this->paste_edit_ = nullptr;
+            aux_::insert_text_in_widget_edit(this->clipboard_str_.c_str(), edit);
+        }
+        else {
+            this->paste_edit_ = &edit;
+            this->send_to_front_channel(RDPECLIP::FormatDataRequestPDU(RDPECLIP::CF_UNICODETEXT));
+        }
     }
 
-//     void copy() {
-//
-//     }
+    void copy(const char * s, size_t n) {
+        this->has_clipboard_ = true;
+        this->clipboard_str_.assign(s, n);
+        this->send_to_front_channel(RDPECLIP::FormatListPDU());
+    }
 
     void send_to_mod_channel(Stream & chunk, uint32_t flags)
     {
@@ -111,12 +120,14 @@ public:
             case RDPECLIP::CB_FORMAT_LIST:
                 RDPECLIP::FormatListPDU().recv(stream, recv_factory);
                 this->send_to_front_channel(RDPECLIP::FormatListResponsePDU(true));
+                this->has_clipboard_ = false;
+                this->clipboard_str_.size = 0;
                 break;
             //case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
             //    break;
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                 RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
-                this->send_to_front_channel(RDPECLIP::FormatDataResponsePDU(true), "");
+                this->send_to_front_channel(RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.buf);
                 break;
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
                 RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
@@ -130,18 +141,20 @@ public:
                             throw Error(ERR_RDP_PROTOCOL);
                         }
 
-                        this->clipboard_str.size = UTF16toUTF8(
+                        this->clipboard_str_.size = UTF16toUTF8(
                             stream.p
                           , format_data_response_pdu.dataLen() / 2
-                          , reinterpret_cast<uint8_t*>(this->clipboard_str.buf)
-                          , this->clipboard_str.max_size()
+                          , reinterpret_cast<uint8_t*>(this->clipboard_str_.buf)
+                          , this->clipboard_str_.max_size()
                         );
-                        this->clipboard_str.buf[this->clipboard_str.size] = 0;
+                        this->clipboard_str_.buf[this->clipboard_str_.size] = 0;
 
                         if (this->paste_edit_) {
-                            aux_::insert_text_in_widget_edit(this->clipboard_str.c_str(), *this->paste_edit_);
+                            aux_::insert_text_in_widget_edit(this->clipboard_str_.c_str(), *this->paste_edit_);
                             this->paste_edit_ = nullptr;
                         }
+
+                        this->has_clipboard_ = true;
                     }
                     else {
                         // Virtual channel data span in multiple Virtual Channel PDUs.
@@ -151,7 +164,7 @@ public:
                             throw Error(ERR_RDP_PROTOCOL);
                         }
 
-                        this->clipboard_str.push_back(reinterpret_cast<char const *>(stream.get_data()), stream.size());
+                        this->clipboard_str_.push_back(reinterpret_cast<char const *>(stream.get_data()), stream.size());
                     }
                 }
                 break;

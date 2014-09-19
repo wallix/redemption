@@ -25,7 +25,7 @@
 #include "config.hpp"
 #include "widget2/flat_selector2.hpp"
 #include "internal_mod.hpp"
-#include "copy_paste_utility.hpp"
+#include "copy_paste.hpp"
 
 class FlatSelector2Mod : public InternalMod, public NotifyApi
 {
@@ -287,8 +287,6 @@ public:
     virtual void draw_event(time_t now)
     {
         if (!this->copy_paste && event.waked_up_by_time) {
-            std::cout << "  ##  ## waked_up_by_time" << std::endl;
-
             this->copy_paste.ready(this->front);
 
             this->selector.filter_protocol.copy_paste = &this->copy_paste;

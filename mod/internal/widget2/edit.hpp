@@ -26,7 +26,7 @@
 #include "label.hpp"
 #include <keymap2.hpp>
 #include "cast.hpp"
-#include "../copy_paste_utility.hpp"
+#include "../copy_paste.hpp"
 
 class WidgetEdit : public Widget2 {
 public:
