@@ -12,8 +12,9 @@ try:
     from wallixgenericnotifier import LICENCE_EXPIRED, LICENCE_PRIMARY_CX_ERROR, LICENCE_SECONDARY_CX_ERROR
     from wabconfig import Config
     from wabengine.client.sync_client import SynClient
-    from wabengine.common.const import ACCEPTED, REJECTED, APPROVAL_PENDING, APPROVAL_NONE
-    from wabengine.common.const import REQUIRED, OPTIONAL
+    from wabengine.common.const import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
+        APPROVAL_PENDING, APPROVAL_NONE
+    from wabengine.common.const import APPREQ_REQUIRED, APPREQ_OPTIONAL
     from wabx509 import AuthX509
 except Exception, e:
     Logger().info("================================")
