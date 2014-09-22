@@ -2430,9 +2430,6 @@ public:
                 LOG(LOG_ERR, "client event PDU Recv");
                 FastPath::ClientInputEventPDU_Recv cfpie(stream, this->decrypt);
 
-                uint8_t byte;
-                uint8_t eventCode;
-
                 for (uint8_t i = 0; i < cfpie.numEvents; i++){
                     if (!cfpie.payload.in_check_rem(1)){
                         LOG(LOG_ERR, "Truncated Fast-Path input event PDU, need=1 remains=%u",
@@ -2440,9 +2437,8 @@ public:
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
 
-                    byte = cfpie.payload.in_uint8();
-
-                    eventCode  = (byte & 0xE0) >> 5;
+                    uint8_t byte = cfpie.payload.in_uint8();
+                    uint8_t eventCode  = (byte & 0xE0) >> 5;
 
                     switch (eventCode){
                         case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:

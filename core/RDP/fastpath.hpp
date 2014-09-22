@@ -234,17 +234,15 @@ namespace FastPath {
                 }
 
                 stream.in_copy_bytes(this->dataSignature, 8);
-            }
-
-            this->payload.resize(stream, stream.in_remain());
-
-            if (this->secFlags & FASTPATH_INPUT_ENCRYPTED) {
                 decrypt.decrypt(payload.get_data(), payload.size());
             }
 
             if (this->numEvents == 0) {
-                this->numEvents = payload.in_uint8();
+                this->numEvents = stream.in_uint8();
             }
+
+            this->payload.resize(stream, stream.in_remain());
+
         }   // ClientInputEventPDU_Recv(Stream & stream)
     };  // struct ClientInputEventPDU_Recv
 
