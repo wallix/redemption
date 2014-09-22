@@ -65,7 +65,8 @@
 
 #include "genrandom.hpp"
 
-struct mod_rdp : public mod_api {
+class mod_rdp : public mod_api {
+
     FrontAPI & front;
 
     CHANNELS::ChannelDefArray mod_channel_list;
@@ -191,6 +192,7 @@ struct mod_rdp : public mod_api {
 
     bool deactivation_reactivation_in_progress;
 
+public:
     mod_rdp( Transport * trans
            , FrontAPI & front
            , const ClientInfo & info
@@ -844,6 +846,7 @@ struct mod_rdp : public mod_api {
                                 cs_net.channelCount = num_channels;
                                 for (size_t index = 0; index < num_channels; index++) {
                                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
+                                    std::cout << "channel_list[index].name: " << channel_list[index].name << std::endl;
                                     memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
                                     cs_net.channelDefArray[index].options = channel_item.flags;
                                     CHANNELS::ChannelDef def;
@@ -852,7 +855,6 @@ struct mod_rdp : public mod_api {
                                     if (this->verbose & 16){
                                         def.log(index);
                                     }
-                                    //TODO filtering channel
                                     this->mod_channel_list.push_back(def);
                                 }
 
@@ -1059,11 +1061,11 @@ struct mod_rdp : public mod_api {
                                     if (this->verbose & 16){
                                         LOG(LOG_INFO, "server_channels_count=%u sent_channels_count=%u",
                                             sc_net.channelCount,
-                                            mod_channel_list.channelCount);
+                                            mod_channel_list.size());
                                     }
                                     for (uint32_t index = 0; index < sc_net.channelCount; index++) {
                                         if (this->verbose & 16){
-                                            this->mod_channel_list.items[index].log(index);
+                                            this->mod_channel_list[index].log(index);
                                         }
                                         this->mod_channel_list.set_chanid(index, sc_net.channelDefArray[index].id);
                                     }
@@ -1193,9 +1195,9 @@ struct mod_rdp : public mod_api {
                                 SubStream & mcs_cjcf_data = x224.payload;
                                 MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
                                 TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list");
-                                    if (this->verbose & 16){
-                                        LOG(LOG_INFO, "cjcf[%u] = %u", index, mcs.channelId);
-                                    }
+                                if (this->verbose & 16){
+                                    LOG(LOG_INFO, "cjcf[%u] = %u", index, mcs.channelId);
+                                }
                             }
                         }
 
@@ -1734,9 +1736,6 @@ struct mod_rdp : public mod_api {
                             uint32_t length = sec.payload.in_uint32_le();
                             int flags = sec.payload.in_uint32_le();
                             size_t chunk_size = sec.payload.in_remain();
-
-                            //std::cout << "mod_channel.name: " << mod_channel.name << std::endl;
-                            //TODO filtering channel
 
                             // If channel name is our virtual channel, then don't send data to front
                             if (this->auth_channel[0] /*&& this->acl */&& !strcmp(mod_channel.name, this->auth_channel)){

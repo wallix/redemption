@@ -77,6 +77,8 @@
 
 #include "auth_api.hpp"
 
+#include "filtering_channel.hpp"
+
 enum {
     FRONT_DISCONNECTED,
     FRONT_CONNECTING,
@@ -85,6 +87,32 @@ enum {
 
 class Front : public FrontAPI {
     using FrontAPI::draw;
+
+    class DisableChannelId {
+        unsigned channel_id_[32];
+        size_t size_ = 0;
+
+    public:
+        void push_back(unsigned i) {
+            this->channel_id_[this->size_] = i;
+            ++this->size_;
+        }
+
+        unsigned const * begin() const {
+            return this->channel_id_;
+        }
+
+        unsigned const * end() const {
+            return this->begin() + this->size_;
+        }
+
+        size_t size() const {
+            return this->size_;
+        }
+    };
+    DisableChannelId disable_channel_id_sorted;
+    FilteringChannel filtering_channel;
+
 public:
     enum CaptureState {
           CAPTURE_STATE_UNKNOWN
@@ -1591,13 +1619,18 @@ public:
                         GCC::UserData::CSNet cs_net;
                         cs_net.recv(f.payload);
                         for (uint32_t index = 0; index < cs_net.channelCount; index++) {
-                            CHANNELS::ChannelDef channel_item;
-                            memcpy(channel_item.name, cs_net.channelDefArray[index].name, 8);
-                            channel_item.flags = cs_net.channelDefArray[index].options;
-                            channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
-                            //std::cout << "channel_item.name: " << channel_item.name << std::endl;
-                            //TODO filtering channel
-                            this->channel_list.push_back(channel_item);
+                            const auto & channel_def = cs_net.channelDefArray[index];
+                            if (!this->filtering_channel.contains(channel_def.name)) {
+                                CHANNELS::ChannelDef channel_item;
+                                memcpy(channel_item.name, channel_def.name, 8);
+                                channel_item.flags = channel_def.options;
+                                channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
+                                //std::cout << "channel_item.name: " << channel_item.name << std::endl;
+                                this->channel_list.push_back(channel_item);
+                            }
+                            else {
+                                this->disable_channel_id_sorted.push_back(index);
+                            }
                         }
                         if (this->verbose & 1) {
                             cs_net.log("Received from Client");
@@ -1856,7 +1889,9 @@ public:
                 this->trans->send(x224_header, mcs_cjcf_data);
             }
 
-            for (size_t i = 0 ; i < this->channel_list.size() ; i++){
+            const unsigned * beg_disable_channel_id = this->disable_channel_id_sorted.begin();
+            const unsigned * end_disable_channel_id = this->disable_channel_id_sorted.end();
+            for (size_t i = 0 ; i < this->channel_list.size() + this->disable_channel_id_sorted.size(); i++){
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*this->trans, x224_data);
@@ -1882,7 +1917,13 @@ public:
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
                 this->trans->send(x224_header, mcs_cjcf_data);
 
-                this->channel_list.set_chanid(i, mcs.channelId);
+                if (beg_disable_channel_id != end_disable_channel_id && *beg_disable_channel_id == i) {
+                    ++beg_disable_channel_id;
+                }
+                else {
+                    const size_t real_index = i - (beg_disable_channel_id - this->disable_channel_id_sorted.begin());
+                    this->channel_list.set_chanid(real_index, mcs.channelId);
+                }
             }
 
             if (this->verbose & 1){

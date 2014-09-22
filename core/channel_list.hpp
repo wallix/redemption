@@ -77,11 +77,11 @@ namespace CHANNELS {
     };
 
     class ChannelDefArray {
-    public:
         // The number of requested static virtual channels (the maximum allowed is 31).
         size_t     channelCount;
         ChannelDef items[32];
 
+    public:
         ChannelDefArray() : channelCount(0) {}
 
         const ChannelDef & operator[](size_t index) const {
