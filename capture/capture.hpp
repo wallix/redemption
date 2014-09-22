@@ -93,7 +93,7 @@ public:
     , last_y(height / 2)
     {
         if (this->capture_drawable) {
-            this->drawable = new RDPDrawable(width, height, mod_bpp);
+            this->drawable = new RDPDrawable(width, height, capture_bpp);
         }
 
         if (this->capture_png) {
