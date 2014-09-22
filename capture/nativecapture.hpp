@@ -60,10 +60,6 @@
 class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice
 {
 public:
-//    int width;
-//    int height;
-//    int capture_bpp;
-
     uint64_t frame_interval;
     timeval start_native_capture;
     uint64_t inter_frame_interval_native_capture;
@@ -79,16 +75,16 @@ public:
 
     bool disable_keyboard_log_wrm;
 
+    bool externally_generated_breakpoint;
+
     NativeCapture(const timeval & now, Transport & trans, int width, int height, int capture_bpp, BmpCache & bmp_cache,
-                  RDPDrawable & drawable, const Inifile & ini)
-//    : width(width)
-//    , height(height)
-//    , capture_bpp(capture_bpp)
+                  RDPDrawable & drawable, const Inifile & ini, bool externally_generated_breakpoint = false)
     : bmp_cache(bmp_cache)
     , recorder(now, &trans, width, height, capture_bpp, bmp_cache, drawable, ini)
     , nb_file(0)
     , time_to_wait(0)
     , disable_keyboard_log_wrm(ini.video.disable_keyboard_log_wrm)
+    , externally_generated_breakpoint(externally_generated_breakpoint)
     {
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
         this->start_native_capture = now;
@@ -127,9 +123,10 @@ public:
             this->time_to_wait = this->inter_frame_interval_native_capture;
             this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
             this->start_native_capture = now;
-            if (difftimeval(now, this->start_break_capture)
-                    >= this->inter_frame_interval_start_break_capture) {
-                this->breakpoint();
+            if (!this->externally_generated_breakpoint &&
+                (difftimeval(now, this->start_break_capture) >=
+                 this->inter_frame_interval_start_break_capture)) {
+                this->recorder.breakpoint();
                 this->start_break_capture = now;
             }
         }
@@ -238,13 +235,11 @@ public:
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip)
-    {
+    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
-    {
+    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) {
         this->recorder.draw(cmd, clip);
     }
 
@@ -258,9 +253,10 @@ public:
         this->recorder.set_pointer(cache_idx);
     }
 
-private:
-    void breakpoint()
-    {
+    // toggles externally genareted breakpoint.
+    virtual void external_breakpoint() {
+        REDASSERT(this->externally_generated_breakpoint);
+
         this->recorder.breakpoint();
     }
 };

@@ -354,12 +354,9 @@ public:
                 break;
                 case TS_CACHE_COLOR_TABLE:
                     LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_COLOR_TABLE (%d)", header.type);
-//                    this->process_colormap(this->stream, control, header, mod);
                     break;
                 case TS_CACHE_GLYPH:
                 {
-//                  LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_GLYPH (%d)", header.type);
-//                  this->rdp_orders_process_fontcache(this->stream, header.flags, mod);
                     RDPGlyphCache cmd;
                     cmd.receive(this->stream, control, header);
                     if (this->verbose > 32){
@@ -706,7 +703,7 @@ public:
 
                 this->stream.p = this->stream.end;
 
-                if (!this->meta_ok){
+                if (!this->meta_ok) {
                     this->bmp_cache = new BmpCache(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
                         this->info_use_waiting_list,
                         BmpCache::CacheOption(
@@ -724,9 +721,15 @@ public:
                 }
                 else {
                     if (this->screen_rect.cx != this->info_width ||
-                        this->screen_rect.cy != this->info_height){
+                        this->screen_rect.cy != this->info_height) {
                         LOG(LOG_ERR,"Inconsistant redundant meta chunk");
                         throw Error(ERR_WRM);
+                    }
+                }
+
+                for (size_t i = 0; i < this->nbconsumers ; i++) {
+                    if (this->consumers[i].capture_device) {
+                        this->consumers[i].capture_device->external_breakpoint();
                     }
                 }
             }

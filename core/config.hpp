@@ -1607,6 +1607,9 @@ public:
                 this->video.disable_keyboard_log_wrm    = 0 != (this->video.disable_keyboard_log.get() & 2);
                 this->video.disable_keyboard_log_ocr    = 0 != (this->video.disable_keyboard_log.get() & 4);
             }
+            else if (0 == strcmp(key, "rt_display")) {
+                this->video.rt_display.set_from_cstr(value);
+            }
             else if (0 == strcmp(key, "wrm_color_depth_selection_strategy")) {
                 this->video.wrm_color_depth_selection_strategy = ulong_from_cstr(value);
             }

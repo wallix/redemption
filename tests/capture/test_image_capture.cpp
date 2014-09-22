@@ -315,7 +315,6 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.drawable);
 
-//    consumer.set_pointer_display();
     drawable.drawable.dont_show_mouse_cursor = true;
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);

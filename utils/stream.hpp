@@ -46,6 +46,7 @@ public:
     uint8_t* end;
 protected:
     uint8_t* data;
+public:
     size_t capacity;
 
 public:

@@ -27,17 +27,20 @@
 
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include "stream.hpp"
 #include "transport.hpp"
 #include "test_transport.hpp"
 #include "RDP/sec.hpp"
+#include "RDP/x224.hpp"
 #include "RDP/fastpath.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     CryptContext decrypt;
+
+    TODO("We should fix that test (and a few other below) to make it independant from transport");
 
     const char *payload =
 /* 0000 */ "\x10\x0e\x01\x0f\x62\x01\x0f\x20\x00\x08\xca\x00\x41\x03"         // ....b.. ....A.   |
@@ -50,7 +53,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     BStream in_s(65536);
     BStream out_s(65536);
 
-    FastPath::ClientInputEventPDU_Recv in_cie(in_t, in_s, decrypt);
+    X224::RecvFactory fx224(in_t, in_s, true);
+    FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt);
 
     BOOST_CHECK_EQUAL(4, in_cie.numEvents);
 
@@ -129,7 +133,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     BStream in_s(65536);
     BStream out_s(65536);
 
-    FastPath::ClientInputEventPDU_Recv in_cie(in_t, in_s, decrypt);
+    X224::RecvFactory fx224(in_t, in_s, true);
+    FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt);
 
     BOOST_CHECK_EQUAL(6, in_cie.numEvents);
 
@@ -210,7 +215,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     BStream in_s(65536);
     BStream out_s(65536);
 
-    FastPath::ServerUpdatePDU_Recv in_su(in_t, in_s, decrypt);
+    X224::RecvFactory fx224(in_t, in_s, true);
+    FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt);
 
     uint8_t updateCodes[4] = {
           FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE
@@ -267,7 +273,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
 
     BStream in_s(65536);
 
-    FastPath::ServerUpdatePDU_Recv in_su(in_t, in_s, decrypt);
+    X224::RecvFactory fx224(in_t, in_s, true);
+    FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt);
 
     uint8_t updateCodes[4] = {
           FastPath::FASTPATH_UPDATETYPE_ORDERS
@@ -303,7 +310,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
     BStream in_s(65536);
     BStream out_s(65536);
 
-    FastPath::ServerUpdatePDU_Recv in_su(in_t, in_s, decrypt);
+    X224::RecvFactory fx224(in_t, in_s, true);
+    FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt);
 
     out_s.out_clear_bytes(FastPath::Update_Send::GetSize(false)); // Fast-Path Update (TS_FP_UPDATE structure) size
 

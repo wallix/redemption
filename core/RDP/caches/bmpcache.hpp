@@ -201,7 +201,7 @@ private:
 
         typedef aligned_set_allocator<value_set> set_allocator;
         typedef std::less<value_set> set_compare;
-        typedef std::set<value_set, set_compare/*, set_allocator*/> set_type;
+        typedef std::set<value_set, set_compare, set_allocator> set_type;
 
         set_type sorted_elements;
 
@@ -209,7 +209,7 @@ private:
         cache_range(cache_element * first, size_t sz, storage_value_set & storage)
         : first(first)
         , last(first + sz)
-//         , sorted_elements(set_compare(), storage)
+        , sorted_elements(set_compare(), storage)
         {}
 
         cache_element & operator[](size_t i) {
@@ -273,7 +273,7 @@ private:
             this->sorted_elements.insert(e);
         }
 
-        cache_range(cache_range &&) = default;
+        cache_range(cache_range &&) = default; // FIXME g++ (4.8, 4.9, other ?)
         cache_range(cache_range const &) = delete;
         cache_range& operator=(cache_range const &) = delete;
     };
