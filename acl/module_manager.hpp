@@ -277,9 +277,13 @@ public:
     }
 
     virtual void check_module() {
-        const char * module_cstr = this->ini.context.module.get_cstr();
-        if (!strcmp(module_cstr, STRMODULE_TRANSITORY)) {
+        if (this->ini.context.forcemodule.get() &&
+            !this->is_connected()) {
             this->mod->get_event().signal = BACK_EVENT_NEXT;
+            this->mod->get_event().set();
+            this->ini.context.forcemodule.set(false);
+            this->ini.context.forcemodule.use();
+            // Do not send back the value to sesman.
         }
     }
 };

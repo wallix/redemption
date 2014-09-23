@@ -190,7 +190,11 @@ struct Session {
                             && this->front->capture) {
                             pause_record.check(now, *this->front);
                         }
-
+                        // new value incomming from acl
+                        if (this->ini->check_from_acl()) {
+                            this->front->update_config(*this->ini);
+                            mm.check_module();
+                        }
                         // Process incoming module trafic
                         if (mm.mod->get_event().is_set(rfds)) {
                             mm.mod->draw_event(now);
@@ -200,17 +204,14 @@ struct Session {
                                 mm.mod->get_event().reset();
                             }
                         }
-                        // TODO: update only when new value incoming
-                        if (this->ini->check_from_acl()) {
-                            this->front->update_config(*this->ini);
-                        }
                         if (this->front->capture
                             && this->front->capture->capture_event.is_set(rfds)) {
                             this->front->periodic_snapshot();
                         }
                         // Incoming data from ACL, or opening acl
                         if (!this->acl) {
-                            if (!mm.last_module) { // acl never opened or closed by me (close box)
+                            if (!mm.last_module) {
+                                // acl never opened or closed by me (close box)
                                 try {
                                     int client_sck = ip_connect(this->ini->globals.authip,
                                                                 this->ini->globals.authport,

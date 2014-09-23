@@ -741,20 +741,16 @@ class Sesman():
 
     def check_target(self, selected_target):
         ticket = None
-        has_wait = False
         while True:
             Logger().info(u"Begin check_target ticket = %s..." % ticket)
             status, infos = self.engine.check_target(selected_target, self.pid, ticket)
             ticket = None
             Logger().info(u"End check_target ...")
             if not status:
-                self.send_data({u'module' : "transitory"})
-                if has_wait:
-                    sleep(1)
+                self.send_data({u'forcemodule' : True})
                 if status is None:
                     return True, ""
-            has_wait = True
-            self.show_waitinfo(status, infos)
+            self.interactive_display_waitinfo(status, infos)
             r = []
             try:
                 Logger().info(u"Start Select ...")
@@ -775,8 +771,8 @@ class Sesman():
                                     u'target_device' : ''})
                     return None, ""
                 if self.shared.get(u'waitinforeturn') == "exit":
-                    self.send_data({u'module' : u'close'})
                     # received exit
+                    self.send_data({u'module' : u'close'})
                     False, ""
                 if self.shared.get(u'waitinforeturn') == "confirm":
                     # should parse the ticket info
@@ -808,9 +804,7 @@ class Sesman():
                 duration = None
         return duration
 
-    def show_waitinfo(self, status, infos):
-        Logger().info("status : %s" % status)
-        Logger().info("infos : %s" % infos)
+    def interactive_display_waitinfo(self, status, infos):
         tosend = { u'module' : u'waitinfo',
                    u'message' : cut_message(infos.get('message')),
                    u'display_message' : MAGICASK,
