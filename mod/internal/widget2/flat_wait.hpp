@@ -53,13 +53,13 @@ public:
         , groupbox(drawable, 0, 0, width, height, *this, NULL, caption, -6,
                    theme.global.fgcolor, theme.global.bgcolor)
         , bg_color(theme.global.bgcolor)
-        , dialog(drawable, 0, 0, groupbox, NULL, text, true, -10,
+        , dialog(drawable, 0, 0, this->groupbox, NULL, text, true, -10,
                  theme.global.fgcolor, theme.global.bgcolor, 10, 2)
         , form(drawable, width - 80, 140, *this, this, -20, theme, required)
-        , goselector(drawable, 0, 0, groupbox, this, "Back to Selector", true, -12,
+        , goselector(drawable, 0, 0, this->groupbox, this, "Back to Selector", true, -12,
                      theme.global.fgcolor, theme.global.bgcolor,
                      theme.global.focus_color, 6, 2)
-        , exit(drawable, 0, 0, groupbox, this, "Exit", true, -11,
+        , exit(drawable, 0, 0, this->groupbox, this, "Exit", true, -11,
                theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
                6, 2)
         , hasform(showform)
@@ -68,10 +68,10 @@ public:
         // this->groupbox.add_widget(&this->title);
         this->groupbox.add_widget(&this->dialog);
 
-        int total_width = this->dialog.cx();
-        total_width = std::min(width + total_width, 2 * width);
-        total_width = total_width / 2;
-        total_width = width - 40;
+        // int total_width = this->dialog.cx();
+        // total_width = std::min(width + total_width, 2 * width);
+        // total_width = total_width / 2;
+        // int total_width = width - 80;
         int total_height = this->dialog.cy() + this->goselector.cy() + 20;
         if (showform) {
             total_height += this->form.cy();
@@ -79,7 +79,8 @@ public:
         // int starty = (height - total_height) / 2;
         int starty = 20;
         int y = starty;
-        this->dialog.rect.x = (this->cx() - total_width) / 2;
+        this->dialog.rect.x = 30; // dialog has 10 margin.
+        // this->dialog.rect.x = (this->cx() - total_width) / 2;
         this->dialog.rect.y = y + 10;
 
         y = this->dialog.dy() + this->dialog.cy() + 20;
@@ -87,14 +88,13 @@ public:
         if (showform) {
             this->groupbox.add_widget(&this->form);
             this->form.move_xy(40, y);
-
             y = this->form.ly() + 10;
         }
 
         this->groupbox.add_widget(&this->goselector);
         this->groupbox.add_widget(&this->exit);
 
-        this->exit.set_button_x(this->dialog.dx() + total_width - (this->exit.cx() + 10));
+        this->exit.set_button_x(width - 40 - this->exit.cx());
         this->goselector.set_button_x(this->exit.dx() - (this->goselector.cx() + 10));
 
         this->goselector.set_button_y(y);
