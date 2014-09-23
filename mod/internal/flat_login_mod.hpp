@@ -28,10 +28,13 @@
 #include "internal_mod.hpp"
 #include "widget2/notify_api.hpp"
 #include "translation.hpp"
+#include "copy_paste.hpp"
 
 class FlatLoginMod : public InternalMod, public NotifyApi
 {
     FlatLogin login;
+
+    CopyPaste copy_paste;
 
 public:
     Inifile & ini;
@@ -62,6 +65,7 @@ public:
     {
         this->screen.clear();
     }
+
     virtual void notify(Widget2* sender, notify_event_t event)
     {
         switch (event) {
@@ -76,13 +80,26 @@ public:
             this->event.set();
             break;
         default:
+            if (this->copy_paste) {
+                copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
+            }
             break;
         }
     }
 
     virtual void draw_event(time_t now)
     {
+        if (!this->copy_paste && event.waked_up_by_time) {
+            this->copy_paste.ready(this->front);
+        }
         this->event.reset();
+    }
+
+    virtual void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags)
+    {
+        if (this->copy_paste) {
+            this->copy_paste.send_to_mod_channel(chunk, flags);
+        }
     }
 };
 

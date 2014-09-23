@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# [-b function] [-f gdb_option] [-c] [-r exec_option] [-h] -x executable
+
 if [ "$1" = '-h' ] || [ -z "$1" ] ; then
   echo "$0 [-c] exec"
   exit 1

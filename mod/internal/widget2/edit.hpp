@@ -26,7 +26,6 @@
 #include "label.hpp"
 #include <keymap2.hpp>
 #include "cast.hpp"
-#include "../copy_paste.hpp"
 
 class WidgetEdit : public Widget2 {
 public:
@@ -528,11 +527,5 @@ public:
         }
     }
 };
-
-namespace aux_ {
-    void insert_text_in_widget_edit(const char * s, WidgetEdit & edit) {
-        edit.insert_text(s);
-    }
-}
 
 #endif

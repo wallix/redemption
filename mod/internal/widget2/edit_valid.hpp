@@ -215,6 +215,11 @@ public:
                 this->editbox->draw(this->rect);
             }
         }
+        if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
+            if (this->notifier) {
+                this->notifier->notify(widget, event);
+            }
+        }
     }
 };
 

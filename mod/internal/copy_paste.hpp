@@ -25,16 +25,10 @@
 #include "channel_list.hpp"
 #include "front_api.hpp"
 #include "stream.hpp"
+#include "widget2/edit.hpp"
 
 #include <utility>
 #include <algorithm>
-
-class WidgetEdit;
-
-namespace aux_ {
-    //NOTE: cross reference (WidgetEdit <-> CopyPaste)
-    void insert_text_in_widget_edit(const char *, WidgetEdit &);
-}
 
 
 class CopyPaste
@@ -104,7 +98,7 @@ public:
     void paste(WidgetEdit & edit) {
         if (this->has_clipboard_) {
             this->paste_edit_ = nullptr;
-            aux_::insert_text_in_widget_edit(this->clipboard_str_.c_str(), edit);
+            edit.insert_text(this->clipboard_str_.c_str());
         }
         else {
             this->paste_edit_ = &edit;
@@ -159,7 +153,7 @@ public:
                         this->clipboard_str_.utf16_push_back(stream.p, format_data_response_pdu.dataLen() / 2);
 
                         if (this->paste_edit_) {
-                            aux_::insert_text_in_widget_edit(this->clipboard_str_.c_str(), *this->paste_edit_);
+                            this->paste_edit_->insert_text(this->clipboard_str_.c_str());
                             this->paste_edit_ = nullptr;
                         }
 
@@ -196,5 +190,20 @@ private:
 };
 
 
+void copy_paste_process_event(CopyPaste & copy_paste, WidgetEdit & widget_edit, NotifyApi::notify_event_t event) {
+    switch(event) {
+        case NOTIFY_PASTE:
+            copy_paste.paste(widget_edit);
+            break;
+        case NOTIFY_COPY:
+            copy_paste.copy(widget_edit.get_text());
+            break;
+        case NOTIFY_CUT:
+            copy_paste.copy(widget_edit.get_text());
+            widget_edit.set_text("");
+            break;
+        default: ;
+    }
+}
 
 #endif

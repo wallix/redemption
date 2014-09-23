@@ -155,16 +155,8 @@ public:
                 }
             }
         }
-        else if (NOTIFY_COPY == event) {
-            this->copy_paste.copy(reinterpret_cast<WidgetEdit*>(widget)->get_text());
-        }
-        else if (NOTIFY_PASTE == event) {
-            this->copy_paste.paste(*reinterpret_cast<WidgetEdit*>(widget));
-        }
-        else if (NOTIFY_CUT == event) {
-            WidgetEdit * edit = reinterpret_cast<WidgetEdit*>(widget);
-            this->copy_paste.copy(edit->get_text());
-            edit->set_text("");
+        else if (this->copy_paste) {
+            copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(widget), event);
         }
     }
 
@@ -303,7 +295,7 @@ public:
         this->event.reset();
     }
 
-    virtual void send_to_mod_channel(const char*const front_channel_name, Stream& chunk, size_t length, uint32_t flags)
+    virtual void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags)
     {
         if (this->copy_paste) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
