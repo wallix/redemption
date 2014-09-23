@@ -42,7 +42,6 @@ public:
     int focus_color;
     bool drawall;
     bool draw_border_focus;
-    CopyPaste * copy_paste;
 
     WidgetEdit(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
                Widget2 & parent, NotifyApi* notifier, const char * text,
@@ -102,6 +101,7 @@ public:
         this->label.buffer[0] = 0;
         this->buffer_size = 0;
         this->num_chars = 0;
+        this->w_text = 0;
         if (text && *text) {
             this->buffer_size = std::min(WidgetLabel::buffer_size - 1, strlen(text));
             memcpy(this->label.buffer, text, this->buffer_size);
@@ -472,11 +472,6 @@ public:
                         this->move_to_first_character();
                     }
                     break;
-                case Keymap2::KEVENT_PASTE:
-                    if (this->copy_paste) {
-                        this->copy_paste->paste(*this);
-                    }
-                    break;
                 case Keymap2::KEVENT_KEY:
                     if (this->num_chars < WidgetLabel::buffer_size - 5) {
                         uint32_t c = keymap->get_char();
@@ -503,6 +498,24 @@ public:
                 case Keymap2::KEVENT_ENTER:
                     keymap->get_kevent();
                     this->send_notify(NOTIFY_SUBMIT);
+                    break;
+                case Keymap2::KEVENT_PASTE:
+                    keymap->get_kevent();
+                    this->send_notify(NOTIFY_PASTE);
+                    break;
+                case Keymap2::KEVENT_COPY:
+                    keymap->get_kevent();
+                    this->send_notify(NOTIFY_COPY);
+                    break;
+                case Keymap2::KEVENT_CUT:
+                    keymap->get_kevent();
+                    this->send_notify(NOTIFY_CUT);
+                    {
+                        this->drawable.begin_update();
+                        this->label.draw(this->label.rect);
+                        this->draw_cursor(this->get_cursor_rect());
+                        this->drawable.end_update();
+                    }
                     break;
                 default:
                     Widget2::rdp_input_scancode(param1, param2, param3, param4, keymap);

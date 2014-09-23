@@ -155,6 +155,17 @@ public:
                 }
             }
         }
+        else if (NOTIFY_COPY == event) {
+            this->copy_paste.copy(reinterpret_cast<WidgetEdit*>(widget)->get_text());
+        }
+        else if (NOTIFY_PASTE == event) {
+            this->copy_paste.paste(*reinterpret_cast<WidgetEdit*>(widget));
+        }
+        else if (NOTIFY_CUT == event) {
+            WidgetEdit * edit = reinterpret_cast<WidgetEdit*>(widget);
+            this->copy_paste.copy(edit->get_text());
+            edit->set_text("");
+        }
     }
 
     virtual void refresh_context(Inifile& ini)
@@ -288,10 +299,6 @@ public:
     {
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
-
-            this->selector.filter_protocol.copy_paste = &this->copy_paste;
-            this->selector.filter_target.copy_paste = &this->copy_paste;
-            this->selector.filter_target_group.copy_paste = &this->copy_paste;
         }
         this->event.reset();
     }

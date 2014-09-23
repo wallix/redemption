@@ -846,7 +846,6 @@ public:
                                 cs_net.channelCount = num_channels;
                                 for (size_t index = 0; index < num_channels; index++) {
                                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
-                                    std::cout << "channel_list[index].name: " << channel_list[index].name << std::endl;
                                     memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
                                     cs_net.channelDefArray[index].options = channel_item.flags;
                                     CHANNELS::ChannelDef def;

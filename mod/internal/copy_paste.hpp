@@ -43,30 +43,37 @@ class CopyPaste
     const CHANNELS::ChannelDef * channel_ = nullptr;
     WidgetEdit * paste_edit_ = nullptr;
 
-    struct LimitString
+    class LimitString
     {
-        char buf[1024 * 4];
-        size_t size = 0;
+        char buf_[1024 * 4];
+        size_t size_ = 0;
 
-        /*C++14 constexpr*/ size_t max_size() const {
-            return sizeof(this->buf) / sizeof(this->buf[0]) - 1;
+    public:
+        static constexpr size_t max_size() {
+            return sizeof(buf_) / sizeof(buf_[0]) - 1;
         }
 
-        void push_back(char const * s, size_t n) {
-            n = std::min(this->size + n, this->max_size());
-            memcpy(this->buf + this->size, s, n);
-            this->size += n;
-            this->buf[this->size] = 0;
+        void utf16_push_back(const uint8_t * s, size_t n) {
+            this->size_ += UTF16toUTF8(
+                s, n,
+                reinterpret_cast<uint8_t*>(this->buf_ + this->size_),
+                this->max_size() - this->size_
+            );
+            this->buf_[this->size_] = 0;
         }
 
         void assign(char const * s, size_t n) {
-            this->size = std::min(n, this->max_size());
-            memcpy(this->buf, s, this->size);
-            this->buf[this->size] = 0;
+            this->size_ = std::min(n, this->max_size());
+            memcpy(this->buf_, s, this->size_);
+            this->buf_[this->size_] = 0;
         }
 
         const char * c_str() const {
-            return this->buf;
+            return this->buf_;
+        }
+
+        void clear() {
+            this->size_ = 0;
         }
     };
 
@@ -111,6 +118,10 @@ public:
         this->send_to_front_channel(RDPECLIP::FormatListPDU());
     }
 
+    void copy(const char * s) {
+        this->copy(s, strlen(s));
+    }
+
     bool contains_text() const noexcept {
         return this->has_clipboard_;
     }
@@ -125,33 +136,27 @@ public:
                 RDPECLIP::FormatListPDU().recv(stream, recv_factory);
                 this->send_to_front_channel(RDPECLIP::FormatListResponsePDU(true));
                 this->has_clipboard_ = false;
-                this->clipboard_str_.size = 0;
+                this->clipboard_str_.clear();
                 break;
             //case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
             //    break;
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                 RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
-                this->send_to_front_channel(RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.buf);
+                this->send_to_front_channel(RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.c_str());
                 break;
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
                 RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
                 format_data_response_pdu.recv(stream, recv_factory);
                 if (format_data_response_pdu.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
-                    if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
-                        if (!stream.in_check_rem(format_data_response_pdu.dataLen())) {
-                            LOG( LOG_ERR
-                            , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
-                            , format_data_response_pdu.dataLen(), stream.in_remain());
-                            throw Error(ERR_RDP_PROTOCOL);
-                        }
+                    if (!stream.in_check_rem(format_data_response_pdu.dataLen())) {
+                        LOG( LOG_ERR
+                        , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
+                        , format_data_response_pdu.dataLen(), stream.in_remain());
+                        throw Error(ERR_RDP_PROTOCOL);
+                    }
 
-                        this->clipboard_str_.size = UTF16toUTF8(
-                            stream.p
-                          , format_data_response_pdu.dataLen() / 2
-                          , reinterpret_cast<uint8_t*>(this->clipboard_str_.buf)
-                          , this->clipboard_str_.max_size()
-                        );
-                        this->clipboard_str_.buf[this->clipboard_str_.size] = 0;
+                    if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
+                        this->clipboard_str_.utf16_push_back(stream.p, format_data_response_pdu.dataLen() / 2);
 
                         if (this->paste_edit_) {
                             aux_::insert_text_in_widget_edit(this->clipboard_str_.c_str(), *this->paste_edit_);
@@ -168,7 +173,7 @@ public:
                             throw Error(ERR_RDP_PROTOCOL);
                         }
 
-                        this->clipboard_str_.push_back(reinterpret_cast<char const *>(stream.get_data()), stream.size());
+                        this->clipboard_str_.utf16_push_back(stream.p, format_data_response_pdu.dataLen() / 2);
                     }
                 }
                 break;

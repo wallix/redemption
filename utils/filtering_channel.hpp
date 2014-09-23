@@ -46,7 +46,6 @@ struct FilteringChannel {
         }
 
         bool operator==(const char * s) const {
-            std::cout << "name_: " << name_ << std::endl;
             const char * beg = this->name_;
             for (; *beg && *s; ++beg, ++s) {
                 if (*beg != *s) {
@@ -76,7 +75,6 @@ public:
     }
 
     bool contains(const char * s) const {
-        std::cout << "s: " << s << std::endl;
         for (ChannelName const & name : *this) {
             if (name == s) {
                 return true;

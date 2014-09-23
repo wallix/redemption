@@ -1625,7 +1625,6 @@ public:
                                 memcpy(channel_item.name, channel_def.name, 8);
                                 channel_item.flags = channel_def.options;
                                 channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
-                                //std::cout << "channel_item.name: " << channel_item.name << std::endl;
                                 this->channel_list.push_back(channel_item);
                             }
                             else {
