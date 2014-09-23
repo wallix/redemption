@@ -550,19 +550,26 @@ class Engine(object):
     def check_target(self, target, pid=None, request_ticket=None):
         status, infos = self.wabengine.check_target(target, self.get_pidhandler(pid),
                                                     request_ticket)
+        Logger().info("status : %s" % status)
+        Logger().info("infos : %s" % infos)
         ticketfields = infos.get("ticket_fields")
         if ticketfields:
             flag = 0
-            if ticketfields["description"] == REQUIRED:
+            if ticketfields.get("description") == APPREQ_REQUIRED:
                 flag += 1
-            if ticketfields["ticket"] == REQUIRED:
+            if ticketfields.get("ticket") == APPREQ_REQUIRED:
                 flag += 2
-            if ticketfields["duration"] == REQUIRED:
+            if ticketfields.get("duration") == APPREQ_REQUIRED:
                 flag += 4
             infos["ticketflags"] = flag
-        if status == ACCEPTED:
+        deconnection_time = infos.get("deconnection_time")
+        if deconnection_time and target.deconnection_time == "":
+            Logger().info("deconnection_time updated from %s to %s" % (target.deconnection_time, deconnection_time))
+            target.deconnection_time = deconnection_time
+            # update deconnection_time in right
+        if status == APPROVAL_ACCEPTED:
             return None, infos
-        if status == REJECTED:
+        if status == APPROVAL_REJECTED:
             return False, infos
         if status == APPROVAL_PENDING:
             return "PENDING", infos
