@@ -196,6 +196,7 @@ public:
     }
 
     virtual void focus(int reason) {
+        const bool tmp_has_focus = this->has_focus;
         if (!this->has_focus) {
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
@@ -210,7 +211,9 @@ public:
         if (this->current_focus) {
             this->current_focus->focus(reason);
         }
-        this->refresh(this->rect);
+        if (!tmp_has_focus) {
+            this->refresh(this->rect);
+        }
     }
     virtual void blur() {
         if (this->has_focus) {
