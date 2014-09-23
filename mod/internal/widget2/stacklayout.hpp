@@ -70,7 +70,7 @@ struct WidgetStackLayout : public WidgetLayout {
     }
 
     virtual void notify(Widget2 * from, notify_event_t event) {
-        if (event == SELECTION_CHANGED) {
+        if (event == NOTIFY_SELECTION_CHANGED) {
             this->select(from->notify_value);
         }
     }

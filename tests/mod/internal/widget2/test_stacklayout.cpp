@@ -63,13 +63,13 @@ BOOST_AUTO_TEST_CASE(Testtab)
     drawable.save_to_png(OUTPUT_FILE_PATH "layout-stack1.png");
 
     control.notify_value = 2;
-    control.send_notify(SELECTION_CHANGED);
+    control.send_notify(NOTIFY_SELECTION_CHANGED);
 
     stack.rdp_input_invalidate(parent.rect);
     drawable.save_to_png(OUTPUT_FILE_PATH "layout-stack2.png");
 
     control.notify_value = 1;
-    control.send_notify(SELECTION_CHANGED);
+    control.send_notify(NOTIFY_SELECTION_CHANGED);
 
     stack.rdp_input_invalidate(parent.rect);
     drawable.save_to_png(OUTPUT_FILE_PATH "layout-stack3.png");

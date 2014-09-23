@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     BOOST_CHECK(notifier2.sender == &wbutton2);
     BOOST_CHECK(notifier3.sender == 0);
     BOOST_CHECK(notifier4.sender == 0);
-    BOOST_CHECK(notifier2.event == FOCUS_BEGIN);
+    BOOST_CHECK(notifier2.event == NOTIFY_FOCUS_BEGIN);
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\x74\x69\x18\x27\x93\x1c\x1e\xae\x6a\xef"
@@ -116,8 +116,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     BOOST_CHECK(notifier2.sender == &wbutton2);
     BOOST_CHECK(notifier3.sender == &wbutton3);
     BOOST_CHECK(notifier4.sender == 0);
-    BOOST_CHECK(notifier2.event == FOCUS_END);
-    BOOST_CHECK(notifier3.event == FOCUS_BEGIN);
+    BOOST_CHECK(notifier2.event == NOTIFY_FOCUS_END);
+    BOOST_CHECK(notifier3.event == NOTIFY_FOCUS_BEGIN);
     notifier2.sender = 0;
     notifier3.sender = 0;
     notifier2.event = 0;
@@ -137,8 +137,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     BOOST_CHECK(notifier2.sender == 0);
     BOOST_CHECK(notifier3.sender == &wbutton3);
     BOOST_CHECK(notifier4.sender == &wbutton4);
-    BOOST_CHECK(notifier3.event == FOCUS_END);
-    BOOST_CHECK(notifier4.event == FOCUS_BEGIN);
+    BOOST_CHECK(notifier3.event == NOTIFY_FOCUS_END);
+    BOOST_CHECK(notifier4.event == NOTIFY_FOCUS_BEGIN);
     notifier3.sender = 0;
     notifier4.sender = 0;
     notifier3.event = 0;
@@ -158,8 +158,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     BOOST_CHECK(notifier2.sender == 0);
     BOOST_CHECK(notifier3.sender == 0);
     BOOST_CHECK(notifier4.sender == &wbutton4);
-    BOOST_CHECK(notifier1.event == FOCUS_BEGIN);
-    BOOST_CHECK(notifier4.event == FOCUS_END);
+    BOOST_CHECK(notifier1.event == NOTIFY_FOCUS_BEGIN);
+    BOOST_CHECK(notifier4.event == NOTIFY_FOCUS_END);
     notifier1.sender = 0;
     notifier4.sender = 0;
     notifier1.event = 0;
@@ -179,8 +179,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     BOOST_CHECK(notifier2.sender == 0);
     BOOST_CHECK(notifier3.sender == 0);
     BOOST_CHECK(notifier4.sender == &wbutton4);
-    BOOST_CHECK(notifier1.event == FOCUS_END);
-    BOOST_CHECK(notifier4.event == FOCUS_BEGIN);
+    BOOST_CHECK(notifier1.event == NOTIFY_FOCUS_END);
+    BOOST_CHECK(notifier4.event == NOTIFY_FOCUS_BEGIN);
     notifier1.sender = 0;
     notifier4.sender = 0;
     notifier1.event = 0;
@@ -200,8 +200,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     BOOST_CHECK(notifier2.sender == 0);
     BOOST_CHECK(notifier3.sender == &wbutton3);
     BOOST_CHECK(notifier4.sender == &wbutton4);
-    BOOST_CHECK(notifier3.event == FOCUS_BEGIN);
-    BOOST_CHECK(notifier4.event == FOCUS_END);
+    BOOST_CHECK(notifier3.event == NOTIFY_FOCUS_BEGIN);
+    BOOST_CHECK(notifier4.event == NOTIFY_FOCUS_END);
     notifier3.sender = 0;
     notifier4.sender = 0;
     notifier3.event = 0;
@@ -221,8 +221,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     BOOST_CHECK(notifier2.sender == 0);
     BOOST_CHECK(notifier3.sender == &wbutton3);
     BOOST_CHECK(notifier4.sender == 0);
-    BOOST_CHECK(notifier1.event == FOCUS_BEGIN);
-    BOOST_CHECK(notifier3.event == FOCUS_END);
+    BOOST_CHECK(notifier1.event == NOTIFY_FOCUS_BEGIN);
+    BOOST_CHECK(notifier3.event == NOTIFY_FOCUS_END);
     notifier1.sender = 0;
     notifier3.sender = 0;
     notifier1.event = 0;
@@ -256,8 +256,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     BOOST_CHECK(notifier2.sender == &wbutton2);
     BOOST_CHECK(notifier3.sender == 0);
     BOOST_CHECK(notifier4.sender == 0);
-    BOOST_CHECK(notifier1.event == FOCUS_END);
-    BOOST_CHECK(notifier2.event == FOCUS_BEGIN);
+    BOOST_CHECK(notifier1.event == NOTIFY_FOCUS_END);
+    BOOST_CHECK(notifier2.event == NOTIFY_FOCUS_BEGIN);
     notifier1.sender = 0;
     notifier2.sender = 0;
     notifier1.event = 0;
@@ -276,8 +276,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     BOOST_CHECK(notifier2.sender == &wbutton2);
     BOOST_CHECK(notifier3.sender == 0);
     BOOST_CHECK(notifier4.sender == &wbutton4);
-    BOOST_CHECK(notifier2.event == FOCUS_END);
-    BOOST_CHECK(notifier4.event == FOCUS_BEGIN);
+    BOOST_CHECK(notifier2.event == NOTIFY_FOCUS_END);
+    BOOST_CHECK(notifier4.event == NOTIFY_FOCUS_BEGIN);
     notifier2.sender = 0;
     notifier4.sender = 0;
     notifier2.event = 0;
