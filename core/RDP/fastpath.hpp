@@ -761,35 +761,38 @@ namespace FastPath {
 //  2.2.9.1.2.1) structures to be processed by the client.
 
     struct ServerUpdatePDU_Recv {
+        uint8_t fpOutputHeader;
+        uint8_t action;
         uint8_t secFlags;
+        uint16_t length;
         uint32_t  fipsInformation;
         uint8_t   dataSignature[8];
         SubStream payload;
 
         ServerUpdatePDU_Recv(Stream & stream, CryptContext & decrypt)
-        : secFlags(0)
-        , fipsInformation(0)
-        , payload(stream) {
-            ::memset(dataSignature, 0, sizeof(dataSignature));
-
-            stream.rewind();
-
-            uint8_t byte = stream.in_uint8();
-            int action = byte & 0x03;
+        : fpOutputHeader(stream.in_uint8())
+        , action([](uint8_t fpOutputHeader){
+            uint8_t action = fpOutputHeader & 0x03;
             if (action != 0) {
                 LOG(LOG_ERR, "Fast-path PDU excepted: action=0x%X", action);
                 throw Error(ERR_RDP_FASTPATH);
             }
-
-            this->secFlags = (byte & 0xC0) >> 6;
-
-            uint16_t length = stream.in_uint8();
-            if (length & 0x80){
-                length = (length & 0x7F) << 8 | stream.in_uint8();
+            return action;
+        }(this->fpOutputHeader))
+        , secFlags((this->fpOutputHeader >> 6) & 3)
+        , length(stream.in_2BUE())
+        , fipsInformation([&decrypt](){ 
+            if (decrypt.encryptionMethod == ENCRYPTION_METHOD_FIPS){
+                TODO("RZ: we should treat fipsInformation ?");
+                LOG(LOG_ERR, "FIPS encryption not supported");
+                throw Error(ERR_RDP_FASTPATH);
             }
-
-            TODO("RZ: Should we treat fipsInformation ?");
-
+            return 0;
+            }())
+        , dataSignature{}
+        , payload([&stream, this, &decrypt]()
+        {
+            TODO("we should move that to some decrypt utility method (in stream ?)");
             if (this->secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
                 const unsigned expected = 8; // dataSignature
                 if (!stream.in_check_rem(expected)) {
@@ -797,15 +800,14 @@ namespace FastPath {
                         expected, stream.in_remain());
                     throw Error(ERR_RDP_FASTPATH);
                 }
-
                 stream.in_copy_bytes(this->dataSignature, 8);
+                decrypt.decrypt(stream.get_data() + stream.get_offset(), stream.in_remain());
             }
-
-            this->payload.resize(stream, stream.in_remain());
-
-            if (this->secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
-                decrypt.decrypt(payload.get_data(), payload.size());
-            }
+            return SubStream(stream, stream.get_offset(), stream.in_remain());
+        }()) 
+        // Body of constructor
+        {
+            stream.in_skip_bytes(this->payload.size());
         } // ServerUpdatePDU_Recv(Stream & stream, CryptContext & decrypt)
     }; // struct ServerUpdatePDU_Recv
 
@@ -1015,6 +1017,55 @@ namespace FastPath {
 //  in the compressedType field in the Share Data Header (section 2.2.8.1.1.1.2)
 //  and have the same meaning.
 
+//  +----------------------------+----------------------------------------------+
+//  |           Flag             |               Meaning                        |
+//  +----------------------------+----------------------------------------------+
+//  |    CompressionTypeMask     | Indicates the package which was used for     |
+//  |           0x0F             | compression. See the table which follows for |
+//  |                            | a list of compression packages.              |
+//  +----------------------------+----------------------------------------------+
+//  |    PACKET_COMPRESSED       | The payload data is compressed. This flag is |
+//  |           0x20             | equivalent to MPPC bit C (for more           |
+//  |                            | information see [RFC2118] section 3.1).      |
+//  +----------------------------+----------------------------------------------+
+//  |       PACKET_AT_FRONT      | The decompressed packet MUST be placed at    |
+//  |           0x40             | the beginning of the history buffer. This    |
+//  |                            | flag is equivalent to MPPC bit B (for more   |
+//  |                            | information see [RFC2118] section 3.1).      |
+//  +----------------------------+----------------------------------------------+
+//  |       PACKET_FLUSHED       | The decompressor MUST reinitialize the       |
+//  |           0x80             | history buffer (by filling it with zeros)    |
+//  |                            | and reset the HistoryOffset to zero. After   |
+//  |                            | it has been reinitialized, the entire history|
+//  |                            | buffer is immediately regarded as valid. This|
+//  |                            | flag is equivalent to MPPC bit A (for more   |
+//  |                            | information see [RFC2118] section 3.1). If   |
+//  |                            | the PACKET_COMPRESSED (0x20) flag is also    |
+//  |                            | present, then the PACKET_FLUSHED flag MUST be|
+//  |                            | processed first.                             |
+//  +----------------------------+----------------------------------------------+
+
+//  Instructions specifying how to set the compression flags can be found in 
+// section 3.1.8.2.1.
+
+//  Possible compression types are as follows.
+
+//  +----------------------------+----------------------------------------------+
+//  |           Value            |               Meaning                        |
+//  +----------------------------+----------------------------------------------+
+//  | PACKET_COMPR_TYPE_8K  0x0  | RDP 4.0 bulk compression (see section        |
+//  |                            | 3.1.8.4.1).                                  |
+//  +----------------------------+----------------------------------------------+
+//  | PACKET_COMPR_TYPE_64K      | RDP 5.0 bulk compression (see section        |
+//  |           0x1              | 3.1.8.4.2).                                  |
+//  +----------------------------+----------------------------------------------+
+//  | PACKET_COMPR_TYPE_RDP6     | RDP 6.0 bulk compression (see [MS-RDPEGDI]   |
+//  |           0x2              | section 3.1.8.1).                            |
+//  +----------------------------+----------------------------------------------+
+//  | PACKET_COMPR_TYPE_RDP6.1   | RDP 6.1 bulk compression (see [MS-RDPEGDI]   |
+//  |           0x2              | section 3.1.8.2).                            |
+//  +----------------------------+----------------------------------------------+
+
 // size (2 bytes): A 16-bit, unsigned integer. The size in bytes of the data in
 //  the updateData field.
 
@@ -1022,6 +1073,7 @@ namespace FastPath {
 //  update.
 
     struct Update_Recv {
+        uint8_t   updateHeader;
         uint8_t   updateCode;
         uint8_t   fragmentation;
         uint8_t   compression;
@@ -1030,12 +1082,7 @@ namespace FastPath {
         SubStream payload;
 
         Update_Recv(Stream & stream, rdp_mppc_dec * dec)
-        : updateCode(0)
-        , fragmentation(0)
-        , compression(0)
-        , compressionFlags(0)
-        , size(0)
-        , payload(stream) {
+        : updateHeader([&stream](){
             unsigned expected = 1; // updateHeader(1)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
@@ -1043,14 +1090,14 @@ namespace FastPath {
                 throw Error(ERR_RDP_FASTPATH);
             }
 
-            uint8_t byte = stream.in_uint8();
-
-            this->updateCode    = byte & 0xF;         // 4 bits
-            this->fragmentation = (byte & 0x30) >> 4; // 2 bits
-            this->compression   = (byte & 0xC0) >> 6; // 2 bits
-
-            expected =
-                  ((this->compression & FASTPATH_OUTPUT_COMPRESSION_USED) ? 1 : 0)  //   ?compressionFlags?(1)
+            return stream.in_uint8();
+        }())
+        , updateCode(this->updateHeader & 0xF)           // 4 bits
+        , fragmentation((this->updateHeader >> 4) & 0x3) // 2 bits
+        , compression((this->updateHeader >> 6) & 0x3)   // 2 bits
+        , compressionFlags([&stream, this](){
+            unsigned expected =
+                  ((this->compression & FASTPATH_OUTPUT_COMPRESSION_USED) ? 1 : 0)  // ?compressionFlags?(1)
                 + 2;                                                                // + size(2)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
@@ -1058,32 +1105,30 @@ namespace FastPath {
                 throw Error(ERR_RDP_FASTPATH);
             }
 
-
-            if (this->compression & FASTPATH_OUTPUT_COMPRESSION_USED) {
-                this->compressionFlags = stream.in_uint8();
-            }
-
-            this->size = stream.in_uint16_le();
-
-            if ((this->size != 0) && !stream.in_check_rem(this->size)) {
+            return (this->compression & FASTPATH_OUTPUT_COMPRESSION_USED)?stream.in_uint8():0;
+        }())
+        , size(stream.in_uint16_le())
+        , payload([&stream, &dec](uint16_t size, uint8_t compression, uint8_t compressionFlags){
+            if ((size != 0) && !stream.in_check_rem(size)) {
                 LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
-                    this->size, stream.in_remain());
+                    size, stream.in_remain());
                 throw Error(ERR_RDP_FASTPATH);
             }
 
-            this->payload.resize(stream, this->size);
-
-            if (   (this->compression & FASTPATH_OUTPUT_COMPRESSION_USED)
-                && (this->compressionFlags & PACKET_COMPRESSED)) {
+            if ((compression & FASTPATH_OUTPUT_COMPRESSION_USED)
+            && (compressionFlags & PACKET_COMPRESSED)) {
                 const uint8_t * rdata;
                 uint32_t        rlen;
 
-                dec->decompress(this->payload.get_data(), this->payload.size(),
-                    this->compressionFlags, rdata, rlen);
+                dec->decompress(stream.get_data() + stream.get_offset(), size,
+                    compressionFlags, rdata, rlen);
 
-                this->payload.resize(StaticStream(rdata, rlen), rlen);
+                return SubStream(StaticStream(rdata, rlen), 0, rlen);
             }
-
+            return SubStream(stream, stream.get_offset(), size);
+        }(this->size, this->compression, this->compressionFlags))
+        // Body of constructor
+        {
             stream.in_skip_bytes(this->size);
         }
     };

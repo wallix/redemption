@@ -2306,13 +2306,6 @@ namespace GCC
             uint16_t userDataType;
             uint16_t length;
 
-            enum {
-                ENCRYPTION_METHOD_NONE   = 0x00000000,
-                ENCRYPTION_METHOD_40BIT  = 0x00000001,
-                ENCRYPTION_METHOD_128BIT = 0x00000002,
-                ENCRYPTION_METHOD_56BIT  = 0x00000008,
-                ENCRYPTION_METHOD_FIPS   = 0x00000010
-            };
             uint32_t encryptionMethod;
 
             enum {
