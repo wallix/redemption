@@ -751,10 +751,8 @@ enum {
         uint32_t flags;
         SubStream payload;
         SecSpecialPacket_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel)
-            : verbose(0x3FF)
+            : verbose(0)
             , flags([&stream](){
-                LOG(LOG_INFO, "SecSpecialPacket_Recv flags");
-
                 const unsigned need = 4; /* flags(4) */
                 if (!stream.in_check_rem(need)){
                     LOG(LOG_ERR, "flags expected: need=%u remains=%u", need, stream.in_remain());
@@ -781,7 +779,7 @@ enum {
                         LOG(LOG_INFO, "Receiving encrypted TPDU");
                         hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());
                     }
-                    crypt.decrypt(stream.get_data()+stream.get_offset(), stream.in_remain());                       
+                    crypt.decrypt(stream.get_data()+stream.get_offset(), stream.in_remain());
                     if (this->verbose >= 0x80){
                         LOG(LOG_INFO, "Decrypted %u bytes", stream.in_remain());
                         hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());

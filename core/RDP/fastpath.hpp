@@ -222,7 +222,6 @@ namespace FastPath {
                       8                                // dataSignature
                     + ((this->numEvents == 0) ? 1 : 0) // numEvent
                     ;
-                LOG(LOG_INFO, "fastpath input encrypted, nbevent = %u sq=%u %u", this->numEvents, expected, stream.in_remain());
                 if (!stream.in_check_rem(expected)) {
                     LOG( LOG_ERR
                        , "FastPath::ClientInputEventPDU_Recv: data truncated, expected=%u remains=%u"

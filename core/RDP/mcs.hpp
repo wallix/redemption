@@ -159,33 +159,6 @@ namespace MCS
         return *stream.get_data() >> 2;
     }
 
-//    struct RecvFactory
-//    {
-//        int type;
-//        // Factory does not consume stream data
-//        RecvFactory(const Stream & stream, int encoding)
-//        {
-//            switch (encoding){
-//            case PER_ENCODING:
-//                if (!stream.in_check_rem(1)){
-//                    throw Error(ERR_MCS);
-//                }
-//                this->type = ((stream.get_data())[0] >> 2);
-//            break;
-//            default:
-//            case BER_ENCODING:
-//                if (!stream.in_check_rem(2)){
-//                    throw Error(ERR_MCS);
-//                }
-//                TODO("getting to the type this way should works in our restricted use case,"
-//                     " but it would be nicer to perform actual BER TAG value decoding")
-//                this->type = (stream.get_data())[1];
-//            break;
-//            }
-//        }
-//    };
-
-
     struct InBerStream
     {
 
