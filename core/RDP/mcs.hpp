@@ -153,10 +153,19 @@ namespace MCS
     };
 
     int peekPerEncodedMCSType(const Stream & stream) {
-//        if (!stream.in_check_rem(1)){
-//            throw Error(ERR_MCS);
-//        }
+        if (!stream.in_check_rem(1)){
+            throw Error(ERR_MCS);
+        }
         return *stream.get_data() >> 2;
+    }
+
+    int peekBerEncodedMCSType(const Stream & stream) {
+        if (!stream.in_check_rem(2)){
+            throw Error(ERR_MCS);
+        }
+       TODO("getting to the type this way should works in our restricted use case,"
+            " but it would be nicer to perform actual BER TAG value decoding")
+        return (stream.get_data())[1];
     }
 
     struct InBerStream
