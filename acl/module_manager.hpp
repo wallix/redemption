@@ -486,7 +486,7 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
                 const char * message = this->ini.context.message.get_cstr();
-                const char * caption = "Information";
+                const char * caption = TR("information", this->ini);
                 bool showform = this->ini.context.showform.get();
                 uint flag = this->ini.context.formflag.get();
                 this->mod = new FlatWaitMod(

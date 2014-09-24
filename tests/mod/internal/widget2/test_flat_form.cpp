@@ -52,11 +52,12 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     Theme colors;
+    Inifile ini;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
 
 
-    FlatForm form(drawable, 600, 140, parent, notifier, 0, colors);
+    FlatForm form(drawable, 600, 140, parent, notifier, 0, ini, colors);
     // ask to widget to redraw at it's current position
     form.move_xy(70, 70);
     form.rdp_input_invalidate(form.rect);

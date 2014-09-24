@@ -43,7 +43,7 @@ public:
                 bool showform = false, uint32_t flag = 0)
         : InternalMod(front, width, height, &ini)
         , wait_widget(*this, width, height, this->screen, this, caption, message,
-                      0, ini.theme, showform, flag)
+                      0, ini,  ini.theme, showform, flag)
         , ini(ini)
         , timeout(Timeout(now, 600))
     {

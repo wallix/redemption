@@ -31,6 +31,7 @@
 #include "password.hpp"
 #include "theme.hpp"
 #include "group_box.hpp"
+#include "translation.hpp"
 
 class FlatForm : public WidgetParent
 {
@@ -59,31 +60,29 @@ enum {
     int flags;
 
     FlatForm(DrawApi& drawable, int16_t width, int16_t height,
-             Widget2 & parent, NotifyApi* notifier, int group_id,
+             Widget2 & parent, NotifyApi* notifier, int group_id, Inifile & ini,
              Theme & theme, int flags = 0)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
-        , comment_label(drawable, 0, 10, *this, NULL, "Comment", true,
+        , comment_label(drawable, 0, 10, *this, NULL, TR("comment", ini), true,
                         group_id, theme.global.fgcolor, theme.global.bgcolor)
         , comment_edit(drawable, this->comment_label.lx() + 20, 10, 300, *this, this,
                        0, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                        theme.edit.focus_color, -1, 1, 1)
-        , ticket_label(drawable, 0, 40, *this, NULL, "Ticket n°", true,
+        , ticket_label(drawable, 0, 40, *this, NULL, TR("ticket", ini), true,
                        group_id, theme.global.fgcolor, theme.global.bgcolor)
         , ticket_edit(drawable, this->ticket_label.lx() + 20, 40, 300, *this, this,
                       0, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                       theme.edit.focus_color, -1, 1, 1)
-        , duration_label(drawable, 0, 70, *this, NULL, "Duration", true,
+        , duration_label(drawable, 0, 70, *this, NULL, TR("duration", ini), true,
                          group_id, theme.global.fgcolor, theme.global.bgcolor)
         , duration_edit(drawable, this->duration_label.lx() + 20, 70, 300, *this, this,
                         0, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                         theme.edit.focus_color, -1, 1, 1)
-        , duration_format(drawable, 0, 100, *this, NULL,
-                "format \"[hours]h[mins]m\" each unit is optional.", true,
+        , duration_format(drawable, 0, 100, *this, NULL, TR("note_duration_format", ini),
+                          true, group_id, theme.global.fgcolor, theme.global.bgcolor)
+        , notes(drawable, 0, 120, *this, NULL, TR("note_required", ini), true,
                 group_id, theme.global.fgcolor, theme.global.bgcolor)
-        , notes(drawable, 0, 120, *this, NULL,
-                "(*) required fields.", true,
-                group_id, theme.global.fgcolor, theme.global.bgcolor)
-        , confirm(drawable, 0, 0, *this, this, "Confirm", true, group_id,
+        , confirm(drawable, 0, 0, *this, this, TR("confirm", ini), true, group_id,
                   theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
                   6, 2)
         , flags(flags)
@@ -97,13 +96,13 @@ enum {
         this->add_widget(&this->duration_label);
         this->add_widget(&this->duration_edit);
         if (this->flags & COMMENT_MANDATORY) {
-            this->comment_label.set_text("Comment (*)");
+            this->comment_label.set_text(TR("comment_r", ini));
         }
         if (this->flags & TICKET_MANDATORY) {
-            this->ticket_label.set_text("Ticket n° (*)");
+            this->ticket_label.set_text(TR("ticket_r", ini));
         }
         if (this->flags & DURATION_MANDATORY) {
-            this->duration_label.set_text("Duration (*)");
+            this->duration_label.set_text(TR("duration_r", ini));
         }
 
         int labelmaxwidth = std::max(this->comment_label.cx(),
