@@ -1968,8 +1968,8 @@ public:
                 X224::RecvFactory f(*this->trans, pdu);
                 X224::DT_TPDU_Recv x224(pdu);
 
-                MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-                if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+                if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                     LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
@@ -2039,8 +2039,8 @@ public:
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(stream);
 
-            MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-            if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+            int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+            if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                 LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
@@ -2049,7 +2049,6 @@ public:
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
@@ -2221,9 +2220,9 @@ public:
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(stream);
 
-            MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-            if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
-                LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
+            int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+            
+            if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
@@ -2231,7 +2230,6 @@ public:
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if ((this->verbose & (128|2)) == (128|2)){
                 LOG(LOG_INFO, "sec decrypted payload:");
@@ -2464,16 +2462,10 @@ public:
         {
             BStream stream(65536);
 
-            LOG(LOG_ERR, "X224::RecvFactory FP");
             X224::RecvFactory fx224(*this->trans, stream, true);
             
             if (fx224.fast_path){
-                LOG(LOG_ERR, "X224 is FP");
-                LOG(LOG_ERR, "client event PDU Recv");
                 FastPath::ClientInputEventPDU_Recv cfpie(stream, this->decrypt);
-
-                uint8_t byte;
-                uint8_t eventCode;
 
                 for (uint8_t i = 0; i < cfpie.numEvents; i++){
                     if (!cfpie.payload.in_check_rem(1)){
@@ -2482,9 +2474,8 @@ public:
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
 
-                    byte = cfpie.payload.in_uint8();
-
-                    eventCode  = (byte & 0xE0) >> 5;
+                    uint8_t byte = cfpie.payload.in_uint8();
+                    uint8_t eventCode  = (byte & 0xE0) >> 5;
 
                     switch (eventCode){
                         case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
@@ -2599,8 +2590,8 @@ public:
 
                 X224::DT_TPDU_Recv x224(stream);
 
-                MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-                if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+                if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                     LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
@@ -2609,7 +2600,6 @@ public:
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
                 SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
                 if (this->verbose & 128){
                     LOG(LOG_INFO, "sec decrypted payload:");

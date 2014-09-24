@@ -747,11 +747,13 @@ enum {
     class SecSpecialPacket_Recv
     {
         public:
-        uint32_t flags;
         uint32_t verbose;
+        uint32_t flags;
+
         SubStream payload;
         SecSpecialPacket_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel)
-            : flags([&stream](){
+            : verbose(0)
+            , flags([&stream](){
                 const unsigned need = 4; /* flags(4) */
                 if (!stream.in_check_rem(need)){
                     LOG(LOG_ERR, "flags expected: need=%u remains=%u", need, stream.in_remain());
@@ -759,7 +761,6 @@ enum {
                 }
                 return stream.in_uint32_le();
             }())
-            , verbose(0)
             //, signature() => we should also check signature
             , payload([&stream, this, encryptionLevel, &crypt](){
                 if (encryptionLevel > 0 && this->flags & SEC::SEC_ENCRYPT){
@@ -781,7 +782,7 @@ enum {
                     }
                     crypt.decrypt(stream.get_data()+stream.get_offset(), stream.in_remain());
                     if (this->verbose >= 0x80){
-                        LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
+                        LOG(LOG_INFO, "Decrypted %u bytes", stream.in_remain());
                         hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());
                     }
                 }

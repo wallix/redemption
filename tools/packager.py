@@ -190,7 +190,7 @@ def copy_and_replace(src, dst, old, new):
 
 
 # Parse target Config files
-rgx_general = re.compile("^([^#]\S*)\s*=\s*(.*)$")
+rgx_general = re.compile("^([^#][^=]*)\s*=\s*(.*)$")
 def parse_config_line(line):
   m = re.search(rgx_general, line.strip())
   if m:

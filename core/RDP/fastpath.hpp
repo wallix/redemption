@@ -184,44 +184,40 @@ namespace FastPath {
 //  it is present).
 
     struct ClientInputEventPDU_Recv {
+        uint8_t   fpInputHeader;
+        uint8_t   action;
+        uint8_t   numEvents;
         uint8_t   secFlags;
+        uint16_t  length;
         uint32_t  fipsInformation;
         uint8_t   dataSignature[8];
         SubStream payload;
-        uint8_t   numEvents;
 
         ClientInputEventPDU_Recv(Stream & stream, CryptContext & decrypt)
-        : secFlags(0)
-        , fipsInformation(0)
-        , dataSignature{}
-        , payload(stream) 
-        , numEvents(0)
-        {
-            uint8_t byte = stream.in_uint8();
-            int action = byte & 0x03;
+        : fpInputHeader(stream.in_uint8())
+        , action([this](){
+            uint8_t action = this->fpInputHeader & 0x03;
             if (action != 0) {
                 LOG(LOG_ERR, "Fast-path PDU expected: action=0x%X", action);
                 throw Error(ERR_RDP_FASTPATH);
             }
-
-            this->numEvents = (byte & 0x3C) >> 2;// ????
-            this->secFlags  = (byte & 0xC0) >> 6;
-
-
+            return action;
+        }())
+        , numEvents((this->fpInputHeader & 0x3C) >> 2)
+        , secFlags((this->fpInputHeader >> 6) & 3)
+        , length([&stream](){
              uint16_t length = stream.in_uint8();
              if (length & 0x80){
                  length = (length & 0x7F) << 8 | stream.in_uint8();
              }
-
-            if (length != stream.size()){
-                LOG( LOG_ERR
-                   , "FastPath::ClientInputEventPDU_Recv: inconsistent length in header (length=%u)"
-                   , length);
-                throw Error(ERR_RDP_FASTPATH);
-            }
+             return length;
+        }())
+        , fipsInformation(0)
+        , dataSignature{}
+        , payload([&stream, &decrypt, this](){
             TODO("RZ: Should we treat fipsInformation ?");
 
-            if (this->secFlags & FASTPATH_INPUT_ENCRYPTED) {
+            if ( 0!= (this->secFlags & FASTPATH_INPUT_ENCRYPTED)) {
                 const unsigned expected =
                       8                                // dataSignature
                     + ((this->numEvents == 0) ? 1 : 0) // numEvent
@@ -234,17 +230,16 @@ namespace FastPath {
                 }
 
                 stream.in_copy_bytes(this->dataSignature, 8);
-            }
-
-            this->payload.resize(stream, stream.in_remain());
-
-            if (this->secFlags & FASTPATH_INPUT_ENCRYPTED) {
-                decrypt.decrypt(payload.get_data(), payload.size());
+                decrypt.decrypt(stream.get_data()+stream.get_offset(), stream.in_remain());
             }
 
             if (this->numEvents == 0) {
-                this->numEvents = payload.in_uint8();
+                this->numEvents = stream.in_uint8();
             }
+            return SubStream(stream, stream.get_offset(), stream.in_remain());
+        }()) 
+        {
+            stream.in_skip_bytes(this->payload.size());
         }   // ClientInputEventPDU_Recv(Stream & stream)
     };  // struct ClientInputEventPDU_Recv
 
