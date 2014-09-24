@@ -195,13 +195,14 @@ void copy_paste_process_event(CopyPaste & copy_paste, WidgetEdit & widget_edit, 
         case NOTIFY_PASTE:
             copy_paste.paste(widget_edit);
             break;
-        case NOTIFY_COPY:
-            copy_paste.copy(widget_edit.get_text());
-            break;
-        case NOTIFY_CUT:
-            copy_paste.copy(widget_edit.get_text());
-            widget_edit.set_text("");
-            break;
+        //TODO enable copy/cut
+        //case NOTIFY_COPY:
+        //    copy_paste.copy(widget_edit.get_text());
+        //    break;
+        //case NOTIFY_CUT:
+        //    copy_paste.copy(widget_edit.get_text());
+        //    widget_edit.set_text("");
+        //    break;
         default: ;
     }
 }
