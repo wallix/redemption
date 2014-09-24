@@ -137,7 +137,7 @@ public:
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_ESC:
                 keymap->get_kevent();
-                this->send_notify(NOTIFY_CANCEL);
+                this->send_notify(NOTIFY_SUBMIT);
                 break;
             default:
                 WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
