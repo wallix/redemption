@@ -318,27 +318,66 @@ namespace X224
         SSL_WITH_USER_AUTH_REQUIRED_BY_SERVER = 0x00000006
     };
 
-    // Factory just read enough data to know the type of packet we are dealing with
+    // Factory read full TPDU, other layers are just using what was read by factory
+    // Also decode enough data to know the type of packet we are dealing with (TPDU type or fastpath)
     struct RecvFactory {
         int    type;
         size_t length;
         bool   fast_path;
 
         RecvFactory(Transport & t, Stream & stream, bool support_fast_path = false)
-                : fast_path(false) {
+                : type(0)
+                , length(0)
+                , fast_path(false) {
+
+        TODO("find a better way than stream.p = stream.get_data() to avoid to read any data of stream");
+        TODO("make less boundary checks (two calls to receive should be enough, correct TPDU need at least 4 bytes and that is enough to get length field");
+
             /* 1 byte */
-            TODO("Factory should not consume any Data")
-            uint16_t stream_length = stream.size();
-            if (stream_length < 1) {
+            if (stream.size() < 1) {
                 t.recv(&stream.end, 1);
             }
             stream.p = stream.get_data();
-
             uint8_t tpkt_version = stream.in_uint8();
-            if ((tpkt_version & FastPath::FASTPATH_OUTPUT_ACTION_X224) == 0) {
+            int action = tpkt_version & 0x03;
+            
+            if (action == FastPath::FASTPATH_OUTPUT_ACTION_FASTPATH) {
                 if (support_fast_path) {
                     fast_path = true;
+                    
+                    if (action != 0) {
+                        LOG(LOG_ERR, "Fast-path PDU expected: action=0x%X", action);
+                        throw Error(ERR_RDP_FASTPATH);
+                    }
+                    if (stream.size() <= stream.get_offset()){
+                        t.recv(&stream.end, 1);
+                    }
 
+                     uint16_t lg = stream.in_uint8();
+                     if (lg & 0x80){
+                        if (stream.size() <= stream.get_offset()){
+                             t.recv(&stream.end, 1);
+                         }
+                         uint8_t byte = stream.in_uint8();
+                         lg = (lg & 0x7F) << 8 | byte;
+                     }
+                    this->length = lg;
+
+                    if (this->length < stream.size()){
+                        LOG( LOG_ERR
+                           , "FastPath::ClientInputEventPDU_Recv: inconsistent length in header (length=%u)"
+                           , length);
+                        throw Error(ERR_RDP_FASTPATH);
+                    }
+
+                    if (stream.get_capacity() < this->length){
+                        LOG(LOG_ERR, "FastPath::TPKT too long: stream=%d tpkt=%u",
+                            stream.get_capacity(), this->length);
+                        throw Error(ERR_RDP_FASTPATH);
+                    }
+
+                    t.recv(&stream.end, this->length - stream.size());
+                    stream.p = stream.get_data();
                     return;
                 }
                 else {
@@ -346,37 +385,51 @@ namespace X224
                     throw Error(ERR_X224);
                 }
             }
+            else if (action == FastPath::FASTPATH_OUTPUT_ACTION_X224) {
+                /* 4 bytes */
+                if (stream.size() < X224::TPKT_HEADER_LEN) {
+                    t.recv(&stream.end, X224::TPKT_HEADER_LEN - stream.size());
+                }
 
-            /* 4 bytes */
-            stream_length = stream.size();
-            if (stream_length < X224::TPKT_HEADER_LEN) {
-                t.recv(&stream.end, X224::TPKT_HEADER_LEN - stream_length);
+                stream.in_skip_bytes(1);
+                uint16_t tpkt_len = stream.in_uint16_be();
+                t.recv(&stream.end, 2);
+                if (tpkt_len < 6) {
+                    LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", tpkt_len);
+                    throw Error(ERR_X224);
+                }
+                this->length = tpkt_len;
+                if (stream.capacity < this->length){
+                    LOG(LOG_ERR, "SlowPath::TPKT too long: stream=%d tpkt=%u",
+                        stream.get_capacity(), this->length);
+                    throw Error(ERR_X224);
+                }
+
+                if (stream.size() < tpkt_len) {
+                    t.recv(&stream.end, tpkt_len - stream.size() );
+                }
+                stream.in_skip_bytes(1);
+                uint8_t tpdu_type = stream.in_uint8();
+                switch (tpdu_type & 0xF0) {
+                case X224::CR_TPDU: // Connection Request 1110 xxxx
+                case X224::CC_TPDU: // Connection Confirm 1101 xxxx
+                case X224::DR_TPDU: // Disconnect Request 1000 0000
+                case X224::DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
+                case X224::ER_TPDU: // TPDU Error         0111 0000
+                    this->type = tpdu_type & 0xF0;
+                break;
+                default:
+                    this->type = 0;
+                    LOG(LOG_ERR, "Bad X224 header, unknown TPDU type (code = %u)", tpdu_type);
+                    throw Error(ERR_X224);
+                }
+                stream.p = stream.get_data();
+            }
+            else {
+                LOG(LOG_ERR, "Bad X224 header, unknown TPKT version (%0.2x)", tpkt_version);
+                throw Error(ERR_X224);
             }
             stream.p = stream.get_data();
-
-            stream.in_skip_bytes(2);
-            uint16_t tpkt_len = stream.in_uint16_be();
-            t.recv(&stream.end, 2);
-            if (tpkt_len < 6) {
-                LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", tpkt_len);
-                throw Error(ERR_X224);
-            }
-            this->length = tpkt_len;
-            stream.in_skip_bytes(1);
-            uint8_t tpdu_type = stream.in_uint8();
-            switch (tpdu_type & 0xF0) {
-            case X224::CR_TPDU: // Connection Request 1110 xxxx
-            case X224::CC_TPDU: // Connection Confirm 1101 xxxx
-            case X224::DR_TPDU: // Disconnect Request 1000 0000
-            case X224::DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
-            case X224::ER_TPDU: // TPDU Error         0111 0000
-                this->type = tpdu_type & 0xF0;
-            break;
-            default:
-                this->type = 0;
-                LOG(LOG_ERR, "Bad X224 header, unknown TPDU type (code = %u)", tpdu_type);
-                throw Error(ERR_X224);
-            }
         }
     };
 
@@ -389,30 +442,24 @@ namespace X224
             uint16_t len;
         } tpkt;
 
-        Recv(Transport & t, Stream & stream)
+        Recv(Stream & stream)
         {
             uint16_t length = stream.size();
             if (length < 4){
-                t.recv(&stream.end, 4 - length);
+                LOG(LOG_ERR, "Truncated TPKT: stream=%u", length);
             }
-            stream.p = stream.get_data();
 
             // TPKT
             this->tpkt.version = stream.in_uint8();
             stream.in_skip_bytes(1);
             this->tpkt.len = stream.in_uint16_be();
-
-            if (stream.endroom()  < this->tpkt.len){
-                LOG(LOG_ERR, "TPKT too long: stream=%u tpkt=%u",
-                    stream.endroom(), this->tpkt.len);
-                throw Error(ERR_X224);
-            }
-
-            if (stream.size() < this->tpkt.len){
-                t.recv(&stream.end, this->tpkt.len - stream.size());
+            if (length < this->tpkt.len){
+                LOG(LOG_ERR, "Truncated TPKT: stream=%u tpkt=%u",
+                    length, this->tpkt.len);
             }
         }
     };
+
 
     // ################################ END OF COMMON CODE #################################
 
@@ -596,8 +643,8 @@ namespace X224
         uint16_t rdp_cinfo_length;
         uint8_t rdp_cinfo_correlationid[16];
 
-        CR_TPDU_Recv(Transport & t, Stream & stream, bool bogus_neg_req, uint32_t verbose = 0)
-        : Recv(t, stream)
+        CR_TPDU_Recv(Stream & stream, bool bogus_neg_req, uint32_t verbose = 0)
+        : Recv(stream)
         , tpdu_hdr([&]()
             {
                 /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
@@ -925,8 +972,8 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_code; // selected_protocol or failure_code
 
-        CC_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0) 
-            : Recv(t, stream)
+        CC_TPDU_Recv(Stream & stream, uint32_t verbose = 0) 
+            : Recv(stream)
             , tpdu_hdr([&]()
             {
                 /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
@@ -1175,8 +1222,8 @@ namespace X224
         
         size_t _header_size;
 
-        DR_TPDU_Recv(Transport & t, Stream & stream) 
-            : Recv(t, stream)
+        DR_TPDU_Recv(Stream & stream) 
+            : Recv(stream)
             , tpdu_hdr([&]()
             {
                 /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + reason(1) */
@@ -1211,7 +1258,7 @@ namespace X224
 
     struct DR_TPDU_Send
     {
-         DR_TPDU_Send( Stream & stream, uint8_t reason)
+         DR_TPDU_Send(Stream & stream, uint8_t reason)
         {
             stream.out_uint8(0x03); // version 3
             stream.out_uint8(0x00);
@@ -1326,8 +1373,8 @@ namespace X224
         
         size_t _header_size;
 
-        ER_TPDU_Recv(Transport & t, Stream & stream)
-            : Recv(t, stream)
+        ER_TPDU_Recv(Stream & stream)
+            : Recv(stream)
             , tpdu_hdr(stream)
             , _header_size(X224::TPKT_HEADER_LEN + 1 + this->tpdu_hdr.LI)
         {
@@ -1380,8 +1427,8 @@ namespace X224
         size_t _header_size;
         SubStream payload;
 
-        DT_TPDU_Recv(Transport & t, Stream & stream)
-        : Recv(t, stream)
+        DT_TPDU_Recv(Stream & stream)
+        : Recv(stream)
         , tpdu_hdr([&](){
             if (!stream.in_check_rem(3)){
                 LOG(LOG_ERR, "Truncated TPDU header: expected=3 remains=%u", stream.in_remain());

@@ -1430,7 +1430,7 @@ public:
             {
                 BStream stream(65536);
                 X224::RecvFactory fac_x224(*this->trans, stream);
-                X224::CR_TPDU_Recv x224(*this->trans, stream, this->ini->client.bogus_neg_request);
+                X224::CR_TPDU_Recv x224(stream, this->ini->client.bogus_neg_request);
                 if (x224._header_size != (size_t)(stream.size())){
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
                                  " %d bytes remains", stream.size() - x224._header_size);
@@ -1519,7 +1519,7 @@ public:
 
             BStream x224_data(65536);
             X224::RecvFactory f(*this->trans, x224_data);
-            X224::DT_TPDU_Recv x224(*this->trans, x224_data);
+            X224::DT_TPDU_Recv x224(x224_data);
             MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
 
             // GCC User Data
@@ -1788,7 +1788,7 @@ public:
             {
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
-                X224::DT_TPDU_Recv x224(*trans, x224_data);
+                X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
             if (this->verbose){
@@ -1797,7 +1797,7 @@ public:
             {
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
-                X224::DT_TPDU_Recv x224(*trans, x224_data);
+                X224::DT_TPDU_Recv x224(x224_data);
                 MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
             if (this->verbose){
@@ -1816,7 +1816,7 @@ public:
                 // TPDU class 0    (3 bytes = LI F0 PDU_DT)
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
-                X224::DT_TPDU_Recv x224(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 this->userid = mcs.initiator;
 
@@ -1835,7 +1835,7 @@ public:
             {
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
-                X224::DT_TPDU_Recv x224(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 if (mcs.initiator != this->userid){
                     LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
@@ -1857,7 +1857,7 @@ public:
             for (size_t i = 0 ; i < this->channel_list.size() ; i++){
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
-                X224::DT_TPDU_Recv x224(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
                 if (this->verbose & 16){
@@ -1924,10 +1924,10 @@ public:
                 LOG(LOG_INFO, "Legacy RDP mode: expecting exchange packet");
                 BStream pdu(65536);
                 X224::RecvFactory f(*this->trans, pdu);
-                X224::DT_TPDU_Recv x224(*this->trans, pdu);
+                X224::DT_TPDU_Recv x224(pdu);
 
-                MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-                if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+                if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                     LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
@@ -1995,10 +1995,10 @@ public:
 
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
-            X224::DT_TPDU_Recv x224(*this->trans, stream);
+            X224::DT_TPDU_Recv x224(stream);
 
-            MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-            if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+            int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+            if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                 LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
@@ -2007,7 +2007,6 @@ public:
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
@@ -2177,11 +2176,11 @@ public:
             }
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
-            X224::DT_TPDU_Recv x224(*this->trans, stream);
+            X224::DT_TPDU_Recv x224(stream);
 
-            MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-            if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
-                LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
+            int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+            
+            if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
@@ -2189,7 +2188,6 @@ public:
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if ((this->verbose & (128|2)) == (128|2)){
                 LOG(LOG_INFO, "sec decrypted payload:");
@@ -2422,16 +2420,10 @@ public:
         {
             BStream stream(65536);
 
-            // Detect fast-path PDU
-            this->trans->recv(&stream.end, 1);
-            uint8_t byte = stream.in_uint8();
-
-
-            if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
-                FastPath::ClientInputEventPDU_Recv cfpie(*this->trans, stream, this->decrypt);
-
-                uint8_t byte;
-                uint8_t eventCode;
+            X224::RecvFactory fx224(*this->trans, stream, true);
+            
+            if (fx224.fast_path){
+                FastPath::ClientInputEventPDU_Recv cfpie(stream, this->decrypt);
 
                 for (uint8_t i = 0; i < cfpie.numEvents; i++){
                     if (!cfpie.payload.in_check_rem(1)){
@@ -2440,9 +2432,8 @@ public:
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
 
-                    byte = cfpie.payload.in_uint8();
-
-                    eventCode  = (byte & 0xE0) >> 5;
+                    uint8_t byte = cfpie.payload.in_uint8();
+                    uint8_t eventCode  = (byte & 0xE0) >> 5;
 
                     switch (eventCode){
                         case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
@@ -2542,11 +2533,11 @@ public:
                 break;
             }
             else {
-                X224::RecvFactory fx224(*this->trans, stream);
+//                X224::RecvFactory fx224(*this->trans, stream);
                 TODO("We shall put a specific case when we get Disconnect Request")
                 if (fx224.type == X224::DR_TPDU){
                     TODO("What is the clean way to actually disconnect ?")
-                    X224::DR_TPDU_Recv x224(*this->trans, stream);
+                    X224::DR_TPDU_Recv x224(stream);
                     LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
                     throw Error(ERR_X224_EXPECTED_DATA_PDU);
                 }
@@ -2555,10 +2546,10 @@ public:
                     throw Error(ERR_X224_EXPECTED_DATA_PDU);
                 }
 
-                X224::DT_TPDU_Recv x224(*this->trans, stream);
+                X224::DT_TPDU_Recv x224(stream);
 
-                MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-                if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+                if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                     LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
@@ -2567,7 +2558,6 @@ public:
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
                 SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
                 if (this->verbose & 128){
                     LOG(LOG_INFO, "sec decrypted payload:");

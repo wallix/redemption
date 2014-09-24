@@ -274,7 +274,7 @@ struct RdpNego
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
         BStream stream(65536);
         X224::RecvFactory f(*this->trans, stream);
-        X224::CC_TPDU_Recv x224(*this->trans, stream);
+        X224::CC_TPDU_Recv x224(stream);
 
         if (x224.rdp_neg_type == 0){
             this->tls = false;
@@ -540,7 +540,7 @@ struct RdpNego
         {
             BStream stream(65536);
             X224::RecvFactory fac_x224(*this->trans, stream);
-            X224::CR_TPDU_Recv x224(*this->trans, stream, false);
+            X224::CR_TPDU_Recv x224(stream, false);
             if (x224._header_size != (size_t)(stream.size())){
                 LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
                     " %d bytes remains", stream.size() - x224._header_size);

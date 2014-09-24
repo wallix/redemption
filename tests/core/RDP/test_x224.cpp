@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
 
     Inifile ini;
 
-    X224::CR_TPDU_Recv x224(t, stream, false, true);
+    X224::CR_TPDU_Recv x224(stream, false, true);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
@@ -118,7 +118,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
 
     Inifile ini;
     BStream stream(65536);
-    X224::CR_TPDU_Recv x224(t, stream, false);
+    X224::RecvFactory fac_x224(t, stream);
+    X224::CR_TPDU_Recv x224(stream, false);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -139,8 +140,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_overfull_stream)
     BStream stream(4);
     try {
         Inifile ini;
-
-        X224::CR_TPDU_Recv x224(t, stream, false);
+        X224::RecvFactory fac_x224(t, stream);
+        X224::CR_TPDU_Recv x224(stream, false);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -155,8 +156,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_TPDU_truncated_header)
     BStream stream(20);
     try {
         Inifile ini;
-
-        X224::CR_TPDU_Recv x224(t, stream, false);
+        X224::RecvFactory fac_x224(t, stream);
+        X224::CR_TPDU_Recv x224(stream, false);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -171,8 +172,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
     BStream stream(20);
     try {
         Inifile ini;
-
-        X224::CR_TPDU_Recv x224(t, stream, false);
+        X224::RecvFactory fac_x224(t, stream);
+        X224::CR_TPDU_Recv x224(stream, false);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -193,8 +194,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
     BStream stream(100);
     try {
         Inifile ini;
-
-        X224::CR_TPDU_Recv x224(t, stream, false);
+        X224::RecvFactory fac_x224(t, stream);
+        X224::CR_TPDU_Recv x224(stream, false);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -215,8 +216,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
     BStream stream(100);
     try {
         Inifile ini;
-
-        X224::CR_TPDU_Recv x224(t, stream, false);
+        X224::RecvFactory fac_x224(t, stream);
+        X224::CR_TPDU_Recv x224(stream, false);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -237,8 +238,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_trailing_data)
     BStream stream(100);
     try {
         Inifile ini;
-
-        X224::CR_TPDU_Recv x224(t, stream, false);
+        X224::RecvFactory fac_x224(t, stream);
+        X224::CR_TPDU_Recv x224(stream, false);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -257,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
 
     Inifile ini;
 
-    X224::CR_TPDU_Recv x224(t, stream, false);
+    X224::CR_TPDU_Recv x224(stream, false);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -295,21 +296,25 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
 
     Inifile ini;
 
-    X224::CR_TPDU_Recv x224(t, stream, false);
+    try {
+        X224::CR_TPDU_Recv x224(stream, false);
 
-    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
-    BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
-    BOOST_CHECK_EQUAL(0x32, x224.tpdu_hdr.LI);
+        BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+        BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
+        BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
+        BOOST_CHECK_EQUAL(0x32, x224.tpdu_hdr.LI);
 
-    BOOST_CHECK_EQUAL(0, strcmp("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie));
-    BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_REQ, x224.rdp_neg_type);
-    BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
-    BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
-    BOOST_CHECK_EQUAL((uint32_t)X224::PROTOCOL_TLS, x224.rdp_neg_requestedProtocols);
+        BOOST_CHECK_EQUAL(0, strcmp("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie));
+        BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_REQ, x224.rdp_neg_type);
+        BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
+        BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
+        BOOST_CHECK_EQUAL((uint32_t)X224::PROTOCOL_TLS, x224.rdp_neg_requestedProtocols);
 
-    BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
-    BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+        BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
+        BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+    } catch(Error & e) {
+        BOOST_CHECK(false);
+    };
 }
 
 
@@ -317,6 +322,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
 {
+
     BStream stream(256);
     X224::CR_TPDU_Send(stream,
             "Cookie: mstshash=administrateur@qa\x0D\x0A",
@@ -333,12 +339,10 @@ BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet_forge)
 {
-    LOG(LOG_INFO, "===================================");
     BStream stream(256);
     X224::CR_TPDU_Send(stream, "", X224::RDP_NEG_REQ, 0, X224::PROTOCOL_TLS);
     stream.mark_end();
     hexdump_d(stream.get_data(), stream.size());
-    LOG(LOG_INFO, "===================================");
 }
 
 
@@ -351,7 +355,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
 
-    X224::CC_TPDU_Recv x224(t, stream);
+    X224::CC_TPDU_Recv x224(stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -369,7 +373,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_wrong_opcode)
 
     BStream stream(65536);
     try {
-        X224::CC_TPDU_Recv x224(t, stream);
+        X224::RecvFactory fac_x224(t, stream);    
+        X224::CC_TPDU_Recv x224(stream);
         BOOST_CHECK(false);
     }
     catch(Error & e){
@@ -396,7 +401,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)tpkt_len, (size_t)fac_x224.length);
 
-    X224::CC_TPDU_Recv x224(t, stream);
+    X224::CC_TPDU_Recv x224(stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
@@ -432,7 +437,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::DR_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
 
-    X224::DR_TPDU_Recv x224(t, stream);
+    X224::DR_TPDU_Recv x224(stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -450,7 +455,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_wrong_opcode)
 
     BStream stream(65536);
     try {
-        X224::DR_TPDU_Recv x224(t, stream);
+        X224::RecvFactory fac_x224(t, stream);    
+        X224::DR_TPDU_Recv x224(stream);
         BOOST_CHECK(false);
     }
     catch(Error & e){
@@ -477,7 +483,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::ER_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)13, (size_t)fac_x224.length);
 
-    X224::ER_TPDU_Recv x224(t, stream);
+    X224::ER_TPDU_Recv x224(stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(13, x224.tpkt.len);
@@ -508,7 +514,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_wrong_opcode)
 
     BStream stream(65536);
     try {
-        X224::ER_TPDU_Recv x224(t, stream);
+        X224::RecvFactory fac_x224(t, stream);    
+        X224::ER_TPDU_Recv x224(stream);
         BOOST_CHECK(false);
     }
     catch(Error & e){
@@ -526,7 +533,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)12, (size_t)fac_x224.length);
 
-    X224::DT_TPDU_Recv x224(t, stream);
+    X224::DT_TPDU_Recv x224(stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(12, x224.tpkt.len);
@@ -546,7 +553,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_wrong_opcode)
 
     BStream stream(65536);
     try {
-        X224::DT_TPDU_Recv x224(t, stream);
+        X224::RecvFactory fac_x224(t, stream);    
+        X224::DT_TPDU_Recv x224(stream);
         BOOST_CHECK(false);
     }
     catch(Error & e){
