@@ -45,6 +45,7 @@
 #include "internal/flat_selector2_mod.hpp"
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
+#include "internal/flat_wait_mod.hpp"
 #include "internal/widget_test_mod.hpp"
 
 #define STRMODULE_LOGIN            "login"
@@ -60,6 +61,7 @@
 #define STRMODULE_RDP              "RDP"
 #define STRMODULE_VNC              "VNC"
 #define STRMODULE_INTERNAL         "INTERNAL"
+#define STRMODULE_WAITINFO         "waitinfo"
 
 enum {
     MODULE_EXIT,
@@ -83,6 +85,7 @@ enum {
     MODULE_INTERNAL_WIDGET2_SELECTOR,
     MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY,
     MODULE_INTERNAL_WIDGETTEST,
+    MODULE_INTERNAL_WAIT_INFO,
     MODULE_EXIT_INTERNAL_CLOSE,
     MODULE_TRANSITORY,
     MODULE_AUTH,
@@ -124,6 +127,7 @@ public:
         return res;
     }
     virtual void record(auth_api * acl) {}
+    virtual void check_module() { }
 };
 
 class MMIni : public MMApi {
@@ -131,7 +135,8 @@ public:
     Inifile & ini;
     uint32_t verbose;
     MMIni(Inifile & _ini) : ini(_ini)
-                          , verbose(ini.debug.auth) {}
+                          , verbose(ini.debug.auth)
+    {}
     virtual ~MMIni() {}
     virtual void remove_mod() {};
     virtual void new_mod(int target_module, time_t now, auth_api * acl) {
@@ -204,6 +209,10 @@ public:
             LOG(LOG_INFO, "===========> MODULE_DIALOG_VALID");
             return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
         }
+        else if (!strcmp(module_cstr, STRMODULE_WAITINFO)) {
+            LOG(LOG_INFO, "===========> MODULE_WAITINFO");
+            return MODULE_INTERNAL_WAIT_INFO;
+        }
         else if (!strcmp(module_cstr, STRMODULE_TRANSITORY)) {
             LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
             return MODULE_TRANSITORY;
@@ -267,6 +276,16 @@ public:
         return MODULE_INTERNAL_CLOSE;
     }
 
+    virtual void check_module() {
+        if (this->ini.context.forcemodule.get() &&
+            !this->is_connected()) {
+            this->mod->get_event().signal = BACK_EVENT_NEXT;
+            this->mod->get_event().set();
+            this->ini.context.forcemodule.set(false);
+            this->ini.context.forcemodule.use();
+            // Do not send back the value to sesman.
+        }
+    }
 };
 
 
@@ -462,6 +481,26 @@ public:
                 LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Challenge' ready");
             }
 
+            break;
+        case MODULE_INTERNAL_WAIT_INFO:
+            {
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
+                const char * message = this->ini.context.message.get_cstr();
+                const char * caption = "Information";
+                bool showform = this->ini.context.showform.get();
+                uint flag = this->ini.context.formflag.get();
+                this->mod = new FlatWaitMod(
+                                            this->ini,
+                                            this->front,
+                                            this->front.client_info.width,
+                                            this->front.client_info.height,
+                                            caption,
+                                            message,
+                                            now,
+                                            showform,
+                                            flag);
+                LOG(LOG_INFO, "ModuleManager::internal module 'Wait Info Message' ready");
+            }
             break;
         case MODULE_INTERNAL_WIDGET2_LOGIN:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");

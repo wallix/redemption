@@ -2221,7 +2221,7 @@ public:
             X224::DT_TPDU_Recv x224(stream);
 
             int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
-            
+
             if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
@@ -2462,9 +2462,12 @@ public:
         {
             BStream stream(65536);
 
+            // LOG(LOG_ERR, "X224::RecvFactory FP");
             X224::RecvFactory fx224(*this->trans, stream, true);
-            
+
             if (fx224.fast_path){
+                // LOG(LOG_ERR, "X224 is FP");
+                // LOG(LOG_ERR, "client event PDU Recv");
                 FastPath::ClientInputEventPDU_Recv cfpie(stream, this->decrypt);
 
                 for (uint8_t i = 0; i < cfpie.numEvents; i++){

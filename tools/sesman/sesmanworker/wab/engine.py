@@ -12,6 +12,9 @@ try:
     from wallixgenericnotifier import LICENCE_EXPIRED, LICENCE_PRIMARY_CX_ERROR, LICENCE_SECONDARY_CX_ERROR
     from wabconfig import Config
     from wabengine.client.sync_client import SynClient
+    from wabengine.common.const import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
+        APPROVAL_PENDING, APPROVAL_NONE
+    from wabengine.common.const import APPREQ_REQUIRED, APPREQ_OPTIONAL
     from wabx509 import AuthX509
 except Exception, e:
     Logger().info("================================")
@@ -63,6 +66,7 @@ class Engine(object):
         self.physical_targets = []
         self.displaytargets = []
         self.proxyrightsinput = None
+        self.pidhandler = None
 
     def get_language(self):
         try:
@@ -337,10 +341,11 @@ class Engine(object):
         self.proxy_rights = None
         self.rights = None
 
-    def get_proxy_rights(self, protocols, target_device=None):
+    def get_proxy_rights(self, protocols, target_device=None, check_timeframes=True):
         if self.proxy_rights is not None:
             return
-        self.proxy_rights = self.wabengine.get_proxy_rights(protocols, target_device)
+        self.proxy_rights = self.wabengine.get_proxy_rights(protocols, target_device,
+                                                            check_timeframes=check_timeframes)
 
         self.rights = self.proxy_rights.rights
         self.targets = {}
@@ -374,7 +379,8 @@ class Engine(object):
         if target_service == '':
             target_service = None
         selected_target = None
-        self.get_proxy_rights([u'RDP', u'VNC'], target_device)
+        self.get_proxy_rights([u'RDP', u'VNC'], target_device,
+                              check_timeframes=True if target_device else False)
         right = None
         if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
             for r in self.rights:
@@ -450,13 +456,8 @@ class Engine(object):
 
     def start_session(self, auth, pid, effective_login):
         try:
-            try:
-                from wabengine.common.interface import IPBSessionHandler
-                from wabengine.common.utils import ProcessSessionHandler
-                wab_engine_session_handler = IPBSessionHandler(ProcessSessionHandler(int(pid)))
-            except Exception, e:
-                wab_engine_session_handler = None
-            self.session_id = self.wabengine.start_session(auth, wab_engine_session_handler, effective_login=effective_login)
+            self.session_id = self.wabengine.start_session(auth, self.get_pidhandler(pid),
+                                                           effective_login=effective_login)
         except Exception, e:
             import traceback
             Logger().info("Engine start_session failed: (((%s)))" % (traceback.format_exc(e)))
@@ -535,6 +536,48 @@ class Engine(object):
 
     def read_session_parameters(self, key=None):
         return self.wabengine.read_session_parameters(self.session_id, key=key)
+
+    def get_pidhandler(self, pid):
+        if not self.pidhandler:
+            try:
+                from wabengine.common.interface import IPBSessionHandler
+                from wabengine.common.utils import ProcessSessionHandler
+                self.pidhandler = IPBSessionHandler(ProcessSessionHandler(int(pid)))
+            except Exception, e:
+                self.pidhandler = None
+        return self.pidhandler
+
+    def check_target(self, target, pid=None, request_ticket=None):
+        status, infos = self.wabengine.check_target(target, self.get_pidhandler(pid),
+                                                    request_ticket)
+        Logger().info("status : %s" % status)
+        Logger().info("infos : %s" % infos)
+        ticketfields = infos.get("ticket_fields")
+        if ticketfields:
+            flag = 0
+            if ticketfields.get("description") == APPREQ_REQUIRED:
+                flag += 1
+            if ticketfields.get("ticket") == APPREQ_REQUIRED:
+                flag += 2
+            if ticketfields.get("duration") == APPREQ_REQUIRED:
+                flag += 4
+            infos["ticketflags"] = flag
+        deconnection_time = infos.get("deconnection_time")
+        if deconnection_time and target.deconnection_time == "":
+            Logger().info("deconnection_time updated from %s to %s" % (target.deconnection_time, deconnection_time))
+            target.deconnection_time = deconnection_time
+            # update deconnection_time in right
+        if status == APPROVAL_ACCEPTED:
+            return None, infos
+        if status == APPROVAL_REJECTED:
+            return False, infos
+        if status == APPROVAL_PENDING:
+            return "PENDING", infos
+        if status == APPROVAL_NONE:
+            return "APPROVAL", infos
+        return False, infos
+
+
 
     def get_target_protocols(self):
         if not self.target_right:
