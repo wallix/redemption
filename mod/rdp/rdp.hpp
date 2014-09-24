@@ -905,8 +905,7 @@ struct mod_rdp : public mod_api {
                         X224::RecvFactory f(*this->nego.trans, x224_data);
                         X224::DT_TPDU_Recv x224(x224_data);
 
-                        SubStream & mcs_data = x224.payload;
-                        MCS::CONNECT_RESPONSE_PDU_Recv mcs(mcs_data, MCS::BER_ENCODING);
+                        MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
 
                         GCC::Create_Response_Recv gcc_cr(mcs.payload);
 
@@ -1357,9 +1356,9 @@ struct mod_rdp : public mod_api {
                         BStream stream(65536);
                         X224::RecvFactory f(*this->nego.trans, stream);
                         X224::DT_TPDU_Recv x224(stream);
-                        SubStream & mcs_data = x224.payload;
-                        TODO("We should have some MCS:RecvFactory to manage possible Deconnection Ultimatum here")
-                        MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
+                        TODO("Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here")
+//                        int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+                        MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
                         SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
@@ -1697,10 +1696,11 @@ struct mod_rdp : public mod_api {
                         }
 
                         X224::DT_TPDU_Recv x224(stream);
-                        SubStream & mcs_data = x224.payload;
                         
-                        MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-                        if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+//                        MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
+                        int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+
+                        if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                             LOG(LOG_INFO, "mod::rdp::DisconnectProviderUltimatum received");
                             x224.payload.rewind();
                             MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1710,7 +1710,7 @@ struct mod_rdp : public mod_api {
                         }
                         
 
-                        MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
+                        MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
                         SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
                         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){

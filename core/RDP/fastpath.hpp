@@ -204,7 +204,7 @@ namespace FastPath {
             return action;
         }())
         , numEvents((this->fpInputHeader & 0x3C) >> 2)
-        , secFlags((this->fpInputHeader & 0xC0) >> 6)
+        , secFlags((this->fpInputHeader >> 6) & 3)
         , length([&stream](){
              uint16_t length = stream.in_uint8();
              if (length & 0x80){
@@ -214,16 +214,15 @@ namespace FastPath {
         }())
         , fipsInformation(0)
         , dataSignature{}
-        , payload(stream) 
-        {
-
+        , payload([&stream, &decrypt, this](){
             TODO("RZ: Should we treat fipsInformation ?");
 
-            if (this->secFlags & FASTPATH_INPUT_ENCRYPTED) {
+            if ( 0!= (this->secFlags & FASTPATH_INPUT_ENCRYPTED)) {
                 const unsigned expected =
                       8                                // dataSignature
                     + ((this->numEvents == 0) ? 1 : 0) // numEvent
                     ;
+                LOG(LOG_INFO, "fastpath input encrypted, nbevent = %u sq=%u %u", this->numEvents, expected, stream.in_remain());
                 if (!stream.in_check_rem(expected)) {
                     LOG( LOG_ERR
                        , "FastPath::ClientInputEventPDU_Recv: data truncated, expected=%u remains=%u"
@@ -232,15 +231,16 @@ namespace FastPath {
                 }
 
                 stream.in_copy_bytes(this->dataSignature, 8);
-                decrypt.decrypt(payload.get_data(), payload.size());
+                decrypt.decrypt(stream.get_data()+stream.get_offset(), stream.in_remain());
             }
 
             if (this->numEvents == 0) {
                 this->numEvents = stream.in_uint8();
             }
-
-            this->payload.resize(stream, stream.in_remain());
-
+            return SubStream(stream, stream.get_offset(), stream.in_remain());
+        }()) 
+        {
+            stream.in_skip_bytes(this->payload.size());
         }   // ClientInputEventPDU_Recv(Stream & stream)
     };  // struct ClientInputEventPDU_Recv
 

@@ -1926,8 +1926,8 @@ public:
                 X224::RecvFactory f(*this->trans, pdu);
                 X224::DT_TPDU_Recv x224(pdu);
 
-                MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-                if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+                if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                     LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
@@ -1997,8 +1997,8 @@ public:
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(stream);
 
-            MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-            if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+            int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+            if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                 LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
@@ -2007,7 +2007,6 @@ public:
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
@@ -2176,11 +2175,19 @@ public:
                 LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
             }
             BStream stream(65536);
+            LOG(LOG_INFO, "Front::incoming::RecvFactory");
             X224::RecvFactory fx224(*this->trans, stream);
+            LOG(LOG_INFO, "Front::incoming::DT_TPDU");
             X224::DT_TPDU_Recv x224(stream);
 
-            MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-            if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+            LOG(LOG_INFO, "Front::incoming::DT_TPDU payload size=%d offset=%d", 
+                x224.payload.size(), x224.payload.get_offset());
+
+            int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+            
+            LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE mcs_type = %d", mcs_type);
+
+            if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                 LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
@@ -2190,11 +2197,21 @@ public:
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
+            LOG(LOG_INFO, "Front::incoming::SendDataRequest_Recv mcs.payload.size=%d mcs.payload.offset=%d el=%d",
+                mcs.payload.size(), mcs.payload.get_offset(), this->client_info.encryptionLevel);
+
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
+
+            LOG(LOG_INFO, "Front::incoming::SendDataRequest_Recv sec.payload.size=%d sec.payload.offset=%d el=%d",
+                sec.payload.size(), sec.payload.get_offset(), this->client_info.encryptionLevel);
+
             if ((this->verbose & (128|2)) == (128|2)){
                 LOG(LOG_INFO, "sec decrypted payload:");
                 hexdump_d(sec.payload.get_data(), sec.payload.size());
             }
+
+            LOG(LOG_INFO, "Front::incoming::SendDataRequest_Recv sec.payload.size=%d sec.payload.offset=%d el=%d",
+                mcs.payload.size(), mcs.payload.get_offset(), this->client_info.encryptionLevel);
 
             // Licensing
             // ---------
@@ -2214,6 +2231,10 @@ public:
 
             // Client                                                     Server
             //    | <------ Licence Error PDU Valid Client ---------------- |
+
+            LOG(LOG_INFO, "Front::incoming::SecSpecialPacket_Recv sec.payload.size=%d sec.payload.offset=%d",
+                sec.payload.size(), sec.payload.get_offset());
+
 
             if (sec.flags & SEC::SEC_LICENSE_PKT) {
                 LIC::RecvFactory flic(sec.payload);
@@ -2550,8 +2571,8 @@ public:
 
                 X224::DT_TPDU_Recv x224(stream);
 
-                MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-                if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+                if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                     LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
@@ -2560,7 +2581,6 @@ public:
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
                 SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
                 if (this->verbose & 128){
                     LOG(LOG_INFO, "sec decrypted payload:");

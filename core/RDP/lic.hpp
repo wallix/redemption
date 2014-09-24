@@ -243,7 +243,9 @@ namespace LIC
                 LOG(LOG_ERR, "Not enough data to read licence data, need %u, got %u", 4, this->wMsgSize, stream.size());
                 throw Error(ERR_LIC);
             }
-            stream.p -= 4;
+            TODO("Factory does not read anything, write it using a cleaner method");
+//            stream.p -= 4;
+            stream.p = stream.get_data();
         }
     };
 
