@@ -4554,6 +4554,7 @@ BOOST_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
     gd.mem_blt(Rect(0, 0, 368, 10), bmp2, 0, 0, 0x000000, true);
     OutFilenameTransport trans("test_decompressed_image.png");
     ::transport_dump_png24(&trans, gd.data, 368, 10, gd.rowsize, true);
+    ::unlink("test_decompressed_image.png");
 }
 
 
