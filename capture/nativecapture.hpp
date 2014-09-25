@@ -259,6 +259,11 @@ public:
 
         this->recorder.breakpoint();
     }
+
+    virtual void external_time(const timeval & now) {
+        this->recorder.flush();
+        this->recorder.timestamp(now);
+    }
 };
 
 #endif
