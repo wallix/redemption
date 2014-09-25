@@ -495,7 +495,6 @@ class Sesman():
                     device_filter = self.shared.get(u'selector_device_filter'),
                     protocol_filter = self.shared.get(u'selector_proto_filter'),
                     real_target_device = self.shared.get(u'real_target_device'))
-
                 if (len(services) > 1) or item_filtered:
                     try:
                         _current_page = int(self.shared.get(u'selector_current_page')) - 1
@@ -589,31 +588,33 @@ class Sesman():
                             Logger().info(u"Unexpected error in selector pagination %s" % traceback.format_exc(e))
                         return False, u"Unexpected error in selector pagination"
                 elif len(services) == 1:
+                    Logger().info(u"service len = 1")
                     s = services[0]
                     data_to_send = {}
                     data_to_send[u'module'] = u'transitory' if s[2] != u'INTERNAL' else u'INTERNAL'
-                    if s[2] == u'APP':
-                        data_to_send[u'target_login'] = '@'.join(s[1].split('@')[:-1])
-                        data_to_send[u'target_device'] = s[4]
-                        # data_to_send[u'proto_dest'] = s[2]
 
-                        self._full_user_device_account = u"%s@%s:%s" % ( target_login
-                                                                       , target_device
-                                                                       , wab_login
-                                                                       )
-                    else:
-                        data_to_send[u'target_login'] = '@'.join(s[1].split('@')[:-1])
-                        data_to_send[u'target_device'] = s[4]
-                        # data_to_send[u'proto_dest'] = s[2] if s[2] != u'INTERNAL' else u'RDP'
+                    # service_login (s[1]) format:
+                    # target_login@device_name:service_name
+                    # target_login can contains '@'
+                    # device_name and service_name can not contain ':', nor '@'
 
-                        self._full_user_device_account = u"%s@%s:%s" % ( self.shared.get(u'target_login')
-                                                                       , self.shared.get(u'target_device')
-                                                                       , self.shared.get(u'login')
-                                                                       )
+                    # service_split = [ *target_login* , device_name:service_name ]
+                    service_split = s[1].split('@')
+                    target_login = '@'.join(service_split[:-1])
+                    # device_service_split = [ device_name, service_name ]
+                    device_service_split = s[1].split('@')[-1].split(':')
+                    device_name = device_service_split[0]
+                    service_name = device_service_split[-1]
+
+                    data_to_send[u'target_login'] = target_login
+                    data_to_send[u'target_device'] = device_name
+                    self._full_user_device_account = u"%s@%s:%s" % (target_login,
+                                                                    device_name,
+                                                                    wab_login)
                     if data_to_send.has_key(u'module') and not self.internal_mod:
                         self.internal_mod = True if data_to_send[u'module'] == u'INTERNAL' else False
                     self.send_data(data_to_send)
-                    self.target_service_name = s[1].split(':')[-1]
+                    self.target_service_name = service_name
                     # Logger().info("Only one target : service name %s" % self.target_service_name)
                     _status = True
                 else:
