@@ -540,6 +540,12 @@ public:
                 timeval last_movie_time = this->record_now;
                 this->stream.in_timeval_from_uint64le_usec(this->record_now);
 
+                for (size_t i = 0; i < this->nbconsumers ; i++){
+                    if (this->consumers[i].capture_device) {
+                        this->consumers[i].capture_device->external_time(this->record_now);
+                    }
+                }
+
                 REDOC("If some data remains, it is input data : mouse_x, mouse_y and decoded keyboard keys (utf8)")
                 if (this->stream.end - this->stream.p > 0){
                     if (this->stream.end - this->stream.p < 4){
