@@ -118,6 +118,8 @@ struct RDPCaptureDevice {
     // toggles externally genareted breakpoint.
     virtual void external_breakpoint() {}
 
+    virtual void external_time(const timeval & now) {}
+
 protected:
     // this to avoid calling constructor of base abstract class
     RDPCaptureDevice() {}
