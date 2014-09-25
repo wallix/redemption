@@ -135,6 +135,18 @@ public:
         return (int16_t)((v > 32767)?v - 65536:v);
     }
 
+
+
+
+    uint16_t incheck_uint16_le(int id, const char * message) {
+        if (!this->in_check_rem(2)){
+            LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
+            throw Error(id);
+        }
+        return in_uint16_le();
+    }
+
+
     uint16_t in_uint16_le(void) {
         REDASSERT(this->in_check_rem(2));
         this->p += 2;
