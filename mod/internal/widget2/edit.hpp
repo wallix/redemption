@@ -472,10 +472,7 @@ public:
                     }
                     break;
                 case Keymap2::KEVENT_KEY:
-                    TODO("Num chars limit should be the buffer size, but at 128,"
-                         " unexpected behavior occurs")
-                        // if (this->num_chars < WidgetLabel::buffer_size - 5) {
-                        if (this->num_chars < 127) {
+                    if (this->num_chars < WidgetLabel::buffer_size - 5) {
                         uint32_t c = keymap->get_char();
                         UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0, c, WidgetLabel::buffer_size - 1 - this->edit_buffer_pos);
                         size_t tmp = this->edit_buffer_pos;

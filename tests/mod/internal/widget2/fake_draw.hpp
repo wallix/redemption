@@ -151,14 +151,19 @@ struct TestDraw : DrawApi
 
     virtual void text_metrics(const char* text, int& width, int& height)
     {
+        //TODO used ::text_metrics of text_metrics.hpp
         height = 0;
         width = 0;
-        uint32_t uni[256];
-        size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
-        if (len_uni){
-            for (size_t index = 0; index < len_uni; index++) {
-                FontChar & font_item = this->gd.get_font(this->font, uni[index]);
-                // width += font_item->incby;
+        UTF8toUnicodeIterator unicode_iter(text);
+        if (*unicode_iter) {
+            for (; uint32_t c = *unicode_iter; ++unicode_iter) {
+                const FontChar & font_item = [&, c]() -> const FontChar & {
+                    if (!this->font.glyph_defined(c) || !this->font.font_items[c]) {
+                        return this->font.font_items[unsigned('?')];
+                    }
+                    return this->font.font_items[c];
+                }();
+                //width += font_item.incby;
                 width += font_item.width + 2;
                 height = std::max(height, font_item.height);
             }

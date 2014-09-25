@@ -78,6 +78,7 @@
 #include "auth_api.hpp"
 
 #include "filtering_channel.hpp"
+#include "text_metrics.hpp"
 
 enum {
     FRONT_DISCONNECTED,
@@ -414,23 +415,13 @@ public:
         }
     }
 
-    virtual void text_metrics(const char * text, int & width, int & height){
-        height = 0;
-        width = 0;
-        uint32_t uni[256];
-        size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
-        if (len_uni){
-            for (size_t index = 0; index < len_uni; index++) {
-                uint32_t charnum = uni[index]; //
-                FontChar *font_item = this->font.glyph_defined(charnum)?&this->font.font_items[charnum]:nullptr;
-                if (!font_item) {
-                    LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                    font_item = &this->font.font_items[static_cast<unsigned>('?')];
-                }
-                width += font_item->incby;
-                height = std::max(height, font_item->height);
-            }
-        }
+    virtual void text_metrics(const char * text, int & width, int & height)
+    {
+        ::text_metrics(this->font, text, width, height,
+                       [](uint32_t charnum) {
+                           LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
+                       }
+        );
     }
 
     TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
@@ -439,23 +430,30 @@ public:
         this->send_global_palette();
 
         // add text to glyph cache
-        int len = strlen(text);
-        TODO("we should put some loop here for text to be splitted between chunks of UTF8 characters and loop on them")
-        if (len > 120) {
-            len = 120;
-        }
+        //int len = strlen(text);
+        //TODO("we should put some loop here for text to be splitted between chunks of UTF8 characters and loop on them")
+        //if (len > 120) {
+        //    len = 120;
+        //}
 
-        if (len > 0){
-            uint32_t uni[128];
-            size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
+        UTF8toUnicodeIterator unicode_iter(text);
+        while (*unicode_iter){
             int total_width = 0;
             int total_height = 0;
             uint8_t data[256];
-            int f = 7;
+            auto data_begin = std::begin(data);
+            const auto data_end = std::end(data)-2;
+
+            const int f = 7;
             int distance_from_previous_fragment = 0;
-            for (size_t index = 0; index < part_len; index++) {
+            while (data_begin != data_end) {
+                const uint32_t charnum = *unicode_iter;
+                if (!charnum) {
+                    break ;
+                }
+                ++unicode_iter;
+
                 int c = 0;
-                uint32_t charnum = uni[index];
                 FontChar & font_item = this->font.glyph_defined(charnum) && this->font.font_items[charnum]
                 ? this->font.font_items[charnum]
                 : [&]() {
@@ -485,8 +483,10 @@ public:
                     default:
                     break;
                 }
-                data[index * 2] = c;
-                data[index * 2 + 1] = distance_from_previous_fragment;
+                *data_begin = c;
+                ++data_begin;
+                *data_begin = distance_from_previous_fragment;
+                ++data_begin;
                 distance_from_previous_fragment = font_item.incby;
                 total_width += font_item.incby;
                 total_height = std::max(total_height, font_item.height);
@@ -494,7 +494,7 @@ public:
 
             const Rect bk(x, y, total_width + 1, total_height + 1);
 
-             RDPGlyphIndex glyphindex(
+            RDPGlyphIndex glyphindex(
                 f, // cache_id
                 0x03, // fl_accel
                 0x0, // ui_charinc
@@ -508,9 +508,11 @@ public:
                     (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
                 x,  // glyph_x
                 y + total_height, // glyph_y
-                part_len * 2, // data_len in bytes
+                data_begin - data, // data_len in bytes
                 data // data
             );
+
+            x += total_width;
 
             this->draw(glyphindex, clip, NULL);
         }
