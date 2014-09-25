@@ -66,6 +66,10 @@ class CopyPaste
             return this->buf_;
         }
 
+        size_t size() const {
+            return this->size_;
+        }
+
         void clear() {
             this->size_ = 0;
         }
@@ -73,6 +77,7 @@ class CopyPaste
 
     LimitString clipboard_str_;
     bool has_clipboard_ = false;
+    size_t long_data_response_size = 0;
 
 public:
     CopyPaste() = default;
@@ -91,7 +96,7 @@ public:
         return false;
     }
 
-    operator bool () const noexcept {
+    explicit operator bool () const noexcept {
         return this->channel_;
     }
 
@@ -123,6 +128,26 @@ public:
     void send_to_mod_channel(Stream & chunk, uint32_t flags)
     {
         SubStream stream(chunk, 0, chunk.size());
+
+        if (this->long_data_response_size) {
+            if (this->long_data_response_size < stream.in_remain()) {
+                LOG( LOG_ERR
+                   , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
+                   , this->long_data_response_size, stream.in_remain());
+                throw Error(ERR_RDP_PROTOCOL);
+            }
+
+            this->long_data_response_size -= stream.in_remain();
+            this->clipboard_str_.utf16_push_back(stream.p, stream.in_remain() / 2);
+
+            if (!this->long_data_response_size && this->paste_edit_) {
+                this->paste_edit_->insert_text(this->clipboard_str_.c_str());
+                this->paste_edit_ = nullptr;
+            }
+
+            return ;
+        }
+
         RDPECLIP::RecvFactory recv_factory(stream);
 
         switch (recv_factory.msgType) {
@@ -136,20 +161,24 @@ public:
             //    break;
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                 RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
-                this->send_to_front_channel(RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.c_str());
+                this->send_to_front_channel_and_set_buf_size(
+                    this->clipboard_str_.size() * 2 /*utf8 to utf16*/ + sizeof(RDPECLIP::CliprdrHeader) + 4 /*data_len*/,
+                    RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.c_str()
+                );
                 break;
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
                 RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
                 format_data_response_pdu.recv(stream, recv_factory);
                 if (format_data_response_pdu.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
-                    if (!stream.in_check_rem(format_data_response_pdu.dataLen())) {
-                        LOG( LOG_ERR
-                        , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
-                        , format_data_response_pdu.dataLen(), stream.in_remain());
-                        throw Error(ERR_RDP_PROTOCOL);
-                    }
 
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
+                        if (!stream.in_check_rem(format_data_response_pdu.dataLen())) {
+                            LOG( LOG_ERR
+                               , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
+                               , format_data_response_pdu.dataLen(), stream.in_remain());
+                            throw Error(ERR_RDP_PROTOCOL);
+                        }
+
                         this->clipboard_str_.utf16_push_back(stream.p, format_data_response_pdu.dataLen() / 2);
 
                         if (this->paste_edit_) {
@@ -167,7 +196,8 @@ public:
                             throw Error(ERR_RDP_PROTOCOL);
                         }
 
-                        this->clipboard_str_.utf16_push_back(stream.p, format_data_response_pdu.dataLen() / 2);
+                        this->long_data_response_size = format_data_response_pdu.dataLen() - stream.in_remain();
+                        this->clipboard_str_.utf16_push_back(stream.p, stream.in_remain() / 2);
                     }
                 }
                 break;
@@ -179,13 +209,18 @@ public:
 
 private:
     template<class PDU, class... Args>
-    void send_to_front_channel(PDU && pdu, Args && ...args) {
-        BStream out_s(256);
-        pdu.emit(out_s, std::move(args)...);
+    void send_to_front_channel_and_set_buf_size(size_t buf_size, PDU && pdu, Args && ...args) {
+        BStream out_s(buf_size);
+        pdu.emit(out_s, args...);
         const size_t length     = out_s.size();
         const size_t chunk_size = length;
         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                       CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
+    }
+
+    template<class PDU, class... Args>
+    void send_to_front_channel(PDU && pdu, Args && ...args) {
+        this->send_to_front_channel_and_set_buf_size(256, std::move(pdu), args...);
     }
 };
 

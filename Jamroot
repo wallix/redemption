@@ -582,6 +582,8 @@ unit-test test_test_card_mod : tests/mod/internal/test_test_card_mod.cpp libboos
 
 unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_copy_paste : tests/mod/internal/test_copy_paste.cpp libboost_unit_test png z openssl crypto : <variant>coverage:<library>gcov ;
 ## @}
 
 
