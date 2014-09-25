@@ -38,32 +38,33 @@ private:
     trans_t fr_map;
 
     void build_fr_map() {
-        fr_map["login"] = "Identifiant";
-        fr_map["password"] = "Mot de passe";
-        fr_map["diagnostic"] = "Diagnostic";
-        fr_map["connection_closed"] = "Connexion fermée";
-        fr_map["OK"] = "OK";
-        fr_map["cancel"] = "Annuler";
-        fr_map["help"] = "Aide";
-        fr_map["close"] = "Fermer";
-        fr_map["refused"] = "Refuser";
-        fr_map["username"] = "Utilisateur";
-        fr_map["password_expire"] = "Votre mot de passe va bientôt expirer. Veuillez le changer";
-        fr_map["protocol"] = "Protocole";
-        fr_map["target_group"] = "Groupe";
-        fr_map["target"] = "Cible";
-        fr_map["close_time"] = "Date de clôture";
-        fr_map["logout"] = "Déconnexion";
-        fr_map["apply"] = "Appliquer";
-        fr_map["filter"] = "Filtrer";
-        fr_map["connect"] = "Connecter";
-        fr_map["timeleft"] = "Temps restant";
-        fr_map["second"] = "seconde";
-        fr_map["minute"] = "minute";
-        fr_map["before_closing"] = "avant fermeture";
-        fr_map["manager_close_cnx"] = "Le gestionnaire de session a coupé la connexion";
-        fr_map["end_connection"] = "Fin de connexion";
-        fr_map["help_message"] =
+        trans_t & dict = this->fr_map;
+        dict["login"] = "Identifiant";
+        dict["password"] = "Mot de passe";
+        dict["diagnostic"] = "Diagnostic";
+        dict["connection_closed"] = "Connexion fermée";
+        dict["OK"] = "OK";
+        dict["cancel"] = "Annuler";
+        dict["help"] = "Aide";
+        dict["close"] = "Fermer";
+        dict["refused"] = "Refuser";
+        dict["username"] = "Utilisateur";
+        dict["password_expire"] = "Votre mot de passe va bientôt expirer. Veuillez le changer";
+        dict["protocol"] = "Protocole";
+        dict["target_group"] = "Groupe";
+        dict["target"] = "Cible";
+        dict["close_time"] = "Date de clôture";
+        dict["logout"] = "Déconnexion";
+        dict["apply"] = "Appliquer";
+        dict["filter"] = "Filtrer";
+        dict["connect"] = "Connecter";
+        dict["timeleft"] = "Temps restant";
+        dict["second"] = "seconde";
+        dict["minute"] = "minute";
+        dict["before_closing"] = "avant fermeture";
+        dict["manager_close_cnx"] = "Le gestionnaire de session a coupé la connexion";
+        dict["end_connection"] = "Fin de connexion";
+        dict["help_message"] =
             "Dans la zone de saisie login, entrez:<br>"
             "- le nom de la machine cible et du compte<br>"
             "  sous la forme login@serveur.<br>"
@@ -76,42 +77,56 @@ private:
             "<br>"
             "Contactez votre administrateur système en<br>"
             "cas de problème pour vous connecter.";
-        fr_map["selector"] = "Sélecteur";
-        fr_map["session_out_time"] = "L'authorisation de la session a expirée";
-        fr_map["miss_keepalive"] = "Absence de réponse de Keepalive de l'ACL";
-        fr_map["close_inactivity"] = "Fermeture sur inactivité";
-        fr_map["acl_fail"] = "Echec du service d'authentification";
-        fr_map["target_fail"] = "Echec de la connexion à la cible distante";
-        fr_map["comment"] = "Commentaire";
-        fr_map["no_results"] = "Aucun résultat";
+        dict["selector"] = "Sélecteur";
+        dict["session_out_time"] = "L'authorisation de la session a expirée";
+        dict["miss_keepalive"] = "Absence de réponse de Keepalive de l'ACL";
+        dict["close_inactivity"] = "Fermeture sur inactivité";
+        dict["acl_fail"] = "Echec du service d'authentification";
+        dict["target_fail"] = "Echec de la connexion à la cible distante";
+        dict["comment"] = "Commentaire";
+        dict["no_results"] = "Aucun résultat";
+
+        dict["back_selector"] = "Retour au Sélecteur";
+        dict["exit"] = "Déconnexion";
+        dict["comment"] = "Commentaire";
+        dict["comment_r"] = "Commentaire *";
+        dict["ticket"] = "Ticket n°";
+        dict["ticket_r"] = "Ticket n° *";
+        dict["duration"] = "Durée";
+        dict["duration_r"] = "Durée *";
+        dict["note_duration_format"] = "format: \"[heures]h[mins]m\" chaque unité est optionnelle.";
+        dict["note_required"] = "(*) champs obligatoires.";
+        dict["confirm"] = "Confirmer";
+        dict["information"] = "Information";
     }
     void build_en_map() {
-        en_map["login"] = "Login";
-        en_map["password"] = "Password";
-        en_map["diagnostic"] = "Diagnostic";
-        en_map["connection_closed"] = "Connection closed";
-        en_map["OK"] = "OK";
-        en_map["cancel"] = "Cancel";
-        en_map["help"] = "Help";
-        en_map["close"] = "Close";
-        en_map["refused"] = "Refused";
-        en_map["username"] = "Username";
-        en_map["password_expire"] = "Your password will expire soon. Please change it.";
-        en_map["protocol"] = "Protocol";
-        en_map["target_group"] = "Target Group";
-        en_map["target"] = "Target";
-        en_map["close_time"] = "Close Time";
-        en_map["logout"] = "Logout";
-        en_map["apply"] = "Apply";
-        en_map["filter"] = "Filter";
-        en_map["connect"] = "Connect";
-        en_map["timeleft"] = "Time left";
-        en_map["second"] = "second";
-        en_map["minute"] = "minute";
-        en_map["before_closing"] = "before closing";
-        en_map["manager_close_cnx"] = "Connection closed by manager";
-        en_map["end_connection"] = "End of connection";
-        en_map["help_message"] =
+        trans_t & dict = this->en_map;
+        dict["login"] = "Login";
+        dict["password"] = "Password";
+        dict["diagnostic"] = "Diagnostic";
+        dict["connection_closed"] = "Connection closed";
+        dict["OK"] = "OK";
+        dict["cancel"] = "Cancel";
+        dict["help"] = "Help";
+        dict["close"] = "Close";
+        dict["refused"] = "Refused";
+        dict["username"] = "Username";
+        dict["password_expire"] = "Your password will expire soon. Please change it.";
+        dict["protocol"] = "Protocol";
+        dict["target_group"] = "Target Group";
+        dict["target"] = "Target";
+        dict["close_time"] = "Close Time";
+        dict["logout"] = "Logout";
+        dict["apply"] = "Apply";
+        dict["filter"] = "Filter";
+        dict["connect"] = "Connect";
+        dict["timeleft"] = "Time left";
+        dict["second"] = "second";
+        dict["minute"] = "minute";
+        dict["before_closing"] = "before closing";
+        dict["manager_close_cnx"] = "Connection closed by manager";
+        dict["end_connection"] = "End of connection";
+        dict["help_message"] =
             "In login edit box, enter:<br>"
             "- target device and login as login@target.<br>"
             "- or a valid authentication user.<br>"
@@ -123,14 +138,28 @@ private:
             "<br>"
             "Contact your system administrator if you are<br>"
             "experiencing problems.";
-        en_map["selector"] = "Selector";
-        en_map["session_out_time"] = "Session is out of allowed timeframe";
-        en_map["miss_keepalive"] = "Missed keepalive from ACL";
-        en_map["close_inactivity"] = "Connection closed on inactivity";
-        en_map["acl_fail"] = "Authentifier service failed";
-        en_map["target_fail"] = "Failed to connect to remote TCP host";
-        en_map["comment"] = "Comment";
-        en_map["no_results"] = "No results found";
+        dict["selector"] = "Selector";
+        dict["session_out_time"] = "Session is out of allowed timeframe";
+        dict["miss_keepalive"] = "Missed keepalive from ACL";
+        dict["close_inactivity"] = "Connection closed on inactivity";
+        dict["acl_fail"] = "Authentifier service failed";
+        dict["target_fail"] = "Failed to connect to remote TCP host";
+        dict["comment"] = "Comment";
+        dict["no_results"] = "No results found";
+
+        dict["back_selector"] = "Back to Selector";
+        dict["exit"] = "Exit";
+        dict["comment"] = "Comment";
+        dict["comment_r"] = "Comment *";
+        dict["ticket"] = "Ticket n°";
+        dict["ticket_r"] = "Ticket n° *";
+        dict["duration"] = "Duration";
+        dict["duration_r"] = "Duration *";
+        dict["note_duration_format"] = "format \"[hours]h[mins]m\" each unit is optional.";
+        dict["note_required"] = "(*) required fields.";
+        dict["confirm"] = "Confirm";
+        dict["information"] = "Information";
+
     }
 
     Translation()

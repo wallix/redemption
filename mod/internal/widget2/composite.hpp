@@ -473,7 +473,8 @@ public:
 
     virtual void rdp_input_scancode( long param1, long param2, long param3
                                    , long param4, Keymap2 * keymap) {
-        if (keymap->nb_kevent_available() > 0) {
+        while (keymap->nb_kevent_available() > 0) {
+            uint32_t nb_kevent = keymap->nb_kevent_available();
             switch (keymap->top_kevent()) {
             case Keymap2::KEVENT_TAB:
                 //std::cout << ("tab") << '\n';
@@ -490,6 +491,10 @@ public:
                     this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
                 }
                 break;
+            }
+            if (nb_kevent == keymap->nb_kevent_available()) {
+                // this is to prevent infinite loop if the kevent is not consummed
+                keymap->get_kevent();
             }
         }
     }

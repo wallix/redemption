@@ -30,6 +30,7 @@
 #include "theme.hpp"
 #include "group_box.hpp"
 #include "flat_form.hpp"
+#include "translation.hpp"
 
 class FlatWait : public WidgetParent
 {
@@ -47,7 +48,7 @@ public:
 
     FlatWait(DrawApi& drawable, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier,
-             const char* caption, const char * text, int group_id,
+             const char* caption, const char * text, int group_id, Inifile & ini,
              Theme & theme, bool showform = false, int required = FlatForm::NONE)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
         , groupbox(drawable, 0, 0, width, height, *this, NULL, caption, -6,
@@ -55,11 +56,11 @@ public:
         , bg_color(theme.global.bgcolor)
         , dialog(drawable, 0, 0, this->groupbox, NULL, text, true, -10,
                  theme.global.fgcolor, theme.global.bgcolor, 10, 2)
-        , form(drawable, width - 80, 140, *this, this, -20, theme, required)
-        , goselector(drawable, 0, 0, this->groupbox, this, "Back to Selector", true, -12,
+        , form(drawable, width - 80, 140, *this, this, -20, ini, theme, required)
+        , goselector(drawable, 0, 0, this->groupbox, this, TR("back_selector", ini), true, -12,
                      theme.global.fgcolor, theme.global.bgcolor,
                      theme.global.focus_color, 6, 2)
-        , exit(drawable, 0, 0, this->groupbox, this, "Exit", true, -11,
+        , exit(drawable, 0, 0, this->groupbox, this, TR("exit", ini), true, -11,
                theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
                6, 2)
         , hasform(showform)
@@ -136,7 +137,7 @@ public:
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_ESC:
                 keymap->get_kevent();
-                this->send_notify(NOTIFY_CANCEL);
+                this->send_notify(NOTIFY_SUBMIT);
                 break;
             default:
                 WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);

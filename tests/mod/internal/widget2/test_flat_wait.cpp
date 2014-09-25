@@ -51,6 +51,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
+    Inifile ini;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
@@ -84,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 
 
     FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Invalid Target",
-                         text_invalid, 0, colors);
+                         text_invalid, 0, ini, colors);
     // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
     //                      text_pending, 0, colors);
     // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",
