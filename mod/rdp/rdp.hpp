@@ -1696,8 +1696,6 @@ struct mod_rdp : public mod_api {
                         }
 
                         X224::DT_TPDU_Recv x224(stream);
-                        
-                        MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
                         int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
 
                         if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
@@ -1822,6 +1820,7 @@ struct mod_rdp : public mod_api {
                                     //     this->send_flow_response_pdu(sctrl.flow_id,
                                     //                                  sctrl.flow_number);
                                     // }
+                                    next_packet = sec.payload.p;
                                 }
                                 else {
                                     ShareControl_Recv sctrl(sec.payload);

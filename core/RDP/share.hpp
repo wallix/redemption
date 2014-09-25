@@ -76,6 +76,76 @@ enum {
 };
 
 
+enum {
+    RDP_POINTER_SYSTEM             = 1,
+    RDP_POINTER_MOVE               = 3,
+    RDP_POINTER_COLOR              = 6,
+    RDP_POINTER_CACHED             = 7,
+    RDP_POINTER_NEW                = 8
+};
+
+// Return True if flowMarker is detected
+// In these case we have FlowTestPDU, FlowResponsePDU or FlowStopPDU
+// and not ShareControl header.
+bool peekFlowPDU(const Stream & stream) {
+    if (!stream.in_check_rem(2)){
+        throw Error(ERR_SEC);
+    }
+    return (stream.get_data()[stream.get_offset()] == 0) 
+    && (stream.get_data()[stream.get_offset()+1] == 0x80);
+}
+
+
+//##############################################################################
+
+// FlowPDU ::= SEQUENCE {
+// flowMarker Integer16(32768), -- ('8000'H),
+// -- distinguishes FlowPDUs from ASPDUs
+// -- containing ShareControlHeaders
+// pad8bits Integer8(0),
+// pduTypeFlow PDUTypeFlow(flowResponsePDU | flowStopPDU | flowTestPDU),
+// flowIdentifier Integer8(0..127),
+// flowNumber Integer8,
+// -- shall be zero for PDUType FlowStopPDU
+// pduSource
+// UserID
+// -- MCS User ID of sending ASCE
+// }
+
+
+struct ShareFlow_Recv
+//##############################################################################
+{
+    public:
+    uint16_t flowMarker;
+    uint8_t pad;
+    uint8_t pduTypeFlow;
+    uint8_t flowIdentifier;
+    uint16_t flowNumber;
+    uint16_t mcs_channel;
+
+    ShareFlow_Recv(Stream & stream)
+    : flowMarker(stream.incheck_uint16_le( ERR_SEC, "Truncated ShareFlow PDU packet"))
+    , pad(stream.incheck_uint8(            ERR_SEC, "Truncated ShareFlow pad"))
+    , pduTypeFlow(stream.incheck_uint8(    ERR_SEC, "Truncated ShareFlow PDU type"))
+    , flowIdentifier(stream.incheck_uint8( ERR_SEC, "Truncated flow Identifier"))
+    , flowNumber(stream.incheck_uint8(     ERR_SEC, "Truncated flow number"))
+    , mcs_channel(stream.incheck_uint16_le(ERR_SEC, "Truncated ShareFlow PDU packet"))
+    {
+        LOG(LOG_ERR, "Flow control packet %0.4x (offset=%u)", this->flowMarker, stream.get_offset());
+        if (this->flowMarker != 0x8000) {
+            LOG(LOG_ERR, "Expected flow control packet, got %0.4x", this->flowMarker);
+            throw Error(ERR_SEC);
+        }
+
+        LOG(LOG_INFO, "PDUTypeFlow=%u", this->pduTypeFlow);
+        if (stream.in_remain()) {
+            LOG(LOG_INFO, "trailing bytes in FlowPDU, remains %u bytes", stream.in_remain());
+        }
+    }
+}; // END CLASS ShareFlow_Recv
+
+
 // [MS-RDPBCGR] 2.2.8.1.1.1.1 Share Control Header (TS_SHARECONTROLHEADER)
 // =======================================================================
 
@@ -131,168 +201,59 @@ enum {
 // PDUSource (2 bytes): A 16-bit, unsigned integer. The channel ID which is the
 //   transmission source of the PDU.
 
-enum {
-    RDP_POINTER_SYSTEM             = 1,
-    RDP_POINTER_MOVE               = 3,
-    RDP_POINTER_COLOR              = 6,
-    RDP_POINTER_CACHED             = 7,
-    RDP_POINTER_NEW                = 8
-};
-
-// Return True if flowMarker is detected
-// In these case we have FlowTestPDU, FlowResponsePDU or FlowStopPDU
-// and not ShareControl header.
-bool peekFlowPDU(const Stream & stream) {
-    if (!stream.in_check_rem(2)){
-        throw Error(ERR_SEC);
-    }
-    return stream.get_data()[0] == 0 && stream.get_data()[1] == 0x80);
-}
-
-
-//##############################################################################
-struct ShareFlow_Recv
-//##############################################################################
-{
-    SubStream payload;
-    public:
-    uint16_t flowMarker;
-    TODO("rename to pduType")
-    uint8_t pdu_type1;
-    TODO("Rename to PDUSource")
-    uint16_t mcs_channel;
-    //flow_pdu fields
-    uint8_t flow_pdu_type;
-    uint8_t flow_id;
-    uint16_t flow_number;
-
-    ShareFlow_Recv(Stream & stream)
-    : payload(stream, 0)
-    , flowMarker(0)
-    , pdu_type1(0)
-    , mcs_channel(0)
-    , flow_pdu_type(0)
-    , flow_id(0)
-    , flow_number(0)
-    {
-        const unsigned expected = 4; /* totalLength(2) + pdu_type1(2) */
-        if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated ShareControl packet, need=%u remains=%u",
-                expected, stream.in_remain());
-            throw Error(ERR_SEC);
-        }
-
-        this->flowMarker = stream.in_uint16_le();
-
-        // LOG(LOG_INFO, "ShareControl packet recv: TotalLength=%u", this->totalLength);
-        if (this->flowMarker != 0x8000) {
-            LOG(LOG_ERR, "Expected flow control packet, got %0.4x", this->flowMarker);
-            throw Error(ERR_SEC);
-        }
-        
-        // FlowPDU ::= SEQUENCE {
-        // flowMarker
-        // Integer16(32768), -- ('8000'H),
-        // -- distinguishes FlowPDUs from ASPDUs
-        // -- containing ShareControlHeaders
-        // pad8bits
-        // Integer8(0),
-        // pduTypeFlow
-        // PDUTypeFlow(flowResponsePDU | flowStopPDU | flowTestPDU),
-        // flowIdentifier Integer8(0..127),
-        // flowNumber
-        // Integer8,
-        // -- shall be zero for PDUType FlowStopPDU
-        // pduSource
-        // UserID
-        // -- MCS User ID of sending ASCE
-        // }
-        this->flow_pdu_type = stream.in_uint8();
-        stream.in_skip_bytes(1);
-        this->flow_id = stream.in_uint8();
-        this->flow_number = stream.in_uint8();
-        this->mcs_channel = stream.in_uint16_le();
-        LOG(LOG_INFO, "ShareControl packet recv : FlowPDU received -> ignored");
-        LOG(LOG_INFO, "PDUTypeFlow=%u", this->flow_pdu_type);
-        if (stream.in_remain()) {
-            LOG(LOG_INFO, "remaining bytes in FlowPDU remains %u bytes", stream.in_remain());
-        }
-        this->totalLength = 8 + stream.in_remain();
-        this->pdu_type1 = FLOWPDU;
-        this->payload.resize(stream, stream.in_remain());
-        return;
-    }
-}; // END CLASS FlowControl_Recv
 
 //##############################################################################
 struct ShareControl_Recv
 //##############################################################################
 {
-    SubStream payload;
     public:
     uint16_t totalLength;
     TODO("rename to pduType")
     uint8_t pdu_type1;
     TODO("Rename to PDUSource")
     uint16_t mcs_channel;
-    //flow_pdu fields
-    uint8_t flow_pdu_type;
-    uint8_t flow_id;
-    uint16_t flow_number;
+    SubStream payload;
 
     ShareControl_Recv(Stream & stream)
-    : payload(stream, 0)
-    , totalLength(0)
-    , pdu_type1(0)
-    , mcs_channel(0)
-    {
-        const unsigned expected = 4; /* totalLength(2) + pdu_type1(2) */
-        if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated ShareControl packet, need=%u remains=%u",
-                expected, stream.in_remain());
-            throw Error(ERR_SEC);
+    : totalLength(stream.incheck_uint16_le(ERR_SEC, "Truncated ShareControl packet"))
+    , pdu_type1(stream.incheck_uint16_le(ERR_SEC, "Truncated ShareControl packet") & 0xF)
+    , mcs_channel([&stream, this](){
+        if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4){
+            // should not happen
+            // but DEACTIVATEALLPDU seems to be broken on windows 2000
+            return static_cast<uint16_t>(0);
         }
-
-        this->totalLength = stream.in_uint16_le();
-
-        if (this->totalLength == 0x8000) {
-            LOG(LOG_ERR, "Expected ShareControl header, got flowMarker");
-            throw Error(ERR_SEC);
-        }
-
-        this->pdu_type1 = stream.in_uint16_le() & 0xF;
-        // LOG(LOG_INFO, "ShareControl packet recv: PDUTYPE=%u", this->pdu_type1);
-
+        return stream.in_uint16_le();
+    }())
+    , payload([&stream, this](){
         if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4){
             // should not happen
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
             this->payload.resize(stream, 0);
-            return;
+            return SubStream(stream, stream.get_offset(), 0);
         }
-
-        if (!stream.in_check_rem(2)){
-            LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=2 remains=%u",
-                stream.in_remain());
-            throw Error(ERR_SEC);
-        }
-
-        this->mcs_channel = stream.in_uint16_le();
+    
         if (this->totalLength < 6){
             LOG(LOG_ERR, "ShareControl packet too short totalLength=%u pdu_type1=%u mcs_channel=%u",
                 this->totalLength, this->pdu_type1, this->mcs_channel);
             throw Error(ERR_SEC);
         }
 
-        size_t new_size = this->totalLength - 6;
-
-        if (!stream.in_check_rem(new_size)){
+        if (!stream.in_check_rem(this->totalLength - 6)){
             LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=%u remains=%u",
-                new_size,
+                this->totalLength - 6,
                 stream.in_remain());
             throw Error(ERR_SEC);
         }
-
-        this->payload.resize(stream, new_size);
+        return SubStream(stream, stream.get_offset(), this->totalLength - 6);
+    }())
+    // body of constructor
+    {
+        if (this->totalLength == 0x8000) {
+            LOG(LOG_ERR, "Expected ShareControl header, got flowMarker");
+            throw Error(ERR_SEC);
+        }
+        stream.in_skip_bytes(this->payload.size());
     }
 }; // END CLASS ShareControl_Recv
 

@@ -112,6 +112,14 @@ public:
         return *((signed char*)(this->p++));
     }
 
+    unsigned char incheck_uint8(int id, const char * message) {
+        if (!this->in_check_rem(1)){
+            LOG(LOG_ERR, "%s , need=1 remains=%u", message, this->in_remain());
+            throw Error(id);
+        }
+        return in_uint8();
+    }
+
     unsigned char in_uint8(void) {
         REDASSERT(this->in_check_rem(1));
         return *((unsigned char*)(this->p++));
