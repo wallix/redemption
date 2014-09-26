@@ -568,20 +568,18 @@ public:
 
             fgcolor = RGBtoBGR(fgcolor);
 
-            uint32_t uni[128];
-            size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
+            UTF8toUnicodeIterator unicode_iter(text);
 
-            size_t index = 0;
-            for (; index < part_len && x < screen_rect.x; index++) {
-                const FontChar & font_item = this->get_font(font, uni[index]);
+            for (; *unicode_iter; ++unicode_iter) {
+                const FontChar & font_item = this->get_font(font, *unicode_iter);
                 if (x + font_item.width > screen_rect.x) {
                     break ;
                 }
                 x += font_item.incby;
             }
 
-            for (; index < part_len && x < screen_rect.right(); index++) {
-                const FontChar & font_item = this->get_font(font, uni[index]);
+            for (; *unicode_iter && x < screen_rect.right(); ++unicode_iter) {
+                const FontChar & font_item = this->get_font(font, *unicode_iter);
                 int16_t cy = std::min<int16_t>(y + font_item.height, screen_rect.bottom()) - y;
                 int i = 0;
                 //x += font_item.offset;
