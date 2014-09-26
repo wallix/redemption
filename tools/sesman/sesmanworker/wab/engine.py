@@ -89,7 +89,8 @@ class Engine(object):
             return False
 
     def init_timeframe(self, auth):
-        if (auth.deconnection_time != u"-"
+        if (auth.deconnection_time is not None
+            and auth.deconnection_time != u"-"
             and auth.deconnection_time[0:4] <= u"2034"):
             self.deconnection_time = auth.deconnection_time
             self.deconnection_epoch = int(
@@ -563,7 +564,7 @@ class Engine(object):
                 flag += 4
             infos["ticketflags"] = flag
         deconnection_time = infos.get("deconnection_time")
-        if deconnection_time and target.deconnection_time == "":
+        if deconnection_time:
             Logger().info("deconnection_time updated from %s to %s" % (target.deconnection_time, deconnection_time))
             target.deconnection_time = deconnection_time
             # update deconnection_time in right

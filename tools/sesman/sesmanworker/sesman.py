@@ -932,15 +932,17 @@ class Sesman():
             if _status:
                 Logger().info(u"Checking timeframe")
                 self.infinite_connection = False
+                if not selected_target.deconnection_time:
+                    Logger().error("No timeframe available, Timeframe has not been checked !")
+                    _status = False
                 if (selected_target.deconnection_time == u"-"
-                   or selected_target.deconnection_time[0:4] >= u"2034"
-                   ):
+                    or selected_target.deconnection_time[0:4] >= u"2034"):
                     selected_target.deconnection_time = u"2034-12-31 23:59:59"
                     self.infinite_connection = True
 
                 now = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
                 if (selected_target.deconnection_time == u'-'
-                or now < selected_target.deconnection_time):
+                    or now < selected_target.deconnection_time):
                     # deconnection time to epoch
                     tt = datetime.strptime(selected_target.deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
                     kv[u'timeclose'] = int(mktime(tt))
