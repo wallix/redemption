@@ -89,7 +89,8 @@ class Engine(object):
             return False
 
     def init_timeframe(self, auth):
-        if (auth.deconnection_time != u"-"
+        if (auth.deconnection_time is not None
+            and auth.deconnection_time != u"-"
             and auth.deconnection_time[0:4] <= u"2034"):
             self.deconnection_time = auth.deconnection_time
             self.deconnection_epoch = int(
