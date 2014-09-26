@@ -563,7 +563,7 @@ class Engine(object):
                 flag += 4
             infos["ticketflags"] = flag
         deconnection_time = infos.get("deconnection_time")
-        if deconnection_time and target.deconnection_time == "":
+        if deconnection_time:
             Logger().info("deconnection_time updated from %s to %s" % (target.deconnection_time, deconnection_time))
             target.deconnection_time = deconnection_time
             # update deconnection_time in right
