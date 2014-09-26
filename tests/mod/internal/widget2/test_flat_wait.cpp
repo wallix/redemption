@@ -100,9 +100,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x07\xe3\xb7\xf9\x90\x2e\x27\xfe\x18\x20"
-                   "\x78\x29\xab\x0c\x45\xb0\x59\x53\xe4\x12"
-                   )){
+        "\x74\x84\x83\xcc\x4e\x22\x9c\x8c\xdc\x11\x72\x1b\x32\x71\x67\x2d\x54\x10\xa1\x0c"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 

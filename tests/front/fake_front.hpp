@@ -179,27 +179,12 @@ public:
 
     virtual void text_metrics(const char* text, int& width, int& height)
     {
-        height = 0;
-        width = 0;
         if (!this->font) {
+            height = 0;
+            width = 0;
             return ;
         }
-        //TODO used ::text_metrics of text_metrics.hpp
-        UTF8toUnicodeIterator unicode_iter(text);
-        if (*unicode_iter) {
-            for (; uint32_t c = *unicode_iter; ++unicode_iter) {
-                const FontChar & font_item = [&, c]() -> const FontChar & {
-                    if (!this->font->glyph_defined(c) || !this->font->font_items[c]) {
-                        return this->font->font_items[unsigned('?')];
-                    }
-                    return this->font->font_items[c];
-                }();
-                // width += font_item.incby;
-                width += font_item.width + 2;
-                height = std::max(height, font_item.height);
-            }
-            width -= 1;
-        }
+        this->gd.text_metrics(text, width, height, *this->font);
     }
 
     virtual int server_resize(int width, int height, int bpp) {

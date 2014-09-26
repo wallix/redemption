@@ -36,6 +36,7 @@
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
+#include "text_metrics.hpp"
 
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH
@@ -169,24 +170,7 @@ struct TestDraw : DrawApi
 
     virtual void text_metrics(const char* text, int& width, int& height)
     {
-        //TODO used ::text_metrics of text_metrics.hpp
-        width = 0;
-        height = 0;
-        UTF8toUnicodeIterator unicode_iter(text);
-        if (*unicode_iter) {
-            for (; uint32_t c = *unicode_iter; ++unicode_iter) {
-                const FontChar & font_item = [&, c]() -> const FontChar & {
-                    if (!this->font.glyph_defined(c) || !this->font.font_items[c]) {
-                        return this->font.font_items[unsigned('?')];
-                    }
-                    return this->font.font_items[c];
-                }();
-                // width += font_item.incby;
-                width += font_item.width + 2;
-                height = std::max(height, font_item.height);
-            }
-            width -= 1;
-        }
+        ::text_metrics(this->font, text, width, height);
     }
 
     void save_to_png(const char * filename)
@@ -229,9 +213,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xbc\xd1\x30\xc8\xef\x21\x5c\xc1\x3e\x95"
-                   "\x06\xb9\xde\xe2\x54\xa4\x68\xbb\x03\x39"
-                   )){
+        "\x24\x6f\xbb\xdb\xa9\xdc\x43\xe0\xb1\x5b"
+        "\xd0\xf4\xd5\x6e\x7e\x94\x38\xbe\x59\x8d"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -262,9 +246,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xfc\xa6\xe1\x51\x73\xde\xd0\xcf\x8e\xa6"
-                   "\x0a\xf7\x58\xdf\xa8\x7a\x1a\xc8\x5b\x28"
-                   )){
+        "\x29\xee\x4e\x58\x60\x14\xb5\xe1\x6d\xa6"
+        "\x81\x47\xb6\x98\x93\xf8\x72\x9c\x2b\xc6"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -295,9 +279,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x2c\x77\x71\xfe\xba\xf2\x59\xb9\x56\x93"
-                   "\xa3\x2d\x8a\xec\x9f\x40\x89\x64\x12\xd2"
-                   )){
+        "\xec\xb2\x1d\x5e\x9e\xc5\xbd\xa8\xe1\x26"
+        "\x69\x9c\x91\xa9\x7c\x21\xa6\x8f\x47\x6a"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -328,9 +312,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x5c\x87\xba\xef\xd1\x3b\x9e\x74\x39\x34"
-                   "\x45\xd4\x64\xac\xd0\xec\x47\x05\xb2\x97"
-                   )){
+        "\xe7\x8e\xbb\x18\xc2\x62\xc4\x3c\xbc\x6e"
+        "\x98\x41\x76\xd1\x52\xc5\x33\x6c\xba\x82"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -361,9 +345,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xbf\x45\x46\x98\x1c\x13\x54\x5f\xbf\x83"
-                   "\x81\x74\x32\x88\x9d\x7d\xf1\x74\x5c\x78"
-                   )){
+        "\x25\xcf\xa9\xb5\xf5\x62\xc4\xe9\xcb\x12"
+        "\xea\x45\x26\x14\xfc\x8b\x02\x84\xea\x63"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -394,9 +378,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x37\xcf\x67\x14\x4f\x58\xd3\xdd\x2e\x25"
-                   "\x95\x8e\xaa\x85\x06\xf3\xea\x96\xc0\x64"
-                   )){
+        "\xe5\x74\x2d\xb0\x29\xdb\xa5\xae\xd5\xfe"
+        "\xc3\x8a\x15\xaf\xd9\x52\x3e\x43\x03\x54"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -427,9 +411,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xc8\xdd\x05\x7b\x43\x3f\x1b\x1d\x04\x4f"
-                   "\x80\x60\x52\x04\x1a\xf5\x10\x07\xf5\xe4"
-                   )){
+        "\x60\xb2\xe3\x51\x9e\x2a\x77\x04\xfa\x62"
+        "\x89\x1a\xf1\xcc\x34\x96\x44\xf6\xde\x97"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -460,8 +444,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x22\xb4\x05\xf5\x69\x0d\x69\x30\x13\x11"
-        "\x01\xd2\xfc\x20\x59\xac\xad\x9e\x11\xf4")){
+        "\x89\xbd\x1c\xe4\x54\x71\x8f\xaf\x81\x70"
+        "\xd5\x04\x41\x36\x86\x19\xeb\x64\x69\xa8"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -516,9 +501,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e1.png");
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x1f\x0d\xf0\x54\xd2\x85\xeb\x62\x98\xa2"
-                   "\x4e\x37\x47\x88\x61\xd1\x45\x3f\xa8\x0c"
-                   )){
+        "\xd3\xb1\x7a\x7f\x87\xef\x26\x28\x68\x90"
+        "\x2e\x31\x94\x91\xa7\xf9\x78\xf5\x8f\x6e"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -534,9 +519,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e2-1.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xb2\xdb\x82\xf4\x0f\xaf\x1f\x49\x29\x51"
-                   "\xc4\x1a\xf5\x3e\xac\x37\x89\xfe\x36\xb0"
-                   )){
+        "\xea\xb0\x0c\xe4\x9d\xee\x82\x70\x04\x4e"
+        "\x31\x97\x14\x8e\x54\xa2\x25\x61\xb9\x90"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == &wedit);
@@ -550,9 +535,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e2-2.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x9b\xc4\x46\x9e\x70\x07\x84\xe1\x9d\xd8"
-                   "\xcd\xde\x68\x7e\xb2\x37\x2f\x90\x4e\x89"
-                   )){
+        "\x48\x62\xe2\xf6\x7c\x23\x24\x07\x8e\xad"
+        "\x30\xdc\xaa\x8e\xb0\x3f\x8c\xed\xd4\xe6"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == &wedit);
@@ -565,9 +550,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e3.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x79\x68\x73\xaa\x18\x2d\xe7\xaa\xb4\x68"
-                   "\xcb\x9c\xd7\x1d\x0d\x10\x13\xcf\x58\x36"
-                   )){
+        "\xba\x93\x80\xd6\xa5\xf6\xaf\x6c\x93\x64"
+        "\xfc\x1c\x69\x1b\xd6\xfe\x07\xa3\x9f\xb0"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == 0);
@@ -579,9 +564,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e4.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x9b\xc4\x46\x9e\x70\x07\x84\xe1\x9d\xd8"
-                   "\xcd\xde\x68\x7e\xb2\x37\x2f\x90\x4e\x89"
-                   )){
+        "\x48\x62\xe2\xf6\x7c\x23\x24\x07\x8e\xad"
+        "\x30\xdc\xaa\x8e\xb0\x3f\x8c\xed\xd4\xe6"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -591,9 +576,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e5.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xb2\xdb\x82\xf4\x0f\xaf\x1f\x49\x29\x51"
-                   "\xc4\x1a\xf5\x3e\xac\x37\x89\xfe\x36\xb0"
-                   )){
+        "\xea\xb0\x0c\xe4\x9d\xee\x82\x70\x04\x4e"
+        "\x31\x97\x14\x8e\x54\xa2\x25\x61\xb9\x90"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -602,9 +587,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e6.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x45\x3b\xdc\x15\x05\x48\x96\xab\x99\x72"
-                   "\x19\x7d\x05\xb2\xf9\x72\x72\x53\x5d\x7c"
-                   )){
+        "\x8b\xf4\x34\x3f\xfa\xf4\x11\x91\x8b\xeb"
+        "\x36\xad\xff\xf6\x2e\x74\xae\x92\x33\xc4"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -613,9 +598,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e7.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x34\x32\x7d\x9c\x6a\xdf\x6a\x58\x46\xbb"
-                   "\xf7\x56\xe8\xb9\x60\x22\x53\x61\x32\x7d"
-                   )){
+        "\xaa\xa7\x31\x5c\x5c\x55\x21\x78\x92\x87"
+        "\xa3\x8b\x79\xc3\x0c\xca\xd8\xa5\x2c\xe2"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -627,9 +612,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e8.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xeb\xd9\x3c\x01\x35\xf5\xcf\x59\x53\x2b"
-                   "\x03\x60\x47\xf1\xa9\x3a\x4e\xce\xc3\x1c"
-                   )){
+        "\xeb\xd9\x3c\x01\x35\xf5\xcf\x59\x53\x2b"
+        "\x03\x60\x47\xf1\xa9\x3a\x4e\xce\xc3\x1c"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -641,9 +626,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e9.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x42\x67\x95\x18\xda\xeb\x34\x88\xa4\x04"
-                   "\xd0\x54\xf1\x22\xa7\xe9\x9f\x0a\x60\xeb"
-                   )){
+        "\xb2\xe3\x9d\xe5\x1f\xb9\xaa\x19\xd5\xca"
+        "\x36\x58\xce\xe1\x13\x4e\x9a\x87\xa8\x72"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -655,9 +640,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e10.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xd0\xfa\xdf\x07\x35\x93\x19\x95\xe2\xc2"
-                   "\x51\x97\x8c\x14\x5b\xf7\x5c\x4d\xff\x95"
-                   )){
+        "\xd0\xfa\xdf\x07\x35\x93\x19\x95\xe2\xc2"
+        "\x51\x97\x8c\x14\x5b\xf7\x5c\x4d\xff\x95"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -681,9 +666,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e11.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x7b\x12\x34\x1c\xba\xcc\x95\x9d\xae\xe1"
-                   "\xd1\x8b\x4e\x93\xf8\x93\x09\xfd\x91\xc4"
-                   )){
+        "\xf4\x07\x87\x9a\x62\xf2\xcb\xeb\x8e\x00"
+        "\x01\xe5\x51\x95\x94\xf4\x73\xb5\x24\xe9"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -725,9 +710,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x67\xa6\x1d\x2d\x26\xb0\xb8\x98\xbb\xba"
-                   "\x49\xb9\x64\x0c\x8f\x87\x18\x00\xe7\xf5"
-                   )){
+        "\x67\xa6\x1d\x2d\x26\xb0\xb8\x98\xbb\xba"
+        "\x49\xb9\x64\x0c\x8f\x87\x18\x00\xe7\xf5"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -737,9 +722,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit10.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x13\x56\x53\xc6\x78\x81\x07\x75\x16\x2e"
-                   "\xe0\xf3\x37\xa0\xe5\x72\x58\x08\xe6\xe9"
-                   )){
+        "\x40\x96\x2d\x77\x07\x5e\x67\x8e\x9f\x10"
+        "\x80\xb1\xa7\xf2\xe4\x31\x22\xfe\x37\x59"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
     wcomposite.clear();
@@ -834,9 +819,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditScrolling)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-s2-1.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x99\xde\xb6\xac\xe3\x9e\x45\xf6\x42\x49"
-                   "\xf3\xcd\x9b\x86\xee\xa3\x8f\x79\x50\x95"
-                   )) {
+        "\x4e\x36\x0c\x24\x57\xc7\x65\xfd\x2b\x26"
+        "\x90\x0c\x32\x63\x88\x0f\x5c\xc3\x26\xc8"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
