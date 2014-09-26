@@ -159,13 +159,12 @@ public:
 
         ShareControl_Recv sctrl(stream);
 
-        switch (sctrl.pdu_type1) {
+        switch (sctrl.pduType) {
             case PDUTYPE_DATAPDU:
             {
-                LOG(LOG_INFO, "send_data_indication_ex: Received PDUTYPE_DATAPDU(0x%X)", sctrl.pdu_type1);
+                LOG(LOG_INFO, "send_data_indication_ex: Received PDUTYPE_DATAPDU(0x%X)", sctrl.pduType);
 
-                ShareData sdata(stream);
-                sdata.recv_begin(&this->mppc_dec);
+                ShareData_Recv sdata(stream, &this->mppc_dec);
                 switch (sdata.pdutype2) {
                     case PDUTYPE2_UPDATE:
                     {
@@ -206,7 +205,7 @@ public:
             break;
 
             default:
-                LOG(LOG_INFO, "send_data_indication_ex: ***** Received unexpected PDU, pdu_type1=0x%X *****", sctrl.pdu_type1);
+                LOG(LOG_INFO, "send_data_indication_ex: ***** Received unexpected PDU, pdu_type1=0x%X *****", sctrl.pduType);
             break;
         }
     }
