@@ -2283,6 +2283,11 @@ struct mod_rdp : public mod_api {
 
         // intersect with client order capabilities
         // which may not be supported by clients.
+        this->front.intersect_order_caps(TS_NEG_DSTBLT_INDEX,             order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_PATBLT_INDEX,             order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_SCRBLT_INDEX,             order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_LINETO_INDEX,             order_caps.orderSupport);
+
         this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX,        order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTIOPAQUERECT_INDEX,    order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTIPATBLT_INDEX,        order_caps.orderSupport);
