@@ -21,7 +21,7 @@ except Exception, e:
     Logger().info("==== Load Fake PROXY ENGINE ====")
     Logger().info("================================")
     FAKE = True
-    from sshng.fake.proxyengine import *
+    from fake.proxyengine import *
 
 import time
 
