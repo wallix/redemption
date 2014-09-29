@@ -164,13 +164,21 @@ struct ShareFlow_Recv
 // The format below is for ShareControlHeader:
 
 // totalLength (2 bytes): A 16-bit, unsigned integer. The total length of the
-//   packet in bytes (the length include the size of the Share Control Header).
+//  packet in bytes (the length include the size of the Share Control Header).
+// If the totalLength field equals 0x8000, then the Share Control Header and
+// any data that follows MAY be interpreted as a T.128 FlowPDU as described in
+// [T128] section 8.5 (the ASN.1 structure definition is detailed in [T128]
+// section 9.1) and MUST be ignored.
+
 // From T128:
+// ~~~~~~~~~~
 // This is the total length in octets of the ASPDU within which this header is
 // included. This parameter is required as MCS implementations may
 // segment ASPDUs in transmission and are not required to reassemble on
 // delivery. This parameter allows receiving ASCEs to efficiently perform
 // reassembly where MCS segmentation is present.
+
+
 
 // pduType (2 bytes): A 16-bit, unsigned integer. It contains the PDU type and
 //   protocol version information. The format of the pduType word is described
@@ -190,7 +198,7 @@ struct ShareFlow_Recv
 // |                             | (section 2.2.8.1.1.1.2)  structure).        |
 // +-----------------------------+---------------------------------------------+
 // | 10 PDUTYPE_SERVER_REDIR_PKT | Enhanced Security Server Redirection PDU    |
-// |                             | (see [MS-RDPEGDI] section 2.2.3.3.1).       |
+// |                             | (see [MS-RDPEGDI] section 2.2.13.3.1).      |
 // +-----------------------------+---------------------------------------------+
 
 // pduType::versionLow (4 bits): Most significant 4 bits of the least significant byte.
@@ -208,17 +216,15 @@ struct ShareControl_Recv
 {
     public:
     uint16_t totalLength;
-    TODO("rename to pduType")
-    uint8_t pdu_type1;
-    TODO("Rename to PDUSource")
-    uint16_t mcs_channel;
+    uint8_t pduType;
+    uint16_t PDUSource;
     SubStream payload;
 
     ShareControl_Recv(Stream & stream)
     : totalLength(stream.incheck_uint16_le(ERR_SEC, "Truncated ShareControl packet"))
-    , pdu_type1(stream.incheck_uint16_le(ERR_SEC, "Truncated ShareControl packet") & 0xF)
-    , mcs_channel([&stream, this](){
-        if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4){
+    , pduType(stream.incheck_uint16_le(ERR_SEC, "Truncated ShareControl packet") & 0xF)
+    , PDUSource([&stream, this](){
+        if (this->pduType == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4){
             // should not happen
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
             return static_cast<uint16_t>(0);
@@ -226,21 +232,20 @@ struct ShareControl_Recv
         return stream.in_uint16_le();
     }())
     , payload([&stream, this](){
-        if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4){
+        if (this->pduType == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4){
             // should not happen
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
-            this->payload.resize(stream, 0);
             return SubStream(stream, stream.get_offset(), 0);
         }
     
         if (this->totalLength < 6){
-            LOG(LOG_ERR, "ShareControl packet too short totalLength=%u pdu_type1=%u mcs_channel=%u",
-                this->totalLength, this->pdu_type1, this->mcs_channel);
+            LOG(LOG_ERR, "ShareControl packet too short totalLength=%u pduType=%u mcs_channel=%u",
+                this->totalLength, this->pduType, this->PDUSource);
             throw Error(ERR_SEC);
         }
 
         if (!stream.in_check_rem(this->totalLength - 6)){
-            LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated ShareControl packet, need=%u remains=%u",
                 this->totalLength - 6,
                 stream.in_remain());
             throw Error(ERR_SEC);
@@ -261,15 +266,15 @@ struct ShareControl_Recv
 struct ShareControl_Send
 //##############################################################################
 {
-    ShareControl_Send(Stream & stream, uint8_t pdu_type1, uint16_t mcs_channel, uint16_t payload_len)
+    ShareControl_Send(Stream & stream, uint8_t pduType, uint16_t PDUSource, uint16_t payload_len)
     {
         enum {
             versionLow = 0x10,
             versionHigh = 0
         };
         stream.out_uint16_le(payload_len + 6);
-        stream.out_uint16_le(versionHigh | versionLow | pdu_type1);
-        stream.out_uint16_le(mcs_channel);
+        stream.out_uint16_le(versionHigh | versionLow | pduType);
+        stream.out_uint16_le(PDUSource);
         stream.mark_end();
     }
 }; // END CLASS ShareControl_Send
@@ -460,6 +465,89 @@ enum {
 //   of the packet in bytes.
 
 //##############################################################################
+
+
+// Inheritance is only used to check if we have enough data available
+struct CheckShareData_Recv {
+    CheckShareData_Recv(const Stream & stream){
+        // share_id(4) 
+        // + ignored(1) 
+        // + streamid(1) 
+        // + len(2) 
+        // + pdutype2(1) 
+        // + compressedType(1) 
+        // + compressedLen(2)
+        const unsigned expected = 12;
+        if (!stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "sdata packet len too short: need %u, remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_SEC);
+        }
+        LOG(LOG_ERR, "sizeof(*this)");
+    }
+};
+
+struct ShareData_Recv : private CheckShareData_Recv
+//##############################################################################
+{
+    public:
+    uint32_t share_id;
+    uint8_t pad1;
+    uint8_t streamid;
+    uint16_t len;
+    uint8_t pdutype2;
+    uint16_t uncompressedLen;
+    uint8_t compressedType;
+    uint16_t compressedLen;
+    SubStream payload;
+
+
+    ShareData_Recv(Stream & stream, rdp_mppc_dec * dec = 0)
+    //==============================================================================
+    : CheckShareData_Recv(stream)
+    , share_id(stream.in_uint32_le())
+    , pad1(stream.in_uint8())
+    , streamid(stream.in_uint8())
+    , len(stream.in_uint16_le())
+    , pdutype2(stream.in_uint8())
+    , compressedType(stream.in_uint8())
+    , compressedLen(stream.in_uint16_le())
+    , payload([&stream, dec, this](){
+        if (this->compressedType & PACKET_COMPRESSED) {
+            if (!dec) {
+                LOG(LOG_INFO, "ShareData::recv_begin: got unexpected compressed share data");
+                throw Error(ERR_SEC);
+            }
+
+            const uint8_t * rdata;
+            uint32_t        rlen;
+
+            dec->decompress(stream.get_data()+stream.get_offset(), stream.in_remain(),
+                this->compressedType, rdata, rlen);
+
+            return SubStream(StaticStream(rdata, rlen), 0, rlen);
+        }
+        else {
+                return SubStream(stream, stream.get_offset(), stream.in_remain());
+
+        }    
+    }())
+    // BEGIN CONSTRUCTOR
+    {
+        stream.in_skip_bytes(this->payload.size());
+    } // END CONSTRUCTOR
+
+    ~ShareData_Recv(void){
+        if (!this->payload.check_end()) {
+            LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains=%u",
+                this->len, this->compressedLen, payload.in_remain());
+                throw Error(ERR_SEC);
+        }
+    }
+}; // END CLASS ShareData_Recv
+
+
+//##############################################################################
 struct ShareData
 //##############################################################################
 {
@@ -529,52 +617,6 @@ struct ShareData
         stream.mark_end();
     } // END METHOD emit_end
 
-    //==============================================================================
-    void recv_begin(rdp_mppc_dec * dec = 0)
-    //==============================================================================
-    {
-        /* share_id(4) + ignored(1) + streamid(1) + len(2) + pdutype2(1) + compressedType(1) + compressedLen(2) */
-        const unsigned expected = 12;
-        if (!this->stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "sdata packet len too short: need %u, remains=%u",
-                expected, this->stream.in_remain());
-            throw Error(ERR_SEC);
-        }
-
-        this->share_id = stream.in_uint32_le();
-        stream.in_uint8();
-        this->streamid = stream.in_uint8();
-        this->len = stream.in_uint16_le();
-        this->pdutype2 = stream.in_uint8();
-        this->compressedType = stream.in_uint8();
-        this->compressedLen = stream.in_uint16_le();
-
-        this->payload.resize(this->stream, this->stream.in_remain());
-
-        if (this->compressedType & PACKET_COMPRESSED) {
-            if (!dec) {
-                LOG(LOG_INFO, "ShareData::recv_begin: got unexpected compressed share data");
-            }
-
-            const uint8_t * rdata;
-            uint32_t        rlen;
-
-            dec->decompress(this->payload.get_data(), this->payload.size(),
-                this->compressedType, rdata, rlen);
-
-            this->payload.resize(StaticStream(rdata, rlen), rlen);
-        }
-    } // END METHOD recv_begin
-
-    //==============================================================================
-    void recv_end() {
-    //==============================================================================
-        if (!this->payload.check_end()) {
-            LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains1=%u remains=%u",
-                this->len, this->compressedLen, payload.in_remain(), stream.in_remain());
-                throw Error(ERR_SEC);
-        }
-    } // END METHOD recv_end
 }; // END CLASS ShareData
 
 //##############################################################################

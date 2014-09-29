@@ -299,6 +299,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 //        }
         mod->draw_event(time(NULL));
     }
+    
 
 //    front.dump_png("trace_w2003_");
 }

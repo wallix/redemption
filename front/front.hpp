@@ -2314,7 +2314,7 @@ public:
                 }
                 ShareControl_Recv sctrl(sec.payload);
 
-                switch (sctrl.pdu_type1) {
+                switch (sctrl.pduType) {
                 case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
                     if (this->verbose & 2){
                         LOG(LOG_INFO, "unexpected DEMANDACTIVE PDU while in licence negociation");
@@ -2369,7 +2369,7 @@ public:
                     TODO("check all payload data is consumed")
                     break;
                 default:
-                    LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sctrl.pdu_type1);
+                    LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sctrl.pduType);
                     break;
                 }
                 TODO("Check why this is necessary when using loop connection ?")
@@ -2629,7 +2629,7 @@ public:
                     while (sec.payload.p < sec.payload.end) {
                         ShareControl_Recv sctrl(sec.payload);
 
-                        switch (sctrl.pdu_type1) {
+                        switch (sctrl.pduType) {
                         case PDUTYPE_DEMANDACTIVEPDU:
                             if (this->verbose & 1){
                                 LOG(LOG_INFO, "Front received DEMANDACTIVEPDU (unsupported)");
@@ -2651,8 +2651,8 @@ public:
                                 uint32_t share_id = sctrl.payload.in_uint32_le();
                                 uint16_t originatorId = sctrl.payload.in_uint16_le();
                                 this->process_confirm_active(sctrl.payload);
-(void)share_id;
-(void)originatorId;
+                                (void)share_id;
+                                (void)originatorId;
                             }
                             // reset caches, etc.
                             this->reset();
@@ -2701,7 +2701,7 @@ public:
                             }
                             break;
                         default:
-                            LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pdu_type1);
+                            LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pduType);
                             break;
                         }
 
@@ -3678,8 +3678,7 @@ public:
         if (this->verbose & 8){
             LOG(LOG_INFO, "Front::process_data(...)");
         }
-        ShareData sdata_in(stream);
-        sdata_in.recv_begin();
+        ShareData_Recv sdata_in(stream, 0);
         if (this->verbose & 8){
             LOG(LOG_INFO, "sdata_in.pdutype2=%u"
                           " sdata_in.len=%u"
@@ -4214,7 +4213,6 @@ public:
             break;
         }
 
-        sdata_in.recv_end();
         stream.p = sdata_in.payload.p;
 
         if (this->verbose & (4|8)){
