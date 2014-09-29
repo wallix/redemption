@@ -741,17 +741,23 @@ class Sesman():
 
     def check_target(self, selected_target):
         ticket = None
+        status = None
+        got_signal = False
         while True:
             Logger().info(u"Begin check_target ticket = %s..." % ticket)
+            previous_status = status
             status, infos = self.engine.check_target(selected_target, self.pid, ticket)
             ticket = None
             Logger().info(u"End check_target ...")
             status_changed = got_signal or (status != previous_status)
-            if not status:
+            if status_changed:
                 self.send_data({u'forcemodule' : True})
-                if status is None:
+            if not status: # ACCEPTED or REFUSED
+                if status is None: # ACCEPTED
                     return True, ""
-            self.interactive_display_waitinfo(status, infos)
+            if status_changed:
+                self.interactive_display_waitinfo(status, infos)
+            got_signal = False
             r = []
             try:
                 Logger().info(u"Start Select ...")
@@ -764,6 +770,7 @@ class Sesman():
                     if e[0] != 4:
                         raise
                 Logger().info("Got Signal %s" % e)
+                got_signal = True
             if self.proxy_conx in r:
                 _status, _error = self.receive_data();
                 if self.shared.get(u'waitinforeturn') == "backselector":
