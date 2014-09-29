@@ -465,71 +465,82 @@ enum {
 //   of the packet in bytes.
 
 //##############################################################################
-struct ShareData_Recv
+
+
+// Inheritance is only used to check if we have enough data available
+struct CheckShareData_Recv {
+    CheckShareData_Recv(const Stream & stream){
+        // share_id(4) 
+        // + ignored(1) 
+        // + streamid(1) 
+        // + len(2) 
+        // + pdutype2(1) 
+        // + compressedType(1) 
+        // + compressedLen(2)
+        const unsigned expected = 12;
+        if (!stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "sdata packet len too short: need %u, remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_SEC);
+        }
+        LOG(LOG_ERR, "sizeof(*this)");
+    }
+};
+
+struct ShareData_Recv : private CheckShareData_Recv
 //##############################################################################
 {
-    Stream & stream;
-    SubStream payload;
-
     public:
     uint32_t share_id;
+    uint8_t pad1;
     uint8_t streamid;
     uint16_t len;
     uint8_t pdutype2;
     uint16_t uncompressedLen;
     uint8_t compressedType;
     uint16_t compressedLen;
+    SubStream payload;
 
 
     ShareData_Recv(Stream & stream, rdp_mppc_dec * dec = 0)
     //==============================================================================
-    : stream(stream)
-    , payload(this->stream, 0)
-    , share_id(0)
-    , streamid(0)
-    , len(0)
-    , pdutype2(0)
-    , uncompressedLen(0)
-    , compressedType(0)
-    , compressedLen(0)
-    {
-        /* share_id(4) + ignored(1) + streamid(1) + len(2) + pdutype2(1) + compressedType(1) + compressedLen(2) */
-        const unsigned expected = 12;
-        if (!this->stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "sdata packet len too short: need %u, remains=%u",
-                expected, this->stream.in_remain());
-            throw Error(ERR_SEC);
-        }
-
-        this->share_id = stream.in_uint32_le();
-        stream.in_uint8();
-        this->streamid = stream.in_uint8();
-        this->len = stream.in_uint16_le();
-        this->pdutype2 = stream.in_uint8();
-        this->compressedType = stream.in_uint8();
-        this->compressedLen = stream.in_uint16_le();
-
-        this->payload.resize(this->stream, this->stream.in_remain());
-
+    : CheckShareData_Recv(stream)
+    , share_id(stream.in_uint32_le())
+    , pad1(stream.in_uint8())
+    , streamid(stream.in_uint8())
+    , len(stream.in_uint16_le())
+    , pdutype2(stream.in_uint8())
+    , compressedType(stream.in_uint8())
+    , compressedLen(stream.in_uint16_le())
+    , payload([&stream, dec, this](){
         if (this->compressedType & PACKET_COMPRESSED) {
             if (!dec) {
                 LOG(LOG_INFO, "ShareData::recv_begin: got unexpected compressed share data");
+                throw Error(ERR_SEC);
             }
 
             const uint8_t * rdata;
             uint32_t        rlen;
 
-            dec->decompress(this->payload.get_data(), this->payload.size(),
+            dec->decompress(stream.get_data()+stream.get_offset(), stream.in_remain(),
                 this->compressedType, rdata, rlen);
 
-            this->payload.resize(StaticStream(rdata, rlen), rlen);
+            return SubStream(StaticStream(rdata, rlen), 0, rlen);
         }
+        else {
+                return SubStream(stream, stream.get_offset(), stream.in_remain());
+
+        }    
+    }())
+    // BEGIN CONSTRUCTOR
+    {
+        stream.in_skip_bytes(this->payload.size());
     } // END CONSTRUCTOR
 
     ~ShareData_Recv(void){
         if (!this->payload.check_end()) {
-            LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains1=%u remains=%u",
-                this->len, this->compressedLen, payload.in_remain(), stream.in_remain());
+            LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains=%u",
+                this->len, this->compressedLen, payload.in_remain());
                 throw Error(ERR_SEC);
         }
     }
@@ -606,52 +617,6 @@ struct ShareData
         stream.mark_end();
     } // END METHOD emit_end
 
-    //==============================================================================
-//    void recv_begin(rdp_mppc_dec * dec = 0)
-//    //==============================================================================
-//    {
-//        /* share_id(4) + ignored(1) + streamid(1) + len(2) + pdutype2(1) + compressedType(1) + compressedLen(2) */
-//        const unsigned expected = 12;
-//        if (!this->stream.in_check_rem(expected)){
-//            LOG(LOG_ERR, "sdata packet len too short: need %u, remains=%u",
-//                expected, this->stream.in_remain());
-//            throw Error(ERR_SEC);
-//        }
-
-//        this->share_id = stream.in_uint32_le();
-//        stream.in_uint8();
-//        this->streamid = stream.in_uint8();
-//        this->len = stream.in_uint16_le();
-//        this->pdutype2 = stream.in_uint8();
-//        this->compressedType = stream.in_uint8();
-//        this->compressedLen = stream.in_uint16_le();
-
-//        this->payload.resize(this->stream, this->stream.in_remain());
-
-//        if (this->compressedType & PACKET_COMPRESSED) {
-//            if (!dec) {
-//                LOG(LOG_INFO, "ShareData::recv_begin: got unexpected compressed share data");
-//            }
-
-//            const uint8_t * rdata;
-//            uint32_t        rlen;
-
-//            dec->decompress(this->payload.get_data(), this->payload.size(),
-//                this->compressedType, rdata, rlen);
-
-//            this->payload.resize(StaticStream(rdata, rlen), rlen);
-//        }
-//    } // END METHOD recv_begin
-
-    //==============================================================================
-    void recv_end() {
-    //==============================================================================
-        if (!this->payload.check_end()) {
-            LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains1=%u remains=%u",
-                this->len, this->compressedLen, payload.in_remain(), stream.in_remain());
-                throw Error(ERR_SEC);
-        }
-    } // END METHOD recv_end
 }; // END CLASS ShareData
 
 //##############################################################################

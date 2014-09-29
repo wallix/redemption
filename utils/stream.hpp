@@ -106,11 +106,20 @@ public:
     // =========================================================================
     // Generic binary Data access methods
     // =========================================================================
+    unsigned char incheck_sint8(int id, const char * message) {
+        if (!this->in_check_rem(1)){
+            LOG(LOG_ERR, "%s , need=1 remains=%u", message, this->in_remain());
+            throw Error(id);
+        }
+        return in_sint8();
+    }
 
     signed char in_sint8(void) {
         REDASSERT(this->in_check_rem(1));
         return *((signed char*)(this->p++));
     }
+
+    // ---------------------------------------------------------------------------
 
     unsigned char incheck_uint8(int id, const char * message) {
         if (!this->in_check_rem(1)){
@@ -131,10 +140,30 @@ public:
         return *((unsigned char*)(this->p));
     }
 
+    // ---------------------------------------------------------------------------
+
+    int16_t incheck_sint16_be(int id, const char * message) {
+        if (!this->in_check_rem(2)){
+            LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
+            throw Error(id);
+        }
+        return in_sint16_be();
+    }
+
     int16_t in_sint16_be(void) {
         REDASSERT(this->in_check_rem(2));
         unsigned int v = this->in_uint16_be();
         return (int16_t)((v > 32767)?v - 65536:v);
+    }
+
+    // ---------------------------------------------------------------------------
+
+    int16_t incheck_sint16_le(int id, const char * message) {
+        if (!this->in_check_rem(2)){
+            LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
+            throw Error(id);
+        }
+        return in_sint16_le();
     }
 
     int16_t in_sint16_le(void) {
@@ -143,8 +172,7 @@ public:
         return (int16_t)((v > 32767)?v - 65536:v);
     }
 
-
-
+    // ---------------------------------------------------------------------------
 
     uint16_t incheck_uint16_le(int id, const char * message) {
         if (!this->in_check_rem(2)){
@@ -154,17 +182,36 @@ public:
         return in_uint16_le();
     }
 
-
     uint16_t in_uint16_le(void) {
         REDASSERT(this->in_check_rem(2));
         this->p += 2;
         return (uint16_t)(this->p[-2] | (this->p[-1] << 8));
     }
 
+    // ---------------------------------------------------------------------------
+
+    uint16_t incheck_uint16_be(int id, const char * message) {
+        if (!this->in_check_rem(2)){
+            LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
+            throw Error(id);
+        }
+        return in_uint16_be();
+    }
+
     uint16_t in_uint16_be(void) {
         REDASSERT(this->in_check_rem(2));
         this->p += 2;
         return (uint16_t)(this->p[-1] | (this->p[-2] << 8)) ;
+    }
+
+    // ---------------------------------------------------------------------------
+
+    unsigned int incheck_uint32_le(int id, const char * message) {
+        if (!this->in_check_rem(4)){
+            LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
+            throw Error(id);
+        }
+        return in_uint32_le();
     }
 
     unsigned int in_uint32_le(void) {
@@ -177,6 +224,16 @@ public:
              ;
     }
 
+    // ---------------------------------------------------------------------------
+
+    unsigned int incheck_uint32_be(int id, const char * message) {
+        if (!this->in_check_rem(4)){
+            LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
+            throw Error(id);
+        }
+        return in_uint32_be();
+    }
+
     unsigned int in_uint32_be(void) {
         REDASSERT(this->in_check_rem(4));
         this->p += 4;
@@ -187,10 +244,37 @@ public:
              ;
     }
 
+    // ---------------------------------------------------------------------------
+
+    int32_t incheck_sint32_le(int id, const char * message) {
+        if (!this->in_check_rem(4)){
+            LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
+            throw Error(id);
+        }
+        return in_sint32_le();
+    }
+
     int32_t in_sint32_le(void) {
         uint64_t v = this->in_uint32_le();
         return (int32_t)((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
     }
+
+    // ---------------------------------------------------------------------------
+
+    int32_t incheck_sint32_be(int id, const char * message) {
+        if (!this->in_check_rem(4)){
+            LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
+            throw Error(id);
+        }
+        return in_sint32_be();
+    }
+
+    int32_t in_sint32_be(void) {
+        uint64_t v = this->in_uint32_be();
+        return (int32_t)((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
+    }
+
+    // ---------------------------------------------------------------------------
 
     void in_timeval_from_uint64le_usec(timeval & tv)
     {
@@ -208,6 +292,8 @@ public:
         this->out_uint32_le(static_cast<uint32_t>(usec >> 32));
     }
 
+    // ---------------------------------------------------------------------------
+
     void out_uint64_le(uint64_t v) {
         REDASSERT(this->has_room(8));
         this->p[0] = v & 0xFF;
@@ -219,6 +305,14 @@ public:
         this->p[6] = (v >> 48) & 0xFF;
         this->p[7] = (uint8_t)(v >> 56) & 0xFF;
         this->p+=8;
+    }
+
+    uint64_t incheck_uint64_le(int id, const char * message) {
+        if (!this->in_check_rem(8)){
+            LOG(LOG_ERR, "%s , need=8 remains=%u", message, this->in_remain());
+            throw Error(id);
+        }
+        return in_uint64_le();
     }
 
     uint64_t in_uint64_le(void) {
@@ -239,6 +333,14 @@ public:
         this->p[6] = (v >> 8) & 0xFF;
         this->p[7] = v & 0xFF;
         this->p+=8;
+    }
+
+    uint64_t incheck_uint64_be(int id, const char * message) {
+        if (!this->in_check_rem(8)){
+            LOG(LOG_ERR, "%s , need=8 remains=%u", message, this->in_remain());
+            throw Error(id);
+        }
+        return in_uint64_be();
     }
 
     uint64_t in_uint64_be(void) {
@@ -969,18 +1071,18 @@ class SubStream : public Stream {
         this->end = this->data + this->capacity;
     }
 
-    void resize(const Stream & stream, size_t new_size){
-        if (new_size > stream.size()){
-            LOG(LOG_ERR, "Substream resize overflow size=%u offset=%u new_size=%u",
-                static_cast<unsigned>(stream.size()),
-                static_cast<unsigned>(stream.get_offset()),
-                static_cast<unsigned>(new_size));
-            throw Error(ERR_SUBSTREAM_OVERFLOW_IN_RESIZE);
-        }
-        this->data = this->p = stream.get_data()+stream.get_offset();
-        this->capacity = new_size;
-        this->end = this->data + new_size;
-    }
+//    void resize(const Stream & stream, size_t new_size){
+//        if (new_size > stream.size()){
+//            LOG(LOG_ERR, "Substream resize overflow size=%u offset=%u new_size=%u",
+//                static_cast<unsigned>(stream.size()),
+//                static_cast<unsigned>(stream.get_offset()),
+//                static_cast<unsigned>(new_size));
+//            throw Error(ERR_SUBSTREAM_OVERFLOW_IN_RESIZE);
+//        }
+//        this->data = this->p = stream.get_data()+stream.get_offset();
+//        this->capacity = new_size;
+//        this->end = this->data + new_size;
+//    }
 
     virtual ~SubStream() {}
 
