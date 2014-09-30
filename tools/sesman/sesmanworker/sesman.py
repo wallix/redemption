@@ -113,7 +113,7 @@ class Sesman():
         self.shared[u'auth_channel_result'] = u''
         self.shared[u'auth_channel_target'] = u''
 
-        self.internal_mod = False
+        self.internal_target = False
         self.check_session_parameters = False
 
     def set_language_from_keylayout(self):
@@ -479,11 +479,10 @@ class Sesman():
                 data_to_send = { u'login'                   : wab_login
                                , u'target_login'            : target_login
                                , u'target_device'           : target_device
-                               # , u'proto_dest'              : proto_dest if proto_dest != u'INTERNAL' else u'RDP'
-                               , u'module'                  : u'transitory' if self.target_service_name != u'INTERNAL' else u'INTERNAL'
+                               , u'module'                  : u'transitory' # if self.target_service_name != u'INTERNAL' else u'INTERNAL'
                                }
-                if data_to_send.has_key(u'module') and not self.internal_mod:
-                    self.internal_mod = True if data_to_send[u'module'] == u'INTERNAL' else False
+                if not self.internal_target:
+                    self.internal_target = True if self.target_service_name == u'INTERNAL' else False
                 self.send_data(data_to_send)
                 _status = True
             elif self.shared.get(u'selector') == MAGICASK:
@@ -591,7 +590,7 @@ class Sesman():
                     Logger().info(u"service len = 1")
                     s = services[0]
                     data_to_send = {}
-                    data_to_send[u'module'] = u'transitory' if s[2] != u'INTERNAL' else u'INTERNAL'
+                    data_to_send[u'module'] = u'transitory' # if s[2] != u'INTERNAL' else u'INTERNAL'
 
                     # service_login (s[1]) format:
                     # target_login@device_name:service_name
@@ -611,8 +610,8 @@ class Sesman():
                     self._full_user_device_account = u"%s@%s:%s" % (target_login,
                                                                     device_name,
                                                                     wab_login)
-                    if data_to_send.has_key(u'module') and not self.internal_mod:
-                        self.internal_mod = True if data_to_send[u'module'] == u'INTERNAL' else False
+                    if not self.internal_target:
+                        self.internal_target = True if s[2] == u'INTERNAL' else False
                     self.send_data(data_to_send)
                     self.target_service_name = service_name
                     # Logger().info("Only one target : service name %s" % self.target_service_name)
@@ -742,16 +741,23 @@ class Sesman():
 
     def check_target(self, selected_target):
         ticket = None
+        status = None
+        got_signal = False
         while True:
             Logger().info(u"Begin check_target ticket = %s..." % ticket)
+            previous_status = status
             status, infos = self.engine.check_target(selected_target, self.pid, ticket)
             ticket = None
             Logger().info(u"End check_target ...")
-            if not status:
+            status_changed = got_signal or (status != previous_status)
+            if status_changed:
                 self.send_data({u'forcemodule' : True})
-                if status is None:
+            if not status: # ACCEPTED or REFUSED
+                if status is None: # ACCEPTED
                     return True, ""
-            self.interactive_display_waitinfo(status, infos)
+            if status_changed:
+                self.interactive_display_waitinfo(status, infos)
+            got_signal = False
             r = []
             try:
                 Logger().info(u"Start Select ...")
@@ -764,6 +770,7 @@ class Sesman():
                     if e[0] != 4:
                         raise
                 Logger().info("Got Signal %s" % e)
+                got_signal = True
             if self.proxy_conx in r:
                 _status, _error = self.receive_data();
                 if self.shared.get(u'waitinforeturn') == "backselector":
@@ -783,7 +790,6 @@ class Sesman():
                     ticket = { u"description": desc if desc else None,
                                u"ticket": ticketno if ticketno else None,
                                u"duration": duration}
-                    continue
         return False, ""
 
     def parse_duration(self, duration):
@@ -954,6 +960,8 @@ class Sesman():
             module = kv.get(u'proto_dest')
             if not module in [ u'RDP', u'VNC', u'INTERNAL' ]:
                 module = u'RDP'
+            if self.internal_target:
+                module = u'INTERNAL'
             kv[u'module'] = module
             proto = u'RDP' if  kv.get(u'proto_dest') != u'VNC' else u'VNC'
             kv[u'device_redirection'] = SESMANCONF[proto][u'device_redirection']
@@ -1072,6 +1080,7 @@ class Sesman():
                         while True:
                             r = []
                             Logger().info(u"Waiting on proxy")
+                            got_signal = False
                             try:
                                 r, w, x = select([self.proxy_conx], [], [], 60)
                             except Exception as e:
@@ -1082,6 +1091,7 @@ class Sesman():
                                 if e[0] != 4:
                                     raise
                                 Logger().info("Got Signal %s" % e)
+                                got_signal = True
                             if self.check_session_parameters:
                                 self.update_session_parameters()
                                 self.check_session_parameters = False
@@ -1140,11 +1150,12 @@ class Sesman():
 
                                     self.shared[u'auth_channel_target'] = u''
                             # r can be empty
-                            # else: # (if self.proxy_conx in r)
-                            #     if not self.internal_mod:
-                            #         Logger().error(u'break connection')
-                            #         release_reason = u'Break connection'
-                            #         break
+                            else: # (if self.proxy_conx in r)
+                                if not self.internal_target and not got_signal:
+                                    Logger().info(u'Missing Keepalive')
+                                    Logger().error(u'break connection')
+                                    release_reason = u'Break connection'
+                                    break
                         Logger().debug(u"End Of Keep Alive")
 
 
