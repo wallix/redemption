@@ -59,6 +59,8 @@ class Engine(object):
         self.challenge = None
         self.deconnection_epoch = 0xffffffff
         self.deconnection_time = u"-"
+        self.erpm_password_checked_out = False
+
         self.proxy_rights = None
         self.rights = None
         self.targets = {}
@@ -436,7 +438,7 @@ class Engine(object):
         Logger().debug("Engine get_target_password ...")
         try:
             target_password = self.wabengine.get_target_password(target_device)
-
+            self.erpm_password_checked_out = True
             if not target_password:
                 target_password = u''
             Logger().debug("Engine get_target_password done")
@@ -448,6 +450,7 @@ class Engine(object):
 
     def release_target_password(self, target_device, reason, target_application = None):
         Logger().debug("Engine release_target_password: reason=\"%s\"" % reason)
+        self.erpm_password_checked_out = False
         try:
             self.wabengine.release_target_password(target_device, reason, target_application)
             Logger().debug("Engine release_target_password done")
