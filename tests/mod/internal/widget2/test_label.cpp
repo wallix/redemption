@@ -75,8 +75,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x08\x5f\x09\xe3\x80\x12\xab\x42\xc9\xd1"
-        "\x33\x9a\xe7\x27\x69\xd0\x6c\xe9\xcd\x0f")){
+        "\xe9\xd7\x17\x63\x3d\xe6\x1a\xc2\x59\xb6"
+        "\x69\xdf\xab\x32\x42\xe6\x05\xb4\xa2\x5a")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -107,8 +107,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc2\x24\xac\x83\xee\xdc\x69\x2d\x01\x94"
-        "\xfc\xe9\x2b\x45\xa8\x4a\xa9\x89\xde\x6d")){
+        "\x28\xbf\x82\xf3\xe9\x32\xa1\x11\xfb\x37"
+        "\x9a\x02\x43\x0f\xd9\x17\x95\xd3\x25\xc4")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -139,8 +139,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x40\x9a\xff\xfd\x37\x16\x19\xa3\x3a\x92"
-        "\xac\x4c\x1d\x7c\x6e\x47\xd1\x14\x33\x01")){
+        "\x14\x3a\xd8\x31\x4b\x03\x83\x6b\x4c\x3a"
+        "\x92\x90\x01\xb3\x2a\x91\xa6\x43\x40\x85")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -171,8 +171,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x55\xb9\x08\xd3\x42\x16\x47\x4d\x62\xa7"
-        "\xfc\xce\x0d\x18\x9c\x29\x82\xd6\xf2\x38")){
+        "\x43\xaf\x23\xac\x69\x21\xb2\xa7\xdd\xa6"
+        "\xc4\x08\xd3\x6c\x4a\xa3\x3f\x3f\x6a\xa9")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -203,8 +203,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x3c\xa9\xf2\x32\x51\xc4\x70\x8c\xfe\x26"
-        "\xc8\x37\xa1\xdb\x5a\xdb\x82\xad\x1f\x67")){
+        "\x2b\xd4\xd5\xfc\x58\x2e\x1e\xac\x95\x7f"
+        "\x01\x81\x9a\x07\x96\xe9\xd3\x4a\xc7\xdd")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -235,8 +235,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x14\x49\x6b\x6a\xf0\xb8\x40\x0d\x5f\x61"
-        "\xe6\x5d\x91\x13\x34\x89\x8d\x3c\xb8\xd0")){
+        "\xaf\xb6\xac\x53\x1e\x48\x0b\x03\xde\x66"
+        "\xda\xa9\xe5\xab\x8b\x1a\x12\xd0\x0b\xfc")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -267,8 +267,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x5b\x6c\x88\xf2\x0b\x35\x40\xbe\x8e\x44"
-        "\xc0\x45\x4c\xed\x3a\x77\xc3\x3c\x30\x1a")){
+        "\x17\xfc\xdc\x5f\xae\x08\xab\xa7\x5b\xe3"
+        "\x2d\xe7\x25\xdf\x37\xf9\x4f\xa2\x28\xb9")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -299,8 +299,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa1\x7a\x59\x8d\x51\x87\x8f\xf5\x90\x75"
-        "\x02\xec\x6e\x61\x49\xbd\xaa\x92\x8f\x01")){
+        "\xd1\xa8\x01\xd4\xcd\x55\xac\xae\xec\x4e"
+        "\x0c\xa3\x23\xf3\xd7\x2c\xa5\x24\x96\x36")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -390,8 +390,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
-        "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
+        "\xcb\x89\x53\x0a\x5e\x9e\x97\xb3\x05\x56"
+        "\xd8\xd6\x12\x24\x5f\xb7\x77\xe3\x14\xe5")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -401,8 +401,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     // drawable.save_to_png(OUTPUT_FILE_PATH "label10.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x47\x60\x43\x39\x74\x53\x46\x46\xd0\x1a"
-        "\x3a\x30\x71\xfd\xee\xa6\x3a\x6c\xaa\x75")){
+        "\x16\x9c\x03\xc9\xf5\x45\x42\x8e\x89\x5c"
+        "\x8e\x51\x01\x40\xb6\xde\x3b\xc5\x7d\x5b")){
         BOOST_CHECK_MESSAGE(false, message);
     }
     wcomposite.clear();

@@ -39,7 +39,7 @@ class CopyPaste
 
     class LimitString
     {
-        char buf_[1024 * 4];
+        char buf_[1024/* * 4*/];
         size_t size_ = 0;
 
     public:

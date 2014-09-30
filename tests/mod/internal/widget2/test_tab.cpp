@@ -124,9 +124,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     parent.refresh(parent.rect);
 
     char message[1024];
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\xa8\xe3\xf5\x36\x90\xc8\x52\x3b\xcb\xc6"
-                    "\x06\xc3\x10\xaf\x67\x2b\x12\x65\x3a\x13")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x86\x38\xfb\x75\xbc\xd0\xdd\xa1\x77\x2e\x95\xa6\x1b\x9e\x97\x76\x66\xab\xc2\x65"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -146,9 +146,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                           , mouse_y
                           , NULL);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\x5a\xb8\x6d\x93\x05\x89\xf7\x22\x59\x97"
-                    "\x34\x26\xa2\xf3\xf2\xf1\x88\x0f\x66\xe0")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x88\x12\xe6\x6b\xd3\x8a\x60\x75\x6f\x93\xaf\xa1\xdf\x10\x9d\xce\xaf\x39\xc7\xe9"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -164,9 +164,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                           , mouse_y
                           , NULL);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\xa8\xe3\xf5\x36\x90\xc8\x52\x3b\xcb\xc6"
-                    "\x06\xc3\x10\xaf\x67\x2b\x12\x65\x3a\x13")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x86\x38\xfb\x75\xbc\xd0\xdd\xa1\x77\x2e\x95\xa6\x1b\x9e\x97\x76\x66\xab\xc2\x65"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -181,9 +181,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\x5a\xb8\x6d\x93\x05\x89\xf7\x22\x59\x97"
-                    "\x34\x26\xa2\xf3\xf2\xf1\x88\x0f\x66\xe0")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x88\x12\xe6\x6b\xd3\x8a\x60\x75\x6f\x93\xaf\xa1\xdf\x10\x9d\xce\xaf\x39\xc7\xe9"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -193,9 +193,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\x22\xd3\x7d\x83\xe2\xa4\x99\x5d\x77\xb2"
-                    "\x0d\x25\xd3\x12\x4a\x6a\x1d\x0f\xf9\xbf")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x24\x64\x90\xb5\x4a\x35\x94\xf2\x2c\x92\x10\xf7\x8f\xea\xf8\xf4\x41\x94\x5b\xbb"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -205,9 +205,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\x5a\xb8\x6d\x93\x05\x89\xf7\x22\x59\x97"
-                    "\x34\x26\xa2\xf3\xf2\xf1\x88\x0f\x66\xe0")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x88\x12\xe6\x6b\xd3\x8a\x60\x75\x6f\x93\xaf\xa1\xdf\x10\x9d\xce\xaf\x39\xc7\xe9"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -217,9 +217,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\x95\xca\xee\x66\x92\x86\x65\x02\x2a\x6a"
-                    "\x43\xeb\x56\x9d\x35\xad\x08\x8a\x68\x55")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\xd0\x15\x2d\x69\x77\xa7\xf6\x14\x12\x92\xc5\xb5\x1a\x41\xb3\x4b\x4a\x83\xd3\xa9"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -229,9 +229,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\xea\x27\x39\x94\xf0\x64\x35\x4d\x4c\x4b"
-                    "\x39\x76\x7d\x05\x9d\x99\x7e\x8b\xa9\x9e")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x00\x07\xc7\x57\xd3\xc3\xfd\x4c\xd8\x9b\xe6\x45\x22\x42\x9e\x18\x37\x68\xae\xdb"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -241,9 +241,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\xee\x91\x40\xc9\x43\x40\xc3\x59\x40\xa1"
-                    "\x42\xd6\xbc\x50\xa6\xa2\x03\x33\x37\xed")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x81\x42\xc8\xfc\x91\xe0\xa0\xac\xbb\xbe\x40\x65\xd4\x80\xf1\x14\xa7\xbb\x01\xc9"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -253,9 +253,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\x01\x37\xd7\x09\xd5\x75\x1c\x05\xf0\x55"
-                    "\x1b\xd4\x95\x76\x0c\x70\x80\x48\xa3\xa5")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x7a\xfa\x1e\xc3\xa8\x96\xaa\x54\xd9\x6d\xed\xd6\x55\xb9\xed\x64\xcf\xde\x9d\x83"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -265,9 +265,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\x5a\xb8\x6d\x93\x05\x89\xf7\x22\x59\x97"
-                    "\x34\x26\xa2\xf3\xf2\xf1\x88\x0f\x66\xe0")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x88\x12\xe6\x6b\xd3\x8a\x60\x75\x6f\x93\xaf\xa1\xdf\x10\x9d\xce\xaf\x39\xc7\xe9"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -277,9 +277,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\x01\x37\xd7\x09\xd5\x75\x1c\x05\xf0\x55"
-                    "\x1b\xd4\x95\x76\x0c\x70\x80\x48\xa3\xa5")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x7a\xfa\x1e\xc3\xa8\x96\xaa\x54\xd9\x6d\xed\xd6\x55\xb9\xed\x64\xcf\xde\x9d\x83"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -289,9 +289,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\xee\x91\x40\xc9\x43\x40\xc3\x59\x40\xa1"
-                    "\x42\xd6\xbc\x50\xa6\xa2\x03\x33\x37\xed")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x81\x42\xc8\xfc\x91\xe0\xa0\xac\xbb\xbe\x40\x65\xd4\x80\xf1\x14\xa7\xbb\x01\xc9"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -301,9 +301,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\xea\x27\x39\x94\xf0\x64\x35\x4d\x4c\x4b"
-                    "\x39\x76\x7d\x05\x9d\x99\x7e\x8b\xa9\x9e")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x00\x07\xc7\x57\xd3\xc3\xfd\x4c\xd8\x9b\xe6\x45\x22\x42\x9e\x18\x37\x68\xae\xdb"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -317,9 +317,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                           , mouse_y
                           , NULL);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\xa8\xe3\xf5\x36\x90\xc8\x52\x3b\xcb\xc6"
-                    "\x06\xc3\x10\xaf\x67\x2b\x12\x65\x3a\x13")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x86\x38\xfb\x75\xbc\xd0\xdd\xa1\x77\x2e\x95\xa6\x1b\x9e\x97\x76\x66\xab\xc2\x65"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -335,9 +335,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                           , mouse_y
                           , NULL);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\x22\x4d\x6d\xae\x35\xd7\x29\x32\xd0\x73"
-                    "\xe0\x8a\xd8\xcf\x3e\x6f\x23\xa2\x18\xe6")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\xd1\x12\xb0\xcb\xfd\x3f\xa0\x94\x96\xb8\xdb\xe0\xdd\xe0\x9c\xf5\x3d\x09\x71\xd4"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -349,9 +349,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\xa8\xe3\xf5\x36\x90\xc8\x52\x3b\xcb\xc6"
-                    "\x06\xc3\x10\xaf\x67\x2b\x12\x65\x3a\x13")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x86\x38\xfb\x75\xbc\xd0\xdd\xa1\x77\x2e\x95\xa6\x1b\x9e\x97\x76\x66\xab\xc2\x65"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -365,9 +365,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                           , mouse_y
                           , NULL);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\x64\xcf\xdc\xcc\x87\x1c\x05\xde\xdf\xf2"
-                    "\x16\x7d\x0f\x7f\x21\xdc\xb8\x46\x93\x3d")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\xe0\xce\xb6\x80\xa1\xd1\xce\xdb\x8c\xe9\x0c\xf7\x33\xf0\xd3\xaf\x30\x32\xc2\xd6"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -383,9 +383,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                           , mouse_y
                           , NULL);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\xed\xfd\xbe\x01\x7e\xe5\xc7\x08\x5e\x6d"
-                    "\x70\x0a\x3a\x8f\x2e\xfb\x43\x5e\xaf\xbc")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x34\x76\x85\xdf\xb5\xa8\x96\x87\x04\x64\xa3\xc6\x53\x82\xe8\x58\xe1\x33\xee\xf7"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -397,9 +397,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\xc9\x0b\xef\x6a\x33\x3c\xf8\xdf\xc4\x80"
-                    "\x72\x4c\xba\x04\x78\xeb\x33\x11\x58\x5e")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x08\x47\x84\x17\x8b\xbc\xd6\xe6\x38\xa8\x19\xf7\x30\xf7\x09\xcc\xa7\x7d\x82\x41"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -409,9 +409,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\x8a\x0b\x7b\xc4\x0f\x95\xb4\x7c\x96\xe4"
-                    "\x18\x64\x6e\x14\x93\x2c\xb2\x45\x67\x1b")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\xe0\xce\xb6\x80\xa1\xd1\xce\xdb\x8c\xe9\x0c\xf7\x33\xf0\xd3\xaf\x30\x32\xc2\xd6"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -421,9 +421,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\xc9\x0b\xef\x6a\x33\x3c\xf8\xdf\xc4\x80"
-                    "\x72\x4c\xba\x04\x78\xeb\x33\x11\x58\x5e")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x08\x47\x84\x17\x8b\xbc\xd6\xe6\x38\xa8\x19\xf7\x30\xf7\x09\xcc\xa7\x7d\x82\x41"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -433,9 +433,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\xed\xfd\xbe\x01\x7e\xe5\xc7\x08\x5e\x6d"
-                    "\x70\x0a\x3a\x8f\x2e\xfb\x43\x5e\xaf\xbc")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x34\x76\x85\xdf\xb5\xa8\x96\x87\x04\x64\xa3\xc6\x53\x82\xe8\x58\xe1\x33\xee\xf7"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -445,9 +445,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
-                  , "\x8a\x0b\x7b\xc4\x0f\x95\xb4\x7c\x96\xe4"
-                    "\x18\x64\x6e\x14\x93\x2c\xb2\x45\x67\x1b")) {
+    if (!check_sig( drawable.gd.drawable, message,
+        "\x83\xe6\x4e\x57\xd9\x5e\x20\x63\x24\x29\x2b\x35\x7e\x0f\x7f\xb5\x75\xf1\x92\x4e"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 

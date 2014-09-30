@@ -1699,7 +1699,7 @@ public:
 
                         X224::DT_TPDU_Recv x224(stream);
 
-                        int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+                        const int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
 
                         if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                             LOG(LOG_INFO, "mod::rdp::DisconnectProviderUltimatum received");
