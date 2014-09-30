@@ -85,9 +85,13 @@ public:
     // (non orders chunks are counted as 1 order)
     uint32_t total_orders_count;
 
-    timeval synctime_now;
     timeval record_now;
 
+private:
+    timeval start_record_now;
+    timeval start_synctime_now;
+
+public:
     uint16_t nbconsumers;
 
     struct Consumer {
@@ -262,7 +266,7 @@ public:
         }
 
         if (!this->remaining_order_count){
-            for (size_t i = 0; i < this->nbconsumers ; i++){
+            for (size_t i = 0; i < this->nbconsumers; i++){
                 this->consumers[i].graphic_device->flush();
             }
 
@@ -325,7 +329,7 @@ public:
                         if (this->verbose > 32){
                             order.log(LOG_INFO);
                         }
-                        for (size_t i = 0; i < this->nbconsumers ; i++){
+                        for (size_t i = 0; i < this->nbconsumers; i++){
                             this->consumers[i].graphic_device->draw(order);
                         }
                     }
@@ -365,7 +369,7 @@ public:
                     FontChar fc(cmd.glyphData_x, cmd.glyphData_y, cmd.glyphData_cx, cmd.glyphData_cy, -1);
                     memcpy(fc.data.get(), cmd.glyphData_aj, fc.datasize());
                     this->gly_cache.set_glyph(std::move(fc), cmd.cacheId, cmd.glyphData_cacheIndex);
-                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                    for (size_t i = 0; i < this->nbconsumers; i++){
                         this->consumers[i].graphic_device->draw(cmd);
                     }
                 }
@@ -392,7 +396,7 @@ public:
                 switch (this->common.order) {
                 case RDP::GLYPHINDEX:
                     this->glyphindex.receive(this->stream, header);
-                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                    for (size_t i = 0; i < this->nbconsumers; i++){
                         this->consumers[i].graphic_device->draw(this->glyphindex, clip, &this->gly_cache);
                     }
                     break;
@@ -401,7 +405,7 @@ public:
                     if (this->verbose > 32){
                         this->destblt.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                    for (size_t i = 0; i < this->nbconsumers; i++){
                         this->consumers[i].graphic_device->draw(this->destblt, clip);
                     }
                     break;
@@ -410,7 +414,7 @@ public:
                     if (this->verbose > 32){
                         this->multidstblt.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers ; i++) {
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
                         this->consumers[i].graphic_device->draw(this->multidstblt, clip);
                     }
                     break;
@@ -419,7 +423,7 @@ public:
                     if (this->verbose > 32){
                         this->multiopaquerect.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers ; i++) {
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
                         this->consumers[i].graphic_device->draw(this->multiopaquerect, clip);
                     }
                     break;
@@ -428,7 +432,7 @@ public:
                     if (this->verbose > 32){
                         this->multipatblt.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers ; i++) {
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
                         this->consumers[i].graphic_device->draw(this->multipatblt, clip);
                     }
                     break;
@@ -437,7 +441,7 @@ public:
                     if (this->verbose > 32){
                         this->multiscrblt.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers ; i++) {
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
                         this->consumers[i].graphic_device->draw(this->multiscrblt, clip);
                     }
                     break;
@@ -446,7 +450,7 @@ public:
                     if (this->verbose > 32){
                         this->patblt.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                    for (size_t i = 0; i < this->nbconsumers; i++){
                         this->consumers[i].graphic_device->draw(this->patblt, clip);
                     }
                     break;
@@ -455,7 +459,7 @@ public:
                     if (this->verbose > 32){
                         this->scrblt.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                    for (size_t i = 0; i < this->nbconsumers; i++){
                         this->consumers[i].graphic_device->draw(this->scrblt, clip);
                     }
                     break;
@@ -464,7 +468,7 @@ public:
                     if (this->verbose > 32){
                         this->lineto.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers ; i++) {
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
                         this->consumers[i].graphic_device->draw(this->lineto, clip);
                     }
                     break;
@@ -473,7 +477,7 @@ public:
                     if (this->verbose > 32){
                         this->opaquerect.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                    for (size_t i = 0; i < this->nbconsumers; i++){
                         this->consumers[i].graphic_device->draw(this->opaquerect, clip);
                     }
                     break;
@@ -489,7 +493,7 @@ public:
                             throw Error(ERR_WRM);
                         }
                         else {
-                            for (size_t i = 0; i < this->nbconsumers ; i++){
+                            for (size_t i = 0; i < this->nbconsumers; i++){
                                 this->consumers[i].graphic_device->draw(this->memblt, clip, bmp);
                             }
                         }
@@ -507,7 +511,7 @@ public:
                             throw Error(ERR_WRM);
                         }
                         else {
-                            for (size_t i = 0; i < this->nbconsumers ; i++){
+                            for (size_t i = 0; i < this->nbconsumers; i++){
                                 this->consumers[i].graphic_device->draw(this->mem3blt, clip, bmp);
                             }
                         }
@@ -518,7 +522,7 @@ public:
                     if (this->verbose > 32){
                         this->polyline.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers ; i++) {
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
                         this->consumers[i].graphic_device->draw(this->polyline, clip);
                     }
                     break;
@@ -537,8 +541,13 @@ public:
             break;
             case TIMESTAMP:
             {
-                timeval last_movie_time = this->record_now;
                 this->stream.in_timeval_from_uint64le_usec(this->record_now);
+
+                for (size_t i = 0; i < this->nbconsumers; i++){
+                    if (this->consumers[i].capture_device) {
+                        this->consumers[i].capture_device->external_time(this->record_now);
+                    }
+                }
 
                 REDOC("If some data remains, it is input data : mouse_x, mouse_y and decoded keyboard keys (utf8)")
                 if (this->stream.end - this->stream.p > 0){
@@ -574,7 +583,7 @@ public:
 
                         StaticStream ss(this->input, this->input_len);
 
-                        for (size_t i = 0; i < this->nbconsumers ; i++){
+                        for (size_t i = 0; i < this->nbconsumers; i++){
                             if (this->consumers[i].capture_device) {
                                 this->consumers[i].capture_device->input(this->record_now, ss);
                             }
@@ -598,45 +607,38 @@ public:
                                    , key32);
                             }
                         }
-
                     }
                 }
 
-                if (!this->timestamp_ok){
+                if (!this->timestamp_ok) {
                    if (this->real_time) {
-                        this->synctime_now = tvtime();
-                    }
-                    else {
-                        this->synctime_now = this->record_now;
+                        this->start_record_now   = this->record_now;
+                        this->start_synctime_now = tvtime();
                     }
                     this->timestamp_ok = true;
                 }
                 else {
-                   if (this->real_time){
-                        for (size_t i = 0; i < this->nbconsumers ; i++){
+                   if (this->real_time) {
+                        for (size_t i = 0; i < this->nbconsumers; i++) {
                             this->consumers[i].graphic_device->flush();
                         }
 
-                        struct   timeval now = tvtime();
-                        uint64_t elapsed     = difftimeval(now, this->synctime_now);
+                        struct timeval now     = tvtime();
+                        uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
 
-                                 this->synctime_now = now;
-                        uint64_t movie_elapsed      = difftimeval(this->record_now, last_movie_time);
+                        uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
 
-                        if (elapsed <= movie_elapsed) {
+                        if (elapsed < movie_elapsed) {
                             struct timespec wtime     = {
-                                  static_cast<uint32_t>((movie_elapsed - elapsed) / 1000000LL)
+                                  static_cast<uint32_t>( (movie_elapsed - elapsed) / 1000000LL)
                                 , static_cast<uint32_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
                                 };
                             struct timespec wtime_rem = { 0, 0 };
 
-                            while ((nanosleep(&wtime, NULL) == -1) && (errno == EINTR)) {
+                            while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
                                 wtime = wtime_rem;
                             }
                         }
-                    }
-                    else {
-                        this->synctime_now = this->record_now;
                     }
                 }
             }
@@ -644,60 +646,60 @@ public:
             case META_FILE:
             TODO("Cache meta_data (sizes, number of entries) should be put in META chunk");
             {
-                this->info_version                = this->stream.in_uint16_le();
-                this->mem3blt_support             = (this->info_version > 1);
-                this->polyline_support            = (this->info_version > 2);
-                this->multidstblt_support         = (this->info_version > 3);
-                this->multiopaquerect_support     = (this->info_version > 3);
-                this->multipatblt_support         = (this->info_version > 3);
-                this->multiscrblt_support         = (this->info_version > 3);
-                this->info_width                  = this->stream.in_uint16_le();
-                this->info_height                 = this->stream.in_uint16_le();
-                this->info_bpp                    = this->stream.in_uint16_le();
-                this->info_cache_0_entries        = this->stream.in_uint16_le();
-                this->info_cache_0_size           = this->stream.in_uint16_le();
-                this->info_cache_1_entries        = this->stream.in_uint16_le();
-                this->info_cache_1_size           = this->stream.in_uint16_le();
-                this->info_cache_2_entries        = this->stream.in_uint16_le();
-                this->info_cache_2_size           = this->stream.in_uint16_le();
+                this->info_version                   = this->stream.in_uint16_le();
+                this->mem3blt_support                = (this->info_version > 1);
+                this->polyline_support               = (this->info_version > 2);
+                this->multidstblt_support            = (this->info_version > 3);
+                this->multiopaquerect_support        = (this->info_version > 3);
+                this->multipatblt_support            = (this->info_version > 3);
+                this->multiscrblt_support            = (this->info_version > 3);
+                this->info_width                     = this->stream.in_uint16_le();
+                this->info_height                    = this->stream.in_uint16_le();
+                this->info_bpp                       = this->stream.in_uint16_le();
+                this->info_cache_0_entries           = this->stream.in_uint16_le();
+                this->info_cache_0_size              = this->stream.in_uint16_le();
+                this->info_cache_1_entries           = this->stream.in_uint16_le();
+                this->info_cache_1_size              = this->stream.in_uint16_le();
+                this->info_cache_2_entries           = this->stream.in_uint16_le();
+                this->info_cache_2_size              = this->stream.in_uint16_le();
 
                 if (this->info_version <= 3) {
-                    this->info_number_of_cache  = 3;
-                    this->info_use_waiting_list = false;
+                    this->info_number_of_cache       = 3;
+                    this->info_use_waiting_list      = false;
 
-                    this->info_cache_0_persistent = false;
-                    this->info_cache_1_persistent = false;
-                    this->info_cache_2_persistent = false;
+                    this->info_cache_0_persistent    = false;
+                    this->info_cache_1_persistent    = false;
+                    this->info_cache_2_persistent    = false;
                 }
                 else {
-                    this->info_number_of_cache  = this->stream.in_uint8();
-                    this->info_use_waiting_list = (this->stream.in_uint8() ? true : false);
+                    this->info_number_of_cache       = this->stream.in_uint8();
+                    this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
 
-                    this->info_cache_0_persistent = (this->stream.in_uint8() ? true : false);
-                    this->info_cache_1_persistent = (this->stream.in_uint8() ? true : false);
-                    this->info_cache_2_persistent = (this->stream.in_uint8() ? true : false);
+                    this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
+                    this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
+                    this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
 
-                    this->info_cache_3_entries    = this->stream.in_uint16_le();
-                    this->info_cache_3_size       = this->stream.in_uint16_le();
-                    this->info_cache_3_persistent = (this->stream.in_uint8() ? true : false);
+                    this->info_cache_3_entries       = this->stream.in_uint16_le();
+                    this->info_cache_3_size          = this->stream.in_uint16_le();
+                    this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
 
-                    this->info_cache_4_entries    = this->stream.in_uint16_le();
-                    this->info_cache_4_size       = this->stream.in_uint16_le();
-                    this->info_cache_4_persistent = (this->stream.in_uint8() ? true : false);
+                    this->info_cache_4_entries       = this->stream.in_uint16_le();
+                    this->info_cache_4_size          = this->stream.in_uint16_le();
+                    this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
 
                     this->info_compression_algorithm = this->stream.in_uint8();
                     REDASSERT(this->info_compression_algorithm <= 2);
 
                     switch (this->info_compression_algorithm) {
-                        case 1:
-                            this->trans = &this->gzcit;
-                            break;
-                        case 2:
-                            this->trans = &this->scit;
-                            break;
-                        default:
-                            this->trans = this->trans_source;
-                            break;
+                    case 1:
+                        this->trans = &this->gzcit;
+                        break;
+                    case 2:
+                        this->trans = &this->scit;
+                        break;
+                    default:
+                        this->trans = this->trans_source;
+                        break;
                     }
                 }
 
@@ -727,7 +729,7 @@ public:
                     }
                 }
 
-                for (size_t i = 0; i < this->nbconsumers ; i++) {
+                for (size_t i = 0; i < this->nbconsumers; i++) {
                     if (this->consumers[i].capture_device) {
                         this->consumers[i].capture_device->external_breakpoint();
                     }
@@ -961,31 +963,31 @@ public:
                     TODO("check png row_size is identical to drawable rowsize");
 
                     uint32_t tmp[8192];
-                    for (size_t k = 0 ; k < height ; ++k) {
+                    for (size_t k = 0; k < height; ++k) {
                         png_read_row(ppng, reinterpret_cast<uint8_t*>(tmp), NULL);
 
                         uint32_t bgrtmp[8192];
                         const uint32_t * s = reinterpret_cast<const uint32_t*>(tmp);
                         uint32_t * t = bgrtmp;
-                        for (size_t n = 0; n < (width / 4) ; n++){
+                        for (size_t n = 0; n < (width / 4); n++){
                             unsigned bRGB = *s++;
                             unsigned GBrg = *s++;
                             unsigned rgbR = *s++;
                             *t++ = ((GBrg << 16) & 0xFF000000)
                                | ((bRGB << 16) & 0x00FF0000)
                                | (bRGB         & 0x0000FF00)
-                               | ((bRGB >> 16) & 0x000000FF) ;
+                               | ((bRGB >> 16) & 0x000000FF);
                             *t++ = (GBrg         & 0xFF000000)
                                | ((rgbR << 16) & 0x00FF0000)
                                | ((bRGB >> 16) & 0x0000FF00)
-                               | ( GBrg        & 0x000000FF) ;
+                               | ( GBrg        & 0x000000FF);
                             *t++ = ((rgbR << 16) & 0xFF000000)
                                | (rgbR         & 0x00FF0000)
                                | ((rgbR >> 16) & 0x0000FF00)
-                               | ((GBrg >> 16) & 0x000000FF) ;
+                               | ((GBrg >> 16) & 0x000000FF);
                         }
 
-                        for (size_t cu = 0 ; cu < this->nbconsumers ; cu++){
+                        for (size_t cu = 0; cu < this->nbconsumers; cu++){
                             if (this->consumers[cu].capture_device) {
                                 this->consumers[cu].capture_device->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
                             }
@@ -1103,7 +1105,7 @@ public:
             }
             this->interpret_order();
             if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
-                for (size_t i = 0; i < this->nbconsumers ; i++) {
+                for (size_t i = 0; i < this->nbconsumers; i++) {
                     if (this->consumers[i].capture_device) {
                         this->consumers[i].capture_device->snapshot( this->record_now, this->mouse_x, this->mouse_y
                                                                    , this->ignore_frame_in_timeval);

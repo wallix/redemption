@@ -905,8 +905,7 @@ struct mod_rdp : public mod_api {
                         X224::RecvFactory f(*this->nego.trans, x224_data);
                         X224::DT_TPDU_Recv x224(x224_data);
 
-                        SubStream & mcs_data = x224.payload;
-                        MCS::CONNECT_RESPONSE_PDU_Recv mcs(mcs_data, MCS::BER_ENCODING);
+                        MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
 
                         GCC::Create_Response_Recv gcc_cr(mcs.payload);
 
@@ -1357,9 +1356,9 @@ struct mod_rdp : public mod_api {
                         BStream stream(65536);
                         X224::RecvFactory f(*this->nego.trans, stream);
                         X224::DT_TPDU_Recv x224(stream);
-                        SubStream & mcs_data = x224.payload;
-                        TODO("We should have some MCS:RecvFactory to manage possible Deconnection Ultimatum here")
-                        MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
+                        TODO("Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here")
+//                        int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+                        MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
                         SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
@@ -1697,10 +1696,9 @@ struct mod_rdp : public mod_api {
                         }
 
                         X224::DT_TPDU_Recv x224(stream);
-                        SubStream & mcs_data = x224.payload;
-                        
-                        MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-                        if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                        int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+
+                        if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                             LOG(LOG_INFO, "mod::rdp::DisconnectProviderUltimatum received");
                             x224.payload.rewind();
                             MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1710,7 +1708,7 @@ struct mod_rdp : public mod_api {
                         }
                         
 
-                        MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
+                        MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
                         SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
                         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
@@ -1812,284 +1810,286 @@ struct mod_rdp : public mod_api {
 
                                 uint8_t * current_packet = next_packet;
 
-                                ShareControl_Recv sctrl(sec.payload);
-                                next_packet += sctrl.totalLength;
-
-                                if (this->verbose & 128) {
-                                    LOG(LOG_WARNING, "LOOPING on PDUs: %u", (unsigned)sctrl.totalLength);
-                                }
-
-                                switch (sctrl.pdu_type1) {
-                                case PDUTYPE_DATAPDU:
-                                    if (this->verbose & 128) {
-                                        LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
-                                    }
-                                    switch (this->connection_finalization_state){
-                                    case EARLY:
-                                        LOG(LOG_WARNING, "Rdp::finalization is early");
-                                        throw Error(ERR_SEC);
-                                    case WAITING_SYNCHRONIZE:
-                                        if (this->verbose & 1){
-                                            LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
-                                        }
-                                        //this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
-                                        this->connection_finalization_state = WAITING_CTL_COOPERATE;
-                                        break;
-                                    case WAITING_CTL_COOPERATE:
-                                        if (this->verbose & 1){
-                                            LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
-                                        }
-                                        //this->check_data_pdu(PDUTYPE2_CONTROL);
-                                        this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
-                                        break;
-                                    case WAITING_GRANT_CONTROL_COOPERATE:
-                                        if (this->verbose & 1){
-                                            LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
-                                        }
-                                        //                            this->check_data_pdu(PDUTYPE2_CONTROL);
-                                        this->connection_finalization_state = WAITING_FONT_MAP;
-                                        break;
-                                    case WAITING_FONT_MAP:
-                                        if (this->verbose & 1){
-                                            LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
-                                        }
-                                        //this->check_data_pdu(PDUTYPE2_FONTMAP);
-                                        this->connection_finalization_state = UP_AND_RUNNING;
-
-                                        // Synchronize sent to indicate server the state of sticky keys (x-locks)
-                                        // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
-                                        rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
-                                        break;
-                                    case UP_AND_RUNNING:
-                                        if (this->enable_transparent_mode)
-                                        {
-                                            sec.payload.p = current_packet;
-
-                                            HStream copy_stream(1024, 65535);
-
-                                            copy_stream.out_copy_bytes(current_packet, next_packet - current_packet);
-                                            copy_stream.mark_end();
-
-                                            //total_data_received += copy_stream.size();
-                                            //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
-
-                                            if (this->transparent_recorder) {
-                                                this->transparent_recorder->send_data_indication_ex(mcs.channelId,
-                                                    copy_stream);
-                                            }
-                                            this->front.send_data_indication_ex(mcs.channelId, copy_stream);
-
-                                            next_packet = sec.payload.end;
-
-                                            break;
-                                        }
-
-                                        {
-                                            ShareData sdata(sctrl.payload);
-                                            sdata.recv_begin(&this->mppc_dec);
-                                            switch (sdata.pdutype2) {
-                                            case PDUTYPE2_UPDATE:
-                                                {
-                                                    if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_UPDATE"); }
-                                                    // MS-RDPBCGR: 1.3.6
-                                                    // -----------------
-                                                    // The most fundamental output that a server can send to a connected client
-                                                    // is bitmap images of the remote session using the Update Bitmap PDU. This
-                                                    // allows the client to render the working space and enables a user to
-                                                    // interact with the session running on the server. The global palette
-                                                    // information for a session is sent to the client in the Update Palette PDU.
-
-                                                    SlowPath::GraphicsUpdate_Recv gur(sdata.payload);
-                                                    switch (gur.update_type) {
-                                                    case RDP_UPDATE_ORDERS:
-                                                        if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
-                                                        this->front.begin_update();
-                                                        this->orders.process_orders(this->bpp, sdata.payload, false, *this->gd,
-                                                                                    this->front_width, this->front_height);
-                                                        this->front.end_update();
-                                                        break;
-                                                    case RDP_UPDATE_BITMAP:
-                                                        if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_BITMAP");}
-                                                        this->front.begin_update();
-                                                        this->process_bitmap_updates(sdata.payload, false);
-                                                        this->front.end_update();
-                                                        break;
-                                                    case RDP_UPDATE_PALETTE:
-                                                        if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_PALETTE");}
-                                                        this->front.begin_update();
-                                                        this->process_palette(sdata.payload, false);
-                                                        this->front.end_update();
-                                                        break;
-                                                    case RDP_UPDATE_SYNCHRONIZE:
-                                                        if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_SYNCHRONIZE");}
-                                                        sdata.payload.in_skip_bytes(2);
-                                                        break;
-                                                    default:
-                                                        if (this->verbose & 8){ LOG(LOG_WARNING, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_UNKNOWN");}
-                                                        break;
-                                                    }
-                                                }
-                                                break;
-                                            case PDUTYPE2_CONTROL:
-                                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
-                                                TODO("CGR: Data should actually be consumed");
-                                                    sdata.payload.p = sdata.payload.end;
-                                                break;
-                                            case PDUTYPE2_SYNCHRONIZE:
-                                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
-                                                TODO("CGR: Data should actually be consumed");
-                                                    sdata.payload.p = sdata.payload.end;
-                                                break;
-                                            case PDUTYPE2_POINTER:
-                                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
-                                                this->process_pointer_pdu(sdata.payload, this);
-                                                TODO("CGR: Data should actually be consumed");
-                                                    sdata.payload.p = sdata.payload.end;
-                                                break;
-                                            case PDUTYPE2_PLAY_SOUND:
-                                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
-                                                TODO("CGR: Data should actually be consumed");
-                                                    sdata.payload.p = sdata.payload.end;
-                                                break;
-                                            case PDUTYPE2_SAVE_SESSION_INFO:
-                                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
-                                                TODO("CGR: Data should actually be consumed");
-                                                this->process_save_session_info(sdata.payload);
-                                                break;
-                                            case PDUTYPE2_SET_ERROR_INFO_PDU:
-                                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
-                                                this->process_disconnect_pdu(sdata.payload);
-                                                break;
-                                            case PDUTYPE2_SHUTDOWN_DENIED:
-                                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");}
-                                                LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED Received");
-                                                break;
-                                            default:
-                                                LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
-                                                TODO("CGR: Data should actually be consumed");
-                                                    sdata.payload.p = sdata.payload.end;
-                                                break;
-                                            }
-                                            sdata.recv_end();
-                                        }
-                                        break;
-                                    }
-                                    break;
-                                case PDUTYPE_DEMANDACTIVEPDU:
-                                    {
-                                        if (this->verbose & 128){
-                                             LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
-                                        }
-
-                                        this->orders.reset();
-
-    // 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
-    // ==========================================================
-
-    //    shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1 ) containing information
-    //  about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to
-    // PDUTYPE_DEMANDACTIVEPDU (1).
-
-    //    shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for the packet (see [T128]
-    // section 8.4.2 for more information regarding share IDs).
-
-                                        this->share_id = sctrl.payload.in_uint32_le();
-
-    //    lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size in bytes of the sourceDescriptor
-    // field.
-                                        uint16_t lengthSourceDescriptor = sctrl.payload.in_uint16_le();
-
-    //    lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. The combined size in bytes of the
-    // numberCapabilities, pad2Octets, and capabilitySets fields.
-
-                                        uint16_t lengthCombinedCapabilities = sctrl.payload.in_uint16_le();
-
-    //    sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see
-    // [T128] section 8.4.1 for more information regarding source descriptors).
-
-                                        TODO("before skipping we should check we do not go outside current stream");
-                                        sctrl.payload.in_skip_bytes(lengthSourceDescriptor);
-
-    // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the
-    // Demand Active PDU.
-
-    // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
-
-    // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number
-    //  of capability sets is specified by the numberCapabilities field.
-
-                                        this->process_server_caps(sctrl.payload, lengthCombinedCapabilities);
-
-    // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
-
-                                        uint32_t sessionId = sctrl.payload.in_uint32_le();
-(void)sessionId;
-
-                                        this->send_confirm_active(this);
-                                        this->send_synchronise();
-                                        this->send_control(RDP_CTL_COOPERATE);
-                                        this->send_control(RDP_CTL_REQUEST_CONTROL);
-
-                                        /* Including RDP 5.0 capabilities */
-                                        if (this->use_rdp5){
-                                            LOG(LOG_INFO, "use rdp5");
-                                            if (this->enable_persistent_disk_bitmap_cache) {
-                                                if (!this->deactivation_reactivation_in_progress) {
-                                                    this->send_persistent_key_list();
-                                                }
-                                            }
-                                            this->send_fonts(3);
-                                        }
-                                        else{
-                                            LOG(LOG_INFO, "not using rdp5");
-                                            this->send_fonts(1);
-                                            this->send_fonts(2);
-                                        }
-
-                                        this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
-
-                                        LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
-                                        if (this->transparent_recorder) {
-                                            this->transparent_recorder->server_resize(this->front_width,
-                                                this->front_height, this->bpp);
-                                        }
-                                        if (-1 == this->front.server_resize(this->front_width, this->front_height, this->bpp)){
-                                            LOG(LOG_WARNING, "Resize not available on older clients,"
-                                                " change client resolution to match server resolution");
-                                            throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
-                                        }
-//                                        this->orders.reset();
-                                        this->connection_finalization_state = WAITING_SYNCHRONIZE;
-
-                                        this->deactivation_reactivation_in_progress = false;
-                                    }
-                                    break;
-                                case PDUTYPE_DEACTIVATEALLPDU:
-                                    if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_DEACTIVATEALLPDU"); }
-                                    LOG(LOG_INFO, "Deactivate All PDU");
-                                    this->deactivation_reactivation_in_progress = true;
-                                    TODO("CGR: Data should actually be consumed");
-                                        TODO("CGR: Check we are indeed expecting Synchronize... dubious");
-                                        this->connection_finalization_state = WAITING_SYNCHRONIZE;
-                                    break;
-                                case PDUTYPE_SERVER_REDIR_PKT:
-                                    if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_SERVER_REDIR_PKT"); }
-                                    break;
-                                case FLOWPDU:
+                                if  (peekFlowPDU(sec.payload)){
                                     if (this->verbose & 128) {
                                         LOG(LOG_WARNING, "FlowPDU TYPE");
                                     }
+                                    ShareFlow_Recv sflow(sec.payload);
                                     // ignoring
                                     // if (sctrl.flow_pdu_type == FLOW_TEST_PDU) {
                                     //     this->send_flow_response_pdu(sctrl.flow_id,
                                     //                                  sctrl.flow_number);
                                     // }
-                                    break;
-                                default:
-                                    LOG(LOG_INFO, "unknown PDU %u", sctrl.pdu_type1);
-                                    break;
+                                    next_packet = sec.payload.p;
                                 }
+                                else {
+                                    ShareControl_Recv sctrl(sec.payload);
+                                    next_packet += sctrl.totalLength;
+
+                                    if (this->verbose & 128) {
+                                        LOG(LOG_WARNING, "LOOPING on PDUs: %u", (unsigned)sctrl.totalLength);
+                                    }
+
+                                    switch (sctrl.pduType) {
+                                    case PDUTYPE_DATAPDU:
+                                        if (this->verbose & 128) {
+                                            LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
+                                        }
+                                        switch (this->connection_finalization_state){
+                                        case EARLY:
+                                            LOG(LOG_WARNING, "Rdp::finalization is early");
+                                            throw Error(ERR_SEC);
+                                        case WAITING_SYNCHRONIZE:
+                                            if (this->verbose & 1){
+                                                LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
+                                            }
+                                            //this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
+                                            this->connection_finalization_state = WAITING_CTL_COOPERATE;
+                                            break;
+                                        case WAITING_CTL_COOPERATE:
+                                            if (this->verbose & 1){
+                                                LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
+                                            }
+                                            //this->check_data_pdu(PDUTYPE2_CONTROL);
+                                            this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
+                                            break;
+                                        case WAITING_GRANT_CONTROL_COOPERATE:
+                                            if (this->verbose & 1){
+                                                LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
+                                            }
+                                            //                            this->check_data_pdu(PDUTYPE2_CONTROL);
+                                            this->connection_finalization_state = WAITING_FONT_MAP;
+                                            break;
+                                        case WAITING_FONT_MAP:
+                                            if (this->verbose & 1){
+                                                LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
+                                            }
+                                            //this->check_data_pdu(PDUTYPE2_FONTMAP);
+                                            this->connection_finalization_state = UP_AND_RUNNING;
+
+                                            // Synchronize sent to indicate server the state of sticky keys (x-locks)
+                                            // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
+                                            rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
+                                            break;
+                                        case UP_AND_RUNNING:
+                                            if (this->enable_transparent_mode)
+                                            {
+                                                sec.payload.p = current_packet;
+
+                                                HStream copy_stream(1024, 65535);
+
+                                                copy_stream.out_copy_bytes(current_packet, next_packet - current_packet);
+                                                copy_stream.mark_end();
+
+                                                //total_data_received += copy_stream.size();
+                                                //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
+
+                                                if (this->transparent_recorder) {
+                                                    this->transparent_recorder->send_data_indication_ex(mcs.channelId,
+                                                        copy_stream);
+                                                }
+                                                this->front.send_data_indication_ex(mcs.channelId, copy_stream);
+
+                                                next_packet = sec.payload.end;
+
+                                                break;
+                                            }
+
+                                            {
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                switch (sdata.pdutype2) {
+                                                case PDUTYPE2_UPDATE:
+                                                    {
+                                                        if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_UPDATE"); }
+                                                        // MS-RDPBCGR: 1.3.6
+                                                        // -----------------
+                                                        // The most fundamental output that a server can send to a connected client
+                                                        // is bitmap images of the remote session using the Update Bitmap PDU. This
+                                                        // allows the client to render the working space and enables a user to
+                                                        // interact with the session running on the server. The global palette
+                                                        // information for a session is sent to the client in the Update Palette PDU.
+
+                                                        SlowPath::GraphicsUpdate_Recv gur(sdata.payload);
+                                                        switch (gur.update_type) {
+                                                        case RDP_UPDATE_ORDERS:
+                                                            if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
+                                                            this->front.begin_update();
+                                                            this->orders.process_orders(this->bpp, sdata.payload, false, *this->gd,
+                                                                                        this->front_width, this->front_height);
+                                                            this->front.end_update();
+                                                            break;
+                                                        case RDP_UPDATE_BITMAP:
+                                                            if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_BITMAP");}
+                                                            this->front.begin_update();
+                                                            this->process_bitmap_updates(sdata.payload, false);
+                                                            this->front.end_update();
+                                                            break;
+                                                        case RDP_UPDATE_PALETTE:
+                                                            if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_PALETTE");}
+                                                            this->front.begin_update();
+                                                            this->process_palette(sdata.payload, false);
+                                                            this->front.end_update();
+                                                            break;
+                                                        case RDP_UPDATE_SYNCHRONIZE:
+                                                            if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_SYNCHRONIZE");}
+                                                            sdata.payload.in_skip_bytes(2);
+                                                            break;
+                                                        default:
+                                                            if (this->verbose & 8){ LOG(LOG_WARNING, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_UNKNOWN");}
+                                                            break;
+                                                        }
+                                                    }
+                                                    break;
+                                                case PDUTYPE2_CONTROL:
+                                                    if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
+                                                    TODO("CGR: Data should actually be consumed");
+                                                        sdata.payload.p = sdata.payload.end;
+                                                    break;
+                                                case PDUTYPE2_SYNCHRONIZE:
+                                                    if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
+                                                    TODO("CGR: Data should actually be consumed");
+                                                        sdata.payload.p = sdata.payload.end;
+                                                    break;
+                                                case PDUTYPE2_POINTER:
+                                                    if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
+                                                    this->process_pointer_pdu(sdata.payload, this);
+                                                    TODO("CGR: Data should actually be consumed");
+                                                        sdata.payload.p = sdata.payload.end;
+                                                    break;
+                                                case PDUTYPE2_PLAY_SOUND:
+                                                    if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
+                                                    TODO("CGR: Data should actually be consumed");
+                                                        sdata.payload.p = sdata.payload.end;
+                                                    break;
+                                                case PDUTYPE2_SAVE_SESSION_INFO:
+                                                    if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
+                                                    TODO("CGR: Data should actually be consumed");
+                                                    this->process_save_session_info(sdata.payload);
+                                                    break;
+                                                case PDUTYPE2_SET_ERROR_INFO_PDU:
+                                                    if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
+                                                    this->process_disconnect_pdu(sdata.payload);
+                                                    break;
+                                                case PDUTYPE2_SHUTDOWN_DENIED:
+                                                    if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");}
+                                                    LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED Received");
+                                                    break;
+                                                default:
+                                                    LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
+                                                    TODO("CGR: Data should actually be consumed");
+                                                        sdata.payload.p = sdata.payload.end;
+                                                    break;
+                                                }
+                                            }
+                                            break;
+                                        }
+                                        break;
+                                    case PDUTYPE_DEMANDACTIVEPDU:
+                                        {
+                                            if (this->verbose & 128){
+                                                 LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
+                                            }
+
+                                            this->orders.reset();
+
+        // 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
+        // ==========================================================
+
+        //    shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1 ) containing information
+        //  about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to
+        // PDUTYPE_DEMANDACTIVEPDU (1).
+
+        //    shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for the packet (see [T128]
+        // section 8.4.2 for more information regarding share IDs).
+
+                                            this->share_id = sctrl.payload.in_uint32_le();
+
+        //    lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size in bytes of the sourceDescriptor
+        // field.
+                                            uint16_t lengthSourceDescriptor = sctrl.payload.in_uint16_le();
+
+        //    lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. The combined size in bytes of the
+        // numberCapabilities, pad2Octets, and capabilitySets fields.
+
+                                            uint16_t lengthCombinedCapabilities = sctrl.payload.in_uint16_le();
+
+        //    sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see
+        // [T128] section 8.4.1 for more information regarding source descriptors).
+
+                                            TODO("before skipping we should check we do not go outside current stream");
+                                            sctrl.payload.in_skip_bytes(lengthSourceDescriptor);
+
+        // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the
+        // Demand Active PDU.
+
+        // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+
+        // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number
+        //  of capability sets is specified by the numberCapabilities field.
+
+                                            this->process_server_caps(sctrl.payload, lengthCombinedCapabilities);
+
+        // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
+
+                                            uint32_t sessionId = sctrl.payload.in_uint32_le();
+    (void)sessionId;
+
+                                            this->send_confirm_active(this);
+                                            this->send_synchronise();
+                                            this->send_control(RDP_CTL_COOPERATE);
+                                            this->send_control(RDP_CTL_REQUEST_CONTROL);
+
+                                            /* Including RDP 5.0 capabilities */
+                                            if (this->use_rdp5){
+                                                LOG(LOG_INFO, "use rdp5");
+                                                if (this->enable_persistent_disk_bitmap_cache) {
+                                                    if (!this->deactivation_reactivation_in_progress) {
+                                                        this->send_persistent_key_list();
+                                                    }
+                                                }
+                                                this->send_fonts(3);
+                                            }
+                                            else{
+                                                LOG(LOG_INFO, "not using rdp5");
+                                                this->send_fonts(1);
+                                                this->send_fonts(2);
+                                            }
+
+                                            this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+
+                                            LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
+                                            if (this->transparent_recorder) {
+                                                this->transparent_recorder->server_resize(this->front_width,
+                                                    this->front_height, this->bpp);
+                                            }
+                                            if (-1 == this->front.server_resize(this->front_width, this->front_height, this->bpp)){
+                                                LOG(LOG_WARNING, "Resize not available on older clients,"
+                                                    " change client resolution to match server resolution");
+                                                throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
+                                            }
+    //                                        this->orders.reset();
+                                            this->connection_finalization_state = WAITING_SYNCHRONIZE;
+
+                                            this->deactivation_reactivation_in_progress = false;
+                                        }
+                                        break;
+                                    case PDUTYPE_DEACTIVATEALLPDU:
+                                        if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_DEACTIVATEALLPDU"); }
+                                        LOG(LOG_INFO, "Deactivate All PDU");
+                                        this->deactivation_reactivation_in_progress = true;
+                                        TODO("CGR: Data should actually be consumed");
+                                            TODO("CGR: Check we are indeed expecting Synchronize... dubious");
+                                            this->connection_finalization_state = WAITING_SYNCHRONIZE;
+                                        break;
+                                    case PDUTYPE_SERVER_REDIR_PKT:
+                                        if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_SERVER_REDIR_PKT"); }
+                                        break;
+                                    default:
+                                        LOG(LOG_INFO, "unknown PDU %u", sctrl.pduType);
+                                        break;
+                                    }
                                 TODO("check sctrl.payload is completely consumed");
+                                }
                             }
                         }
                     }
@@ -2283,6 +2283,11 @@ struct mod_rdp : public mod_api {
 
         // intersect with client order capabilities
         // which may not be supported by clients.
+        this->front.intersect_order_caps(TS_NEG_DSTBLT_INDEX,             order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_PATBLT_INDEX,             order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_SCRBLT_INDEX,             order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_LINETO_INDEX,             order_caps.orderSupport);
+
         this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX,        order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTIOPAQUERECT_INDEX,    order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTIPATBLT_INDEX,        order_caps.orderSupport);
