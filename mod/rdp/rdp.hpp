@@ -1834,7 +1834,7 @@ public:
                                         LOG(LOG_WARNING, "LOOPING on PDUs: %u", (unsigned)sctrl.totalLength);
                                     }
 
-                                    switch (sctrl.pdu_type1) {
+                                    switch (sctrl.pduType) {
                                     case PDUTYPE_DATAPDU:
                                         if (this->verbose & 128) {
                                             LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
@@ -1900,8 +1900,7 @@ public:
                                             }
 
                                             {
-                                                ShareData sdata(sctrl.payload);
-                                                sdata.recv_begin(&this->mppc_dec);
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                                 switch (sdata.pdutype2) {
                                                 case PDUTYPE2_UPDATE:
                                                     {
@@ -1985,7 +1984,6 @@ public:
                                                         sdata.payload.p = sdata.payload.end;
                                                     break;
                                                 }
-                                                sdata.recv_end();
                                             }
                                             break;
                                         }
@@ -2091,7 +2089,7 @@ public:
                                         if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_SERVER_REDIR_PKT"); }
                                         break;
                                     default:
-                                        LOG(LOG_INFO, "unknown PDU %u", sctrl.pdu_type1);
+                                        LOG(LOG_INFO, "unknown PDU %u", sctrl.pduType);
                                         break;
                                     }
                                 TODO("check sctrl.payload is completely consumed");
@@ -2289,6 +2287,11 @@ public:
 
         // intersect with client order capabilities
         // which may not be supported by clients.
+        this->front.intersect_order_caps(TS_NEG_DSTBLT_INDEX,             order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_PATBLT_INDEX,             order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_SCRBLT_INDEX,             order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_LINETO_INDEX,             order_caps.orderSupport);
+
         this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX,        order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTIOPAQUERECT_INDEX,    order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTIPATBLT_INDEX,        order_caps.orderSupport);

@@ -288,7 +288,7 @@ namespace detail
         int close() /*noexcept*/
         {
             const int res1 = this->next();
-            const int res2 = this->meta_buf_.close();
+            const int res2 = (this->meta_buf().is_open() ? this->meta_buf_.close() : 0);
             return res1 ? res1 : res2;
         }
 
