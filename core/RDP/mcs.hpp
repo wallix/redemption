@@ -191,22 +191,6 @@ namespace MCS
 
 
         // return string length or -1 on error
-        int in_ber_octet_string(uint8_t * target, uint16_t target_len)
-        {
-            uint8_t tag = this->stream.in_uint8();
-            if (tag != BER_TAG_OCTET_STRING){
-                LOG(LOG_ERR, "Octet string BER tag (%u) expected, got %u", BER_TAG_OCTET_STRING, tag);
-                return -1;
-            }
-            size_t len = this->in_ber_len();
-            if (len > target_len){
-                LOG(LOG_ERR, "target string too large (max=%u, got=%u)", target_len, len);
-                return -1;
-            }
-            this->stream.in_copy_bytes(target, len);
-            return len;
-        }
-
         int in_ber_octet_string_with_check(uint8_t * target, uint16_t target_len)
         {
             bool in_result;
@@ -234,22 +218,6 @@ namespace MCS
             }
             this->stream.in_copy_bytes(target, len);
             return len;
-        }
-
-        // return 0 if false, 1 if true, -1 on error
-        int in_ber_boolean()
-        {
-            uint8_t tag = this->stream.in_uint8();
-            if (tag != BER_TAG_BOOLEAN){
-                LOG(LOG_ERR, "Boolean BER tag (%u) expected, got %u", BER_TAG_BOOLEAN, tag);
-                return -1;
-            }
-            size_t len = this->in_ber_len();
-            if (len != 1){
-                LOG(LOG_ERR, "Boolean BER should be one byte");
-                return -1;
-            }
-            return this->stream.in_uint8();
         }
 
         // return 0 if false, 1 if true, -1 on error
@@ -477,17 +445,6 @@ namespace MCS
         void out_ber_len_uint16(unsigned int v){
             this->stream.out_uint8(0x82);
             this->stream.out_uint16_be(v);
-        }
-
-        void set_out_ber_len(unsigned int v, size_t offset){
-            if (v>= 0x80){
-                REDASSERT(v < 65536);
-                (this->stream.get_data())[offset+0] = 0x82;
-                this->stream.set_out_uint16_be(v, offset+1);
-            }
-            else {
-                (this->stream.get_data())[offset+0] = static_cast<uint8_t>(v);
-            }
         }
 
         void mark_end() {
@@ -795,7 +752,7 @@ namespace MCS
                     throw Error(ERR_MCS);
                 }
                 return MCSPDU_CONNECT_INITIAL;
-            
+
             }())
             , tag_len([this](){
                 bool in_result;
@@ -815,7 +772,7 @@ namespace MCS
                     throw Error(ERR_MCS);
                 }
                 return len_callingDomainSelector;
-            }())            
+            }())
             , calledDomainSelector{}
             , len_calledDomainSelector([this](){
                 len_calledDomainSelector =
@@ -873,7 +830,7 @@ namespace MCS
                         InBerStream::BER_TAG_OCTET_STRING, tag);
                     throw Error(ERR_MCS);
                 }
-                
+
                 size_t payload_size = this->ber_stream.in_ber_len_with_check(in_result);
                 if (!in_result){
                     LOG(LOG_ERR, "Truncated Connect Initial PDU payload size");

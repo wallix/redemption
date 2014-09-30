@@ -340,11 +340,11 @@ namespace X224
             stream.p = stream.get_data();
             uint8_t tpkt_version = stream.in_uint8();
             int action = tpkt_version & 0x03;
-            
+
             if (action == FastPath::FASTPATH_OUTPUT_ACTION_FASTPATH) {
                 if (support_fast_path) {
                     fast_path = true;
-                    
+
                     if (action != 0) {
                         LOG(LOG_ERR, "Fast-path PDU expected: action=0x%X", action);
                         throw Error(ERR_RDP_FASTPATH);
@@ -665,7 +665,7 @@ namespace X224
                 uint16_t src_ref = stream.in_uint16_le();
                 uint8_t class_option = stream.in_uint8();
 
-                return CR_TPDU_Recv::CR_Header({LI, code, dst_ref, src_ref, class_option});
+                return CR_Header{LI, code, dst_ref, src_ref, class_option};
             }())
         , _header_size(X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1)
         , rdp_neg_type(0)
@@ -964,7 +964,7 @@ namespace X224
             uint16_t src_ref;
             uint8_t class_option;
         } tpdu_hdr;
-        
+
         size_t _header_size;
 
         uint8_t rdp_neg_type;
@@ -972,7 +972,7 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_code; // selected_protocol or failure_code
 
-        CC_TPDU_Recv(Stream & stream, uint32_t verbose = 0) 
+        CC_TPDU_Recv(Stream & stream, uint32_t verbose = 0)
             : Recv(stream)
             , tpdu_hdr([&]()
             {
@@ -993,7 +993,7 @@ namespace X224
                 uint16_t dst_ref = stream.in_uint16_le();
                 uint16_t src_ref = stream.in_uint16_le();
                 uint8_t class_option = stream.in_uint8();
-                return CC_TPDU_Recv::CC_Header({LI, code, dst_ref, src_ref, class_option});
+                return CC_Header{LI, code, dst_ref, src_ref, class_option};
             }())
             , _header_size(X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1)
         {
@@ -1219,10 +1219,10 @@ namespace X224
             uint16_t src_ref;
             uint8_t reason;
         } tpdu_hdr;
-        
+
         size_t _header_size;
 
-        DR_TPDU_Recv(Stream & stream) 
+        DR_TPDU_Recv(Stream & stream)
             : Recv(stream)
             , tpdu_hdr([&]()
             {
@@ -1243,9 +1243,9 @@ namespace X224
                 uint16_t dst_ref = stream.in_uint16_le();
                 uint16_t src_ref = stream.in_uint16_le();
                 uint8_t reason = stream.in_uint8();
-                return DR_TPDU_Recv::DR_Header({LI, code, dst_ref, src_ref, reason});
+                return DR_Header{LI, code, dst_ref, src_ref, reason};
             }())
-            , _header_size(X224::TPKT_HEADER_LEN + 1 + this->tpdu_hdr.LI)            
+            , _header_size(X224::TPKT_HEADER_LEN + 1 + this->tpdu_hdr.LI)
         {
             uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             if (end_of_header != stream.p){
@@ -1305,7 +1305,7 @@ namespace X224
             uint8_t invalid_tpdu_var;
             uint8_t invalid_tpdu_vl;
             uint8_t invalid[256];
-            
+
             ER_Header(Stream & stream)
             {
                 /* LI(1) + code(1) + dst_ref(2) + reject_cause(1) */
@@ -1364,13 +1364,13 @@ namespace X224
                 }
                 const size_t _header_size = X224::TPKT_HEADER_LEN + 1 + this->LI;
                 if (_header_size != stream.get_offset()){
-                    LOG(LOG_ERR, "ER TPDU header should be terminated, got trailing data %u", 
+                    LOG(LOG_ERR, "ER TPDU header should be terminated, got trailing data %u",
                         stream.get_offset() - _header_size);
                     throw Error(ERR_X224);
                 }
             }
         } tpdu_hdr;
-        
+
         size_t _header_size;
 
         ER_TPDU_Recv(Stream & stream)
@@ -1447,12 +1447,12 @@ namespace X224
                 LOG(LOG_ERR, "DT TPDU should say EOT, got=%x", this->tpdu_hdr.eot);
                 throw Error(ERR_X224);
             }
-            return DT_TPDU_Recv::DT_Header({LI, code, eot});
+            return DT_Header{LI, code, eot};
         }())
         , _header_size([&](){
             const size_t header_size = X224::TPKT_HEADER_LEN + 1 + this->tpdu_hdr.LI;
             if (header_size != stream.get_offset()){
-                LOG(LOG_ERR, "DT TPDU header should be terminated, got trailing data %u", 
+                LOG(LOG_ERR, "DT TPDU header should be terminated, got trailing data %u",
                     stream.get_offset() - header_size);
                 throw Error(ERR_X224);
             }

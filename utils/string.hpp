@@ -32,18 +32,18 @@ private:
     std::string internal_string;
 
 public:
-    string() : internal_string() {}
+    string() = default;
+    string(string&&) = default;
+    string(const string & source) = default;
 
     string(const char * source) : internal_string(source) {}
-
-    string(const string & source) : internal_string(source.internal_string) {}
 
     string(const char * source, size_t length) : internal_string(source, length) {}
 
 private:
-    string & operator=(const char * source);
+    string & operator=(const char * source) = delete;
 
-    string & operator=(const string & source);
+    string & operator=(const string & source) = delete;
 
 public:
     const char * c_str() const {
@@ -70,8 +70,7 @@ public:
         this->internal_string.clear();
     }
 
-    size_t find(const char * s, size_t pos = 0) const
-    {
+    size_t find(const char * s, size_t pos = 0) const {
         return this->internal_string.find(s, pos);
     }
 

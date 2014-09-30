@@ -7,7 +7,7 @@ dirtest='ftests tests'
 
 function find_unused() {
     while read l ; do
-        grep -oRhm1 "${l//*\//}" "$@" > /dev/null || echo "$l"
+        grep -oRhEm1 "^[[:space:]]*#[[:space:]]*include[[:space:]]+\".*${l//*\//}\"" "$@" > /dev/null || echo "$l"
     done
 }
 

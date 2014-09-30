@@ -62,12 +62,11 @@ public:
         strcpy(basename, "replay"); // default value actual one should come from movie_path
         strcpy(extension, ".mwrm"); // extension is currently ignored
         char prefix[4096];
-        bool res = true;
-        res = canonical_path( this->movie
-                            , path, sizeof(path)
-                            , basename, sizeof(basename)
-                            , extension, sizeof(extension)
-                            );
+        const bool res = canonical_path( this->movie
+                                       , path, sizeof(path)
+                                       , basename, sizeof(basename)
+                                       , extension, sizeof(extension)
+                                       );
         if (!res) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);

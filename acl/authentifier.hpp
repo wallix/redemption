@@ -174,7 +174,6 @@ public:
 class SessionManager : public auth_api {
     Inifile & ini;
 
-public:
     AclSerializer acl_serial;
 
     bool remote_answer;       // false initialy, set to true once response is
@@ -185,7 +184,6 @@ public:
 
     uint32_t verbose;
 
-private:
     KeepAlive keepalive;
     Inactivity inactivity;
 
@@ -235,8 +233,7 @@ public:
         long enddate = this->ini.context.end_date_cnx.get();
         if (enddate != 0 && (now > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-            const char * message = "Session is out of allowed timeframe";
-            message = TR("session_out_time", this->ini);
+            const char * message = TR("session_out_time", this->ini);
             mm.invoke_close_box(message, signal, now);
 
             return true;
@@ -321,7 +318,7 @@ public:
                         return true;
                     }
                     else {
-                        throw e;
+                        throw;
                     }
                 }
                 if (!this->keepalive.is_started() && mm.connected) {

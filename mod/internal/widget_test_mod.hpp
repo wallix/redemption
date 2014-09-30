@@ -49,12 +49,9 @@ public:
     , wbutton_on_first_tab(NULL) {
         this->screen.add_widget(&this->tab);
 
-        size_t tab_0_index = static_cast<size_t>(-1);
-        size_t tab_1_index = static_cast<size_t>(-1);
-
-        tab_0_index = this->tab.add_item("First tab");
-        tab_1_index = this->tab.add_item("Second tab");
-(void)tab_1_index;
+        const size_t tab_0_index = this->tab.add_item("First tab");
+        const size_t tab_1_index = this->tab.add_item("Second tab");
+        (void)tab_1_index;
 
 
         NotifyApi * notifier = NULL;

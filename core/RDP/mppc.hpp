@@ -617,8 +617,7 @@ template<typename T> struct rdp_mppc_enc_hash_table_manager {
         , max_undo_element(max_undo_element)
         , undo_element_size(sizeof(hash_type) + sizeof(T))
     {
-        this->hash_table = static_cast<T *>(calloc(
-            rdp_mppc_enc_hash_table_manager::MAX_HASH_TABLE_ELEMENT, sizeof(T)));
+        this->hash_table = static_cast<T *>(calloc(MAX_HASH_TABLE_ELEMENT, sizeof(T)));
 
         this->undo_buffer_begin   = static_cast<uint8_t *>(calloc(this->max_undo_element, this->undo_element_size));
         this->undo_buffer_end     = this->undo_buffer_begin + this->max_undo_element * this->undo_element_size;
@@ -638,16 +637,15 @@ template<typename T> struct rdp_mppc_enc_hash_table_manager {
         LOG(LOG_INFO, "Type=RDP X.X bulk compressor hash table manager");
         LOG(LOG_INFO, "hashTable");
         hexdump_d(reinterpret_cast<const char *>(this->hash_table),
-            (mini_dump ? 16 :
-                 rdp_mppc_enc_hash_table_manager::MAX_HASH_TABLE_ELEMENT * sizeof(T)));
+            (mini_dump ? 16 : get_table_size()));
     }
 
     inline T get_offset(hash_type hash) const {
         return this->hash_table[hash];
     }
 
-    static inline size_t get_table_size() {
-        return rdp_mppc_enc_hash_table_manager::MAX_HASH_TABLE_ELEMENT * sizeof(T);
+    constexpr static size_t get_table_size() {
+        return MAX_HASH_TABLE_ELEMENT * sizeof(T);
     }
 
     inline hash_type sign(const uint8_t * data) {
@@ -716,8 +714,7 @@ template<typename T> struct rdp_mppc_enc_hash_table_manager {
     }
 
     inline void reset() {
-        ::memset(this->hash_table, 0,
-            rdp_mppc_enc_hash_table_manager::MAX_HASH_TABLE_ELEMENT * sizeof(T));
+        ::memset(this->hash_table, 0, get_table_size());
 
         this->undo_buffer_current = this->undo_buffer_begin;
     }

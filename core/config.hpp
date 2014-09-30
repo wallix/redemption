@@ -125,28 +125,6 @@ TODO("move these into configuration")
 
 using namespace std;
 
-static inline bool check_name(const char * str)
-{
-    return ((strlen(str) > 0) && (strlen(str) < 250));
-}
-
-static inline bool check_ask(const char * str)
-{
-    return (0 == strcmp(str, "ask"));
-}
-
-static inline void ask_string(const char * str, char buffer[], bool & flag)
-{
-    flag = check_ask(str);
-    if (!flag) {
-        strncpy(buffer, str, strlen(str));
-        buffer[strlen(str)] = 0;
-    }
-    else {
-        buffer[0] = 0;
-    }
-}
-
 static inline const char * get_printable_password(const char * password, uint32_t printing_mode) {
     switch (printing_mode) {
         case 1:
@@ -1803,23 +1781,6 @@ public:
         }
     }   // void set_value(const char * context, const char * key, const char * value)
 
-    TODO("Should only be used by Authentifier "
-         "It currently ask if the field has been modified "
-         "and set it to not modified if it is not asked ")
-    bool context_has_changed(authid_t authid) {
-        bool res = false;
-        try {
-            BaseField * field = this->field_list.at(authid);
-            res = field->has_changed();
-            field->use();
-        }
-        catch (const std::out_of_range & oor) {
-            LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
-            res = false;
-        }
-        return res;
-    }
-
     /******************
      * Set_from_acl sets a value to corresponding field but does not mark it as changed
      */
@@ -1862,16 +1823,6 @@ public:
         }
         else {
             LOG(LOG_WARNING, "Inifile::ask_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
-        }
-    }
-
-    void context_set_value_by_string(const char * strauthid, const char * value) {
-        authid_t authid = authid_from_string(strauthid);
-        if (authid != AUTHID_UNKNOWN) {
-            this->context_set_value(authid, value);
-        }
-        else {
-            LOG(LOG_WARNING, "Inifile::context_set_value(strid): unknown strauthid=\"%s\"", strauthid);
         }
     }
 
@@ -1930,16 +1881,6 @@ public:
         return pszReturn;
     }
 
-    void context_ask_by_string(const char *strauthid) {
-        authid_t authid = authid_from_string(strauthid);
-        if (authid != AUTHID_UNKNOWN) {
-            context_ask(authid);
-        }
-        else {
-            LOG(LOG_WARNING, "Inifile::context_ask(strid): unknown strauthid=\"%s\"", strauthid);
-        }
-    }
-
     void context_ask(authid_t authid) {
         try{
             this->field_list.at(authid)->ask();
@@ -1947,17 +1888,6 @@ public:
         catch (const std::out_of_range & oor) {
             LOG(LOG_WARNING, "Inifile::context_ask(id): unknown authid=%d", authid);
         }
-    }
-
-    bool context_is_asked_by_string(const char *strauthid) {
-        authid_t authid = authid_from_string(strauthid);
-        if (authid != AUTHID_UNKNOWN) {
-            return context_is_asked(authid);
-        }
-
-        LOG(LOG_WARNING, "Inifile::context_is_asked(strid): unknown strauthid=\"%s\"", strauthid);
-
-        return false;
     }
 
     bool context_is_asked(authid_t authid) {

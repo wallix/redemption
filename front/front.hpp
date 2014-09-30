@@ -131,7 +131,7 @@ public:
     CHANNELS::ChannelDefArray channel_list;
     int up_and_running;
     int share_id;
-    struct ClientInfo client_info;
+    ClientInfo client_info;
     uint32_t packet_number;
     Transport * trans;
     uint16_t userid;
@@ -144,7 +144,7 @@ public:
     Inifile * ini;
     uint32_t verbose;
 
-    struct Font font;
+    Font font;
     BrushCache brush_cache;
     PointerCache pointer_cache;
     GlyphCache glyph_cache;
@@ -560,10 +560,9 @@ public:
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
         strcpy(basename, "redemption"); // default value actual one should come from movie_path
         strcpy(extension, "");          // extension is currently ignored
-        bool res = true;
-        res = canonical_path(ini.globals.movie_path.get_cstr(), path,
-                             sizeof(path), basename, sizeof(basename), extension,
-                             sizeof(extension));
+        const bool res = canonical_path(ini.globals.movie_path.get_cstr(), path,
+                                        sizeof(path), basename, sizeof(basename), extension,
+                                        sizeof(extension));
         if (!res) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
@@ -2057,7 +2056,7 @@ public:
                 hexdump_d(sec.payload.get_data(), sec.payload.size());
             }
 
-            if (!sec.flags & SEC::SEC_INFO_PKT) {
+            if (!(sec.flags & SEC::SEC_INFO_PKT)) {
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
             }
 
@@ -3137,14 +3136,6 @@ public:
         }
 
         this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
-    }
-
-    /* store the number of client cursor cache in client_info */
-    void capset_pointercache(Stream & stream, int len)
-    {
-        if (this->verbose & 32){
-            LOG(LOG_INFO, "capset_pointercache");
-        }
     }
 
     void process_confirm_active(Stream & stream)

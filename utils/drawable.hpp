@@ -235,9 +235,9 @@ public:
         return this->data + (y * this->width + x) * Bpp;
     }
 
-    uint8_t * after_last_pixel() {
-        return this->data + this->pix_len;
-    }
+    //uint8_t * after_last_pixel() {
+    //    return this->data + this->pix_len;
+    //}
 
     uint8_t * beginning_of_last_line(const Rect & rect) {
         return this->data + ((rect.y + rect.cy - 1) * this->width + rect.x) * Bpp;
@@ -1902,7 +1902,7 @@ public:
     };
 
     template <typename Op>
-    void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect drect)
+    void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect & drect)
     {
         Op op;
 
@@ -1942,7 +1942,7 @@ public:
 
     // low level scrblt, mostly avoid considering clipping
     // because we already took care of it
-    void scrblt(unsigned srcx, unsigned srcy, const Rect drect, uint8_t rop)
+    void scrblt(unsigned srcx, unsigned srcy, const Rect & drect, uint8_t rop)
     {
         TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.");
         switch (rop) {

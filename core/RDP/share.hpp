@@ -91,7 +91,7 @@ bool peekFlowPDU(const Stream & stream) {
     if (!stream.in_check_rem(2)){
         throw Error(ERR_SEC);
     }
-    return (stream.get_data()[stream.get_offset()] == 0) 
+    return (stream.get_data()[stream.get_offset()] == 0)
     && (stream.get_data()[stream.get_offset()+1] == 0x80);
 }
 
@@ -237,7 +237,7 @@ struct ShareControl_Recv
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
             return SubStream(stream, stream.get_offset(), 0);
         }
-    
+
         if (this->totalLength < 6){
             LOG(LOG_ERR, "ShareControl packet too short totalLength=%u pduType=%u mcs_channel=%u",
                 this->totalLength, this->pduType, this->PDUSource);
@@ -470,12 +470,12 @@ enum {
 // Inheritance is only used to check if we have enough data available
 struct CheckShareData_Recv {
     CheckShareData_Recv(const Stream & stream){
-        // share_id(4) 
-        // + ignored(1) 
-        // + streamid(1) 
-        // + len(2) 
-        // + pdutype2(1) 
-        // + compressedType(1) 
+        // share_id(4)
+        // + ignored(1)
+        // + streamid(1)
+        // + len(2)
+        // + pdutype2(1)
+        // + compressedType(1)
         // + compressedLen(2)
         const unsigned expected = 12;
         if (!stream.in_check_rem(expected)){
@@ -530,14 +530,14 @@ struct ShareData_Recv : private CheckShareData_Recv
         else {
                 return SubStream(stream, stream.get_offset(), stream.in_remain());
 
-        }    
+        }
     }())
     // BEGIN CONSTRUCTOR
     {
         stream.in_skip_bytes(this->payload.size());
     } // END CONSTRUCTOR
 
-    ~ShareData_Recv(void){
+    ~ShareData_Recv() noexcept(false) {
         if (!this->payload.check_end()) {
             LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains=%u",
                 this->len, this->compressedLen, payload.in_remain());

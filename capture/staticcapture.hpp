@@ -46,13 +46,8 @@
 #include "sequence_generator.hpp"
 
 struct StaticCaptureConfig {
-    unsigned png_limit;
     uint64_t png_interval;
-    char path[1024];
-    bool bgr;
-
-    StaticCaptureConfig()
-    : png_limit(3) {}
+    unsigned png_limit = 3;
 };
 
 class StaticCapture : public ImageCapture, public RDPCaptureDevice {

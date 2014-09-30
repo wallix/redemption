@@ -128,7 +128,6 @@ struct Session {
             struct timeval time_mark = { 3, 0 };
 
             bool run_session = true;
-            bool has_pending_data;
 
             while (run_session) {
                 unsigned max = 0;
@@ -150,7 +149,7 @@ struct Session {
                 }
                 mm.mod->get_event().add_to_fd_set(rfds, max, timeout);
 
-                has_pending_data =
+                const bool has_pending_data =
                     (front_event.st->tls && SSL_pending(front_event.st->allocated_ssl));
                 if (has_pending_data)
                     memset(&timeout, 0, sizeof(timeout));

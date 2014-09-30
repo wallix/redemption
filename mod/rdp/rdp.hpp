@@ -2098,7 +2098,7 @@ public:
                     }
                 }
             }
-            catch(Error e){
+            catch(Error & e){
                 if (this->acl)
                 {
                     char message[128];
@@ -2115,7 +2115,7 @@ public:
                     this->nego.trans->send(stream);
                     LOG(LOG_INFO, "Connection to server closed");
                 }
-                catch(Error e){
+                catch(Error & e){
                     LOG(LOG_INFO, "Connection to server Already closed: error=%d", e.id);
                 };
                 this->event.signal = BACK_EVENT_NEXT;
@@ -3723,12 +3723,21 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
 
-        FILE * output_file = 0;
+        struct autoclose_file {
+            FILE * file;
 
-        if (!this->output_filename.is_empty())
-        {
-            output_file = fopen(this->output_filename.c_str(), "w");
-        }
+            ~autoclose_file()
+            {
+                if (this->file) {
+                    fclose(this->file);
+                }
+            }
+        };
+        FILE * const output_file =
+            !this->output_filename.is_empty()
+            ? fopen(this->output_filename.c_str(), "w")
+            : nullptr;
+        autoclose_file autoclose{output_file};
 
         unsigned expected = 4; /* numberCapabilities(2) + pad2Octets(2) */
         if (!stream.in_check_rem(expected)){
@@ -3824,11 +3833,6 @@ public:
                 break;
             }
             stream.p = next;
-        }
-
-        if (output_file)
-        {
-            fclose(output_file);
         }
 
         if (this->verbose & 32){
@@ -4011,7 +4015,7 @@ public:
 
                 this->send_persistent_key_list_pdu(pdu_data_stream);
             }
-            catch (Error e)
+            catch (Error & e)
             {
                 if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
                     LOG(LOG_ERR, "mod_rdp::send_persistent_key_list_transparent: error=%u", e.id);

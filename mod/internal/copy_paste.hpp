@@ -121,7 +121,7 @@ public:
         this->copy(s, strlen(s));
     }
 
-    bool contains_text() const noexcept {
+    bool has_text() const noexcept {
         return this->has_clipboard_;
     }
 

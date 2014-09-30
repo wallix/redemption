@@ -58,10 +58,6 @@ struct FilteringChannel {
         bool empty() const {
             return !this->name_[0];
         }
-
-        void clean() {
-            this->name_[0] = 0;
-        }
     };
 
     ChannelName names[max_filtering_channels];

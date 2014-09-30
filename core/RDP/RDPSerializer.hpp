@@ -158,7 +158,6 @@ struct RDPSerializer : public RDPGraphicDevice
     size_t order_count;
     size_t bitmap_count;
 
-    size_t chunk_flags;
     BmpCache & bmp_cache;
 
 
