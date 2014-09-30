@@ -53,10 +53,11 @@ class Engine(object):
         self.wabengine = None
         self.wabuser = None
         self.client = SynClient('localhost', 'tcp:8803')
-        self.session_id  = None
+        self.session_id = None
         self.auth_x509 = None
-        self._trace_encryption = None
+        self._trace_encryption = None            # local ?
         self.challenge = None
+        self.session_record = None
         self.deconnection_epoch = 0xffffffff
         self.deconnection_time = u"-"
         self.erpm_password_checked_out = False
@@ -91,7 +92,7 @@ class Engine(object):
             return False
 
     def init_timeframe(self, auth):
-        if (auth.deconnection_time is not None
+        if (auth.deconnection_time
             and auth.deconnection_time != u"-"
             and auth.deconnection_time[0:4] <= u"2034"):
             self.deconnection_time = auth.deconnection_time
@@ -343,6 +344,7 @@ class Engine(object):
     def reset_proxy_rights(self):
         self.proxy_rights = None
         self.rights = None
+        self.target_right = None
 
     def get_proxy_rights(self, protocols, target_device=None, check_timeframes=True):
         if self.proxy_rights is not None:
@@ -381,10 +383,9 @@ class Engine(object):
         # Logger().info("%s@%s:%s" % (target_device, target_login, target_service))
         if target_service == '':
             target_service = None
-        selected_target = None
+        right = None
         self.get_proxy_rights([u'RDP', u'VNC'], target_device,
                               check_timeframes=True if target_device else False)
-        right = None
         if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
             for r in self.rights:
                 if not is_device_in_subnet(target_device, r.resource.device.host):
@@ -458,6 +459,16 @@ class Engine(object):
             import traceback
             Logger().info("Engine release_target_password failed: (((%s)))" % (traceback.format_exc(e)))
 
+    def get_pidhandler(self, pid):
+        if not self.pidhandler:
+            try:
+                from wabengine.common.interface import IPBSessionHandler
+                from wabengine.common.utils import ProcessSessionHandler
+                self.pidhandler = IPBSessionHandler(ProcessSessionHandler(int(pid)))
+            except Exception, e:
+                self.pidhandler = None
+        return self.pidhandler
+
     def start_session(self, auth, pid, effective_login):
         try:
             self.session_id = self.wabengine.start_session(auth, self.get_pidhandler(pid),
@@ -478,6 +489,14 @@ class Engine(object):
         except Exception, e:
             import traceback
             Logger().info("Engine update_session failed: (((%s)))" % (traceback.format_exc(e)))
+
+    def stop_session(self, result=True, diag=u"success", title=u"End session"):
+        try:
+            if self.session_id:
+                self.wabengine.stop_session(self.session_id, result=result, diag=diag, title=title)
+        except Exception, e:
+            import traceback
+            Logger().info("Engine stop_session failed: (((%s)))" % (traceback.format_exc(e)))
 
     def get_restrictions(self, auth, proxytype):
         if proxytype == "RDP":
@@ -516,14 +535,6 @@ class Engine(object):
             Logger().info("Engine get_restrictions failed: (((%s)))" % (traceback.format_exc(e)))
         return (self.pattern_kill, self.pattern_notify)
 
-    def stop_session(self, result=True, diag=u"success", title=u"End session"):
-        try:
-            if self.session_id:
-                self.wabengine.stop_session(self.session_id, result=result, diag=diag, title=title)
-        except Exception, e:
-            import traceback
-            Logger().info("Engine stop_session failed: (((%s)))" % (traceback.format_exc(e)))
-
     def write_trace(self, video_path):
         try:
             _status, _error = True, TR(u"No error")
@@ -540,16 +551,6 @@ class Engine(object):
 
     def read_session_parameters(self, key=None):
         return self.wabengine.read_session_parameters(self.session_id, key=key)
-
-    def get_pidhandler(self, pid):
-        if not self.pidhandler:
-            try:
-                from wabengine.common.interface import IPBSessionHandler
-                from wabengine.common.utils import ProcessSessionHandler
-                self.pidhandler = IPBSessionHandler(ProcessSessionHandler(int(pid)))
-            except Exception, e:
-                self.pidhandler = None
-        return self.pidhandler
 
     def check_target(self, target, pid=None, request_ticket=None):
         status, infos = self.wabengine.check_target(target, self.get_pidhandler(pid),
@@ -580,8 +581,6 @@ class Engine(object):
         if status == APPROVAL_NONE:
             return "APPROVAL", infos
         return False, infos
-
-
 
     def get_target_protocols(self):
         if not self.target_right:
@@ -628,6 +627,10 @@ class Engine(object):
                          conn_cmd=conn_cmd,
                          autologon=autologon)
 
+
+
+
+# Information Structs
 
 class DisplayInfo(object):
     def __init__(self, target_login, target_name, service_name,
