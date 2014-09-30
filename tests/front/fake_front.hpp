@@ -239,7 +239,7 @@ public:
 
         // ERR_free_strings() frees all previously loaded error strings.
 
-        SSL_load_error_strings();
+        //SSL_load_error_strings();
 
         // SSL_library_init() registers the available SSL/TLS ciphers and digests.
         // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
@@ -254,6 +254,6 @@ public:
         // SSL_library_init(). Applications which need to use SHA2 in earlier versions
         // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
 
-        SSL_library_init();
+        //SSL_library_init();
     }
 };
