@@ -8,8 +8,11 @@ try:
     from wabengine.common.exception import AuthenticationFailed
     from wabengine.common.exception import AuthenticationChallenged
     from wabengine.common.exception import MustChangePassword
-    from wallixgenericnotifier import Notify, CX_EQUIPMENT, PATTERN_FOUND, PRIMARY_CX_FAILED, SECONDARY_CX_FAILED, NEW_FINGERPRINT, WRONG_FINGERPRINT, RDP_PATTERN_FOUND, FILESYSTEM_FULL
-    from wallixgenericnotifier import LICENCE_EXPIRED, LICENCE_PRIMARY_CX_ERROR, LICENCE_SECONDARY_CX_ERROR
+    from wallixgenericnotifier import Notify, CX_EQUIPMENT, PATTERN_FOUND, \
+        PRIMARY_CX_FAILED, SECONDARY_CX_FAILED, NEW_FINGERPRINT, WRONG_FINGERPRINT, \
+        RDP_PATTERN_FOUND, FILESYSTEM_FULL
+    from wallixgenericnotifier import LICENCE_EXPIRED, LICENCE_PRIMARY_CX_ERROR, \
+        LICENCE_SECONDARY_CX_ERROR
     from wabconfig import Config
     from wabengine.client.sync_client import SynClient
     from wabengine.common.const import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
@@ -546,7 +549,6 @@ class Engine(object):
         except Exception, e:
             Logger().info("Engine write_trace failed: %s" % e)
             _status, _error = False, TR(u"Trace writer failed for %s") % video_path
-
         return _status, _error
 
     def read_session_parameters(self, key=None):
@@ -582,53 +584,67 @@ class Engine(object):
             return "APPROVAL", infos
         return False, infos
 
-    def get_target_protocols(self):
-        if not self.target_right:
+    def get_application(self, selected_target=None):
+        target = selected_target or self.target_right
+        if not target:
             return None
-        proto = self.target_right.resource.service.protocol.cn
-        subproto = [x.cn for x in self.target_right.subprotocols]
+        return target.resource.application
+
+    def get_target_protocols(self, selected_target=None):
+        target = selected_target or self.target_right
+        if not target:
+            return None
+        proto = target.resource.service.protocol.cn
+        subproto = [x.cn for x in target.subprotocols]
         return ProtocolInfo(proto, subproto)
 
-    def get_target_extra_info(self):
-        if not self.target_right:
+    def get_target_extra_info(self, selected_target=None):
+        target = selected_target or self.target_right
+        if not target:
             return None
-        isRecorded = self.target_right.authorization.isRecorded
-        isCritical = self.target_right.authorization.isCritical
+        isRecorded = target.authorization.isRecorded
+        isCritical = target.authorization.isCritical
         return ExtraInfo(isRecorded, isCritical)
 
-
-    def get_target_agent_forwardable(self):
-        if not self.target_right:
+    def get_deconnection_time(self, selected_target=None):
+        target = selected_target or self.target_right
+        if not target:
             return None
-        return self.target_right.account.isAgentForwardable
+        return target.deconnection_time
+
+    def get_target_agent_forwardable(self, selected_target=None):
+        target = selected_target or self.target_right
+        if not target:
+            return None
+        return target.account.isAgentForwardable
 
     def get_physical_target_info(self, physical_target):
         return PhysicalTarget(device_host=physical_target.resource.device.host,
                               account_login=physical_target.account.login,
                               service_port=int(physical_target.resource.service.port))
 
-    def get_target_login_info(self):
-        if not self.target_right:
+    def get_target_login_info(self, selected_target=None):
+        target = selected_target or self.target_right
+        if not target:
             return None
-        physical_target = PhysicalTarget(
-            device_host=self.target_right.resource.device.host,
-            account_login=self.target_right.account.login,
-            service_port=self.target_right.resource.service.port)
-        if self.target_right.resource.application:
-            target_name = self.target_right.resource.application.cn
+        if target.resource.application:
+            target_name = target.resource.application.cn
+            device_host = None,
         else:
-            target_name = self.target_right.resource.device.cn
-        service_name = self.target_right.resource.service.cn
-        conn_cmd = self.target_right.resource.service.authmechanism.data
-        autologon = self.target_right.account.password or self.target_right.account.isAgentForwardable
-        return LoginInfo(physical_target=physical_target,
+            target_name = target.resource.device.cn
+            device_host = target.resource.device.host
+        account_login = target.account.login,
+        service_port = target.resource.service.port
+        service_name = target.resource.service.cn
+        conn_cmd = target.resource.service.authmechanism.data
+        autologon = target.account.password or target.account.isAgentForwardable
+        return LoginInfo(account_login=target.account.login,
                          target_name=target_name,
                          service_name=service_name,
+                         device_host=device_host,
+                         service_port=service_port,
                          conn_cmd=conn_cmd,
                          autologon=autologon)
-
-
-
 
 # Information Structs
 
@@ -662,10 +678,12 @@ class PhysicalTarget(object):
         self.service_port = service_port
 
 class LoginInfo(object):
-    def __init__(self, physical_target, target_name, service_name,
-                 conn_cmd, autologon):
-        self.physical_target = physical_target
+    def __init__(self, account_login, target_name, service_name,
+                 device_host, service_port, conn_cmd, autologon):
+        self.account_login = account_login
         self.target_name = target_name
         self.service_name = service_name
+        self.device_host = device_host
+        self.service_port = service_port
         self.conn_cmd = conn_cmd
         self.autologon = autologon

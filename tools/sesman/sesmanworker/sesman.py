@@ -913,8 +913,11 @@ class Sesman():
             Logger().info(u"Fetching protocol")
 
             kv = {}
-            kv[u'proto_dest'] = selected_target.resource.service.protocol.cn
-            kv[u'target_port'] = selected_target.resource.service.port
+
+            target_login_info = self.engine.get_target_login_info(selected_target)
+            proto_info = self.engine.get_target_protocols(selected_target)
+            kv[u'proto_dest'] = proto_info.protocol
+            kv[u'target_port'] = target_login_info.service_port
             kv[u'timezone'] = str(altzone if daylight else timezone)
 
             if _status:
@@ -938,23 +941,24 @@ class Sesman():
             if _status:
                 Logger().info(u"Checking timeframe")
                 self.infinite_connection = False
-                if not selected_target.deconnection_time:
+                deconnection_time = self.engine.get_deconnection_time(selected_target)
+                if not deconnection_time:
                     Logger().error("No timeframe available, Timeframe has not been checked !")
                     _status = False
-                if (selected_target.deconnection_time == u"-"
-                    or selected_target.deconnection_time[0:4] >= u"2034"):
-                    selected_target.deconnection_time = u"2034-12-31 23:59:59"
+                if (deconnection_time == u"-"
+                    or deconnection_time[0:4] >= u"2034"):
+                    deconnection_time = u"2034-12-31 23:59:59"
                     self.infinite_connection = True
 
                 now = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
-                if (selected_target.deconnection_time == u'-'
-                    or now < selected_target.deconnection_time):
+                if (deconnection_time == u'-'
+                    or now < deconnection_time):
                     # deconnection time to epoch
-                    tt = datetime.strptime(selected_target.deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
+                    tt = datetime.strptime(deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
                     kv[u'timeclose'] = int(mktime(tt))
                     if not self.infinite_connection:
                         _status, _error = self.interactive_display_message(
-                                {u'message': TR(u'session_closed_at %s') % selected_target.deconnection_time}
+                                {u'message': TR(u'session_closed_at %s') % deconnection_time}
                                 )
 
             module = kv.get(u'proto_dest')
@@ -975,31 +979,35 @@ class Sesman():
             try_next = False
 
             for physical_target in self.engine.get_effective_target(selected_target):
+                physical_info = self.engine.get_physical_target_info(physical_target)
                 if not _status:
                     physical_target = None
                     break
 
                 kv[u'disable_tsk_switch_shortcuts'] = u'no'
-                if selected_target.resource.application:
-                    self.cn = selected_target.resource.application.cn
+                application = self.engine.get_application(selected_target)
+                if application:
                     app_params = self.engine.get_app_params(selected_target, physical_target)
                     if not app_params:
                         continue
                     kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))
                     kv[u'shell_working_directory'] = app_params.workingdir
-                    kv[u'target_application'] = selected_target.service_login
+
+                    kv[u'target_application'] = "%s@%s" % \
+                        (target_login_info.account_login,
+                         target_login_info.target_name)
+                    # kv[u'target_application'] = selected_target.service_login
                     kv[u'disable_tsk_switch_shortcuts'] = u'yes'
-                else:
-                    self.cn = selected_target.resource.device.cn
+                self.cn = target_login_info.target_name
 
                 if self.shared.get(u'real_target_device'):
                     kv[u'target_device'] = self.shared.get(u'real_target_device')
                 else:
-                    kv[u'target_device'] = physical_target.resource.device.host
-                    kv[u'target_port'] = physical_target.resource.service.port
+                    kv[u'target_device'] = physical_info.device_host
+                    kv[u'target_port'] = physical_info.service_port
 
                 if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() != u'true':
-                    kv[u'target_login'] = physical_target.account.login
+                    kv[u'target_login'] = physical_info.account_login
 
                 release_reason = u''
 
@@ -1027,14 +1035,14 @@ class Sesman():
                     if self.shared.get(u'real_target_device'):
                         self._physical_target_device = self.shared.get(u'real_target_device')
                     else:
-                        self._physical_target_device = physical_target.resource.device.host
+                        self._physical_target_device = physical_info.device_host
 
                     Logger().info(u"Send critic notification (every attempt to connect to some physical node)")
-                    if selected_target.authorization.isCritical:
+                    if extra_info.is_critical:
+                        Logger().info("CRITICAL CONNECTION")
                         import socket
                         self.engine.NotifyConnectionToCriticalEquipment(
-                            (u'APP' if selected_target.resource.application
-                                 else selected_target.resource.service.protocol.cn),
+                            (u'APP' if application else proto_info.protocol),
                             self.shared.get(u'login'),
                             socket.getfqdn(self.shared.get(u'ip_client')),
                             self.shared.get(u'ip_client'),
