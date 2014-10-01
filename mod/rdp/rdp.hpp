@@ -901,8 +901,10 @@ struct mod_rdp : public mod_api {
                         LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
                     }
                     {
-                        BStream x224_data(65536);
-                        X224::RecvFactory f(*this->nego.trans, x224_data);
+                        Array array(65536);
+                        uint8_t * end = array.get_data();
+                        X224::RecvFactory f(*this->nego.trans, &end, array.size());
+                        InStream x224_data(array, 0, 0, end - array.get_data());
                         X224::DT_TPDU_Recv x224(x224_data);
 
                         MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
@@ -1155,8 +1157,10 @@ struct mod_rdp : public mod_api {
                     }
                     {
                         {
-                            BStream stream(65536);
-                            X224::RecvFactory f(*this->nego.trans, stream);
+                            Array array(256);
+                            uint8_t * end = array.get_data();
+                            X224::RecvFactory f(*this->nego.trans, &end, array.size());
+                            InStream stream(array, 0, 0, end - array.get_data());
                             X224::DT_TPDU_Recv x224(stream);
                             SubStream & payload = x224.payload;
 
@@ -1185,8 +1189,11 @@ struct mod_rdp : public mod_api {
                                 X224::DT_TPDU_Send(x224_header, mcs_cjrq_data.size());
                                 this->nego.trans->send(x224_header, mcs_cjrq_data);
 
-                                BStream x224_data(256);
-                                X224::RecvFactory f(*this->nego.trans, x224_data);
+                                Array array(256);
+                                uint8_t * end = array.get_data();
+                                X224::RecvFactory f(*this->nego.trans, &end, array.size());
+                                InStream x224_data(array, 0, 0, end - array.get_data());
+
                                 X224::DT_TPDU_Recv x224(x224_data);
                                 SubStream & mcs_cjcf_data = x224.payload;
                                 MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
@@ -1353,8 +1360,10 @@ struct mod_rdp : public mod_api {
                         // read tpktHeader (4 bytes = 3 0 len)
                         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
-                        BStream stream(65536);
-                        X224::RecvFactory f(*this->nego.trans, stream);
+                        Array array(65536);
+                        uint8_t * end = array.get_data();
+                        X224::RecvFactory f(*this->nego.trans, &end, array.size());
+                        InStream stream(array, 0, 0, end - array.get_data());
                         X224::DT_TPDU_Recv x224(stream);
                         TODO("Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here")
 //                        int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -1599,23 +1608,23 @@ struct mod_rdp : public mod_api {
                         // read tpktHeader (4 bytes = 3 0 len)
                         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
-                        BStream stream(65536);
-
                         // Detect fast-path PDU
-                        X224::RecvFactory f( *this->nego.trans
-                                           , stream
-                                           , true               /* Support Fast-Path. */
-                                           );
+                        Array array(256);
+                        uint8_t * end = array.get_data();
+                        X224::RecvFactory fx224(*this->nego.trans, &end, array.size(), true);
+                        InStream stream(array, 0, 0, end - array.get_data());
 
-                        if (f.fast_path) {
+                        if (fx224.fast_path) {
                             FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt);
                             if (this->enable_transparent_mode) {
                                 //total_data_received += su.payload.size();
                                 //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
+                                SubStream su_payload(su.payload, 0, su.payload.size());
+                                TODO("check that we actually want to send the same stream 2 times, dangerous su_payload can be modified")
                                 if (this->transparent_recorder) {
-                                    this->transparent_recorder->send_fastpath_data(su.payload);
+                                    this->transparent_recorder->send_fastpath_data(su_payload);
                                 }
-                                this->front.send_fastpath_data(su.payload);
+                                this->front.send_fastpath_data(su_payload);
 
                                 break;
                             }
