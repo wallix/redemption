@@ -24,7 +24,8 @@
 #define BOOST_TEST_MODULE TestInMetaSequenceTransport
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
 #include <stdlib.h>
@@ -118,9 +119,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
     BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
     BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
     BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
-
 }
-
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 {
@@ -165,6 +164,70 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
     } catch(const Error & e) {
         BOOST_CHECK(false);
     };
-
 }
 
+BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
+{
+//        "800 600\n",
+//        "0\n",
+//        "\n",
+//        "/var/rdpproxy/recorded/sample0.wrm 1352304810 1352304870\n",
+//        "/var/rdpproxy/recorded/sample1.wrm 1352304870 1352304930\n",
+//        "/var/rdpproxy/recorded/sample2.wrm 1352304930 1352304990\n",
+
+    // This is what we are actually testing, chaining of several files content
+    {
+        InMetaSequenceTransport mwrm_trans("./tests/fixtures/moved_sample", ".mwrm");
+        BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
+
+        mwrm_trans.next();
+        BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
+        BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+
+        mwrm_trans.next();
+        BOOST_CHECK_EQUAL("./tests/fixtures/sample1.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
+        BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+
+        mwrm_trans.next();
+        BOOST_CHECK_EQUAL("./tests/fixtures/sample2.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
+        BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+
+        try {
+            mwrm_trans.next();
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e){
+            BOOST_CHECK_EQUAL((unsigned)ERR_TRANSPORT_NO_MORE_DATA, e.id);
+        };
+    }
+
+    // check we can do it two times
+    InMetaSequenceTransport mwrm_trans("./tests/fixtures/moved_sample", ".mwrm");
+
+    BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
+
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL("./tests/fixtures/sample1.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL("./tests/fixtures/sample2.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+
+}
