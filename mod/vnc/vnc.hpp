@@ -952,7 +952,7 @@ public:
         }
     } // draw_event
 
-    private:
+private:
     struct ZRLEUpdateContext
     {
         uint8_t Bpp;
@@ -1691,9 +1691,7 @@ public:
 
     /******************************************************************************/
     void lib_open_clip_channel(void) {
-        CHANNELS::ChannelDefArray chanlist   = this->front.get_channel_list();
-        const CHANNELS::ChannelDef * channel =
-            chanlist.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+        const CHANNELS::ChannelDef * channel = this->get_channel_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
         if (channel) {
             // Monitor ready PDU send to front
@@ -1731,12 +1729,10 @@ public:
     } // lib_open_clip_channel
 
     //==============================================================================================================
-    const CHANNELS::ChannelDef * get_channel_from_front_by_name(char * channel_name) {
+    const CHANNELS::ChannelDef * get_channel_by_name(const char * channel_name) const {
     //==============================================================================================================
-        CHANNELS::ChannelDefArray    channel_list = this->front.get_channel_list();
-        const CHANNELS::ChannelDef * channel      = channel_list.get_by_name(channel_name);
-        return channel;
-    } // get_channel_from_front_by_name
+        return this->front.get_channel_list().get_by_name(channel_name);
+    } // get_channel_by_name
 
     //******************************************************************************
     // Entry point for VNC server clipboard content reception
@@ -1748,8 +1744,7 @@ public:
     //==============================================================================================================
     void lib_clip_data(void) {
     //==============================================================================================================
-        CHANNELS::ChannelDefArray    chanlist = this->front.get_channel_list();
-        const CHANNELS::ChannelDef * channel  = chanlist.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+        const CHANNELS::ChannelDef * channel  = this->get_channel_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
         TODO("change code below. It will overflow for long VNC data to copy."
         " If clip_data_size is large is will also allocate an undecent amoutn of memory")
@@ -1838,8 +1833,7 @@ public:
             return;
         }
 
-        CHANNELS::ChannelDefArray    chanlist    = this->front.get_channel_list();
-        const CHANNELS::ChannelDef * mod_channel = chanlist.get_by_name(front_channel_name);
+        const CHANNELS::ChannelDef * mod_channel = this->get_channel_by_name(front_channel_name);
 
         // send it if module has a matching channel, if no matching channel is found just forget it
         if (mod_channel) {

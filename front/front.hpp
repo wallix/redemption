@@ -2465,12 +2465,9 @@ public:
         {
             BStream stream(65536);
 
-            // LOG(LOG_ERR, "X224::RecvFactory FP");
             X224::RecvFactory fx224(*this->trans, stream, true);
 
             if (fx224.fast_path){
-                // LOG(LOG_ERR, "X224 is FP");
-                // LOG(LOG_ERR, "client event PDU Recv");
                 FastPath::ClientInputEventPDU_Recv cfpie(stream, this->decrypt);
 
                 for (uint8_t i = 0; i < cfpie.numEvents; i++){
