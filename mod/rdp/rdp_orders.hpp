@@ -87,8 +87,10 @@ public:
 
     redemption::string target_device;
     bool               enable_persistent_disk_bitmap_cache;
+    bool               persist_bitmap_cache_on_disk;
 
-    rdp_orders(const char * target_device, bool enable_persistent_disk_bitmap_cache, uint32_t verbose)
+    rdp_orders( const char * target_device, bool enable_persistent_disk_bitmap_cache
+              , bool persist_bitmap_cache_on_disk, uint32_t verbose)
             : common(RDP::PATBLT, Rect(0, 0, 1, 1))
             , memblt(0, Rect(), 0, 0, 0, 0)
             , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
@@ -104,7 +106,8 @@ public:
             , recv_bmp_cache_count(0)
             , recv_order_count(0)
             , target_device(target_device)
-            , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache) {
+            , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache)
+            , persist_bitmap_cache_on_disk(persist_bitmap_cache_on_disk) {
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
         memset(this->global_palette, 0, sizeof(this->global_palette));
     }
@@ -139,7 +142,7 @@ public:
     }
 
     void save_persistent_disk_bitmap_cache() const {
-        if (!this->enable_persistent_disk_bitmap_cache) {
+        if (!this->enable_persistent_disk_bitmap_cache || !this->persist_bitmap_cache_on_disk) {
             return;
         }
 
@@ -219,7 +222,7 @@ public:
                                        BmpCache::CacheOption(),
                                        verbose);
 
-        if (this->enable_persistent_disk_bitmap_cache) {
+        if (this->enable_persistent_disk_bitmap_cache && this->persist_bitmap_cache_on_disk) {
             // Generates the name of file.
             char filename[2048];
             ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",

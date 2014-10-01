@@ -656,7 +656,7 @@ public:
     }
 
     void save_persistent_disk_bitmap_cache() const {
-        if (!this->ini->client.persistent_disk_bitmap_cache)
+        if (!this->ini->client.persistent_disk_bitmap_cache || !this->ini->client.persist_bitmap_cache_on_disk)
             return;
 
         const char * persistent_path = PERSISTENT_PATH "/client";
@@ -787,7 +787,9 @@ private:
                                               this->client_info.cache5_persistent),
                         this->ini->debug.cache);
 
-        if (this->ini->client.persistent_disk_bitmap_cache && this->bmp_cache->has_cache_persistent()) {
+        if (this->ini->client.persistent_disk_bitmap_cache &&
+            this->ini->client.persist_bitmap_cache_on_disk &&
+            this->bmp_cache->has_cache_persistent()) {
             // Generates the name of file.
             char cache_filename[2048];
             ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
@@ -4630,10 +4632,6 @@ public:
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-//                RDPLineTo new_cmd24 = cmd;
-//                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-//                new_cmd24.pen.color = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette_rgb);
-//                this->capture->draw(new_cmd24, clip);
                 if (this->capture_bpp != this->mod_bpp){
                     RDPLineTo capture_cmd = cmd;
 
@@ -5033,6 +5031,8 @@ public:
                      , size_t size, const Bitmap & bmp) {
         //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
         this->orders->draw(bitmap_data, data, size, bmp);
+        //bitmap_data.log(LOG_INFO, "Front");
+        //hexdump_d(data, size);
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             if ((bmp.bpp() > this->capture_bpp) || (bmp.bpp() == 8)) {

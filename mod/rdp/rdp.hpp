@@ -204,7 +204,7 @@ public:
         , use_rdp5(1)
         , keylayout(info.keylayout)
         , orders( mod_rdp_params.target_device, mod_rdp_params.enable_persistent_disk_bitmap_cache
-                , mod_rdp_params.verbose)
+                , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose)
         , share_id(0)
         , userid(0)
         , version(0)
