@@ -28,10 +28,9 @@
 #include <iostream>
 
 struct FilteringChannel {
-    // The number of requested static virtual channels (the maximum allowed is 31).
-    static const size_t max_filtering_channels = 31;
+    static const size_t max_filtering_channels = CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS;
     class ChannelName {
-        char name_[8]; /*short name*/
+        char name_[CHANNELS::ChannelDef::max_size_name+1];
 
     public:
         ChannelName & operator=(const char * s) {

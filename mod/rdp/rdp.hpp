@@ -1170,7 +1170,7 @@ public:
 
                         {
                             size_t num_channels = this->mod_channel_list.size();
-                            uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS];
+                            uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
                             channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
                             channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
                             for (size_t index = 0; index < num_channels; index++){

@@ -55,7 +55,6 @@ private:
         while (total_len < len){
             if (static_cast<size_t>(stream.end - stream.p) >= static_cast<size_t>(len - total_len)){
                 stream.in_copy_bytes(*pbuffer + total_len, len - total_len);
-                total_len += len - total_len;
                 *pbuffer += len;
                 return;
             }

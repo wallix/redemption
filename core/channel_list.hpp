@@ -36,7 +36,7 @@ namespace CHANNELS {
 #define CLIPBOARD_VIRTUAL_CHANNEL_NAME "cliprdr"
 
     enum {
-        MAX_STATIC_VIRTUAL_CHANNELS = 16
+        MAX_STATIC_VIRTUAL_CHANNELS = 32 // 30 static virtual channels + global channel + wab channel
     };
 
     //    1.3.3 Static Virtual Channels
@@ -57,16 +57,19 @@ namespace CHANNELS {
     //    implementation can decide whether to pass on individual chunks of data as they are received, or to
     //    assemble the separate chunks of data into a complete block before passing it on to the endpoint.
 
-    struct ChannelDef {
-        char name[MAX_STATIC_VIRTUAL_CHANNELS];
+    struct ChannelDef
+    {
+        static const size_t max_size_name = 7;
 
+        char     name[max_size_name+1];
         uint32_t flags;
         int      chanid;
 
-        ChannelDef() {
+        ChannelDef()
+        : flags(0)
+        , chanid(0)
+        {
             this->name[0] = 0;
-            this->flags   = 0;
-            this->chanid  = 0;
         }
 
         void log(unsigned index) const {
@@ -79,7 +82,7 @@ namespace CHANNELS {
     class ChannelDefArray {
         // The number of requested static virtual channels (the maximum allowed is 31).
         size_t     channelCount;
-        ChannelDef items[32];
+        ChannelDef items[MAX_STATIC_VIRTUAL_CHANNELS];
 
     public:
         ChannelDefArray() : channelCount(0) {}
