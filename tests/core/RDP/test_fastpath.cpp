@@ -50,10 +50,13 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     GeneratorTransport in_t(payload, payload_length);
     CheckTransport     out_t(payload, payload_length);
 
-    BStream in_s(65536);
     BStream out_s(65536);
 
-    X224::RecvFactory fx224(in_t, in_s, true);
+    Array array(65536);
+    uint8_t * end = array.get_data();
+    X224::RecvFactory fx224(in_t, &end, array.size(), true);
+
+    InStream in_s(array, 0, 0, end - array.get_data());
     FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt);
 
     BOOST_CHECK_EQUAL(4, in_cie.numEvents);
@@ -80,7 +83,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
             case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
             {
                 FastPath::KeyboardEvent_Recv ke(in_cie.payload, byte);
-
                 FastPath::KeyboardEvent_Send(out_payload, ke.eventFlags, ke.keyCode);
             }
             break;
@@ -88,7 +90,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
             case FastPath::FASTPATH_INPUT_EVENT_MOUSE:
             {
                 FastPath::MouseEvent_Recv me(in_cie.payload, byte);
-
                 FastPath::MouseEvent_Send(out_payload, me.pointerFlags, me.xPos, me.yPos);
             }
             break;
@@ -96,12 +97,12 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
             case FastPath::FASTPATH_INPUT_EVENT_SYNC:
             {
                 FastPath::SynchronizeEvent_Recv se(in_cie.payload, byte);
-
                 FastPath::SynchronizeEvent_Send(out_payload, se.eventFlags);
             }
             break;
 
             default:
+                LOG(LOG_INFO, "ERR FASTPATH");
                 throw Error(ERR_RDP_FASTPATH);
             break;
         }
@@ -130,10 +131,12 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     GeneratorTransport in_t(payload, payload_length);
     CheckTransport     out_t(payload, payload_length);
 
-    BStream in_s(65536);
     BStream out_s(65536);
 
-    X224::RecvFactory fx224(in_t, in_s, true);
+    Array array(65536);
+    uint8_t * end = array.get_data();
+    X224::RecvFactory fx224(in_t, &end, array.size(), true);
+    InStream in_s(array, 0, 0, end - array.get_data());
     FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt);
 
     BOOST_CHECK_EQUAL(6, in_cie.numEvents);
@@ -212,10 +215,12 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     GeneratorTransport in_t(payload, payload_length);
     CheckTransport     out_t(payload, payload_length);
 
-    BStream in_s(65536);
     BStream out_s(65536);
 
-    X224::RecvFactory fx224(in_t, in_s, true);
+    Array array(65536);
+    uint8_t * end = array.get_data();
+    X224::RecvFactory fx224(in_t, &end, array.size(), true);
+    InStream in_s(array, 0, 0, end - array.get_data());
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt);
 
     uint8_t updateCodes[4] = {
@@ -271,9 +276,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
 
     GeneratorTransport in_t(payload, payload_length);
 
-    BStream in_s(65536);
-
-    X224::RecvFactory fx224(in_t, in_s, true);
+    Array array(65536);
+    uint8_t * end = array.get_data();
+    X224::RecvFactory fx224(in_t, &end, array.size(), true);
+    InStream in_s(array, 0, 0, end - array.get_data());
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt);
 
     uint8_t updateCodes[4] = {
@@ -307,10 +313,12 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
     GeneratorTransport in_t(payload, payload_length);
     CheckTransport     out_t(payload, payload_length);
 
-    BStream in_s(65536);
     BStream out_s(65536);
 
-    X224::RecvFactory fx224(in_t, in_s, true);
+    Array array(65536);
+    uint8_t * end = array.get_data();
+    X224::RecvFactory fx224(in_t, &end, array.size(), true);
+    InStream in_s(array, 0, 0, end - array.get_data());
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt);
 
     out_s.out_clear_bytes(FastPath::Update_Send::GetSize(false)); // Fast-Path Update (TS_FP_UPDATE structure) size
@@ -352,4 +360,5 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
 
     BOOST_CHECK_EQUAL(true, out_t.get_status());
 }
+
 

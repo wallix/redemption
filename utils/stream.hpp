@@ -43,7 +43,9 @@ enum {
 #include"array.hpp"
 
 class InStream {
+public:
     const Array & array;
+private:
     // Absolute coordinates inside array (begin inclusive, end exclusive)
     uint8_t * begin;
     uint8_t * end;
@@ -51,10 +53,10 @@ class InStream {
     uint8_t * p;
 
 public:
-    InStream(Array & array, size_t begin, size_t end) 
+    InStream(const Array & array, size_t base, size_t begin, size_t end) 
     : array(array)
-    , begin(array.get_data() + begin)
-    , end(array.get_data() + end)
+    , begin(array.get_data() + base + begin)
+    , end(array.get_data() + base + end)
     , p(this->begin)
     {
     }
@@ -63,8 +65,12 @@ public:
         return this->begin;
     }
 
-    uint32_t get_offset() const {
-        return static_cast<uint32_t>(this->p - this->begin);
+    uint8_t * get_current() const {
+        return this->p;
+    }
+
+    size_t get_offset() const {
+        return static_cast<size_t>(this->p - this->begin);
     }
 
     bool in_check_rem(const unsigned n) const {
@@ -73,7 +79,7 @@ public:
     }
 
     size_t in_remain() const {
-        TODO("check that, it shouldn't be necessary. Allow negative remain ?");
+        TODO("check test below, it shouldn't be necessary. Allow negative remain ?");
         if (this->p >= this->end) {
             return 0;
         }
@@ -1863,6 +1869,7 @@ public:
 
 };
 
+
 // BStream is for "buffering stream", as this stream allocate a work buffer.
 class BStream : public Stream {
     uint8_t autobuffer[AUTOSIZE];
@@ -1998,6 +2005,21 @@ class SubStream : public Stream {
         this->capacity = (new_size == 0)?(stream.size() - offset):new_size;
         this->end = this->data + this->capacity;
     }
+
+    SubStream(const InStream & stream, size_t offset = 0, size_t new_size = 0)
+    {
+        if ((offset + new_size) > stream.size()){
+            LOG(LOG_ERR, "Substream definition outside underlying stream stream.size=%u offset=%u new_size=%u",
+                static_cast<unsigned>(stream.size()),
+                static_cast<unsigned>(offset),
+                static_cast<unsigned>(new_size));
+            throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
+        }
+        this->p = this->data = stream.get_data() + offset;
+        this->capacity = (new_size == 0)?(stream.size() - offset):new_size;
+        this->end = this->data + this->capacity;
+    }
+
 
     virtual ~SubStream() {}
 
