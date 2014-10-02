@@ -24,6 +24,7 @@
 #include "log.hpp"
 #include "error.hpp"
 #include "no_param.hpp"
+#include "fileutils.hpp"
 
 #include <algorithm>
 #include <cerrno>
@@ -104,14 +105,17 @@ namespace detail
         const char * meta_filename;
         BufParam buf_param;
         BufMetaParam meta_param;
+        uint32_t verbose;
 
         in_meta_sequence_buf_param(
             const char * meta_filename,
+            uint32_t verbose = 0,
             const BufParam & buf_param = BufParam(),
             const BufMetaParam & meta_param = BufMetaParam())
         : meta_filename(meta_filename)
         , buf_param(buf_param)
         , meta_param(meta_param)
+        , verbose(verbose)
         {}
     };
 
@@ -138,6 +142,8 @@ namespace detail
         ReaderLine<ReaderBuf> reader;
         unsigned begin_chunk_time;
         unsigned end_chunk_time;
+        char meta_path[2048];
+        uint32_t verbose;
 
         static BufMeta & open_and_return(const char * filename, BufMeta & buf)
         {
@@ -155,6 +161,7 @@ namespace detail
         , reader(this->open_and_return(params.meta_filename, this->buf_meta))
         , begin_chunk_time(0)
         , end_chunk_time(0)
+        , verbose(params.verbose)
         {
             // headers
             //@{
@@ -167,6 +174,13 @@ namespace detail
             //@}
 
             this->path[0] = 0;
+            this->meta_path[0] = 0;
+
+            char basename[1024] = {};
+            char extension[256] = {};
+
+            canonical_path( params.meta_filename, this->meta_path, sizeof(this->meta_path), basename, sizeof(basename), extension
+                          , sizeof(extension), this->verbose);
         }
 
         ssize_t read(void * data, size_t len) /*noexcept*/
@@ -223,11 +237,11 @@ namespace detail
 
         int next_line()
         {
-            ssize_t len = reader.read_line(path, sizeof(path) - 1, ERR_TRANSPORT_NO_MORE_DATA);
+            ssize_t len = reader.read_line(this->path, sizeof(this->path) - 1, ERR_TRANSPORT_NO_MORE_DATA);
             if (len < 0) {
                 return -len;
             }
-            path[len] = 0;
+            this->path[len] = 0;
 
             // Line format "fffff sssss eeeee hhhhh HHHHH"
             //                               ^  ^  ^  ^
@@ -242,14 +256,14 @@ namespace detail
             //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
             typedef std::reverse_iterator<char*> reverse_iterator;
 
-            reverse_iterator last(path);
-            reverse_iterator first(path + len);
+            reverse_iterator last(this->path);
+            reverse_iterator first(this->path + len);
             reverse_iterator e1 = std::find(first, last, ' ');
-            reverse_iterator e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
+            reverse_iterator e2 = (e1 == last) ? e1 : std::find(e1 + 1, last, ' ');
             if (e1 - first == 64 && e2 != last) {
                 first = e2 + 1;
                 e1 = std::find(first, last, ' ');
-                e2 = (e1 == last) ? e1 : std::find(e1+1, last, ' ');
+                e2 = (e1 == last) ? e1 : std::find(e1 + 1, last, ' ');
             }
 
             this->end_chunk_time = this->parse_sec(e1.base(), first.base());
@@ -260,6 +274,21 @@ namespace detail
 
             if (e2 != last) {
                 *e2 = 0;
+            }
+
+            if (!file_exist(this->path)) {
+                char original_path[1024] = {};
+                char basename[1024] = {};
+                char extension[256] = {};
+                char filename[2048] = {};
+
+                canonical_path( this->path, original_path, sizeof(original_path), basename, sizeof(basename), extension
+                              , sizeof(extension), this->verbose);
+                snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
+
+                if (file_exist(filename)) {
+                    strcpy(this->path, filename);
+                }
             }
             return 0;
         }

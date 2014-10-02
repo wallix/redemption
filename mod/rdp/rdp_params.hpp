@@ -69,6 +69,7 @@ struct ModRDPParams {
 
     bool enable_persistent_disk_bitmap_cache;
     bool enable_cache_waiting_list;
+    bool persist_bitmap_cache_on_disk;
 
     uint32_t password_printing_mode;
 
@@ -121,6 +122,7 @@ struct ModRDPParams {
 
         , enable_persistent_disk_bitmap_cache(false)
         , enable_cache_waiting_list(false)
+        , persist_bitmap_cache_on_disk(false)
 
         , password_printing_mode(0)
 
@@ -197,6 +199,8 @@ struct ModRDPParams {
             "ModRDPParams enable_persistent_disk_bitmap_cache=%s", (this->enable_persistent_disk_bitmap_cache ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams enable_cache_waiting_list=%s",           (this->enable_cache_waiting_list ? "yes" : "no"));
+        LOG(LOG_INFO,
+            "ModRDPParams persist_bitmap_cache_on_disk=%s",        (this->persist_bitmap_cache_on_disk ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams password_printing_mode=%u",              this->password_printing_mode);
