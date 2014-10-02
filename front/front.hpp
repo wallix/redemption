@@ -2013,7 +2013,7 @@ public:
         {
             LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
 
-            Array array(256);
+            Array array(65536);
             uint8_t * end = array.get_data();
             X224::RecvFactory fx224(*this->trans, &end, array.size());
             InStream stream(array, 0, 0, end - array.get_data());
@@ -2823,7 +2823,7 @@ public:
         this->trans->send(fastpath_header, data);
     }
 */
-    virtual void send_fastpath_data(Stream & data) {
+    virtual void send_fastpath_data(InStream & data) {
         HStream stream(1024, 1024 + 65536);
 
         stream.out_copy_bytes(data.get_data(), data.size());

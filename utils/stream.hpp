@@ -41,6 +41,7 @@ enum {
 };
 
 #include"array.hpp"
+#include"parse.hpp"
 
 class InStream {
 public:
@@ -50,7 +51,7 @@ private:
     uint8_t * begin;
     uint8_t * end;
     // relative coordinate between begin and end (at begin, p = 0)
-    uint8_t * p;
+    Parse p;
 
 public:
     InStream(const Array & array, size_t base, size_t begin, size_t end) 
@@ -66,11 +67,11 @@ public:
     }
 
     uint8_t * get_current() const {
-        return this->p;
+        return this->p.p;
     }
 
     size_t get_offset() const {
-        return static_cast<size_t>(this->p - this->begin);
+        return static_cast<size_t>(this->p.p - this->begin);
     }
 
     bool in_check_rem(const unsigned n) const {
@@ -80,14 +81,14 @@ public:
 
     size_t in_remain() const {
         TODO("check test below, it shouldn't be necessary. Allow negative remain ?");
-        if (this->p >= this->end) {
+        if (this->p.p >= this->end) {
             return 0;
         }
-        return this->end - this->p;
+        return this->end - this->p.p;
     }
 
     bool check_end(void) const {
-        return this->p == this->end;
+        return this->p.p == this->end;
     }
 
     size_t size() const {
@@ -102,12 +103,12 @@ public:
             LOG(LOG_ERR, "%s , need=1 remains=%u", message, this->in_remain());
             throw Error(id);
         }
-        return in_sint8();
+        return this->p.in_sint8();
     }
 
     signed char in_sint8(void) {
         REDASSERT(this->in_check_rem(1));
-        return *((signed char*)(this->p++));
+        return this->p.in_sint8();
     }
 
     // ---------------------------------------------------------------------------
@@ -117,18 +118,18 @@ public:
             LOG(LOG_ERR, "%s , need=1 remains=%u", message, this->in_remain());
             throw Error(id);
         }
-        return in_uint8();
+        return this->p.in_uint8();
     }
 
     unsigned char in_uint8(void) {
         REDASSERT(this->in_check_rem(1));
-        return *((unsigned char*)(this->p++));
+        return this->p.in_uint8();
     }
 
     /* Peek a byte from stream without move <p>. */
     unsigned char peek_uint8(void) {
         REDASSERT(this->in_check_rem(1));
-        return *((unsigned char*)(this->p));
+        return *((unsigned char*)(this->p.p));
     }
 
     // ---------------------------------------------------------------------------
@@ -138,13 +139,12 @@ public:
             LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
             throw Error(id);
         }
-        return in_sint16_be();
+        return this->p.in_sint16_be();
     }
 
     int16_t in_sint16_be(void) {
         REDASSERT(this->in_check_rem(2));
-        unsigned int v = this->in_uint16_be();
-        return (int16_t)((v > 32767)?v - 65536:v);
+        return this->p.in_sint16_be();
     }
 
     // ---------------------------------------------------------------------------
@@ -154,13 +154,12 @@ public:
             LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
             throw Error(id);
         }
-        return in_sint16_le();
+        return this->p.in_sint16_le();
     }
 
     int16_t in_sint16_le(void) {
         REDASSERT(this->in_check_rem(2));
-        unsigned int v = this->in_uint16_le();
-        return (int16_t)((v > 32767)?v - 65536:v);
+        return this->p.in_sint16_le();
     }
 
     // ---------------------------------------------------------------------------
@@ -170,13 +169,12 @@ public:
             LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
             throw Error(id);
         }
-        return in_uint16_le();
+        return this->p.in_uint16_le();
     }
 
     uint16_t in_uint16_le(void) {
         REDASSERT(this->in_check_rem(2));
-        this->p += 2;
-        return (uint16_t)(this->p[-2] | (this->p[-1] << 8));
+        return this->p.in_uint16_le();
     }
 
     // ---------------------------------------------------------------------------
@@ -186,13 +184,12 @@ public:
             LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
             throw Error(id);
         }
-        return in_uint16_be();
+        return this->p.in_uint16_be();
     }
 
     uint16_t in_uint16_be(void) {
         REDASSERT(this->in_check_rem(2));
-        this->p += 2;
-        return (uint16_t)(this->p[-1] | (this->p[-2] << 8)) ;
+        return this->p.in_uint16_be();
     }
 
     // ---------------------------------------------------------------------------
@@ -202,17 +199,12 @@ public:
             LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
             throw Error(id);
         }
-        return in_uint32_le();
+        return this->p.in_uint32_le();
     }
 
     unsigned int in_uint32_le(void) {
         REDASSERT(this->in_check_rem(4));
-        this->p += 4;
-        return  this->p[-4]
-             | (this->p[-3] << 8)
-             | (this->p[-2] << 16)
-             | (this->p[-1] << 24)
-             ;
+        return this->p.in_uint32_le();
     }
 
     // ---------------------------------------------------------------------------
@@ -222,17 +214,12 @@ public:
             LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
             throw Error(id);
         }
-        return in_uint32_be();
+        return this->p.in_uint32_be();
     }
 
     unsigned int in_uint32_be(void) {
         REDASSERT(this->in_check_rem(4));
-        this->p += 4;
-        return  this->p[-1]
-             | (this->p[-2] << 8)
-             | (this->p[-3] << 16)
-             | (this->p[-4] << 24)
-             ;
+        return this->p.in_uint32_be();
     }
 
     // ---------------------------------------------------------------------------
@@ -242,12 +229,11 @@ public:
             LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
             throw Error(id);
         }
-        return in_sint32_le();
+        return this->p.in_sint32_le();
     }
 
     int32_t in_sint32_le(void) {
-        uint64_t v = this->in_uint32_le();
-        return (int32_t)((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
+        return this->p.in_sint32_le();
     }
 
     // ---------------------------------------------------------------------------
@@ -257,12 +243,11 @@ public:
             LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
             throw Error(id);
         }
-        return in_sint32_be();
+        return this->p.in_sint32_be();
     }
 
     int32_t in_sint32_be(void) {
-        uint64_t v = this->in_uint32_be();
-        return (int32_t)((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
+        return this->p.in_sint32_be();
     }
 
     // ---------------------------------------------------------------------------
@@ -282,14 +267,12 @@ public:
             LOG(LOG_ERR, "%s , need=8 remains=%u", message, this->in_remain());
             throw Error(id);
         }
-        return in_uint64_le();
+        return this->p.in_uint64_le();
     }
 
     uint64_t in_uint64_le(void) {
         REDASSERT(this->in_check_rem(8));
-        uint64_t low = this->in_uint32_le();
-        uint64_t high = this->in_uint32_le();
-        return low + (high << 32);
+        return this->p.in_uint64_le();
     }
 
     uint64_t incheck_uint64_be(int id, const char * message) {
@@ -297,47 +280,42 @@ public:
             LOG(LOG_ERR, "%s , need=8 remains=%u", message, this->in_remain());
             throw Error(id);
         }
-        return in_uint64_be();
+        return this->p.in_uint64_be();
     }
 
     uint64_t in_uint64_be(void) {
         REDASSERT(this->in_check_rem(8));
-        uint64_t high = this->in_uint32_be();
-        uint64_t low = this->in_uint32_be();
-        return low + (high << 32);
+        return this->p.in_uint64_be();
     }
 
     unsigned in_bytes_le(const uint8_t nb){
         REDASSERT(this->in_check_rem(nb));
-        this->p += nb;
-        return ::in_uint32_from_nb_bytes_le(nb, this->p - nb);
+        return this->p.in_bytes_le(nb);
     }
 
     unsigned in_bytes_be(const uint8_t nb){
         REDASSERT(this->in_check_rem(nb));
-        this->p += nb;
-        return ::in_uint32_from_nb_bytes_be(nb, this->p - nb);
+        return this->p.in_bytes_be(nb);
     }
 
     void in_copy_bytes(uint8_t * v, size_t n) {
         REDASSERT(this->in_check_rem(n));
-        memcpy(v, this->p, n);
-        this->p += n;
+        return this->p.in_copy_bytes(v, n);
     }
 
     void in_copy_bytes(char * v, size_t n) {
-        this->in_copy_bytes((uint8_t*)(v), n);
+        REDASSERT(this->in_check_rem(n));
+        return this->p.in_copy_bytes(v, n);
     }
 
     const uint8_t *in_uint8p(unsigned int n) {
         REDASSERT(this->in_check_rem(n));
-        this->p+=n;
-        return this->p - n;
+        return this->p.in_uint8p(n);
     }
 
     void in_skip_bytes(unsigned int n) {
         REDASSERT(this->in_check_rem(n));
-        this->p+=n;
+        return this->p.in_skip_bytes(n);
     }
 
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
@@ -362,12 +340,7 @@ public:
 
     uint16_t in_2BUE()
     {
-        uint16_t length = this->in_uint8();
-        if (length & 0x80){
-            length = ((length & 0x7F) << 8);
-            length += this->in_uint8();
-        }
-        return length;
+        return this->p.in_2BUE();
     }
 
 // [MS-RDPEGDI] - 2.2.2.2.1.2.1.4 Four-Byte Unsigned Encoding
@@ -423,27 +396,7 @@ public:
 
     uint32_t in_4BUE()
     {
-        uint32_t length = this->in_uint8();
-        switch (length & 0xC0)
-        {
-            case 0xC0:
-                length =  ((length & 0x3F)  << 24);
-                length += (this->in_uint8() << 16);
-                length += (this->in_uint8() << 8 );
-                length +=  this->in_uint8();
-            break;
-            case 0x80:
-                length =  ((length & 0x3F)  << 16);
-                length += (this->in_uint8() << 8 );
-                length +=  this->in_uint8();
-            break;
-            case 0x40:
-                length =  ((length & 0x3F)  << 8 );
-                length +=  this->in_uint8();
-            break;
-        }
-
-        return length;
+        return this->p.in_4BUE();
     }
 
     // MS-RDPEGDI : 2.2.2.2.1.1.1.4 Delta-Encoded Points (DELTA_PTS_FIELD)
@@ -461,34 +414,19 @@ public:
     //    (the first byte containing the high-order bits) to create a 15-bit
     //    signed delta value.
     int16_t in_DEP(void) {
-        int16_t point = this->in_uint8();
-        if (point & 0x80)
-        {
-            point = ((point & 0x7F) << 8) + this->in_uint8();
-            if (point & 0x4000)
-                point = - ((~(point - 1)) & 0x7FFF);
-        }
-        else
-        {
-            if (point & 0x40)
-                point = - ((~(point - 1)) & 0x7F);
-        }
-
-        return point;
+        return this->p.in_DEP();
     }
 
     void in_utf16(uint16_t utf16[], size_t length)
     {
-        for (size_t i = 0; i < length ; i ++){
-            utf16[i] = this->in_uint16_le();
-        }
+        return this->p.in_utf16(utf16, length);
     }
 
     // sz utf16 bytes are translated to ascci, 00 terminated
     void in_uni_to_ascii_str(uint8_t * text, size_t sz, size_t bufsz)
     {
-        UTF16toUTF8(this->p, sz / 2, text, bufsz);
-        this->p += sz;
+        UTF16toUTF8(this->p.p, sz / 2, text, bufsz);
+        this->p.p += sz;
     }
 };
 

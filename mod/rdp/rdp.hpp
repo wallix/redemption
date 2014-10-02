@@ -1157,7 +1157,7 @@ struct mod_rdp : public mod_api {
                     }
                     {
                         {
-                            Array array(256);
+                            Array array(65536);
                             uint8_t * end = array.get_data();
                             X224::RecvFactory f(*this->nego.trans, &end, array.size());
                             InStream stream(array, 0, 0, end - array.get_data());
@@ -1189,7 +1189,7 @@ struct mod_rdp : public mod_api {
                                 X224::DT_TPDU_Send(x224_header, mcs_cjrq_data.size());
                                 this->nego.trans->send(x224_header, mcs_cjrq_data);
 
-                                Array array(256);
+                                Array array(65536);
                                 uint8_t * end = array.get_data();
                                 X224::RecvFactory f(*this->nego.trans, &end, array.size());
                                 InStream x224_data(array, 0, 0, end - array.get_data());
@@ -1609,7 +1609,7 @@ struct mod_rdp : public mod_api {
                         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
                         // Detect fast-path PDU
-                        Array array(256);
+                        Array array(65536);
                         uint8_t * end = array.get_data();
                         X224::RecvFactory fx224(*this->nego.trans, &end, array.size(), true);
                         InStream stream(array, 0, 0, end - array.get_data());
@@ -1619,12 +1619,11 @@ struct mod_rdp : public mod_api {
                             if (this->enable_transparent_mode) {
                                 //total_data_received += su.payload.size();
                                 //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
-                                SubStream su_payload(su.payload, 0, su.payload.size());
-                                TODO("check that we actually want to send the same stream 2 times, dangerous su_payload can be modified")
+//                                SubStream su_payload(su.payload, 0, su.payload.size());
                                 if (this->transparent_recorder) {
-                                    this->transparent_recorder->send_fastpath_data(su_payload);
+                                    this->transparent_recorder->send_fastpath_data(su.payload);
                                 }
-                                this->front.send_fastpath_data(su_payload);
+                                this->front.send_fastpath_data(su.payload);
 
                                 break;
                             }

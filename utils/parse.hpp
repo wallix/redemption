@@ -27,6 +27,7 @@
 #include <string.h> // for memcpy
 
 class Parse {
+public:
     uint8_t * p;
     
 public:
