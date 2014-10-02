@@ -1230,7 +1230,6 @@ public:
         this->context.authentication_challenge.attach_ini(this, AUTHID_AUTHENTICATION_CHALLENGE);
 
         this->to_send_set.insert(AUTHID_MODULE);
-        this->to_send_set.insert(AUTHID_FORCEMODULE);
         this->to_send_set.insert(AUTHID_TICKET);
         this->to_send_set.insert(AUTHID_COMMENT);
         this->to_send_set.insert(AUTHID_DURATION);
@@ -1243,7 +1242,6 @@ public:
         this->context.module.use();
         this->context.forcemodule.set(false);
         this->context.forcemodule.attach_ini(this, AUTHID_FORCEMODULE);
-        this->context.forcemodule.use();
 
         this->context.ticket.set_from_cstr("");
         this->context.ticket.attach_ini(this, AUTHID_TICKET);

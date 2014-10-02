@@ -282,7 +282,6 @@ public:
             this->mod->get_event().signal = BACK_EVENT_NEXT;
             this->mod->get_event().set();
             this->ini.context.forcemodule.set(false);
-            this->ini.context.forcemodule.use();
             // Do not send back the value to sesman.
         }
     }
