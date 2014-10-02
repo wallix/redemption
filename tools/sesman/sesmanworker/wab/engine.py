@@ -566,16 +566,6 @@ class Engine(object):
                                                     request_ticket)
         Logger().info("status : %s" % status)
         Logger().info("infos : %s" % infos)
-        ticketfields = infos.get("ticket_fields")
-        if ticketfields:
-            flag = 0
-            if ticketfields.get("description") == APPREQ_REQUIRED:
-                flag += 1
-            if ticketfields.get("ticket") == APPREQ_REQUIRED:
-                flag += 2
-            if ticketfields.get("duration") == APPREQ_REQUIRED:
-                flag += 4
-            infos["ticketflags"] = flag
         deconnection_time = infos.get("deconnection_time")
         if deconnection_time:
             Logger().info("deconnection_time updated from %s to %s" % (target.deconnection_time, deconnection_time))
