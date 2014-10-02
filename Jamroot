@@ -349,6 +349,7 @@ unit-test test_ellipse : tests/utils/test_ellipse.cpp libboost_unit_test : <vari
 unit-test test_drawable : tests/utils/test_drawable.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_region : tests/utils/test_region.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bitfu : tests/utils/test_bitfu.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_parse : tests/utils/test_parse.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_fileutils : tests/utils/test_fileutils.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_x224 : tests/core/RDP/test_x224.cpp cryptofile z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_out_per_bstream : tests/core/RDP/test_out_per_bstream.cpp cryptofile z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;

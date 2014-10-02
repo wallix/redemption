@@ -55,8 +55,10 @@ public:
 
             //LOG(LOG_INFO, "chunk_type=%u data_size=%u", chunk_type, data_size);
 
-            BStream payload(65535);
-            this->t->recv(&payload.end, data_size);
+            Array array(65535);
+            uint8_t * end = array.get_data();
+            this->t->recv(&end, data_size);
+            InStream payload(array, 0, 0, end - array.get_data());
 
             switch (chunk_type) {
                 case CHUNK_TYPE_META:
@@ -70,8 +72,7 @@ public:
                     break;
                 case CHUNK_TYPE_FASTPATH:
                     {
-                        SubStream data(payload, payload.get_offset());
-                        this->consumer->send_fastpath_data(data);
+                        this->consumer->send_fastpath_data(payload);
                     }
                     break;
                 case CHUNK_TYPE_FRONTCHANNEL:
