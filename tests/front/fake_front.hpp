@@ -22,7 +22,7 @@
 
 #include "RDP/RDPDrawable.hpp"
 #include "front_api.hpp"
-#include "openssl/ssl.h"
+//#include "openssl/ssl.h"
 #include <memory>
 
 class FakeFront : public FrontAPI {
