@@ -36,7 +36,7 @@ namespace CHANNELS {
 #define CLIPBOARD_VIRTUAL_CHANNEL_NAME "cliprdr"
 
     enum {
-        MAX_STATIC_VIRTUAL_CHANNELS = 32 // 30 static virtual channels + global channel + wab channel
+        MAX_STATIC_VIRTUAL_CHANNELS = 30 // 30 static virtual channels
     };
 
     //    1.3.3 Static Virtual Channels
@@ -82,7 +82,7 @@ namespace CHANNELS {
     class ChannelDefArray {
         // The number of requested static virtual channels (the maximum allowed is 31).
         size_t     channelCount;
-        ChannelDef items[MAX_STATIC_VIRTUAL_CHANNELS];
+        ChannelDef items[MAX_STATIC_VIRTUAL_CHANNELS + 2];  // + global channel + wab channel
 
     public:
         ChannelDefArray() : channelCount(0) {}

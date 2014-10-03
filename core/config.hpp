@@ -29,18 +29,11 @@
 
 #include "log.hpp"
 
-#include <istream>
 #include <string>
 #include <stdint.h>
-#include <boost/program_options.hpp>
-#include <boost/algorithm/string.hpp>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <map>
 
-#include <fileutils.hpp>
-#include <string.hpp>
+#include "fileutils.hpp"
+#include "string.hpp"
 
 TODO("move SHARE_PATH to configuration (still used in front, checkfiles, session, transparent, some internal mods)")
 #if !defined(SHARE_PATH)
@@ -253,6 +246,8 @@ typedef enum
         AUTHID_FORMFLAG,
 
         AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
+        AUTHID_ALLOW_CHANNELS,
+        AUTHID_DENY_CHANNELS,
 
         AUTHID_DISABLE_KEYBOARD_LOG,
 
@@ -360,6 +355,9 @@ typedef enum
 #define STRAUTHID_SHOWFORM                 "showform"
 #define STRAUTHID_FORMFLAG                 "formflag"
 #define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS        "disable_tsk_switch_shortcuts"
+
+#define STRAUTHID_ALLOW_CHANNELS           "allow_channels"
+#define STRAUTHID_DENY_CHANNELS            "deny_channels"
 
 #define STRAUTHID_DISABLE_KEYBOARD_LOG     "disable_keyboard_log"
 #define STRAUTHID_RT_DISPLAY               "rt_display"
@@ -472,13 +470,16 @@ static const std::string authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
 
+    STRAUTHID_ALLOW_CHANNELS,
+    STRAUTHID_DENY_CHANNELS,
+
     STRAUTHID_DISABLE_KEYBOARD_LOG,
     STRAUTHID_RT_DISPLAY
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
 
-    std::string str = std::string(strauthid);
+    std::string str(strauthid);
     authid_t res = AUTHID_UNKNOWN;
     for (int i = 0; i < MAX_AUTHID - 1 ; i++) {
         if (0 == authstr[i].compare(str)) {
@@ -580,6 +581,14 @@ struct Inifile : public FieldObserver {
         bool persist_bitmap_cache_on_disk;  // default false
 
         bool bitmap_compression;            // default true
+
+        /**
+         * channel1,channel2,etc
+         * @{
+         */
+        redemption::string allow_channels;
+        redemption::string deny_channels;
+        // @}
     } client;
 
     struct {
@@ -599,6 +608,14 @@ struct Inifile : public FieldObserver {
         bool persistent_disk_bitmap_cache;  // default false
         bool cache_waiting_list;            // default true
         bool persist_bitmap_cache_on_disk;  // default false
+
+        /**
+         * channel1,channel2,etc
+         * @{
+         */
+        StringField allow_channels;
+        StringField deny_channels;
+        // @}
     } mod_rdp;
 
     struct
@@ -806,13 +823,14 @@ struct Inifile : public FieldObserver {
 
     Theme theme;
 
-    struct IniAccounts account;
+    IniAccounts account;
 
 public:
     Inifile() : FieldObserver() {
         this->init();
     }
 
+//private:
     void init() {
         //init to_send_set of authid
         this->to_send_set.insert(AUTHID_PROXY_TYPE);
@@ -950,6 +968,9 @@ public:
         this->client.disable_tsk_switch_shortcuts.set(false);
 
         this->client.bitmap_compression = true;
+
+        this->client.allow_channels.copy_c_str("cliprdr");
+        this->client.deny_channels.empty();
         // End Section "client"
 
         // Begin section "mod_rdp"
@@ -964,6 +985,11 @@ public:
         this->mod_rdp.persist_bitmap_cache_on_disk      = false;
 
         this->mod_rdp.extra_orders.empty();
+
+        this->mod_rdp.allow_channels.attach_ini(this, AUTHID_ALLOW_CHANNELS);
+        this->mod_rdp.allow_channels.set_from_cstr("cliprdr");
+        this->mod_rdp.deny_channels.attach_ini(this, AUTHID_DENY_CHANNELS);
+        this->mod_rdp.deny_channels.set_from_cstr("");
         // End Section "mod_rdp"
 
         // Begin section "mod_vnc"
@@ -1277,10 +1303,9 @@ public:
         this->context.authchannel_result.attach_ini(this,AUTHID_AUTHCHANNEL_RESULT);
         this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
         this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
-
-
     };
 
+public:
     virtual void set_value(const char * context, const char * key, const char * value)
     {
         if (0 == strcmp(context, "globals")) {
@@ -1442,6 +1467,12 @@ public:
             else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
                 this->client.persist_bitmap_cache_on_disk = bool_from_cstr(value);
             }
+            else if (0 == strcmp(key, "allow_channels")) {
+                this->client.allow_channels.copy_c_str(value);
+            }
+            else if (0 == strcmp(key, "deny_channels")) {
+                this->client.deny_channels.copy_c_str(value);
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1480,6 +1511,12 @@ public:
             }
             else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
                 this->mod_rdp.persist_bitmap_cache_on_disk = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "allow_channels")) {
+                this->mod_rdp.allow_channels.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "deny_channels")) {
+                this->mod_rdp.deny_channels.set_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

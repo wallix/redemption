@@ -671,7 +671,10 @@ public:
                 mod_rdp_params.password_printing_mode              = this->ini.debug.password;
                 mod_rdp_params.cache_verbose                       = this->ini.debug.cache;
 
-                mod_rdp_params.extra_orders                    = this->ini.mod_rdp.extra_orders.c_str();
+                mod_rdp_params.extra_orders                        = this->ini.mod_rdp.extra_orders.c_str();
+
+                mod_rdp_params.allow_channels                      = &(this->ini.mod_rdp.allow_channels.get());
+                mod_rdp_params.deny_channels                       = &(this->ini.mod_rdp.deny_channels.get());
 
                 UdevRandom gen;
                 this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);

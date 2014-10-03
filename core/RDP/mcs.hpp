@@ -65,7 +65,7 @@ namespace MCS
         RT_DOMAIN_MERGING           = 1,
         RT_DOMAIN_NOT_HIERARCHICAL  = 2,
         RT_NO_SUCH_CHANNEL          = 3,
-        rt_NO_SUCH_DOMAIN           = 4,
+        RT_NO_SUCH_DOMAIN           = 4,
         RT_NO_SUCH_USER             = 5,
         RT_NOT_ADMITTED             = 6,
         RT_OTHER_USER_ID            = 7,

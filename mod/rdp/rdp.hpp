@@ -64,12 +64,14 @@
 #include "transparentrecorder.hpp"
 
 #include "genrandom.hpp"
+#include "authorization_channels.hpp"
 
 class mod_rdp : public mod_api {
 
     FrontAPI & front;
 
     CHANNELS::ChannelDefArray mod_channel_list;
+    AuthorizationChannels authorization_channels;
 
     int  use_rdp5;
 
@@ -261,6 +263,14 @@ public:
         , password_printing_mode(mod_rdp_params.password_printing_mode)
         , deactivation_reactivation_in_progress(false)
     {
+        initalize_authorization_channels(
+            this->authorization_channels,
+            *mod_rdp_params.allow_channels,
+            *mod_rdp_params.deny_channels
+        );
+        //this->authorization_channels.deny().push_back("cliprdr");
+
+
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
                 LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -845,16 +855,18 @@ public:
                                 GCC::UserData::CSNet cs_net;
                                 cs_net.channelCount = num_channels;
                                 for (size_t index = 0; index < num_channels; index++) {
-                                    const CHANNELS::ChannelDef & channel_item = channel_list[index];
-                                    memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
-                                    cs_net.channelDefArray[index].options = channel_item.flags;
-                                    CHANNELS::ChannelDef def;
-                                    memcpy(def.name, cs_net.channelDefArray[index].name, 8);
-                                    def.flags = channel_item.flags;
-                                    if (this->verbose & 16){
-                                        def.log(index);
+                                    if (this->authorization_channels.authorized(channel_list[index].name)) {
+                                        const CHANNELS::ChannelDef & channel_item = channel_list[index];
+                                        memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
+                                        cs_net.channelDefArray[index].options = channel_item.flags;
+                                        CHANNELS::ChannelDef def;
+                                        memcpy(def.name, cs_net.channelDefArray[index].name, 8);
+                                        def.flags = channel_item.flags;
+                                        if (this->verbose & 16){
+                                            def.log(index);
+                                        }
+                                        this->mod_channel_list.push_back(def);
                                     }
-                                    this->mod_channel_list.push_back(def);
                                 }
 
                                 // Inject a new channel for auth_channel virtual channel (wablauncher)

@@ -77,8 +77,9 @@
 
 #include "auth_api.hpp"
 
-#include "filtering_channel.hpp"
+#include "authorization_channels.hpp"
 #include "text_metrics.hpp"
+#include "splitter.hpp"
 
 enum {
     FRONT_DISCONNECTED,
@@ -90,7 +91,7 @@ class Front : public FrontAPI {
     using FrontAPI::draw;
 
     class DisableChannelId {
-        unsigned channel_id_[32];
+        unsigned channel_id_[AuthorizationChannels::max_authorization_channels];
         size_t size_ = 0;
 
     public:
@@ -112,7 +113,7 @@ class Front : public FrontAPI {
         }
     };
     DisableChannelId disable_channel_id_sorted;
-    FilteringChannel filtering_channel;
+    AuthorizationChannels authorization_channels;
 
 public:
     enum CaptureState {
@@ -245,6 +246,12 @@ public:
         , authentifier(NULL)
         , auth_info_sent(false)
     {
+        initalize_authorization_channels(
+            this->authorization_channels,
+            this->ini->client.allow_channels,
+            this->ini->client.deny_channels
+        );
+
         // init TLS
         // --------------------------------------------------------
 
@@ -1623,7 +1630,7 @@ public:
                         cs_net.recv(f.payload);
                         for (uint32_t index = 0; index < cs_net.channelCount; index++) {
                             const auto & channel_def = cs_net.channelDefArray[index];
-                            if (!this->filtering_channel.contains(channel_def.name)) {
+                            if (this->authorization_channels.authorized(channel_def.name)) {
                                 CHANNELS::ChannelDef channel_item;
                                 memcpy(channel_item.name, channel_def.name, 8);
                                 channel_item.flags = channel_def.options;

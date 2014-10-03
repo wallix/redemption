@@ -25,6 +25,7 @@
 #include "config.hpp"
 // BASE64 TRY
 // #include "base64.hpp"
+#include "string.hpp"
 #include <set>
 #include <map>
 

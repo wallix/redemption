@@ -317,6 +317,7 @@ class Sesman():
 
     def interactive_accept_message(self, data_to_send):
         data_to_send.update({ u'module'        : u'valid'
+                            , u'allow_channels':'cliprdr,audinrdr' 
                             # , u'proto_dest'    : u'INTERNAL'
                             # , u'accept_message': MAGICASK
                             # , u'display_message': u''

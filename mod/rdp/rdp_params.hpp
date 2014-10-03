@@ -22,6 +22,7 @@
 #define _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_
 
 #include "log.hpp"
+#include "string.hpp"
 
 class Transport;
 class auth_api;
@@ -72,6 +73,9 @@ struct ModRDPParams {
     bool persist_bitmap_cache_on_disk;
 
     uint32_t password_printing_mode;
+
+    const redemption::string * allow_channels;
+    const redemption::string * deny_channels;
 
     uint32_t verbose;
     uint32_t cache_verbose;
@@ -125,6 +129,9 @@ struct ModRDPParams {
         , persist_bitmap_cache_on_disk(false)
 
         , password_printing_mode(0)
+
+        , allow_channels(nullptr)
+        , deny_channels(nullptr)
 
         , verbose(verbose)
         , cache_verbose(0)
