@@ -2078,7 +2078,7 @@ public:
                     stream.out_copy_bytes((char*)lic3, 16);
                     stream.mark_end();
 
-                    BStream sec_header(256);
+                    BStream sec_header(65536);
 
                     if ((this->verbose & (128|2)) == (128|2)){
                         LOG(LOG_INFO, "Sec clear payload to send:");
@@ -2172,7 +2172,7 @@ public:
                 stream.out_copy_bytes((char*)lic1, 314);
                 stream.mark_end();
 
-                BStream sec_header(256);
+                BStream sec_header(65536);
 
                 if ((this->verbose & (128|2)) == (128|2)){
                     LOG(LOG_INFO, "Sec clear payload to send:");
@@ -2198,7 +2198,7 @@ public:
             if (this->verbose & 2){
                 LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
             }
-            Array array(256);
+            Array array(65536);
             uint8_t * end = array.get_data();
             X224::RecvFactory fx224(*this->trans, &end, array.size());
             InStream stream(array, 0, 0, end - array.get_data());
