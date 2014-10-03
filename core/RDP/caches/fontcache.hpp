@@ -24,6 +24,8 @@
 #include "font.hpp"
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
+class ClientInfo;
+
 struct char_item
 {
     int      stamp = 0;

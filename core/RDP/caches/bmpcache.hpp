@@ -27,7 +27,6 @@
 #include "bitmap.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-#include "fileutils.hpp"
 #include "unique_ptr.hpp"
 
 

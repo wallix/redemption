@@ -92,6 +92,7 @@
 
 #include "transport.hpp"
 
+#include "config.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/share.hpp"
 #include "difftimeval.hpp"

@@ -21,11 +21,13 @@
 #ifndef _REDEMPTION_BASE_FIELD_HPP_
 #define _REDEMPTION_BASE_FIELD_HPP_
 
+#include "get_printable_password.hpp"
 #include "cfgloader.hpp"
 #include "config.hpp"
 // BASE64 TRY
 // #include "base64.hpp"
 #include "string.hpp"
+#include <algorithm>
 #include <set>
 #include <map>
 

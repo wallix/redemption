@@ -25,9 +25,10 @@
 #include "front_api.hpp"
 #include "wait_obj.hpp"
 #include "callback.hpp"
-#include "config.hpp"
 #include "font.hpp"
 #include "draw_api.hpp"
+
+class Inifile;
 
 enum {
     BUTTON_STATE_UP   = 0,

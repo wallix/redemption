@@ -263,11 +263,13 @@ public:
         , password_printing_mode(mod_rdp_params.password_printing_mode)
         , deactivation_reactivation_in_progress(false)
     {
-        initalize_authorization_channels(
-            this->authorization_channels,
-            *mod_rdp_params.allow_channels,
-            *mod_rdp_params.deny_channels
-        );
+        if (mod_rdp_params.allow_channels || mod_rdp_params.allow_channels) {
+            initalize_authorization_channels(
+                this->authorization_channels,
+                mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : "",
+                mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : ""
+            );
+        }
         //this->authorization_channels.deny().push_back("cliprdr");
 
 

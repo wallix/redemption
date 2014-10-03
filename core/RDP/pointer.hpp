@@ -21,8 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_POINTER_HPP_
 #define _REDEMPTION_CORE_RDP_POINTER_HPP_
 
-#include "drawable.hpp"
-#include "client_info.hpp"
+#include "log.hpp"
+#include <cstring>
 
 struct Pointer {
     enum {

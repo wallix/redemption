@@ -55,6 +55,7 @@
 #include "RDP/caches/fontcache.hpp"
 #include "RDP/pointer.hpp"
 #include "ellipse.hpp"
+#include "bitmap.hpp"
 
 struct RDPGraphicDevice {
     virtual void draw(const RDPOpaqueRect       & cmd, const Rect & clip) = 0;

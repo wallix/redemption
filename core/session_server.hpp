@@ -26,6 +26,7 @@
 #include "server.hpp"
 #include "session.hpp"
 #include "crypto_key_holder.hpp"
+#include "parse_ip_conntrack.hpp"
 
 class SessionServer : public Server
 {

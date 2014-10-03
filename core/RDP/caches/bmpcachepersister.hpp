@@ -21,6 +21,7 @@
 #ifndef _REDEMPTION_CORE_RDP_CACHES_BMPCACHEPERSISTER_HPP_
 #define _REDEMPTION_CORE_RDP_CACHES_BMPCACHEPERSISTER_HPP_
 
+#include <map>
 #include "bmpcache.hpp"
 #include "transport.hpp"
 

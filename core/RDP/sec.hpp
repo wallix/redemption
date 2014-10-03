@@ -28,7 +28,6 @@
 #include <stdint.h>
 
 #include "RDP/share.hpp"
-#include "client_info.hpp"
 
 
 TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.")

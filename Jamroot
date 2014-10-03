@@ -350,6 +350,7 @@ unit-test test_drawable : tests/utils/test_drawable.cpp png z crypto libboost_un
 unit-test test_region : tests/utils/test_region.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bitfu : tests/utils/test_bitfu.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_fileutils : tests/utils/test_fileutils.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_parse_ip_conntrack : tests/utils/test_parse_ip_conntrack.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_x224 : tests/core/RDP/test_x224.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_out_per_bstream : tests/core/RDP/test_out_per_bstream.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_mcs : tests/core/RDP/test_mcs.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

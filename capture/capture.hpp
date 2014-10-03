@@ -21,7 +21,6 @@
 #ifndef _REDEMPTION_CAPTURE_CAPTURE_HPP_
 #define _REDEMPTION_CAPTURE_CAPTURE_HPP_
 
-#include "client_info.hpp"
 #include "out_meta_sequence_transport.hpp"
 #include "crypto_out_meta_sequence_transport.hpp"
 #include "out_filename_sequence_transport.hpp"

@@ -118,17 +118,6 @@ TODO("move these into configuration")
 
 using namespace std;
 
-static inline const char * get_printable_password(const char * password, uint32_t printing_mode) {
-    switch (printing_mode) {
-        case 1:
-            return ((*password) ? "<hidden>" : "<null>");
-        case 2:
-            return password;
-        default:
-            return "<hidden>";
-    }
-}
-
 struct IniAccounts {
     char accountname[255];
     char username[255]; // should use string

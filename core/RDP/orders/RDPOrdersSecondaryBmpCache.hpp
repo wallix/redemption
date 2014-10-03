@@ -25,6 +25,8 @@
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYBMPCACHE_HPP_
 
 #include "log.hpp"
+#include "colors.hpp"
+#include "bitmap.hpp"
 #include "RDPOrdersCommon.hpp"
 
 /* RDP bitmap cache (version 2) constants */

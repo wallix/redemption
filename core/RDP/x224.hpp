@@ -31,7 +31,6 @@
 #include "log.hpp"
 #include "error.hpp"
 #include "fastpath.hpp"
-#include "config.hpp"
 
 //##############################################################################
 namespace X224
