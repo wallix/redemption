@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
     const struct ToCacheOption {
         ToCacheOption(){}
-        BmpCache::CacheOption operator()(const BmpCache::Cache & cache) const {
+        BmpCache::CacheOption operator()(const BmpCache::cache_ & cache) const {
             return BmpCache::CacheOption(cache.entries(), cache.bmp_size(), cache.persistent());
         }
     } to_cache_option;

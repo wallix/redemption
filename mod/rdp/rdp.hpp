@@ -3912,7 +3912,7 @@ struct mod_rdp : public mod_api {
         uint16_t totalEntriesCache[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 0, 0, 0, 0, 0 };
 
         for (uint8_t cache_id = 0; cache_id < this->orders.bmp_cache->number_of_cache; cache_id++) {
-            const BmpCache::Cache & cache = this->orders.bmp_cache->get_cache(cache_id);
+            const BmpCache::cache_ & cache = this->orders.bmp_cache->get_cache(cache_id);
             if (cache.persistent()) {
                 uint16_t idx = 0;
                 while (idx < cache.size() && cache[idx]) {
@@ -3933,7 +3933,7 @@ struct mod_rdp : public mod_api {
             uint16_t number_of_entries     = 0;
             uint8_t  pdu_number_of_entries = 0;
             for (uint8_t cache_id = 0; cache_id < this->orders.bmp_cache->number_of_cache; cache_id++) {
-                const BmpCache::Cache & cache = this->orders.bmp_cache->get_cache(cache_id);
+                const BmpCache::cache_ & cache = this->orders.bmp_cache->get_cache(cache_id);
 
                 if (!cache.persistent()) {
                     continue;
