@@ -57,7 +57,10 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
         printf("initial_size = %lu, compressed size: %lu\n",
             (long)bigbmp.bmp_size(),
             (long)(out.p - out.get_data()));
-        printf("elapsed time = %lu %lu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+        printf("elapsed time = %lu %lu %f\n", 
+            static_cast<long unsigned>(elapusec), 
+            static_cast<long unsigned>(elapcyc), 
+            static_cast<double>(elapcyc) / static_cast<double>(elapusec));
 
         Bitmap bmp2(24, 24, (BGRPalette *)NULL, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.p - out.get_data(), true);
         BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
@@ -77,7 +80,11 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
         printf("initial_size = %lu, compressed size: %lu\n",
             (long)bigbmp.bmp_size(),
             (long)(out.p - out.get_data()));
-        printf("elapsed time = %lu %lu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+
+        printf("elapsed time = %lu %lu %f\n", 
+            static_cast<long unsigned>(elapusec), 
+            static_cast<long unsigned>(elapcyc), 
+            static_cast<double>(elapcyc) / static_cast<double>(elapusec));
 
         Bitmap bmp2(bpp, bpp, (BGRPalette *)NULL, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.p - out.get_data(), true);
         BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
@@ -103,7 +110,10 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
         printf("initial_size = %lu, compressed size: %lu\n",
             (long)bigbmp.bmp_size(),
             (long)(out.p - out.get_data()));
-        printf("elapsed time = %lu %lu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+        printf("elapsed time = %lu %lu %f\n", 
+            static_cast<long unsigned>(elapusec), 
+            static_cast<long unsigned>(elapcyc), 
+            static_cast<double>(elapcyc) / static_cast<double>(elapusec));
 
         Bitmap bmp2(24, 24, (BGRPalette *)NULL, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.p - out.get_data(), true);
         BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
@@ -123,7 +133,10 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
         printf("initial_size = %lu, compressed size: %lu\n",
             (long)bigbmp.bmp_size(),
             (long)(out.p - out.get_data()));
-        printf("elapsed time = %lu %lu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+        printf("elapsed time = %lu %lu %f\n", 
+            static_cast<long unsigned>(elapusec), 
+            static_cast<long unsigned>(elapcyc), 
+            static_cast<double>(elapcyc) / static_cast<double>(elapusec));
 
         Bitmap bmp2(bpp, bpp, (BGRPalette *)NULL, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.p - out.get_data(), true);
         BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
