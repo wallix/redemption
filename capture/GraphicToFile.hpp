@@ -503,7 +503,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     void save_bmp_caches()
     {
         for (uint8_t cache_id = 0
-        ; cache_id < BmpCache::MAXIMUM_NUMBER_OF_CACHES && this->bmp_cache.number_of_cache > cache_id
+        ; cache_id < this->bmp_cache.number_of_cache
         ; ++cache_id) {
             const size_t entries = this->bmp_cache.get_cache(cache_id).entries();
             for (size_t i = 0; i < entries; i++){
