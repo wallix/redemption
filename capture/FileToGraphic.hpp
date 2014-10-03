@@ -626,8 +626,8 @@ public:
 
                         if (elapsed < movie_elapsed) {
                             struct timespec wtime     = {
-                                  static_cast<uint32_t>( (movie_elapsed - elapsed) / 1000000LL)
-                                , static_cast<uint32_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
+                                  static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
+                                , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
                                 };
                             struct timespec wtime_rem = { 0, 0 };
 

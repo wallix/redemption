@@ -56,8 +56,10 @@ public:
 
             //LOG(LOG_INFO, "chunk_type=%u data_size=%u", chunk_type, data_size);
 
-            BStream payload(65535);
-            this->t->recv(&payload.end, data_size);
+            Array array(65535);
+            uint8_t * end = array.get_data();
+            this->t->recv(&end, data_size);
+            InStream payload(array, 0, 0, end - array.get_data());
 
             switch (chunk_type) {
                 case CHUNK_TYPE_META:
@@ -71,8 +73,7 @@ public:
                     break;
                 case CHUNK_TYPE_FASTPATH:
                     {
-                        SubStream data(payload, payload.get_offset());
-                        this->consumer->send_fastpath_data(data);
+                        this->consumer->send_fastpath_data(payload);
                     }
                     break;
                 case CHUNK_TYPE_FRONTCHANNEL:
@@ -130,8 +131,8 @@ public:
 
                 if (elapsed <= record_elapsed) {
                     struct timespec wtime     = {
-                          static_cast<uint32_t>((record_elapsed - elapsed) / 1000000LL)
-                        , static_cast<uint32_t>(((record_elapsed - elapsed) % 1000000LL) * 1000)
+                          static_cast<time_t>((record_elapsed - elapsed) / 1000000LL)
+                        , static_cast<time_t>(((record_elapsed - elapsed) % 1000000LL) * 1000)
                         };
                     struct timespec wtime_rem = { 0, 0 };
 

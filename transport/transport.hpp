@@ -51,6 +51,8 @@ protected:
 
     auth_api * authentifier;
 
+    uint32_t verbose;
+
 public:
     Transport()
     : total_received(0)
@@ -61,6 +63,7 @@ public:
     , last_quantum_sent(0)
     , status(true)
     , authentifier(get_null_authentifier())
+    , verbose(0)
     {}
 
     virtual ~Transport()
@@ -167,6 +170,9 @@ private:
     }
 
 public:
+
+    TODO("All these functions should be changed after Stream refactoring to remove dependency between transport and Stream")
+
     void send(Stream & header1, Stream & header2, Stream & header3, HStream & stream)
     {
         stream.copy_to_head(header3.get_data(), header3.size());
@@ -192,6 +198,12 @@ public:
     {
         this->send(stream.get_data(), stream.size());
     }
+
+    void send(InStream & stream)
+    {
+        this->send(stream.get_data(), stream.size());
+    }
+
 
     virtual bool disconnect()
     {

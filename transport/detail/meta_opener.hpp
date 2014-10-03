@@ -105,14 +105,17 @@ namespace detail
         const char * meta_filename;
         BufParam buf_param;
         BufMetaParam meta_param;
+        uint32_t verbose;
 
         in_meta_sequence_buf_param(
             const char * meta_filename,
+            uint32_t verbose = 0,
             const BufParam & buf_param = BufParam(),
             const BufMetaParam & meta_param = BufMetaParam())
         : meta_filename(meta_filename)
         , buf_param(buf_param)
         , meta_param(meta_param)
+        , verbose(verbose)
         {}
     };
 
@@ -140,6 +143,7 @@ namespace detail
         unsigned begin_chunk_time;
         unsigned end_chunk_time;
         char meta_path[2048];
+        uint32_t verbose;
 
         static BufMeta & open_and_return(const char * filename, BufMeta & buf)
         {
@@ -157,6 +161,7 @@ namespace detail
         , reader(open_and_return(params.meta_filename, this->buf_meta))
         , begin_chunk_time(0)
         , end_chunk_time(0)
+        , verbose(params.verbose)
         {
             // headers
             //@{
@@ -174,7 +179,8 @@ namespace detail
             char basename[1024] = {};
             char extension[256] = {};
 
-            canonical_path(params.meta_filename, this->meta_path, sizeof(this->meta_path), basename, sizeof(basename), extension, sizeof(extension));
+            canonical_path( params.meta_filename, this->meta_path, sizeof(this->meta_path), basename, sizeof(basename), extension
+                          , sizeof(extension), this->verbose);
         }
 
         ssize_t read(void * data, size_t len) /*noexcept*/
@@ -276,7 +282,8 @@ namespace detail
                 char extension[256] = {};
                 char filename[2048] = {};
 
-                canonical_path(this->path, original_path, sizeof(original_path), basename, sizeof(basename), extension, sizeof(extension));
+                canonical_path( this->path, original_path, sizeof(original_path), basename, sizeof(basename), extension
+                              , sizeof(extension), this->verbose);
                 snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
 
                 if (file_exist(filename)) {

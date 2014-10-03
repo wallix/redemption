@@ -191,9 +191,9 @@ namespace FastPath {
         uint16_t  length;
         uint32_t  fipsInformation;
         uint8_t   dataSignature[8];
-        SubStream payload;
+        InStream payload;
 
-        ClientInputEventPDU_Recv(Stream & stream, CryptContext & decrypt)
+        ClientInputEventPDU_Recv(InStream & stream, CryptContext & decrypt)
         : fpInputHeader(stream.in_uint8())
         , action([this](){
             uint8_t action = this->fpInputHeader & 0x03;
@@ -236,7 +236,7 @@ namespace FastPath {
             if (this->numEvents == 0) {
                 this->numEvents = stream.in_uint8();
             }
-            return SubStream(stream, stream.get_offset(), stream.in_remain());
+            return InStream(stream.array, stream.get_offset(), 0, stream.in_remain());
         }()) 
         {
             stream.in_skip_bytes(this->payload.size());
@@ -422,7 +422,7 @@ namespace FastPath {
         uint16_t spKeyboardFlags; // Slow-path compatible flags
         uint8_t  keyCode;
 
-        KeyboardEvent_Recv(Stream & stream, uint8_t eventHeader)
+        KeyboardEvent_Recv(InStream & stream, uint8_t eventHeader)
         : eventFlags(0)
         , spKeyboardFlags(0)
         , keyCode(0) {
@@ -521,7 +521,7 @@ namespace FastPath {
         uint16_t xPos;
         uint16_t yPos;
 
-        MouseEvent_Recv(Stream & stream, uint8_t eventHeader)
+        MouseEvent_Recv(InStream & stream, uint8_t eventHeader)
         : pointerFlags(0)
         , xPos(0)
         , yPos(0) {
@@ -599,7 +599,7 @@ namespace FastPath {
     struct SynchronizeEvent_Recv {
         uint8_t  eventFlags;
 
-        SynchronizeEvent_Recv(Stream & stream, uint8_t eventHeader)
+        SynchronizeEvent_Recv(InStream & stream, uint8_t eventHeader)
         : eventFlags(0) {
             uint8_t eventCode = (eventHeader & 0xE0) >> 5;
             if (eventCode != FASTPATH_INPUT_EVENT_SYNC) {
@@ -767,9 +767,9 @@ namespace FastPath {
         uint16_t length;
         uint32_t  fipsInformation;
         uint8_t   dataSignature[8];
-        SubStream payload;
+        InStream payload;
 
-        ServerUpdatePDU_Recv(Stream & stream, CryptContext & decrypt)
+        ServerUpdatePDU_Recv(InStream & stream, CryptContext & decrypt)
         : fpOutputHeader(stream.in_uint8())
         , action([](uint8_t fpOutputHeader){
             uint8_t action = fpOutputHeader & 0x03;
@@ -803,7 +803,7 @@ namespace FastPath {
                 stream.in_copy_bytes(this->dataSignature, 8);
                 decrypt.decrypt(stream.get_data() + stream.get_offset(), stream.in_remain());
             }
-            return SubStream(stream, stream.get_offset(), stream.in_remain());
+            return InStream(stream.array, stream.get_offset(), 0, stream.in_remain());
         }()) 
         // Body of constructor
         {
@@ -1081,7 +1081,7 @@ namespace FastPath {
         uint16_t  size;
         SubStream payload;
 
-        Update_Recv(Stream & stream, rdp_mppc_dec * dec)
+        Update_Recv(InStream & stream, rdp_mppc_dec * dec)
         : updateHeader([&stream](){
             unsigned expected = 1; // updateHeader(1)
             if (!stream.in_check_rem(expected)) {

@@ -33,14 +33,18 @@ struct InMetaSequenceTransport
     detail::empty_ctor<transbuf::ifile_base>
 > >
 {
-    InMetaSequenceTransport(const char * filename, const char * extension)
+    InMetaSequenceTransport(const char * filename, const char * extension, uint32_t verbose = 0)
     : InMetaSequenceTransport::TransportType(
-        detail::in_meta_sequence_buf_param<>(detail::temporary_concat(filename, extension).str))
-    {}
+        detail::in_meta_sequence_buf_param<>(detail::temporary_concat(filename, extension).str, verbose))
+    {
+        this->verbose = verbose;
+    }
 
-    InMetaSequenceTransport(const char * filename) /*noexcept*/
-    : InMetaSequenceTransport::TransportType(detail::in_meta_sequence_buf_param<>(filename))
-    {}
+    InMetaSequenceTransport(const char * filename, uint32_t verbose = 0) /*noexcept*/
+    : InMetaSequenceTransport::TransportType(detail::in_meta_sequence_buf_param<>(filename, verbose))
+    {
+        this->verbose = verbose;
+    }
 
     unsigned begin_chunk_time() const /*noexcept*/
     { return this->buffer().get_begin_chunk_time(); }

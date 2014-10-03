@@ -483,7 +483,6 @@ struct CheckShareData_Recv {
                 expected, stream.in_remain());
             throw Error(ERR_SEC);
         }
-        LOG(LOG_ERR, "sizeof(*this)");
     }
 };
 
