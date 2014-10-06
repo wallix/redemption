@@ -32,8 +32,6 @@
 #include <istream>
 #include <string>
 #include <stdint.h>
-#include <boost/program_options.hpp>
-#include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <fstream>
 #include <sstream>

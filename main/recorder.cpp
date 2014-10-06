@@ -25,6 +25,8 @@
 #include <iostream>
 
 #include <boost/program_options/options_description.hpp>
+#include <boost/program_options/variables_map.hpp>
+#include <boost/program_options/parsers.hpp>
 #include <utility>
 #include <string>
 
