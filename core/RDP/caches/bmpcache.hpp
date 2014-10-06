@@ -703,6 +703,7 @@ public:
                 this->waiting_list.remove(e);
             }
             ::memcpy(e.sha1, e_compare.sha1, 20);
+            e.is_valid = true;
             this->waiting_list_bitmap = std::move(e_compare.bmp);
             e.stamp = ++this->stamp;
             this->waiting_list.add(e);
