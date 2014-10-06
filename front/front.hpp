@@ -348,6 +348,10 @@ public:
         }
     }
 
+    bool authorized_channel(const char * channel_name) {
+        return this->authorization_channels.authorized(channel_name);
+    }
+
     int server_resize(int width, int height, int bpp)
     {
         uint32_t res = 0;

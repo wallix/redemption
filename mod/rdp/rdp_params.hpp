@@ -39,7 +39,6 @@ struct ModRDPParams {
     bool enable_tls;
     bool enable_nla;
     bool enable_krb;
-    bool enable_clipboard;
     bool enable_fastpath;           // If true, fast-path must be supported.
     bool enable_mem3blt;
     bool enable_bitmap_update;
@@ -95,7 +94,6 @@ struct ModRDPParams {
         , enable_tls(true)
         , enable_nla(true)
         , enable_krb(false)
-        , enable_clipboard(true)
         , enable_fastpath(true)
         , enable_mem3blt(true)
         , enable_bitmap_update(false)
@@ -154,8 +152,6 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams enable_krb=%s",                          (this->enable_krb ? "yes" : "no"));
         LOG(LOG_INFO,
-            "ModRDPParams enable_clipboard=%s",                    (this->enable_clipboard ? "yes" : "no"));
-        LOG(LOG_INFO,
             "ModRDPParams enable_fastpath=%s",                     (this->enable_fastpath ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams enable_mem3blt=%s",                      (this->enable_mem3blt ? "yes" : "no"));
@@ -211,6 +207,11 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams password_printing_mode=%u",              this->password_printing_mode);
+
+        LOG(LOG_INFO,
+            "ModRDPParams allow_channels=<%p>",                    this->allow_channels);
+        LOG(LOG_INFO,
+            "ModRDPParams deny_channels=<%p>",                     this->deny_channels);
 
         LOG(LOG_INFO,
             "ModRDPParams verbose=0x%08X",                         this->verbose);

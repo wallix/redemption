@@ -556,7 +556,6 @@ struct Inifile : public FieldObserver {
         bool tls_support;
         bool bogus_neg_request; // needed to connect with jrdp, based on bogus X224 layer code
 
-        BoolField clipboard;                // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;       // AUTHID_OPT_DEVICEREDIRECTION //
 
         BoolField disable_tsk_switch_shortcuts; // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS //
@@ -609,6 +608,8 @@ struct Inifile : public FieldObserver {
 
     struct
     {
+        BoolField clipboard;                // AUTHID_OPT_CLIPBOARD //
+
         redemption::string encodings;
 
         bool allow_authentification_retries;
@@ -934,9 +935,7 @@ public:
         this->client.keyboard_layout.set(0);
         this->to_send_set.insert(AUTHID_KEYBOARD_LAYOUT);
 
-        this->client.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
         this->client.device_redirection.attach_ini(this,AUTHID_OPT_DEVICEREDIRECTION);
-        this->client.clipboard.set(true);
         this->client.device_redirection.set(true);
 
         this->client.ignore_logon_password               = false;
@@ -982,6 +981,9 @@ public:
         // End Section "mod_rdp"
 
         // Begin section "mod_vnc"
+        this->mod_vnc.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
+        this->mod_vnc.clipboard.set(false);
+
         this->mod_vnc.encodings.empty();
 
         this->mod_vnc.allow_authentification_retries = false;
@@ -1419,9 +1421,6 @@ public:
             else if (0 == strcmp(key, "bogus_neg_request")) {
                 this->client.bogus_neg_request = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "clipboard")) {
-                this->client.clipboard.set_from_cstr(value);
-            }
             else if (0 == strcmp(key, "device_redirection")) {
                 this->client.device_redirection.set_from_cstr(value);
             }
@@ -1512,7 +1511,10 @@ public:
             }
         }
         else if (0 == strcmp(context, "mod_vnc")) {
-            if (0 == strcmp(key, "encodings")) {
+            if (0 == strcmp(key, "clipboard")) {
+                this->mod_vnc.clipboard.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "encodings")) {
                 this->mod_vnc.encodings.copy_c_str(value);
             }
             else if (0 == strcmp(key, "allow_authentification_retries")) {

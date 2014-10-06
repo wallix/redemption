@@ -71,7 +71,20 @@ class mod_rdp : public mod_api {
     FrontAPI & front;
 
     CHANNELS::ChannelDefArray mod_channel_list;
-    AuthorizationChannels authorization_channels;
+
+    struct RDPAuthorizationChannels : AuthorizationChannels {
+        RDPAuthorizationChannels(const ModRDPParams & mod_rdp_params)
+        {
+            if (mod_rdp_params.allow_channels || mod_rdp_params.allow_channels) {
+                initalize_authorization_channels(
+                    *this,
+                    mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : "",
+                    mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : ""
+                );
+            }
+        }
+    } authorization_channels;
+
 
     int  use_rdp5;
 
@@ -203,6 +216,7 @@ public:
            )
         : mod_api(info.width - (info.width % 4), info.height)
         , front(front)
+        , authorization_channels(mod_rdp_params)
         , use_rdp5(1)
         , keylayout(info.keylayout)
         , orders( mod_rdp_params.target_device, mod_rdp_params.enable_persistent_disk_bitmap_cache
@@ -231,7 +245,7 @@ public:
               , mod_rdp_params.enable_nla, mod_rdp_params.target_device
               , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
         , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
-        , enable_clipboard(mod_rdp_params.enable_clipboard)
+        , enable_clipboard(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME))
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
@@ -263,16 +277,6 @@ public:
         , password_printing_mode(mod_rdp_params.password_printing_mode)
         , deactivation_reactivation_in_progress(false)
     {
-        if (mod_rdp_params.allow_channels || mod_rdp_params.allow_channels) {
-            initalize_authorization_channels(
-                this->authorization_channels,
-                mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : "",
-                mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : ""
-            );
-        }
-        //this->authorization_channels.deny().push_back("cliprdr");
-
-
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
                 LOG(LOG_INFO, "Creation of new mod 'RDP'");

@@ -651,7 +651,6 @@ public:
                     mod_rdp_params.enable_nla                      = this->ini.mod_rdp.enable_nla;
                 }
                 mod_rdp_params.enable_krb                          = this->ini.mod_rdp.enable_kerberos;
-                mod_rdp_params.enable_clipboard                    = this->ini.client.clipboard.get();
                 //mod_rdp_params.enable_fastpath                     = true;
                 //mod_rdp_params.enable_mem3blt                      = true;
                 mod_rdp_params.enable_bitmap_update                = this->ini.globals.enable_bitmap_update;
@@ -716,6 +715,8 @@ public:
 
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
 
+                const bool enable_clipboard = this->front.authorized_channel(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+
                 this->mod = new mod_vnc(t
                                         , this->ini
                                         , this->ini.globals.target_user.get_cstr()
@@ -725,7 +726,7 @@ public:
                                         , this->front.client_info.height
                                         , this->front.client_info.keylayout
                                         , this->front.keymap.key_flags
-                                        , this->ini.client.clipboard.get()
+                                        , enable_clipboard && this->ini.mod_vnc.clipboard.get()
                                         , this->ini.mod_vnc.encodings.c_str()
                                         , this->ini.mod_vnc.allow_authentification_retries
                                         , this->ini.debug.mod_vnc);

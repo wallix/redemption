@@ -23,6 +23,7 @@
 
 #include "channel_list.hpp"
 #include "splitter.hpp"
+#include "string.hpp"
 #include "log.hpp"
 #include <iterator>
 #include <cassert>
@@ -54,6 +55,12 @@ public:
     {
         ChannelName names[max_authorization_channels];
         ChannelName * pos = names;
+
+        friend class AuthorizationChannels;
+
+        ChannelNameArray() = default;
+        ChannelNameArray(const ChannelNameArray &) = delete;
+        ChannelNameArray& operator=(const ChannelNameArray &) = delete;
 
     public:
         void push_back(const char * name, std::size_t n) {
@@ -88,6 +95,7 @@ public:
         }
     };
 
+private:
     ChannelNameArray allow_;
     ChannelNameArray deny_;
     bool all_deny_ = false;
@@ -131,7 +139,7 @@ void initalize_authorization_channels(
 ) {
     struct add_impl {
         static void add(
-            AuthorizationChannels::ChannelNameArray channel_array,
+            AuthorizationChannels::ChannelNameArray & channel_array,
             const redemption::string & s, const char * type_error
         ) {
             for (auto & r : get_split(s.c_str(), s.c_str() + s.length(), ',')) {
