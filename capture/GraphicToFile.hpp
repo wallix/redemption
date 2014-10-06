@@ -217,9 +217,9 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.out_uint16_le(this->height);
         payload.out_uint16_le(this->capture_bpp);
 
-        const BmpCache::Cache & c0 = this->bmp_cache.get_cache(0);
-        const BmpCache::Cache & c1 = this->bmp_cache.get_cache(1);
-        const BmpCache::Cache & c2 = this->bmp_cache.get_cache(2);
+        const BmpCache::cache_ & c0 = this->bmp_cache.get_cache(0);
+        const BmpCache::cache_ & c1 = this->bmp_cache.get_cache(1);
+        const BmpCache::cache_ & c2 = this->bmp_cache.get_cache(2);
 
         payload.out_uint16_le(c0.entries());
         payload.out_uint16_le(c0.bmp_size());
@@ -236,8 +236,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             payload.out_uint8(c1.persistent() ? 1 : 0);
             payload.out_uint8(c2.persistent() ? 1 : 0);
 
-            const BmpCache::Cache & c3 = this->bmp_cache.get_cache(3);
-            const BmpCache::Cache & c4 = this->bmp_cache.get_cache(4);
+            const BmpCache::cache_ & c3 = this->bmp_cache.get_cache(3);
+            const BmpCache::cache_ & c4 = this->bmp_cache.get_cache(4);
 
             payload.out_uint16_le(c3.entries());
             payload.out_uint16_le(c3.bmp_size());
@@ -503,7 +503,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     void save_bmp_caches()
     {
         for (uint8_t cache_id = 0
-        ; cache_id < BmpCache::MAXIMUM_NUMBER_OF_CACHES && this->bmp_cache.number_of_cache > cache_id
+        ; cache_id < this->bmp_cache.number_of_cache
         ; ++cache_id) {
             const size_t entries = this->bmp_cache.get_cache(cache_id).entries();
             for (size_t i = 0; i < entries; i++){

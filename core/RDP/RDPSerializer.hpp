@@ -371,7 +371,7 @@ public:
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & oldbmp)
     {
         uint32_t res          = this->bmp_cache.cache_bitmap(oldbmp);
-        bool     in_wait_list = (res >> 16) & 0x80;
+        bool     in_wait_list = (res >> 16) & BmpCache::IN_WAIT_LIST;
         uint8_t  cache_id     = (res >> 16) & 0x7;
         uint16_t cache_idx    = res;
 
@@ -400,7 +400,7 @@ public:
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & oldbmp) {
         uint32_t res          = this->bmp_cache.cache_bitmap(oldbmp);
-        bool     in_wait_list = (res >> 16) & 0x80;
+        bool     in_wait_list = (res >> 16) & BmpCache::IN_WAIT_LIST;
         uint8_t  cache_id     = (res >> 16) & 0x7;
         uint16_t cache_idx    = res;
 
