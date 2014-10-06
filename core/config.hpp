@@ -674,7 +674,7 @@ struct Inifile : public FieldObserver {
 
         unsigned wrm_color_depth_selection_strategy; // 0: 24-bit, 1: 16-bit
 
-        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy
+        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy, 3: LZMA
     } video;
 
     // Section "Crypto"
