@@ -266,7 +266,6 @@ int main(int argc, char * argv[]) {
             //mod_rdp_params.enable_tls                          = true;
             mod_rdp_params.enable_nla                          = ini.mod_rdp.enable_nla;
             mod_rdp_params.enable_krb                          = ini.mod_rdp.enable_kerberos;
-            mod_rdp_params.enable_clipboard                    = ini.client.clipboard.get();
             //mod_rdp_params.enable_fastpath                     = true;
             //mod_rdp_params.enable_mem3blt                      = true;
             mod_rdp_params.enable_bitmap_update                = ini.globals.enable_bitmap_update;
@@ -287,6 +286,9 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.enable_cache_waiting_list           = ini.mod_rdp.cache_waiting_list;
             mod_rdp_params.password_printing_mode              = ini.debug.password;
             mod_rdp_params.cache_verbose                       = ini.debug.cache;
+
+            mod_rdp_params.allow_channels                      = &(ini.mod_rdp.allow_channels.get());
+            mod_rdp_params.deny_channels                       = &(ini.mod_rdp.deny_channels.get());
 
             mod_rdp mod(&mod_trans, front, client_info, gen, mod_rdp_params);
             mod.get_event().st = &mod_trans;

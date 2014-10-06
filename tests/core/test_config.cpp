@@ -176,7 +176,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
@@ -185,6 +184,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(std::string("cliprdr"),           std::string(ini.client.allow_channels.c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.client.deny_channels.c_str()));
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -195,7 +196,10 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL(std::string("cliprdr"),           std::string(ini.mod_rdp.allow_channels.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.mod_rdp.deny_channels.get_cstr()));
 
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
@@ -441,7 +445,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
@@ -450,6 +453,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(std::string("cliprdr"),           std::string(ini.client.allow_channels.c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.client.deny_channels.c_str()));
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -460,9 +465,12 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL(std::string("cliprdr"),           std::string(ini.mod_rdp.allow_channels.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.mod_rdp.deny_channels.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_OK)));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_CANCEL)));
@@ -722,7 +730,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
@@ -731,6 +738,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(std::string("cliprdr"),           std::string(ini.client.allow_channels.c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.client.deny_channels.c_str()));
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -741,7 +750,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL(std::string("cliprdr"),           std::string(ini.mod_rdp.allow_channels.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.mod_rdp.deny_channels.get_cstr()));
 
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
@@ -791,7 +803,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "performance_flags_force_present=0x1\n"
                           "performance_flags_force_not_present=0x0\n"
                           "tls_fallback_legacy=yes\n"
-                          "clipboard=no\n"
                           "device_redirection=no\n"
                           "tls_support=no\n"
                           "rdp_compression=1\n"
@@ -801,6 +812,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "cache_waiting_list=no\n"
                           "persist_bitmap_cache_on_disk=yes\n"
                           "bitmap_compression=true\n"
+                          "allow_channels=audin\n"
+                          "deny_channels=*\n"
                           "\n"
                           "[mod_rdp]\n"
                           "disconnect_on_logon_user_change=yes\n"
@@ -811,8 +824,11 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "persistent_disk_bitmap_cache=false\n"
                           "cache_waiting_list=no\n"
                           "persist_bitmap_cache_on_disk=true\n"
+                          "allow_channels=audin\n"
+                          "deny_channels=*\n"
                           "\n"
                           "[mod_vnc]\n"
+                          "clipboard=yes\n"
                           "encodings=16,2,0,1,-239\n"
                           "allow_authentification_retries=yes\n"
                           "\n"
@@ -980,7 +996,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(false,                            ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(1,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.client.disable_tsk_switch_shortcuts.get());
@@ -989,6 +1004,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(true,                             ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(std::string("audin"),             std::string(ini.client.allow_channels.c_str()));
+    BOOST_CHECK_EQUAL(std::string("*"),                 std::string(ini.client.deny_channels.c_str()));
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.disconnect_on_logon_user_change);
@@ -999,7 +1016,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL(std::string("audin"),             std::string(ini.mod_rdp.allow_channels.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("*"),                 std::string(ini.mod_rdp.deny_channels.get_cstr()));
 
+    BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.clipboard.get());
     BOOST_CHECK_EQUAL(std::string("16,2,0,1,-239"),     ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.allow_authentification_retries);
 
@@ -1210,7 +1230,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
@@ -1418,7 +1437,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
@@ -1611,7 +1629,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
@@ -1798,7 +1815,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
@@ -1978,7 +1994,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
@@ -2158,7 +2173,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
@@ -2327,7 +2341,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());

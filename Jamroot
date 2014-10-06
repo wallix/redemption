@@ -340,6 +340,7 @@ exe tls_test_server
 
 import testing ;
 
+unit-test test_splitter : tests/utils/test_splitter.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_unique_ptr : tests/utils/test_unique_ptr.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_stream : tests/utils/test_stream.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_inputarray : tests/utils/test_inputarray.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -627,11 +628,11 @@ unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp krb5 gss
 unit-test test_darray : tests/utils/test_darray.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 
-# Widget for workflow
+## Widget for workflow
+## @{
 unit-test test_flat_wait : tests/mod/internal/widget2/test_flat_wait.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_flat_form : tests/mod/internal/widget2/test_flat_form.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
-
-unit-test test_splitter : tests/utils/test_splitter.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+## @}
 
 unit-test test_authorization_channels : tests/utils/test_authorization_channels.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
