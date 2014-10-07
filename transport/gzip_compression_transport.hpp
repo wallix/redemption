@@ -106,7 +106,8 @@ private:
 
                     const uint16_t compressed_data_length = data_stream.in_uint16_le();
                     if (this->verbose) {
-                        LOG(LOG_INFO, "GZipCompressionInTransport::do_recv: compressed_data_length=%u", compressed_data_length);
+                        LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: compressed_data_length=%u"
+                           , compressed_data_length);
                     }
 
                     data_stream.reset();
@@ -211,11 +212,11 @@ private:
         this->compression_stream.avail_in = data_length;
         this->compression_stream.next_in  = const_cast<uint8_t *>(data);
 
-        uint8_t compressed_data[GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
+        uint8_t temp_compressed_data[GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
 
         do {
-            this->compression_stream.avail_out = sizeof(compressed_data);
-            this->compression_stream.next_out  = reinterpret_cast<unsigned char *>(compressed_data);
+            this->compression_stream.avail_out = sizeof(temp_compressed_data);
+            this->compression_stream.next_out  = reinterpret_cast<unsigned char *>(temp_compressed_data);
 
             int ret = ::deflate(&this->compression_stream, flush);
             if (this->verbose & 0x2) {
@@ -225,25 +226,29 @@ private:
             REDASSERT(ret != Z_STREAM_ERROR);
 
             if (this->verbose & 0x2) {
-                LOG( LOG_INFO, "GZipCompressionOutTransport::compress: compressed_data_capacity=%u avail_out=%u"
-                   , sizeof(compressed_data), this->compression_stream.avail_out);
+                LOG( LOG_INFO
+                   , "GZipCompressionOutTransport::compress: compressed_data_capacity=%u avail_out=%u"
+                   , sizeof(temp_compressed_data), this->compression_stream.avail_out);
             }
-            const size_t compressed_data_length = sizeof(compressed_data) - this->compression_stream.avail_out;
+            const size_t temp_compressed_data_length =
+                sizeof(temp_compressed_data) - this->compression_stream.avail_out;
 
             BStream buffer_stream(128);
 
             buffer_stream.out_uint8(this->reset_compressor ? 1 : 0);
             this->reset_compressor = false;
 
-            buffer_stream.out_uint16_le(compressed_data_length);
+            buffer_stream.out_uint16_le(temp_compressed_data_length);
             if (this->verbose) {
-                LOG(LOG_INFO, "GZipCompressionOutTransport::compress: compressed_data_length=%u", compressed_data_length);
+                LOG( LOG_INFO
+                   , "GZipCompressionOutTransport::compress: temp_compressed_data_length=%u"
+                   , temp_compressed_data_length);
             }
 
             buffer_stream.mark_end();
             this->target_transport.send(buffer_stream);
 
-            this->target_transport.send(compressed_data, compressed_data_length);
+            this->target_transport.send(temp_compressed_data, temp_compressed_data_length);
         }
         while (this->compression_stream.avail_out == 0);
         REDASSERT(this->compression_stream.avail_in == 0);
@@ -295,7 +300,8 @@ private:
         }
 
         if (this->verbose & 0x4) {
-            LOG(LOG_INFO, "GZipCompressionOutTransport::do_send: uncompressed_data_length=%u", this->uncompressed_data_length);
+            LOG( LOG_INFO, "GZipCompressionOutTransport::do_send: uncompressed_data_length=%u"
+               , this->uncompressed_data_length);
         }
     }
 

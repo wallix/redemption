@@ -330,6 +330,7 @@ public:
                                       , this->front.client_info.width
                                       , this->front.client_info.height
                                       , this->ini.context.auth_error_message
+                                      , this->ini
                                       );
             if (this->verbose){
                 LOG(LOG_INFO, "ModuleManager::internal module 'test' ready");
