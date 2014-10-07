@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(TestGZipCompressionTransport)
         MemoryTransport mt;
 
         {
-            GZipCompressionOutTransport out_trans(mt);
+            GZipCompressionOutTransport out_trans(mt, 0xFFFF);
 
             out_trans.send(
                   "azert"
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestGZipCompressionTransport)
         }
 
         {
-            GZipCompressionInTransport  in_trans(mt);
+            GZipCompressionInTransport  in_trans(mt, 0xFFFF);
 
             char   in_data[128] = { 0 };
             char * in_buffer   = in_data;

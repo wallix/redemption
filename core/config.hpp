@@ -669,7 +669,7 @@ struct Inifile : public FieldObserver {
 
         unsigned wrm_color_depth_selection_strategy; // 0: 24-bit, 1: 16-bit
 
-        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy
+        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy, 3: LZMA
     } video;
 
     // Section "Crypto"
@@ -1058,7 +1058,7 @@ public:
         this->debug.password          = 0;
         this->debug.compression       = 0;
         this->debug.cache             = 0;
-	this->debug.bitmap_update     = 0;
+        this->debug.bitmap_update     = 0;
 
         this->debug.log_type          = 2; // syslog by default
         this->debug.log_file_path[0]  = 0;

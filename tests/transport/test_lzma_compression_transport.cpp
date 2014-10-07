@@ -23,8 +23,8 @@
 #define BOOST_TEST_MODULE TestLzmaCompressionTransport
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
 #include "lzma_compression_transport.hpp"
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(TestLzmaCompressionTransport)
         MemoryTransport mt;
 
         {
-            LzmaCompressionOutTransport out_trans(mt);
+            LzmaCompressionOutTransport out_trans(mt, false, 0xFFFF);
 
             out_trans.send(
                   "azert"
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestLzmaCompressionTransport)
         }
 
         {
-            LzmaCompressionInTransport  in_trans(mt);
+            LzmaCompressionInTransport  in_trans(mt, 0xFFFF);
 
             char   in_data[128] = { 0 };
             char * in_buffer   = in_data;
