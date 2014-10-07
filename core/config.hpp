@@ -24,18 +24,13 @@
 #ifndef _REDEMPTION_CORE_CONFIG_HPP_
 #define _REDEMPTION_CORE_CONFIG_HPP_
 
-#include <dirent.h>
 #include <stdio.h>
 
 #include "log.hpp"
 
-#include <istream>
 #include <string>
 #include <stdint.h>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <map>
+#include <stdexcept>
 
 #include <fileutils.hpp>
 #include <string.hpp>
