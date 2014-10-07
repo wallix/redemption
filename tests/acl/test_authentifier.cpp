@@ -30,6 +30,13 @@
 #include "count_transport.hpp"
 #include "test_transport.hpp"
 
+struct ActivityAlwaysTrue : ActivityChecker {
+    virtual bool check_and_reset_activity() { return true; };
+};
+struct ActivityAlwaysFalse : ActivityChecker {
+    virtual bool check_and_reset_activity() { return false; };
+};
+
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 {
@@ -105,7 +112,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     ;
 
     TestTransport acl_trans("test", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    SessionManager sesman(mm.ini, acl_trans, 10000, 10010);
+    ActivityAlwaysTrue activity_checker;
+    SessionManager sesman(mm.ini, activity_checker, acl_trans, 10000, 10010);
     signal = BACK_EVENT_NEXT;
 
     CountTransport keepalivetrans;
@@ -213,7 +221,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     ;
 
     TestTransport acl_trans("test", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    SessionManager sesman(mm.ini, acl_trans, 10000, 10010);
+    ActivityAlwaysTrue activity_checker;
+    SessionManager sesman(mm.ini, activity_checker, acl_trans, 10000, 10010);
     signal = BACK_EVENT_NEXT;
 
     CountTransport keepalivetrans;
@@ -411,7 +420,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     TestTransport acl_trans("test", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     CountTransport keepalivetrans;
-    SessionManager sesman(ini, acl_trans, 10000, 10010);
+    ActivityAlwaysFalse activity_checker;
+    SessionManager sesman(ini, activity_checker, acl_trans, 10000, 10010);
     signal = BACK_EVENT_NEXT;
 
 

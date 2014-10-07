@@ -73,6 +73,7 @@
 #include "RDP/PersistentKeyListPDU.hpp"
 
 #include "front_api.hpp"
+#include "activity_checker.hpp"
 #include "genrandom.hpp"
 
 #include "auth_api.hpp"
@@ -83,8 +84,13 @@ enum {
     FRONT_RUNNING
 };
 
-class Front : public FrontAPI {
+class Front : public FrontAPI, public ActivityChecker{
     using FrontAPI::draw;
+
+    bool has_activity = true;
+    time_t last_activity_time;
+    time_t inactivity_timeout;
+
 public:
     enum CaptureState {
           CAPTURE_STATE_UNKNOWN
@@ -2205,7 +2211,7 @@ public:
             X224::DT_TPDU_Recv x224(stream);
 
             int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
-            
+
             if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
@@ -2448,7 +2454,7 @@ public:
             uint8_t * end = array.get_data();
             X224::RecvFactory fx224(*this->trans, &end, array.size(), true);
             InStream stream(array, 0, 0, end - array.get_data());
-            
+
             if (fx224.fast_path){
                 FastPath::ClientInputEventPDU_Recv cfpie(stream, this->decrypt);
 
@@ -2493,6 +2499,7 @@ public:
                                 }
                                 else {
                                     cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                                    this->has_activity = true;
                                 }
                             }
                         }
@@ -2512,6 +2519,7 @@ public:
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
                                 cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                                this->has_activity = true;
                             }
                         }
                         break;
@@ -2533,6 +2541,7 @@ public:
                             this->keymap.synchronize(se.eventFlags & 0xFFFF);
                             if (this->up_and_running) {
                                 cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
+                                this->has_activity = true;
                             }
                         }
                         break;
@@ -3788,6 +3797,7 @@ public:
                             this->keymap.synchronize(se.toggleFlags & 0xFFFF);
                             if (this->up_and_running){
                                 cb.rdp_input_synchronize(ie.eventTime, 0, se.toggleFlags & 0xFFFF, (se.toggleFlags & 0xFFFF0000) >> 16);
+                                this->has_activity = true;
                             }
                         }
                         break;
@@ -3804,6 +3814,7 @@ public:
                             this->mouse_y = me.yPos;
                             if (this->up_and_running){
                                 cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                                this->has_activity = true;
                             }
                         }
                         break;
@@ -3837,6 +3848,7 @@ public:
                                 }
                                 else {
                                     cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
+                                    this->has_activity = true;
                                 }
                             }
                         }
@@ -5036,6 +5048,13 @@ public:
                 }
             }
         }
+    }
+
+    virtual bool check_and_reset_activity()
+    {
+        const bool res = this->has_activity;
+        this->has_activity = false;
+        return res;
     }
 };
 
