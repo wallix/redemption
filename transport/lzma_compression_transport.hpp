@@ -133,12 +133,11 @@ private:
                 this->compression_stream.next_out  = this->uncompressed_data;
 
                 lzma_ret ret = ::lzma_code(&this->compression_stream, action);
-                REDASSERT((ret == LZMA_OK) || (ret == LZMA_STREAM_END));
-
                 if (this->verbose & 0x2) {
                     LOG(LOG_INFO, "LzmaCompressionInTransport::do_recv: lzma_code return %d", ret);
                 }
 (void)ret;
+                REDASSERT((ret == LZMA_OK) || (ret == LZMA_STREAM_END));
 
                 if (this->verbose & 0x2) {
                     LOG( LOG_INFO, "LzmaCompressionInTransport::do_recv: uncompressed_data_capacity=%u avail_out=%u"
@@ -223,7 +222,7 @@ private:
             LOG(LOG_INFO, "LzmaCompressionOutTransport::compress: end=%s", (end ? "true" : "false"));
         }
 
-        const lzma_action action = (end ? LZMA_FINISH : LZMA_RUN);
+        const lzma_action action = (end ? LZMA_FINISH : /*LZMA_RUN*/LZMA_SYNC_FLUSH);
 
         this->compression_stream.avail_in = data_length;
         this->compression_stream.next_in  = const_cast<uint8_t *>(data);

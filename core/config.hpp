@@ -1063,7 +1063,7 @@ public:
         this->debug.password          = 0;
         this->debug.compression       = 0;
         this->debug.cache             = 0;
-	this->debug.bitmap_update     = 0;
+        this->debug.bitmap_update     = 0;
 
         this->debug.log_type          = 2; // syslog by default
         this->debug.log_file_path[0]  = 0;

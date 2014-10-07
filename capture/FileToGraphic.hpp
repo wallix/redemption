@@ -218,7 +218,7 @@ public:
         , info_compression_algorithm(0)
         , ignore_frame_in_timeval(false)
         , gzcit(*trans)
-        , lcit(*trans)
+        , lcit(*trans, verbose)
         , scit(*trans)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now

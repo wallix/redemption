@@ -136,6 +136,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     const uint8_t wrm_format_version;
 
+    const uint32_t verbose;
+
     GraphicToFile(const timeval& now
                 , Transport * trans
                 , const uint16_t width
@@ -143,7 +145,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
                 , const uint8_t  capture_bpp
                 , BmpCache & bmp_cache
                 , RDPDrawable & drawable
-                , const Inifile & ini)
+                , const Inifile & ini
+                , uint32_t verbose = 0)
     : RDPSerializer( trans, this->buffer_stream_orders
                    , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, 0, 1, 1, ini)
     , RDPCaptureDevice()
@@ -163,9 +166,10 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     , keyboard_buffer_32(GTF_SIZE_KEYBUF_REC * sizeof(uint32_t))
     , ini(ini)
     , gzcot(*trans)
-    , lcot(*trans)
+    , lcot(*trans, false, verbose)
     , scot(*trans)
     , wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 4)) ? 4 : 3)
+    , verbose(verbose)
     {
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;

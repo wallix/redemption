@@ -218,10 +218,10 @@ private:
             this->compression_stream.next_out  = reinterpret_cast<unsigned char *>(compressed_data);
 
             int ret = ::deflate(&this->compression_stream, flush);
-(void)ret;
             if (this->verbose & 0x2) {
                 LOG(LOG_INFO, "GZipCompressionOutTransport::compress: deflate return %d", ret);
             }
+(void)ret;
             REDASSERT(ret != Z_STREAM_ERROR);
 
             if (this->verbose & 0x2) {
