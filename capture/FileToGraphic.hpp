@@ -37,7 +37,7 @@
 #include "RDP/share.hpp"
 #include "difftimeval.hpp"
 #include "gzip_compression_transport.hpp"
-#include "lzma_compression_transport.hpp"
+//#include "lzma_compression_transport.hpp"
 #include "snappy_compression_transport.hpp"
 #include "chunked_image_transport.hpp"
 
@@ -148,7 +148,7 @@ public:
     bool ignore_frame_in_timeval;
 
     GZipCompressionInTransport   gzcit;
-    LzmaCompressionInTransport   lcit;
+    //LzmaCompressionInTransport   lcit;
     SnappyCompressionInTransport scit;
 
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
@@ -218,7 +218,7 @@ public:
         , info_compression_algorithm(0)
         , ignore_frame_in_timeval(false)
         , gzcit(*trans)
-        , lcit(*trans, verbose)
+        //, lcit(*trans, verbose)
         , scit(*trans)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
@@ -691,7 +691,8 @@ public:
                     this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
 
                     this->info_compression_algorithm = this->stream.in_uint8();
-                    REDASSERT(this->info_compression_algorithm < 4);
+                    //REDASSERT(this->info_compression_algorithm < 4);
+                    REDASSERT(this->info_compression_algorithm < 3);
 
                     switch (this->info_compression_algorithm) {
                     case 1:
@@ -700,9 +701,9 @@ public:
                     case 2:
                         this->trans = &this->scit;
                         break;
-                    case 3:
-                        this->trans = &this->lcit;
-                        break;
+                    //case 3:
+                    //    this->trans = &this->lcit;
+                    //    break;
                     default:
                         this->trans = this->trans_source;
                         break;

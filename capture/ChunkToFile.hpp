@@ -23,7 +23,7 @@
 
 #include "RDPChunkedDevice.hpp"
 #include "gzip_compression_transport.hpp"
-#include "lzma_compression_transport.hpp"
+//#include "lzma_compression_transport.hpp"
 #include "snappy_compression_transport.hpp"
 
 struct ChunkToFile : public RDPChunkedDevice {
@@ -34,7 +34,7 @@ private:
     const Inifile & ini;
 
     GZipCompressionOutTransport   gzcot;
-    LzmaCompressionOutTransport   lcot;
+    //LzmaCompressionOutTransport   lcot;
     SnappyCompressionOutTransport scot;
 
     const uint8_t wrm_format_version;
@@ -72,11 +72,13 @@ public:
     , trans(trans)
     , ini(ini)
     , gzcot(*trans)
-    , lcot(*trans, true, ini.debug.capture)
+    //, lcot(*trans, true, ini.debug.capture)
     , scot(*trans)
-    , wrm_format_version((ini.video.wrm_compression_algorithm > 0) ? 4 : 3)
+    //, wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 4)) ? 4 : 3)
+    , wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 3)) ? 4 : 3)
     {
-        REDASSERT(this->ini.video.wrm_compression_algorithm < 4);
+        //REDASSERT(this->ini.video.wrm_compression_algorithm < 4);
+        REDASSERT(this->ini.video.wrm_compression_algorithm < 3);
 
         if (this->ini.video.wrm_compression_algorithm == 1) {
             this->trans = &this->gzcot;
@@ -84,9 +86,9 @@ public:
         else if (this->ini.video.wrm_compression_algorithm == 2) {
             this->trans = &this->scot;
         }
-        else if (this->ini.video.wrm_compression_algorithm == 3) {
-            this->trans = &this->lcot;
-        }
+        //else if (this->ini.video.wrm_compression_algorithm == 3) {
+        //    this->trans = &this->lcot;
+        //}
 
         this->send_meta_chunk( info_width
                              , info_height
@@ -166,7 +168,8 @@ private:
             payload.out_uint16_le(info_cache_4_size);
             payload.out_uint8(info_cache_4_persistent);
 
-            payload.out_uint8(this->ini.video.wrm_compression_algorithm);
+            //payload.out_uint8((ini.video.wrm_compression_algorithm < 4) ? this->ini.video.wrm_compression_algorithm : 0);
+            payload.out_uint8((ini.video.wrm_compression_algorithm < 3) ? this->ini.video.wrm_compression_algorithm : 0);
         }
         payload.mark_end();
 

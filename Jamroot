@@ -236,7 +236,7 @@ exe rdpproxy
         png
 
         snappy
-        lzma
+#        lzma
         libboost_program_options
 
         krb5
@@ -260,7 +260,7 @@ exe redrec
         dl
 
         snappy
-        lzma
+#        lzma
         libboost_program_options
     :
         <link>static
@@ -281,7 +281,7 @@ exe rdptproxy
         dl
 
         snappy
-        lzma
+#        lzma
         libboost_program_options
 
         krb5

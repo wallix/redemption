@@ -69,7 +69,7 @@ public:
     uint8_t  info_compression_algorithm;
 
     GZipCompressionInTransport   gzcit;
-    LzmaCompressionInTransport   lcit;
+    //LzmaCompressionInTransport   lcit;
     SnappyCompressionInTransport scit;
 
     FileToChunk(Transport * trans, uint32_t verbose)
@@ -107,7 +107,7 @@ public:
         , info_cache_4_persistent(false)
         , info_compression_algorithm(0)
         , gzcit(*trans)
-        , lcit(*trans, verbose)
+        //, lcit(*trans, verbose)
         , scit(*trans) {
         while (this->next_chunk()) {
             this->interpret_chunk();
@@ -191,7 +191,8 @@ public:
                 this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
 
                 this->info_compression_algorithm = this->stream.in_uint8();
-                REDASSERT(this->info_compression_algorithm < 4);
+                //REDASSERT(this->info_compression_algorithm < 4);
+                REDASSERT(this->info_compression_algorithm < 3);
 
                 switch (this->info_compression_algorithm) {
                 case 1:
@@ -200,9 +201,9 @@ public:
                 case 2:
                     this->trans = &this->scit;
                     break;
-                case 3:
-                    this->trans = &this->lcit;
-                    break;
+                //case 3:
+                //    this->trans = &this->lcit;
+                //    break;
                 default:
                     this->trans = this->trans_source;
                     break;

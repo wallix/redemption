@@ -105,6 +105,7 @@ int main(int argc, char** argv)
     ("zoom", boost::program_options::value<uint32_t>(&zoom), "scaling factor for png capture (default 100%)")
     ("meta,m", "show file metadata")
 
+    //("compression,z", boost::program_options::value(&wrm_compression_algorithm), "wrm compression algorithm (default=original, none, gzip, snappy, lzma)")
     ("compression,z", boost::program_options::value(&wrm_compression_algorithm), "wrm compression algorithm (default=original, none, gzip, snappy)")
     ("color-depth,d", boost::program_options::value(&wrm_color_depth),           "wrm color depth (default=original, 16, 24)")
 
@@ -171,9 +172,9 @@ int main(int argc, char** argv)
             else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "snappy"  )) {
                 ini.video.wrm_compression_algorithm = 2;
             }
-            else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "lzma"    )) {
-                ini.video.wrm_compression_algorithm = 3;
-            }
+            //else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "lzma"    )) {
+            //    ini.video.wrm_compression_algorithm = 3;
+            //}
             else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "original")) {
                 ini.video.wrm_compression_algorithm = USE_ORIGINAL_COMPRESSION_ALGORITHM;
             }
