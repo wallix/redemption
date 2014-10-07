@@ -101,10 +101,10 @@ public:
 
     virtual wait_obj& get_event() { return this->event; }
 
-    uint16_t get_front_width() const { return this->front_width; }
-    uint16_t get_front_height() const { return this->front_height; }
-
 protected:
+    static uint16_t get_front_width(const mod_api & mod) { return mod.front_width; }
+    static uint16_t get_front_height(const mod_api & mod) { return mod.front_height; }
+
     static RDPGraphicDevice * get_gd(mod_api & mod)
     {
         return mod.gd;

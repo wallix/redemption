@@ -47,6 +47,8 @@
 #include "internal/flat_dialog_mod.hpp"
 #include "internal/widget_test_mod.hpp"
 
+#include "mod_osd.hpp"
+
 #define STRMODULE_LOGIN            "login"
 #define STRMODULE_SELECTOR         "selector"
 #define STRMODULE_SELECTOR_LEGACY  "selector_legacy"
@@ -638,6 +640,9 @@ public:
                 UdevRandom gen;
                 this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
                 this->mod->get_event().st = t;
+
+                Bitmap bmp("/home/jpoelen/projects/redemption-public/tests/fixtures/ad24b.bmp");
+                this->mod = new mod_osd(this->front, *this->mod, bmp);
 
                 // DArray<Rect> rects(1);
                 // rects[0] = Rect(0, 0, this->front.client_info.width, this->front.client_info.height);
