@@ -25,6 +25,10 @@
 #include "RDP/mppc.hpp"
 #include "RDP/mppc_61.hpp"
 
+/*****************************
+* BulkCompressionInTransport
+*/
+
 class BulkCompressionInTransport : public Transport {
     Transport & source_transport;
 
@@ -105,6 +109,10 @@ private:
     }
 };  // class BulkCompressionInTransport
 
+
+/******************************
+* BulkCompressionOutTransport
+*/
 
 class BulkCompressionOutTransport : public Transport {
     Transport & target_transport;

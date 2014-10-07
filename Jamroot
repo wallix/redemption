@@ -196,6 +196,7 @@ lib gssglue : : <name>gssglue <link>shared ;
 lib crypto : : <name>crypto <link>static ;
 lib z : : <name>z <link>static ;
 lib snappy : : <name>snappy <link>shared ;
+lib lzma : : <name>lzma <link>shared ;
 lib dl : : <name>dl <link>shared ;
 
 lib lcms : : <name>lcms <link>shared ;
@@ -490,6 +491,7 @@ unit-test test_request_full_cleaning : tests/transport/test_request_full_cleanin
 unit-test test_filename_transport : tests/transport/test_filename_transport.cpp cryptofile openssl crypto dl z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bulk_compression_transport : tests/transport/test_bulk_compression_transport.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_lzma_compression_transport : tests/transport/test_lzma_compression_transport.cpp lzma libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_buffering_buf : tests/transport/buffer/test_buffering_buf.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 

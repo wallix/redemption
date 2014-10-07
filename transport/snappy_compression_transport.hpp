@@ -27,7 +27,7 @@
 
 static const size_t SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
 
-/******************************
+/*******************************
 * SnappyCompressionInTransport
 */
 
