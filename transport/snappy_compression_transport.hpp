@@ -18,16 +18,16 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
+#ifndef REDEMPTION_TRANSPORT_SNAPPY_COMPRESSION_TRANSPORT_HPP
+#define REDEMPTION_TRANSPORT_SNAPPY_COMPRESSION_TRANSPORT_HPP
+
 #include <snappy-c.h>
 
 #include "transport.hpp"
 
-#ifndef REDEMPTION_TRANSPORT_SNAPPY_COMPRESSION_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_SNAPPY_COMPRESSION_TRANSPORT_HPP
-
 static const size_t SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
 
-/******************************
+/*******************************
 * SnappyCompressionInTransport
 */
 

@@ -80,5 +80,5 @@ BOOST_AUTO_TEST_CASE(TestSnappyCompressionTransport)
             in_trans.recv(&in_buffer, 65);
             LOG(LOG_INFO, "in_data=\"%s\"", in_data);
         }
-        //}
+    //}
 }

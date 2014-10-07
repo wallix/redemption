@@ -45,6 +45,7 @@ public:
 private:
     static const uint16_t MAXIMUM_NUMBER_OF_CACHE_ENTRIES = 8192;
 
+    // For Persistent Disk Bitmap Cache's Wait List.
     struct cache_lite_element {
         uint_fast32_t stamp;
         uint8_t sha1[20];
@@ -71,6 +72,7 @@ private:
         }
     };
 
+    // For all other Bitmap Caches.
     struct cache_element
     {
         Bitmap bmp;
