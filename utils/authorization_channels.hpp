@@ -24,6 +24,7 @@
 #include "channel_list.hpp"
 #include "splitter.hpp"
 #include "string.hpp"
+#include "iter.hpp"
 #include "log.hpp"
 #include <iterator>
 #include <cassert>
@@ -32,27 +33,27 @@
 struct AuthorizationChannels {
     static const size_t max_authorization_channels = CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS;
 
-    class ChannelName {
-        char name_[CHANNELS::ChannelDef::max_size_name+1];
-
-    public:
-        void assign(const char * s, std::size_t n) {
-            std::copy(s, s + n, std::begin(this->name_));
-            this->name_[n] = 0;
-        }
-
-        bool operator==(const char * s) const noexcept {
-            return !strcmp(this->name_, s);
-        }
-
-        bool empty() const noexcept {
-            return !this->name_[0];
-        }
-    };
-
-public:
     class ChannelNameArray
     {
+        class ChannelName
+        {
+            char name_[CHANNELS::ChannelDef::max_size_name+1];
+
+        public:
+            void assign(const char * s, std::size_t n) {
+                std::copy(s, s + n, std::begin(this->name_));
+                this->name_[n] = 0;
+            }
+
+            bool operator==(const char * s) const noexcept {
+                return !strcmp(this->name_, s);
+            }
+
+            bool empty() const noexcept {
+                return !this->name_[0];
+            }
+        };
+
         ChannelName names[max_authorization_channels];
         ChannelName * pos = names;
 
@@ -64,17 +65,9 @@ public:
 
     public:
         void push_back(const char * name, std::size_t n) {
-            assert((this->end() != this->begin() + this->max_size()) && n <= CHANNELS::ChannelDef::max_size_name);
+            assert((this->pos != this->names + this->max_size()) && n <= CHANNELS::ChannelDef::max_size_name);
             this->pos->assign(name, n);
             ++this->pos;
-        }
-
-        ChannelName const * begin() const {
-            return this->names;
-        }
-
-        ChannelName const * end() const {
-            return this->pos;
         }
 
         constexpr static size_t max_size() {
@@ -82,7 +75,7 @@ public:
         }
 
         bool contains(const char * s) const {
-            for (ChannelName const & name : *this) {
+            for (ChannelName const & name : iter(this->names, this->pos)) {
                 if (name == s) {
                     return true;
                 }
