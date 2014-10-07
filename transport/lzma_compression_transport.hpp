@@ -36,6 +36,8 @@ class LzmaCompressionInTransport : public Transport {
 
     lzma_stream compression_stream;
 
+    BStream compressed_data;
+
     uint8_t * uncompressed_data;
     size_t    uncompressed_data_length;
     uint8_t   uncompressed_data_buffer[LZMA_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
@@ -49,6 +51,7 @@ public:
     : Transport()
     , source_transport(st)
     , compression_stream()
+    , compressed_data(LZMA_COMPRESSION_TRANSPORT_BUFFER_LENGTH)
     , uncompressed_data(NULL)
     , uncompressed_data_length(0)
     , uncompressed_data_buffer()
@@ -57,8 +60,8 @@ public:
         this->compression_stream = LZMA_STREAM_INIT;
 
         lzma_ret ret = ::lzma_stream_decoder( &this->compression_stream
-                                            , UINT64_MAX                    // No memory limit.
-                                            , LZMA_TELL_UNSUPPORTED_CHECK);
+                                            , UINT64_MAX                                        // No memory limit.
+                                            , LZMA_TELL_UNSUPPORTED_CHECK | LZMA_CONCATENATED);
 (void)ret;
     }
 
@@ -86,15 +89,15 @@ private:
                 temp_data_length -= data_length;
             }
             else {
-                BStream data_stream(LZMA_COMPRESSION_TRANSPORT_BUFFER_LENGTH);
+                this->compressed_data.reset();
 
                 if (!this->decode_pending) {
                     this->source_transport.recv(
-                          &data_stream.end
-                        , 3                 // reset_decompressor(1) + compressed_data_length(2)
+                          &this->compressed_data.end
+                        , 5                             // reset_decompressor(1) + compressed_data_length(4)
                         );
 
-                    if (data_stream.in_uint8() == 1) {
+                    if (this->compressed_data.in_uint8() == 1) {
                         REDASSERT(this->decode_pending == false);
 
                         if (this->verbose) {
@@ -105,26 +108,24 @@ private:
                         this->compression_stream = LZMA_STREAM_INIT;
 
                         lzma_ret ret = ::lzma_stream_decoder( &this->compression_stream
-                                                            , UINT64_MAX                    // No memory limit.
-                                                            , LZMA_TELL_UNSUPPORTED_CHECK);
+                                                            , UINT64_MAX                                        // No memory limit.
+                                                            , LZMA_TELL_UNSUPPORTED_CHECK | LZMA_CONCATENATED);
 (void)ret;
                     }
 
-                    const uint16_t compressed_data_length = data_stream.in_uint16_le();
+                    const size_t compressed_data_length = this->compressed_data.in_uint32_le();
                     if (this->verbose) {
                         LOG( LOG_INFO, "LzmaCompressionInTransport::do_recv: compressed_data_length=%u"
                            , compressed_data_length);
                     }
 
-                    data_stream.reset();
+                    this->compressed_data.reset();
 
-                    this->source_transport.recv(&data_stream.end, compressed_data_length);
+                    this->source_transport.recv(&this->compressed_data.end, compressed_data_length);
 
                     this->compression_stream.avail_in = compressed_data_length;
-                    this->compression_stream.next_in  = data_stream.get_data();
+                    this->compression_stream.next_in  = this->compressed_data.get_data();
                 }
-
-                const lzma_action action = LZMA_RUN;
 
                 this->uncompressed_data = this->uncompressed_data_buffer;
 
@@ -133,7 +134,7 @@ private:
                 this->compression_stream.avail_out = uncompressed_data_capacity;
                 this->compression_stream.next_out  = this->uncompressed_data;
 
-                lzma_ret ret = ::lzma_code(&this->compression_stream, action);
+                lzma_ret ret = ::lzma_code(&this->compression_stream, LZMA_RUN);
                 if (this->verbose & 0x2) {
                     LOG(LOG_INFO, "LzmaCompressionInTransport::do_recv: lzma_code return %d", ret);
                 }
@@ -175,6 +176,9 @@ class LzmaCompressionOutTransport : public Transport {
     uint8_t uncompressed_data[LZMA_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
     size_t  uncompressed_data_length;
 
+    uint8_t compressed_data[LZMA_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
+    size_t  compressed_data_length;
+
     bool improve_compression_ratio;
 
     uint32_t verbose;
@@ -187,6 +191,8 @@ public:
     , reset_compressor(false)
     , uncompressed_data()
     , uncompressed_data_length(0)
+    , compressed_data()
+    , compressed_data_length(0)
     , improve_compression_ratio(improve_compression_ratio)
     , verbose(verbose) {
         this->compression_stream = LZMA_STREAM_INIT;
@@ -212,6 +218,10 @@ public:
             this->uncompressed_data_length = 0;
         }
 
+        if (this->compressed_data_length) {
+            this->send_to_target();
+        }
+
         ::lzma_end(&this->compression_stream);
     }
 
@@ -224,7 +234,7 @@ private:
             LOG(LOG_INFO, "LzmaCompressionOutTransport::compress: end=%s", (end ? "true" : "false"));
         }
 
-        const lzma_action action = (end ? LZMA_FINISH : /*LZMA_RUN*/LZMA_SYNC_FLUSH);
+        const lzma_action action = (end ? LZMA_FINISH : LZMA_RUN);
 
         this->compression_stream.avail_in = data_length;
         this->compression_stream.next_in  = const_cast<uint8_t *>(data);
@@ -249,23 +259,28 @@ private:
             }
             const size_t temp_compressed_data_length =
                 sizeof(temp_compressed_data) - this->compression_stream.avail_out;
-
-            BStream buffer_stream(128);
-
-            buffer_stream.out_uint8(this->reset_compressor ? 1 : 0);
-            this->reset_compressor = false;
-
-            buffer_stream.out_uint16_le(temp_compressed_data_length);
             if (this->verbose) {
                 LOG( LOG_INFO
                    , "LzmaCompressionOutTransport::compress: temp_compressed_data_length=%u"
                    , temp_compressed_data_length);
             }
 
-            buffer_stream.mark_end();
-            this->target_transport.send(buffer_stream);
+            for (size_t number_of_bytes_copied = 0; number_of_bytes_copied < temp_compressed_data_length; ) {
+                const size_t number_of_bytes_to_copy =
+                    std::min<size_t>( sizeof(this->compressed_data) - this->compressed_data_length
+                                    , temp_compressed_data_length - number_of_bytes_copied);
 
-            this->target_transport.send(temp_compressed_data, temp_compressed_data_length);
+                ::memcpy( this->compressed_data + this->compressed_data_length
+                        , temp_compressed_data + number_of_bytes_copied
+                        , number_of_bytes_to_copy);
+
+                this->compressed_data_length += number_of_bytes_to_copy;
+                number_of_bytes_copied       += number_of_bytes_to_copy;
+
+                if (this->compressed_data_length == sizeof(this->compressed_data)) {
+                    this->send_to_target();
+                }
+            }
         }
         while (this->compression_stream.avail_out == 0);
         REDASSERT(this->compression_stream.avail_in == 0);
@@ -333,6 +348,10 @@ public:
             this->uncompressed_data_length = 0;
         }
 
+        if (this->compressed_data_length) {
+            this->send_to_target();
+        }
+
         if (this->verbose) {
             LOG(LOG_INFO, "LzmaCompressionOutTransport::next: Compressor reset");
         }
@@ -356,6 +375,32 @@ public:
         return this->target_transport.next();
     }
 
+private:
+    void send_to_target() {
+        if (!this->compressed_data_length)
+            return;
+
+        BStream buffer_stream(128);
+
+        buffer_stream.out_uint8(this->reset_compressor ? 1 : 0);
+        this->reset_compressor = false;
+
+        buffer_stream.out_uint32_le(this->compressed_data_length);
+        if (this->verbose) {
+            LOG( LOG_INFO
+               , "LzmaCompressionOutTransport::send_to_target: compressed_data_length=%u"
+               , this->compressed_data_length);
+        }
+
+        buffer_stream.mark_end();
+        this->target_transport.send(buffer_stream);
+
+        this->target_transport.send(this->compressed_data, this->compressed_data_length);
+
+        this->compressed_data_length = 0;
+    }
+
+public:
     virtual void timestamp(timeval now) {
         this->target_transport.timestamp(now);
     }
