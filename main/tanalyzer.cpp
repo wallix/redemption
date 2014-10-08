@@ -210,7 +210,7 @@ public:
         }
     }
 
-    virtual void send_fastpath_data(Stream & data) {
+    virtual void send_fastpath_data(InStream & data) {
         LOG(LOG_INFO, "send_fastpath_data: data_size=%u", data.size());
 
         while (data.in_remain()) {

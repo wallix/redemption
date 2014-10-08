@@ -24,20 +24,13 @@
 #ifndef _REDEMPTION_CORE_CONFIG_HPP_
 #define _REDEMPTION_CORE_CONFIG_HPP_
 
-#include <dirent.h>
 #include <stdio.h>
 
 #include "log.hpp"
 
-#include <istream>
 #include <string>
 #include <stdint.h>
-#include <boost/program_options.hpp>
-#include <boost/algorithm/string.hpp>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <map>
+#include <stdexcept>
 
 #include <fileutils.hpp>
 #include <string.hpp>
@@ -599,6 +592,7 @@ struct Inifile : public FieldObserver {
 
         bool persistent_disk_bitmap_cache;  // default false
         bool cache_waiting_list;            // default true
+        bool persist_bitmap_cache_on_disk;  // default false
 
         bool bitmap_compression;            // default true
     } client;
@@ -619,6 +613,7 @@ struct Inifile : public FieldObserver {
 
         bool persistent_disk_bitmap_cache;  // default false
         bool cache_waiting_list;            // default true
+        bool persist_bitmap_cache_on_disk;  // default false
     } mod_rdp;
 
     struct
@@ -689,7 +684,7 @@ struct Inifile : public FieldObserver {
 
         unsigned wrm_color_depth_selection_strategy; // 0: 24-bit, 1: 16-bit
 
-        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy
+        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy, 3: LZMA
     } video;
 
     // Section "Crypto"
@@ -964,6 +959,7 @@ public:
         this->client.max_color_depth                     = 24;
         this->client.persistent_disk_bitmap_cache        = false;
         this->client.cache_waiting_list                  = true;
+        this->client.persist_bitmap_cache_on_disk        = false;
 
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
@@ -980,6 +976,7 @@ public:
         this->mod_rdp.certificate_change_action         = 0;
         this->mod_rdp.persistent_disk_bitmap_cache      = false;
         this->mod_rdp.cache_waiting_list                = true;
+        this->mod_rdp.persist_bitmap_cache_on_disk      = false;
 
         this->mod_rdp.extra_orders.empty();
         // End Section "mod_rdp"
@@ -1081,7 +1078,7 @@ public:
         this->debug.password          = 0;
         this->debug.compression       = 0;
         this->debug.cache             = 0;
-	this->debug.bitmap_update     = 0;
+        this->debug.bitmap_update     = 0;
 
         this->debug.log_type          = 2; // syslog by default
         this->debug.log_file_path[0]  = 0;
@@ -1455,6 +1452,9 @@ public:
             else if (0 == strcmp(key, "bitmap_compression")) {
                 this->client.bitmap_compression = bool_from_cstr(value);
             }
+            else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
+                this->client.persist_bitmap_cache_on_disk = bool_from_cstr(value);
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1490,6 +1490,9 @@ public:
             }
             else if (0 == strcmp(key, "cache_waiting_list")) {
                 this->mod_rdp.cache_waiting_list = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
+                this->mod_rdp.persist_bitmap_cache_on_disk = bool_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

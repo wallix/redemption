@@ -23,7 +23,7 @@
 
 namespace detail {
     struct no_param {};
-    
+
     template<class Buf>
     struct empty_ctor
     : Buf

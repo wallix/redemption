@@ -272,8 +272,11 @@ struct RdpNego
     void recv_connection_confirm(bool ignore_certificate_change)
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
-        BStream stream(65536);
-        X224::RecvFactory f(*this->trans, stream);
+
+        Array array(65536);
+        uint8_t * end = array.get_data();
+        X224::RecvFactory f(*this->trans, &end, array.size());
+        InStream stream(array, 0, 0, end - array.get_data());
         X224::CC_TPDU_Recv x224(stream);
 
         if (x224.rdp_neg_type == 0){
@@ -538,8 +541,11 @@ struct RdpNego
                        bool tls_support, bool tls_fallback_legacy) {
         // Receive Request
         {
-            BStream stream(65536);
-            X224::RecvFactory fac_x224(*this->trans, stream);
+
+            Array array(65536);
+            uint8_t * end = array.get_data();
+            X224::RecvFactory fac_x224(*this->trans, &end, array.size());
+            InStream stream(array, 0, 0, end - array.get_data());
             X224::CR_TPDU_Recv x224(stream, false);
             if (x224._header_size != (size_t)(stream.size())){
                 LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"

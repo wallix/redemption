@@ -47,7 +47,7 @@ public:
         this->t->send(stream);
     }
 
-    void send_fastpath_data(Stream & data) {
+    void send_fastpath_data(InStream & data) {
         BStream header(TRANSPARENT_CHUNT_HEADER_SIZE);
         this->make_chunk_header(header, CHUNK_TYPE_FASTPATH, data.size());
 

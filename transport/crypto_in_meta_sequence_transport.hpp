@@ -32,12 +32,12 @@ struct CryptoInMetaSequenceTransport
 {
     CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
     : CryptoInMetaSequenceTransport::TransportType(detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(
-        detail::temporary_concat(filename, extension).c_str(), crypto_ctx, crypto_ctx))
+        detail::temporary_concat(filename, extension).c_str(), 0, crypto_ctx, crypto_ctx))
     {}
 
     CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename)
     : CryptoInMetaSequenceTransport::TransportType(
-        detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(filename, crypto_ctx, crypto_ctx))
+        detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(filename, 0, crypto_ctx, crypto_ctx))
     {}
 
     unsigned begin_chunk_time() const /*noexcept*/

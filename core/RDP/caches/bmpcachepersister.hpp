@@ -340,7 +340,7 @@ public:
 private:
     static void save_to_disk(const BmpCache & bmp_cache, uint8_t cache_id, Transport & t, uint32_t verbose) {
         uint16_t bitmap_count = 0;
-        BmpCache::Cache const & cache = bmp_cache.get_cache(cache_id);
+        BmpCache::cache_ const & cache = bmp_cache.get_cache(cache_id);
 
         if (cache.persistent()) {
             for (uint16_t cache_index = 0; cache_index < cache.size(); cache_index++) {

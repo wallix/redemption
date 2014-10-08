@@ -33,6 +33,7 @@ namespace detail {
         out_meta_sequence_filename_buf_param<CryptoContext*> meta_sq_params;
         const char * hash_prefix;
         CryptoContext & cctx;
+        uint32_t verbose;
 
         crypto_out_meta_sequence_filename_buf_param(
             CryptoContext & cctx,
@@ -42,10 +43,12 @@ namespace detail {
             const char * const prefix,
             const char * const filename,
             const char * const extension,
-            const int groupid)
+            const int groupid,
+            uint32_t verbose = 0)
         : meta_sq_params(start_sec, format, prefix, filename, extension, groupid, &cctx)
         , hash_prefix(hash_prefix)
         , cctx(cctx)
+        , verbose(verbose)
         {}
     };
 
@@ -56,6 +59,7 @@ namespace detail {
         detail::MetaFilename hf_;
         CryptoContext & cctx;
         transfil::encrypt_filter encrypt_wrm;
+        uint32_t verbose;
 
         typedef out_meta_sequence_filename_buf<BufWrm, BufMwrm> sequence_base_type;
 
@@ -64,6 +68,7 @@ namespace detail {
         : sequence_base_type(params.meta_sq_params)
         , hf_(params.hash_prefix, params.meta_sq_params.sq_params.filename, params.meta_sq_params.sq_params.format)
         , cctx(params.cctx)
+        , verbose(params.verbose)
         {}
 
         ~crypto_meta_sequence_filename_buf()
@@ -115,7 +120,8 @@ namespace detail {
             char extension[256] = {};
             char filename[2048] = {};
 
-            canonical_path(hf_.filename, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
+            canonical_path( hf_.filename, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)
+                          , this->verbose);
             snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
             unsigned char hash[HASH_LEN + 1] = {0};
@@ -223,9 +229,9 @@ RequestCleaningTransport<
         detail::crypto_out_meta_sequence_filename_buf_param(
             *crypto_ctx,
             now.tv_sec,
-            format, hash_path, path, basename, ".wrm", groupid))
+            format, hash_path, path, basename, ".wrm", groupid, verbose))
     {
-        (void)verbose;
+        this->verbose = verbose;
 
         if (authentifier) {
             this->set_authentifier(authentifier);

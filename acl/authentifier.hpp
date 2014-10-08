@@ -34,6 +34,7 @@
 #include "acl_serializer.hpp"
 #include "module_manager.hpp"
 #include "translation.hpp"
+#include "activity_checker.hpp"
 
 class KeepAlive {
     // Keep alive Variables
@@ -125,16 +126,17 @@ class Inactivity {
     // hence we should have t << inactivity_timeout.
     time_t inactivity_timeout;
     time_t last_activity_time;
-    uint64_t last_total_received;
+
+    ActivityChecker & checker;
 
     uint32_t verbose;
 
 public:
-    Inactivity(uint32_t max_tick, time_t start, uint32_t verbose)
-        : inactivity_timeout(max_tick?30*max_tick:10)
-        , last_activity_time(start)
-        , last_total_received(0)
-        , verbose(verbose)
+    Inactivity(ActivityChecker & checker, uint32_t max_tick, time_t start, uint32_t verbose)
+    : inactivity_timeout(max_tick?30*max_tick:10)
+    , last_activity_time(start)
+    , checker(checker)
+    , verbose(verbose)
     {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
@@ -151,12 +153,11 @@ public:
         uint32_t timeout = max_tick?30*max_tick:10;
         LOG(LOG_INFO, "Session User inactivity : set timeout to %u seconds", timeout);
         this->last_activity_time = now;
-        this->last_total_received = trans.get_total_received();
         this->inactivity_timeout = timeout;
     }
 
     bool check(time_t now, Transport & trans) {
-        if (trans.get_total_received() == this->last_total_received) {
+        if (!this->checker.check_and_reset_activity()) {
             if (now > this->last_activity_time + this->inactivity_timeout) {
                 LOG(LOG_INFO, "Session User inactivity : closing");
                 // mm.invoke_close_box("Connection closed on inactivity", signal, now);
@@ -165,7 +166,6 @@ public:
         }
         else {
             this->last_activity_time = now;
-            this->last_total_received = trans.get_total_received();
         }
         return false;
     }
@@ -180,8 +180,6 @@ public:
     bool remote_answer;       // false initialy, set to true once response is
                               // received from acl and asked_remote_answer is
                               // set to false
-    time_t start_time;
-    time_t acl_start_time;
 
     uint32_t verbose;
 
@@ -192,15 +190,15 @@ private:
     bool wait_for_capture;
 
 public:
-    SessionManager(Inifile & ini, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
+    SessionManager(Inifile & ini, ActivityChecker & activity_checker, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
         : ini(ini)
-        , acl_serial(AclSerializer(&ini, _auth_trans, ini.debug.auth))
+        , acl_serial(&ini, _auth_trans, ini.debug.auth)
         , remote_answer(false)
-        , start_time(start_time)
-        , acl_start_time(acl_start_time)
+        //, start_time(start_time)
+        //, acl_start_time(acl_start_time)
         , verbose(ini.debug.auth)
-        , keepalive(KeepAlive(ini.globals.keepalive_grace_delay, ini.debug.auth))
-        , inactivity(Inactivity(ini.globals.max_tick, acl_start_time, ini.debug.auth))
+        , keepalive(ini.globals.keepalive_grace_delay, ini.debug.auth)
+        , inactivity(activity_checker, ini.globals.max_tick, acl_start_time, ini.debug.auth)
         , wait_for_capture(true)
     {
         if (this->verbose & 0x10) {

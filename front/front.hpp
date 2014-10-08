@@ -73,6 +73,7 @@
 #include "RDP/PersistentKeyListPDU.hpp"
 
 #include "front_api.hpp"
+#include "activity_checker.hpp"
 #include "genrandom.hpp"
 
 #include "auth_api.hpp"
@@ -83,8 +84,13 @@ enum {
     FRONT_RUNNING
 };
 
-class Front : public FrontAPI {
+class Front : public FrontAPI, public ActivityChecker{
     using FrontAPI::draw;
+
+    bool has_activity = true;
+    time_t last_activity_time;
+    time_t inactivity_timeout;
+
 public:
     enum CaptureState {
           CAPTURE_STATE_UNKNOWN
@@ -627,7 +633,7 @@ public:
     }
 
     void save_persistent_disk_bitmap_cache() const {
-        if (!this->ini->client.persistent_disk_bitmap_cache)
+        if (!this->ini->client.persistent_disk_bitmap_cache || !this->ini->client.persist_bitmap_cache_on_disk)
             return;
 
         const char * persistent_path = PERSISTENT_PATH "/client";
@@ -758,7 +764,9 @@ private:
                                               this->client_info.cache5_persistent),
                         this->ini->debug.cache);
 
-        if (this->ini->client.persistent_disk_bitmap_cache && this->bmp_cache->has_cache_persistent()) {
+        if (this->ini->client.persistent_disk_bitmap_cache &&
+            this->ini->client.persist_bitmap_cache_on_disk &&
+            this->bmp_cache->has_cache_persistent()) {
             // Generates the name of file.
             char cache_filename[2048];
             ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
@@ -1428,8 +1436,11 @@ public:
             }
 
             {
-                BStream stream(65536);
-                X224::RecvFactory fac_x224(*this->trans, stream);
+                Array array(65536);
+                uint8_t * end = array.get_data();
+                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                InStream stream(array, 0, 0, end - array.get_data());
+
                 X224::CR_TPDU_Recv x224(stream, this->ini->client.bogus_neg_request);
                 if (x224._header_size != (size_t)(stream.size())){
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
@@ -1517,8 +1528,12 @@ public:
                 LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
             }
 
-            BStream x224_data(65536);
-            X224::RecvFactory f(*this->trans, x224_data);
+
+            Array array(65536);
+            uint8_t * end = array.get_data();
+            X224::RecvFactory fx224(*this->trans, &end, array.size());
+            InStream x224_data(array, 0, 0, end - array.get_data());
+
             X224::DT_TPDU_Recv x224(x224_data);
             MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
 
@@ -1786,8 +1801,11 @@ public:
                 LOG(LOG_INFO, "Front::incoming::Recv MCS::ErectDomainRequest");
             }
             {
-                BStream x224_data(256);
-                X224::RecvFactory f(*this->trans, x224_data);
+                Array array(256);
+                uint8_t * end = array.get_data();
+                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                InStream x224_data(array, 0, 0, end - array.get_data());
+
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
@@ -1795,8 +1813,10 @@ public:
                 LOG(LOG_INFO, "Front::incoming::Recv MCS::AttachUserRequest");
             }
             {
-                BStream x224_data(256);
-                X224::RecvFactory f(*this->trans, x224_data);
+                Array array(256);
+                uint8_t * end = array.get_data();
+                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                InStream x224_data(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
@@ -1814,8 +1834,10 @@ public:
             {
                 // read tpktHeader (4 bytes = 3 0 len)
                 // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-                BStream x224_data(256);
-                X224::RecvFactory f(*this->trans, x224_data);
+                Array array(256);
+                uint8_t * end = array.get_data();
+                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                InStream x224_data(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 this->userid = mcs.initiator;
@@ -1833,8 +1855,10 @@ public:
             }
 
             {
-                BStream x224_data(256);
-                X224::RecvFactory f(*this->trans, x224_data);
+                Array array(256);
+                uint8_t * end = array.get_data();
+                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                InStream x224_data(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 if (mcs.initiator != this->userid){
@@ -1855,8 +1879,10 @@ public:
             }
 
             for (size_t i = 0 ; i < this->channel_list.size() ; i++){
-                BStream x224_data(256);
-                X224::RecvFactory f(*this->trans, x224_data);
+                Array array(256);
+                uint8_t * end = array.get_data();
+                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                InStream x224_data(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
@@ -1922,8 +1948,10 @@ public:
             else
             {
                 LOG(LOG_INFO, "Legacy RDP mode: expecting exchange packet");
-                BStream pdu(65536);
-                X224::RecvFactory f(*this->trans, pdu);
+                Array array(256);
+                uint8_t * end = array.get_data();
+                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                InStream pdu(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(pdu);
 
                 int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -1993,8 +2021,10 @@ public:
         {
             LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
 
-            BStream stream(65536);
-            X224::RecvFactory fx224(*this->trans, stream);
+            Array array(65536);
+            uint8_t * end = array.get_data();
+            X224::RecvFactory fx224(*this->trans, &end, array.size());
+            InStream stream(array, 0, 0, end - array.get_data());
             X224::DT_TPDU_Recv x224(stream);
 
             int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -2054,7 +2084,7 @@ public:
                     stream.out_copy_bytes((char*)lic3, 16);
                     stream.mark_end();
 
-                    BStream sec_header(256);
+                    BStream sec_header(65536);
 
                     if ((this->verbose & (128|2)) == (128|2)){
                         LOG(LOG_INFO, "Sec clear payload to send:");
@@ -2148,7 +2178,7 @@ public:
                 stream.out_copy_bytes((char*)lic1, 314);
                 stream.mark_end();
 
-                BStream sec_header(256);
+                BStream sec_header(65536);
 
                 if ((this->verbose & (128|2)) == (128|2)){
                     LOG(LOG_INFO, "Sec clear payload to send:");
@@ -2174,8 +2204,10 @@ public:
             if (this->verbose & 2){
                 LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
             }
-            BStream stream(65536);
-            X224::RecvFactory fx224(*this->trans, stream);
+            Array array(65536);
+            uint8_t * end = array.get_data();
+            X224::RecvFactory fx224(*this->trans, &end, array.size());
+            InStream stream(array, 0, 0, end - array.get_data());
             X224::DT_TPDU_Recv x224(stream);
 
             int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -2418,9 +2450,10 @@ public:
         // connection management information and virtual channel messages (exchanged
         // between client-side plug-ins and server-side applications).
         {
-            BStream stream(65536);
-
-            X224::RecvFactory fx224(*this->trans, stream, true);
+            Array array(65536);
+            uint8_t * end = array.get_data();
+            X224::RecvFactory fx224(*this->trans, &end, array.size(), true);
+            InStream stream(array, 0, 0, end - array.get_data());
 
             if (fx224.fast_path){
                 FastPath::ClientInputEventPDU_Recv cfpie(stream, this->decrypt);
@@ -2466,6 +2499,7 @@ public:
                                 }
                                 else {
                                     cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                                    this->has_activity = true;
                                 }
                             }
                         }
@@ -2485,6 +2519,7 @@ public:
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
                                 cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                                this->has_activity = true;
                             }
                         }
                         break;
@@ -2506,6 +2541,7 @@ public:
                             this->keymap.synchronize(se.eventFlags & 0xFFFF);
                             if (this->up_and_running) {
                                 cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
+                                this->has_activity = true;
                             }
                         }
                         break;
@@ -2798,7 +2834,7 @@ public:
         this->trans->send(fastpath_header, data);
     }
 */
-    virtual void send_fastpath_data(Stream & data) {
+    virtual void send_fastpath_data(InStream & data) {
         HStream stream(1024, 1024 + 65536);
 
         stream.out_copy_bytes(data.get_data(), data.size());
@@ -3761,6 +3797,7 @@ public:
                             this->keymap.synchronize(se.toggleFlags & 0xFFFF);
                             if (this->up_and_running){
                                 cb.rdp_input_synchronize(ie.eventTime, 0, se.toggleFlags & 0xFFFF, (se.toggleFlags & 0xFFFF0000) >> 16);
+                                this->has_activity = true;
                             }
                         }
                         break;
@@ -3777,6 +3814,7 @@ public:
                             this->mouse_y = me.yPos;
                             if (this->up_and_running){
                                 cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                                this->has_activity = true;
                             }
                         }
                         break;
@@ -3810,6 +3848,7 @@ public:
                                 }
                                 else {
                                     cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
+                                    this->has_activity = true;
                                 }
                             }
                         }
@@ -4592,10 +4631,6 @@ public:
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-//                RDPLineTo new_cmd24 = cmd;
-//                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-//                new_cmd24.pen.color = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette_rgb);
-//                this->capture->draw(new_cmd24, clip);
                 if (this->capture_bpp != this->mod_bpp){
                     RDPLineTo capture_cmd = cmd;
 
@@ -4995,6 +5030,8 @@ public:
                      , size_t size, const Bitmap & bmp) {
         //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
         this->orders->draw(bitmap_data, data, size, bmp);
+        //bitmap_data.log(LOG_INFO, "Front");
+        //hexdump_d(data, size);
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             if ((bmp.bpp() > this->capture_bpp) || (bmp.bpp() == 8)) {
@@ -5011,6 +5048,13 @@ public:
                 }
             }
         }
+    }
+
+    virtual bool check_and_reset_activity()
+    {
+        const bool res = this->has_activity;
+        this->has_activity = false;
+        return res;
     }
 };
 

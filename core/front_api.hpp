@@ -59,7 +59,7 @@ class FrontAPI : public DrawApi {
     // Used by transparent proxy.
 
     virtual void send_data_indication_ex(uint16_t channelId, HStream & stream) {}
-    virtual void send_fastpath_data(Stream & data) {}
+    virtual void send_fastpath_data(InStream & data) {}
     virtual bool retrieve_client_capability_set(Capability & caps) { return true; }
 };
 

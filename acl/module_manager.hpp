@@ -348,6 +348,7 @@ public:
                                       , this->front.client_info.width
                                       , this->front.client_info.height
                                       , this->ini.context.auth_error_message
+                                      , this->ini
                                       );
             if (this->verbose){
                 LOG(LOG_INFO, "ModuleManager::internal module 'test' ready");
@@ -666,6 +667,7 @@ public:
                 mod_rdp_params.certificate_change_action           = this->ini.mod_rdp.certificate_change_action;
                 mod_rdp_params.enable_persistent_disk_bitmap_cache = this->ini.mod_rdp.persistent_disk_bitmap_cache;
                 mod_rdp_params.enable_cache_waiting_list           = this->ini.mod_rdp.cache_waiting_list;
+                mod_rdp_params.persist_bitmap_cache_on_disk        = this->ini.mod_rdp.persist_bitmap_cache_on_disk;
                 mod_rdp_params.password_printing_mode              = this->ini.debug.password;
                 mod_rdp_params.cache_verbose                       = this->ini.debug.cache;
 
