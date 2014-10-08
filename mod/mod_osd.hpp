@@ -24,12 +24,15 @@
 
 #include "mod_api.hpp"
 
+#include <functional>
+
+
 class mod_osd : public mod_api
 {
     template<class Command, class... OtherArgs>
     void split_draw(const Rect & cmd_rect, Command const & cmd, const Rect & clip, OtherArgs const &... other_args)
     {
-        Rect rect = cmd_rect.intersect(clip);
+        const Rect rect = cmd_rect.intersect(clip);
         if (this->fg_rect.contains(rect) || rect.isempty()) {
             //nada
         }
@@ -62,7 +65,7 @@ class mod_osd : public mod_api
         Rect left;
     };
 
-    subrect_t subrect(const Rect & rect)
+    subrect_t subrect(const Rect & rect) const
     {
         const Rect sect = rect.intersect(this->fg_rect);
         return {
@@ -75,25 +78,49 @@ class mod_osd : public mod_api
 
     void draw_fg(Rect const & rect)
     {
-        this->mod.draw(RDPMemBlt(0, rect, 0xCC, this->bmp_srcx, this->bmp_srcy, 0), this->fg_rect, this->bmp);
+        this->dispatch_draw_fg(this->mod, rect, this->fg_rect);
     }
 
     const Rect fg_rect;
-    const int bmp_srcx;
-    const int bmp_srcy;
-    const Bitmap bmp;
     mod_api & mod;
     FrontAPI & front;
+    std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> dispatch_draw_fg;
 
+public:
+    mod_osd(
+        FrontAPI & front, mod_api & mod, const Rect & rect,
+        std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f,
+        bool call_f = true
+    )
+    : mod_api(mod_api::get_front_width(mod), mod_api::get_front_height(mod))
+    , fg_rect(Rect(0, 0, mod_api::get_front_width(mod), mod_api::get_front_height(mod)).intersect(rect))
+    , mod(mod)
+    , front(front)
+    , dispatch_draw_fg(std::move(f))
+    {
+        if (call_f) {
+            this->draw_fg(this->fg_rect);
+        }
+        this->set_gd(mod, this);
+    }
+
+private:
+    struct dispatch_bmp_draw {
+        const Bitmap bmp;
+        const int bmp_srcx;
+        const int bmp_srcy;
+
+        void operator()(mod_api & mod, const Rect & rect, const Rect & clip) const {
+            mod.draw(RDPMemBlt(0, rect, 0xCC, this->bmp_srcx, this->bmp_srcy, 0), clip, this->bmp);
+        }
+    };
 public:
     mod_osd(FrontAPI & front, mod_api & mod, const Bitmap& bmp, int x = 0, int y = 0)
     : mod_api(mod_api::get_front_width(mod), mod_api::get_front_height(mod))
     , fg_rect(Rect(0, 0, mod_api::get_front_width(mod), mod_api::get_front_height(mod)).intersect(Rect(x,y,bmp.cx(),bmp.cy())))
-    , bmp_srcx(x - this->fg_rect.x)
-    , bmp_srcy(y - this->fg_rect.y)
-    , bmp(bmp)
     , mod(mod)
     , front(front)
+    , dispatch_draw_fg(dispatch_bmp_draw{bmp, x - this->fg_rect.x, y - this->fg_rect.y})
     {
         this->draw_fg(this->fg_rect);
         this->set_gd(mod, this);
@@ -101,7 +128,7 @@ public:
 
     virtual ~mod_osd()
     {
-        if (this->get_gd(this->mod) == this) {
+        if (this->is_active()) {
             this->mod.rdp_input_invalidate(this->fg_rect);
         }
     }
@@ -336,7 +363,7 @@ public:
         this->mod.draw_event(now);
     }
 
-    virtual void rdp_input_invalidate(const Rect& r)
+    virtual void rdp_input_invalidate(const Rect & r)
     {
         if (r.has_intersection(this->fg_rect)) {
             this->mod.begin_update();
@@ -361,17 +388,7 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (keymap->nb_kevent_available() > 0){
-            if (!(param3 & SlowPath::KBDFLAGS_DOWN)
-             && keymap->top_kevent() == Keymap2::KEVENT_ESC
-             && keymap->is_ctrl_pressed()) {
-                keymap->get_kevent();
-                this->swap_active();
-            }
-            else {
-                this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
-            }
-        }
+        this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
     virtual void send_to_front_channel(const char*const mod_channel_name, uint8_t* data, size_t length,

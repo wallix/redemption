@@ -274,7 +274,90 @@ public:
 
 class ModuleManager : public MMIni
 {
+    struct module_osd
+    : public mod_osd
+    //, noncopyable
+    {
+        module_osd(
+            ModuleManager & manager, const Rect & rect, const char * message,
+            std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f)
+        //: mod_osd(manager.front, *manager.mod, Bitmap("/home/jpoelen/projects/redemption-public/tests/fixtures/ad24b.bmp"))
+        : mod_osd(manager.front, *manager.mod, rect, std::move(f))
+        , manager(manager)
+        , old_mod(manager.mod)
+        {
+            manager.osd = this;
+        }
+
+        ~module_osd()
+        {
+            this->manager.mod = this->old_mod;
+            this->manager.osd = nullptr;
+            // disable draw hidden
+            if (this->is_active()) {
+                this->set_gd(*this, nullptr);
+            }
+        }
+
+        virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+        {
+            if (this->fg().contains_pt(x, y)) {
+                if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+                    this->delete_self();
+                }
+            }
+            else {
+                mod_osd::rdp_input_mouse(device_flags, x, y, keymap);
+            }
+        }
+
+        virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+        {
+            if (keymap->nb_kevent_available() > 0){
+                if (!(param3 & SlowPath::KBDFLAGS_DOWN)
+                 && keymap->top_kevent() == Keymap2::KEVENT_ESC
+                 && keymap->is_ctrl_pressed()) {
+                    keymap->get_kevent();
+                    this->delete_self();
+                }
+                else {
+                    mod_osd::rdp_input_scancode(param1, param2, param3, param4, keymap);
+                }
+            }
+        }
+
+        void delete_self()
+        {
+            this->swap_active();
+            delete this;
+        }
+        ModuleManager & manager;
+        mod_api * old_mod;
+    };
+    module_osd * osd = nullptr;
+
 public:
+    void osd_message(char const * message) {
+        if (this->osd) {
+            this->osd->delete_self();
+        }
+        int w, h;
+        this->front.text_metrics(message, w, h);
+        h += 8;
+        w += 16;
+        this->mod = new module_osd(
+            *this, Rect(0, 0, w, h), message,
+            [this, message](mod_api & mod, const Rect & rect, const Rect & clip) {
+                const Rect r = rect.intersect(clip);
+                this->front.begin_update();
+                this->front.draw(RDPOpaqueRect(r, 0x333333), r);
+                this->front.server_draw_text(8, 4, message, 0xeeeeee, 0x333333, r);
+                this->front.end_update();
+            }
+        );
+    }
+
+
     Front & front;
     mod_api * no_mod;
     Transport * mod_transport;
@@ -291,6 +374,9 @@ public:
 
     virtual void remove_mod()
     {
+        delete this->osd;
+        this->osd = nullptr;
+
         if (this->mod != this->no_mod){
             delete this->mod;
             if (this->mod_transport) {
@@ -640,9 +726,6 @@ public:
                 UdevRandom gen;
                 this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
                 this->mod->get_event().st = t;
-
-                Bitmap bmp("/home/jpoelen/projects/redemption-public/tests/fixtures/ad24b.bmp");
-                this->mod = new mod_osd(this->front, *this->mod, bmp);
 
                 // DArray<Rect> rects(1);
                 // rects[0] = Rect(0, 0, this->front.client_info.width, this->front.client_info.height);

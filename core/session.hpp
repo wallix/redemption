@@ -250,6 +250,18 @@ struct Session {
                             }
                         }
 
+                        {
+                            static time_t tt = time(NULL);
+                            if (now > tt + 5) {
+                                tt = now;
+                                mm.osd_message("Vite, plus que 10 minutes !");
+                            }
+//                             const long enddate = this->ini->context.end_date_cnx.get();
+//                             if (enddate != 0 && (now > enddate)) {
+//                                 mm.osd_message();
+//                             }
+                        }
+
                         if (this->acl) {
                             run_session = this->acl->check(mm, now, front_trans, signal);
                         }

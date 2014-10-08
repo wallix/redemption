@@ -231,7 +231,7 @@ public:
             return true;
         }
 
-        long enddate = this->ini.context.end_date_cnx.get();
+        const long enddate = this->ini.context.end_date_cnx.get();
         if (enddate != 0 && (now > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             const char * message = "Session is out of allowed timeframe";
