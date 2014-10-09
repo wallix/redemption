@@ -47,9 +47,7 @@ public:
     Timeout(time_t now, time_t length = 0)
         : timeout(length ? (now + length) : 0) {}
 
-    ~Timeout() {}
-
-    timeout_result_t check(time_t now) {
+    timeout_result_t check(time_t now) const {
         if (this->timeout) {
             if (now > this->timeout) {
                 return TIMEOUT_REACHED;
@@ -61,11 +59,11 @@ public:
         return TIMEOUT_INACTIVE;
     }
 
-    bool is_cancelled() {
+    bool is_cancelled() const {
         return (this->timeout == 0);
     }
 
-    long timeleft_sec(time_t now) {
+    long timeleft_sec(time_t now) const {
         return (this->timeout - now);
     }
 
@@ -101,11 +99,11 @@ public:
 
     virtual wait_obj& get_event() { return this->event; }
 
-    uint16_t get_front_width() { return this->front_width; }
-    uint16_t get_front_height() { return this->front_height; }
+    uint16_t get_front_width() const { return this->front_width; }
+    uint16_t get_front_height() const { return this->front_height; }
 
 protected:
-    static RDPGraphicDevice * get_gd(mod_api & mod)
+    static RDPGraphicDevice * get_gd(mod_api const & mod)
     {
         return mod.gd;
     }
