@@ -92,8 +92,8 @@ public:
         std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f,
         bool call_f = true
     )
-    : mod_api(mod_api::get_front_width(mod), mod_api::get_front_height(mod))
-    , fg_rect(Rect(0, 0, mod_api::get_front_width(mod), mod_api::get_front_height(mod)).intersect(rect))
+    : mod_api(mod.get_front_width(), mod.get_front_height())
+    , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(rect))
     , mod(mod)
     , front(front)
     , dispatch_draw_fg(std::move(f))
@@ -116,8 +116,8 @@ private:
     };
 public:
     mod_osd(FrontAPI & front, mod_api & mod, const Bitmap& bmp, int x = 0, int y = 0)
-    : mod_api(mod_api::get_front_width(mod), mod_api::get_front_height(mod))
-    , fg_rect(Rect(0, 0, mod_api::get_front_width(mod), mod_api::get_front_height(mod)).intersect(Rect(x,y,bmp.cx(),bmp.cy())))
+    : mod_api(mod.get_front_width(), mod.get_front_height())
+    , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(Rect(x,y,bmp.cx(),bmp.cy())))
     , mod(mod)
     , front(front)
     , dispatch_draw_fg(dispatch_bmp_draw{bmp, x - this->fg_rect.x, y - this->fg_rect.y})

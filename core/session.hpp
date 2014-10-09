@@ -33,6 +33,8 @@
 #include <assert.h>
 #include <dirent.h>
 
+#include <array>
+
 #include "server.hpp"
 #include "colors.hpp"
 #include "stream.hpp"
@@ -123,12 +125,14 @@ struct Session {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
             }
 
-            time_t start_time = time(NULL);
+            const time_t start_time = time(NULL);
 
-            struct timeval time_mark = { 3, 0 };
+            const timeval time_mark = { 3, 0 };
 
             bool run_session = true;
-            bool has_pending_data;
+
+            constexpr std::array<unsigned, 4> timers{{ 30*60, 10*60, 5*60, 1*60, }};
+            unsigned osd_state = timers.size();
 
             while (run_session) {
                 unsigned max = 0;
@@ -137,7 +141,7 @@ struct Session {
 
                 FD_ZERO(&rfds);
                 FD_ZERO(&wfds);
-                struct timeval timeout = time_mark;
+                timeval timeout = time_mark;
 
                 front_event.add_to_fd_set(rfds, max, timeout);
                 if (this->front->capture) {
@@ -150,7 +154,7 @@ struct Session {
                 }
                 mm.mod->get_event().add_to_fd_set(rfds, max, timeout);
 
-                has_pending_data =
+                const bool has_pending_data =
                     (front_event.st->tls && SSL_pending(front_event.st->allocated_ssl));
                 if (has_pending_data)
                     memset(&timeout, 0, sizeof(timeout));
@@ -236,6 +240,15 @@ struct Session {
                                                                   , start_time // proxy start time
                                                                   , now        // acl start time
                                                                   );
+                                    osd_state = [&](uint32_t enddata) -> unsigned {
+                                        if (!enddata || enddata <= start_time) {
+                                            return timers.size();
+                                        }
+                                        unsigned i = timers.rend() - std::lower_bound(
+                                            timers.rbegin(), timers.rend(), enddata - start_time
+                                        );
+                                        return i ? i-1 : 0;
+                                    }(this->ini->context.end_date_cnx.get());
                                     signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {
@@ -251,15 +264,20 @@ struct Session {
                         }
 
                         {
-                            static time_t tt = time(NULL);
-                            if (now > tt + 5) {
-                                tt = now;
-                                mm.osd_message("Vite, plus que 10 minutes !");
+                            const uint32_t enddate = this->ini->context.end_date_cnx.get();
+                            if (enddate
+                            && osd_state < timers.size()
+                            && enddate - now <= timers[osd_state]
+                            && mm.is_up_and_running()) {
+                                std::string mes;
+                                mes.reserve(128);
+                                mes += TR("connection_closed", *this->ini);
+                                mes += " : ";
+                                mes += std::to_string((enddate - now + 30) / 60);
+                                mes += TR("minutes", *this->ini);
+                                mm.osd_message(mes);
+                                ++osd_state;
                             }
-//                             const long enddate = this->ini->context.end_date_cnx.get();
-//                             if (enddate != 0 && (now > enddate)) {
-//                                 mm.osd_message();
-//                             }
                         }
 
                         if (this->acl) {

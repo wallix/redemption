@@ -29,6 +29,7 @@
 #include "transport.hpp"
 #include "out_filename_sequence_transport.hpp"
 #include "staticcapture.hpp"
+#include "../front/fake_front.hpp"
 #include "mod_osd.hpp"
 #include "rdp/rdp.hpp"
 #include "RDP/caches/bmpcache.hpp"
@@ -112,7 +113,11 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH "."
 #endif
-        mod_osd osd(mod, Bitmap(FIXTURES_PATH "/ad8b.bmp"), 200, 200);
+        ClientInfo info(0, 0, 0);
+        info.width = 1;
+        info.height = 1;
+        FakeFront front(info, 0);
+        mod_osd osd(front, mod, Bitmap(FIXTURES_PATH "/ad8b.bmp"), 200, 200);
 
         now.tv_sec++;
         consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);

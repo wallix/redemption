@@ -279,7 +279,7 @@ class ModuleManager : public MMIni
     //, noncopyable
     {
         module_osd(
-            ModuleManager & manager, const Rect & rect, const char * message,
+            ModuleManager & manager, const Rect & rect,
             std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f)
         //: mod_osd(manager.front, *manager.mod, Bitmap("/home/jpoelen/projects/redemption-public/tests/fixtures/ad24b.bmp"))
         : mod_osd(manager.front, *manager.mod, rect, std::move(f))
@@ -336,25 +336,39 @@ class ModuleManager : public MMIni
     };
     module_osd * osd = nullptr;
 
+    static const int padw = 16;
+    static const int padh = 16;
+
 public:
-    void osd_message(char const * message) {
+    bool osd_message(std::string message) {
         if (this->osd) {
             this->osd->delete_self();
         }
         int w, h;
-        this->front.text_metrics(message, w, h);
-        h += 8;
-        w += 16;
+        this->front.text_metrics(message.c_str(), w, h);
+        w += padw * 2;
+        h += padh * 2;
+        uint32_t color = BLACK;
+        uint32_t background_color = DARK_GREEN;
+        if (this->front.mod_bpp != this->front.client_info.bpp) {
+            color = color_encode(
+                color_decode_opaquerect(color, this->front.mod_bpp, this->front.mod_palette_rgb),
+                this->front.client_info.bpp);
+            background_color = color_encode(
+                color_decode_opaquerect(background_color, this->front.mod_bpp, this->front.mod_palette_rgb),
+                this->front.client_info.bpp);
+        }
         this->mod = new module_osd(
-            *this, Rect(0, 0, w, h), message,
-            [this, message](mod_api & mod, const Rect & rect, const Rect & clip) {
+            *this, Rect(this->front.client_info.width < w ? 0 : (this->front.client_info.width - w) / 2, 0, w, h),
+            [this, message, color, background_color](mod_api & mod, const Rect & rect, const Rect & clip) {
                 const Rect r = rect.intersect(clip);
                 this->front.begin_update();
-                this->front.draw(RDPOpaqueRect(r, 0x333333), r);
-                this->front.server_draw_text(8, 4, message, 0xeeeeee, 0x333333, r);
+                this->front.draw(RDPOpaqueRect(r, background_color), r);
+                this->front.server_draw_text(clip.x + padw, padh, message.c_str(), color, background_color, r);
                 this->front.end_update();
             }
         );
+        return true;
     }
 
 
