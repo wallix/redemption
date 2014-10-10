@@ -676,7 +676,7 @@ struct Inifile : public FieldObserver {
 
         unsigned wrm_color_depth_selection_strategy; // 0: 24-bit, 1: 16-bit
 
-        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy
+        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy, 3: LZMA
     } video;
 
     // Section "Crypto"
@@ -1080,7 +1080,7 @@ public:
         this->debug.password          = 0;
         this->debug.compression       = 0;
         this->debug.cache             = 0;
-	this->debug.bitmap_update     = 0;
+        this->debug.bitmap_update     = 0;
 
         this->debug.log_type          = 2; // syslog by default
         this->debug.log_file_path[0]  = 0;
@@ -1229,7 +1229,6 @@ public:
         this->context.authentication_challenge.attach_ini(this, AUTHID_AUTHENTICATION_CHALLENGE);
 
         this->to_send_set.insert(AUTHID_MODULE);
-        this->to_send_set.insert(AUTHID_FORCEMODULE);
         this->to_send_set.insert(AUTHID_TICKET);
         this->to_send_set.insert(AUTHID_COMMENT);
         this->to_send_set.insert(AUTHID_DURATION);
@@ -1242,7 +1241,6 @@ public:
         this->context.module.use();
         this->context.forcemodule.set(false);
         this->context.forcemodule.attach_ini(this, AUTHID_FORCEMODULE);
-        this->context.forcemodule.use();
 
         this->context.ticket.set_from_cstr("");
         this->context.ticket.attach_ini(this, AUTHID_TICKET);

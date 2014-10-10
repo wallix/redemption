@@ -40,16 +40,20 @@ class ReplayMod : public InternalMod {
 
     bool end_of_data;
 
+    const Inifile & ini;
+
 public:
     ReplayMod( FrontAPI & front
-             , char * replay_path
-             , char * movie
+             , const char * replay_path
+             , const char * movie
              , uint16_t width
              , uint16_t height
-             , redemption::string & auth_error_message)
+             , redemption::string & auth_error_message
+             , Inifile & ini)
     : InternalMod(front, width, height)
     , auth_error_message(auth_error_message)
     , end_of_data(false)
+    , ini(ini)
     {
         strncpy(this->movie, replay_path, sizeof(this->movie)-1);
         strncat(this->movie, movie, sizeof(this->movie)-1);
@@ -76,7 +80,8 @@ public:
         this->in_trans = new InMetaSequenceTransport(prefix, extension);
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
         timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-        this->reader = new FileToGraphic(this->in_trans, begin_capture, end_capture, true, 0);
+        this->reader = new FileToGraphic( this->in_trans, begin_capture, end_capture, true
+                                        , this->ini.debug.capture);
 
         switch (this->front.server_resize( this->reader->info_width
                                          , this->reader->info_height

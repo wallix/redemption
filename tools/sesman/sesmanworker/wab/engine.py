@@ -3,7 +3,6 @@
 
 from sesmanconf import TR, SESMANCONF, translations
 from logger import Logger
-FAKE=False
 try:
     from wabengine.common.exception import AuthenticationFailed
     from wabengine.common.exception import AuthenticationChallenged
@@ -19,11 +18,19 @@ try:
         APPROVAL_PENDING, APPROVAL_NONE
     from wabengine.common.const import APPREQ_REQUIRED, APPREQ_OPTIONAL
     from wabx509 import AuthX509
+    WAB_BANNER_LOGO = """
+         __      __         __   __   __
+        /  \    /  \_____  |  | |  | |__|__  ___
+        \   \/\/   /\__  \ |  | |  | |  \  \/  /
+         \        /  / __ \|  |_|  |_|  |>    <
+          \__/\  /  (____  /____/____/__/__/\_ \\
+               \/        \/                   \/
+            %s
+        """
 except Exception, e:
     Logger().info("================================")
     Logger().info("==== Load Fake PROXY ENGINE ====")
     Logger().info("================================")
-    FAKE = True
     from fake.proxyengine import *
 
 import time
@@ -559,30 +566,12 @@ class Engine(object):
                                                     request_ticket)
         Logger().info("status : %s" % status)
         Logger().info("infos : %s" % infos)
-        ticketfields = infos.get("ticket_fields")
-        if ticketfields:
-            flag = 0
-            if ticketfields.get("description") == APPREQ_REQUIRED:
-                flag += 1
-            if ticketfields.get("ticket") == APPREQ_REQUIRED:
-                flag += 2
-            if ticketfields.get("duration") == APPREQ_REQUIRED:
-                flag += 4
-            infos["ticketflags"] = flag
         deconnection_time = infos.get("deconnection_time")
         if deconnection_time:
             Logger().info("deconnection_time updated from %s to %s" % (target.deconnection_time, deconnection_time))
             target.deconnection_time = deconnection_time
             # update deconnection_time in right
-        if status == APPROVAL_ACCEPTED:
-            return None, infos
-        if status == APPROVAL_REJECTED:
-            return False, infos
-        if status == APPROVAL_PENDING:
-            return "PENDING", infos
-        if status == APPROVAL_NONE:
-            return "APPROVAL", infos
-        return False, infos
+        return status, infos
 
     def get_application(self, selected_target=None):
         target = selected_target or self.target_right

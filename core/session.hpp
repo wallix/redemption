@@ -79,7 +79,7 @@ struct Session {
     int internal_state;
     long id;                     // not used
 
-    struct Front * front;
+    Front * front;
 
     SessionManager * acl;
 
@@ -230,6 +230,7 @@ struct Session {
                                                                                 );
                                     this->ptr_auth_event = new wait_obj(this->ptr_auth_trans);
                                     this->acl = new SessionManager( *this->ini
+                                                                  , *front
                                                                   , *this->ptr_auth_trans
                                                                   , start_time // proxy start time
                                                                   , now        // acl start time

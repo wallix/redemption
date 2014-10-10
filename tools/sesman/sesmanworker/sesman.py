@@ -40,6 +40,11 @@ RECORD_PATH = u'/var/wab/recorded/rdp/'
 from sesmanconf import TR, SESMANCONF, translations
 import engine
 
+from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
+    APPROVAL_PENDING, APPROVAL_NONE
+from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
+
+
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
 def mundane(value):
     if value == MAGICASK:
@@ -752,8 +757,8 @@ class Sesman():
             status_changed = got_signal or (status != previous_status)
             if status_changed:
                 self.send_data({u'forcemodule' : True})
-            if not status: # ACCEPTED or REFUSED
-                if status is None: # ACCEPTED
+            if status in [ APPROVAL_ACCEPTED, APPROVAL_REJECTED ]:
+                if status == APPROVAL_ACCEPTED:
                     return True, ""
             if status_changed:
                 self.interactive_display_waitinfo(status, infos)
@@ -817,10 +822,18 @@ class Sesman():
                    u'display_message' : MAGICASK,
                    u'waitinforeturn' : MAGICASK
                    }
-        if status == "APPROVAL":
+        ticketfields = infos.get("ticket_fields")
+        flag = 0
+        if ticketfields:
+            if ticketfields.get("description") == APPREQ_REQUIRED:
+                flag += 1
+            if ticketfields.get("ticket") == APPREQ_REQUIRED:
+                flag += 2
+            if ticketfields.get("duration") == APPREQ_REQUIRED:
+                flag += 4
+        if status == APPROVAL_NONE:
             tosend["showform"] = True
-            flag = infos.get("ticketflags")
-            tosend["formflag"] = flag if flag else 0
+            tosend["formflag"] = flag
         else:
             tosend["showform"] = False
         self.send_data(tosend)
