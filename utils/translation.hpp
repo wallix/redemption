@@ -77,7 +77,7 @@ private:
             "Contactez votre administrateur système en<br>"
             "cas de problème pour vous connecter.";
         fr_map["selector"] = "Sélecteur";
-        fr_map["session_out_time"] = "L'authorisation de la session a expirée";
+        fr_map["session_out_time"] = "L'autorisation de la session a expiré";
         fr_map["miss_keepalive"] = "Absence de réponse de Keepalive de l'ACL";
         fr_map["close_inactivity"] = "Fermeture sur inactivité";
         fr_map["acl_fail"] = "Echec du service d'authentification";
