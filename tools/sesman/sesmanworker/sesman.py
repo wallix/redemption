@@ -757,9 +757,8 @@ class Sesman():
             status_changed = got_signal or (status != previous_status)
             if status_changed:
                 self.send_data({u'forcemodule' : True})
-            if status in [ APPROVAL_ACCEPTED, APPROVAL_REJECTED ]:
-                if status == APPROVAL_ACCEPTED:
-                    return True, ""
+            if status == APPROVAL_ACCEPTED:
+                return True, ""
             if status_changed:
                 self.interactive_display_waitinfo(status, infos)
             got_signal = False
