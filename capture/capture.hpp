@@ -108,9 +108,6 @@ public:
                                                               , basename, ".png", ini.video.capture_groupid, authentifier);
             this->psc = new StaticCapture( now, *this->png_trans, this->png_trans->seqgen(), width, height
                                          , clear_png, ini, this->drawable->drawable);
-
-            // simulate demand for PNG capture of WAB GUI
-            this->psc->update_config(ini);
         }
 
         if (this->capture_wrm) {
