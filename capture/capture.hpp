@@ -70,6 +70,8 @@ private:
     int     last_x;
     int     last_y;
 
+    bool    clear_png;
+
 public:
     Capture( const timeval & now, int width, int height, int mod_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
@@ -91,6 +93,7 @@ public:
     , last_now(now)
     , last_x(width / 2)
     , last_y(height / 2)
+    , clear_png(clear_png)
     {
         if (this->capture_drawable) {
             this->drawable = new RDPDrawable(width, height, capture_bpp);
@@ -105,6 +108,9 @@ public:
                                                               , basename, ".png", ini.video.capture_groupid, authentifier);
             this->psc = new StaticCapture( now, *this->png_trans, this->png_trans->seqgen(), width, height
                                          , clear_png, ini, this->drawable->drawable);
+
+            // simulate demand for PNG capture of WAB GUI
+            this->psc->update_config(ini);
         }
 
         if (this->capture_wrm) {
@@ -173,7 +179,9 @@ public:
         delete this->pnc_bmp_cache;
         delete this->drawable;
 
-        clear_files_flv_meta_png(this->png_path.c_str(), this->basename.c_str());
+        if (this->clear_png) {
+            clear_files_flv_meta_png(this->png_path.c_str(), this->basename.c_str());
+        }
     }
 
     const SequenceGenerator * seqgen() const
