@@ -55,9 +55,9 @@ int main(int argc, char** argv)
 
     const char * copyright_notice =
     "\n"
-    "ReDemPtion RECorder" VERSION ": An RDP movie converter.\n"
-    "Copyright (C) Wallix 2010-2013.\n"
-    "Christophe Grosjean, Jonathan Poelen and Raphaël Zhou\n"
+    "ReDemPtion RECorder " VERSION ": An RDP movie converter.\n"
+    "Copyright (C) Wallix 2010-2014.\n"
+    "Christophe Grosjean, Jonathan Poelen and Raphael Zhou.\n"
     "\n"
     ;
 
