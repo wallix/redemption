@@ -120,9 +120,7 @@ int main(int argc, char** argv)
     try {
         boost::program_options::variables_map options;
         boost::program_options::store(
-            boost::program_options::command_line_parser(argc, argv).options(desc)
-    //            .positional(p)
-                .run(),
+            boost::program_options::command_line_parser(argc, argv).options(desc).run(),
             options
         );
         boost::program_options::notify(options);
@@ -304,72 +302,6 @@ int main(int argc, char** argv)
     };
 
     InMetaSequenceTransport in_wrm_trans(infile_prefix, infile_extension);
-/*
-    for (unsigned i = 1; i < count ; i++){
-        in_wrm_trans.next();
-    }
-
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
-    if (show_file_metadata) {
-        cout << endl;
-        cout << "WRM file version      : " << player.info_version         << endl;
-        cout << "Width                 : " << player.info_width           << endl;
-        cout << "Height                : " << player.info_height          << endl;
-        cout << "Bpp                   : " << player.info_bpp             << endl;
-        cout << "Cache 0 entries       : " << player.info_cache_0_entries << endl;
-        cout << "Cache 0 size          : " << player.info_cache_0_size    << endl;
-        cout << "Cache 1 entries       : " << player.info_cache_1_entries << endl;
-        cout << "Cache 1 size          : " << player.info_cache_1_size    << endl;
-        cout << "Cache 2 entries       : " << player.info_cache_2_entries << endl;
-        cout << "Cache 2 size          : " << player.info_cache_2_size    << endl;
-        if (player.info_version > 3) {
-            //cout << "Cache 3 entries       : " << player.info_cache_3_entries                         << endl;
-            //cout << "Cache 3 size          : " << player.info_cache_3_size                            << endl;
-            //cout << "Cache 4 entries       : " << player.info_cache_4_entries                         << endl;
-            //cout << "Cache 4 size          : " << player.info_cache_4_size                            << endl;
-            cout << "Compression algorithm : " << static_cast<int>(player.info_compression_algorithm) << endl;
-        }
-        cout << endl;
-
-        if (!output_filename.length()) {
-            return 0;
-        }
-    }
-    player.max_order_count = order_count;
-
-    const char * outfile_fullpath = output_filename.c_str();
-    char outfile_path[1024];
-    char outfile_basename[1024];
-    char outfile_extension[128];
-    strcpy(outfile_path, "./"); // default value, actual one should come from output_filename
-    strcpy(outfile_basename, "redrec_output"); // default value actual one should come from output_filename
-    strcpy(outfile_extension, "");
-    canonical_path(outfile_fullpath,
-        outfile_path, sizeof(outfile_path),
-        outfile_basename, sizeof(outfile_basename),
-        outfile_extension, sizeof(outfile_extension));
-    if (clear == 1) {
-        clear_files_flv_meta_png(outfile_path, outfile_basename);
-    }
-
-    Capture capture( player.record_now, player.screen_rect.cx, player.screen_rect.cy, player.info_bpp, 24
-                   , outfile_path, outfile_path, ini.video.hash_path, outfile_basename, false
-                   , false, NULL, ini);
-    if (capture.capture_png){
-        capture.psc->zoom(zoom);
-    }
-    player.add_consumer((RDPGraphicDevice * )&capture, (RDPCaptureDevice * )&capture);
-
-    int return_code = 0;
-    try {
-        player.play();
-    }
-    catch (Error e) {
-        return_code = -1;
-    }
-
-    return return_code;
-*/
 
     int result = recompress_or_record( in_wrm_trans, begin_capture, end_capture, verbose
                                      , output_filename, ini, count, order_count, clear, zoom
@@ -442,8 +374,6 @@ static int do_recompress(Transport & in_wrm_trans, std::string & output_filename
         cerr << "Failed to create directory: \"" << outfile_path << "\"" << endl;
     }
 
-    struct timeval now = tvtime();
-
     if (ini.video.wrm_compression_algorithm == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
         ini.video.wrm_compression_algorithm = player.info_compression_algorithm;
     }
@@ -459,13 +389,14 @@ static int do_recompress(Transport & in_wrm_trans, std::string & output_filename
             memcpy(cctx.hmac_key,   ini.crypto.key1, sizeof(cctx.hmac_key  ));
 
             wrm_trans.reset(
-                new CryptoOutMetaSequenceTransport( &cctx, outfile_path, ini.video.hash_path, outfile_basename, now
-                                                  , player.info_width, player.info_height, ini.video.capture_groupid)
+                new CryptoOutMetaSequenceTransport( &cctx, outfile_path, ini.video.hash_path, outfile_basename
+                                                  , player.record_now, player.info_width, player.info_height
+                                                  , ini.video.capture_groupid)
                 );
         }
         else {
             wrm_trans.reset(
-                new OutMetaSequenceTransport( outfile_path, outfile_basename, now
+                new OutMetaSequenceTransport( outfile_path, outfile_basename, player.record_now
                                             , player.info_width, player.info_height, ini.video.capture_groupid)
                 );
         }
