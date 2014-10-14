@@ -84,6 +84,7 @@ private:
         fr_map["target_fail"] = "Echec de la connexion à la cible distante";
         fr_map["comment"] = "Commentaire";
         fr_map["no_results"] = "Aucun résultat";
+        fr_map["authentication_required"] = "Authentification Requise";
     }
     void build_en_map() {
         en_map["login"] = "Login";
@@ -131,6 +132,7 @@ private:
         en_map["target_fail"] = "Failed to connect to remote TCP host";
         en_map["comment"] = "Comment";
         en_map["no_results"] = "No results found";
+        en_map["authentication_required"] = "Authentication Required";
     }
 
     Translation()
