@@ -78,7 +78,7 @@ private:
             "Contactez votre administrateur système en<br>"
             "cas de problème pour vous connecter.";
         dict["selector"] = "Sélecteur";
-        dict["session_out_time"] = "L'authorisation de la session a expirée";
+        dict["session_out_time"] = "L'autorisation de la session a expiré";
         dict["miss_keepalive"] = "Absence de réponse de Keepalive de l'ACL";
         dict["close_inactivity"] = "Fermeture sur inactivité";
         dict["acl_fail"] = "Echec du service d'authentification";

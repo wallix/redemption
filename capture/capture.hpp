@@ -70,6 +70,8 @@ private:
     int     last_x;
     int     last_y;
 
+    bool    clear_png;
+
 public:
     Capture( const timeval & now, int width, int height, int mod_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
@@ -91,6 +93,7 @@ public:
     , last_now(now)
     , last_x(width / 2)
     , last_y(height / 2)
+    , clear_png(clear_png)
     {
         if (this->capture_drawable) {
             this->drawable = new RDPDrawable(width, height, capture_bpp);
@@ -173,7 +176,9 @@ public:
         delete this->pnc_bmp_cache;
         delete this->drawable;
 
-        clear_files_flv_meta_png(this->png_path.c_str(), this->basename.c_str());
+        if (this->clear_png) {
+            clear_files_flv_meta_png(this->png_path.c_str(), this->basename.c_str());
+        }
     }
 
     const SequenceGenerator * seqgen() const

@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
                                   "cas de problème pour vous connecter."));
     BOOST_CHECK_EQUAL(std::string(TR("selector", ini)),          std::string("Sélecteur"));
     BOOST_CHECK_EQUAL(std::string(TR("session_out_time", ini)),
-                      std::string("L'authorisation de la session a expirée"));
+                      std::string("L'autorisation de la session a expiré"));
     BOOST_CHECK_EQUAL(std::string(TR("miss_keepalive", ini)),
                       std::string("Absence de réponse de Keepalive de l'ACL"));
     BOOST_CHECK_EQUAL(std::string(TR("close_inactivity", ini)),
