@@ -44,7 +44,7 @@ static int recompress_or_record( Transport & in_wrm_trans, const timeval begin_c
                                , const timeval end_capture, uint32_t verbose
                                , std::string & output_filename, Inifile & ini
                                , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
-                               , bool show_file_metadata);
+                               , bool show_file_metadata, bool show_statistics);
 
 static const unsigned USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF;
 static const unsigned USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF;
@@ -55,9 +55,9 @@ int main(int argc, char** argv)
 
     const char * copyright_notice =
     "\n"
-    "ReDemPtion RECorder" VERSION ": An RDP movie converter.\n"
-    "Copyright (C) Wallix 2010-2013.\n"
-    "Christophe Grosjean, Jonathan Poelen and Raphaël Zhou\n"
+    "ReDemPtion RECorder " VERSION ": An RDP movie converter.\n"
+    "Copyright (C) Wallix 2010-2014.\n"
+    "Christophe Grosjean, Jonathan Poelen and Raphael Zhou.\n"
     "\n"
     ;
 
@@ -75,6 +75,7 @@ int main(int argc, char** argv)
     uint32_t    order_count        = 0;
     unsigned    zoom               = 100;
     bool        show_file_metadata = false;
+    bool        show_statistics    = false;
     bool        auto_output_file   = false;
     bool        remove_input_file  = false;
     std::string wrm_compression_algorithm;  // output compression algorithm.
@@ -84,8 +85,8 @@ int main(int argc, char** argv)
     desc.add_options()
     ("help,h", "produce help message")
     ("version,v", "show software version")
-    ("output-file,o", boost::program_options::value(&output_filename), "output base filename (see --output-type)")
-    ("input-file,i", boost::program_options::value(&input_filename), "input base filename (see --input-type)")
+    ("output-file,o", boost::program_options::value(&output_filename), "output base filename")
+    ("input-file,i", boost::program_options::value(&input_filename), "input base filename")
 
     ("begin,b", boost::program_options::value<uint32_t>(&begin_cap), "begin capture time (in seconds), default=none")
     ("end,e", boost::program_options::value<uint32_t>(&end_cap), "end capture time (in seconds), default=none")
@@ -104,6 +105,7 @@ int main(int argc, char** argv)
     ("verbose", boost::program_options::value<uint32_t>(&verbose), "more logs")
     ("zoom", boost::program_options::value<uint32_t>(&zoom), "scaling factor for png capture (default 100%)")
     ("meta,m", "show file metadata")
+    ("statistics,s", "show statistics")
 
     //("compression,z", boost::program_options::value(&wrm_compression_algorithm), "wrm compression algorithm (default=original, none, gzip, snappy, lzma)")
     ("compression,z", boost::program_options::value(&wrm_compression_algorithm), "wrm compression algorithm (default=original, none, gzip, snappy)")
@@ -118,9 +120,7 @@ int main(int argc, char** argv)
     try {
         boost::program_options::variables_map options;
         boost::program_options::store(
-            boost::program_options::command_line_parser(argc, argv).options(desc)
-    //            .positional(p)
-                .run(),
+            boost::program_options::command_line_parser(argc, argv).options(desc).run(),
             options
         );
         boost::program_options::notify(options);
@@ -146,10 +146,11 @@ int main(int argc, char** argv)
         }
 
         show_file_metadata = (options.count("meta"             ) > 0);
+        show_statistics    = (options.count("statistics"       ) > 0);
         auto_output_file   = (options.count("auto-output-file" ) > 0);
         remove_input_file  = (options.count("remove-input-file") > 0);
 
-        if (!show_file_metadata && !auto_output_file && (output_filename.c_str()[0] == 0)) {
+        if (!show_file_metadata && !show_statistics && !auto_output_file && (output_filename.c_str()[0] == 0)) {
             cout << "Missing output filename\n\n";
             cout << copyright_notice;
             cout << "Usage: redrec [options]\n\n";
@@ -206,12 +207,14 @@ int main(int argc, char** argv)
             ini.video.wrm_color_depth_selection_strategy = USE_ORIGINAL_COLOR_DEPTH;
         }
 
-        ini.video.png_limit = png_limit;
-        ini.video.png_interval = png_interval;
+        ini.video.png_limit      = png_limit;
+        ini.video.png_interval   = png_interval;
         ini.video.frame_interval = wrm_frame_interval;
         ini.video.break_interval = wrm_break_interval;
-        ini.video.capture_wrm = options.count("wrm") > 0;
-        ini.video.capture_png = (options.count("png") > 0);
+        ini.video.capture_wrm    = options.count("wrm") > 0;
+        ini.video.capture_png    = (options.count("png") > 0);
+
+        ini.video.rt_display.set(ini.video.capture_png ? 1 : 0);
 
         if (   output_filename.length()
             && !(ini.video.capture_png | ini.video.capture_wrm)) {
@@ -247,6 +250,7 @@ int main(int argc, char** argv)
                   , sizeof(infile_basename)
                   , infile_extension
                   , sizeof(infile_extension)
+                  , verbose
                   );
     if (verbose) {
         cout << endl << "Input file path: " << infile_path << infile_basename << infile_extension <<
@@ -298,76 +302,10 @@ int main(int argc, char** argv)
     };
 
     InMetaSequenceTransport in_wrm_trans(infile_prefix, infile_extension);
-/*
-    for (unsigned i = 1; i < count ; i++){
-        in_wrm_trans.next();
-    }
-
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
-    if (show_file_metadata) {
-        cout << endl;
-        cout << "WRM file version      : " << player.info_version         << endl;
-        cout << "Width                 : " << player.info_width           << endl;
-        cout << "Height                : " << player.info_height          << endl;
-        cout << "Bpp                   : " << player.info_bpp             << endl;
-        cout << "Cache 0 entries       : " << player.info_cache_0_entries << endl;
-        cout << "Cache 0 size          : " << player.info_cache_0_size    << endl;
-        cout << "Cache 1 entries       : " << player.info_cache_1_entries << endl;
-        cout << "Cache 1 size          : " << player.info_cache_1_size    << endl;
-        cout << "Cache 2 entries       : " << player.info_cache_2_entries << endl;
-        cout << "Cache 2 size          : " << player.info_cache_2_size    << endl;
-        if (player.info_version > 3) {
-            //cout << "Cache 3 entries       : " << player.info_cache_3_entries                         << endl;
-            //cout << "Cache 3 size          : " << player.info_cache_3_size                            << endl;
-            //cout << "Cache 4 entries       : " << player.info_cache_4_entries                         << endl;
-            //cout << "Cache 4 size          : " << player.info_cache_4_size                            << endl;
-            cout << "Compression algorithm : " << static_cast<int>(player.info_compression_algorithm) << endl;
-        }
-        cout << endl;
-
-        if (!output_filename.length()) {
-            return 0;
-        }
-    }
-    player.max_order_count = order_count;
-
-    const char * outfile_fullpath = output_filename.c_str();
-    char outfile_path[1024];
-    char outfile_basename[1024];
-    char outfile_extension[128];
-    strcpy(outfile_path, "./"); // default value, actual one should come from output_filename
-    strcpy(outfile_basename, "redrec_output"); // default value actual one should come from output_filename
-    strcpy(outfile_extension, "");
-    canonical_path(outfile_fullpath,
-        outfile_path, sizeof(outfile_path),
-        outfile_basename, sizeof(outfile_basename),
-        outfile_extension, sizeof(outfile_extension));
-    if (clear == 1) {
-        clear_files_flv_meta_png(outfile_path, outfile_basename);
-    }
-
-    Capture capture( player.record_now, player.screen_rect.cx, player.screen_rect.cy, player.info_bpp, 24
-                   , outfile_path, outfile_path, ini.video.hash_path, outfile_basename, false
-                   , false, NULL, ini);
-    if (capture.capture_png){
-        capture.psc->zoom(zoom);
-    }
-    player.add_consumer((RDPGraphicDevice * )&capture, (RDPCaptureDevice * )&capture);
-
-    int return_code = 0;
-    try {
-        player.play();
-    }
-    catch (Error e) {
-        return_code = -1;
-    }
-
-    return return_code;
-*/
 
     int result = recompress_or_record( in_wrm_trans, begin_capture, end_capture, verbose
                                      , output_filename, ini, count, order_count, clear, zoom
-                                     , show_file_metadata);
+                                     , show_file_metadata, show_statistics);
 
     if (!result && remove_input_file) {
         InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
@@ -436,8 +374,6 @@ static int do_recompress(Transport & in_wrm_trans, std::string & output_filename
         cerr << "Failed to create directory: \"" << outfile_path << "\"" << endl;
     }
 
-    struct timeval now = tvtime();
-
     if (ini.video.wrm_compression_algorithm == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
         ini.video.wrm_compression_algorithm = player.info_compression_algorithm;
     }
@@ -453,13 +389,14 @@ static int do_recompress(Transport & in_wrm_trans, std::string & output_filename
             memcpy(cctx.hmac_key,   ini.crypto.key1, sizeof(cctx.hmac_key  ));
 
             wrm_trans.reset(
-                new CryptoOutMetaSequenceTransport( &cctx, outfile_path, ini.video.hash_path, outfile_basename, now
-                                                  , player.info_width, player.info_height, ini.video.capture_groupid)
+                new CryptoOutMetaSequenceTransport( &cctx, outfile_path, ini.video.hash_path, outfile_basename
+                                                  , player.record_now, player.info_width, player.info_height
+                                                  , ini.video.capture_groupid)
                 );
         }
         else {
             wrm_trans.reset(
-                new OutMetaSequenceTransport( outfile_path, outfile_basename, now
+                new OutMetaSequenceTransport( outfile_path, outfile_basename, player.record_now
                                             , player.info_width, player.info_height, ini.video.capture_groupid)
                 );
         }
@@ -501,12 +438,12 @@ static int do_recompress(Transport & in_wrm_trans, std::string & output_filename
     }
 
     return return_code;
-}
+}   // do_recompress
 
 static int do_record( Transport & in_wrm_trans, const timeval begin_capture
                     , const timeval end_capture, uint32_t verbose
                     , std::string & output_filename, Inifile & ini, uint32_t order_count, uint32_t clear
-                    , unsigned zoom, bool show_file_metadata) {
+                    , unsigned zoom, bool show_file_metadata, bool show_statistics) {
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
 
     if (show_file_metadata) {
@@ -529,75 +466,114 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture
             cout << "Compression algorithm : " << static_cast<int>(player.info_compression_algorithm) << endl;
         }
 
-        if (!output_filename.length()) {
+        if (!show_statistics && !output_filename.length()) {
             return 0;
         }
     }
 
+    unique_ptr<Capture> capture;
+
     player.max_order_count = order_count;
 
-    const char * outfile_fullpath = output_filename.c_str();
-    char outfile_path[1024];
-    char outfile_basename[1024];
-    char outfile_extension[128];
-    strcpy(outfile_path,      "./"           ); // default value, actual one should come from output_filename
-    strcpy(outfile_basename,  "redrec_output"); // default value actual one should come from output_filename
-    strcpy(outfile_extension, ""             ); // extension is ignored for targets anyway
+    if (output_filename.length()) {
+        const char * outfile_fullpath = output_filename.c_str();
+        char outfile_path[1024];
+        char outfile_basename[1024];
+        char outfile_extension[128];
+        strcpy(outfile_path,      "./"           ); // default value, actual one should come from output_filename
+        strcpy(outfile_basename,  "redrec_output"); // default value actual one should come from output_filename
+        strcpy(outfile_extension, ""             ); // extension is ignored for targets anyway
 
-    canonical_path( outfile_fullpath
-                  , outfile_path
-                  , sizeof(outfile_path)
-                  , outfile_basename
-                  , sizeof(outfile_basename)
-                  , outfile_extension
-                  , sizeof(outfile_extension)
-                  );
+        canonical_path( outfile_fullpath
+                      , outfile_path
+                      , sizeof(outfile_path)
+                      , outfile_basename
+                      , sizeof(outfile_basename)
+                      , outfile_extension
+                      , sizeof(outfile_extension)
+                      , verbose
+                      );
 
-    if (verbose) {
-        cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension <<
-            endl << endl;
+        if (verbose) {
+            cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension <<
+                endl << endl;
+        }
+
+        if (clear == 1) {
+            clear_files_flv_meta_png(outfile_path, outfile_basename);
+        }
+
+        capture.reset(new Capture( player.record_now, player.screen_rect.cx, player.screen_rect.cy
+                                 , player.info_bpp, 24, outfile_path, outfile_path, ini.video.hash_path
+                                 , outfile_basename, false, false, NULL, ini));
+        if (capture->capture_png){
+            capture->psc->zoom(zoom);
+        }
+        player.add_consumer((RDPGraphicDevice * )capture.get(), (RDPCaptureDevice * )capture.get());
     }
-
-    if (clear == 1) {
-        clear_files_flv_meta_png(outfile_path, outfile_basename);
-    }
-
-    Capture capture( player.record_now, player.screen_rect.cx, player.screen_rect.cy, player.info_bpp, 24
-                   , outfile_path, outfile_path, ini.video.hash_path, outfile_basename, false
-                   , false, NULL, ini);
-    if (capture.capture_png){
-        capture.psc->zoom(zoom);
-    }
-    player.add_consumer((RDPGraphicDevice * )&capture, (RDPCaptureDevice * )&capture);
 
     int return_code = 0;
     try {
         player.play();
+
+        if (show_statistics) {
+            cout << endl;
+            cout << "DstBlt                : " << player.statistics.DstBlt                << endl;
+            cout << "MultiDstBlt           : " << player.statistics.MultiDstBlt           << endl;
+            cout << "PatBlt                : " << player.statistics.PatBlt                << endl;
+            cout << "MultiPatBlt           : " << player.statistics.MultiPatBlt           << endl;
+            cout << "OpaqueRect            : " << player.statistics.OpaqueRect            << endl;
+            cout << "MultiOpaqueRect       : " << player.statistics.MultiOpaqueRect       << endl;
+            cout << "ScrBlt                : " << player.statistics.ScrBlt                << endl;
+            cout << "MultiScrBlt           : " << player.statistics.MultiScrBlt           << endl;
+            cout << "MemBlt                : " << player.statistics.MemBlt                << endl;
+            cout << "Mem3Blt               : " << player.statistics.Mem3Blt               << endl;
+            cout << "LineTo                : " << player.statistics.LineTo                << endl;
+            cout << "GlyphIndex            : " << player.statistics.GlyphIndex            << endl;
+            cout << "Polyline              : " << player.statistics.Polyline              << endl;
+
+            cout << "CacheBitmap           : " << player.statistics.CacheBitmap           << endl;
+            cout << "CacheColorTable       : " << player.statistics.CacheColorTable       << endl;
+            cout << "CacheGlyph            : " << player.statistics.CacheGlyph            << endl;
+
+            cout << "FrameMarker           : " << player.statistics.FrameMarker           << endl;
+
+            cout << "BitmapUpdate          : " << player.statistics.BitmapUpdate          << endl;
+
+            cout << "CachePointer          : " << player.statistics.CachePointer          << endl;
+            cout << "PointerIndex          : " << player.statistics.PointerIndex          << endl;
+
+            cout << "graphics_update_chunk : " << player.statistics.graphics_update_chunk << endl;
+            cout << "bitmap_update_chunk   : " << player.statistics.bitmap_update_chunk   << endl;
+            cout << "timestamp_chunk       : " << player.statistics.timestamp_chunk       << endl;
+        }
     }
     catch (Error e) {
         return_code = -1;
     }
 
+    capture.reset();
+
     return return_code;
-}
+}   // do_record
 
 static int recompress_or_record( Transport & in_wrm_trans, const timeval begin_capture
                                , const timeval end_capture, uint32_t verbose
                                , std::string & output_filename, Inifile & ini
                                , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
-                               , bool show_file_metadata) {
+                               , bool show_file_metadata, bool show_statistics) {
     for (unsigned i = 1; i < file_count ; i++) {
         in_wrm_trans.next();
     }
 
-    if (ini.video.capture_png || show_file_metadata ||
+    if (ini.video.capture_png || show_file_metadata || show_statistics ||
         (ini.video.wrm_color_depth_selection_strategy != USE_ORIGINAL_COLOR_DEPTH) || order_count) {
         if (verbose) {
             cout << "[A]"<< endl;
         }
         return do_record( in_wrm_trans, begin_capture, end_capture, verbose
                         , output_filename, ini, order_count, clear, zoom
-                        , show_file_metadata);
+                        , show_file_metadata, show_statistics);
     }
     else {
         if (verbose) {

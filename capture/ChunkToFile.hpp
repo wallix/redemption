@@ -269,6 +269,14 @@ public:
             }
             break;
 
+        case TIMESTAMP:
+            {
+                StaticStream stream(data.p, data.size());
+                timeval      record_now;
+
+                stream.in_timeval_from_uint64le_usec(record_now);
+                this->trans_target->timestamp(record_now);
+            }
         default:
             {
                 FixedSizeStream payload(data.p, data.size());

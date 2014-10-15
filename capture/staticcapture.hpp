@@ -86,7 +86,7 @@ public:
     }
 
     virtual ~StaticCapture() {
-        if (this->first_picture_capture_delayed) {
+        if (this->first_picture_capture_delayed && this->rt_display) {
             this->breakpoint(this->first_picture_capture_now);
         }
 

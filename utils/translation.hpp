@@ -49,7 +49,16 @@ private:
         bool operator!=(const char * k) const noexcept
         { return !(*this == k); }
     };
-    typedef std::array<value_type, 34> trans_t;
+    typedef std::array<value_type, 35> trans_t;
+
+    //template<class... Vs>
+    //struct MakerBase {
+    //    constexpr static trans_t make(Vs... args) noexcept {
+    //        return {args...};
+    //    }
+    //};
+    //
+    //using Maker = MakerBase<make_sequence<value_type, std::tuple_size<trans_t>::value>>;
 
     language_t lang;
     trans_t trans[MAX_LANG];
@@ -102,6 +111,7 @@ private:
         {"target_fail", "Failed to connect to remote TCP host"},
         {"comment", "Comment"},
         {"no_results", "No results found"},
+        {"authentication_required", "Authentication Required"}
     }}, trans_t{{
         {"login", "Identifiant"},
         {"password", "Mot de passe"},
@@ -142,13 +152,14 @@ private:
             "Contactez votre administrateur système en<br>"
             "cas de problème pour vous connecter."},
         {"selector", "Sélecteur"},
-        {"session_out_time", "L'authorisation de la session a expirée"},
+        {"session_out_time", "L'autorisation de la session a expiré"},
         {"miss_keepalive", "Absence de réponse de Keepalive de l'ACL"},
         {"close_inactivity", "Fermeture sur inactivité"},
         {"acl_fail", "Echec du service d'authentification"},
         {"target_fail", "Echec de la connexion à la cible distante"},
         {"comment", "Commentaire"},
         {"no_results", "Aucun résultat"},
+        {"authentication_required", "Authentification Requise"}
     }}}
     {
         for (auto & t : this->trans) {

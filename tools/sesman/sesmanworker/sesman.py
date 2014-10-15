@@ -329,6 +329,14 @@ class Sesman():
 
         return _status, _error
 
+    def interactive_password(self, data_to_send):
+        data_to_send.update({ u'module' : u'interactive_password' })
+        self.send_data(data_to_send)
+
+        _status, _error = self.receive_data()
+        if self.shared.get(u'accept_message') != u'True':
+            _status, _error = False, TR(u'not_accept_message')
+        return _status, _error
 
     def interactive_close(self, target, message):
         data_to_send = { u'error_message'  : message
@@ -923,6 +931,9 @@ class Sesman():
                     if not password_of_target:
                         kv[u'target_password'] = u''
                         Logger().info(u"auto logon is disabled")
+                        _status, _error = self.interactive_password({})
+                        if _status:
+                            kv[u'target_password'] = self.shared.get(u'target_password')
 
                     if not _status:
                         break
