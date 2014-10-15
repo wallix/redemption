@@ -95,11 +95,6 @@ public:
         return this->drawable.rowsize;
     }
 
-    uint32_t RGBtoBGR(uint32_t color)
-    {
-        return ((color << 16) | (color & 0xFF00)| (color >> 16)) & 0xFFFFFF;
-    }
-
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         const Rect & trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
@@ -282,13 +277,13 @@ public:
             this->drawable.mem_blt(rect, bmp
                 , cmd.srcx + (rect.x - cmd.rect.x)
                 , cmd.srcy + (rect.y - cmd.rect.y)
-                , 0xFFFFFF, false);
+                , 0xFFFFFF);
         break;
         case 0xCC:
             this->drawable.mem_blt(rect, bmp
                 , cmd.srcx + (rect.x - cmd.rect.x)
                 , cmd.srcy + (rect.y - cmd.rect.y)
-                , 0, false);
+                , 0);
         break;
         case 0x22:  // dest = dest AND (NOT source)
         case 0x66:  // dest = source XOR dest (SRCINVERT)
@@ -298,7 +293,7 @@ public:
             this->drawable.mem_blt_ex(rect, bmp
                 , cmd.srcx + (rect.x - cmd.rect.x)
                 , cmd.srcy + (rect.y - cmd.rect.y)
-                , cmd.rop, false);
+                , cmd.rop);
             break;
         default:
             // should not happen
@@ -317,9 +312,10 @@ public:
             , cmd.srcx + (rect.x  - cmd.rect.x)
             , cmd.srcy + (rect.y  - cmd.rect.y)
             , cmd.rop
-            , ((this->capture_bpp == 24) ? cmd.fore_color
-                                         : ::color_decode_opaquerect(cmd.fore_color, this->capture_bpp, this->mod_palette_rgb))
-            , false);
+            , ((this->capture_bpp == 24)
+                ? cmd.fore_color
+                : ::color_decode_opaquerect(cmd.fore_color, this->capture_bpp, this->mod_palette_rgb))
+        );
     }
 
     /*
@@ -532,9 +528,7 @@ public:
             }
         }
 
-        this->drawable.draw_bitmap(
-            Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), glyph_fragments,
-            false);
+        this->drawable.draw_bitmap(Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), glyph_fragments);
     }
 
     virtual void draw(const RDPBrushCache & cmd) {}
@@ -682,7 +676,7 @@ public:
 
         const Rect & trect = rectBmp.intersect(this->drawable.width, this->drawable.height);
 
-        this->drawable.draw_bitmap(trect, bmp, false);
+        this->drawable.draw_bitmap(trect, bmp);
     }
 
     virtual void draw(const RDP::FrameMarker & order) {

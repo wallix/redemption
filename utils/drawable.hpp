@@ -121,6 +121,8 @@ public:
     }
 };  // struct DrawablePointerCache
 
+using std::size_t;
+
 struct Drawable {
     static const std::size_t Bpp = 3;
 
@@ -819,7 +821,7 @@ public:
      * a cache (data) and insert a subpart (srcx, srcy) to the local
      * image cache (this->data) a the given position (rect).
      */
-    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, const uint32_t xormask, const bool bgr) {
+    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, const uint32_t xormask) {
         if (bmp.cx() < srcx || bmp.cy() < srcy) {
             return ;
         }
@@ -849,9 +851,6 @@ public:
                     px = (px << 8) + source[Bpp-1-b];
                 }
                 uint32_t color = xormask ^ color_decode(px, bmp.bpp(), bmp.palette());
-                if (bgr) {
-                    color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
-                }
                 target[0] = color;
                 target[1] = color >> 8;
                 target[2] = color >> 16;
@@ -859,12 +858,12 @@ public:
         }
     }
 
+private:
     template <typename Op>
-    void memblt_op( const Rect & rect
-                  , const Bitmap & bmp
-                  , const uint16_t srcx
-                  , const uint16_t srcy
-                  , const bool bgr) {
+    void mem_blt_op( const Rect & rect
+                   , const Bitmap & bmp
+                   , const uint16_t srcx
+                   , const uint16_t srcy) {
         Op op;
 
         if (bmp.cx() < srcx || bmp.cy() < srcy) {
@@ -902,9 +901,6 @@ public:
                     px = (px << 8) + source[Bpp-1-b];
                 }
                 uint32_t color = color_decode(px, bmp.bpp(), bmp.palette());
-                if (bgr) {
-                    color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
-                }
 
                 s0 = color         & 0xFF;
                 s1 = (color >> 8 ) & 0xFF;
@@ -917,47 +913,47 @@ public:
         }
     }
 
+public:
     void mem_blt_ex( const Rect & rect
                    , const Bitmap & bmp
                    , const uint16_t srcx
                    , const uint16_t srcy
-                   , uint8_t rop
-                   , const bool bgr) {
+                   , uint8_t rop) {
         switch (rop) {
             // +------+-------------------------------+
             // | 0x22 | ROP: 0x00220326               |
             // |      | RPN: DSna                     |
             // +------+-------------------------------+
             case 0x22:
-                this->memblt_op<Op_0x22>(rect, bmp, srcx, srcy, bgr);
+                this->mem_blt_op<Op_0x22>(rect, bmp, srcx, srcy);
                 break;
             // +------+-------------------------------+
             // | 0x66 | ROP: 0x00660046 (SRCINVERT)   |
             // |      | RPN: DSx                      |
             // +------+-------------------------------+
             case 0x66:
-                this->memblt_op<Op_0x66>(rect, bmp, srcx, srcy, bgr);
+                this->mem_blt_op<Op_0x66>(rect, bmp, srcx, srcy);
                 break;
             // +------+-------------------------------+
             // | 0x88 | ROP: 0x008800C6 (SRCAND)      |
             // |      | RPN: DSa                      |
             // +------+-------------------------------+
             case 0x88:
-                this->memblt_op<Op_0x88>(rect, bmp, srcx, srcy, bgr);
+                this->mem_blt_op<Op_0x88>(rect, bmp, srcx, srcy);
                 break;
             // +------+-------------------------------+
             // | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
             // |      | RPN: DSo                      |
             // +------+-------------------------------+
             case 0xEE:
-                this->memblt_op<Op_0xEE>(rect, bmp, srcx, srcy, bgr);
+                this->mem_blt_op<Op_0xEE>(rect, bmp, srcx, srcy);
                 break;
             // +------+-------------------------------+
             // | 0xBB | ROP: 0x00BB0226 (MERGEPAINT)  |
             // |      | RPN: DSno                     |
             // +------+-------------------------------+
             case 0xBB:
-                this->memblt_op<Op_0xBB>(rect, bmp, srcx, srcy, bgr);
+                this->mem_blt_op<Op_0xBB>(rect, bmp, srcx, srcy);
                 break;
 
             default:
@@ -966,7 +962,7 @@ public:
         }
     }
 
-    void draw_bitmap(const Rect & rect, const Bitmap & bmp, bool bgr) {
+    void draw_bitmap(const Rect & rect, const Bitmap & bmp) {
         const int16_t mincx =
             std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->width  - rect.x, rect.cx));
         const int16_t mincy =
@@ -995,9 +991,6 @@ public:
                     px = (px << 8) + source[Bpp - 1 - b];
                 }
                 uint32_t color = color_decode(px, bmp.bpp(), bmp.palette());
-                if (bgr) {
-                    color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
-                }
                 target[0] = color      ;
                 target[1] = color >> 8 ;
                 target[2] = color >> 16;
@@ -1013,13 +1006,13 @@ public:
         }
     };
 
+private:
     template <typename Op>
-    void mem3blt_op( const Rect & rect
-                   , const Bitmap & bmp
-                   , const uint16_t srcx
-                   , const uint16_t srcy
-                   , const uint32_t pattern_color
-                   , const bool bgr) {
+    void mem_3_blt_op( const Rect & rect
+                     , const Bitmap & bmp
+                     , const uint16_t srcx
+                     , const uint16_t srcy
+                     , const uint32_t pattern_color) {
         Op op;
 
         if (bmp.cx() < srcx || bmp.cy() < srcy) {
@@ -1058,11 +1051,6 @@ public:
                     px = (px << 8) + source[Bpp-1-b];
                 }
                 uint32_t color = color_decode(px, bmp.bpp(), bmp.palette());
-                if (bgr) {
-                    color =   ((color << 16) & 0xFF0000)
-                            | ( color        & 0xFF00)
-                            | ((color >> 16) & 0xFF);
-                }
 
                 s0 = color         & 0xFF;
                 s1 = (color >> 8 ) & 0xFF;
@@ -1079,20 +1067,20 @@ public:
         }
     }
 
+public:
     void mem_3_blt( const Rect & rect
                   , const Bitmap & bmp
                   , const uint16_t srcx
                   , const uint16_t srcy
                   , uint8_t rop
-                  , const uint32_t pattern_color
-                  , const bool bgr) {
+                  , const uint32_t pattern_color) {
         switch (rop) {
             // +------+-------------------------------+
             // | 0xB8 | ROP: 0x00B8074A               |
             // |      | RPN: PSDPxax                  |
             // +------+-------------------------------+
             case 0xB8:
-                this->mem3blt_op<Op_0xB8>(rect, bmp, srcx, srcy, pattern_color, bgr);
+                this->mem_3_blt_op<Op_0xB8>(rect, bmp, srcx, srcy, pattern_color);
             break;
 
             default:
@@ -1132,6 +1120,7 @@ public:
         }
     }
 
+private:
     void invert_color(const Rect & rect)
     {
         const Rect & trect = rect.intersect(Rect(0, 0, this->width, this->height));
@@ -1272,6 +1261,7 @@ public:
         }
     };
 
+public:
     void ellipse(const Ellipse & el, const uint8_t rop,
                       const uint8_t fill, const uint32_t color) {
         if (this->tracked_area.has_intersection(el.get_rect())) {
@@ -1481,6 +1471,7 @@ public:
         }
     }
 
+private:
     template <typename Op>
     void patblt_op(const Rect & rect, const uint32_t color)
     {
@@ -1596,6 +1587,7 @@ public:
         }
     };
 
+public:
     // low level patblt,
     // mostly avoid clipping because we already took care of it
     void patblt(const Rect & rect, const uint8_t rop, const uint32_t color)
@@ -1801,6 +1793,7 @@ public:
         }
     }
 
+private:
     struct Op_0x11
     {
         uint8_t operator()(uint8_t target, uint8_t source)
@@ -1940,6 +1933,7 @@ public:
         }
     }
 
+public:
     // low level scrblt, mostly avoid considering clipping
     // because we already took care of it
     void scrblt(unsigned srcx, unsigned srcy, const Rect drect, uint8_t rop)
