@@ -82,12 +82,12 @@ public:
 
     virtual void set_row(size_t rownum, const uint8_t * data)
     {
-        memcpy(this->drawable.data + this->drawable.rowsize * rownum, data, this->drawable.rowsize);
+        memcpy(this->drawable.row_data(rownum), data, this->drawable.rowsize);
     }
 
     virtual uint8_t * get_row(size_t rownum)
     {
-        return this->drawable.data + this->drawable.rowsize * rownum;
+        return this->drawable.row_data(rownum);
     }
 
     virtual size_t get_rowsize()
@@ -581,7 +581,7 @@ public:
                             ++i;
                         }
                         if (yy + y >= screen_rect.y && xx + x >= screen_rect.x && xx + x < screen_rect.right() && font_item->data[i + yy] & oc) {
-                            this->drawable.opaquerect(Rect(x + xx, y + yy, 1, 1), fgcolor);
+                            this->drawable.draw_pixel(x + xx, y + yy, fgcolor);
                         }
                         oc >>= 1;
                     }

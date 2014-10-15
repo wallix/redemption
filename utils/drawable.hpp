@@ -126,12 +126,13 @@ using std::size_t;
 struct Drawable {
     static const std::size_t Bpp = 3;
 
-    uint16_t width;
-    uint16_t height;
+    const uint16_t width;
+    const uint16_t height;
     const size_t rowsize;
-    unsigned long pix_len;
-    uint8_t * data;
 
+    uint8_t * const data;
+
+private:
     enum {
         char_width  = 7,
         char_height = 12
@@ -156,6 +157,7 @@ struct Drawable {
     uint16_t save_mouse_x;
     uint16_t save_mouse_y;
 
+public:
     Rect tracked_area;
     bool tracked_area_changed;
 
@@ -180,7 +182,17 @@ public:
     : width(width)
     , height(height)
     , rowsize(width * Bpp)
-    , pix_len(this->rowsize * height)
+    , data([this]{
+        if (!(this->rowsize * this->height)) {
+            throw Error(ERR_RECORDER_EMPTY_IMAGE);
+        }
+        uint8_t * data = new (std::nothrow) uint8_t[this->rowsize * this->height] {};
+        if (0 == data) {
+            throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
+        }
+        return data;
+    }())
+    , previous_timestamp_length(0)
     , tracked_area(0, 0, 0, 0)
     , tracked_area_changed(false)
     , logical_frame_ended(true)
@@ -190,19 +202,8 @@ public:
     , current_pointer(&this->default_pointer)
     {
         this->initialize_default_pointer();
-
-        if (!this->pix_len) {
-            throw Error(ERR_RECORDER_EMPTY_IMAGE);
-        }
-        this->data = new (std::nothrow) uint8_t[this->pix_len];
-        if (this->data == 0) {
-            throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
-        }
-        std::fill(this->data, this->data + this->pix_len, 0);
-
         memset(this->timestamp_data, 0xFF, sizeof(this->timestamp_data));
         memset(this->previous_timestamp, 0x07, sizeof(this->previous_timestamp));
-        this->previous_timestamp_length = 0;
     }
 
     ~Drawable() {
@@ -225,8 +226,8 @@ public:
         return this->data + (rect.y * this->width + rect.x) * Bpp;
     }
 
-    uint8_t * first_pixel(int y) {
-        return this->data + y * this->width * Bpp;
+    uint8_t * row_data(int y) const {
+        return this->data + y * this->rowsize;
     }
 
     uint8_t * first_pixel(int x, int y) {
@@ -237,16 +238,16 @@ public:
         return this->data + (y * this->width + x) * Bpp;
     }
 
-    uint8_t * after_last_pixel() {
-        return this->data + this->pix_len;
-    }
-
     uint8_t * beginning_of_last_line(const Rect & rect) {
         return this->data + ((rect.y + rect.cy - 1) * this->width + rect.x) * Bpp;
     }
 
-    int size() const {
+    unsigned size() const {
         return this->width * this->height;
+    }
+
+    size_t pix_len() const {
+        return this->rowsize * this->height;
     }
 
     void set_mouse_cursor_pos(int x, int y) {
@@ -255,7 +256,7 @@ public:
     }
 
 private:
-    int _posch_12x7(char ch) {
+    int _posch_12x7(char ch) const {
         return char_width * char_height *
         (isdigit(ch)  ? ch-'0'
         : isupper(ch) ? ch - 'A' + 14
@@ -864,8 +865,6 @@ private:
                    , const Bitmap & bmp
                    , const uint16_t srcx
                    , const uint16_t srcy) {
-        Op op;
-
         if (bmp.cx() < srcx || bmp.cy() < srcy) {
             return ;
         }
@@ -893,6 +892,7 @@ private:
         int stepsource = (bmp.bmp_size() / bmp.cy()) + trect.cx * Bpp;
 
         uint8_t s0, s1, s2;
+        Op op;
 
         for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource) {
             for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp) {
@@ -1000,7 +1000,7 @@ public:
 
     struct Op_0xB8
     {
-        uint8_t operator()(uint8_t target, uint8_t source, uint8_t pattern)
+        uint8_t operator()(uint8_t target, uint8_t source, uint8_t pattern) const
         {
             return ((target ^ pattern) & source) ^ pattern;
         }
@@ -1013,8 +1013,6 @@ private:
                      , const uint16_t srcx
                      , const uint16_t srcy
                      , const uint32_t pattern_color) {
-        Op op;
-
         if (bmp.cx() < srcx || bmp.cy() < srcy) {
             return;
         }
@@ -1043,6 +1041,7 @@ private:
 
         uint8_t s0, s1, s2;
         uint8_t p0, p1, p2;
+        Op op;
 
         for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource) {
             for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp) {
@@ -1150,112 +1149,112 @@ private:
 
     struct Op2_0x01 // R2_BLACK 0
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return 0x00;
         }
     };
     struct Op2_0x02 // R2_NOTMERGEPEN DPon
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~(target | source);
         }
     };
     struct Op2_0x03 // R2_MASKNOTPEN DPna
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return (target & ~source);
         }
     };
     struct Op2_0x04 // R2_NOTCOPYPEN Pn
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~source;
         }
     };
     struct Op2_0x05 // R2_MASKPENNOT PDna
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return (source & ~target);
         }
     };
     struct Op2_0x06 // R2_NOT Dn
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~target;
         }
     };
     struct Op2_0x07 // R2_XORPEN DPx
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return (target ^ source);
         }
     };
     struct Op2_0x08 // R2_NOTMASKPEN DPan
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~(target & source);
         }
     };
     struct Op2_0x09 // R2_MASKPEN DPa
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return (target & source);
         }
     };
     struct Op2_0x0A // R2_NOTXORPEN DPxn
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~(target ^ source);
         }
     };
     // struct Op2_0x0B // R2_NOP D
     // {
-    //     uint8_t operator()(uint8_t target, uint8_t source)
+    //     uint8_t operator()(uint8_t target, uint8_t source) const
     //     {
     //         return target;
     //     }
     // };
     struct Op2_0x0C // R2_MERGENOTPEN DPno
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return (target | ~source);
         }
     };
     struct Op2_0x0D // R2_COPYPEN P
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return source;
         }
     };
     struct Op2_0x0E // R2_MERGEPENNOT PDno
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return (source | ~target);
         }
     };
     struct Op2_0x0F // R2_MERGEPEN PDo
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return (target | source);
         }
     };
     struct Op2_0x10 // R2_WHITE 1
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return 0xFF;
         }
@@ -1471,12 +1470,21 @@ public:
         }
     }
 
+    void draw_pixel(int16_t x, int16_t y, const uint32_t color)
+    {
+        if (this->tracked_area.has_intersection(x, y)) {
+            this->tracked_area_changed = true;
+        }
+        uint8_t * const base = this->first_pixel(x, y);
+        base[0] = color;
+        base[1] = color >> 8;
+        base[2] = color >> 16;
+    }
+
 private:
     template <typename Op>
     void patblt_op(const Rect & rect, const uint32_t color)
     {
-        Op op;
-
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
         }
@@ -1486,6 +1494,7 @@ private:
         uint8_t p0 = color & 0xFF;
         uint8_t p1 = (color >> 8) & 0xFF;
         uint8_t p2 = (color >> 16) & 0xFF;
+        Op op;
 
         for (size_t y = 0; y < static_cast<size_t>(rect.cy) ; y++) {
             p = base + this->rowsize * y;
@@ -1500,7 +1509,7 @@ private:
 
     struct Op_0x05
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~(target | source);
         }
@@ -1508,7 +1517,7 @@ private:
 
     struct Op_0x0F
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~source;
         }
@@ -1516,7 +1525,7 @@ private:
 
     struct Op_0x50
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~target & source;
         }
@@ -1524,7 +1533,7 @@ private:
 
     struct Op_0x5A
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return target ^ source;
         }
@@ -1532,7 +1541,7 @@ private:
 
     struct Op_0x5F
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~(target & source);
         }
@@ -1540,7 +1549,7 @@ private:
 
     struct Op_0xA0
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return target & source;
         }
@@ -1548,7 +1557,7 @@ private:
 
     struct Op_0xA5
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~(target ^ source);
         }
@@ -1556,7 +1565,7 @@ private:
 
     struct Op_0xAF
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return target | ~source;
         }
@@ -1565,7 +1574,7 @@ private:
     TODO("This one is a memset and should be simplified")
     struct Op_0xF0
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return source;
         }
@@ -1573,7 +1582,7 @@ private:
 
     struct Op_0xF5
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~target | source;
         }
@@ -1581,7 +1590,7 @@ private:
 
     struct Op_0xFA
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return target | source;
         }
@@ -1707,8 +1716,6 @@ public:
     void patblt_op_ex(const Rect & rect, const uint8_t * brush_data,
         const uint32_t back_color, const uint32_t fore_color)
     {
-        Op op;
-
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
         }
@@ -1719,6 +1726,7 @@ public:
         uint8_t p0;
         uint8_t p1;
         uint8_t p2;
+        Op op;
 
         for (size_t y = 0; y < static_cast<size_t>(rect.cy) ; y++)
         {
@@ -1796,7 +1804,7 @@ public:
 private:
     struct Op_0x11
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~(target | ~source);
         }
@@ -1804,7 +1812,7 @@ private:
 
     struct Op_0x22
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return target & ~source;
         }
@@ -1812,7 +1820,7 @@ private:
 
     struct Op_0x33
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             TODO("The templated function can be optimize in the case the target is not read.");
             (void)target;
@@ -1822,7 +1830,7 @@ private:
 
     struct Op_0x44
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~target & source;
         }
@@ -1830,7 +1838,7 @@ private:
 
     struct Op_0x66
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return target ^ source;
         }
@@ -1838,7 +1846,7 @@ private:
 
     struct Op_0x77
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~(target & source);
         }
@@ -1846,7 +1854,7 @@ private:
 
     struct Op_0x88
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return target & source;
         }
@@ -1854,7 +1862,7 @@ private:
 
     struct Op_0x99
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~(target ^ source);
         }
@@ -1862,7 +1870,7 @@ private:
 
     struct Op_0xBB
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return target | ~source;
         }
@@ -1870,7 +1878,7 @@ private:
 
     struct Op_0xCC
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             TODO("The templated function can be optimized because in the case the target is not read. See commented code in src_blt (and add performance benchmark)");
             (void)target;
@@ -1880,7 +1888,7 @@ private:
 
     struct Op_0xDD
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return ~target | source;
         }
@@ -1888,7 +1896,7 @@ private:
 
     struct Op_0xEE
     {
-        uint8_t operator()(uint8_t target, uint8_t source)
+        uint8_t operator()(uint8_t target, uint8_t source) const
         {
             return target | source;
         }
@@ -1897,8 +1905,6 @@ private:
     template <typename Op>
     void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect drect)
     {
-        Op op;
-
         if (this->tracked_area.has_intersection(drect)) {
             this->tracked_area_changed = true;
         }
@@ -1907,17 +1913,22 @@ private:
         const int16_t deltay = static_cast<int16_t>(srcy - drect.y);
         const Rect srect = drect.offset(deltax, deltay);
         const Rect & overlap = srect.intersect(drect);
+
         uint8_t * target = ((deltay >= 0)||overlap.isempty())
-        ? this->first_pixel(drect)
-        : this->beginning_of_last_line(drect);
+            ? this->first_pixel(drect)
+            : this->beginning_of_last_line(drect);
         uint8_t * source = ((deltay >= 0)||overlap.isempty())
-        ? this->first_pixel(srect)
-        : this->beginning_of_last_line(srect);
+            ? this->first_pixel(srect)
+            : this->beginning_of_last_line(srect);
         const signed int to_nextrow = static_cast<signed int>(((deltay >= 0)||overlap.isempty())
-        ?  this->rowsize
-        : -this->rowsize);
+            ?  this->rowsize
+            : -this->rowsize);
+
         const signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?this->Bpp:-this->Bpp;
         const unsigned offset = static_cast<unsigned>(((deltay != 0)||(deltax >= 0))?0:this->Bpp*(drect.cx - 1));
+
+        Op op;
+
         for (size_t y = 0; y < drect.cy ; y++) {
             uint8_t * linetarget = target + offset;
             uint8_t * linesource = source + offset;
@@ -2242,62 +2253,40 @@ public:
         }
     }
 
-public:
     void trace_timestamp(tm & now)
     {
-        char    * timezone;
-        uint8_t   timestamp_length;
-
-        timezone = (daylight ? tzname[1] : tzname[0]);
-
-        char rawdate[size_str_timestamp];
-        memset(rawdate, 0, sizeof(rawdate));
-        timestamp_length = 20 + strlen(timezone);
-        snprintf(rawdate, timestamp_length + 1, "%4d-%02d-%02d %02d:%02d:%02d %s",
-                 now.tm_year+1900, now.tm_mon+1, now.tm_mday,
-                 now.tm_hour, now.tm_min, now.tm_sec, timezone);
-
-        this->draw_12x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate,
-            this->previous_timestamp);
-        memcpy(this->previous_timestamp, rawdate, size_str_timestamp);
-        this->previous_timestamp_length = timestamp_length;
-
-        uint8_t * tsave = this->timestamp_save;
-        uint8_t* buf = this->data;
-        int step = this->width * 3;
-        for (size_t y = 0; y < ts_height ; ++y, buf += step) {
-            memcpy(tsave, buf, timestamp_length*char_width*3);
-            tsave += timestamp_length*char_width*3;
-            memcpy(buf, this->timestamp_data + y*ts_width*3, timestamp_length*char_width*3);
-        }
+        this->priv_trace_timestamp(now, false);
     }
 
     void clear_timestamp()
     {
-        const uint8_t * tsave = this->timestamp_save;
-        int step = this->width * 3;
-        uint8_t* buf = this->data;
-        for (size_t y = 0; y < ts_height ; ++y, buf += step) {
-            memcpy(buf, tsave, this->previous_timestamp_length*char_width*3);
-            tsave += this->previous_timestamp_length*char_width*3;
-        }
+        this->priv_clear_timestamp(0);
     }
 
-    TODO("Instead of copying the trace timestamp function (un clear timestamp) for pause, "
-         "we could just parametrize the position of the timestamp on the screen")
     void trace_pausetimestamp(tm & now)
     {
-        char    * timezone;
-        uint8_t   timestamp_length;
+        this->priv_trace_timestamp(now, true);
+    }
 
-        timezone = (daylight ? tzname[1] : tzname[0]);
+    void clear_pausetimestamp()
+    {
+        this->priv_clear_timestamp(this->priv_offset_timestamp(this->previous_timestamp_length));
+    }
 
-        char rawdate[size_str_timestamp];
-        memset(rawdate, 0, sizeof(rawdate));
-        timestamp_length = 20 + strlen(timezone);
+private:
+    size_t priv_offset_timestamp(uint8_t timestamp_len) const
+    {
+        return this->rowsize * (this->height / 2) + ((this->width - timestamp_len*char_width)*Bpp) / 2;
+    }
+
+    void priv_trace_timestamp(tm & now, bool has_clear)
+    {
+        const char * timezone = (daylight ? tzname[1] : tzname[0]);
+        const uint8_t timestamp_length = 20 + strlen(timezone);
+        char rawdate[size_str_timestamp] {};
         snprintf(rawdate, timestamp_length + 1, "%4d-%02d-%02d %02d:%02d:%02d %s",
-                 now.tm_year+1900, now.tm_mon+1, now.tm_mday,
-                 now.tm_hour, now.tm_min, now.tm_sec, timezone);
+            now.tm_year+1900, now.tm_mon+1, now.tm_mday,
+            now.tm_hour, now.tm_min, now.tm_sec, timezone);
 
         this->draw_12x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate,
             this->previous_timestamp);
@@ -2305,27 +2294,21 @@ public:
         this->previous_timestamp_length = timestamp_length;
 
         uint8_t * tsave = this->timestamp_save;
-        uint8_t* buf = this->data
-            + (this->width * 3) * (this->height / 2)
-            + ((this->width - timestamp_length*char_width)*3) / 2 ;
-        int step = this->width * 3;
-        for (size_t y = 0; y < ts_height ; ++y, buf += step) {
-            memcpy(tsave, buf, timestamp_length*char_width*3);
-            tsave += timestamp_length*char_width*3;
-            memcpy(buf, this->timestamp_data + y*ts_width*3, timestamp_length*char_width*3);
+        uint8_t * buf = this->data + (has_clear ? this->priv_offset_timestamp(timestamp_length) : 0);
+        const size_t n = timestamp_length * char_width * Bpp;
+        for (size_t y = 0; y < ts_height ; ++y, buf += this->rowsize, tsave += n) {
+            memcpy(tsave, buf, n);
+            memcpy(buf, this->timestamp_data + y*ts_width*Bpp, n);
         }
     }
 
-    void clear_pausetimestamp()
+    void priv_clear_timestamp(size_t offset)
     {
         const uint8_t * tsave = this->timestamp_save;
-        int step = this->width * 3;
-        uint8_t* buf = this->data
-            + (this->width * 3) * (this->height / 2)
-            + ((this->width - this->previous_timestamp_length*char_width)*3) / 2 ;
-        for (size_t y = 0; y < ts_height ; ++y, buf += step) {
-            memcpy(buf, tsave, this->previous_timestamp_length*char_width*3);
-            tsave += this->previous_timestamp_length*char_width*3;
+        uint8_t * buf = this->data + offset;
+        const size_t n = this->previous_timestamp_length * char_width * Bpp;
+        for (size_t y = 0; y < ts_height ; ++y, buf += this->rowsize, tsave += n) {
+            memcpy(buf, tsave, n);
         }
     }
 
@@ -2587,7 +2570,7 @@ public:
 /* 0fd0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................
 /* 0fe0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................
 /* 0ff0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................
-};
+        };
         const uint8_t pointer_mask[] = {
 /* 0000 */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // ................
 /* 0010 */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // ................
@@ -2597,7 +2580,7 @@ public:
 /* 0050 */ 0x00, 0x0f, 0xff, 0xff, 0x00, 0x1f, 0xff, 0xff, 0x00, 0x3f, 0xff, 0xff, 0x00, 0x7f, 0xff, 0xff,  // .........?......
 /* 0060 */ 0x00, 0xff, 0xff, 0xff, 0x01, 0xff, 0xff, 0xff, 0x03, 0xff, 0xff, 0xff, 0x07, 0xff, 0xff, 0xff,  // ................
 /* 0070 */ 0x0f, 0xff, 0xff, 0xff, 0x1f, 0xff, 0xff, 0xff, 0x3f, 0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff,  // ........?.......
-};
+        };
 
         this->default_pointer.initialize(0, 0, pointer_data, pointer_mask);
     }
