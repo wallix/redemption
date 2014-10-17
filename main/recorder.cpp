@@ -230,11 +230,6 @@ int main(int argc, char** argv)
         exit(-1);
     };
 
-    timeval begin_capture;
-    begin_capture.tv_sec = begin_cap; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = end_cap; end_capture.tv_usec = 0;
-
     char infile_path     [1024] = "./"          ;   // default value, actual one should come from output_filename
     char infile_basename [1024] = "redrec_input";   // default value, actual one should come from output_filename
     char infile_extension[ 128] = ".mwrm"       ;
@@ -300,6 +295,11 @@ int main(int argc, char** argv)
     };
 
     InMetaSequenceTransport in_wrm_trans(infile_prefix, infile_extension);
+
+    timeval begin_capture;
+    begin_capture.tv_sec = begin_cap; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = end_cap; end_capture.tv_usec = 0;
 
     int result = recompress_or_record( in_wrm_trans, begin_record, begin_capture, end_capture
                                      , output_filename, ini, count, order_count, clear, zoom
