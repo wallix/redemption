@@ -492,7 +492,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture
             clear_files_flv_meta_png(outfile_path, outfile_basename);
         }
 
-        capture.reset(new Capture( player.record_now, player.screen_rect.cx, player.screen_rect.cy
+        capture.reset(new Capture( begin_capture, player.screen_rect.cx, player.screen_rect.cy
                                  , player.info_bpp, 24, outfile_path, outfile_path, ini.video.hash_path
                                  , outfile_basename, false, false, NULL, ini));
         if (capture->capture_png){

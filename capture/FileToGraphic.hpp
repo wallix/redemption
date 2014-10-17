@@ -1187,7 +1187,7 @@ public:
             if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
                 break;
             }
-            if (this->end_capture.tv_sec && this->begin_capture < this->record_now) {
+            if (this->end_capture.tv_sec && this->end_capture < this->record_now) {
                 break;
             }
         }
