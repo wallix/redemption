@@ -44,7 +44,6 @@ public:
     timeval record_now;
 
     bool meta_ok;
-    bool timestamp_ok;
 
     uint32_t verbose;
 
@@ -86,7 +85,6 @@ public:
         , nbconsumers(0)
         , consumers()
         , meta_ok(false)
-        , timestamp_ok(false)
         , verbose(verbose)
         , info_version(0)
         , info_width(0)
@@ -115,7 +113,7 @@ public:
         , scit(*trans) {
         while (this->next_chunk()) {
             this->interpret_chunk();
-            if (this->meta_ok && this->timestamp_ok) {
+            if (this->meta_ok) {
                 break;
             }
         }
@@ -124,12 +122,6 @@ public:
     void add_consumer(RDPChunkedDevice * chunk_device) {
         REDASSERT(nbconsumers < (sizeof(consumers) / sizeof(consumers[0]) - 1));
         this->consumers[this->nbconsumers++] = chunk_device;
-
-        BStream payload(12 + 1);
-        payload.out_timeval_to_uint64le_usec(this->record_now);
-        payload.mark_end();
-
-        chunk_device->chunk(TIMESTAMP, 1, payload);
     }
 
     bool next_chunk() {
@@ -224,23 +216,14 @@ public:
 
             this->stream.p = this->stream.get_data();
 
-            this->meta_ok = true;
+            if (!this->meta_ok) {
+                this->meta_ok = true;
+            }
             break;
         case RESET_CHUNK:
             this->info_compression_algorithm = 0;
 
             this->trans = this->trans_source;
-            break;
-        case TIMESTAMP:
-            {
-                StaticStream temp_stream(this->stream.p, this->stream.size());
-
-                temp_stream.in_timeval_from_uint64le_usec(this->record_now);
-
-                if (!this->timestamp_ok) {
-                    this->timestamp_ok = true;
-                }
-            }
             break;
         }
 

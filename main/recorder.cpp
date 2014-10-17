@@ -40,11 +40,11 @@
 #include "FileToChunk.hpp"
 #include "FileToGraphic.hpp"
 
-static int recompress_or_record( Transport & in_wrm_trans, const timeval begin_capture
-                               , const timeval end_capture, uint32_t verbose
+static int recompress_or_record( Transport & in_wrm_trans, const timeval begin_record
+                               , const timeval begin_capture, const timeval end_capture
                                , std::string & output_filename, Inifile & ini
                                , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
-                               , bool show_file_metadata, bool show_statistics);
+                               , bool show_file_metadata, bool show_statistics, uint32_t verbose);
 
 static const unsigned USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF;
 static const unsigned USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF;
@@ -235,14 +235,10 @@ int main(int argc, char** argv)
     timeval end_capture;
     end_capture.tv_sec = end_cap; end_capture.tv_usec = 0;
 
-    char infile_path[1024];
-    char infile_basename[1024];
-    char infile_extension[128];
-    char infile_prefix[4096];
+    char infile_path     [1024] = "./"          ;   // default value, actual one should come from output_filename
+    char infile_basename [1024] = "redrec_input";   // default value, actual one should come from output_filename
+    char infile_extension[ 128] = ".mwrm"       ;
 
-    strcpy(infile_path,      "./"          );   // default value, actual one should come from output_filename
-    strcpy(infile_basename,  "redrec_input");   // default value actual one should come from output_filename
-    strcpy(infile_extension, ".mwrm"       );
     canonical_path( input_filename.c_str()
                   , infile_path
                   , sizeof(infile_path)
@@ -257,7 +253,7 @@ int main(int argc, char** argv)
             endl;
     }
 
-    infile_prefix[0] = 0;
+    char infile_prefix [4096];
     sprintf(infile_prefix, "%s%s", infile_path, infile_basename);
 
     if (auto_output_file) {
@@ -275,10 +271,12 @@ int main(int argc, char** argv)
     TODO("if start and stop time are outside wrm, users should also be warned")
 
 
-    unsigned count = 0;
+    timeval  begin_record    ;
+    unsigned count        = 0;
     try {
         InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
         in_wrm_trans_tmp.next();
+        begin_record.tv_sec = in_wrm_trans_tmp.begin_chunk_time();
         TODO("a negative time should be a time relative to end of movie")
         REDOC("less than 1 year means we are given a time relatve to beginning of movie")
         if (begin_cap < 31536000){ // less than 1 year, it is relative not absolute timestamp
@@ -303,9 +301,9 @@ int main(int argc, char** argv)
 
     InMetaSequenceTransport in_wrm_trans(infile_prefix, infile_extension);
 
-    int result = recompress_or_record( in_wrm_trans, begin_capture, end_capture, verbose
+    int result = recompress_or_record( in_wrm_trans, begin_record, begin_capture, end_capture
                                      , output_filename, ini, count, order_count, clear, zoom
-                                     , show_file_metadata, show_statistics);
+                                     , show_file_metadata, show_statistics, verbose);
 
     if (!result && remove_input_file) {
         InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
@@ -342,20 +340,15 @@ int main(int argc, char** argv)
     return result;
 }
 
-static int do_recompress(Transport & in_wrm_trans, std::string & output_filename, Inifile & ini, uint32_t verbose) {
+static int do_recompress( Transport & in_wrm_trans, std::string & output_filename, const timeval begin_record
+                        , Inifile & ini, uint32_t verbose) {
     FileToChunk player(&in_wrm_trans, 0);
 
-    char outfile_path[1024];
-    char outfile_basename[1024];
-    char outfile_extension[1024];
+    char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
+    char outfile_basename [1024] = "redrec_output"; // default value, actual one should come from output_filename
+    char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
 
-    strcpy(outfile_path,      PNG_PATH "/");    // default value, actual one should come from output_filename
-    strcpy(outfile_basename,  "redrec_output"); // default value, actual one should come from output_filename
-    strcpy(outfile_extension, "");              // extension is ignored for targets anyway
-
-    const char * outfile_fullpath = output_filename.c_str();
-
-    canonical_path( outfile_fullpath
+    canonical_path( output_filename.c_str()
                   , outfile_path
                   , sizeof(outfile_path)
                   , outfile_basename
@@ -390,13 +383,13 @@ static int do_recompress(Transport & in_wrm_trans, std::string & output_filename
 
             wrm_trans.reset(
                 new CryptoOutMetaSequenceTransport( &cctx, outfile_path, ini.video.hash_path, outfile_basename
-                                                  , player.record_now, player.info_width, player.info_height
+                                                  , begin_record, player.info_width, player.info_height
                                                   , ini.video.capture_groupid)
                 );
         }
         else {
             wrm_trans.reset(
-                new OutMetaSequenceTransport( outfile_path, outfile_basename, player.record_now
+                new OutMetaSequenceTransport( outfile_path, outfile_basename, begin_record
                                             , player.info_width, player.info_height, ini.video.capture_groupid)
                 );
         }
@@ -476,15 +469,11 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture
     player.max_order_count = order_count;
 
     if (output_filename.length()) {
-        const char * outfile_fullpath = output_filename.c_str();
-        char outfile_path[1024];
-        char outfile_basename[1024];
-        char outfile_extension[128];
-        strcpy(outfile_path,      "./"           ); // default value, actual one should come from output_filename
-        strcpy(outfile_basename,  "redrec_output"); // default value actual one should come from output_filename
-        strcpy(outfile_extension, ""             ); // extension is ignored for targets anyway
+        char outfile_path     [1024] = "./"           ; // default value, actual one should come from output_filename
+        char outfile_basename [1024] = "redrec_output"; // default value actual one should come from output_filename
+        char outfile_extension[ 128] = ""             ; // extension is ignored for targets anyway
 
-        canonical_path( outfile_fullpath
+        canonical_path( output_filename.c_str()
                       , outfile_path
                       , sizeof(outfile_path)
                       , outfile_basename
@@ -557,11 +546,11 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture
     return return_code;
 }   // do_record
 
-static int recompress_or_record( Transport & in_wrm_trans, const timeval begin_capture
-                               , const timeval end_capture, uint32_t verbose
+static int recompress_or_record( Transport & in_wrm_trans, const timeval begin_record
+                               , const timeval begin_capture, const timeval end_capture
                                , std::string & output_filename, Inifile & ini
                                , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
-                               , bool show_file_metadata, bool show_statistics) {
+                               , bool show_file_metadata, bool show_statistics, uint32_t verbose) {
     for (unsigned i = 1; i < file_count ; i++) {
         in_wrm_trans.next();
     }
@@ -579,6 +568,6 @@ static int recompress_or_record( Transport & in_wrm_trans, const timeval begin_c
         if (verbose) {
             cout << "[R]" << endl;
         }
-        return do_recompress(in_wrm_trans, output_filename, ini, verbose);
+        return do_recompress(in_wrm_trans, output_filename, begin_record, ini, verbose);
     }
 }
