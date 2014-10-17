@@ -222,7 +222,7 @@ public:
                 }
             }
 
-            this->stream.p = this->stream.end;
+            this->stream.p = this->stream.get_data();
 
             this->meta_ok = true;
             break;
