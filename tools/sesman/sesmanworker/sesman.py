@@ -430,6 +430,10 @@ class Sesman():
                     return None, TR(u"auth_failed_wab %s") % wab_login
 
             # At this point, User is authentified.
+            if wab_login.startswith('_OTP_'):
+                real_wab_login = self.engine.get_username()
+                self.shared[u'login'] = self.shared.get(u'login').replace(wab_login,
+                                                                          real_wab_login)
             self.language = self.engine.get_language()
             if self.engine.get_force_change_password():
                 self.send_data({u'rejected': TR(u'changepassword')})
