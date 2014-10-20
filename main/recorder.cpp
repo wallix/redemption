@@ -30,7 +30,7 @@
 #include <utility>
 #include <string>
 
-#define LOGPRINT
+//#define LOGPRINT
 #include "version.hpp"
 
 #include "fileutils.hpp"
@@ -39,12 +39,20 @@
 #include "ChunkToFile.hpp"
 #include "FileToChunk.hpp"
 #include "FileToGraphic.hpp"
+#include "crypto_in_meta_sequence_transport.hpp"
 
-static int recompress_or_record( Transport & in_wrm_trans, const timeval begin_capture
-                               , const timeval end_capture, uint32_t verbose
+static int recompress_or_record( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
+                               , const timeval begin_capture, const timeval end_capture
                                , std::string & output_filename, Inifile & ini
                                , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
-                               , bool show_file_metadata, bool show_statistics);
+                               , bool show_file_metadata, bool show_statistics, uint32_t verbose);
+
+template<typename InWrmTrans>
+unsigned get_file_count(InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_t & end_cap, timeval & begin_record);
+
+template<typename InWrmTrans>
+void remove_file(InWrmTrans & in_wrm_trans, const char * hash_path, const char * infile_path
+                , const char * infile_basename, const char * infile_extension, bool is_encrypted);
 
 static const unsigned USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF;
 static const unsigned USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF;
@@ -80,6 +88,7 @@ int main(int argc, char** argv)
     bool        remove_input_file  = false;
     std::string wrm_compression_algorithm;  // output compression algorithm.
     std::string wrm_color_depth;
+    std::string wrm_encryption;
 
     boost::program_options::options_description desc("Options");
     desc.add_options()
@@ -109,13 +118,16 @@ int main(int argc, char** argv)
 
     //("compression,z", boost::program_options::value(&wrm_compression_algorithm), "wrm compression algorithm (default=original, none, gzip, snappy, lzma)")
     ("compression,z", boost::program_options::value(&wrm_compression_algorithm), "wrm compression algorithm (default=original, none, gzip, snappy)")
-    ("color-depth,d", boost::program_options::value(&wrm_color_depth),           "wrm color depth (default=original, 16, 24)")
+    ("color-depth,d", boost::program_options::value(&wrm_color_depth),           "wrm color depth (default=original, 16, 24)"                      )
+    ("encryption,y",  boost::program_options::value(&wrm_encryption),            "wrm encryption (default=origianl, enable, disable)"              )
 
     ("auto-output-file",  "Append suffix to input base filename to generate output base filename automatically")
-    ("remove-input-file", "Remove input file")
+    ("remove-input-file", "Remove input file"                                                                  )
     ;
 
     Inifile ini;
+    bool    infile_is_encrypted = false;
+
 
     try {
         boost::program_options::variables_map options;
@@ -211,7 +223,7 @@ int main(int argc, char** argv)
         ini.video.png_interval   = png_interval;
         ini.video.frame_interval = wrm_frame_interval;
         ini.video.break_interval = wrm_break_interval;
-        ini.video.capture_wrm    = options.count("wrm") > 0;
+        ini.video.capture_wrm    =  options.count("wrm") > 0;
         ini.video.capture_png    = (options.count("png") > 0);
 
         ini.video.rt_display.set(ini.video.capture_png ? 1 : 0);
@@ -220,6 +232,42 @@ int main(int argc, char** argv)
             && !(ini.video.capture_png | ini.video.capture_wrm)) {
             cout << "Missing target format : need --png or --wrm\n\n";
             exit(-1);
+        }
+
+        {
+            int      fd_test;
+            uint32_t magic_test;
+            int      res_test;
+            fd_test = open(input_filename.c_str(), O_RDONLY);
+            if (fd_test != -1) {
+                TODO("Not portable code endianess, use byte array instead")
+                res_test = read(fd_test, &magic_test, sizeof(magic_test));
+                if ((res_test == sizeof(magic_test)) &&
+                    (magic_test == WABCRYPTOFILE_MAGIC)) {
+                    infile_is_encrypted = true;
+                    cout << "Input file is encrypted." << endl;
+                }
+                close(fd_test);
+            }
+        }
+
+        if (options.count("encryption") > 0) {
+                 if (0 == strcmp(wrm_encryption.c_str(), "enable")) {
+                ini.globals.enable_file_encryption.set(true);
+            }
+            else if (0 == strcmp(wrm_encryption.c_str(), "disable")) {
+                ini.globals.enable_file_encryption.set(false);
+            }
+            else  if (0 == strcmp(wrm_encryption.c_str(), "original")) {
+                ini.globals.enable_file_encryption.set(infile_is_encrypted);
+            }
+            else {
+                cout << "Unknown wrm encryption parameter" << endl << endl;
+                exit(-1);
+            }
+        }
+        else {
+            ini.globals.enable_file_encryption.set(infile_is_encrypted);
         }
     }
     catch(boost::program_options::error& error) {
@@ -230,19 +278,14 @@ int main(int argc, char** argv)
         exit(-1);
     };
 
-    timeval begin_capture;
-    begin_capture.tv_sec = begin_cap; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = end_cap; end_capture.tv_usec = 0;
+    if (infile_is_encrypted || ini.globals.enable_file_encryption.get()) {
+        OpenSSL_add_all_digests();
+    }
 
-    char infile_path[1024];
-    char infile_basename[1024];
-    char infile_extension[128];
-    char infile_prefix[4096];
+    char infile_path     [1024] = "./"          ;   // default value, actual one should come from output_filename
+    char infile_basename [1024] = "redrec_input";   // default value, actual one should come from output_filename
+    char infile_extension[ 128] = ".mwrm"       ;
 
-    strcpy(infile_path,      "./"          );   // default value, actual one should come from output_filename
-    strcpy(infile_basename,  "redrec_input");   // default value actual one should come from output_filename
-    strcpy(infile_extension, ".mwrm"       );
     canonical_path( input_filename.c_str()
                   , infile_path
                   , sizeof(infile_path)
@@ -257,7 +300,7 @@ int main(int argc, char** argv)
             endl;
     }
 
-    infile_prefix[0] = 0;
+    char infile_prefix [4096];
     sprintf(infile_prefix, "%s%s", infile_path, infile_basename);
 
     if (auto_output_file) {
@@ -274,66 +317,61 @@ int main(int argc, char** argv)
     TODO("also check if it contains any wrm at all and at wich one we should start depending on input time")
     TODO("if start and stop time are outside wrm, users should also be warned")
 
+    CryptoContext cctx;
+    memset(&cctx, 0, sizeof(cctx));
+    memcpy(cctx.crypto_key, ini.crypto.key0, sizeof(cctx.crypto_key));
+    memcpy(cctx.hmac_key,   ini.crypto.key1, sizeof(cctx.hmac_key  ));
 
-    unsigned count = 0;
+    timeval  begin_record    ;
+    unsigned file_count   = 0;
     try {
-        InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
-        in_wrm_trans_tmp.next();
-        TODO("a negative time should be a time relative to end of movie")
-        REDOC("less than 1 year means we are given a time relatve to beginning of movie")
-        if (begin_cap < 31536000){ // less than 1 year, it is relative not absolute timestamp
-            // begin_capture.tv_usec is 0
-            begin_cap += in_wrm_trans_tmp.begin_chunk_time();
+        if (infile_is_encrypted == false) {
+            InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
+            file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record);
         }
-        if (end_cap < 31536000){ // less than 1 year, it is relative not absolute timestamp
-            // begin_capture.tv_usec is 0
-            end_cap += in_wrm_trans_tmp.begin_chunk_time();
+        else {
+            CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension);
+            file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record);
         }
-        while (begin_cap >= in_wrm_trans_tmp.end_chunk_time()){
-            in_wrm_trans_tmp.next();
-        }
-        count = in_wrm_trans_tmp.get_seqno();
     }
     catch (const Error & e) {
         if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)){
             printf("Asked time not found in mwrm file\n");
-        };
+        }
+        else {
+            cerr << "Exception code: " << e.id << endl;
+        }
         exit(-1);
     };
 
-    InMetaSequenceTransport in_wrm_trans(infile_prefix, infile_extension);
+    unique_ptr<Transport> in_wrm_trans;
 
-    int result = recompress_or_record( in_wrm_trans, begin_capture, end_capture, verbose
-                                     , output_filename, ini, count, order_count, clear, zoom
-                                     , show_file_metadata, show_statistics);
+    if (infile_is_encrypted == false) {
+        in_wrm_trans.reset(new InMetaSequenceTransport(infile_prefix, infile_extension));
+    }
+    else {
+        in_wrm_trans.reset(new CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension));
+    }
+
+    timeval begin_capture;
+    begin_capture.tv_sec = begin_cap; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec   = end_cap;   end_capture.tv_usec   = 0;
+
+    int result = recompress_or_record( cctx, *in_wrm_trans.get(), begin_record, begin_capture, end_capture
+                                     , output_filename, ini, file_count, order_count, clear, zoom
+                                     , show_file_metadata, show_statistics, verbose);
 
     if (!result && remove_input_file) {
-        InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
-
-
-        std::vector<std::string> files;
-
-        char infile_fullpath[2048];
-        snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", infile_path, infile_basename, infile_extension);
-        files.push_back(infile_fullpath);
-
-        try {
-            do {
-                in_wrm_trans.next();
-                files.push_back(in_wrm_trans.path());
-            }
-            while (true);
+        if (infile_is_encrypted == false) {
+            InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
+            remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path, infile_basename, infile_extension
+                       , infile_is_encrypted);
         }
-        catch (const Error & e){
-            if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-                throw;
-            }
-        };
-
-        cout << endl;
-        for (std::vector<std::string>::reverse_iterator rit = files.rbegin(); rit != files.rend(); ++rit) {
-            unlink(rit->c_str());
-            cout << "Removed : " << *rit << endl;
+        else {
+            CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension);
+            remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path, infile_basename, infile_extension
+                       , infile_is_encrypted);
         }
     }
 
@@ -342,20 +380,68 @@ int main(int argc, char** argv)
     return result;
 }
 
-static int do_recompress(Transport & in_wrm_trans, std::string & output_filename, Inifile & ini, uint32_t verbose) {
+template<typename InWrmTrans>
+unsigned get_file_count(InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_t & end_cap, timeval & begin_record) {
+    in_wrm_trans.next();
+    begin_record.tv_sec = in_wrm_trans.begin_chunk_time();
+    TODO("a negative time should be a time relative to end of movie")
+    REDOC("less than 1 year means we are given a time relatve to beginning of movie")
+    if (begin_cap && (begin_cap < 31536000)) {  // less than 1 year, it is relative not absolute timestamp
+        // begin_capture.tv_usec is 0
+        begin_cap += in_wrm_trans.begin_chunk_time();
+    }
+    if (end_cap && (end_cap < 31536000)) { // less than 1 year, it is relative not absolute timestamp
+        // begin_capture.tv_usec is 0
+        end_cap += in_wrm_trans.begin_chunk_time();
+    }
+    while (begin_cap >= in_wrm_trans.end_chunk_time()) {
+        in_wrm_trans.next();
+    }
+    return in_wrm_trans.get_seqno();
+}
+
+template<typename InWrmTrans>
+void remove_file( InWrmTrans & in_wrm_trans, const char * hash_path, const char * infile_path
+                , const char * infile_basename, const char * infile_extension, bool is_encrypted) {
+    std::vector<std::string> files;
+
+    char infile_fullpath[2048];
+    if (is_encrypted) {
+        snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", hash_path, infile_basename, infile_extension);
+        files.push_back(infile_fullpath);
+    }
+    snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", infile_path, infile_basename, infile_extension);
+    files.push_back(infile_fullpath);
+
+    try {
+        do {
+            in_wrm_trans.next();
+            files.push_back(in_wrm_trans.path());
+        }
+        while (true);
+    }
+    catch (const Error & e){
+        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
+            throw;
+        }
+    };
+
+    cout << endl;
+    for (std::vector<std::string>::reverse_iterator rit = files.rbegin(); rit != files.rend(); ++rit) {
+        unlink(rit->c_str());
+        cout << "Removed : " << *rit << endl;
+    }
+}
+
+static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
+                        , std::string & output_filename, Inifile & ini, uint32_t verbose) {
     FileToChunk player(&in_wrm_trans, 0);
 
-    char outfile_path[1024];
-    char outfile_basename[1024];
-    char outfile_extension[1024];
+    char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
+    char outfile_basename [1024] = "redrec_output"; // default value, actual one should come from output_filename
+    char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
 
-    strcpy(outfile_path,      PNG_PATH "/");    // default value, actual one should come from output_filename
-    strcpy(outfile_basename,  "redrec_output"); // default value, actual one should come from output_filename
-    strcpy(outfile_extension, "");              // extension is ignored for targets anyway
-
-    const char * outfile_fullpath = output_filename.c_str();
-
-    canonical_path( outfile_fullpath
+    canonical_path( output_filename.c_str()
                   , outfile_path
                   , sizeof(outfile_path)
                   , outfile_basename
@@ -381,22 +467,16 @@ static int do_recompress(Transport & in_wrm_trans, std::string & output_filename
     int return_code = 0;
     try {
         unique_ptr<Transport> wrm_trans;
-        CryptoContext         cctx;
-
         if (ini.globals.enable_file_encryption.get()) {
-            memset(&cctx, 0, sizeof(cctx));
-            memcpy(cctx.crypto_key, ini.crypto.key0, sizeof(cctx.crypto_key));
-            memcpy(cctx.hmac_key,   ini.crypto.key1, sizeof(cctx.hmac_key  ));
-
             wrm_trans.reset(
                 new CryptoOutMetaSequenceTransport( &cctx, outfile_path, ini.video.hash_path, outfile_basename
-                                                  , player.record_now, player.info_width, player.info_height
+                                                  , begin_record, player.info_width, player.info_height
                                                   , ini.video.capture_groupid)
                 );
         }
         else {
             wrm_trans.reset(
-                new OutMetaSequenceTransport( outfile_path, outfile_basename, player.record_now
+                new OutMetaSequenceTransport( outfile_path, outfile_basename, begin_record
                                             , player.info_width, player.info_height, ini.video.capture_groupid)
                 );
         }
@@ -476,15 +556,11 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture
     player.max_order_count = order_count;
 
     if (output_filename.length()) {
-        const char * outfile_fullpath = output_filename.c_str();
-        char outfile_path[1024];
-        char outfile_basename[1024];
-        char outfile_extension[128];
-        strcpy(outfile_path,      "./"           ); // default value, actual one should come from output_filename
-        strcpy(outfile_basename,  "redrec_output"); // default value actual one should come from output_filename
-        strcpy(outfile_extension, ""             ); // extension is ignored for targets anyway
+        char outfile_path     [1024] = "./"           ; // default value, actual one should come from output_filename
+        char outfile_basename [1024] = "redrec_output"; // default value actual one should come from output_filename
+        char outfile_extension[ 128] = ""             ; // extension is ignored for targets anyway
 
-        canonical_path( outfile_fullpath
+        canonical_path( output_filename.c_str()
                       , outfile_path
                       , sizeof(outfile_path)
                       , outfile_basename
@@ -503,7 +579,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture
             clear_files_flv_meta_png(outfile_path, outfile_basename);
         }
 
-        capture.reset(new Capture( player.record_now, player.screen_rect.cx, player.screen_rect.cy
+        capture.reset(new Capture( begin_capture, player.screen_rect.cx, player.screen_rect.cy
                                  , player.info_bpp, 24, outfile_path, outfile_path, ini.video.hash_path
                                  , outfile_basename, false, false, NULL, ini));
         if (capture->capture_png){
@@ -557,11 +633,11 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture
     return return_code;
 }   // do_record
 
-static int recompress_or_record( Transport & in_wrm_trans, const timeval begin_capture
-                               , const timeval end_capture, uint32_t verbose
+static int recompress_or_record( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
+                               , const timeval begin_capture, const timeval end_capture
                                , std::string & output_filename, Inifile & ini
                                , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
-                               , bool show_file_metadata, bool show_statistics) {
+                               , bool show_file_metadata, bool show_statistics, uint32_t verbose) {
     for (unsigned i = 1; i < file_count ; i++) {
         in_wrm_trans.next();
     }
@@ -579,6 +655,6 @@ static int recompress_or_record( Transport & in_wrm_trans, const timeval begin_c
         if (verbose) {
             cout << "[R]" << endl;
         }
-        return do_recompress(in_wrm_trans, output_filename, ini, verbose);
+        return do_recompress(cctx, in_wrm_trans, begin_record, output_filename, ini, verbose);
     }
 }
