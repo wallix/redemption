@@ -23,12 +23,830 @@
 #define _REDEMPTION_UTILS_DRAWABLE_HPP_
 
 #include <algorithm>
+#include <memory>
 
 #include "bitmap.hpp"
 #include "colors.hpp"
 #include "rect.hpp"
 #include "ellipse.hpp"
 #include "difftimeval.hpp"
+
+using std::size_t;
+
+namespace Ops {
+    using u8 = uint8_t;
+
+    struct CopySrc
+    {
+       u8 operator()(u8 /*target*/, u8 source) const
+       {
+           return source;
+       }
+    };
+
+
+    struct Op_0xB8
+    {
+        u8 operator()(u8 target, u8 source, u8 pattern) const
+        {
+            return ((target ^ pattern) & source) ^ pattern;
+        }
+    };
+
+// 2.2.2.2.1.1.1.6 Binary Raster Operation (ROP2_OPERATION)
+//  The ROP2_OPERATION structure is used to define how the bits in a destination bitmap and a
+//  selected brush or pen are combined by using Boolean operators.
+// rop2Operation (1 byte): An 8-bit, unsigned integer. A raster-operation code that describes a
+//  Boolean operation, in Reverse Polish Notation, to perform on the bits in a destination
+//  bitmap (D) and selected brush or pen (P). This operation is a combination of the AND (a), OR
+//  (o), NOT (n), and XOR (x) Boolean operators.
+
+    //struct Op2_0x01 // R2_BLACK 0
+    //{
+    //    u8 operator()(u8 /*target*/, u8 /*source*/) const
+    //    {
+    //        return 0x00;
+    //    }
+    //};
+
+    struct Op2_0x02 // R2_NOTMERGEPEN DPon
+    {
+        u8 operator()(u8 target, u8 source) const
+        {
+            return ~(target | source);
+        }
+    };
+
+    struct Op2_0x03 // R2_MASKNOTPEN DPna
+    {
+        u8 operator()(u8 target, u8 source) const
+        {
+            return (target & ~source);
+        }
+    };
+
+    //struct Op2_0x04 // R2_NOTCOPYPEN Pn
+    //{
+    //    u8 operator()(u8 /*target*/, u8 source) const
+    //    {
+    //        return ~source;
+    //    }
+    //};
+
+    struct Op2_0x05 // R2_MASKPENNOT PDna
+    {
+        u8 operator()(u8 target, u8 source) const
+        {
+            return (source & ~target);
+        }
+    };
+
+    //struct Op2_0x06 // R2_NOT Dn
+    //{
+    //    u8 operator()(u8 target, u8 /*source*/) const
+    //    {
+    //        return ~target;
+    //    }
+    //};
+
+    struct Op2_0x07 // R2_XORPEN DPx
+    {
+        u8 operator()(u8 target, u8 source) const
+        {
+            return (target ^ source);
+        }
+    };
+
+    struct Op2_0x08 // R2_NOTMASKPEN DPan
+    {
+        u8 operator()(u8 target, u8 source) const
+        {
+            return ~(target & source);
+        }
+    };
+
+    struct Op2_0x09 // R2_MASKPEN DPa
+    {
+        u8 operator()(u8 target, u8 source) const
+        {
+            return (target & source);
+        }
+    };
+
+    struct Op2_0x0A // R2_NOTXORPEN DPxn
+    {
+        u8 operator()(u8 target, u8 source) const
+        {
+            return ~(target ^ source);
+        }
+    };
+
+    // struct Op2_0x0B // R2_NOP D
+    // {
+    //     u8 operator()(u8 target, u8 source) const
+    //     {
+    //         return target;
+    //     }
+    // };
+
+    struct Op2_0x0C // R2_MERGENOTPEN DPno
+    {
+        u8 operator()(u8 target, u8 source) const
+        {
+            return (target | ~source);
+        }
+    };
+
+    typedef CopySrc Op2_0x0D; // R2_COPYPEN P
+
+    struct Op2_0x0E // R2_MERGEPENNOT PDno
+    {
+        u8 operator()(u8 target, u8 source) const
+        {
+            return (source | ~target);
+        }
+    };
+
+    struct Op2_0x0F // R2_MERGEPEN PDo
+    {
+        u8 operator()(u8 target, u8 source) const
+        {
+            return (target | source);
+        }
+    };
+
+    //struct Op2_0x10 // R2_WHITE 1
+    //{
+    //    u8 operator()(u8 /*target*/, u8 /*source*/) const
+    //    {
+    //        return 0xFF;
+    //    }
+    //};
+
+
+    typedef Op2_0x02 Op_0x05;
+    //typedef Op2_0x04 Op_0x0F;
+    typedef Op2_0x05 Op_0x50;
+    typedef Op2_0x07 Op_0x5A;
+    typedef Op2_0x08 Op_0x5F;
+    typedef Op2_0x09 Op_0xA0;
+    typedef Op2_0x0A Op_0xA5;
+    typedef Op2_0x0C Op_0xAF;
+    //typedef Op2_0x0D Op_0xF0;
+    typedef Op2_0x0E Op_0xF5;
+    typedef Op2_0x0F Op_0xFA;
+
+    struct Op_0x11
+    {
+        u8 operator()(u8 target, u8 source) const
+        {
+            return ~(target | ~source);
+        }
+    };
+
+    typedef Op2_0x03 Op_0x22;
+    //typedef Op2_0x04 Op_0x33;
+    typedef Op2_0x05 Op_0x44;
+    typedef Op2_0x07 Op_0x66;
+    typedef Op2_0x08 Op_0x77;
+    typedef Op2_0x09 Op_0x88;
+    typedef Op2_0x0A Op_0x99;
+    typedef Op2_0x0C Op_0xBB;
+    //typedef Op2_0x0D Op_0xCC;
+    typedef Op2_0x0E Op_0xDD;
+    typedef Op2_0x0F Op_0xEE;
+};
+
+
+enum class DepthColor { color8 = 8, color15 = 15, color16 = 16, color24 = 24, color32 = 32 };
+constexpr uint8_t bpp_color_to_nbbyte[] {
+    0, 0, 0, 0, 0, 0, 0, 1,
+    0, 0, 0, 0, 0, 0, 2, 2,
+    0, 0, 0, 0, 0, 0, 0, 3,
+    0, 0, 0, 0, 0, 0, 0, 4,
+};
+
+
+struct DrawableTraitColor24
+{
+    // 24 bpp
+    static const size_t Bpp = 3;
+
+    struct color_t {
+        uint8_t r;
+        uint8_t g;
+        uint8_t b;
+
+        constexpr uint8_t red() const noexcept
+        { return r; }
+
+        constexpr uint8_t green() const noexcept
+        { return g; }
+
+        constexpr uint8_t blue() const noexcept
+        { return b; }
+    };
+
+    static uint8_t * assign(uint8_t * dest, color_t color) noexcept
+    {
+        *dest++ = color.red();
+        *dest++ = color.green();
+        *dest++ = color.blue();
+        return dest;
+    }
+
+    template<class BinaryOp>
+    static uint8_t * assign(uint8_t * dest, color_t color, BinaryOp op) noexcept
+    {
+        *dest = op(*dest, color.red());   ++dest;
+        *dest = op(*dest, color.green()); ++dest;
+        *dest = op(*dest, color.blue());  ++dest;
+        return dest;
+    }
+
+    template<class UnaryOp>
+    static uint8_t * transform(uint8_t * dest, UnaryOp op) noexcept
+    {
+        *dest = op(*dest); ++dest;
+        *dest = op(*dest); ++dest;
+        *dest = op(*dest); ++dest;
+        return dest;
+    }
+
+    static constexpr color_t u32_to_color(uint32_t color) noexcept
+    {
+        return {uint8_t(color), uint8_t(color >> 8), uint8_t(color >> 16)};
+    }
+
+
+    struct toColor1
+    {
+        color_t operator()(uint8_t * p) const noexcept
+        {
+            if (*p) {
+                return {uint8_t(0xff), uint8_t(0xff), uint8_t(0xff)};
+            }
+            return {uint8_t(0), uint8_t(0), uint8_t(0)};
+        }
+    };
+
+    struct toColor8
+    {
+        const uint32_t (& palette)[256];
+
+        color_t operator()(uint8_t * p) const noexcept
+        {
+            const uint32_t c = this->palette[static_cast<uint8_t>(*p)] & 0xFFFFFF;
+            return {uint8_t(c), uint8_t(c >> 8), uint8_t(c >> 16)};
+        }
+    };
+
+    struct toColor15
+    {
+        color_t operator()(uint8_t * p) const noexcept
+        {
+            const BGRColor c = (*p << 8) + p[1];
+            // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
+            const BGRColor r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
+            const BGRColor g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
+            const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
+            return {uint8_t(r << 16), uint8_t(g << 8), uint8_t(b)};
+        }
+    };
+
+    struct toColor16
+    {
+        color_t operator()(uint8_t * p) const noexcept
+        {
+            const BGRColor c = (*p << 16) + p[1];
+            // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
+            const BGRColor r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
+            const BGRColor g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
+            const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
+            return {uint8_t(r << 16), uint8_t(g << 8), uint8_t(b)};
+        }
+    };
+
+    struct toColor24
+    {
+        color_t operator()(uint8_t * p) const noexcept
+        {
+            return {uint8_t(*p << 16), uint8_t(p[1] << 8), p[2]};
+        }
+    };
+};
+
+template<DepthColor BppIn>
+struct DrawableTrait;
+
+template<>
+struct DrawableTrait<DepthColor::color24>
+: DrawableTraitColor24
+{};
+
+
+template<DepthColor BppIn>
+class DrawableImpl
+{
+    static_assert(BppIn != DepthColor::color8, "8 bit isn't supported");
+    static_assert(BppIn != DepthColor::color15, "15 bit isn't supported");
+    static_assert(BppIn != DepthColor::color16, "16 bit isn't supported");
+    static_assert(BppIn != DepthColor::color32, "32 bit isn't supported");
+
+    using u8 = uint8_t;
+    using u16 = uint16_t;
+    using P = u8 *;
+    using cP = u8 const *;
+
+    const uint16_t width_;
+    const uint16_t height_;
+    const size_t rowsize_;
+
+    P const data_;
+
+    using trait = DrawableTrait<BppIn>;
+    using color_t = typename trait::color_t;
+
+public:
+    static const size_t Bpp = trait::Bpp;
+
+    DrawableImpl(unsigned width, unsigned height)
+    : width_(width)
+    , height_(height)
+    , rowsize_(width * Bpp)
+    , data_([this]{
+        if (!(this->rowsize_ * this->height_)) {
+            throw Error(ERR_RECORDER_EMPTY_IMAGE);
+        }
+        uint8_t * data = new (std::nothrow) uint8_t[this->rowsize_ * this->height_] {};
+        if (0 == data) {
+            throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
+        }
+        return data;
+    }())
+    {}
+
+    ~DrawableImpl()
+    {
+        delete[] this->data_;
+    }
+
+    const uint8_t * data() const noexcept {
+        return this->data_;
+    }
+
+    const uint8_t * data(int x, int y) const noexcept {
+        return this->data_ + (y * this->width_ + x) * Bpp;
+    }
+
+    unsigned width() const noexcept {
+        return this->width_;
+    }
+
+    unsigned height() const noexcept {
+        return this->height_;
+    }
+
+    unsigned size() const noexcept {
+        return this->width_ * this->height_;
+    }
+
+    size_t rowsize() const noexcept {
+        return this->rowsize_;
+    }
+
+    size_t pix_len() const noexcept {
+        return this->rowsize_ * this->height_;
+    }
+
+    static constexpr uint8_t nbbytes_color() noexcept {
+        return uint8_t(Bpp);
+    }
+
+    static constexpr uint8_t bpp() noexcept {
+        return static_cast<uint8_t>(BppIn);
+    }
+
+    uint8_t * first_pixel() const noexcept {
+        return this->data_;
+    }
+
+    uint8_t * first_pixel(int x, int y) const noexcept {
+        return this->data_ + (y * this->width_ + x) * Bpp;
+    }
+
+    uint8_t * first_pixel(const Rect & rect) const {
+        return this->first_pixel(rect.x, rect.y);
+    }
+
+    uint8_t * row_data(int y) const noexcept {
+        return this->first_pixel() + y * this->rowsize();
+    }
+
+    uint8_t * beginning_of_last_line(const Rect & rect) const noexcept {
+        return this->data_ + ((rect.y + rect.cy - 1) * this->width_ + rect.x) * Bpp;
+    }
+
+private:
+    template<class>
+    struct AssignOp;
+    struct Assign;
+    struct Invert;
+
+public:
+    void opaque_rect(const Rect & rect, const uint32_t color)
+    {
+        P const base = this->first_pixel(rect);
+
+        apply_for_line(base, rect.cx, Assign{trait::u32_to_color(color)});
+
+        P target = base;
+        const size_t line_size = this->rowsize();
+        cP pe = target + line_size * rect.cy;
+        while ((target += line_size) < pe) {
+            memcpy(target, base, line_size);
+        }
+    }
+
+    void draw_pixel(int16_t x, int16_t y, const uint32_t color)
+    {
+        trait::assign(this->first_pixel(x, y), trait::u32_to_color(color));
+    }
+
+    template<class Op>
+    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, Op op)
+    {
+        const uint8_t Bpp = this->nbbytes_color();
+        P dest = this->first_pixel(rect);
+        cP src = this->data_bmp(bmp, srcx, srcy);
+        const size_t n = rect.cx * Bpp;
+        const uint8_t bmp_bpp = bmp.bpp();
+        const size_t bmp_line_size = bmp.line_size();
+
+        if (bmp_bpp == this->bpp()) {
+            const size_t line_size = this->rowsize();
+            for (cP ep = dest + line_size * rect.cy; dest < ep; dest += line_size, src -= bmp_line_size) {
+                this->copy(dest, src, n, op);
+            }
+        }
+        else {
+            switch (bmp_bpp) {
+                case 8: this->spe_mem_blt(dest, src, rect.cx, rect.cy, bmp_bpp, bmp_line_size, op, trait::toColor8()); break;
+                case 15: this->spe_mem_blt(dest, src, rect.cx, rect.cy, bmp_bpp, bmp_line_size, op, trait::toColor15()); break;
+                case 16: this->spe_mem_blt(dest, src, rect.cx, rect.cy, bmp_bpp, bmp_line_size, op, trait::toColor16()); break;
+                case 24: this->spe_mem_blt(dest, src, rect.cx, rect.cy, bmp_bpp, bmp_line_size, op, trait::toColor24()); break;
+                default: ;
+            }
+        }
+    }
+
+private:
+    template<class Op, class ToColor>
+    void spe_mem_blt(P dest, P src, u16 cx, u16 cy, u8 bmp_bpp, size_t bmp_line_size, Op op, ToColor to_color)
+    {
+        const size_t line_size = this->rowsize();
+        const size_t destn = cx * this->nbbytes_color();
+        const size_t bmp_Bpp = ::nbbytes(bmp_bpp);
+        const size_t srcn = cx * bmp_Bpp;
+        for (cP ep = dest + line_size * cy; dest < ep; dest += line_size, src -= bmp_line_size) {
+            const P tmpsrc = src;
+            const P tmpdest = dest;
+            const cP dest_e = dest + destn;
+            while (dest != dest_e) {
+                dest = trait::assign(dest, to_color(src));
+                src += bmp_Bpp;
+            }
+            src = tmpsrc;
+            dest = tmpdest;
+        }
+    }
+
+public:
+    void draw_bitmap(const Rect & rect, const Bitmap & bmp)
+    {
+        this->mem_blt(rect, bmp, 0, 0, Ops::CopySrc{});
+    }
+
+    void component_rect(const Rect & rect, uint8_t c)
+    {
+        P p = this->first_pixel(rect);
+        const size_t step = this->rowsize();
+        const size_t n = rect.cx * this->nbbytes_color();
+        for (cP pe = p + rect.cy * step; p < pe; p += step) {
+            memset(p, c, n);
+        }
+    }
+
+    template<typename Op2>
+    void draw_ellipse(const Ellipse & el, const uint8_t fill, const uint32_t color)
+    {
+        Op2 op;
+        const int cX = el.centerx;
+        const int cY = el.centery;
+        const int rX = el.radiusx;
+        const int rY = el.radiusy;
+        const int rXcarre = rX*rX;
+        const int rYcarre = rY*rY;
+        int errX = 0;
+        int pX = rX;
+        int pY = 0;
+        int borX = rYcarre*rX;
+        int borY = 0;
+        auto color_ = trait::u32_to_color(color);
+
+        this->colordot(cX+pX, cY, color_, op);
+        this->colordot(cX-pX, cY, color_, op);
+        if (fill) {
+            this->colorline(cX-pX + 1, cY, 2*pX - 1, color_, op);
+        }
+        if (errX > pX*rYcarre) {
+            errX -= (2*pX - 1)*rYcarre;
+            pX--;
+            borX -= rYcarre;
+        }
+        errX += (2*pY + 1)*rXcarre;
+        pY++;
+        borY += rXcarre;
+        int lastchange = 0;
+        while ((borX > borY) && (pY <= rY)) {
+            lastchange = 0;
+            this->colordot(cX+pX, cY+pY, color_, op);
+            this->colordot(cX+pX, cY-pY, color_, op);
+            this->colordot(cX-pX, cY+pY, color_, op);
+            this->colordot(cX-pX, cY-pY, color_, op);
+            if (fill) {
+                this->colorline(cX-pX + 1, cY+pY, 2*pX - 1, color_, op);
+                this->colorline(cX-pX + 1, cY-pY, 2*pX - 1, color_, op);
+            }
+            if (errX > pX*rYcarre) {
+                errX -= (2*pX - 1)*rYcarre;
+                pX--;
+                borX -= rYcarre;
+                lastchange = 1;
+            }
+            errX += (2*pY + 1)*rXcarre;
+            pY++;
+            borY += rXcarre;
+        }
+        int lastpX = pX + lastchange;
+        int lastpY = pY - 1;
+        int errY = 0;
+        pX = 0;
+        pY = rY;
+        if ((fill && ((pX < lastpX) && (pY > lastpY))) ||
+            (!fill && ((pX < lastpX) || (pY > lastpY)))) {
+            this->colordot(cX, cY+pY, color_, op);
+            this->colordot(cX, cY-pY, color_, op);
+            if (errY > pY*rXcarre) {
+                errY -= (2*pY - 1)*rXcarre;
+                pY--;
+                if (fill && pY > lastpY) {
+                    this->colorline(cX, cY + pY, 2*pX + 1, color_, op);
+                }
+            }
+            errY += (2*pX + 1)*rYcarre;
+            pX++;
+        }
+        while (((fill && (pX <= lastpX && pY > lastpY)) ||
+                (!fill && ((pX < lastpX) || (pY > lastpY)))) &&
+               (pX <= rX)) {
+            this->colordot(cX+pX, cY+pY, color_, op);
+            this->colordot(cX+pX, cY-pY, color_, op);
+            this->colordot(cX-pX, cY+pY, color_, op);
+            this->colordot(cX-pX, cY-pY, color_, op);
+            if (errY > pY*rXcarre) {
+                errY -= (2*pY - 1)*rXcarre;
+                pY--;
+                if (fill && (pY > lastpY)) {
+                    this->colorline(cX-pX, cY+pY, 2*pX+1, color_, op);
+                    this->colorline(cX-pX, cY-pY, 2*pX+1, color_, op);
+                }
+            }
+            errY += (2*pX + 1)*rYcarre;
+            pX++;
+        }
+    }
+
+private:
+    template <typename Op2>
+    void colordot(int x, int y, color_t color, Op2 op2) {
+        if (!(x >= 0 &&
+              y >= 0 &&
+              x < this->width() &&
+              y < this->height())) {
+            return;
+        }
+        P p = this->first_pixel(x, y);
+        trait::assign(p, color, op2);
+    }
+
+    template <typename Op2>
+    void colorline(int x, int y, int l, color_t color, Op2) {
+        if (!(y >= 0 &&
+              y < this->height())) {
+                return;
+        }
+        if (x < 0) {
+            l += x;
+            x = 0;
+        }
+        else if ((x + l) >= this->width()) {
+            l = this->width() - x;
+        }
+        P p = this->first_pixel(x, y);
+        this->apply_for_line(p, l, AssignOp<Op2>{color});
+    }
+
+    template <typename Op>
+    void patblt_op_ex(
+        const Rect & rect, const uint8_t * brush_data,
+        const uint32_t back_color, const uint32_t fore_color)
+    {
+        P const base = this->first_pixel(rect);
+        P       p    = base;
+
+        auto back_color_ = trait::u32_to_color(back_color);
+        auto fore_color_ = trait::u32_to_color(fore_color);
+
+        for (size_t y = 0, cy = static_cast<size_t>(rect.cy); y < cy; ++y) {
+            p = base + this->rowsize() * y;
+            for (size_t x = 0, cx = static_cast<size_t>(rect.cx); x < cx; ++x) {
+                if (brush_data[(y + rect.y) % 8] & (1 << ((x + rect.x) % 8))) {
+                    p = trait::assign(p, back_color_, Op());
+                }
+                else {
+                    p = trait::assign(p, fore_color_, Op());
+                }
+            }
+        }
+    }
+
+    template <typename Op>
+    void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect drect)
+    {
+        const uint8_t Bpp = this->nbbytes_color();
+        const int16_t deltax = static_cast<int16_t>(srcx - drect.x);
+        const int16_t deltay = static_cast<int16_t>(srcy - drect.y);
+        const Rect srect = drect.offset(deltax, deltay);
+        const Rect overlap = srect.intersect(drect);
+
+        P target = ((deltay >= 0)||overlap.isempty())
+            ? this->first_pixel(drect)
+            : this->beginning_of_last_line(drect);
+        P source = ((deltay >= 0)||overlap.isempty())
+            ? this->first_pixel(srect)
+            : this->beginning_of_last_line(srect);
+        const signed int to_nextrow = static_cast<signed int>(((deltay >= 0)||overlap.isempty())
+            ?  this->rowsize()
+            : -this->rowsize());
+
+        const signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
+        const unsigned offset = static_cast<unsigned>(((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1));
+
+        for (size_t y = 0; y < drect.cy ; y++) {
+            P linetarget = target + offset;
+            P linesource = source + offset;
+            // TODO trait::copy(linetarget, linesource, drect.cx * Bpp, Op()); /!\ to_nextpixel <||> 0
+            for (size_t x = 0; x < drect.cx ; x++) {
+                this->copy(linetarget, linesource, Bpp, Op());
+                linetarget += to_nextpixel;
+                linesource += to_nextpixel;
+            }
+            target += to_nextrow;
+            source += to_nextrow;
+        }
+    }
+
+    // nor horizontal nor vertical, use Bresenham
+    template<class Op>
+    void line(int startx, int starty, int endx, int endy, Op op)
+    {
+        // Prep
+        const uint8_t Bpp = this->nbbytes_color();
+        const int dx = endx - startx;
+        const int dy = (endy >= starty) ? (endy - starty) : (starty - endy);
+        const int sy = (endy >= starty) ? 1 : -1;
+        int x = startx;
+        int y = starty;
+        int err = dx - dy;
+
+        while (true) {
+            trait::transform(this->first_pixel(x, y), op);
+
+            if ((x >= endx) && (y == endy)) {
+                break;
+            }
+
+            // Calculating pixel position
+            const int e2 = err * 2; //prevents use of floating point
+            if (e2 > -dy) {
+                err -= dy;
+                x++;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y += sy;
+            }
+        }
+    }
+
+    template<class Op>
+    void vertical_line(uint16_t x, uint16_t starty, uint16_t endy, Op op)
+    {
+        P p = this->first_pixel(x, starty);
+        P pe = p + (endy - starty + 1) * this->rowsize();
+        for (; p != pe; p += this->rowsize()) {
+            trait::transform(p, op);
+        }
+    }
+
+    template<class Op>
+    void horizontal_line(uint16_t startx, uint16_t y, uint16_t endx, Op)
+    {
+        this->apply_for_line(this->first_pixel(startx, y), endx - startx + 1, Byte<Op>{});
+    }
+
+private:
+    static cP data_bmp(const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy)
+    {
+        // TODO ::nbbytes(bmp.bpp()) -> this->nbbytes_color()
+        return bmp.data() + (bmp.cy() - srcy - 1) * (bmp.bmp_size() / bmp.cy()) + srcx * ::nbbytes(bmp.bpp());
+    }
+
+    template <typename Op>
+    void patblt_op(const Rect & rect, const uint32_t color)
+    {
+        this->apply_for_rect(rect, AssignOp<Op>{trait::u32_to_color(color)});
+    }
+
+    void invert_color(const Rect & rect)
+    {
+        this->apply_for_rect(rect, Invert{});
+    }
+
+    struct Assign {
+        color_t color;
+
+        P operator()(P dest) const noexcept
+        { return trait::assign(dest, color); }
+    };
+
+    template<class Op>
+    struct AssignOp {
+        color_t color;
+
+        P operator()(P dest) const noexcept
+        { return trait::assign(dest, color, Op()); }
+    };
+
+    template<class Op>
+    struct Byte {
+        P operator()(P dest) const noexcept
+        { *dest = Op()(*dest); return ++dest; }
+    };
+
+    struct Invert {
+        P operator()(P dest) const noexcept
+        { *dest ^= 0xff; return ++dest; }
+    };
+
+    template<class Op>
+    void copy(uint8_t * dest, uint8_t * src, size_t n, Op op) noexcept
+    {
+        const uint8_t * e = dest + n;
+        for (; dest != e; ++dest, ++src) {
+            *dest = op(*dest, *src);
+        }
+    }
+
+    void copy(uint8_t * dest, uint8_t * src, size_t n, Ops::CopySrc) noexcept
+    {
+       memcpy(dest, src, n);
+    }
+
+    template<class F>
+    P apply_for_line(P p, size_t n, F f)
+    {
+        for (cP pe = p + n * this->nbbytes_color(); p != pe; ) {
+            p = f(p);
+        }
+        return p;
+    }
+
+    template<class F>
+    void apply_for_rect(const Rect & rect, F f)
+    {
+        P p = this->first_pixel(rect);
+        const size_t line_size = this->rowsize();
+        const size_t inc_line = static_cast<size_t>(line_size - rect.y);
+        for (cP pe = p + rect.y * line_size; p != pe; p += inc_line) {
+            for (cP pe2 = p + rect.x * this->nbbytes_color(); p != pe2; ) {
+                p = f(p);
+            }
+        }
+    }
+};
+
 
 struct DrawablePointer {
     struct ContiguousPixels {
@@ -121,16 +939,50 @@ public:
     }
 };  // struct DrawablePointerCache
 
-using std::size_t;
-
 struct Drawable {
-    static const std::size_t Bpp = 3;
+    using DrawableImplPrivate = DrawableImpl<DepthColor::color24>;
 
-    const uint16_t width;
-    const uint16_t height;
-    const size_t rowsize;
+    static const std::size_t Bpp = DrawableImplPrivate::Bpp;
 
-    uint8_t * const data;
+    const uint8_t * data() const noexcept {
+        return this->impl.data();
+    }
+
+    const uint8_t * data(int x, int y) const noexcept {
+        return this->impl.data();
+    }
+
+    unsigned width() const noexcept {
+        return this->impl.width();
+    }
+
+    unsigned height() const noexcept {
+        return this->impl.height();
+    }
+
+    unsigned size() const noexcept {
+        return this->impl.size();
+    }
+
+    size_t rowsize() const noexcept {
+        return this->impl.rowsize();
+    }
+
+    size_t pix_len() const noexcept {
+        return this->impl.pix_len();
+    }
+
+    /*TODO const*/ uint8_t * row_data(int y) const noexcept {
+        return this->impl.row_data(y);
+    }
+
+    static constexpr uint8_t nbbytes_color() noexcept {
+        return DrawableImplPrivate::nbbytes_color();
+    }
+
+    static constexpr uint8_t bpp() noexcept {
+        return DrawableImplPrivate::bpp();
+    }
 
 private:
     enum {
@@ -147,6 +999,8 @@ private:
         ts_height = char_height,
         size_str_timestamp = ts_max_length + 1
     };
+
+    DrawableImplPrivate impl;
 
     uint8_t timestamp_save[ts_width * ts_height * 3];
     uint8_t timestamp_data[ts_width * ts_height * 3];
@@ -179,19 +1033,7 @@ public:
     DrawablePointer default_pointer;
 
     Drawable(int width, int height)
-    : width(width)
-    , height(height)
-    , rowsize(width * Bpp)
-    , data([this]{
-        if (!(this->rowsize * this->height)) {
-            throw Error(ERR_RECORDER_EMPTY_IMAGE);
-        }
-        uint8_t * data = new (std::nothrow) uint8_t[this->rowsize * this->height] {};
-        if (0 == data) {
-            throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
-        }
-        return data;
-    }())
+    : impl(width, height)
     , previous_timestamp_length(0)
     , tracked_area(0, 0, 0, 0)
     , tracked_area_changed(false)
@@ -204,50 +1046,6 @@ public:
         this->initialize_default_pointer();
         memset(this->timestamp_data, 0xFF, sizeof(this->timestamp_data));
         memset(this->previous_timestamp, 0x07, sizeof(this->previous_timestamp));
-    }
-
-    ~Drawable() {
-        delete[] this->data;
-    }
-
-    uint8_t * first_pixel() {
-        return this->data;
-    }
-
-    const uint8_t * first_pixel() const {
-        return this->data;
-    }
-
-    uint8_t * first_pixel(const Rect & rect) {
-        return this->data + (rect.y * this->width + rect.x) * Bpp;
-    }
-
-    const uint8_t * first_pixel(const Rect & rect) const {
-        return this->data + (rect.y * this->width + rect.x) * Bpp;
-    }
-
-    uint8_t * row_data(int y) const {
-        return this->data + y * this->rowsize;
-    }
-
-    uint8_t * first_pixel(int x, int y) {
-        return this->data + (y * this->width + x) * Bpp;
-    }
-
-    const uint8_t * first_pixel(int x, int y) const {
-        return this->data + (y * this->width + x) * Bpp;
-    }
-
-    uint8_t * beginning_of_last_line(const Rect & rect) {
-        return this->data + ((rect.y + rect.cy - 1) * this->width + rect.x) * Bpp;
-    }
-
-    unsigned size() const {
-        return this->width * this->height;
-    }
-
-    size_t pix_len() const {
-        return this->rowsize * this->height;
     }
 
     void set_mouse_cursor_pos(int x, int y) {
@@ -798,17 +1596,15 @@ private:
                 const char * poldch = digits + _posch_12x7(oldch);
 
                 unsigned br_pix = 0;
-                unsigned br_pixindex = i * (char_width * 3);
+                unsigned br_pixindex = i * (char_width * Bpp);
 
-                for (size_t y = 0 ; y < char_height ; ++y, br_pix += char_width, br_pixindex += width*3) {
+                for (size_t y = 0 ; y < char_height ; ++y, br_pix += char_width, br_pixindex += width*Bpp) {
                     for (size_t x = 0 ; x <  char_width ; ++x) {
                         unsigned pix = br_pix + x;
                         if (pnewch[pix] != poldch[pix]) {
                             uint8_t pixcolorcomponent = (pnewch[pix] == 'X') ? 0xFF : 0;
                             unsigned pixindex = br_pixindex + x*3;
-                            rgbpixbuf[pixindex] =
-                            rgbpixbuf[pixindex+1] =
-                            rgbpixbuf[pixindex+2] = pixcolorcomponent;
+                            memset(&rgbpixbuf[pixindex], Bpp, pixcolorcomponent);
                         }
                     }
                 }
@@ -820,29 +1616,29 @@ public:
     /*
      * The name doesn't say it : mem_blt COPIES a decoded bitmap from
      * a cache (data) and insert a subpart (srcx, srcy) to the local
-     * image cache (this->data) a the given position (rect).
+     * image cache (this->impl.first_pixel()) a the given position (rect).
      */
     void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, const uint32_t xormask) {
         if (bmp.cx() < srcx || bmp.cy() < srcy) {
             return ;
         }
 
-        const int16_t mincx = std::min<int16_t>(bmp.cx() - srcx, std::min<int16_t>(this->width - rect.x, rect.cx));
-        const int16_t mincy = std::min<int16_t>(bmp.cy() - srcy, std::min<int16_t>(this->height - rect.y, rect.cy));
+        const int16_t mincx = std::min<int16_t>(bmp.cx() - srcx, std::min<int16_t>(this->width() - rect.x, rect.cx));
+        const int16_t mincy = std::min<int16_t>(bmp.cy() - srcy, std::min<int16_t>(this->height() - rect.y, rect.cy));
 
         if (mincx <= 0 || mincy <= 0) {
             return;
         }
-        const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
+        const Rect trect(rect.x, rect.y, mincx, mincy);
 
         if (this->tracked_area.has_intersection(trect)) {
             this->tracked_area_changed = true;
         }
 
         const uint8_t Bpp = ::nbbytes(bmp.bpp());
-        uint8_t * target = this->first_pixel(trect);
+        uint8_t * target = this->impl.first_pixel(trect);
         const uint8_t * source = bmp.data() + (bmp.cy() - srcy - 1) * (bmp.bmp_size() / bmp.cy()) + srcx * Bpp;
-        int steptarget = (this->width - trect.cx) * 3;
+        int steptarget = (this->width() - trect.cx) * 3;
         int stepsource = (bmp.bmp_size() / bmp.cy()) + trect.cx * Bpp;
 
         for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource) {
@@ -870,25 +1666,25 @@ private:
         }
 
         const int16_t mincx = std::min<int16_t>(bmp.cx() - srcx,
-            std::min<int16_t>(this->width - rect.x, rect.cx));
+            std::min<int16_t>(this->width() - rect.x, rect.cx));
         const int16_t mincy = std::min<int16_t>(bmp.cy() - srcy,
-            std::min<int16_t>(this->height - rect.y, rect.cy));
+            std::min<int16_t>(this->height() - rect.y, rect.cy));
 
         if (mincx <= 0 || mincy <= 0) {
             return;
         }
-        const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
+        const Rect trect(rect.x, rect.y, mincx, mincy);
 
         if (this->tracked_area.has_intersection(trect)) {
             this->tracked_area_changed = true;
         }
 
         const uint8_t   Bpp = ::nbbytes(bmp.bpp());
-        uint8_t       * target = this->first_pixel(trect);
+        uint8_t       * target = this->impl.first_pixel(trect);
         const uint8_t * source = bmp.data() + (bmp.cy() - srcy - 1) * (bmp.bmp_size() / bmp.cy()) +
             srcx * Bpp;
 
-        int steptarget = (this->width - trect.cx) * 3;
+        int steptarget = (this->width() - trect.cx) * 3;
         int stepsource = (bmp.bmp_size() / bmp.cy()) + trect.cx * Bpp;
 
         uint8_t s0, s1, s2;
@@ -964,24 +1760,24 @@ public:
 
     void draw_bitmap(const Rect & rect, const Bitmap & bmp) {
         const int16_t mincx =
-            std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->width  - rect.x, rect.cx));
+            std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->width()  - rect.x, rect.cx));
         const int16_t mincy =
-            std::min<int16_t>(bmp.cy(), std::min<int16_t>(this->height - rect.y, rect.cy));
+            std::min<int16_t>(bmp.cy(), std::min<int16_t>(this->height() - rect.y, rect.cy));
 
         if (mincx <= 0 || mincy <= 0) {
             return;
         }
-        const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
+        const Rect trect(rect.x, rect.y, mincx, mincy);
 
         if (this->tracked_area.has_intersection(trect)) {
             this->tracked_area_changed = true;
         }
 
         const uint8_t   Bpp    = ::nbbytes(bmp.bpp());
-        uint8_t       * target = this->first_pixel(trect);
+        uint8_t       * target = this->impl.first_pixel(trect);
         const uint8_t * source = bmp.data() + (bmp.cy() - 1) * (bmp.bmp_size() / bmp.cy());
 
-        int steptarget = (this->width - trect.cx) * 3;
+        int steptarget = (this->width() - trect.cx) * 3;
         int stepsource = (bmp.bmp_size() / bmp.cy()) + trect.cx * Bpp;
 
         for (int y = 0; y < trect.cy; y++, target += steptarget, source -= stepsource) {
@@ -1018,25 +1814,25 @@ private:
         }
 
         const int16_t mincx = std::min<int16_t>(bmp.cx() - srcx,
-            std::min<int16_t>(this->width - rect.x, rect.cx));
+            std::min<int16_t>(this->width() - rect.x, rect.cx));
         const int16_t mincy = std::min<int16_t>(bmp.cy() - srcy,
-            std::min<int16_t>(this->height - rect.y, rect.cy));
+            std::min<int16_t>(this->height() - rect.y, rect.cy));
 
         if (mincx <= 0 || mincy <= 0) {
             return;
         }
-        const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
+        const Rect trect(rect.x, rect.y, mincx, mincy);
 
         if (this->tracked_area.has_intersection(trect)) {
             this->tracked_area_changed = true;
         }
 
         const uint8_t   Bpp    = ::nbbytes(bmp.bpp());
-        uint8_t *       target = this->first_pixel(trect);
+        uint8_t *       target = this->impl.first_pixel(trect);
         const uint8_t * source = bmp.data() + (bmp.cy() - srcy - 1) * (bmp.bmp_size() / bmp.cy()) +
             srcx * Bpp;
 
-        int steptarget = (this->width - trect.cx) * 3;
+        int steptarget = (this->width() - trect.cx) * 3;
         int stepsource = (bmp.bmp_size() / bmp.cy()) + trect.cx * Bpp;
 
         uint8_t s0, s1, s2;
@@ -1090,14 +1886,14 @@ public:
 
     void black_color(const Rect & rect)
     {
-        const Rect & trect = rect.intersect(Rect(0, 0, this->width, this->height));
+        const Rect & trect = rect.intersect(Rect(0, 0, this->width(), this->height()));
 
         if (this->tracked_area.has_intersection(trect)) {
             this->tracked_area_changed = true;
         }
 
-        uint8_t * p = this->first_pixel(trect);
-        const size_t step = this->rowsize;
+        uint8_t * p = this->impl.first_pixel(trect);
+        const size_t step = this->rowsize();
         const size_t rect_rowsize = trect.cx * this->Bpp;
         for (int j = 0; j < trect.cy ; j++, p += step) {
             memset(p, 0, rect_rowsize);
@@ -1110,9 +1906,9 @@ public:
             this->tracked_area_changed = true;
         }
 
-        uint8_t * p = this->first_pixel(rect);
+        uint8_t * p = this->impl.first_pixel(rect);
 
-        const size_t step = this->rowsize;
+        const size_t step = this->rowsize();
         const size_t rect_rowsize = rect.cx * this->Bpp;
         for (int j = 0; j < rect.cy ; j++, p += step) {
             memset(p, 0xFF, rect_rowsize);
@@ -1122,15 +1918,15 @@ public:
 private:
     void invert_color(const Rect & rect)
     {
-        const Rect & trect = rect.intersect(Rect(0, 0, this->width, this->height));
+        const Rect & trect = rect.intersect(Rect(0, 0, this->width(), this->height()));
 
         if (this->tracked_area.has_intersection(trect)) {
             this->tracked_area_changed = true;
         }
 
-        uint8_t * p = this->first_pixel(trect);
+        uint8_t * p = this->impl.first_pixel(trect);
         const size_t rect_rowsize = trect.cx * this->Bpp;
-        const size_t step = this->rowsize - rect_rowsize;
+        const size_t step = this->rowsize() - rect_rowsize;
         for (int j = 0; j < trect.cy ; j++, p += step) {
             for (int i = 0; i < trect.cx ; i++, p += 3) {
                 TODO("Applying inversion on blocks of 32 bits instead of bytes should be faster");
@@ -1409,35 +2205,35 @@ private:
     }
 
     uint pos_xy(int x, int y) {
-        return (y * this->rowsize) + (x * this->Bpp);
+        return (y * this->rowsize()) + (x * this->Bpp);
     }
 
     template <typename Op2>
     void colordot(int x, int y, int32_t color, Op2 op2) {
         if (!(x >= 0 &&
               y >= 0 &&
-              x < this->width &&
-              y < this->height)) {
+              unsigned(x) < this->width() &&
+              unsigned(y) < this->height())) {
             return;
         }
-        uint8_t * p = this->data + this->pos_xy(x, y);
+        uint8_t * p = this->impl.first_pixel() + this->pos_xy(x, y);
         p[0] = op2(p[0], color); p[1] = op2(p[1], color >> 8); p[2] = op2(p[2], color >> 16);
     }
 
     template <typename Op2>
     void colorline(int x, int y, int l, int32_t color, Op2 op2) {
         if (!(y >= 0 &&
-              y < this->height)) {
+              unsigned(y) < this->height())) {
                 return;
         }
         if (x < 0) {
             l += x;
             x = 0;
         }
-        else if ((x + l) >= this->width) {
-            l = this->width - x;
+        else if (unsigned(x + l) >= this->width()) {
+            l = this->width() - x;
         }
-        uint8_t * p = this->data + this->pos_xy(x, y);
+        uint8_t * p = this->impl.first_pixel() + this->pos_xy(x, y);
         for (int i = 0; i < l; i++) {
             p[0] = op2(p[0], color);
             p[1] = op2(p[1], color >> 8);
@@ -1455,7 +2251,7 @@ public:
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
         }
-        uint8_t * const base = this->first_pixel(rect);
+        uint8_t * const base = this->impl.first_pixel(rect);
         uint8_t * p = base;
 
         for (size_t x = 0; x < static_cast<size_t>(rect.cx) ; x++) {
@@ -1465,7 +2261,7 @@ public:
         uint8_t * target = base;
         size_t line_size = rect.cx * this->Bpp;
         for (size_t y = 1; y < static_cast<size_t>(rect.cy) ; y++) {
-            target += this->rowsize;
+            target += this->rowsize();
             memcpy(target, base, line_size);
         }
     }
@@ -1475,7 +2271,7 @@ public:
         if (this->tracked_area.has_intersection(x, y)) {
             this->tracked_area_changed = true;
         }
-        uint8_t * const base = this->first_pixel(x, y);
+        uint8_t * const base = this->impl.first_pixel(x, y);
         base[0] = color;
         base[1] = color >> 8;
         base[2] = color >> 16;
@@ -1489,7 +2285,7 @@ private:
             this->tracked_area_changed = true;
         }
 
-        uint8_t * const base = this->first_pixel(rect);
+        uint8_t * const base = this->impl.first_pixel(rect);
         uint8_t * p = base;
         uint8_t p0 = color & 0xFF;
         uint8_t p1 = (color >> 8) & 0xFF;
@@ -1497,7 +2293,7 @@ private:
         Op op;
 
         for (size_t y = 0; y < static_cast<size_t>(rect.cy) ; y++) {
-            p = base + this->rowsize * y;
+            p = base + this->rowsize() * y;
             for (size_t x = 0; x < static_cast<size_t>(rect.cx) ; x++) {
                 p[0] = op(p[0], p0);
                 p[1] = op(p[1], p1);
@@ -1720,7 +2516,7 @@ public:
             this->tracked_area_changed = true;
         }
 
-        uint8_t * const base = this->first_pixel(rect);
+        uint8_t * const base = this->impl.first_pixel(rect);
         uint8_t *       p    = base;
 
         uint8_t p0;
@@ -1730,7 +2526,7 @@ public:
 
         for (size_t y = 0; y < static_cast<size_t>(rect.cy) ; y++)
         {
-            p = base + this->rowsize * y;
+            p = base + this->rowsize() * y;
             for (size_t x = 0; x < static_cast<size_t>(rect.cx) ; x++)
             {
                 if (brush_data[(y + rect.y) % 8] & (1 << ((x + rect.x) % 8)))
@@ -1915,14 +2711,14 @@ private:
         const Rect & overlap = srect.intersect(drect);
 
         uint8_t * target = ((deltay >= 0)||overlap.isempty())
-            ? this->first_pixel(drect)
-            : this->beginning_of_last_line(drect);
+            ? this->impl.first_pixel(drect)
+            : this->impl.beginning_of_last_line(drect);
         uint8_t * source = ((deltay >= 0)||overlap.isempty())
-            ? this->first_pixel(srect)
-            : this->beginning_of_last_line(srect);
+            ? this->impl.first_pixel(srect)
+            : this->impl.beginning_of_last_line(srect);
         const signed int to_nextrow = static_cast<signed int>(((deltay >= 0)||overlap.isempty())
-            ?  this->rowsize
-            : -this->rowsize);
+            ?  this->impl.rowsize()
+            : -this->impl.rowsize());
 
         const signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?this->Bpp:-this->Bpp;
         const unsigned offset = static_cast<unsigned>(((deltay != 0)||(deltax >= 0))?0:this->Bpp*(drect.cx - 1));
@@ -2093,7 +2889,7 @@ public:
         int err = dx - dy;
 
         while (true) {
-            uint8_t * const p = this->data + (y * this->width + x) * this->Bpp;
+            uint8_t * const p = this->impl.first_pixel() + (y * this->width() + x) * this->Bpp;
             for (uint8_t b = 0 ; b < this->Bpp; b++) {
                 switch (rop)
                     {
@@ -2132,7 +2928,7 @@ public:
             , static_cast<uint8_t>(color >> 16)
         };
 
-        uint8_t * p = this->data + (starty * this->width + x) * 3;
+        uint8_t * p = this->impl.first_pixel() + (starty * this->width() + x) * 3;
         for (int dy = starty; dy <= endy ; dy++) {
             switch (rop)
             {
@@ -2147,7 +2943,7 @@ public:
                 p[2] = col[2];
                 break;
             }
-            p += this->width * 3;
+            p += this->width() * 3;
         }
     }
 
@@ -2159,7 +2955,7 @@ public:
             , static_cast<uint8_t>(color >> 16)
         };
 
-        uint8_t * p = this->data + (y * this->width + startx) * 3;
+        uint8_t * p = this->impl.first_pixel() + (y * this->width() + startx) * 3;
         for (int dx = startx; dx <= endx ; dx++) {
             switch (rop)
             {
@@ -2189,6 +2985,11 @@ public:
         this->current_pointer = &pointer;
     }
 
+    void set_row(size_t rownum, const uint8_t * data)
+    {
+        memcpy(this->impl.row_data(rownum), data, this->rowsize());
+    }
+
     void trace_mouse() {
         if (this->dont_show_mouse_cursor || !this->current_pointer) {
             return;
@@ -2201,18 +3002,18 @@ public:
         int       x     = this->mouse_cursor_pos_x - this->current_pointer->hotspot_x;
         int       y     = this->mouse_cursor_pos_y - this->current_pointer->hotspot_y;
 
-        const uint8_t * data_end = this->data + this->height * this->width * 3;
+        const uint8_t * data_end = this->impl.first_pixel() + this->height() * this->width() * this->Bpp;
 
         for (size_t i = 0; i < this->current_pointer->number_of_contiguous_pixels; i++) {
-            uint8_t  * pixel_start = this->data +
-               ((this->current_pointer->contiguous_pixels[i].y + y) * this->width + this->current_pointer->contiguous_pixels[i].x + x) * 3;
+            uint8_t  * pixel_start = this->impl.first_pixel() +
+               ((this->current_pointer->contiguous_pixels[i].y + y) * this->width() + this->current_pointer->contiguous_pixels[i].x + x) * 3;
             unsigned   lg          = this->current_pointer->contiguous_pixels[i].data_size;
             int offset = 0;
-            if (pixel_start + lg <= this->data) continue;
-            if (pixel_start < this->data) {
-                offset = this->data - pixel_start;
+            if (pixel_start + lg <= this->impl.first_pixel()) continue;
+            if (pixel_start < this->impl.first_pixel()) {
+                offset = this->data() - pixel_start;
                 lg -= offset;
-                pixel_start = this->data;
+                pixel_start = this->impl.first_pixel();
             }
             if (pixel_start > data_end) break;
             if (pixel_start + lg >= data_end) {
@@ -2233,16 +3034,16 @@ public:
         int       x     = this->save_mouse_x - this->current_pointer->hotspot_x;
         int       y     = this->save_mouse_y - this->current_pointer->hotspot_y;
 
-        const uint8_t * data_end = this->data + this->height * this->width * 3;
+        const uint8_t * data_end = this->impl.first_pixel() + this->height() * this->width() * 3;
 
         for (size_t i = 0; i < this->current_pointer->number_of_contiguous_pixels; i++) {
-            uint8_t  * pixel_start = this->data +
-               ((this->current_pointer->contiguous_pixels[i].y + y) * this->width + this->current_pointer->contiguous_pixels[i].x + x) * 3;
+            uint8_t  * pixel_start = this->impl.first_pixel() +
+               ((this->current_pointer->contiguous_pixels[i].y + y) * this->width() + this->current_pointer->contiguous_pixels[i].x + x) * 3;
             unsigned   lg          = this->current_pointer->contiguous_pixels[i].data_size;
-            if (pixel_start + lg <= this->data) continue;
-            if (pixel_start < this->data) {
-                lg -= this->data - pixel_start;
-                pixel_start = this->data;
+            if (pixel_start + lg <= this->impl.first_pixel()) continue;
+            if (pixel_start < this->impl.first_pixel()) {
+                lg -= this->data() - pixel_start;
+                pixel_start = this->impl.first_pixel();
             }
             if (pixel_start > data_end) break;
             if (pixel_start + lg >= data_end) {
@@ -2276,7 +3077,7 @@ public:
 private:
     size_t priv_offset_timestamp(uint8_t timestamp_len) const
     {
-        return this->rowsize * (this->height / 2) + ((this->width - timestamp_len*char_width)*Bpp) / 2;
+        return this->rowsize() * (this->height() / 2) + ((this->width() - timestamp_len*char_width)*Bpp) / 2;
     }
 
     void priv_trace_timestamp(tm & now, bool has_clear)
@@ -2294,9 +3095,9 @@ private:
         this->previous_timestamp_length = timestamp_length;
 
         uint8_t * tsave = this->timestamp_save;
-        uint8_t * buf = this->data + (has_clear ? this->priv_offset_timestamp(timestamp_length) : 0);
+        uint8_t * buf = this->impl.first_pixel() + (has_clear ? this->priv_offset_timestamp(timestamp_length) : 0);
         const size_t n = timestamp_length * char_width * Bpp;
-        for (size_t y = 0; y < ts_height ; ++y, buf += this->rowsize, tsave += n) {
+        for (size_t y = 0; y < ts_height ; ++y, buf += this->rowsize(), tsave += n) {
             memcpy(tsave, buf, n);
             memcpy(buf, this->timestamp_data + y*ts_width*Bpp, n);
         }
@@ -2305,9 +3106,9 @@ private:
     void priv_clear_timestamp(size_t offset)
     {
         const uint8_t * tsave = this->timestamp_save;
-        uint8_t * buf = this->data + offset;
+        uint8_t * buf = this->impl.first_pixel() + offset;
         const size_t n = this->previous_timestamp_length * char_width * Bpp;
-        for (size_t y = 0; y < ts_height ; ++y, buf += this->rowsize, tsave += n) {
+        for (size_t y = 0; y < ts_height ; ++y, buf += this->rowsize(), tsave += n) {
             memcpy(buf, tsave, n);
         }
     }

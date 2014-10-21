@@ -82,7 +82,7 @@ public:
 
     virtual void set_row(size_t rownum, const uint8_t * data)
     {
-        memcpy(this->drawable.row_data(rownum), data, this->drawable.rowsize);
+        this->drawable.set_row(rownum, data);
     }
 
     virtual uint8_t * get_row(size_t rownum)
@@ -92,12 +92,12 @@ public:
 
     virtual size_t get_rowsize()
     {
-        return this->drawable.rowsize;
+        return this->drawable.rowsize();
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        const Rect & trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
+        const Rect & trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         this->drawable.opaquerect(trect
             , ::RGBtoBGR(((this->capture_bpp == 24) ? cmd.color
                                                     : ::color_decode_opaquerect(cmd.color, this->capture_bpp, this->mod_palette_rgb))));
@@ -121,7 +121,7 @@ public:
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
         // Destination rectangle : drect
-        const Rect drect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
+        const Rect drect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         if (drect.isempty()){ return; }
         // adding delta move dest to source
         const signed int deltax = cmd.srcx - cmd.rect.x;
@@ -131,14 +131,14 @@ public:
 
     void draw(const RDPDestBlt & cmd, const Rect & clip)
     {
-        const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
+        const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         this->drawable.destblt(trect, cmd.rop);
     }
 
     void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
     {
         const Rect clip_drawable_cmd_intersect = clip.intersect(
-            this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+            this->drawable.width(), this->drawable.height()).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
 
         Rect cmd_rect(0, 0, 0, 0);
 
@@ -155,7 +155,7 @@ public:
     void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip)
     {
         const Rect clip_drawable_cmd_intersect = clip.intersect(
-            this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+            this->drawable.width(), this->drawable.height()).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
 
         Rect cmd_rect(0, 0, 0, 0);
 
@@ -174,7 +174,7 @@ public:
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip)
     {
         const Rect clip_drawable_cmd_intersect = clip.intersect(
-            this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+            this->drawable.width(), this->drawable.height()).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
 
         Rect cmd_rect(0, 0, 0, 0);
 
@@ -212,7 +212,7 @@ public:
     void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip)
     {
         const Rect clip_drawable_cmd_intersect = clip.intersect(
-            this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+            this->drawable.width(), this->drawable.height()).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
 
         Rect cmd_rect(0, 0, 0, 0);
 
@@ -233,7 +233,7 @@ public:
 
     void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
-        const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
+        const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         TODO("PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
 
         uint32_t back_color;
@@ -549,7 +549,7 @@ public:
     {
         TODO("Merge common code with Front::server_draw_text()");
         if (text[0] != 0) {
-            Rect screen_rect = clip.intersect(this->drawable.width, this->drawable.height);
+            Rect screen_rect = clip.intersect(this->drawable.width(), this->drawable.height());
             if (screen_rect.isempty()){
                 return ;
             }
@@ -674,7 +674,7 @@ public:
                     , bitmap_data.dest_right - bitmap_data.dest_left + 1
                     , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
 
-        const Rect & trect = rectBmp.intersect(this->drawable.width, this->drawable.height);
+        const Rect & trect = rectBmp.intersect(this->drawable.width(), this->drawable.height());
 
         this->drawable.draw_bitmap(trect, bmp);
     }
@@ -703,9 +703,9 @@ public:
     }
 
     virtual void dump_png24(Transport * trans, bool bgr) {
-        ::transport_dump_png24(trans, this->drawable.data,
-            this->drawable.width, this->drawable.height,
-            this->drawable.rowsize,
+        ::transport_dump_png24(trans, this->drawable.data(),
+            this->drawable.width(), this->drawable.height(),
+            this->drawable.rowsize(),
             bgr);
     }
 };

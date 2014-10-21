@@ -47,8 +47,8 @@ public:
     virtual ~ImageCapture() {}
 
     void zoom(unsigned percent) {
-        const unsigned zoom_width = (this->drawable.width * percent) / 100;
-        const unsigned zoom_height = (this->drawable.height * percent) / 100;
+        const unsigned zoom_width = (this->drawable.width() * percent) / 100;
+        const unsigned zoom_height = (this->drawable.height() * percent) / 100;
         TODO("we should limit percent to avoid images larger than 4096 x 4096");
         this->zoom_factor = percent;
         this->scaled_width = (zoom_width + 3) & 0xFFC;
@@ -65,18 +65,18 @@ public:
     }
 
     void dump24() {
-        ::transport_dump_png24(&this->trans, this->drawable.data,
-            this->drawable.width, this->drawable.height,
-            this->drawable.rowsize,
+        ::transport_dump_png24(&this->trans, this->drawable.data(),
+            this->drawable.width(), this->drawable.height(),
+            this->drawable.rowsize(),
             true);
     }
 
     void scale_dump24() {
         unique_ptr<uint8_t[]> scaled_data(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-        scale_data(scaled_data.get(), this->drawable.data,
-                   this->scaled_width, this->drawable.width,
-                   this->scaled_height, this->drawable.height,
-                   this->drawable.rowsize);
+        scale_data(scaled_data.get(), this->drawable.data(),
+                   this->scaled_width, this->drawable.width(),
+                   this->scaled_height, this->drawable.height(),
+                   this->drawable.rowsize());
         ::transport_dump_png24(&this->trans, scaled_data.get(),
                      this->scaled_width, this->scaled_height,
                      this->scaled_width * 3, true);
