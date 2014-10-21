@@ -175,6 +175,13 @@ struct Rect {
         );
     }
 
+    bool has_intersection(int16_t x, int16_t y) const
+    {
+        return this->cx
+            && (x >= this->x && x < this->right())
+            && (y >= this->y && y < this->bottom());
+    }
+
     // Ensemblist difference
     void difference(const Rect & a, RectIterator & it) const
     {
