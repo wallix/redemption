@@ -399,11 +399,11 @@ public:
         return this->data_ + (y * this->width_ + x) * Bpp;
     }
 
-    unsigned width() const noexcept {
+    uint16_t width() const noexcept {
         return this->width_;
     }
 
-    unsigned height() const noexcept {
+    uint16_t height() const noexcept {
         return this->height_;
     }
 
@@ -491,6 +491,7 @@ public:
         }
         else {
             switch (bmp_bpp) {
+                // TODO palette
                 case 8: this->spe_mem_blt(dest, src, rect.cx, rect.cy, bmp_bpp, bmp_line_size, op, trait::toColor8()); break;
                 case 15: this->spe_mem_blt(dest, src, rect.cx, rect.cy, bmp_bpp, bmp_line_size, op, trait::toColor15()); break;
                 case 16: this->spe_mem_blt(dest, src, rect.cx, rect.cy, bmp_bpp, bmp_line_size, op, trait::toColor16()); break;
@@ -952,11 +953,11 @@ struct Drawable {
         return this->impl.data();
     }
 
-    unsigned width() const noexcept {
+    uint16_t width() const noexcept {
         return this->impl.width();
     }
 
-    unsigned height() const noexcept {
+    uint16_t height() const noexcept {
         return this->impl.height();
     }
 
@@ -1603,8 +1604,8 @@ private:
                         unsigned pix = br_pix + x;
                         if (pnewch[pix] != poldch[pix]) {
                             uint8_t pixcolorcomponent = (pnewch[pix] == 'X') ? 0xFF : 0;
-                            unsigned pixindex = br_pixindex + x*3;
-                            memset(&rgbpixbuf[pixindex], Bpp, pixcolorcomponent);
+                            unsigned pixindex = br_pixindex + x*Bpp;
+                            memset(&rgbpixbuf[pixindex], pixcolorcomponent, Bpp);
                         }
                     }
                 }
@@ -3006,16 +3007,20 @@ public:
 
         for (size_t i = 0; i < this->current_pointer->number_of_contiguous_pixels; i++) {
             uint8_t  * pixel_start = this->impl.first_pixel() +
-               ((this->current_pointer->contiguous_pixels[i].y + y) * this->width() + this->current_pointer->contiguous_pixels[i].x + x) * 3;
+               ((this->current_pointer->contiguous_pixels[i].y + y) * this->width() + this->current_pointer->contiguous_pixels[i].x + x) * this->Bpp;
             unsigned   lg          = this->current_pointer->contiguous_pixels[i].data_size;
             int offset = 0;
-            if (pixel_start + lg <= this->impl.first_pixel()) continue;
+            if (pixel_start + lg <= this->impl.first_pixel()) {
+                continue;
+            }
             if (pixel_start < this->impl.first_pixel()) {
                 offset = this->data() - pixel_start;
                 lg -= offset;
                 pixel_start = this->impl.first_pixel();
             }
-            if (pixel_start > data_end) break;
+            if (pixel_start > data_end) {
+                break;
+            }
             if (pixel_start + lg >= data_end) {
                 lg = data_end - pixel_start;
             }
@@ -3034,11 +3039,11 @@ public:
         int       x     = this->save_mouse_x - this->current_pointer->hotspot_x;
         int       y     = this->save_mouse_y - this->current_pointer->hotspot_y;
 
-        const uint8_t * data_end = this->impl.first_pixel() + this->height() * this->width() * 3;
+        const uint8_t * data_end = this->impl.first_pixel() + this->height() * this->width() * this->Bpp;
 
         for (size_t i = 0; i < this->current_pointer->number_of_contiguous_pixels; i++) {
             uint8_t  * pixel_start = this->impl.first_pixel() +
-               ((this->current_pointer->contiguous_pixels[i].y + y) * this->width() + this->current_pointer->contiguous_pixels[i].x + x) * 3;
+               ((this->current_pointer->contiguous_pixels[i].y + y) * this->width() + this->current_pointer->contiguous_pixels[i].x + x) * this->Bpp;
             unsigned   lg          = this->current_pointer->contiguous_pixels[i].data_size;
             if (pixel_start + lg <= this->impl.first_pixel()) continue;
             if (pixel_start < this->impl.first_pixel()) {

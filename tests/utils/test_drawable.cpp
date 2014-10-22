@@ -34,6 +34,9 @@
 #include <errno.h>
 #include <algorithm>
 
+#include <iostream>
+
+#include "check_sig.hpp"
 #include "ssl_calls.hpp"
 #include "png.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -41,34 +44,7 @@
 #include "drawable.hpp"
 #include "rdtsc.hpp"
 
-inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
-                      char * message, const char * shasig)
-{
-    uint8_t sig[20];
-    SslSha1 sha1;
-    for (size_t y = 0; y < static_cast<size_t>(height); y++){
-        sha1.update(data + y * len, len);
-    }
-    sha1.final(sig, 20);
-
-    if (memcmp(shasig, sig, 20)){
-        sprintf(message, "Expected signature: \""
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
-        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
-        sig[ 8], sig[ 9], sig[10], sig[11],
-        sig[12], sig[13], sig[14], sig[15],
-        sig[16], sig[17], sig[18], sig[19]);
-        return false;
-    }
-    return true;
-}
-
-inline bool check_sig(Drawable & data, char * message, const char * shasig)
+inline bool check_sig(RDPDrawable & data, char * message, const char * shasig)
 {
     return check_sig(data.data(), data.height(), data.rowsize(), message, shasig);
 }
@@ -123,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     gd.draw(RDPLineTo(10, 0, 10, 1024, 479, BLUE, 0xCC, RDPPen(0, 1, PINK)), screen_rect.shrink(5));
 
     char message[1024];
-    if (!check_sig(gd.drawable, message,
+    if (!check_sig(gd, message,
                    "\xba\x61\xe0\xa7\x5a\x4d\xc0\xf1\xfd\xaf"
                    "\x57\x73\x04\x9f\xc9\xb5\xd4\xba\x75\x6a"
                    )){
@@ -131,8 +107,8 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     }
 
     // uncomment to see result in png file
-    //save_to_png("/tmp/test_line_000.png", gd.drawable);
-    //dump_png("/tmp/test_line_005_", gd.drawable);
+    //save_to_png("/tmp/test_line_000.png", gd.impl());
+    //dump_png("/tmp/test_line_005_", gd.impl());
 }
 
 BOOST_AUTO_TEST_CASE(TestPolyline)
@@ -176,14 +152,14 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
     gd.draw(RDPPolyline(158, 230, 0x06, 0, 0xFFFFFF, 7, dp), screen_rect);
 
     char message[1024];
-    if (!check_sig(gd.drawable, message,
+    if (!check_sig(gd, message,
     "\x32\x60\x8b\x02\xb9\xa2\x83\x27\x0f\xa9\x67\xef\x3c\x2e\xa0\x25\x69\x16\x02\x2b"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_polyline_000_", gd.drawable);
+    //dump_png("/tmp/test_polyline_000_", gd.impl());
 }
 
 BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
@@ -216,14 +192,14 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
     gd.draw(RDPMultiDstBlt(100, 100, 200, 200, 0x55, 20, deltaRectangles), screen_rect);
 
     char message[1024];
-    if (!check_sig(gd.drawable, message,
+    if (!check_sig(gd, message,
     "\x3d\x83\xd7\x7e\x0b\x3e\xf4\xd1\x53\x50\x33\x94\x1e\x11\x46\x9c\x60\x76\xd7\x0a"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_multidstblt_000_", gd.drawable);
+    //dump_png("/tmp/test_multidstblt_000_", gd.impl());
 }
 
 BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
@@ -256,14 +232,14 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
     gd.draw(RDPMultiOpaqueRect(100, 100, 200, 200, 0x000000, 20, deltaRectangles), screen_rect);
 
     char message[1024];
-    if (!check_sig(gd.drawable, message,
+    if (!check_sig(gd, message,
     "\x1d\x52\x8e\x03\x43\xc8\x99\x8d\xeb\x51\xa6\x23\x91\x24\xab\x8c\xa4\xcc\xf0\xc8"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_multiopaquerect_000_", gd.drawable);
+    //dump_png("/tmp/test_multiopaquerect_000_", gd.impl());
 }
 
 BOOST_AUTO_TEST_CASE(TestEllipse)
@@ -389,7 +365,7 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
     LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
 
     char message[1024];
-    if (!check_sig(gd.drawable, message,
+    if (!check_sig(gd, message,
                    "\xa7\xa0\x72\x43\x8a\x05\x86\xc7\xdd\xf6"
                    "\x38\xc1\x7e\xa4\x9d\x20\x2a\x39\xdf\x4e"
                    )){
@@ -397,7 +373,7 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
     }
 
     // uncomment to see result in png file
-    //save_to_png("/tmp/test_ellipse_001.png", gd.drawable);
+    //save_to_png("/tmp/test_ellipse_001.png", gd.impl());
 }
 
 BOOST_AUTO_TEST_CASE(TestPatBlt)
@@ -460,14 +436,14 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     gd.draw(RDPPatBlt(screen_rect.shrink(125), 0xFA, BLUE, WHITE, RDPBrush()), screen_rect);
 
     char message[1024];
-    if (!check_sig(gd.drawable, message,
+    if (!check_sig(gd, message,
         "\x87\x16\x73\x28\x21\x64\x9a\x4a\xea\x25\x60\xe5\x40\x32\x6e\xac\x28\x63\xe5\xad"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_patblt_000_", gd.drawable);
+    //dump_png("/tmp/test_patblt_000_", gd.impl());
 }
 
 BOOST_AUTO_TEST_CASE(TestDestBlt)
@@ -485,14 +461,14 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     gd.draw(RDPDestBlt(screen_rect.shrink(15), 0x55), screen_rect);
 
     char message[1024];
-    if (!check_sig(gd.drawable, message,
+    if (!check_sig(gd, message,
     "\x5b\x24\xc7\xec\x13\x7f\xf9\x8a\x32\x59\x62\x50\xef\x6b\x37\x1f\x15\x14\xfc\xbb"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_destblt_000_", gd.drawable);
+    //dump_png("/tmp/test_destblt_000_", gd.impl());
 }
 
 BOOST_AUTO_TEST_CASE(TestAddMouse)
@@ -504,12 +480,12 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     RDPDrawable gd(width, height, 24);
 
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
-    gd.drawable.set_mouse_cursor_pos(100, 100);
-    gd.drawable.trace_mouse();
+    gd.impl().set_mouse_cursor_pos(100, 100);
+    gd.impl().trace_mouse();
 
     {
         char message[1024];
-        if (!check_sig(gd.drawable, message,
+        if (!check_sig(gd, message,
         "\x75\xc6\xe6\x3b\xd3\x22\x88\x14\x27\x03\xf3\x3e\x3c\x90\x5f\xac\xc1\x5c\x61\xa0"
         )){
             BOOST_CHECK_MESSAGE(false, message);
@@ -517,13 +493,13 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     }
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_mouse_000_", gd.drawable);
+    //dump_png("/tmp/test_mouse_000_", gd.impl());
 
-    gd.drawable.clear_mouse();
+    gd.impl().clear_mouse();
 
     {
         char message[1024];
-        if (!check_sig(gd.drawable, message,
+        if (!check_sig(gd, message,
         "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05"
         )){
             BOOST_CHECK_MESSAGE(false, message);
@@ -531,7 +507,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     }
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_mouse_001_", gd.drawable);
+    //dump_png("/tmp/test_mouse_001_", gd.impl());
 }
 
 BOOST_AUTO_TEST_CASE(TestAddMouse2)
@@ -543,12 +519,12 @@ BOOST_AUTO_TEST_CASE(TestAddMouse2)
     RDPDrawable gd(width, height, 24);
 
     gd.draw(RDPOpaqueRect(screen_rect, BLACK), screen_rect); // BLACK
-    gd.drawable.set_mouse_cursor_pos(638, 470);
-    gd.drawable.trace_mouse();
+    gd.impl().set_mouse_cursor_pos(638, 470);
+    gd.impl().trace_mouse();
 
     {
         char message[1024];
-        if (!check_sig(gd.drawable, message,
+        if (!check_sig(gd, message,
         "\xd1\x1b\xe6\x6b\x0a\x66\x87\xd2\x06\x07\x5a\x52\x90\x8a\x37\xc7\x8c\x46\x46\x4b"
         )) {
             BOOST_CHECK_MESSAGE(false, message);
@@ -556,13 +532,13 @@ BOOST_AUTO_TEST_CASE(TestAddMouse2)
     }
 
     // uncomment to see result in png file
-    //dump_png("test_mouse2_visible_", gd.drawable);
+    //dump_png("test_mouse2_visible_", gd.impl());
 
-    gd.drawable.clear_mouse();
+    gd.impl().clear_mouse();
 
     {
         char message[1024];
-        if (!check_sig(gd.drawable, message,
+        if (!check_sig(gd, message,
         "\xf9\x71\xf3\x63\x57\xcc\x45\x41\x40\x90\xce\xce\xce\x55\xa9\x1e\xe1\x9a\xab\x29"
         )) {
             BOOST_CHECK_MESSAGE(false, message);
@@ -570,7 +546,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse2)
     }
 
     // uncomment to see result in png file
-    //dump_png("test_mouse2_clear_", gd.drawable);
+    //dump_png("test_mouse2_clear_", gd.impl());
 }
 
 BOOST_AUTO_TEST_CASE(TestAddMouse3)
@@ -581,16 +557,16 @@ BOOST_AUTO_TEST_CASE(TestAddMouse3)
     Rect screen_rect(0, 0, width, height);
     RDPDrawable gd(width, height, 24);
 
-    gd.drawable.default_pointer.hotspot_x = 8;
-    gd.drawable.default_pointer.hotspot_y = 8;
+    gd.impl().default_pointer.hotspot_x = 8;
+    gd.impl().default_pointer.hotspot_y = 8;
 
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
-    gd.drawable.set_mouse_cursor_pos(0, 0);
-    gd.drawable.trace_mouse();
+    gd.impl().set_mouse_cursor_pos(0, 0);
+    gd.impl().trace_mouse();
 
     {
         char message[1024];
-        if (!check_sig(gd.drawable, message,
+        if (!check_sig(gd, message,
         "\xec\x2b\xf0\xb0\xe0\x8a\x60\x64\xba\x8d\x2d\xbb\x33\xc7\x58\xd0\x4b\x19\x21\x3f"
         )) {
             BOOST_CHECK_MESSAGE(false, message);
@@ -598,13 +574,13 @@ BOOST_AUTO_TEST_CASE(TestAddMouse3)
     }
 
     // uncomment to see result in png file
-    dump_png("test_mouse3_visible_", gd.drawable);
+    //dump_png("test_mouse3_visible_", gd.impl());
 
-    gd.drawable.clear_mouse();
+    gd.impl().clear_mouse();
 
     {
         char message[1024];
-        if (!check_sig(gd.drawable, message,
+        if (!check_sig(gd, message,
         "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05"
         )) {
             BOOST_CHECK_MESSAGE(false, message);
@@ -612,7 +588,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse3)
     }
 
     // uncomment to see result in png file
-    //dump_png("test_mouse3_clear_", gd.drawable);
+    //dump_png("test_mouse3_clear_", gd.impl());
 }
 
 BOOST_AUTO_TEST_CASE(TestTimestampMouse)
@@ -638,11 +614,11 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     now.tm_yday =  67;
     now.tm_isdst =  0;
 
-    gd.drawable.trace_timestamp(now);
+    gd.impl().trace_timestamp(now);
 
     {
         char message[1024];
-        if (!check_sig(gd.drawable, message,
+        if (!check_sig(gd, message,
         "\x0d\x64\x40\x8c\xcb\x82\xd6\x29\x9b\x55\x83\x87\x3d\xd9\x69\xb6\xd7\x5b\x0d\x3d"
         )){
             BOOST_CHECK_MESSAGE(false, message);
@@ -650,7 +626,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     }
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_timestamp_000_", gd.drawable);
+    //dump_png("/tmp/test_timestamp_000_", gd.impl());
 
 
     now.tm_sec  =  00;
@@ -663,12 +639,12 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     now.tm_yday =  67;
     now.tm_isdst =  0;
 
-    gd.drawable.clear_timestamp();
-    gd.drawable.trace_timestamp(now);
+    gd.impl().clear_timestamp();
+    gd.impl().trace_timestamp(now);
 
     {
         char message[1024];
-        if (!check_sig(gd.drawable, message,
+        if (!check_sig(gd, message,
         "\x9c\x75\xcc\x7e\x0e\xa2\x3b\x61\xef\x53\x9a\x64\x66\x06\x57\x05\xa1\xe6\x4f\xf0"
         )){
             BOOST_CHECK_MESSAGE(false, message);
@@ -676,14 +652,14 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     }
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_timestamp_001_", gd.drawable);
+    //dump_png("/tmp/test_timestamp_001_", gd.impl());
 
 
-    gd.drawable.clear_timestamp();
+    gd.impl().clear_timestamp();
 
     {
         char message[1024];
-        if (!check_sig(gd.drawable, message,
+        if (!check_sig(gd, message,
         "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05"
         )){
             BOOST_CHECK_MESSAGE(false, message);
@@ -691,7 +667,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     }
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_timestamp_002_", gd.drawable);
+    //dump_png("/tmp/test_timestamp_002_", gd.impl());
 }
 
 TODO("We should perform exhaustive tests on scrblt like for patblt, current tests are not exhaustive.")
@@ -704,18 +680,18 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     gd.draw(RDPOpaqueRect(Rect(90, 90, 120, 120), RED), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
     gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
-    gd.drawable.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
-    gd.drawable.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
+    gd.impl().scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
+    gd.impl().scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
 
     char message[1024];
-    if (!check_sig(gd.drawable, message, shasig)){
+    if (!check_sig(gd, message, shasig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
     //char tmpname[128];
     //sprintf(tmpname, "/tmp/test_scrblt_%s", name);
-    //dump_png(tmpname, gd.drawable);
+    //dump_png(tmpname, gd.impl());
 }
 
 bool test_scrblt2(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig, char * message){
@@ -727,15 +703,15 @@ bool test_scrblt2(const uint8_t rop, const int cx, const int cy, const char * na
     gd.draw(RDPOpaqueRect(Rect(90, 90, 120, 120), RED), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
     gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
-    gd.drawable.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
-    gd.drawable.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
+    gd.impl().scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
+    gd.impl().scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
 
     // uncomment to see result in png file
     //char tmpname[128];
     //sprintf(tmpname, "/tmp/test_scrblt_%s", name);
-    //dump_png(tmpname, gd.drawable);
+    //dump_png(tmpname, gd.impl());
 
-    return check_sig(gd.drawable, message, shasig);
+    return check_sig(gd, message, shasig);
 }
 
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltDown)
@@ -882,14 +858,14 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     gd.draw(RDPMemBlt(1, Rect(65, 65, 20, 20), 0xFF, 0, 0, 10), screen_rect, bmp);
 
     char message[1024];
-    if (!check_sig(gd.drawable, message,
+    if (!check_sig(gd, message,
     "\x98\x6c\x40\x0b\x3a\xbc\x39\x38\x29\x11\x77\x37\x98\xe2\x27\xb2\xcb\x61\xec\x5d"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //dump_png("./test_memblt_", gd.drawable);
+    //dump_png("./test_memblt_", gd.impl());
 }
 
 BOOST_AUTO_TEST_CASE(TestMemblt2)
@@ -1017,14 +993,14 @@ BOOST_AUTO_TEST_CASE(TestMemblt2)
     gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect, bmp);
 
     //char message[1024];
-    //if (!check_sig(gd.drawable, message,
+    //if (!check_sig(gd, message,
     //"\x98\x6c\x40\x0b\x3a\xbc\x39\x38\x29\x11\x77\x37\x98\xe2\x27\xb2\xcb\x61\xec\x5d"
     //)){
     //    BOOST_CHECK_MESSAGE(false, message);
     //}
 
     // uncomment to see result in png file
-    //dump_png("./test_memblt2_", gd.drawable);
+    //dump_png("./test_memblt2_", gd.impl());
 }
 
 BOOST_AUTO_TEST_CASE(TestMemblt3)
@@ -1140,12 +1116,12 @@ BOOST_AUTO_TEST_CASE(TestMemblt3)
     gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect, bmp);
 
     //char message[1024];
-    //if (!check_sig(gd.drawable, message,
+    //if (!check_sig(gd, message,
     //"\x98\x6c\x40\x0b\x3a\xbc\x39\x38\x29\x11\x77\x37\x98\xe2\x27\xb2\xcb\x61\xec\x5d"
     //)){
     //    BOOST_CHECK_MESSAGE(false, message);
     //}
 
     // uncomment to see result in png file
-    //dump_png("./test_memblt3_", gd.drawable);
+    //dump_png("./test_memblt3_", gd.impl());
 }

@@ -107,7 +107,7 @@ public:
             this->png_trans = new OutFilenameSequenceTransport( FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, png_path
                                                               , basename, ".png", ini.video.capture_groupid, authentifier);
             this->psc = new StaticCapture( now, *this->png_trans, this->png_trans->seqgen(), width, height
-                                         , clear_png, ini, this->drawable->drawable);
+                                         , clear_png, ini, this->drawable->impl());
         }
 
         if (this->capture_wrm) {
@@ -229,7 +229,7 @@ public:
         this->capture_event.reset();
 
         if (this->capture_drawable) {
-            this->drawable->drawable.set_mouse_cursor_pos(x, y);
+            this->drawable->set_mouse_cursor_pos(x, y);
         }
 
         this->last_now = now;
@@ -437,7 +437,7 @@ public:
 
     virtual void set_pointer_display() {
         if (this->capture_drawable) {
-            this->drawable->drawable.dont_show_mouse_cursor = true;
+            this->drawable->show_mouse_cursor(false);
         }
     }
 };

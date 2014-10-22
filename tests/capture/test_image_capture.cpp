@@ -232,14 +232,14 @@ BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
     TestTransport trans("TestTransportPNG", "", 0, expected_red, sizeof(expected_red)-1);
 //    int fd = open("TestTransportPNG.png", O_WRONLY|O_CREAT, 0777);
 //    OutFileTransport trans(fd);
-    transport_dump_png24(&trans, d.drawable.data, 800, 600, d.drawable.rowsize, true);
+    transport_dump_png24(&trans, d.data(), 800, 600, d.rowsize(), true);
 }
 
 BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
 {
     CheckTransport trans(expected_red, sizeof(expected_red)-1);
     RDPDrawable drawable(800, 600, 24);
-    ImageCapture d(trans, 800, 600, drawable.drawable);
+    ImageCapture d(trans, 800, 600, drawable.impl());
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 
     OutFileTransport trans(fd);
     RDPDrawable drawable(800, 600, 24);
-    ImageCapture d(trans, 800, 600, drawable.drawable);
+    ImageCapture d(trans, 800, 600, drawable.impl());
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
@@ -277,7 +277,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
     RDPDrawable drawable(800, 600, 24);
-    ImageCapture d(trans, 800, 600, drawable.drawable);
+    ImageCapture d(trans, 800, 600, drawable.impl());
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
@@ -313,9 +313,9 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     ini.video.png_limit = 3;
     RDPDrawable drawable(800, 600, 24);
 
-    StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.drawable);
+    StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.impl());
 
-    drawable.drawable.dont_show_mouse_cursor = true;
+    drawable.impl().dont_show_mouse_cursor = true;
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
@@ -384,7 +384,7 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, NULL, 0x100);
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10, 24);
-    ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
+    ImageCapture d(trans, scr.cx, scr.cy, drawable.impl());
     drawable.draw(RDPOpaqueRect(scr, RED), scr);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -402,14 +402,14 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
     Rect scr(0, 0, width, height);
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
+    ImageCapture d(trans, scr.cx, scr.cy, drawable.impl());
     d.zoom(50);
 
     {
         const char * filename = "./tests/fixtures/win2008capture10.png";
         FILE * fd = fopen(filename, "r");
         TODO("Add ability to write image to file or read image from file in RDPDrawable")
-        read_png24(fd, d.drawable.data, d.drawable.width, d.drawable.height, d.drawable.rowsize);
+        read_png24(fd, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize());
         fclose(fd);
     }
     d.flush();
@@ -426,7 +426,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, NULL, 0x100);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
-    ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
+    ImageCapture d(trans, scr.cx, scr.cy, drawable.impl());
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr);
 
     uint8_t source64x64[] = {
@@ -551,7 +551,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, NULL, 0x100);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
-    ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
+    ImageCapture d(trans, scr.cx, scr.cy, drawable.impl());
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr);
 
     uint8_t source32x1[] =

@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     parent.refresh(parent.rect);
 
     char message[1024];
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\xa8\xe3\xf5\x36\x90\xc8\x52\x3b\xcb\xc6"
                     "\x06\xc3\x10\xaf\x67\x2b\x12\x65\x3a\x13")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                           , mouse_y
                           , NULL);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x5a\xb8\x6d\x93\x05\x89\xf7\x22\x59\x97"
                     "\x34\x26\xa2\xf3\xf2\xf1\x88\x0f\x66\xe0")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                           , mouse_y
                           , NULL);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\xa8\xe3\xf5\x36\x90\xc8\x52\x3b\xcb\xc6"
                     "\x06\xc3\x10\xaf\x67\x2b\x12\x65\x3a\x13")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x5a\xb8\x6d\x93\x05\x89\xf7\x22\x59\x97"
                     "\x34\x26\xa2\xf3\xf2\xf1\x88\x0f\x66\xe0")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x22\xd3\x7d\x83\xe2\xa4\x99\x5d\x77\xb2"
                     "\x0d\x25\xd3\x12\x4a\x6a\x1d\x0f\xf9\xbf")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x5a\xb8\x6d\x93\x05\x89\xf7\x22\x59\x97"
                     "\x34\x26\xa2\xf3\xf2\xf1\x88\x0f\x66\xe0")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x95\xca\xee\x66\x92\x86\x65\x02\x2a\x6a"
                     "\x43\xeb\x56\x9d\x35\xad\x08\x8a\x68\x55")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\xea\x27\x39\x94\xf0\x64\x35\x4d\x4c\x4b"
                     "\x39\x76\x7d\x05\x9d\x99\x7e\x8b\xa9\x9e")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\xee\x91\x40\xc9\x43\x40\xc3\x59\x40\xa1"
                     "\x42\xd6\xbc\x50\xa6\xa2\x03\x33\x37\xed")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -253,7 +253,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x01\x37\xd7\x09\xd5\x75\x1c\x05\xf0\x55"
                     "\x1b\xd4\x95\x76\x0c\x70\x80\x48\xa3\xa5")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -265,7 +265,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x5a\xb8\x6d\x93\x05\x89\xf7\x22\x59\x97"
                     "\x34\x26\xa2\xf3\xf2\xf1\x88\x0f\x66\xe0")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -277,7 +277,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x01\x37\xd7\x09\xd5\x75\x1c\x05\xf0\x55"
                     "\x1b\xd4\x95\x76\x0c\x70\x80\x48\xa3\xa5")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\xee\x91\x40\xc9\x43\x40\xc3\x59\x40\xa1"
                     "\x42\xd6\xbc\x50\xa6\xa2\x03\x33\x37\xed")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -301,7 +301,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\xea\x27\x39\x94\xf0\x64\x35\x4d\x4c\x4b"
                     "\x39\x76\x7d\x05\x9d\x99\x7e\x8b\xa9\x9e")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                           , mouse_y
                           , NULL);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\xa8\xe3\xf5\x36\x90\xc8\x52\x3b\xcb\xc6"
                     "\x06\xc3\x10\xaf\x67\x2b\x12\x65\x3a\x13")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -335,7 +335,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                           , mouse_y
                           , NULL);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x22\x4d\x6d\xae\x35\xd7\x29\x32\xd0\x73"
                     "\xe0\x8a\xd8\xcf\x3e\x6f\x23\xa2\x18\xe6")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -349,7 +349,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\xa8\xe3\xf5\x36\x90\xc8\x52\x3b\xcb\xc6"
                     "\x06\xc3\x10\xaf\x67\x2b\x12\x65\x3a\x13")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -365,7 +365,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                           , mouse_y
                           , NULL);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x64\xcf\xdc\xcc\x87\x1c\x05\xde\xdf\xf2"
                     "\x16\x7d\x0f\x7f\x21\xdc\xb8\x46\x93\x3d")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -383,7 +383,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
                           , mouse_y
                           , NULL);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\xed\xfd\xbe\x01\x7e\xe5\xc7\x08\x5e\x6d"
                     "\x70\x0a\x3a\x8f\x2e\xfb\x43\x5e\xaf\xbc")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -397,7 +397,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\xc9\x0b\xef\x6a\x33\x3c\xf8\xdf\xc4\x80"
                     "\x72\x4c\xba\x04\x78\xeb\x33\x11\x58\x5e")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -409,7 +409,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x8a\x0b\x7b\xc4\x0f\x95\xb4\x7c\x96\xe4"
                     "\x18\x64\x6e\x14\x93\x2c\xb2\x45\x67\x1b")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -421,7 +421,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\xc9\x0b\xef\x6a\x33\x3c\xf8\xdf\xc4\x80"
                     "\x72\x4c\xba\x04\x78\xeb\x33\x11\x58\x5e")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -433,7 +433,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\xed\xfd\xbe\x01\x7e\xe5\xc7\x08\x5e\x6d"
                     "\x70\x0a\x3a\x8f\x2e\xfb\x43\x5e\xaf\xbc")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -445,7 +445,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x8a\x0b\x7b\xc4\x0f\x95\xb4\x7c\x96\xe4"
                     "\x18\x64\x6e\x14\x93\x2c\xb2\x45\x67\x1b")) {
         BOOST_CHECK_MESSAGE(false, message);

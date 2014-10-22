@@ -50,8 +50,50 @@
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
 class RDPDrawable : public RDPGraphicDevice, public RDPCaptureDevice {
-public:
     Drawable drawable;
+public:
+    const uint8_t * data() const noexcept {
+        return this->drawable.data();
+    }
+
+    uint16_t width() const noexcept {
+        return this->drawable.width();
+    }
+
+    uint16_t height() const noexcept {
+        return this->drawable.height();
+    }
+
+    unsigned size() const noexcept {
+        return this->drawable.size();
+    }
+
+    size_t rowsize() const noexcept {
+        return this->drawable.rowsize();
+    }
+
+    size_t pix_len() const noexcept {
+        return this->drawable.pix_len();
+    }
+
+    // temporary
+    //@{
+    Drawable & impl() noexcept {
+        return this->drawable;
+    }
+
+    const Drawable & impl() const noexcept {
+        return this->drawable;
+    }
+
+    void set_mouse_cursor_pos(int x, int y) {
+        this->drawable.set_mouse_cursor_pos(x, y);
+    }
+
+    void show_mouse_cursor(bool x) {
+        this->drawable.dont_show_mouse_cursor = !x;
+    }
+    //@}
 
     GlyphCache gly_cache;
 

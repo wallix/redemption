@@ -98,9 +98,9 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     ini.video.rt_display.set(1);
     ini.video.png_limit = -1;
     ini.video.png_interval = 0;
-    StaticCapture consumer(now, trans, trans.seqgen(), screen_rect.cx, screen_rect.cy, false, ini, drawable.drawable);
+    StaticCapture consumer(now, trans, trans.seqgen(), screen_rect.cx, screen_rect.cy, false, ini, drawable.impl());
 
-    drawable.drawable.dont_show_mouse_cursor = true;
+    drawable.show_mouse_cursor(false);
 
     bool ignore_frame_in_timeval = false;
 

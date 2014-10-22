@@ -24,8 +24,8 @@
 #define BOOST_TEST_MODULE TestXXX
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
-#include "log.hpp"
+// #define LOGNULL
+// #include "log.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestXXX)
