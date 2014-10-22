@@ -76,7 +76,15 @@ public:
         return this->drawable.pix_len();
     }
 
-    // temporary
+    void set_mouse_cursor_pos(int x, int y) {
+        this->drawable.set_mouse_cursor_pos(x, y);
+    }
+
+    void show_mouse_cursor(bool x) {
+        this->drawable.dont_show_mouse_cursor = !x;
+    }
+
+    // TODO FIXME temporary
     //@{
     Drawable & impl() noexcept {
         return this->drawable;
@@ -84,14 +92,6 @@ public:
 
     const Drawable & impl() const noexcept {
         return this->drawable;
-    }
-
-    void set_mouse_cursor_pos(int x, int y) {
-        this->drawable.set_mouse_cursor_pos(x, y);
-    }
-
-    void show_mouse_cursor(bool x) {
-        this->drawable.dont_show_mouse_cursor = !x;
     }
     //@}
 

@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         consumer.flush();
         consumer.send_image_chunk();
     }
-    catch (Error & e){
+    catch (Error const & e){
         BOOST_CHECK(false);
     };
 }
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     OutChunkedBufferingTransport<100> png_trans(&trans);
     try {
         consumer.drawable.dump_png24(&png_trans, true);
-    } catch (Error & e) {
+    } catch (Error const & e) {
         BOOST_CHECK(false);
     };
 }
