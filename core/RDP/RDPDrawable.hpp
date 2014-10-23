@@ -408,16 +408,16 @@ public:
         if (startx == endx){
             this->drawable.vertical_line(BackMode,
                                          startx,
-                                         (starty <= endy)?starty:endy,
-                                         (starty <= endy)?endy:starty,
+                                         std::min(starty, endy),
+                                         std::max(starty, endy),
                                          bRop2,
                                          color);
         }
         else if (starty == endy){
             this->drawable.horizontal_line(BackMode,
-                                           (startx <= endx)?startx:endx,
+                                           std::min(startx, endx),
                                            starty,
-                                           (startx <= endx)?endx:startx,
+                                           std::max(startx, endx),
                                            bRop2,
                                            color);
 

@@ -52,6 +52,14 @@ namespace Ops {
        }
     };
 
+    struct InvertTarget
+    {
+       u8 operator()(u8 target, u8 /*source*/) const
+       {
+           return ~target;
+       }
+    };
+
 
     struct Op_0xB8
     {
@@ -223,7 +231,7 @@ namespace Ops {
     //typedef Op2_0x0D Op_0xCC;
     typedef Op2_0x0E Op_0xDD;
     typedef Op2_0x0F Op_0xEE;
-};
+}
 
 
 enum class DepthColor { color8 = 8, color15 = 15, color16 = 16, color24 = 24, color32 = 32 };
@@ -456,6 +464,10 @@ public:
         return this->first_pixel(rect.x, rect.y);
     }
 
+    uint8_t * last_pixel() const noexcept {
+        return this->data_ + this->pix_len();
+    }
+
     uint8_t * row_data(int y) const noexcept {
         return this->first_pixel() + y * this->rowsize();
     }
@@ -529,16 +541,14 @@ private:
         const size_t destn = cx * Bpp;
         const size_t bmp_Bpp = ::nbbytes(bmp_bpp);
         const size_t srcn = cx * bmp_Bpp;
-        for (cP ep = dest + line_size * cy; dest < ep; dest += line_size, src -= bmp_line_size) {
-            const cP tmpsrc = src;
-            const P tmpdest = dest;
+        const size_t inc_line = line_size - destn;
+        const size_t inc_bmp_line = bmp_line_size - srcn;
+        for (cP ep = dest + line_size * cy; dest < ep; dest += inc_line, src -= inc_bmp_line) {
             const cP dest_e = dest + destn;
             while (dest != dest_e) {
                 dest = traits::assign(dest, to_color(src), c..., op);
                 src += bmp_Bpp;
             }
-            src = tmpsrc;
-            dest = tmpdest;
         }
     }
 
@@ -573,7 +583,7 @@ public:
         int pY = 0;
         int borX = rYcarre*rX;
         int borY = 0;
-        auto color_ = traits::u32_to_color(color);
+        const color_t color_ = traits::u32_to_color(color);
 
         this->colordot(cX+pX, cY, color_, op);
         this->colordot(cX-pX, cY, color_, op);
@@ -687,8 +697,8 @@ public:
         P const base = this->first_pixel(rect);
         P       p    = base;
 
-        auto back_color_ = traits::u32_to_color(back_color);
-        auto fore_color_ = traits::u32_to_color(fore_color);
+        const color_t back_color_ = traits::u32_to_color(back_color);
+        const color_t fore_color_ = traits::u32_to_color(fore_color);
 
         for (size_t y = 0, cy = static_cast<size_t>(rect.cy); y < cy; ++y) {
             p = base + this->rowsize() * y;
@@ -749,18 +759,18 @@ public:
 
     // nor horizontal nor vertical, use Bresenham
     template<class Op>
-    void line(int startx, int starty, int endx, int endy, Op op)
+    void line(int x, int y, int endx, int endy, const uint32_t color, Op op)
     {
         // Prep
-        const int dx = endx - startx;
-        const int dy = (endy >= starty) ? (endy - starty) : (starty - endy);
-        const int sy = (endy >= starty) ? 1 : -1;
-        int x = startx;
-        int y = starty;
+        const int dx = endx - x;
+        const int dy = (endy >= y) ? (endy - y) : (y - endy);
+        const int sy = (endy >= y) ? 1 : -1;
         int err = dx - dy;
 
+        const color_t color_ = traits::u32_to_color(color);
+
         while (true) {
-            traits::transform(this->first_pixel(x, y), op);
+            traits::assign(this->first_pixel(x, y), color_, op);
 
             if ((x >= endx) && (y == endy)) {
                 break;
@@ -780,23 +790,24 @@ public:
     }
 
     template<class Op>
-    void vertical_line(uint16_t x, uint16_t starty, uint16_t endy, Op op)
+    void vertical_line(uint16_t x, uint16_t y, uint16_t endy, uint32_t color, Op op)
     {
-        P p = this->first_pixel(x, starty);
-        P pe = p + (endy - starty + 1) * this->rowsize();
+        const color_t color_ = traits::u32_to_color(color);
+        P p = this->first_pixel(x, y);
+        P pe = p + (endy - y + 1) * this->rowsize();
         for (; p != pe; p += this->rowsize()) {
-            traits::transform(p, op);
+            traits::assign(p, color_, op);
         }
     }
 
     template<class Op>
-    void horizontal_line(uint16_t startx, uint16_t y, uint16_t endx, Op)
+    void horizontal_line(uint16_t startx, uint16_t y, uint16_t endx, uint32_t color, Op)
     {
-        this->apply_for_line(this->first_pixel(startx, y), endx - startx + 1, Byte<Op>{});
+        this->apply_for_line(this->first_pixel(startx, y), endx - startx + 1, AssignOp<Op>{traits::u32_to_color(color)});
     }
 
     template <typename Op>
-    void patblt_op(const Rect & rect, const uint32_t color)
+    void patblt_op(const Rect & rect, uint32_t color)
     {
         this->apply_for_rect(rect, AssignOp<Op>{traits::u32_to_color(color)});
     }
@@ -807,6 +818,17 @@ public:
     }
 
 private:
+    static void assign_op_transform(P dest, color_t c)
+    {
+        traits::assign(dest, c);
+    }
+
+    template<class UnaryOp>
+    static void assign_op_transform(P dest, UnaryOp op)
+    {
+        traits::transform(dest, op);
+    }
+
     static cP data_bmp(const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy)
     {
         // TODO ::nbbytes(bmp.bpp()) -> this->nbbytes_color()
@@ -826,12 +848,6 @@ private:
 
         P operator()(P dest) const noexcept
         { return traits::assign(dest, color, Op()); }
-    };
-
-    template<class Op>
-    struct Byte {
-        P operator()(P dest) const noexcept
-        { *dest = Op()(*dest); return ++dest; }
     };
 
     struct Invert {
@@ -956,6 +972,17 @@ struct DrawablePointer {
             }
             //printf("\n");
         }
+    }
+
+    struct ContiguousPixelsView {
+        DrawablePointer::ContiguousPixels const * first;
+        DrawablePointer::ContiguousPixels const * last;
+        DrawablePointer::ContiguousPixels const * begin() const noexcept { return this->first; }
+        DrawablePointer::ContiguousPixels const * end() const noexcept { return this->last; }
+    };
+
+    ContiguousPixelsView contiguous_pixels_view() const {
+        return {this->contiguous_pixels + 0, this->contiguous_pixels + this->number_of_contiguous_pixels};
     }
 };  // struct DrawablePointer
 
@@ -2530,111 +2557,48 @@ public:
     }
 
     // nor horizontal nor vertical, use Bresenham
-    void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const uint8_t rop, const uint32_t color)
+    void line(int mix_mode, int x, int y, int endx, int endy, uint8_t rop, uint32_t color)
     {
-        // Color handling
-        uint8_t col[3] =
-            { static_cast<uint8_t>(color)
-            , static_cast<uint8_t>(color >> 8)
-            , static_cast<uint8_t>(color >> 16)
-            };
-
-        const Rect & line_rect = Rect(startx, starty, 1, 1).enlarge_to(endx, endy);
+        const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(endx, endy);
         if (this->tracked_area.has_intersection(line_rect)) {
             this->tracked_area_changed = true;
         }
 
-        // Prep
-        int x = startx;
-        int y = starty;
-        int dx = endx - startx;
-        int dy = (endy >= starty)?(endy - starty):(starty - endy);
-        int sy = (endy >= starty)?1:-1;
-        int err = dx - dy;
-
-        while (true) {
-            uint8_t * const p = this->impl.first_pixel() + (y * this->width() + x) * this->Bpp;
-            for (uint8_t b = 0 ; b < this->Bpp; b++) {
-                switch (rop)
-                    {
-                    case 0x06:  // R2_NOT
-                        p[b] = ~p[b];
-                        break;
-                    default:
-                        p[b] = col[b];
-                        break;
-                    }
-            }
-
-            if ((x >= endx) && (y == endy)) {
-                break;
-            }
-
-            // Calculating pixel position
-            int e2 = err * 2; //prevents use of floating point
-            if (e2 > -dy) {
-                err -= dy;
-                x++;
-            }
-            if (e2 < dx) {
-                err += dx;
-                y += sy;
-            }
+        if (rop == 0x06) {
+            this->impl.line(x, y, endx, endy, color, Ops::InvertTarget());
+        }
+        else {
+            this->impl.line(x, y, endx, endy, color, Ops::CopySrc());
         }
     }
 
-    void vertical_line(const uint8_t mix_mode, const uint16_t x, const uint16_t starty, const uint16_t endy, const uint8_t rop, const uint32_t color)
+    void vertical_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endy, uint8_t rop, uint32_t color)
     {
-        // Color handling
-        uint8_t col[3] = {
-              static_cast<uint8_t>(color)
-            , static_cast<uint8_t>(color >> 8)
-            , static_cast<uint8_t>(color >> 16)
-        };
+        const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(x+1, endy);
+        if (this->tracked_area.has_intersection(line_rect)) {
+            this->tracked_area_changed = true;
+        }
 
-        uint8_t * p = this->impl.first_pixel() + (starty * this->width() + x) * 3;
-        for (int dy = starty; dy <= endy ; dy++) {
-            switch (rop)
-            {
-            case 0x06:  // R2_NOT
-                p[0] = ~p[0];
-                p[1] = ~p[1];
-                p[2] = ~p[2];
-                break;
-            default:
-                p[0] = col[0];
-                p[1] = col[1];
-                p[2] = col[2];
-                break;
-            }
-            p += this->width() * 3;
+        if (rop == 0x06) {
+            this->impl.vertical_line(x, y, endy, color, Ops::InvertTarget());
+        }
+        else {
+            this->impl.vertical_line(x, y, endy, color, Ops::CopySrc());
         }
     }
 
-    void horizontal_line(const uint8_t mix_mode, const uint16_t startx, const uint16_t y, const uint16_t endx, const uint8_t rop, const uint32_t color)
+    void horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endx, uint8_t rop, uint32_t color)
     {
-        uint8_t col[3] = {
-              static_cast<uint8_t>(color)
-            , static_cast<uint8_t>(color >> 8)
-            , static_cast<uint8_t>(color >> 16)
-        };
+        const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(endx, y+1);
+        if (this->tracked_area.has_intersection(line_rect)) {
+            this->tracked_area_changed = true;
+        }
 
-        uint8_t * p = this->impl.first_pixel() + (y * this->width() + startx) * 3;
-        for (int dx = startx; dx <= endx ; dx++) {
-            switch (rop)
-            {
-            case 0x06:  // R2_NOT
-                p[0] = ~p[0];
-                p[1] = ~p[1];
-                p[2] = ~p[2];
-                break;
-            default:
-                p[0] = col[0];
-                p[1] = col[1];
-                p[2] = col[2];
-                break;
-            }
-            p += 3;
+        if (rop == 0x06) {
+            this->impl.horizontal_line(x, y, endx, color, Ops::InvertTarget());
+        }
+        else {
+            this->impl.horizontal_line(x, y, endx, color, Ops::CopySrc());
         }
     }
 
@@ -2662,23 +2626,55 @@ public:
         this->save_mouse_x = this->mouse_cursor_pos_x;
         this->save_mouse_y = this->mouse_cursor_pos_y;
 
+        struct Trace {
+            int offset_;
+            void reset() noexcept { this->offset_ = 0; }
+            int set(int offset) noexcept { return this->offset_ = offset; }
+            void operator()(uint8_t * psave, uint8_t * pixel_start, const uint8_t * data, size_t n) const noexcept {
+                memcpy(psave, pixel_start, n);
+                memcpy(pixel_start, data + this->offset_, n);
+            }
+        };
+
+        const int x = this->mouse_cursor_pos_x - this->current_pointer->hotspot_x;
+        const int y = this->mouse_cursor_pos_y - this->current_pointer->hotspot_y;
+        this->priv_trace_mouse(Trace(), x, y);
+    }
+
+    void clear_mouse() {
+        if (this->dont_show_mouse_cursor || !this->current_pointer) {
+            return;
+        }
+
+        struct Trace {
+            void reset() const noexcept { }
+            int set(int offset) const noexcept { return offset; }
+            void operator()(uint8_t * psave, uint8_t * pixel_start, const uint8_t * /*data*/, size_t n) const noexcept {
+                ::memcpy(pixel_start, psave, n);
+            }
+        };
+
+        const int x = this->save_mouse_x - this->current_pointer->hotspot_x;
+        const int y = this->save_mouse_y - this->current_pointer->hotspot_y;
+        this->priv_trace_mouse(Trace(), x, y);
+    }
+
+private:
+    template<class O>
+    void priv_trace_mouse(O o, int x, int y)
+    {
         uint8_t * psave = this->save_mouse;
-        int       x     = this->mouse_cursor_pos_x - this->current_pointer->hotspot_x;
-        int       y     = this->mouse_cursor_pos_y - this->current_pointer->hotspot_y;
+        const uint8_t * data_end = this->impl.last_pixel();
 
-        const uint8_t * data_end = this->impl.first_pixel() + this->height() * this->width() * this->Bpp;
-
-        for (size_t i = 0; i < this->current_pointer->number_of_contiguous_pixels; i++) {
-            uint8_t  * pixel_start = this->impl.first_pixel() +
-               ((this->current_pointer->contiguous_pixels[i].y + y) * this->width() + this->current_pointer->contiguous_pixels[i].x + x) * this->Bpp;
-            unsigned   lg          = this->current_pointer->contiguous_pixels[i].data_size;
-            int offset = 0;
+        for (DrawablePointer::ContiguousPixels const & contiguous_pixels : this->current_pointer->contiguous_pixels_view()) {
+            uint8_t  * pixel_start = this->impl.first_pixel(contiguous_pixels.x + x, contiguous_pixels.y + y);
+            unsigned   lg          = contiguous_pixels.data_size;
             if (pixel_start + lg <= this->impl.first_pixel()) {
                 continue;
             }
+            o.reset();
             if (pixel_start < this->impl.first_pixel()) {
-                offset = this->data() - pixel_start;
-                lg -= offset;
+                lg -= o.set(this->data() - pixel_start);
                 pixel_start = this->impl.first_pixel();
             }
             if (pixel_start > data_end) {
@@ -2687,41 +2683,12 @@ public:
             if (pixel_start + lg >= data_end) {
                 lg = data_end - pixel_start;
             }
-            memcpy(psave, pixel_start, lg);
-            psave += lg;
-            memcpy(pixel_start, this->current_pointer->contiguous_pixels[i].data + offset, lg);
-        }
-    }
-
-    void clear_mouse() {
-        if (this->dont_show_mouse_cursor || !this->current_pointer) {
-            return;
-        }
-
-        uint8_t * psave = this->save_mouse;
-        int       x     = this->save_mouse_x - this->current_pointer->hotspot_x;
-        int       y     = this->save_mouse_y - this->current_pointer->hotspot_y;
-
-        const uint8_t * data_end = this->impl.first_pixel() + this->height() * this->width() * this->Bpp;
-
-        for (size_t i = 0; i < this->current_pointer->number_of_contiguous_pixels; i++) {
-            uint8_t  * pixel_start = this->impl.first_pixel() +
-               ((this->current_pointer->contiguous_pixels[i].y + y) * this->width() + this->current_pointer->contiguous_pixels[i].x + x) * this->Bpp;
-            unsigned   lg          = this->current_pointer->contiguous_pixels[i].data_size;
-            if (pixel_start + lg <= this->impl.first_pixel()) continue;
-            if (pixel_start < this->impl.first_pixel()) {
-                lg -= this->data() - pixel_start;
-                pixel_start = this->impl.first_pixel();
-            }
-            if (pixel_start > data_end) break;
-            if (pixel_start + lg >= data_end) {
-                lg = data_end - pixel_start;
-            }
-            ::memcpy(pixel_start, psave, lg);
+            o(psave, pixel_start, contiguous_pixels.data, lg);
             psave += lg;
         }
     }
 
+public:
     void trace_timestamp(tm & now)
     {
         this->priv_trace_timestamp(now, false);
