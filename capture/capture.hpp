@@ -440,6 +440,19 @@ public:
             this->drawable->drawable.dont_show_mouse_cursor = true;
         }
     }
+
+    // toggles externally genareted breakpoint.
+    virtual void external_breakpoint() {
+        if (this->capture_wrm) {
+            this->pnc->external_breakpoint();
+        }
+    }
+
+    virtual void external_time(const timeval & now) {
+        if (this->capture_wrm) {
+            this->pnc->external_time(now);
+        }
+    }
 };
 
 #endif

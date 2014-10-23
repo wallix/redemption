@@ -520,7 +520,7 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
     return return_code;
 }   // do_recompress
 
-static int do_record( Transport & in_wrm_trans, const timeval begin_capture
+static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval begin_capture
                     , const timeval end_capture, uint32_t verbose
                     , std::string & output_filename, Inifile & ini, uint32_t order_count, uint32_t clear
                     , unsigned zoom, bool show_file_metadata, bool show_statistics) {
@@ -579,7 +579,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture
             clear_files_flv_meta_png(outfile_path, outfile_basename);
         }
 
-        capture.reset(new Capture( begin_capture, player.screen_rect.cx, player.screen_rect.cy
+        capture.reset(new Capture( begin_record, player.screen_rect.cx, player.screen_rect.cy
                                  , player.info_bpp, 24, outfile_path, outfile_path, ini.video.hash_path
                                  , outfile_basename, false, false, NULL, ini));
         if (capture->capture_png){
@@ -647,7 +647,7 @@ static int recompress_or_record( CryptoContext & cctx, Transport & in_wrm_trans,
         if (verbose) {
             cout << "[A]"<< endl;
         }
-        return do_record( in_wrm_trans, begin_capture, end_capture, verbose
+        return do_record( in_wrm_trans, begin_record, begin_capture, end_capture, verbose
                         , output_filename, ini, order_count, clear, zoom
                         , show_file_metadata, show_statistics);
     }
