@@ -896,6 +896,59 @@ class TargetConf(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
+        'rec_x@10.10.47.179:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'x',
+                password = u'x',
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                ),
+                GroupTargetInfo(
+                    cn = u'win2'
+                )
+            ],
+            target_groups = u'win1;win2',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.47.179',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.47.179',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = False,
+                isRecorded = True
+            ),
+            service_login = u'x@10.10.47.179:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
+        ),
         'w2k_administrateur@10.10.46.64:RDP' : RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
@@ -1565,11 +1618,11 @@ class TargetConf(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
-        'w2k8erpm\\administrateur@10.10.46.110:RDP' : RightInfo(
+        'x@10.10.47.179:RDP' : RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
-                login = u'QA\\administrateur',
-                password = PASSWORD1,
+                login = u'x',
+                password = u'x',
                 pubkey = None,
                 isKeyAuth = None
             ),
@@ -1585,10 +1638,10 @@ class TargetConf(object):
             target_groups = u'win1;win2',
             resource = ResourceInfo(
                 device = DeviceInfo(
-                    cn = u'10.10.46.110',
+                    cn = u'10.10.47.179',
                     uid = u'140ee23607907e970800279eed97',
                     deviceAlias = u'',
-                    host = u'10.10.46.110',
+                    host = u'10.10.47.179',
                     isKeyAuth = None
                 ),
                 application = None,
@@ -1608,7 +1661,7 @@ class TargetConf(object):
                 isCritical = False,
                 isRecorded = False
             ),
-            service_login = u'QA\\administrateur@10.10.46.110:RDP',
+            service_login = u'x@10.10.47.179:RDP',
             subprotocols =
             [
                 SubprotocolInfo(
@@ -1686,6 +1739,12 @@ class TargetConf(object):
     }
 
     config_target_password = [
+        TargetPasswordInfo(
+            account = u'x',
+            resource = u'10.10.47.179',
+            protocol = u'RDP',
+            password = u'x'
+        ),
         TargetPasswordInfo(
             account = u'administrateur',
             resource = u'10.10.47.63',
@@ -1874,7 +1933,8 @@ class TargetConf(object):
                 'rec_w2k3_qa\\administrateur@10.10.46.70:RDP',
                 'rec_w2k8_qa\\administrateur@10.10.46.78:RDP',
                 'rec_wxp_administrateur@10.10.47.175:RDP',
-                'rec_w2k12_administrateur@10.10.47.132:RDP'
+                'rec_w2k12_administrateur@10.10.47.132:RDP',
+                'rec_x@10.10.47.179:RDP'
             ]
         },
         'x':
@@ -1897,7 +1957,7 @@ class TargetConf(object):
                 'w2k8_qa\\administrateur@10.10.46.78:RDP',
                 'w2k8_qa\\administrateur@10.10.46.88:RDP',
                 'wxp_administrateur@10.10.47.175:RDP',
-                'w2k8erpm\\administrateur@10.10.46.110:RDP',
+                'x@10.10.47.179:RDP',
                 'w2k8erpm\\special@10.10.46.110:RDP'
             ]
         },
