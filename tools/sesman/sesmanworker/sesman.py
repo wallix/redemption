@@ -427,6 +427,10 @@ class Sesman():
                     return None, TR(u"auth_failed_wab %s") % wab_login
 
             # At this point, User is authentified.
+            if wab_login.startswith('_OTP_'):
+                real_wab_login = self.engine.get_username()
+                self.shared[u'login'] = self.shared.get(u'login').replace(wab_login,
+                                                                          real_wab_login)
             self.language = self.engine.get_language()
             if self.engine.get_force_change_password():
                 self.send_data({u'rejected': TR(u'changepassword')})
@@ -1263,7 +1267,7 @@ class Sesman():
             string = pattern[1]
 #            Logger().info(u"regexp=\"%s\" string=\"%s\" user_login=\"%s\" user=\"%s\" host=\"%s\"" %
 #                (regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device')))
-            self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn)
+            self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn, self.target_service_name)
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))

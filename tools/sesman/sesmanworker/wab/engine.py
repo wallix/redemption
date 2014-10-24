@@ -297,7 +297,7 @@ class Engine(object):
             import traceback
             Logger().info("Engine NotifyFilesystemIsFullOrUsedAtXPercent failed: (((%s)))" % (traceback.format_exc(e)))
 
-    def NotifyFindPatternInRDPFlow(self, regexp, string, user_login, user, host, cn):
+    def NotifyFindPatternInRDPFlow(self, regexp, string, user_login, user, host, cn, service):
         try:
             notif_data = {
                    u'regexp'     : regexp
@@ -306,6 +306,7 @@ class Engine(object):
                  , u'user'       : user
                  , u'host'       : host
                  , u'device'     : cn
+                 , u'service'    : service
              }
 
             Notify(self.wabengine, RDP_PATTERN_FOUND, notif_data)
