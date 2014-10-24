@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
 
     BOOST_CHECK_EQUAL(std::string(TR("unknown text made for tests", ini)),  std::string("unknown text made for tests"));
 
-    Translation::getInstance().set_lang(FR);
+    Translation::getInstance().set_lang(Translation::FR);
     ini.translation.language.set_from_cstr("fr");
     ini.translation.login.set_from_cstr("");
     ini.translation.password.set_from_cstr("");
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
 
     BOOST_CHECK_EQUAL(std::string(TR("texte inconnu fait pour les tests", ini)),  std::string("texte inconnu fait pour les tests"));
 
-    BOOST_CHECK_EQUAL(TRANSLATIONCONF.set_lang((language_t)10000), false);
+    BOOST_CHECK_EQUAL(TRANSLATIONCONF.set_lang((Translation::language_t)10000), false);
     // Unknown language does not change current language.
 
     BOOST_CHECK_EQUAL(std::string(TR("close", ini)), std::string("Fermer"));

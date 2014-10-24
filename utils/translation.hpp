@@ -15,56 +15,142 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Meng Tan
+ *   Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen
  */
 
 #ifndef REDEMPTION_TRANSLATION_HPP
 #define REDEMPTION_TRANSLATION_HPP
 
-#include <map>
+#include <array>
+#include <algorithm>
 #include "config.hpp"
 
-typedef std::map <const char *, const char *> trans_t;
-enum language_t {
-    EN,
-    FR,
-    MAX_LANG
-};
-
-class Translation {
+struct Translation
+{
+    enum language_t {
+        EN,
+        FR,
+        MAX_LANG
+    };
 private:
-    language_t lang;
-    trans_t en_map;
-    trans_t fr_map;
+    struct value_type
+    {
+        const char * key; const char * s;
 
-    void build_fr_map() {
-        trans_t & dict = this->fr_map;
-        dict["login"] = "Identifiant";
-        dict["password"] = "Mot de passe";
-        dict["diagnostic"] = "Diagnostic";
-        dict["connection_closed"] = "Connexion fermée";
-        dict["OK"] = "OK";
-        dict["cancel"] = "Annuler";
-        dict["help"] = "Aide";
-        dict["close"] = "Fermer";
-        dict["refused"] = "Refuser";
-        dict["username"] = "Utilisateur";
-        dict["password_expire"] = "Votre mot de passe va bientôt expirer. Veuillez le changer";
-        dict["protocol"] = "Protocole";
-        dict["target_group"] = "Groupe";
-        dict["target"] = "Cible";
-        dict["close_time"] = "Date de clôture";
-        dict["logout"] = "Déconnexion";
-        dict["apply"] = "Appliquer";
-        dict["filter"] = "Filtrer";
-        dict["connect"] = "Connecter";
-        dict["timeleft"] = "Temps restant";
-        dict["second"] = "seconde";
-        dict["minute"] = "minute";
-        dict["before_closing"] = "avant fermeture";
-        dict["manager_close_cnx"] = "Le gestionnaire de session a coupé la connexion";
-        dict["end_connection"] = "Fin de connexion";
-        dict["help_message"] =
+        bool operator<(const value_type & other) const noexcept
+        { return std::less<const char*>()(this->key, other.key); }
+
+        bool operator<(const char * k) const noexcept
+        { return std::less<const char*>()(this->key, k); }
+
+        bool operator==(const char * k) const noexcept
+        { return std::equal_to<const char*>()(this->key, k); }
+
+        bool operator!=(const char * k) const noexcept
+        { return !(*this == k); }
+    };
+    typedef std::array<value_type, 47> trans_t;
+
+    //template<class... Vs>
+    //struct MakerBase {
+    //    constexpr static trans_t make(Vs... args) noexcept {
+    //        return {args...};
+    //    }
+    //};
+    //
+    //using Maker = MakerBase<make_sequence<value_type, std::tuple_size<trans_t>::value>>;
+
+    language_t lang;
+    trans_t trans[MAX_LANG];
+
+    Translation()
+    : lang(EN)
+    , trans{trans_t{{
+        {"login", "Login"},
+        {"password", "Password"},
+        {"diagnostic", "Diagnostic"},
+        {"connection_closed", "Connection closed"},
+        {"OK", "OK"},
+        {"cancel", "Cancel"},
+        {"help", "Help"},
+        {"close", "Close"},
+        {"refused", "Refused"},
+        {"username", "Username"},
+        {"password_expire", "Your password will expire soon. Please change it."},
+        {"protocol", "Protocol"},
+        {"target_group", "Target Group"},
+        {"target", "Target"},
+        {"close_time", "Close Time"},
+        {"logout", "Logout"},
+        {"apply", "Apply"},
+        {"filter", "Filter"},
+        {"connect", "Connect"},
+        {"timeleft", "Time left"},
+        {"second", "second"},
+        {"minute", "minute"},
+        {"before_closing", "before closing"},
+        {"manager_close_cnx", "Connection closed by manager"},
+        {"end_connection", "End of connection"},
+        {"help_message",
+            "In login edit box, enter:<br>"
+            "- target device and login as login@target.<br>"
+            "- or a valid authentication user.<br>"
+            "<br>"
+            "In password edit box enter your password<br>"
+            "for user.<br>"
+            "<br>"
+            "Both fields are case sensitive.<br>"
+            "<br>"
+            "Contact your system administrator if you are<br>"
+            "experiencing problems."},
+        {"selector", "Selector"},
+        {"session_out_time", "Session is out of allowed timeframe"},
+        {"miss_keepalive", "Missed keepalive from ACL"},
+        {"close_inactivity", "Connection closed on inactivity"},
+        {"acl_fail", "Authentifier service failed"},
+        {"target_fail", "Failed to connect to remote TCP host"},
+        {"comment", "Comment"},
+        {"no_results", "No results found"},
+        {"back_selector", "Back to Selector"},
+        {"exit", "Exit"},
+        {"comment", "Comment"},
+        {"comment_r", "Comment *"},
+        {"ticket", "Ticket n°"},
+        {"ticket_r", "Ticket n° *"},
+        {"duration", "Duration"},
+        {"duration_r", "Duration *"},
+        {"note_duration_format", "format \"[hours]h[mins]m\" each unit is optional."},
+        {"note_required", "(*) required fields."},
+        {"confirm", "Confirm"},
+        {"information", "Information"},
+        {"authentication_required", "Authentication Required"}
+    }}, trans_t{{
+        {"login", "Identifiant"},
+        {"password", "Mot de passe"},
+        {"diagnostic", "Diagnostic"},
+        {"connection_closed", "Connexion fermée"},
+        {"OK", "OK"},
+        {"cancel", "Annuler"},
+        {"help", "Aide"},
+        {"close", "Fermer"},
+        {"refused", "Refuser"},
+        {"username", "Utilisateur"},
+        {"password_expire", "Votre mot de passe va bientôt expirer. Veuillez le changer"},
+        {"protocol", "Protocole"},
+        {"target_group", "Groupe"},
+        {"target", "Cible"},
+        {"close_time", "Date de clôture"},
+        {"logout", "Déconnexion"},
+        {"apply", "Appliquer"},
+        {"filter", "Filtrer"},
+        {"connect", "Connecter"},
+        {"timeleft", "Temps restant"},
+        {"second", "seconde"},
+        {"minute", "minute"},
+        {"before_closing", "avant fermeture"},
+        {"manager_close_cnx", "Le gestionnaire de session a coupé la connexion"},
+        {"end_connection", "Fin de connexion"},
+        {"help_message",
             "Dans la zone de saisie login, entrez:<br>"
             "- le nom de la machine cible et du compte<br>"
             "  sous la forme login@serveur.<br>"
@@ -76,107 +162,40 @@ private:
             "Les deux champs sont sensibles à la casse.<br>"
             "<br>"
             "Contactez votre administrateur système en<br>"
-            "cas de problème pour vous connecter.";
-        dict["selector"] = "Sélecteur";
-        dict["session_out_time"] = "L'autorisation de la session a expiré";
-        dict["miss_keepalive"] = "Absence de réponse de Keepalive de l'ACL";
-        dict["close_inactivity"] = "Fermeture sur inactivité";
-        dict["acl_fail"] = "Echec du service d'authentification";
-        dict["target_fail"] = "Echec de la connexion à la cible distante";
-        dict["comment"] = "Commentaire";
-        dict["no_results"] = "Aucun résultat";
-
-        dict["back_selector"] = "Retour au Sélecteur";
-        dict["exit"] = "Déconnexion";
-        dict["comment"] = "Commentaire";
-        dict["comment_r"] = "Commentaire *";
-        dict["ticket"] = "Ticket n°";
-        dict["ticket_r"] = "Ticket n° *";
-        dict["duration"] = "Durée";
-        dict["duration_r"] = "Durée *";
-        dict["note_duration_format"] = "format: \"[heures]h[mins]m\" chaque unité est optionnelle.";
-        dict["note_required"] = "(*) champs obligatoires.";
-        dict["confirm"] = "Confirmer";
-        dict["information"] = "Information";
-    }
-    void build_en_map() {
-        trans_t & dict = this->en_map;
-        dict["login"] = "Login";
-        dict["password"] = "Password";
-        dict["diagnostic"] = "Diagnostic";
-        dict["connection_closed"] = "Connection closed";
-        dict["OK"] = "OK";
-        dict["cancel"] = "Cancel";
-        dict["help"] = "Help";
-        dict["close"] = "Close";
-        dict["refused"] = "Refused";
-        dict["username"] = "Username";
-        dict["password_expire"] = "Your password will expire soon. Please change it.";
-        dict["protocol"] = "Protocol";
-        dict["target_group"] = "Target Group";
-        dict["target"] = "Target";
-        dict["close_time"] = "Close Time";
-        dict["logout"] = "Logout";
-        dict["apply"] = "Apply";
-        dict["filter"] = "Filter";
-        dict["connect"] = "Connect";
-        dict["timeleft"] = "Time left";
-        dict["second"] = "second";
-        dict["minute"] = "minute";
-        dict["before_closing"] = "before closing";
-        dict["manager_close_cnx"] = "Connection closed by manager";
-        dict["end_connection"] = "End of connection";
-        dict["help_message"] =
-            "In login edit box, enter:<br>"
-            "- target device and login as login@target.<br>"
-            "- or a valid authentication user.<br>"
-            "<br>"
-            "In password edit box enter your password<br>"
-            "for user.<br>"
-            "<br>"
-            "Both fields are case sensitive.<br>"
-            "<br>"
-            "Contact your system administrator if you are<br>"
-            "experiencing problems.";
-        dict["selector"] = "Selector";
-        dict["session_out_time"] = "Session is out of allowed timeframe";
-        dict["miss_keepalive"] = "Missed keepalive from ACL";
-        dict["close_inactivity"] = "Connection closed on inactivity";
-        dict["acl_fail"] = "Authentifier service failed";
-        dict["target_fail"] = "Failed to connect to remote TCP host";
-        dict["comment"] = "Comment";
-        dict["no_results"] = "No results found";
-
-        dict["back_selector"] = "Back to Selector";
-        dict["exit"] = "Exit";
-        dict["comment"] = "Comment";
-        dict["comment_r"] = "Comment *";
-        dict["ticket"] = "Ticket n°";
-        dict["ticket_r"] = "Ticket n° *";
-        dict["duration"] = "Duration";
-        dict["duration_r"] = "Duration *";
-        dict["note_duration_format"] = "format \"[hours]h[mins]m\" each unit is optional.";
-        dict["note_required"] = "(*) required fields.";
-        dict["confirm"] = "Confirm";
-        dict["information"] = "Information";
-
-    }
-
-    Translation()
-        : lang(EN)
+            "cas de problème pour vous connecter."},
+        {"selector", "Sélecteur"},
+        {"session_out_time", "L'autorisation de la session a expiré"},
+        {"miss_keepalive", "Absence de réponse de Keepalive de l'ACL"},
+        {"close_inactivity", "Fermeture sur inactivité"},
+        {"acl_fail", "Echec du service d'authentification"},
+        {"target_fail", "Echec de la connexion à la cible distante"},
+        {"comment", "Commentaire"},
+        {"no_results", "Aucun résultat"},
+        {"back_selector", "Back to Selector"},
+        {"exit", "Exit"},
+        {"comment", "Comment"},
+        {"comment_r", "Comment *"},
+        {"ticket", "Ticket n°"},
+        {"ticket_r", "Ticket n° *"},
+        {"duration", "Duration"},
+        {"duration_r", "Duration *"},
+        {"note_duration_format", "format \"[hours]h[mins]m\" each unit is optional."},
+        {"note_required", "(*) required fields."},
+        {"confirm", "Confirm"},
+        {"information", "Information"},
+        {"authentication_required", "Authentification Requise"}
+    }}}
     {
-        this->build_fr_map();
-        this->build_en_map();
+        for (auto & t : this->trans) {
+            std::sort(t.begin(), t.end());
+        }
     }
-    Translation(Translation const&);
-    void operator=(Translation const&);
-
-    ~Translation()
-    {}
+    Translation(Translation const&) = delete;
+    void operator=(Translation const&) = delete;
 
     static const char * get_value(const trans_t & trans, const char * key) {
-        trans_t::const_iterator it = trans.find(key);
-        return it != trans.end() ? it->second : 0;
+        auto it = std::lower_bound(trans.begin(), trans.end(), key);
+        return it == trans.end() || *it != key ? 0 : it->s;
     }
 
 public:
@@ -193,10 +212,7 @@ public:
     }
 
     const char * translate(const char * key) const {
-        if (this->lang == FR) {
-            return this->get_value(this->fr_map, key);
-        }
-        return this->get_value(this->en_map, key);
+        return this->get_value(this->trans[this->lang], key);
     }
 };
 
@@ -244,18 +260,18 @@ static inline const char * TR(const char * key, Inifile & ini) {
     else if (0 == strcmp(key, "manager_close_cnx")) {
         res = ini.translation.manager_close_cnx.get_cstr();
     }
-    const char * lang = ini.translation.language.get_cstr();
-    if (0 == strcmp("fr", lang)) {
-        TRANSLATIONCONF.set_lang(FR);
-    }
-    else if (0 == strcmp("en", lang)) {
-        TRANSLATIONCONF.set_lang(EN);
-    }
 
     if ((res == NULL) ||
         0 == strcmp(res, "") ||
         0 == strcmp(res, "ASK")) {
 
+        const char * lang = ini.translation.language.get_cstr();
+        if (0 == strcmp("fr", lang)) {
+            TRANSLATIONCONF.set_lang(Translation::FR);
+        }
+        else if (0 == strcmp("en", lang)) {
+            TRANSLATIONCONF.set_lang(Translation::EN);
+        }
         res = TRANSLATIONCONF.translate(key);
         if (!res) {
             LOG(LOG_INFO, "Translation not found for '%s'", key);

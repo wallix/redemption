@@ -144,7 +144,7 @@ public:
                                                               , width, height, ini.video.capture_groupid, authentifier);
             }
             this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
-                                         , *this->pnc_bmp_cache, *this->drawable, ini);
+                                         , *this->pnc_bmp_cache, *this->drawable, ini, ini.video.capture_wrm);
             this->pnc->recorder.send_input = true;
         }
 
@@ -438,6 +438,19 @@ public:
     virtual void set_pointer_display() {
         if (this->capture_drawable) {
             this->drawable->drawable.dont_show_mouse_cursor = true;
+        }
+    }
+
+    // toggles externally genareted breakpoint.
+    virtual void external_breakpoint() {
+        if (this->capture_wrm) {
+            this->pnc->external_breakpoint();
+        }
+    }
+
+    virtual void external_time(const timeval & now) {
+        if (this->capture_wrm) {
+            this->pnc->external_time(now);
         }
     }
 };
