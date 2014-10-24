@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarHorizontal)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "framebarh2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "/tmp/framebarh2.png");
 
     if (!check_sig( drawable.gd.impl(), message,
                     "\xf5\x92\xff\x5e\xe1\xcc\x0a\x37\x9b\x30"

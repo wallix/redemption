@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <iostream> // TODO
 
 #include "bitmap.hpp"
 #include "colors.hpp"
@@ -77,13 +78,13 @@ namespace Ops {
 //  bitmap (D) and selected brush or pen (P). This operation is a combination of the AND (a), OR
 //  (o), NOT (n), and XOR (x) Boolean operators.
 
-    //struct Op2_0x01 // R2_BLACK 0
-    //{
-    //    u8 operator()(u8 /*target*/, u8 /*source*/) const
-    //    {
-    //        return 0x00;
-    //    }
-    //};
+    struct Op2_0x01 // R2_BLACK 0
+    {
+       u8 operator()(u8 /*target*/, u8 /*source*/) const
+       {
+           return 0x00;
+       }
+    };
 
     struct Op2_0x02 // R2_NOTMERGEPEN DPon
     {
@@ -101,13 +102,7 @@ namespace Ops {
         }
     };
 
-    //struct Op2_0x04 // R2_NOTCOPYPEN Pn
-    //{
-    //    u8 operator()(u8 /*target*/, u8 source) const
-    //    {
-    //        return ~source;
-    //    }
-    //};
+    typedef InvertSrc Op2_0x04; // R2_NOTCOPYPEN Pn
 
     struct Op2_0x05 // R2_MASKPENNOT PDna
     {
@@ -117,13 +112,7 @@ namespace Ops {
         }
     };
 
-    //struct Op2_0x06 // R2_NOT Dn
-    //{
-    //    u8 operator()(u8 target, u8 /*source*/) const
-    //    {
-    //        return ~target;
-    //    }
-    //};
+    typedef InvertTarget Op2_0x06; // R2_NOT Dn
 
     struct Op2_0x07 // R2_XORPEN DPx
     {
@@ -191,24 +180,24 @@ namespace Ops {
         }
     };
 
-    //struct Op2_0x10 // R2_WHITE 1
-    //{
-    //    u8 operator()(u8 /*target*/, u8 /*source*/) const
-    //    {
-    //        return 0xFF;
-    //    }
-    //};
+    struct Op2_0x10 // R2_WHITE 1
+    {
+       u8 operator()(u8 /*target*/, u8 /*source*/) const
+       {
+           return 0xFF;
+       }
+    };
 
 
     typedef Op2_0x02 Op_0x05;
-    //typedef Op2_0x04 Op_0x0F;
+    typedef InvertSrc Op_0x0F;
     typedef Op2_0x05 Op_0x50;
     typedef Op2_0x07 Op_0x5A;
     typedef Op2_0x08 Op_0x5F;
     typedef Op2_0x09 Op_0xA0;
     typedef Op2_0x0A Op_0xA5;
     typedef Op2_0x0C Op_0xAF;
-    //typedef Op2_0x0D Op_0xF0;
+    typedef CopySrc Op_0xF0;
     typedef Op2_0x0E Op_0xF5;
     typedef Op2_0x0F Op_0xFA;
 
@@ -221,14 +210,14 @@ namespace Ops {
     };
 
     typedef Op2_0x03 Op_0x22;
-    //typedef Op2_0x04 Op_0x33;
+    typedef InvertSrc Op_0x33;
     typedef Op2_0x05 Op_0x44;
     typedef Op2_0x07 Op_0x66;
     typedef Op2_0x08 Op_0x77;
     typedef Op2_0x09 Op_0x88;
     typedef Op2_0x0A Op_0x99;
     typedef Op2_0x0C Op_0xBB;
-    //typedef Op2_0x0D Op_0xCC;
+    typedef CopySrc Op_0xCC;
     typedef Op2_0x0E Op_0xDD;
     typedef Op2_0x0F Op_0xEE;
 }
@@ -261,6 +250,9 @@ struct DrawableTraitColor24
 
         constexpr uint8_t blue() const noexcept
         { return b; }
+
+        color_t operator~() const noexcept
+        { return {uint8_t(~r), uint8_t(~g), uint8_t(~b)}; }
     };
 
     static uint8_t * assign(uint8_t * dest, color_t color) noexcept
@@ -321,8 +313,7 @@ struct DrawableTraitColor24
 
         color_t operator()(const uint8_t * p) const noexcept
         {
-            const uint32_t c = this->palette[static_cast<uint8_t>(*p)] & 0xFFFFFF;
-            return {uint8_t(c), uint8_t(c >> 8), uint8_t(c >> 16)};
+            return u32_to_color(this->palette[*p] & 0xFFFFFF);
         }
     };
 
@@ -330,12 +321,12 @@ struct DrawableTraitColor24
     {
         color_t operator()(const uint8_t * p) const noexcept
         {
-            const BGRColor c = (*p << 8) + p[1];
+            const BGRColor c = (p[1] << 8) + p[0];
             // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
             const BGRColor r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
             const BGRColor g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
             const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
-            return {uint8_t(r), uint8_t(g), uint8_t(b)};
+            return {uint8_t(b), uint8_t(g), uint8_t(r)};
         }
     };
 
@@ -343,12 +334,12 @@ struct DrawableTraitColor24
     {
         color_t operator()(const uint8_t * p) const noexcept
         {
-            const BGRColor c = (p[0] << 8) + p[1];
+            const BGRColor c = (p[1] << 8) + p[0];
             // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
             const BGRColor r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
             const BGRColor g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
             const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
-            return {uint8_t(r), uint8_t(g), uint8_t(b)};
+            return {uint8_t(b), uint8_t(g), uint8_t(r)};
         }
     };
 
@@ -519,7 +510,6 @@ public:
         }
         else {
             switch (bmp_bpp) {
-                // TODO palette
                 case 8: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
                     bmp_bpp, bmp_line_size, op, typename traits::toColor8{bmp.palette()}, c...); break;
                 case 15: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
@@ -542,7 +532,8 @@ private:
         const size_t bmp_Bpp = ::nbbytes(bmp_bpp);
         const size_t srcn = cx * bmp_Bpp;
         const size_t inc_line = line_size - destn;
-        const size_t inc_bmp_line = bmp_line_size - srcn;
+        const size_t inc_bmp_line = bmp_line_size + srcn;
+
         for (cP ep = dest + line_size * cy; dest < ep; dest += inc_line, src -= inc_bmp_line) {
             const cP dest_e = dest + destn;
             while (dest != dest_e) {
@@ -715,48 +706,203 @@ public:
     }
 
     template <typename Op>
-    void scr_blt_op(const Rect rect, uint16_t srcx, uint16_t srcy)
+    void scr_blt_op(const Rect & rect, uint16_t srcx, uint16_t srcy)
     {
         const int16_t deltax = static_cast<int16_t>(srcx - rect.x);
         const int16_t deltay = static_cast<int16_t>(srcy - rect.y);
         const Rect srect = rect.offset(deltax, deltay);
-        const Rect overlap = srect.intersect(rect);
+        const bool is_overlap = srect.has_intersection(rect);
 
-        P target = ((deltay >= 0)||overlap.isempty())
-            ? this->first_pixel(rect)
-            : this->beginning_of_last_line(rect);
-        P source = ((deltay >= 0)||overlap.isempty())
-            ? this->first_pixel(srect)
-            : this->beginning_of_last_line(srect);
-        const signed int to_nextrow = static_cast<signed int>(((deltay >= 0)||overlap.isempty())
-            ?  this->rowsize()
-            : -this->rowsize());
-        const size_t cx = rect.cx * Bpp;
+        if (is_overlap) {
+            P target = (deltay >= 0 || !is_overlap)
+                ? this->first_pixel(rect)
+                : this->beginning_of_last_line(rect);
+            P source = (deltay >= 0 || !is_overlap)
+                ? this->first_pixel(srect)
+                : this->beginning_of_last_line(srect);
+            const size_t to_nextrow = (deltay >= 0 || !is_overlap)
+                ?  this->rowsize()
+                : -this->rowsize();
 
-        if (deltay != 0 || deltax >= 0) {
-            for (P e = target + to_nextrow * rect.cy; e != target; ) {
-                this->copy(target, source, cx, Op());
-                target += to_nextrow;
-                source += to_nextrow;
-            }
-        }
-        else {
-            const unsigned offset = this->nbbytes_color() * (rect.cx - 1);
-
-            for (P e = target + to_nextrow * rect.cy; e != target; ) {
-                P linetarget = target + offset;
-                P linesource = source + offset;
-                for (P e2 = linetarget - cx; e2 != linetarget; ) {
-                    this->copy(linetarget, linesource, Bpp, Op());
-                    linetarget -= Bpp;
-                    linesource -= Bpp;
+            const signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?this->Bpp:-this->Bpp;
+            const unsigned offset = static_cast<unsigned>(((deltay != 0)||(deltax >= 0))?0:this->Bpp*(rect.cx - 1));
+            Op op;
+            for (size_t y = 0; y < rect.cy ; y++) {
+                uint8_t * linetarget = target + offset;
+                uint8_t * linesource = source + offset;
+                for (size_t x = 0; x < rect.cx ; x++) {
+                    for (uint8_t b = 0 ; b < this->Bpp; b++) {
+                        linetarget[b] = op(linetarget[b], linesource[b]);
+                    }
+                    linetarget += to_nextpixel;
+                    linesource += to_nextpixel;
                 }
                 target += to_nextrow;
                 source += to_nextrow;
             }
+
+//             std::cout << rect << std::endl;
+//             std::cout << srcx << ' ' << srcy << std::endl;
+//             const Rect overlap = srect.intersect(rect);
+//
+//             if (overlap.y == srcy) {
+//                 const size_t px = rect.x;
+//                 const size_t py = rect.y + overlap.y - srcy;
+//                 std::cout << "1 - " << Rect(srcx, overlap.y, rect.cx, overlap.cy) << " -> " << Rect(px, py, rect.cx, overlap.cy) << std::endl;
+//
+//                 if (static_cast<int16_t>(py) < overlap.bottom()) {
+//                     std::cout << "py < bottom" << std::endl;
+//                     this->scr_blt_op_overlap_reverse(
+//                         this->first_pixel(px, py)
+//                       , this->first_pixel(srcx, overlap.y)
+//                       , rect.cx, overlap.cy
+//                       , Op()
+//                     );
+//                 }
+//                 else {
+//                     std::cout << "py >= bottom" << std::endl;
+//                     this->scr_blt_op_overlap(
+//                         this->first_pixel(px, py)
+//                       , this->first_pixel(srcx, overlap.y)
+//                       , rect.cx, overlap.cy
+//                       , Op()
+//                     );
+//                 }
+//
+//                 const Rect nooverlap(rect.x, overlap.bottom(), rect.cx, rect.cy - overlap.cy);
+//                 std::cout << "1 - " << Rect(srcx, nooverlap.y, rect.cx, nooverlap.cy) << " -> " << Rect(rect.x, overlap.bottom() - srcy, rect.cx, nooverlap.cy) << std::endl;
+//                 this->scr_blt_op_nooverlap(
+//                      this->first_pixel(rect.x, overlap.bottom() - srcy)
+//                    , this->first_pixel(srcx, nooverlap.y)
+//                    , rect.cx, nooverlap.cy
+//                    , Op()
+//                 );
+//             }
+//             else {
+//                 const size_t px = rect.x;
+//                 const size_t py = rect.y + overlap.y - srcy;
+//                 std::cout << "2 - " << Rect(srcx, overlap.y, rect.cx, overlap.cy) << " -> " << Rect(px, py, rect.cx, overlap.cy) << std::endl;
+//
+//                 if (static_cast<int16_t>(py) < overlap.bottom()) {
+//                     std::cout << "py < bottom" << std::endl;
+//                     this->scr_blt_op_overlap_reverse(
+//                         this->first_pixel(px, py)
+//                       , this->first_pixel(srcx, overlap.y)
+//                       , rect.cx, overlap.cy
+//                       , Op()
+//                     );
+//                 }
+//                 else {
+//                     std::cout << "py >= bottom" << std::endl;
+//                     this->scr_blt_op_overlap(
+//                         this->first_pixel(px, py)
+//                       , this->first_pixel(srcx, overlap.y)
+//                       , rect.cx, overlap.cy
+//                       , Op()
+//                     );
+//                 }
+//
+//                 const Rect nooverlap(rect.x, rect.y, rect.cx, rect.cy - overlap.cy);
+//                 std::cout << "2 - " << Rect(srcx, srcy, rect.cx, nooverlap.cy) << " -> " << Rect(rect.x, rect.y, rect.cx, nooverlap.cy) << std::endl;
+//                 this->scr_blt_op_nooverlap(
+//                      this->first_pixel(rect.x, rect.y)
+//                    , this->first_pixel(srcx, srcy)
+//                    , rect.cx, nooverlap.cy
+//                    , Op()
+//                 );
+//             }
+        }
+        else {
+            this->scr_blt_op_nooverlap(this->first_pixel(rect), this->first_pixel(srect), srect.cx, srect.cy, Op());
+        }
+
+//         P target = (deltay >= 0 || !is_overlap)
+//             ? this->first_pixel(rect)
+//             : this->beginning_of_last_line(rect);
+//         P source = (deltay >= 0 || !is_overlap)
+//             ? this->first_pixel(srect)
+//             : this->beginning_of_last_line(srect);
+//         const size_t to_nextrow = (deltay >= 0 || !is_overlap)
+//             ?  this->rowsize()
+//             : -this->rowsize();
+
+//         const size_t cx = rect.cx * Bpp;
+//
+//         if (deltay != 0 || deltax >= 0) {
+//             for (P e = target + to_nextrow * rect.cy; e != target; ) {
+//                 this->copy(target, source, cx, Op());
+//                 target += to_nextrow;
+//                 source += to_nextrow;
+//             }
+//         }
+//         else {
+//             const unsigned offset = this->nbbytes_color() * (rect.cx - 1);
+//
+//             for (P e = target + to_nextrow * rect.cy; e != target; ) {
+//                 P linetarget = target + offset;
+//                 P linesource = source + offset;
+//                 for (P e2 = linetarget - cx; e2 != linetarget; ) {
+//                     this->copy(linetarget, linesource, Bpp, Op());
+//                     linetarget -= Bpp;
+//                     linesource -= Bpp;
+//                 }
+//                 target += to_nextrow;
+//                 source += to_nextrow;
+//             }
+//         }
+
+
+//         const signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?this->Bpp:-this->Bpp;
+//         const unsigned offset = static_cast<unsigned>(((deltay != 0)||(deltax >= 0))?0:this->Bpp*(rect.cx - 1));
+//         Op op;
+//         for (size_t y = 0; y < rect.cy ; y++) {
+//             uint8_t * linetarget = target + offset;
+//             uint8_t * linesource = source + offset;
+//             for (size_t x = 0; x < rect.cx ; x++) {
+//                 for (uint8_t b = 0 ; b < this->Bpp; b++) {
+//                     linetarget[b] = op(linetarget[b], linesource[b]);
+//                 }
+//                 linetarget += to_nextpixel;
+//                 linesource += to_nextpixel;
+//             }
+//             target += to_nextrow;
+//             source += to_nextrow;
+//         }
+    }
+
+private:
+    template <typename Op>
+    void scr_blt_op_overlap(P dest, cP src, size_t cx, size_t cy, Op op)
+    {
+        for (P e = dest + this->rowsize() * cy; e != dest; ) {
+            this->move(dest, src, cx * Bpp, op);
+            dest += this->rowsize();
+            src += this->rowsize();
         }
     }
 
+    template <typename Op>
+    void scr_blt_op_overlap_reverse(P dest, cP src, size_t cx, size_t cy, Op op)
+    {
+        src += this->rowsize() * cy;
+        for (P e = dest + this->rowsize() * cy; e != dest; ) {
+            e -= this->rowsize();
+            src -= this->rowsize();
+            this->move(e, src, cx * Bpp, op);
+        }
+    }
+
+    template <typename Op>
+    void scr_blt_op_nooverlap(P dest, cP src, size_t cx, size_t cy, Op op)
+    {
+        for (P e = dest + this->rowsize() * cy; e != dest; ) {
+            this->copy(dest, src, cx * Bpp, op);
+            dest += this->rowsize();
+            src += this->rowsize();
+        }
+    }
+
+public:
     // nor horizontal nor vertical, use Bresenham
     template<class Op>
     void line(int x, int y, int endx, int endy, const uint32_t color, Op op)
@@ -807,9 +953,19 @@ public:
     }
 
     template <typename Op>
-    void patblt_op(const Rect & rect, uint32_t color)
+    void patblt_op(const Rect & rect, uint32_t color, Op)
     {
         this->apply_for_rect(rect, AssignOp<Op>{traits::u32_to_color(color)});
+    }
+
+    void patblt_op(const Rect & rect, uint32_t color, Ops::InvertSrc)
+    {
+        this->apply_for_rect(rect, Assign{~traits::u32_to_color(color)});
+    }
+
+    void patblt_op(const Rect & rect, uint32_t color, Ops::CopySrc)
+    {
+        this->apply_for_rect(rect, Assign{traits::u32_to_color(color)});
     }
 
     void invert_color(const Rect & rect)
@@ -867,6 +1023,24 @@ private:
     void copy(uint8_t * dest, const uint8_t * src, size_t n, Ops::CopySrc) noexcept
     {
        memcpy(dest, src, n);
+    }
+
+    template<class Op>
+    void move(uint8_t * dest, const uint8_t * src, size_t n, Op op) noexcept
+    {
+        if (src + n < dest || dest < src) {
+            this->copy(dest, src, n, op);
+        }
+        else {
+            const long d = static_cast<long>((src + n) - dest);
+            this->copy(dest + (n - d), src + (n - d), d, op);
+            this->copy(dest, src, n - d, op);
+        }
+    }
+
+    void move(uint8_t * dest, const uint8_t * src, size_t n, Ops::CopySrc) noexcept
+    {
+        memmove(dest, src, n);
     }
 
     template<class Op>
@@ -1733,35 +1907,35 @@ public:
             // |      | RPN: DSna                     |
             // +------+-------------------------------+
             case 0x22:
-                this->mem_blt_op<Op_0x22>(rect, bmp, srcx, srcy);
+                this->mem_blt_op<Ops::Op_0x22>(rect, bmp, srcx, srcy);
                 break;
             // +------+-------------------------------+
             // | 0x66 | ROP: 0x00660046 (SRCINVERT)   |
             // |      | RPN: DSx                      |
             // +------+-------------------------------+
             case 0x66:
-                this->mem_blt_op<Op_0x66>(rect, bmp, srcx, srcy);
+                this->mem_blt_op<Ops::Op_0x66>(rect, bmp, srcx, srcy);
                 break;
             // +------+-------------------------------+
             // | 0x88 | ROP: 0x008800C6 (SRCAND)      |
             // |      | RPN: DSa                      |
             // +------+-------------------------------+
             case 0x88:
-                this->mem_blt_op<Op_0x88>(rect, bmp, srcx, srcy);
+                this->mem_blt_op<Ops::Op_0x88>(rect, bmp, srcx, srcy);
                 break;
             // +------+-------------------------------+
             // | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
             // |      | RPN: DSo                      |
             // +------+-------------------------------+
             case 0xEE:
-                this->mem_blt_op<Op_0xEE>(rect, bmp, srcx, srcy);
+                this->mem_blt_op<Ops::Op_0xEE>(rect, bmp, srcx, srcy);
                 break;
             // +------+-------------------------------+
             // | 0xBB | ROP: 0x00BB0226 (MERGEPAINT)  |
             // |      | RPN: DSno                     |
             // +------+-------------------------------+
             case 0xBB:
-                this->mem_blt_op<Op_0xBB>(rect, bmp, srcx, srcy);
+                this->mem_blt_op<Ops::Op_0xBB>(rect, bmp, srcx, srcy);
                 break;
 
             default:
@@ -1773,14 +1947,6 @@ public:
     void draw_bitmap(const Rect & rect, const Bitmap & bmp) {
         this->mem_blt_op<Ops::CopySrc>(rect, bmp, 0, 0);
     }
-
-    struct Op_0xB8
-    {
-        uint8_t operator()(uint8_t target, uint8_t source, uint8_t pattern) const
-        {
-            return ((target ^ pattern) & source) ^ pattern;
-        }
-    };
 
     void mem_3_blt( const Rect & rect
                   , const Bitmap & bmp
@@ -1795,7 +1961,7 @@ public:
             // +------+-------------------------------+
             case 0xB8:
                 using traits = DrawableImplPrivate::traits;
-                this->mem_blt_op<Op_0xB8>(rect, bmp, srcx, srcy, traits::u32_to_color(pattern_color));
+                this->mem_blt_op<Ops::Op_0xB8>(rect, bmp, srcx, srcy, traits::u32_to_color(pattern_color));
             break;
 
             default:
@@ -1806,7 +1972,7 @@ public:
 
     void black_color(const Rect & rect)
     {
-        const Rect & trect = rect.intersect(this->width(), this->height());
+        const Rect trect = rect.intersect(this->width(), this->height());
 
         if (this->tracked_area.has_intersection(trect)) {
             this->tracked_area_changed = true;
@@ -1817,7 +1983,7 @@ public:
 
     void white_color(const Rect & rect)
     {
-        const Rect & trect = rect.intersect(this->width(), this->height());
+        const Rect trect = rect.intersect(this->width(), this->height());
 
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
@@ -1829,21 +1995,13 @@ public:
 private:
     void invert_color(const Rect & rect)
     {
-        const Rect & trect = rect.intersect(this->width(), this->height());
+        const Rect trect = rect.intersect(this->width(), this->height());
 
         if (this->tracked_area.has_intersection(trect)) {
             this->tracked_area_changed = true;
         }
 
-        uint8_t * p = this->impl.first_pixel(trect);
-        const size_t rect_rowsize = trect.cx * this->Bpp;
-        const size_t step = this->rowsize() - rect_rowsize;
-        for (int j = 0; j < trect.cy ; j++, p += step) {
-            for (int i = 0; i < trect.cx ; i++, p += 3) {
-                TODO("Applying inversion on blocks of 32 bits instead of bytes should be faster");
-                p[0] ^= 0xFF; p[1] ^= 0xFF; p[2] ^= 0xFF;
-            }
-        }
+        this->impl.invert_color(trect);
     }
 
 // 2.2.2.2.1.1.1.6 Binary Raster Operation (ROP2_OPERATION)
@@ -1854,119 +2012,6 @@ private:
 //  bitmap (D) and selected brush or pen (P). This operation is a combination of the AND (a), OR
 //  (o), NOT (n), and XOR (x) Boolean operators.
 
-    struct Op2_0x01 // R2_BLACK 0
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return 0x00;
-        }
-    };
-    struct Op2_0x02 // R2_NOTMERGEPEN DPon
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~(target | source);
-        }
-    };
-    struct Op2_0x03 // R2_MASKNOTPEN DPna
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return (target & ~source);
-        }
-    };
-    struct Op2_0x04 // R2_NOTCOPYPEN Pn
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~source;
-        }
-    };
-    struct Op2_0x05 // R2_MASKPENNOT PDna
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return (source & ~target);
-        }
-    };
-    struct Op2_0x06 // R2_NOT Dn
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~target;
-        }
-    };
-    struct Op2_0x07 // R2_XORPEN DPx
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return (target ^ source);
-        }
-    };
-    struct Op2_0x08 // R2_NOTMASKPEN DPan
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~(target & source);
-        }
-    };
-    struct Op2_0x09 // R2_MASKPEN DPa
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return (target & source);
-        }
-    };
-    struct Op2_0x0A // R2_NOTXORPEN DPxn
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~(target ^ source);
-        }
-    };
-    // struct Op2_0x0B // R2_NOP D
-    // {
-    //     uint8_t operator()(uint8_t target, uint8_t source) const
-    //     {
-    //         return target;
-    //     }
-    // };
-    struct Op2_0x0C // R2_MERGENOTPEN DPno
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return (target | ~source);
-        }
-    };
-    struct Op2_0x0D // R2_COPYPEN P
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return source;
-        }
-    };
-    struct Op2_0x0E // R2_MERGEPENNOT PDno
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return (source | ~target);
-        }
-    };
-    struct Op2_0x0F // R2_MERGEPEN PDo
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return (target | source);
-        }
-    };
-    struct Op2_0x10 // R2_WHITE 1
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return 0xFF;
-        }
-    };
-
 public:
     void ellipse(const Ellipse & el, const uint8_t rop,
                       const uint8_t fill, const uint32_t color) {
@@ -1975,54 +2020,54 @@ public:
         }
         switch (rop) {
         case 0x01: // R2_BLACK
-            this->impl.draw_ellipse<Op2_0x01>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x01>(el, fill, color);
             break;
         case 0x02: // R2_NOTMERGEPEN
-            this->impl.draw_ellipse<Op2_0x02>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x02>(el, fill, color);
             break;
         case 0x03: // R2_MASKNOTPEN
-            this->impl.draw_ellipse<Op2_0x03>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x03>(el, fill, color);
             break;
         case 0x04: // R2_NOTCOPYPEN
-            this->impl.draw_ellipse<Op2_0x04>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x04>(el, fill, color);
             break;
         case 0x05: // R2_MASKPENNOT
-            this->impl.draw_ellipse<Op2_0x05>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x05>(el, fill, color);
             break;
         case 0x06:  // R2_NOT
-            this->impl.draw_ellipse<Op2_0x06>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x06>(el, fill, color);
             break;
         case 0x07:  // R2_XORPEN
-            this->impl.draw_ellipse<Op2_0x07>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x07>(el, fill, color);
             break;
         case 0x08:  // R2_NOTMASKPEN
-            this->impl.draw_ellipse<Op2_0x08>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x08>(el, fill, color);
             break;
         case 0x09:  // R2_MASKPEN
-            this->impl.draw_ellipse<Op2_0x09>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x09>(el, fill, color);
             break;
         case 0x0A:  // R2_NOTXORPEN
-            this->impl.draw_ellipse<Op2_0x0A>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x0A>(el, fill, color);
             break;
         case 0x0B:  // R2_NOP
             break;
         case 0x0C:  // R2_MERGENOTPEN
-            this->impl.draw_ellipse<Op2_0x0C>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x0C>(el, fill, color);
             break;
         case 0x0D:  // R2_COPYPEN
-            this->impl.draw_ellipse<Op2_0x0D>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x0D>(el, fill, color);
             break;
         case 0x0E:  // R2_MERGEPENNOT
-            this->impl.draw_ellipse<Op2_0x0E>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x0E>(el, fill, color);
             break;
         case 0x0F:  // R2_MERGEPEN
-            this->impl.draw_ellipse<Op2_0x0F>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x0F>(el, fill, color);
             break;
         case 0x10: // R2_WHITE
-            this->impl.draw_ellipse<Op2_0x10>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x10>(el, fill, color);
             break;
         default:
-            this->impl.draw_ellipse<Op2_0x0D>(el, fill, color);
+            this->impl.draw_ellipse<Ops::Op2_0x0D>(el, fill, color);
             break;
         }
     }
@@ -2054,97 +2099,8 @@ private:
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
         }
-        this->impl.patblt_op<Op>(rect, color);
+        this->impl.patblt_op(rect, color, Op());
     }
-
-    struct Op_0x05
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~(target | source);
-        }
-    };
-
-    struct Op_0x0F
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~source;
-        }
-    };
-
-    struct Op_0x50
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~target & source;
-        }
-    };
-
-    struct Op_0x5A
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return target ^ source;
-        }
-    };
-
-    struct Op_0x5F
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~(target & source);
-        }
-    };
-
-    struct Op_0xA0
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return target & source;
-        }
-    };
-
-    struct Op_0xA5
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~(target ^ source);
-        }
-    };
-
-    struct Op_0xAF
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return target | ~source;
-        }
-    };
-
-    TODO("This one is a memset and should be simplified")
-    struct Op_0xF0
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return source;
-        }
-    };
-
-    struct Op_0xF5
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~target | source;
-        }
-    };
-
-    struct Op_0xFA
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return target | source;
-        }
-    };
 
 public:
     // low level patblt,
@@ -2164,21 +2120,21 @@ public:
             // |      | RPN: DPon                     |
             // +------+-------------------------------+
             case 0x05:
-                this->patblt_op<Op_0x05>(rect, color);
+                this->patblt_op<Ops::Op_0x05>(rect, color);
                 break;
                 // +------+-------------------------------+
                 // | 0x0F | ROP: 0x000F0001               |
                 // |      | RPN: Pn                       |
                 // +------+-------------------------------+
             case 0x0F:
-                this->patblt_op<Op_0x0F>(rect, color);
+                this->patblt_op<Ops::Op_0x0F>(rect, color);
                 break;
                 // +------+-------------------------------+
                 // | 0x50 | ROP: 0x00500325               |
                 // |      | RPN: PDna                     |
                 // +------+-------------------------------+
             case 0x50:
-                this->patblt_op<Op_0x50>(rect, color);
+                this->patblt_op<Ops::Op_0x50>(rect, color);
                 break;
                 // +------+-------------------------------+
                 // | 0x55 | ROP: 0x00550009 (DSTINVERT)   |
@@ -2192,28 +2148,28 @@ public:
             // |      | RPN: DPx                      |
             // +------+-------------------------------+
             case 0x5A:
-                this->patblt_op<Op_0x5A>(rect, color);
+                this->patblt_op<Ops::Op_0x5A>(rect, color);
                 break;
                 // +------+-------------------------------+
                 // | 0x5F | ROP: 0x005F00E9               |
                 // |      | RPN: DPan                     |
                 // +------+-------------------------------+
             case 0x5F:
-                this->patblt_op<Op_0x5F>(rect, color);
+                this->patblt_op<Ops::Op_0x5F>(rect, color);
                 break;
                 // +------+-------------------------------+
                 // | 0xA0 | ROP: 0x00A000C9               |
                 // |      | RPN: DPa                      |
                 // +------+-------------------------------+
             case 0xA0:
-                this->patblt_op<Op_0xA0>(rect, color);
+                this->patblt_op<Ops::Op_0xA0>(rect, color);
                 break;
                 // +------+-------------------------------+
                 // | 0xA5 | ROP: 0x00A50065               |
                 // |      | RPN: PDxn                     |
                 // +------+-------------------------------+
             case 0xA5:
-                this->patblt_op<Op_0xA5>(rect, color);
+                this->patblt_op<Ops::Op_0xA5>(rect, color);
                 break;
                 // +------+-------------------------------+
                 // | 0xAA | ROP: 0x00AA0029               |
@@ -2226,28 +2182,28 @@ public:
                 // |      | RPN: DPno                     |
                 // +------+-------------------------------+
             case 0xAF:
-                this->patblt_op<Op_0xAF>(rect, color);
+                this->patblt_op<Ops::Op_0xAF>(rect, color);
                 break;
                 // +------+-------------------------------+
                 // | 0xF0 | ROP: 0x00F00021 (PATCOPY)     |
                 // |      | RPN: P                        |
                 // +------+-------------------------------+
             case 0xF0:
-                this->patblt_op<Op_0xF0>(rect, color);
+                this->patblt_op<Ops::Op_0xF0>(rect, color);
                 break;
                 // +------+-------------------------------+
                 // | 0xF5 | ROP: 0x00F50225               |
                 // |      | RPN: PDno                     |
                 // +------+-------------------------------+
             case 0xF5:
-                this->patblt_op<Op_0xF5>(rect, color);
+                this->patblt_op<Ops::Op_0xF5>(rect, color);
                 break;
                 // +------+-------------------------------+
                 // | 0xFA | ROP: 0x00FA0089               |
                 // |      | RPN: DPo                      |
                 // +------+-------------------------------+
             case 0xFA:
-                this->patblt_op<Op_0xFA>(rect, color);
+                this->patblt_op<Ops::Op_0xFA>(rect, color);
                 break;
                 // +------+-------------------------------+
                 // | 0xFF | ROP: 0x00FF0062 (WHITENESS)   |
@@ -2290,7 +2246,7 @@ public:
         // |      | RPN: P                        |
         // +------+-------------------------------+
         case 0xF0:
-            this->patblt_op_ex<Op_0xF0>(rect, brush_data, back_color, fore_color);
+            this->patblt_op_ex<Ops::Op_0xF0>(rect, brush_data, back_color, fore_color);
             break;
         default:
             // should not happen, do nothing
@@ -2320,109 +2276,8 @@ public:
         }
     }
 
-private:
-    struct Op_0x11
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~(target | ~source);
-        }
-    };
-
-    struct Op_0x22
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return target & ~source;
-        }
-    };
-
-    struct Op_0x33
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            TODO("The templated function can be optimize in the case the target is not read.");
-            (void)target;
-            return ~source;
-        }
-    };
-
-    struct Op_0x44
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~target & source;
-        }
-    };
-
-    struct Op_0x66
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return target ^ source;
-        }
-    };
-
-    struct Op_0x77
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~(target & source);
-        }
-    };
-
-    struct Op_0x88
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return target & source;
-        }
-    };
-
-    struct Op_0x99
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~(target ^ source);
-        }
-    };
-
-    struct Op_0xBB
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return target | ~source;
-        }
-    };
-
-    struct Op_0xCC
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            TODO("The templated function can be optimized because in the case the target is not read. See commented code in src_blt (and add performance benchmark)");
-            (void)target;
-            return source;
-        }
-    };
-
-    struct Op_0xDD
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return ~target | source;
-        }
-    };
-
-    struct Op_0xEE
-    {
-        uint8_t operator()(uint8_t target, uint8_t source) const
-        {
-            return target | source;
-        }
-    };
-
     template <typename Op>
-    void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect drect)
+    void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect & drect)
     {
         if (this->tracked_area.has_intersection(drect)) {
             this->tracked_area_changed = true;
@@ -2434,9 +2289,8 @@ private:
 public:
     // low level scrblt, mostly avoid considering clipping
     // because we already took care of it
-    void scrblt(unsigned srcx, unsigned srcy, const Rect drect, uint8_t rop)
+    void scrblt(unsigned srcx, unsigned srcy, const Rect & drect, uint8_t rop)
     {
-        TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.");
         switch (rop) {
             // +------+-------------------------------+
             // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |
@@ -2450,28 +2304,28 @@ public:
                 // |      | RPN: DSon                     |
                 // +------+-------------------------------+
             case 0x11:
-                this->scr_blt_op<Op_0x11>(srcx, srcy, drect);
+                this->scr_blt_op<Ops::Op_0x11>(srcx, srcy, drect);
                 break;
                 // +------+-------------------------------+
                 // | 0x22 | ROP: 0x00220326               |
                 // |      | RPN: DSna                     |
                 // +------+-------------------------------+
             case 0x22:
-                this->scr_blt_op<Op_0x22>(srcx, srcy, drect);
+                this->scr_blt_op<Ops::Op_0x22>(srcx, srcy, drect);
                 break;
                 // +------+-------------------------------+
                 // | 0x33 | ROP: 0x00330008 (NOTSRCCOPY)  |
                 // |      | RPN: Sn                       |
                 // +------+-------------------------------+
             case 0x33:
-                this->scr_blt_op<Op_0x33>(srcx, srcy, drect);
+                this->scr_blt_op<Ops::Op_0x33>(srcx, srcy, drect);
                 break;
                 // +------+-------------------------------+
                 // | 0x44 | ROP: 0x00440328 (SRCERASE)    |
                 // |      | RPN: SDna                     |
                 // +------+-------------------------------+
             case 0x44:
-                this->scr_blt_op<Op_0x44>(srcx, srcy, drect);
+                this->scr_blt_op<Ops::Op_0x44>(srcx, srcy, drect);
                 break;
 
                 // +------+-------------------------------+
@@ -2486,28 +2340,28 @@ public:
                 // |      | RPN: DSx                      |
                 // +------+-------------------------------+
             case 0x66:
-                this->scr_blt_op<Op_0x66>(srcx, srcy, drect);
+                this->scr_blt_op<Ops::Op_0x66>(srcx, srcy, drect);
                 break;
                 // +------+-------------------------------+
                 // | 0x77 | ROP: 0x007700E6               |
                 // |      | RPN: DSan                     |
                 // +------+-------------------------------+
             case 0x77:
-                this->scr_blt_op<Op_0x77>(srcx, srcy, drect);
+                this->scr_blt_op<Ops::Op_0x77>(srcx, srcy, drect);
                 break;
                 // +------+-------------------------------+
                 // | 0x88 | ROP: 0x008800C6 (SRCAND)      |
                 // |      | RPN: DSa                      |
                 // +------+-------------------------------+
             case 0x88:
-                this->scr_blt_op<Op_0x88>(srcx, srcy, drect);
+                this->scr_blt_op<Ops::Op_0x88>(srcx, srcy, drect);
                 break;
                 // +------+-------------------------------+
                 // | 0x99 | ROP: 0x00990066               |
                 // |      | RPN: DSxn                     |
                 // +------+-------------------------------+
             case 0x99:
-                this->scr_blt_op<Op_0x99>(srcx, srcy, drect);
+                this->scr_blt_op<Ops::Op_0x99>(srcx, srcy, drect);
                 break;
                 // +------+-------------------------------+
                 // | 0xAA | ROP: 0x00AA0029               |
@@ -2520,28 +2374,28 @@ public:
                 // |      | RPN: DSno                     |
                 // +------+-------------------------------+
             case 0xBB:
-                this->scr_blt_op<Op_0xBB>(srcx, srcy, drect);
+                this->scr_blt_op<Ops::Op_0xBB>(srcx, srcy, drect);
                 break;
                 // +------+-------------------------------+
                 // | 0xCC | ROP: 0x00CC0020 (SRCCOPY)     |
                 // |      | RPN: S                        |
                 // +------+-------------------------------+
             case 0xCC:
-                this->scr_blt_op<Op_0xCC>(srcx, srcy, drect);
+                this->scr_blt_op<Ops::Op_0xCC>(srcx, srcy, drect);
                 break;
                 // +------+-------------------------------+
                 // | 0xDD | ROP: 0x00DD0228               |
                 // |      | RPN: SDno                     |
                 // +------+-------------------------------+
             case 0xDD:
-                this->scr_blt_op<Op_0xDD>(srcx, srcy, drect);
+                this->scr_blt_op<Ops::Op_0xDD>(srcx, srcy, drect);
                 break;
                 // +------+-------------------------------+
                 // | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
                 // |      | RPN: DSo                      |
                 // +------+-------------------------------+
             case 0xEE:
-                this->scr_blt_op<Op_0xEE>(srcx, srcy, drect);
+                this->scr_blt_op<Ops::Op_0xEE>(srcx, srcy, drect);
                 break;
                 // +------+-------------------------------+
                 // | 0xFF | ROP: 0x00FF0062 (WHITENESS)   |
@@ -2630,7 +2484,7 @@ public:
             int offset_;
             void reset() noexcept { this->offset_ = 0; }
             int set(int offset) noexcept { return this->offset_ = offset; }
-            void operator()(uint8_t * psave, uint8_t * pixel_start, const uint8_t * data, size_t n) const noexcept {
+            void trace(uint8_t * psave, uint8_t * pixel_start, const uint8_t * data, size_t n) const noexcept {
                 memcpy(psave, pixel_start, n);
                 memcpy(pixel_start, data + this->offset_, n);
             }
@@ -2649,7 +2503,7 @@ public:
         struct Trace {
             void reset() const noexcept { }
             int set(int offset) const noexcept { return offset; }
-            void operator()(uint8_t * psave, uint8_t * pixel_start, const uint8_t * /*data*/, size_t n) const noexcept {
+            void trace(uint8_t * psave, uint8_t * pixel_start, const uint8_t * /*data*/, size_t n) const noexcept {
                 ::memcpy(pixel_start, psave, n);
             }
         };
@@ -2660,8 +2514,8 @@ public:
     }
 
 private:
-    template<class O>
-    void priv_trace_mouse(O o, int x, int y)
+    template<class Tracer>
+    void priv_trace_mouse(Tracer tracer, int x, int y)
     {
         uint8_t * psave = this->save_mouse;
         const uint8_t * data_end = this->impl.last_pixel();
@@ -2672,9 +2526,9 @@ private:
             if (pixel_start + lg <= this->impl.first_pixel()) {
                 continue;
             }
-            o.reset();
+            tracer.reset();
             if (pixel_start < this->impl.first_pixel()) {
-                lg -= o.set(this->data() - pixel_start);
+                lg -= tracer.set(this->data() - pixel_start);
                 pixel_start = this->impl.first_pixel();
             }
             if (pixel_start > data_end) {
@@ -2683,7 +2537,7 @@ private:
             if (pixel_start + lg >= data_end) {
                 lg = data_end - pixel_start;
             }
-            o(psave, pixel_start, contiguous_pixels.data, lg);
+            tracer.trace(psave, pixel_start, contiguous_pixels.data, lg);
             psave += lg;
         }
     }

@@ -31,11 +31,6 @@
 //#define LOGPRINT
 #include "log.hpp"
 
-#include <errno.h>
-#include <algorithm>
-
-#include <iostream> //TODO
-
 #include "check_sig.hpp"
 #include "ssl_calls.hpp"
 #include "png.hpp"
@@ -703,8 +698,10 @@ bool test_scrblt2(const uint8_t rop, const int cx, const int cy, const char * na
     gd.draw(RDPOpaqueRect(Rect(90, 90, 120, 120), RED), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
     gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
-    gd.impl().scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
-    gd.impl().scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
+    gd.draw(RDPScrBlt(Rect(300, 300, 120, 120), 0xCC, 90, 90), screen_rect);
+    gd.draw(RDPScrBlt(Rect(90 + cx, 90 + cy, 120, 120), rop, 90, 90), screen_rect);
+//     gd.impl().scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
+//     gd.impl().scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
 
     // uncomment to see result in png file
     //char tmpname[128];
