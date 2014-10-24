@@ -751,19 +751,24 @@ class Sesman():
     def check_target(self, selected_target):
         ticket = None
         status = None
+        info_message = None
         got_signal = False
         while True:
             Logger().info(u"Begin check_target ticket = %s..." % ticket)
             previous_status = status
+            previous_info_message = info_message
             status, infos = self.engine.check_target(selected_target, self.pid, ticket)
             ticket = None
-            Logger().info(u"End check_target ...")
-            status_changed = got_signal or (status != previous_status)
-            if status_changed:
+            info_message = infos.get('message')
+            refresh_page = (got_signal
+                            or (status != previous_status)
+                            or (previous_info_message != info_message))
+            Logger().info(u"End check_target ... refresh : %s" % refresh_page)
+            if refresh_page:
                 self.send_data({u'forcemodule' : True})
             if status == APPROVAL_ACCEPTED:
                 return True, ""
-            if status_changed:
+            if refresh_page:
                 self.interactive_display_waitinfo(status, infos)
             got_signal = False
             r = []
