@@ -474,7 +474,7 @@ private:
     struct Invert;
 
 public:
-    void opaque_rect(const Rect & rect, const uint32_t color)
+    void opaque_rect(const Rect & rect, const uint32_t color) noexcept
     {
         P const base = this->first_pixel(rect);
 
@@ -488,16 +488,17 @@ public:
         }
     }
 
-    void draw_pixel(int16_t x, int16_t y, const uint32_t color)
+    void draw_pixel(int16_t x, int16_t y, const uint32_t color) noexcept
     {
         traits::assign(this->first_pixel(x, y), traits::u32_to_color(color));
     }
 
     template<class Op, class... Col>
-    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
+    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c) noexcept
     {
         P dest = this->first_pixel(rect);
-        cP src = this->data_bmp(bmp, srcx, srcy);
+        const size_t bmp_Bpp = ::nbbytes(bmp.bpp());
+        cP src = bmp.data() + (bmp.cy() - srcy - 1) * (bmp.bmp_size() / bmp.cy()) + srcx * bmp_Bpp;
         const size_t n = rect.cx * Bpp;
         const uint8_t bmp_bpp = bmp.bpp();
         const size_t bmp_line_size = bmp.line_size();
@@ -511,13 +512,13 @@ public:
         else {
             switch (bmp_bpp) {
                 case 8: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_bpp, bmp_line_size, op, typename traits::toColor8{bmp.palette()}, c...); break;
+                    bmp_Bpp, bmp_line_size, op, typename traits::toColor8{bmp.palette()}, c...); break;
                 case 15: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_bpp, bmp_line_size, op, typename traits::toColor15{}, c...); break;
+                    bmp_Bpp, bmp_line_size, op, typename traits::toColor15{}, c...); break;
                 case 16: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_bpp, bmp_line_size, op, typename traits::toColor16{}, c...); break;
+                    bmp_Bpp, bmp_line_size, op, typename traits::toColor16{}, c...); break;
                 case 24: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_bpp, bmp_line_size, op, typename traits::toColor24{}, c...); break;
+                    bmp_Bpp, bmp_line_size, op, typename traits::toColor24{}, c...); break;
                 default: ;
             }
         }
@@ -525,11 +526,11 @@ public:
 
 private:
     template<class Op, class ToColor, class... Col>
-    void spe_mem_blt(P dest, cP src, u16 cx, u16 cy, u8 bmp_bpp, size_t bmp_line_size, Op op, ToColor to_color, Col... c)
+    void spe_mem_blt(
+        P dest, cP src, u16 cx, u16 cy, size_t bmp_Bpp, size_t bmp_line_size, Op op, ToColor to_color, Col... c) noexcept
     {
         const size_t line_size = this->rowsize();
         const size_t destn = cx * Bpp;
-        const size_t bmp_Bpp = ::nbbytes(bmp_bpp);
         const size_t srcn = cx * bmp_Bpp;
         const size_t inc_line = line_size - destn;
         const size_t inc_bmp_line = bmp_line_size + srcn;
@@ -544,12 +545,12 @@ private:
     }
 
 public:
-    void draw_bitmap(const Rect & rect, const Bitmap & bmp)
+    void draw_bitmap(const Rect & rect, const Bitmap & bmp) noexcept
     {
         this->mem_blt(rect, bmp, 0, 0, Ops::CopySrc{});
     }
 
-    void component_rect(const Rect & rect, uint8_t c)
+    void component_rect(const Rect & rect, uint8_t c) noexcept
     {
         P p = this->first_pixel(rect);
         const size_t step = this->rowsize();
@@ -560,7 +561,7 @@ public:
     }
 
     template<typename Op2>
-    void draw_ellipse(const Ellipse & el, const uint8_t fill, const uint32_t color)
+    void draw_ellipse(const Ellipse & el, const uint8_t fill, const uint32_t color) noexcept
     {
         Op2 op;
         const int cX = el.centerx;
@@ -651,7 +652,8 @@ public:
 
 private:
     template <typename Op2>
-    void colordot(int x, int y, color_t color, Op2 op2) {
+    void colordot(int x, int y, color_t color, Op2 op2) noexcept
+    {
         if (!(x >= 0 &&
               y >= 0 &&
               x < this->width() &&
@@ -663,7 +665,8 @@ private:
     }
 
     template <typename Op2>
-    void colorline(int x, int y, int l, color_t color, Op2) {
+    void colorline(int x, int y, int l, color_t color, Op2) noexcept
+    {
         if (!(y >= 0 &&
               y < this->height())) {
                 return;
@@ -683,7 +686,7 @@ public:
     template <typename Op>
     void patblt_op_ex(
         const Rect & rect, const uint8_t * brush_data,
-        const uint32_t back_color, const uint32_t fore_color)
+        const uint32_t back_color, const uint32_t fore_color) noexcept
     {
         P const base = this->first_pixel(rect);
         P       p    = base;
@@ -706,7 +709,7 @@ public:
     }
 
     template <typename Op>
-    void scr_blt_op(const Rect & rect, uint16_t srcx, uint16_t srcy)
+    void scr_blt_op(const Rect & rect, uint16_t srcx, uint16_t srcy) noexcept
     {
         const int16_t deltax = static_cast<int16_t>(srcx - rect.x);
         const int16_t deltay = static_cast<int16_t>(srcy - rect.y);
@@ -747,7 +750,7 @@ public:
     }
 
 private:
-    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Ops::CopySrc op)
+    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Ops::CopySrc op) noexcept
     {
         this->scr_blt_impl(rect_dest, srcx, srcy, [](P dest, cP src, size_t n) {
             memmove(dest, src, n);
@@ -755,7 +758,7 @@ private:
     }
 
     template <typename Op>
-    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op)
+    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op) noexcept
     {
         P dest = this->first_pixel(rect_dest);
         cP src = this->first_pixel(srcx, srcy);
@@ -787,7 +790,7 @@ private:
     }
 
     template <typename Op>
-    void scr_blt_op_nooverlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op)
+    void scr_blt_op_nooverlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op) noexcept
     {
         this->scr_blt_impl(rect_dest, srcx, srcy, [this, op](P dest, cP src, size_t n) {
             this->copy(dest, src, n, op);
@@ -795,13 +798,13 @@ private:
     }
 
     template <typename F>
-    void scr_blt_impl(Rect const & rect_dest, size_t srcx, size_t srcy, F f)
+    void scr_blt_impl(Rect const & rect_dest, size_t srcx, size_t srcy, F f) noexcept
     {
         this->scr_blt_impl(this->first_pixel(rect_dest), this->first_pixel(srcx, srcy), rect_dest.cx * Bpp, rect_dest.cy, f);
     }
 
     template <typename F>
-    void scr_blt_impl(P dest, cP src, size_t n, size_t cy, F f)
+    void scr_blt_impl(P dest, cP src, size_t n, size_t cy, F f) noexcept
     {
         for (P e = dest + this->rowsize() * cy; e != dest; ) {
             f(dest, src, n);
@@ -813,7 +816,7 @@ private:
 public:
     // nor horizontal nor vertical, use Bresenham
     template<class Op>
-    void line(int x, int y, int endx, int endy, const uint32_t color, Op op)
+    void line(int x, int y, int endx, int endy, const uint32_t color, Op op) noexcept
     {
         // Prep
         const int dx = endx - x;
@@ -844,7 +847,7 @@ public:
     }
 
     template<class Op>
-    void vertical_line(uint16_t x, uint16_t y, uint16_t endy, uint32_t color, Op op)
+    void vertical_line(uint16_t x, uint16_t y, uint16_t endy, uint32_t color, Op op) noexcept
     {
         const color_t color_ = traits::u32_to_color(color);
         P p = this->first_pixel(x, y);
@@ -855,50 +858,33 @@ public:
     }
 
     template<class Op>
-    void horizontal_line(uint16_t startx, uint16_t y, uint16_t endx, uint32_t color, Op)
+    void horizontal_line(uint16_t startx, uint16_t y, uint16_t endx, uint32_t color, Op) noexcept
     {
         this->apply_for_line(this->first_pixel(startx, y), endx - startx + 1, AssignOp<Op>{traits::u32_to_color(color)});
     }
 
     template <typename Op>
-    void patblt_op(const Rect & rect, uint32_t color, Op)
+    void patblt_op(const Rect & rect, uint32_t color, Op) noexcept
     {
         this->apply_for_rect(rect, AssignOp<Op>{traits::u32_to_color(color)});
     }
 
-    void patblt_op(const Rect & rect, uint32_t color, Ops::InvertSrc)
+    void patblt_op(const Rect & rect, uint32_t color, Ops::InvertSrc) noexcept
     {
         this->apply_for_rect(rect, Assign{~traits::u32_to_color(color)});
     }
 
-    void patblt_op(const Rect & rect, uint32_t color, Ops::CopySrc)
+    void patblt_op(const Rect & rect, uint32_t color, Ops::CopySrc) noexcept
     {
         this->apply_for_rect(rect, Assign{traits::u32_to_color(color)});
     }
 
-    void invert_color(const Rect & rect)
+    void invert_color(const Rect & rect) noexcept
     {
         this->apply_for_rect(rect, Invert{});
     }
 
 private:
-    static void assign_op_transform(P dest, color_t c)
-    {
-        traits::assign(dest, c);
-    }
-
-    template<class UnaryOp>
-    static void assign_op_transform(P dest, UnaryOp op)
-    {
-        traits::transform(dest, op);
-    }
-
-    static cP data_bmp(const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy)
-    {
-        // TODO ::nbbytes(bmp.bpp()) -> this->nbbytes_color()
-        return bmp.data() + (bmp.cy() - srcy - 1) * (bmp.bmp_size() / bmp.cy()) + srcx * ::nbbytes(bmp.bpp());
-    }
-
     struct Assign {
         color_t color;
 
@@ -945,7 +931,7 @@ private:
     }
 
     template<class F>
-    P apply_for_line(P p, size_t n, F f)
+    P apply_for_line(P p, size_t n, F f) noexcept
     {
         for (cP pe = p + n * Bpp; p != pe; ) {
             p = f(p);
@@ -954,7 +940,7 @@ private:
     }
 
     template<class F>
-    void apply_for_rect(const Rect & rect, F f)
+    void apply_for_rect(const Rect & rect, F f) noexcept
     {
         P p = this->first_pixel(rect);
         const size_t line_size = this->rowsize();
@@ -1104,10 +1090,6 @@ struct Drawable {
         return this->impl.pix_len();
     }
 
-    /*TODO const*/ uint8_t * row_data(int y) const noexcept {
-        return this->impl.row_data(y);
-    }
-
     static constexpr uint8_t nbbytes_color() noexcept {
         return DrawableImplPrivate::nbbytes_color();
     }
@@ -1134,8 +1116,8 @@ private:
 
     DrawableImplPrivate impl;
 
-    uint8_t timestamp_save[ts_width * ts_height * 3];
-    uint8_t timestamp_data[ts_width * ts_height * 3];
+    uint8_t timestamp_save[ts_width * ts_height * Bpp];
+    uint8_t timestamp_data[ts_width * ts_height * Bpp];
     char previous_timestamp[size_str_timestamp];
     uint8_t previous_timestamp_length;
 

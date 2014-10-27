@@ -127,11 +127,6 @@ public:
         this->drawable.set_row(rownum, data);
     }
 
-    virtual uint8_t * get_row(size_t rownum)
-    {
-        return this->drawable.row_data(rownum);
-    }
-
     virtual size_t get_rowsize()
     {
         return this->drawable.rowsize();
