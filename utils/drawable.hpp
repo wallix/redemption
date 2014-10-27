@@ -24,7 +24,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <iostream> // TODO
 
 #include "bitmap.hpp"
 #include "colors.hpp"
