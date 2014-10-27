@@ -322,7 +322,7 @@ int main(int argc, char** argv)
     memcpy(cctx.crypto_key, ini.crypto.key0, sizeof(cctx.crypto_key));
     memcpy(cctx.hmac_key,   ini.crypto.key1, sizeof(cctx.hmac_key  ));
 
-    timeval  begin_record    ;
+    timeval  begin_record = { 0, 0 };
     unsigned file_count   = 0;
     try {
         if (infile_is_encrypted == false) {
