@@ -322,7 +322,7 @@ int main(int argc, char** argv)
     memcpy(cctx.crypto_key, ini.crypto.key0, sizeof(cctx.crypto_key));
     memcpy(cctx.hmac_key,   ini.crypto.key1, sizeof(cctx.hmac_key  ));
 
-    timeval  begin_record = { 0 , 0 };
+    timeval  begin_record = { 0, 0 };
     unsigned file_count   = 0;
     try {
         if (infile_is_encrypted == false) {
@@ -589,7 +589,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture, con
         capture.reset(new Capture( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                  , player.screen_rect.cx, player.screen_rect.cy
                                  , player.info_bpp, 24, outfile_path, outfile_path, ini.video.hash_path
-                                 , outfile_basename, false, false, NULL, ini));
+                                 , outfile_basename, false, false, NULL, ini, true));
         if (capture->capture_png){
             capture->psc->zoom(zoom);
         }

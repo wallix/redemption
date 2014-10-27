@@ -75,7 +75,7 @@ private:
 public:
     Capture( const timeval & now, int width, int height, int mod_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
-           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini)
+           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini, bool externally_generated_breakpoint = false)
     : capture_wrm(ini.video.capture_wrm)
     , capture_drawable(ini.video.capture_wrm||(ini.video.png_limit > 0))
     , capture_png(ini.video.png_limit > 0)
@@ -144,7 +144,7 @@ public:
                                                               , width, height, ini.video.capture_groupid, authentifier);
             }
             this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
-                                         , *this->pnc_bmp_cache, *this->drawable, ini, ini.video.capture_wrm);
+                                         , *this->pnc_bmp_cache, *this->drawable, ini, externally_generated_breakpoint);
             this->pnc->recorder.send_input = true;
         }
 
