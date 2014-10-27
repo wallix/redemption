@@ -714,189 +714,97 @@ public:
         const bool is_overlap = srect.has_intersection(rect);
 
         if (is_overlap) {
-            P target = (deltay >= 0 || !is_overlap)
-                ? this->first_pixel(rect)
-                : this->beginning_of_last_line(rect);
-            P source = (deltay >= 0 || !is_overlap)
-                ? this->first_pixel(srect)
-                : this->beginning_of_last_line(srect);
-            const size_t to_nextrow = (deltay >= 0 || !is_overlap)
-                ?  this->rowsize()
-                : -this->rowsize();
-
-            const signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?this->Bpp:-this->Bpp;
-            const unsigned offset = static_cast<unsigned>(((deltay != 0)||(deltax >= 0))?0:this->Bpp*(rect.cx - 1));
-            Op op;
-            for (size_t y = 0; y < rect.cy ; y++) {
-                uint8_t * linetarget = target + offset;
-                uint8_t * linesource = source + offset;
-                for (size_t x = 0; x < rect.cx ; x++) {
-                    for (uint8_t b = 0 ; b < this->Bpp; b++) {
-                        linetarget[b] = op(linetarget[b], linesource[b]);
-                    }
-                    linetarget += to_nextpixel;
-                    linesource += to_nextpixel;
-                }
-                target += to_nextrow;
-                source += to_nextrow;
+            const Rect overlap = srect.intersect(rect);
+            if (rect.y < srcy) {
+                this->scr_blt_op_nooverlap(rect, srcx, srcy, Op());
             }
+            else if (rect.y == srcy) {
+                this->scr_blt_op_overlap(rect, srcx, srcy, Op());
+            }
+            else {
+                if (srcy + overlap.cy > overlap.y) {
+                    P dest = this->first_pixel(rect.x, rect.bottom());
+                    cP src = this->first_pixel(srcx, srcy + rect.cy);
+                    cP esrc = src - this->rowsize() * (srcy + rect.cy - overlap.y);
+                    while (src > esrc) {
+                        dest -= this->rowsize();
+                        src -= this->rowsize();
+                        this->copy(dest, src, rect.cx * this->Bpp, Op());
+                    }
+                }
+                else {
+                    const Rect dest1(rect.x, rect.bottom() - ((srcy + rect.cy - overlap.y)), rect.cx, (srcy + rect.cy - overlap.y));
+                    this->scr_blt_op_nooverlap(dest1, dest1.x + deltax, dest1.y + deltay, Op());
+                }
 
-//             std::cout << rect << std::endl;
-//             std::cout << srcx << ' ' << srcy << std::endl;
-//             const Rect overlap = srect.intersect(rect);
-//
-//             if (overlap.y == srcy) {
-//                 const size_t px = rect.x;
-//                 const size_t py = rect.y + overlap.y - srcy;
-//                 std::cout << "1 - " << Rect(srcx, overlap.y, rect.cx, overlap.cy) << " -> " << Rect(px, py, rect.cx, overlap.cy) << std::endl;
-//
-//                 if (static_cast<int16_t>(py) < overlap.bottom()) {
-//                     std::cout << "py < bottom" << std::endl;
-//                     this->scr_blt_op_overlap_reverse(
-//                         this->first_pixel(px, py)
-//                       , this->first_pixel(srcx, overlap.y)
-//                       , rect.cx, overlap.cy
-//                       , Op()
-//                     );
-//                 }
-//                 else {
-//                     std::cout << "py >= bottom" << std::endl;
-//                     this->scr_blt_op_overlap(
-//                         this->first_pixel(px, py)
-//                       , this->first_pixel(srcx, overlap.y)
-//                       , rect.cx, overlap.cy
-//                       , Op()
-//                     );
-//                 }
-//
-//                 const Rect nooverlap(rect.x, overlap.bottom(), rect.cx, rect.cy - overlap.cy);
-//                 std::cout << "1 - " << Rect(srcx, nooverlap.y, rect.cx, nooverlap.cy) << " -> " << Rect(rect.x, overlap.bottom() - srcy, rect.cx, nooverlap.cy) << std::endl;
-//                 this->scr_blt_op_nooverlap(
-//                      this->first_pixel(rect.x, overlap.bottom() - srcy)
-//                    , this->first_pixel(srcx, nooverlap.y)
-//                    , rect.cx, nooverlap.cy
-//                    , Op()
-//                 );
-//             }
-//             else {
-//                 const size_t px = rect.x;
-//                 const size_t py = rect.y + overlap.y - srcy;
-//                 std::cout << "2 - " << Rect(srcx, overlap.y, rect.cx, overlap.cy) << " -> " << Rect(px, py, rect.cx, overlap.cy) << std::endl;
-//
-//                 if (static_cast<int16_t>(py) < overlap.bottom()) {
-//                     std::cout << "py < bottom" << std::endl;
-//                     this->scr_blt_op_overlap_reverse(
-//                         this->first_pixel(px, py)
-//                       , this->first_pixel(srcx, overlap.y)
-//                       , rect.cx, overlap.cy
-//                       , Op()
-//                     );
-//                 }
-//                 else {
-//                     std::cout << "py >= bottom" << std::endl;
-//                     this->scr_blt_op_overlap(
-//                         this->first_pixel(px, py)
-//                       , this->first_pixel(srcx, overlap.y)
-//                       , rect.cx, overlap.cy
-//                       , Op()
-//                     );
-//                 }
-//
-//                 const Rect nooverlap(rect.x, rect.y, rect.cx, rect.cy - overlap.cy);
-//                 std::cout << "2 - " << Rect(srcx, srcy, rect.cx, nooverlap.cy) << " -> " << Rect(rect.x, rect.y, rect.cx, nooverlap.cy) << std::endl;
-//                 this->scr_blt_op_nooverlap(
-//                      this->first_pixel(rect.x, rect.y)
-//                    , this->first_pixel(srcx, srcy)
-//                    , rect.cx, nooverlap.cy
-//                    , Op()
-//                 );
-//             }
+                const Rect dest_safe(rect.x, rect.y, rect.cx, rect.cy - overlap.cy);
+                this->scr_blt_op_nooverlap(dest_safe, dest_safe.x + deltax, dest_safe.y + deltay, Op());
+            }
         }
         else {
-            this->scr_blt_op_nooverlap(this->first_pixel(rect), this->first_pixel(srect), srect.cx, srect.cy, Op());
+            this->scr_blt_op_nooverlap(rect, srect.x, srect.y, Op());
         }
-
-//         P target = (deltay >= 0 || !is_overlap)
-//             ? this->first_pixel(rect)
-//             : this->beginning_of_last_line(rect);
-//         P source = (deltay >= 0 || !is_overlap)
-//             ? this->first_pixel(srect)
-//             : this->beginning_of_last_line(srect);
-//         const size_t to_nextrow = (deltay >= 0 || !is_overlap)
-//             ?  this->rowsize()
-//             : -this->rowsize();
-
-//         const size_t cx = rect.cx * Bpp;
-//
-//         if (deltay != 0 || deltax >= 0) {
-//             for (P e = target + to_nextrow * rect.cy; e != target; ) {
-//                 this->copy(target, source, cx, Op());
-//                 target += to_nextrow;
-//                 source += to_nextrow;
-//             }
-//         }
-//         else {
-//             const unsigned offset = this->nbbytes_color() * (rect.cx - 1);
-//
-//             for (P e = target + to_nextrow * rect.cy; e != target; ) {
-//                 P linetarget = target + offset;
-//                 P linesource = source + offset;
-//                 for (P e2 = linetarget - cx; e2 != linetarget; ) {
-//                     this->copy(linetarget, linesource, Bpp, Op());
-//                     linetarget -= Bpp;
-//                     linesource -= Bpp;
-//                 }
-//                 target += to_nextrow;
-//                 source += to_nextrow;
-//             }
-//         }
-
-
-//         const signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?this->Bpp:-this->Bpp;
-//         const unsigned offset = static_cast<unsigned>(((deltay != 0)||(deltax >= 0))?0:this->Bpp*(rect.cx - 1));
-//         Op op;
-//         for (size_t y = 0; y < rect.cy ; y++) {
-//             uint8_t * linetarget = target + offset;
-//             uint8_t * linesource = source + offset;
-//             for (size_t x = 0; x < rect.cx ; x++) {
-//                 for (uint8_t b = 0 ; b < this->Bpp; b++) {
-//                     linetarget[b] = op(linetarget[b], linesource[b]);
-//                 }
-//                 linetarget += to_nextpixel;
-//                 linesource += to_nextpixel;
-//             }
-//             target += to_nextrow;
-//             source += to_nextrow;
-//         }
     }
 
 private:
-    template <typename Op>
-    void scr_blt_op_overlap(P dest, cP src, size_t cx, size_t cy, Op op)
+    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Ops::CopySrc op)
     {
-        for (P e = dest + this->rowsize() * cy; e != dest; ) {
-            this->move(dest, src, cx * Bpp, op);
-            dest += this->rowsize();
-            src += this->rowsize();
+        this->scr_blt_impl(rect_dest, srcx, srcy, [](P dest, cP src, size_t n) {
+            memmove(dest, src, n);
+        });
+    }
+
+    template <typename Op>
+    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op)
+    {
+        P dest = this->first_pixel(rect_dest);
+        cP src = this->first_pixel(srcx, srcy);
+        const size_t n = rect_dest.cx * Bpp;
+        if (src + n < dest || dest < src) {
+            this->scr_blt_op_nooverlap(rect_dest, srcx, srcy, op);
+        }
+        else {
+            const size_t d = static_cast<size_t>((src + n) - dest);
+            if (dest + d > dest - (n - d)) {
+                this->scr_blt_impl(dest, src, n, rect_dest.cy, [this, d, op](P dest, cP src, size_t n) {
+                    P edest = dest + n;
+                    cP esrc = src + n;
+                    while (edest > dest + (n - d)) {
+                        --edest;
+                        --esrc;
+                        *edest = op(*edest, *esrc);
+                    }
+                    this->copy(dest, src, n - d, op);
+                });
+            }
+            else {
+                this->scr_blt_impl(dest, src, n, rect_dest.cy, [this, d, op](P dest, cP src, size_t n) {
+                    this->copy(dest + (n - d), src + (n - d), d, op);
+                    this->copy(dest, src, n - d, op);
+                });
+            }
         }
     }
 
     template <typename Op>
-    void scr_blt_op_overlap_reverse(P dest, cP src, size_t cx, size_t cy, Op op)
+    void scr_blt_op_nooverlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op)
     {
-        src += this->rowsize() * cy;
-        for (P e = dest + this->rowsize() * cy; e != dest; ) {
-            e -= this->rowsize();
-            src -= this->rowsize();
-            this->move(e, src, cx * Bpp, op);
-        }
+        this->scr_blt_impl(rect_dest, srcx, srcy, [this, op](P dest, cP src, size_t n) {
+            this->copy(dest, src, n, op);
+        });
     }
 
-    template <typename Op>
-    void scr_blt_op_nooverlap(P dest, cP src, size_t cx, size_t cy, Op op)
+    template <typename F>
+    void scr_blt_impl(Rect const & rect_dest, size_t srcx, size_t srcy, F f)
+    {
+        this->scr_blt_impl(this->first_pixel(rect_dest), this->first_pixel(srcx, srcy), rect_dest.cx * Bpp, rect_dest.cy, f);
+    }
+
+    template <typename F>
+    void scr_blt_impl(P dest, cP src, size_t n, size_t cy, F f)
     {
         for (P e = dest + this->rowsize() * cy; e != dest; ) {
-            this->copy(dest, src, cx * Bpp, op);
+            f(dest, src, n);
             dest += this->rowsize();
             src += this->rowsize();
         }
@@ -1023,24 +931,6 @@ private:
     void copy(uint8_t * dest, const uint8_t * src, size_t n, Ops::CopySrc) noexcept
     {
        memcpy(dest, src, n);
-    }
-
-    template<class Op>
-    void move(uint8_t * dest, const uint8_t * src, size_t n, Op op) noexcept
-    {
-        if (src + n < dest || dest < src) {
-            this->copy(dest, src, n, op);
-        }
-        else {
-            const long d = static_cast<long>((src + n) - dest);
-            this->copy(dest + (n - d), src + (n - d), d, op);
-            this->copy(dest, src, n - d, op);
-        }
-    }
-
-    void move(uint8_t * dest, const uint8_t * src, size_t n, Ops::CopySrc) noexcept
-    {
-        memmove(dest, src, n);
     }
 
     template<class Op>
