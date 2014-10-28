@@ -236,10 +236,17 @@ struct DrawableTraitColor24
     // 24 bpp
     static const size_t Bpp = 3;
 
-    struct color_t {
+    class color_t {
         uint8_t r;
         uint8_t g;
         uint8_t b;
+
+    public:
+        constexpr color_t(uint8_t r_, uint8_t g_, uint8_t b_) noexcept
+        : r(r_)
+        , g(g_)
+        , b(b_)
+        {}
 
         constexpr uint8_t red() const noexcept
         { return r; }
@@ -250,7 +257,7 @@ struct DrawableTraitColor24
         constexpr uint8_t blue() const noexcept
         { return b; }
 
-        color_t operator~() const noexcept
+        constexpr color_t operator~() const noexcept
         { return {uint8_t(~r), uint8_t(~g), uint8_t(~b)}; }
     };
 
@@ -292,6 +299,11 @@ struct DrawableTraitColor24
     static constexpr color_t u32_to_color(uint32_t color) noexcept
     {
         return {uint8_t(color), uint8_t(color >> 8), uint8_t(color >> 16)};
+    }
+
+    static constexpr color_t u32bgr_to_color(uint32_t color) noexcept
+    {
+        return {uint8_t(color >> 16), uint8_t(color >> 8), uint8_t(color)};
     }
 
 
@@ -473,11 +485,11 @@ private:
     struct Invert;
 
 public:
-    void opaque_rect(const Rect & rect, const uint32_t color) noexcept
+    void opaque_rect(const Rect & rect, const color_t color) noexcept
     {
         P const base = this->first_pixel(rect);
 
-        apply_for_line(base, rect.cx, Assign{traits::u32_to_color(color)});
+        apply_for_line(base, rect.cx, Assign{color});
 
         P target = base;
         const size_t line_size = this->rowsize();
@@ -487,9 +499,9 @@ public:
         }
     }
 
-    void draw_pixel(int16_t x, int16_t y, const uint32_t color) noexcept
+    void draw_pixel(int16_t x, int16_t y, const color_t color) noexcept
     {
-        traits::assign(this->first_pixel(x, y), traits::u32_to_color(color));
+        traits::assign(this->first_pixel(x, y), color);
     }
 
     template<class Op, class... Col>
@@ -560,7 +572,7 @@ public:
     }
 
     template<typename Op2>
-    void draw_ellipse(const Ellipse & el, const uint8_t fill, const uint32_t color) noexcept
+    void draw_ellipse(const Ellipse & el, const uint8_t fill, const color_t color) noexcept
     {
         Op2 op;
         const int cX = el.centerx;
@@ -574,12 +586,11 @@ public:
         int pY = 0;
         int borX = rYcarre*rX;
         int borY = 0;
-        const color_t color_ = traits::u32_to_color(color);
 
-        this->colordot(cX+pX, cY, color_, op);
-        this->colordot(cX-pX, cY, color_, op);
+        this->colordot(cX+pX, cY, color, op);
+        this->colordot(cX-pX, cY, color, op);
         if (fill) {
-            this->colorline(cX-pX + 1, cY, 2*pX - 1, color_, op);
+            this->colorline(cX-pX + 1, cY, 2*pX - 1, color, op);
         }
         if (errX > pX*rYcarre) {
             errX -= (2*pX - 1)*rYcarre;
@@ -592,13 +603,13 @@ public:
         int lastchange = 0;
         while ((borX > borY) && (pY <= rY)) {
             lastchange = 0;
-            this->colordot(cX+pX, cY+pY, color_, op);
-            this->colordot(cX+pX, cY-pY, color_, op);
-            this->colordot(cX-pX, cY+pY, color_, op);
-            this->colordot(cX-pX, cY-pY, color_, op);
+            this->colordot(cX+pX, cY+pY, color, op);
+            this->colordot(cX+pX, cY-pY, color, op);
+            this->colordot(cX-pX, cY+pY, color, op);
+            this->colordot(cX-pX, cY-pY, color, op);
             if (fill) {
-                this->colorline(cX-pX + 1, cY+pY, 2*pX - 1, color_, op);
-                this->colorline(cX-pX + 1, cY-pY, 2*pX - 1, color_, op);
+                this->colorline(cX-pX + 1, cY+pY, 2*pX - 1, color, op);
+                this->colorline(cX-pX + 1, cY-pY, 2*pX - 1, color, op);
             }
             if (errX > pX*rYcarre) {
                 errX -= (2*pX - 1)*rYcarre;
@@ -617,13 +628,13 @@ public:
         pY = rY;
         if ((fill && ((pX < lastpX) && (pY > lastpY))) ||
             (!fill && ((pX < lastpX) || (pY > lastpY)))) {
-            this->colordot(cX, cY+pY, color_, op);
-            this->colordot(cX, cY-pY, color_, op);
+            this->colordot(cX, cY+pY, color, op);
+            this->colordot(cX, cY-pY, color, op);
             if (errY > pY*rXcarre) {
                 errY -= (2*pY - 1)*rXcarre;
                 pY--;
                 if (fill && pY > lastpY) {
-                    this->colorline(cX, cY + pY, 2*pX + 1, color_, op);
+                    this->colorline(cX, cY + pY, 2*pX + 1, color, op);
                 }
             }
             errY += (2*pX + 1)*rYcarre;
@@ -632,16 +643,16 @@ public:
         while (((fill && (pX <= lastpX && pY > lastpY)) ||
                 (!fill && ((pX < lastpX) || (pY > lastpY)))) &&
                (pX <= rX)) {
-            this->colordot(cX+pX, cY+pY, color_, op);
-            this->colordot(cX+pX, cY-pY, color_, op);
-            this->colordot(cX-pX, cY+pY, color_, op);
-            this->colordot(cX-pX, cY-pY, color_, op);
+            this->colordot(cX+pX, cY+pY, color, op);
+            this->colordot(cX+pX, cY-pY, color, op);
+            this->colordot(cX-pX, cY+pY, color, op);
+            this->colordot(cX-pX, cY-pY, color, op);
             if (errY > pY*rXcarre) {
                 errY -= (2*pY - 1)*rXcarre;
                 pY--;
                 if (fill && (pY > lastpY)) {
-                    this->colorline(cX-pX, cY+pY, 2*pX+1, color_, op);
-                    this->colorline(cX-pX, cY-pY, 2*pX+1, color_, op);
+                    this->colorline(cX-pX, cY+pY, 2*pX+1, color, op);
+                    this->colorline(cX-pX, cY-pY, 2*pX+1, color, op);
                 }
             }
             errY += (2*pX + 1)*rYcarre;
@@ -685,23 +696,20 @@ public:
     template <typename Op>
     void patblt_op_ex(
         const Rect & rect, const uint8_t * brush_data,
-        const uint32_t back_color, const uint32_t fore_color) noexcept
+        const color_t back_color, const color_t fore_color) noexcept
     {
         P const base = this->first_pixel(rect);
         P       p    = base;
-
-        const color_t back_color_ = traits::u32_to_color(back_color);
-        const color_t fore_color_ = traits::u32_to_color(fore_color);
 
         for (size_t y = 0, cy = static_cast<size_t>(rect.cy); y < cy; ++y) {
             p = base + this->rowsize() * y;
             const uint8_t brush = brush_data[(y + rect.y) % 8];
             for (size_t x = 0, cx = static_cast<size_t>(rect.cx); x < cx; ++x) {
                 if (brush & (1 << ((x + rect.x) % 8))) {
-                    p = traits::assign(p, back_color_, Op());
+                    p = traits::assign(p, back_color, Op());
                 }
                 else {
-                    p = traits::assign(p, fore_color_, Op());
+                    p = traits::assign(p, fore_color, Op());
                 }
             }
         }
@@ -815,7 +823,7 @@ private:
 public:
     // nor horizontal nor vertical, use Bresenham
     template<class Op>
-    void line(int x, int y, int endx, int endy, const uint32_t color, Op op) noexcept
+    void line(int x, int y, int endx, int endy, const color_t color, Op op) noexcept
     {
         // Prep
         const int dx = endx - x;
@@ -823,10 +831,8 @@ public:
         const int sy = (endy >= y) ? 1 : -1;
         int err = dx - dy;
 
-        const color_t color_ = traits::u32_to_color(color);
-
         while (true) {
-            traits::assign(this->first_pixel(x, y), color_, op);
+            traits::assign(this->first_pixel(x, y), color, op);
 
             if ((x >= endx) && (y == endy)) {
                 break;
@@ -846,36 +852,35 @@ public:
     }
 
     template<class Op>
-    void vertical_line(uint16_t x, uint16_t y, uint16_t endy, uint32_t color, Op op) noexcept
+    void vertical_line(uint16_t x, uint16_t y, uint16_t endy, color_t color, Op op) noexcept
     {
-        const color_t color_ = traits::u32_to_color(color);
         P p = this->first_pixel(x, y);
         P pe = p + (endy - y + 1) * this->rowsize();
         for (; p != pe; p += this->rowsize()) {
-            traits::assign(p, color_, op);
+            traits::assign(p, color, op);
         }
     }
 
     template<class Op>
-    void horizontal_line(uint16_t startx, uint16_t y, uint16_t endx, uint32_t color, Op) noexcept
+    void horizontal_line(uint16_t startx, uint16_t y, uint16_t endx, color_t color, Op) noexcept
     {
-        this->apply_for_line(this->first_pixel(startx, y), endx - startx + 1, AssignOp<Op>{traits::u32_to_color(color)});
+        this->apply_for_line(this->first_pixel(startx, y), endx - startx + 1, AssignOp<Op>{color});
     }
 
     template <typename Op>
-    void patblt_op(const Rect & rect, uint32_t color, Op) noexcept
+    void patblt_op(const Rect & rect, color_t color, Op) noexcept
     {
-        this->apply_for_rect(rect, AssignOp<Op>{traits::u32_to_color(color)});
+        this->apply_for_rect(rect, AssignOp<Op>{color});
     }
 
-    void patblt_op(const Rect & rect, uint32_t color, Ops::InvertSrc) noexcept
+    void patblt_op(const Rect & rect, color_t color, Ops::InvertSrc) noexcept
     {
-        this->apply_for_rect(rect, Assign{~traits::u32_to_color(color)});
+        this->apply_for_rect(rect, Assign{~color});
     }
 
-    void patblt_op(const Rect & rect, uint32_t color, Ops::CopySrc) noexcept
+    void patblt_op(const Rect & rect, color_t color, Ops::CopySrc) noexcept
     {
-        this->apply_for_rect(rect, Assign{traits::u32_to_color(color)});
+        this->apply_for_rect(rect, Assign{color});
     }
 
     void invert_color(const Rect & rect) noexcept
@@ -1059,10 +1064,20 @@ public:
 struct Drawable {
     using DrawableImplPrivate = DrawableImpl<DepthColor::color24>;
 
+    using Color = DrawableImplPrivate::color_t;
+
     static const std::size_t Bpp = DrawableImplPrivate::Bpp;
 
     const uint8_t * data() const noexcept {
         return this->impl.data();
+    }
+
+    Color u32_to_color(uint32_t color) const {
+        return DrawableImplPrivate::traits::u32_to_color(color);
+    }
+
+    Color u32bgr_to_color(uint32_t color) const {
+        return DrawableImplPrivate::traits::u32bgr_to_color(color);
     }
 
     const uint8_t * data(int x, int y) const noexcept {
@@ -1731,13 +1746,12 @@ public:
      * a cache (data) and insert a subpart (srcx, srcy) to the local
      * image cache (this->impl.first_pixel()) a the given position (rect).
      */
-    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, const uint32_t xormask) {
-        if (xormask) {
-            this->mem_blt_op<Ops::InvertSrc>(rect, bmp, srcx, srcy);
-        }
-        else {
-            this->mem_blt_op<Ops::CopySrc>(rect, bmp, srcx, srcy);
-        }
+    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
+        this->mem_blt_op<Ops::CopySrc>(rect, bmp, srcx, srcy);
+    }
+
+    void mem_blt_invert(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
+        this->mem_blt_op<Ops::InvertSrc>(rect, bmp, srcx, srcy);
     }
 
 private:
@@ -1824,7 +1838,7 @@ public:
                   , const uint16_t srcx
                   , const uint16_t srcy
                   , uint8_t rop
-                  , const uint32_t pattern_color) {
+                  , const Color pattern_color) {
         switch (rop) {
             // +------+-------------------------------+
             // | 0xB8 | ROP: 0x00B8074A               |
@@ -1832,7 +1846,7 @@ public:
             // +------+-------------------------------+
             case 0xB8:
                 using traits = DrawableImplPrivate::traits;
-                this->mem_blt_op<Ops::Op_0xB8>(rect, bmp, srcx, srcy, traits::u32_to_color(pattern_color));
+                this->mem_blt_op<Ops::Op_0xB8>(rect, bmp, srcx, srcy, pattern_color);
             break;
 
             default:
@@ -1884,8 +1898,7 @@ private:
 //  (o), NOT (n), and XOR (x) Boolean operators.
 
 public:
-    void ellipse(const Ellipse & el, const uint8_t rop,
-                      const uint8_t fill, const uint32_t color) {
+    void ellipse(const Ellipse & el, const uint8_t rop, const uint8_t fill, const Color color) {
         if (this->tracked_area.has_intersection(el.get_rect())) {
             this->tracked_area_changed = true;
         }
@@ -1946,7 +1959,7 @@ public:
     // low level opaquerect,
     // mostly avoid clipping because we already took care of it
     // also we already swapped color if we are using BGR instead of RGB
-    void opaquerect(const Rect & rect, const uint32_t color)
+    void opaquerect(const Rect & rect, const Color color)
     {
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
@@ -1954,8 +1967,7 @@ public:
         this->impl.opaque_rect(rect, color);
     }
 
-    // TODO uint32_t -> color_t
-    void draw_pixel(int16_t x, int16_t y, const uint32_t color)
+    void draw_pixel(int16_t x, int16_t y, const Color color)
     {
         if (this->tracked_area.has_intersection(x, y)) {
             this->tracked_area_changed = true;
@@ -1965,7 +1977,7 @@ public:
 
 private:
     template <typename Op>
-    void patblt_op(const Rect & rect, const uint32_t color)
+    void patblt_op(const Rect & rect, const Color color)
     {
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
@@ -1976,7 +1988,7 @@ private:
 public:
     // low level patblt,
     // mostly avoid clipping because we already took care of it
-    void patblt(const Rect & rect, const uint8_t rop, const uint32_t color)
+    void patblt(const Rect & rect, const uint8_t rop, const Color color)
     {
         switch (rop) {
             // +------+-------------------------------+
@@ -2091,7 +2103,7 @@ public:
 
     template <typename Op>
     void patblt_op_ex(const Rect & rect, const uint8_t * brush_data,
-        const uint32_t back_color, const uint32_t fore_color)
+        const Color back_color, const Color fore_color)
     {
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
@@ -2101,8 +2113,7 @@ public:
     }
 
     void patblt_ex(const Rect & rect, const uint8_t rop,
-        const uint32_t back_color, const uint32_t fore_color,
-        const uint8_t * brush_data)
+        const Color back_color, const Color fore_color, const uint8_t * brush_data)
     {
         if (rop != 0xF0)
         {
@@ -2282,7 +2293,7 @@ public:
     }
 
     // nor horizontal nor vertical, use Bresenham
-    void line(int mix_mode, int x, int y, int endx, int endy, uint8_t rop, uint32_t color)
+    void line(int mix_mode, int x, int y, int endx, int endy, uint8_t rop, Color color)
     {
         const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(endx, endy);
         if (this->tracked_area.has_intersection(line_rect)) {
@@ -2297,7 +2308,7 @@ public:
         }
     }
 
-    void vertical_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endy, uint8_t rop, uint32_t color)
+    void vertical_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endy, uint8_t rop, Color color)
     {
         const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(x+1, endy);
         if (this->tracked_area.has_intersection(line_rect)) {
@@ -2312,7 +2323,7 @@ public:
         }
     }
 
-    void horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endx, uint8_t rop, uint32_t color)
+    void horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endx, uint8_t rop, Color color)
     {
         const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(endx, y+1);
         if (this->tracked_area.has_intersection(line_rect)) {

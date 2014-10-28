@@ -49,9 +49,32 @@
 
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
-class RDPDrawable : public RDPGraphicDevice, public RDPCaptureDevice {
+class RDPDrawable : public RDPGraphicDevice, public RDPCaptureDevice
+{
+    using Color = Drawable::Color;
+
     Drawable drawable;
+    GlyphCache gly_cache;
+    int frame_start_count;
+    int capture_bpp;
+    BGRPalette mod_palette_rgb;
+
 public:
+    RDPDrawable(const uint16_t width, const uint16_t height, int capture_bpp)
+    : drawable(width, height)
+    , frame_start_count(0)
+    , capture_bpp(capture_bpp)
+    {
+        REDASSERT(capture_bpp);
+        Pointer pointer0(Pointer::POINTER_CURSOR0);
+        this->drawable.cache_pointer(pointer0.x, pointer0.y, pointer0.data, pointer0.mask, 0);
+
+        Pointer pointer1(Pointer::POINTER_CURSOR1);
+        this->drawable.cache_pointer(pointer1.x, pointer1.y, pointer1.data, pointer1.mask, 1);
+
+        init_palette332(this->mod_palette_rgb);
+    }
+
     const uint8_t * data() const noexcept {
         return this->drawable.data();
     }
@@ -95,50 +118,28 @@ public:
     }
     //@}
 
-    GlyphCache gly_cache;
-
-    int frame_start_count;
-
-    int capture_bpp;
-
-    BGRPalette mod_palette_rgb;
-
-    RDPDrawable(const uint16_t width, const uint16_t height, int capture_bpp)
-    : drawable(width, height)
-    , frame_start_count(0)
-    , capture_bpp(capture_bpp)
+private:
+    Color u32_to_color(uint32_t color) const
     {
-        REDASSERT(capture_bpp);
-        Pointer pointer0(Pointer::POINTER_CURSOR0);
-        this->drawable.cache_pointer(pointer0.x, pointer0.y, pointer0.data, pointer0.mask, 0);
-
-        Pointer pointer1(Pointer::POINTER_CURSOR1);
-        this->drawable.cache_pointer(pointer1.x, pointer1.y, pointer1.data, pointer1.mask, 1);
-
-        BGRPalette palette_local;
-        init_palette332(palette_local);
-        for (unsigned i = 0; i < 256 ; i++){
-            this->mod_palette_rgb[i] = RGBtoBGR(palette_local[i]);
-        }
+        return this->drawable.u32bgr_to_color(color);
     }
 
-private:
-    BGRColor u32rgb_to_u32bgr(BGRColor color) const
+    Color u32rgb_to_color(BGRColor color) const
     {
-        return RGBtoBGR(((this->capture_bpp == 24)
+        return this->u32_to_color((this->capture_bpp == 24)
             ? color
-            : ::color_decode_opaquerect(color, this->capture_bpp, this->mod_palette_rgb))
+            : ::color_decode_opaquerect(color, this->capture_bpp, this->mod_palette_rgb)
         );
     }
 
-    std::tuple<BGRColor, BGRColor> u32rgb_to_u32bgr(BGRColor color1, BGRColor color2) const
+    std::tuple<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const
     {
         if (this->capture_bpp == 24) {
-            return std::tuple<BGRColor, BGRColor>{RGBtoBGR(color1), RGBtoBGR(color2)};
+            return std::tuple<Color, Color>{this->u32_to_color(color1), this->u32_to_color(color2)};
         }
-        return std::tuple<BGRColor, BGRColor>{
-            RGBtoBGR(::color_decode_opaquerect(color1, this->capture_bpp, this->mod_palette_rgb)),
-            RGBtoBGR(::color_decode_opaquerect(color2, this->capture_bpp, this->mod_palette_rgb))
+        return std::tuple<Color, Color>{
+            this->u32_to_color(::color_decode_opaquerect(color1, this->capture_bpp, this->mod_palette_rgb)),
+            this->u32_to_color(::color_decode_opaquerect(color2, this->capture_bpp, this->mod_palette_rgb))
         };
     }
 
@@ -148,24 +149,19 @@ public:
         this->drawable.set_row(rownum, data);
     }
 
-    virtual size_t get_rowsize()
-    {
-        return this->drawable.rowsize();
-    }
-
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
-        this->drawable.opaquerect(trect, this->u32rgb_to_u32bgr(cmd.color));
+        this->drawable.opaquerect(trect, this->u32rgb_to_color(cmd.color));
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) {
-        this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, this->u32rgb_to_u32bgr(cmd.color));
+        this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, this->u32rgb_to_color(cmd.color));
     }
 
     TODO("This will draw a standard ellipse without brush style")
     void draw(const RDPEllipseCB & cmd, const Rect & clip) {
-        this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, this->u32rgb_to_u32bgr(cmd.back_color));
+        this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, this->u32rgb_to_color(cmd.back_color));
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
@@ -185,91 +181,69 @@ public:
         this->drawable.destblt(trect, cmd.rop);
     }
 
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
+private:
+    template<class RDPMulti, class FRect>
+    void draw_multi(const RDPMulti & cmd, const Rect & clip, FRect f)
     {
-        const Rect clip_drawable_cmd_intersect = clip.intersect(
-            this->drawable.width(), this->drawable.height()).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+        const Rect clip_drawable_cmd_intersect
+          = clip.intersect(this->drawable.width(), this->drawable.height())
+          .intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
 
-        Rect cmd_rect(0, 0, 0, 0);
+        Rect cmd_rect;
 
         for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
             cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
             cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
             cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
             cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
-            const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
-            this->drawable.destblt(trect, cmd.bRop);
+            f(clip_drawable_cmd_intersect.intersect(cmd_rect));
         }
+    }
+
+public:
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
+    {
+        this->draw_multi(cmd, clip, [&](const Rect & trect) {
+            this->drawable.destblt(trect, cmd.bRop);
+        });
     }
 
     void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip)
     {
-        const Rect clip_drawable_cmd_intersect = clip.intersect(
-            this->drawable.width(), this->drawable.height()).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
-
-        Rect cmd_rect(0, 0, 0, 0);
-
-        for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
-            cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
-            cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
-            cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
-            cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
-            const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
-            this->drawable.opaquerect(trect, this->u32rgb_to_u32bgr(cmd._Color));
-        }
+        const Color color = this->u32rgb_to_color(cmd._Color);
+        this->draw_multi(cmd, clip, [color, this](const Rect & trect) {
+            this->drawable.opaquerect(trect, color);
+        });
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip)
     {
-        const Rect clip_drawable_cmd_intersect = clip.intersect(
-            this->drawable.width(), this->drawable.height()).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
-
-        Rect cmd_rect(0, 0, 0, 0);
-
-        uint32_t BackColor;
-        uint32_t ForeColor;
-        std::tie(BackColor, ForeColor) = this->u32rgb_to_u32bgr(cmd.BackColor, cmd.ForeColor);
-
-        for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
-            cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
-            cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
-            cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
-            cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
-            const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
-            TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
-            if ((cmd.bRop == 0xF0) && (cmd.BrushStyle == 0x03)) {
-                uint8_t brush_data[8];
-                memcpy(brush_data, cmd.BrushExtra, 7);
-                brush_data[7] = cmd.BrushHatch;
-
-                this->drawable.patblt_ex(trect, cmd.bRop, BackColor, ForeColor, brush_data);
-            }
-            else {
-                this->drawable.patblt(trect, cmd.bRop, BackColor);
-            }
+        TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
+        if ((cmd.bRop == 0xF0) && (cmd.BrushStyle == 0x03)) {
+            enum { BackColor, ForeColor };
+            auto colors = this->u32rgb_to_color(cmd.BackColor, cmd.ForeColor);
+            uint8_t brush_data[8];
+            memcpy(brush_data, cmd.BrushExtra, 7);
+            brush_data[7] = cmd.BrushHatch;
+            this->draw_multi(cmd, clip, [&](const Rect & trect) {
+                this->drawable.patblt_ex(trect, cmd.bRop, get<BackColor>(colors), get<ForeColor>(colors), brush_data);
+            });
+        }
+        else {
+            const Color color = this->u32rgb_to_color(cmd.BackColor);
+            this->draw_multi(cmd, clip, [&](const Rect & trect) {
+                this->drawable.patblt(trect, cmd.bRop, color);
+            });
         }
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip)
     {
-        const Rect clip_drawable_cmd_intersect = clip.intersect(
-            this->drawable.width(), this->drawable.height()).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
-
-        Rect cmd_rect(0, 0, 0, 0);
-
         const signed int deltax = cmd.nXSrc - cmd.rect.x;
         const signed int deltay = cmd.nYSrc - cmd.rect.y;
-
-        for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
-            cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
-            cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
-            cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
-            cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
-            // Destination rectangle : drect
-            const Rect drect = clip_drawable_cmd_intersect.intersect(cmd_rect);
-            // adding delta move dest to source
-            this->drawable.scrblt(drect.x + deltax, drect.y + deltay, drect, cmd.bRop);
-        }
+        this->draw_multi(cmd, clip, [&](const Rect & trect) {
+            this->drawable.scrblt(trect.x + deltax, trect.y + deltay, trect, cmd.bRop);
+        });
     }
 
     void draw(const RDPPatBlt & cmd, const Rect & clip)
@@ -277,19 +251,17 @@ public:
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         TODO("PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
 
-        uint32_t back_color;
-        uint32_t fore_color;
-        std::tie(back_color, fore_color) = this->u32rgb_to_u32bgr(cmd.back_color, cmd.fore_color);
-
         if ((cmd.rop == 0xF0) && (cmd.brush.style == 0x03)) {
+            enum { BackColor, ForeColor };
+            auto colors = this->u32rgb_to_color(cmd.back_color, cmd.fore_color);
             uint8_t brush_data[8];
             memcpy(brush_data, cmd.brush.extra, 7);
             brush_data[7] = cmd.brush.hatch;
 
-            this->drawable.patblt_ex(trect, cmd.rop, back_color, fore_color, brush_data);
+            this->drawable.patblt_ex(trect, cmd.rop, get<BackColor>(colors), get<ForeColor>(colors), brush_data);
         }
         else {
-            this->drawable.patblt(trect, cmd.rop, back_color);
+            this->drawable.patblt(trect, cmd.rop, this->u32rgb_to_color(cmd.back_color));
         }
     }
 
@@ -308,16 +280,14 @@ public:
             this->drawable.white_color(rect);
         break;
         case 0x55:
-            this->drawable.mem_blt(rect, bmp
+            this->drawable.mem_blt_invert(rect, bmp
                 , cmd.srcx + (rect.x - cmd.rect.x)
-                , cmd.srcy + (rect.y - cmd.rect.y)
-                , 0xFFFFFF);
+                , cmd.srcy + (rect.y - cmd.rect.y));
         break;
         case 0xCC:
             this->drawable.mem_blt(rect, bmp
                 , cmd.srcx + (rect.x - cmd.rect.x)
-                , cmd.srcy + (rect.y - cmd.rect.y)
-                , 0);
+                , cmd.srcy + (rect.y - cmd.rect.y));
         break;
         case 0x22:  // dest = dest AND (NOT source)
         case 0x66:  // dest = source XOR dest (SRCINVERT)
@@ -346,7 +316,7 @@ public:
             , cmd.srcx + (rect.x  - cmd.rect.x)
             , cmd.srcy + (rect.y  - cmd.rect.y)
             , cmd.rop
-            , this->u32rgb_to_u32bgr(cmd.fore_color)
+            , this->u32rgb_to_color(cmd.fore_color)
         );
     }
 
@@ -369,13 +339,13 @@ public:
     void draw(const RDPLineTo & lineto, const Rect & clip)
     {
         this->draw_line(lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy, lineto.rop2,
-                        this->u32rgb_to_u32bgr(lineto.pen.color), clip);
+                        this->u32rgb_to_color(lineto.pen.color), clip);
     }
 
 private:
     void draw_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart,
                    int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
-                   uint32_t color, const Rect & clip) {
+                   Color color, const Rect & clip) {
         LineEquation equa(nXStart, nYStart, nXEnd, nYEnd);
         int startx = 0;
         int starty = 0;
@@ -438,7 +408,7 @@ public:
     }
 
 private:
-    void draw_glyph(Bitmap & bmp, FontChar const & fc, size_t offset_x, uint32_t color) const
+    void draw_glyph(Bitmap & bmp, FontChar const & fc, size_t offset_x, Color color) const
     {
         uint8_t * bmp_data    = const_cast<uint8_t*>(bmp.data()) + (offset_x + 1) * 3 + bmp.line_size() * (fc.height - 1);
         uint8_t   fc_bit_mask = 128;
@@ -450,9 +420,9 @@ private:
             {
                 if (fc_bit_mask & (*fc_data))
                 {
-                    bmp_data[x * 3    ] = color;
-                    bmp_data[x * 3 + 1] = color >> 8;
-                    bmp_data[x * 3 + 2] = color >> 16;
+                    bmp_data[x * 3    ] = color.red();
+                    bmp_data[x * 3 + 1] = color.green();
+                    bmp_data[x * 3 + 2] = color.blue();
                     //printf("X");
                 }
                 //else
@@ -474,25 +444,21 @@ private:
     }
 
 public:
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
-        const GlyphCache * gly_cache)
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
         Bitmap glyph_fragments(24, NULL, cmd.bk.cx, cmd.bk.cy);
 
         {
-            const uint32_t color = this->u32rgb_to_u32bgr(cmd.fore_color);
-            const uint8_t c0 = color;
-            const uint8_t c1 = color >> 8;
-            const uint8_t c2 = color >> 16;
+            const Color color = this->u32rgb_to_color(cmd.fore_color);
 
             uint8_t * base = const_cast<uint8_t*>(glyph_fragments.data());
             uint8_t * p    = base;
 
             for (size_t x = 0; x < glyph_fragments.cx(); x++)
             {
-                p[0] = c0;
-                p[1] = c1;
-                p[2] = c2;
+                p[0] = color.red();
+                p[1] = color.green();
+                p[2] = color.blue();
 
                 p += 3;
             }
@@ -508,7 +474,7 @@ public:
 
         {
             bool has_delta_byte = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
-            const uint32_t color = this->u32rgb_to_u32bgr(cmd.back_color);
+            const Color color = this->u32rgb_to_color(cmd.back_color);
 
             StaticStream aj(cmd.data, cmd.data_len);
 
@@ -583,7 +549,7 @@ public:
                 return ;
             }
 
-            fgcolor = RGBtoBGR(fgcolor);
+            const Color fg_color = this->u32_to_color(fgcolor);
 
             uint32_t uni[128];
             size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
@@ -610,7 +576,7 @@ public:
                             ++i;
                         }
                         if (yy + y >= screen_rect.y && xx + x >= screen_rect.x && xx + x < screen_rect.right() && font_item->data[i + yy] & oc) {
-                            this->drawable.draw_pixel(x + xx, y + yy, fgcolor);
+                            this->drawable.draw_pixel(x + xx, y + yy, fg_color);
                         }
                         oc >>= 1;
                     }
@@ -627,7 +593,7 @@ public:
         int16_t endx;
         int16_t endy;
 
-        const uint32_t color = this->u32rgb_to_u32bgr(cmd.PenColor);
+        const Color color = this->u32rgb_to_color(cmd.PenColor);
 
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
             endx = startx + cmd.deltaEncodedPoints[i].xDelta;
@@ -649,7 +615,7 @@ public:
         int16_t endx;
         int16_t endy;
 
-        const uint32_t BrushColor = this->u32rgb_to_u32bgr(cmd.BrushColor);
+        const Color BrushColor = this->u32rgb_to_color(cmd.BrushColor);
 
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
             endx = startx + cmd.deltaPoints[i].xDelta;
@@ -675,7 +641,7 @@ public:
         int16_t endx;
         int16_t endy;
 
-        const uint32_t foreColor = this->u32rgb_to_u32bgr(cmd.foreColor);
+        const Color foreColor = this->u32rgb_to_color(cmd.foreColor);
 
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
             endx = startx + cmd.deltaPoints[i].xDelta;
@@ -694,9 +660,9 @@ public:
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
             size_t size, const Bitmap & bmp) {
-        Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
-                    , bitmap_data.dest_right - bitmap_data.dest_left + 1
-                    , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
+        const Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
+                          , bitmap_data.dest_right - bitmap_data.dest_left + 1
+                          , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
 
         const Rect trect = rectBmp.intersect(this->drawable.width(), this->drawable.height());
 
