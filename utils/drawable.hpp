@@ -413,6 +413,9 @@ public:
     }())
     {}
 
+    DrawableImpl(DrawableImpl const &) = delete;
+    DrawableImpl& operator=(DrawableImpl const &) = delete;
+
     ~DrawableImpl()
     {
         delete[] this->data_;
@@ -1061,58 +1064,14 @@ public:
     }
 };  // struct DrawablePointerCache
 
-struct Drawable {
+
+class Drawable
+: DrawableImpl<DepthColor::color24>
+{
     using DrawableImplPrivate = DrawableImpl<DepthColor::color24>;
+    DrawableImplPrivate & impl() noexcept { return *this; }
+    const DrawableImplPrivate & impl() const noexcept { return *this; }
 
-    using Color = DrawableImplPrivate::color_t;
-
-    static const std::size_t Bpp = DrawableImplPrivate::Bpp;
-
-    const uint8_t * data() const noexcept {
-        return this->impl.data();
-    }
-
-    Color u32_to_color(uint32_t color) const {
-        return DrawableImplPrivate::traits::u32_to_color(color);
-    }
-
-    Color u32bgr_to_color(uint32_t color) const {
-        return DrawableImplPrivate::traits::u32bgr_to_color(color);
-    }
-
-    const uint8_t * data(int x, int y) const noexcept {
-        return this->impl.data();
-    }
-
-    uint16_t width() const noexcept {
-        return this->impl.width();
-    }
-
-    uint16_t height() const noexcept {
-        return this->impl.height();
-    }
-
-    unsigned size() const noexcept {
-        return this->impl.size();
-    }
-
-    size_t rowsize() const noexcept {
-        return this->impl.rowsize();
-    }
-
-    size_t pix_len() const noexcept {
-        return this->impl.pix_len();
-    }
-
-    static constexpr uint8_t nbbytes_color() noexcept {
-        return DrawableImplPrivate::nbbytes_color();
-    }
-
-    static constexpr uint8_t bpp() noexcept {
-        return DrawableImplPrivate::bpp();
-    }
-
-private:
     enum {
         char_width  = 7,
         char_height = 12
@@ -1127,8 +1086,6 @@ private:
         ts_height = char_height,
         size_str_timestamp = ts_max_length + 1
     };
-
-    DrawableImplPrivate impl;
 
     uint8_t timestamp_save[ts_width * ts_height * Bpp];
     uint8_t timestamp_data[ts_width * ts_height * Bpp];
@@ -1160,8 +1117,13 @@ private:
 public:
     DrawablePointer default_pointer;
 
+    using Color = DrawableImplPrivate::color_t;
+
+    static const std::size_t Bpp = DrawableImplPrivate::Bpp;
+
+
     Drawable(int width, int height)
-    : impl(width, height)
+    : DrawableImplPrivate(width, height)
     , previous_timestamp_length(0)
     , tracked_area(0, 0, 0, 0)
     , tracked_area_changed(false)
@@ -1174,6 +1136,50 @@ public:
         this->initialize_default_pointer();
         memset(this->timestamp_data, 0xFF, sizeof(this->timestamp_data));
         memset(this->previous_timestamp, 0x07, sizeof(this->previous_timestamp));
+    }
+
+    const uint8_t * data() const noexcept {
+        return this->impl().data();
+    }
+
+    Color u32_to_color(uint32_t color) const {
+        return DrawableImplPrivate::traits::u32_to_color(color);
+    }
+
+    Color u32bgr_to_color(uint32_t color) const {
+        return DrawableImplPrivate::traits::u32bgr_to_color(color);
+    }
+
+    const uint8_t * data(int x, int y) const noexcept {
+        return this->impl().data();
+    }
+
+    uint16_t width() const noexcept {
+        return this->impl().width();
+    }
+
+    uint16_t height() const noexcept {
+        return this->impl().height();
+    }
+
+    unsigned size() const noexcept {
+        return this->impl().size();
+    }
+
+    size_t rowsize() const noexcept {
+        return this->impl().rowsize();
+    }
+
+    size_t pix_len() const noexcept {
+        return this->impl().pix_len();
+    }
+
+    static constexpr uint8_t nbbytes_color() noexcept {
+        return DrawableImplPrivate::nbbytes_color();
+    }
+
+    static constexpr uint8_t bpp() noexcept {
+        return DrawableImplPrivate::bpp();
     }
 
     void set_mouse_cursor_pos(int x, int y) {
@@ -1744,7 +1750,7 @@ public:
     /*
      * The name doesn't say it : mem_blt COPIES a decoded bitmap from
      * a cache (data) and insert a subpart (srcx, srcy) to the local
-     * image cache (this->impl.first_pixel()) a the given position (rect).
+     * image cache (this->impl().first_pixel()) a the given position (rect).
      */
     void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
         this->mem_blt_op<Ops::CopySrc>(rect, bmp, srcx, srcy);
@@ -1777,7 +1783,7 @@ private:
             this->tracked_area_changed = true;
         }
 
-        this->impl.mem_blt(trect, bmp, srcx, srcy, Op(), c...);
+        this->impl().mem_blt(trect, bmp, srcx, srcy, Op(), c...);
     }
 
 public:
@@ -1845,7 +1851,6 @@ public:
             // |      | RPN: PSDPxax                  |
             // +------+-------------------------------+
             case 0xB8:
-                using traits = DrawableImplPrivate::traits;
                 this->mem_blt_op<Ops::Op_0xB8>(rect, bmp, srcx, srcy, pattern_color);
             break;
 
@@ -1863,7 +1868,7 @@ public:
             this->tracked_area_changed = true;
         }
 
-        this->impl.component_rect(trect, 0);
+        this->impl().component_rect(trect, 0);
     }
 
     void white_color(const Rect & rect)
@@ -1874,7 +1879,7 @@ public:
             this->tracked_area_changed = true;
         }
 
-        this->impl.component_rect(trect, 0xFF);
+        this->impl().component_rect(trect, 0xFF);
     }
 
 private:
@@ -1886,7 +1891,7 @@ private:
             this->tracked_area_changed = true;
         }
 
-        this->impl.invert_color(trect);
+        this->impl().invert_color(trect);
     }
 
 // 2.2.2.2.1.1.1.6 Binary Raster Operation (ROP2_OPERATION)
@@ -1904,54 +1909,54 @@ public:
         }
         switch (rop) {
         case 0x01: // R2_BLACK
-            this->impl.draw_ellipse<Ops::Op2_0x01>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x01>(el, fill, color);
             break;
         case 0x02: // R2_NOTMERGEPEN
-            this->impl.draw_ellipse<Ops::Op2_0x02>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x02>(el, fill, color);
             break;
         case 0x03: // R2_MASKNOTPEN
-            this->impl.draw_ellipse<Ops::Op2_0x03>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x03>(el, fill, color);
             break;
         case 0x04: // R2_NOTCOPYPEN
-            this->impl.draw_ellipse<Ops::Op2_0x04>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x04>(el, fill, color);
             break;
         case 0x05: // R2_MASKPENNOT
-            this->impl.draw_ellipse<Ops::Op2_0x05>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x05>(el, fill, color);
             break;
         case 0x06:  // R2_NOT
-            this->impl.draw_ellipse<Ops::Op2_0x06>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x06>(el, fill, color);
             break;
         case 0x07:  // R2_XORPEN
-            this->impl.draw_ellipse<Ops::Op2_0x07>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x07>(el, fill, color);
             break;
         case 0x08:  // R2_NOTMASKPEN
-            this->impl.draw_ellipse<Ops::Op2_0x08>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x08>(el, fill, color);
             break;
         case 0x09:  // R2_MASKPEN
-            this->impl.draw_ellipse<Ops::Op2_0x09>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x09>(el, fill, color);
             break;
         case 0x0A:  // R2_NOTXORPEN
-            this->impl.draw_ellipse<Ops::Op2_0x0A>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x0A>(el, fill, color);
             break;
         case 0x0B:  // R2_NOP
             break;
         case 0x0C:  // R2_MERGENOTPEN
-            this->impl.draw_ellipse<Ops::Op2_0x0C>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x0C>(el, fill, color);
             break;
         case 0x0D:  // R2_COPYPEN
-            this->impl.draw_ellipse<Ops::Op2_0x0D>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x0D>(el, fill, color);
             break;
         case 0x0E:  // R2_MERGEPENNOT
-            this->impl.draw_ellipse<Ops::Op2_0x0E>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x0E>(el, fill, color);
             break;
         case 0x0F:  // R2_MERGEPEN
-            this->impl.draw_ellipse<Ops::Op2_0x0F>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x0F>(el, fill, color);
             break;
         case 0x10: // R2_WHITE
-            this->impl.draw_ellipse<Ops::Op2_0x10>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x10>(el, fill, color);
             break;
         default:
-            this->impl.draw_ellipse<Ops::Op2_0x0D>(el, fill, color);
+            this->impl().draw_ellipse<Ops::Op2_0x0D>(el, fill, color);
             break;
         }
     }
@@ -1964,7 +1969,7 @@ public:
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
         }
-        this->impl.opaque_rect(rect, color);
+        this->impl().opaque_rect(rect, color);
     }
 
     void draw_pixel(int16_t x, int16_t y, const Color color)
@@ -1972,7 +1977,7 @@ public:
         if (this->tracked_area.has_intersection(x, y)) {
             this->tracked_area_changed = true;
         }
-        this->impl.draw_pixel(x, y, color);
+        this->impl().draw_pixel(x, y, color);
     }
 
 private:
@@ -1982,7 +1987,7 @@ private:
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
         }
-        this->impl.patblt_op(rect, color, Op());
+        this->impl().patblt_op(rect, color, Op());
     }
 
 public:
@@ -2109,7 +2114,7 @@ public:
             this->tracked_area_changed = true;
         }
 
-        this->impl.patblt_op_ex<Op>(rect, brush_data, back_color, fore_color);
+        this->impl().patblt_op_ex<Op>(rect, brush_data, back_color, fore_color);
     }
 
     void patblt_ex(const Rect & rect, const uint8_t rop,
@@ -2165,7 +2170,7 @@ public:
             this->tracked_area_changed = true;
         }
 
-        this->impl.scr_blt_op<Op>(drect, srcx, srcy);
+        this->impl().scr_blt_op<Op>(drect, srcx, srcy);
     }
 
 public:
@@ -2301,10 +2306,10 @@ public:
         }
 
         if (rop == 0x06) {
-            this->impl.line(x, y, endx, endy, color, Ops::InvertTarget());
+            this->impl().line(x, y, endx, endy, color, Ops::InvertTarget());
         }
         else {
-            this->impl.line(x, y, endx, endy, color, Ops::CopySrc());
+            this->impl().line(x, y, endx, endy, color, Ops::CopySrc());
         }
     }
 
@@ -2316,10 +2321,10 @@ public:
         }
 
         if (rop == 0x06) {
-            this->impl.vertical_line(x, y, endy, color, Ops::InvertTarget());
+            this->impl().vertical_line(x, y, endy, color, Ops::InvertTarget());
         }
         else {
-            this->impl.vertical_line(x, y, endy, color, Ops::CopySrc());
+            this->impl().vertical_line(x, y, endy, color, Ops::CopySrc());
         }
     }
 
@@ -2331,10 +2336,10 @@ public:
         }
 
         if (rop == 0x06) {
-            this->impl.horizontal_line(x, y, endx, color, Ops::InvertTarget());
+            this->impl().horizontal_line(x, y, endx, color, Ops::InvertTarget());
         }
         else {
-            this->impl.horizontal_line(x, y, endx, color, Ops::CopySrc());
+            this->impl().horizontal_line(x, y, endx, color, Ops::CopySrc());
         }
     }
 
@@ -2344,14 +2349,12 @@ public:
     }
 
     void use_cached_pointer(unsigned int index) {
-        const DrawablePointer & pointer = this->pointer_cache.get_cached_pointer(index);
-
-        this->current_pointer = &pointer;
+        this->current_pointer = &this->pointer_cache.get_cached_pointer(index);
     }
 
     void set_row(size_t rownum, const uint8_t * data)
     {
-        memcpy(this->impl.row_data(rownum), data, this->rowsize());
+        memcpy(this->impl().row_data(rownum), data, this->rowsize());
     }
 
     void trace_mouse() {
@@ -2400,18 +2403,18 @@ private:
     void priv_trace_mouse(Tracer tracer, int x, int y)
     {
         uint8_t * psave = this->save_mouse;
-        const uint8_t * data_end = this->impl.last_pixel();
+        const uint8_t * data_end = this->impl().last_pixel();
 
         for (DrawablePointer::ContiguousPixels const & contiguous_pixels : this->current_pointer->contiguous_pixels_view()) {
-            uint8_t  * pixel_start = this->impl.first_pixel(contiguous_pixels.x + x, contiguous_pixels.y + y);
+            uint8_t  * pixel_start = this->impl().first_pixel(contiguous_pixels.x + x, contiguous_pixels.y + y);
             unsigned   lg          = contiguous_pixels.data_size;
-            if (pixel_start + lg <= this->impl.first_pixel()) {
+            if (pixel_start + lg <= this->impl().first_pixel()) {
                 continue;
             }
             tracer.reset();
-            if (pixel_start < this->impl.first_pixel()) {
+            if (pixel_start < this->impl().first_pixel()) {
                 lg -= tracer.set(this->data() - pixel_start);
-                pixel_start = this->impl.first_pixel();
+                pixel_start = this->impl().first_pixel();
             }
             if (pixel_start > data_end) {
                 break;
@@ -2466,7 +2469,7 @@ private:
         this->previous_timestamp_length = timestamp_length;
 
         uint8_t * tsave = this->timestamp_save;
-        uint8_t * buf = this->impl.first_pixel() + (has_clear ? this->priv_offset_timestamp(timestamp_length) : 0);
+        uint8_t * buf = this->impl().first_pixel() + (has_clear ? this->priv_offset_timestamp(timestamp_length) : 0);
         const size_t n = timestamp_length * char_width * Bpp;
         for (size_t y = 0; y < ts_height ; ++y, buf += this->rowsize(), tsave += n) {
             memcpy(tsave, buf, n);
@@ -2477,7 +2480,7 @@ private:
     void priv_clear_timestamp(size_t offset)
     {
         const uint8_t * tsave = this->timestamp_save;
-        uint8_t * buf = this->impl.first_pixel() + offset;
+        uint8_t * buf = this->impl().first_pixel() + offset;
         const size_t n = this->previous_timestamp_length * char_width * Bpp;
         for (size_t y = 0; y < ts_height ; ++y, buf += this->rowsize(), tsave += n) {
             memcpy(buf, tsave, n);

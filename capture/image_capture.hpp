@@ -35,9 +35,9 @@ public:
     unsigned zoom_factor;
     unsigned scaled_width;
     unsigned scaled_height;
-    Drawable & drawable;
+    const Drawable & drawable;
 
-    ImageCapture(Transport & trans, unsigned width, unsigned height, Drawable & drawable)
+    ImageCapture(Transport & trans, unsigned width, unsigned height, const Drawable & drawable)
     : trans(trans)
     , zoom_factor(100)
     , scaled_width(width)
@@ -64,14 +64,14 @@ public:
         }
     }
 
-    void dump24() {
+    void dump24() const {
         ::transport_dump_png24(&this->trans, this->drawable.data(),
             this->drawable.width(), this->drawable.height(),
             this->drawable.rowsize(),
             true);
     }
 
-    void scale_dump24() {
+    void scale_dump24() const {
         unique_ptr<uint8_t[]> scaled_data(new uint8_t[this->scaled_width * this->scaled_height * 3]);
         scale_data(scaled_data.get(), this->drawable.data(),
                    this->scaled_width, this->drawable.width(),
