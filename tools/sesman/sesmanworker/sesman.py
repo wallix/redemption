@@ -113,7 +113,7 @@ class Sesman():
         self.shared[u'auth_channel_result'] = u''
         self.shared[u'auth_channel_target'] = u''
 
-        self.internal_mod = False
+        self.internal_target = False
         self.check_session_parameters = False
 
     def set_language_from_keylayout(self):
@@ -430,6 +430,10 @@ class Sesman():
                     return None, TR(u"auth_failed_wab %s") % wab_login
 
             # At this point, User is authentified.
+            if wab_login.startswith('_OTP_'):
+                real_wab_login = self.engine.get_username()
+                self.shared[u'login'] = self.shared.get(u'login').replace(wab_login,
+                                                                          real_wab_login)
             self.language = self.engine.get_language()
             if self.engine.get_force_change_password():
                 self.send_data({u'rejected': TR(u'changepassword')})
@@ -500,8 +504,8 @@ class Sesman():
                                # , u'proto_dest'              : proto_dest if proto_dest != u'INTERNAL' else u'RDP'
                                , u'module'                  : u'transitory' if self.target_service_name != u'INTERNAL' else u'INTERNAL'
                                }
-                if data_to_send.has_key(u'module') and not self.internal_mod:
-                    self.internal_mod = True if data_to_send[u'module'] == u'INTERNAL' else False
+                if data_to_send.has_key(u'module') and not self.internal_target:
+                    self.internal_target = True if data_to_send[u'module'] == u'INTERNAL' else False
                 self.send_data(data_to_send)
                 _status = True
             elif self.shared.get(u'selector') == MAGICASK:
@@ -609,28 +613,28 @@ class Sesman():
                     s = services[0]
                     data_to_send = {}
                     data_to_send[u'module'] = u'transitory' if s[2] != u'INTERNAL' else u'INTERNAL'
-                    if s[2] == u'APP':
-                        data_to_send[u'target_login'] = '@'.join(s[1].split('@')[:-1])
-                        data_to_send[u'target_device'] = s[4]
-                        # data_to_send[u'proto_dest'] = s[2]
+                    # service_login (s[1]) format:
+                    # target_login@device_name:service_name
+                    # target_login can contains '@'
+                    # device_name and service_name can not contain ':', nor '@'
 
-                        self._full_user_device_account = u"%s@%s:%s" % ( target_login
-                                                                       , target_device
-                                                                       , wab_login
-                                                                       )
-                    else:
-                        data_to_send[u'target_login'] = '@'.join(s[1].split('@')[:-1])
-                        data_to_send[u'target_device'] = s[4]
-                        # data_to_send[u'proto_dest'] = s[2] if s[2] != u'INTERNAL' else u'RDP'
+                    # service_split = [ *target_login* , device_name:service_name ]
+                    service_split = s[1].split('@')
+                    target_login = '@'.join(service_split[:-1])
+                    # device_service_split = [ device_name, service_name ]
+                    device_service_split = s[1].split('@')[-1].split(':')
+                    device_name = device_service_split[0]
+                    service_name = device_service_split[-1]
 
-                        self._full_user_device_account = u"%s@%s:%s" % ( self.shared.get(u'target_login')
-                                                                       , self.shared.get(u'target_device')
-                                                                       , self.shared.get(u'login')
-                                                                       )
-                    if data_to_send.has_key(u'module') and not self.internal_mod:
-                        self.internal_mod = True if data_to_send[u'module'] == u'INTERNAL' else False
+                    data_to_send[u'target_login'] = target_login
+                    data_to_send[u'target_device'] = device_name
+                    self._full_user_device_account = u"%s@%s:%s" % (target_login,
+                                                                    device_name,
+                                                                    wab_login)
+                    if not self.internal_target:
+                        self.internal_target = True if s[2] == u'INTERNAL' else False
                     self.send_data(data_to_send)
-                    self.target_service_name = s[1].split(':')[-1]
+                    self.target_service_name = service_name
                     # Logger().info("Only one target : service name %s" % self.target_service_name)
                     _status = True
                 else:
@@ -1063,7 +1067,7 @@ class Sesman():
                                     self.shared[u'auth_channel_target'] = u''
                             # r can be empty
                             # else: # (if self.proxy_conx in r)
-                            #     if not self.internal_mod:
+                            #     if not self.internal_target:
                             #         Logger().error(u'break connection')
                             #         release_reason = u'Break connection'
                             #         break

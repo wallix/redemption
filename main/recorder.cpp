@@ -322,7 +322,7 @@ int main(int argc, char** argv)
     memcpy(cctx.crypto_key, ini.crypto.key0, sizeof(cctx.crypto_key));
     memcpy(cctx.hmac_key,   ini.crypto.key1, sizeof(cctx.hmac_key  ));
 
-    timeval  begin_record    ;
+    timeval  begin_record = { 0, 0 };
     unsigned file_count   = 0;
     try {
         if (infile_is_encrypted == false) {
@@ -520,10 +520,9 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
     return return_code;
 }   // do_recompress
 
-static int do_record( Transport & in_wrm_trans, const timeval begin_capture
-                    , const timeval end_capture, uint32_t verbose
+static int do_record( Transport & in_wrm_trans, const timeval begin_capture, const timeval end_capture
                     , std::string & output_filename, Inifile & ini, uint32_t order_count, uint32_t clear
-                    , unsigned zoom, bool show_file_metadata, bool show_statistics) {
+                    , unsigned zoom, bool show_file_metadata, bool show_statistics, uint32_t verbose) {
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
 
     if (show_file_metadata) {
@@ -579,9 +578,18 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture
             clear_files_flv_meta_png(outfile_path, outfile_basename);
         }
 
-        capture.reset(new Capture( begin_capture, player.screen_rect.cx, player.screen_rect.cy
+        if (ini.video.wrm_compression_algorithm == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
+            ini.video.wrm_compression_algorithm = player.info_compression_algorithm;
+        }
+
+        if (ini.video.wrm_color_depth_selection_strategy == USE_ORIGINAL_COLOR_DEPTH) {
+            ini.video.wrm_color_depth_selection_strategy = player.info_bpp;
+        }
+
+        capture.reset(new Capture( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
+                                 , player.screen_rect.cx, player.screen_rect.cy
                                  , player.info_bpp, 24, outfile_path, outfile_path, ini.video.hash_path
-                                 , outfile_basename, false, false, NULL, ini));
+                                 , outfile_basename, false, false, NULL, ini, true));
         if (capture->capture_png){
             capture->psc->zoom(zoom);
         }
@@ -647,9 +655,8 @@ static int recompress_or_record( CryptoContext & cctx, Transport & in_wrm_trans,
         if (verbose) {
             cout << "[A]"<< endl;
         }
-        return do_record( in_wrm_trans, begin_capture, end_capture, verbose
-                        , output_filename, ini, order_count, clear, zoom
-                        , show_file_metadata, show_statistics);
+        return do_record( in_wrm_trans, begin_capture, end_capture, output_filename, ini, order_count
+                        , clear, zoom, show_file_metadata, show_statistics, verbose);
     }
     else {
         if (verbose) {
