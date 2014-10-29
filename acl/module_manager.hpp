@@ -45,6 +45,7 @@
 #include "internal/flat_selector2_mod.hpp"
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
+#include "internal/interactive_password_mod.hpp"
 #include "internal/widget_test_mod.hpp"
 
 #include "mod_osd.hpp"
@@ -58,6 +59,7 @@
 #define STRMODULE_TRANSITORY       "transitory"
 #define STRMODULE_CLOSE            "close"
 #define STRMODULE_CONNECTION       "connection"
+#define STRMODULE_PASSWORD         "interactive_password"
 #define STRMODULE_MESSAGE          "message"
 #define STRMODULE_RDP              "RDP"
 #define STRMODULE_VNC              "VNC"
@@ -80,6 +82,7 @@ enum {
     MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE,
     MODULE_INTERNAL_DIALOG_VALID_MESSAGE,
     MODULE_INTERNAL_DIALOG_CHALLENGE,
+    MODULE_INTERNAL_PASSWORD,
     MODULE_INTERNAL_BOUNCER2,
     MODULE_INTERNAL_TEST,
     MODULE_INTERNAL_WIDGET2_SELECTOR,
@@ -205,6 +208,10 @@ public:
         else if (!strcmp(module_cstr, STRMODULE_VALID)) {
             LOG(LOG_INFO, "===========> MODULE_DIALOG_VALID");
             return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
+        }
+        else if (!strcmp(module_cstr, STRMODULE_PASSWORD)) {
+            LOG(LOG_INFO, "===========> MODULE_INTERACTIVE_PASSWORD");
+            return MODULE_INTERNAL_PASSWORD;
         }
         else if (!strcmp(module_cstr, STRMODULE_TRANSITORY)) {
             LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
@@ -499,7 +506,16 @@ public:
             }
             LOG(LOG_INFO, "ModuleManager::internal module Close ready");
             break;
-
+        case MODULE_INTERNAL_PASSWORD:
+            {
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Interactive Password'");
+                this->mod = new InteractivePasswordMod(this->ini,
+                                                       this->front,
+                                                       this->front.client_info.width,
+                                                       this->front.client_info.height);
+                LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Password' ready");
+            }
+            break;
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
         case MODULE_INTERNAL_WIDGET2_DIALOG:
             {

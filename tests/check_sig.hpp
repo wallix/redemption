@@ -52,7 +52,7 @@ inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
 
 inline bool check_sig(Drawable & data, char * message, const char * shasig)
 {
-   return check_sig(data.data, data.height, data.rowsize, message, shasig);
+   return check_sig(data.data(), data.height(), data.rowsize(), message, shasig);
 }
 
 

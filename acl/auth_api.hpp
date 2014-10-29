@@ -40,7 +40,7 @@ class NullAuthentifier : public auth_api {
 };
 
 
-NullAuthentifier * get_null_authentifier() {
+inline NullAuthentifier * get_null_authentifier() {
     static NullAuthentifier auth;
 
     return &auth;

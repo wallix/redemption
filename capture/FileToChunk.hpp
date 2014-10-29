@@ -41,6 +41,8 @@ public:
 
     struct RDPChunkedDevice * consumers[10];
 
+    timeval record_now;
+
     bool meta_ok;
 
     uint32_t verbose;
@@ -144,7 +146,9 @@ public:
                 throw;
             }
 
-            LOG(LOG_INFO,"receive error %u : end of transport", e.id);
+            if (this->verbose) {
+                LOG(LOG_INFO,"receive error %u : end of transport", e.id);
+            }
             // receive error, end of transport
             return false;
         }
@@ -210,9 +214,11 @@ public:
                 }
             }
 
-            this->stream.p = this->stream.end;
+            this->stream.p = this->stream.get_data();
 
-            this->meta_ok = true;
+            if (!this->meta_ok) {
+                this->meta_ok = true;
+            }
             break;
         case RESET_CHUNK:
             this->info_compression_algorithm = 0;

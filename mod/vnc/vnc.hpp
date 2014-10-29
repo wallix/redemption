@@ -2158,7 +2158,7 @@ public:
     {
         switch (event) {
         case NOTIFY_SUBMIT:
-            this->ini.context_set_value(AUTHID_PASSWORD,
+            this->ini.context_set_value(AUTHID_TARGET_PASSWORD,
                                         this->challenge.password_edit.get_text());
 
             this->screen.clear();

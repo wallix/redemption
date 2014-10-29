@@ -164,8 +164,8 @@ struct TestDraw : DrawApi
     void save_to_png(const char * filename)
     {
         std::FILE * file = fopen(filename, "w+");
-        dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
+        dump_png24(file, this->gd.data(), this->gd.width(),
+                   this->gd.height(), this->gd.rowsize(), true);
         fclose(file);
     }
 };
@@ -177,8 +177,8 @@ public:
 
     WidgetCompositeRect(TestDraw & drawable)
     : WidgetComposite(drawable, Rect(0, 0,
-                                      drawable.gd.drawable.width,
-                                      drawable.gd.drawable.height),
+                                      drawable.gd.width(),
+                                      drawable.gd.height()),
                       *this, NULL)
     , color(0x27642F)
     {}
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     //drawable.save_to_png("/tmp/composite.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
     "\x42\xfd\x22\x64\x4d\xb8\xea\xfd\xf8\x95\x7b\x4d\x51\x98\x9d\x67\xb5\xe6\x82\xba"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -242,7 +242,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
 
     //drawable.save_to_png("/tmp/composite2.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
     "\xdf\x6a\xf5\x43\xba\x3f\xf7\xce\xeb\x2e\x8c\xe7\xa9\xf0\x3c\x1b\x78\x9f\x58\x20"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -256,7 +256,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
 
     //drawable.save_to_png("/tmp/composite3.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
     "\xc8\x83\xe3\x4b\xe2\xd8\x39\x0c\xbe\x07\x93\x2f\x36\x24\x2e\xc1\x85\xae\x1a\x61"
     )){
         BOOST_CHECK_MESSAGE(false, message);

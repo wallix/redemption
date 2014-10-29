@@ -70,10 +70,12 @@ private:
     int     last_x;
     int     last_y;
 
+    bool    clear_png;
+
 public:
     Capture( const timeval & now, int width, int height, int mod_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
-           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini)
+           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini, bool externally_generated_breakpoint = false)
     : capture_wrm(ini.video.capture_wrm)
     , capture_drawable(ini.video.capture_wrm||(ini.video.png_limit > 0))
     , capture_png(ini.video.png_limit > 0)
@@ -91,6 +93,7 @@ public:
     , last_now(now)
     , last_x(width / 2)
     , last_y(height / 2)
+    , clear_png(clear_png)
     {
         if (this->capture_drawable) {
             this->drawable = new RDPDrawable(width, height, capture_bpp);
@@ -104,7 +107,7 @@ public:
             this->png_trans = new OutFilenameSequenceTransport( FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, png_path
                                                               , basename, ".png", ini.video.capture_groupid, authentifier);
             this->psc = new StaticCapture( now, *this->png_trans, this->png_trans->seqgen(), width, height
-                                         , clear_png, ini, this->drawable->drawable);
+                                         , clear_png, ini, this->drawable->impl());
         }
 
         if (this->capture_wrm) {
@@ -141,7 +144,7 @@ public:
                                                               , width, height, ini.video.capture_groupid, authentifier);
             }
             this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
-                                         , *this->pnc_bmp_cache, *this->drawable, ini);
+                                         , *this->pnc_bmp_cache, *this->drawable, ini, externally_generated_breakpoint);
             this->pnc->recorder.send_input = true;
         }
 
@@ -173,7 +176,9 @@ public:
         delete this->pnc_bmp_cache;
         delete this->drawable;
 
-        clear_files_flv_meta_png(this->png_path.c_str(), this->basename.c_str());
+        if (this->clear_png) {
+            clear_files_flv_meta_png(this->png_path.c_str(), this->basename.c_str());
+        }
     }
 
     const SequenceGenerator * seqgen() const
@@ -224,7 +229,7 @@ public:
         this->capture_event.reset();
 
         if (this->capture_drawable) {
-            this->drawable->drawable.set_mouse_cursor_pos(x, y);
+            this->drawable->set_mouse_cursor_pos(x, y);
         }
 
         this->last_now = now;
@@ -432,7 +437,20 @@ public:
 
     virtual void set_pointer_display() {
         if (this->capture_drawable) {
-            this->drawable->drawable.dont_show_mouse_cursor = true;
+            this->drawable->show_mouse_cursor(false);
+        }
+    }
+
+    // toggles externally genareted breakpoint.
+    virtual void external_breakpoint() {
+        if (this->capture_wrm) {
+            this->pnc->external_breakpoint();
+        }
+    }
+
+    virtual void external_time(const timeval & now) {
+        if (this->capture_wrm) {
+            this->pnc->external_time(now);
         }
     }
 };

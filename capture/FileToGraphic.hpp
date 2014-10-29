@@ -151,6 +151,37 @@ public:
     //LzmaCompressionInTransport   lcit;
     SnappyCompressionInTransport scit;
 
+    struct Statistics {
+        uint32_t DstBlt;
+        uint32_t MultiDstBlt;
+        uint32_t PatBlt;
+        uint32_t MultiPatBlt;
+        uint32_t OpaqueRect;
+        uint32_t MultiOpaqueRect;
+        uint32_t ScrBlt;
+        uint32_t MultiScrBlt;
+        uint32_t MemBlt;
+        uint32_t Mem3Blt;
+        uint32_t LineTo;
+        uint32_t GlyphIndex;
+        uint32_t Polyline;
+
+        uint32_t CacheBitmap;
+        uint32_t CacheColorTable;
+        uint32_t CacheGlyph;
+
+        uint32_t FrameMarker;
+
+        uint32_t BitmapUpdate;
+
+        uint32_t CachePointer;
+        uint32_t PointerIndex;
+
+        uint32_t graphics_update_chunk;
+        uint32_t bitmap_update_chunk;
+        uint32_t timestamp_chunk;
+    } statistics;
+
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
         : stream(65536)
         , trans_source(trans)
@@ -220,6 +251,7 @@ public:
         , gzcit(*trans)
         //, lcit(*trans, verbose)
         , scit(*trans)
+        , statistics()
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
 
@@ -280,7 +312,15 @@ public:
                 this->chunk_size = header.in_uint32_le();
                 this->remaining_order_count = this->chunk_count = header.in_uint16_le();
 
-                if (this->chunk_type != LAST_IMAGE_CHUNK && this->chunk_type != PARTIAL_IMAGE_CHUNK){
+                if (this->chunk_type != LAST_IMAGE_CHUNK && this->chunk_type != PARTIAL_IMAGE_CHUNK) {
+                    switch (this->chunk_type) {
+                        case RDP_UPDATE_ORDERS:
+                            this->statistics.graphics_update_chunk++; break;
+                        case RDP_UPDATE_BITMAP:
+                            this->statistics.bitmap_update_chunk++;   break;
+                        case TIMESTAMP:
+                            this->statistics.timestamp_chunk++;       break;
+                    }
                     if (this->chunk_size > 65536){
                         LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
                         return false;
@@ -296,7 +336,9 @@ public:
                     throw;
                 }
 
-                LOG(LOG_INFO,"receive error %u : end of transport", e.id);
+                if (this->verbose) {
+                    LOG(LOG_INFO,"receive error %u : end of transport", e.id);
+                }
                 // receive error, end of transport
                 return false;
             }
@@ -326,6 +368,7 @@ public:
                 switch (header.orderType) {
                     case RDP::AltsecDrawingOrderHeader::FrameMarker:
                     {
+                        this->statistics.FrameMarker++;
                         RDP::FrameMarker order;
 
                         order.receive(stream, header);
@@ -351,6 +394,7 @@ public:
                 case TS_CACHE_BITMAP_COMPRESSED:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
                 {
+                    this->statistics.CacheBitmap++;
                     RDPBmpCache cmd;
                     cmd.receive(this->info_bpp, this->stream, control, header, this->palette);
                     if (this->verbose > 32){
@@ -360,10 +404,12 @@ public:
                 }
                 break;
                 case TS_CACHE_COLOR_TABLE:
+                    this->statistics.CacheColorTable++;
                     LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_COLOR_TABLE (%d)", header.type);
                     break;
                 case TS_CACHE_GLYPH:
                 {
+                    this->statistics.CacheGlyph++;
                     RDPGlyphCache cmd;
                     cmd.receive(this->stream, control, header);
                     if (this->verbose > 32){
@@ -398,12 +444,14 @@ public:
                 const Rect & clip = (control & RDP::BOUNDS)?this->common.clip:this->screen_rect;
                 switch (this->common.order) {
                 case RDP::GLYPHINDEX:
+                    this->statistics.GlyphIndex++;
                     this->glyphindex.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers; i++){
                         this->consumers[i].graphic_device->draw(this->glyphindex, clip, &this->gly_cache);
                     }
                     break;
                 case RDP::DESTBLT:
+                    this->statistics.DstBlt++;
                     this->destblt.receive(this->stream, header);
                     if (this->verbose > 32){
                         this->destblt.log(LOG_INFO, clip);
@@ -413,6 +461,7 @@ public:
                     }
                     break;
                 case RDP::MULTIDSTBLT:
+                    this->statistics.MultiDstBlt++;
                     this->multidstblt.receive(this->stream, header);
                     if (this->verbose > 32){
                         this->multidstblt.log(LOG_INFO, clip);
@@ -422,6 +471,7 @@ public:
                     }
                     break;
                 case RDP::MULTIOPAQUERECT:
+                    this->statistics.MultiOpaqueRect++;
                     this->multiopaquerect.receive(this->stream, header);
                     if (this->verbose > 32){
                         this->multiopaquerect.log(LOG_INFO, clip);
@@ -431,6 +481,7 @@ public:
                     }
                     break;
                 case RDP::MULTIPATBLT:
+                    this->statistics.MultiPatBlt++;
                     this->multipatblt.receive(this->stream, header);
                     if (this->verbose > 32){
                         this->multipatblt.log(LOG_INFO, clip);
@@ -440,6 +491,7 @@ public:
                     }
                     break;
                 case RDP::MULTISCRBLT:
+                    this->statistics.MultiScrBlt++;
                     this->multiscrblt.receive(this->stream, header);
                     if (this->verbose > 32){
                         this->multiscrblt.log(LOG_INFO, clip);
@@ -449,6 +501,7 @@ public:
                     }
                     break;
                 case RDP::PATBLT:
+                    this->statistics.PatBlt++;
                     this->patblt.receive(this->stream, header);
                     if (this->verbose > 32){
                         this->patblt.log(LOG_INFO, clip);
@@ -458,6 +511,7 @@ public:
                     }
                     break;
                 case RDP::SCREENBLT:
+                    this->statistics.ScrBlt++;
                     this->scrblt.receive(this->stream, header);
                     if (this->verbose > 32){
                         this->scrblt.log(LOG_INFO, clip);
@@ -467,6 +521,7 @@ public:
                     }
                     break;
                 case RDP::LINE:
+                    this->statistics.LineTo++;
                     this->lineto.receive(this->stream, header);
                     if (this->verbose > 32){
                         this->lineto.log(LOG_INFO, clip);
@@ -476,6 +531,7 @@ public:
                     }
                     break;
                 case RDP::RECT:
+                    this->statistics.OpaqueRect++;
                     this->opaquerect.receive(this->stream, header);
                     if (this->verbose > 32){
                         this->opaquerect.log(LOG_INFO, clip);
@@ -486,6 +542,7 @@ public:
                     break;
                 case RDP::MEMBLT:
                     {
+                        this->statistics.MemBlt++;
                         this->memblt.receive(this->stream, header);
                         if (this->verbose > 32){
                             this->memblt.log(LOG_INFO, clip);
@@ -504,6 +561,7 @@ public:
                     break;
                 case RDP::MEM3BLT:
                     {
+                        this->statistics.Mem3Blt++;
                         this->mem3blt.receive(this->stream, header);
                         if (this->verbose > 32){
                             this->mem3blt.log(LOG_INFO, clip);
@@ -521,6 +579,7 @@ public:
                     }
                     break;
                 case RDP::POLYLINE:
+                    this->statistics.Polyline++;
                     this->polyline.receive(this->stream, header);
                     if (this->verbose > 32){
                         this->polyline.log(LOG_INFO, clip);
@@ -731,7 +790,8 @@ public:
                 else {
                     if (this->screen_rect.cx != this->info_width ||
                         this->screen_rect.cy != this->info_height) {
-                        LOG(LOG_ERR,"Inconsistant redundant meta chunk");
+                        LOG( LOG_ERR,"Inconsistant redundant meta chunk: (%u x %u) -> (%u x %u)"
+                           , this->screen_rect.cx, this->screen_rect.cy, this->info_width, this->info_height);
                         throw Error(ERR_WRM);
                     }
                 }
@@ -1024,6 +1084,7 @@ public:
                     throw Error(ERR_WRM);
                 }
 
+                this->statistics.BitmapUpdate++;
                 RDPBitmapData bitmap_data;
                 bitmap_data.receive(this->stream);
 
@@ -1061,6 +1122,7 @@ public:
 
                 if (  chunk_size - 8 /*header(8)*/
                     > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
+                    this->statistics.CachePointer++;
                     struct Pointer cursor(Pointer::POINTER_NULL);
                     cursor.width = 32;
                     cursor.height = 32;
@@ -1077,6 +1139,7 @@ public:
                     }
                 }
                 else {
+                    this->statistics.PointerIndex++;
                     Pointer & pi = this->ptr_cache.Pointers[cache_idx];
                     Pointer cursor(Pointer::POINTER_NULL);
                     cursor.width = 32;
@@ -1124,7 +1187,7 @@ public:
             if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
                 break;
             }
-            if (this->end_capture.tv_sec && this->begin_capture < this->record_now) {
+            if (this->end_capture.tv_sec && this->end_capture < this->record_now) {
                 break;
             }
         }

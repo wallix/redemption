@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
     //drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e1.png");
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xb3\xbe\x97\x34\xbe\x84\x7e\xdb\x6b\xd8"
                    "\x9e\x1b\x73\xb2\x6d\x6a\x3f\x2b\xa9\x3a"
                    )){
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
     //drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e2-1.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xb3\xbe\x97\x34\xbe\x84\x7e\xdb\x6b\xd8"
                    "\x9e\x1b\x73\xb2\x6d\x6a\x3f\x2b\xa9\x3a"
                    )){
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
     //drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e2-2.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x79\x18\xe1\x55\xca\x0e\x30\x3b\x1e\xa0"
                    "\x83\xc7\x98\xd2\x73\x88\x83\x01\xe9\x05"
                    )){
