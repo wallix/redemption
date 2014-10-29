@@ -2586,7 +2586,7 @@ private:
     }
 };
 
-void swap(Bitmap & a, Bitmap & b) /*noexcept*/ {
+inline void swap(Bitmap & a, Bitmap & b) noexcept {
     a.swap(b);
 }
 

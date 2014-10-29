@@ -223,12 +223,6 @@ namespace Ops {
 
 
 enum class DepthColor { color8 = 8, color15 = 15, color16 = 16, color24 = 24, color32 = 32 };
-constexpr uint8_t bpp_color_to_nbbyte[] {
-    0, 0, 0, 0, 0, 0, 0, 1,
-    0, 0, 0, 0, 0, 0, 2, 2,
-    0, 0, 0, 0, 0, 0, 0, 3,
-    0, 0, 0, 0, 0, 0, 0, 4,
-};
 
 
 struct DrawableTraitColor24

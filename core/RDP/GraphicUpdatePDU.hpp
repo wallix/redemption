@@ -35,6 +35,7 @@
 #include "RDP/lic.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/fastpath.hpp"
+#include "RDPSerializer.hpp"
 
 // MS-RDPEGDI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
