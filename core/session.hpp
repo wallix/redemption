@@ -133,6 +133,7 @@ struct Session {
 
             constexpr std::array<unsigned, 4> timers{{ 30*60, 10*60, 5*60, 1*60, }};
             unsigned osd_state = timers.size();
+            const bool enable_osd = this->ini->globals.enable_osd;
 
             while (run_session) {
                 unsigned max = 0;
@@ -240,8 +241,9 @@ struct Session {
                                                                   , start_time // proxy start time
                                                                   , now        // acl start time
                                                                   );
+
                                     osd_state = [&](uint32_t enddata) -> unsigned {
-                                        if (!enddata || enddata <= start_time) {
+                                        if (!enddata || enddata <= now) {
                                             return timers.size();
                                         }
                                         unsigned i = timers.rend() - std::lower_bound(
@@ -263,7 +265,7 @@ struct Session {
                             }
                         }
 
-                        {
+                        if (enable_osd) {
                             const uint32_t enddate = this->ini->context.end_date_cnx.get();
                             if (enddate
                             && osd_state < timers.size()
@@ -271,11 +273,17 @@ struct Session {
                             && mm.is_up_and_running()) {
                                 std::string mes;
                                 mes.reserve(128);
-                                mes += TR("connection_closed", *this->ini);
-                                mes += " : ";
-                                mes += std::to_string((enddate - now + 30) / 60);
-                                mes += TR("minutes", *this->ini);
-                                mm.osd_message(mes);
+                                const unsigned minutes = (enddate - now + 30) / 60;
+                                mes += std::to_string(minutes);
+                                mes += ' ';
+                                mes += TR("minute", *this->ini);
+                                if (minutes > 1) {
+                                    mes += "s ";
+                                } else {
+                                    mes += ' ';
+                                }
+                                mes += TR("before_closing", *this->ini);
+                                mm.osd_message(std::move(mes));
                                 ++osd_state;
                             }
                         }

@@ -347,23 +347,25 @@ class ModuleManager : public MMIni
     static const int padh = 16;
 
 public:
-    bool osd_message(std::string message) {
+    void clear_osd_message() {
         if (this->osd) {
             this->osd->delete_self();
         }
+    }
+
+    void osd_message(std::string message) {
+        this->clear_osd_message();
         int w, h;
+        message += "  ";
+        message += TR("disable_osd", this->ini);
         this->front.text_metrics(message.c_str(), w, h);
         w += padw * 2;
         h += padh * 2;
         uint32_t color = BLACK;
-        uint32_t background_color = DARK_GREEN;
-        if (this->front.mod_bpp != this->front.client_info.bpp) {
-            color = color_encode(
-                color_decode_opaquerect(color, this->front.mod_bpp, this->front.mod_palette_rgb),
-                this->front.client_info.bpp);
-            background_color = color_encode(
-                color_decode_opaquerect(background_color, this->front.mod_bpp, this->front.mod_palette_rgb),
-                this->front.client_info.bpp);
+        uint32_t background_color = LIGHT_YELLOW;
+        if (24 != this->front.client_info.bpp) {
+            color = color_encode(color, this->front.client_info.bpp);
+            background_color = color_encode(background_color, this->front.client_info.bpp);
         }
         this->mod = new module_osd(
             *this, Rect(this->front.client_info.width < w ? 0 : (this->front.client_info.width - w) / 2, 0, w, h),
@@ -375,7 +377,6 @@ public:
                 this->front.end_update();
             }
         );
-        return true;
     }
 
 
@@ -396,7 +397,6 @@ public:
     virtual void remove_mod()
     {
         delete this->osd;
-        this->osd = nullptr;
 
         if (this->mod != this->no_mod){
             delete this->mod;

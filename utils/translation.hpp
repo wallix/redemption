@@ -59,7 +59,7 @@ private:
         bool operator!=(const char * k) const noexcept
         { return !(*this == k); }
     };
-    typedef std::array<value_type, 35> trans_t;
+    typedef std::array<value_type, 36> trans_t;
 
     language_t lang;
     trans_t trans;
@@ -129,7 +129,8 @@ private:
         {"target_fail", {"Failed to connect to remote TCP host", "Echec de la connexion à la cible distante"}},
         {"comment", {"Comment", "Commentaire"}},
         {"no_results", {"No results found", "Aucun résultat"}},
-        {"authentication_required", {"Authentication Required", "Authentification Requise"}}
+        {"authentication_required", {"Authentication Required", "Authentification Requise"}},
+        {"disable_osd", {"(hidden with ctrl+esc or left click)", "(cacher avec ctrl+esc ou clic gauche)"}}
     }}
     {
         std::sort(this->trans.begin(), this->trans.end());
