@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xc3\x40\x75\x1e\x15\x45\xd9\x3b\x52\x70\xb7\xc1\x21\x69\x1d\x92\x52\xa8\x91\x36"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xbe\xfa\x1e\x30\xe1\x18\x09\x8e\x83\xa4\x46\x7e\xcd\x2e\x6f\x50\x49\x2c\xf0\x70"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xb6\xe8\xcd\x88\x8f\xb1\xdb\xc5\x0c\x44\x40\x79\x15\xe1\x33\xaf\x4b\xb9\xe5\x56"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x36\x43\x1c\x13\xa6\x40\xe8\x4a\x3f\xbc\x6e\xa9\xd8\xb8\x24\x33\xd5\xd9\x68\x93"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x12\x71\x2e\xd7\x8a\x95\x53\x23\x4c\x84\x0d\xce\xa2\x32\x3a\xc0\xc9\x48\x17\x4c"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -301,7 +301,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x4b\x4f\xaf\x73\xce\xb5\x65\x14\xbf\xa2\xdd\x59\xc2\x23\x54\x8a\xdc\x03\xd4\xf8"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -311,7 +311,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close-exit2.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x31\xd8\xbc\x23\xb4\xc6\xac\xc1\x33\x44\x4b\x76\x93\x82\x3a\x90\x70\x11\x88\xca"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -328,7 +328,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close-exit3.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x31\xd8\xbc\x23\xb4\xc6\xac\xc1\x33\x44\x4b\x76\x93\x82\x3a\x90\x70\x11\x88\xca"
     )){
         BOOST_CHECK_MESSAGE(false, message);

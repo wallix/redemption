@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
     // drawable.save_to_png(OUTPUT_FILE_PATH "multiline.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x79\x04\xc6\xe6\x88\x42\xfc\x31\xb5\x18"
         "\xf9\xb8\xce\xca\x8b\x75\xb6\xf0\xee\x96"
     )){
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline2.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xc6\x2e\xbe\xa7\xa6\x8b\x95\x65\x10\xc4"
         "\x4d\x8c\x25\x54\xcf\xd9\x7e\x0a\x19\xc9"
     )){
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline3.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x7b\x75\x7c\x63\x30\x5c\x76\xb8\x48\xa7"
         "\xaa\x60\xee\x6b\x6a\x42\xcb\x56\xa4\xec"
     )){
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline4.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x39\xf3\xcb\x87\x56\x8a\x6e\xe1\xd2\xc4"
         "\xab\x2a\x52\x12\xb2\xbf\x16\x53\x0f\xf6"
     )){
@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline5.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xc3\x12\x01\x1b\x1b\xa3\x51\xc6\x79\x05"
         "\xa9\x89\x30\xda\x24\xe9\x49\x9d\x27\x06"
     )){
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline6.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x86\x81\xe2\x98\x84\xae\xdb\xa1\xf6\xf0"
         "\xf6\x89\x5a\x18\x28\x61\x35\xac\x13\xa9"
     )){
@@ -313,7 +313,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline7.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xb3\xe6\x76\x89\x65\x50\xc0\x73\x86\xcd"
         "\x27\x3d\x5a\xe2\x46\x23\xb2\x39\xd4\xa5"
     )){
@@ -352,7 +352,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline8.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x14\xe3\x00\xef\xb0\xe4\x12\x06\xf1\xbf"
         "\x3a\x59\xe0\x57\x6d\xea\x71\x97\xd3\xd3"
     )){
@@ -389,7 +389,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline9.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xa6\x30\xe2\xd0\xa4\x03\xd1\x30\xdc\xdb"
         "\x2b\xa2\xf8\xa3\xe8\x40\xad\x7c\xb8\x18"
     )){

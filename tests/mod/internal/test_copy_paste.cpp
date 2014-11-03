@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(TestPaste)
         //front.dump_png("/tmp/test_copy_paste_");
         BOOST_CHECK_EQUAL(s, edit.get_text());
         char message[1024];
-        if (!check_sig(front.gd.drawable, message, sig)){
+        if (!check_sig(front.gd.impl(), message, sig)){
             BOOST_CHECK_MESSAGE(false, message);
         }
     };

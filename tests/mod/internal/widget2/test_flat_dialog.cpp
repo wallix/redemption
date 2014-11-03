@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog1.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xf6\x79\x28\xaa\x73\x62\x02\x09\x8a\x7b\xbc\x6d\x81\xc7\xa1\xb2\xd7\x6e\xd2\x4e"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x64\x4f\xfb\xad\xa1\x7d\xd0\x11\x43\x1c\xfd\xe2\x3a\xcd\x67\xe7\x77\xa3\x54\xce"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xa1\xb7\xce\xbd\x69\x55\x5c\x97\x38\x96\xd4\x89\x5d\x96\x39\xd0\x99\xea\x7b\x29"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xd7\x57\x39\xbd\x99\x5d\xff\xee\x76\x3c\xf0\xd3\x1b\x31\xfd\xba\xb1\xa4\x78\xe9"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x56\x37\x5b\xd5\x40\xc4\xe7\x54\x23\xe0\x51\x32\xe9\x9c\x2e\xb6\x4e\x90\x3f\xdb"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xbc\x1a\x27\x17\xaf\x9e\xe2\x71\xb6\x7c\x6f\xdb\xdb\x0d\x93\x6e\x3b\x7a\x0c\x7c"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -286,7 +286,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xe3\x0c\xbc\xfd\x66\xd7\xf2\x26\x43\x59\xb6\x59\x53\x86\x3f\x07\xcd\x8a\x5e\x34"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x00\x23\xbe\x2f\x39\x72\xfe\x7f\xad\x7d\x89\x90\x88\x85\xac\xbb\xed\x3b\x91\x86"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -386,7 +386,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x7a\x05\x83\xc8\xf7\x52\x91\xce\x20\xa5\xb6\xd8\x11\x04\x47\xb9\xc7\x52\x18\x72"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -406,7 +406,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-2-button-ok.png");
 
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x71\xa3\x07\xf2\x93\xb2\x6a\x6e\x63\xe7\x3a\x37\xb0\x89\x8f\xba\xb6\x47\x88\x12"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -427,7 +427,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
 
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x27\x41\xda\x14\x2d\xe8\xd1\x8e\x2b\xe3\x66\x1d\x6f\x49\x0f\xfe\x5d\x65\x7c\x91"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -515,7 +515,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x18\xfb\x60\x47\x6d\xca\x82\x0b\x54\xf3\xbc\xda\x46\x29\xd2\x12\x5d\x42\x1f\x02"
     )){
         BOOST_CHECK_MESSAGE(false, message);

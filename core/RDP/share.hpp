@@ -87,7 +87,7 @@ enum {
 // Return True if flowMarker is detected
 // In these case we have FlowTestPDU, FlowResponsePDU or FlowStopPDU
 // and not ShareControl header.
-bool peekFlowPDU(const Stream & stream) {
+inline bool peekFlowPDU(const Stream & stream) {
     if (!stream.in_check_rem(2)){
         throw Error(ERR_SEC);
     }

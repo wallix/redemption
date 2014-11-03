@@ -168,8 +168,8 @@ struct TestDraw : DrawApi
     void save_to_png(const char * filename)
     {
         std::FILE * file = fopen(filename, "w+");
-        dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
+        dump_png24(file, this->gd.data(), this->gd.width(),
+                   this->gd.height(), this->gd.rowsize(), true);
         fclose(file);
     }
 };
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
     //drawable.save_to_png(OUTPUT_FILE_PATH "rect.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xea\xe1\x3b\x4b\xdb\xda\xa6\x75\xf1\x17"
         "\xa2\xe8\x09\xf1\xd2\x42\x7a\xdf\x85\x6d")){
         BOOST_CHECK_MESSAGE(false, message);
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
     //drawable.save_to_png(OUTPUT_FILE_PATH "rect2.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x7c\x96\x36\xc6\x5a\x1e\x29\xb4\xd7\x4a"
         "\x31\x64\x37\xec\x94\x5f\x7a\x3c\x4a\x52")){
         BOOST_CHECK_MESSAGE(false, message);
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
     //drawable.save_to_png(OUTPUT_FILE_PATH "rect3.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x00\x57\x28\x73\x89\x49\xd5\x9e\xc0\xc1"
         "\x77\xc9\xc5\x7b\x5e\x13\x88\xf0\xf6\x33")){
         BOOST_CHECK_MESSAGE(false, message);
@@ -283,7 +283,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
     //drawable.save_to_png(OUTPUT_FILE_PATH "rect4.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xc8\x60\xbd\xc0\xe3\x38\x4a\xe5\xd3\x29"
         "\x52\x7d\xf6\x9b\x3e\x83\x97\xf0\xbc\x90")){
         BOOST_CHECK_MESSAGE(false, message);
@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
     //drawable.save_to_png(OUTPUT_FILE_PATH "rect5.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x9c\xbe\xee\x0d\xd5\xa6\x50\xfb\x99\x4b"
         "\x2d\xae\xd9\xcc\x33\x65\x6f\xc1\x5e\x1e")){
         BOOST_CHECK_MESSAGE(false, message);
@@ -341,7 +341,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
     //drawable.save_to_png(OUTPUT_FILE_PATH "rect6.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x0a\x0f\xb8\xff\x34\x91\xe5\xd0\x60\x52"
         "\x56\xcb\x3a\x56\x37\x21\xe8\xc4\x22\x19")){
         BOOST_CHECK_MESSAGE(false, message);
@@ -370,7 +370,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
     //drawable.save_to_png(OUTPUT_FILE_PATH "rect7.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x91\xe9\x85\x69\x98\x49\xea\x17\xe6\xc8"
         "\xaf\x9b\x78\x73\x71\x65\xdd\x67\x4b\xe3")){
         BOOST_CHECK_MESSAGE(false, message);
@@ -399,7 +399,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     //drawable.save_to_png(OUTPUT_FILE_PATH "rect8.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xe9\x67\x5a\xe9\xa3\xa2\xca\xf3\xbe\xc2"
         "\x37\xff\xa0\xff\x20\x3d\x8e\x28\x37\xc8")){
         BOOST_CHECK_MESSAGE(false, message);

@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xe5\xd4\x61\xfb\x43\x29\x85\xd2\xf8\x93\x2b\xd7\x41\xc1\x58\xd9\x2f\x3d\xe8\x9c"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login2.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xc7\x65\xc0\x7e\x7a\x71\x3c\x88\xc2\xcf\xa8\x6c\x4f\x52\x9e\x44\x2c\xb6\xbc\x5e"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login3.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xa3\xa6\x18\xbd\x9b\x21\xa0\xf1\xea\xfe\x00\x0d\x15\xa1\x71\xae\x0c\x04\xc7\x55"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help1.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xfc\x64\xc9\xb0\xee\x24\x2e\x22\xce\xe6\x90\x45\xc8\xbc\x5b\x86\xbc\x56\x49\x86"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xf5\xa9\x48\x33\x44\xd2\x07\xb9\x34\xe0\x5c\x49\xbe\xe0\x90\xf6\x49\x92\x31\xdd"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login7.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xcb\xe2\xaa\x03\x38\xea\x41\xe7\xbd\x18\xb7\x8d\xbc\xad\x15\x71\x9b\x50\x75\x12"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login8.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x31\x82\xdc\x89\xfd\xda\x77\xc1\xf9\xa1"
                    "\x44\x23\xdb\xc5\x09\xae\xb9\xb7\x2b\x35"
     )){

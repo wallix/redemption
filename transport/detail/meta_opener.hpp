@@ -74,7 +74,8 @@ namespace detail
                 }
                 total_read += pos - this->cur;
                 memcpy(dest, this->cur, pos - this->cur);
-                this->cur = pos+1;
+                dest += pos - this->cur;
+                this->cur = pos + 1;
                 if (pos != this->eof) {
                     break;
                 }

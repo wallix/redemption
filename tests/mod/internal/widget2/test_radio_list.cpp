@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
     // drawable.save_to_png(OUTPUT_FILE_PATH "radio1.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x94\x3a\xb8\xec\xe8\x01\x5e\xbe\x20\xca\xdb\x96\x54\xfd\x30\x2e\x10\x4f\x65\xaf"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "radio2.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x2c\x9f\xc4\xf6\xae\x42\x4d\xdd\xe1\x8d\x72\xdd\x9f\xdd\x90\x5d\x7e\x97\x93\x58"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "radio3.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xcb\x26\x1a\x2a\xdd\x15\x09\xa1\x5f\x48\x7e\xe8\xa9\xdb\xff\x06\x96\xce\xbc\x69"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolist1.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x6c\xcc\xc2\xb1\x2b\xc7\xa6\xd7\x97\x08\x56\x3a\xd1\x1b\x45\x3d\x11\x6d\x8b\x8c"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolist2.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x2c\xaf\x58\x89\xe5\x7d\xd3\x58\xc5\x81\xd8\xb8\x6d\xcd\x4a\x80\xc6\x37\xa4\xf2"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolist3.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xa7\xce\x7e\x70\x1b\xec\x38\x14\x64\x3c\x91\xcd\xac\x1c\x97\xd5\x19\xd0\x70\x6b"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolist4.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x17\x2a\xa9\xe8\xad\x93\x17\xff\x89\x8d\xf0\x8b\x96\xb9\xe8\x80\xf6\xc3\x9d\x14"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify1.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x19\xad\x25\x31\x4e\x4f\x77\xb5\x25\xc7\x7c\xc2\x71\xe1\x79\x8f\x22\x54\x26\xbe"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
                            x, y, NULL);
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify2.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x36\x5f\xe9\x22\x0c\x76\x9c\x76\xd3\x14\x95\xe8\x8c\x94\x9b\xb3\xcd\x4d\xfa\x04"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -227,7 +227,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
                            x, y, NULL);
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify3.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x12\x16\x75\xe9\xf3\x49\xbc\x86\x28\x3e\xd1\x8a\x00\xd9\x17\xc2\xcb\x1b\x78\xea"
     )){
         BOOST_CHECK_MESSAGE(false, message);

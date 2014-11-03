@@ -65,7 +65,7 @@ public:
     uint32_t rt_display;
 
     StaticCapture(const timeval & now, Transport & trans, SequenceGenerator const * seq, unsigned width, unsigned height,
-                  bool clear_png, const Inifile & ini, Drawable & drawable)
+                  bool clear_png, const Inifile & ini, const Drawable & drawable)
     : ImageCapture(trans, width, height, drawable)
     , clear_png(clear_png)
     , seq(seq)
@@ -81,7 +81,7 @@ public:
     }
 
     virtual ~StaticCapture() {
-        if (this->first_picture_capture_delayed) {
+        if (this->first_picture_capture_delayed && this->rt_display) {
             this->breakpoint(this->first_picture_capture_now);
         }
 
@@ -132,10 +132,10 @@ public:
             if (   this->drawable.logical_frame_ended
                 // Force snapshot if diff_time_val >= 1,5 x inter_frame_interval_static_capture.
                 || (diff_time_val >= static_cast<unsigned>(this->inter_frame_interval_static_capture) * 3 / 2)) {
-                this->drawable.trace_mouse();
+                const_cast<Drawable&>(this->drawable).trace_mouse();
                 this->breakpoint(now);
                 this->start_static_capture = addusectimeval(this->inter_frame_interval_static_capture, this->start_static_capture);
-                this->drawable.clear_mouse();
+                const_cast<Drawable&>(this->drawable).clear_mouse();
             }
             else {
                 if (this->first_picture_capture_delayed) {
@@ -168,9 +168,9 @@ public:
         time_t rawtime = now.tv_sec;
         tm ptm;
         localtime_r(&rawtime, &ptm);
-        this->drawable.trace_pausetimestamp(ptm);
+        const_cast<Drawable&>(this->drawable).trace_pausetimestamp(ptm);
         this->flush_png();
-        this->drawable.clear_pausetimestamp();
+        const_cast<Drawable&>(this->drawable).clear_pausetimestamp();
         this->start_static_capture = now;
     }
 
@@ -181,9 +181,9 @@ public:
         time_t rawtime = now.tv_sec;
         tm ptm;
         localtime_r(&rawtime, &ptm);
-        this->drawable.trace_timestamp(ptm);
+        const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
         this->flush_png();
-        this->drawable.clear_timestamp();
+        const_cast<Drawable&>(this->drawable).clear_timestamp();
     }
 };
 

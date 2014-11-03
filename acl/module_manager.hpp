@@ -46,7 +46,10 @@
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
 #include "internal/flat_wait_mod.hpp"
+#include "internal/interactive_password_mod.hpp"
 #include "internal/widget_test_mod.hpp"
+
+#include "mod_osd.hpp"
 
 #define STRMODULE_LOGIN            "login"
 #define STRMODULE_SELECTOR         "selector"
@@ -57,6 +60,7 @@
 #define STRMODULE_TRANSITORY       "transitory"
 #define STRMODULE_CLOSE            "close"
 #define STRMODULE_CONNECTION       "connection"
+#define STRMODULE_PASSWORD         "interactive_password"
 #define STRMODULE_MESSAGE          "message"
 #define STRMODULE_RDP              "RDP"
 #define STRMODULE_VNC              "VNC"
@@ -80,6 +84,7 @@ enum {
     MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE,
     MODULE_INTERNAL_DIALOG_VALID_MESSAGE,
     MODULE_INTERNAL_DIALOG_CHALLENGE,
+    MODULE_INTERNAL_PASSWORD,
     MODULE_INTERNAL_BOUNCER2,
     MODULE_INTERNAL_TEST,
     MODULE_INTERNAL_WIDGET2_SELECTOR,
@@ -213,6 +218,10 @@ public:
             LOG(LOG_INFO, "===========> MODULE_WAITINFO");
             return MODULE_INTERNAL_WAIT_INFO;
         }
+        else if (!strcmp(module_cstr, STRMODULE_PASSWORD)) {
+            LOG(LOG_INFO, "===========> MODULE_INTERACTIVE_PASSWORD");
+            return MODULE_INTERNAL_PASSWORD;
+        }
         else if (!strcmp(module_cstr, STRMODULE_TRANSITORY)) {
             LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
             return MODULE_TRANSITORY;
@@ -290,7 +299,105 @@ public:
 
 class ModuleManager : public MMIni
 {
+    struct module_osd
+    : public mod_osd
+    //, noncopyable
+    {
+        module_osd(
+            ModuleManager & manager, const Rect & rect,
+            std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f)
+        //: mod_osd(manager.front, *manager.mod, Bitmap("/home/jpoelen/projects/redemption-public/tests/fixtures/ad24b.bmp"))
+        : mod_osd(manager.front, *manager.mod, rect, std::move(f))
+        , manager(manager)
+        , old_mod(manager.mod)
+        {
+            manager.osd = this;
+        }
+
+        ~module_osd()
+        {
+            this->manager.mod = this->old_mod;
+            this->manager.osd = nullptr;
+            // disable draw hidden
+            if (this->is_active()) {
+                this->set_gd(*this, nullptr);
+            }
+        }
+
+        virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+        {
+            if (this->fg().contains_pt(x, y)) {
+                if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+                    this->delete_self();
+                }
+            }
+            else {
+                mod_osd::rdp_input_mouse(device_flags, x, y, keymap);
+            }
+        }
+
+        virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+        {
+            if (keymap->nb_kevent_available() > 0){
+                if (!(param3 & SlowPath::KBDFLAGS_DOWN)
+                 && keymap->top_kevent() == Keymap2::KEVENT_ESC
+                 && keymap->is_ctrl_pressed()) {
+                    keymap->get_kevent();
+                    this->delete_self();
+                }
+                else {
+                    mod_osd::rdp_input_scancode(param1, param2, param3, param4, keymap);
+                }
+            }
+        }
+
+        void delete_self()
+        {
+            this->swap_active();
+            delete this;
+        }
+        ModuleManager & manager;
+        mod_api * old_mod;
+    };
+    module_osd * osd = nullptr;
+
+    static const int padw = 16;
+    static const int padh = 16;
+
 public:
+    void clear_osd_message() {
+        if (this->osd) {
+            this->osd->delete_self();
+        }
+    }
+
+    void osd_message(std::string message) {
+        this->clear_osd_message();
+        int w, h;
+        message += "  ";
+        message += TR("disable_osd", this->ini);
+        this->front.text_metrics(message.c_str(), w, h);
+        w += padw * 2;
+        h += padh * 2;
+        uint32_t color = BLACK;
+        uint32_t background_color = LIGHT_YELLOW;
+        if (24 != this->front.client_info.bpp) {
+            color = color_encode(color, this->front.client_info.bpp);
+            background_color = color_encode(background_color, this->front.client_info.bpp);
+        }
+        this->mod = new module_osd(
+            *this, Rect(this->front.client_info.width < w ? 0 : (this->front.client_info.width - w) / 2, 0, w, h),
+            [this, message, color, background_color](mod_api & mod, const Rect & rect, const Rect & clip) {
+                const Rect r = rect.intersect(clip);
+                this->front.begin_update();
+                this->front.draw(RDPOpaqueRect(r, background_color), r);
+                this->front.server_draw_text(clip.x + padw, padh, message.c_str(), color, background_color, r);
+                this->front.end_update();
+            }
+        );
+    }
+
+
     Front & front;
     mod_api * no_mod;
     Transport * mod_transport;
@@ -307,6 +414,8 @@ public:
 
     virtual void remove_mod()
     {
+        delete this->osd;
+
         if (this->mod != this->no_mod){
             delete this->mod;
             if (this->mod_transport) {
@@ -415,7 +524,16 @@ public:
             }
             LOG(LOG_INFO, "ModuleManager::internal module Close ready");
             break;
-
+        case MODULE_INTERNAL_PASSWORD:
+            {
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Interactive Password'");
+                this->mod = new InteractivePasswordMod(this->ini,
+                                                       this->front,
+                                                       this->front.client_info.width,
+                                                       this->front.client_info.height);
+                LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Password' ready");
+            }
+            break;
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
         case MODULE_INTERNAL_WIDGET2_DIALOG:
             {

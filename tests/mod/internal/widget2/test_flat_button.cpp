@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x97\x74\x69\x41\x37\x9c\x8d\xa6\x89\x14"
         "\x88\x63\x79\x8e\x3f\xae\x3c\x22\xef\x55"
     )){
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button2.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xf9\x01\x08\x71\xcc\x4f\xfb\x43\x6a\xec"
         "\xf7\xbd\x43\x10\xa0\x4b\x21\x44\x8a\x3f"
     )){
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton3)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button3.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x30\xfc\xe0\x34\xff\x78\x9b\x9e\x96\x6d"
         "\xf0\xa6\x9d\x15\xff\x0a\x1b\x10\xb6\xc0"
     )){
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton4)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button4.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x6f\xb0\x8d\x93\xaf\xfb\x71\x11\x65\x4a"
         "\xf4\x68\x8f\xaa\xf0\x67\xb3\xf5\x10\x19"
     )){
@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton5)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button5.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x0a\x74\xd0\x5a\xe7\x29\x61\x18\x0c\x73"
         "\xef\x7d\xf3\x87\x9e\x79\xb4\x3d\x76\x08"
     )){
@@ -244,7 +244,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton6)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button6.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xca\x98\xb2\x78\x2e\xbc\xb4\xfb\xbf\x00"
         "\x7d\x3d\x38\x59\x77\x4e\xa6\x32\xaf\x0b"
     )){
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button7.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x65\x01\x76\x90\x19\x3f\x9d\x67\xa0\xae"
         "\xdc\x0e\xc9\xf8\x10\x5b\xae\xc4\xfb\x70"
     )){
@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button8.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x3c\x4c\x75\x45\x7c\xfc\x6f\xc7\x43\x99"
         "\x28\x6e\xc2\x38\xcc\x14\x81\xf7\xee\x3c"
     )){
@@ -345,7 +345,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button9.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x63\xf6\xb9\xf7\xea\x5d\xaf\xaa\x5f\x9b"
         "\x4d\xd9\x59\xbc\x32\x86\x8c\x6f\x7b\x4f"
     )){
@@ -358,7 +358,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button10.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x6b\x2b\x42\xf0\xd0\x72\xef\x60\xa5\x10"
         "\xf2\xb3\x20\x2e\x7f\xa2\x8f\xd0\xf2\xc0"
     )){
@@ -371,7 +371,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button11.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x63\xf6\xb9\xf7\xea\x5d\xaf\xaa\x5f\x9b"
         "\x4d\xd9\x59\xbc\x32\x86\x8c\x6f\x7b\x4f"
     )){
@@ -517,7 +517,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button12.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xd2\xb7\x90\xff\xad\xe1\xd3\x5b\x20\x59"
         "\x14\x83\x8e\x0d\xbf\xd0\x9a\xd7\x3a\xe5"
     )){
@@ -530,7 +530,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button13.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x4b\xd7\x1c\xe2\x2b\x46\x34\xd7\xdb\x56"
         "\xd7\x64\x03\xba\xbf\xd7\xfd\xc9\x13\xa8"
     )){
@@ -565,7 +565,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button14.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xf4\xb4\xb3\xcd\x42\x49\xd9\x38\x38\xd8"
         "\x25\x94\x25\x37\x96\xe6\xea\x76\xca\x6f"
     )){
@@ -579,7 +579,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button15.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xd1\x14\x95\x71\x12\x28\x07\xf5\x8d\x5a"
         "\x43\xbe\x26\x41\xd3\x0d\xfb\x13\x4f\xbf"
     )){
@@ -594,7 +594,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button16.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xf4\xb4\xb3\xcd\x42\x49\xd9\x38\x38\xd8"
         "\x25\x94\x25\x37\x96\xe6\xea\x76\xca\x6f"
     )){
@@ -609,7 +609,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button17.png");
 
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\xd1\x14\x95\x71\x12\x28\x07\xf5\x8d\x5a"
         "\x43\xbe\x26\x41\xd3\x0d\xfb\x13\x4f\xbf"
     )){

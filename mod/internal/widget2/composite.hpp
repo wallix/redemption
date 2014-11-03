@@ -26,11 +26,12 @@
 #include <algorithm>
 #include "widget.hpp"
 #include "keymap2.hpp"
-#include <region.hpp>
+#include "region.hpp"
+#include "draw_api.hpp"
 
-void fill_region(DrawApi & drawable, const Region & region, int bg_color) {
-    for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-        drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
+inline void fill_region(DrawApi & drawable, const Region & region, int bg_color) {
+    for (const Rect & rect : region.rects) {
+        drawable.draw(RDPOpaqueRect(rect, bg_color), rect);
     }
 }
 

@@ -535,6 +535,7 @@ struct Inifile : public FieldObserver {
         StringField video_quality;            // AUTHID_VIDEO_QUALITY //
         bool        enable_bitmap_update;
         bool        enable_close_box;
+        bool        enable_osd;
         // END globals
 
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
@@ -919,6 +920,7 @@ public:
         this->globals.video_quality.set_from_cstr("medium");
         this->globals.enable_bitmap_update = false;
         this->globals.enable_close_box = true;
+        this->globals.enable_osd = true;
 
         pathncpy(this->globals.persistent_path, PERSISTENT_PATH, sizeof(this->globals.persistent_path));
         // End Init globals
@@ -1389,6 +1391,9 @@ public:
             }
             else if (0 == strcmp(key, "enable_close_box")) {
                 this->globals.enable_close_box = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "enable_osd")) {
+                this->globals.enable_osd = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "persistent_path")) {
                 pathncpy(this->globals.persistent_path, value, sizeof(this->globals.persistent_path));

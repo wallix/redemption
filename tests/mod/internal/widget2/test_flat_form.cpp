@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
     drawable.save_to_png(OUTPUT_FILE_PATH "ticket_form.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x0e\x9a\x61\x56\xae\x43\x24\xe9\x7f\xa6\x4b\x81\xfe\x84\xad\x6b\x12\xc3\x7d\x3f"
     )){
         BOOST_CHECK_MESSAGE(false, message);
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.drawable, message,
+//     if (!check_sig(drawable.gd.impl(), message,
 //                    "\xbe\xdc\x51\xe5\x3f\x17\x87\xa2\x5e\x57"
 //                    "\x57\x77\xc8\xab\x74\xd1\x44\x67\x73\x6a"
 //                    )){
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.drawable, message,
+//     if (!check_sig(drawable.gd.impl(), message,
 //                    "\xab\xf6\x15\x4e\xf6\x00\xcf\xb1\xba\x72"
 //                    "\xc7\x45\x21\x71\xdc\x87\x99\x29\xcd\xdc"
 //                    )){
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.drawable, message,
+//     if (!check_sig(drawable.gd.impl(), message,
 //                    "\xa4\x3f\xae\x5e\x0c\x62\x18\x35\x12\x4e"
 //                    "\x97\xb2\x9d\xf3\x0a\x21\x3b\xaa\x16\xa8"
 //                    )){
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.drawable, message,
+//     if (!check_sig(drawable.gd.impl(), message,
 //                    "\x23\x3e\xc8\xac\x9e\x89\x32\x4a\xc7\x13"
 //                    "\xb5\xe8\x55\xf9\x55\x0c\x61\xf8\x1f\x56"
 //                    )){
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.drawable, message,
+//     if (!check_sig(drawable.gd.impl(), message,
 //                    "\x60\x53\x42\x70\xfb\xc5\x95\xd8\xa7\xef"
 //                    "\x07\xe8\x5d\xab\xbc\xb1\xf7\x7a\xb6\x6e"
 //     )){
@@ -288,7 +288,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.drawable, message,
+//     if (!check_sig(drawable.gd.impl(), message,
 //                    "\x6f\x5e\xaa\x7b\xaa\x85\x86\x9a\x32\x6c"
 //                    "\xd3\x2e\xa2\x2b\xde\x76\x35\xd6\x3b\x50"
 //     )){
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.drawable, message,
+//     if (!check_sig(drawable.gd.impl(), message,
 //                    "\xb1\x4f\x44\xde\x94\x93\x7c\x72\x48\xc1"
 //                    "\x15\x50\x5f\x45\xa5\xb4\xcf\x9f\x21\x73"
 //     )){
@@ -390,7 +390,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.drawable, message,
+//     if (!check_sig(drawable.gd.impl(), message,
 //                    "\x09\x03\x4f\xf6\x6b\xbf\xe2\x9c\xf0\xee"
 //                    "\x89\x5c\x88\x5b\x63\xe8\x39\x4e\xe4\xef"
 //     )){
@@ -411,7 +411,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 //     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-2-button-ok.png");
 
 
-//     if (!check_sig(drawable.gd.drawable, message,
+//     if (!check_sig(drawable.gd.impl(), message,
 //                    "\xed\xa6\x0c\x8e\xbc\xab\xdf\x81\x63\xd9"
 //                    "\xaf\x19\x24\x80\x7e\x65\x98\xe9\x94\xab"
 //     )){
@@ -433,7 +433,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 
 
-//     if (!check_sig(drawable.gd.drawable, message,
+//     if (!check_sig(drawable.gd.impl(), message,
 //                    "\xee\x26\x6b\x3c\x2b\x33\x01\x18\xf5\xca"
 //                    "\x87\x41\xd2\xce\x00\x17\xf9\x2f\xbd\xb2"
 //     )){
@@ -522,7 +522,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.drawable, message,
+//     if (!check_sig(drawable.gd.impl(), message,
 //                    "\xaa\x65\x78\x57\x46\xa8\x97\x24\xf1\xd6"
 //                    "\xc2\xff\x28\x92\xbe\xc8\x46\x0c\xbe\x01"
 //     )){

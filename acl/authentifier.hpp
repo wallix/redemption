@@ -149,14 +149,7 @@ public:
         }
     }
 
-    void set_timeout(uint32_t max_tick, time_t now, Transport & trans) {
-        uint32_t timeout = max_tick?30*max_tick:10;
-        LOG(LOG_INFO, "Session User inactivity : set timeout to %u seconds", timeout);
-        this->last_activity_time = now;
-        this->inactivity_timeout = timeout;
-    }
-
-    bool check(time_t now, Transport & trans) {
+    bool check(time_t now) {
         if (!this->checker.check_and_reset_activity()) {
             if (now > this->last_activity_time + this->inactivity_timeout) {
                 LOG(LOG_INFO, "Session User inactivity : closing");
@@ -228,7 +221,7 @@ public:
             return true;
         }
 
-        long enddate = this->ini.context.end_date_cnx.get();
+        const uint32_t enddate = this->ini.context.end_date_cnx.get();
         if (enddate != 0 && (now > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             const char * message = TR("session_out_time", this->ini);
@@ -253,7 +246,7 @@ public:
         }
 
         // Inactivity management
-        if (this->inactivity.check(now, trans)) {
+        if (this->inactivity.check(now)) {
             mm.invoke_close_box(TR("close_inactivity", this->ini), signal, now);
             return true;
         }
