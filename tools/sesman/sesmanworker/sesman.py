@@ -496,7 +496,7 @@ class Sesman():
                 data_to_send = { u'login'                   : wab_login
                                , u'target_login'            : target_login
                                , u'target_device'           : target_device
-                               , u'module'                  : u'transitory' # if self.target_service_name != u'INTERNAL' else u'INTERNAL'
+                               , u'module'                  : u'transitory'
                                }
                 if not self.internal_target:
                     self.internal_target = True if self.target_service_name == u'INTERNAL' else False
@@ -758,20 +758,24 @@ class Sesman():
     def check_target(self, selected_target):
         ticket = None
         status = None
+        info_message = None
         got_signal = False
         while True:
             Logger().info(u"Begin check_target ticket = %s..." % ticket)
             previous_status = status
+            previous_info_message = info_message
             status, infos = self.engine.check_target(selected_target, self.pid, ticket)
             ticket = None
-            Logger().info(u"End check_target ...")
-            status_changed = got_signal or (status != previous_status)
-            if status_changed:
+            info_message = infos.get('message')
+            refresh_page = (got_signal
+                            or (status != previous_status)
+                            or (previous_info_message != info_message))
+            Logger().info(u"End check_target ... refresh : %s" % refresh_page)
+            if refresh_page:
                 self.send_data({u'forcemodule' : True})
-            if status in [ APPROVAL_ACCEPTED, APPROVAL_REJECTED ]:
-                if status == APPROVAL_ACCEPTED:
-                    return True, ""
-            if status_changed:
+            if status == APPROVAL_ACCEPTED:
+                return True, ""
+            if refresh_page:
                 self.interactive_display_waitinfo(status, infos)
             got_signal = False
             r = []
@@ -1278,7 +1282,7 @@ class Sesman():
             string = pattern[1]
 #            Logger().info(u"regexp=\"%s\" string=\"%s\" user_login=\"%s\" user=\"%s\" host=\"%s\"" %
 #                (regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device')))
-            self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn)
+            self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn, self.target_service_name)
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))

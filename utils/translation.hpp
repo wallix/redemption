@@ -59,6 +59,7 @@ private:
         bool operator!=(const char * k) const noexcept
         { return !(*this == k); }
     };
+
     typedef std::array<value_type, 48> trans_t;
 
     language_t lang;
