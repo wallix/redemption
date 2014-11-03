@@ -295,8 +295,8 @@ public:
 
     virtual void draw(const RDPEllipseSC & cmd, const Rect & clip)
     {
-        this->split_draw(Rect(cmd.el.centerx - cmd.el.radiusx,
-                              cmd.el.centery - cmd.el.radiusy, cmd.el.radiusx * 2, cmd.el.radiusy * 2),
+        this->split_draw(Rect(cmd.el.center_x() - cmd.el.radius_x(),
+                              cmd.el.center_y() - cmd.el.radius_y(), cmd.el.radius_x() * 2, cmd.el.radius_y() * 2),
                          cmd, clip);
     }
 

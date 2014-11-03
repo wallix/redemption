@@ -108,42 +108,106 @@
 // Color (3 bytes): The foreground color described by using a Generic Color
 //  (section 2.2.2.2.1.1.1.8) structure.
 
+class Ellipse2 {
+    int16_t  leftRect;
+    int16_t  topRect;
+    int16_t  rightRect;
+    int16_t  bottomRect;
+
+public:
+    Ellipse2()
+    : Ellipse2(0, 0, 0, 0)
+    {}
+
+    Ellipse2(int16_t leftRect, int16_t topRect, int16_t rightRect, int16_t bottomRect)
+    : leftRect(leftRect)
+    , topRect(topRect)
+    , rightRect(rightRect)
+    , bottomRect(bottomRect)
+    {}
+
+    Ellipse2(const Rect & r)
+    : leftRect(r.x)
+    , topRect(r.y)
+    , rightRect(r.right())
+    , bottomRect(r.bottom())
+    {}
+
+    int16_t left() const {
+        return this->leftRect;
+    }
+    int16_t top() const {
+        return this->topRect;
+    }
+    int16_t right() const {
+        return this->rightRect;
+    }
+    int16_t bottom() const {
+        return this->bottomRect;
+    }
+
+    uint16_t width() const {
+        return static_cast<uint16_t>(this->right() - this->left());
+    }
+    uint16_t height() const {
+        return static_cast<uint16_t>(this->bottom() - this->top());
+    }
+
+    uint16_t radius_x() const {
+        return this->width() / 2;
+    }
+    uint16_t radius_y() const {
+        return this->height() / 2;
+    }
+
+    int16_t center_x() const {
+        return this->left() + (this->right() - this->left()) / 2;
+    }
+    int16_t center_y() const {
+        return this->top() + (this->bottom() - this->top()) / 2;
+    }
+
+    Rect get_rect() const {
+        return Rect(this->left(), this->top(), this->width(), this->height());
+    }
+
+    bool operator == (const Ellipse2 & other) const noexcept {
+        return (other.leftRect == this->leftRect &&
+                other.topRect == this->topRect &&
+                other.rightRect == this->rightRect &&
+                other.bottomRect == this->bottomRect);
+    }
+};
 
 class RDPEllipseSC {
 public:
-    Ellipse el;
+    Ellipse2 el;
     uint8_t  bRop2;
     uint8_t  fillMode;
     uint32_t color;
 
     RDPEllipseSC()
-        : el(Ellipse())
-        , bRop2(0x0)
-        , fillMode(0x0)
-        , color(0x000000)
+    : bRop2(0x0)
+    , fillMode(0x0)
+    , color(0x000000)
     {}
 
-
     RDPEllipseSC(const Rect & r, int c)
-        : el(Ellipse(r))
-        , bRop2(0x0D)
-        , fillMode(0x01)
-        , color(c)
+    : RDPEllipseSC(r, c, 0x0D, 0x01)
     {}
 
     RDPEllipseSC(const Rect & r, int c, uint8_t rop, uint8_t fill)
-        : el(Ellipse(r))
-        , bRop2(rop)
-        , fillMode(fill)
-        , color(c)
+    : el(r)
+    , bRop2(rop)
+    , fillMode(fill)
+    , color(c)
     {}
 
-
     bool operator==(const RDPEllipseSC & other) const {
-        return (this->el.equal(other.el)
-                && (this->bRop2 == other.bRop2)
-                && (this->fillMode == other.fillMode)
-                && (this->color == other.color));
+        return this->el == other.el
+            && this->bRop2 == other.bRop2
+            && this->fillMode == other.fillMode
+            && this->color == other.color;
     }
 
     static uint8_t id(void) {
@@ -158,34 +222,30 @@ public:
             header.control |= RDP::BOUNDS;
         }
 
-        int16_t left   = this->el.left();
-        int16_t top    = this->el.top();
-        int16_t right  = this->el.right();
-        int16_t bottom = this->el.bottom();
-        int16_t oldleft   = oldcmd.el.left();
-        int16_t oldtop    = oldcmd.el.top();
-        int16_t oldright  = oldcmd.el.right();
-        int16_t oldbottom = oldcmd.el.bottom();
+        const int16_t oldleft   = oldcmd.el.left();
+        const int16_t oldtop    = oldcmd.el.top();
+        const int16_t oldright  = oldcmd.el.right();
+        const int16_t oldbottom = oldcmd.el.bottom();
 
-        header.control |= (is_1_byte(left - oldleft) &&
-                           is_1_byte(top - oldtop) &&
-                           is_1_byte(right - oldright) &&
-                           is_1_byte(bottom - oldbottom)) * RDP::DELTA;
+        header.control |= (is_1_byte(this->el.left() - oldleft) &&
+                           is_1_byte(this->el.top() - oldtop) &&
+                           is_1_byte(this->el.right() - oldright) &&
+                           is_1_byte(this->el.bottom() - oldbottom)) * RDP::DELTA;
 
         header.fields =
-            ( left           != oldleft        ) * 0x0001
-            |(top            != oldtop         ) * 0x0002
-            |(right          != oldright       ) * 0x0004
-            |(bottom         != oldbottom      ) * 0x0008
+            ( this->el.left()   != oldleft        ) * 0x0001
+            |(this->el.top()    != oldtop         ) * 0x0002
+            |(this->el.right()  != oldright       ) * 0x0004
+            |(this->el.bottom() != oldbottom      ) * 0x0008
             |(this->bRop2    != oldcmd.bRop2   ) * 0x0010
             |(this->fillMode != oldcmd.fillMode) * 0x0020
             |(this->color    != oldcmd.color   ) * 0x0040;
 
         common.emit(stream, header, oldcommon);
-        header.emit_coord(stream, 0x0001, left,   oldleft);
-        header.emit_coord(stream, 0x0002, top,    oldtop);
-        header.emit_coord(stream, 0x0004, right,  oldright);
-        header.emit_coord(stream, 0x0008, bottom, oldbottom);
+        header.emit_coord(stream, 0x0001, this->el.left(),   oldleft);
+        header.emit_coord(stream, 0x0002, this->el.top(),    oldtop);
+        header.emit_coord(stream, 0x0004, this->el.right(),  oldright);
+        header.emit_coord(stream, 0x0008, this->el.bottom(), oldbottom);
 
         if (header.fields & 0x0010) { stream.out_uint8(this->bRop2); }
 
@@ -203,16 +263,16 @@ public:
 
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
         // LOG(LOG_INFO, "RDPEllipseSC::receive: header fields=0x%02X", header.fields);
-        int16_t  leftRect   = this->el.left();
-        int16_t  topRect    = this->el.top();
-        int16_t  rightRect  = this->el.right();
-        int16_t  bottomRect = this->el.bottom();
+        int16_t leftRect   = this->el.left();
+        int16_t topRect    = this->el.top();
+        int16_t rightRect  = this->el.right();
+        int16_t bottomRect = this->el.bottom();
         header.receive_coord(stream, 0x0001, leftRect);
         header.receive_coord(stream, 0x0002, topRect);
         header.receive_coord(stream, 0x0004, rightRect);
         header.receive_coord(stream, 0x0008, bottomRect);
 
-        this->el = Ellipse(Rect(leftRect, topRect, rightRect - leftRect, bottomRect - topRect));
+        this->el = Ellipse2(leftRect, topRect, rightRect, bottomRect);
 
         if (header.fields & 0x0010) {
             this->bRop2  = stream.in_uint8();

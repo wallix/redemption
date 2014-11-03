@@ -161,7 +161,8 @@ public:
 
     TODO("This will draw a standard ellipse without brush style")
     void draw(const RDPEllipseCB & cmd, const Rect & clip) {
-        this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, this->u32rgb_to_color(cmd.back_color));
+//         std::cout << "RDPEllipseCB" << std::endl;
+//         this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, this->u32rgb_to_color(cmd.back_color));
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
