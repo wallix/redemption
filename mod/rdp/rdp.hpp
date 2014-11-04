@@ -159,7 +159,8 @@ class mod_rdp : public mod_api {
     char clientAddr[512];
 
     const bool enable_bitmap_update;
-    const bool enable_clipboard;                   // true clipboard available, false clipboard unavailable
+    const bool enable_clipboard_in;                // true clipboard available, false clipboard unavailable
+    const bool enable_clipboard_out;               // true clipboard available, false clipboard unavailable
     const bool enable_fastpath;                    // choice of programmer
           bool enable_fastpath_client_input_event; // choice of programmer + capability of server
     const bool enable_fastpath_server_update;      // = choice of programmer
@@ -245,7 +246,8 @@ public:
               , mod_rdp_params.enable_nla, mod_rdp_params.target_device
               , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
         , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
-        , enable_clipboard(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME))
+        , enable_clipboard_in(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_in"))
+        , enable_clipboard_out(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_out"))
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
@@ -602,26 +604,55 @@ public:
                                     , Stream & chunk
                                     , size_t length
                                     , uint32_t flags) {
-        if (this->verbose & 16) {
-            LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
-            LOG(LOG_INFO, "sending to channel %s", front_channel_name);
-        }
+        struct TraleLog {
+            const bool b;
+            TraleLog(bool verbose, const char * const front_channel_name)
+            : b(verbose & 16)
+            {
+                if (this->b) {
+                    LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
+                    LOG(LOG_INFO, "sending to channel %s", front_channel_name);
+                }
+            }
+            ~TraleLog() {
+                if (this->b) {
+                    LOG(LOG_INFO, "mod_rdp::send_to_mod_channel done");
+                }
+            }
+        } trace(this->verbose, front_channel_name);
 
         // Clipboard is unavailable and is a Clipboard PDU
-        if (!this->enable_clipboard && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+        if (!this->enable_clipboard_in && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "mod_rdp clipboard PDU");
             }
 
             if (!chunk.in_check_rem(2)) {
-                LOG(LOG_INFO, "mod_vnc::send_to_mod_channel truncated msgType, need=2 remains=%u",
+                LOG(LOG_INFO, "mod_rdp::send_to_mod_channel truncated msgType, need=2 remains=%u",
                     chunk.in_remain());
-                throw Error(ERR_VNC);
+                throw Error(ERR_RDP_DATA_TRUNCATED);
             }
 
             uint16_t msgType = chunk.in_uint16_le();
 
-            if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+            if (this->enable_clipboard_out) {
+                if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
+                    RDPECLIP::FormatDataResponsePDU format_data_response_pdu(true);
+                    BStream                         out_s(256);
+
+                    format_data_response_pdu.emit(out_s, "");
+
+                    this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                                               , out_s.get_data()
+                                               , out_s.size()
+                                               , out_s.size()
+                                               , CHANNELS::CHANNEL_FLAG_FIRST
+                                               | CHANNELS::CHANNEL_FLAG_LAST
+                                               );
+                    return;
+                }
+            }
+            else if (msgType == RDPECLIP::CB_FORMAT_LIST) {
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                 }
@@ -639,12 +670,12 @@ public:
                 size_t chunk_size = length;
 
                 this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                             , out_s.get_data()
-                                             , length
-                                             , chunk_size
-                                             , CHANNELS::CHANNEL_FLAG_FIRST
-                                             | CHANNELS::CHANNEL_FLAG_LAST
-                                             );
+                                           , out_s.get_data()
+                                           , length
+                                           , chunk_size
+                                           , CHANNELS::CHANNEL_FLAG_FIRST
+                                           | CHANNELS::CHANNEL_FLAG_LAST
+                                           );
 
                 return;
             }
@@ -659,10 +690,6 @@ public:
                 mod_channel->log(index);
             }
             this->send_to_channel(*mod_channel, chunk, length, flags);
-        }
-
-        if (this->verbose & 16) {
-            LOG(LOG_INFO, "mod_rdp::send_to_mod_channel done");
         }
     }
 
@@ -1789,7 +1816,7 @@ public:
                                     }
                                 }
                             }
-                            else if (!this->enable_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+                            else if (!this->enable_clipboard_out && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
                                 // Clipboard is unavailable and is a Clipboard PDU
 
                                 TODO("RZ: Don't reject clipboard update, this can block rdesktop. (until 1.7.1 ?)");
@@ -1800,7 +1827,33 @@ public:
 
                                 uint16_t msgType = sec.payload.in_uint16_le();
 
-                                if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+                                if (this->enable_clipboard_in) {
+                                    if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
+                                        RDPECLIP::FormatDataResponsePDU format_data_response_pdu(true);
+                                        BStream                         out_s(256);
+
+                                        format_data_response_pdu.emit(out_s, "");
+
+                                        const CHANNELS::ChannelDef * mod_channel =
+                                            this->mod_channel_list.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+
+                                        if (mod_channel) {
+                                            this->front.send_to_channel(*mod_channel
+                                                                       , out_s.get_data()
+                                                                       , out_s.size()
+                                                                       , out_s.size()
+                                                                       , CHANNELS::CHANNEL_FLAG_FIRST
+                                                                       | CHANNELS::CHANNEL_FLAG_LAST
+                                                                       );
+                                        }
+                                    }
+                                    else {
+                                        sec.payload.p -= 2;
+                                        this->send_to_front_channel(
+                                            mod_channel.name, sec.payload.p, length, chunk_size, flags);
+                                    }
+                                }
+                                else if (msgType == RDPECLIP::CB_FORMAT_LIST) {
                                     if (this->verbose & 1) {
                                         LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                                     }
