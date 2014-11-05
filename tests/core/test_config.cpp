@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
-    BOOST_CHECK_EQUAL(std::string("cliprdr"),           std::string(ini.client.allow_channels.c_str()));
+    BOOST_CHECK_EQUAL(std::string("*"),                 std::string(ini.client.allow_channels.c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.client.deny_channels.c_str()));
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
-    BOOST_CHECK_EQUAL(std::string("cliprdr"),           std::string(ini.mod_rdp.allow_channels.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("*"),                 std::string(ini.mod_rdp.allow_channels.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.mod_rdp.deny_channels.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
@@ -453,7 +453,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
-    BOOST_CHECK_EQUAL(std::string("cliprdr"),           std::string(ini.client.allow_channels.c_str()));
+    BOOST_CHECK_EQUAL(std::string("*"),                 std::string(ini.client.allow_channels.c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.client.deny_channels.c_str()));
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
@@ -465,7 +465,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
-    BOOST_CHECK_EQUAL(std::string("cliprdr"),           std::string(ini.mod_rdp.allow_channels.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("*"),                 std::string(ini.mod_rdp.allow_channels.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.mod_rdp.deny_channels.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
@@ -738,7 +738,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
-    BOOST_CHECK_EQUAL(std::string("cliprdr"),           std::string(ini.client.allow_channels.c_str()));
+    BOOST_CHECK_EQUAL(std::string("*"),                 std::string(ini.client.allow_channels.c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.client.deny_channels.c_str()));
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
@@ -750,7 +750,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
-    BOOST_CHECK_EQUAL(std::string("cliprdr"),           std::string(ini.mod_rdp.allow_channels.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("*"),                 std::string(ini.mod_rdp.allow_channels.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.mod_rdp.deny_channels.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
