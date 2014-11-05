@@ -648,3 +648,6 @@ unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp krb5 gss
 
 
 unit-test test_darray : tests/utils/test_darray.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+
