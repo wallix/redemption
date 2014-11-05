@@ -246,8 +246,8 @@ public:
               , mod_rdp_params.enable_nla, mod_rdp_params.target_device
               , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
         , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
-        , enable_clipboard_in(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_in"))
-        , enable_clipboard_out(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_out"))
+        , enable_clipboard_in(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_up"))
+        , enable_clipboard_out(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_down"))
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
@@ -1832,7 +1832,7 @@ public:
                                         RDPECLIP::FormatDataResponsePDU format_data_response_pdu(true);
                                         BStream                         out_s(256);
 
-                                        format_data_response_pdu.emit(out_s, "");
+                                        format_data_response_pdu.emit(out_s, "\0");
 
                                         const CHANNELS::ChannelDef * mod_channel =
                                             this->mod_channel_list.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);

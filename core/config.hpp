@@ -959,7 +959,7 @@ public:
 
         this->client.bitmap_compression = true;
 
-        this->client.allow_channels.copy_c_str("cliprdr");
+        this->client.allow_channels.copy_c_str("*");
         this->client.deny_channels.empty();
         // End Section "client"
 
@@ -977,7 +977,7 @@ public:
         this->mod_rdp.extra_orders.empty();
 
         this->mod_rdp.allow_channels.attach_ini(this, AUTHID_ALLOW_CHANNELS);
-        this->mod_rdp.allow_channels.set_from_cstr("cliprdr");
+        this->mod_rdp.allow_channels.set_from_cstr("*");
         this->mod_rdp.deny_channels.attach_ini(this, AUTHID_DENY_CHANNELS);
         this->mod_rdp.deny_channels.set_from_cstr("");
         // End Section "mod_rdp"

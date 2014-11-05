@@ -91,29 +91,7 @@ enum {
 class Front : public FrontAPI, public ActivityChecker{
     using FrontAPI::draw;
 
-    class DisableChannelId {
-        unsigned channel_id_[AuthorizationChannels::max_authorization_channels];
-        size_t size_ = 0;
-
-    public:
-        void push_back(unsigned i) {
-            this->channel_id_[this->size_] = i;
-            ++this->size_;
-        }
-
-        unsigned const * begin() const {
-            return this->channel_id_;
-        }
-
-        unsigned const * end() const {
-            return this->begin() + this->size_;
-        }
-
-        size_t size() const {
-            return this->size_;
-        }
-    };
-    DisableChannelId disable_channel_id_sorted;
+    std::vector<unsigned> disable_channel_id_sorted;
     AuthorizationChannels authorization_channels;
 
     bool has_activity = true;
@@ -1921,8 +1899,8 @@ public:
                 this->trans->send(x224_header, mcs_cjcf_data);
             }
 
-            const unsigned * beg_disable_channel_id = this->disable_channel_id_sorted.begin();
-            const unsigned * end_disable_channel_id = this->disable_channel_id_sorted.end();
+            auto beg_disable_channel_id = this->disable_channel_id_sorted.begin();
+            auto end_disable_channel_id = this->disable_channel_id_sorted.end();
             for (size_t i = 0 ; i < this->channel_list.size() + this->disable_channel_id_sorted.size(); i++){
                 Array array(256);
                 uint8_t * end = array.get_data();
@@ -1959,6 +1937,8 @@ public:
                     this->channel_list.set_chanid(real_index, mcs.channelId);
                 }
             }
+            this->disable_channel_id_sorted.clear();
+            this->disable_channel_id_sorted.shrink_to_fit();
 
             if (this->verbose & 1){
                 LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");

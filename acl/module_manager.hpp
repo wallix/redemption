@@ -833,7 +833,8 @@ public:
 
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
 
-                const bool enable_clipboard = this->front.authorized_channel(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+                const bool enable_clipboard_in  = this->front.authorized_channel(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_up");
+                const bool enable_clipboard_out = this->front.authorized_channel(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_down");
 
                 this->mod = new mod_vnc(t
                                         , this->ini
@@ -844,7 +845,8 @@ public:
                                         , this->front.client_info.height
                                         , this->front.client_info.keylayout
                                         , this->front.keymap.key_flags
-                                        , enable_clipboard && this->ini.mod_vnc.clipboard.get()
+                                        , enable_clipboard_in  && this->ini.mod_vnc.clipboard.get()
+                                        , enable_clipboard_out && this->ini.mod_vnc.clipboard.get()
                                         , this->ini.mod_vnc.encodings.c_str()
                                         , this->ini.mod_vnc.allow_authentification_retries
                                         , this->ini.debug.mod_vnc);

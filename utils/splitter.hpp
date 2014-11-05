@@ -23,13 +23,13 @@
 
 #include <iterator>
 
-template<class ForwardIterator>
+template<class ForwardIterator, class ValueT = typename std::iterator_traits<ForwardIterator>::value_type>
 class splitter
 {
     ForwardIterator first_;
     ForwardIterator last_;
     ForwardIterator cur_;
-    using value_type = typename std::iterator_traits<ForwardIterator>::value_type;
+    using value_type = ValueT;
     value_type sep_;
 
     struct range
@@ -133,9 +133,30 @@ public:
 };
 
 
-template<class ForwardIterator, class T = typename std::iterator_traits<ForwardIterator>::value_type>
+template<class ForwardIterator, class T>
 splitter<ForwardIterator> get_split(ForwardIterator first, ForwardIterator last, T sep = T()) {
-    return {first, last, sep};
+    return {first, last, std::move(sep)};
+}
+
+template<class Cont, class T>
+splitter<typename Cont::iterator> get_split(Cont & cont, T sep = T()) {
+    using std::begin;
+    using std::end;
+    return {begin(cont), end(cont), std::move(sep)};
+}
+
+template<class Cont, class T>
+splitter<typename Cont::const_iterator> get_split(const Cont & cont, T sep = T()) {
+    using std::begin;
+    using std::end;
+    return {begin(cont), end(cont), std::move(sep)};
+}
+
+template<class Cont, class T>
+splitter<typename Cont::iterator> get_split(Cont && cont, T sep = T()) {
+    using std::begin;
+    using std::end;
+    return {begin(cont), end(cont), std::move(sep)};
 }
 
 

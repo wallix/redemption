@@ -99,7 +99,8 @@ private:
     BStream to_vnc_large_clipboard_data;
 
 private:
-    bool opt_clipboard;  // true clipboard available, false clipboard unavailable
+    bool enable_clipboard_in;  // true clipboard available, false clipboard unavailable
+    bool enable_clipboard_out;  // true clipboard available, false clipboard unavailable
 
     z_stream zstrm;
 
@@ -139,7 +140,8 @@ public:
            , uint16_t front_height
            , int keylayout
            , int key_flags
-           , bool clipboard
+           , bool clipboard_in
+           , bool clipboard_out
            , const char * encodings
            , bool allow_authentification_retries
            , uint32_t verbose
@@ -155,7 +157,8 @@ public:
     , keymapSym(verbose)
     , incr(0)
     , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
-    , opt_clipboard(clipboard)
+    , enable_clipboard_in(clipboard_in)
+    , enable_clipboard_out(clipboard_out)
     , state(WAIT_SECURITY_TYPES)
     , ini(ini)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
@@ -1744,8 +1747,6 @@ private:
     //==============================================================================================================
     void lib_clip_data(void) {
     //==============================================================================================================
-        const CHANNELS::ChannelDef * channel  = this->get_channel_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
-
         TODO("change code below. It will overflow for long VNC data to copy."
         " If clip_data_size is large is will also allocate an undecent amoutn of memory")
 
@@ -1758,7 +1759,7 @@ private:
 
         size_t chunk_size = 0;
 
-        if (this->opt_clipboard) {
+        if (this->enable_clipboard_out || this->enable_clipboard_in) {
             chunk_size = std::min<size_t>(clip_data_size, MAX_VNC_2_RDP_CLIP_DATA_SIZE);
             if (this->verbose) {
                 LOG(LOG_INFO, "clip_data_size=%u chunk_size=%u", clip_data_size, chunk_size);
@@ -1779,7 +1780,10 @@ private:
 
             RDPECLIP::FormatDataResponsePDU format_data_response_pdu(response_ok);
 
-            format_data_response_pdu.emit(this->to_rdp_clipboard_data, reinterpret_cast<const char *>(stream.p));
+            format_data_response_pdu.emit(
+                this->to_rdp_clipboard_data
+              , this->enable_clipboard_out ? reinterpret_cast<const char *>(stream.p) : "\0"
+            );
         }
 
         // drop remaining clipboard content if larger that about 8000 bytes
@@ -1795,11 +1799,11 @@ private:
             this->t->recv(&drop.end, remaining);
         }
 
-        if (this->opt_clipboard && channel) {
+        if (this->enable_clipboard_in && this->get_channel_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
             LOG(LOG_INFO, "Clipboard Channel Redirection available");
 
             RDPECLIP::FormatListPDU format_list_pdu;
-            BStream                 out_s(16384);
+            BStream                 out_s(256);
 
             format_list_pdu.emit(out_s);
 
@@ -1900,7 +1904,7 @@ private:
         switch (recv_factory.msgType) {
             // Client notify that a copy operation have occured. Two operations should be done :
             //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
-            //  - Only if clipboard content formats list include "NICODETEXT: send a request for it in that format
+            //  - Only if clipboard content formats list include "UNICODETEXT: send a request for it in that format
             case RDPECLIP::CB_FORMAT_LIST: {
                 // Always coming from front
                 LOG(LOG_INFO, "mod_vnc::send_to_vnc - receiving CB_FORMAT_LIST");
@@ -1909,7 +1913,7 @@ private:
 
                 format_list_pdu.recv(stream, recv_factory);
 
-                if (this->opt_clipboard && format_list_pdu.contians_data_in_text_format) {
+                if (this->enable_clipboard_in && format_list_pdu.contians_data_in_text_format) {
                     //--------------------------- Beginning of clipboard PDU Header ----------------------------
 
                     TODO("Create a unit tested class for clipboard messages");
@@ -1938,20 +1942,20 @@ private:
                     // 04 00 00 00 04 00 00 00 0d 00 00 00
                     // 00 00 00 00
                     RDPECLIP::FormatDataRequestPDU format_data_request_pdu(RDPECLIP::CF_UNICODETEXT);
-                    BStream                        out_s2(256);
+                    out_s.init(256);
 
-                    format_data_request_pdu.emit(out_s2);
+                    format_data_request_pdu.emit(out_s);
 
-                    length     = out_s2.size();
+                    length     = out_s.size();
                     chunk_size = length;
 
                     this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                            , out_s2.get_data()
-                                            , length
-                                            , chunk_size
-                                            , CHANNELS::CHANNEL_FLAG_FIRST
-                                            | CHANNELS::CHANNEL_FLAG_LAST
-                                            );
+                                               , out_s.get_data()
+                                               , length
+                                               , chunk_size
+                                               , CHANNELS::CHANNEL_FLAG_FIRST
+                                               | CHANNELS::CHANNEL_FLAG_LAST
+                                               );
                 }
                 //else {
                 // NOTE block freerdp
@@ -2083,19 +2087,21 @@ private:
                             throw Error(ERR_VNC);
                         }
 
-                        Array dataU8(
-                              format_data_response_pdu.dataLen()
-                            + format_data_response_pdu.dataLen() / 2
-                            + 1);
+                        if (this->enable_clipboard_in) {
+                            Array dataU8(
+                                format_data_response_pdu.dataLen()
+                                + format_data_response_pdu.dataLen() / 2
+                                + 1);
 
-                        size_t len_utf8 = UTF16toUTF8( stream.p
-                                                     , format_data_response_pdu.dataLen() / 2
-                                                     , dataU8.get_data()
-                                                     , dataU8.size());
+                            size_t len_utf8 = UTF16toUTF8( stream.p
+                                                        , format_data_response_pdu.dataLen() / 2
+                                                        , dataU8.get_data()
+                                                        , dataU8.size());
 
-                        dataU8.get_data()[len_utf8] = 0;
+                            dataU8.get_data()[len_utf8] = 0;
 
-                        this->rdp_input_clip_data(dataU8.get_data(), len_utf8 + 1);
+                            this->rdp_input_clip_data(dataU8.get_data(), len_utf8 + 1);
+                        }
                     }
                     else {
                         // Virtual channel data span in multiple Virtual Channel PDUs.
@@ -2111,14 +2117,16 @@ private:
                                , format_data_response_pdu.dataLen());
                         }
 
-                        this->to_vnc_large_clipboard_data.init(2 * (MAX_VNC_2_RDP_CLIP_DATA_SIZE + 1));
+                        if (this->enable_clipboard_in) {
+                            this->to_vnc_large_clipboard_data.init(2 * (MAX_VNC_2_RDP_CLIP_DATA_SIZE + 1));
 
-                        size_t dataLenU16 = std::min<size_t>( stream.in_remain()
-                                                            , this->to_vnc_large_clipboard_data.tailroom());
+                            size_t dataLenU16 = std::min<size_t>( stream.in_remain()
+                                                                , this->to_vnc_large_clipboard_data.tailroom());
 
-                        REDASSERT(dataLenU16 != 0);
+                            REDASSERT(dataLenU16 != 0);
 
-                        this->to_vnc_large_clipboard_data.out_copy_bytes(stream.p, dataLenU16);
+                            this->to_vnc_large_clipboard_data.out_copy_bytes(stream.p, dataLenU16);
+                        }
                     }
                 }
 
