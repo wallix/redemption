@@ -24,59 +24,37 @@
 
 #include "mod_api.hpp"
 
+#include <functional>
+
+
 class mod_osd : public mod_api
 {
-    /**
-     * Emulate variadic template with 2 arguments (variadic template is feature of C++11)
-     * @{
-     */
-    template<class Command, class OtherArg>
-    void dispath_draw(Command const & cmd, const Rect & clip, OtherArg const & other_arg)
+    template<class Command, class... OtherArgs>
+    void split_draw(const Rect & cmd_rect, Command const & cmd, const Rect & clip, OtherArgs const &... other_args)
     {
-        this->mod.draw(cmd, clip, other_arg);
-    }
-
-    struct no_arg {};
-
-    template<class Command>
-    void dispath_draw(Command const & cmd, const Rect & clip, no_arg)
-    {
-        this->mod.draw(cmd, clip);
-    }
-
-    template<class Command>
-    void split_draw(const Rect & cmd_rect, Command const & cmd, const Rect & clip)
-    {
-        this->split_draw(cmd_rect, cmd, clip, no_arg());
-    }
-    //@}
-
-    template<class Command, class OtherArg>
-    void split_draw(const Rect & cmd_rect, Command const & cmd, const Rect & clip, OtherArg const & other_arg)
-    {
-        Rect rect = cmd_rect.intersect(clip);
+        const Rect rect = cmd_rect.intersect(clip);
         if (this->fg_rect.contains(rect) || rect.isempty()) {
             //nada
         }
         else if (rect.has_intersection(this->fg_rect)) {
-            subrect_t rect4 = subrect(rect, this->fg_rect);
+            const subrect_t rect4 = this->subrect(rect);
             this->mod.begin_update();
             if (!rect4.top.isempty()) {
-                this->dispath_draw(cmd, rect4.top, other_arg);
+                this->mod.draw(cmd, rect4.top, other_args...);
             }
             if (!rect4.right.isempty()) {
-                this->dispath_draw(cmd, rect4.right, other_arg);
+                this->mod.draw(cmd, rect4.right, other_args...);
             }
             if (!rect4.bottom.isempty()) {
-                this->dispath_draw(cmd, rect4.bottom, other_arg);
+                this->mod.draw(cmd, rect4.bottom, other_args...);
             }
             if (!rect4.left.isempty()) {
-                this->dispath_draw(cmd, rect4.left, other_arg);
+                this->mod.draw(cmd, rect4.left, other_args...);
             }
             this->mod.end_update();
         }
         else {
-            this->dispath_draw(cmd, clip, other_arg);
+            this->mod.draw(cmd, clip, other_args...);
         }
     }
 
@@ -87,40 +65,62 @@ class mod_osd : public mod_api
         Rect left;
     };
 
-    static subrect_t do_subrect(const Rect & rect, const Rect & sect)
+    subrect_t subrect(const Rect & rect) const
     {
-        subrect_t ret;
-        ret.top = Rect(rect.x, rect.y, rect.cx, sect.y - rect.y);
-        ret.left = Rect(rect.x, sect.y, sect.x - rect.x, sect.cy);
-        ret.right = Rect(sect.right(), sect.y, rect.right() - sect.right(), sect.cy);
-        ret.bottom = Rect(rect.x, sect.bottom(), rect.cx, rect.bottom() - sect.bottom());
-        return ret;
-    }
-
-    static subrect_t subrect(const Rect & rect, const Rect & sub)
-    {
-        return do_subrect(rect, rect.intersect(sub));
+        const Rect sect = rect.intersect(this->fg_rect);
+        return {
+            Rect(rect.x, rect.y, rect.cx, sect.y - rect.y),
+            Rect(sect.right(), sect.y, rect.right() - sect.right(), sect.cy),
+            Rect(rect.x, sect.bottom(), rect.cx, rect.bottom() - sect.bottom()),
+            Rect(rect.x, sect.y, sect.x - rect.x, sect.cy)
+        };
     }
 
     void draw_fg(Rect const & rect)
     {
-        this->mod.draw(RDPMemBlt(0, rect, 0xCC, this->bmp_srcx, this->bmp_srcy, 0), this->fg_rect, this->bmp);
+        this->dispatch_draw_fg(this->mod, rect, this->fg_rect);
     }
 
     const Rect fg_rect;
-    const int bmp_srcx;
-    const int bmp_srcy;
-    const Bitmap bmp;
     mod_api & mod;
+    FrontAPI & front;
+    std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> dispatch_draw_fg;
 
 public:
-    mod_osd(mod_api & mod, const Bitmap& bmp, int x = 0, int y = 0)
+    mod_osd(
+        FrontAPI & front, mod_api & mod, const Rect & rect,
+        std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f,
+        bool call_f = true
+    )
+    : mod_api(mod.get_front_width(), mod.get_front_height())
+    , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(rect))
+    , mod(mod)
+    , front(front)
+    , dispatch_draw_fg(std::move(f))
+    {
+        if (call_f) {
+            this->draw_fg(this->fg_rect);
+        }
+        this->set_gd(mod, this);
+    }
+
+private:
+    struct dispatch_bmp_draw {
+        const Bitmap bmp;
+        const int bmp_srcx;
+        const int bmp_srcy;
+
+        void operator()(mod_api & mod, const Rect & rect, const Rect & clip) const {
+            mod.draw(RDPMemBlt(0, rect, 0xCC, this->bmp_srcx, this->bmp_srcy, 0), clip, this->bmp);
+        }
+    };
+public:
+    mod_osd(FrontAPI & front, mod_api & mod, const Bitmap& bmp, int x = 0, int y = 0)
     : mod_api(mod.get_front_width(), mod.get_front_height())
     , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(Rect(x,y,bmp.cx(),bmp.cy())))
-    , bmp_srcx(x - this->fg_rect.x)
-    , bmp_srcy(y - this->fg_rect.y)
-    , bmp(bmp.bpp(), bmp)
     , mod(mod)
+    , front(front)
+    , dispatch_draw_fg(dispatch_bmp_draw{bmp, x - this->fg_rect.x, y - this->fg_rect.y})
     {
         this->draw_fg(this->fg_rect);
         this->set_gd(mod, this);
@@ -128,7 +128,7 @@ public:
 
     virtual ~mod_osd()
     {
-        if (this->get_gd(this->mod) == this) {
+        if (this->is_active()) {
             this->mod.rdp_input_invalidate(this->fg_rect);
         }
     }
@@ -170,7 +170,7 @@ public:
 private:
     void subrect_input_invalidate(const Rect & rect)
     {
-        subrect_t rect4 = subrect(rect, this->fg_rect);
+        subrect_t rect4 = this->subrect(rect);
 
         if (!rect4.top.isempty()){
             this->mod.rdp_input_invalidate(rect4.top);
@@ -328,14 +328,15 @@ public:
                     , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
 
         if (rectBmp.has_intersection(this->fg_rect)) {
-            Rect intersect = rectBmp.intersect(this->fg_rect);
-            subrect_t rect4 = do_subrect(rectBmp, intersect);
+            const subrect_t rect4 = this->subrect(rectBmp);
+            this->front.flush();
             this->mod.begin_update();
             this->draw_bitmap_rect(rect4.top, rectBmp, bmp);
             this->draw_bitmap_rect(rect4.right, rectBmp, bmp);
             this->draw_bitmap_rect(rect4.bottom, rectBmp, bmp);
             this->draw_bitmap_rect(rect4.left, rectBmp, bmp);
             this->mod.end_update();
+            this->front.flush();
         }
         else {
             this->mod.draw(bitmap_data, data, size, bmp);
@@ -362,7 +363,7 @@ public:
         this->mod.draw_event(now);
     }
 
-    virtual void rdp_input_invalidate(const Rect& r)
+    virtual void rdp_input_invalidate(const Rect & r)
     {
         if (r.has_intersection(this->fg_rect)) {
             this->mod.begin_update();
@@ -387,17 +388,7 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (keymap->nb_kevent_available() > 0){
-            if (!(param3 & SlowPath::KBDFLAGS_DOWN)
-             && keymap->top_kevent() == Keymap2::KEVENT_ESC
-             && keymap->is_ctrl_pressed()) {
-                keymap->get_kevent();
-                this->swap_active();
-            }
-            else {
-                this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
-            }
-        }
+        this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
     virtual void send_to_front_channel(const char*const mod_channel_name, uint8_t* data, size_t length,
@@ -481,6 +472,41 @@ public:
     virtual void on_front_up_and_running()
     {
         this->mod.on_front_up_and_running();
+    }
+
+    virtual void disconnect()
+    {
+        this->mod.disconnect();
+    }
+
+    virtual bool is_up_and_running()
+    {
+        return this->mod.is_up_and_running();
+    }
+
+    virtual void rdp_input_invalidate2(const DArray< Rect >& vr)
+    {
+        this->mod.rdp_input_invalidate2(vr);
+    }
+
+    virtual void refresh_context(Inifile& ini)
+    {
+        this->mod.refresh_context(ini);
+    }
+
+    virtual void send_data_indication_ex(uint16_t channelId, HStream& stream)
+    {
+        this->mod.send_data_indication_ex(channelId, stream);
+    }
+
+    virtual void send_fastpath_data(Stream& data)
+    {
+        this->mod.send_fastpath_data(data);
+    }
+
+    virtual void set_mod_palette(const BGRPalette& palette)
+    {
+        this->mod.set_mod_palette(palette);
     }
 };
 

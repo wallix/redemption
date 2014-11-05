@@ -61,6 +61,8 @@ BOOST_AUTO_TEST_CASE(TestFilename)
         catch (Error & e) {
         }
     }
+
+    ::unlink(filename);
 }
 
 BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
@@ -102,4 +104,6 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
         catch (Error & e) {
         }
     }
+
+    ::unlink(filename);
 }

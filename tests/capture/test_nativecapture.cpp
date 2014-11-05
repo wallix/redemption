@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     RDPDrawable drawable(800, 600, 24);
     NativeCapture consumer(now, trans, 800, 600, 24, bmp_cache, drawable, ini);
 
-    drawable.drawable.dont_show_mouse_cursor = true;
+    drawable.show_mouse_cursor(false);
 
     ini.video.frame_interval = 100; // one snapshot by second
     ini.video.break_interval = 5;   // one WRM file every 5 seconds

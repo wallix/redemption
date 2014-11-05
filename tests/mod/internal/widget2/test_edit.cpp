@@ -187,8 +187,8 @@ struct TestDraw : DrawApi
     void save_to_png(const char * filename)
     {
         std::FILE * file = fopen(filename, "w+");
-        dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
+        dump_png24(file, this->gd.data(), this->gd.width(),
+                   this->gd.height(), this->gd.rowsize(), true);
         fclose(file);
     }
 };
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit1.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xbc\xd1\x30\xc8\xef\x21\x5c\xc1\x3e\x95"
                    "\x06\xb9\xde\xe2\x54\xa4\x68\xbb\x03\x39"
                    )){
@@ -256,7 +256,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit2.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xfc\xa6\xe1\x51\x73\xde\xd0\xcf\x8e\xa6"
                    "\x0a\xf7\x58\xdf\xa8\x7a\x1a\xc8\x5b\x28"
                    )){
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit3.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x2c\x77\x71\xfe\xba\xf2\x59\xb9\x56\x93"
                    "\xa3\x2d\x8a\xec\x9f\x40\x89\x64\x12\xd2"
                    )){
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit4.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x5c\x87\xba\xef\xd1\x3b\x9e\x74\x39\x34"
                    "\x45\xd4\x64\xac\xd0\xec\x47\x05\xb2\x97"
                    )){
@@ -355,7 +355,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit5.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xbf\x45\x46\x98\x1c\x13\x54\x5f\xbf\x83"
                    "\x81\x74\x32\x88\x9d\x7d\xf1\x74\x5c\x78"
                    )){
@@ -388,7 +388,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit6.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x37\xcf\x67\x14\x4f\x58\xd3\xdd\x2e\x25"
                    "\x95\x8e\xaa\x85\x06\xf3\xea\x96\xc0\x64"
                    )){
@@ -421,7 +421,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit7.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xc8\xdd\x05\x7b\x43\x3f\x1b\x1d\x04\x4f"
                    "\x80\x60\x52\x04\x1a\xf5\x10\x07\xf5\xe4"
                    )){
@@ -454,7 +454,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit8.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x22\xb4\x05\xf5\x69\x0d\x69\x30\x13\x11"
         "\x01\xd2\xfc\x20\x59\xac\xad\x9e\x11\xf4")){
         BOOST_CHECK_MESSAGE(false, message);
@@ -510,7 +510,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e1.png");
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x1f\x0d\xf0\x54\xd2\x85\xeb\x62\x98\xa2"
                    "\x4e\x37\x47\x88\x61\xd1\x45\x3f\xa8\x0c"
                    )){
@@ -528,7 +528,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16, decoded_data, ctrl_alt_delete);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e2-1.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xb2\xdb\x82\xf4\x0f\xaf\x1f\x49\x29\x51"
                    "\xc4\x1a\xf5\x3e\xac\x37\x89\xfe\x36\xb0"
                    )){
@@ -544,7 +544,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, decoded_data, ctrl_alt_delete);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e2-2.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x9b\xc4\x46\x9e\x70\x07\x84\xe1\x9d\xd8"
                    "\xcd\xde\x68\x7e\xb2\x37\x2f\x90\x4e\x89"
                    )){
@@ -559,7 +559,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e3.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x79\x68\x73\xaa\x18\x2d\xe7\xaa\xb4\x68"
                    "\xcb\x9c\xd7\x1d\x0d\x10\x13\xcf\x58\x36"
                    )){
@@ -573,7 +573,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e4.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x9b\xc4\x46\x9e\x70\x07\x84\xe1\x9d\xd8"
                    "\xcd\xde\x68\x7e\xb2\x37\x2f\x90\x4e\x89"
                    )){
@@ -585,7 +585,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e5.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xb2\xdb\x82\xf4\x0f\xaf\x1f\x49\x29\x51"
                    "\xc4\x1a\xf5\x3e\xac\x37\x89\xfe\x36\xb0"
                    )){
@@ -596,7 +596,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e6.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x45\x3b\xdc\x15\x05\x48\x96\xab\x99\x72"
                    "\x19\x7d\x05\xb2\xf9\x72\x72\x53\x5d\x7c"
                    )){
@@ -607,7 +607,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e7.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x34\x32\x7d\x9c\x6a\xdf\x6a\x58\x46\xbb"
                    "\xf7\x56\xe8\xb9\x60\x22\x53\x61\x32\x7d"
                    )){
@@ -621,7 +621,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e8.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xeb\xd9\x3c\x01\x35\xf5\xcf\x59\x53\x2b"
                    "\x03\x60\x47\xf1\xa9\x3a\x4e\xce\xc3\x1c"
                    )){
@@ -635,7 +635,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e9.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x42\x67\x95\x18\xda\xeb\x34\x88\xa4\x04"
                    "\xd0\x54\xf1\x22\xa7\xe9\x9f\x0a\x60\xeb"
                    )){
@@ -649,7 +649,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e10.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xd0\xfa\xdf\x07\x35\x93\x19\x95\xe2\xc2"
                    "\x51\x97\x8c\x14\x5b\xf7\x5c\x4d\xff\x95"
                    )){
@@ -675,7 +675,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e11.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x7b\x12\x34\x1c\xba\xcc\x95\x9d\xae\xe1"
                    "\xd1\x8b\x4e\x93\xf8\x93\x09\xfd\x91\xc4"
                    )){
@@ -719,7 +719,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit9.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x67\xa6\x1d\x2d\x26\xb0\xb8\x98\xbb\xba"
                    "\x49\xb9\x64\x0c\x8f\x87\x18\x00\xe7\xf5"
                    )){
@@ -731,7 +731,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit10.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x13\x56\x53\xc6\x78\x81\x07\x75\x16\x2e"
                    "\xe0\xf3\x37\xa0\xe5\x72\x58\x08\xe6\xe9"
                    )){
@@ -828,7 +828,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditScrolling)
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-s2-1.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x99\xde\xb6\xac\xe3\x9e\x45\xf6\x42\x49"
                    "\xf3\xcd\x9b\x86\xee\xa3\x8f\x79\x50\x95"
                    )) {

@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
     // drawable.save_to_png(OUTPUT_FILE_PATH "radio1.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x6e\xbe\xb3\xa5\x4f\x57\x12\xa9\xa9\x26"
                    "\x32\xb5\xc9\x1d\xde\xbc\xa1\xe1\x1d\xe4"
                    )){
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "radio2.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x7b\xf5\x2f\xd9\x8d\x62\x9f\x3a\x30\xed"
                    "\x3c\xa6\x3f\xc3\xc0\x52\x2f\x1a\x5b\x0c"
                    )){
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "radio3.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x43\x0a\xb0\xa1\x8e\x1a\x92\x87\xd5\x2d"
                    "\x53\xee\xcc\x6e\xf0\xa6\x68\x79\x0e\x78"
                    )){
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolist1.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xa6\x3e\x25\x38\xd0\xbc\x2a\x41\x36\x44"
                    "\x9a\xc8\x1e\xe7\x41\x69\xaa\x93\x84\x59"
                    )){
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolist2.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x27\x50\x56\xc7\xef\xa0\x19\xd3\xf0\x42"
                    "\x76\xff\xc1\xb5\x57\xb2\x19\x52\xc8\x29"
                    )){
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolist3.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x92\x3c\xc0\x03\x39\x00\x73\xdf\xc0\x71"
                    "\x4c\x64\x13\x49\x20\x79\x81\xc8\x89\xdf"
                    )){
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolist4.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xa4\x77\x20\xba\x51\x68\x6b\xc1\xd3\xcd"
                    "\x40\x24\x72\x34\x0a\x48\xab\x4e\x86\xc2"
                    )){
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify1.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x66\x73\x53\xaf\x17\xe4\x5b\xad\xfc\x06"
                    "\x23\x73\x0b\x1e\x69\xe3\x29\x0c\x40\xfb"
                    )){
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
                            x, y, NULL);
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify2.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x02\x41\x3f\x86\x0a\x68\xd3\x52\xb0\xce"
                    "\xe0\x2d\x74\xce\x7e\x5c\xf3\xd0\x64\xb5"
                    )){
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
                            x, y, NULL);
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify3.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xd7\x7e\x9f\x6d\xff\xbf\x75\xa2\xe0\x51"
                    "\x7a\x84\xd6\xe5\x00\x7e\xac\x15\x5d\x83"
                    )){

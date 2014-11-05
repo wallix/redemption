@@ -169,8 +169,8 @@ struct TestDraw : DrawApi
     void save_to_png(const char * filename)
     {
         std::FILE * file = fopen(filename, "w+");
-        dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
+        dump_png24(file, this->gd.data(), this->gd.width(),
+                   this->gd.height(), this->gd.rowsize(), true);
         fclose(file);
     }
 };
