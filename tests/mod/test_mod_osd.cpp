@@ -29,6 +29,7 @@
 #include "transport.hpp"
 #include "out_filename_sequence_transport.hpp"
 #include "staticcapture.hpp"
+#include "../front/fake_front.hpp"
 #include "mod_osd.hpp"
 #include "rdp/rdp.hpp"
 #include "RDP/caches/bmpcache.hpp"
@@ -98,9 +99,9 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     ini.video.rt_display.set(1);
     ini.video.png_limit = -1;
     ini.video.png_interval = 0;
-    StaticCapture consumer(now, trans, trans.seqgen(), screen_rect.cx, screen_rect.cy, false, ini, drawable.drawable);
+    StaticCapture consumer(now, trans, trans.seqgen(), screen_rect.cx, screen_rect.cy, false, ini, drawable.impl());
 
-    drawable.drawable.dont_show_mouse_cursor = true;
+    drawable.show_mouse_cursor(false);
 
     bool ignore_frame_in_timeval = false;
 
@@ -112,7 +113,11 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH "."
 #endif
-        mod_osd osd(mod, Bitmap(FIXTURES_PATH "/ad8b.bmp"), 200, 200);
+        ClientInfo info(0, 0, 0);
+        info.width = 1;
+        info.height = 1;
+        FakeFront front(info, 0);
+        mod_osd osd(front, mod, Bitmap(FIXTURES_PATH "/ad8b.bmp"), 200, 200);
 
         now.tv_sec++;
         consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);

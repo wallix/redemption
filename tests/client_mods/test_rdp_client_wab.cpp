@@ -31,6 +31,7 @@
 #define LOGNULL
 //#define LOGPRINT
 #include "test_orders.hpp"
+#include "check_sig.hpp"
 
 #include "stream.hpp"
 #include "transport.hpp"
@@ -51,38 +52,6 @@
 #include "staticcapture.hpp"
 
 #include "../front/fake_front.hpp"
-
-inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
-                      char * message, const char * shasig)
-{
-    uint8_t sig[20];
-    SslSha1 sha1;
-    for (size_t y = 0; y < static_cast<size_t>(height); y++){
-        sha1.update(data + y * len, len);
-    }
-    sha1.final(sig, 20);
-
-    if (memcmp(shasig, sig, 20)){
-        sprintf(message, "Expected signature: \""
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
-        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
-        sig[ 8], sig[ 9], sig[10], sig[11],
-        sig[12], sig[13], sig[14], sig[15],
-        sig[16], sig[17], sig[18], sig[19]);
-        return false;
-    }
-    return true;
-}
-
-inline bool check_sig(Drawable & data, char * message, const char * shasig)
-{
-    return check_sig(data.data, data.height, data.rowsize, message, shasig);
-}
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
@@ -164,7 +133,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
 
     char message[1024];
-    if (!check_sig(front.gd.drawable, message,
+    if (!check_sig(front.gd.impl(), message,
     "\xb0\x16\x5e\xf5\x85\xdc\x1e\x3f\x91\x04\xe8\x0c\x19\x5e\x65\x34\xb5\x1b\xbd\xa6"
     )){
         BOOST_CHECK_MESSAGE(false, message);

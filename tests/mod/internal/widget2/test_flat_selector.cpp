@@ -50,8 +50,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     // WidgetSelectorFlat is a selector widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
     Inifile ini;
 
     ini.translation.target.set_from_cstr("Target");
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector1.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x97\x81\x51\x5c\x82\x59\xc1\x12\x08\x1a"
                    "\xf7\xcd\x50\xe5\x84\xa3\xd5\x61\x3d\xd1"
                    )) {
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector2.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x68\xaf\xe3\x65\xa1\x8d\xdf\xf5\x40\xb1"
                    "\x4f\x42\x98\x3e\xde\xda\x74\x5b\x8e\xba"
                    )){
@@ -106,8 +106,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
     // WidgetSelectorFlat is a selector widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 640, 480);
     NotifyApi * notifier = NULL;
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
 
     Inifile ini;
     ini.translation.target.set_from_cstr("Target");
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-resize1.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x78\x3c\x32\x0a\x2b\x3a\x61\xe2\xda\x7c"
                    "\x4f\x01\x95\x87\xec\x96\x98\x17\x0f\x3b"
                    )){
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-resize2.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x52\x57\x5d\x4c\xd8\xe5\x16\xc5\x71\x98"
                    "\xc8\x89\xd4\xad\x94\x9f\xc9\x97\x1a\xe3"
                    )){
@@ -164,8 +164,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
     // WidgetSelectorFlat is a selector widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
 
     Inifile ini;
     ini.translation.target.set_from_cstr("Target");
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector3.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xe0\x56\xfe\x91\x97\xc9\xc9\x09\xce\x5e"
                    "\x7d\x87\x26\x63\xf6\xe9\x81\x0d\xd0\x58"
                    )){
@@ -193,8 +193,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
     // WidgetSelectorFlat is a selector widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
 
     Inifile ini;
     ini.translation.target.set_from_cstr("Target");
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector4.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x0f\x7d\x77\x78\x45\x3e\x80\xf5\xcd\x77"
                    "\x83\x9b\xed\xc6\x7f\xb3\xe2\xf0\x28\xa4"
                    )){
@@ -226,8 +226,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
 
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
 
     Inifile ini;
     ini.translation.target.set_from_cstr("Target");
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector5.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
         "\x9d\xe3\xdc\x8b\x3e\xe0\x66\x51\x3f\x38"
         "\x8f\x1b\xe4\x7f\x5d\xe8\x60\xb0\x8f\xe9"
     )){
@@ -258,8 +258,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     // WidgetSelectorFlat is a selector widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
 
     Inifile ini;
     ini.translation.target.set_from_cstr("Target");
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x07\xa6\xe2\x7c\x16\xf7\x41\x44\xee\x52"
                    "\xda\x6a\x28\x41\xbe\x35\xf8\xc7\x93\x59"
                    )){
@@ -310,7 +310,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-2.png");
 
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x62\x48\x5a\x12\x3e\xcb\x36\x76\x64\x23"
                    "\xc2\xc0\x46\xe7\x4c\x3d\x0a\xc9\x76\x1c"
                    )){
@@ -326,7 +326,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-3.png");
 
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xeb\x82\xe1\x12\x07\x21\x4d\x8c\x58\x29"
                    "\xa3\xac\x06\x1f\x0f\xf4\x73\xc4\x6d\x8b"
                    )){
@@ -342,7 +342,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-4.png");
 
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xd3\x46\x9f\x74\xba\x03\x75\x4c\x38\x95"
                    "\x88\x95\x9e\x9c\x4d\x4b\x38\xcc\xa4\x96"
                    )){
@@ -358,7 +358,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-5.png");
 
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x62\x48\x5a\x12\x3e\xcb\x36\x76\x64\x23"
                    "\xc2\xc0\x46\xe7\x4c\x3d\x0a\xc9\x76\x1c"
                    )){
@@ -376,7 +376,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-6.png");
 
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xd3\x46\x9f\x74\xba\x03\x75\x4c\x38\x95"
                    "\x88\x95\x9e\x9c\x4d\x4b\x38\xcc\xa4\x96"
                    )){
@@ -404,8 +404,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     // WidgetSelectorFlat is a selector widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
 
     Inifile ini;
 //    ini.translation.target.set_from_cstr("Target");
@@ -443,7 +443,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x18\xee\xe4\x8b\x13\x37\x5a\x5c\x23\x59"
                    "\x94\x7c\x34\x54\x08\x12\x87\xcd\xdd\xd6"
                    )){
@@ -462,7 +462,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-2.png");
 
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xb5\x73\xc3\x32\x5d\x4f\x79\x63\xfc\x20"
                    "\xe9\xb0\x34\x13\xf0\x52\xd7\x0a\xa5\x79"
                    )){
@@ -476,7 +476,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-3.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x1a\x62\x2e\x39\xc4\x07\xbb\x06\x8d\xc8"
                    "\x54\x0b\x07\x45\x9a\x58\xd1\xdf\x49\xce"
                    )){
@@ -492,7 +492,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-4.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x72\x69\x3b\x9c\x00\xd5\xd3\x93\x71\x48"
                    "\x7c\x1c\xdc\x8d\xd7\x55\xce\x03\x18\x84"
                    )){
@@ -507,7 +507,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-5.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xb5\x5c\x66\xc7\x99\x66\x8a\x11\xa9\x59"
                    "\x1d\x3a\xf6\xc7\xb7\xa3\x89\x91\xde\x16"
                    )){
@@ -522,7 +522,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-6.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xfc\x84\xda\xbf\x51\xcb\x89\xd6\x54\x73"
                    "\xdc\x8a\x14\xc9\x82\x00\xa5\xa6\x0e\x0d"
                    )){
@@ -537,7 +537,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-7.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x87\xc1\x85\xfd\x1a\x80\xa1\x06\x8b\xeb"
                    "\x45\x5b\x9c\xcd\x57\x06\x03\xe8\x27\x25"
                    )){
@@ -555,7 +555,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-8.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x0f\x14\xf1\xc5\x86\x4b\xaf\x82\x82\x8c"
                    "\x61\x52\x60\x62\x40\x1f\xf5\x9b\x40\x27"
                    )){
@@ -582,7 +582,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-9.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xee\xab\x3a\x75\x0c\xf8\xc4\x8b\x82\xf0"
                    "\x92\x7f\x98\x02\x0a\x88\x91\x31\xa7\x81"
                    )){
@@ -598,8 +598,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
     // WidgetSelectorFlat is a selector widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
 
     Inifile ini;
     // ini.translation.target.set_from_cstr("Target");
@@ -641,7 +641,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x36\xf9\x92\x34\x51\xa3\xe6\x18\xb8\xbb"
                    "\x7d\xd9\xa2\x92\x14\xe8\x40\xb3\x04\x2f"
                    )){
@@ -670,7 +670,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
     selector.rdp_input_invalidate(selector.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-2.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x08\x3d\xdd\xe9\x60\x8b\xf9\xc9\x74\xcc"
                    "\xb3\x4c\xb4\x1d\xa4\x85\x3f\xdd\xe1\xad"
                    )){
@@ -699,7 +699,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
     selector.rdp_input_invalidate(selector.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-3.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x6d\x23\xab\x06\x73\x7c\xbe\x69\x6b\x33"
                    "\xd4\x94\x7a\x4c\xc7\x38\x68\x01\xcd\xcf"
                    )){
@@ -727,7 +727,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
     selector.rdp_input_invalidate(selector.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-4.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x82\x5c\xe0\x0e\x0e\xcb\x63\x48\x64\xb7"
                    "\x6f\x05\xa8\x92\x40\xe6\x51\x7f\x20\x32"
                    )){
@@ -742,8 +742,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
     // WidgetSelectorFlat is a selector widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 640, 480);
     NotifyApi * notifier = NULL;
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
 
     Inifile ini;
     // ini.translation.target.set_from_cstr("Target");
@@ -785,7 +785,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xc3\x87\x52\xfc\xbc\x47\x3d\x20\x34\x33"
                    "\x7c\x54\xcd\x65\xf1\x3f\xab\xc3\x12\x64"
                    )){
@@ -815,7 +815,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
     selector.rdp_input_invalidate(selector.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-2.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x88\xff\x6f\x35\xb6\xca\xf3\x61\x5a\x8c"
                    "\xcf\x4b\xa0\x27\x98\x4e\xe4\x0a\x38\x2d"
                    )){
@@ -845,7 +845,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
     selector.rdp_input_invalidate(selector.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-3.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x04\xf1\xeb\x69\xe9\xbc\xda\x26\xd4\xe0"
                    "\x96\xd1\xa7\x59\x52\x0a\x2e\x7d\x44\x01"
                    )){
@@ -874,7 +874,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
     selector.rdp_input_invalidate(selector.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-4.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x8d\x52\x86\xa1\xbe\x32\x62\xa9\x14\xc6"
                    "\x06\xea\xa6\x27\x18\x10\x8b\xa8\x4b\xe7"
                    )){
@@ -890,8 +890,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
     // WidgetSelectorFlat is a selector widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 1280, 1024);
     NotifyApi * notifier = NULL;
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
 
     Inifile ini;
     // ini.translation.target.set_from_cstr("Target");
@@ -933,7 +933,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
 
     char message[1024];
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x7d\x56\xc8\x95\xa9\xb2\x32\x5c\x7d\x61"
                    "\x7f\x06\x0b\x3c\x6b\x1f\x37\x71\xad\x28"
                    )){
@@ -963,7 +963,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
     selector.rdp_input_invalidate(selector.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-2.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x4c\x80\xba\x39\xfc\xc3\xbe\x2a\x1f\xc4"
                    "\x25\xdf\xcf\xc7\x13\x57\x8d\xb0\xfa\xad"
                    )){
@@ -993,7 +993,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
     selector.rdp_input_invalidate(selector.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-3.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x8a\xb8\x20\xdf\xad\x13\x4e\x70\x6f\x7a"
                    "\xe3\xc6\x21\x8d\xa6\x3b\xa5\x16\x84\xe7"
                    )){
@@ -1022,7 +1022,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
     selector.rdp_input_invalidate(selector.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-4.png");
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x1a\x2f\xf3\x80\x9f\x43\x8d\x11\xd5\x1a"
                    "\x56\xf6\xd4\xfc\xef\x4a\x3a\xc0\x80\x3c"
                    )){
@@ -1053,8 +1053,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldVV)
         }
     } notifier;
 
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
     Inifile ini;
 
     ini.translation.target.set_from_cstr("Target");
@@ -1116,8 +1116,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldVM)
         }
     } notifier;
 
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
     Inifile ini;
 
     ini.translation.target.set_from_cstr("Target");
@@ -1194,8 +1194,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldMV)
         }
     } notifier;
 
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
     Inifile ini;
 
     ini.translation.target.set_from_cstr("Target");
@@ -1290,8 +1290,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldMM)
         }
     } notifier;
 
-    int16_t w = drawable.gd.drawable.width;
-    int16_t h = drawable.gd.drawable.height;
+    int16_t w = drawable.gd.width();
+    int16_t h = drawable.gd.height();
     Inifile ini;
 
     ini.translation.target.set_from_cstr("Target");

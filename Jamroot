@@ -92,6 +92,9 @@ project redemption
     <conditional>@defines
 
     <cxxflags>-std=c++11
+#     <cxxflags>-Weffc++
+#     <cxxflags>-Wswitch-enum
+#     <cxxflags>-Wswitch-default
     <cxxflags>-pedantic
 #    <cxxflags>-Wconversion
     <cxxflags>-Wvla
@@ -113,9 +116,8 @@ project redemption
     <cxxflags>-Wchar-subscripts
 #     <cxxflags>-Wformat
 #     <cxxflags>-Wformat=2
-#     <cxxflags>-Wformat-security
+    <cxxflags>-Wformat-security
 #     <cxxflags>-Wmissing-format-attribute
-#    <cxxflags>-Werror-implicit-function-declaration
     <cxxflags>-Wsequence-point
     <cxxflags>-Wreturn-type
     <cxxflags>-Wfloat-equal
@@ -652,3 +654,6 @@ unit-test test_darray : tests/utils/test_darray.cpp libboost_unit_test : <varian
 unit-test test_flat_wait : tests/mod/internal/widget2/test_flat_wait.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_flat_form : tests/mod/internal/widget2/test_flat_form.cpp cryptofile png z openssl crypto dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+

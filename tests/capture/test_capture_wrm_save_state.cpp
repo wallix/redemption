@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
     player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
     player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
@@ -354,7 +354,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid);
     const SequenceGenerator * seq = out_png_trans.seqgen();
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
     player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);

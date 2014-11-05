@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
     // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_0.png");
 
     char message[1024];
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x3a\x68\x71\xa0\x6d\x23\xc2\xd5\xf8\xd5"
                     "\x41\xdf\x41\x2f\x60\xbc\x03\x1e\xaf\xd7")) {
         BOOST_CHECK_MESSAGE(false, message);
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_1.png");
 
-    if (!check_sig( drawable.gd.drawable, message
+    if (!check_sig( drawable.gd.impl(), message
                   , "\x2d\xb0\xd3\x13\xc9\x3e\xc1\x62\xa7\x43"
                     "\x0c\x1c\x3a\x7a\x7e\xb1\x54\x22\x49\xd1")) {
         BOOST_CHECK_MESSAGE(false, message);

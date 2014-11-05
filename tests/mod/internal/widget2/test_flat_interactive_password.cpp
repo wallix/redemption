@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
     // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_pass.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xcd\x0a\xf2\xa7\xeb\xcb\x10\xc7\x45\x42"
                    "\xb8\x9c\xa7\x41\xe7\xda\x3f\xec\x52\xa8"
                    )){

@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
     drawable.save_to_png(OUTPUT_FILE_PATH "ticket_form.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x5c\x9c\xb9\xad\x98\xa7\xd0\x0a\x76\x98"
                    "\xed\x7c\x44\xdd\xf0\x63\xfe\xa3\x3f\x04"
                    )){

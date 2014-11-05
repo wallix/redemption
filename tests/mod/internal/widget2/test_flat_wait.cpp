@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
     drawable.save_to_png(OUTPUT_FILE_PATH "flat_wait.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x07\xe3\xb7\xf9\x90\x2e\x27\xfe\x18\x20"
                    "\x78\x29\xab\x0c\x45\xb0\x59\x53\xe4\x12"
                    )){

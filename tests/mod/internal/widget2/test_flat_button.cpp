@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x22\xb2\x48\xa5\x9e\x42\xcb\x4d\x38\x7c"
                    "\x41\x1a\x59\x5a\xa5\xe3\x70\x8d\xe8\x00"
         )){
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button2.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xa2\x7c\xc5\x08\x48\x37\x41\x27\xed\x6a"
                    "\x02\xae\xc7\xad\xaf\x82\xbb\xba\x18\xe5"
                    )){
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton3)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button3.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x2a\xb3\x83\x3b\xc1\xca\x5a\x26\x5f\x1f"
                    "\x99\xc2\xe4\x29\xad\x54\xda\xe1\x17\xc6"
         )){
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton4)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button4.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x99\x52\xc1\x9c\x18\x29\xce\x7d\x8f\x41"
                    "\x76\xd2\xda\xd8\x0b\x82\x98\x08\xd5\x40"
         )){
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton5)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button5.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xc3\x04\x0e\xbc\x75\x79\xa9\xf3\x61\xba"
                    "\x38\x3f\x2e\x39\xae\x3d\x39\xc4\x2c\xf3"
         )){
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton6)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button6.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x4a\x1a\x16\x53\xe4\x66\x41\x52\x03\xb6"
                    "\x93\xac\xfe\x4a\xc3\xe6\x67\x03\x59\xdf"
         )){
@@ -280,7 +280,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button7.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xdc\x95\xcb\x86\xab\x12\x48\x0a\xd4\xbd"
                    "\x83\x49\xea\x97\x76\x3d\x06\xb5\xa7\xb5"
         )){
@@ -315,7 +315,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button8.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xf2\x68\xec\x64\x6a\xeb\xb7\xbd\x1b\x18"
                    "\x09\x0b\x23\x0d\x1e\xb1\xf6\xe9\xc9\x3c"
         )){
@@ -347,7 +347,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button9.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x56\xc7\x70\x37\xd5\x53\xf4\x15\x1e\xe0"
                    "\xa0\x6b\x56\xe8\x92\x8a\x96\xd1\x66\x5f"
         )){
@@ -360,7 +360,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button10.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x7c\xd2\xea\xd3\xc0\xb9\x8b\xfb\xc5\x48"
                    "\x42\xf2\xc4\x24\xf7\xd6\x44\x23\xf2\x89"
        )){
@@ -373,7 +373,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button11.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x56\xc7\x70\x37\xd5\x53\xf4\x15\x1e\xe0"
                    "\xa0\x6b\x56\xe8\x92\x8a\x96\xd1\x66\x5f"
     )){
@@ -520,7 +520,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button12.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x18\xe4\x82\xd0\xdf\x7a\x91\x84\xa7\xf9"
                    "\x7b\xdc\x23\x4d\x0e\x76\xb7\xf9\x32\xf2"
         )){
@@ -533,7 +533,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button13.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\x93\x90\xf9\x17\xe0\x22\x00\xa6\x96\x8a"
                    "\x27\xc2\xca\x8b\x90\x41\x81\x92\x78\xbd"
         )){
@@ -568,7 +568,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button14.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xb5\x54\x4b\x09\x1f\x05\xd6\x5f\x63\xcf"
                    "\x33\xef\x1b\xa1\x1a\x4e\xab\x72\x7a\x55"
         )){
@@ -582,7 +582,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button15.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xf7\xe1\x60\x46\x35\xe1\xaf\x36\x1b\x8f"
                    "\x22\x79\x89\x46\x7b\x35\xa9\xaf\xcc\xba"
        )){
@@ -597,7 +597,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button16.png");
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xb5\x54\x4b\x09\x1f\x05\xd6\x5f\x63\xcf"
                    "\x33\xef\x1b\xa1\x1a\x4e\xab\x72\x7a\x55"
     )){
@@ -612,7 +612,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button17.png");
 
 
-    if (!check_sig(drawable.gd.drawable, message,
+    if (!check_sig(drawable.gd.impl(), message,
                    "\xf7\xe1\x60\x46\x35\xe1\xaf\x36\x1b\x8f"
                    "\x22\x79\x89\x46\x7b\x35\xa9\xaf\xcc\xba"
     )){
