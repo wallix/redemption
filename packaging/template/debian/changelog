@@ -1,3 +1,31 @@
+redemption (0.9.426%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix bugs in packager script again
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 12 May 2014 18:50:23 +0200
+
+redemption (0.9.424%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix bugs in packager script
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 12 May 2014 18:43:51 +0200
+
+redemption (0.9.422%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix bug in package script
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 12 May 2014 17:53:41 +0200
+
+redemption (0.9.420%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * New Packager with update version and build package
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 12 May 2014 17:42:02 +0200
+
 redemption (0.9.289%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fixed Numlock initial state bug
