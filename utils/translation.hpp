@@ -94,7 +94,8 @@ private:
         {"second", {"second", "seconde"}},
         {"minute", {"minute", "minute"}},
         {"before_closing", {"before closing", "avant fermeture"}},
-        {"manager_close_cnx", {"Connection closed by manager", "Le gestionnaire de session a coupé la connexion"}},
+        {"manager_close_cnx", {"Connection closed by manager",
+                               "Le gestionnaire de session a coupé la connexion"}},
         {"end_connection", {"End of connection", "Fin de connexion"}},
         {"help_message", {
             "In login edit box, enter:<br>"
@@ -123,32 +124,38 @@ private:
             "cas de problème pour vous connecter."
         }},
         {"selector", {"Selector", "Sélecteur"}},
-        {"session_out_time", {"Session is out of allowed timeframe", "L'autorisation de la session a expiré"}},
-        {"miss_keepalive", {"Missed keepalive from ACL", "Absence de réponse de Keepalive de l'ACL"}},
-        {"close_inactivity", {"Connection closed on inactivity", "Fermeture sur inactivité"}},
-        {"acl_fail", {"Authentifier service failed", "Echec du service d'authentification"}},
-        {"target_fail", {"Failed to connect to remote TCP host", "Echec de la connexion à la cible distante"}},
+        {"session_out_time", {"Session is out of allowed timeframe",
+                              "L'autorisation de la session a expiré"}},
+        {"miss_keepalive", {"Missed keepalive from ACL",
+                            "Absence de réponse de Keepalive de l'ACL"}},
+        {"close_inactivity", {"Connection closed on inactivity",
+                              "Fermeture sur inactivité"}},
+        {"acl_fail", {"Authentifier service failed",
+                      "Echec du service d'authentification"}},
+        {"target_fail", {"Failed to connect to remote TCP host",
+                         "Echec de la connexion à la cible distante"}},
         {"comment", {"Comment", "Commentaire"}},
         {"no_results", {"No results found", "Aucun résultat"}},
-        {"authentication_required", {"Authentication Required", "Authentification Requise"}},
-        {"disable_osd", {"(hidden with ctrl+esc or left click)", "(cacher avec ctrl+esc ou clic gauche)"}},
-
         {"back_selector", {"Back to Selector", "Retour au Sélecteur"}},
-        {"exit", {"Exit", "Déconnexion"}},
+        {"exit", {"Exit", "Sortir"}},
         {"comment", {"Comment", "Commentaire"}},
         {"comment_r", {"Comment *", "Commentaire *"}},
         {"ticket", {"Ticket n°", "Ticket n°"}},
         {"ticket_r", {"Ticket n° *", "Ticket n° *"}},
         {"duration", {"Duration", "Durée"}},
         {"duration_r", {"Duration *", "Durée *"}},
-        {"note_duration_format", {
-            "format \"[hours]h[mins]m\" each unit is optional.",
-            "format: \"[heures]h[mins]m\" chaque unité est optionnelle."
-        }},
-        {"note_required", {"(*) required fields.", "(*) champs obligatoires."}},
+
+        {"note_duration_format",
+                {"format \"[hours]h[mins]m\" each unit is optional.",
+                 "format \"[heures]h[mins]m\" chaque unité est optionnel."}},
+        {"note_required", {"(*) required fields", "(*) champs requis"}},
         {"confirm", {"Confirm", "Confirmer"}},
         {"information", {"Information", "Information"}},
-    }}
+        {"authentication_required", {"Authentication Required",
+                                     "Authentification Requise"}},
+        {"disable_osd", {"(hidden with ctrl+esc or left click)",
+                         "(cacher avec ctrl+esc ou clic gauche)"}},
+        }}
     {
         std::sort(this->trans.begin(), this->trans.end());
     }
