@@ -162,6 +162,21 @@ void rfbDes(unsigned char *inblock, unsigned char *outblock)
     return;
 }
 
+void rfbDesText(unsigned char *inblock, unsigned char *outblock, unsigned long length,
+                unsigned char *key) {
+    for (unsigned int i = 0; i < 8; i++) {
+        inblock[i] ^= key[i];
+    }
+    rfbDes(inblock, outblock);
+    for (unsigned int i = 8; i < length; i += 8) {
+        for (int j = 0; j < 8; j++) {
+            inblock[i + j] ^= outblock[i + j - 8];
+        }
+        rfbDes(inblock + i, outblock + i);
+    }
+
+}
+
 static void scrunch(register unsigned char *outof, register unsigned long *into)
 {
     *into	 = (*outof++ & 0xffL) << 24;
