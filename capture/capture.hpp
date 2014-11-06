@@ -95,7 +95,7 @@ public:
     , clear_png(clear_png)
     {
         if (this->capture_drawable) {
-            this->drawable = new RDPDrawable(width, height, capture_bpp);
+            this->drawable = new RDPDrawable(width, height, mod_bpp);
         }
 
         if (this->capture_png) {

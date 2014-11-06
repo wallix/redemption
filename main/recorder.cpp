@@ -589,7 +589,8 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture, con
 
         capture.reset(new Capture( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                  , player.screen_rect.cx, player.screen_rect.cy
-                                 , player.info_bpp, 24, outfile_path, outfile_path, ini.video.hash_path
+                                 , player.info_bpp, ini.video.wrm_color_depth_selection_strategy
+                                 , outfile_path, outfile_path, ini.video.hash_path
                                  , outfile_basename, false, false, NULL, ini, true));
         if (capture->capture_png){
             capture->psc->zoom(zoom);

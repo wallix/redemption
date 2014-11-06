@@ -199,11 +199,11 @@ namespace detail
             if (size_t(res) != len) {
                 ssize_t res2 = res;
                 do {
-                    if (const ssize_t err = this->Buf::close()) {
+                    if (/*const ssize_t err = */this->Buf::close()) {
                         return res;
                     }
                     data = static_cast<char*>(data) + res2;
-                    if (const int e = this->open_next()) {
+                    if (/*const int err = */this->open_next()) {
                         return res;
                     }
                     len -= res2;
