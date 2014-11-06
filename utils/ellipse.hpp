@@ -23,76 +23,78 @@
 #ifndef _REDEMPTION_UTILS_ELLIPSE_HPP_
 #define _REDEMPTION_UTILS_ELLIPSE_HPP_
 
-#include <algorithm>
-#include <iosfwd>
-#include <stdint.h>
+#include <cstddef>
 #include "rect.hpp"
-#include "log.hpp"
 
+class Ellipse {
+    int16_t  leftRect;
+    int16_t  topRect;
+    int16_t  rightRect;
+    int16_t  bottomRect;
 
-struct Ellipse {
-    int16_t centerx;
-    int16_t centery;
-    uint16_t radiusx;
-    uint16_t radiusy;
+public:
+    Ellipse()
+    : Ellipse(0, 0, 0, 0)
+    {}
 
-    Ellipse() : centerx(0), centery(0), radiusx(0), radiusy(0) {}
+    Ellipse(int16_t leftRect, int16_t topRect, int16_t rightRect, int16_t bottomRect)
+    : leftRect(leftRect)
+    , topRect(topRect)
+    , rightRect(rightRect)
+    , bottomRect(bottomRect)
+    {}
 
-    Ellipse(int centerx, int centery, uint16_t radiusx, uint16_t radiusy)
-        : centerx(centerx), centery(centery), radiusx(radiusx), radiusy(radiusy)
-    {
-        if (((radiusx-1)|(radiusy-1)) & 0x8000) {
-            this->centerx = 0;
-            this->centery = 0;
-            this->radiusx = 0;
-            this->radiusy = 0;
-        }
+    static Ellipse since_center(int centerx, int centery, uint16_t radiusx, uint16_t radiusy) {
+        return Ellipse(centerx - radiusx, centery - radiusy, centerx + radiusx, centery + radiusy);
     }
 
-    Ellipse(const Rect & rect)
-        : centerx(rect.getCenteredX())
-        , centery(rect.getCenteredY())
-        , radiusx(rect.cx / 2)
-        , radiusy(rect.cy / 2)
+    Ellipse(const Rect & r)
+    : Ellipse(r.x, r.y, r.right(), r.bottom())
     {}
 
     int16_t left() const {
-        return this->centerx - this->radiusx;
+        return this->leftRect;
     }
     int16_t top() const {
-        return this->centery - this->radiusy;
+        return this->topRect;
     }
     int16_t right() const {
-        return this->centerx + this->radiusx;
+        return this->rightRect;
     }
     int16_t bottom() const {
-        return this->centery + this->radiusy;
+        return this->bottomRect;
     }
 
     uint16_t width() const {
-        return this->radiusx * 2;
+        return static_cast<uint16_t>(this->right() - this->left());
     }
     uint16_t height() const {
-        return this->radiusy * 2;
+        return static_cast<uint16_t>(this->bottom() - this->top());
+    }
+
+    uint16_t radius_x() const {
+        return this->width() / 2;
+    }
+    uint16_t radius_y() const {
+        return this->height() / 2;
+    }
+
+    int16_t center_x() const {
+        return this->left() + (this->right() - this->left()) / 2;
+    }
+    int16_t center_y() const {
+        return this->top() + (this->bottom() - this->top()) / 2;
     }
 
     Rect get_rect() const {
         return Rect(this->left(), this->top(), this->width(), this->height());
     }
 
-    bool contains_pt(int x, int y) const {
-        if (this->radiusx == 0 || this->radiusy == 0)
-            return false;
-#define SQ(X) (X)*(X)
-        return (SQ((x - this->centerx) / this->radiusx) +
-                SQ((y - this->centery) / this->radiusy)) <= 1;
-#undef SQ
-    }
-    bool equal(const Ellipse & other) const {
-        return (other.centerx == this->centerx &&
-                other.centery == this->centery &&
-                other.radiusx == this->radiusx &&
-                other.radiusy == this->radiusy);
+    bool operator == (const Ellipse & other) const noexcept {
+        return (other.leftRect == this->leftRect &&
+                other.topRect == this->topRect &&
+                other.rightRect == this->rightRect &&
+                other.bottomRect == this->bottomRect);
     }
 };
 

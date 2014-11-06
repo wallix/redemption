@@ -108,80 +108,10 @@
 // Color (3 bytes): The foreground color described by using a Generic Color
 //  (section 2.2.2.2.1.1.1.8) structure.
 
-class Ellipse2 {
-    int16_t  leftRect;
-    int16_t  topRect;
-    int16_t  rightRect;
-    int16_t  bottomRect;
-
-public:
-    Ellipse2()
-    : Ellipse2(0, 0, 0, 0)
-    {}
-
-    Ellipse2(int16_t leftRect, int16_t topRect, int16_t rightRect, int16_t bottomRect)
-    : leftRect(leftRect)
-    , topRect(topRect)
-    , rightRect(rightRect)
-    , bottomRect(bottomRect)
-    {}
-
-    Ellipse2(const Rect & r)
-    : leftRect(r.x)
-    , topRect(r.y)
-    , rightRect(r.right())
-    , bottomRect(r.bottom())
-    {}
-
-    int16_t left() const {
-        return this->leftRect;
-    }
-    int16_t top() const {
-        return this->topRect;
-    }
-    int16_t right() const {
-        return this->rightRect;
-    }
-    int16_t bottom() const {
-        return this->bottomRect;
-    }
-
-    uint16_t width() const {
-        return static_cast<uint16_t>(this->right() - this->left());
-    }
-    uint16_t height() const {
-        return static_cast<uint16_t>(this->bottom() - this->top());
-    }
-
-    uint16_t radius_x() const {
-        return this->width() / 2;
-    }
-    uint16_t radius_y() const {
-        return this->height() / 2;
-    }
-
-    int16_t center_x() const {
-        return this->left() + (this->right() - this->left()) / 2;
-    }
-    int16_t center_y() const {
-        return this->top() + (this->bottom() - this->top()) / 2;
-    }
-
-    Rect get_rect() const {
-        return Rect(this->left(), this->top(), this->width(), this->height());
-    }
-
-    bool operator == (const Ellipse2 & other) const noexcept {
-        return (other.leftRect == this->leftRect &&
-                other.topRect == this->topRect &&
-                other.rightRect == this->rightRect &&
-                other.bottomRect == this->bottomRect);
-    }
-};
 
 class RDPEllipseSC {
 public:
-    Ellipse2 el;
+    Ellipse el;
     uint8_t  bRop2;
     uint8_t  fillMode;
     uint32_t color;
@@ -272,7 +202,7 @@ public:
         header.receive_coord(stream, 0x0004, rightRect);
         header.receive_coord(stream, 0x0008, bottomRect);
 
-        this->el = Ellipse2(leftRect, topRect, rightRect, bottomRect);
+        this->el = Ellipse(leftRect, topRect, rightRect, bottomRect);
 
         if (header.fields & 0x0010) {
             this->bRop2  = stream.in_uint8();

@@ -570,7 +570,7 @@ public:
     }
 
     template<typename Op2>
-    void draw_ellipse(const Ellipse2 & el, const uint8_t fill, const color_t color) noexcept
+    void draw_ellipse(const Ellipse & el, const uint8_t fill, const color_t color) noexcept
     {
         Op2 op;
         const int cX = el.center_x();
@@ -1898,7 +1898,7 @@ private:
 //  (o), NOT (n), and XOR (x) Boolean operators.
 
 public:
-    void ellipse(const Ellipse2 & el, const uint8_t rop, const uint8_t fill, const Color color) {
+    void ellipse(const Ellipse & el, const uint8_t rop, const uint8_t fill, const Color color) {
         if (this->tracked_area.has_intersection(el.get_rect())) {
             this->tracked_area_changed = true;
         }
