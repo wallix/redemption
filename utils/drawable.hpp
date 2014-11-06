@@ -2466,9 +2466,11 @@ private:
         uint8_t * tsave = this->timestamp_save;
         uint8_t * buf = this->impl().first_pixel() + (has_clear ? this->priv_offset_timestamp(timestamp_length) : 0);
         const size_t n = timestamp_length * char_width * Bpp;
-        for (size_t y = 0; y < ts_height ; ++y, buf += this->rowsize(), tsave += n) {
-            memcpy(tsave, buf, n);
-            memcpy(buf, this->timestamp_data + y*ts_width*Bpp, n);
+        const size_t cp_n = std::min<size_t>(n, this->width());
+        const size_t ny = std::min<size_t>(ts_height, this->height());
+        for (size_t y = 0; y < ny ; ++y, buf += this->rowsize(), tsave += n) {
+            memcpy(tsave, buf, cp_n);
+            memcpy(buf, this->timestamp_data + y*ts_width*Bpp, cp_n);
         }
     }
 
@@ -2477,8 +2479,10 @@ private:
         const uint8_t * tsave = this->timestamp_save;
         uint8_t * buf = this->impl().first_pixel() + offset;
         const size_t n = this->previous_timestamp_length * char_width * Bpp;
-        for (size_t y = 0; y < ts_height ; ++y, buf += this->rowsize(), tsave += n) {
-            memcpy(buf, tsave, n);
+        const size_t cp_n = std::min<size_t>(n, this->width());
+        const size_t ny = std::min<size_t>(ts_height, this->height());
+        for (size_t y = 0; y < ny; ++y, buf += this->rowsize(), tsave += n) {
+            memcpy(buf, tsave, cp_n);
         }
     }
 
