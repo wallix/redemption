@@ -545,7 +545,7 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
         this->capture_bpp = ((ini.video.wrm_color_depth_selection_strategy == 1) ? 16 : 24);
-        this->capture = new Capture( now, width, height, this->mod_bpp, this->capture_bpp
+        this->capture = new Capture( now, width, height, this->capture_bpp, this->capture_bpp
                                    , ini.video.record_path
                                    , ini.video.record_tmp_path
                                    , ini.video.hash_path, basename

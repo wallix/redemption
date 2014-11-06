@@ -1146,7 +1146,7 @@ public:
     }
 
     const uint8_t * data(int x, int y) const noexcept {
-        return this->impl().data();
+        return this->impl().data(x, y);
     }
 
     uint16_t width() const noexcept {

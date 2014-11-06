@@ -35,6 +35,7 @@
 #include "stream.hpp"
 #include "array.hpp"
 #include "d3des.hpp"
+#include "diffiehellman.hpp"
 #include "keymap2.hpp"
 #include "keymapSym.hpp"
 #include "mod_api.hpp"
@@ -56,7 +57,6 @@
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
 #define MAX_VNC_2_RDP_CLIP_DATA_SIZE 8000
-
 
 //###############################################################################################################
 struct mod_vnc : public InternalMod, public NotifyApi {
@@ -202,6 +202,74 @@ public:
         this->screen.clear();
     }
     //==============================================================================================================
+
+    virtual void ms_logon(uint64_t gen, uint64_t mod, uint64_t resp) {
+        if (this->verbose) {
+            LOG(LOG_INFO, "MS-Logon with following values:");
+            LOG(LOG_INFO, "Gen=%u", gen);
+            LOG(LOG_INFO, "Mod=%u", mod);
+            LOG(LOG_INFO, "Resp=%u", resp);
+        }
+        DiffieHellman dh = DiffieHellman(gen, mod);
+        uint64_t pub = dh.createInterKey();
+
+        BStream stream(32768);
+        stream.out_uint64_be(pub);
+
+        uint64_t key = dh.createEncryptionKey(resp);
+        uint8_t keybuffer[8] = {};
+        dh.uint64_to_uint8p(key, keybuffer);
+
+        rfbDesKey((unsigned char*)keybuffer, EN0); // 0, encrypt
+
+        uint8_t ms_username[256] = {};
+        uint8_t ms_password[64] = {};
+        memcpy(ms_username, this->username, 256);
+        memcpy(ms_password, this->password, 64);
+        uint8_t cp_username[256] = {};
+        uint8_t cp_password[64] = {};
+        rfbDesText((unsigned char*)ms_username, (unsigned char*)cp_username,
+                   (unsigned long)sizeof(ms_username), (unsigned char*)keybuffer);
+        rfbDesText((unsigned char*)ms_password, (unsigned char*)cp_password,
+                   (unsigned long)sizeof(ms_password), (unsigned char*)keybuffer);
+
+        stream.out_copy_bytes(cp_username, 256);
+        stream.out_copy_bytes(cp_password, 64);
+
+        this->t->send(stream.get_data(), 8+256+64);
+        // sec result
+        if (this->verbose) {
+            LOG(LOG_INFO, "Waiting for password ack");
+        }
+        stream.init(8192);
+        this->t->recv(&stream.end, 4);
+        int i = stream.in_uint32_be();
+        if (i != 0) {
+            // vnc password failed
+            LOG(LOG_INFO, "MS LOGON password FAILED\n");
+            // Optionnal
+            try {
+                this->t->recv(&stream.end, 4);
+                uint32_t reason_length = stream.in_uint32_be();
+
+                char   reason[256];
+                char * preason = reason;
+
+                this->t->recv(&preason, std::min<size_t>(sizeof(reason) - 1, reason_length));
+                *preason = 0;
+
+                LOG(LOG_INFO, "Reason for the connection failure: %s", preason);
+            }
+            catch (Error e) {
+            }
+        } else {
+            if (this->verbose) {
+                LOG(LOG_INFO, "MS LOGON password ok\n");
+            }
+        }
+
+    }
+
 
     static void fill_encoding_types_buffer(const char * encodings, Stream & stream, uint16_t & number_of_encodings, uint32_t verbose)
     {
@@ -551,14 +619,22 @@ public:
 
                 /* protocol version */
                 this->t->recv(&stream.end, 12);
+                uint8_t server_protoversion[12];
+                stream.in_copy_bytes(server_protoversion, 12);
+                server_protoversion[11] = 0;
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Server Protocol Version=%s\n",
+                        server_protoversion);
+                }
                 this->t->send("RFB 003.003\n", 12);
-
                 // sec type
+
                 stream.init(8192);
                 this->t->recv(&stream.end, 4);
-                int security_level = stream.in_uint32_be();
+                int32_t security_level = stream.in_sint32_be();
                 if (this->verbose) {
-                    LOG(LOG_INFO, "security level is %d (1 = none, 2 = standard)\n",
+                    LOG(LOG_INFO, "security level is %d "
+                        "(1 = none, 2 = standard, -6 = mslogon)\n",
                         security_level);
                 }
 
@@ -644,6 +720,29 @@ public:
                         }
                     }
                     break;
+                    case -6: // MS-LOGON
+                    {
+                        LOG(LOG_INFO, "VNC MS-LOGON Auth");
+                        stream.init(8192);
+                        this->t->recv(&stream.end, 8+8+8);
+                        uint64_t gen = stream.in_uint64_be();
+                        uint64_t mod = stream.in_uint64_be();
+                        uint64_t resp = stream.in_uint64_be();
+                        this->ms_logon(gen, mod, resp);
+                    }
+                    break;
+                    case 0:
+                    {
+                        LOG(LOG_INFO, "VNC INVALID Auth");
+                        stream.init(8192);
+                        this->t->recv(&stream.end, 4);
+                        size_t reason_length = stream.in_uint32_be();
+                        stream.init(8192);
+                        this->t->recv(&stream.end, reason_length);
+                        hexdump_c(stream.get_data(), reason_length);
+                        throw Error(ERR_VNC_CONNECTION_ERROR);
+
+                    }
                     default:
                         LOG(LOG_ERR, "vnc unexpected security level");
                         throw Error(ERR_VNC_CONNECTION_ERROR);
@@ -744,7 +843,7 @@ public:
                     this->blue_shift = stream.in_uint8();
                     stream.in_skip_bytes(3); // skip padding
 
-        //            LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
+                    // LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
 
                     int lg = stream.in_uint32_be();
 
@@ -755,6 +854,7 @@ public:
                     char * end = this->mod_name;
                     this->t->recv(&end, lg);
                     this->mod_name[lg] = 0;
+                    // LOG(LOG_INFO, "VNC received: mod_name='%s'", this->mod_name);
                 }
 
                 // should be connected
@@ -2222,5 +2322,6 @@ private:
         }
     }
 };
+
 
 #endif
