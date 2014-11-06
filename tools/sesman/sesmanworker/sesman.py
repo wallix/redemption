@@ -121,6 +121,11 @@ class Sesman():
         self.internal_target = False
         self.check_session_parameters = False
 
+        self.passthrough_mode = (SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower()
+                                 == u'true')
+        self.default_login = SESMANCONF[u'sesman'][u'default_login'].strip() if (
+            SESMANCONF[u'sesman'][u'use_default_login'].strip() == u'2') else None
+
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
         french_layouts = [0x0000040C, # French (France)
@@ -249,11 +254,9 @@ class Sesman():
 
     def parse_username(self, wab_login, target_login, target_device, target_service):
         effective_login = None
-        if ((SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true')
-            and (SESMANCONF[u'sesman'][u'use_default_login'].strip() == u'2')
-            and len(SESMANCONF[u'sesman'][u'default_login'].strip())):
+        if (self.passthrough_mode and self.default_login):
             target_login = wab_login
-            wab_login = SESMANCONF[u'sesman'][u'default_login'].strip()
+            wab_login = self.default_login
             effective_login = target_login
         else:
             level_0_items = wab_login.split(u':')
@@ -265,7 +268,7 @@ class Sesman():
                 target_service = u'' if len(level_0_items) <= 2 else level_0_items[-2]
                 level_1_items, wab_login       = level_0_items[0].split(u'@'), level_0_items[-1]
                 target_login, target_device = '@'.join(level_1_items[:-1]), level_1_items[-1]
-        if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
+        if self.passthrough_mode:
             Logger().info(u'ip_target="%s" real_target_device="%s"' % (
                 self.shared.get(u'ip_target'), self.shared.get(u'real_target_device')))
             if target_login == MAGICASK:
@@ -414,7 +417,7 @@ class Sesman():
                 # Wait for confirmation from GUI (or timeout)
                 if not (self.interactive_ask_x509_connection() and self.engine.x509_authenticate()):
                     return False, TR(u"x509 browser authentication not validated by user")
-            elif SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
+            elif self.passthrough_mode:
                 # Passthrough Authentification
                 if not self.engine.passthrough_authenticate(
                         wab_login,
@@ -487,7 +490,7 @@ class Sesman():
         while _status is None:
 
             if (target_device and target_device != MAGICASK
-            and (target_login or SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true') and target_login != MAGICASK):
+            and (target_login or self.passthrough_mode) and target_login != MAGICASK):
                 # Target is provided at login
                 self._full_user_device_account = u"%s@%s:%s" % ( target_login
                                                                , target_device
@@ -742,11 +745,13 @@ class Sesman():
         target_device = self.shared.get(u'target_device')
         target_login = self.shared.get(u'target_login')
         target_service = self.target_service_name if self.target_service_name != u'INTERNAL' else u'RDP'
+        target_host = self.shared.get(u'real_target_device')
 
         # Logger().info("selected target ==> %s %s %s" % (target_login, target_device, target_service))
         selected_target = self.engine.get_selected_target(target_login,
                                                           target_device,
-                                                          target_service)
+                                                          target_service,
+                                                          target_host)
         if not selected_target:
             _target = u"%s@%s:%s" % ( target_login, target_device, target_service )
             _error_log = u"Targets %s not found in user rights" % _target
@@ -960,6 +965,9 @@ class Sesman():
                 kv[u'session_id'] = self.engine.start_session(selected_target, self.pid,
                                                               self.effective_login)
                 _status, _error = self.engine.write_trace(self.full_path)
+                _error = TR(_error)
+                if not _status:
+                    _error = _error % self.full_path
                 pattern_kill, pattern_notify = self.engine.get_restrictions(selected_target, "RDP")
                 if pattern_kill:
                     self.send_data({ u'module' : u'transitory', u'pattern_kill': pattern_kill })
@@ -1034,15 +1042,15 @@ class Sesman():
                     kv[u'target_device'] = physical_info.device_host
                     kv[u'target_port'] = physical_info.service_port
 
-                if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() != u'true':
+                if not self.passthrough_mode:
                     kv[u'target_login'] = physical_info.account_login
 
                 release_reason = u''
 
                 try:
-                    Logger().info("auth_mode_passthrough=%s" % SESMANCONF[u'sesman'][u'auth_mode_passthrough'])
+                    Logger().info("auth_mode_passthrough=%s" % self.passthrough_mode)
 
-                    if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
+                    if self.passthrough_mode:
                         if self.shared.get(u'password') == MAGICASK:
                             password_of_target = u''
                         else:
