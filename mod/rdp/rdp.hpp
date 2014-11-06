@@ -75,7 +75,7 @@ class mod_rdp : public mod_api {
     struct RDPAuthorizationChannels : AuthorizationChannels {
         RDPAuthorizationChannels(const ModRDPParams & mod_rdp_params)
         {
-            if (mod_rdp_params.allow_channels || mod_rdp_params.allow_channels) {
+            if (mod_rdp_params.allow_channels || mod_rdp_params.deny_channels) {
                 initalize_authorization_channels(
                     *this,
                     mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : "",
@@ -726,7 +726,7 @@ public:
         if (this->verbose & 16) {
             LOG( LOG_INFO, "mod_rdp::send_to_channel length=%u chunk_size=%u", static_cast<unsigned>(length)
                  , (unsigned)chunk.size());
-            channel.log(-1);
+            channel.log(-1u);
         }
 
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {

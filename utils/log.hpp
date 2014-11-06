@@ -65,7 +65,7 @@ namespace aux_ {
 
 typedef struct _code {
     const char *c_name;
-    int c_val;
+    //int c_val;
 } CODE;
 
 #ifdef LOGPRINT
@@ -89,15 +89,15 @@ static inline void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, const char *for
 {
     const CODE prioritynames[] =
     {
-        { "EMERG", LOG_EMERG },
-        { "ALERT", LOG_ALERT },
-        { "CRIT", LOG_CRIT },
-        { "ERR", LOG_ERR },
-        { "WARNING", LOG_WARNING },
-        { "NOTICE", LOG_NOTICE },
-        { "INFO", LOG_INFO },
-        { "DEBUG", LOG_DEBUG },
-        { NULL, -1 }
+        { "EMERG"/*, LOG_EMERG*/ },
+        { "ALERT"/*, LOG_ALERT*/ },
+        { "CRIT"/*, LOG_CRIT*/ },
+        { "ERR"/*, LOG_ERR*/ },
+        { "WARNING"/*, LOG_WARNING*/ },
+        { "NOTICE"/*, LOG_NOTICE*/ },
+        { "INFO"/*, LOG_INFO*/ },
+        { "DEBUG"/*, LOG_DEBUG*/ },
+        { NULL/*, -1*/ }
     };
     char message[8192];
     va_list vl;
@@ -111,15 +111,15 @@ static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *form
 {
     const CODE prioritynames[] =
     {
-        { "EMERG", LOG_EMERG },
-        { "ALERT", LOG_ALERT },
-        { "CRIT", LOG_CRIT },
-        { "ERR", LOG_ERR },
-        { "WARNING", LOG_WARNING },
-        { "NOTICE", LOG_NOTICE },
-        { "INFO", LOG_INFO },
-        { "DEBUG", LOG_DEBUG },
-        { NULL, -1 }
+        { "EMERG"/*, LOG_EMERG*/ },
+        { "ALERT"/*, LOG_ALERT*/ },
+        { "CRIT"/*, LOG_CRIT*/ },
+        { "ERR"/*, LOG_ERR*/ },
+        { "WARNING"/*, LOG_WARNING*/ },
+        { "NOTICE"/*, LOG_NOTICE*/ },
+        { "INFO"/*, LOG_INFO*/ },
+        { "DEBUG"/*, LOG_DEBUG*/ },
+        { NULL/*, -1*/ }
     };
     char message[8192];
     va_list vl;

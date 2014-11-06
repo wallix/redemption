@@ -103,7 +103,7 @@ font_dump(void)
     char filename[256];
     TCHAR text[256];
     char zero1;
-    char* bmtext;
+    char* bmtext = 0;
     int bmtextindex;
     int fd;
     int x1;
@@ -304,7 +304,7 @@ font_dump(void)
                     write(fd, &zero1, 1);
                     outlen++;
                 }
-                free(bmtext);
+                delete[] bmtext;
                 DeleteDC(dc1);
                 DeleteObject(bitmap);
             }
@@ -401,7 +401,6 @@ create_window(void)
     WNDCLASS wc;
     DWORD style;
     HDC dc;
-    int height;
     int left;
     int top;
 

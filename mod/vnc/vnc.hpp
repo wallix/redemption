@@ -267,7 +267,7 @@ public:
 
                 LOG(LOG_INFO, "Reason for the connection failure: %s", preason);
             }
-            catch (Error e) {
+            catch (Error const & e) {
             }
         } else {
             if (this->verbose) {

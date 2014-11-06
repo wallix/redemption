@@ -263,7 +263,7 @@ public:
         while (processed < odrs_upd_r.number_orders) {
             RDP::DrawingOrder_RecvFactory drawodr_rf(stream);
 
-            if (!drawodr_rf.control_flags & RDP::STANDARD) {
+            if (!(drawodr_rf.control_flags & RDP::STANDARD)) {
                 LOG(LOG_ERR, "process_orders: Non standard order detected, protocol error");
                 throw Error(ERR_RDP_PROTOCOL);
             }

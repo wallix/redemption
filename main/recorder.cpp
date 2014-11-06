@@ -236,13 +236,11 @@ int main(int argc, char** argv)
         }
 
         {
-            int      fd_test;
-            uint32_t magic_test;
-            int      res_test;
-            fd_test = open(input_filename.c_str(), O_RDONLY);
+            int fd_test = open(input_filename.c_str(), O_RDONLY);
             if (fd_test != -1) {
+                uint32_t magic_test;
                 TODO("Not portable code endianess, use byte array instead")
-                res_test = read(fd_test, &magic_test, sizeof(magic_test));
+                ssize_t res_test = read(fd_test, &magic_test, sizeof(magic_test));
                 if ((res_test == sizeof(magic_test)) &&
                     (magic_test == WABCRYPTOFILE_MAGIC)) {
                     infile_is_encrypted = true;
@@ -634,7 +632,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture, con
             cout << "timestamp_chunk       : " << player.statistics.timestamp_chunk       << endl;
         }
     }
-    catch (Error e) {
+    catch (Error const & e) {
         return_code = -1;
     }
 
