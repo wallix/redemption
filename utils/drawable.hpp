@@ -62,7 +62,7 @@ namespace Ops {
     };
 
 
-    struct Op_0xB8
+    struct Op_0xB8 // PSDPxax
     {
         u8 operator()(u8 target, u8 source, u8 pattern) const
         {
@@ -279,15 +279,6 @@ struct DrawableTraitColor24
         *dest = op(*dest, color.red(),   color2.red());   ++dest;
         *dest = op(*dest, color.green(), color2.green()); ++dest;
         *dest = op(*dest, color.blue(),  color2.blue());  ++dest;
-        return dest;
-    }
-
-    template<class UnaryOp>
-    static uint8_t * transform(uint8_t * dest, UnaryOp op) noexcept
-    {
-        *dest = op(*dest); ++dest;
-        *dest = op(*dest); ++dest;
-        *dest = op(*dest); ++dest;
         return dest;
     }
 
