@@ -108,6 +108,7 @@ class Sesman():
 
         self.shared[u'target_login']    = MAGICASK
         self.shared[u'target_device']   = MAGICASK
+        self.shared[u'target_host']   = MAGICASK
         self.shared[u'login']           = MAGICASK
         self.shared[u'ip_client']       = MAGICASK
         self.shared[u'proxy_type  ']    = MAGICASK
@@ -1032,9 +1033,9 @@ class Sesman():
                 self.cn = target_login_info.target_name
 
                 if self.shared.get(u'real_target_device'):
-                    kv[u'target_device'] = self.shared.get(u'real_target_device')
+                    kv[u'target_host'] = self.shared.get(u'real_target_device')
                 else:
-                    kv[u'target_device'] = physical_info.device_host
+                    kv[u'target_host'] = physical_info.device_host
                     kv[u'target_port'] = physical_info.service_port
 
                 if not self.passthrough_mode:
@@ -1086,7 +1087,7 @@ class Sesman():
                             socket.getfqdn(self.shared.get(u'ip_client')),
                             self.shared.get(u'ip_client'),
                             self.shared.get(u'target_login'),
-                            self.shared.get(u'target_device'),
+                            self.shared.get(u'target_host'),
                             self._physical_target_device,
                             ctime(),
                             None
@@ -1108,6 +1109,7 @@ class Sesman():
                              , u'target_login': u""
                              , u'target_password': u""
                              , u'target_device': u""
+                             , u'target_host': u""
                              # , u'authenticated': u'False'
                              # , u'selector': u"undefined"
                              , u'rejected': _error
