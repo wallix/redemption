@@ -24,7 +24,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapture
+#define BOOST_TEST_MODULE TestDrawable
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
@@ -32,11 +32,8 @@
 #include "log.hpp"
 
 #include "check_sig.hpp"
-#include "ssl_calls.hpp"
 #include "png.hpp"
 #include "RDP/RDPDrawable.hpp"
-#include "staticcapture.hpp"
-#include "drawable.hpp"
 #include "rdtsc.hpp"
 
 inline bool check_sig(RDPDrawable & data, char * message, const char * shasig)

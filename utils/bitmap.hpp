@@ -2091,6 +2091,9 @@ public:
             while (p < pmax)
             {
                 uint32_t fom_count = this->get_fom_count_set(Bpp, pmin, pmax, p, new_foreground, flags);
+                if (nbbytes_large(fom_count) > sizeof(masks)) {
+                    fom_count = sizeof(masks) * 8;
+                }
                 uint32_t color_count = 0;
                 uint32_t bicolor_count = 0;
 
