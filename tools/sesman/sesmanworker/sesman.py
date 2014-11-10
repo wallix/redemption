@@ -125,6 +125,7 @@ class Sesman():
                                  == u'true')
         self.default_login = SESMANCONF[u'sesman'][u'default_login'].strip() if (
             SESMANCONF[u'sesman'][u'use_default_login'].strip() == u'2') else None
+        self.passthrough_target_login = None
 
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
@@ -254,27 +255,22 @@ class Sesman():
 
     def parse_username(self, wab_login, target_login, target_device, target_service):
         effective_login = None
-        if (self.passthrough_mode and self.default_login):
-            target_login = wab_login
-            wab_login = self.default_login
-            effective_login = target_login
-        else:
-            level_0_items = wab_login.split(u':')
-            if len(level_0_items) > 1:
-                if len(level_0_items) > 3:
-                    Logger().info(u"username parse error %s" % wab_login)
-                    return False, (TR(u'Username_parse_error %s') % wab_login), wab_login, target_login, target_device, target_service, effective_login
-
-                target_service = u'' if len(level_0_items) <= 2 else level_0_items[-2]
-                level_1_items, wab_login       = level_0_items[0].split(u'@'), level_0_items[-1]
-                target_login, target_device = '@'.join(level_1_items[:-1]), level_1_items[-1]
+        level_0_items = wab_login.split(u':')
+        if len(level_0_items) > 1:
+            if len(level_0_items) > 3:
+                Logger().info(u"username parse error %s" % wab_login)
+                return False, (TR(u'Username_parse_error %s') % wab_login), wab_login, target_login, target_device, target_service, effective_login
+            target_service = u'' if len(level_0_items) <= 2 else level_0_items[-2]
+            level_1_items, wab_login = level_0_items[0].split(u'@'), level_0_items[-1]
+            target_login, target_device = '@'.join(level_1_items[:-1]), level_1_items[-1]
         if self.passthrough_mode:
+            if not self.passthrough_target_login:
+                self.passthrough_target_login = wab_login
+            if self.default_login:
+                effective_login = self.passthrough_target_login
+                wab_login = self.default_login
             Logger().info(u'ip_target="%s" real_target_device="%s"' % (
                 self.shared.get(u'ip_target'), self.shared.get(u'real_target_device')))
-            if target_login == MAGICASK:
-                target_login = wab_login
-            target_device = self.shared.get(u'real_target_device')
-            target_service = u'RDP'
         return True, "", wab_login, target_login, target_device, target_service, effective_login
 
     def interactive_ask_x509_connection(self):
@@ -340,9 +336,8 @@ class Sesman():
     def interactive_password(self, data_to_send):
         data_to_send.update({ u'module' : u'interactive_password' })
         self.send_data(data_to_send)
-
         _status, _error = self.receive_data()
-        if self.shared.get(u'accept_message') != u'True':
+        if self.shared.get(u'display_message') != u'True':
             _status, _error = False, TR(u'not_accept_message')
         return _status, _error
 
@@ -960,7 +955,7 @@ class Sesman():
                 signal.signal(signal.SIGUSR1, self.kill_handler)
                 signal.signal(signal.SIGUSR2, self.check_handler)
 
-                Logger().info(u"Starting Session")
+                Logger().info(u"Starting Session, effective login='%s'" % self.effective_login)
                 # Add connection to the observer
                 kv[u'session_id'] = self.engine.start_session(selected_target, self.pid,
                                                               self.effective_login)
@@ -1051,6 +1046,7 @@ class Sesman():
                     Logger().info("auth_mode_passthrough=%s" % self.passthrough_mode)
 
                     if self.passthrough_mode:
+                        kv[u'target_login'] = self.passthrough_target_login
                         if self.shared.get(u'password') == MAGICASK:
                             password_of_target = u''
                         else:
@@ -1064,9 +1060,13 @@ class Sesman():
                     if not password_of_target:
                         kv[u'target_password'] = u''
                         Logger().info(u"auto logon is disabled")
-                        _status, _error = self.interactive_password({})
+                        interactive_data = {}
+                        if kv.get(u'target_login'):
+                            interactive_data[u'target_login'] = kv.get(u'target_login')
+                        _status, _error = self.interactive_password(interactive_data)
                         if _status:
                             kv[u'target_password'] = self.shared.get(u'target_password')
+
 
                     if not _status:
                         break
