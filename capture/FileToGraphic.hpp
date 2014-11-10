@@ -165,6 +165,7 @@ public:
         uint32_t LineTo;
         uint32_t GlyphIndex;
         uint32_t Polyline;
+        uint32_t EllipseSC;
 
         uint32_t CacheBitmap;
         uint32_t CacheColorTable;
@@ -586,6 +587,16 @@ public:
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
                         this->consumers[i].graphic_device->draw(this->polyline, clip);
+                    }
+                    break;
+                case RDP::ELLIPSESC:
+                    this->statistics.EllipseSC++;
+                    this->ellipseSC.receive(this->stream, header);
+                    if (this->verbose > 32){
+                        this->ellipseSC.log(LOG_INFO, clip);
+                    }
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
+                        this->consumers[i].graphic_device->draw(this->ellipseSC, clip);
                     }
                     break;
                 default:

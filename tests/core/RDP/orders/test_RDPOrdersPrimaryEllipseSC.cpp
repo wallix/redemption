@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
                             0x0F,  // left, top, right, bottom changed
                             5, // 5 on left
                             10, // 10 on top
-                            19, // 29 on right
+                            20, // 30 on right
                             30  // 40 on bottom
         };
         check_datas(stream.p-stream.get_data(), stream.get_data(), 7, datas, "ellipse draw 2");
@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
             0x0F,   // x, y, w, h coordinates changed
             0x05, 0, // x = 0x005 = 5
             0x2C, 1, // y = 0x12C = 300
-            29, 0,   // w = 25
+            30, 0,   // w = 25
             74, 1,   // h = 30
         };
         check_datas(stream.p-stream.get_data(), stream.get_data(), 11, datas, "ellipse draw 5");
@@ -301,7 +301,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
             0x4F,   // top left right bottom coordinates and color changed
             0x05, 0, // top = 0x005 = 5
             0x2C, 1, // left = 0x12C = 300
-            29, 0,   // right = 29
+            30, 0,   // right = 30
             74, 1,   // bottom = 330
             0x30, 0x20, 0x10  // RGB colors
         };
@@ -341,7 +341,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
             0x3F, 0x01, // bottom bound = 319  (bounds are include ")
             0x05, 0, // x = 0x005 = 5
             0x2C, 1, // y = 0x12C = 300
-            29, 0,   // w = 25
+            30, 0,   // w = 25
             74, 1,   // h = 30
             0x30, 0x20, 0x10  // RGB colors
         };
@@ -382,7 +382,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
             0x0A,   // bottom bound = +10
             0x05, 0, // x = 0x005 = 5
             0x2F, 3,   // w = 815
-            0x5C, 2,   // H = 604
+            0x5D, 2,   // H = 604
             0x30, 0x20, 0x10,  // RGB colors
         };
         check_datas(stream.p-stream.get_data(), stream.get_data(), 17, datas, "ellipse draw 8");
@@ -418,7 +418,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
             0x4D,   // x, w, h, r, g, b coordinates changed
             0x05, 0, // x = 0x005 = 5
             0x2F, 3,   // right = 815
-            0x5C, 2,   // bottom = 604
+            0x5D, 2,   // bottom = 604
             0x30, 0x20, 0x10,  // RGB colors
         };
         check_datas(stream.p-stream.get_data(), stream.get_data(), 11, datas, "Ellipse Draw 9");
@@ -490,7 +490,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
             0x7D,   // x, w, h, r, g, b coordinates rbop and fillmode changed
             0x05, 0, // x = 0x005 = 5
             0x2F, 3,   // right = 815
-            0x5C, 2,   // bottom = 604
+            0x5D, 2,   // bottom = 604
             0x0E,
             0x00,
             0x30, 0x20, 0x10,  // RGB colors

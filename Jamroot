@@ -131,7 +131,7 @@ project redemption
     <cxxflags>-Winit-self
     <cxxflags>-Wcast-qual
     <cxxflags>-Woverloaded-virtual
-#     <cxxflags>-Wunused-variable
+    <cxxflags>-Wunused-variable
     <cxxflags>-fpie
 
 #     <toolset>gcc:<cxxflags>-Wdouble-promotion

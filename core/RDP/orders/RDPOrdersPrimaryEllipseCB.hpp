@@ -152,7 +152,7 @@ public:
     RDPEllipseCB(const Rect & rect, uint8_t rop, uint8_t fill,
                  uint32_t back_color, uint32_t fore_color,
                  const RDPBrush & brush) :
-        el(Ellipse(rect)),
+        el(rect),
         brop2(rop),
         fill_mode(fill),
         back_color(back_color),
@@ -162,12 +162,12 @@ public:
     }
 
     bool operator==(const RDPEllipseCB & other) const {
-        return (this->el.equal(other.el)
-                && (this->brop2 == other.brop2)
-                && (this->fill_mode == other.fill_mode)
-                && (this->back_color == other.back_color)
-                && (this->fore_color == other.fore_color)
-                && (this->brush == other.brush));
+        return (this->el == other.el
+            && (this->brop2 == other.brop2)
+            && (this->fill_mode == other.fill_mode)
+            && (this->back_color == other.back_color)
+            && (this->fore_color == other.fore_color)
+            && (this->brush == other.brush));
     }
 
     void emit(Stream & stream,
@@ -245,7 +245,7 @@ public:
         header.receive_coord(stream, 0x0004, rightRect);
         header.receive_coord(stream, 0x0008, bottomRect);
 
-        this->el = Ellipse(Rect(leftRect, topRect, rightRect - leftRect, bottomRect - topRect));
+        this->el = Ellipse(leftRect, topRect, rightRect, bottomRect);
 
         if (header.fields & 0x0010) {
             this->brop2  = stream.in_uint8();

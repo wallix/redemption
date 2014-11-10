@@ -38,24 +38,24 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
 
     Ellipse nil;
 
-    BOOST_CHECK_EQUAL(0, nil.centerx);
-    BOOST_CHECK_EQUAL(0, nil.centery);
-    BOOST_CHECK_EQUAL(0, nil.radiusx);
-    BOOST_CHECK_EQUAL(0, nil.radiusy);
+    BOOST_CHECK_EQUAL(0, nil.center_x());
+    BOOST_CHECK_EQUAL(0, nil.center_y());
+    BOOST_CHECK_EQUAL(0, nil.radius_x());
+    BOOST_CHECK_EQUAL(0, nil.radius_y());
 
     Ellipse empty(0, 0, 0, 0);
 
-    BOOST_CHECK_EQUAL(0, nil.centerx);
-    BOOST_CHECK_EQUAL(0, nil.centery);
-    BOOST_CHECK_EQUAL(0, nil.radiusx);
-    BOOST_CHECK_EQUAL(0, nil.radiusy);
+    BOOST_CHECK_EQUAL(0, nil.center_x());
+    BOOST_CHECK_EQUAL(0, nil.center_y());
+    BOOST_CHECK_EQUAL(0, nil.radius_x());
+    BOOST_CHECK_EQUAL(0, nil.radius_y());
 
-    Ellipse elli(70, 60, 45, 32);
+    Ellipse elli = Ellipse::since_center(70, 60, 45, 32);
 
-    BOOST_CHECK_EQUAL(70, elli.centerx);
-    BOOST_CHECK_EQUAL(60, elli.centery);
-    BOOST_CHECK_EQUAL(45, elli.radiusx);
-    BOOST_CHECK_EQUAL(32, elli.radiusy);
+    BOOST_CHECK_EQUAL(70, elli.center_x());
+    BOOST_CHECK_EQUAL(60, elli.center_y());
+    BOOST_CHECK_EQUAL(45, elli.radius_x());
+    BOOST_CHECK_EQUAL(32, elli.radius_y());
 
     BOOST_CHECK_EQUAL(25, elli.left());
     BOOST_CHECK_EQUAL(28, elli.top());
@@ -64,8 +64,6 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
 
     BOOST_CHECK_EQUAL(90, elli.width());
     BOOST_CHECK_EQUAL(64, elli.height());
-
-    BOOST_CHECK(elli.contains_pt(70, 60));
 
     Rect rect = elli.get_rect();
 
@@ -76,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
 
     Ellipse elliclone(rect);
 
-    BOOST_CHECK(elli.equal(elliclone));
+    BOOST_CHECK(elli == elliclone);
 
     Ellipse elli2(Rect(100, 200, 40, 60));
     Rect rect2 = elli2.get_rect();
