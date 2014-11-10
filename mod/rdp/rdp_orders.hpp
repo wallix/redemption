@@ -85,11 +85,11 @@ public:
     size_t recv_bmp_cache_count;
     size_t recv_order_count;
 
-    redemption::string target_device;
+    redemption::string target_host;
     bool               enable_persistent_disk_bitmap_cache;
     bool               persist_bitmap_cache_on_disk;
 
-    rdp_orders( const char * target_device, bool enable_persistent_disk_bitmap_cache
+    rdp_orders( const char * target_host, bool enable_persistent_disk_bitmap_cache
               , bool persist_bitmap_cache_on_disk, uint32_t verbose)
             : common(RDP::PATBLT, Rect(0, 0, 1, 1))
             , memblt(0, Rect(), 0, 0, 0, 0)
@@ -105,7 +105,7 @@ public:
             , verbose(verbose)
             , recv_bmp_cache_count(0)
             , recv_order_count(0)
-            , target_device(target_device)
+            , target_host(target_host)
             , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache)
             , persist_bitmap_cache_on_disk(persist_bitmap_cache_on_disk) {
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
@@ -159,12 +159,12 @@ public:
         // Generates the name of file.
         char filename[2048];
         ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            persistent_path, this->target_device.c_str(), this->bmp_cache->bpp);
+            persistent_path, this->target_host.c_str(), this->bmp_cache->bpp);
         filename[sizeof(filename) - 1] = '\0';
 
         char filename_temporary[2048];
         ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
-            persistent_path, this->target_device.c_str(), this->bmp_cache->bpp);
+            persistent_path, this->target_host.c_str(), this->bmp_cache->bpp);
         filename_temporary[sizeof(filename_temporary) - 1] = '\0';
 
         int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
@@ -226,7 +226,7 @@ public:
             // Generates the name of file.
             char filename[2048];
             ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-                PERSISTENT_PATH "/mod_rdp", this->target_device.c_str(), this->bmp_cache->bpp);
+                PERSISTENT_PATH "/mod_rdp", this->target_host.c_str(), this->bmp_cache->bpp);
             filename[sizeof(filename) - 1] = '\0';
 
             int fd = ::open(filename, O_RDONLY);

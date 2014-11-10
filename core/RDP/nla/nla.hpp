@@ -56,7 +56,7 @@ struct rdpCredssp
     bool RestrictedAdminMode;
     SecInterface sec_interface;
 
-    const char * target_device;
+    const char * target_host;
     const uint32_t verbose;
 
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static")
@@ -67,7 +67,7 @@ struct rdpCredssp
                uint8_t * domain,
                uint8_t * pass,
                uint8_t * hostname,
-               const char * target_device,
+               const char * target_host,
                const bool krb,
                const bool restricted_admin_mode,
                const uint32_t verbose = 0)
@@ -80,7 +80,7 @@ struct rdpCredssp
         , table(new SecurityFunctionTable)
         , RestrictedAdminMode(restricted_admin_mode)
         , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
-        , target_device(target_device)
+        , target_host(target_host)
         , verbose(verbose)
         , hardcodedtests(false)
     {
@@ -539,7 +539,7 @@ public:
             }
 
 
-            status = this->table->AcquireCredentialsHandle(this->target_device,
+            status = this->table->AcquireCredentialsHandle(this->target_host,
                                                            NLA_PKG_NAME,
                                                            SECPKG_CRED_OUTBOUND,
                                                            &this->ServicePrincipalName,
