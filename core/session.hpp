@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <sys/resource.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
@@ -91,12 +92,21 @@ struct Session {
     SocketTransport * ptr_auth_trans;
     wait_obj        * ptr_auth_event;
 
+          time_t   perf_last_info_collect_time;
+    const pid_t    perf_pid;
+          FILE   * perf_file;
+
+    const time_t select_timeout_tv_sec = 3;
+
     Session(int sck, Inifile * ini)
             : ini(ini)
             , verbose(this->ini->debug.session)
             , acl(NULL)
             , ptr_auth_trans(NULL)
-            , ptr_auth_event(NULL) {
+            , ptr_auth_event(NULL)
+            , perf_last_info_collect_time(0)
+            , perf_pid(getpid())
+            , perf_file(NULL) {
         try {
             SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->debug.front);
             wait_obj front_event(&front_trans);
@@ -126,8 +136,11 @@ struct Session {
             }
 
             const time_t start_time = time(NULL);
+            if (this->ini->debug.performance & 0x8000) {
+                this->write_performance_log(start_time);
+            }
 
-            const timeval time_mark = { 3, 0 };
+            const timeval time_mark = { this->select_timeout_tv_sec, 0 };
 
             bool run_session = true;
 
@@ -177,6 +190,9 @@ struct Session {
                 }
 
                 time_t now = time(NULL);
+                if (this->ini->debug.performance & 0x8000) {
+                    this->write_performance_log(now);
+                }
 
                 if (front_event.is_set(rfds) ||
                     (front_event.st->tls && SSL_pending(front_event.st->allocated_ssl))) {
@@ -324,6 +340,12 @@ struct Session {
     }
 
     ~Session() {
+        if (this->ini->debug.performance & 0x8000) {
+            this->write_performance_log(this->perf_last_info_collect_time + 3);
+        }
+        if (this->perf_file) {
+            ::fclose(this->perf_file);
+        }
         delete this->front;
         if (this->acl) { delete this->acl; }
         if (this->ptr_auth_event) { delete this->ptr_auth_event; }
@@ -341,6 +363,74 @@ struct Session {
             sprintf(old_session_file, "%s/session_%d.pid", PID_PATH, child_pid);
             unlink(old_session_file);
         }
+    }
+
+private:
+    void write_performance_log(time_t now) {
+        if (!this->perf_last_info_collect_time) {
+            REDASSERT(!this->perf_file);
+
+            this->perf_last_info_collect_time = now - this->select_timeout_tv_sec;
+
+            struct tm tm_;
+
+            localtime_r(&this->perf_last_info_collect_time, &tm_);
+
+            char filename[2048];
+            snprintf(filename, sizeof(filename), "%s/rdpproxy,%04d%02d%02d-%02d%02d%02d,%d.perf",
+                this->ini->video.record_tmp_path,
+                tm_.tm_year + 1900, tm_.tm_mon, tm_.tm_mday, tm_.tm_hour, tm_.tm_min, tm_.tm_sec, this->perf_pid
+                );
+
+            this->perf_file = ::fopen(filename, "w");
+
+            ::fprintf(this->perf_file,
+                "time_t;"
+                "ru_utime.tv_sec;ru_utime.tv_usec;ru_stime.tv_sec;ru_stime.tv_usec;"
+                "ru_maxrss;ru_ixrss;ru_idrss;ru_isrss;ru_minflt;ru_majflt;ru_nswap;"
+                "ru_inblock;ru_oublock;ru_msgsnd;ru_msgrcv;ru_nsignals;ru_nvcsw;ru_nivcsw\n");
+
+        }
+        else if (this->perf_last_info_collect_time + this->select_timeout_tv_sec > now) {
+            return;
+        }
+
+        struct rusage resource_usage;
+
+        getrusage(RUSAGE_SELF, &resource_usage);
+
+        do {
+            this->perf_last_info_collect_time += this->select_timeout_tv_sec;
+
+            struct tm result;
+
+            localtime_r(&this->perf_last_info_collect_time, &result);
+
+            ::fprintf(
+                  this->perf_file
+                , "%lu;"
+                  "%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n"
+                , now
+                , resource_usage.ru_utime.tv_sec, resource_usage.ru_utime.tv_usec   /* user CPU time used               */
+                , resource_usage.ru_stime.tv_sec, resource_usage.ru_stime.tv_usec   /* system CPU time used             */
+                , resource_usage.ru_maxrss                                          /* maximum resident set size        */
+                , resource_usage.ru_ixrss                                           /* integral shared memory size      */
+                , resource_usage.ru_idrss                                           /* integral unshared data size      */
+                , resource_usage.ru_isrss                                           /* integral unshared stack size     */
+                , resource_usage.ru_minflt                                          /* page reclaims (soft page faults) */
+                , resource_usage.ru_majflt                                          /* page faults (hard page faults)   */
+                , resource_usage.ru_nswap                                           /* swaps                            */
+                , resource_usage.ru_inblock                                         /* block input operations           */
+                , resource_usage.ru_oublock                                         /* block output operations          */
+                , resource_usage.ru_msgsnd                                          /* IPC messages sent                */
+                , resource_usage.ru_msgrcv                                          /* IPC messages received            */
+                , resource_usage.ru_nsignals                                        /* signals received                 */
+                , resource_usage.ru_nvcsw                                           /* voluntary context switches       */
+                , resource_usage.ru_nivcsw                                          /* involuntary context switches     */
+            );
+            ::fflush(this->perf_file);
+        }
+        while (this->perf_last_info_collect_time + this->select_timeout_tv_sec <= now);
     }
 };
 
