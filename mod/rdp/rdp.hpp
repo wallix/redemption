@@ -192,8 +192,6 @@ struct mod_rdp : public mod_api {
 
     bool deactivation_reactivation_in_progress;
 
-    bool use_bitmapcache_rev2;
-
     mod_rdp( Transport * trans
            , FrontAPI & front
            , const ClientInfo & info
@@ -262,7 +260,6 @@ struct mod_rdp : public mod_api {
         //, total_data_received(0)
         , password_printing_mode(mod_rdp_params.password_printing_mode)
         , deactivation_reactivation_in_progress(false)
-        , use_bitmapcache_rev2(false)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -2347,27 +2344,45 @@ struct mod_rdp : public mod_api {
         bmpcache2_caps.bitmapCache1CellInfo = 120;
         bmpcache2_caps.bitmapCache2CellInfo = (2553 | 0x80000000);
 
+        bool use_bitmapcache_rev2 = false;
+
         if (this->enable_transparent_mode) {
             if (!this->front.retrieve_client_capability_set(bmpcache_caps)) {
                 this->front.retrieve_client_capability_set(bmpcache2_caps);
-                this->use_bitmapcache_rev2 = true;
+                use_bitmapcache_rev2 = true;
             }
         }
         else {
-            this->use_bitmapcache_rev2 = this->enable_persistent_disk_bitmap_cache;
+            use_bitmapcache_rev2 = this->enable_persistent_disk_bitmap_cache;
         }
 
-        if (this->use_bitmapcache_rev2) {
+        if (use_bitmapcache_rev2) {
             if (this->verbose & 1) {
                 bmpcache2_caps.log("Sending to server");
             }
             confirm_active_pdu.emit_capability_set(bmpcache2_caps);
+
+            if (!this->enable_transparent_mode) {
+                this->orders.create_cache_bitmap(this->bpp,
+                    120,   nbbytes(this->bpp) * 16 * 16, false,
+                    120,   nbbytes(this->bpp) * 32 * 32, false,
+                    2553,  nbbytes(this->bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
+                    this->cache_verbose);
+            }
         }
         else {
             if (this->verbose & 1) {
                 bmpcache_caps.log("Sending to server");
             }
             confirm_active_pdu.emit_capability_set(bmpcache_caps);
+
+            if (!this->enable_transparent_mode) {
+                this->orders.create_cache_bitmap(this->bpp,
+                    0x258, nbbytes(this->bpp) * 0x100,   false,
+                    0x12c, nbbytes(this->bpp) * 0x400,   false,
+                    0x106, nbbytes(this->bpp) * 0x1000,  false,
+                    this->cache_verbose);
+            }
         }
 
         ColorCacheCaps colorcache_caps;
@@ -3796,21 +3811,6 @@ struct mod_rdp : public mod_api {
                     this->bpp = bitmap_caps.preferredBitsPerPixel;
                     this->front_width = bitmap_caps.desktopWidth;
                     this->front_height = bitmap_caps.desktopHeight;
-
-                    if (!this->use_bitmapcache_rev2) {
-                        this->orders.create_cache_bitmap(this->bpp,
-                            0x258, nbbytes(this->bpp) * 0x100,   false,
-                            0x12c, nbbytes(this->bpp) * 0x400,   false,
-                            0x106, nbbytes(this->bpp) * 0x1000,  false,
-                            this->cache_verbose);
-                    }
-                    else {
-                        this->orders.create_cache_bitmap(this->bpp,
-                            120,   nbbytes(this->bpp) * 16 * 16, false,
-                            120,   nbbytes(this->bpp) * 32 * 32, false,
-                            2553,  nbbytes(this->bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
-                            this->cache_verbose);
-                    }
                 }
                 break;
             case CAPSTYPE_ORDER:
