@@ -103,7 +103,7 @@ public:
     , capture_bpp(capture_bpp)
     {
         if (this->capture_drawable) {
-            this->drawable = new RDPDrawable(width, height, order_bpp);
+            this->drawable = new RDPDrawable(width, height, capture_bpp);
         }
 
         if (this->capture_png) {
