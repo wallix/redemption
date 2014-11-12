@@ -91,6 +91,8 @@ class Sesman():
 
         self._full_user_device_account = u'Unknown'
         self.target_service_name = None
+        self.target_login_filter = None
+        self.target_host_filter = None
 
         self.shared[u'module']                  = u'login'
         self.shared[u'selector_group_filter']   = u''
@@ -126,6 +128,14 @@ class Sesman():
                                  == u'true')
         self.default_login = SESMANCONF[u'sesman'][u'default_login'].strip() if (
             SESMANCONF[u'sesman'][u'use_default_login'].strip() == u'2') else None
+        self.passthrough_target_login = None
+
+    def reset_session_var(self):
+        self._full_user_device_account = u'Unknown'
+        self.target_service_name = None
+        self.target_login_filter = None
+        self.target_host_filter = None
+        self.internal_target = False
         self.passthrough_target_login = None
 
     def set_language_from_keylayout(self):
@@ -482,11 +492,32 @@ class Sesman():
             return None, TR(u"Invalid user, try again")
 
         _status, _error = None, TR(u"No error")
+        # This allow proxy to check if target_device is a device_name or a hostname
+        # in case it is a hostname, we keep the target_login as a filter.
+        if not self.target_host_filter:
+            self.target_host_filter = self.shared.get(u'real_target_device')
+        if target_device and target_device != MAGICASK:
+            valid = self.engine.valid_device_name([u'RDP', u'VNC'], target_device)
+            Logger().info("Check Valid device '%s' : res = %s" % (target_device, valid))
+            if not valid:
+                try:
+                    host = socket.gethostbyname(target_device)
+                    Logger().info("Resolve DNS Hostname %s -> %s" % (target_device, host))
+                    self.target_host_filter = host
+                    if (target_login and target_login != MAGICASK):
+                        self.target_login_filter = target_login
+                        Logger().info("===> target_login = %s" % target_login)
+                    else:
+                        Logger().info("===> NO target_login :(")
+                    target_device = MAGICASK
+                except socket.error:
+                    Logger().info("target_device is not a hostname")
 
         while _status is None:
 
             if (target_device and target_device != MAGICASK
-            and (target_login or self.passthrough_mode) and target_login != MAGICASK):
+                and (target_login or self.passthrough_mode)
+                and target_login != MAGICASK):
                 # Target is provided at login
                 self._full_user_device_account = u"%s@%s:%s" % ( target_login
                                                                , target_device
@@ -509,7 +540,8 @@ class Sesman():
                     group_filter = self.shared.get(u'selector_group_filter'),
                     device_filter = self.shared.get(u'selector_device_filter'),
                     protocol_filter = self.shared.get(u'selector_proto_filter'),
-                    real_target_device = self.shared.get(u'real_target_device'))
+                    real_target_device = self.target_host_filter,
+                    target_login = self.target_login_filter)
                 if (len(services) > 1) or item_filtered:
                     try:
                         _current_page = int(self.shared.get(u'selector_current_page')) - 1
@@ -741,7 +773,8 @@ class Sesman():
         target_device = self.shared.get(u'target_device')
         target_login = self.shared.get(u'target_login')
         target_service = self.target_service_name if self.target_service_name != u'INTERNAL' else u'RDP'
-        target_host = self.shared.get(u'real_target_device')
+        target_host = self.target_host_filter
+        # target_host = self.shared.get(u'real_target_device')
 
         # Logger().info("selected target ==> %s %s %s" % (target_login, target_device, target_service))
         selected_target = self.engine.get_selected_target(target_login,
@@ -857,6 +890,7 @@ class Sesman():
     def start(self):
         _status, tries = None, 5
         while _status is None and tries > 0:
+            self.reset_session_var()
 
             ##################
             ### AUTHENTIFY ###
@@ -1032,8 +1066,10 @@ class Sesman():
                     kv[u'disable_tsk_switch_shortcuts'] = u'yes'
                 self.cn = target_login_info.target_name
 
-                if self.shared.get(u'real_target_device'):
-                    kv[u'target_host'] = self.shared.get(u'real_target_device')
+                # if self.shared.get(u'real_target_device'):
+                #     kv[u'target_host'] = self.shared.get(u'real_target_device')
+                if self.target_host_filter:
+                    kv[u'target_host'] = self.target_host_filter
                 else:
                     kv[u'target_host'] = physical_info.device_host
                     kv[u'target_port'] = physical_info.service_port
@@ -1072,8 +1108,10 @@ class Sesman():
                     if not _status:
                         break
 
-                    if self.shared.get(u'real_target_device'):
-                        self._physical_target_device = self.shared.get(u'real_target_device')
+                    # if self.shared.get(u'real_target_device'):
+                    #     self._physical_target_device = self.shared.get(u'real_target_device')
+                    if self.target_host_filter:
+                        self._physical_target_device = self.target_host_filter
                     else:
                         self._physical_target_device = physical_info.device_host
 

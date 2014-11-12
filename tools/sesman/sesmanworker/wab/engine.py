@@ -313,7 +313,8 @@ class Engine(object):
             Logger().info("Engine NotifyFindPatternInRDPFlow failed: (((%s)))" % (traceback.format_exc(e)))
 
     def get_targets_list(self, group_filter, device_filter, protocol_filter,
-                         real_target_device):
+                         real_target_device, target_login=None):
+        Logger().info("GET_TARGETS_LIST target_login='%s'" % target_login)
         targets = []
         item_filtered = False
         for target_info in self.displaytargets:
@@ -342,18 +343,34 @@ class Engine(object):
                     and (not is_device_in_subnet(real_target_device,
                                                  target_info.host))):
                     continue
+            if target_login:
+                Logger().info("info='%s' login='%s'" % (target_info.target_login, target_login))
+                if target_info.target_login.lower() != target_login.lower():
+                    Logger().info("result => SKIP")
+                    continue
 
             targets.append((target_info.group # ( = concatenated list)
                             , temp_service_login
                             , temp_resource_service_protocol_cn
                             )
                            )
+        Logger().info("targets list = %s'" % targets)
         return targets, item_filtered
 
     def reset_proxy_rights(self):
         self.proxy_rights = None
         self.rights = None
         self.target_right = None
+
+    def valid_device_name(self, protocols, target_device):
+        Logger().info("VALID DEVICE NAME target_device = '%s'" % target_device)
+        prights = self.wabengine.get_proxy_rights(protocols, target_device,
+                                                 check_timeframes=False)
+        rights = prights.rights
+        Logger().info("VALID DEVICE NAME Rights = '%s', len = %s" % (rights, len(rights)))
+        if rights:
+            return True
+        return False
 
     def get_proxy_rights(self, protocols, target_device=None, check_timeframes=True):
         if self.proxy_rights is not None:
