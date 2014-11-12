@@ -474,7 +474,23 @@ public:
 
     void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) {
         if (this->gd) {
-            this->gd->draw(bitmap_data, data, size, bmp);
+            if (this->capture_wrm) {
+                if (bmp.bpp() > this->capture_bpp) {
+                    // reducing the color depth of image.
+                    Bitmap capture_bmp(this->capture_bpp, bmp);
+
+                    ::compress_and_draw_bitmap_update(bitmap_data, capture_bmp, this->capture_bpp, *this->gd);
+                }
+                else if (!(bitmap_data.flags & BITMAP_COMPRESSION)) {
+                    ::compress_and_draw_bitmap_update(bitmap_data, bmp, this->capture_bpp, *this->gd);
+                }
+                else {
+                    this->gd->draw(bitmap_data, data, size, bmp);
+                }
+            }
+            else {
+                this->gd->draw(bitmap_data, data, size, bmp);
+            }
         }
     }
 
