@@ -56,16 +56,16 @@ class RDPDrawable : public RDPGraphicDevice, public RDPCaptureDevice
     Drawable drawable;
     GlyphCache gly_cache;
     int frame_start_count;
-    int capture_bpp;
+    int order_bpp;
     BGRPalette mod_palette_rgb;
 
 public:
-    RDPDrawable(const uint16_t width, const uint16_t height, int capture_bpp)
+    RDPDrawable(const uint16_t width, const uint16_t height, int order_bpp)
     : drawable(width, height)
     , frame_start_count(0)
-    , capture_bpp(capture_bpp)
+    , order_bpp(order_bpp)
     {
-        REDASSERT(capture_bpp);
+        REDASSERT(order_bpp);
         Pointer pointer0(Pointer::POINTER_CURSOR0);
         this->drawable.cache_pointer(pointer0.x, pointer0.y, pointer0.data, pointer0.mask, 0);
 
@@ -126,20 +126,20 @@ private:
 
     Color u32rgb_to_color(BGRColor color) const
     {
-        return this->u32_to_color((this->capture_bpp == 24)
+        return this->u32_to_color((this->order_bpp == 24)
             ? color
-            : ::color_decode_opaquerect(color, this->capture_bpp, this->mod_palette_rgb)
+            : ::color_decode_opaquerect(color, this->order_bpp, this->mod_palette_rgb)
         );
     }
 
     std::tuple<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const
     {
-        if (this->capture_bpp == 24) {
+        if (this->order_bpp == 24) {
             return std::tuple<Color, Color>{this->u32_to_color(color1), this->u32_to_color(color2)};
         }
         return std::tuple<Color, Color>{
-            this->u32_to_color(::color_decode_opaquerect(color1, this->capture_bpp, this->mod_palette_rgb)),
-            this->u32_to_color(::color_decode_opaquerect(color2, this->capture_bpp, this->mod_palette_rgb))
+            this->u32_to_color(::color_decode_opaquerect(color1, this->order_bpp, this->mod_palette_rgb)),
+            this->u32_to_color(::color_decode_opaquerect(color2, this->order_bpp, this->mod_palette_rgb))
         };
     }
 
