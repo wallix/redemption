@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         ini.video.capture_wrm = false;
         ini.video.capture_png = true;
         ini.globals.enable_file_encryption.set(false);
-        Capture capture(now, scr.cx, scr.cy, 16, 24, "./", "/tmp/", "/tmp/", "capture", false, false, NULL, ini);
+        Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, NULL, ini);
 
         capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr);
         now.tv_sec++;
