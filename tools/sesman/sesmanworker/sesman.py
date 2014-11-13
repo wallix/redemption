@@ -653,6 +653,7 @@ class Sesman():
                     Logger().info(u"service len = 1")
                     s = services[0]
                     data_to_send = {}
+                    data_to_send[u'login'] = wab_login
                     data_to_send[u'module'] = u'transitory' if s[2] != u'INTERNAL' else u'INTERNAL'
                     # service_login (s[1]) format:
                     # target_login@device_name:service_name
