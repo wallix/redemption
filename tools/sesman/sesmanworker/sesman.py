@@ -469,8 +469,9 @@ class Sesman():
         """ Resolve the right target host to use
         self.target_host_filter will contains the target host.
         self.target_hostname_show will contains the target_device to show in case
-            target_host_filter exist
-        self.target_login_filter will contains the target_login.
+            target_host_filter exist.
+        self.target_login_filter will contains the target_login if not in
+            passthrough mode.
 
         Returns None if target_device is a hostname,
                 target_device in other cases
@@ -495,11 +496,9 @@ class Sesman():
                                                                      host))
                     self.target_host_filter = host
                     self.target_hostname_show = target_device
-                    if (target_login and target_login != MAGICASK):
+                    if (target_login and target_login != MAGICASK
+                        and not self.passthrough_mode):
                         self.target_login_filter = target_login
-                        Logger().info("===> target_login = %s" % target_login)
-                    else:
-                        Logger().info("===> NO target_login :(")
                     return None
                 except socket.error:
                     Logger().info("target_device is not a hostname")
