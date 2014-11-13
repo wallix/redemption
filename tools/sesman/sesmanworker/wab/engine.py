@@ -27,10 +27,15 @@ try:
             %s
         """
 except Exception, e:
-    Logger().info("================================")
-    Logger().info("==== Load Fake PROXY ENGINE ====")
-    Logger().info("================================")
-    from fake.proxyengine import *
+    import traceback
+    tracelog = traceback.format_exc(e)
+    try:
+        from fake.proxyengine import *
+        Logger().info("================================")
+        Logger().info("==== Load Fake PROXY ENGINE ====")
+        Logger().info("================================")
+    except Exception, e:
+        Logger.info(">>>>>> %s" % tracelog)
 
 import time
 
