@@ -98,8 +98,6 @@ class mod_rdp : public mod_api {
     int      share_id;
     uint16_t userid;
 
-    int version;
-
     char hostname[16];
     char username[128];
     char password[256];
@@ -138,7 +136,6 @@ class mod_rdp : public mod_api {
     int state;
     Pointer cursors[32];
     const bool console_session;
-    const int brush_cache_code;
     const uint8_t front_bpp;
     const uint32_t performanceFlags;
     Random & gen;
@@ -223,7 +220,6 @@ public:
                 , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose)
         , share_id(0)
         , userid(0)
-        , version(0)
         , bpp(0)
         , encryptionLevel(0)
         , key_flags(mod_rdp_params.key_flags)
@@ -231,7 +227,6 @@ public:
         , connection_finalization_state(EARLY)
         , state(MOD_RDP_NEGO)
         , console_session(info.console_session)
-        , brush_cache_code(info.brush_cache_code)
         , front_bpp(info.bpp)
         , performanceFlags(info.rdp5_performanceflags)
         , gen(gen)
