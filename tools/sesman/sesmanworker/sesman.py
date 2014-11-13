@@ -475,34 +475,34 @@ class Sesman():
         Returns None if target_device is a hostname,
                 target_device in other cases
         """
-        if not self.target_host_filter:
-            if self.shared.get(u'real_target_device'):
-                # Transparent proxy
-                self.target_host_filter = self.shared.get(u'real_target_device')
-                self.target_hostname_show = self.target_host_filter
-            elif target_device and target_device != MAGICASK:
-                # This allow proxy to check if target_device is a device_name
-                # or a hostname.
-                # In case it is a hostname, we keep the target_login as a filter.
-                valid = self.engine.valid_device_name([u'RDP', u'VNC'], target_device)
-                Logger().info("Check Valid device '%s' : res = %s" %
-                              (target_device, valid))
-                if not valid:
-                    # target_device might be a hostname
-                    try:
-                        host = socket.gethostbyname(target_device)
-                        Logger().info("Resolve DNS Hostname %s -> %s" % (target_device,
-                                                                         host))
-                        self.target_host_filter = host
-                        self.target_hostname_show = target_device
-                        if (target_login and target_login != MAGICASK):
-                            self.target_login_filter = target_login
-                            Logger().info("===> target_login = %s" % target_login)
-                        else:
-                            Logger().info("===> NO target_login :(")
-                        return None
-                    except socket.error:
-                        Logger().info("target_device is not a hostname")
+        if not self.target_host_filter and self.shared.get(u'real_target_device'):
+            # Transparent proxy
+            self.target_host_filter = self.shared.get(u'real_target_device')
+            self.target_hostname_show = self.target_host_filter
+        if (target_device and target_device != MAGICASK
+            and not self.shared.get(u'real_target_device')):
+            # This allow proxy to check if target_device is a device_name
+            # or a hostname.
+            # In case it is a hostname, we keep the target_login as a filter.
+            valid = self.engine.valid_device_name([u'RDP', u'VNC'], target_device)
+            Logger().info("Check Valid device '%s' : res = %s" %
+                          (target_device, valid))
+            if not valid:
+                # target_device might be a hostname
+                try:
+                    host = socket.gethostbyname(target_device)
+                    Logger().info("Resolve DNS Hostname %s -> %s" % (target_device,
+                                                                     host))
+                    self.target_host_filter = host
+                    self.target_hostname_show = target_device
+                    if (target_login and target_login != MAGICASK):
+                        self.target_login_filter = target_login
+                        Logger().info("===> target_login = %s" % target_login)
+                    else:
+                        Logger().info("===> NO target_login :(")
+                    return None
+                except socket.error:
+                    Logger().info("target_device is not a hostname")
         return target_device
 
     # GET SERVICE
