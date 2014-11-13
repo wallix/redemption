@@ -72,18 +72,16 @@ class mod_rdp : public mod_api {
 
     CHANNELS::ChannelDefArray mod_channel_list;
 
-    struct RDPAuthorizationChannels : AuthorizationChannels {
-        RDPAuthorizationChannels(const ModRDPParams & mod_rdp_params)
-        {
-            if (mod_rdp_params.allow_channels || mod_rdp_params.deny_channels) {
-                initalize_authorization_channels(
-                    *this,
-                    mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : "",
-                    mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : ""
-                );
-            }
+    AuthorizationChannels make_authorization_channels_with_rdp_params(const ModRDPParams & mod_rdp_params) {
+        if (mod_rdp_params.allow_channels || mod_rdp_params.deny_channels) {
+            return make_authorization_channels(
+                mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : "",
+                mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : ""
+            );
         }
-    } authorization_channels;
+        return AuthorizationChannels();
+    }
+    AuthorizationChannels authorization_channels;
 
 
     int  use_rdp5;
@@ -218,7 +216,7 @@ public:
            )
         : mod_api(info.width - (info.width % 4), info.height)
         , front(front)
-        , authorization_channels(mod_rdp_params)
+        , authorization_channels(make_authorization_channels_with_rdp_params(mod_rdp_params))
         , use_rdp5(1)
         , keylayout(info.keylayout)
         , orders( mod_rdp_params.target_device, mod_rdp_params.enable_persistent_disk_bitmap_cache

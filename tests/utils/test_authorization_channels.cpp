@@ -31,8 +31,7 @@
 
 BOOST_AUTO_TEST_CASE(TestAuthorizationChannels)
 {
-    AuthorizationChannels authorization_channels;
-    initalize_authorization_channels(authorization_channels, "a,b,c", "b,d");
+    AuthorizationChannels authorization_channels = make_authorization_channels("a,b,c", "b,d");
     BOOST_CHECK_EQUAL(authorization_channels.authorized("a"), true);
     BOOST_CHECK_EQUAL(authorization_channels.authorized("b"), false);
     BOOST_CHECK_EQUAL(authorization_channels.authorized("c"), true);
@@ -42,8 +41,7 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannels)
 
 BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllDeny)
 {
-    AuthorizationChannels authorization_channels;
-    initalize_authorization_channels(authorization_channels, "a,b,c", "*");
+    AuthorizationChannels authorization_channels = make_authorization_channels("a,b,c", "*");
     BOOST_CHECK_EQUAL(authorization_channels.authorized("a"), true);
     BOOST_CHECK_EQUAL(authorization_channels.authorized("b"), true);
     BOOST_CHECK_EQUAL(authorization_channels.authorized("c"), true);
@@ -52,8 +50,7 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllDeny)
 
 BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllAllow)
 {
-    AuthorizationChannels authorization_channels;
-    initalize_authorization_channels(authorization_channels, "*", "a,b,c");
+    AuthorizationChannels authorization_channels = make_authorization_channels("*", "a,b,c");
     BOOST_CHECK_EQUAL(authorization_channels.authorized("a"), !true);
     BOOST_CHECK_EQUAL(authorization_channels.authorized("b"), !true);
     BOOST_CHECK_EQUAL(authorization_channels.authorized("c"), !true);

@@ -80,18 +80,15 @@ private:
 };
 
 
-void initalize_authorization_channels(
-    AuthorizationChannels & authorization_channels,
-    const redemption::string & allow, const redemption::string & deny
-) {
+AuthorizationChannels make_authorization_channels(const redemption::string & allow, const redemption::string & deny) {
     if (deny.length() == 1 && deny.c_str()[0] == '*') {
-        authorization_channels = AuthorizationChannels(std::string(allow.c_str(), allow.length()), true);
+        return AuthorizationChannels(std::string(allow.c_str(), allow.length()), true);
     }
     else if (allow.length() == 1 && allow.c_str()[0] == '*') {
-        authorization_channels = AuthorizationChannels(true, std::string(deny.c_str(), deny.length()));
+        return AuthorizationChannels(true, std::string(deny.c_str(), deny.length()));
     }
     else {
-        authorization_channels = AuthorizationChannels(
+        return AuthorizationChannels(
             std::string(allow.c_str(), allow.length())
           , std::string(deny.c_str(), deny.length())
         );

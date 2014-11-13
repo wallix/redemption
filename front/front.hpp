@@ -190,6 +190,7 @@ public:
           , Transport * persistent_key_list_transport = NULL
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
+        , authorization_channels(make_authorization_channels(ini->client.allow_channels, ini->client.deny_channels))
         , capture_state(CAPTURE_STATE_UNKNOWN)
         , capture(NULL)
         , bmp_cache(NULL)
@@ -227,12 +228,6 @@ public:
         , authentifier(NULL)
         , auth_info_sent(false)
     {
-        initalize_authorization_channels(
-            this->authorization_channels,
-            this->ini->client.allow_channels,
-            this->ini->client.deny_channels
-        );
-
         // init TLS
         // --------------------------------------------------------
 
