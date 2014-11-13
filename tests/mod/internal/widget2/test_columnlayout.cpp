@@ -75,14 +75,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetColumn)
 
     // ask to widget to redraw at it's current position
     wcolumn.rdp_input_invalidate(parent.rect);
-    drawable.save_to_png(OUTPUT_FILE_PATH "layout-column.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "layout-column.png");
 
     label2.rect.cy = 130;
     label3.rect.cy = 50;
     wcolumn.rearrange(2);
 
     wcolumn.rdp_input_invalidate(parent.rect);
-    drawable.save_to_png(OUTPUT_FILE_PATH "layout-column2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "layout-column2.png");
 
     // char message[1024];
     // if (!check_sig(drawable.gd.drawable, message,
