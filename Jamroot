@@ -420,7 +420,7 @@ unit-test test_font : tests/core/test_font.cpp libboost_unit_test : <variant>cov
 unit-test test_front_api : tests/core/test_front_api.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_listen : tests/core/test_listen.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_mainloop : tests/core/test_mainloop.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp libboost_unit_test png z crypto : <variant>coverage:<library>gcov ;
 unit-test test_bmpcache : tests/core/RDP/caches/test_bmpcache.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_brushcache : tests/core/RDP/caches/test_brushcache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

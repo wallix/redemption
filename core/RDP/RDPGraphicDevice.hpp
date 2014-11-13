@@ -135,8 +135,6 @@ public:
 inline
 void compress_and_draw_bitmap_update( const RDPBitmapData & bitmap_data, const Bitmap & bmp
                                     , uint8_t target_bpp, RDPGraphicDevice & gd) {
-    REDASSERT(!(bitmap_data.flags & BITMAP_COMPRESSION));
-
     BStream bmp_stream(65535);
     bmp.compress(target_bpp, bmp_stream);
     bmp_stream.mark_end();
