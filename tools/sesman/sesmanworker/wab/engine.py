@@ -350,7 +350,7 @@ class Engine(object):
                     continue
             if target_login:
                 Logger().info("info='%s' login='%s'" % (target_info.target_login, target_login))
-                if target_info.target_login.lower() != target_login.lower():
+                if target_info.target_login != target_login:
                     Logger().info("result => SKIP")
                     continue
 

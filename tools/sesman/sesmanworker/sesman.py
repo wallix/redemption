@@ -465,6 +465,46 @@ class Sesman():
 
         return _status, _error
 
+    def resolve_target_host(self, target_device, target_login):
+        """ Resolve the right target host to use
+        self.target_host_filter will contains the target host.
+        self.target_hostname_show will contains the target_device to show in case
+            target_host_filter exist
+        self.target_login_filter will contains the target_login.
+
+        Returns None if target_device is a hostname,
+                target_device in other cases
+        """
+        if not self.target_host_filter:
+            if self.shared.get(u'real_target_device'):
+                # Transparent proxy
+                self.target_host_filter = self.shared.get(u'real_target_device')
+                self.target_hostname_show = self.target_host_filter
+            elif target_device and target_device != MAGICASK:
+                # This allow proxy to check if target_device is a device_name
+                # or a hostname.
+                # In case it is a hostname, we keep the target_login as a filter.
+                valid = self.engine.valid_device_name([u'RDP', u'VNC'], target_device)
+                Logger().info("Check Valid device '%s' : res = %s" %
+                              (target_device, valid))
+                if not valid:
+                    # target_device might be a hostname
+                    try:
+                        host = socket.gethostbyname(target_device)
+                        Logger().info("Resolve DNS Hostname %s -> %s" % (target_device,
+                                                                         host))
+                        self.target_host_filter = host
+                        self.target_hostname_show = target_device
+                        if (target_login and target_login != MAGICASK):
+                            self.target_login_filter = target_login
+                            Logger().info("===> target_login = %s" % target_login)
+                        else:
+                            Logger().info("===> NO target_login :(")
+                        return None
+                    except socket.error:
+                        Logger().info("target_device is not a hostname")
+        return target_device
+
     # GET SERVICE
     #===============================================================================
     def get_service(self):
@@ -486,37 +526,11 @@ class Sesman():
         if not _status:
             Logger().info(u"Invalid user %s, try again" % self.shared.get(u'login'))
             return None, TR(u"Invalid user, try again")
-
         _status, _error = None, TR(u"No error")
-        # This allow proxy to check if target_device is a device_name
-        # or a hostname.
-        # In case it is a hostname, we keep the target_login as a filter.
-        if not self.target_host_filter:
-            if self.shared.get(u'real_target_device'):
-                self.target_host_filter = self.shared.get(u'real_target_device')
-                self.target_hostname_show = self.target_host_filter
-            elif target_device and target_device != MAGICASK:
-                valid = self.engine.valid_device_name([u'RDP', u'VNC'], target_device)
-                Logger().info("Check Valid device '%s' : res = %s" %
-                              (target_device, valid))
-                if not valid:
-                    try:
-                        host = socket.gethostbyname(target_device)
-                        Logger().info("Resolve DNS Hostname %s -> %s" % (target_device,
-                                                                         host))
-                        self.target_host_filter = host
-                        self.target_hostname_show = target_device
-                        target_device = MAGICASK
-                        if (target_login and target_login != MAGICASK):
-                            self.target_login_filter = target_login
-                            Logger().info("===> target_login = %s" % target_login)
-                        else:
-                            Logger().info("===> NO target_login :(")
-                    except socket.error:
-                        Logger().info("target_device is not a hostname")
+
+        target_device = self.resolve_target_host(target_device, target_login)
 
         while _status is None:
-
             if (target_device and target_device != MAGICASK
                 and (target_login or self.passthrough_mode)
                 and target_login != MAGICASK):
@@ -764,13 +778,14 @@ class Sesman():
         ###################
         ### FIND_TARGET ###
         ###################
-        # The purpose of the snippet below is electing the first right that match
-        # the login AND device AND service that have been passed in the connection
-        # string.
-        # If service is blank take the first right that match login AND device
-        # (may happen with a command line or a mstsc '.rdp' file connections ;
-        # never happens if the selector is used).
-        # NB : service names are supposed to be in alphabetical ascending order.
+        """ The purpose of the snippet below is electing the first right that match
+        the login AND device AND service that have been passed in the connection
+        string.
+        If service is blank take the first right that match login AND device
+        (may happen with a command line or a mstsc '.rdp' file connections ;
+        never happens if the selector is used).
+        NB : service names are supposed to be in alphabetical ascending order.
+        """
         selected_target = None
         target_device = self.shared.get(u'target_device')
         target_login = self.shared.get(u'target_login')
@@ -792,6 +807,8 @@ class Sesman():
         return selected_target, True, ""
 
     def check_target(self, selected_target):
+        """ Checking selected target validity
+        """
         ticket = None
         status = None
         info_message = None
