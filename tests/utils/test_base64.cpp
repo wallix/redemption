@@ -32,7 +32,7 @@
 #include "base64.hpp"
 #include "stream.hpp"
 #include "genrandom.hpp"
-#include <stdio.h>
+#include <string>
 
 BOOST_AUTO_TEST_CASE(TestEncoding)
 {

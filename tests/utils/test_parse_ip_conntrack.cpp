@@ -86,6 +86,7 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
     BOOST_CHECK_EQUAL(0, strcmp(transparent_target, ""));
 
     close(fd);
+    unlink(tmpname);
 }
 
 BOOST_AUTO_TEST_CASE(ParseIpConntrack2)
@@ -146,4 +147,5 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack2)
     BOOST_CHECK_EQUAL(0, strcmp(transparent_target, ""));
 
     close(fd);
+    unlink(tmpname);
 }
