@@ -177,19 +177,22 @@ int main(int argc, char** argv)
         }
 
         if (options.count("compression") > 0) {
-                 if (0 == strcmp(wrm_compression_algorithm.c_str(), "none"     )) {
+                 if (0 == strcmp(wrm_compression_algorithm.c_str(), "none"       )) {
                 ini.video.wrm_compression_algorithm = 0;
             }
-            else if (0 == strcmp(wrm_compression_algorithm.c_str(), "gzip"     )) {
+            else if (0 == strcmp(wrm_compression_algorithm.c_str(), "gzip"       )) {
                 ini.video.wrm_compression_algorithm = 1;
             }
-            else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "snappy"  )) {
+            else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "snappy"    )) {
                 ini.video.wrm_compression_algorithm = 2;
             }
-            //else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "lzma"    )) {
-            //    ini.video.wrm_compression_algorithm = 3;
+            else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "bufferized")) {
+                ini.video.wrm_compression_algorithm = 3;
+            }
+            //else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "lzma"      )) {
+            //    ini.video.wrm_compression_algorithm = 4;
             //}
-            else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "original")) {
+            else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "original"  )) {
                 ini.video.wrm_compression_algorithm = USE_ORIGINAL_COMPRESSION_ALGORITHM;
             }
             else {
