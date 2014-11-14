@@ -588,13 +588,31 @@ public:
                                                              , chunk_size, flags);
         }
 
-        const CHANNELS::ChannelDef * front_channel =
-            this->front.get_channel_list().get_by_name(mod_channel_name);
+        const CHANNELS::ChannelDef * front_channel = this->front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }
     }
 
+private:
+    template<class PDU, class... Args>
+    void send_clipboard_pdu_to_front_channel(bool response_ok, Args&&... args) {
+        PDU             format_data_response_pdu(response_ok);
+        uint8_t         data[256];
+        FixedSizeStream out_s(data, sizeof(data));
+
+        format_data_response_pdu.emit(out_s, args...);
+
+        this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                                   , out_s.get_data()
+                                   , out_s.size()
+                                   , out_s.size()
+                                   , CHANNELS::CHANNEL_FLAG_FIRST
+                                   | CHANNELS::CHANNEL_FLAG_LAST
+                                   );
+    }
+
+public:
     virtual void send_to_mod_channel( const char * const front_channel_name
                                     , Stream & chunk
                                     , size_t length
@@ -632,18 +650,7 @@ public:
 
             if (this->enable_clipboard_out) {
                 if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
-                    RDPECLIP::FormatDataResponsePDU format_data_response_pdu(true);
-                    BStream                         out_s(256);
-
-                    format_data_response_pdu.emit(out_s, "");
-
-                    this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                               , out_s.get_data()
-                                               , out_s.size()
-                                               , out_s.size()
-                                               , CHANNELS::CHANNEL_FLAG_FIRST
-                                               | CHANNELS::CHANNEL_FLAG_LAST
-                                               );
+                    this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(true, "\0");
                     return;
                 }
             }
@@ -651,37 +658,19 @@ public:
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                 }
-
-                bool response_ok = false;
-
+                const bool response_ok = false;
                 // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
                 // 03 00 02 00 00 00 00 00
-                RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
-                BStream                         out_s(256);
-
-                format_list_response_pdu.emit(out_s);
-
-                size_t length     = out_s.size();
-                size_t chunk_size = length;
-
-                this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                           , out_s.get_data()
-                                           , length
-                                           , chunk_size
-                                           , CHANNELS::CHANNEL_FLAG_FIRST
-                                           | CHANNELS::CHANNEL_FLAG_LAST
-                                           );
-
+                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(response_ok);
                 return;
             }
         }
 
-        const CHANNELS::ChannelDef * mod_channel =
-            this->mod_channel_list.get_by_name(front_channel_name);
+        const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
         // send it if module has a matching channel, if no matching channel is found just forget it
         if (mod_channel) {
             if (this->verbose & 16) {
-                int index = this->mod_channel_list.get_index_by_name(front_channel_name);
+                const int index = this->mod_channel_list.get_index_by_name(front_channel_name);
                 mod_channel->log(index);
             }
             this->send_to_channel(*mod_channel, chunk, length, flags);
@@ -1767,8 +1756,7 @@ public:
                                 LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
                             }
 
-                            int num_channel_src =
-                                this->mod_channel_list.get_index_by_id(mcs.channelId);
+                            int num_channel_src = this->mod_channel_list.get_index_by_id(mcs.channelId);
                             if (num_channel_src == -1) {
                                 LOG(LOG_WARNING, "mod::rdp::MOD_RDP_CONNECTED::Unknown Channel id=%d", mcs.channelId);
                                 throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
@@ -1820,27 +1808,11 @@ public:
                                     LOG(LOG_INFO, "mod_rdp clipboard PDU");
                                 }
 
-                                uint16_t msgType = sec.payload.in_uint16_le();
+                                const uint16_t msgType = sec.payload.in_uint16_le();
 
                                 if (this->enable_clipboard_in) {
                                     if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
-                                        RDPECLIP::FormatDataResponsePDU format_data_response_pdu(true);
-                                        BStream                         out_s(256);
-
-                                        format_data_response_pdu.emit(out_s, "\0");
-
-                                        const CHANNELS::ChannelDef * mod_channel =
-                                            this->mod_channel_list.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
-
-                                        if (mod_channel) {
-                                            this->front.send_to_channel(*mod_channel
-                                                                       , out_s.get_data()
-                                                                       , out_s.size()
-                                                                       , out_s.size()
-                                                                       , CHANNELS::CHANNEL_FLAG_FIRST
-                                                                       | CHANNELS::CHANNEL_FLAG_LAST
-                                                                       );
-                                        }
+                                        this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(true, "\0");
                                     }
                                     else {
                                         sec.payload.p -= 2;
@@ -1853,8 +1825,7 @@ public:
                                         LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                                     }
 
-                                    bool response_ok = true;
-
+                                    const bool response_ok = true;
                                     // Build and send the CB_FORMAT_LIST_RESPONSE (with status = OK)
                                     // 03 00 01 00 00 00 00 00
                                     RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
@@ -1862,17 +1833,12 @@ public:
 
                                     format_list_response_pdu.emit(out_s);
 
-                                    const CHANNELS::ChannelDef * mod_channel =
-                                        this->mod_channel_list.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
-
-                                    if (mod_channel) {
-                                        this->send_to_channel(*mod_channel
-                                                              , out_s
-                                                              , out_s.size()
-                                                              , CHANNELS::CHANNEL_FLAG_FIRST
-                                                              | CHANNELS::CHANNEL_FLAG_LAST
-                                                              );
-                                    }
+                                    this->send_to_channel( mod_channel
+                                                         , out_s
+                                                         , out_s.size()
+                                                         , CHANNELS::CHANNEL_FLAG_FIRST
+                                                         | CHANNELS::CHANNEL_FLAG_LAST
+                                                         );
                                 }
                             }
                             else {
