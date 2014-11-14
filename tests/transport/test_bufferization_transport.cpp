@@ -20,23 +20,23 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGZipCompressionTransport
+#define BOOST_TEST_MODULE TestBufferizationTransport
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
 //#define LOGPRINT
 #include "log.hpp"
 
-#include "gzip_compression_transport.hpp"
+#include "bufferization_transport.hpp"
 #include "test_transport.hpp"
 
-BOOST_AUTO_TEST_CASE(TestGZipCompressionTransport)
+BOOST_AUTO_TEST_CASE(TestBufferizationTransport)
 {
     //for (unsigned int i = 0; i < 100000; i++) {
         MemoryTransport mt;
 
         {
-            GZipCompressionOutTransport out_trans(mt, 0xFFFF);
+            BufferizationOutTransport out_trans(mt, 0xFFFF);
 
             out_trans.send(
                   "azert"
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestGZipCompressionTransport)
         }
 
         {
-            GZipCompressionInTransport  in_trans(mt, 0xFFFF);
+            BufferizationInTransport in_trans(mt, 0xFFFF);
 
             char   in_data[128] = { 0 };
             char * in_buffer   = in_data;

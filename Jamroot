@@ -514,6 +514,7 @@ unit-test test_filename_transport : tests/transport/test_filename_transport.cpp 
 unit-test test_bulk_compression_transport : tests/transport/test_bulk_compression_transport.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_lzma_compression_transport : tests/transport/test_lzma_compression_transport.cpp lzma libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_bufferization_transport : tests/transport/test_bufferization_transport.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_buffering_buf : tests/transport/buffer/test_buffering_buf.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
