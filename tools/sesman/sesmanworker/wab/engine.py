@@ -477,6 +477,8 @@ class Engine(object):
 
     def release_target_password(self, target_device, reason, target_application = None):
         Logger().debug("Engine release_target_password: reason=\"%s\"" % reason)
+        if target_device == target_application:
+            target_application = None
         self.erpm_password_checked_out = False
         try:
             self.wabengine.release_target_password(target_device, reason, target_application)

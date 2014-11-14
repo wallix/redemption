@@ -683,7 +683,9 @@ class Sesman():
                     _status, _error = False, TR(u"Target unreachable")
 
             else:
-                self.send_data({u'login': MAGICASK})
+                self.send_data({u'login': MAGICASK,
+                                u'module': 'login'
+                                })
                 return None, u"Logout"
 
         return _status, _error
@@ -1284,14 +1286,7 @@ class Sesman():
                         break;
                 finally:
                     if not (physical_target is None):
-                        if (physical_target == selected_target):
-                            #no application case
-                            Logger().info("Calling release_target_password")
-                            self.engine.release_target_password(physical_target, release_reason)
-                        else:
-                            #application case
-                            #release application password
-                            self.engine.release_target_password(physical_target, release_reason, selected_target)
+                        self.engine.release_target_password(physical_target, release_reason, selected_target)
 
             Logger().info(u"Stop session ...")
 
