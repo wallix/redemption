@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestLineLayoutwithColumns)
     wcolumn.add_widget(&wline4);
 
     wcolumn.rdp_input_invalidate(parent.rect);
-    drawable.save_to_png(OUTPUT_FILE_PATH "layout-columnline.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "layout-columnline.png");
 
     WidgetFlatButton button(drawable, 0, 0, wcolumn, &wcolumn, "un boutton", true, id,
                             WHITE, DARK_BLUE, DARK_BLUE);
@@ -127,10 +127,10 @@ BOOST_AUTO_TEST_CASE(TestLineLayoutwithColumns)
     wcolumn.insert_widget(&button, 2);
 
     wcolumn.rdp_input_invalidate(parent.rect);
-    drawable.save_to_png(OUTPUT_FILE_PATH "layout-columnline2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "layout-columnline2.png");
 
     wcolumn.remove_widget(&wline3);
 
     wcolumn.rdp_input_invalidate(parent.rect);
-    drawable.save_to_png(OUTPUT_FILE_PATH "layout-columnline3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "layout-columnline3.png");
 }

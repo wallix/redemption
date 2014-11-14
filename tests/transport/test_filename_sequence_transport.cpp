@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #include "out_filename_sequence_transport.hpp"
+#include "fileutils.hpp"
 
 BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
 {
@@ -42,4 +43,11 @@ BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
     fnt.next();
     fnt.send(" ", 1);
     fnt.send("A new file.", 11);
+
+    BOOST_CHECK_EQUAL(filesize(fnt.seqgen()->get(0)), 31);
+    BOOST_CHECK_EQUAL(filesize(fnt.seqgen()->get(1)), 12);
+
+    fnt.disconnect();
+    unlink(fnt.seqgen()->get(0));
+    unlink(fnt.seqgen()->get(1));
 }
