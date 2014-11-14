@@ -182,6 +182,7 @@ typedef enum
 
         AUTHID_TARGET_DEVICE,       // target_device
         AUTHID_TARGET_PASSWORD,     // target_password
+        AUTHID_TARGET_HOST,       // target_host
         AUTHID_TARGET_PORT,         // target_port
         AUTHID_TARGET_PROTOCOL,     // proto_dest
         AUTHID_TARGET_USER,         // target_login
@@ -293,6 +294,7 @@ typedef enum
 
 #define STRAUTHID_TARGET_DEVICE            "target_device"
 #define STRAUTHID_TARGET_PASSWORD          "target_password"
+#define STRAUTHID_TARGET_HOST              "target_host"
 #define STRAUTHID_TARGET_PORT              "target_port"
 #define STRAUTHID_TARGET_PROTOCOL          "proto_dest"
 #define STRAUTHID_TARGET_USER              "target_login"
@@ -405,6 +407,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_TARGET_DEVICE,        // target_device
     STRAUTHID_TARGET_PASSWORD,      // target_password
+    STRAUTHID_TARGET_HOST,          // target_host
     STRAUTHID_TARGET_PORT,          // target_port
     STRAUTHID_TARGET_PROTOCOL,      // proto_dest
     STRAUTHID_TARGET_USER,          // target_login
@@ -762,6 +765,7 @@ struct Inifile : public FieldObserver {
         UnsignedField      selector_number_of_pages; // AUTHID_SELECTOR_NUMBER_OF_PAGES //
 
         StringField        target_password;          // AUTHID_TARGET_PASSWORD //
+        StringField        target_host;              // AUTHID_TARGET_HOST //
         UnsignedField      target_port;              // AUTHID_TARGET_PORT //
         StringField        target_protocol;          // AUTHID_TARGET_PROTOCOL //
 
@@ -1176,6 +1180,8 @@ public:
         this->context.target_port.set(3389);
         this->context.target_port.ask();
 
+        this->context.target_host.set_from_cstr("");
+        this->context.target_host.ask();
 
         this->context.target_protocol.set_from_cstr("RDP");
         this->context.target_protocol.ask();
@@ -1279,6 +1285,7 @@ public:
 
         this->context.target_password.attach_ini(this,AUTHID_TARGET_PASSWORD);
         this->context.target_protocol.attach_ini(this,AUTHID_TARGET_PROTOCOL);
+        this->context.target_host.attach_ini(this,AUTHID_TARGET_HOST);
         this->context.target_port.attach_ini(this,AUTHID_TARGET_PORT);
 
         this->context.password.attach_ini(this,AUTHID_PASSWORD);

@@ -216,7 +216,7 @@ public:
         , authorization_channels(make_authorization_channels_with_rdp_params(mod_rdp_params))
         , use_rdp5(1)
         , keylayout(info.keylayout)
-        , orders( mod_rdp_params.target_device, mod_rdp_params.enable_persistent_disk_bitmap_cache
+        , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose)
         , share_id(0)
         , userid(0)
@@ -237,7 +237,7 @@ public:
         , auth_channel_state(0) // 0 means unused
         , acl(mod_rdp_params.acl)
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
-              , mod_rdp_params.enable_nla, mod_rdp_params.target_device
+              , mod_rdp_params.enable_nla, mod_rdp_params.target_host
               , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
         , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
         , enable_clipboard_in(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_up"))

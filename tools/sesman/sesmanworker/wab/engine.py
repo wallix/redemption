@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from sesmanconf import TR, SESMANCONF, translations
 from logger import Logger
 try:
     from wabengine.common.exception import AuthenticationFailed
@@ -28,10 +27,15 @@ try:
             %s
         """
 except Exception, e:
-    Logger().info("================================")
-    Logger().info("==== Load Fake PROXY ENGINE ====")
-    Logger().info("================================")
-    from fake.proxyengine import *
+    import traceback
+    tracelog = traceback.format_exc(e)
+    try:
+        from fake.proxyengine import *
+        Logger().info("================================")
+        Logger().info("==== Load Fake PROXY ENGINE ====")
+        Logger().info("================================")
+    except Exception, e:
+        Logger.info(">>>>>> %s" % tracelog)
 
 import time
 
@@ -43,7 +47,6 @@ def _binary_ip(network, bits):
     return ((a << 24) + (b << 16) + (c << 8) + d) & mask
 
 def is_device_in_subnet(device, subnet):
-
     if '/' in subnet:
         try:
             network, bits = subnet.rsplit('/')
@@ -315,7 +318,8 @@ class Engine(object):
             Logger().info("Engine NotifyFindPatternInRDPFlow failed: (((%s)))" % (traceback.format_exc(e)))
 
     def get_targets_list(self, group_filter, device_filter, protocol_filter,
-                         real_target_device):
+                         real_target_device, target_login=None):
+        Logger().info("GET_TARGETS_LIST target_login='%s'" % target_login)
         targets = []
         item_filtered = False
         for target_info in self.displaytargets:
@@ -344,18 +348,34 @@ class Engine(object):
                     and (not is_device_in_subnet(real_target_device,
                                                  target_info.host))):
                     continue
+            if target_login:
+                Logger().info("info='%s' login='%s'" % (target_info.target_login, target_login))
+                if target_info.target_login != target_login:
+                    Logger().info("result => SKIP")
+                    continue
 
             targets.append((target_info.group # ( = concatenated list)
                             , temp_service_login
                             , temp_resource_service_protocol_cn
                             )
                            )
+        Logger().info("targets list = %s'" % targets)
         return targets, item_filtered
 
     def reset_proxy_rights(self):
         self.proxy_rights = None
         self.rights = None
         self.target_right = None
+
+    def valid_device_name(self, protocols, target_device):
+        Logger().info("VALID DEVICE NAME target_device = '%s'" % target_device)
+        prights = self.wabengine.get_proxy_rights(protocols, target_device,
+                                                 check_timeframes=False)
+        rights = prights.rights
+        Logger().info("VALID DEVICE NAME Rights = '%s', len = %s" % (rights, len(rights)))
+        if rights:
+            return True
+        return False
 
     def get_proxy_rights(self, protocols, target_device=None, check_timeframes=True):
         if self.proxy_rights is not None:
@@ -390,28 +410,23 @@ class Engine(object):
                                                        right.subprotocols,
                                                        host))
 
-    def get_selected_target(self, target_login, target_device, target_service):
+    def get_selected_target(self, target_login, target_device, target_service,
+                            target_host=None):
         # Logger().info("%s@%s:%s" % (target_device, target_login, target_service))
         if target_service == '':
             target_service = None
         right = None
         self.get_proxy_rights([u'RDP', u'VNC'], target_device,
                               check_timeframes=True if target_device else False)
-        if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
-            for r in self.rights:
-                if not is_device_in_subnet(target_device, r.resource.device.host):
-                    continue
-                if target_service != r.resource.service.cn:
-                    continue
-                right = r
-                break
-        else:
-            result = self.targets.get((target_login, target_device))
-            if result:
-                if (not target_service) and (len(result) == 1):
-                    right = result.values()[0]
-                if target_service and result.get(target_service):
-                    right = result[target_service]
+        result = self.targets.get((target_login, target_device))
+        if result:
+            if (not target_service) and (len(result) == 1):
+                right = result.values()[0]
+            if target_service and result.get(target_service):
+                right = result[target_service]
+            if (target_host and right
+                and not is_device_in_subnet(target_host, right.resource.device.host)):
+                right = None
         if right:
             self.init_timeframe(right)
             self.target_right = right
@@ -548,7 +563,7 @@ class Engine(object):
 
     def write_trace(self, video_path):
         try:
-            _status, _error = True, TR(u"No error")
+            _status, _error = True, u"No error"
             if video_path:
                 # Notify WabEngine with Trace file descriptor
                 trace = self.wabengine.get_trace_writer(self.session_id, trace_type=u"rdptrc")
@@ -556,7 +571,7 @@ class Engine(object):
                 trace.end()
         except Exception, e:
             Logger().info("Engine write_trace failed: %s" % e)
-            _status, _error = False, TR(u"Trace writer failed for %s") % video_path
+            _status, _error = False, u"Trace writer failed for %s"
         return _status, _error
 
     def read_session_parameters(self, key=None):

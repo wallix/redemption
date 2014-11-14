@@ -33,7 +33,7 @@ namespace redemption {
 struct ModRDPParams {
     const char * target_user;
     const char * target_password;
-    const char * target_device;
+    const char * target_host;
     const char * client_address;
 
     bool enable_tls;
@@ -81,14 +81,14 @@ struct ModRDPParams {
 
     ModRDPParams( const char * target_user
                 , const char * target_password
-                , const char * target_device
+                , const char * target_host
                 , const char * client_address
                 , int key_flags
                 , uint32_t verbose = 0
                 )
         : target_user(target_user)
         , target_password(target_password)
-        , target_device(target_device)
+        , target_host(target_host)
         , client_address(client_address)
 
         , enable_tls(true)
@@ -141,7 +141,7 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams target_password=\"%s\"",                 (this->target_password ? "<hidden>" : "<null>"));
         LOG(LOG_INFO,
-            "ModRDPParams target_device=\"%s\"",                   this->target_device);
+            "ModRDPParams target_host=\"%s\"",                     this->target_host);
         LOG(LOG_INFO,
             "ModRDPParams client_address=\"%s\"",                  this->client_address);
 

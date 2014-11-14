@@ -241,7 +241,7 @@ public:
         else if (!strcmp(module_cstr, STRMODULE_INTERNAL)) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL");
             int res = MODULE_EXIT;
-            const char * target = this->ini.globals.target_device.get_cstr();
+            const char * target = this->ini.context.target_host.get_cstr();
             if (0 == strcmp(target, "bouncer2")) {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "==========> INTERNAL bouncer2");
@@ -668,7 +668,7 @@ public:
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                 }
 
-                int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
+                int client_sck = ip_connect(this->ini.context.target_host.get_cstr(),
                                             this->ini.context.target_port.get(),
                                             4, 1000,
                                             this->ini.debug.mod_xup);
@@ -680,7 +680,7 @@ public:
 
                 SocketTransport * t = new SocketTransport(name
                                                           , client_sck
-                                                          , this->ini.globals.target_device.get_cstr()
+                                                          , this->ini.context.target_host.get_cstr()
                                                           , this->ini.context.target_port.get()
                                                           , this->ini.debug.mod_xup);
                 this->mod_transport = t;
@@ -731,7 +731,7 @@ public:
 
                 static const char * name = "RDP Target";
 
-                int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
+                int client_sck = ip_connect(this->ini.context.target_host.get_cstr(),
                                             this->ini.context.target_port.get(),
                                             3, 1000,
                                             this->ini.debug.mod_rdp);
@@ -745,7 +745,7 @@ public:
                 SocketTransport * t = new SocketTransport(
                                                           name
                                                           , client_sck
-                                                          , this->ini.globals.target_device.get_cstr()
+                                                          , this->ini.context.target_host.get_cstr()
                                                           , this->ini.context.target_port.get()
                                                           , this->ini.debug.mod_rdp
                                                           , &this->ini.context.auth_error_message
@@ -756,7 +756,7 @@ public:
 
                 ModRDPParams mod_rdp_params( this->ini.globals.target_user.get_cstr()
                                            , this->ini.context.target_password.get_cstr()
-                                           , this->ini.globals.target_device.get_cstr()
+                                           , this->ini.context.target_host.get_cstr()
                                            , "0.0.0.0"   // client ip is silenced
                                            , this->front.keymap.key_flags
                                            , this->ini.debug.mod_rdp
@@ -813,8 +813,8 @@ public:
                 static const char * name = "VNC Target";
 
 
-                int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
-                                            //this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
+                int client_sck = ip_connect(this->ini.context.target_host.get_cstr(),
+                                            //this->ini.context_get_value(AUTHID_TARGET_HOST, NULL, 0),
                                             this->ini.context.target_port.get(),
                                             3, 1000,
                                             this->ini.debug.mod_vnc);
@@ -826,7 +826,7 @@ public:
 
                 SocketTransport * t = new SocketTransport(name
                                                           , client_sck
-                                                          , this->ini.globals.target_device.get_cstr()
+                                                          , this->ini.context.target_host.get_cstr()
                                                           , this->ini.context.target_port.get()
                                                           , this->ini.debug.mod_vnc);
                 this->mod_transport = t;
