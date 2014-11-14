@@ -50,6 +50,7 @@
 #include "internal/widget_test_mod.hpp"
 
 #include "mod_osd.hpp"
+#include "noncopyable.hpp"
 
 #define STRMODULE_LOGIN            "login"
 #define STRMODULE_SELECTOR         "selector"
@@ -301,12 +302,11 @@ class ModuleManager : public MMIni
 {
     struct module_osd
     : public mod_osd
-    //, noncopyable
+    , noncopyable
     {
         module_osd(
             ModuleManager & manager, const Rect & rect,
             std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f)
-        //: mod_osd(manager.front, *manager.mod, Bitmap("/home/jpoelen/projects/redemption-public/tests/fixtures/ad24b.bmp"))
         : mod_osd(manager.front, *manager.mod, rect, std::move(f))
         , manager(manager)
         , old_mod(manager.mod)
@@ -399,37 +399,36 @@ public:
 
 
     Front & front;
-    mod_api * no_mod;
+    null_mod no_mod;
     Transport * mod_transport;
 
     ModuleManager(Front & front, Inifile & ini)
         : MMIni(ini)
         , front(front)
+        , no_mod(this->front)
         , mod_transport(NULL)
     {
-        this->no_mod = new null_mod(this->front);
-        this->no_mod->get_event().reset();
-        this->mod = this->no_mod;
+        this->no_mod.get_event().reset();
+        this->mod = &this->no_mod;
     }
 
     virtual void remove_mod()
     {
         delete this->osd;
 
-        if (this->mod != this->no_mod){
+        if (this->mod != &this->no_mod){
             delete this->mod;
             if (this->mod_transport) {
                 delete this->mod_transport;
                 this->mod_transport = NULL;
             }
-            this->mod = this->no_mod;
+            this->mod = &this->no_mod;
         }
     }
 
     virtual ~ModuleManager()
     {
         this->remove_mod();
-        delete this->no_mod;
     }
 
     virtual void new_mod(int target_module, time_t now, auth_api * acl)
