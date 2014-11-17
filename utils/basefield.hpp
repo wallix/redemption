@@ -198,7 +198,7 @@ struct FieldObserver : public ConfigurationHolder {
         {
         }
 
-        void set(redemption::string & string) {
+        void set(redemption::string const & string) {
             this->set_from_cstr(string.c_str());
         }
         void set_empty() {
@@ -274,10 +274,6 @@ struct FieldObserver : public ConfigurationHolder {
 
         void set_from_level_cstr(const char * cstr) {
             this->set(level_from_cstr(cstr));
-        }
-
-        void set_from_logtype_cstr(const char * cstr) {
-            this->set(logtype_from_cstr(cstr));
         }
 
         uint32_t get() const {

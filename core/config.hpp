@@ -705,8 +705,6 @@ struct Inifile : public FieldObserver {
         uint32_t performance;
 
         uint32_t pass_dialog_box;
-        int log_type;
-        char log_file_path[1024]; // log file location
     } debug;
 
     // section "translation"
@@ -1064,8 +1062,6 @@ public:
         this->debug.bitmap_update     = 0;
         this->debug.performance       = 0;
 
-        this->debug.log_type          = 2; // syslog by default
-        this->debug.log_file_path[0]  = 0;
         this->debug.pass_dialog_box   = 0;
         // End Section "debug"
 
@@ -1681,15 +1677,8 @@ public:
             else if (0 == strcmp(key, "bitmap_update")) {
                 this->debug.bitmap_update     = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "log_type")) {
-                this->debug.log_type          = logtype_from_cstr(value);
-            }
             else if (0 == strcmp(key, "pass_dialog_box")) {
                 this->debug.pass_dialog_box   = ulong_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "log_file_path")) {
-                strncpy(this->debug.log_file_path, value, sizeof(this->debug.log_file_path));
-                this->debug.log_file_path[sizeof(this->debug.log_file_path) - 1] = 0;
             }
             else if (0 == strcmp(key, "performance")) {
                 this->debug.performance       = ulong_from_cstr(value);
