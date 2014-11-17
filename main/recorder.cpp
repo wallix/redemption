@@ -176,19 +176,22 @@ int main(int argc, char** argv)
         }
 
         if (options.count("compression") > 0) {
-                 if (0 == strcmp(wrm_compression_algorithm.c_str(), "none"     )) {
+                 if (0 == strcmp(wrm_compression_algorithm.c_str(), "none"       )) {
                 ini.video.wrm_compression_algorithm = 0;
             }
-            else if (0 == strcmp(wrm_compression_algorithm.c_str(), "gzip"     )) {
+            else if (0 == strcmp(wrm_compression_algorithm.c_str(), "gzip"       )) {
                 ini.video.wrm_compression_algorithm = 1;
             }
-            else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "snappy"  )) {
+            else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "snappy"    )) {
                 ini.video.wrm_compression_algorithm = 2;
             }
-            //else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "lzma"    )) {
-            //    ini.video.wrm_compression_algorithm = 3;
+            else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "bufferized")) {
+                ini.video.wrm_compression_algorithm = 3;
+            }
+            //else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "lzma"      )) {
+            //    ini.video.wrm_compression_algorithm = 4;
             //}
-            else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "original")) {
+            else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "original"  )) {
                 ini.video.wrm_compression_algorithm = USE_ORIGINAL_COMPRESSION_ALGORITHM;
             }
             else {
@@ -588,7 +591,8 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture, con
 
         capture.reset(new Capture( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                  , player.screen_rect.cx, player.screen_rect.cy
-                                 , player.info_bpp, 24, outfile_path, outfile_path, ini.video.hash_path
+                                 , player.info_bpp, ini.video.wrm_color_depth_selection_strategy
+                                 , outfile_path, outfile_path, ini.video.hash_path
                                  , outfile_basename, false, false, NULL, ini, true));
         if (capture->capture_png){
             capture->psc->zoom(zoom);

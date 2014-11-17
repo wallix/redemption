@@ -36,6 +36,7 @@
 #include "RDP/RDPSerializer.hpp"
 #include "RDP/share.hpp"
 #include "difftimeval.hpp"
+#include "bufferization_transport.hpp"
 #include "gzip_compression_transport.hpp"
 //#include "lzma_compression_transport.hpp"
 #include "snappy_compression_transport.hpp"
@@ -147,6 +148,7 @@ public:
 
     bool ignore_frame_in_timeval;
 
+    BufferizationInTransport     bit;
     GZipCompressionInTransport   gzcit;
     //LzmaCompressionInTransport   lcit;
     SnappyCompressionInTransport scit;
@@ -165,6 +167,7 @@ public:
         uint32_t LineTo;
         uint32_t GlyphIndex;
         uint32_t Polyline;
+        uint32_t EllipseSC;
 
         uint32_t CacheBitmap;
         uint32_t CacheColorTable;
@@ -248,6 +251,7 @@ public:
         , info_cache_4_persistent(false)
         , info_compression_algorithm(0)
         , ignore_frame_in_timeval(false)
+        , bit(*trans)
         , gzcit(*trans)
         //, lcit(*trans, verbose)
         , scit(*trans)
@@ -588,6 +592,16 @@ public:
                         this->consumers[i].graphic_device->draw(this->polyline, clip);
                     }
                     break;
+                case RDP::ELLIPSESC:
+                    this->statistics.EllipseSC++;
+                    this->ellipseSC.receive(this->stream, header);
+                    if (this->verbose > 32){
+                        this->ellipseSC.log(LOG_INFO, clip);
+                    }
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
+                        this->consumers[i].graphic_device->draw(this->ellipseSC, clip);
+                    }
+                    break;
                 default:
                     /* error unknown order */
                     LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
@@ -750,8 +764,8 @@ public:
                     this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
 
                     this->info_compression_algorithm = this->stream.in_uint8();
-                    //REDASSERT(this->info_compression_algorithm < 4);
-                    REDASSERT(this->info_compression_algorithm < 3);
+                    //REDASSERT(this->info_compression_algorithm < 5);
+                    REDASSERT(this->info_compression_algorithm < 4);
 
                     switch (this->info_compression_algorithm) {
                     case 1:
@@ -760,7 +774,10 @@ public:
                     case 2:
                         this->trans = &this->scit;
                         break;
-                    //case 3:
+                    case 3:
+                        this->trans = &this->bit;
+                        break;
+                    //case 4:
                     //    this->trans = &this->lcit;
                     //    break;
                     default:

@@ -24,7 +24,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapture
+#define BOOST_TEST_MODULE TestDrawable
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
@@ -32,12 +32,8 @@
 #include "log.hpp"
 
 #include "check_sig.hpp"
-#include "ssl_calls.hpp"
 #include "png.hpp"
 #include "RDP/RDPDrawable.hpp"
-#include "staticcapture.hpp"
-#include "drawable.hpp"
-#include "rdtsc.hpp"
 
 inline bool check_sig(RDPDrawable & data, char * message, const char * shasig)
 {
@@ -246,26 +242,26 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), LIGHT_GREEN), screen_rect);
 
-    uint64_t usec = ustime();
-    uint64_t cycles = rdtsc();
+//     uint64_t usec = ustime();
+//     uint64_t cycles = rdtsc();
 
     gd.draw(RDPEllipseSC(Rect(2, 200, 540, 32), BLUE, 0x06, 0x01), screen_rect);
 
-    uint64_t elapusec = ustime() - usec;
-    uint64_t elapcyc = rdtsc() - cycles;
-    LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
-
-    usec = ustime();
-    cycles = rdtsc();
+//     uint64_t elapusec = ustime() - usec;
+//     uint64_t elapcyc = rdtsc() - cycles;
+//     LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+//
+//     usec = ustime();
+//     cycles = rdtsc();
 
     gd.draw(RDPEllipseSC(Rect(100, 2, 40, 400), RED, 0x06, 0x01), screen_rect);
 
-    elapusec = ustime() - usec;
-    elapcyc = rdtsc() - cycles;
-    LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
-
-    usec = ustime();
-    cycles = rdtsc();
+//     elapusec = ustime() - usec;
+//     elapcyc = rdtsc() - cycles;
+//     LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+//
+//     usec = ustime();
+//     cycles = rdtsc();
 
     gd.draw(RDPEllipseSC(Rect(2, 300, 540, 32), BLUE, 0x06, 0x00), screen_rect);
     gd.draw(RDPEllipseSC(Rect(200, 2, 40, 400), RED, 0x06, 0x00), screen_rect);
@@ -354,10 +350,10 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
     gd.draw(RDPEllipseSC(Rect(400, 105, 30, 40), RED, 0x10, 0x0B), screen_rect);
     gd.draw(RDPEllipseSC(Rect(400, 155, 30, 40), RED, 0x06, 0x01), screen_rect);
 
-    elapusec = ustime() - usec;
-    elapcyc = rdtsc() - cycles;
-
-    LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+//     elapusec = ustime() - usec;
+//     elapcyc = rdtsc() - cycles;
+//
+//     LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
 
     char message[1024];
     if (!check_sig(gd, message,

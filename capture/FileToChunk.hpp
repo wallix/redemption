@@ -70,6 +70,7 @@ public:
     bool     info_cache_4_persistent;
     uint8_t  info_compression_algorithm;
 
+    BufferizationInTransport     bit;
     GZipCompressionInTransport   gzcit;
     //LzmaCompressionInTransport   lcit;
     SnappyCompressionInTransport scit;
@@ -108,6 +109,7 @@ public:
         , info_cache_4_size(0)
         , info_cache_4_persistent(false)
         , info_compression_algorithm(0)
+        , bit(*trans)
         , gzcit(*trans)
         //, lcit(*trans, verbose)
         , scit(*trans) {
@@ -195,8 +197,8 @@ public:
                 this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
 
                 this->info_compression_algorithm = this->stream.in_uint8();
-                //REDASSERT(this->info_compression_algorithm < 4);
-                REDASSERT(this->info_compression_algorithm < 3);
+                //REDASSERT(this->info_compression_algorithm < 5);
+                REDASSERT(this->info_compression_algorithm < 4);
 
                 switch (this->info_compression_algorithm) {
                 case 1:
@@ -205,7 +207,10 @@ public:
                 case 2:
                     this->trans = &this->scit;
                     break;
-                //case 3:
+                case 3:
+                    this->trans = &this->bit;
+                    break;
+                //case 4:
                 //    this->trans = &this->lcit;
                 //    break;
                 default:

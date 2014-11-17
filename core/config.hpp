@@ -627,6 +627,11 @@ struct Inifile : public FieldObserver {
         bool allow_authentification_retries;
     } mod_vnc;
 
+    // struct
+    //{
+    //    int on_end_of_data; // 0 - Wait for Escape, 1 - End session
+    //} mod_replay;
+
     // Section "video"
     struct {
         unsigned capture_flags;   // 1 PNG capture, 2 WRM
@@ -688,7 +693,7 @@ struct Inifile : public FieldObserver {
 
         unsigned wrm_color_depth_selection_strategy; // 0: 24-bit, 1: 16-bit
 
-        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy, 3: LZMA
+        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy, 3: bufferized, 4: LZMA (not yet supported)
     } video;
 
     // Section "Crypto"
@@ -719,7 +724,8 @@ struct Inifile : public FieldObserver {
         uint32_t password;
         uint32_t compression;
         uint32_t cache;
-	uint32_t bitmap_update;
+        uint32_t bitmap_update;
+        uint32_t performance;
 
         uint32_t pass_dialog_box;
         int log_type;
@@ -1085,6 +1091,7 @@ public:
         this->debug.compression       = 0;
         this->debug.cache             = 0;
         this->debug.bitmap_update     = 0;
+        this->debug.performance       = 0;
 
         this->debug.log_type          = 2; // syslog by default
         this->debug.log_file_path[0]  = 0;
@@ -1725,14 +1732,17 @@ public:
                 this->debug.bitmap_update     = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "log_type")) {
-                this->debug.log_type = logtype_from_cstr(value);
+                this->debug.log_type          = logtype_from_cstr(value);
             }
             else if (0 == strcmp(key, "pass_dialog_box")) {
-                this->debug.pass_dialog_box = ulong_from_cstr(value);
+                this->debug.pass_dialog_box   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "log_file_path")) {
                 strncpy(this->debug.log_file_path, value, sizeof(this->debug.log_file_path));
                 this->debug.log_file_path[sizeof(this->debug.log_file_path) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "performance")) {
+                this->debug.performance       = ulong_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

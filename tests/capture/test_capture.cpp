@@ -28,6 +28,8 @@
 #define LOGNULL
 //#define LOGPRINT
 #include "capture.hpp"
+#include "check_sig.hpp"
+#include "get_file_contents.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
@@ -36,7 +38,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     const int groupid = 0;
     {
         // Timestamps are applied only when flushing
-        struct timeval now;
+        timeval now;
         now.tv_usec = 0;
         now.tv_sec = 1000;
 
@@ -137,6 +139,46 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator wrm_seq(FilenameGenerator::PATH_FILE_PID_EXTENSION, "/tmp/", "capture", ".mwrm", groupid);
         const char * filename = wrm_seq.get(0);
         BOOST_CHECK_EQUAL(32, ::filesize(filename));
+        ::unlink(filename);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
+{
+    Inifile ini;
+    ini.video.rt_display.set(1);
+    {
+        // Timestamps are applied only when flushing
+        timeval now;
+        now.tv_usec = 0;
+        now.tv_sec = 1000;
+
+        Rect scr(0, 0, 10, 10);
+
+        ini.video.frame_interval = 100; // one timestamp every second
+        ini.video.break_interval = 3;   // one WRM file every 5 seconds
+
+        ini.video.png_limit = 10; // one snapshot by second
+        ini.video.png_interval = 10; // one snapshot by second
+
+        ini.video.capture_wrm = false;
+        ini.video.capture_png = true;
+        ini.globals.enable_file_encryption.set(false);
+        Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, NULL, ini);
+
+        capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr);
+        now.tv_sec++;
+        capture.snapshot(now, 0, 0, true);
+
+        const char * filename = capture.png_trans->seqgen()->get(0);
+
+        auto s = get_file_contents<std::string>(filename);
+        char message[1024];
+        if (!check_sig(reinterpret_cast<const uint8_t*>(s.data()), s.size(), message,
+            "\x7e\xfc\x1c\x63\x17\x32\x78\x52\xed\x66\x33\xf4\x08\x06\x7c\x7d\x62\x2e\x8c\x69"
+        )) {
+            BOOST_CHECK_MESSAGE(false, message);
+        }
         ::unlink(filename);
     }
 }

@@ -538,9 +538,9 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     Bitmap bogus(24, 24, NULL, 64, 64, stream.get_data(), stream.size(), true);
     drawable.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx(), bogus.cy()), 0xCC, 0, 0, 0), scr, bogus);
 
-    FILE * f = fopen("/tmp/test_bmp.png", "wb");
-    dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
-    fclose(f);
+//     FILE * f = fopen("/tmp/test_bmp.png", "wb");
+//     dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
+//     fclose(f);
 
     d.flush();
     const char * filename = trans.seqgen()->get(0);
