@@ -244,11 +244,10 @@ public:
                     LOG(LOG_INFO, "==========> INTERNAL test");
                 }
                 const char * user = this->ini.globals.target_user.get_cstr();
-                size_t len_user = strlen(user);
-                strncpy(this->ini.context.movie, user, sizeof(this->ini.context.movie));
-                this->ini.context.movie[sizeof(this->ini.context.movie) - 1] = 0;
-                if (0 != strcmp(".mwrm", user + len_user - 5)) {
-                    strcpy(this->ini.context.movie + len_user, ".mwrm");
+                this->ini.context.movie = user;
+                const size_t len_user = strlen(user);
+                if (0 != strcmp(".mwrm", user + len_user - 5) && len_user + 5 < this->ini.context.movie.max_size()) {
+                    strcpy(this->ini.context.movie.data() + len_user, ".mwrm");
                 }
                 res = MODULE_INTERNAL_TEST;
             }

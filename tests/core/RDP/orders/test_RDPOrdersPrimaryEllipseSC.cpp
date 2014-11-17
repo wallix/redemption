@@ -518,7 +518,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
     RDPEllipseSC nullellipse;
     BOOST_CHECK(nullellipse.id() == ELLIPSESC);
-    nullellipse.log(1, Rect());
-    nullellipse.print(Rect());
+    //nullellipse.log(1, Rect());
+    //nullellipse.print(Rect());
 }
 

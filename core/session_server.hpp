@@ -79,8 +79,8 @@ public:
                 Inifile ini;
                 ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
-                memcpy(ini.crypto.key0, this->cryptoKeyHldr.get_key_0(), sizeof(ini.crypto.key0));
-                memcpy(ini.crypto.key1, this->cryptoKeyHldr.get_key_1(), sizeof(ini.crypto.key1));
+                ini.crypto.key0.setmem(this->cryptoKeyHldr.get_key_0());
+                ini.crypto.key1.setmem(this->cryptoKeyHldr.get_key_1());
 
                 if (ini.debug.session){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);

@@ -56,8 +56,8 @@ BOOST_AUTO_TEST_CASE(TestEllipseCB)
         RDPOrderCommon state_common(0, Rect(311, 0, 800, 600));
         RDPEllipseCB state_ellipse(Rect(), 0, 0x00, 0, 0, RDPBrush());
         BOOST_CHECK(state_ellipse.id() == ELLIPSECB);
-        state_ellipse.log(1, Rect());
-        state_ellipse.print(Rect());
+        //state_ellipse.log(1, Rect());
+        //state_ellipse.print(Rect());
         RDPOrderCommon newcommon(ELLIPSECB, Rect(311, 0, 800, 600));
         RDPEllipseCB(Rect(300, 400, 50, 60),
                      0xFF, 0x01,

@@ -231,7 +231,7 @@ public:
             }
             stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
             this->auth_trans.send(stream.get_data(), total_length);
-        } catch (Error e) {
+        } catch (Error const & e) {
             this->ini->context.authenticated.set(false);
             this->ini->context.rejected.set_from_cstr(TR("acl_fail", *(this->ini)));
             // this->ini->context.rejected.set_from_cstr("Authentifier service failed");
