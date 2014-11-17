@@ -609,6 +609,11 @@ struct Inifile : public FieldObserver {
         bool allow_authentification_retries;
     } mod_vnc;
 
+    // struct
+    //{
+    //    int on_end_of_data; // 0 - Wait for Escape, 1 - End session
+    //} mod_replay;
+
     // Section "video"
     struct {
         unsigned capture_flags;   // 1 PNG capture, 2 WRM
@@ -670,7 +675,7 @@ struct Inifile : public FieldObserver {
 
         unsigned wrm_color_depth_selection_strategy; // 0: 24-bit, 1: 16-bit
 
-        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy, 3: LZMA
+        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy, 3: bufferized, 4: LZMA (not yet supported)
     } video;
 
     // Section "Crypto"
