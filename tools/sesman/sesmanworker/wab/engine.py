@@ -318,8 +318,8 @@ class Engine(object):
             Logger().info("Engine NotifyFindPatternInRDPFlow failed: (((%s)))" % (traceback.format_exc(e)))
 
     def get_targets_list(self, group_filter, device_filter, protocol_filter,
-                         real_target_device, target_login=None):
-        Logger().info("GET_TARGETS_LIST target_login='%s'" % target_login)
+                         target_context=None):
+# real_target_device, target_login=None):
         targets = []
         item_filtered = False
         for target_info in self.displaytargets:
@@ -341,18 +341,20 @@ class Engine(object):
                 item_filtered = True
                 continue
 
-            if real_target_device:
-                if target_info.protocol == u"APP":
-                    continue
-                if (target_info.host
-                    and (not is_device_in_subnet(real_target_device,
-                                                 target_info.host))):
-                    continue
-            if target_login:
-                Logger().info("info='%s' login='%s'" % (target_info.target_login, target_login))
-                if target_info.target_login != target_login:
-                    Logger().info("result => SKIP")
-                    continue
+            if target_context:
+                if target_context.host:
+                    if target_info.protocol == u"APP":
+                        continue
+                    if (target_info.host
+                        and (not is_device_in_subnet(target_context.host,
+                                                     target_info.host))
+                        and target_context.dnsname != target_info.host):
+                        continue
+                if target_context.login:
+                    Logger().info("info='%s' login='%s'" % (target_info.target_login, target_context.login))
+                    if target_info.target_login != target_context.login:
+                        Logger().info("result => SKIP")
+                        continue
 
             targets.append((target_info.group # ( = concatenated list)
                             , temp_service_login
@@ -410,8 +412,7 @@ class Engine(object):
                                                        right.subprotocols,
                                                        host))
 
-    def get_selected_target(self, target_login, target_device, target_service,
-                            target_host=None):
+    def get_selected_target(self, target_login, target_device, target_service):
         # Logger().info("%s@%s:%s" % (target_device, target_login, target_service))
         if target_service == '':
             target_service = None
@@ -424,9 +425,6 @@ class Engine(object):
                 right = result.values()[0]
             if target_service and result.get(target_service):
                 right = result[target_service]
-            if (target_host and right
-                and not is_device_in_subnet(target_host, right.resource.device.host)):
-                right = None
         if right:
             self.init_timeframe(right)
             self.target_right = right
@@ -477,6 +475,8 @@ class Engine(object):
 
     def release_target_password(self, target_device, reason, target_application = None):
         Logger().debug("Engine release_target_password: reason=\"%s\"" % reason)
+        if target_device == target_application:
+            target_application = None
         self.erpm_password_checked_out = False
         try:
             self.wabengine.release_target_password(target_device, reason, target_application)
