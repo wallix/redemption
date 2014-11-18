@@ -16,6 +16,7 @@ import os
 import urllib
 import signal
 import traceback
+import json
 from logger import Logger
 
 from cutmessage import cut_message
@@ -1243,23 +1244,18 @@ class Sesman():
                                 if self.shared.get(u'auth_channel_target'):
                                     Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
 
-                                    _message = (u"SET JOB\x01"
-                                                u"To:%s\x01"
-                                                u"\x01"
-                                                u"Job:simple_webform_filling\x01"
-                                                u"Application:C:\\Program Files\\Internet Explorer\\iexplore.exe\x01"
-                                                u"Directory:%%HOMEDRIVE%%%%HOMEPATH%%\x01"
-                                                u"WebsiteURL:10.10.47.32\x01"
-                                                u"WebformURL:https://10.10.47.32/accounts/login/\x01"
-                                                u"WebformName:login-form\x01"
-                                                u"Input:user_name:admin\x01"
-                                                u"Input:passwd:admin") % self.shared.get(u'auth_channel_target')
+                                    if self.shared.get(u'auth_channel_target') == u'GetWabSessionParameters':
+                                        account_login = selected_target.account.login
+                                        application_password = self.engine.get_target_password(selected_target)
 
-                                    self.send_data({u'auth_channel_answer': _message})
+                                        _message = { 'user' : account_login, 'password' : application_password }
 
-                                    Logger().info(u"Sending of auth channel answer ok")
+                                        #Logger().info(u"GetWabSessionParameters (response):" % json.dumps(_message))
+                                        self.send_data({u'auth_channel_answer': json.dumps(_message)})
 
-                                    self.shared[u'auth_channel_target'] = u''
+                                        Logger().info(u"Sending of auth channel answer ok (GetWabSessionParameters)")
+
+                                self.shared[u'auth_channel_target'] = u''
                             # r can be empty
                             else: # (if self.proxy_conx in r)
                                 if not self.internal_target and not got_signal:
