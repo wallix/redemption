@@ -64,6 +64,16 @@ def mdecode(item):
 class AuthentifierSocketClosed(Exception):
     pass
 
+class TargetContext(object):
+    def __init__(self, host=None, dnsname=None, login=None, show=None):
+        self.host = host
+        self.dnsname = dnsname
+        self.login = login
+        self.show = show
+    def showname(self):
+        return self.show or self.dnsname or self.host
+
+
 ################################################################################
 class Sesman():
 ################################################################################
@@ -91,9 +101,7 @@ class Sesman():
 
         self._full_user_device_account = u'Unknown'
         self.target_service_name = None
-        self.target_login_filter = None
-        self.target_host_filter = None
-        self.target_hostname_show = None
+        self.target_context = None
 
         self.shared[u'module']                  = u'login'
         self.shared[u'selector_group_filter']   = u''
@@ -111,7 +119,7 @@ class Sesman():
 
         self.shared[u'target_login']    = MAGICASK
         self.shared[u'target_device']   = MAGICASK
-        self.shared[u'target_host']   = MAGICASK
+        self.shared[u'target_host']     = MAGICASK
         self.shared[u'login']           = MAGICASK
         self.shared[u'ip_client']       = MAGICASK
         self.shared[u'proxy_type  ']    = MAGICASK
@@ -125,6 +133,7 @@ class Sesman():
         self.internal_target = False
         self.check_session_parameters = False
 
+        # Passthrough context
         self.passthrough_mode = (SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower()
                                  == u'true')
         self.default_login = SESMANCONF[u'sesman'][u'default_login'].strip() if (
@@ -134,11 +143,9 @@ class Sesman():
     def reset_session_var(self):
         self._full_user_device_account = u'Unknown'
         self.target_service_name = None
-        self.target_login_filter = None
-        self.target_host_filter = None
         self.internal_target = False
         self.passthrough_target_login = None
-        self.target_hostname_show = None
+        self.target_context = None
 
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
@@ -387,8 +394,7 @@ class Sesman():
             self.shared.get(u'login'),
             self.shared.get(u'target_login'),
             self.shared.get(u'target_device'),
-            self.target_service_name
-            )
+            self.target_service_name)
         if not _status:
             return None, TR(u"Invalid user, try again")
 
@@ -467,21 +473,19 @@ class Sesman():
 
     def resolve_target_host(self, target_device, target_login):
         """ Resolve the right target host to use
-        self.target_host_filter will contains the target host.
-        self.target_hostname_show will contains the target_device to show in case
-            target_host_filter exist.
-        self.target_login_filter will contains the target_login if not in
+        self.target_context.host will contains the target host.
+        self.target_context.showname() will contains the target_device to show
+        self.target_context.login will contains the target_login if not in
             passthrough mode.
 
         Returns None if target_device is a hostname,
                 target_device in other cases
         """
-        if not self.target_host_filter and self.shared.get(u'real_target_device'):
+        if self.shared.get(u'real_target_device'):
             # Transparent proxy
-            self.target_host_filter = self.shared.get(u'real_target_device')
-            self.target_hostname_show = self.target_host_filter
-        if (target_device and target_device != MAGICASK
-            and not self.shared.get(u'real_target_device')):
+            if not self.target_context:
+                self.target_context = TargetContext(host=self.shared.get(u'real_target_device'))
+        elif target_device and target_device != MAGICASK:
             # This allow proxy to check if target_device is a device_name
             # or a hostname.
             # In case it is a hostname, we keep the target_login as a filter.
@@ -491,18 +495,23 @@ class Sesman():
             if not valid:
                 # target_device might be a hostname
                 try:
-                    host = socket.gethostbyname(target_device)
-                    Logger().info("Resolve DNS Hostname %s -> %s" % (target_device,
-                                                                     host))
-                    self.target_host_filter = host
-                    self.target_hostname_show = target_device
+                    login_filter = None
                     if (target_login and target_login != MAGICASK
                         and not self.passthrough_mode):
-                        self.target_login_filter = target_login
+                        login_filter = target_login
+                    dnsname, alias, ip_list = socket.gethostbyaddr(target_device)
+                    Logger().info("Resolve DNS Hostname %s -> %s" % (target_device,
+                                                                     ip_list))
+                    host_ip = ip_list[0] if ip_list else None
+                    self.target_context = TargetContext(host=host_ip,
+                                                        dnsname=dnsname,
+                                                        login=login_filter,
+                                                        show=target_device)
                     return None
                 except socket.error:
                     Logger().info("target_device is not a hostname")
         return target_device
+
 
     # GET SERVICE
     #===============================================================================
@@ -555,8 +564,7 @@ class Sesman():
                     group_filter = self.shared.get(u'selector_group_filter'),
                     device_filter = self.shared.get(u'selector_device_filter'),
                     protocol_filter = self.shared.get(u'selector_proto_filter'),
-                    real_target_device = self.target_host_filter,
-                    target_login = self.target_login_filter)
+                    target_context = self.target_context)
                 if (len(services) > 1) or item_filtered:
                     try:
                         _current_page = int(self.shared.get(u'selector_current_page')) - 1
@@ -792,14 +800,11 @@ class Sesman():
         target_device = self.shared.get(u'target_device')
         target_login = self.shared.get(u'target_login')
         target_service = self.target_service_name if self.target_service_name != u'INTERNAL' else u'RDP'
-        target_host = self.target_host_filter
-        # target_host = self.shared.get(u'real_target_device')
 
         # Logger().info("selected target ==> %s %s %s" % (target_login, target_device, target_service))
         selected_target = self.engine.get_selected_target(target_login,
                                                           target_device,
-                                                          target_service,
-                                                          target_host)
+                                                          target_service)
         if not selected_target:
             _target = u"%s@%s:%s" % ( target_login, target_device, target_service )
             _error_log = u"Targets %s not found in user rights" % _target
@@ -1090,12 +1095,9 @@ class Sesman():
                     kv[u'disable_tsk_switch_shortcuts'] = u'yes'
                 self.cn = target_login_info.target_name
 
-                # if self.shared.get(u'real_target_device'):
-                #     kv[u'target_host'] = self.shared.get(u'real_target_device')
-                if self.target_host_filter:
-                    kv[u'target_host'] = self.target_host_filter
-                    kv[u'target_device'] = (self.target_hostname_show
-                                            or self.target_host_filter)
+                if self.target_context:
+                    kv[u'target_host'] = self.target_context.host
+                    kv[u'target_device'] = self.target_context.showname()
                 else:
                     kv[u'target_host'] = physical_info.device_host
                     kv[u'target_port'] = physical_info.service_port
@@ -1134,8 +1136,8 @@ class Sesman():
                     if not _status:
                         break
 
-                    if self.target_host_filter:
-                        self._physical_target_device = self.target_host_filter
+                    if self.target_context:
+                        self._physical_target_device = self.target_context.host
                     else:
                         self._physical_target_device = physical_info.device_host
 
