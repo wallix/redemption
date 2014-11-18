@@ -1656,21 +1656,30 @@ public:
         }
     }   // void set_value(const char * context, const char * key, const char * value)
 
+
+private:
+    BaseField * get_field(authid_t authid) const {
+        auto pos = this->field_list.find(authid);
+        if (pos != this->field_list.end()) {
+            return pos->second;
+        }
+        return nullptr;
+    }
+
+public:
     TODO("Should only be used by Authentifier "
          "It currently ask if the field has been modified "
          "and set it to not modified if it is not asked ")
     bool context_has_changed(authid_t authid) {
-        bool res = false;
-        try {
-            BaseField * field = this->field_list.at(authid);
-            res = field->has_changed();
+        if (BaseField * field = this->get_field(authid)) {
+            const bool res = field->has_changed();
             field->use();
+            return res;
         }
-        catch (const std::out_of_range & oor) {
+        else {
             LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
-            res = false;
+            return false;
         }
-        return res;
     }
 
     /******************
@@ -1679,19 +1688,16 @@ public:
     void set_from_acl(const char * strauthid, const char * value) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
-            try {
-                if (authid == AUTHID_AUTH_ERROR_MESSAGE)
-                {
-                    this->context.auth_error_message.copy_c_str(value);
-                }
-                else
-                {
-                    BaseField * field = this->field_list.at(authid);
+            if (authid == AUTHID_AUTH_ERROR_MESSAGE) {
+                this->context.auth_error_message.copy_c_str(value);
+            }
+            else {
+                if (BaseField * field = this->get_field(authid)) {
                     field->set_from_acl(value);
                 }
-            }
-            catch (const std::out_of_range & oor) {
-                LOG(LOG_WARNING, "Inifile::set_from_acl(id): unknown authid=%d", authid);
+                else {
+                    LOG(LOG_WARNING, "Inifile::set_from_acl(id): unknown authid=%d", authid);
+                }
             }
         }
         else {
@@ -1705,11 +1711,10 @@ public:
     void ask_from_acl(const char * strauthid) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
-            try {
-                BaseField * field = this->field_list.at(authid);
+            if (BaseField * field = this->get_field(authid)) {
                 field->ask_from_acl();
             }
-            catch (const std::out_of_range & oor) {
+            else {
                 LOG(LOG_WARNING, "Inifile::ask_from_acl(id): unknown authid=%d", authid);
             }
         }
@@ -1737,11 +1742,10 @@ public:
                 this->context.auth_error_message.copy_c_str(value);
                 break;
             default:
-                try {
-                    BaseField * field = this->field_list.at(authid);
+                if (BaseField * field = this->get_field(authid)) {
                     field->set_from_cstr(value);
                 }
-                catch (const std::out_of_range & oor) {
+                else {
                     LOG(LOG_WARNING, "Inifile::context_set_value(id): unknown authid=%d", authid);
                 }
                 break;
@@ -1769,12 +1773,12 @@ public:
                 pszReturn = this->context.auth_error_message.c_str();
                 break;
             default:
-                try{
-                    BaseField * field = this->field_list.at(authid);
-                    if (!field->is_asked())
+                if (BaseField * field = this->get_field(authid)) {
+                    if (!field->is_asked()) {
                         pszReturn = field->get_value();
+                    }
                 }
-                catch (const std::out_of_range & oor) {
+                else {
                     LOG(LOG_WARNING, "Inifile::context_get_value(id): unknown authid=\"%d\"", authid);
                 }
                 break;
@@ -1794,10 +1798,10 @@ public:
     }
 
     void context_ask(authid_t authid) {
-        try{
-            this->field_list.at(authid)->ask();
+        if (BaseField * field = this->get_field(authid)) {
+            field->ask();
         }
-        catch (const std::out_of_range & oor) {
+        else {
             LOG(LOG_WARNING, "Inifile::context_ask(id): unknown authid=%d", authid);
         }
     }
@@ -1814,14 +1818,13 @@ public:
     }
 
     bool context_is_asked(authid_t authid) {
-        bool res = false;
-        try{
-            res = this->field_list.at(authid)->is_asked();
+        if (BaseField * field = this->get_field(authid)) {
+            return field->is_asked();
         }
-        catch (const std::out_of_range & oor) {
+        else {
             LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
+            return false;
         }
-        return res;
     }
 
     bool context_get_bool(authid_t authid) {
