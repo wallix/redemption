@@ -16,6 +16,7 @@ import os
 import urllib
 import signal
 import traceback
+import json
 from logger import Logger
 
 from cutmessage import cut_message
@@ -40,6 +41,11 @@ RECORD_PATH = u'/var/wab/recorded/rdp/'
 from sesmanconf import TR, SESMANCONF, translations
 import engine
 
+from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
+    APPROVAL_PENDING, APPROVAL_NONE
+from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
+
+
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
 def mundane(value):
     if value == MAGICASK:
@@ -58,6 +64,16 @@ def mdecode(item):
 
 class AuthentifierSocketClosed(Exception):
     pass
+
+class TargetContext(object):
+    def __init__(self, host=None, dnsname=None, login=None, show=None):
+        self.host = host
+        self.dnsname = dnsname
+        self.login = login
+        self.show = show
+    def showname(self):
+        return self.show or self.dnsname or self.host
+
 
 ################################################################################
 class Sesman():
@@ -86,6 +102,7 @@ class Sesman():
 
         self._full_user_device_account = u'Unknown'
         self.target_service_name = None
+        self.target_context = None
 
         self.shared[u'module']                  = u'login'
         self.shared[u'selector_group_filter']   = u''
@@ -103,6 +120,7 @@ class Sesman():
 
         self.shared[u'target_login']    = MAGICASK
         self.shared[u'target_device']   = MAGICASK
+        self.shared[u'target_host']     = MAGICASK
         self.shared[u'login']           = MAGICASK
         self.shared[u'ip_client']       = MAGICASK
         self.shared[u'proxy_type  ']    = MAGICASK
@@ -115,6 +133,20 @@ class Sesman():
 
         self.internal_target = False
         self.check_session_parameters = False
+
+        # Passthrough context
+        self.passthrough_mode = (SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower()
+                                 == u'true')
+        self.default_login = SESMANCONF[u'sesman'][u'default_login'].strip() if (
+            SESMANCONF[u'sesman'][u'use_default_login'].strip() == u'2') else None
+        self.passthrough_target_login = None
+
+    def reset_session_var(self):
+        self._full_user_device_account = u'Unknown'
+        self.target_service_name = None
+        self.internal_target = False
+        self.passthrough_target_login = None
+        self.target_context = None
 
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
@@ -152,12 +184,6 @@ class Sesman():
             #     data[u'password'] = u''
 
             data.update(translations())
-
-        # else:
-        #     if self.shared.get(u'password') == MAGICASK:
-        #         data[u'password'] = u''
-        #         Logger().info(u"Update password")
-        #     data.update({})
 
         # replace MAGICASK with ASK and send data on the wire
         _list = []
@@ -244,29 +270,22 @@ class Sesman():
 
     def parse_username(self, wab_login, target_login, target_device, target_service):
         effective_login = None
-        if ((SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true')
-            and (SESMANCONF[u'sesman'][u'use_default_login'].strip() == u'2')
-            and len(SESMANCONF[u'sesman'][u'default_login'].strip())):
-            target_login = wab_login
-            wab_login = SESMANCONF[u'sesman'][u'default_login'].strip()
-            effective_login = target_login
-        else:
-            level_0_items = wab_login.split(u':')
-            if len(level_0_items) > 1:
-                if len(level_0_items) > 3:
-                    Logger().info(u"username parse error %s" % wab_login)
-                    return False, (TR(u'Username_parse_error %s') % wab_login), wab_login, target_login, target_device, target_service, effective_login
-
-                target_service = u'' if len(level_0_items) <= 2 else level_0_items[-2]
-                level_1_items, wab_login       = level_0_items[0].split(u'@'), level_0_items[-1]
-                target_login, target_device = '@'.join(level_1_items[:-1]), level_1_items[-1]
-        if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
+        level_0_items = wab_login.split(u':')
+        if len(level_0_items) > 1:
+            if len(level_0_items) > 3:
+                Logger().info(u"username parse error %s" % wab_login)
+                return False, (TR(u'Username_parse_error %s') % wab_login), wab_login, target_login, target_device, target_service, effective_login
+            target_service = u'' if len(level_0_items) <= 2 else level_0_items[-2]
+            level_1_items, wab_login = level_0_items[0].split(u'@'), level_0_items[-1]
+            target_login, target_device = '@'.join(level_1_items[:-1]), level_1_items[-1]
+        if self.passthrough_mode:
+            if not self.passthrough_target_login:
+                self.passthrough_target_login = wab_login
+            if self.default_login:
+                effective_login = self.passthrough_target_login
+                wab_login = self.default_login
             Logger().info(u'ip_target="%s" real_target_device="%s"' % (
                 self.shared.get(u'ip_target'), self.shared.get(u'real_target_device')))
-            if target_login == MAGICASK:
-                target_login = wab_login
-            target_device = self.shared.get(u'real_target_device')
-            target_service = u'RDP'
         return True, "", wab_login, target_login, target_device, target_service, effective_login
 
     def interactive_ask_x509_connection(self):
@@ -332,9 +351,8 @@ class Sesman():
     def interactive_password(self, data_to_send):
         data_to_send.update({ u'module' : u'interactive_password' })
         self.send_data(data_to_send)
-
         _status, _error = self.receive_data()
-        if self.shared.get(u'accept_message') != u'True':
+        if self.shared.get(u'display_message') != u'True':
             _status, _error = False, TR(u'not_accept_message')
         return _status, _error
 
@@ -377,8 +395,7 @@ class Sesman():
             self.shared.get(u'login'),
             self.shared.get(u'target_login'),
             self.shared.get(u'target_device'),
-            self.target_service_name
-            )
+            self.target_service_name)
         if not _status:
             return None, TR(u"Invalid user, try again")
 
@@ -409,7 +426,7 @@ class Sesman():
                 # Wait for confirmation from GUI (or timeout)
                 if not (self.interactive_ask_x509_connection() and self.engine.x509_authenticate()):
                     return False, TR(u"x509 browser authentication not validated by user")
-            elif SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
+            elif self.passthrough_mode:
                 # Passthrough Authentification
                 if not self.engine.passthrough_authenticate(
                         wab_login,
@@ -447,16 +464,6 @@ class Sesman():
             if not self.engine.get_license_status():
                 return False, TR(u'licence_blocker')
 
-            # try:
-            #     # might be too early, should be done just before accessing Right structure
-            #     # Then get user rights (reachable targets)
-            #     self.engine.get_proxy_rights([u'RDP', u'VNC'])
-            # except Exception, e:
-            #     if DEBUG:
-            #         import traceback
-            #         Logger().info("<<<%s>>>" % traceback.format_exc(e))
-            #     # NB : this exception may be raised because the user must change his password
-            #     return False, TR(u"Error while retreiving rights for user %s") % wab_login
         except Exception, e:
             if DEBUG:
                 import traceback
@@ -464,6 +471,48 @@ class Sesman():
             _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
 
         return _status, _error
+
+    def resolve_target_host(self, target_device, target_login):
+        """ Resolve the right target host to use
+        self.target_context.host will contains the target host.
+        self.target_context.showname() will contains the target_device to show
+        self.target_context.login will contains the target_login if not in
+            passthrough mode.
+
+        Returns None if target_device is a hostname,
+                target_device in other cases
+        """
+        if self.shared.get(u'real_target_device'):
+            # Transparent proxy
+            if not self.target_context:
+                self.target_context = TargetContext(host=self.shared.get(u'real_target_device'))
+        elif target_device and target_device != MAGICASK:
+            # This allow proxy to check if target_device is a device_name
+            # or a hostname.
+            # In case it is a hostname, we keep the target_login as a filter.
+            valid = self.engine.valid_device_name([u'RDP', u'VNC'], target_device)
+            Logger().info("Check Valid device '%s' : res = %s" %
+                          (target_device, valid))
+            if not valid:
+                # target_device might be a hostname
+                try:
+                    login_filter = None
+                    if (target_login and target_login != MAGICASK
+                        and not self.passthrough_mode):
+                        login_filter = target_login
+                    dnsname, alias, ip_list = socket.gethostbyaddr(target_device)
+                    Logger().info("Resolve DNS Hostname %s -> %s" % (target_device,
+                                                                     ip_list))
+                    host_ip = ip_list[0] if ip_list else None
+                    self.target_context = TargetContext(host=host_ip,
+                                                        dnsname=dnsname,
+                                                        login=login_filter,
+                                                        show=target_device)
+                    return None
+                except socket.error:
+                    Logger().info("target_device is not a hostname")
+        return target_device
+
 
     # GET SERVICE
     #===============================================================================
@@ -486,13 +535,14 @@ class Sesman():
         if not _status:
             Logger().info(u"Invalid user %s, try again" % self.shared.get(u'login'))
             return None, TR(u"Invalid user, try again")
-
         _status, _error = None, TR(u"No error")
 
-        while _status is None:
+        target_device = self.resolve_target_host(target_device, target_login)
 
+        while _status is None:
             if (target_device and target_device != MAGICASK
-            and (target_login or SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true') and target_login != MAGICASK):
+                and (target_login or self.passthrough_mode)
+                and target_login != MAGICASK):
                 # Target is provided at login
                 self._full_user_device_account = u"%s@%s:%s" % ( target_login
                                                                , target_device
@@ -501,22 +551,21 @@ class Sesman():
                 data_to_send = { u'login'                   : wab_login
                                , u'target_login'            : target_login
                                , u'target_device'           : target_device
-                               # , u'proto_dest'              : proto_dest if proto_dest != u'INTERNAL' else u'RDP'
-                               , u'module'                  : u'transitory' if self.target_service_name != u'INTERNAL' else u'INTERNAL'
+                               , u'module'                  : u'transitory'
                                }
-                if data_to_send.has_key(u'module') and not self.internal_target:
-                    self.internal_target = True if data_to_send[u'module'] == u'INTERNAL' else False
+                if not self.internal_target:
+                    self.internal_target = True if self.target_service_name == u'INTERNAL' else False
                 self.send_data(data_to_send)
                 _status = True
             elif self.shared.get(u'selector') == MAGICASK:
                 # filters ("Group" and "Account/Device") entered by user in selector are applied to raw services list
-                self.engine.get_proxy_rights([u'RDP', u'VNC'])
+                self.engine.get_proxy_rights([u'RDP', u'VNC'],
+                                             check_timeframes=False)
                 services, item_filtered = self.engine.get_targets_list(
                     group_filter = self.shared.get(u'selector_group_filter'),
                     device_filter = self.shared.get(u'selector_device_filter'),
                     protocol_filter = self.shared.get(u'selector_proto_filter'),
-                    real_target_device = self.shared.get(u'real_target_device'))
-
+                    target_context = self.target_context)
                 if (len(services) > 1) or item_filtered:
                     try:
                         _current_page = int(self.shared.get(u'selector_current_page')) - 1
@@ -610,8 +659,10 @@ class Sesman():
                             Logger().info(u"Unexpected error in selector pagination %s" % traceback.format_exc(e))
                         return False, u"Unexpected error in selector pagination"
                 elif len(services) == 1:
+                    Logger().info(u"service len = 1")
                     s = services[0]
                     data_to_send = {}
+                    data_to_send[u'login'] = wab_login
                     data_to_send[u'module'] = u'transitory' if s[2] != u'INTERNAL' else u'INTERNAL'
                     # service_login (s[1]) format:
                     # target_login@device_name:service_name
@@ -641,7 +692,9 @@ class Sesman():
                     _status, _error = False, TR(u"Target unreachable")
 
             else:
-                self.send_data({u'login': MAGICASK})
+                self.send_data({u'login': MAGICASK,
+                                u'module': 'login'
+                                })
                 return None, u"Logout"
 
         return _status, _error
@@ -732,13 +785,144 @@ class Sesman():
 
         return _status, _error
 
+    def select_target(self):
+        ###################
+        ### FIND_TARGET ###
+        ###################
+        """ The purpose of the snippet below is electing the first right that match
+        the login AND device AND service that have been passed in the connection
+        string.
+        If service is blank take the first right that match login AND device
+        (may happen with a command line or a mstsc '.rdp' file connections ;
+        never happens if the selector is used).
+        NB : service names are supposed to be in alphabetical ascending order.
+        """
+        selected_target = None
+        target_device = self.shared.get(u'target_device')
+        target_login = self.shared.get(u'target_login')
+        target_service = self.target_service_name if self.target_service_name != u'INTERNAL' else u'RDP'
+
+        # Logger().info("selected target ==> %s %s %s" % (target_login, target_device, target_service))
+        selected_target = self.engine.get_selected_target(target_login,
+                                                          target_device,
+                                                          target_service)
+        if not selected_target:
+            _target = u"%s@%s:%s" % ( target_login, target_device, target_service )
+            _error_log = u"Targets %s not found in user rights" % _target
+            _status, _error = False, TR(u"Target %s not found in user rights") % _target
+            Logger().info("%s" % _error)
+            return None, _status, _error
+        return selected_target, True, ""
+
+    def check_target(self, selected_target):
+        """ Checking selected target validity
+        """
+        ticket = None
+        status = None
+        info_message = None
+        got_signal = False
+        while True:
+            Logger().info(u"Begin check_target ticket = %s..." % ticket)
+            previous_status = status
+            previous_info_message = info_message
+            status, infos = self.engine.check_target(selected_target, self.pid, ticket)
+            ticket = None
+            info_message = infos.get('message')
+            refresh_page = (got_signal
+                            or (status != previous_status)
+                            or (previous_info_message != info_message))
+            Logger().info(u"End check_target ... refresh : %s" % refresh_page)
+            if refresh_page:
+                self.send_data({u'forcemodule' : True})
+            if status == APPROVAL_ACCEPTED:
+                return True, ""
+            if refresh_page:
+                self.interactive_display_waitinfo(status, infos)
+            got_signal = False
+            r = []
+            try:
+                Logger().info(u"Start Select ...")
+                r, w, x = select([self.proxy_conx], [], [], 10)
+            except Exception as e:
+                if DEBUG:
+                    Logger().info("exception: '%s'" % e)
+                    import traceback
+                    Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                    if e[0] != 4:
+                        raise
+                Logger().info("Got Signal %s" % e)
+                got_signal = True
+            if self.proxy_conx in r:
+                _status, _error = self.receive_data();
+                if self.shared.get(u'waitinforeturn') == "backselector":
+                    # received back to selector
+                    self.send_data({u'module' : u'selector', u'target_login': '',
+                                    u'target_device' : ''})
+                    return None, ""
+                if self.shared.get(u'waitinforeturn') == "exit":
+                    # received exit
+                    self.send_data({u'module' : u'close'})
+                    False, ""
+                if self.shared.get(u'waitinforeturn') == "confirm":
+                    # should parse the ticket info
+                    desc = self.shared.get(u'comment')
+                    ticketno = self.shared.get(u'ticket')
+                    duration = self.parse_duration(self.shared.get(u'duration'))
+                    ticket = { u"description": desc if desc else None,
+                               u"ticket": ticketno if ticketno else None,
+                               u"duration": duration}
+        return False, ""
+
+    def parse_duration(self, duration):
+        if duration:
+            try:
+                import re
+                mpat = re.compile("(\d+)m")
+                hpat = re.compile("(\d+)h")
+                hres = hpat.search(duration)
+                mres = mpat.search(duration)
+                duration = 0
+                if mres:
+                    duration += 60*int(mres.group(1))
+                if hres:
+                    duration += 60*60*int(hres.group(1))
+                if duration == 0:
+                    duration = None
+            except Exception, e:
+                duration = None
+        return duration
+
+    def interactive_display_waitinfo(self, status, infos):
+        tosend = { u'module' : u'waitinfo',
+                   u'message' : cut_message(infos.get('message')),
+                   u'display_message' : MAGICASK,
+                   u'waitinforeturn' : MAGICASK
+                   }
+        ticketfields = infos.get("ticket_fields")
+        flag = 0
+        if ticketfields:
+            if ticketfields.get("description") == APPREQ_REQUIRED:
+                flag += 1
+            if ticketfields.get("ticket") == APPREQ_REQUIRED:
+                flag += 2
+            if ticketfields.get("duration") == APPREQ_REQUIRED:
+                flag += 4
+        if status == APPROVAL_NONE:
+            tosend["showform"] = True
+            tosend["formflag"] = flag
+        else:
+            tosend["showform"] = False
+        self.send_data(tosend)
+
     def start(self):
         _status, tries = None, 5
         while _status is None and tries > 0:
+            self.reset_session_var()
 
             ##################
             ### AUTHENTIFY ###
             ##################
+            # [ LOGIN ]
             _status, _error = self.authentify()
 
             if _status is None and self.engine.challenge:
@@ -780,9 +964,24 @@ class Sesman():
                 _status, _error = self.check_password_expiration_date()
 
                 # Get services for identified user
-                _status, _error = self.get_service()
-                if not _status:
-                    self.engine.reset_proxy_rights()
+                _status = None
+                while _status is None:
+                    # [ SELECTOR ]
+                    _status, _error = self.get_service()
+                    Logger().info("get service end :%s" % _status)
+                    if not _status:
+                        # logout or error in selector
+                        self.engine.reset_proxy_rights()
+                        break
+                    selected_target, _status, _error = self.select_target()
+                    Logger().info("select_target end :%s" % _status)
+                    if not _status:
+                        # target not available
+                        self.engine.reset_proxy_rights()
+                        break
+                    # [ WAIT INFO ]
+                    _status, _error = self.check_target(selected_target)
+                    Logger().info("check_target end :%s" % _status)
 
         if tries <= 0:
             Logger().info(u"Too many login failures")
@@ -793,36 +992,11 @@ class Sesman():
         if _status:
             Logger().info(u"Asking service %s@%s" % (self.shared.get(u'target_login'), self.shared.get(u'target_device')))
 
-        # Fetch Auth on given target account
-        if _status:
-            ###################
-            ### FIND_TARGET ###
-            ###################
-
-            # The purpose of the snippet below is electing the first right that match
-            # the login AND device AND service that have been passed in the connection
-            # string.
-            # If service is blank take the first right that match login AND device
-            # (may happen with a command line or a mstsc '.rdp' file connections ;
-            # never happens if the selector is used).
-            # NB : service names are supposed to be in alphabetical ascending order.
-            selected_target = None
-            target_device = self.shared.get(u'target_device')
-            target_login = self.shared.get(u'target_login')
-            target_service = self.target_service_name if self.target_service_name != u'INTERNAL' else u'RDP'
-
-            # Logger().info("selected target ==> %s %s %s" % (target_login, target_device, target_service))
-            selected_target = self.engine.get_selected_target(target_login,
-                                                              target_device,
-                                                              target_service)
-            if not selected_target:
-                _target = u"%s@%s:%s" % ( target_login, target_device, target_service )
-                _error_log = u"Targets %s not found in user rights" % _target
-                _status, _error = False, TR(u"Target %s not found in user rights") % _target
-                Logger().info("%s" % _error)
-
         #TODO: looks like the code below should be done in the instance of some "selected_target" class
         if _status:
+            #####################
+            ### START_SESSION ###
+            #####################
             session_started = False
             extra_info = self.engine.get_target_extra_info()
             _status, _error = self.check_video_recording(
@@ -832,8 +1006,11 @@ class Sesman():
             Logger().info(u"Fetching protocol")
 
             kv = {}
-            kv[u'proto_dest'] = selected_target.resource.service.protocol.cn
-            kv[u'target_port'] = selected_target.resource.service.port
+
+            target_login_info = self.engine.get_target_login_info(selected_target)
+            proto_info = self.engine.get_target_protocols(selected_target)
+            kv[u'proto_dest'] = proto_info.protocol
+            kv[u'target_port'] = target_login_info.service_port
             kv[u'timezone'] = str(altzone if daylight else timezone)
 
             if _status:
@@ -843,11 +1020,14 @@ class Sesman():
                 signal.signal(signal.SIGUSR1, self.kill_handler)
                 signal.signal(signal.SIGUSR2, self.check_handler)
 
-                Logger().info(u"Starting Session")
+                Logger().info(u"Starting Session, effective login='%s'" % self.effective_login)
                 # Add connection to the observer
                 kv[u'session_id'] = self.engine.start_session(selected_target, self.pid,
                                                               self.effective_login)
                 _status, _error = self.engine.write_trace(self.full_path)
+                _error = TR(_error)
+                if not _status:
+                    _error = _error % self.full_path
                 pattern_kill, pattern_notify = self.engine.get_restrictions(selected_target, "RDP")
                 if pattern_kill:
                     self.send_data({ u'module' : u'transitory', u'pattern_kill': pattern_kill })
@@ -857,26 +1037,31 @@ class Sesman():
             if _status:
                 Logger().info(u"Checking timeframe")
                 self.infinite_connection = False
-                if (selected_target.deconnection_time == u"-"
-                   or selected_target.deconnection_time[0:4] >= u"2034"
-                   ):
-                    selected_target.deconnection_time = u"2034-12-31 23:59:59"
+                deconnection_time = self.engine.get_deconnection_time(selected_target)
+                if not deconnection_time:
+                    Logger().error("No timeframe available, Timeframe has not been checked !")
+                    _status = False
+                if (deconnection_time == u"-"
+                    or deconnection_time[0:4] >= u"2034"):
+                    deconnection_time = u"2034-12-31 23:59:59"
                     self.infinite_connection = True
 
                 now = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
-                if (selected_target.deconnection_time == u'-'
-                or now < selected_target.deconnection_time):
+                if (deconnection_time == u'-'
+                    or now < deconnection_time):
                     # deconnection time to epoch
-                    tt = datetime.strptime(selected_target.deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
+                    tt = datetime.strptime(deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
                     kv[u'timeclose'] = int(mktime(tt))
                     if not self.infinite_connection:
                         _status, _error = self.interactive_display_message(
-                                {u'message': TR(u'session_closed_at %s') % selected_target.deconnection_time}
+                                {u'message': TR(u'session_closed_at %s') % deconnection_time}
                                 )
 
             module = kv.get(u'proto_dest')
             if not module in [ u'RDP', u'VNC', u'INTERNAL' ]:
                 module = u'RDP'
+            if self.internal_target:
+                module = u'INTERNAL'
             kv[u'module'] = module
             proto = u'RDP' if  kv.get(u'proto_dest') != u'VNC' else u'VNC'
             kv[u'device_redirection'] = SESMANCONF[proto][u'device_redirection']
@@ -890,74 +1075,84 @@ class Sesman():
             try_next = False
 
             for physical_target in self.engine.get_effective_target(selected_target):
+                physical_info = self.engine.get_physical_target_info(physical_target)
                 if not _status:
                     physical_target = None
                     break
 
                 kv[u'disable_tsk_switch_shortcuts'] = u'no'
-                if selected_target.resource.application:
-                    self.cn = selected_target.resource.application.cn
+                application = self.engine.get_application(selected_target)
+                if application:
                     app_params = self.engine.get_app_params(selected_target, physical_target)
                     if not app_params:
                         continue
                     kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))
                     kv[u'shell_working_directory'] = app_params.workingdir
-                    kv[u'target_application'] = selected_target.service_login
+
+                    kv[u'target_application'] = "%s@%s" % \
+                        (target_login_info.account_login,
+                         target_login_info.target_name)
+                    # kv[u'target_application'] = selected_target.service_login
                     kv[u'disable_tsk_switch_shortcuts'] = u'yes'
-                else:
-                    self.cn = selected_target.resource.device.cn
+                self.cn = target_login_info.target_name
 
-                if self.shared.get(u'real_target_device'):
-                    kv[u'target_device'] = self.shared.get(u'real_target_device')
+                if self.target_context:
+                    kv[u'target_host'] = self.target_context.host
+                    kv[u'target_device'] = self.target_context.showname()
                 else:
-                    kv[u'target_device'] = physical_target.resource.device.host
-                    kv[u'target_port'] = physical_target.resource.service.port
+                    kv[u'target_host'] = physical_info.device_host
+                    kv[u'target_port'] = physical_info.service_port
 
-                if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() != u'true':
-                    kv[u'target_login'] = physical_target.account.login
+                if not self.passthrough_mode:
+                    kv[u'target_login'] = physical_info.account_login
 
                 release_reason = u''
 
                 try:
-                    Logger().info("auth_mode_passthrough=%s" % SESMANCONF[u'sesman'][u'auth_mode_passthrough'])
+                    Logger().info("auth_mode_passthrough=%s" % self.passthrough_mode)
 
-                    if SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower() == u'true':
+                    if self.passthrough_mode:
+                        kv[u'target_login'] = self.passthrough_target_login
                         if self.shared.get(u'password') == MAGICASK:
-                            password_of_target = u''
+                            target_password = u''
                         else:
-                            password_of_target = self.shared.get(u'password')
-                        #Logger().info("auth_mode_passthrough target_password=%s" % password_of_target)
+                            target_password = self.shared.get(u'password')
+                        #Logger().info("auth_mode_passthrough target_password=%s" % target_password)
                         kv[u'password'] = u'password'
                     else:
-                        password_of_target = self.engine.get_target_password(physical_target)
+                        target_password = self.engine.get_target_password(physical_target)
 
-                    kv[u'target_password'] = password_of_target
-                    if not password_of_target:
+                    kv[u'target_password'] = target_password
+                    if not target_password:
                         kv[u'target_password'] = u''
                         Logger().info(u"auto logon is disabled")
-                        _status, _error = self.interactive_password({})
+                        interactive_data = {}
+                        if kv.get(u'target_login'):
+                            interactive_data[u'target_login'] = kv.get(u'target_login')
+                        _status, _error = self.interactive_password(interactive_data)
                         if _status:
                             kv[u'target_password'] = self.shared.get(u'target_password')
+
 
                     if not _status:
                         break
 
-                    if self.shared.get(u'real_target_device'):
-                        self._physical_target_device = self.shared.get(u'real_target_device')
+                    if self.target_context:
+                        self._physical_target_device = self.target_context.host
                     else:
-                        self._physical_target_device = physical_target.resource.device.host
+                        self._physical_target_device = physical_info.device_host
 
                     Logger().info(u"Send critic notification (every attempt to connect to some physical node)")
-                    if selected_target.authorization.isCritical:
+                    if extra_info.is_critical:
+                        Logger().info("CRITICAL CONNECTION")
                         import socket
                         self.engine.NotifyConnectionToCriticalEquipment(
-                            (u'APP' if selected_target.resource.application
-                                 else selected_target.resource.service.protocol.cn),
+                            (u'APP' if application else proto_info.protocol),
                             self.shared.get(u'login'),
                             socket.getfqdn(self.shared.get(u'ip_client')),
                             self.shared.get(u'ip_client'),
                             self.shared.get(u'target_login'),
-                            self.shared.get(u'target_device'),
+                            self.shared.get(u'target_host'),
                             self._physical_target_device,
                             ctime(),
                             None
@@ -979,8 +1174,7 @@ class Sesman():
                              , u'target_login': u""
                              , u'target_password': u""
                              , u'target_device': u""
-                             # , u'authenticated': u'False'
-                             # , u'selector': u"undefined"
+                             , u'target_host': u""
                              , u'rejected': _error
                              }
 
@@ -998,6 +1192,7 @@ class Sesman():
                         while True:
                             r = []
                             Logger().info(u"Waiting on proxy")
+                            got_signal = False
                             try:
                                 r, w, x = select([self.proxy_conx], [], [], 60)
                             except Exception as e:
@@ -1008,6 +1203,7 @@ class Sesman():
                                 if e[0] != 4:
                                     raise
                                 Logger().info("Got Signal %s" % e)
+                                got_signal = True
                             if self.check_session_parameters:
                                 self.update_session_parameters()
                                 self.check_session_parameters = False
@@ -1048,29 +1244,25 @@ class Sesman():
                                 if self.shared.get(u'auth_channel_target'):
                                     Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
 
-                                    _message = (u"SET JOB\x01"
-                                                u"To:%s\x01"
-                                                u"\x01"
-                                                u"Job:simple_webform_filling\x01"
-                                                u"Application:C:\\Program Files\\Internet Explorer\\iexplore.exe\x01"
-                                                u"Directory:%%HOMEDRIVE%%%%HOMEPATH%%\x01"
-                                                u"WebsiteURL:10.10.47.32\x01"
-                                                u"WebformURL:https://10.10.47.32/accounts/login/\x01"
-                                                u"WebformName:login-form\x01"
-                                                u"Input:user_name:admin\x01"
-                                                u"Input:passwd:admin") % self.shared.get(u'auth_channel_target')
+                                    if self.shared.get(u'auth_channel_target') == u'GetWabSessionParameters':
+                                        account_login = selected_target.account.login
+                                        application_password = self.engine.get_target_password(selected_target)
 
-                                    self.send_data({u'auth_channel_answer': _message})
+                                        _message = { 'user' : account_login, 'password' : application_password }
 
-                                    Logger().info(u"Sending of auth channel answer ok")
+                                        #Logger().info(u"GetWabSessionParameters (response):" % json.dumps(_message))
+                                        self.send_data({u'auth_channel_answer': json.dumps(_message)})
 
-                                    self.shared[u'auth_channel_target'] = u''
+                                        Logger().info(u"Sending of auth channel answer ok (GetWabSessionParameters)")
+
+                                self.shared[u'auth_channel_target'] = u''
                             # r can be empty
-                            # else: # (if self.proxy_conx in r)
-                            #     if not self.internal_target:
-                            #         Logger().error(u'break connection')
-                            #         release_reason = u'Break connection'
-                            #         break
+                            else: # (if self.proxy_conx in r)
+                                if not self.internal_target and not got_signal:
+                                    Logger().info(u'Missing Keepalive')
+                                    Logger().error(u'break connection')
+                                    release_reason = u'Break connection'
+                                    break
                         Logger().debug(u"End Of Keep Alive")
 
 
@@ -1092,14 +1284,7 @@ class Sesman():
                         break;
                 finally:
                     if not (physical_target is None):
-                        if (physical_target == selected_target):
-                            #no application case
-                            Logger().info("Calling release_target_password")
-                            self.engine.release_target_password(physical_target, release_reason)
-                        else:
-                            #application case
-                            #release application password
-                            self.engine.release_target_password(physical_target, release_reason, selected_target)
+                        self.engine.release_target_password(physical_target, release_reason, selected_target)
 
             Logger().info(u"Stop session ...")
 
@@ -1158,7 +1343,7 @@ class Sesman():
             string = pattern[1]
 #            Logger().info(u"regexp=\"%s\" string=\"%s\" user_login=\"%s\" user=\"%s\" host=\"%s\"" %
 #                (regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device')))
-            self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn)
+            self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn, self.target_service_name)
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))

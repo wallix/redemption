@@ -70,8 +70,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
     int  focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;
     int  ytext       = 1;
-    WidgetFlatButton wbutton(drawable, 10, 20, wgroupbox, notifier, "Button 1", auto_resize, group_id,
-        fg_color, bg_color, focuscolor, xtext, ytext);
+    WidgetFlatButton wbutton(drawable, 10, 20, wgroupbox, notifier, "Button 1",
+                             auto_resize, group_id, fg_color, bg_color, focuscolor,
+                             xtext, ytext);
 
     wgroupbox.add_widget(&wbutton);
 
@@ -82,7 +83,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
                                        , wgroupbox.cy()
                                        ));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "group_box_0.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_0.png");
 
     char message[1024];
     if (!check_sig( drawable.gd.impl(), message
@@ -102,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
                                        , wgroupbox.cy()
                                        ));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "group_box_1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_1.png");
 
     if (!check_sig( drawable.gd.impl(), message
                   , "\x2d\xb0\xd3\x13\xc9\x3e\xc1\x62\xa7\x43"

@@ -134,7 +134,7 @@ struct mod_rdp : public mod_api {
     char auth_channel[8];
     int  auth_channel_flags;
     int  auth_channel_chanid;
-    int  auth_channel_state;    // 0 means unused, 1 means session running
+    //int  auth_channel_state;    // 0 means unused, 1 means session running
 
     auth_api * acl;
 
@@ -202,7 +202,7 @@ struct mod_rdp : public mod_api {
         , front(front)
         , use_rdp5(1)
         , keylayout(info.keylayout)
-        , orders( mod_rdp_params.target_device, mod_rdp_params.enable_persistent_disk_bitmap_cache
+        , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose)
         , share_id(0)
         , userid(0)
@@ -222,10 +222,10 @@ struct mod_rdp : public mod_api {
         , cache_verbose(mod_rdp_params.cache_verbose)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
-        , auth_channel_state(0) // 0 means unused
+        //, auth_channel_state(0) // 0 means unused
         , acl(mod_rdp_params.acl)
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
-              , mod_rdp_params.enable_nla, mod_rdp_params.target_device
+              , mod_rdp_params.enable_nla, mod_rdp_params.target_host
               , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
         , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
         , enable_clipboard(mod_rdp_params.enable_clipboard)
@@ -652,23 +652,17 @@ struct mod_rdp : public mod_api {
 
     // Method used by session to transmit sesman answer for auth_channel
     virtual void send_auth_channel_data(const char * string_data) {
-        if (strncmp("ERROR", string_data, 5)) {
-            this->auth_channel_state = 1; // session started
-        }
+        //if (strncmp("Error", string_data, 5)) {
+        //    this->auth_channel_state = 1; // session started
+        //}
 
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
         BStream stream_data(65536);
-        uint32_t data_size = std::min(::strlen(string_data), stream_data.get_capacity() - sizeof(uint32_t));
+        uint32_t data_size = std::min(::strlen(string_data) + 1, stream_data.get_capacity());
 
-        stream_data.out_uint32_le(data_size);
-        uint8_t * data_curr = stream_data.p;
         stream_data.out_copy_bytes(string_data, data_size);
         stream_data.mark_end();
-
-        for (uint8_t * data_end = data_curr + data_size; data_curr != data_end; data_curr++)
-            if (*data_curr == 1)
-                *data_curr = '\n';
 
         virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
                             , this->userid, this->auth_channel_chanid
@@ -1716,7 +1710,7 @@ struct mod_rdp : public mod_api {
                             LOG(LOG_INFO, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
                             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                         }
-                        
+
 
                         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
                         SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
@@ -1744,31 +1738,27 @@ struct mod_rdp : public mod_api {
 
                             // If channel name is our virtual channel, then don't send data to front
                             if (this->auth_channel[0] /*&& this->acl */&& !strcmp(mod_channel.name, this->auth_channel)){
-                                uint32_t ulDataLength = sec.payload.in_uint32_le();
-                                LOG(LOG_INFO, "Auth channel data length=%d", ulDataLength);
-                                redemption::string auth_channel_message((const char *)sec.payload.p, ulDataLength);
+                                redemption::string auth_channel_message((const char *)sec.payload.p, sec.payload.in_remain());
                                 LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message.c_str());
-                                if (this->auth_channel_state == 0) {
+                                //if (this->auth_channel_state == 0) {
                                     this->auth_channel_flags = flags;
                                     this->auth_channel_chanid = mod_channel.chanid;
-                                    if (auth_channel_message.find("GET JOB") != 0) {
-                                        LOG(LOG_ERR, "Auth message \"GET JOB\" is expected, got=\"%s\"", auth_channel_message.c_str());
-                                        this->send_auth_channel_data("ERROR\nTo:wablauncher\n\n");
-                                    }
-                                    else {
-                                        this->acl->set_auth_channel_target("wablauncher");
-                                    }
-                                }
-                                else if (this->auth_channel_state == 1) {
-                                    if (auth_channel_message.find("SET JOB RESULT") != 0) {
-                                        LOG(LOG_ERR, "Auth message \"SET JOB RESULT\" is expected, got=\"%s\"", auth_channel_message.c_str());
-                                        this->send_auth_channel_data("ERROR\nTo:wablauncher\n\n");
-                                    }
-                                    this->auth_channel_state = 0;
                                     if (this->acl) {
-                                        this->acl->set_auth_channel_result("OK");
+                                        this->acl->set_auth_channel_target(auth_channel_message.c_str());
                                     }
-                                }
+                                //}
+                                //else if (this->auth_channel_state == 1) {
+                                //    if (auth_channel_message.find("SET JOB RESULT") == 0) {
+                                //        if (this->acl) {
+                                //            this->acl->set_auth_channel_result("OK");
+                                //        }
+                                //    }
+                                //    else {
+                                //        LOG(LOG_ERR, "Unknown auth message: \"%s\"", auth_channel_message.c_str());
+                                //        this->send_auth_channel_data("ERROR\n\n");
+                                //    }
+                                //    this->auth_channel_state = 0;
+                                //}
                             }
                             else if (!this->enable_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
                                 // Clipboard is unavailable and is a Clipboard PDU
