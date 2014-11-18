@@ -32,8 +32,8 @@
 #include <stdint.h>
 #include <stdexcept>
 
-#include <fileutils.hpp>
-#include <string.hpp>
+#include "fileutils.hpp"
+#include "string.hpp"
 
 TODO("move SHARE_PATH to configuration (still used in front, checkfiles, session, transparent, some internal mods)")
 #if !defined(SHARE_PATH)
@@ -117,39 +117,6 @@ TODO("move these into configuration")
 #define DH_PEM DH2048_PEM
 
 using namespace std;
-
-static inline bool check_name(const char * str)
-{
-    return ((strlen(str) > 0) && (strlen(str) < 250));
-}
-
-static inline bool check_ask(const char * str)
-{
-    return (0 == strcmp(str, "ask"));
-}
-
-static inline void ask_string(const char * str, char buffer[], bool & flag)
-{
-    flag = check_ask(str);
-    if (!flag) {
-        strncpy(buffer, str, strlen(str));
-        buffer[strlen(str)] = 0;
-    }
-    else {
-        buffer[0] = 0;
-    }
-}
-
-static inline const char * get_printable_password(const char * password, uint32_t printing_mode) {
-    switch (printing_mode) {
-        case 1:
-            return ((*password) ? "<hidden>" : "<null>");
-        case 2:
-            return password;
-        default:
-            return "<hidden>";
-    }
-}
 
 struct IniAccounts {
     char username[255]; // should use string
@@ -269,6 +236,8 @@ typedef enum
         AUTHID_FORMFLAG,
 
         AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
+        AUTHID_ALLOW_CHANNELS,
+        AUTHID_DENY_CHANNELS,
 
         AUTHID_DISABLE_KEYBOARD_LOG,
 
@@ -378,6 +347,9 @@ typedef enum
 #define STRAUTHID_SHOWFORM                 "showform"
 #define STRAUTHID_FORMFLAG                 "formflag"
 #define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS        "disable_tsk_switch_shortcuts"
+
+#define STRAUTHID_ALLOW_CHANNELS           "allow_channels"
+#define STRAUTHID_DENY_CHANNELS            "deny_channels"
 
 #define STRAUTHID_DISABLE_KEYBOARD_LOG     "disable_keyboard_log"
 #define STRAUTHID_RT_DISPLAY               "rt_display"
@@ -491,13 +463,16 @@ static const std::string authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
 
+    STRAUTHID_ALLOW_CHANNELS,
+    STRAUTHID_DENY_CHANNELS,
+
     STRAUTHID_DISABLE_KEYBOARD_LOG,
     STRAUTHID_RT_DISPLAY
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
 
-    std::string str = std::string(strauthid);
+    std::string str(strauthid);
     authid_t res = AUTHID_UNKNOWN;
     for (int i = 0; i < MAX_AUTHID - 1 ; i++) {
         if (0 == authstr[i].compare(str)) {
@@ -665,7 +640,6 @@ struct Inifile : public FieldObserver {
         bool tls_support         = true;
         bool bogus_neg_request   = false; // needed to connect with jrdp, based on bogus X224 layer code
 
-        BoolField clipboard;                // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;       // AUTHID_OPT_DEVICEREDIRECTION //
 
         BoolField disable_tsk_switch_shortcuts; // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS //
@@ -679,6 +653,14 @@ struct Inifile : public FieldObserver {
         bool persist_bitmap_cache_on_disk   = false;
 
         bool bitmap_compression = true;
+
+        /**
+         * channel1,channel2,etc
+         * @{
+         */
+        redemption::string allow_channels;
+        redemption::string deny_channels;
+        // @}
     } client;
 
     struct {
@@ -698,10 +680,20 @@ struct Inifile : public FieldObserver {
         bool persistent_disk_bitmap_cache   = false;
         bool cache_waiting_list             = true;
         bool persist_bitmap_cache_on_disk   = false;
+
+        /**
+         * channel1,channel2,etc
+         * @{
+         */
+        StringField allow_channels;
+        StringField deny_channels;
+        // @}
     } mod_rdp;
 
     struct
     {
+        BoolField clipboard;                // AUTHID_OPT_CLIPBOARD //
+
         redemption::string encodings;
 
         bool allow_authentification_retries = false;
@@ -1002,14 +994,26 @@ public:
         this->client.keyboard_layout.set(0);
         this->to_send_set.insert(AUTHID_KEYBOARD_LAYOUT);
 
-        this->client.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
         this->client.device_redirection.attach_ini(this,AUTHID_OPT_DEVICEREDIRECTION);
-        this->client.clipboard.set(true);
         this->client.device_redirection.set(true);
 
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
+
+        this->client.allow_channels.copy_c_str("*");
+        this->client.deny_channels.empty();
         // End Section "client"
+
+        // Begin section "mod_rdp"
+        this->mod_rdp.allow_channels.attach_ini(this, AUTHID_ALLOW_CHANNELS);
+        this->mod_rdp.allow_channels.set_from_cstr("*");
+        this->mod_rdp.deny_channels.attach_ini(this, AUTHID_DENY_CHANNELS);
+        this->mod_rdp.deny_channels.set_from_cstr("");
+        // End Section "mod_rdp"
+
+        // Begin section "mod_vnc"
+        this->mod_vnc.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
+        // End Section "mod_vnc"
 
         // Begin section video
         this->video.disable_keyboard_log.attach_ini(this, AUTHID_DISABLE_KEYBOARD_LOG);
@@ -1201,6 +1205,7 @@ public:
         this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
     }
 
+public:
     virtual void set_value(const char * context, const char * key, const char * value)
     {
         if (0 == strcmp(context, "globals")) {
@@ -1315,9 +1320,6 @@ public:
             else if (0 == strcmp(key, "bogus_neg_request")) {
                 this->client.bogus_neg_request = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "clipboard")) {
-                this->client.clipboard.set_from_cstr(value);
-            }
             else if (0 == strcmp(key, "device_redirection")) {
                 this->client.device_redirection.set_from_cstr(value);
             }
@@ -1351,6 +1353,12 @@ public:
             }
             else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
                 this->client.persist_bitmap_cache_on_disk = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "allow_channels")) {
+                this->client.allow_channels.copy_c_str(value);
+            }
+            else if (0 == strcmp(key, "deny_channels")) {
+                this->client.deny_channels.copy_c_str(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -1391,12 +1399,21 @@ public:
             else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
                 this->mod_rdp.persist_bitmap_cache_on_disk = bool_from_cstr(value);
             }
+            else if (0 == strcmp(key, "allow_channels")) {
+                this->mod_rdp.allow_channels.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "deny_channels")) {
+                this->mod_rdp.deny_channels.set_from_cstr(value);
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
         else if (0 == strcmp(context, "mod_vnc")) {
-            if (0 == strcmp(key, "encodings")) {
+            if (0 == strcmp(key, "clipboard")) {
+                this->mod_vnc.clipboard.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "encodings")) {
                 this->mod_vnc.encodings.copy_c_str(value);
             }
             else if (0 == strcmp(key, "allow_authentification_retries")) {
@@ -1710,21 +1727,6 @@ private:
     }
 
 public:
-    TODO("Should only be used by Authentifier "
-         "It currently ask if the field has been modified "
-         "and set it to not modified if it is not asked ")
-    bool context_has_changed(authid_t authid) {
-        if (BaseField * field = this->get_field(authid)) {
-            const bool res = field->has_changed();
-            field->use();
-            return res;
-        }
-        else {
-            LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
-            return false;
-        }
-    }
-
     /******************
      * Set_from_acl sets a value to corresponding field but does not mark it as changed
      */
@@ -1763,16 +1765,6 @@ public:
         }
         else {
             LOG(LOG_WARNING, "Inifile::ask_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
-        }
-    }
-
-    void context_set_value_by_string(const char * strauthid, const char * value) {
-        authid_t authid = authid_from_string(strauthid);
-        if (authid != AUTHID_UNKNOWN) {
-            this->context_set_value(authid, value);
-        }
-        else {
-            LOG(LOG_WARNING, "Inifile::context_set_value(strid): unknown strauthid=\"%s\"", strauthid);
         }
     }
 
@@ -1830,16 +1822,6 @@ public:
         return pszReturn;
     }
 
-    void context_ask_by_string(const char *strauthid) {
-        authid_t authid = authid_from_string(strauthid);
-        if (authid != AUTHID_UNKNOWN) {
-            context_ask(authid);
-        }
-        else {
-            LOG(LOG_WARNING, "Inifile::context_ask(strid): unknown strauthid=\"%s\"", strauthid);
-        }
-    }
-
     void context_ask(authid_t authid) {
         if (BaseField * field = this->get_field(authid)) {
             field->ask();
@@ -1847,17 +1829,6 @@ public:
         else {
             LOG(LOG_WARNING, "Inifile::context_ask(id): unknown authid=%d", authid);
         }
-    }
-
-    bool context_is_asked_by_string(const char *strauthid) {
-        authid_t authid = authid_from_string(strauthid);
-        if (authid != AUTHID_UNKNOWN) {
-            return context_is_asked(authid);
-        }
-
-        LOG(LOG_WARNING, "Inifile::context_is_asked(strid): unknown strauthid=\"%s\"", strauthid);
-
-        return false;
     }
 
     bool context_is_asked(authid_t authid) {
@@ -2152,7 +2123,6 @@ public:
             WRITE_VAR(client, tls_support);
             WRITE_VAR(client, bogus_neg_request);
 
-            WRITE_VAR(client, clipboard);
             WRITE_VAR(client, device_redirection);
 
             WRITE_VAR(client, disable_tsk_switch_shortcuts);
@@ -2197,6 +2167,7 @@ public:
 
         os << "[mod_vnc]\n";
         {
+            WRITE_VAR(mod_vnc, clipboard);
             WRITE_VAR(mod_vnc, encodings);
             WRITE_VAR(mod_vnc, allow_authentification_retries);
         }

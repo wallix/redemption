@@ -22,7 +22,8 @@
 
 #include "RDP/RDPDrawable.hpp"
 #include "front_api.hpp"
-#include "openssl/ssl.h"
+//#include "openssl/ssl.h"
+#include <memory>
 
 class FakeFront : public FrontAPI {
 public:
@@ -39,6 +40,7 @@ public:
     bool nomouse;
 
     RDPDrawable gd;
+    std::unique_ptr<Font> font;
 
     virtual void flush() {}
 
@@ -163,9 +165,27 @@ public:
     virtual void server_set_pointer(const Pointer & cursor){}
 
     virtual void server_draw_text( int16_t x, int16_t y, const char * text, uint32_t fgcolor
-                                 , uint32_t bgcolor, const Rect & clip) {}
+                                 , uint32_t bgcolor, const Rect & clip) {
+        if (!this->font) {
+            return ;
+        }
+        this->gd.server_draw_text(
+            x, y, text,
+            color_decode_opaquerect(fgcolor, this->mod_bpp, this->mod_palette),
+            color_decode_opaquerect(bgcolor, this->mod_bpp, this->mod_palette),
+            clip, *this->font
+        );
+    }
 
-    virtual void text_metrics(const char * text, int & width, int & height) { width = 0; height = 0; }
+    virtual void text_metrics(const char* text, int& width, int& height)
+    {
+        if (!this->font) {
+            height = 0;
+            width = 0;
+            return ;
+        }
+        this->gd.text_metrics(text, width, height, *this->font);
+    }
 
     virtual int server_resize(int width, int height, int bpp) {
         this->mod_bpp = bpp;
@@ -188,15 +208,26 @@ public:
         ::fclose(f);
     }
 
-    FakeFront(ClientInfo & info, uint32_t verbose)
+    void save_to_png(const char * filename)
+    {
+        std::FILE * file = fopen(filename, "w+");
+        dump_png24(file, this->gd.data(), this->gd.width(),
+                   this->gd.height(), this->gd.rowsize(), true);
+        fclose(file);
+    }
+
+    FakeFront(ClientInfo & info, uint32_t verbose, const char * font_file = 0)
             : FrontAPI(false, false)
             , verbose(verbose)
             , info(info)
+            , mod_bpp(info.bpp)
             , mouse_x(0)
             , mouse_y(0)
             , notimestamp(true)
             , nomouse(true)
-            , gd(info.width, info.height, 24) {
+            , gd(info.width, info.height, 24)
+            , font(font_file ? new Font(font_file ): nullptr)
+    {
         // -------- Start of system wide SSL_Ctx option ------------------------------
 
         // ERR_load_crypto_strings() registers the error strings for all libcrypto
@@ -208,7 +239,7 @@ public:
 
         // ERR_free_strings() frees all previously loaded error strings.
 
-        SSL_load_error_strings();
+        //SSL_load_error_strings();
 
         // SSL_library_init() registers the available SSL/TLS ciphers and digests.
         // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
@@ -223,6 +254,6 @@ public:
         // SSL_library_init(). Applications which need to use SHA2 in earlier versions
         // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
 
-        SSL_library_init();
+        //SSL_library_init();
     }
 };

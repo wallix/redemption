@@ -101,6 +101,12 @@ public:
         this->set_masked_text();
     }
 
+    virtual void insert_text(const char* text) {
+        WidgetEdit::insert_text(text);
+        this->set_masked_text();
+        this->refresh(this->rect);
+    }
+
     const char * show_text() {
         return this->masked_text.buffer;
     }

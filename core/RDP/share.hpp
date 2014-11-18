@@ -536,7 +536,7 @@ struct ShareData_Recv : private CheckShareData_Recv
         stream.in_skip_bytes(this->payload.size());
     } // END CONSTRUCTOR
 
-    ~ShareData_Recv(void){
+    ~ShareData_Recv() noexcept(false) {
         if (!this->payload.check_end()) {
             LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains=%u",
                 this->len, this->compressedLen, payload.in_remain());

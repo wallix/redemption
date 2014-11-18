@@ -31,6 +31,7 @@
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "colors.hpp"
 
 #include "test_orders.hpp"
 

@@ -42,10 +42,10 @@ namespace re {
     inline std::ostream& operator<<(std::ostream& os, utf8_char utf8_c)
     {
         char c[] = {
-            char((utf8_c.uc & 0XFF000000) >> 24),
-            char((utf8_c.uc & 0X00FF0000) >> 16),
-            char((utf8_c.uc & 0X0000FF00) >> 8),
-            char((utf8_c.uc & 0X000000FF)),
+            char((utf8_c.uc & 0xFF000000) >> 24),
+            char((utf8_c.uc & 0x00FF0000) >> 16),
+            char((utf8_c.uc & 0x0000FF00) >> 8),
+            char((utf8_c.uc & 0x000000FF)),
         };
         if (c[0]) {
             return os.write(c, 4);
@@ -65,10 +65,10 @@ namespace re {
     inline std::string& operator+=(std::string& str, utf8_char utf8_c)
     {
         char c[] = {
-            char((utf8_c.uc & 0XFF000000) >> 24),
-            char((utf8_c.uc & 0X00FF0000) >> 16),
-            char((utf8_c.uc & 0X0000FF00) >> 8),
-            char((utf8_c.uc & 0X000000FF)),
+            char((utf8_c.uc & 0xFF000000) >> 24),
+            char((utf8_c.uc & 0x00FF0000) >> 16),
+            char((utf8_c.uc & 0x0000FF00) >> 8),
+            char((utf8_c.uc & 0x000000FF)),
         };
         if (c[0]) {
             str += c[0];

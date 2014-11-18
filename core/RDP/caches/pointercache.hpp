@@ -35,28 +35,24 @@ enum {
 
 /* difference caches */
 class PointerCache {
-    int pointer_cache_entries;
+    int pointer_cache_entries = 0;
 
     /* pointer */
-    int pointer_stamp;
+    int pointer_stamp = 0;
 
 public:
     Pointer Pointers[32];
 
 private:
-    int stamps[32];
+    int stamps[32] = {0};
 
 public:
-    PointerCache() {
-        this->pointer_cache_entries = 0;
-        this->pointer_stamp = 0;
-    }
-
-    ~PointerCache() {}
+    PointerCache() = default;
+    ~PointerCache() = default;
 
     TODO(" much duplicated code with constructor and destructor  create some intermediate functions or object")
-    int reset(struct ClientInfo & client_info) {
-        memset(this, 0, sizeof(struct PointerCache));
+    int reset(ClientInfo & client_info) {
+        memset(this, 0, sizeof(PointerCache));
         this->pointer_cache_entries = client_info.pointer_cache_entries;
         return 0;
     }

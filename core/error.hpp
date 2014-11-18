@@ -310,7 +310,7 @@ private:
     char errstr[64];
 
 public:
-    Error(int id, int errnum = 0) throw()
+    Error(int id, int errnum = 0) noexcept
     : id(id)
     , errnum(errnum)
     {
@@ -318,7 +318,7 @@ public:
 //        exit(0);
     }
 
-    const char * errmsg() {
+    const char * errmsg() noexcept {
         switch(this->id) {
         case NO_ERROR:
             return "No error";

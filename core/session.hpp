@@ -42,7 +42,6 @@
 #include "front.hpp"
 #include "ssl_calls.hpp"
 #include "rect.hpp"
-#include "client_info.hpp"
 #include "netutils.hpp"
 
 #include "config.hpp"

@@ -23,6 +23,7 @@
 
 #include "transport.hpp"
 #include "transparentchunk.hpp"
+#include "difftimeval.hpp"
 
 class TransparentPlayer {
 private:

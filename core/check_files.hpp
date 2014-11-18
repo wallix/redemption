@@ -24,13 +24,9 @@
 #ifndef _REDEMPTION_CORE_CHECK_FILES_HPP_
 #define _REDEMPTION_CORE_CHECK_FILES_HPP_
 
-#include <iostream>
-#include <string>
-#include <string.h>
+#include <cstring>
+#include <cstdio>
 #include <sys/types.h>
-#include <dirent.h>
-#include <errno.h>
-
 #include "log.hpp"
 
 TODO("merge that with find and unlink")

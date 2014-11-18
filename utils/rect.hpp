@@ -309,15 +309,15 @@ struct LineEquation {
     {
     }
 
-    int compute_x(int y) {
+    int compute_x(int y) const {
         return (this->dX*y - this->c) / this->dY;
     }
 
-    int compute_y(int x) {
+    int compute_y(int x) const {
         return (this->dY*x + this->c) / this->dX;
     }
 
-    bool compute_intersection(const Rect & rect, int region, int & x, int & y) {
+    bool compute_intersection(const Rect & rect, int region, int & x, int & y) const {
         int interX = 0;
         int interY = 0;
         bool found = false;
@@ -395,14 +395,14 @@ class DeltaRect {
     int dheight;
     int dwidth;
 
-    DeltaRect(const Rect & r1, const Rect & r2) {
-        this->dtop = r1.y - r2.y;
-        this->dleft = r1.x - r2.x;
-        this->dheight = r1.cy - r2.cy;
-        this->dwidth = r1.cx - r2.cx;
-    }
+    DeltaRect(const Rect & r1, const Rect & r2)
+    : dleft(r1.x - r2.x)
+    , dtop(r1.y - r2.y)
+    , dheight(r1.cy - r2.cy)
+    , dwidth(r1.cx - r2.cx)
+    {}
 
-    bool fully_relative(){
+    bool fully_relative() const {
         return (abs(this->dleft) < 128)
             && (abs(this->dtop) < 128)
             && (abs(this->dwidth) < 128)

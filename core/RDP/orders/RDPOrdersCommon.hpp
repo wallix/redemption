@@ -25,9 +25,6 @@
 
 #include "stream.hpp"
 #include "rect.hpp"
-#include "bitfu.hpp"
-#include "bitmap.hpp"
-#include "client_info.hpp"
 
 // MS-RDPEGDI 3.3.5.1.1.1       Construction of a Primary Drawing Order
 // ====================================================================

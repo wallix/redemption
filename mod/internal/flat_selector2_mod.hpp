@@ -25,6 +25,7 @@
 #include "config.hpp"
 #include "widget2/flat_selector2.hpp"
 #include "internal_mod.hpp"
+#include "copy_paste.hpp"
 
 class FlatSelector2Mod : public InternalMod, public NotifyApi
 {
@@ -33,6 +34,8 @@ class FlatSelector2Mod : public InternalMod, public NotifyApi
     int number_page;
 
     Inifile & ini;
+
+    CopyPaste copy_paste;
 
     struct temporary_login {
         char buffer[256];
@@ -152,19 +155,22 @@ public:
                 }
             }
         }
+        else if (this->copy_paste) {
+            copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(widget), event);
+        }
     }
 
     virtual void refresh_context(Inifile& ini)
     {
         char buffer[16];
 
-	this->current_page = ini.context.selector_current_page.get();
-	snprintf(buffer, sizeof(buffer), "%u", this->current_page);
-	this->selector.current_page.set_text(buffer);
+        this->current_page = ini.context.selector_current_page.get();
+        snprintf(buffer, sizeof(buffer), "%u", this->current_page);
+        this->selector.current_page.set_text(buffer);
 
-	this->number_page = ini.context.selector_number_of_pages.get();
-	snprintf(buffer, sizeof(buffer), "%u", this->number_page);
-	this->selector.number_page.set_text(WidgetSelectorFlat2::temporary_number_of_page(buffer).buffer);
+        this->number_page = ini.context.selector_number_of_pages.get();
+        snprintf(buffer, sizeof(buffer), "%u", this->number_page);
+        this->selector.number_page.set_text(WidgetSelectorFlat2::temporary_number_of_page(buffer).buffer);
 
 
         // uint16_t cy = this->selector.selector_lines.cy();
@@ -283,7 +289,17 @@ public:
 
     virtual void draw_event(time_t now)
     {
+        if (!this->copy_paste && event.waked_up_by_time) {
+            this->copy_paste.ready(this->front);
+        }
         this->event.reset();
+    }
+
+    virtual void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags)
+    {
+        if (this->copy_paste) {
+            this->copy_paste.send_to_mod_channel(chunk, flags);
+        }
     }
 };
 

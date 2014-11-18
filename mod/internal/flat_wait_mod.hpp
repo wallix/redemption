@@ -29,6 +29,7 @@
 // #include "widget2/flat_waitdisplay.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
+#include "copy_paste.hpp"
 
 class FlatWaitMod : public InternalMod, public NotifyApi
 {
@@ -36,6 +37,8 @@ class FlatWaitMod : public InternalMod, public NotifyApi
 
     Inifile & ini;
     Timeout timeout;
+
+    CopyPaste copy_paste;
 
 public:
     FlatWaitMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
@@ -69,7 +72,10 @@ public:
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
             case NOTIFY_TEXT_CHANGED: this->confirm(); break;
-            default: ;
+            default:
+                if (this->copy_paste) {
+                    copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
+                };
         }
     }
 
@@ -116,11 +122,21 @@ public:
             this->event.set(1000000);
             break;
         default:
+            if (!this->copy_paste && event.waked_up_by_time) {
+                this->copy_paste.ready(this->front);
+            }
             this->event.reset();
             break;
         }
     }
 
+
+    virtual void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags)
+    {
+        if (this->copy_paste) {
+            this->copy_paste.send_to_mod_channel(chunk, flags);
+        }
+    }
 };
 
 #endif

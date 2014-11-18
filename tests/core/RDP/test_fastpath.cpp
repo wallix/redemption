@@ -104,7 +104,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
             default:
                 LOG(LOG_INFO, "ERR FASTPATH");
                 throw Error(ERR_RDP_FASTPATH);
-            break;
         }
     }
 
@@ -188,7 +187,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
 
             default:
                 throw Error(ERR_RDP_FASTPATH);
-            break;
         }
     }
 

@@ -36,13 +36,9 @@ namespace re {
     public:
         const state_list_t & states;
 
-    private:
-        unsigned nb_cap;
-    public:
-        StatesValue(const state_list_t & sts, unsigned nb_cap)
+        StatesValue(const state_list_t & sts, unsigned /*nb_cap*/)
         : nums(sts.size(), 0)
         , states(sts)
-        , nb_cap(nb_cap)
         {}
 
         ~StatesValue()

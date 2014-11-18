@@ -37,22 +37,12 @@
 #define TODO(x) DO_PRAGMA(message ("TODO - " x))
 #endif
 
-// -Wno-null-dereference and clang++
+// -Wnull-dereference and clang++
 namespace aux_ {
-    class null_pointer
-    {
-        void * ptr;
-
-    public:
-        null_pointer()
-        : ptr(0)
-        {}
-
-        void * get() const
-        { return this->ptr; }
-    };
+    inline void * null_pointer()
+    { return 0; }
 }
-#define BOOM (*reinterpret_cast<int*>(aux_::null_pointer().get())=1)
+#define BOOM (*reinterpret_cast<int*>(aux_::null_pointer())=1)
 
 // REDASSERT behave like assert but instaed of calling abort it triggers a segfault
 // This is handy to get stacktrace while debugging.
@@ -75,7 +65,7 @@ namespace aux_ {
 
 typedef struct _code {
     const char *c_name;
-    int c_val;
+    //int c_val;
 } CODE;
 
 #ifdef LOGPRINT
@@ -99,15 +89,15 @@ static inline void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, const char *for
 {
     const CODE prioritynames[] =
     {
-        { "EMERG", LOG_EMERG },
-        { "ALERT", LOG_ALERT },
-        { "CRIT", LOG_CRIT },
-        { "ERR", LOG_ERR },
-        { "WARNING", LOG_WARNING },
-        { "NOTICE", LOG_NOTICE },
-        { "INFO", LOG_INFO },
-        { "DEBUG", LOG_DEBUG },
-        { NULL, -1 }
+        { "EMERG"/*, LOG_EMERG*/ },
+        { "ALERT"/*, LOG_ALERT*/ },
+        { "CRIT"/*, LOG_CRIT*/ },
+        { "ERR"/*, LOG_ERR*/ },
+        { "WARNING"/*, LOG_WARNING*/ },
+        { "NOTICE"/*, LOG_NOTICE*/ },
+        { "INFO"/*, LOG_INFO*/ },
+        { "DEBUG"/*, LOG_DEBUG*/ },
+        { NULL/*, -1*/ }
     };
     char message[8192];
     va_list vl;
@@ -121,15 +111,15 @@ static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *form
 {
     const CODE prioritynames[] =
     {
-        { "EMERG", LOG_EMERG },
-        { "ALERT", LOG_ALERT },
-        { "CRIT", LOG_CRIT },
-        { "ERR", LOG_ERR },
-        { "WARNING", LOG_WARNING },
-        { "NOTICE", LOG_NOTICE },
-        { "INFO", LOG_INFO },
-        { "DEBUG", LOG_DEBUG },
-        { NULL, -1 }
+        { "EMERG"/*, LOG_EMERG*/ },
+        { "ALERT"/*, LOG_ALERT*/ },
+        { "CRIT"/*, LOG_CRIT*/ },
+        { "ERR"/*, LOG_ERR*/ },
+        { "WARNING"/*, LOG_WARNING*/ },
+        { "NOTICE"/*, LOG_NOTICE*/ },
+        { "INFO"/*, LOG_INFO*/ },
+        { "DEBUG"/*, LOG_DEBUG*/ },
+        { NULL/*, -1*/ }
     };
     char message[8192];
     va_list vl;

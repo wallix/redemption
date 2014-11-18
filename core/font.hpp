@@ -329,7 +329,7 @@ ErrorReadingFontFile:
         return;
     }
 
-    bool glyph_defined(uint32_t charnum)
+    bool glyph_defined(uint32_t charnum) const
     {
         if ((charnum < 32)||(charnum >= NUM_GLYPHS)){
             return false;

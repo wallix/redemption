@@ -78,9 +78,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x97\x81\x51\x5c\x82\x59\xc1\x12\x08\x1a"
-                   "\xf7\xcd\x50\xe5\x84\xa3\xd5\x61\x3d\xd1"
-                   )) {
+        "\x1e\xa4\x56\xaa\x3a\xf6\x75\x64\x40\x4c\x90\x37\xda\xa2\x77\xaa\x62\x61\xc9\x8c"
+    )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -92,9 +91,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector2.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x68\xaf\xe3\x65\xa1\x8d\xdf\xf5\x40\xb1"
-                   "\x4f\x42\x98\x3e\xde\xda\x74\x5b\x8e\xba"
-                   )){
+        "\x08\x01\x32\x64\x83\xe5\x98\x83\x87\x27\xf9\x00\x3b\x5c\x2c\x20\xc7\xc0\xea\x14"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -135,9 +133,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x78\x3c\x32\x0a\x2b\x3a\x61\xe2\xda\x7c"
-                   "\x4f\x01\x95\x87\xec\x96\x98\x17\x0f\x3b"
-                   )){
+        "\x9a\x8e\xd7\xbd\x97\x51\x79\x8d\x3b\x0d\x4e\x22\x85\xfd\xff\x45\x6b\xc2\x0e\x80"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -149,9 +146,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-resize2.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x52\x57\x5d\x4c\xd8\xe5\x16\xc5\x71\x98"
-                   "\xc8\x89\xd4\xad\x94\x9f\xc9\x97\x1a\xe3"
-                   )){
+        "\x6c\x46\xd6\xf7\xc0\x80\xf1\xcf\xbb\x50\x6b\xc6\x59\xb0\x9e\xf1\xda\x3a\x65\xdc"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -179,9 +175,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xe0\x56\xfe\x91\x97\xc9\xc9\x09\xce\x5e"
-                   "\x7d\x87\x26\x63\xf6\xe9\x81\x0d\xd0\x58"
-                   )){
+        "\x89\xd2\xe5\xb7\x76\x62\xc8\x47\x92\xeb\x9e\x6f\x3a\xcb\x02\x58\x50\x7b\x79\xb5"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -211,9 +206,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x0f\x7d\x77\x78\x45\x3e\x80\xf5\xcd\x77"
-                   "\x83\x9b\xed\xc6\x7f\xb3\xe2\xf0\x28\xa4"
-                   )){
+        "\xb0\x60\x4c\x7d\xc3\xe1\x51\xe1\x63\x6a\x5e\x61\x59\x8c\xab\xec\x2f\x3c\x24\x87"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -244,8 +238,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x9d\xe3\xdc\x8b\x3e\xe0\x66\x51\x3f\x38"
-        "\x8f\x1b\xe4\x7f\x5d\xe8\x60\xb0\x8f\xe9"
+        "\x39\xd3\x5b\x20\x81\x7b\xa9\x67\x12\x79\x1d\xaf\x20\xff\xcf\xd6\xf7\xc8\xdd\x5a"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -292,9 +285,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x07\xa6\xe2\x7c\x16\xf7\x41\x44\xee\x52"
-                   "\xda\x6a\x28\x41\xbe\x35\xf8\xc7\x93\x59"
-                   )){
+        "\x99\x6c\xa7\x11\x99\x5b\xbc\x7e\xd0\x10\x29\x10\x6c\x86\xac\x34\xef\xfd\xf7\xaf"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -311,9 +303,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
 
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x62\x48\x5a\x12\x3e\xcb\x36\x76\x64\x23"
-                   "\xc2\xc0\x46\xe7\x4c\x3d\x0a\xc9\x76\x1c"
-                   )){
+        "\x6f\xc3\xcf\xf8\x8b\x03\xf2\xcc\x49\x68\x8a\xa7\x9a\x5c\x95\xdf\x9a\x1c\xae\xa1"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -327,9 +318,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
 
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xeb\x82\xe1\x12\x07\x21\x4d\x8c\x58\x29"
-                   "\xa3\xac\x06\x1f\x0f\xf4\x73\xc4\x6d\x8b"
-                   )){
+        "\x58\x9b\x86\xc6\xb1\xc9\x47\x25\x6d\xca\x86\x5b\xec\x43\xed\x14\x6b\xa4\xb3\xdc"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -343,9 +333,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
 
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xd3\x46\x9f\x74\xba\x03\x75\x4c\x38\x95"
-                   "\x88\x95\x9e\x9c\x4d\x4b\x38\xcc\xa4\x96"
-                   )){
+        "\x13\x79\x2b\x56\xe9\x22\x23\x0f\x8c\xfe\x2a\x74\xad\x8c\xd2\xcc\x69\x77\x91\x33"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -359,9 +348,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
 
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x62\x48\x5a\x12\x3e\xcb\x36\x76\x64\x23"
-                   "\xc2\xc0\x46\xe7\x4c\x3d\x0a\xc9\x76\x1c"
-                   )){
+        "\x6f\xc3\xcf\xf8\x8b\x03\xf2\xcc\x49\x68\x8a\xa7\x9a\x5c\x95\xdf\x9a\x1c\xae\xa1"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -377,9 +365,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
 
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xd3\x46\x9f\x74\xba\x03\x75\x4c\x38\x95"
-                   "\x88\x95\x9e\x9c\x4d\x4b\x38\xcc\xa4\x96"
-                   )){
+        "\x13\x79\x2b\x56\xe9\x22\x23\x0f\x8c\xfe\x2a\x74\xad\x8c\xd2\xcc\x69\x77\x91\x33"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -444,9 +431,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x18\xee\xe4\x8b\x13\x37\x5a\x5c\x23\x59"
-                   "\x94\x7c\x34\x54\x08\x12\x87\xcd\xdd\xd6"
-                   )){
+        "\x28\xe4\xfd\x68\xfa\xf6\xae\x2c\xa7\x06\xa6\xab\xac\x90\x2d\xfb\xd8\xf4\x71\x3d"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -463,9 +449,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xb5\x73\xc3\x32\x5d\x4f\x79\x63\xfc\x20"
-                   "\xe9\xb0\x34\x13\xf0\x52\xd7\x0a\xa5\x79"
-                   )){
+        "\xce\x86\x57\x03\x66\x37\x98\x50\xdf\x72\xb2\xd0\x2c\x8d\xf7\xee\x48\xbb\xe1\xf7"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -477,9 +462,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-3.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x1a\x62\x2e\x39\xc4\x07\xbb\x06\x8d\xc8"
-                   "\x54\x0b\x07\x45\x9a\x58\xd1\xdf\x49\xce"
-                   )){
+        "\xc8\xbc\xff\x38\x44\x2b\x28\xda\xdc\x7f\xe2\x1d\x3f\x3a\x04\x86\x8d\xf4\xcb\x0a"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
     keymap.push_kevent(Keymap2::KEVENT_TAB);
@@ -493,9 +477,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-4.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x72\x69\x3b\x9c\x00\xd5\xd3\x93\x71\x48"
-                   "\x7c\x1c\xdc\x8d\xd7\x55\xce\x03\x18\x84"
-                   )){
+        "\x1e\x0b\x1e\x6a\x30\xe3\xfd\x32\x38\xa2\x94\x56\x4b\xf2\x56\x6a\xde\x42\x14\xc7"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -508,9 +491,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-5.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xb5\x5c\x66\xc7\x99\x66\x8a\x11\xa9\x59"
-                   "\x1d\x3a\xf6\xc7\xb7\xa3\x89\x91\xde\x16"
-                   )){
+        "\xe5\xac\x83\xa8\xa5\x44\x10\x61\x1f\x67\xe2\xa5\xa2\x84\x2e\xa1\x16\x2f\xce\x80"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -523,9 +505,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-6.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xfc\x84\xda\xbf\x51\xcb\x89\xd6\x54\x73"
-                   "\xdc\x8a\x14\xc9\x82\x00\xa5\xa6\x0e\x0d"
-                   )){
+        "\x10\xab\xfe\x73\xbf\xbf\x7d\xe9\x8b\xa2\x1e\x7e\x5f\x77\xd5\x2b\xf1\xf5\xc8\x4a"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -538,9 +519,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-7.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x87\xc1\x85\xfd\x1a\x80\xa1\x06\x8b\xeb"
-                   "\x45\x5b\x9c\xcd\x57\x06\x03\xe8\x27\x25"
-                   )){
+        "\x2d\xad\x69\xaa\xe0\x63\x57\xc0\x87\x77\x36\x2c\xfe\x8d\x9c\x44\xcb\xad\x6a\xf3"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -556,9 +536,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-8.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x0f\x14\xf1\xc5\x86\x4b\xaf\x82\x82\x8c"
-                   "\x61\x52\x60\x62\x40\x1f\xf5\x9b\x40\x27"
-                   )){
+        "\x40\xce\xd1\x64\x2d\x6a\xbf\xb1\xa2\x0c\x14\xad\x86\x60\xc6\xf1\x46\x10\xb6\x7d"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -583,9 +562,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-9.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xee\xab\x3a\x75\x0c\xf8\xc4\x8b\x82\xf0"
-                   "\x92\x7f\x98\x02\x0a\x88\x91\x31\xa7\x81"
-                   )){
+        "\x33\xb6\xf1\xfa\x4e\xab\xe8\x60\x4e\xe5\x20\x5f\x72\x08\x87\x01\x57\xd1\xa6\xa7"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -642,9 +620,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x36\xf9\x92\x34\x51\xa3\xe6\x18\xb8\xbb"
-                   "\x7d\xd9\xa2\x92\x14\xe8\x40\xb3\x04\x2f"
-                   )){
+        "\xc3\x70\x7c\x38\x59\x7a\xdd\x84\x17\x14\x0d\x8e\xdc\x31\xf8\xaf\xd4\x9b\x5d\x3d"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -671,9 +648,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-2.png");
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x08\x3d\xdd\xe9\x60\x8b\xf9\xc9\x74\xcc"
-                   "\xb3\x4c\xb4\x1d\xa4\x85\x3f\xdd\xe1\xad"
-                   )){
+        "\xa2\xfb\xd4\xed\x7e\x49\xa7\xf6\x05\x8a\xb4\xb7\xb3\x70\xf2\xf4\x6e\x0d\x60\xe2"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -700,9 +676,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-3.png");
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x6d\x23\xab\x06\x73\x7c\xbe\x69\x6b\x33"
-                   "\xd4\x94\x7a\x4c\xc7\x38\x68\x01\xcd\xcf"
-                   )){
+        "\xdc\x02\xac\x7c\x8f\x93\xed\x8d\x10\x02\xd3\x82\x84\x96\xbd\x04\xd1\x6a\x1b\x91"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -728,9 +703,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-4.png");
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x82\x5c\xe0\x0e\x0e\xcb\x63\x48\x64\xb7"
-                   "\x6f\x05\xa8\x92\x40\xe6\x51\x7f\x20\x32"
-                   )){
+        "\xa9\x33\x1f\x05\x22\x81\xae\xcc\xff\x33\xbc\x80\xd2\x25\xbc\x43\x45\x96\x17\xa3"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -786,9 +760,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xc3\x87\x52\xfc\xbc\x47\x3d\x20\x34\x33"
-                   "\x7c\x54\xcd\x65\xf1\x3f\xab\xc3\x12\x64"
-                   )){
+        "\xa2\x66\xe9\x32\x18\xa9\xae\xd1\x0b\x00\x59\xcc\x10\x3a\x31\xd8\x90\x09\xfa\x40"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -816,9 +789,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-2.png");
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x88\xff\x6f\x35\xb6\xca\xf3\x61\x5a\x8c"
-                   "\xcf\x4b\xa0\x27\x98\x4e\xe4\x0a\x38\x2d"
-                   )){
+        "\x39\xcd\x5e\x3d\x86\xc1\x16\x04\xd7\xdd\xb9\xd3\x3c\x2e\x51\x68\x6f\x93\xaa\xba"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -846,9 +818,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-3.png");
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x04\xf1\xeb\x69\xe9\xbc\xda\x26\xd4\xe0"
-                   "\x96\xd1\xa7\x59\x52\x0a\x2e\x7d\x44\x01"
-                   )){
+        "\x65\xd4\x2d\x84\x1d\x0f\xcf\x52\x22\xd8\x2d\x29\x7e\xc2\x65\x5c\x60\x33\xa2\xf5"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -875,9 +846,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-4.png");
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x8d\x52\x86\xa1\xbe\x32\x62\xa9\x14\xc6"
-                   "\x06\xea\xa6\x27\x18\x10\x8b\xa8\x4b\xe7"
-                   )){
+        "\xd3\x3d\x5f\x73\xcc\x09\x21\x24\xae\x01\x81\x3d\xdc\xdf\xb5\xdd\x51\x02\x36\xff"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -934,9 +904,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x7d\x56\xc8\x95\xa9\xb2\x32\x5c\x7d\x61"
-                   "\x7f\x06\x0b\x3c\x6b\x1f\x37\x71\xad\x28"
-                   )){
+        "\xaa\x46\x80\xf1\x0d\xa6\x64\x27\xc1\x3a\x99\x05\x31\xc4\xac\x56\xa5\xcd\x8e\x50"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -964,9 +933,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-2.png");
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x4c\x80\xba\x39\xfc\xc3\xbe\x2a\x1f\xc4"
-                   "\x25\xdf\xcf\xc7\x13\x57\x8d\xb0\xfa\xad"
-                   )){
+        "\xa4\xfb\x35\x2b\x5b\xc4\x0a\x7f\x30\x4c\x24\x19\xad\x92\x7b\xdc\xc0\x73\x75\xb7"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -994,9 +962,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-3.png");
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x8a\xb8\x20\xdf\xad\x13\x4e\x70\x6f\x7a"
-                   "\xe3\xc6\x21\x8d\xa6\x3b\xa5\x16\x84\xe7"
-                   )){
+        "\xa3\x4d\x46\x3b\x2c\x4f\x02\x82\xee\x6a\xba\x94\x2c\x1f\xf8\x0f\x25\xa8\x05\xc1"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -1023,9 +990,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-4.png");
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x1a\x2f\xf3\x80\x9f\x43\x8d\x11\xd5\x1a"
-                   "\x56\xf6\xd4\xfc\xef\x4a\x3a\xc0\x80\x3c"
-                   )){
+        "\x43\x81\xa7\x68\xf2\x72\x09\x8d\x58\xcb\xb5\xe1\xc1\x08\xa3\x25\x5f\xc3\x53\x7f"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 

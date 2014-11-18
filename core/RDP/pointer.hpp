@@ -21,8 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_POINTER_HPP_
 #define _REDEMPTION_CORE_RDP_POINTER_HPP_
 
-#include "drawable.hpp"
-#include "client_info.hpp"
+#include "log.hpp"
+#include <cstring>
 
 struct Pointer {
     enum {
@@ -331,7 +331,7 @@ public:
 
     ~Pointer() {}
 
-    void initialize(unsigned bpp,  unsigned width,  unsigned height, int x, int y, uint8_t * data, size_t data_size,
+    void initialize(unsigned bpp, unsigned width, unsigned height, int x, int y, uint8_t * data, size_t data_size,
         uint8_t * mask, size_t mask_size) {
         this->bpp    = bpp;
         this->width  = width;
@@ -345,28 +345,17 @@ public:
         ::memcpy(this->mask, mask, std::min(mask_size, sizeof(this->mask)));
     }
 
-    void initialize_1(const Pointer & other) {
-        this->bpp    = other.bpp;
-        this->width  = other.width;
-        this->height = other.height;
-        this->x      = other.x;
-        this->y      = other.y;
-
-        ::memcpy(this->data, other.data, sizeof(this->data));
-        ::memcpy(this->mask, other.mask, sizeof(this->mask));
-    }
-
-    bool is_same(const Pointer & other) {
-      return (
-             (this->bpp    == other.bpp)
-          && (this->width  == other.width)
-          && (this->height == other.height)
-          && (this->x      == other.x)
-          && (this->y      == other.y)
-          && (memcmp(this->data, other.data, this->data_size()) == 0)
-          && (memcmp(this->mask, other.mask, this->mask_size()) == 0)
-          );
-    }
+    //bool is_same(const Pointer & other) {
+    //  return (
+    //         (this->bpp    == other.bpp)
+    //      && (this->width  == other.width)
+    //      && (this->height == other.height)
+    //      && (this->x      == other.x)
+    //      && (this->y      == other.y)
+    //      && (memcmp(this->data, other.data, this->data_size()) == 0)
+    //      && (memcmp(this->mask, other.mask, this->mask_size()) == 0)
+    //      );
+    //}
 
     unsigned data_size() const {
         switch (this->bpp){

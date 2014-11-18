@@ -40,13 +40,12 @@ size_t unbase64(char *buffer, size_t bufsiz, const char *txt)
     unsigned int bits = 0;
     int nbits = 0;
     char base64tbl[256];
-    int i;
     char v;
     size_t nbytes = 0;
 
     memset(base64tbl, -1, sizeof base64tbl);
 
-    for (i = 0; _base64chars[i]; i++) {
+    for (unsigned i = 0; _base64chars[i]; i++) {
         base64tbl[_base64chars[i]] = i;
     }
 

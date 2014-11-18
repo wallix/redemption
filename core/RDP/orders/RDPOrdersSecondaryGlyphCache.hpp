@@ -100,7 +100,7 @@ class RDPGlyphCache {
     uint16_t glyphData_y;
     uint16_t glyphData_cx;
     uint16_t glyphData_cy;
-    size_t size;
+    //size_t size;
     uint8_t * glyphData_aj;
 
     RDPGlyphCache() : cGlyphs(1), glyphData_aj(NULL)

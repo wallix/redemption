@@ -5,6 +5,7 @@
 
 // #define LOGPRINT
 
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -57,7 +58,7 @@ static void rdp_request(SocketTransport & sockettransport)
 
     char * pbuf = buf;
     sockettransport.recv(&pbuf, 29);
-    (std::cout << "receive: ").write(buf, 29).flush();
+    //(std::cout << "receive: ").write(buf, 29).flush();
 
     pbuf = buf;
     sockettransport.recv(&pbuf, 18);

@@ -54,10 +54,10 @@ public:
         this->close();
     }
 
-    int get_fd() const
-    {
-       return this->fd;
-    }
+    //int get_fd() const
+    //{
+    //   return this->fd;
+    //}
 
     int open(const char *pathname, int flags) /*noexcept*/
     {

@@ -28,6 +28,7 @@
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include "client_info.hpp"
 
 #include "test_orders.hpp"
 

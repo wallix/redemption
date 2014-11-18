@@ -67,9 +67,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x31\x91\x81\x07\x31\x0b\x13\x90\x2c\x97"
-                   "\x98\xb3\x52\x65\x92\xf8\x08\x42\xc2\xd5"
-                   )){
+        "\x10\x6b\x61\x5c\x34\xa3\xf7\x26\xf7\x97"
+        "\xe7\xfb\x46\x96\x79\x3d\x96\x64\xff\x65"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -107,9 +107,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x87\x22\x76\x5e\xc5\x6b\x02\x4f\xa6\xc9"
-                   "\x60\x32\xbd\x64\x6e\x5c\xbd\x80\x16\xa2"
-                   )){
+        "\x99\x76\xb1\xfe\x46\x2b\xb6\x12\x84\x7e"
+        "\xf8\x34\x09\x1a\xaf\x2f\xc3\x9c\x64\x04"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -121,9 +121,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen2.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x38\x6d\x83\x65\xc3\x76\x03\x32\xb2\x18"
-                   "\xe8\x9c\x7d\xd1\xcb\xa1\xed\xa8\x61\x6a"
-                   )){
+        "\xa9\xc9\x59\x0c\xc2\xbe\x77\x9d\x43\xef"
+        "\xac\x06\xe2\xc0\xac\xe8\xe7\x0a\xbf\x2c"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -139,9 +139,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen3.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x9d\x9a\xca\x54\xc2\x12\x21\x7d\x04\x94"
-                   "\xa5\x4d\x42\x0c\x42\xd6\xd2\x7c\x3f\x26"
-                   )){
+        "\xac\x4c\xe6\x8f\x7d\xff\x72\x10\x31\x19"
+        "\x9f\xcc\xe7\xba\x39\xf2\x33\x0d\xef\x93"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -153,9 +153,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen4.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xf1\x95\xb1\x6f\x27\xaf\x57\xa5\xa1\x2a"
-                   "\xb8\x93\x59\x98\xdb\x02\x23\x64\x74\x50"
-                   )){
+        "\x94\x59\x4f\xd6\x69\xe6\xea\xbb\x3c\x1c"
+        "\xfa\x84\xbf\x0f\xbf\x38\x18\xd4\x9a\xef"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 

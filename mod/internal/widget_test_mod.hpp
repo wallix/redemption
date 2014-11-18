@@ -29,8 +29,6 @@
 #include "widget2/tab.hpp"
 
 class WidgetTestMod : public InternalMod, public NotifyApi {
-    Inifile & ini;
-
     WidgetTabDPDefault drawing_policy;
     WidgetTab          tab;
 
@@ -42,19 +40,15 @@ class WidgetTestMod : public InternalMod, public NotifyApi {
 public:
     WidgetTestMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height, &ini)
-    , ini(ini)
     , drawing_policy(*this)
     , tab(*this, drawing_policy, 30, 30, width - 60, height - 260, this->screen, this, 0, ini.theme.global.fgcolor, ini.theme.global.bgcolor)
     , wedit_on_first_tab(NULL)
     , wbutton_on_first_tab(NULL) {
         this->screen.add_widget(&this->tab);
 
-        size_t tab_0_index = static_cast<size_t>(-1);
-        size_t tab_1_index = static_cast<size_t>(-1);
-
-        tab_0_index = this->tab.add_item("First tab");
-        tab_1_index = this->tab.add_item("Second tab");
-(void)tab_1_index;
+        const size_t tab_0_index = this->tab.add_item("First tab");
+        const size_t tab_1_index = this->tab.add_item("Second tab");
+        (void)tab_1_index;
 
 
         NotifyApi * notifier = NULL;

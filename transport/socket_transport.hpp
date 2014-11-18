@@ -81,7 +81,7 @@ static inline char* crypto_cert_fingerprint(X509* xcert)
 
 static inline int password_cb0(char *buf, int num, int rwflag, void *userdata)
 {
-    printf("password cb num=%u\n", num);
+    printf("password cb num=%d\n", num);
     const char * pass = static_cast<const char*>(userdata);
     if(num < (int)strlen(pass)+1){
       return(0);

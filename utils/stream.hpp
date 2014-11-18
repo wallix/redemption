@@ -54,14 +54,14 @@ private:
     Parse p;
 
 public:
-    InStream(const Array & array, size_t base, size_t begin, size_t end) 
+    InStream(const Array & array, size_t base, size_t begin, size_t end)
     : array(array)
     , begin(array.get_data() + base + begin)
     , end(array.get_data() + base + end)
     , p(this->begin)
     {
     }
-    
+
     uint8_t * get_data() const {
         return this->begin;
     }
@@ -433,15 +433,13 @@ public:
 
 
 class OutStream {
-    Array & array;
     uint8_t * begin;
     uint8_t * end;
     uint8_t * p;
 
 public:
-    OutStream(Array & array, size_t headroom = 0) 
-    : array(array)
-    , begin(array.get_data()+headroom)
+    OutStream(Array & array, size_t headroom = 0)
+    : begin(array.get_data()+headroom)
     , end(array.get_data()+array.size())
     , p(this->begin)
     {

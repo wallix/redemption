@@ -33,6 +33,7 @@
 #include "log.hpp"
 #include "listen.hpp"
 #include "session_server.hpp"
+#include "parse_ip_conntrack.hpp"
 
 /*****************************************************************************/
 void shutdown(int sig)
