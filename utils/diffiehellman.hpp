@@ -42,7 +42,7 @@ public:
     DiffieHellman(uint64_t generator, uint64_t modulus)
         : randgen()
         , rand(&this->randgen)
-        , max((1L << DH_MAX_BITS) - 1)
+        , max((uint64_t(1) << DH_MAX_BITS) - 1)
         , gen(generator)
         , mod(modulus)
         , pub(0)

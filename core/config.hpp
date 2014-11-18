@@ -583,7 +583,7 @@ struct Inifile : public FieldObserver {
     };
 
     struct Inifile_globals {
-        bool capture_chunk = false;
+        BoolField capture_chunk;
 
         StringField auth_user;           // AUTHID_AUTH_USER
         StringField host;                // client_ip AUTHID_HOST
@@ -594,23 +594,22 @@ struct Inifile : public FieldObserver {
 
         // BEGIN globals
         bool bitmap_cache               = true;
-        int  port                       = 3389;
+        unsigned port                   = 3389;
         bool nomouse                    = false;
         bool notimestamp                = false;
         int  encryptionLevel            = 0; // 0=low, 1=medium, 2=high
-        StaticString<255> authip        = "127.0.0.1";
-        int  authport                   = 3350;
+        StaticString<16> authip         = "127.0.0.1";
+        unsigned authport               = 3350;
         bool autovalidate               = false; // dialog autovalidation for test
 
         // keepalive and no traffic auto deconnexion
-        int max_tick                    = 30;
-        int keepalive_grace_delay       = 30;
-        int close_timeout               = 600; // timeout of close box in seconds (0 to desactivate)
+        unsigned max_tick               = 30;
+        unsigned keepalive_grace_delay  = 30;
+        unsigned close_timeout          = 600; // timeout of close box in seconds (0 to desactivate)
 
-        StaticString<1024> dynamic_conf_path = "/tmp/rdpproxy/"; // directory where to look for dynamic configuration files
         StaticString<8>    auth_channel      = null_fill();
         BoolField          enable_file_encryption;  // AUTHID_OPT_FILE_ENCRYPTION //
-        StaticString<256>  listen_address        = "0.0.0.0";
+        StaticString<16>   listen_address        = "0.0.0.0";
         bool               enable_ip_transparent = false;
         StaticString<256>  certificate_password  = "inquisition";
 
@@ -655,7 +654,7 @@ struct Inifile : public FieldObserver {
 
         int rdp_compression = 0; // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
 
-        uint32_t max_color_depth = 24; // 0 - Default (24-bit), 1 - 8-bit, 2 - 15-bit, 3 - 16-bit, 4 - 24-bit, 5 - 32-bit (not yet supported)
+        uint32_t max_color_depth = 24; // 8-bit, 15-bit, 16-bit, 24-bit, 32-bit (not yet supported) Default (24-bit)
 
         bool persistent_disk_bitmap_cache   = false;
         bool cache_waiting_list             = true;
@@ -717,25 +716,25 @@ struct Inifile : public FieldObserver {
         unsigned png_limit          = 3;    // number of png captures to keep
         StaticString<1024> replay_path = "/tmp/";
 
-        int l_bitrate   = 20000; // bitrate for low quality
-        int l_framerate = 5;     // framerate for low quality
-        int l_height    = 480;   // height for low quality
-        int l_width     = 640;   // width for low quality
-        int l_qscale    = 25;    // qscale (parameter given to ffmpeg) for low quality
+        unsigned l_bitrate   = 20000; // bitrate for low quality
+        unsigned l_framerate = 5;     // framerate for low quality
+        unsigned l_height    = 480;   // height for low quality
+        unsigned l_width     = 640;   // width for low quality
+        unsigned l_qscale    = 25;    // qscale (parameter given to ffmpeg) for low quality
 
         // Same for medium quality
-        int m_bitrate   = 40000;
-        int m_framerate = 5;
-        int m_height    = 768;
-        int m_width     = 1024;
-        int m_qscale    = 15;
+        unsigned m_bitrate   = 40000;
+        unsigned m_framerate = 5;
+        unsigned m_height    = 768;
+        unsigned m_width     = 1024;
+        unsigned m_qscale    = 15;
 
         // Same for high quality
-        int h_bitrate   = 200000;
-        int h_framerate = 5;
-        int h_height    = 1024;
-        int h_width     = 1280;
-        int h_qscale    = 15;
+        unsigned h_bitrate   = 200000;
+        unsigned h_framerate = 5;
+        unsigned h_height    = 1024;
+        unsigned h_width     = 1280;
+        unsigned h_qscale    = 15;
 
         StaticPath<1024> hash_path       = HASH_PATH;
         StaticPath<1024> record_tmp_path = RECORD_TMP_PATH;
@@ -832,7 +831,6 @@ struct Inifile : public FieldObserver {
 
     // section "context"
     struct {
-        unsigned           selector_focus = 0;       // --
         StaticString<1024> movie;                    // --
 
         UnsignedField      opt_bitrate;              // AUTHID_OPT_BITRATE //
@@ -1194,9 +1192,6 @@ public:
             }
             else if (0 == strcmp(key, "close_timeout")) {
                 this->globals.close_timeout = ulong_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "dynamic_conf_path")) {
-                this->globals.dynamic_conf_path = value;
             }
             else if (0 == strcmp(key, "auth_channel")) {
                 this->globals.auth_channel = value;
@@ -1621,6 +1616,9 @@ public:
             else if (0 == strcmp(key, "help_message")) {
                 this->translation.help_message.set_from_cstr(value);
             }
+            else if (0 == strcmp(key, "manager_close_cnx")) {
+                this->translation.manager_close_cnx.set_from_cstr(value);
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1995,6 +1993,327 @@ public:
         this->context_ask(AUTHID_TARGET_USER);
         this->context_ask(AUTHID_TARGET_DEVICE);
         this->context_ask(AUTHID_TARGET_PROTOCOL);
+    }
+
+private:
+    static void write_var(std::ostream & os, const char * name, bool x) {
+        os << "\t" << name << " = boolean(default=" << x << ")\n";
+    }
+    static void write_var(std::ostream & os, const char * name, BoolField const & x) {
+        os << "\t" << name << " = boolean(default=" << x.get() << ")\n";
+    }
+
+    template<class T>
+    static typename std::enable_if<std::is_integral<T>::value>::type
+    write_var(std::ostream & os, const char * name, T x) {
+        os << "\t" << name << " = integer(min="
+           << std::numeric_limits<T>::min() << ",max="
+           << std::numeric_limits<T>::max() << ", default="
+           << x << ")\n";
+    }
+    static void write_var(std::ostream & os, const char * name, UnsignedField const & x) {
+        write_var(os, name, x.get());
+    }
+    static void write_var(std::ostream & os, const char * name, SignedField const & x) {
+        write_var(os, name, x.get());
+    }
+
+    template<std::size_t N>
+    static void write_var(std::ostream & os, const char * name, StaticString<N> const & x) {
+        os << "\t" << name << " = string(max=" << (N-1) << ", default='" << x.c_str() << "')\n";
+    }
+    template<std::size_t N>
+    static void write_var(std::ostream & os, const char * name, StaticPath<N> const & x) {
+        os << "\t" << name << " = string(max=" << (N-1) << ", default='" << x.c_str() << "')\n";
+    }
+    static void write_var(std::ostream & os, const char * name, redemption::string const & x) {
+        os << "\t" << name << " = string(default='" << x.c_str() << "')\n";
+    }
+    static void write_var(std::ostream & os, const char * name, StringField const & x) {
+        write_var(os, name, x.get());
+    }
+
+public:
+    void write_spec(std::ostream & os) const
+    {
+        const char * strlvls[] {"low","medium","high"};
+
+        #define WRITE_VAR(section, name) this->write_var(os, #name, this->section.name)
+
+        os << "[globals]\n";
+        {
+            //WRITE_VAR(globals, capture_chunk);
+
+            //WRITE_VAR(globals, auth_user);
+            //WRITE_VAR(globals, host);
+            //WRITE_VAR(globals, target);
+            //WRITE_VAR(globals, target_device);
+            //WRITE_VAR(globals, target_user);
+            //WRITE_VAR(globals, target_application);
+
+            WRITE_VAR(globals, bitmap_cache);
+            WRITE_VAR(globals, port);
+            WRITE_VAR(globals, nomouse);
+            WRITE_VAR(globals, notimestamp);
+            os << "\tencryptionLevel = option('low','medium','high', default='"
+               << strlvls[this->globals.encryptionLevel] << "')\n";
+            os << "\tauthip = ip_addr(default='"
+               << this->globals.authip << "')\n";
+            WRITE_VAR(globals, authport);
+            WRITE_VAR(globals, autovalidate);
+
+            WRITE_VAR(globals, max_tick);
+            WRITE_VAR(globals, keepalive_grace_delay);
+            WRITE_VAR(globals, close_timeout);
+
+            WRITE_VAR(globals, auth_channel);
+            WRITE_VAR(globals, enable_file_encryption);
+            os << "\tlisten_address = ip_addr(default='"
+               << this->globals.listen_address << "')\n";
+            WRITE_VAR(globals, enable_ip_transparent);
+            WRITE_VAR(globals, certificate_password);
+
+            WRITE_VAR(globals, png_path);
+            WRITE_VAR(globals, wrm_path);
+
+            WRITE_VAR(globals, alternate_shell);
+            WRITE_VAR(globals, shell_working_directory);
+
+            WRITE_VAR(globals, codec_id);
+            WRITE_VAR(globals, movie);
+            WRITE_VAR(globals, movie_path);
+            os << "\tvideo_quality = option('low','medium','high', default='"
+               << this->globals.video_quality.get_cstr() << "')\n";
+            WRITE_VAR(globals, enable_bitmap_update);
+            WRITE_VAR(globals, enable_close_box);
+            WRITE_VAR(globals, enable_osd);
+
+            //WRITE_VAR(globals, flv_break_interval);
+            //WRITE_VAR(globals, flv_frame_interval);
+
+            WRITE_VAR(globals, persistent_path);
+        }
+
+
+        os << "[client]\n";
+        {
+            WRITE_VAR(client, ignore_logon_password);
+
+            WRITE_VAR(client, performance_flags_default);
+            WRITE_VAR(client, performance_flags_force_present);
+            WRITE_VAR(client, performance_flags_force_not_present);
+
+            WRITE_VAR(client, tls_fallback_legacy);
+            WRITE_VAR(client, tls_support);
+            WRITE_VAR(client, bogus_neg_request);
+
+            WRITE_VAR(client, clipboard);
+            WRITE_VAR(client, device_redirection);
+
+            WRITE_VAR(client, disable_tsk_switch_shortcuts);
+
+            os << "\trdp_compression = option('0','1','2','3','4', default='"
+               << this->client.rdp_compression << "')\n";
+
+            os << "\tmax_color_depth = option(8,15,16,24, default='"
+               << this->client.max_color_depth << "')\n";
+
+            WRITE_VAR(client, persistent_disk_bitmap_cache);
+            WRITE_VAR(client, cache_waiting_list);
+            WRITE_VAR(client, persist_bitmap_cache_on_disk);
+
+            WRITE_VAR(client, bitmap_compression);
+        }
+
+
+        os << "[mod_rdp]\n";
+        {
+            os << "\trdp_compression = option('0','1','2','3','4', default='"
+               << this->mod_rdp.rdp_compression << "')\n";
+
+            WRITE_VAR(mod_rdp, disconnect_on_logon_user_change);
+
+            WRITE_VAR(mod_rdp, open_session_timeout);
+
+            os << "\tcertificate_change_action = option('0','1', default='"
+               << this->mod_rdp.certificate_change_action << "')\n";
+
+            WRITE_VAR(mod_rdp, extra_orders);
+
+            WRITE_VAR(mod_rdp, enable_nla);
+
+            WRITE_VAR(mod_rdp, enable_kerberos);
+
+            WRITE_VAR(mod_rdp, persistent_disk_bitmap_cache);
+            WRITE_VAR(mod_rdp, cache_waiting_list);
+            WRITE_VAR(mod_rdp, persist_bitmap_cache_on_disk);
+        }
+
+
+        os << "[mod_vnc]\n";
+        {
+            WRITE_VAR(mod_vnc, encodings);
+            WRITE_VAR(mod_vnc, allow_authentification_retries);
+        }
+
+
+        os << "[video]\n";
+        {
+            os << "\tcapture_flags = integer(min=0,max=16, default="
+               << this->video.capture_flags << ")\n";
+            WRITE_VAR(video, capture_png);
+            WRITE_VAR(video, capture_wrm);
+            WRITE_VAR(video, capture_flv);
+            WRITE_VAR(video, capture_ocr);
+
+            WRITE_VAR(video, ocr_interval);
+            WRITE_VAR(video, ocr_on_title_bar_only);
+            os << "\tocr_max_unrecog_char_rate = integer(min=0,max=100, default="
+               << this->video.ocr_max_unrecog_char_rate << ")\n";
+
+            WRITE_VAR(video, png_interval);
+            WRITE_VAR(video, capture_groupid);
+            WRITE_VAR(video, frame_interval);
+            WRITE_VAR(video, break_interval);
+            WRITE_VAR(video, png_limit);
+            WRITE_VAR(video, replay_path);
+
+            WRITE_VAR(video, l_bitrate);
+            WRITE_VAR(video, l_framerate);
+            WRITE_VAR(video, l_height);
+            WRITE_VAR(video, l_width);
+            WRITE_VAR(video, l_qscale);
+
+            WRITE_VAR(video, m_bitrate);
+            WRITE_VAR(video, m_framerate);
+            WRITE_VAR(video, m_height);
+            WRITE_VAR(video, m_width);
+            WRITE_VAR(video, m_qscale);
+
+            WRITE_VAR(video, h_bitrate);
+            WRITE_VAR(video, h_framerate);
+            WRITE_VAR(video, h_height);
+            WRITE_VAR(video, h_width);
+            WRITE_VAR(video, h_qscale);
+
+            WRITE_VAR(video, hash_path);
+            WRITE_VAR(video, record_tmp_path);
+            WRITE_VAR(video, record_path);
+
+            WRITE_VAR(video, inactivity_pause);
+            WRITE_VAR(video, inactivity_timeout);
+
+            os << "\tdisable_keyboard_log = integer(min=0,max=7, default="
+               << this->video.disable_keyboard_log.get() << ")\n";
+
+            os << "\twrm_color_depth_selection_strategy = integer(min=0,max=1, default="
+               << this->video.wrm_color_depth_selection_strategy << ")\n";
+
+            os << "\twrm_compression_algorithm = integer(min=0,max=3, default="
+               << this->video.wrm_compression_algorithm << ")\n";
+        }
+
+
+        os << "[crypto]\n";
+        {
+            auto tohex = [](std::ostream & os, const char * k) {
+                int c;
+                for (const char * e = k + 32; k != e; ++k) {
+                    c = (*k >> 4);
+                    c += (c > 9) ? 'A' - 10 : '0';
+                    os << char(c);
+                    c = (*k & 0xf);
+                    c += (c > 9) ? 'A' - 10 : '0';
+                    os << char(c);
+                }
+            };
+            os << "\tkey0 = string(min=64,max=64, default='";
+            tohex(os, this->crypto.key0.c_str());
+            os << "')\n";
+            os << "\tkey1 = string(min=64,max=64, default='";
+            tohex(os, this->crypto.key1.c_str());
+            os << "')\n";
+        }
+
+
+        os << "[debug]\n";
+        {
+            WRITE_VAR(debug, x224);
+            WRITE_VAR(debug, mcs);
+            WRITE_VAR(debug, sec);
+            WRITE_VAR(debug, rdp);
+            WRITE_VAR(debug, primary_orders);
+            WRITE_VAR(debug, secondary_orders);
+            WRITE_VAR(debug, bitmap);
+            WRITE_VAR(debug, capture);
+            WRITE_VAR(debug, auth);
+            WRITE_VAR(debug, session);
+            WRITE_VAR(debug, front);
+            WRITE_VAR(debug, mod_rdp);
+            WRITE_VAR(debug, mod_vnc);
+            WRITE_VAR(debug, mod_int);
+            WRITE_VAR(debug, mod_xup);
+            WRITE_VAR(debug, widget);
+            WRITE_VAR(debug, input);
+            WRITE_VAR(debug, password);
+            WRITE_VAR(debug, compression);
+            WRITE_VAR(debug, cache);
+            WRITE_VAR(debug, bitmap_update);
+            WRITE_VAR(debug, performance);
+
+            WRITE_VAR(debug, pass_dialog_box);
+        }
+
+
+        os << "[translation]\n";
+        {
+            WRITE_VAR(translation, button_ok);
+            WRITE_VAR(translation, button_cancel);
+            WRITE_VAR(translation, button_help);
+            WRITE_VAR(translation, button_close);
+            WRITE_VAR(translation, button_refused);
+            WRITE_VAR(translation, login);
+            WRITE_VAR(translation, username);
+            WRITE_VAR(translation, password);
+            WRITE_VAR(translation, target);
+            WRITE_VAR(translation, diagnostic);
+            WRITE_VAR(translation, connection_closed);
+            WRITE_VAR(translation, help_message);
+            WRITE_VAR(translation, manager_close_cnx);
+
+            os << "\tlanguage = option('fr','en', default='"
+               << this->translation.language.get_cstr() << "')\n";
+        }
+
+
+        //os << "[context]\n";
+        //{
+            //WRITE_VAR(context, movie);
+
+            //WRITE_VAR(context, opt_bitrate);
+            //WRITE_VAR(context, opt_framerate);
+            //WRITE_VAR(context, opt_qscale);
+
+            //WRITE_VAR(context, opt_bpp);
+            //WRITE_VAR(context, opt_height);
+            //WRITE_VAR(context, opt_width);
+
+            //WRITE_VAR(context, authchannel_answer);
+            //WRITE_VAR(context, authchannel_result);
+            //WRITE_VAR(context, authchannel_target);
+
+            //WRITE_VAR(context, message);
+            //WRITE_VAR(context, pattern_kill);
+            //WRITE_VAR(context, pattern_notify);
+
+            //WRITE_VAR(context, end_date_cnx);
+            //WRITE_VAR(context, end_time);
+
+            //os << "\tmode_console = option('allow','force','forbid')\n";
+            //WRITE_VAR(context, timezone);
+        //}
+
+        #undef WRITE_VAR
     }
 };
 

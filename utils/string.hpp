@@ -21,8 +21,6 @@
 #ifndef _REDEMPTION_UTILS_STRING_HPP_
 #define _REDEMPTION_UTILS_STRING_HPP_
 
-#include "error.hpp"
-#include "log.hpp"
 #include <string>
 
 namespace redemption {

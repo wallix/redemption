@@ -22,7 +22,6 @@
 #define _REDEMPTION_BASE_FIELD_HPP_
 
 #include "cfgloader.hpp"
-#include "config.hpp"
 // BASE64 TRY
 // #include "base64.hpp"
 #include <set>
@@ -229,7 +228,7 @@ struct FieldObserver : public ConfigurationHolder {
             return this->data;
         }
 
-        const char * get_cstr() {
+        const char * get_cstr() const {
             return this->get().c_str();
         }
 
