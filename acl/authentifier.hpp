@@ -170,10 +170,9 @@ class SessionManager : public auth_api {
 public:
     AclSerializer acl_serial;
 
-    bool remote_answer;       // false initialy, set to true once response is received from acl
-                              // and asked_remote_answer is set to false
-    //time_t start_time;
-    //time_t acl_start_time;
+    bool remote_answer;       // false initialy, set to true once response is
+                              // received from acl and asked_remote_answer is
+                              // set to false
 
     uint32_t verbose;
 
@@ -269,6 +268,7 @@ public:
             }
         }
         else if (this->remote_answer) {
+            this->remote_answer = false;
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;

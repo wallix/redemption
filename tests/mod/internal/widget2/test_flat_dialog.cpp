@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(flat_dialog.rect);
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,

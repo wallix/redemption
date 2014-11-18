@@ -215,6 +215,7 @@ typedef enum
 
         AUTHID_TARGET_DEVICE,       // target_device
         AUTHID_TARGET_PASSWORD,     // target_password
+        AUTHID_TARGET_HOST,       // target_host
         AUTHID_TARGET_PORT,         // target_port
         AUTHID_TARGET_PROTOCOL,     // proto_dest
         AUTHID_TARGET_USER,         // target_login
@@ -259,8 +260,13 @@ typedef enum
         AUTHID_AUTHENTICATION_CHALLENGE,
 
         AUTHID_MODULE,
+        AUTHID_FORCEMODULE,
         AUTHID_TICKET,
         AUTHID_COMMENT,
+        AUTHID_DURATION,
+        AUTHID_WAITINFORETURN,
+        AUTHID_SHOWFORM,
+        AUTHID_FORMFLAG,
 
         AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
 
@@ -319,6 +325,7 @@ typedef enum
 
 #define STRAUTHID_TARGET_DEVICE            "target_device"
 #define STRAUTHID_TARGET_PASSWORD          "target_password"
+#define STRAUTHID_TARGET_HOST              "target_host"
 #define STRAUTHID_TARGET_PORT              "target_port"
 #define STRAUTHID_TARGET_PROTOCOL          "proto_dest"
 #define STRAUTHID_TARGET_USER              "target_login"
@@ -362,8 +369,13 @@ typedef enum
 
 #define STRAUTHID_AUTHENTICATION_CHALLENGE "authentication_challenge"
 #define STRAUTHID_MODULE                   "module"
+#define STRAUTHID_FORCEMODULE              "forcemodule"
 #define STRAUTHID_TICKET                   "ticket"
 #define STRAUTHID_COMMENT                  "comment"
+#define STRAUTHID_DURATION                 "duration"
+#define STRAUTHID_WAITINFORETURN           "waitinforeturn"
+#define STRAUTHID_SHOWFORM                 "showform"
+#define STRAUTHID_FORMFLAG                 "formflag"
 #define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS        "disable_tsk_switch_shortcuts"
 
 #define STRAUTHID_DISABLE_KEYBOARD_LOG     "disable_keyboard_log"
@@ -423,6 +435,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_TARGET_DEVICE,        // target_device
     STRAUTHID_TARGET_PASSWORD,      // target_password
+    STRAUTHID_TARGET_HOST,          // target_host
     STRAUTHID_TARGET_PORT,          // target_port
     STRAUTHID_TARGET_PROTOCOL,      // proto_dest
     STRAUTHID_TARGET_USER,          // target_login
@@ -467,8 +480,13 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_AUTHENTICATION_CHALLENGE,
 
     STRAUTHID_MODULE,
+    STRAUTHID_FORCEMODULE,
     STRAUTHID_TICKET,
     STRAUTHID_COMMENT,
+    STRAUTHID_DURATION,
+    STRAUTHID_WAITINFORETURN,
+    STRAUTHID_SHOWFORM,
+    STRAUTHID_FORMFLAG,
 
     STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
 
@@ -760,6 +778,7 @@ struct Inifile : public FieldObserver {
         UnsignedField      selector_number_of_pages; // AUTHID_SELECTOR_NUMBER_OF_PAGES //
 
         StringField        target_password;          // AUTHID_TARGET_PASSWORD //
+        StringField        target_host;              // AUTHID_TARGET_HOST //
         UnsignedField      target_port;              // AUTHID_TARGET_PORT //
         StringField        target_protocol;          // AUTHID_TARGET_PROTOCOL //
 
@@ -802,8 +821,13 @@ struct Inifile : public FieldObserver {
 
         StringField        ticket;                   // AUTHID_TICKET //
         StringField        comment;                  // AUTHID_COMMENT //
+        StringField        duration;                  // AUTHID_DURATION //
+        StringField        waitinforeturn;           // AUTHID_WAITINFORETURN //
+        BoolField          showform;                 // AUTHID_SHOWFORM //
+        UnsignedField      formflag;                 // AUTHID_FORMFLAG //
 
-        StringField        module;
+        StringField        module;                   // AUTHID_MODULE //
+        BoolField          forcemodule;              // AUTHID_FORCEMODULE //
     } context;
 
     Theme theme;
@@ -1159,6 +1183,8 @@ public:
         this->context.target_port.set(3389);
         this->context.target_port.ask();
 
+        this->context.target_host.set_from_cstr("");
+        this->context.target_host.ask();
 
         this->context.target_protocol.set_from_cstr("RDP");
         this->context.target_protocol.ask();
@@ -1218,10 +1244,16 @@ public:
         this->to_send_set.insert(AUTHID_MODULE);
         this->to_send_set.insert(AUTHID_TICKET);
         this->to_send_set.insert(AUTHID_COMMENT);
+        this->to_send_set.insert(AUTHID_DURATION);
+        this->to_send_set.insert(AUTHID_WAITINFORETURN);
+        this->to_send_set.insert(AUTHID_SHOWFORM);
+        this->to_send_set.insert(AUTHID_FORMFLAG);
 
         this->context.module.set_from_cstr("login");
         this->context.module.attach_ini(this, AUTHID_MODULE);
         this->context.module.use();
+        this->context.forcemodule.set(false);
+        this->context.forcemodule.attach_ini(this, AUTHID_FORCEMODULE);
 
         this->context.ticket.set_from_cstr("");
         this->context.ticket.attach_ini(this, AUTHID_TICKET);
@@ -1229,6 +1261,18 @@ public:
         this->context.comment.set_from_cstr("");
         this->context.comment.attach_ini(this, AUTHID_COMMENT);
         this->context.comment.use();
+        this->context.duration.set_from_cstr("");
+        this->context.duration.attach_ini(this, AUTHID_DURATION);
+        this->context.duration.use();
+        this->context.waitinforeturn.set_from_cstr("");
+        this->context.waitinforeturn.attach_ini(this, AUTHID_WAITINFORETURN);
+        this->context.waitinforeturn.use();
+        this->context.showform.set(false);
+        this->context.showform.attach_ini(this, AUTHID_SHOWFORM);
+        this->context.showform.use();
+        this->context.formflag.set(0);
+        this->context.formflag.attach_ini(this, AUTHID_FORMFLAG);
+        this->context.formflag.use();
 
         // Attaching ini struct to values
         this->context.opt_bpp.attach_ini(this,AUTHID_OPT_BPP);
@@ -1244,6 +1288,7 @@ public:
 
         this->context.target_password.attach_ini(this,AUTHID_TARGET_PASSWORD);
         this->context.target_protocol.attach_ini(this,AUTHID_TARGET_PROTOCOL);
+        this->context.target_host.attach_ini(this,AUTHID_TARGET_HOST);
         this->context.target_port.attach_ini(this,AUTHID_TARGET_PORT);
 
         this->context.password.attach_ini(this,AUTHID_PASSWORD);

@@ -107,7 +107,14 @@ public:
     virtual int get_bg_color() const {
         return this->bg_color;
     }
-
+    virtual void move_xy(int16_t x, int16_t y) {
+        this->rect.x += x;
+        this->rect.y += y;
+        this->WidgetParent::move_xy(x,y);
+    }
+    virtual void set_xy(int16_t x, int16_t y) {
+        this->move_xy(x - this->rect.x, y - this->rect.y);
+    }
     const char * get_text() const {
         return this->buffer;
     }

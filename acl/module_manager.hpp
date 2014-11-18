@@ -45,6 +45,7 @@
 #include "internal/flat_selector2_mod.hpp"
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
+#include "internal/flat_wait_mod.hpp"
 #include "internal/interactive_password_mod.hpp"
 #include "internal/widget_test_mod.hpp"
 
@@ -64,6 +65,7 @@
 #define STRMODULE_RDP              "RDP"
 #define STRMODULE_VNC              "VNC"
 #define STRMODULE_INTERNAL         "INTERNAL"
+#define STRMODULE_WAITINFO         "waitinfo"
 
 enum {
     MODULE_EXIT,
@@ -88,6 +90,7 @@ enum {
     MODULE_INTERNAL_WIDGET2_SELECTOR,
     MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY,
     MODULE_INTERNAL_WIDGETTEST,
+    MODULE_INTERNAL_WAIT_INFO,
     MODULE_EXIT_INTERNAL_CLOSE,
     MODULE_TRANSITORY,
     MODULE_AUTH,
@@ -129,6 +132,7 @@ public:
         return res;
     }
     virtual void record(auth_api * acl) {}
+    virtual void check_module() { }
 };
 
 class MMIni : public MMApi {
@@ -136,7 +140,8 @@ public:
     Inifile & ini;
     uint32_t verbose;
     MMIni(Inifile & _ini) : ini(_ini)
-                          , verbose(ini.debug.auth) {}
+                          , verbose(ini.debug.auth)
+    {}
     virtual ~MMIni() {}
     virtual void remove_mod() {};
     virtual void new_mod(int target_module, time_t now, auth_api * acl) {
@@ -209,6 +214,10 @@ public:
             LOG(LOG_INFO, "===========> MODULE_DIALOG_VALID");
             return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
         }
+        else if (!strcmp(module_cstr, STRMODULE_WAITINFO)) {
+            LOG(LOG_INFO, "===========> MODULE_WAITINFO");
+            return MODULE_INTERNAL_WAIT_INFO;
+        }
         else if (!strcmp(module_cstr, STRMODULE_PASSWORD)) {
             LOG(LOG_INFO, "===========> MODULE_INTERACTIVE_PASSWORD");
             return MODULE_INTERNAL_PASSWORD;
@@ -232,7 +241,7 @@ public:
         else if (!strcmp(module_cstr, STRMODULE_INTERNAL)) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL");
             int res = MODULE_EXIT;
-            const char * target = this->ini.globals.target_device.get_cstr();
+            const char * target = this->ini.context.target_host.get_cstr();
             if (0 == strcmp(target, "bouncer2")) {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "==========> INTERNAL bouncer2");
@@ -276,6 +285,15 @@ public:
         return MODULE_INTERNAL_CLOSE;
     }
 
+    virtual void check_module() {
+        if (this->ini.context.forcemodule.get() &&
+            !this->is_connected()) {
+            this->mod->get_event().signal = BACK_EVENT_NEXT;
+            this->mod->get_event().set();
+            this->ini.context.forcemodule.set(false);
+            // Do not send back the value to sesman.
+        }
+    }
 };
 
 
@@ -582,6 +600,26 @@ public:
             }
 
             break;
+        case MODULE_INTERNAL_WAIT_INFO:
+            {
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
+                const char * message = this->ini.context.message.get_cstr();
+                const char * caption = TR("information", this->ini);
+                bool showform = this->ini.context.showform.get();
+                uint flag = this->ini.context.formflag.get();
+                this->mod = new FlatWaitMod(
+                                            this->ini,
+                                            this->front,
+                                            this->front.client_info.width,
+                                            this->front.client_info.height,
+                                            caption,
+                                            message,
+                                            now,
+                                            showform,
+                                            flag);
+                LOG(LOG_INFO, "ModuleManager::internal module 'Wait Info Message' ready");
+            }
+            break;
         case MODULE_INTERNAL_WIDGET2_LOGIN:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
             if (this->ini.context_is_asked(AUTHID_TARGET_USER)
@@ -630,7 +668,7 @@ public:
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                 }
 
-                int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
+                int client_sck = ip_connect(this->ini.context.target_host.get_cstr(),
                                             this->ini.context.target_port.get(),
                                             4, 1000,
                                             this->ini.debug.mod_xup);
@@ -642,7 +680,7 @@ public:
 
                 SocketTransport * t = new SocketTransport(name
                                                           , client_sck
-                                                          , this->ini.globals.target_device.get_cstr()
+                                                          , this->ini.context.target_host.get_cstr()
                                                           , this->ini.context.target_port.get()
                                                           , this->ini.debug.mod_xup);
                 this->mod_transport = t;
@@ -693,7 +731,7 @@ public:
 
                 static const char * name = "RDP Target";
 
-                int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
+                int client_sck = ip_connect(this->ini.context.target_host.get_cstr(),
                                             this->ini.context.target_port.get(),
                                             3, 1000,
                                             this->ini.debug.mod_rdp);
@@ -707,7 +745,7 @@ public:
                 SocketTransport * t = new SocketTransport(
                                                           name
                                                           , client_sck
-                                                          , this->ini.globals.target_device.get_cstr()
+                                                          , this->ini.context.target_host.get_cstr()
                                                           , this->ini.context.target_port.get()
                                                           , this->ini.debug.mod_rdp
                                                           , &this->ini.context.auth_error_message
@@ -718,7 +756,7 @@ public:
 
                 ModRDPParams mod_rdp_params( this->ini.globals.target_user.get_cstr()
                                            , this->ini.context.target_password.get_cstr()
-                                           , this->ini.globals.target_device.get_cstr()
+                                           , this->ini.context.target_host.get_cstr()
                                            , "0.0.0.0"   // client ip is silenced
                                            , this->front.keymap.key_flags
                                            , this->ini.debug.mod_rdp
@@ -773,8 +811,8 @@ public:
                 static const char * name = "VNC Target";
 
 
-                int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
-                                            //this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
+                int client_sck = ip_connect(this->ini.context.target_host.get_cstr(),
+                                            //this->ini.context_get_value(AUTHID_TARGET_HOST, NULL, 0),
                                             this->ini.context.target_port.get(),
                                             3, 1000,
                                             this->ini.debug.mod_vnc);
@@ -786,7 +824,7 @@ public:
 
                 SocketTransport * t = new SocketTransport(name
                                                           , client_sck
-                                                          , this->ini.globals.target_device.get_cstr()
+                                                          , this->ini.context.target_host.get_cstr()
                                                           , this->ini.context.target_port.get()
                                                           , this->ini.debug.mod_vnc);
                 this->mod_transport = t;
