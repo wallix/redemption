@@ -658,7 +658,7 @@ struct Inifile : public FieldObserver {
          * channel1,channel2,etc
          * @{
          */
-        redemption::string allow_channels;
+        redemption::string allow_channels = "*";
         redemption::string deny_channels;
         // @}
     } client;
@@ -701,7 +701,7 @@ struct Inifile : public FieldObserver {
 
     struct
     {
-        int on_end_of_data; // 0 - Wait for Escape, 1 - End session
+        int on_end_of_data = 0; // 0 - Wait for Escape, 1 - End session
     } mod_replay;
 
     // Section "video"
@@ -999,25 +999,18 @@ public:
 
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
-
-        this->client.allow_channels.copy_c_str("*");
-        this->client.deny_channels.empty();
         // End Section "client"
 
         // Begin section "mod_rdp"
-        this->mod_rdp.allow_channels.attach_ini(this, AUTHID_ALLOW_CHANNELS);
         this->mod_rdp.allow_channels.set_from_cstr("*");
+        this->mod_rdp.allow_channels.attach_ini(this, AUTHID_ALLOW_CHANNELS);
+        //this->mod_rdp.deny_channels.set_from_cstr("");
         this->mod_rdp.deny_channels.attach_ini(this, AUTHID_DENY_CHANNELS);
-        this->mod_rdp.deny_channels.set_from_cstr("");
         // End Section "mod_rdp"
 
         // Begin section "mod_vnc"
         this->mod_vnc.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
         // End Section "mod_vnc"
-
-        // Begin Section "mod_replay"
-        this->mod_replay.on_end_of_data = 0;
-        // End Section "mod_replay"
 
         // Begin section video
         this->video.disable_keyboard_log.attach_ini(this, AUTHID_DISABLE_KEYBOARD_LOG);
@@ -2122,7 +2115,6 @@ public:
             WRITE_VAR(globals, persistent_path);
         }
 
-
         os << "[client]\n";
         {
             WRITE_VAR(client, ignore_logon_password);
@@ -2150,6 +2142,9 @@ public:
             WRITE_VAR(client, persist_bitmap_cache_on_disk);
 
             WRITE_VAR(client, bitmap_compression);
+
+            os << "\tallow_channels = string_list(default='" << this->client.allow_channels.c_str() << "')\n";
+            os << "\tdeny_channels = string_list(default='" << this->client.deny_channels.c_str() << "')\n";
         }
 
 
@@ -2174,6 +2169,9 @@ public:
             WRITE_VAR(mod_rdp, persistent_disk_bitmap_cache);
             WRITE_VAR(mod_rdp, cache_waiting_list);
             WRITE_VAR(mod_rdp, persist_bitmap_cache_on_disk);
+
+            os << "\tallow_channels = string_list(default='" << this->mod_rdp.allow_channels.get_cstr() << "')\n";
+            os << "\tdeny_channels = string_list(default='" << this->mod_rdp.deny_channels.get_cstr() << "')\n";
         }
 
 
