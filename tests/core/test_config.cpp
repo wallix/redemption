@@ -199,6 +199,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
@@ -463,6 +465,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
+
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_OK)));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_CANCEL)));
@@ -745,6 +749,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
@@ -1003,6 +1009,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(std::string("16,2,0,1,-239"),     ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.allow_authentification_retries);
 
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Annuler"),           std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
@@ -1061,6 +1069,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "persistent_disk_bitmap_cache=yes\n"
                           "cache_waiting_list=no\n"
                           "persist_bitmap_cache_on_disk=no\n"
+                          "[mod_replay]\n"
+                          "on_end_of_data=1\n"
                           "[video]\n"
                           "hash_path=/mnt/wab/hash/\n"
                           "record_path=/mnt/wab/recorded/rdp/\n"
@@ -1233,6 +1243,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
+    BOOST_CHECK_EQUAL(1,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
@@ -1280,6 +1292,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "bitmap_compression=false\n"
                           "[mod_rdp]\n"
                           "rdp_compression=0\n"
+                          "[mod_replay]\n"
+                          "on_end_of_data=0\n"
                           "[video]\n"
                           "disable_keyboard_log=4\n"
                           "wrm_color_depth_selection_strategy=1\n"
@@ -1440,6 +1454,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
+
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1634,6 +1650,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
@@ -1821,6 +1839,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
@@ -2000,6 +2020,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
+
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -2181,6 +2203,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
@@ -2349,6 +2373,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
+
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
