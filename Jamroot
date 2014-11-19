@@ -503,7 +503,7 @@ unit-test test_log : tests/utils/test_log.cpp libboost_unit_test : <variant>cove
 unit-test test_netutils : tests/utils/test_netutils.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_png : tests/utils/test_png.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdtsc : tests/utils/test_rdtsc.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp crypto dl libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp crypto dl z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_string : tests/utils/test_string.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
