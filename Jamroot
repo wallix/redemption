@@ -363,7 +363,7 @@ exe tls_test_server
 
 import testing ;
 
-## Test generic utility
+## Test facility functions or classes
 ## @{
 unit-test test_iter : tests/utils/test_iter.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_noncopyable : tests/utils/test_noncopyable.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -391,7 +391,7 @@ unit-test test_mppc_40 : tests/core/RDP/test_mppc_40.cpp libboost_unit_test : <v
 unit-test test_mppc_50 : tests/core/RDP/test_mppc_50.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_mppc_60 : tests/core/RDP/test_mppc_60.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_mppc_61 : tests/core/RDP/test_mppc_61.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_gcc : tests/core/RDP/test_gcc.cpp crypto dl libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_gcc : tests/core/RDP/test_gcc.cpp crypto dl z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_sec : tests/core/RDP/test_sec.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_lic : tests/core/RDP/test_lic.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_share : tests/core/RDP/test_share.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
