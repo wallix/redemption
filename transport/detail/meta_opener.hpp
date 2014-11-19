@@ -159,7 +159,7 @@ namespace detail
         in_meta_sequence_buf(const in_meta_sequence_buf_param<BufParam, BufMetaParam> & params)
         : Buf(params.buf_param)
         , buf_meta(params.meta_param)
-        , reader(this->open_and_return(params.meta_filename, this->buf_meta))
+        , reader(open_and_return(params.meta_filename, this->buf_meta))
         , begin_chunk_time(0)
         , end_chunk_time(0)
         , verbose(params.verbose)

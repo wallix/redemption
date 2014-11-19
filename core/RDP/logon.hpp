@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include "log.hpp"
 #include "stream.hpp"
+#include "get_printable_password.hpp"
 
 // 2.2.1.11.1.1 Info Packet (TS_INFO_PACKET)
 // =========================================

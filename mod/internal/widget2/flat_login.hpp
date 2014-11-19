@@ -173,6 +173,11 @@ public:
              && event == NOTIFY_SUBMIT) {
             this->send_notify(NOTIFY_SUBMIT);
         }
+        if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
+            if (this->notifier) {
+                this->notifier->notify(widget, event);
+            }
+        }
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)

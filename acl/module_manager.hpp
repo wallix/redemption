@@ -50,6 +50,7 @@
 #include "internal/widget_test_mod.hpp"
 
 #include "mod_osd.hpp"
+#include "noncopyable.hpp"
 
 #define STRMODULE_LOGIN            "login"
 #define STRMODULE_SELECTOR         "selector"
@@ -253,11 +254,10 @@ public:
                     LOG(LOG_INFO, "==========> INTERNAL test");
                 }
                 const char * user = this->ini.globals.target_user.get_cstr();
-                size_t len_user = strlen(user);
-                strncpy(this->ini.context.movie, user, sizeof(this->ini.context.movie));
-                this->ini.context.movie[sizeof(this->ini.context.movie) - 1] = 0;
-                if (0 != strcmp(".mwrm", user + len_user - 5)) {
-                    strcpy(this->ini.context.movie + len_user, ".mwrm");
+                this->ini.context.movie = user;
+                const size_t len_user = strlen(user);
+                if (0 != strcmp(".mwrm", user + len_user - 5) && len_user + 5 < this->ini.context.movie.max_size()) {
+                    strcpy(this->ini.context.movie.data() + len_user, ".mwrm");
                 }
                 res = MODULE_INTERNAL_TEST;
             }
@@ -301,12 +301,11 @@ class ModuleManager : public MMIni
 {
     struct module_osd
     : public mod_osd
-    //, noncopyable
+    , noncopyable
     {
         module_osd(
             ModuleManager & manager, const Rect & rect,
             std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f)
-        //: mod_osd(manager.front, *manager.mod, Bitmap("/home/jpoelen/projects/redemption-public/tests/fixtures/ad24b.bmp"))
         : mod_osd(manager.front, *manager.mod, rect, std::move(f))
         , manager(manager)
         , old_mod(manager.mod)
@@ -399,37 +398,36 @@ public:
 
 
     Front & front;
-    mod_api * no_mod;
+    null_mod no_mod;
     Transport * mod_transport;
 
     ModuleManager(Front & front, Inifile & ini)
         : MMIni(ini)
         , front(front)
+        , no_mod(this->front)
         , mod_transport(NULL)
     {
-        this->no_mod = new null_mod(this->front);
-        this->no_mod->get_event().reset();
-        this->mod = this->no_mod;
+        this->no_mod.get_event().reset();
+        this->mod = &this->no_mod;
     }
 
     virtual void remove_mod()
     {
         delete this->osd;
 
-        if (this->mod != this->no_mod){
+        if (this->mod != &this->no_mod){
             delete this->mod;
             if (this->mod_transport) {
                 delete this->mod_transport;
                 this->mod_transport = NULL;
             }
-            this->mod = this->no_mod;
+            this->mod = &this->no_mod;
         }
     }
 
     virtual ~ModuleManager()
     {
         this->remove_mod();
-        delete this->no_mod;
     }
 
     virtual void new_mod(int target_module, time_t now, auth_api * acl)
@@ -769,7 +767,6 @@ public:
                     mod_rdp_params.enable_nla                      = this->ini.mod_rdp.enable_nla;
                 }
                 mod_rdp_params.enable_krb                          = this->ini.mod_rdp.enable_kerberos;
-                mod_rdp_params.enable_clipboard                    = this->ini.client.clipboard.get();
                 //mod_rdp_params.enable_fastpath                     = true;
                 //mod_rdp_params.enable_mem3blt                      = true;
                 mod_rdp_params.enable_bitmap_update                = this->ini.globals.enable_bitmap_update;
@@ -789,7 +786,10 @@ public:
                 mod_rdp_params.password_printing_mode              = this->ini.debug.password;
                 mod_rdp_params.cache_verbose                       = this->ini.debug.cache;
 
-                mod_rdp_params.extra_orders                    = this->ini.mod_rdp.extra_orders.c_str();
+                mod_rdp_params.extra_orders                        = this->ini.mod_rdp.extra_orders.c_str();
+
+                mod_rdp_params.allow_channels                      = &(this->ini.mod_rdp.allow_channels.get());
+                mod_rdp_params.deny_channels                       = &(this->ini.mod_rdp.deny_channels.get());
 
                 UdevRandom gen;
                 this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
@@ -831,6 +831,9 @@ public:
 
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
 
+                const bool enable_clipboard_in  = this->front.authorized_channel(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_up");
+                const bool enable_clipboard_out = this->front.authorized_channel(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_down");
+
                 this->mod = new mod_vnc(t
                                         , this->ini
                                         , this->ini.globals.target_user.get_cstr()
@@ -840,7 +843,8 @@ public:
                                         , this->front.client_info.height
                                         , this->front.client_info.keylayout
                                         , this->front.keymap.key_flags
-                                        , this->ini.client.clipboard.get()
+                                        , enable_clipboard_in  && this->ini.mod_vnc.clipboard.get()
+                                        , enable_clipboard_out && this->ini.mod_vnc.clipboard.get()
                                         , this->ini.mod_vnc.encodings.c_str()
                                         , this->ini.mod_vnc.allow_authentification_retries
                                         , this->ini.debug.mod_vnc);

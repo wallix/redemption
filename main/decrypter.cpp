@@ -16,10 +16,10 @@
 
 #include "version.hpp"
 
-#include "capture.hpp"
 #include "FileToGraphic.hpp"
 #include "crypto_in_filename_transport.hpp"
 #include "out_file_transport.hpp"
+#include "fdbuf.hpp"
 
 #ifndef HASH_LEN
 #define HASH_LEN 64
@@ -115,42 +115,29 @@ int main(int argc, char ** argv) {
 
     CryptoInFilenameTransport in_t(&cctx, input_filename.c_str());
 
-    int fd = -1;
+    const int fd = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+    if (fd != -1) {
+        io::posix::fdbuf file(fd);
+        OutFileTransport out_t(fd);
 
-    try {
-        int fd = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+        char mem[4096];
+        char *buf;
 
-        if (fd != -1) {
-            OutFileTransport out_t(fd);
+        try {
+            while (1) {
+                buf = mem;
+                in_t.recv(&buf, sizeof(mem));
 
-            char mem[4096];
-            char *buf;
-
-            try {
-                while (1) {
-                    buf = mem;
-                    in_t.recv(&buf, sizeof(mem));
-
-                    out_t.send(mem, sizeof(mem));
-                }
+                out_t.send(mem, sizeof(mem));
             }
-            catch (Error e) {
-                if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-                    throw;
-                }
-
-                out_t.send(mem, buf - mem);
+        }
+        catch (Error const & e) {
+            if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
+                throw;
             }
 
-            close(fd);
+            out_t.send(mem, buf - mem);
         }
-    }
-    catch (...) {
-        if (fd != -1) {
-            close(fd);
-        }
-
-        throw;
     }
 
     return 0;

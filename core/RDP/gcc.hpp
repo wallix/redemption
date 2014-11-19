@@ -241,7 +241,7 @@ namespace GCC
         public:
         SubStream payload;
 
-        Create_Request_Recv(Stream & stream) 
+        Create_Request_Recv(Stream & stream)
             : payload([&stream](){
                 if (!stream.in_check_rem(23)){
                     LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %u)", stream.size());
@@ -474,7 +474,7 @@ namespace GCC
         public:
         SubStream payload;
 
-        Create_Response_Recv(Stream & stream) 
+        Create_Response_Recv(Stream & stream)
             : payload([&stream](){
                 if (!stream.in_check_rem(23)){
                     LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.size());
@@ -546,7 +546,7 @@ namespace GCC
                     LOG(LOG_WARNING, "Incomplete GCC::UserData data block header");
                     throw Error(ERR_GCC);
                 }
-                return stream.in_uint16_le();            
+                return stream.in_uint16_le();
             }())
             , length(stream.in_uint16_le())
             , payload([&stream, this](){
@@ -1762,9 +1762,9 @@ namespace GCC
         //       0x00100000             control transactions.
 
         struct CSNet {
-            uint16_t userDataType;
-            uint16_t length;
-            uint32_t channelCount;
+            uint16_t userDataType = CS_NET;
+            uint16_t length       = 12;
+            uint32_t channelCount = 0;
 
             enum {
                 CHANNEL_OPTION_INITIALIZED   = 0x80000000,
@@ -1787,15 +1787,7 @@ namespace GCC
                 uint32_t options;
             } channelDefArray[32];
 
-            bool permissive;
-
-            CSNet()
-            : userDataType(CS_NET)
-            , length(12)
-            , channelCount(0)
-            , permissive(false)
-            {
-            }
+            bool permissive = false;
 
             void emit(Stream & stream)
             {

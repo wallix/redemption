@@ -59,6 +59,7 @@ private:
         bool operator!=(const char * k) const noexcept
         { return !(*this == k); }
     };
+
     typedef std::array<value_type, 48> trans_t;
 
     language_t lang;
@@ -108,6 +109,7 @@ private:
             "<br>"
             "Contact your system administrator if you are<br>"
             "experiencing problems.",
+
             "Dans la zone de saisie login, entrez:<br>"
             "- le nom de la machine cible et du compte<br>"
             "  sous la forme login@serveur.<br>"
@@ -134,7 +136,7 @@ private:
                          "Echec de la connexion à la cible distante"}},
         {"comment", {"Comment", "Commentaire"}},
         {"no_results", {"No results found", "Aucun résultat"}},
-        {"back_selector", {"Back to Selector", "Retour au Sélécteur"}},
+        {"back_selector", {"Back to Selector", "Retour au Sélecteur"}},
         {"exit", {"Exit", "Sortir"}},
         {"comment", {"Comment", "Commentaire"}},
         {"comment_r", {"Comment *", "Commentaire *"}},
@@ -142,6 +144,7 @@ private:
         {"ticket_r", {"Ticket n° *", "Ticket n° *"}},
         {"duration", {"Duration", "Durée"}},
         {"duration_r", {"Duration *", "Durée *"}},
+
         {"note_duration_format",
                 {"format \"[hours]h[mins]m\" each unit is optional.",
                  "format \"[heures]h[mins]m\" chaque unité est optionnel."}},

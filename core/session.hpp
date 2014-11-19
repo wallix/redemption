@@ -42,7 +42,6 @@
 #include "front.hpp"
 #include "ssl_calls.hpp"
 #include "rect.hpp"
-#include "client_info.hpp"
 #include "netutils.hpp"
 
 #include "config.hpp"
@@ -379,7 +378,7 @@ private:
 
             char filename[2048];
             snprintf(filename, sizeof(filename), "%s/rdpproxy,%04d%02d%02d-%02d%02d%02d,%d.perf",
-                this->ini->video.record_tmp_path,
+                this->ini->video.record_tmp_path.c_str(),
                 tm_.tm_year + 1900, tm_.tm_mon, tm_.tm_mday, tm_.tm_hour, tm_.tm_min, tm_.tm_sec, this->perf_pid
                 );
 

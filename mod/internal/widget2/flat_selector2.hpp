@@ -331,7 +331,7 @@ public:
             }
         }
         else if (widget->group_id == this->apply.group_id) {
-            if (NOTIFY_SUBMIT == event) {
+            if (NOTIFY_SUBMIT == event || NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
                 if (this->notifier) {
                     this->notifier->notify(widget, event);
                 }

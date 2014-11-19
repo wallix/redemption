@@ -28,7 +28,6 @@
 #include <stdint.h>
 
 #include "RDP/share.hpp"
-#include "client_info.hpp"
 
 
 TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.")
@@ -749,6 +748,7 @@ enum {
         public:
         uint32_t verbose;
         uint32_t flags;
+
         SubStream payload;
         SecSpecialPacket_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel)
             : verbose(0)
@@ -837,7 +837,7 @@ enum {
                 }
                 return flags;
             }())
-            , payload(stream, stream.get_offset(), stream.in_remain()) 
+            , payload(stream, stream.get_offset(), stream.in_remain())
         // Constructor Body
         {
             stream.in_skip_bytes(this->payload.size());

@@ -27,9 +27,9 @@
 #include "bitmap.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-#include "fileutils.hpp"
 #include "unique_ptr.hpp"
 
+using std::size_t;
 
 enum {
       BITMAP_FOUND_IN_CACHE
@@ -63,6 +63,9 @@ private:
             memcpy(this->sha1, sha1_, sizeof(this->sha1));
         }
 
+        cache_lite_element(cache_lite_element const &) = delete;
+        cache_lite_element&operator=(cache_lite_element const &) = delete;
+
         void reset() {
             this->stamp = 0;
             this->is_valid = false;
@@ -92,6 +95,9 @@ private:
         : bmp(bmp)
         , stamp(0)
         {}
+
+        cache_element(cache_element const &) = delete;
+        cache_element&operator=(cache_element const &) = delete;
 
         void reset() {
             this->stamp = 0;
@@ -546,13 +552,13 @@ public:
         return false;
     }
 
+private:
     uint16_t get_cache_usage(uint8_t cache_id) const {
         REDASSERT((cache_id & IN_WAIT_LIST) == 0);
         uint16_t cache_entries = 0;
-        unsigned cache_index = 0;
         const cache_range<cache_element> & r = this->caches[cache_id];
-        const unsigned last_index = this->caches[cache_id].size();
-        for (; cache_index < last_index; ++cache_index) {
+        const size_t last_index = r.size();
+        for (size_t cache_index = 0; cache_index < last_index; ++cache_index) {
             if (r[cache_index]) {
                 ++cache_entries;
             }
@@ -560,6 +566,7 @@ public:
         return cache_entries;
     }
 
+public:
     void log() const {
         LOG( LOG_INFO
             , "BmpCache: %s (0=>%u, %u%s) (1=>%u, %u%s) (2=>%u, %u%s) (3=>%u, %u%s) (4=>%u, %u%s)"

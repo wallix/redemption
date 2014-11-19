@@ -32,8 +32,8 @@
 #include <stdint.h>
 #include <stdexcept>
 
-#include <fileutils.hpp>
-#include <string.hpp>
+#include "fileutils.hpp"
+#include "string.hpp"
 
 TODO("move SHARE_PATH to configuration (still used in front, checkfiles, session, transparent, some internal mods)")
 #if !defined(SHARE_PATH)
@@ -118,41 +118,7 @@ TODO("move these into configuration")
 
 using namespace std;
 
-static inline bool check_name(const char * str)
-{
-    return ((strlen(str) > 0) && (strlen(str) < 250));
-}
-
-static inline bool check_ask(const char * str)
-{
-    return (0 == strcmp(str, "ask"));
-}
-
-static inline void ask_string(const char * str, char buffer[], bool & flag)
-{
-    flag = check_ask(str);
-    if (!flag) {
-        strncpy(buffer, str, strlen(str));
-        buffer[strlen(str)] = 0;
-    }
-    else {
-        buffer[0] = 0;
-    }
-}
-
-static inline const char * get_printable_password(const char * password, uint32_t printing_mode) {
-    switch (printing_mode) {
-        case 1:
-            return ((*password) ? "<hidden>" : "<null>");
-        case 2:
-            return password;
-        default:
-            return "<hidden>";
-    }
-}
-
 struct IniAccounts {
-    char accountname[255];
     char username[255]; // should use string
     char password[255]; // should use string
 };
@@ -239,6 +205,7 @@ typedef enum
         AUTHID_ACCEPT_MESSAGE,  // display a dialog to valid a message
         AUTHID_DISPLAY_MESSAGE, // display a dialog box with a message
 
+
         AUTHID_AUTHENTICATED,
         AUTHID_REJECTED,        // rejected
 
@@ -269,6 +236,8 @@ typedef enum
         AUTHID_FORMFLAG,
 
         AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
+        AUTHID_ALLOW_CHANNELS,
+        AUTHID_DENY_CHANNELS,
 
         AUTHID_DISABLE_KEYBOARD_LOG,
 
@@ -349,6 +318,7 @@ typedef enum
 #define STRAUTHID_ACCEPT_MESSAGE           "accept_message"
 #define STRAUTHID_DISPLAY_MESSAGE          "display_message"
 
+
 #define STRAUTHID_AUTHENTICATED            "authenticated"
 #define STRAUTHID_REJECTED                 "rejected"
 
@@ -377,6 +347,9 @@ typedef enum
 #define STRAUTHID_SHOWFORM                 "showform"
 #define STRAUTHID_FORMFLAG                 "formflag"
 #define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS        "disable_tsk_switch_shortcuts"
+
+#define STRAUTHID_ALLOW_CHANNELS           "allow_channels"
+#define STRAUTHID_DENY_CHANNELS            "deny_channels"
 
 #define STRAUTHID_DISABLE_KEYBOARD_LOG     "disable_keyboard_log"
 #define STRAUTHID_RT_DISPLAY               "rt_display"
@@ -490,13 +463,16 @@ static const std::string authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
 
+    STRAUTHID_ALLOW_CHANNELS,
+    STRAUTHID_DENY_CHANNELS,
+
     STRAUTHID_DISABLE_KEYBOARD_LOG,
     STRAUTHID_RT_DISPLAY
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
 
-    std::string str = std::string(strauthid);
+    std::string str(strauthid);
     authid_t res = AUTHID_UNKNOWN;
     for (int i = 0; i < MAX_AUTHID - 1 ; i++) {
         if (0 == authstr[i].compare(str)) {
@@ -517,6 +493,88 @@ static inline const char * string_from_authid(authid_t authid) {
 #include "theme.hpp"
 
 struct Inifile : public FieldObserver {
+
+    struct null_fill { null_fill() {}; };
+
+    template<std::size_t N>
+    class StaticString {
+        char str[N];
+
+    public:
+        StaticString() noexcept
+        { this->str[0] = 0; }
+
+        StaticString(null_fill) noexcept
+        : str{}
+        {}
+
+        StaticString(const char * s) noexcept
+        { *this = s; }
+
+        StaticString& operator=(const char * s) noexcept {
+            char * p = this->str;
+            const char * e = p + N - 1;
+            for (; p != e && *s; ++s, ++p) {
+                *p = *s;
+            }
+            *p = 0;
+            return *this;
+        }
+
+        void setmem(const char * s, std::size_t n) noexcept {
+            memcpy(this->str, s, n);
+        }
+
+        void setmem(const char * s) noexcept {
+            this->setmem(s, N);
+        }
+
+        char * data() noexcept {
+            return this->str;
+        }
+
+        const char * c_str() const noexcept {
+            return this->str;
+        }
+
+        constexpr operator const char * () const noexcept {
+            return this->str;
+        }
+
+        constexpr std::size_t max_size() const noexcept {
+            return N;
+        }
+    };
+
+    template<std::size_t N>
+    class StaticPath {
+        char str[N];
+
+    public:
+        StaticPath() noexcept
+        { this->str[0] = 0; }
+
+        StaticPath(const char * s)
+        { *this = s; }
+
+        StaticPath& operator=(const char * s) {
+            pathncpy(this->str, s, this->max_size());
+            return *this;
+        }
+
+        const char * c_str() const noexcept {
+            return this->str;
+        }
+
+        constexpr operator const char * () const noexcept {
+            return this->str;
+        }
+
+        constexpr std::size_t max_size() const noexcept {
+            return N;
+        }
+    };
+
     struct Inifile_globals {
         BoolField capture_chunk;
 
@@ -528,31 +586,28 @@ struct Inifile : public FieldObserver {
         StringField target_application;  // AUTHID_TARGET_APPLICATION
 
         // BEGIN globals
-        bool bitmap_cache;                // default true
-        int  port;                        // default 3389
-        bool nomouse;
-        bool notimestamp;
-        int  encryptionLevel;             // 0=low, 1=medium, 2=high
-        char authip[255];                 //
-        int  authport;                    //
-        bool autovalidate;                // dialog autovalidation for test
+        bool bitmap_cache               = true;
+        unsigned port                   = 3389;
+        bool nomouse                    = false;
+        bool notimestamp                = false;
+        int  encryptionLevel            = 0; // 0=low, 1=medium, 2=high
+        StaticString<16> authip         = "127.0.0.1";
+        unsigned authport               = 3350;
+        bool autovalidate               = false; // dialog autovalidation for test
 
         // keepalive and no traffic auto deconnexion
-        int max_tick;
-        int keepalive_grace_delay;
-        int close_timeout;                // timeout of close box in seconds (0 to desactivate)
+        unsigned max_tick               = 30;
+        unsigned keepalive_grace_delay  = 30;
+        unsigned close_timeout          = 600; // timeout of close box in seconds (0 to desactivate)
 
-        bool internal_domain;
+        StaticString<8>    auth_channel      = null_fill();
+        BoolField          enable_file_encryption;  // AUTHID_OPT_FILE_ENCRYPTION //
+        StaticString<16>   listen_address        = "0.0.0.0";
+        bool               enable_ip_transparent = false;
+        StaticString<256>  certificate_password  = "inquisition";
 
-        char      dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
-        char      auth_channel[512];
-        BoolField enable_file_encryption;  // AUTHID_OPT_FILE_ENCRYPTION //
-        char      listen_address[256];
-        bool      enable_ip_transparent;
-        char      certificate_password[256];
-
-        char png_path[1024];
-        char wrm_path[1024];
+        StaticString<1024> png_path = PNG_PATH;
+        StaticString<1024> wrm_path = WRM_PATH;
 
         StringField alternate_shell;          // STRAUTHID_ALTERNATE_SHELL //
         StringField shell_working_directory;  // STRAUTHID_SHELL_WORKING_DIRECTORY //
@@ -561,175 +616,208 @@ struct Inifile : public FieldObserver {
         BoolField   movie;                    // AUTHID_OPT_MOVIE //
         StringField movie_path;               // AUTHID_OPT_MOVIE_PATH //
         StringField video_quality;            // AUTHID_VIDEO_QUALITY //
-        bool        enable_bitmap_update;
-        bool        enable_close_box;
-        bool        enable_osd;
+        bool        enable_bitmap_update = false;
+        bool        enable_close_box = true;
+        bool        enable_osd = true;
         // END globals
 
-        uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
-        unsigned flv_frame_interval;
+        uint64_t flv_break_interval = 600000000l;  // time between 2 flv movies captures (in seconds)
+        unsigned flv_frame_interval = 1000000L;
 
-        char persistent_path[1024];
+        StaticPath<1024> persistent_path = PERSISTENT_PATH;
     } globals;
 
     // section "client"
     struct {
         UnsignedField keyboard_layout;    // AUTHID_KEYBOARD_LAYOUT
-        bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default
+        bool ignore_logon_password = false; // if true, ignore password provided by RDP client, user need do login manually. default
 
-        uint32_t performance_flags_default;
-        uint32_t performance_flags_force_present;
-        uint32_t performance_flags_force_not_present;
+        uint32_t performance_flags_default           = 0;   // PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
+        uint32_t performance_flags_force_present     = 0;
+        uint32_t performance_flags_force_not_present = 0;
 
-        bool tls_fallback_legacy;
-        bool tls_support;
-        bool bogus_neg_request; // needed to connect with jrdp, based on bogus X224 layer code
+        bool tls_fallback_legacy = false;
+        bool tls_support         = true;
+        bool bogus_neg_request   = false; // needed to connect with jrdp, based on bogus X224 layer code
 
-        BoolField clipboard;                // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;       // AUTHID_OPT_DEVICEREDIRECTION //
 
         BoolField disable_tsk_switch_shortcuts; // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS //
 
-        int rdp_compression;    // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
+        int rdp_compression = 0; // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
 
-        uint32_t max_color_depth;   // 0 - Default (24-bit), 1 - 8-bit, 2 - 15-bit, 3 - 16-bit, 4 - 24-bit, 5 - 32-bit (not yet supported)
+        uint32_t max_color_depth = 24; // 8-bit, 15-bit, 16-bit, 24-bit, 32-bit (not yet supported) Default (24-bit)
 
-        bool persistent_disk_bitmap_cache;  // default false
-        bool cache_waiting_list;            // default true
-        bool persist_bitmap_cache_on_disk;  // default false
+        bool persistent_disk_bitmap_cache   = false;
+        bool cache_waiting_list             = true;
+        bool persist_bitmap_cache_on_disk   = false;
 
-        bool bitmap_compression;            // default true
+        bool bitmap_compression = true;
+
+        /**
+         * channel1,channel2,etc
+         * @{
+         */
+        redemption::string allow_channels = "*";
+        redemption::string deny_channels;
+        // @}
     } client;
 
     struct {
-        int rdp_compression;    // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
+        int rdp_compression = 0; // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
 
-        bool disconnect_on_logon_user_change;
+        bool disconnect_on_logon_user_change = false;
 
-        uint32_t open_session_timeout;
+        uint32_t open_session_timeout        = 0;
 
-        unsigned certificate_change_action; // 0 - Interrupt connection, 1 - Replace certificate then continue
+        unsigned certificate_change_action   = 0; // 0 - Interrupt connection, 1 - Replace certificate then continue
 
         redemption::string extra_orders;
 
-        bool enable_nla;
-        bool enable_kerberos;
+        bool enable_nla      = true;
+        bool enable_kerberos = false;
 
-        bool persistent_disk_bitmap_cache;  // default false
-        bool cache_waiting_list;            // default true
-        bool persist_bitmap_cache_on_disk;  // default false
+        bool persistent_disk_bitmap_cache   = false;
+        bool cache_waiting_list             = true;
+        bool persist_bitmap_cache_on_disk   = false;
+
+        /**
+         * channel1,channel2,etc
+         * @{
+         */
+        StringField allow_channels;
+        StringField deny_channels;
+        // @}
     } mod_rdp;
 
     struct
     {
+        BoolField clipboard;                // AUTHID_OPT_CLIPBOARD //
+
         redemption::string encodings;
 
-        bool allow_authentification_retries;
+        bool allow_authentification_retries = false;
     } mod_vnc;
 
     struct
     {
-        int on_end_of_data; // 0 - Wait for Escape, 1 - End session
+        int on_end_of_data = 0; // 0 - Wait for Escape, 1 - End session
     } mod_replay;
 
     // Section "video"
     struct {
-        unsigned capture_flags;   // 1 PNG capture, 2 WRM
+        unsigned capture_flags  = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
         // video opt from capture_flags
-        bool     capture_png;
-        bool     capture_wrm;
-        bool     capture_flv;
-        bool     capture_ocr;
+        bool     capture_png    = true;
+        bool     capture_wrm    = true;
+        bool     capture_flv    = false;
+        bool     capture_ocr    = false;
 
-        unsigned ocr_interval;
-        bool     ocr_on_title_bar_only;
-        unsigned ocr_max_unrecog_char_rate; // expressed in percentage,
-                                            //     0   - all of characters need be recognized
-                                            //     100 - accept all results
+        unsigned ocr_interval               = 100; // 1 every second
+        bool     ocr_on_title_bar_only      = false;
+        unsigned ocr_max_unrecog_char_rate  = 40; // expressed in percentage,
+                                                  //     0   - all of characters need be recognized
+                                                  //     100 - accept all results
 
-        unsigned png_interval;    // time between 2 png captures (in 1/10 seconds)
-        unsigned capture_groupid;
-        unsigned frame_interval;  // time between 2 frame captures (in 1/100 seconds)
-        unsigned break_interval;  // time between 2 wrm movies (in seconds)
-        unsigned png_limit;       // number of png captures to keep
-        char     replay_path[1024];
+        unsigned png_interval       = 3000; // time between 2 png captures (in 1/10 seconds)
+        unsigned capture_groupid    = 33;
+        unsigned frame_interval     = 40;   // time between 2 frame captures (in 1/100 seconds) (default: 2,5 frame per second)
+        unsigned break_interval     = 600;  // time between 2 wrm movies (in seconds)
+        unsigned png_limit          = 3;    // number of png captures to keep
+        StaticString<1024> replay_path = "/tmp/";
 
-        int l_bitrate;            // bitrate for low quality
-        int l_framerate;          // framerate for low quality
-        int l_height;             // height for low quality
-        int l_width;              // width for low quality
-        int l_qscale;             // qscale (parameter given to ffmpeg) for low quality
+        unsigned l_bitrate   = 20000; // bitrate for low quality
+        unsigned l_framerate = 5;     // framerate for low quality
+        unsigned l_height    = 480;   // height for low quality
+        unsigned l_width     = 640;   // width for low quality
+        unsigned l_qscale    = 25;    // qscale (parameter given to ffmpeg) for low quality
 
         // Same for medium quality
-        int m_bitrate;
-        int m_framerate;
-        int m_height;
-        int m_width;
-        int m_qscale;
+        unsigned m_bitrate   = 40000;
+        unsigned m_framerate = 5;
+        unsigned m_height    = 768;
+        unsigned m_width     = 1024;
+        unsigned m_qscale    = 15;
 
         // Same for high quality
-        int h_bitrate;
-        int h_framerate;
-        int h_height;
-        int h_width;
-        int h_qscale;
+        unsigned h_bitrate   = 200000;
+        unsigned h_framerate = 5;
+        unsigned h_height    = 1024;
+        unsigned h_width     = 1280;
+        unsigned h_qscale    = 15;
 
-        char hash_path[1024];
-        char record_tmp_path[1024];
-        char record_path[1024];
+        StaticPath<1024> hash_path       = HASH_PATH;
+        StaticPath<1024> record_tmp_path = RECORD_TMP_PATH;
+        StaticPath<1024> record_path     = RECORD_PATH;
 
-        bool     inactivity_pause;
-        unsigned inactivity_timeout;
+        bool     inactivity_pause   = false;
+        unsigned inactivity_timeout = 300;
 
         // 1 - Disable keyboard event logging in syslog
         // 2 - Disable keyboard event logging in WRM
         // 4 - Disable keyboard event logging in META
         UnsignedField disable_keyboard_log;     // AUTHID_DISABLE_KEYBOARD_LOG
-        bool disable_keyboard_log_syslog;
-        bool disable_keyboard_log_wrm;
-        bool disable_keyboard_log_ocr;
+        bool disable_keyboard_log_syslog = false;
+        bool disable_keyboard_log_wrm    = false;
+        bool disable_keyboard_log_ocr    = false;
         UnsignedField     rt_display;           // AUTHID_RT_DISPLAY
                                                 // 0: disable, 1: enable
 
-        unsigned wrm_color_depth_selection_strategy; // 0: 24-bit, 1: 16-bit
+        unsigned wrm_color_depth_selection_strategy = 0; // 0: 24-bit, 1: 16-bit
 
-        unsigned wrm_compression_algorithm;   // 0: uncompressed, 1: GZip, 2: Snappy, 3: bufferized, 4: LZMA (not yet supported)
+        unsigned wrm_compression_algorithm = 0; // 0: uncompressed, 1: GZip, 2: Snappy, 3: bufferized, 4: LZMA (not yet supported)
     } video;
 
     // Section "Crypto"
     struct {
-        char key0[32];
-        char key1[32];
+        StaticString<32> key0 = []() {
+            decltype(key0) ret;
+            ret.setmem(
+                "\x00\x01\x02\x03\x04\x05\x06\x07"
+                "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                "\x10\x11\x12\x13\x14\x15\x16\x17"
+                "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+            );
+            return ret;
+        }();
+        StaticString<32> key1 = []() {
+            decltype(key1) ret;
+            ret.setmem(
+                "\x00\x01\x02\x03\x04\x05\x06\x07"
+                "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                "\x10\x11\x12\x13\x14\x15\x16\x17"
+                "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+            );
+            return ret;
+        }();
     } crypto;
 
     // Section "debug"
     struct {
-        uint32_t x224;
-        uint32_t mcs;
-        uint32_t sec;
-        uint32_t rdp;
-        uint32_t primary_orders;
-        uint32_t secondary_orders;
-        uint32_t bitmap;
-        uint32_t capture;
-        uint32_t auth;
-        uint32_t session;
-        uint32_t front;
-        uint32_t mod_rdp;
-        uint32_t mod_vnc;
-        uint32_t mod_int;
-        uint32_t mod_xup;
-        uint32_t widget;
-        uint32_t input;
-        uint32_t password;
-        uint32_t compression;
-        uint32_t cache;
-        uint32_t bitmap_update;
-        uint32_t performance;
+        uint32_t x224               = 0;
+        uint32_t mcs                = 0;
+        uint32_t sec                = 0;
+        uint32_t rdp                = 0;
+        uint32_t primary_orders     = 0;
+        uint32_t secondary_orders   = 0;
+        uint32_t bitmap             = 0;
+        uint32_t capture            = 0;
+        uint32_t auth               = 0;
+        uint32_t session            = 0;
+        uint32_t front              = 0;
+        uint32_t mod_rdp            = 0;
+        uint32_t mod_vnc            = 0;
+        uint32_t mod_int            = 0;
+        uint32_t mod_xup            = 0;
+        uint32_t widget             = 0;
+        uint32_t input              = 0;
+        uint32_t password           = 0;
+        uint32_t compression        = 0;
+        uint32_t cache              = 0;
+        uint32_t bitmap_update      = 0;
+        uint32_t performance        = 0;
 
-        uint32_t pass_dialog_box;
-        int log_type;
-        char log_file_path[1024]; // log file location
+        uint32_t pass_dialog_box    = 0;
     } debug;
 
     // section "translation"
@@ -753,8 +841,7 @@ struct Inifile : public FieldObserver {
 
     // section "context"
     struct {
-        unsigned           selector_focus;           // --
-        char               movie[1024];              // --
+        StaticString<1024> movie;                    // --
 
         UnsignedField      opt_bitrate;              // AUTHID_OPT_BITRATE //
         UnsignedField      opt_framerate;            // AUTHID_OPT_FRAMERATE //
@@ -798,6 +885,7 @@ struct Inifile : public FieldObserver {
         StringField        accept_message;           // AUTHID_ACCEPT_MESSAGE //
         StringField        display_message;          // AUTHID_DISPLAY_MESSAGE //
 
+
         StringField        rejected;                 // AUTHID_REJECTED //
 
         BoolField          authenticated;            // AUTHID_AUTHENTICATED //
@@ -832,14 +920,11 @@ struct Inifile : public FieldObserver {
 
     Theme theme;
 
-    struct IniAccounts account;
+    IniAccounts account;
 
 public:
-    Inifile() : FieldObserver() {
-        this->init();
-    }
-
-    void init() {
+    Inifile()
+    {
         //init to_send_set of authid
         this->to_send_set.insert(AUTHID_PROXY_TYPE);
         this->to_send_set.insert(AUTHID_DISPLAY_MESSAGE);
@@ -864,66 +949,31 @@ public:
 
         this->something_changed = false;
 
-        //this->globals.capture_chunk = false;
-        this->globals.capture_chunk.set(false);
-
-
         this->to_send_set.insert(AUTHID_AUTH_USER);
         this->globals.auth_user.attach_ini(this,              AUTHID_AUTH_USER);
-        this->globals.auth_user.set_from_cstr("");
 
         this->to_send_set.insert(AUTHID_HOST);
         this->globals.host.attach_ini(this,                   AUTHID_HOST);
-        this->globals.host.set_from_cstr("");
 
         this->to_send_set.insert(AUTHID_TARGET);
         this->globals.target.attach_ini(this,                 AUTHID_TARGET);
-        this->globals.target.set_from_cstr("");
 
         this->to_send_set.insert(AUTHID_TARGET_USER);
         this->globals.target_user.attach_ini(this,            AUTHID_TARGET_USER);
-        this->globals.target_user.set_from_cstr("");
 
         this->globals.target_application.attach_ini(this,     AUTHID_TARGET_APPLICATION);
-        this->globals.target_application.set_from_cstr("");
 
         this->to_send_set.insert(AUTHID_TARGET_DEVICE);
         this->globals.target_device.attach_ini(this,          AUTHID_TARGET_DEVICE);
-        this->globals.target_device.set_from_cstr("");
 
         this->globals.enable_file_encryption.attach_ini(this, AUTHID_OPT_FILE_ENCRYPTION);
-        this->globals.enable_file_encryption.set(false);
 
         // Init globals
-        this->globals.bitmap_cache = true;
-        this->globals.port = 3389;
-        this->globals.nomouse = false;
-        this->globals.notimestamp = false;
-        this->globals.encryptionLevel = level_from_cstr("low");
-        strcpy(this->globals.authip, "127.0.0.1");
-        this->globals.authport = 3350;
-        this->globals.autovalidate = false;
 
-        this->globals.max_tick              = 30;
-        this->globals.keepalive_grace_delay = 30;
-        this->globals.close_timeout         = 600;       // timeout of close box set to 10 minutes
-
-        this->globals.internal_domain = false;
-        strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
-        memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
         // this->globals.enable_file_encryption = false;
-        strcpy(this->globals.listen_address, "0.0.0.0");
-        this->globals.enable_ip_transparent  = false;
-        strcpy(this->globals.certificate_password, "inquisition");
-
-        strcpy(this->globals.png_path, PNG_PATH);
-        strcpy(this->globals.wrm_path, WRM_PATH);
 
         this->globals.alternate_shell.attach_ini(this, AUTHID_ALTERNATE_SHELL);
         this->globals.shell_working_directory.attach_ini(this, AUTHID_SHELL_WORKING_DIRECTORY);
-
-        this->globals.alternate_shell.set_empty();
-        this->globals.shell_working_directory.set_empty();
 
         this->globals.codec_id.attach_ini(this, AUTHID_OPT_CODEC_ID);
         this->globals.movie.attach_ini(this, AUTHID_OPT_MOVIE);
@@ -932,175 +982,43 @@ public:
 
         this->globals.codec_id.set_from_cstr("flv");
         this->globals.movie.set(false);
-        this->globals.movie_path.set_empty();
         TODO("this could be some kind of enumeration");
         this->globals.video_quality.set_from_cstr("medium");
-        this->globals.enable_bitmap_update = false;
-        this->globals.enable_close_box = true;
-        this->globals.enable_osd = true;
-
-        pathncpy(this->globals.persistent_path, PERSISTENT_PATH, sizeof(this->globals.persistent_path));
         // End Init globals
 
-        this->globals.flv_break_interval = 600000000l;
-        this->globals.flv_frame_interval = 1000000L;
-
-        strcpy(this->account.accountname, "");
-        strcpy(this->account.username,    "");
-        strcpy(this->account.password,    "");
+        this->account.username[0] = 0;
+        this->account.password[0] = 0;
 
         // Begin Section "client".
         this->client.keyboard_layout.attach_ini(this, AUTHID_KEYBOARD_LAYOUT);
         this->client.keyboard_layout.set(0);
         this->to_send_set.insert(AUTHID_KEYBOARD_LAYOUT);
 
-        this->client.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
         this->client.device_redirection.attach_ini(this,AUTHID_OPT_DEVICEREDIRECTION);
-        this->client.clipboard.set(true);
         this->client.device_redirection.set(true);
-
-        this->client.ignore_logon_password               = false;
-        //      this->client.performance_flags_default           = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
-        this->client.performance_flags_default           = 0;
-        this->client.performance_flags_force_present     = 0;
-        this->client.performance_flags_force_not_present = 0;
-        this->client.tls_fallback_legacy                 = false;
-        this->client.tls_support                         = true;
-        this->client.bogus_neg_request                   = false;
-        this->client.rdp_compression                     = 0;
-        this->client.max_color_depth                     = 24;
-        this->client.persistent_disk_bitmap_cache        = false;
-        this->client.cache_waiting_list                  = true;
-        this->client.persist_bitmap_cache_on_disk        = false;
 
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
-
-        this->client.bitmap_compression = true;
         // End Section "client"
 
         // Begin section "mod_rdp"
-        this->mod_rdp.rdp_compression                   = 0;
-        this->mod_rdp.disconnect_on_logon_user_change   = false;
-        this->mod_rdp.enable_nla                        = true;
-        this->mod_rdp.enable_kerberos                   = false;
-        this->mod_rdp.open_session_timeout              = 0;
-        this->mod_rdp.certificate_change_action         = 0;
-        this->mod_rdp.persistent_disk_bitmap_cache      = false;
-        this->mod_rdp.cache_waiting_list                = true;
-        this->mod_rdp.persist_bitmap_cache_on_disk      = false;
-
-        this->mod_rdp.extra_orders.empty();
+        this->mod_rdp.allow_channels.set_from_cstr("*");
+        this->mod_rdp.allow_channels.attach_ini(this, AUTHID_ALLOW_CHANNELS);
+        //this->mod_rdp.deny_channels.set_from_cstr("");
+        this->mod_rdp.deny_channels.attach_ini(this, AUTHID_DENY_CHANNELS);
         // End Section "mod_rdp"
 
         // Begin section "mod_vnc"
-        this->mod_vnc.encodings.empty();
-
-        this->mod_vnc.allow_authentification_retries = false;
+        this->mod_vnc.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
         // End Section "mod_vnc"
 
-        // Begin Section "mod_replay"
-        this->mod_replay.on_end_of_data = 0;
-        // End Section "mod_replay"
-
         // Begin section video
-        this->video.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
-        this->video.capture_wrm   = true;
-        this->video.capture_png   = true;
-        this->video.capture_flv   = false;
-        this->video.capture_ocr   = false;
-
-        this->video.ocr_interval                = 100;      // 1 every second
-        this->video.ocr_on_title_bar_only       = false;
-        this->video.ocr_max_unrecog_char_rate   = 40;
-
-        this->video.png_interval    = 3000;
-        this->video.capture_groupid = 33;
-        this->video.frame_interval  = 40;         // 2,5 frame per second
-        this->video.break_interval  = 600;        // 10 minutes interval
-        this->video.png_limit       = 3;
-        strcpy(this->video.replay_path, "/tmp/");
-
-        this->video.l_bitrate   = 20000;
-        this->video.l_framerate = 5;
-        this->video.l_height    = 480;
-        this->video.l_width     = 640;
-        this->video.l_qscale    = 25;
-        this->video.m_bitrate   = 40000;
-        this->video.m_framerate = 5;
-        this->video.m_height    = 768;
-        this->video.m_width     = 1024;
-        this->video.m_qscale    = 15;
-        this->video.h_bitrate   = 200000;
-        this->video.h_framerate = 5;
-        this->video.h_height    = 1024;
-        this->video.h_width     = 1280;
-        this->video.h_qscale    = 15;
-
-        pathncpy(this->video.hash_path,       HASH_PATH,       sizeof(this->video.hash_path));
-        pathncpy(this->video.record_path,     RECORD_PATH,     sizeof(this->video.record_path));
-        pathncpy(this->video.record_tmp_path, RECORD_TMP_PATH, sizeof(this->video.record_tmp_path));
-
-        this->video.inactivity_pause   = false;
-        this->video.inactivity_timeout = 300;
-
         this->video.disable_keyboard_log.attach_ini(this, AUTHID_DISABLE_KEYBOARD_LOG);
         this->video.disable_keyboard_log.set(0);
         this->video.rt_display.attach_ini(this, AUTHID_RT_DISPLAY);
         this->video.rt_display.set(0);
         this->to_send_set.insert(AUTHID_DISABLE_KEYBOARD_LOG);
-        this->video.disable_keyboard_log_syslog = false;
-        this->video.disable_keyboard_log_wrm    = false;
-        this->video.disable_keyboard_log_ocr    = false;
-
-        this->video.wrm_color_depth_selection_strategy = 0;
-        this->video.wrm_compression_algorithm          = 0;
         // End section "video"
-
-        // Init crypto
-        memcpy(this->crypto.key0,
-            "\x00\x01\x02\x03\x04\x05\x06\x07"
-            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-            "\x10\x11\x12\x13\x14\x15\x16\x17"
-            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
-            sizeof(this->crypto.key0));
-
-        memcpy(this->crypto.key1,
-            "\x00\x01\x02\x03\x04\x05\x06\x07"
-            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-            "\x10\x11\x12\x13\x14\x15\x16\x17"
-            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
-            sizeof(this->crypto.key1));
-        // End Init crypto
-
-        // Begin Section "debug".
-        this->debug.x224              = 0;
-        this->debug.mcs               = 0;
-        this->debug.sec               = 0;
-        this->debug.rdp               = 0;
-        this->debug.primary_orders    = 0;
-        this->debug.secondary_orders  = 0;
-        this->debug.bitmap            = 0;
-        this->debug.capture           = 0;
-        this->debug.auth              = 0;
-        this->debug.session           = 0;
-        this->debug.front             = 0;
-        this->debug.mod_rdp           = 0;
-        this->debug.mod_vnc           = 0;
-        this->debug.mod_int           = 0;
-        this->debug.mod_xup           = 0;
-        this->debug.widget            = 0;
-        this->debug.input             = 0;
-        this->debug.password          = 0;
-        this->debug.compression       = 0;
-        this->debug.cache             = 0;
-        this->debug.bitmap_update     = 0;
-        this->debug.performance       = 0;
-
-        this->debug.log_type          = 2; // syslog by default
-        this->debug.log_file_path[0]  = 0;
-        this->debug.pass_dialog_box   = 0;
-        // End Section "debug"
 
         // Begin Section "translation"
         this->translation.button_ok.set_from_cstr("OK");
@@ -1147,11 +1065,6 @@ public:
         // End Section "translation"
 
         // Begin section "context"
-
-        this->context.selector_focus              = 0;
-        this->context.movie[0]                    = 0;
-
-
         this->context.opt_bitrate.set(40000);
         this->context.opt_framerate.set(5);
         this->context.opt_qscale.set(15);
@@ -1164,13 +1077,8 @@ public:
         this->context.opt_height.set(600);
         this->context.opt_width.set(800);
 
-        this->context.auth_error_message.empty();
-
         this->context.selector.set(false);
         this->context.selector_current_page.set(1);
-        this->context.selector_device_filter.set_empty();
-        this->context.selector_group_filter.set_empty();
-        this->context.selector_proto_filter.set_empty();
         this->context.selector_lines_per_page.set(0);
         this->context.selector_number_of_pages.set(1);
 
@@ -1181,7 +1089,6 @@ public:
         this->globals.auth_user.ask();
 
 
-        this->context.target_password.set_empty();
         this->context.target_password.ask();
 
         this->context.target_port.set(3389);
@@ -1193,29 +1100,18 @@ public:
         this->context.target_protocol.set_from_cstr("RDP");
         this->context.target_protocol.ask();
 
-        this->context.password.set_empty();
         this->context.password.ask();
 
-        this->context.reporting.set_empty();
 
-        this->context.authchannel_answer.set_empty();
-        this->context.authchannel_result.set_empty();
-        this->context.authchannel_target.set_empty();
-
-
-        this->context.message.set_empty();
         this->context.message.attach_ini(this, AUTHID_MESSAGE);
 
-        this->context.pattern_kill.set_empty();
         this->context.pattern_kill.attach_ini(this, AUTHID_PATTERN_KILL);
 
-        this->context.pattern_notify.set_empty();
         this->context.pattern_notify.attach_ini(this, AUTHID_PATTERN_NOTIFY);
 
         this->context.accept_message.set_empty();
         this->context.display_message.set_empty();
 
-        this->context.rejected.set_empty();
         this->context.rejected.attach_ini(this, AUTHID_REJECTED);
 
         this->context.authenticated.set(false);
@@ -1225,13 +1121,9 @@ public:
 
         this->context.proxy_type.set_from_cstr("RDP");
 
-        this->context.trace_seal.set_empty();
-
-        this->context.session_id.set_empty();
         this->context.session_id.attach_ini(this, AUTHID_SESSION_ID);
 
         this->context.end_date_cnx.set(0);
-        this->context.end_time.set_empty();
         this->context.end_date_cnx.attach_ini(this, AUTHID_END_DATE_CNX);
         this->context.end_time.attach_ini(this, AUTHID_END_TIME);
 
@@ -1239,8 +1131,6 @@ public:
         this->context.timezone.set(-3600);
         this->context.mode_console.attach_ini(this, AUTHID_MODE_CONSOLE);
         this->context.timezone.attach_ini(this, AUTHID_TIMEZONE);
-
-        this->context.real_target_device.set_empty();
 
         this->context.authentication_challenge.ask();
         this->context.authentication_challenge.attach_ini(this, AUTHID_AUTHENTICATION_CHALLENGE);
@@ -1310,10 +1200,9 @@ public:
         this->context.authchannel_result.attach_ini(this,AUTHID_AUTHCHANNEL_RESULT);
         this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
         this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
+    }
 
-
-    };
-
+public:
     virtual void set_value(const char * context, const char * key, const char * value)
     {
         if (0 == strcmp(context, "globals")) {
@@ -1333,8 +1222,7 @@ public:
                 this->globals.encryptionLevel = level_from_cstr(value);
             }
             else if (0 == strcmp(key, "authip")) {
-                strncpy(this->globals.authip, value, sizeof(this->globals.authip));
-                this->globals.authip[sizeof(this->globals.authip) - 1] = 0;
+                this->globals.authip = value;
             }
             else if (0 == strcmp(key, "authport")) {
                 this->globals.authport = ulong_from_cstr(value);
@@ -1352,38 +1240,26 @@ public:
             else if (0 == strcmp(key, "close_timeout")) {
                 this->globals.close_timeout = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "internal_domain")) {
-                this->globals.internal_domain = bool_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "dynamic_conf_path")) {
-                strncpy(this->globals.dynamic_conf_path, value, sizeof(this->globals.dynamic_conf_path));
-                this->globals.dynamic_conf_path[sizeof(this->globals.dynamic_conf_path) - 1] = 0;
-            }
             else if (0 == strcmp(key, "auth_channel")) {
-                strncpy(this->globals.auth_channel, value, 8);
-                this->globals.auth_channel[7] = 0;
+                this->globals.auth_channel = value;
             }
             else if (0 == strcmp(key, "enable_file_encryption")) {
                 this->globals.enable_file_encryption.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "listen_address")) {
-                strncpy(this->globals.listen_address, value, sizeof(this->globals.listen_address));
-                this->globals.listen_address[sizeof(this->globals.listen_address) - 1] = 0;
+                this->globals.listen_address = value;
             }
             else if (0 == strcmp(key, "enable_ip_transparent")) {
                 this->globals.enable_ip_transparent = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "certificate_password")) {
-                strncpy(this->globals.certificate_password, value, sizeof(this->globals.certificate_password));
-                this->globals.certificate_password[sizeof(this->globals.certificate_password) - 1] = 0;
+                this->globals.certificate_password = value;
             }
             else if (0 == strcmp(key, "png_path")) {
-                strncpy(this->globals.png_path, value, sizeof(this->globals.png_path));
-                this->globals.png_path[sizeof(this->globals.png_path) - 1] = 0;
+                this->globals.png_path = value;
             }
             else if (0 == strcmp(key, "wrm_path")) {
-                strncpy(this->globals.wrm_path, value, sizeof(this->globals.wrm_path));
-                this->globals.wrm_path[sizeof(this->globals.wrm_path) - 1] = 0;
+                this->globals.wrm_path = value;
             }
             else if (0 == strcmp(key, "alternate_shell")) {
                 this->globals.alternate_shell.set_from_cstr(value);
@@ -1413,7 +1289,7 @@ public:
                 this->globals.enable_osd = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "persistent_path")) {
-                pathncpy(this->globals.persistent_path, value, sizeof(this->globals.persistent_path));
+                this->globals.persistent_path = value;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -1440,9 +1316,6 @@ public:
             }
             else if (0 == strcmp(key, "bogus_neg_request")) {
                 this->client.bogus_neg_request = bool_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "clipboard")) {
-                this->client.clipboard.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "device_redirection")) {
                 this->client.device_redirection.set_from_cstr(value);
@@ -1477,6 +1350,12 @@ public:
             }
             else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
                 this->client.persist_bitmap_cache_on_disk = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "allow_channels")) {
+                this->client.allow_channels.copy_c_str(value);
+            }
+            else if (0 == strcmp(key, "deny_channels")) {
+                this->client.deny_channels.copy_c_str(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -1517,12 +1396,21 @@ public:
             else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
                 this->mod_rdp.persist_bitmap_cache_on_disk = bool_from_cstr(value);
             }
+            else if (0 == strcmp(key, "allow_channels")) {
+                this->mod_rdp.allow_channels.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "deny_channels")) {
+                this->mod_rdp.deny_channels.set_from_cstr(value);
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
         else if (0 == strcmp(context, "mod_vnc")) {
-            if (0 == strcmp(key, "encodings")) {
+            if (0 == strcmp(key, "clipboard")) {
+                this->mod_vnc.clipboard.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "encodings")) {
                 this->mod_vnc.encodings.copy_c_str(value);
             }
             else if (0 == strcmp(key, "allow_authentification_retries")) {
@@ -1573,8 +1461,7 @@ public:
                 this->video.png_limit   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "replay_path")) {
-                strncpy(this->video.replay_path, value, sizeof(this->video.replay_path));
-                this->video.replay_path[sizeof(this->video.replay_path) - 1] = 0;
+                this->video.replay_path = value;
             }
             else if (0 == strcmp(key, "l_bitrate")) {
                 this->video.l_bitrate   = ulong_from_cstr(value);
@@ -1625,13 +1512,13 @@ public:
                 this->globals.movie_path.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "hash_path")) {
-                pathncpy(this->video.hash_path,       value, sizeof(this->video.hash_path));
+                this->video.hash_path = value;
             }
             else if (0 == strcmp(key, "record_path")) {
-                pathncpy(this->video.record_path,     value, sizeof(this->video.record_path));
+                this->video.record_path = value;
             }
             else if (0 == strcmp(key, "record_tmp_path")) {
-                pathncpy(this->video.record_tmp_path, value, sizeof(this->video.record_tmp_path));
+                this->video.record_tmp_path = value;
             }
             else if (0 == strcmp(key, "disable_keyboard_log")) {
                 this->video.disable_keyboard_log.set_from_cstr(value);
@@ -1660,7 +1547,7 @@ public:
                     for (size_t i = 0; i < sizeof(this->crypto.key0); i++) {
                         memcpy(hexval, value + i * 2, 2);
 
-                        this->crypto.key0[i] = strtol(hexval, &end, 16);
+                        this->crypto.key0.data()[i] = strtol(hexval, &end, 16);
                     }
                 }
             }
@@ -1671,7 +1558,7 @@ public:
                     for (size_t i = 0; i < sizeof(this->crypto.key1); i++) {
                         memcpy(hexval, value + i * 2, 2);
 
-                        this->crypto.key1[i] = strtol(hexval, &end, 16);
+                        this->crypto.key1.data()[i] = strtol(hexval, &end, 16);
                     }
                 }
             }
@@ -1743,15 +1630,8 @@ public:
             else if (0 == strcmp(key, "bitmap_update")) {
                 this->debug.bitmap_update     = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "log_type")) {
-                this->debug.log_type          = logtype_from_cstr(value);
-            }
             else if (0 == strcmp(key, "pass_dialog_box")) {
                 this->debug.pass_dialog_box   = ulong_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "log_file_path")) {
-                strncpy(this->debug.log_file_path, value, sizeof(this->debug.log_file_path));
-                this->debug.log_file_path[sizeof(this->debug.log_file_path) - 1] = 0;
             }
             else if (0 == strcmp(key, "performance")) {
                 this->debug.performance       = ulong_from_cstr(value);
@@ -1803,6 +1683,9 @@ public:
             else if (0 == strcmp(key, "help_message")) {
                 this->translation.help_message.set_from_cstr(value);
             }
+            else if (0 == strcmp(key, "manager_close_cnx")) {
+                this->translation.manager_close_cnx.set_from_cstr(value);
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1838,42 +1721,33 @@ public:
         }
     }   // void set_value(const char * context, const char * key, const char * value)
 
-    TODO("Should only be used by Authentifier "
-         "It currently ask if the field has been modified "
-         "and set it to not modified if it is not asked ")
-    bool context_has_changed(authid_t authid) {
-        bool res = false;
-        try {
-            BaseField * field = this->field_list.at(authid);
-            res = field->has_changed();
-            field->use();
+
+private:
+    BaseField * get_field(authid_t authid) const {
+        auto pos = this->field_list.find(authid);
+        if (pos != this->field_list.end()) {
+            return pos->second;
         }
-        catch (const std::out_of_range & oor) {
-            LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
-            res = false;
-        }
-        return res;
+        return nullptr;
     }
 
+public:
     /******************
      * Set_from_acl sets a value to corresponding field but does not mark it as changed
      */
     void set_from_acl(const char * strauthid, const char * value) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
-            try {
-                if (authid == AUTHID_AUTH_ERROR_MESSAGE)
-                {
-                    this->context.auth_error_message.copy_c_str(value);
-                }
-                else
-                {
-                    BaseField * field = this->field_list.at(authid);
+            if (authid == AUTHID_AUTH_ERROR_MESSAGE) {
+                this->context.auth_error_message.copy_c_str(value);
+            }
+            else {
+                if (BaseField * field = this->get_field(authid)) {
                     field->set_from_acl(value);
                 }
-            }
-            catch (const std::out_of_range & oor) {
-                LOG(LOG_WARNING, "Inifile::set_from_acl(id): unknown authid=%d", authid);
+                else {
+                    LOG(LOG_WARNING, "Inifile::set_from_acl(id): unknown authid=%d", authid);
+                }
             }
         }
         else {
@@ -1887,26 +1761,15 @@ public:
     void ask_from_acl(const char * strauthid) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
-            try {
-                BaseField * field = this->field_list.at(authid);
+            if (BaseField * field = this->get_field(authid)) {
                 field->ask_from_acl();
             }
-            catch (const std::out_of_range & oor) {
+            else {
                 LOG(LOG_WARNING, "Inifile::ask_from_acl(id): unknown authid=%d", authid);
             }
         }
         else {
             LOG(LOG_WARNING, "Inifile::ask_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
-        }
-    }
-
-    void context_set_value_by_string(const char * strauthid, const char * value) {
-        authid_t authid = authid_from_string(strauthid);
-        if (authid != AUTHID_UNKNOWN) {
-            this->context_set_value(authid, value);
-        }
-        else {
-            LOG(LOG_WARNING, "Inifile::context_set_value(strid): unknown strauthid=\"%s\"", strauthid);
         }
     }
 
@@ -1919,11 +1782,10 @@ public:
                 this->context.auth_error_message.copy_c_str(value);
                 break;
             default:
-                try {
-                    BaseField * field = this->field_list.at(authid);
+                if (BaseField * field = this->get_field(authid)) {
                     field->set_from_cstr(value);
                 }
-                catch (const std::out_of_range & oor) {
+                else {
                     LOG(LOG_WARNING, "Inifile::context_set_value(id): unknown authid=%d", authid);
                 }
                 break;
@@ -1951,12 +1813,12 @@ public:
                 pszReturn = this->context.auth_error_message.c_str();
                 break;
             default:
-                try{
-                    BaseField * field = this->field_list.at(authid);
-                    if (!field->is_asked())
+                if (BaseField * field = this->get_field(authid)) {
+                    if (!field->is_asked()) {
                         pszReturn = field->get_value();
+                    }
                 }
-                catch (const std::out_of_range & oor) {
+                else {
                     LOG(LOG_WARNING, "Inifile::context_get_value(id): unknown authid=\"%d\"", authid);
                 }
                 break;
@@ -1965,45 +1827,23 @@ public:
         return pszReturn;
     }
 
-    void context_ask_by_string(const char *strauthid) {
-        authid_t authid = authid_from_string(strauthid);
-        if (authid != AUTHID_UNKNOWN) {
-            context_ask(authid);
+    void context_ask(authid_t authid) {
+        if (BaseField * field = this->get_field(authid)) {
+            field->ask();
         }
         else {
-            LOG(LOG_WARNING, "Inifile::context_ask(strid): unknown strauthid=\"%s\"", strauthid);
-        }
-    }
-
-    void context_ask(authid_t authid) {
-        try{
-            this->field_list.at(authid)->ask();
-        }
-        catch (const std::out_of_range & oor) {
             LOG(LOG_WARNING, "Inifile::context_ask(id): unknown authid=%d", authid);
         }
     }
 
-    bool context_is_asked_by_string(const char *strauthid) {
-        authid_t authid = authid_from_string(strauthid);
-        if (authid != AUTHID_UNKNOWN) {
-            return context_is_asked(authid);
-        }
-
-        LOG(LOG_WARNING, "Inifile::context_is_asked(strid): unknown strauthid=\"%s\"", strauthid);
-
-        return false;
-    }
-
     bool context_is_asked(authid_t authid) {
-        bool res = false;
-        try{
-            res = this->field_list.at(authid)->is_asked();
+        if (BaseField * field = this->get_field(authid)) {
+            return field->is_asked();
         }
-        catch (const std::out_of_range & oor) {
+        else {
             LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
+            return false;
         }
-        return res;
     }
 
     bool context_get_bool(authid_t authid) {

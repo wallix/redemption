@@ -20,14 +20,13 @@
    Base64 converter
 */
 
-
 #ifndef _REDEMPTION_UTILS_BASE64_HPP_
 #define _REDEMPTION_UTILS_BASE64_HPP_
 
+#include <cstddef>
 
-#include <stdint.h>
-#include "error.hpp"
-#include "log.hpp"
+using std::size_t;
+
 
 class Base64 {
     unsigned char encoding_table[64];

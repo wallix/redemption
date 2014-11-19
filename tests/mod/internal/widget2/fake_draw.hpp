@@ -151,19 +151,7 @@ struct TestDraw : DrawApi
 
     virtual void text_metrics(const char* text, int& width, int& height)
     {
-        height = 0;
-        width = 0;
-        uint32_t uni[256];
-        size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
-        if (len_uni){
-            for (size_t index = 0; index < len_uni; index++) {
-                FontChar & font_item = this->gd.get_font(this->font, uni[index]);
-                // width += font_item->incby;
-                width += font_item.width + 2;
-                height = std::max(height, font_item.height);
-            }
-            width -= 2;
-        }
+        this->gd.text_metrics(text, width, height, this->font);
     }
 
     void save_to_png(const char * filename)

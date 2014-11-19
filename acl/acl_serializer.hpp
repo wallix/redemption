@@ -32,14 +32,9 @@
 #include "netutils.hpp"
 #include "socket_transport.hpp"
 #include "translation.hpp"
+#include "get_printable_password.hpp"
 
 class AclSerializer{
-
-    typedef struct {
-        bool tosend;
-        authid_t field_id;
-    } authid_to_send_t;
-
     enum {
         HEADER_SIZE = 4
     };
@@ -232,7 +227,7 @@ public:
             }
             stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
             this->auth_trans.send(stream.get_data(), total_length);
-        } catch (Error e) {
+        } catch (Error const &) {
             this->ini->context.authenticated.set(false);
             this->ini->context.rejected.set_from_cstr(TR("acl_fail", *(this->ini)));
             // this->ini->context.rejected.set_from_cstr("Authentifier service failed");

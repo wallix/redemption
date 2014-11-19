@@ -64,11 +64,25 @@
 #include "transparentrecorder.hpp"
 
 #include "genrandom.hpp"
+#include "authorization_channels.hpp"
 
-struct mod_rdp : public mod_api {
+class mod_rdp : public mod_api {
+
     FrontAPI & front;
 
     CHANNELS::ChannelDefArray mod_channel_list;
+
+    AuthorizationChannels make_authorization_channels_with_rdp_params(const ModRDPParams & mod_rdp_params) {
+        if (mod_rdp_params.allow_channels || mod_rdp_params.deny_channels) {
+            return make_authorization_channels(
+                mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : "",
+                mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : ""
+            );
+        }
+        return AuthorizationChannels();
+    }
+    AuthorizationChannels authorization_channels;
+
 
     int  use_rdp5;
 
@@ -83,8 +97,6 @@ struct mod_rdp : public mod_api {
 
     int      share_id;
     uint16_t userid;
-
-    int version;
 
     char hostname[16];
     char username[128];
@@ -124,7 +136,6 @@ struct mod_rdp : public mod_api {
     int state;
     Pointer cursors[32];
     const bool console_session;
-    const int brush_cache_code;
     const uint8_t front_bpp;
     const uint32_t performanceFlags;
     Random & gen;
@@ -143,7 +154,8 @@ struct mod_rdp : public mod_api {
     char clientAddr[512];
 
     const bool enable_bitmap_update;
-    const bool enable_clipboard;                   // true clipboard available, false clipboard unavailable
+    const bool enable_clipboard_in;                // true clipboard available, false clipboard unavailable
+    const bool enable_clipboard_out;               // true clipboard available, false clipboard unavailable
     const bool enable_fastpath;                    // choice of programmer
           bool enable_fastpath_client_input_event; // choice of programmer + capability of server
     const bool enable_fastpath_server_update;      // = choice of programmer
@@ -192,6 +204,7 @@ struct mod_rdp : public mod_api {
 
     bool deactivation_reactivation_in_progress;
 
+public:
     mod_rdp( Transport * trans
            , FrontAPI & front
            , const ClientInfo & info
@@ -200,13 +213,13 @@ struct mod_rdp : public mod_api {
            )
         : mod_api(info.width - (info.width % 4), info.height)
         , front(front)
+        , authorization_channels(make_authorization_channels_with_rdp_params(mod_rdp_params))
         , use_rdp5(1)
         , keylayout(info.keylayout)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose)
         , share_id(0)
         , userid(0)
-        , version(0)
         , bpp(0)
         , encryptionLevel(0)
         , key_flags(mod_rdp_params.key_flags)
@@ -214,7 +227,6 @@ struct mod_rdp : public mod_api {
         , connection_finalization_state(EARLY)
         , state(MOD_RDP_NEGO)
         , console_session(info.console_session)
-        , brush_cache_code(info.brush_cache_code)
         , front_bpp(info.bpp)
         , performanceFlags(info.rdp5_performanceflags)
         , gen(gen)
@@ -228,7 +240,8 @@ struct mod_rdp : public mod_api {
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
               , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
         , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
-        , enable_clipboard(mod_rdp_params.enable_clipboard)
+        , enable_clipboard_in(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_up"))
+        , enable_clipboard_out(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_down"))
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
@@ -575,78 +588,92 @@ struct mod_rdp : public mod_api {
                                                              , chunk_size, flags);
         }
 
-        const CHANNELS::ChannelDef * front_channel =
-            this->front.get_channel_list().get_by_name(mod_channel_name);
+        const CHANNELS::ChannelDef * front_channel = this->front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }
     }
 
+private:
+    template<class PDU, class... Args>
+    void send_clipboard_pdu_to_front_channel(bool response_ok, Args&&... args) {
+        PDU             format_data_response_pdu(response_ok);
+        uint8_t         data[256];
+        FixedSizeStream out_s(data, sizeof(data));
+
+        format_data_response_pdu.emit(out_s, args...);
+
+        this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                                   , out_s.get_data()
+                                   , out_s.size()
+                                   , out_s.size()
+                                   , CHANNELS::CHANNEL_FLAG_FIRST
+                                   | CHANNELS::CHANNEL_FLAG_LAST
+                                   );
+    }
+
+public:
     virtual void send_to_mod_channel( const char * const front_channel_name
                                     , Stream & chunk
                                     , size_t length
                                     , uint32_t flags) {
-        if (this->verbose & 16) {
-            LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
-            LOG(LOG_INFO, "sending to channel %s", front_channel_name);
-        }
+        struct TraleLog {
+            const bool b;
+            TraleLog(bool verbose, const char * const front_channel_name)
+            : b(verbose & 16)
+            {
+                if (this->b) {
+                    LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
+                    LOG(LOG_INFO, "sending to channel %s", front_channel_name);
+                }
+            }
+            ~TraleLog() {
+                if (this->b) {
+                    LOG(LOG_INFO, "mod_rdp::send_to_mod_channel done");
+                }
+            }
+        } trace(this->verbose, front_channel_name);
 
         // Clipboard is unavailable and is a Clipboard PDU
-        if (!this->enable_clipboard && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+        if (!this->enable_clipboard_in && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "mod_rdp clipboard PDU");
             }
 
             if (!chunk.in_check_rem(2)) {
-                LOG(LOG_INFO, "mod_vnc::send_to_mod_channel truncated msgType, need=2 remains=%u",
+                LOG(LOG_INFO, "mod_rdp::send_to_mod_channel truncated msgType, need=2 remains=%u",
                     chunk.in_remain());
-                throw Error(ERR_VNC);
+                throw Error(ERR_RDP_DATA_TRUNCATED);
             }
 
             uint16_t msgType = chunk.in_uint16_le();
 
-            if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+            if (this->enable_clipboard_out) {
+                if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
+                    this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(true, "\0");
+                    return;
+                }
+            }
+            else if (msgType == RDPECLIP::CB_FORMAT_LIST) {
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                 }
-
-                bool response_ok = false;
-
+                const bool response_ok = false;
                 // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
                 // 03 00 02 00 00 00 00 00
-                RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
-                BStream                         out_s(256);
-
-                format_list_response_pdu.emit(out_s);
-
-                size_t length     = out_s.size();
-                size_t chunk_size = length;
-
-                this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                             , out_s.get_data()
-                                             , length
-                                             , chunk_size
-                                             , CHANNELS::CHANNEL_FLAG_FIRST
-                                             | CHANNELS::CHANNEL_FLAG_LAST
-                                             );
-
+                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(response_ok);
                 return;
             }
         }
 
-        const CHANNELS::ChannelDef * mod_channel =
-            this->mod_channel_list.get_by_name(front_channel_name);
+        const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
         // send it if module has a matching channel, if no matching channel is found just forget it
         if (mod_channel) {
             if (this->verbose & 16) {
-                int index = this->mod_channel_list.get_index_by_name(front_channel_name);
+                const int index = this->mod_channel_list.get_index_by_name(front_channel_name);
                 mod_channel->log(index);
             }
             this->send_to_channel(*mod_channel, chunk, length, flags);
-        }
-
-        if (this->verbose & 16) {
-            LOG(LOG_INFO, "mod_rdp::send_to_mod_channel done");
         }
     }
 
@@ -677,7 +704,7 @@ struct mod_rdp : public mod_api {
         if (this->verbose & 16) {
             LOG( LOG_INFO, "mod_rdp::send_to_channel length=%u chunk_size=%u", static_cast<unsigned>(length)
                  , (unsigned)chunk.size());
-            channel.log(-1);
+            channel.log(-1u);
         }
 
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -790,7 +817,7 @@ struct mod_rdp : public mod_api {
                             for (size_t i = 0; i < maxhostlen ; i++){
                                 cs_core.clientName[i] = hostname[i];
                             }
-                            bzero(&(cs_core.clientName[hostlen]), 16-hostlen);
+                            memset(&(cs_core.clientName[hostlen]), 0, 16-hostlen);
 
                             if (this->nego.tls){
                                 cs_core.serverSelectedProtocol = this->nego.selected_protocol;
@@ -839,16 +866,18 @@ struct mod_rdp : public mod_api {
                                 GCC::UserData::CSNet cs_net;
                                 cs_net.channelCount = num_channels;
                                 for (size_t index = 0; index < num_channels; index++) {
-                                    const CHANNELS::ChannelDef & channel_item = channel_list[index];
-                                    memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
-                                    cs_net.channelDefArray[index].options = channel_item.flags;
-                                    CHANNELS::ChannelDef def;
-                                    memcpy(def.name, cs_net.channelDefArray[index].name, 8);
-                                    def.flags = channel_item.flags;
-                                    if (this->verbose & 16){
-                                        def.log(index);
+                                    if (this->authorization_channels.authorized(channel_list[index].name)) {
+                                        const CHANNELS::ChannelDef & channel_item = channel_list[index];
+                                        memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
+                                        cs_net.channelDefArray[index].options = channel_item.flags;
+                                        CHANNELS::ChannelDef def;
+                                        memcpy(def.name, cs_net.channelDefArray[index].name, 8);
+                                        def.flags = channel_item.flags;
+                                        if (this->verbose & 16){
+                                            def.log(index);
+                                        }
+                                        this->mod_channel_list.push_back(def);
                                     }
-                                    this->mod_channel_list.push_back(def);
                                 }
 
                                 // Inject a new channel for auth_channel virtual channel (wablauncher)
@@ -1055,11 +1084,11 @@ struct mod_rdp : public mod_api {
                                     if (this->verbose & 16){
                                         LOG(LOG_INFO, "server_channels_count=%u sent_channels_count=%u",
                                             sc_net.channelCount,
-                                            mod_channel_list.channelCount);
+                                            mod_channel_list.size());
                                     }
                                     for (uint32_t index = 0; index < sc_net.channelCount; index++) {
                                         if (this->verbose & 16){
-                                            this->mod_channel_list.items[index].log(index);
+                                            this->mod_channel_list[index].log(index);
                                         }
                                         this->mod_channel_list.set_chanid(index, sc_net.channelDefArray[index].id);
                                     }
@@ -1168,7 +1197,7 @@ struct mod_rdp : public mod_api {
 
                         {
                             size_t num_channels = this->mod_channel_list.size();
-                            uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS];
+                            uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
                             channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
                             channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
                             for (size_t index = 0; index < num_channels; index++){
@@ -1194,9 +1223,9 @@ struct mod_rdp : public mod_api {
                                 SubStream & mcs_cjcf_data = x224.payload;
                                 MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
                                 TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list");
-                                    if (this->verbose & 16){
-                                        LOG(LOG_INFO, "cjcf[%u] = %u", index, mcs.channelId);
-                                    }
+                                if (this->verbose & 16){
+                                    LOG(LOG_INFO, "cjcf[%u] = %u", index, mcs.channelId);
+                                }
                             }
                         }
 
@@ -1700,7 +1729,8 @@ struct mod_rdp : public mod_api {
                         }
 
                         X224::DT_TPDU_Recv x224(stream);
-                        int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+
+                        const int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
 
                         if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
                             LOG(LOG_INFO, "mod::rdp::DisconnectProviderUltimatum received");
@@ -1720,8 +1750,7 @@ struct mod_rdp : public mod_api {
                                 LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
                             }
 
-                            int num_channel_src =
-                                this->mod_channel_list.get_index_by_id(mcs.channelId);
+                            int num_channel_src = this->mod_channel_list.get_index_by_id(mcs.channelId);
                             if (num_channel_src == -1) {
                                 LOG(LOG_WARNING, "mod::rdp::MOD_RDP_CONNECTED::Unknown Channel id=%d", mcs.channelId);
                                 throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
@@ -1760,42 +1789,46 @@ struct mod_rdp : public mod_api {
                                 //    this->auth_channel_state = 0;
                                 //}
                             }
-                            else if (!this->enable_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+                            else if (!this->enable_clipboard_out && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
                                 // Clipboard is unavailable and is a Clipboard PDU
 
-                                TODO("RZ: Don't reject clipboard update, this can block rdesktop.");
+                                TODO("RZ: Don't reject clipboard update, this can block rdesktop. (until 1.7.1 ?)");
 
                                 if (this->verbose & 1) {
                                     LOG(LOG_INFO, "mod_rdp clipboard PDU");
                                 }
 
-                                uint16_t msgType = sec.payload.in_uint16_le();
+                                const uint16_t msgType = sec.payload.in_uint16_le();
 
-                                if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+                                if (this->enable_clipboard_in) {
+                                    if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
+                                        this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(true, "\0");
+                                    }
+                                    else {
+                                        sec.payload.p -= 2;
+                                        this->send_to_front_channel(
+                                            mod_channel.name, sec.payload.p, length, chunk_size, flags);
+                                    }
+                                }
+                                else if (msgType == RDPECLIP::CB_FORMAT_LIST) {
                                     if (this->verbose & 1) {
                                         LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                                     }
 
-                                    bool response_ok = true;
-
-                                    // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
-                                    // 03 00 02 00 00 00 00 00
+                                    const bool response_ok = true;
+                                    // Build and send the CB_FORMAT_LIST_RESPONSE (with status = OK)
+                                    // 03 00 01 00 00 00 00 00
                                     RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
                                     BStream                         out_s(256);
 
                                     format_list_response_pdu.emit(out_s);
 
-                                    const CHANNELS::ChannelDef * mod_channel =
-                                        this->mod_channel_list.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
-
-                                    if (mod_channel) {
-                                        this->send_to_channel(*mod_channel
-                                                              , out_s
-                                                              , out_s.size()
-                                                              ,   CHANNELS::CHANNEL_FLAG_FIRST
-                                                              | CHANNELS::CHANNEL_FLAG_LAST
-                                                              );
-                                    }
+                                    this->send_to_channel( mod_channel
+                                                         , out_s
+                                                         , out_s.size()
+                                                         , CHANNELS::CHANNEL_FLAG_FIRST
+                                                         | CHANNELS::CHANNEL_FLAG_LAST
+                                                         );
                                 }
                             }
                             else {
@@ -2096,7 +2129,7 @@ struct mod_rdp : public mod_api {
                     }
                 }
             }
-            catch(Error e){
+            catch(Error & e){
                 if (this->acl)
                 {
                     char message[128];
@@ -2113,7 +2146,7 @@ struct mod_rdp : public mod_api {
                     this->nego.trans->send(stream);
                     LOG(LOG_INFO, "Connection to server closed");
                 }
-                catch(Error e){
+                catch(Error & e){
                     LOG(LOG_INFO, "Connection to server Already closed: error=%d", e.id);
                 };
                 this->event.signal = BACK_EVENT_NEXT;
@@ -3737,12 +3770,21 @@ struct mod_rdp : public mod_api {
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
 
-        FILE * output_file = 0;
+        struct autoclose_file {
+            FILE * file;
 
-        if (!this->output_filename.is_empty())
-        {
-            output_file = fopen(this->output_filename.c_str(), "w");
-        }
+            ~autoclose_file()
+            {
+                if (this->file) {
+                    fclose(this->file);
+                }
+            }
+        };
+        FILE * const output_file =
+            !this->output_filename.is_empty()
+            ? fopen(this->output_filename.c_str(), "w")
+            : nullptr;
+        autoclose_file autoclose{output_file};
 
         unsigned expected = 4; /* numberCapabilities(2) + pad2Octets(2) */
         if (!stream.in_check_rem(expected)){
@@ -3832,11 +3874,6 @@ struct mod_rdp : public mod_api {
                 break;
             }
             stream.p = next;
-        }
-
-        if (output_file)
-        {
-            fclose(output_file);
         }
 
         if (this->verbose & 32){
@@ -4019,7 +4056,7 @@ struct mod_rdp : public mod_api {
 
                 this->send_persistent_key_list_pdu(pdu_data_stream);
             }
-            catch (Error e)
+            catch (Error & e)
             {
                 if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
                     LOG(LOG_ERR, "mod_rdp::send_persistent_key_list_transparent: error=%u", e.id);

@@ -73,10 +73,10 @@ public:
         // total_width = std::min(width + total_width, 2 * width);
         // total_width = total_width / 2;
         // int total_width = width - 80;
-        int total_height = this->dialog.cy() + this->goselector.cy() + 20;
-        if (showform) {
-            total_height += this->form.cy();
-        }
+        // int total_height = this->dialog.cy() + this->goselector.cy() + 20;
+        // if (showform) {
+        //     total_height += this->form.cy();
+        // }
         // int starty = (height - total_height) / 2;
         int starty = 20;
         int y = starty;

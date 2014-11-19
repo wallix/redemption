@@ -48,4 +48,4 @@ fi \
 done 2>/tmp/valgrind_files_error
 
 echo
-cat /tmp/valgrind_files_error
+exec cat /tmp/valgrind_files_error

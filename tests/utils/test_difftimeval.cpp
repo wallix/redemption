@@ -65,30 +65,30 @@ BOOST_AUTO_TEST_CASE(TestTvtimeustime)
     BOOST_CHECK(resus > 0);
 }
 
-BOOST_AUTO_TEST_CASE(TestUsecToTimeval)
-{
-    uint64_t usec = 0L;
-    timeval res;
-    res = usectotimeval(usec);
-    BOOST_CHECK_EQUAL(res.tv_sec,  0);
-    BOOST_CHECK_EQUAL(res.tv_usec, 0);
-
-    usec = 459327L;
-    res = usectotimeval(usec);
-    BOOST_CHECK_EQUAL(res.tv_sec,  0);
-    BOOST_CHECK_EQUAL(res.tv_usec, 459327);
-
-    usec = 5476000000LL;
-    res = usectotimeval(usec);
-    BOOST_CHECK_EQUAL(res.tv_sec,  5476);
-    BOOST_CHECK_EQUAL(res.tv_usec, 0);
-
-    usec = 751379115L;
-    res = usectotimeval(usec);
-    BOOST_CHECK_EQUAL(res.tv_sec,  751);
-    BOOST_CHECK_EQUAL(res.tv_usec, 379115);
-
-}
+// BOOST_AUTO_TEST_CASE(TestUsecToTimeval)
+// {
+//     uint64_t usec = 0L;
+//     timeval res;
+//     res = usectotimeval(usec);
+//     BOOST_CHECK_EQUAL(res.tv_sec,  0);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 0);
+//
+//     usec = 459327L;
+//     res = usectotimeval(usec);
+//     BOOST_CHECK_EQUAL(res.tv_sec,  0);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 459327);
+//
+//     usec = 5476000000LL;
+//     res = usectotimeval(usec);
+//     BOOST_CHECK_EQUAL(res.tv_sec,  5476);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 0);
+//
+//     usec = 751379115L;
+//     res = usectotimeval(usec);
+//     BOOST_CHECK_EQUAL(res.tv_sec,  751);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 379115);
+//
+// }
 
 BOOST_AUTO_TEST_CASE(TestAddUsecTimeval)
 {
@@ -248,72 +248,72 @@ BOOST_AUTO_TEST_CASE(TestLessThanTimeVal)
 }
 
 
-BOOST_AUTO_TEST_CASE(Testaddtimeval)
-{
-    timeval time1, time2;
-    timeval res, sym;
-    time1.tv_sec  = 0;
-    time1.tv_usec = 0;
-    time2 = time1;
-
-    res = addtimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 0);
-    BOOST_CHECK_EQUAL(res.tv_usec, 0);
-    sym = addtimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-    time1.tv_usec = 486541;
-    res = addtimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 0);
-    BOOST_CHECK_EQUAL(res.tv_usec, 486541);
-    sym = addtimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-
-    time1.tv_usec = 0;
-    time1.tv_sec = 975;
-    res = addtimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 975);
-    BOOST_CHECK_EQUAL(res.tv_usec, 0);
-    sym = addtimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-
-    time1.tv_sec = 1237;
-    time1.tv_usec = 4873;
-    res = addtimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 1237);
-    BOOST_CHECK_EQUAL(res.tv_usec, 4873);
-    sym = addtimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-
-    time1.tv_sec = 234321;
-    time1.tv_usec = 354879;
-    time2.tv_sec = 157532;
-    time2.tv_usec = 245789;
-    res = addtimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 391853);
-    BOOST_CHECK_EQUAL(res.tv_usec, 600668);
-    sym = addtimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-    time1.tv_sec = 236321;
-    time1.tv_usec = 354879;
-    time2.tv_sec = 157532;
-    time2.tv_usec = 745789;
-    res = addtimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 393854);
-    BOOST_CHECK_EQUAL(res.tv_usec, 100668);
-    sym = addtimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-}
+// BOOST_AUTO_TEST_CASE(Testaddtimeval)
+// {
+//     timeval time1, time2;
+//     timeval res, sym;
+//     time1.tv_sec  = 0;
+//     time1.tv_usec = 0;
+//     time2 = time1;
+//
+//     res = addtimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 0);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 0);
+//     sym = addtimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//     time1.tv_usec = 486541;
+//     res = addtimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 0);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 486541);
+//     sym = addtimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//
+//     time1.tv_usec = 0;
+//     time1.tv_sec = 975;
+//     res = addtimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 975);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 0);
+//     sym = addtimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//
+//     time1.tv_sec = 1237;
+//     time1.tv_usec = 4873;
+//     res = addtimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 1237);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 4873);
+//     sym = addtimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//
+//     time1.tv_sec = 234321;
+//     time1.tv_usec = 354879;
+//     time2.tv_sec = 157532;
+//     time2.tv_usec = 245789;
+//     res = addtimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 391853);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 600668);
+//     sym = addtimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//     time1.tv_sec = 236321;
+//     time1.tv_usec = 354879;
+//     time2.tv_sec = 157532;
+//     time2.tv_usec = 745789;
+//     res = addtimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 393854);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 100668);
+//     sym = addtimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+// }
 
 BOOST_AUTO_TEST_CASE(TestHowLongToWait)
 {
@@ -376,186 +376,184 @@ BOOST_AUTO_TEST_CASE(TestHowLongToWait)
 
 }
 
-BOOST_AUTO_TEST_CASE(Testabsdifftimeval)
-{
-    timeval time1, time2;
-    timeval res, sym;
+// BOOST_AUTO_TEST_CASE(Testabsdifftimeval)
+// {
+//     timeval time1, time2;
+//     timeval res, sym;
+//
+//     time1.tv_sec  = 0;
+//     time1.tv_usec = 0;
+//     time2 = time1;
+//     res = absdifftimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 0);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 0);
+//     sym = absdifftimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//
+//     time1.tv_sec  = 3457;
+//     time1.tv_usec = 215733;
+//     res = absdifftimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 3457);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 215733);
+//     sym = absdifftimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//     time2 = time1;
+//     res = absdifftimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 0);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 0);
+//     sym = absdifftimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//
+//     time2.tv_usec += 457352;
+//     res = absdifftimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 0);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 457352);
+//     sym = absdifftimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//     time2.tv_sec += 54573;
+//     res = absdifftimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 54573);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 457352);
+//     sym = absdifftimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//
+//     time2.tv_usec = time1.tv_usec;
+//     res = absdifftimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 54573);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 0);
+//     sym = absdifftimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//     time1.tv_sec  = 67235;
+//     time1.tv_usec = 454324;
+//     time2.tv_sec  = 421;
+//     time2.tv_usec = 842136;
+//     res = absdifftimeval(time1, time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 66813);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 612188);
+//     sym = absdifftimeval(time2, time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+// }
 
-    time1.tv_sec  = 0;
-    time1.tv_usec = 0;
-    time2 = time1;
-    res = absdifftimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 0);
-    BOOST_CHECK_EQUAL(res.tv_usec, 0);
-    sym = absdifftimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+// BOOST_AUTO_TEST_CASE(TestMultTimeval)
+// {
+//     timeval init, res;
+//     uint64_t mult;
+//
+//     mult = 0;
+//     init.tv_sec  = 0;
+//     init.tv_usec = 0;
+//     res = multtimeval(mult, init);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 0);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 0);
+//
+//     mult = 0;
+//     init.tv_sec  = 3235357;
+//     init.tv_usec = 243230;
+//     res = multtimeval(mult, init);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 0);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 0);
+//
+//     mult = 43721099;
+//     init.tv_sec  = 0;
+//     init.tv_usec = 0;
+//     res = multtimeval(mult, init);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 0);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 0);
+//
+//     mult = 1;
+//     init.tv_sec  = 234221;
+//     init.tv_usec = 1098;
+//     res = multtimeval(mult, init);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 234221);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 1098);
+//
+//     mult = 12;
+//     init.tv_sec  = 24671;
+//     init.tv_usec = 11566;
+//     res = multtimeval(mult, init);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 296052);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 138792);
+//
+//     mult = 33;
+//     init.tv_sec  = 7499;
+//     init.tv_usec = 111566;
+//     res = multtimeval(mult, init);
+//     BOOST_CHECK_EQUAL(res.tv_sec, 247470);
+//     BOOST_CHECK_EQUAL(res.tv_usec, 681678);
+//
+// }
 
-
-    time1.tv_sec  = 3457;
-    time1.tv_usec = 215733;
-    res = absdifftimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 3457);
-    BOOST_CHECK_EQUAL(res.tv_usec, 215733);
-    sym = absdifftimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-    time2 = time1;
-    res = absdifftimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 0);
-    BOOST_CHECK_EQUAL(res.tv_usec, 0);
-    sym = absdifftimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-
-    time2.tv_usec += 457352;
-    res = absdifftimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 0);
-    BOOST_CHECK_EQUAL(res.tv_usec, 457352);
-    sym = absdifftimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-    time2.tv_sec += 54573;
-    res = absdifftimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 54573);
-    BOOST_CHECK_EQUAL(res.tv_usec, 457352);
-    sym = absdifftimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-
-    time2.tv_usec = time1.tv_usec;
-    res = absdifftimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 54573);
-    BOOST_CHECK_EQUAL(res.tv_usec, 0);
-    sym = absdifftimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-    time1.tv_sec  = 67235;
-    time1.tv_usec = 454324;
-    time2.tv_sec  = 421;
-    time2.tv_usec = 842136;
-    res = absdifftimeval(time1, time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, 66813);
-    BOOST_CHECK_EQUAL(res.tv_usec, 612188);
-    sym = absdifftimeval(time2, time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-
-}
-
-BOOST_AUTO_TEST_CASE(TestMultTimeval)
-{
-    timeval init, res;
-    uint64_t mult;
-
-    mult = 0;
-    init.tv_sec  = 0;
-    init.tv_usec = 0;
-    res = multtimeval(mult, init);
-    BOOST_CHECK_EQUAL(res.tv_sec, 0);
-    BOOST_CHECK_EQUAL(res.tv_usec, 0);
-
-    mult = 0;
-    init.tv_sec  = 3235357;
-    init.tv_usec = 243230;
-    res = multtimeval(mult, init);
-    BOOST_CHECK_EQUAL(res.tv_sec, 0);
-    BOOST_CHECK_EQUAL(res.tv_usec, 0);
-
-    mult = 43721099;
-    init.tv_sec  = 0;
-    init.tv_usec = 0;
-    res = multtimeval(mult, init);
-    BOOST_CHECK_EQUAL(res.tv_sec, 0);
-    BOOST_CHECK_EQUAL(res.tv_usec, 0);
-
-    mult = 1;
-    init.tv_sec  = 234221;
-    init.tv_usec = 1098;
-    res = multtimeval(mult, init);
-    BOOST_CHECK_EQUAL(res.tv_sec, 234221);
-    BOOST_CHECK_EQUAL(res.tv_usec, 1098);
-
-    mult = 12;
-    init.tv_sec  = 24671;
-    init.tv_usec = 11566;
-    res = multtimeval(mult, init);
-    BOOST_CHECK_EQUAL(res.tv_sec, 296052);
-    BOOST_CHECK_EQUAL(res.tv_usec, 138792);
-
-    mult = 33;
-    init.tv_sec  = 7499;
-    init.tv_usec = 111566;
-    res = multtimeval(mult, init);
-    BOOST_CHECK_EQUAL(res.tv_sec, 247470);
-    BOOST_CHECK_EQUAL(res.tv_usec, 681678);
-
-}
-
-BOOST_AUTO_TEST_CASE(Testmintimeval)
-{
-    timeval time1, time2;
-    timeval res, sym;
-
-    time1.tv_sec  = 67235;
-    time1.tv_usec = 454324;
-    time2.tv_sec  = 421;
-    time2.tv_usec = 842136;
-    res = mintimeval(time1,time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, time2.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, time2.tv_usec);
-    sym = mintimeval(time2,time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-
-    time1.tv_sec  = 421;
-    time1.tv_usec = 454324;
-    time2.tv_sec  = 421;
-    time2.tv_usec = 842136;
-    res = mintimeval(time1,time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, time1.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, time1.tv_usec);
-    sym = mintimeval(time2,time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-    time1.tv_sec  = 246575;
-    time1.tv_usec = 454324;
-    time2.tv_sec  = 421;
-    time2.tv_usec = 454324;
-    res = mintimeval(time1,time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, time2.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, time2.tv_usec);
-    sym = mintimeval(time2,time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-    time1.tv_sec  = 246575;
-    time1.tv_usec = 457324;
-    time2.tv_sec  = 421;
-    time2.tv_usec = 454324;
-    res = mintimeval(time1,time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, time2.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, time2.tv_usec);
-    sym = mintimeval(time2,time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-    time2 = time1;
-    res = mintimeval(time1,time2);
-    BOOST_CHECK_EQUAL(res.tv_sec, time2.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, time2.tv_usec);
-    BOOST_CHECK_EQUAL(res.tv_sec, time1.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, time1.tv_usec);
-    sym = mintimeval(time2,time1);
-    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
-    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
-
-}
+// BOOST_AUTO_TEST_CASE(Testmintimeval)
+// {
+//     timeval time1, time2;
+//     timeval res, sym;
+//
+//     time1.tv_sec  = 67235;
+//     time1.tv_usec = 454324;
+//     time2.tv_sec  = 421;
+//     time2.tv_usec = 842136;
+//     res = mintimeval(time1,time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, time2.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, time2.tv_usec);
+//     sym = mintimeval(time2,time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//
+//     time1.tv_sec  = 421;
+//     time1.tv_usec = 454324;
+//     time2.tv_sec  = 421;
+//     time2.tv_usec = 842136;
+//     res = mintimeval(time1,time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, time1.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, time1.tv_usec);
+//     sym = mintimeval(time2,time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//     time1.tv_sec  = 246575;
+//     time1.tv_usec = 454324;
+//     time2.tv_sec  = 421;
+//     time2.tv_usec = 454324;
+//     res = mintimeval(time1,time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, time2.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, time2.tv_usec);
+//     sym = mintimeval(time2,time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//     time1.tv_sec  = 246575;
+//     time1.tv_usec = 457324;
+//     time2.tv_sec  = 421;
+//     time2.tv_usec = 454324;
+//     res = mintimeval(time1,time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, time2.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, time2.tv_usec);
+//     sym = mintimeval(time2,time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+//     time2 = time1;
+//     res = mintimeval(time1,time2);
+//     BOOST_CHECK_EQUAL(res.tv_sec, time2.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, time2.tv_usec);
+//     BOOST_CHECK_EQUAL(res.tv_sec, time1.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, time1.tv_usec);
+//     sym = mintimeval(time2,time1);
+//     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+//     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+//
+// }

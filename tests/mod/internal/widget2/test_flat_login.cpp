@@ -68,9 +68,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x90\xa3\x09\xe6\x63\x02\x8d\xa2\xf3\x92"
-                   "\x78\x94\x0b\xa8\xcf\xf6\x93\xe5\x39\x72"
-                   )){
+        "\xe5\xd4\x61\xfb\x43\x29\x85\xd2\xf8\x93\x2b\xd7\x41\xc1\x58\xd9\x2f\x3d\xe8\x9c"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -99,8 +98,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xfb\xce\x45\xd0\xb2\x55\x3a\x94\x2c\xff"
-                   "\xf0\x38\xc6\x6e\x89\x05\x32\x95\xcc\xe1"
+        "\xc7\x65\xc0\x7e\x7a\x71\x3c\x88\xc2\xcf\xa8\x6c\x4f\x52\x9e\x44\x2c\xb6\xbc\x5e"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -163,9 +161,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xb9\x79\xed\xd8\x69\xd8\x35\x6a\xc4\x3e"
-                   "\xb6\xf4\x2d\x19\x59\x58\x76\xe5\x1c\x73"
-                   )){
+        "\xa3\xa6\x18\xbd\x9b\x21\xa0\xf1\xea\xfe\x00\x0d\x15\xa1\x71\xae\x0c\x04\xc7\x55"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -203,9 +200,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xa3\xe3\x36\xea\x5b\x59\x69\x93\xae\x0b"
-                   "\xab\xf9\x2e\xa6\x77\xa6\x21\x31\x0b\x62"
-                   )){
+        "\xfc\x64\xc9\xb0\xee\x24\x2e\x22\xce\xe6\x90\x45\xc8\xbc\x5b\x86\xbc\x56\x49\x86"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -215,9 +211,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xf8\xa8\xf4\x62\x05\x1c\x00\x8b\xc5\x46"
-                   "\x67\x5f\x0e\xf5\x99\x7f\x78\x5b\xce\x75"
-                   )){
+        "\xf5\xa9\x48\x33\x44\xd2\x07\xb9\x34\xe0\x5c\x49\xbe\xe0\x90\xf6\x49\x92\x31\xdd"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -246,9 +241,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x0c\x61\x34\x92\xe7\x7f\xd0\xa0\xfb\x17"
-                   "\xd5\x7d\xa7\xb5\x0d\xd5\x77\x48\x66\x52"
-                   )){
+        "\xcb\xe2\xaa\x03\x38\xea\x41\xe7\xbd\x18\xb7\x8d\xbc\xad\x15\x71\x9b\x50\x75\x12"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -307,6 +301,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
 
     FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test6",
                          false, 0, 0, 0, "Login", "Password", ini);
+
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
 }
-
-

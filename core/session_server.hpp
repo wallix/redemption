@@ -26,6 +26,7 @@
 #include "server.hpp"
 #include "session.hpp"
 #include "crypto_key_holder.hpp"
+#include "parse_ip_conntrack.hpp"
 
 class SessionServer : public Server
 {
@@ -60,17 +61,11 @@ public:
             _exit(1);
         }
 
-        char text[256];
         char source_ip[256];
-        int source_port = 0;
-        char target_ip[256];
-        int target_port = 0;
-        char real_target_ip[256];
-
         strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
-        source_port = ntohs(u.s4.sin_port);
+        const int source_port = ntohs(u.s4.sin_port);
         /* start new process */
-        pid_t pid = fork();
+        const pid_t pid = fork();
         switch (pid) {
         case 0: /* child */
             {
@@ -79,8 +74,8 @@ public:
                 Inifile ini;
                 ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
-                memcpy(ini.crypto.key0, this->cryptoKeyHldr.get_key_0(), sizeof(ini.crypto.key0));
-                memcpy(ini.crypto.key1, this->cryptoKeyHldr.get_key_1(), sizeof(ini.crypto.key1));
+                ini.crypto.key0.setmem(this->cryptoKeyHldr.get_key_0());
+                ini.crypto.key1.setmem(this->cryptoKeyHldr.get_key_1());
 
                 if (ini.debug.session){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
@@ -101,12 +96,14 @@ public:
                     _exit(1);
                 }
 
-                target_port = ntohs(localAddress.s4.sin_port);
+                char target_ip[256];
+                const int target_port = ntohs(localAddress.s4.sin_port);
 //                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
                 strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
                 LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
 
+                char real_target_ip[256];
                 if (ini.globals.enable_ip_transparent) {
                     int fd = open("/proc/net/ip_conntrack", O_RDONLY);
                     // source and dest are inverted because we get the information we want from reply path rule
@@ -142,7 +139,8 @@ public:
                         LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%d\n", errno, strerror(errno));
                         _exit(1);
                     }
-                    size_t lg = snprintf(text, 255, "%d", child_pid);
+                    char text[256];
+                    const size_t lg = snprintf(text, 255, "%d", child_pid);
                     if (write(fd, text, lg) == -1) {
                         LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/redemption/session_<pid>.pid", strerror(errno));
                         _exit(1);

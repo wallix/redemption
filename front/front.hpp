@@ -78,6 +78,10 @@
 
 #include "auth_api.hpp"
 
+#include "authorization_channels.hpp"
+#include "text_metrics.hpp"
+#include "splitter.hpp"
+
 enum {
     FRONT_DISCONNECTED,
     FRONT_CONNECTING,
@@ -87,9 +91,10 @@ enum {
 class Front : public FrontAPI, public ActivityChecker{
     using FrontAPI::draw;
 
+    std::vector<unsigned> disable_channel_id_sorted;
+    AuthorizationChannels authorization_channels;
+
     bool has_activity = true;
-    time_t last_activity_time;
-    time_t inactivity_timeout;
 
 public:
     enum CaptureState {
@@ -108,7 +113,7 @@ public:
     CHANNELS::ChannelDefArray channel_list;
     int up_and_running;
     int share_id;
-    struct ClientInfo client_info;
+    ClientInfo client_info;
     uint32_t packet_number;
     Transport * trans;
     uint16_t userid;
@@ -121,7 +126,7 @@ public:
     Inifile * ini;
     uint32_t verbose;
 
-    struct Font font;
+    Font font;
     BrushCache brush_cache;
     PointerCache pointer_cache;
     GlyphCache glyph_cache;
@@ -185,6 +190,7 @@ public:
           , Transport * persistent_key_list_transport = NULL
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
+        , authorization_channels(make_authorization_channels(ini->client.allow_channels, ini->client.deny_channels))
         , capture_state(CAPTURE_STATE_UNKNOWN)
         , capture(NULL)
         , bmp_cache(NULL)
@@ -318,6 +324,10 @@ public:
         }
     }
 
+    bool authorized_channel(const char * channel_name) {
+        return this->authorization_channels.authorized(channel_name);
+    }
+
     int server_resize(int width, int height, int bpp)
     {
         uint32_t res = 0;
@@ -392,23 +402,13 @@ public:
         }
     }
 
-    virtual void text_metrics(const char * text, int & width, int & height){
-        height = 0;
-        width = 0;
-        uint32_t uni[256];
-        size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
-        if (len_uni){
-            for (size_t index = 0; index < len_uni; index++) {
-                uint32_t charnum = uni[index]; //
-                FontChar *font_item = this->font.glyph_defined(charnum)?&this->font.font_items[charnum]:nullptr;
-                if (!font_item) {
-                    LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                    font_item = &this->font.font_items[static_cast<unsigned>('?')];
-                }
-                width += font_item->incby;
-                height = std::max(height, font_item->height);
-            }
-        }
+    virtual void text_metrics(const char * text, int & width, int & height)
+    {
+        ::text_metrics(this->font, text, width, height,
+                       [](uint32_t charnum) {
+                           LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
+                       }
+        );
     }
 
     TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
@@ -417,23 +417,30 @@ public:
         this->send_global_palette();
 
         // add text to glyph cache
-        int len = strlen(text);
-        TODO("we should put some loop here for text to be splitted between chunks of UTF8 characters and loop on them")
-        if (len > 120) {
-            len = 120;
-        }
+        //int len = strlen(text);
+        //TODO("we should put some loop here for text to be splitted between chunks of UTF8 characters and loop on them")
+        //if (len > 120) {
+        //    len = 120;
+        //}
 
-        if (len > 0){
-            uint32_t uni[128];
-            size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
+        UTF8toUnicodeIterator unicode_iter(text);
+        while (*unicode_iter){
             int total_width = 0;
             int total_height = 0;
             uint8_t data[256];
-            int f = 7;
+            auto data_begin = std::begin(data);
+            const auto data_end = std::end(data)-2;
+
+            const int f = 7;
             int distance_from_previous_fragment = 0;
-            for (size_t index = 0; index < part_len; index++) {
+            while (data_begin != data_end) {
+                const uint32_t charnum = *unicode_iter;
+                if (!charnum) {
+                    break ;
+                }
+                ++unicode_iter;
+
                 int c = 0;
-                uint32_t charnum = uni[index];
                 FontChar & font_item = this->font.glyph_defined(charnum) && this->font.font_items[charnum]
                 ? this->font.font_items[charnum]
                 : [&]() {
@@ -463,8 +470,10 @@ public:
                     default:
                     break;
                 }
-                data[index * 2] = c;
-                data[index * 2 + 1] = distance_from_previous_fragment;
+                *data_begin = c;
+                ++data_begin;
+                *data_begin = distance_from_previous_fragment;
+                ++data_begin;
                 distance_from_previous_fragment = font_item.incby;
                 total_width += font_item.incby;
                 total_height = std::max(total_height, font_item.height);
@@ -472,7 +481,7 @@ public:
 
             const Rect bk(x, y, total_width + 1, total_height + 1);
 
-             RDPGlyphIndex glyphindex(
+            RDPGlyphIndex glyphindex(
                 f, // cache_id
                 0x03, // fl_accel
                 0x0, // ui_charinc
@@ -486,9 +495,11 @@ public:
                     (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
                 x,  // glyph_x
                 y + total_height, // glyph_y
-                part_len * 2, // data_len in bytes
+                data_begin - data, // data_len in bytes
                 data // data
             );
+
+            x += total_width;
 
             this->draw(glyphindex, clip, NULL);
         }
@@ -536,10 +547,9 @@ public:
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
         strcpy(basename, "redemption"); // default value actual one should come from movie_path
         strcpy(extension, "");          // extension is currently ignored
-        bool res = true;
-        res = canonical_path(ini.globals.movie_path.get_cstr(), path,
-                             sizeof(path), basename, sizeof(basename), extension,
-                             sizeof(extension));
+        const bool res = canonical_path(ini.globals.movie_path.get_cstr(), path,
+                                        sizeof(path), basename, sizeof(basename), extension,
+                                        sizeof(extension));
         if (!res) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
@@ -1606,11 +1616,17 @@ public:
                         GCC::UserData::CSNet cs_net;
                         cs_net.recv(f.payload);
                         for (uint32_t index = 0; index < cs_net.channelCount; index++) {
-                            CHANNELS::ChannelDef channel_item;
-                            memcpy(channel_item.name, cs_net.channelDefArray[index].name, 8);
-                            channel_item.flags = cs_net.channelDefArray[index].options;
-                            channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
-                            this->channel_list.push_back(channel_item);
+                            const auto & channel_def = cs_net.channelDefArray[index];
+                            if (this->authorization_channels.authorized(channel_def.name)) {
+                                CHANNELS::ChannelDef channel_item;
+                                memcpy(channel_item.name, channel_def.name, 8);
+                                channel_item.flags = channel_def.options;
+                                channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
+                                this->channel_list.push_back(channel_item);
+                            }
+                            else {
+                                this->disable_channel_id_sorted.push_back(index);
+                            }
                         }
                         if (this->verbose & 1) {
                             cs_net.log("Received from Client");
@@ -1878,7 +1894,9 @@ public:
                 this->trans->send(x224_header, mcs_cjcf_data);
             }
 
-            for (size_t i = 0 ; i < this->channel_list.size() ; i++){
+            auto beg_disable_channel_id = this->disable_channel_id_sorted.begin();
+            auto end_disable_channel_id = this->disable_channel_id_sorted.end();
+            for (size_t i = 0 ; i < this->channel_list.size() + this->disable_channel_id_sorted.size(); i++){
                 Array array(256);
                 uint8_t * end = array.get_data();
                 X224::RecvFactory fx224(*this->trans, &end, array.size());
@@ -1906,8 +1924,16 @@ public:
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
                 this->trans->send(x224_header, mcs_cjcf_data);
 
-                this->channel_list.set_chanid(i, mcs.channelId);
+                if (beg_disable_channel_id != end_disable_channel_id && *beg_disable_channel_id == i) {
+                    ++beg_disable_channel_id;
+                }
+                else {
+                    const size_t real_index = i - (beg_disable_channel_id - this->disable_channel_id_sorted.begin());
+                    this->channel_list.set_chanid(real_index, mcs.channelId);
+                }
             }
+            this->disable_channel_id_sorted.clear();
+            this->disable_channel_id_sorted.shrink_to_fit();
 
             if (this->verbose & 1){
                 LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");
@@ -2043,7 +2069,7 @@ public:
                 hexdump_d(sec.payload.get_data(), sec.payload.size());
             }
 
-            if (!sec.flags & SEC::SEC_INFO_PKT) {
+            if (!(sec.flags & SEC::SEC_INFO_PKT)) {
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
             }
 
@@ -3126,14 +3152,6 @@ public:
         }
 
         this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
-    }
-
-    /* store the number of client cursor cache in client_info */
-    void capset_pointercache(Stream & stream, int len)
-    {
-        if (this->verbose & 32){
-            LOG(LOG_INFO, "capset_pointercache");
-        }
     }
 
     void process_confirm_active(Stream & stream)

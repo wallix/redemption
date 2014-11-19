@@ -46,6 +46,9 @@
 #include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
 #include "font.hpp"
 #include "png.hpp"
+#include "text_metrics.hpp"
+
+#include <tuple>
 
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
@@ -226,7 +229,7 @@ public:
             memcpy(brush_data, cmd.BrushExtra, 7);
             brush_data[7] = cmd.BrushHatch;
             this->draw_multi(cmd, clip, [&](const Rect & trect) {
-                this->drawable.patblt_ex(trect, cmd.bRop, get<BackColor>(colors), get<ForeColor>(colors), brush_data);
+                this->drawable.patblt_ex(trect, cmd.bRop, std::get<BackColor>(colors), std::get<ForeColor>(colors), brush_data);
             });
         }
         else {
@@ -258,7 +261,7 @@ public:
             memcpy(brush_data, cmd.brush.extra, 7);
             brush_data[7] = cmd.brush.hatch;
 
-            this->drawable.patblt_ex(trect, cmd.rop, get<BackColor>(colors), get<ForeColor>(colors), brush_data);
+            this->drawable.patblt_ex(trect, cmd.rop, std::get<BackColor>(colors), std::get<ForeColor>(colors), brush_data);
         }
         else {
             this->drawable.patblt(trect, cmd.rop, this->u32rgb_to_color(cmd.back_color));
@@ -531,13 +534,18 @@ public:
 
     virtual void flush() {}
 
-    static FontChar & get_font(Font& font, uint32_t c)
+    static const FontChar & get_font(const Font& font, uint32_t c)
     {
         if (!font.glyph_defined(c) || !font.font_items[c]) {
             LOG(LOG_WARNING, "RDPDrawable::get_font() - character not defined >0x%02x<", c);
             return font.font_items[unsigned('?')];
         }
         return font.font_items[c];
+    }
+
+    void text_metrics(const char * text, int & width, int & height, const Font & font)
+    {
+        ::text_metrics(font, text, width, height);
     }
 
     void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip, Font& font)
@@ -551,37 +559,36 @@ public:
 
             const Color fg_color = this->u32_to_color(fgcolor);
 
-            uint32_t uni[128];
-            size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
+            UTF8toUnicodeIterator unicode_iter(text);
 
-            size_t index = 0;
-            FontChar * font_item = 0;
-            for (; index < part_len && x < screen_rect.x; index++) {
-                font_item = &this->get_font(font, uni[index]);
-                if (x + font_item->width > screen_rect.x) {
+            for (; *unicode_iter; ++unicode_iter) {
+                const FontChar & font_item = this->get_font(font, *unicode_iter);
+                if (x + font_item.width > screen_rect.x) {
                     break ;
                 }
-                x += font_item->width + 2;
+                x += font_item.incby;
             }
 
-            for (; index < part_len && x < screen_rect.right(); index++) {
-                font_item = &this->get_font(font, uni[index]);
-                int16_t cy = std::min<int16_t>(y + font_item->height, screen_rect.bottom()) - y;
+            for (; *unicode_iter && x < screen_rect.right(); ++unicode_iter) {
+                const FontChar & font_item = this->get_font(font, *unicode_iter);
+                int16_t cy = std::min<int16_t>(y + font_item.height, screen_rect.bottom()) - y;
                 int i = 0;
+                //x += font_item.offset;
                 for (int yy = 0 ; yy < cy; yy++) {
                     unsigned char oc = 1<<7;
-                    for (int xx = 0; xx < font_item->width; xx++) {
+                    for (int xx = 0; xx < font_item.width; xx++) {
                         if (!oc) {
                             oc = 1 << 7;
                             ++i;
                         }
-                        if (yy + y >= screen_rect.y && xx + x >= screen_rect.x && xx + x < screen_rect.right() && font_item->data[i + yy] & oc) {
+                        if (yy + y >= screen_rect.y && xx + x >= screen_rect.x && xx + x < screen_rect.right() && font_item.data[i + yy] & oc) {
                             this->drawable.draw_pixel(x + xx, y + yy, fg_color);
                         }
                         oc >>= 1;
                     }
                 }
-                x += font_item->width + 2;
+                //x += font_item.incby - font_item.offset;
+                x += font_item.incby;
             }
         }
     }

@@ -22,6 +22,7 @@
 #define _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_
 
 #include "log.hpp"
+#include "string.hpp"
 
 class Transport;
 class auth_api;
@@ -38,7 +39,6 @@ struct ModRDPParams {
     bool enable_tls;
     bool enable_nla;
     bool enable_krb;
-    bool enable_clipboard;
     bool enable_fastpath;           // If true, fast-path must be supported.
     bool enable_mem3blt;
     bool enable_bitmap_update;
@@ -73,6 +73,9 @@ struct ModRDPParams {
 
     uint32_t password_printing_mode;
 
+    const redemption::string * allow_channels;
+    const redemption::string * deny_channels;
+
     uint32_t verbose;
     uint32_t cache_verbose;
 
@@ -91,7 +94,6 @@ struct ModRDPParams {
         , enable_tls(true)
         , enable_nla(true)
         , enable_krb(false)
-        , enable_clipboard(true)
         , enable_fastpath(true)
         , enable_mem3blt(true)
         , enable_bitmap_update(false)
@@ -126,6 +128,9 @@ struct ModRDPParams {
 
         , password_printing_mode(0)
 
+        , allow_channels(nullptr)
+        , deny_channels(nullptr)
+
         , verbose(verbose)
         , cache_verbose(0)
     {}
@@ -146,8 +151,6 @@ struct ModRDPParams {
             "ModRDPParams enable_nla=%s",                         (this->enable_nla ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams enable_krb=%s",                          (this->enable_krb ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams enable_clipboard=%s",                    (this->enable_clipboard ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams enable_fastpath=%s",                     (this->enable_fastpath ? "yes" : "no"));
         LOG(LOG_INFO,
@@ -204,6 +207,11 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams password_printing_mode=%u",              this->password_printing_mode);
+
+        LOG(LOG_INFO,
+            "ModRDPParams allow_channels=<%p>",                    this->allow_channels);
+        LOG(LOG_INFO,
+            "ModRDPParams deny_channels=<%p>",                     this->deny_channels);
 
         LOG(LOG_INFO,
             "ModRDPParams verbose=0x%08X",                         this->verbose);

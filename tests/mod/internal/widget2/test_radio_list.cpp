@@ -70,9 +70,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x6e\xbe\xb3\xa5\x4f\x57\x12\xa9\xa9\x26"
-                   "\x32\xb5\xc9\x1d\xde\xbc\xa1\xe1\x1d\xe4"
-                   )){
+        "\x94\x3a\xb8\xec\xe8\x01\x5e\xbe\x20\xca\xdb\x96\x54\xfd\x30\x2e\x10\x4f\x65\xaf"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -83,9 +82,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
     // drawable.save_to_png(OUTPUT_FILE_PATH "radio2.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x7b\xf5\x2f\xd9\x8d\x62\x9f\x3a\x30\xed"
-                   "\x3c\xa6\x3f\xc3\xc0\x52\x2f\x1a\x5b\x0c"
-                   )){
+        "\x2c\x9f\xc4\xf6\xae\x42\x4d\xdd\xe1\x8d\x72\xdd\x9f\xdd\x90\x5d\x7e\x97\x93\x58"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -96,9 +94,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
     // drawable.save_to_png(OUTPUT_FILE_PATH "radio3.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x43\x0a\xb0\xa1\x8e\x1a\x92\x87\xd5\x2d"
-                   "\x53\xee\xcc\x6e\xf0\xa6\x68\x79\x0e\x78"
-                   )){
+        "\xcb\x26\x1a\x2a\xdd\x15\x09\xa1\x5f\x48\x7e\xe8\xa9\xdb\xff\x06\x96\xce\xbc\x69"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -126,9 +123,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xa6\x3e\x25\x38\xd0\xbc\x2a\x41\x36\x44"
-                   "\x9a\xc8\x1e\xe7\x41\x69\xaa\x93\x84\x59"
-                   )){
+        "\x6c\xcc\xc2\xb1\x2b\xc7\xa6\xd7\x97\x08\x56\x3a\xd1\x1b\x45\x3d\x11\x6d\x8b\x8c"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -137,9 +133,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolist2.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x27\x50\x56\xc7\xef\xa0\x19\xd3\xf0\x42"
-                   "\x76\xff\xc1\xb5\x57\xb2\x19\x52\xc8\x29"
-                   )){
+        "\x2c\xaf\x58\x89\xe5\x7d\xd3\x58\xc5\x81\xd8\xb8\x6d\xcd\x4a\x80\xc6\x37\xa4\xf2"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
     radiolist.select(0);
@@ -147,9 +142,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolist3.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x92\x3c\xc0\x03\x39\x00\x73\xdf\xc0\x71"
-                   "\x4c\x64\x13\x49\x20\x79\x81\xc8\x89\xdf"
-                   )){
+        "\xa7\xce\x7e\x70\x1b\xec\x38\x14\x64\x3c\x91\xcd\xac\x1c\x97\xd5\x19\xd0\x70\x6b"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
     radiolist.select(2);
@@ -157,9 +151,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolist4.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xa4\x77\x20\xba\x51\x68\x6b\xc1\xd3\xcd"
-                   "\x40\x24\x72\x34\x0a\x48\xab\x4e\x86\xc2"
-                   )){
+        "\x17\x2a\xa9\xe8\xad\x93\x17\xff\x89\x8d\xf0\x8b\x96\xb9\xe8\x80\xf6\xc3\x9d\x14"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -200,9 +193,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x66\x73\x53\xaf\x17\xe4\x5b\xad\xfc\x06"
-                   "\x23\x73\x0b\x1e\x69\xe3\x29\x0c\x40\xfb"
-                   )){
+        "\x19\xad\x25\x31\x4e\x4f\x77\xb5\x25\xc7\x7c\xc2\x71\xe1\x79\x8f\x22\x54\x26\xbe"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == 0);
@@ -218,9 +210,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify2.png");
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x02\x41\x3f\x86\x0a\x68\xd3\x52\xb0\xce"
-                   "\xe0\x2d\x74\xce\x7e\x5c\xf3\xd0\x64\xb5"
-                   )){
+        "\x36\x5f\xe9\x22\x0c\x76\x9c\x76\xd3\x14\x95\xe8\x8c\x94\x9b\xb3\xcd\x4d\xfa\x04"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == &radiolist);
@@ -237,9 +228,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify3.png");
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xd7\x7e\x9f\x6d\xff\xbf\x75\xa2\xe0\x51"
-                   "\x7a\x84\xd6\xe5\x00\x7e\xac\x15\x5d\x83"
-                   )){
+        "\x12\x16\x75\xe9\xf3\x49\xbc\x86\x28\x3e\xd1\x8a\x00\xd9\x17\xc2\xcb\x1b\x78\xea"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == &radiolist);
@@ -247,7 +237,4 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
     BOOST_CHECK(radiolist.get_selected() == 1);
     notifier.sender = 0;
     notifier.event = 0;
-
-
-
 }

@@ -33,6 +33,7 @@
 #include <dirent.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <iostream>
 
 #include "openssl_crypto.hpp"
 
@@ -59,7 +60,7 @@ void daemonize(const char * pid_file)
 
     switch (pid = fork()){
     case -1:
-        clog << "problem forking "
+        std::clog << "problem forking "
         << errno << ":'" << strerror(errno) << "'\n";
         _exit(1);
     default: /* exit, this is the main process (daemonizer) */
@@ -68,7 +69,7 @@ void daemonize(const char * pid_file)
         pid = getpid();
         fd = open(pid_file, O_WRONLY | O_CREAT, S_IRWXU);
         if (fd == -1) {
-            clog
+            std::clog
             <<  "Writing process id to " LOCKFILE " failed. Maybe no rights ?"
             << " : " << errno << ":'" << strerror(errno) << "'\n";
             _exit(1);
@@ -83,7 +84,7 @@ void daemonize(const char * pid_file)
         open("/dev/null", O_WRONLY, 0); // stdout 1
         open("/dev/null", O_WRONLY, 0); // stderr 2
 
-        clog << "Process " << pid << " started as daemon\n";
+        std::clog << "Process " << pid << " started as daemon\n";
     }
 }
 
@@ -246,7 +247,7 @@ int main(int argc, char** argv)
         int status = shutdown(PID_PATH "/redemption/" LOCKFILE);
         if (status){
             TODO("check the real error that occured")
-            clog << "problem opening " << PID_PATH "/redemption/" LOCKFILE  << "."
+            std::clog << "problem opening " << PID_PATH "/redemption/" LOCKFILE  << "."
             " Maybe rdpproxy is not running\n";
         }
         _exit(status);
@@ -319,7 +320,7 @@ int main(int argc, char** argv)
     }
 
     if (0 == access(PID_PATH "/redemption/" LOCKFILE, F_OK)) {
-        clog <<
+        std::clog <<
         "File " << PID_PATH "/redemption/" LOCKFILE << " already exists. "
         "It looks like rdpproxy is already running, "
         "if not, try again with -f (force) option or delete the " PID_PATH "/redemption/" LOCKFILE " file and try again\n";
@@ -330,7 +331,7 @@ int main(int argc, char** argv)
     /* write the pid to file */
     fd = open(PID_PATH "/redemption/" LOCKFILE, O_WRONLY | O_CREAT, S_IRWXU);
     if (fd == -1) {
-        clog
+        std::clog
         <<  "Writing process id to " PID_PATH "/redemption/" LOCKFILE " failed. Maybe no rights ?"
         << " : " << errno << ":'" << strerror(errno) << "'\n";
         _exit(1);

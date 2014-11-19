@@ -21,10 +21,12 @@
 #ifndef _REDEMPTION_UTILS_PARSER_HPP_
 #define _REDEMPTION_UTILS_PARSER_HPP_
 
-#include "log.hpp"
+#include <string.h>
+#include <stdlib.h>
 
-static inline unsigned ulong_from_cstr(const char * str)
-{ // 10 = 10, 0x10 = 16
+// 10 = 10, 0x10 = 16
+static inline unsigned ulong_from_cstr(const char * str) noexcept
+{
     if ((*str == '0') && (*(str + 1) == 'x')){
         return strtol(str + 2, 0, 16);
     }
@@ -32,8 +34,9 @@ static inline unsigned ulong_from_cstr(const char * str)
     return atol(str);
 }
 
-static inline long long_from_cstr(const char * str)
-{ // 10 = 10, 0x10 = 16
+// 10 = 10, 0x10 = 16
+static inline long long_from_cstr(const char * str) noexcept
+{
     if ((*str == '0') && (*(str + 1) == 'x')){
         return strtol(str + 2, 0, 16);
     }
@@ -41,12 +44,13 @@ static inline long long_from_cstr(const char * str)
     return atol(str);
 }
 
-static inline signed _long_from_cstr(const char * str)
+static inline signed _long_from_cstr(const char * str) noexcept
 {
     return atol(str);
 }
 
-static inline bool bool_from_cstr(const char * str)
+// 1, yes, on, true
+static inline bool bool_from_cstr(const char * str) noexcept
 {
     return (0 == strcasecmp("1",str))
         || (0 == strcasecmp("yes",str))
@@ -54,21 +58,12 @@ static inline bool bool_from_cstr(const char * str)
         || (0 == strcasecmp("true",str));
 }
 
-static inline unsigned level_from_cstr(const char * str)
-{ // low = 0, medium = 1, high = 2
+// low = 0, medium = 1, high = 2. Others = low
+static inline unsigned level_from_cstr(const char * str) noexcept
+{
     unsigned res = 0;
     if (0 == strcasecmp("medium", str)) { res = 1; }
     else if (0 == strcasecmp("high",   str)) { res = 2; }
-    return res;
-}
-
-static inline unsigned logtype_from_cstr(const char * str)
-{ // null = 0, print = 1, syslog = 2, file = 3, encryptedfile = 4
-    unsigned res = 0;
-    if (0 == strcasecmp("print",         str)) { res = 1; }
-    else if (0 == strcasecmp("syslog",        str)) { res = 2; }
-    else if (0 == strcasecmp("file",          str)) { res = 3; }
-    else if (0 == strcasecmp("encryptedfile", str)) { res = 4; }
     return res;
 }
 

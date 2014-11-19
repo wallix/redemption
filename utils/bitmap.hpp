@@ -103,7 +103,7 @@ namespace aux_ {
             }
 
             Memory(Memory const &) = delete;
-            Memory operator=(Memory const &) = delete;
+            Memory & operator=(Memory const &) = delete;
         };
 
         Memory mems[5];
@@ -583,8 +583,8 @@ public:
                 LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n", filename, strerror(errno), errno);
                 this->load_error_bitmap();
                 // throw Error(ERR_BITMAP_LOAD_FAILED);
+                return ;
             }
-
 
             /* read file type */
             if (read(fd, type1, 2) != 2) {
@@ -592,12 +592,14 @@ public:
                 close(fd);
                 this->load_error_bitmap();
                 // throw Error(ERR_BITMAP_LOAD_FAILED);
+                return ;
             }
             if ((type1[0] != 'B') || (type1[1] != 'M')) {
                 LOG(LOG_ERR, "Widget_load: error bitmap file [%s] not BMP file\n", filename);
                 close(fd);
                 this->load_error_bitmap();
                 // throw Error(ERR_BITMAP_LOAD_FAILED);
+                return ;
             }
 
             /* read file size */

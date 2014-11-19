@@ -666,14 +666,10 @@ public:
                         }
 
                         if (this->verbose > 16) {
-                            const uint8_t * key32;
-                            uint8_t         key8[6];
-                            size_t          len;
-
                             while (ss.in_check_rem(4)) {
-                                key32 = ss.in_uint8p(4);
-
-                                len       = UTF32toUTF8(key32, 4, key8, sizeof(key8));
+                                uint8_t         key8[6];
+                                const uint8_t * key32 = ss.in_uint8p(4);
+                                const size_t    len = UTF32toUTF8(key32, 4, key8, sizeof(key8));
                                 key8[len] = 0;
 
                                 LOG( LOG_INFO, "TIMESTAMP %u.%u keyboard '%s'(0x%X)"

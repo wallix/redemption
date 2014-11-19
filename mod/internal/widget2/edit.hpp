@@ -100,6 +100,7 @@ public:
         this->label.buffer[0] = 0;
         this->buffer_size = 0;
         this->num_chars = 0;
+        this->w_text = 0;
         if (text && *text) {
             this->buffer_size = std::min(WidgetLabel::buffer_size - 1, strlen(text));
             memcpy(this->label.buffer, text, this->buffer_size);
@@ -117,6 +118,55 @@ public:
         this->edit_pos = this->num_chars;
         this->edit_buffer_pos = this->buffer_size;
         this->cursor_px_pos = this->w_text;
+    }
+
+    virtual void insert_text(const char * text/*, int position = 0*/)
+    {
+        if (text && *text) {
+            const size_t n = strlen(text);
+            const size_t tmp_buffer_size = this->buffer_size;
+            const size_t total_n = std::min(WidgetLabel::buffer_size - 1, n + this->buffer_size);
+            const size_t max_n = total_n - this->buffer_size;
+            if (this->edit_pos == this->buffer_size || total_n == WidgetLabel::buffer_size - 1) {
+                memcpy(this->label.buffer + this->buffer_size, text, max_n);
+            }
+            else {
+                memmove(this->label.buffer + this->edit_buffer_pos + n, this->label.buffer + this->edit_buffer_pos,
+                        std::min(WidgetLabel::buffer_size - 1 - (this->edit_buffer_pos + n),
+                                 this->buffer_size - this->edit_buffer_pos));
+                memcpy(this->label.buffer + this->edit_buffer_pos, text, max_n);
+            }
+            this->buffer_size = total_n;
+            this->label.buffer[this->buffer_size] = 0;
+            this->drawable.text_metrics(this->label.buffer, this->w_text, this->h_text);
+            if (this->label.auto_resize) {
+                this->rect.cx = this->label.x_text * 2 + this->w_text;
+                this->rect.cy = this->label.y_text * 2 + this->h_text;
+                if (this->buffer_size == 1) {
+                    this->rect.cx -= 2;
+                }
+            }
+            const size_t tmp_num_chars = this->num_chars;
+            this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
+            Rect rect = this->get_cursor_rect();
+            rect.cx = this->w_text - this->cursor_px_pos;
+            if (this->edit_pos == tmp_buffer_size || total_n == WidgetLabel::buffer_size - 1) {
+                this->cursor_px_pos = this->w_text;
+                this->edit_buffer_pos = this->buffer_size;
+            }
+            else {
+                const size_t pos = this->edit_buffer_pos + max_n;
+                const char c = this->label.buffer[pos];
+                this->label.buffer[pos] = 0;
+                int w, h;
+                this->drawable.text_metrics(this->label.buffer + this->edit_buffer_pos, w, h);
+                this->label.buffer[pos] = c;
+                this->cursor_px_pos += w;
+                this->edit_buffer_pos += max_n;
+            }
+            this->edit_pos += this->num_chars - tmp_num_chars;
+            this->update_draw_cursor(rect);
+        }
     }
 
     const char * get_text() const
@@ -422,10 +472,7 @@ public:
                     }
                     break;
                 case Keymap2::KEVENT_KEY:
-                    TODO("Num chars limit should be the buffer size, but at 128,"
-                         " unexpected behavior occurs")
-                        // if (this->num_chars < WidgetLabel::buffer_size - 5) {
-                        if (this->num_chars < 127) {
+                    if (this->num_chars < WidgetLabel::buffer_size - 5) {
                         uint32_t c = keymap->get_char();
                         UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0, c, WidgetLabel::buffer_size - 1 - this->edit_buffer_pos);
                         size_t tmp = this->edit_buffer_pos;
@@ -450,6 +497,24 @@ public:
                 case Keymap2::KEVENT_ENTER:
                     keymap->get_kevent();
                     this->send_notify(NOTIFY_SUBMIT);
+                    break;
+                case Keymap2::KEVENT_PASTE:
+                    keymap->get_kevent();
+                    this->send_notify(NOTIFY_PASTE);
+                    break;
+                case Keymap2::KEVENT_COPY:
+                    keymap->get_kevent();
+                    this->send_notify(NOTIFY_COPY);
+                    break;
+                case Keymap2::KEVENT_CUT:
+                    keymap->get_kevent();
+                    this->send_notify(NOTIFY_CUT);
+                    {
+                        this->drawable.begin_update();
+                        this->label.draw(this->label.rect);
+                        this->draw_cursor(this->get_cursor_rect());
+                        this->drawable.end_update();
+                    }
                     break;
                 default:
                     Widget2::rdp_input_scancode(param1, param2, param3, param4, keymap);
