@@ -643,7 +643,7 @@ unit-test test_translation : tests/utils/test_translation.cpp libboost_unit_test
 unit-test test_ber : tests/core/RDP/nla/asn1/test_ber.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_credssp : tests/core/RDP/nla/test_credssp.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_sspi : tests/core/RDP/nla/test_sspi.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_nla : tests/core/RDP/nla/test_nla.cpp dl crypto krb5 gssglue libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_nla : tests/core/RDP/nla/test_nla.cpp dl crypto krb5 gssglue z libboost_unit_test : <variant>coverage:<library>gcov ;
 
 alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
 
