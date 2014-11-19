@@ -699,10 +699,10 @@ struct Inifile : public FieldObserver {
         bool allow_authentification_retries = false;
     } mod_vnc;
 
-    // struct
-    //{
-    //    int on_end_of_data; // 0 - Wait for Escape, 1 - End session
-    //} mod_replay;
+    struct
+    {
+        int on_end_of_data; // 0 - Wait for Escape, 1 - End session
+    } mod_replay;
 
     // Section "video"
     struct {
@@ -1014,6 +1014,10 @@ public:
         // Begin section "mod_vnc"
         this->mod_vnc.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
         // End Section "mod_vnc"
+
+        // Begin Section "mod_replay"
+        this->mod_replay.on_end_of_data = 0;
+        // End Section "mod_replay"
 
         // Begin section video
         this->video.disable_keyboard_log.attach_ini(this, AUTHID_DISABLE_KEYBOARD_LOG);
@@ -1418,6 +1422,14 @@ public:
             }
             else if (0 == strcmp(key, "allow_authentification_retries")) {
                 this->mod_vnc.allow_authentification_retries = bool_from_cstr(value);
+            }
+            else {
+                LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            }
+        }
+        else if (0 == strcmp(context, "mod_replay")) {
+            if (0 == strcmp(key, "on_end_of_data")) {
+                this->mod_replay.on_end_of_data = ulong_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

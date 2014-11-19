@@ -159,8 +159,11 @@ public:
                 }
                 else {
                     this->front.flush();
-//                    this->event.signal = BACK_EVENT_STOP;
-//                    this->event.set(1);
+
+                    if (this->ini.mod_replay.on_end_of_data == 1) {
+                        this->event.signal = BACK_EVENT_STOP;
+                        this->event.set(1);
+                    }
                     this->end_of_data = true;
                 }
             }

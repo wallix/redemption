@@ -212,6 +212,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
     BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
     BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL("",                               ini.context.movie.c_str());
 
@@ -479,6 +480,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL("40000",                          ini.context_get_value(AUTHID_OPT_BITRATE));
     BOOST_CHECK_EQUAL("5",                              ini.context_get_value(AUTHID_OPT_FRAMERATE));
     BOOST_CHECK_EQUAL("15",                             ini.context_get_value(AUTHID_OPT_QSCALE));
+
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_OPT_BPP));
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_OPT_HEIGHT));
@@ -752,6 +755,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
     BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
 
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
     BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
@@ -1004,6 +1009,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
     BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
 
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
     BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
@@ -1050,6 +1057,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "persistent_disk_bitmap_cache=yes\n"
                           "cache_waiting_list=no\n"
                           "persist_bitmap_cache_on_disk=no\n"
+                          "[mod_replay]\n"
+                          "on_end_of_data=1\n"
                           "[video]\n"
                           "hash_path=/mnt/wab/hash/\n"
                           "record_path=/mnt/wab/recorded/rdp/\n"
@@ -1224,6 +1233,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
     BOOST_CHECK_EQUAL("Connexion fermée",               ini.translation.connection_closed.get_cstr());
 
+    BOOST_CHECK_EQUAL(1,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
     BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
@@ -1259,6 +1270,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "bitmap_compression=false\n"
                           "[mod_rdp]\n"
                           "rdp_compression=0\n"
+                          "[mod_replay]\n"
+                          "on_end_of_data=0\n"
                           "[video]\n"
                           "disable_keyboard_log=4\n"
                           "wrm_color_depth_selection_strategy=1\n"
@@ -1423,6 +1436,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
     BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
     BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
+
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
@@ -1610,6 +1625,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
     BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
 
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
     BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
@@ -1789,6 +1806,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
     BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
 
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
     BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
@@ -1963,6 +1982,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
     BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
 
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
+
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
     BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
@@ -2136,6 +2157,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
     BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
     BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
+
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
