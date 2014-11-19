@@ -651,8 +651,8 @@ unit-test test_ntlm_message_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_messag
 unit-test test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_ntlm_message_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_ntlm_message_authenticate : tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_ntlm_context : tests/core/RDP/nla/ntlm/test_ntlm_context.cpp crypto dl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm.cpp crypto dl libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_ntlm_context : tests/core/RDP/nla/ntlm/test_ntlm_context.cpp crypto dl z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm.cpp crypto dl z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_credentials : tests/core/RDP/nla/kerberos/test_credentials.cpp krb5 libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp krb5 gssglue libboost_unit_test : <variant>coverage:<library>gcov ;
 ## @}
