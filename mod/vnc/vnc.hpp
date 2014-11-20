@@ -50,8 +50,9 @@
 #include "internal/internal_mod.hpp"
 #include "internal/widget2/notify_api.hpp"
 
-#include "unique_ptr.hpp"
 #include "update_lock.hpp"
+
+#include <memory>
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -1468,7 +1469,7 @@ private:
             switch (encoding) {
             case 0: /* raw */
             {
-                unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * 16 * Bpp]);
+                std::unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * 16 * Bpp]);
                 if (!raw) {
                     LOG(LOG_ERR, "Memory allocation failed for raw buffer in VNC");
                     throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
@@ -1508,7 +1509,7 @@ private:
             case 2: /* RRE */
             {
                 //LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-                unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * cy * Bpp]);
+                std::unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * cy * Bpp]);
                 if (!raw) {
                     LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
                     throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
