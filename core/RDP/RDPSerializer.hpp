@@ -390,9 +390,9 @@ public:
         if ((res >> 24) == BITMAP_ADDED_TO_CACHE) {
             this->emit_bmp_cache(cache_id, cache_idx, in_wait_list);
         }
-        else if ((this->bmp_cache.owner == BmpCache::Recorder) && !this->bmp_cache.IsCached(cache_id, cache_idx)) {
+        else if ((this->bmp_cache.owner == BmpCache::Recorder) && !this->bmp_cache.is_cached(cache_id, cache_idx)) {
             this->emit_bmp_cache(cache_id, cache_idx, in_wait_list);
-            this->bmp_cache.SetCached(cache_id, cache_idx, true);
+            this->bmp_cache.set_cached(cache_id, cache_idx, true);
         }
 
         MemBlt newcmd = cmd;
