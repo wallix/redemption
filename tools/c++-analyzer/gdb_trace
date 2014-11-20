@@ -12,7 +12,7 @@ show_caller=0
 
 prev=''
 (echo -e "b main\nr\ns\n"; yes '') \
-| exec gdb "$@" \
+| exec gdb -n "$@" \
 |& while read l ; do
   if [ "$l" = '(gdb) The program is not being run.' ] ; then
     l=`ps | grep gdb'$'`
