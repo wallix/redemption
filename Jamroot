@@ -368,7 +368,7 @@ import testing ;
 unit-test test_iter : tests/utils/test_iter.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_noncopyable : tests/utils/test_noncopyable.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_splitter : tests/utils/test_splitter.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_unique_ptr : tests/utils/test_unique_ptr.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_make_unique : tests/utils/test_make_unique.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 ## @}
 
 unit-test test_stream : tests/utils/test_stream.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

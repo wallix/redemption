@@ -196,7 +196,7 @@ utils/stream 100 100
 utils/string 100 100
 utils/theme 100 100
 utils/translation 100 100
-utils/unique_ptr 100 100
+utils/make_unique 100 100
 utils/utf 100 100
 acl/acl_serializer 100 100
 acl/authentifier 100 100
