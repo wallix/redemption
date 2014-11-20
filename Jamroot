@@ -399,8 +399,8 @@ unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp crypto libboost_unit_
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_authentifier : tests/acl/test_authentifier.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_module_manager : tests/acl/test_module_manager.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_acl_serializer : tests/acl/test_acl_serializer.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_module_manager : tests/acl/test_module_manager.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_acl_serializer : tests/acl/test_acl_serializer.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_capture : tests/capture/test_capture.cpp crypto dl png z snappy cryptofile libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transport.cpp crypto png z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp png z crypto snappy libboost_unit_test : <variant>coverage:<library>gcov ;
