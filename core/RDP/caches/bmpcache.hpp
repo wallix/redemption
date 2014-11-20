@@ -86,14 +86,17 @@ private:
             uint32_t sig_32[2];
         } sig;
         uint8_t sha1[20];
+        bool cached;
 
         cache_element()
         : stamp(0)
+        , cached(false)
         {}
 
         cache_element(Bitmap const & bmp)
         : bmp(bmp)
         , stamp(0)
+        , cached(false)
         {}
 
         cache_element(cache_element const &) = delete;
@@ -102,6 +105,7 @@ private:
         void reset() {
             this->stamp = 0;
             this->bmp.reset();
+            this->cached = false;
         }
 
         operator bool() const {
@@ -508,6 +512,7 @@ public:
         e.bmp = bmp;
         e.bmp.compute_sha1(e.sha1);
         e.stamp = ++this->stamp;
+        e.cached = true;
 
         if (r.persistent()) {
             REDASSERT(key1 && key2);
@@ -531,6 +536,22 @@ public:
             idx = r.size() - 1;
         }
         return r[idx].bmp;
+    }
+
+    bool IsCached(uint8_t id, uint16_t idx) {
+        REDASSERT(this->owner == Recorder);
+        REDASSERT(!(id & IN_WAIT_LIST) && (id != MAXIMUM_NUMBER_OF_CACHES));
+
+        Cache<cache_element> & r = this->caches[id];
+        return r[idx].cached;
+    }
+
+    void SetCached(uint8_t id, uint16_t idx, bool cached) {
+        REDASSERT(this->owner == Recorder);
+        REDASSERT(!(id & IN_WAIT_LIST) && (id != MAXIMUM_NUMBER_OF_CACHES));
+
+        Cache<cache_element> & r = this->caches[id];
+        r[idx].cached = cached;
     }
 
     bool is_cache_persistent(uint8_t id) {
@@ -705,6 +726,7 @@ public:
             ::memcpy(e.sha1, e_compare.sha1, 20);
             e.bmp = bmp;
             e.stamp = ++this->stamp;
+            e.cached = true;
             cache_real.add(e);
         }
         else {
