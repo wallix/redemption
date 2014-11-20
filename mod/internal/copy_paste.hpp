@@ -43,6 +43,8 @@ class CopyPaste
         size_t size_ = 0;
 
     public:
+        LimitString() = default;
+
         static constexpr size_t max_size() {
             return sizeof(buf_) / sizeof(buf_[0]) - 1;
         }

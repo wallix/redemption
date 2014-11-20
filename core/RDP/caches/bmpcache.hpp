@@ -121,6 +121,7 @@ private:
     public:
         storage_value_set()
         : elem_size(0)
+        , free_list_cur(nullptr)
         {}
 
         template<class T>

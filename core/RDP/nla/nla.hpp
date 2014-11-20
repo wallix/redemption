@@ -71,7 +71,8 @@ struct rdpCredssp
                const bool krb,
                const bool restricted_admin_mode,
                const uint32_t verbose = 0)
-        : send_seq_num(0)
+        : server(false)
+        , send_seq_num(0)
         , recv_seq_num(0)
         , trans(transport)
         , negoToken(ts_request.negoTokens)

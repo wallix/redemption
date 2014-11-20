@@ -625,10 +625,12 @@ struct Inifile : public FieldObserver {
         unsigned flv_frame_interval = 1000000L;
 
         StaticPath<1024> persistent_path = PERSISTENT_PATH;
+
+        Inifile_globals() = default;
     } globals;
 
     // section "client"
-    struct {
+    struct Inifile_client {
         UnsignedField keyboard_layout;    // AUTHID_KEYBOARD_LAYOUT
         bool ignore_logon_password = false; // if true, ignore password provided by RDP client, user need do login manually. default
 
@@ -661,9 +663,11 @@ struct Inifile : public FieldObserver {
         redemption::string allow_channels = "*";
         redemption::string deny_channels;
         // @}
+
+        Inifile_client() = default;
     } client;
 
-    struct {
+    struct Inifile_mod_rdp {
         int rdp_compression = 0; // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
 
         bool disconnect_on_logon_user_change = false;
@@ -688,24 +692,30 @@ struct Inifile : public FieldObserver {
         StringField allow_channels;
         StringField deny_channels;
         // @}
+
+        Inifile_mod_rdp() = default;
     } mod_rdp;
 
-    struct
+    struct Inifile_mod_vnc
     {
         BoolField clipboard;                // AUTHID_OPT_CLIPBOARD //
 
         redemption::string encodings;
 
         bool allow_authentification_retries = false;
+
+        Inifile_mod_vnc() = default;
     } mod_vnc;
 
-    struct
+    struct Inifile_mod_replay
     {
         int on_end_of_data = 0; // 0 - Wait for Escape, 1 - End session
+
+        Inifile_mod_replay() = default;
     } mod_replay;
 
     // Section "video"
-    struct {
+    struct Inifile_video {
         unsigned capture_flags  = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
         // video opt from capture_flags
         bool     capture_png    = true;
@@ -766,10 +776,12 @@ struct Inifile : public FieldObserver {
         unsigned wrm_color_depth_selection_strategy = 0; // 0: 24-bit, 1: 16-bit
 
         unsigned wrm_compression_algorithm = 0; // 0: uncompressed, 1: GZip, 2: Snappy, 3: bufferized, 4: LZMA (not yet supported)
+
+        Inifile_video() = default;
     } video;
 
-    // Section "Crypto"
-    struct {
+    // Section "crypto"
+    struct Inifile_crypto {
         StaticString<32> key0 = []() {
             decltype(key0) ret;
             ret.setmem(
@@ -790,10 +802,12 @@ struct Inifile : public FieldObserver {
             );
             return ret;
         }();
+
+        Inifile_crypto() = default;
     } crypto;
 
     // Section "debug"
-    struct {
+    struct Inifile_debug {
         uint32_t x224               = 0;
         uint32_t mcs                = 0;
         uint32_t sec                = 0;
@@ -818,10 +832,12 @@ struct Inifile : public FieldObserver {
         uint32_t performance        = 0;
 
         uint32_t pass_dialog_box    = 0;
+
+        Inifile_debug() = default;
     } debug;
 
     // section "translation"
-    struct {
+    struct Inifile_translation {
         StringField button_ok;              // AUTHID_TRANS_BUTTON_OK
         StringField button_cancel;          // AUTHID_TRANS_BUTTON_CANCEL
         StringField button_help;            // AUTHID_TRANS_BUTTON_HELP
@@ -837,10 +853,12 @@ struct Inifile : public FieldObserver {
         StringField manager_close_cnx;      // AUTHID_TRANS_MANAGER_CLOSE_CNX
 
         StringField language;
+
+        Inifile_translation() = default;
     } translation;
 
     // section "context"
-    struct {
+    struct Inifile_context {
         StaticString<1024> movie;                    // --
 
         UnsignedField      opt_bitrate;              // AUTHID_OPT_BITRATE //
@@ -916,6 +934,8 @@ struct Inifile : public FieldObserver {
 
         StringField        module;                   // AUTHID_MODULE //
         BoolField          forcemodule;              // AUTHID_FORCEMODULE //
+
+        Inifile_context() = default;
     } context;
 
     Theme theme;

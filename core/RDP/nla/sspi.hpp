@@ -147,6 +147,8 @@ struct SEC_WINNT_AUTH_IDENTITY
         , Password(0)
         , Flags(0)
     {
+        this->princname[0] = 0;
+        this->princpass[0] = 0;
     }
 
     void SetUserFromUtf8(const uint8_t * user) {

@@ -309,6 +309,8 @@ struct Error
 private:
     char errstr[64];
 
+    Error() = delete;
+
 public:
     Error(int id, int errnum = 0) noexcept
     : id(id)

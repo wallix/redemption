@@ -383,6 +383,7 @@ struct RFXCapset {
     , capsetType(1)            // MUST be set to CLY_CAPSET (0xCFC0)
     , numIcaps(0)            // number of elements in icapsData array
     , icapLen(8)             // total length in bytes of the fields of a icap structure (i.e. a row in icapsData array)
+    , icapsData(nullptr)
     {
     }
 };
@@ -399,6 +400,7 @@ struct RFXCaps {
     : blockType(CBY_CAPS)    // MUST be set to CBY_CAPS (0xCBC0)
     , blockLen(8)             // MUST be set to 0x0008
     , numCapsets(1)            // MUST be set to 0x0001
+    , capsetsData(nullptr)
     {
     }
 };

@@ -76,7 +76,7 @@ namespace transfil {
         unsigned int   MAX_CIPHERED_SIZE;       // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
     public:
-        //decrypt_filter()
+        decrypt_filter() = default;
         //: pos(0)
         //, raw_size(0)
         //, state(0)
@@ -265,7 +265,7 @@ namespace transfil {
         uint32_t       file_size;               // the current file size
 
     public:
-        //encrypt_filter()
+        encrypt_filter() = default;
         //: pos(0)
         //, raw_size(0)
         //, file_size(0)
