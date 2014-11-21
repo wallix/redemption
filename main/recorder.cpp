@@ -43,13 +43,14 @@
 #include "crypto_in_meta_sequence_transport.hpp"
 
 static int recompress_or_record( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
-                               , const timeval begin_capture, const timeval end_capture
+                               , const timeval end_record, const timeval begin_capture, const timeval end_capture
                                , std::string & output_filename, Inifile & ini
                                , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                                , bool show_file_metadata, bool show_statistics, uint32_t verbose);
 
 template<typename InWrmTrans>
-unsigned get_file_count(InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_t & end_cap, timeval & begin_record);
+unsigned get_file_count( InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_t & end_cap, timeval & begin_record
+                       , timeval & end_record);
 
 template<typename InWrmTrans>
 void remove_file(InWrmTrans & in_wrm_trans, const char * hash_path, const char * infile_path
@@ -111,7 +112,7 @@ int main(int argc, char** argv)
 
     ("png,p", "enable png capture")
     ("wrm,w", "enable wrm capture")
-    ("clear", boost::program_options::value<uint32_t>(&clear), "Clear old capture files with same prefix (default on)")
+    ("clear", boost::program_options::value<uint32_t>(&clear), "clear old capture files with same prefix (default on)")
     ("verbose", boost::program_options::value<uint32_t>(&verbose), "more logs")
     ("zoom", boost::program_options::value<uint32_t>(&zoom), "scaling factor for png capture (default 100%)")
     ("meta,m", "show file metadata")
@@ -122,8 +123,10 @@ int main(int argc, char** argv)
     ("color-depth,d", boost::program_options::value(&wrm_color_depth),           "wrm color depth (default=original, 16, 24)"                      )
     ("encryption,y",  boost::program_options::value(&wrm_encryption),            "wrm encryption (default=origianl, enable, disable)"              )
 
-    ("auto-output-file",  "Append suffix to input base filename to generate output base filename automatically")
-    ("remove-input-file", "Remove input file"                                                                  )
+    ("auto-output-file",  "append suffix to input base filename to generate output base filename automatically")
+    ("remove-input-file", "remove input file"                                                                  )
+
+    ("get-duration,t", "get input file duration (in seconds)")
     ;
 
     Inifile ini;
@@ -325,15 +328,16 @@ int main(int argc, char** argv)
     memcpy(cctx.hmac_key,   ini.crypto.key1, sizeof(cctx.hmac_key  ));
 
     timeval  begin_record = { 0, 0 };
+    timeval  end_record   = { 0, 0 };
     unsigned file_count   = 0;
     try {
         if (infile_is_encrypted == false) {
             InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
-            file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record);
+            file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
         }
         else {
             CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension);
-            file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record);
+            file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
         }
     }
     catch (const Error & e) {
@@ -360,7 +364,7 @@ int main(int argc, char** argv)
     timeval end_capture;
     end_capture.tv_sec   = end_cap;   end_capture.tv_usec   = 0;
 
-    int result = recompress_or_record( cctx, *in_wrm_trans.get(), begin_record, begin_capture, end_capture
+    int result = recompress_or_record( cctx, *in_wrm_trans.get(), begin_record, end_record, begin_capture, end_capture
                                      , output_filename, ini, file_count, order_count, clear, zoom
                                      , show_file_metadata, show_statistics, verbose);
 
@@ -383,7 +387,8 @@ int main(int argc, char** argv)
 }
 
 template<typename InWrmTrans>
-unsigned get_file_count(InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_t & end_cap, timeval & begin_record) {
+unsigned get_file_count( InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_t & end_cap, timeval & begin_record
+                       , timeval & end_record) {
     in_wrm_trans.next();
     begin_record.tv_sec = in_wrm_trans.begin_chunk_time();
     TODO("a negative time should be a time relative to end of movie")
@@ -399,7 +404,21 @@ unsigned get_file_count(InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_
     while (begin_cap >= in_wrm_trans.end_chunk_time()) {
         in_wrm_trans.next();
     }
-    return in_wrm_trans.get_seqno();
+    unsigned result = in_wrm_trans.get_seqno();
+    try {
+        do {
+            end_record.tv_sec = in_wrm_trans.end_chunk_time();
+            in_wrm_trans.next();
+        }
+        while (true);
+    }
+    catch (const Error & e) {
+        if (e.id != static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)){
+            cerr << "Exception code: " << e.id << endl;
+            exit(-1);
+        }
+    };
+    return result;
 }
 
 template<typename InWrmTrans>
@@ -522,9 +541,88 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
     return return_code;
 }   // do_recompress
 
-static int do_record( Transport & in_wrm_trans, const timeval begin_capture, const timeval end_capture
-                    , std::string & output_filename, Inifile & ini, uint32_t order_count, uint32_t clear
-                    , unsigned zoom, bool show_file_metadata, bool show_statistics, uint32_t verbose) {
+struct UpdateProgressData {
+private:
+    int fd;
+
+    const time_t start_record;
+    const time_t stop_record;
+
+    int last_written_time_percentage;
+
+public:
+    UpdateProgressData( const char * progress_filename
+                      , const time_t begin_record, const time_t end_record
+                      , const time_t begin_capture, const time_t end_capture)
+    : fd(-1)
+    , start_record(begin_capture ? begin_capture : begin_record)
+    , stop_record(end_capture ? end_capture : end_record)
+    , last_written_time_percentage(-1) {
+        this->fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
+        if (this->fd != -1) {
+            int write_result = ::write(this->fd, "0", 1);
+(void)write_result;
+        }
+        else {
+            cerr << "Failed to create file: \"" << progress_filename << "\"" << endl;
+        }
+    }
+
+    ~UpdateProgressData() {
+        if (this->fd != -1) {
+            ::lseek(this->fd, 0, SEEK_SET);
+            int write_result = ::write(this->fd, "100", 3);
+(void)write_result;
+            ::close(this->fd);
+        }
+    }
+
+    bool is_valid() {
+        return (this->fd != -1);
+    }
+
+    void update(time_t record_now) {
+        if (this->fd == -1) {
+            return;
+        }
+
+        int time_percentage;
+
+        if (record_now <= this->start_record) {
+            time_percentage = 0;
+        }
+        else if (record_now >= this->stop_record) {
+            time_percentage = 99;
+        }
+        else {
+            time_percentage = (record_now - this->start_record) * 100 /
+                (this->stop_record - this->start_record);
+        }
+
+        REDASSERT((time_percentage > -1) && (time_percentage < 100));
+
+        if (time_percentage != this->last_written_time_percentage) {
+            char str_time_percentage[32];
+
+            ::snprintf(str_time_percentage, sizeof(str_time_percentage), "%u", time_percentage);
+
+            ::lseek(this->fd, 0, SEEK_SET);
+            int write_result = ::write(this->fd, str_time_percentage, strlen(str_time_percentage));
+    (void)write_result;
+        }
+    }
+};
+
+void cb_update_progress(void * user_data, time_t record_now) {
+    UpdateProgressData * update_progress_data = (UpdateProgressData *)user_data;
+
+    update_progress_data->update(record_now);
+}
+
+static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
+                    , const timeval begin_capture, const timeval end_capture, std::string & output_filename
+                    , Inifile & ini, uint32_t order_count, uint32_t clear, unsigned zoom
+                    , bool show_file_metadata, bool show_statistics, uint32_t verbose) {
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
 
     if (show_file_metadata) {
@@ -546,17 +644,22 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture, con
             //cout << "Cache 4 size          : " << player.info_cache_4_size                            << endl;
             cout << "Compression algorithm : " << static_cast<int>(player.info_compression_algorithm) << endl;
         }
+        cout << "Duration (in seconds) : " << (end_record.tv_sec - begin_record.tv_sec + 1) << endl;
 
         if (!show_statistics && !output_filename.length()) {
             return 0;
         }
     }
 
-    std::unique_ptr<Capture> capture;
+    std::unique_ptr<Capture>            capture;
+    std::unique_ptr<UpdateProgressData> update_progress_data;
 
     player.max_order_count = order_count;
 
     if (output_filename.length()) {
+        char outfile_pid[32];
+        snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
+
         char outfile_path     [1024] = "./"           ; // default value, actual one should come from output_filename
         char outfile_basename [1024] = "redrec_output"; // default value actual one should come from output_filename
         char outfile_extension[ 128] = ""             ; // extension is ignored for targets anyway
@@ -572,7 +675,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture, con
                       );
 
         if (verbose) {
-            cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension <<
+            cout << "Output file path: " << outfile_path << outfile_basename << '-' << outfile_pid << outfile_extension <<
                 endl << endl;
         }
 
@@ -597,55 +700,73 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture, con
             capture->psc->zoom(zoom);
         }
         player.add_consumer((RDPGraphicDevice * )capture.get(), (RDPCaptureDevice * )capture.get());
+
+
+        char progress_filename[4096];
+        snprintf(progress_filename, sizeof(progress_filename), "%s%s-%s.pgs",
+            outfile_path, outfile_basename, outfile_pid);
+
+        update_progress_data.reset(new UpdateProgressData(
+              progress_filename
+            , begin_record.tv_sec, end_record.tv_sec, begin_capture.tv_sec, end_capture.tv_sec
+            )
+        );
     }
 
     int return_code = 0;
-    try {
-        player.play();
 
-        if (show_statistics) {
-            cout << endl;
-            cout << "DstBlt                : " << player.statistics.DstBlt                << endl;
-            cout << "MultiDstBlt           : " << player.statistics.MultiDstBlt           << endl;
-            cout << "PatBlt                : " << player.statistics.PatBlt                << endl;
-            cout << "MultiPatBlt           : " << player.statistics.MultiPatBlt           << endl;
-            cout << "OpaqueRect            : " << player.statistics.OpaqueRect            << endl;
-            cout << "MultiOpaqueRect       : " << player.statistics.MultiOpaqueRect       << endl;
-            cout << "ScrBlt                : " << player.statistics.ScrBlt                << endl;
-            cout << "MultiScrBlt           : " << player.statistics.MultiScrBlt           << endl;
-            cout << "MemBlt                : " << player.statistics.MemBlt                << endl;
-            cout << "Mem3Blt               : " << player.statistics.Mem3Blt               << endl;
-            cout << "LineTo                : " << player.statistics.LineTo                << endl;
-            cout << "GlyphIndex            : " << player.statistics.GlyphIndex            << endl;
-            cout << "Polyline              : " << player.statistics.Polyline              << endl;
-
-            cout << "CacheBitmap           : " << player.statistics.CacheBitmap           << endl;
-            cout << "CacheColorTable       : " << player.statistics.CacheColorTable       << endl;
-            cout << "CacheGlyph            : " << player.statistics.CacheGlyph            << endl;
-
-            cout << "FrameMarker           : " << player.statistics.FrameMarker           << endl;
-
-            cout << "BitmapUpdate          : " << player.statistics.BitmapUpdate          << endl;
-
-            cout << "CachePointer          : " << player.statistics.CachePointer          << endl;
-            cout << "PointerIndex          : " << player.statistics.PointerIndex          << endl;
-
-            cout << "graphics_update_chunk : " << player.statistics.graphics_update_chunk << endl;
-            cout << "bitmap_update_chunk   : " << player.statistics.bitmap_update_chunk   << endl;
-            cout << "timestamp_chunk       : " << player.statistics.timestamp_chunk       << endl;
-        }
-    }
-    catch (Error const & e) {
+    if (((bool)update_progress_data) && !update_progress_data->is_valid()) {
         return_code = -1;
     }
+    else {
+        try {
+            player.play((((bool)update_progress_data) ? cb_update_progress : nullptr), update_progress_data.get());
 
+            if (show_statistics) {
+                cout << endl;
+                cout << "DstBlt                : " << player.statistics.DstBlt                << endl;
+                cout << "MultiDstBlt           : " << player.statistics.MultiDstBlt           << endl;
+                cout << "PatBlt                : " << player.statistics.PatBlt                << endl;
+                cout << "MultiPatBlt           : " << player.statistics.MultiPatBlt           << endl;
+                cout << "OpaqueRect            : " << player.statistics.OpaqueRect            << endl;
+                cout << "MultiOpaqueRect       : " << player.statistics.MultiOpaqueRect       << endl;
+                cout << "ScrBlt                : " << player.statistics.ScrBlt                << endl;
+                cout << "MultiScrBlt           : " << player.statistics.MultiScrBlt           << endl;
+                cout << "MemBlt                : " << player.statistics.MemBlt                << endl;
+                cout << "Mem3Blt               : " << player.statistics.Mem3Blt               << endl;
+                cout << "LineTo                : " << player.statistics.LineTo                << endl;
+                cout << "GlyphIndex            : " << player.statistics.GlyphIndex            << endl;
+                cout << "Polyline              : " << player.statistics.Polyline              << endl;
+
+                cout << "CacheBitmap           : " << player.statistics.CacheBitmap           << endl;
+                cout << "CacheColorTable       : " << player.statistics.CacheColorTable       << endl;
+                cout << "CacheGlyph            : " << player.statistics.CacheGlyph            << endl;
+
+                cout << "FrameMarker           : " << player.statistics.FrameMarker           << endl;
+
+                cout << "BitmapUpdate          : " << player.statistics.BitmapUpdate          << endl;
+
+                cout << "CachePointer          : " << player.statistics.CachePointer          << endl;
+                cout << "PointerIndex          : " << player.statistics.PointerIndex          << endl;
+
+                cout << "graphics_update_chunk : " << player.statistics.graphics_update_chunk << endl;
+                cout << "bitmap_update_chunk   : " << player.statistics.bitmap_update_chunk   << endl;
+                cout << "timestamp_chunk       : " << player.statistics.timestamp_chunk       << endl;
+            }
+        }
+        catch (Error const & e) {
+            return_code = -1;
+        }
+    }
+
+    update_progress_data.reset();
     capture.reset();
 
     return return_code;
 }   // do_record
 
 static int recompress_or_record( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
-                               , const timeval begin_capture, const timeval end_capture
+                               , const timeval end_record, const timeval begin_capture, const timeval end_capture
                                , std::string & output_filename, Inifile & ini
                                , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                                , bool show_file_metadata, bool show_statistics, uint32_t verbose) {
@@ -658,8 +779,8 @@ static int recompress_or_record( CryptoContext & cctx, Transport & in_wrm_trans,
         if (verbose) {
             cout << "[A]"<< endl;
         }
-        return do_record( in_wrm_trans, begin_capture, end_capture, output_filename, ini, order_count
-                        , clear, zoom, show_file_metadata, show_statistics, verbose);
+        return do_record( in_wrm_trans, begin_record, end_record, begin_capture, end_capture, output_filename
+                        , ini, order_count, clear, zoom, show_file_metadata, show_statistics, verbose);
     }
     else {
         if (verbose) {
