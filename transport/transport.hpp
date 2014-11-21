@@ -39,7 +39,6 @@ class Transport
 {
     uint64_t total_received;
     uint64_t total_sent;
-    uint64_t quantum_count;
 
 protected:
     uint32_t seqno;
@@ -57,7 +56,6 @@ public:
     Transport()
     : total_received(0)
     , total_sent(0)
-    , quantum_count(0)
     , seqno(0)
     , last_quantum_received(0)
     , last_quantum_sent(0)
@@ -75,20 +73,17 @@ public:
     uint32_t get_seqno() const /*noexcept*/
     { return this->seqno; }
 
-    uint32_t get_total_received() const /*noexcept*/
+    uint64_t get_total_received() const /*noexcept*/
     { return this->total_received + this->last_quantum_received; }
 
-    uint32_t get_last_quantum_received() const /*noexcept*/
+    uint64_t get_last_quantum_received() const /*noexcept*/
     { return this->last_quantum_received; }
 
-    uint32_t get_total_sent() const /*noexcept*/
+    uint64_t get_total_sent() const /*noexcept*/
     { return this->total_sent + this->last_quantum_sent; }
 
-    uint32_t get_last_quantum_sent() const /*noexcept*/
+    uint64_t get_last_quantum_sent() const /*noexcept*/
     { return this->last_quantum_sent; }
-
-    uint32_t get_quantum_count() const /*noexcept*/
-    { return this->quantum_count; }
 
     bool get_status() const /*noexcept*/
     { return this->status; }
@@ -98,14 +93,13 @@ public:
         this->authentifier = authentifier;
     }
 
-    void reset_quantum_sent() /*noexcept*/
-    {
-        this->last_quantum_sent = 0;
-    }
+    //void reset_quantum_sent() /*noexcept*/
+    //{
+    //    this->last_quantum_sent = 0;
+    //}
 
     void tick() /*noexcept*/
     {
-        this->quantum_count++;
         this->total_received += this->last_quantum_received;
         this->total_sent += this->last_quantum_sent;
         this->last_quantum_received = 0;
