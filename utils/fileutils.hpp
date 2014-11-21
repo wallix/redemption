@@ -222,6 +222,7 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
             const bool extension = ((eob[-4] == '.') && (eob[-3] == 'f') && (eob[-2] == 'l') && (eob[-1] == 'v'))
                           || ((eob[-4] == '.') && (eob[-3] == 'p') && (eob[-2] == 'n') && (eob[-1] == 'g'))
                           || ((eob[-5] == '.') && (eob[-4] == 'm') && (eob[-3] == 'e') && (eob[-2] == 't') && (eob[-1] == 'a'))
+                          || ((eob[-4] == '.') && (eob[-3] == 'p') && (eob[-2] == 'g') && (eob[-1] == 's'))
                           ;
 
             if (!extension){
