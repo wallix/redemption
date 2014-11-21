@@ -21,15 +21,15 @@
 #ifndef REDEMPTION_TRANSPORT_BUFFER_CHECK_BUF_HPP
 #define REDEMPTION_TRANSPORT_BUFFER_CHECK_BUF_HPP
 
-#include "unique_ptr.hpp"
 #include <algorithm>
 #include <cstring>
+#include <memory>
 
 namespace transbuf {
 
     class check_base
     {
-        unique_ptr<uint8_t[]> data;
+        std::unique_ptr<uint8_t[]> data;
         std::size_t len;
         std::size_t current;
 

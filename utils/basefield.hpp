@@ -40,16 +40,17 @@ struct FieldObserver : public ConfigurationHolder {
      */
 
     class BaseField {
+        BaseField(const BaseField &) = delete;
+        BaseField & operator = (const BaseField &) = delete;
+
     protected:
         mutable bool      asked;         // the value is asked in the context
         mutable bool      modified;      // the value has been modified since last use
-        mutable bool      read;          // the value has been read since last set (modified)
         FieldObserver *   ini;           // Inifile to which the field is attached
         authid_t          authid;        // Auth Id of the field in the Inifile
         BaseField()
             : asked(false)
             , modified(true)
-            , read(false)
             , ini(NULL)
             , authid(AUTHID_UNKNOWN)
         {
@@ -95,12 +96,7 @@ struct FieldObserver : public ConfigurationHolder {
             }
 
         }
-        void set_to_send_field() {
-            if (this->authid != AUTHID_UNKNOWN
-                && this->ini) {
-                this->ini->to_send_set.insert(this->authid);
-            }
-        }
+
         /****************************************
          * Use this field to mark it as modified
          ****************************************
@@ -143,14 +139,6 @@ struct FieldObserver : public ConfigurationHolder {
         bool is_asked() {
             return this->asked;
         }
-        /**************************************************************
-         * Check if the field has been read (since last effective set)
-         **************************************************************
-         */
-        bool has_been_read() {
-            return this->read;
-        }
-
 
         authid_t get_authid() {
             return this->authid;
@@ -206,7 +194,6 @@ struct FieldObserver : public ConfigurationHolder {
         void set_empty() {
             if (!this->data.is_empty()){
                 this->modify();
-                this->read = false;
                 this->data.empty();
             }
         }
@@ -218,7 +205,6 @@ struct FieldObserver : public ConfigurationHolder {
         virtual void set_from_cstr(const char * cstr) {
             if (this->asked || strcmp(this->data.c_str(),cstr)) {
                 this->modify();
-                this->read = false;
                 this->data.copy_c_str(cstr);
             }
             this->asked = false;
@@ -227,7 +213,6 @@ struct FieldObserver : public ConfigurationHolder {
             return this->data.is_empty();
         }
         const redemption::string & get() const {
-            this->read = true;
             return this->data;
         }
 
@@ -259,7 +244,6 @@ struct FieldObserver : public ConfigurationHolder {
         void set(uint32_t that) {
             if (this->data != that || this->asked) {
                 this->modify();
-                this->read = false;
                 this->data = that;
             }
             this->asked = false;
@@ -279,7 +263,6 @@ struct FieldObserver : public ConfigurationHolder {
         }
 
         uint32_t get() const {
-            this->read = true;
             return this->data;
         }
 
@@ -309,7 +292,6 @@ struct FieldObserver : public ConfigurationHolder {
         void set(signed that) {
             if (this->data != that || this->asked) {
                 this->modify();
-                this->read = false;
                 this->data = that;
             }
             this->asked = false;
@@ -325,7 +307,6 @@ struct FieldObserver : public ConfigurationHolder {
         }
 
         signed get() const {
-            this->read = true;
             return this->data;
         }
         virtual const char * get_value() {
@@ -352,7 +333,6 @@ struct FieldObserver : public ConfigurationHolder {
         void set(bool that) {
             if (this->data != that || this->asked) {
                 this->modify();
-                this->read = false;
                 this->data = that;
             }
             this->asked = false;
@@ -367,7 +347,6 @@ struct FieldObserver : public ConfigurationHolder {
         }
 
         bool get() const {
-            this->read = true;
             return this->data;
         }
         virtual const char * get_value() {
@@ -380,24 +359,13 @@ struct FieldObserver : public ConfigurationHolder {
 
 
     class SetField {
+        SetField(const SetField &) = delete;
+        SetField & operator = (const SetField &) = delete;
+
         std::set<BaseField * > set_field;
 
-        template<typename Functor>
-        struct FuncRef {
-            Functor& func;
-
-            FuncRef(Functor& fun)
-            : func(fun)
-            {}
-
-            void operator()(BaseField * bf) {
-                this->func(bf);
-            }
-        };
-
     public:
-        SetField() {
-        }
+        SetField() = default;
 
         void insert(BaseField * bfield) {
             this->set_field.insert(bfield);
@@ -407,24 +375,24 @@ struct FieldObserver : public ConfigurationHolder {
             this->set_field.erase(bfield);
         }
 
-        bool empty(){
+        bool empty() const {
             return this->set_field.empty();
         }
 
-        bool find(BaseField * bfield) {
+        bool find(BaseField * bfield) const {
             return (this->set_field.find(bfield) != this->set_field.end());
         }
 
         void clear() {
             this->set_field.clear();
         }
-        size_t size() {
+        size_t size() const {
             return this->set_field.size();
         }
 
         template<class Function>
-        void foreach(Function funct) {
-            std::for_each(set_field.begin(), set_field.end(), FuncRef<Function>(funct));
+        void foreach(Function funct) const {
+            std::for_each(set_field.begin(), set_field.end(), std::move(funct));
         }
     };
 
@@ -444,6 +412,10 @@ protected:
 
 
 public:
+    FieldObserver() = default;
+    FieldObserver(FieldObserver const &) = delete;
+    FieldObserver & operator = (FieldObserver const &) = delete;
+
     virtual ~FieldObserver() {}
     // BASE64 TRY
     // Base64 b64;
@@ -483,8 +455,7 @@ public:
         return this->something_changed;
     }
 
-    // std::set< BaseField * > get_changed_set() {
-    SetField & get_changed_set() {
+    const SetField & get_changed_set() const {
         return this->changed_set;
     }
 

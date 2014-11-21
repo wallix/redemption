@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     char outdata[] =
         // Time: 10011
-           "\x00\x00\x01\xA1"
+           "\x00\x00\x01\x91"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
@@ -75,7 +75,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
            "auth_channel_target\n!\n"
            "accept_message\n!\n"
            "display_message\n!\n"
-           "proxy_type\n!RDP\n"
            "real_target_device\n!\n"
 
         // Time: 10043
@@ -149,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     char outdata[] =
         // Time 10011
-           "\x00\x00\x01\xA1"
+           "\x00\x00\x01\x91"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
@@ -172,7 +171,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
            "auth_channel_target\n!\n"
            "accept_message\n!\n"
            "display_message\n!\n"
-           "proxy_type\n!RDP\n"
            "real_target_device\n!\n"
 
         // Time 10043
@@ -268,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     char outdata[] =
         // Time 10011
-           "\x00\x00\x01\xA1"
+           "\x00\x00\x01\x91"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
@@ -291,7 +289,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
            "auth_channel_target\n!\n"
            "accept_message\n!\n"
            "display_message\n!\n"
-           "proxy_type\n!RDP\n"
            "real_target_device\n!\n"
 
            "\x00\x00\x00\x0E"

@@ -25,7 +25,6 @@
 
 #include "config.hpp"
 #include "transport.hpp"
-#include "unique_ptr.hpp"
 #include "string.hpp"
 #include "netutils.hpp"
 #include "openssl_crypto.hpp"
@@ -33,6 +32,8 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+
+#include <memory>
 
 // X509_NAME_print_ex() prints a human readable version of nm to BIO out.
 // Each line (for multiline formats) is indented by indent spaces.
@@ -105,7 +106,7 @@ public:
     char ip_address[128];
     int  port;
 
-    unique_ptr<uint8_t[]> public_key;
+    std::unique_ptr<uint8_t[]> public_key;
     size_t public_key_length;
     TODO("check if buffer is defined before accessing it")
 

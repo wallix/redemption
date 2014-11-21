@@ -21,16 +21,16 @@
 #define REDEMPTION_UTILS_DARRAY_HPP
 
 #include "log.hpp"
-#include "unique_ptr.hpp"
 
 #include <algorithm>
+#include <memory>
 
 template<class T>
 class DArray {
     typedef std::size_t size_t;
 
     size_t item_count;
-    unique_ptr<T[]> items;
+    std::unique_ptr<T[]> items;
 
 public:
     DArray(size_t count)

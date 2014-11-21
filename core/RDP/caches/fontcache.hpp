@@ -41,6 +41,7 @@ struct GlyphCache
 
     GlyphCache()
     : char_stamp(0)
+    , char_items{}
     {
     }
 

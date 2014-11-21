@@ -22,12 +22,12 @@
 #define _REDEMPTION_CORE_RDP_CACHES_BMPCACHE_HPP_
 
 #include <set>
+#include <memory>
 #include <algorithm>
 
 #include "bitmap.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-#include "unique_ptr.hpp"
 
 using std::size_t;
 
@@ -115,8 +115,8 @@ private:
 
     class storage_value_set {
         size_t elem_size;
-        unique_ptr<uint8_t[]> data;
-        unique_ptr<void*[]> free_list;
+        std::unique_ptr<uint8_t[]> data;
+        std::unique_ptr<void*[]> free_list;
         void* * free_list_cur;
 
         storage_value_set(storage_value_set const &);
@@ -125,6 +125,7 @@ private:
     public:
         storage_value_set()
         : elem_size(0)
+        , free_list_cur(nullptr)
         {}
 
         template<class T>
@@ -359,13 +360,13 @@ public:
 
 private:
     const size_t size_elements;
-    const unique_ptr<cache_element[]> elements;
+    const std::unique_ptr<cache_element[]> elements;
     storage_value_set storage;
 
     Cache<cache_element> caches[MAXIMUM_NUMBER_OF_CACHES];
 
     const size_t size_lite_elements;
-    const unique_ptr<cache_lite_element[]> lite_elements;
+    const std::unique_ptr<cache_lite_element[]> lite_elements;
     storage_value_set lite_storage;
 
     Cache<cache_lite_element> waiting_list;

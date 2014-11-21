@@ -191,34 +191,16 @@ public:
         stream.out_copy_bytes(serialized,strlen(serialized));
     }
 
-    class OutItemFunctor {
-        BStream & stream;
-        AclSerializer * acl;
-    public:
-        OutItemFunctor(AclSerializer * acl, BStream & stream)
-            : stream(stream)
-            , acl(acl) {
-        }
-        OutItemFunctor(const OutItemFunctor & other)
-            : stream(other.stream)
-            , acl(other.acl) {
-        }
-        ~OutItemFunctor() {
-        }
-        void operator()(Inifile::BaseField * bfield) {
-            this->acl->out_item_new(this->stream,bfield);
-        }
-    };
-
     //void send_new(std::set<Inifile::BaseField *>& list)
-    void send(Inifile::SetField & list)
+    void send(Inifile::SetField const & list)
     {
         try {
             BStream stream(8192);
             stream.out_uint32_be(0);
 
-            TODO("This involve copy of functor, find a simpler way")
-            list.foreach(OutItemFunctor(this, stream));
+            list.foreach([&stream, this](Inifile::BaseField * bfield) {
+                this->out_item_new(stream, bfield);
+            });
 
             stream.mark_end();
             int total_length = stream.get_offset();
@@ -235,8 +217,7 @@ public:
     }
 
     void send_acl_data() {
-        Inifile::SetField list = this->ini->get_changed_set();
-        //std::set<Inifile::BaseField *> list = this->ini->get_changed_set();
+        const Inifile::SetField & list = this->ini->get_changed_set();
         if (this->verbose & 0x01){
             LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %u",list.size());
         }

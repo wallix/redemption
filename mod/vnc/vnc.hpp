@@ -50,8 +50,9 @@
 #include "internal/internal_mod.hpp"
 #include "internal/widget2/notify_api.hpp"
 
-#include "unique_ptr.hpp"
 #include "update_lock.hpp"
+
+#include <memory>
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -1468,7 +1469,7 @@ private:
             switch (encoding) {
             case 0: /* raw */
             {
-                unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * 16 * Bpp]);
+                std::unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * 16 * Bpp]);
                 if (!raw) {
                     LOG(LOG_ERR, "Memory allocation failed for raw buffer in VNC");
                     throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
@@ -1508,7 +1509,7 @@ private:
             case 2: /* RRE */
             {
                 //LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-                unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * cy * Bpp]);
+                std::unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * cy * Bpp]);
                 if (!raw) {
                     LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
                     throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
@@ -1530,22 +1531,22 @@ private:
                 number_of_subrectangles_remain =
                 number_of_subrectangles        = stream_rre.in_uint32_be();
 
-                char * bytes_per_pixel;
-                char * point_cur;
-                char * point_end;
+                uint8_t * bytes_per_pixel;
+                uint8_t * point_cur;
+                uint8_t * point_end;
 
-                bytes_per_pixel = reinterpret_cast<char *>(stream_rre.p);
+                bytes_per_pixel = stream_rre.p;
                 stream_rre.in_skip_bytes(Bpp);
 
-                for (point_cur = reinterpret_cast<char *>(raw.get()), point_end = point_cur + cx * cy * Bpp;
+                for (point_cur = raw.get(), point_end = point_cur + cx * cy * Bpp;
                      point_cur < point_end; point_cur += Bpp) {
                     memcpy(point_cur, bytes_per_pixel, Bpp);
                 }
 
                 BStream    subrectangles(65535);
                 uint16_t   subrec_x, subrec_y, subrec_width, subrec_height;
-                char     * point_line_cur;
-                char     * point_line_end;
+                uint8_t  * point_line_cur;
+                uint8_t  * point_line_end;
                 uint32_t   i;
                 uint32_t   ling_boundary;
 
@@ -1558,7 +1559,7 @@ private:
                     number_of_subrectangles_remain -= number_of_subrectangles_read;
 
                     for (i = 0; i < number_of_subrectangles_read; i++) {
-                        bytes_per_pixel = reinterpret_cast<char *>(subrectangles.p);
+                        bytes_per_pixel = subrectangles.p;
                         subrectangles.in_skip_bytes(Bpp);
 
                         subrec_x        = subrectangles.in_uint16_be();
@@ -1566,15 +1567,16 @@ private:
                         subrec_width    = subrectangles.in_uint16_be();
                         subrec_height   = subrectangles.in_uint16_be();
 
-                        for (ling_boundary = cx * Bpp,
-                                 point_line_cur = reinterpret_cast<char *>(raw.get()) + subrec_y * ling_boundary,
-                                 point_line_end = point_line_cur + subrec_height * ling_boundary;
-                             point_line_cur < point_line_end; point_line_cur += ling_boundary)
+                        ling_boundary = cx * Bpp;
+                        point_line_cur = raw.get() + subrec_y * ling_boundary;
+                        point_line_end = point_line_cur + subrec_height * ling_boundary;
+                        for (; point_line_cur < point_line_end; point_line_cur += ling_boundary) {
                             for (point_cur = point_line_cur + subrec_x * Bpp,
-                                    point_end = point_cur + subrec_width * Bpp;
+                                 point_end = point_cur + subrec_width * Bpp;
                                  point_cur < point_end; point_cur += Bpp) {
                                 memcpy(point_cur, bytes_per_pixel, Bpp);
                             }
+                        }
                     }
                 }
 

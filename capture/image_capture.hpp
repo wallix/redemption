@@ -27,6 +27,8 @@
 
 #include "png.hpp"
 
+#include <memory>
+
 #include "RDP/RDPDrawable.hpp"
 
 class ImageCapture {
@@ -72,7 +74,7 @@ public:
     }
 
     void scale_dump24() const {
-        unique_ptr<uint8_t[]> scaled_data(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+        std::unique_ptr<uint8_t[]> scaled_data(new uint8_t[this->scaled_width * this->scaled_height * 3]);
         scale_data(scaled_data.get(), this->drawable.data(),
                    this->scaled_width, this->drawable.width(),
                    this->scaled_height, this->drawable.height(),

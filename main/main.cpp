@@ -214,7 +214,7 @@ int main(int argc, char** argv)
     desc.add_options()
     // -help, --help, -h
     ("help,h", "produce help message")
-    // -help, --help, -h
+    // -version, --version, -v
     ("version,v", "show software version")
     // -kill, --kill, -k
     ("kill,k", "shut down rdpproxy")

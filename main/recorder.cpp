@@ -27,7 +27,7 @@
 #include <boost/program_options/parsers.hpp>
 
 #include <iostream>
-
+#include <memory>
 #include <utility>
 #include <string>
 
@@ -346,7 +346,7 @@ int main(int argc, char** argv)
         exit(-1);
     };
 
-    unique_ptr<Transport> in_wrm_trans;
+    std::unique_ptr<Transport> in_wrm_trans;
 
     if (infile_is_encrypted == false) {
         in_wrm_trans.reset(new InMetaSequenceTransport(infile_prefix, infile_extension));
@@ -468,7 +468,7 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
 
     int return_code = 0;
     try {
-        unique_ptr<Transport> wrm_trans;
+        std::unique_ptr<Transport> wrm_trans;
         if (ini.globals.enable_file_encryption.get()) {
             wrm_trans.reset(
                 new CryptoOutMetaSequenceTransport( &cctx, outfile_path, ini.video.hash_path, outfile_basename
@@ -552,7 +552,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_capture, con
         }
     }
 
-    unique_ptr<Capture> capture;
+    std::unique_ptr<Capture> capture;
 
     player.max_order_count = order_count;
 

@@ -32,9 +32,9 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include "cryptofile.h"
+#include <memory>
 
-#include "unique_ptr.hpp"
+#include "cryptofile.h"
 
 #define HASH_LEN (MD_HASH_LENGTH << 1)
 
@@ -76,7 +76,7 @@ namespace transfil {
         unsigned int   MAX_CIPHERED_SIZE;       // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
     public:
-        //decrypt_filter()
+        decrypt_filter() = default;
         //: pos(0)
         //, raw_size(0)
         //, state(0)
@@ -265,7 +265,7 @@ namespace transfil {
         uint32_t       file_size;               // the current file size
 
     public:
-        //encrypt_filter()
+        encrypt_filter() = default;
         //: pos(0)
         //, raw_size(0)
         //, file_size(0)
@@ -312,7 +312,7 @@ namespace transfil {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc!\n", ::getpid());
                     return -1;
                 }
-                const unique_ptr<unsigned char[]> auto_free(key_buf);
+                const std::unique_ptr<unsigned char[]> auto_free(key_buf);
                 ::memset(key_buf, 0, blocksize);
                 if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
                     unsigned char keyhash[MD_HASH_LENGTH];
@@ -502,7 +502,7 @@ namespace transfil {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc\n", ::getpid());
                     return -1;
                 }
-                const unique_ptr<unsigned char[]> auto_free(key_buf);
+                const std::unique_ptr<unsigned char[]> auto_free(key_buf);
                 ::memset(key_buf, '\0', blocksize);
                 if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
                     unsigned char keyhash[MD_HASH_LENGTH];

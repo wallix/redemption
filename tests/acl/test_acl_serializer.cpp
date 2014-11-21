@@ -46,13 +46,6 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerOutItem)
     // composed of authid key string and its value if known in Inifile,
     // or "ASK" if the value is asked.
     BStream stream(1024);
-    acl.out_item(stream, AUTHID_PROXY_TYPE);
-    BOOST_CHECK_EQUAL(0,
-                      strncmp((char*)stream.get_data(),
-                              STRAUTHID_PROXY_TYPE "\n!RDP\n",
-                              strlen(STRAUTHID_PROXY_TYPE "\n!RDP\n")));
-    stream.reset();
-
     ini.context_ask(AUTHID_TARGET_PROTOCOL);
     acl.out_item(stream, AUTHID_TARGET_PROTOCOL);
     BOOST_CHECK_EQUAL(0,
@@ -80,7 +73,6 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     Inifile ini;
     LogTransport trans;
     AclSerializer acl(&ini, trans, 0);
-    ini.context_set_value(AUTHID_TRACE_SEAL, "true");
     try {
         acl.send_acl_data();
     } catch (const Error & e){
@@ -188,11 +180,9 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
 
     // SOME NORMAL CASE
     test_initem_ask(ini, acl, AUTHID_PASSWORD,"SecureLinux");
-    test_initem_ask(ini, acl, AUTHID_PROXY_TYPE,"VNC");
     test_initem_ask(ini, acl, AUTHID_SELECTOR_CURRENT_PAGE,"");
     test_initem_receive(ini, acl, AUTHID_SELECTOR_CURRENT_PAGE,"\n2\n");
     test_initem_receive(ini, acl, AUTHID_PASSWORD,"\n!SecureLinux\n");
-    test_initem_receive(ini, acl, AUTHID_PROXY_TYPE,"\nRDP\n");
 
     // CASE EXCEPTION
     // try exception
@@ -212,14 +202,10 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItems)
     AclSerializer acl(&ini, trans, 0);
 
     ini.context_set_value(AUTHID_PASSWORD, "VerySecurePassword");
-    ini.context_ask(AUTHID_PROXY_TYPE);
     BOOST_CHECK(!ini.context_is_asked(AUTHID_PASSWORD));
-    BOOST_CHECK(ini.context_is_asked(AUTHID_PROXY_TYPE));
     stream.out_copy_bytes(STRAUTHID_PASSWORD "\nASK\n", strlen(STRAUTHID_PASSWORD "\nASK\n"));
-    stream.out_copy_bytes(STRAUTHID_PROXY_TYPE "\nVNC\n", strlen(STRAUTHID_PROXY_TYPE "\nVNC\n"));
     stream.mark_end();
     stream.rewind();
     acl.in_items(stream);
     BOOST_CHECK(ini.context_is_asked(AUTHID_PASSWORD));
-    BOOST_CHECK(!ini.context_is_asked(AUTHID_PROXY_TYPE));
 }

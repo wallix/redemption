@@ -24,12 +24,12 @@
 #define REDEMPTION_TRANSPORT_TEST_TRANSPORT_HPP
 
 #include "transport.hpp"
-#include "unique_ptr.hpp"
 #include "mixin_transport.hpp"
 #include "buffer/dynarray_buf.hpp"
 #include "buffer/check_buf.hpp"
 
 #include <new>
+#include <memory>
 #include <algorithm>
 
 struct GeneratorTransport
@@ -47,7 +47,7 @@ struct GeneratorTransport
 class CheckTransport
 : public Transport
 {
-    unique_ptr<uint8_t[]> data;
+    std::unique_ptr<uint8_t[]> data;
     std::size_t len;
     std::size_t current;
 
@@ -105,7 +105,7 @@ class TestTransport
 {
     CheckTransport check;
     GeneratorTransport gen;
-    unique_ptr<uint8_t[]> public_key;
+    std::unique_ptr<uint8_t[]> public_key;
     std::size_t public_key_length;
 
 public:
