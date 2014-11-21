@@ -40,6 +40,9 @@ struct FieldObserver : public ConfigurationHolder {
      */
 
     class BaseField {
+        BaseField(const BaseField &) = delete;
+        BaseField & operator = (const BaseField &) = delete;
+
     protected:
         mutable bool      asked;         // the value is asked in the context
         mutable bool      modified;      // the value has been modified since last use
@@ -356,24 +359,13 @@ struct FieldObserver : public ConfigurationHolder {
 
 
     class SetField {
+        SetField(const SetField &) = delete;
+        SetField & operator = (const SetField &) = delete;
+
         std::set<BaseField * > set_field;
 
-        template<typename Functor>
-        struct FuncRef {
-            Functor& func;
-
-            FuncRef(Functor& fun)
-            : func(fun)
-            {}
-
-            void operator()(BaseField * bf) {
-                this->func(bf);
-            }
-        };
-
     public:
-        SetField() {
-        }
+        SetField() = default;
 
         void insert(BaseField * bfield) {
             this->set_field.insert(bfield);
@@ -383,24 +375,24 @@ struct FieldObserver : public ConfigurationHolder {
             this->set_field.erase(bfield);
         }
 
-        bool empty(){
+        bool empty() const {
             return this->set_field.empty();
         }
 
-        bool find(BaseField * bfield) {
+        bool find(BaseField * bfield) const {
             return (this->set_field.find(bfield) != this->set_field.end());
         }
 
         void clear() {
             this->set_field.clear();
         }
-        size_t size() {
+        size_t size() const {
             return this->set_field.size();
         }
 
         template<class Function>
-        void foreach(Function funct) {
-            std::for_each(set_field.begin(), set_field.end(), FuncRef<Function>(funct));
+        void foreach(Function funct) const {
+            std::for_each(set_field.begin(), set_field.end(), std::move(funct));
         }
     };
 
@@ -420,6 +412,10 @@ protected:
 
 
 public:
+    FieldObserver() = default;
+    FieldObserver(FieldObserver const &) = delete;
+    FieldObserver & operator = (FieldObserver const &) = delete;
+
     virtual ~FieldObserver() {}
     // BASE64 TRY
     // Base64 b64;
@@ -459,8 +455,7 @@ public:
         return this->something_changed;
     }
 
-    // std::set< BaseField * > get_changed_set() {
-    SetField & get_changed_set() {
+    const SetField & get_changed_set() const {
         return this->changed_set;
     }
 

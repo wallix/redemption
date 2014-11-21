@@ -28,7 +28,6 @@
 
 #include "log.hpp"
 
-#include <string>
 #include <stdint.h>
 #include <stdexcept>
 
@@ -123,125 +122,125 @@ struct IniAccounts {
     char password[255]; // should use string
 };
 
-typedef enum
-    {
-        AUTHID_UNKNOWN = 0,
+enum authid_t
+{
+    AUTHID_UNKNOWN = 0,
 
-        // Translation text
-        AUTHID_TRANS_BUTTON_OK,
-        AUTHID_TRANS_BUTTON_CANCEL,
-        AUTHID_TRANS_BUTTON_HELP,
-        AUTHID_TRANS_BUTTON_CLOSE,
-        AUTHID_TRANS_BUTTON_REFUSED,
-        AUTHID_TRANS_LOGIN,
-        AUTHID_TRANS_USERNAME,
-        AUTHID_TRANS_PASSWORD,
-        AUTHID_TRANS_TARGET,
-        AUTHID_TRANS_DIAGNOSTIC,
-        AUTHID_TRANS_CONNECTION_CLOSED,
-        AUTHID_TRANS_HELP_MESSAGE,
-        AUTHID_TRANS_MANAGER_CLOSE_CNX,
+    // Translation text
+    AUTHID_TRANS_BUTTON_OK,
+    AUTHID_TRANS_BUTTON_CANCEL,
+    AUTHID_TRANS_BUTTON_HELP,
+    AUTHID_TRANS_BUTTON_CLOSE,
+    AUTHID_TRANS_BUTTON_REFUSED,
+    AUTHID_TRANS_LOGIN,
+    AUTHID_TRANS_USERNAME,
+    AUTHID_TRANS_PASSWORD,
+    AUTHID_TRANS_TARGET,
+    AUTHID_TRANS_DIAGNOSTIC,
+    AUTHID_TRANS_CONNECTION_CLOSED,
+    AUTHID_TRANS_HELP_MESSAGE,
+    AUTHID_TRANS_MANAGER_CLOSE_CNX,
 
-        AUTHID_LANGUAGE,
+    AUTHID_LANGUAGE,
 
-        // Options
-        AUTHID_KEYBOARD_LAYOUT,         // keyboard_layout
-        AUTHID_OPT_CLIPBOARD,           // clipboard
-        AUTHID_OPT_DEVICEREDIRECTION,   // device_redirection
-        AUTHID_OPT_FILE_ENCRYPTION,     // file encryption
+    // Options
+    AUTHID_KEYBOARD_LAYOUT,         // keyboard_layout
+    AUTHID_OPT_CLIPBOARD,           // clipboard
+    AUTHID_OPT_DEVICEREDIRECTION,   // device_redirection
+    AUTHID_OPT_FILE_ENCRYPTION,     // file encryption
 
-        // Video capture
-        AUTHID_OPT_CODEC_ID,    // CODEC_ID for video encoding
-        AUTHID_OPT_MOVIE,       // is_rec
-        AUTHID_OPT_MOVIE_PATH,  // rec_path
-        AUTHID_VIDEO_QUALITY,
+    // Video capture
+    AUTHID_OPT_CODEC_ID,    // CODEC_ID for video encoding
+    AUTHID_OPT_MOVIE,       // is_rec
+    AUTHID_OPT_MOVIE_PATH,  // rec_path
+    AUTHID_VIDEO_QUALITY,
 
-        // Alternate shell
-        AUTHID_ALTERNATE_SHELL,
-        AUTHID_SHELL_WORKING_DIRECTORY,
+    // Alternate shell
+    AUTHID_ALTERNATE_SHELL,
+    AUTHID_SHELL_WORKING_DIRECTORY,
 
-        // Context
-        AUTHID_OPT_BITRATE,     // Bit rate for video encoding
-        AUTHID_OPT_FRAMERATE,   // Frame rate for video encoding
-        AUTHID_OPT_QSCALE,      // QScale parameter for vdeo encoding
+    // Context
+    AUTHID_OPT_BITRATE,     // Bit rate for video encoding
+    AUTHID_OPT_FRAMERATE,   // Frame rate for video encoding
+    AUTHID_OPT_QSCALE,      // QScale parameter for vdeo encoding
 
-        AUTHID_OPT_BPP,         // bits per planes (number of colors)
-        AUTHID_OPT_HEIGHT,      // client height
-        AUTHID_OPT_WIDTH,       // client width
+    AUTHID_OPT_BPP,         // bits per planes (number of colors)
+    AUTHID_OPT_HEIGHT,      // client height
+    AUTHID_OPT_WIDTH,       // client width
 
-        AUTHID_AUTH_ERROR_MESSAGE,
+    AUTHID_AUTH_ERROR_MESSAGE,
 
-        AUTHID_SELECTOR,
-        AUTHID_SELECTOR_CURRENT_PAGE,       // current page
-        AUTHID_SELECTOR_DEVICE_FILTER,      // device filter text
-        AUTHID_SELECTOR_GROUP_FILTER,       // group filter text
-        AUTHID_SELECTOR_PROTO_FILTER,       // protocol filter text
-        AUTHID_SELECTOR_LINES_PER_PAGE,     // number of lines per page
-        AUTHID_SELECTOR_NUMBER_OF_PAGES,    // number of pages
+    AUTHID_SELECTOR,
+    AUTHID_SELECTOR_CURRENT_PAGE,       // current page
+    AUTHID_SELECTOR_DEVICE_FILTER,      // device filter text
+    AUTHID_SELECTOR_GROUP_FILTER,       // group filter text
+    AUTHID_SELECTOR_PROTO_FILTER,       // protocol filter text
+    AUTHID_SELECTOR_LINES_PER_PAGE,     // number of lines per page
+    AUTHID_SELECTOR_NUMBER_OF_PAGES,    // number of pages
 
-        AUTHID_TARGET_DEVICE,       // target_device
-        AUTHID_TARGET_PASSWORD,     // target_password
-        AUTHID_TARGET_HOST,       // target_host
-        AUTHID_TARGET_PORT,         // target_port
-        AUTHID_TARGET_PROTOCOL,     // proto_dest
-        AUTHID_TARGET_USER,         // target_login
-        AUTHID_TARGET_APPLICATION,  // target_application
+    AUTHID_TARGET_DEVICE,       // target_device
+    AUTHID_TARGET_PASSWORD,     // target_password
+    AUTHID_TARGET_HOST,       // target_host
+    AUTHID_TARGET_PORT,         // target_port
+    AUTHID_TARGET_PROTOCOL,     // proto_dest
+    AUTHID_TARGET_USER,         // target_login
+    AUTHID_TARGET_APPLICATION,  // target_application
 
-        AUTHID_AUTH_USER,       // login
-        AUTHID_HOST,            // ip_client
-        AUTHID_TARGET,          // ip_target
-        AUTHID_PASSWORD,        // password
+    AUTHID_AUTH_USER,       // login
+    AUTHID_HOST,            // ip_client
+    AUTHID_TARGET,          // ip_target
+    AUTHID_PASSWORD,        // password
 
-        AUTHID_REPORTING,       // reporting message (client -> server)
+    AUTHID_REPORTING,       // reporting message (client -> server)
 
-        AUTHID_AUTHCHANNEL_ANSWER,  // WabLauncher target answer
-        AUTHID_AUTHCHANNEL_RESULT,  // WabLauncher session result
-        AUTHID_AUTHCHANNEL_TARGET,  // WabLauncher target request
+    AUTHID_AUTHCHANNEL_ANSWER,  // WabLauncher target answer
+    AUTHID_AUTHCHANNEL_RESULT,  // WabLauncher session result
+    AUTHID_AUTHCHANNEL_TARGET,  // WabLauncher target request
 
-        AUTHID_MESSAGE, // warning_message
-        AUTHID_PATTERN_KILL,   // regex to close connexion
-        AUTHID_PATTERN_NOTIFY, // regex to notify to authentifier
+    AUTHID_MESSAGE, // warning_message
+    AUTHID_PATTERN_KILL,   // regex to close connexion
+    AUTHID_PATTERN_NOTIFY, // regex to notify to authentifier
 
-        AUTHID_ACCEPT_MESSAGE,  // display a dialog to valid a message
-        AUTHID_DISPLAY_MESSAGE, // display a dialog box with a message
+    AUTHID_ACCEPT_MESSAGE,  // display a dialog to valid a message
+    AUTHID_DISPLAY_MESSAGE, // display a dialog box with a message
 
 
-        AUTHID_AUTHENTICATED,
-        AUTHID_REJECTED,        // rejected
+    AUTHID_AUTHENTICATED,
+    AUTHID_REJECTED,        // rejected
 
-        AUTHID_KEEPALIVE,
+    AUTHID_KEEPALIVE,
 
-        AUTHID_SESSION_ID,      // session_id
+    AUTHID_SESSION_ID,      // session_id
 
-        AUTHID_END_DATE_CNX,    // timeclose
-        AUTHID_END_TIME,        // end time as text
+    AUTHID_END_DATE_CNX,    // timeclose
+    AUTHID_END_TIME,        // end time as text
 
-        AUTHID_MODE_CONSOLE,
-        AUTHID_TIMEZONE,
+    AUTHID_MODE_CONSOLE,
+    AUTHID_TIMEZONE,
 
-        AUTHID_REAL_TARGET_DEVICE,  // target device in ip transparent mode
+    AUTHID_REAL_TARGET_DEVICE,  // target device in ip transparent mode
 
-        AUTHID_AUTHENTICATION_CHALLENGE,
+    AUTHID_AUTHENTICATION_CHALLENGE,
 
-        AUTHID_MODULE,
-        AUTHID_FORCEMODULE,
-        AUTHID_TICKET,
-        AUTHID_COMMENT,
-        AUTHID_DURATION,
-        AUTHID_WAITINFORETURN,
-        AUTHID_SHOWFORM,
-        AUTHID_FORMFLAG,
+    AUTHID_MODULE,
+    AUTHID_FORCEMODULE,
+    AUTHID_TICKET,
+    AUTHID_COMMENT,
+    AUTHID_DURATION,
+    AUTHID_WAITINFORETURN,
+    AUTHID_SHOWFORM,
+    AUTHID_FORMFLAG,
 
-        AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
-        AUTHID_ALLOW_CHANNELS,
-        AUTHID_DENY_CHANNELS,
+    AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
+    AUTHID_ALLOW_CHANNELS,
+    AUTHID_DENY_CHANNELS,
 
-        AUTHID_DISABLE_KEYBOARD_LOG,
+    AUTHID_DISABLE_KEYBOARD_LOG,
 
-        AUTHID_RT_DISPLAY,
+    AUTHID_RT_DISPLAY,
 
-        MAX_AUTHID
-    } authid_t;
+    MAX_AUTHID
+};
 
 // Translation text
 #define STRAUTHID_TRANS_BUTTON_OK          "trans_ok"
@@ -347,7 +346,12 @@ typedef enum
 
 #define STRAUTHID_DISABLE_KEYBOARD_LOG     "disable_keyboard_log"
 #define STRAUTHID_RT_DISPLAY               "rt_display"
-static const std::string authstr[MAX_AUTHID - 1] = {
+
+namespace detail_ {
+
+}
+
+static const char * const authstr[MAX_AUTHID - 1] = {
     // Translation text
     STRAUTHID_TRANS_BUTTON_OK,
     STRAUTHID_TRANS_BUTTON_CANCEL,
@@ -462,11 +466,9 @@ static const std::string authstr[MAX_AUTHID - 1] = {
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
-
-    std::string str(strauthid);
     authid_t res = AUTHID_UNKNOWN;
     for (int i = 0; i < MAX_AUTHID - 1 ; i++) {
-        if (0 == authstr[i].compare(str)) {
+        if (0 == strcmp(authstr[i], strauthid)) {
             res = static_cast<authid_t>(i + 1);
             break;
         }
@@ -477,7 +479,7 @@ static inline authid_t authid_from_string(const char * strauthid) {
 static inline const char * string_from_authid(authid_t authid) {
     if ((authid == AUTHID_UNKNOWN) || (authid >= MAX_AUTHID))
         return "";
-    return authstr[static_cast<unsigned>(authid) - 1].c_str();
+    return authstr[static_cast<unsigned>(authid) - 1];
 }
 
 #include "basefield.hpp"
