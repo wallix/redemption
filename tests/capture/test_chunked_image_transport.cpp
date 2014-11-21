@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
 
     OutChunkedBufferingTransport<100> png_trans(&trans);
     try {
-        consumer.drawable.dump_png24(&png_trans, true);
+        consumer.dump_png24(png_trans, true);
     } catch (Error const & e) {
         BOOST_CHECK(false);
     };
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 
     OutChunkedBufferingTransport<16> png_trans(&trans);
 
-    consumer.drawable.dump_png24(&png_trans, true);
+    consumer.dump_png24(png_trans, true);
 
 }
 
@@ -280,7 +280,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
                 );
     const int groupid = 0;
     OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    d.dump_png24(&png_trans, true);
+    d.dump_png24(png_trans, true);
     ::unlink(png_trans.seqgen()->get(0));
 }
 
@@ -339,7 +339,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
                  );
     const int groupid = 0;
     OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    d.dump_png24(&png_trans, true);
+    d.dump_png24(png_trans, true);
     ::unlink(png_trans.seqgen()->get(0));
 }
 

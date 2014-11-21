@@ -99,7 +99,7 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-struct GraphicsUpdatePDU : public RDPSerializer {
+class GraphicsUpdatePDU : public RDPSerializer {
     HStream buffer_stream_orders;
     HStream buffer_stream_bitmaps;
 
@@ -120,6 +120,7 @@ struct GraphicsUpdatePDU : public RDPSerializer {
     bool           compression;
     uint8_t        compression_type;
 
+public:
     GraphicsUpdatePDU( Transport * trans
                      , uint16_t & userid
                      , int & shareid

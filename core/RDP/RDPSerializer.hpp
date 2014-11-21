@@ -124,17 +124,25 @@ struct RDPSerializer : public RDPGraphicDevice
 
     using RDPGraphicDevice::draw;
 
+protected:
     Stream & stream_orders;
     Stream & stream_bitmaps;
 
+private:
     uint8_t bpp;
 
+protected:
     Transport * trans;
+
+protected:
     const Inifile & ini;
+
+private:
     const int bitmap_cache_version;
     const int use_bitmap_comp;
     const int op2;
 
+protected:
     // Internal state of orders
     RDPOrderCommon     common;
     RDPDestBlt         destblt;
@@ -161,9 +169,10 @@ struct RDPSerializer : public RDPGraphicDevice
 
     BmpCache & bmp_cache;
 
+private:
+    const uint32_t verbose;
 
-    uint32_t verbose;
-
+public:
     RDPSerializer( Transport * trans
                  , Stream & stream_orders
                  , Stream & stream_bitmaps

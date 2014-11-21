@@ -34,14 +34,14 @@ static inline void png_flush_data(png_structp png_ptr){
     static_cast<Transport*>(png_ptr->io_ptr)->flush();
 }
 
-static inline void transport_dump_png24(Transport * trans, const uint8_t * data,
+static inline void transport_dump_png24(Transport & trans, const uint8_t * data,
                             const size_t width,
                             const size_t height,
                             const size_t rowsize,
                             const bool bgr)
 {
     png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    png_set_write_fn(ppng, trans, &png_write_data, &png_flush_data);
+    png_set_write_fn(ppng, &trans, &png_write_data, &png_flush_data);
 
     png_info * pinfo = png_create_info_struct(ppng);
     png_set_IHDR(ppng, pinfo, width, height, 8,
@@ -84,7 +84,7 @@ static inline void transport_dump_png24(Transport * trans, const uint8_t * data,
     }
     png_write_end(ppng, pinfo);
 
-    trans->flush();
+    trans.flush();
     png_destroy_write_struct(&ppng, &pinfo);
     // commented line below it to create row capture
     // fwrite(this->data, 3, this->width * this->height, fd);

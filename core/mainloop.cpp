@@ -214,7 +214,7 @@ void redemption_new_session()
 
     int nodelay = 1;
     if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
-        Session session(sck, &ini);
+        Session session(sck, ini);
 
         if (ini.debug.session){
             LOG(LOG_INFO, "Session::end of Session(%u)", sck);

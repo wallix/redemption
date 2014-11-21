@@ -158,7 +158,7 @@ public:
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                         ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, real_target_ip);
                     }
-                    Session session(sck, &ini);
+                    Session session(sck, ini);
 
                     // Suppress session file
                     unlink(session_file);

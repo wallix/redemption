@@ -218,7 +218,7 @@ public:
             LOG(LOG_INFO, "Mod=%u", mod);
             LOG(LOG_INFO, "Resp=%u", resp);
         }
-        DiffieHellman dh = DiffieHellman(gen, mod);
+        DiffieHellman dh(gen, mod);
         uint64_t pub = dh.createInterKey();
 
         BStream stream(32768);

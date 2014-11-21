@@ -699,7 +699,7 @@ public:
         }
     }
 
-    virtual void dump_png24(Transport * trans, bool bgr) const {
+    void dump_png24(Transport & trans, bool bgr) const {
         ::transport_dump_png24(trans, this->drawable.data(),
             this->drawable.width(), this->drawable.height(),
             this->drawable.rowsize(),
