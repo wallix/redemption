@@ -83,12 +83,33 @@ class Session {
 
     Front * front;
 
-    SessionManager * acl;
-
     UdevRandom gen;
 
-    SocketTransport * ptr_auth_trans;
-    wait_obj        * ptr_auth_event;
+    class Client {
+        SocketTransport auth_trans;
+
+    public:
+        wait_obj        auth_event;
+        SessionManager  acl;
+
+        Client( int client_sck, Inifile & ini, ActivityChecker & activity_checker, time_t start_time, time_t now )
+        : auth_trans( "Authentifier"
+                    , client_sck
+                    , ini.globals.authip
+                    , ini.globals.authport
+                    , ini.debug.auth
+        )
+        , auth_event(&this->auth_trans)
+        , acl( ini
+             , activity_checker
+             , this->auth_trans
+             , start_time // proxy start time
+             , now        // acl start time
+        )
+        {}
+    };
+
+    Client * client = nullptr;
 
           time_t   perf_last_info_collect_time;
     const pid_t    perf_pid;
@@ -100,21 +121,14 @@ public:
     Session(int sck, Inifile & ini)
             : ini(ini)
             , verbose(this->ini.debug.session)
-            , acl(NULL)
-            , ptr_auth_trans(NULL)
-            , ptr_auth_event(NULL)
             , perf_last_info_collect_time(0)
             , perf_pid(getpid())
-            , perf_file(NULL) {
+            , perf_file(nullptr) {
         try {
             SocketTransport front_trans("RDP Client", sck, "", 0, this->ini.debug.front);
             wait_obj front_event(&front_trans);
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
             //  here instead of inside Sessionmanager
-
-            this->ptr_auth_trans = NULL;
-            this->ptr_auth_event = NULL;
-            this->acl            = NULL;
 
             this->internal_state = SESSION_STATE_ENTRY;
 
@@ -161,9 +175,9 @@ public:
                     this->front->capture->capture_event.add_to_fd_set(rfds, max, timeout);
                 }
                 TODO("Looks like acl and mod can be unified into a common class, where events can happen");
-                TODO("move ptr_auth_event to acl");
-                if (this->acl) {
-                    this->ptr_auth_event->add_to_fd_set(rfds, max, timeout);
+                TODO("move auth_event to acl");
+                if (this->client) {
+                    this->client->auth_event.add_to_fd_set(rfds, max, timeout);
                 }
                 mm.mod->get_event().add_to_fd_set(rfds, max, timeout);
 
@@ -229,7 +243,7 @@ public:
                             this->front->periodic_snapshot();
                         }
                         // Incoming data from ACL, or opening acl
-                        if (!this->acl) {
+                        if (!this->client) {
                             if (!mm.last_module) {
                                 // acl never opened or closed by me (close box)
                                 try {
@@ -244,19 +258,7 @@ public:
                                         throw Error(ERR_SOCKET_CONNECT_FAILED);
                                     }
 
-                                    this->ptr_auth_trans = new SocketTransport( "Authentifier"
-                                                                                , client_sck
-                                                                                , this->ini.globals.authip
-                                                                                , this->ini.globals.authport
-                                                                                , this->ini.debug.auth
-                                                                                );
-                                    this->ptr_auth_event = new wait_obj(this->ptr_auth_trans);
-                                    this->acl = new SessionManager( this->ini
-                                                                  , *front
-                                                                  , *this->ptr_auth_trans
-                                                                  , start_time // proxy start time
-                                                                  , now        // acl start time
-                                                                  );
+                                    this->client = new Client(client_sck, ini, *this->front, start_time, now);
 
                                     osd_state = [&](uint32_t enddata) -> unsigned {
                                         if (!enddata || enddata <= now) {
@@ -275,9 +277,9 @@ public:
                             }
                         }
                         else {
-                            if (this->ptr_auth_event->is_set(rfds)) {
+                            if (this->client->auth_event.is_set(rfds)) {
                                 // acl received updated values
-                                this->acl->receive();
+                                this->client->acl.receive();
                             }
                         }
 
@@ -304,18 +306,16 @@ public:
                             }
                         }
 
-                        if (this->acl) {
-                            run_session = this->acl->check(mm, now, front_trans, signal);
+                        if (this->client) {
+                            run_session = this->client->acl.check(mm, now, front_trans, signal);
                         }
                         else if (signal == BACK_EVENT_STOP) {
                             mm.mod->get_event().reset();
                             run_session = false;
                         }
                         if (mm.last_module) {
-                            if (this->acl) {
-                                delete this->acl;
-                                this->acl = NULL;
-                            }
+                            delete this->client;
+                            this->client = nullptr;
                         }
                     }
                 } catch (Error & e) {
@@ -347,9 +347,7 @@ public:
             ::fclose(this->perf_file);
         }
         delete this->front;
-        if (this->acl) { delete this->acl; }
-        if (this->ptr_auth_event) { delete this->ptr_auth_event; }
-        if (this->ptr_auth_trans) { delete this->ptr_auth_trans; }
+        delete this->client;
         // Suppress Session file from disk (original name with PID or renamed with session_id)
         if (!this->ini.context.session_id.get().is_empty()) {
             char new_session_file[256];
