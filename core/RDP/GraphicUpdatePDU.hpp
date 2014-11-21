@@ -118,7 +118,6 @@ class GraphicsUpdatePDU : public RDPSerializer {
 
     rdp_mppc_enc * mppc_enc;
     bool           compression;
-    uint8_t        compression_type;
 
 public:
     GraphicsUpdatePDU( Transport * trans
@@ -135,7 +134,6 @@ public:
                      , bool fastpath_support
                      , rdp_mppc_enc * mppc_enc
                      , bool compression
-                     , uint8_t compression_type
                      )
         : RDPSerializer( trans, this->buffer_stream_orders
                        , this->buffer_stream_bitmaps, bpp, bmp_cache
@@ -152,8 +150,7 @@ public:
         , offset_bitmap_count(0)
         , fastpath_support(fastpath_support)
         , mppc_enc(mppc_enc)
-        , compression(compression)
-        , compression_type(compression_type) {
+        , compression(compression) {
         this->init_orders();
         this->init_bitmaps();
     }

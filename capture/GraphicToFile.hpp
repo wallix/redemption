@@ -137,7 +137,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     const uint8_t wrm_format_version;
 
-    const uint32_t verbose;
+    //const uint32_t verbose;
 
 public:
     enum class SendInput { NO, YES };
@@ -176,7 +176,7 @@ public:
     , scot(*trans)
     , wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 4)) ? 4 : 3)
     //, wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 5)) ? 4 : 3)
-    , verbose(verbose)
+    //, verbose(verbose)
     {
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;

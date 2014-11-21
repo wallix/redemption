@@ -127,8 +127,6 @@ public:
     ClientInfo client_info;
 
 private:
-    uint32_t packet_number;
-
     Transport & trans;
 
     uint16_t userid;
@@ -176,8 +174,6 @@ private:
     bool mem3blt_support;
     int clientRequestedProtocols;
 
-    uint32_t bitmap_update_count;
-
     GeneralCaps        client_general_caps;
     BitmapCaps         client_bitmap_caps;
     OrderCaps          client_order_caps;
@@ -215,7 +211,6 @@ public:
         , up_and_running(0)
         , share_id(65538)
         , client_info(ini.globals.encryptionLevel, ini.client.bitmap_compression, ini.globals.bitmap_cache)
-        , packet_number(1)
         , trans(trans)
         , userid(0)
         , order_level(0)
@@ -235,7 +230,6 @@ public:
         , tls_client_active(true)
         , mem3blt_support(mem3blt_support)
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
-        , bitmap_update_count(0)
         , use_bitmapcache_rev2(false)
         , server_capabilities_filename(server_capabilities_filename)
         , persistent_key_list_transport(persistent_key_list_transport)
@@ -833,7 +827,6 @@ private:
             , this->server_fastpath_update_support
             , this->mppc_enc
             , this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0
-            , this->ini.client.rdp_compression ? this->client_info.rdp_compression_type : 0
             );
 
         this->pointer_cache.reset(this->client_info);
