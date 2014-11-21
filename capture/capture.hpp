@@ -150,8 +150,8 @@ public:
                                                               , width, height, ini.video.capture_groupid, authentifier);
             }
             this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
-                                         , *this->pnc_bmp_cache, *this->drawable, ini, externally_generated_breakpoint);
-            this->pnc->recorder.send_input = true;
+                                         , *this->pnc_bmp_cache, *this->drawable, ini, externally_generated_breakpoint
+                                         , NativeCapture::SendInput::YES);
         }
 
         Pointer pointer0(Pointer::POINTER_CURSOR0);

@@ -75,67 +75,81 @@ enum {
     SESSION_STATE_STOP
 };
 
-struct Session {
-    Inifile  * ini;
+class Session {
+    Inifile  & ini;
     uint32_t & verbose;
 
     int internal_state;
-    long id;                     // not used
 
     Front * front;
 
-    SessionManager * acl;
-
     UdevRandom gen;
 
-    SocketTransport * ptr_auth_trans;
-    wait_obj        * ptr_auth_event;
+    class Client {
+        SocketTransport auth_trans;
+
+    public:
+        wait_obj        auth_event;
+        SessionManager  acl;
+
+        Client( int client_sck, Inifile & ini, ActivityChecker & activity_checker, time_t start_time, time_t now )
+        : auth_trans( "Authentifier"
+                    , client_sck
+                    , ini.globals.authip
+                    , ini.globals.authport
+                    , ini.debug.auth
+        )
+        , auth_event(&this->auth_trans)
+        , acl( ini
+             , activity_checker
+             , this->auth_trans
+             , start_time // proxy start time
+             , now        // acl start time
+        )
+        {}
+    };
+
+    Client * client = nullptr;
 
           time_t   perf_last_info_collect_time;
     const pid_t    perf_pid;
           FILE   * perf_file;
 
-    const time_t select_timeout_tv_sec = 3;
+    static const time_t select_timeout_tv_sec = 3;
 
-    Session(int sck, Inifile * ini)
+public:
+    Session(int sck, Inifile & ini)
             : ini(ini)
-            , verbose(this->ini->debug.session)
-            , acl(NULL)
-            , ptr_auth_trans(NULL)
-            , ptr_auth_event(NULL)
+            , verbose(this->ini.debug.session)
             , perf_last_info_collect_time(0)
             , perf_pid(getpid())
-            , perf_file(NULL) {
+            , perf_file(nullptr) {
         try {
-            SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->debug.front);
+            SocketTransport front_trans("RDP Client", sck, "", 0, this->ini.debug.front);
             wait_obj front_event(&front_trans);
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
             //  here instead of inside Sessionmanager
-
-            this->ptr_auth_trans = NULL;
-            this->ptr_auth_event = NULL;
-            this->acl            = NULL;
 
             this->internal_state = SESSION_STATE_ENTRY;
 
             const bool enable_fastpath = true;
             const bool mem3blt_support = true;
 
-            this->front = new Front( &front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen
-                                   , ini, enable_fastpath, mem3blt_support);
+            this->front = new Front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, this->gen
+                                   , this->ini, enable_fastpath, mem3blt_support);
 
-            ModuleManager mm(*this->front, *this->ini);
+            ModuleManager mm(*this->front, this->ini);
             BackEvent_t signal = BACK_EVENT_NONE;
 
-            // Under conditions (if this->ini->video.inactivity_pause == true)
-            PauseRecord pause_record(this->ini->video.inactivity_timeout);
+            // Under conditions (if this->ini.video.inactivity_pause == true)
+            PauseRecord pause_record(this->ini.video.inactivity_timeout);
 
             if (this->verbose) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
             }
 
             const time_t start_time = time(NULL);
-            if (this->ini->debug.performance & 0x8000) {
+            if (this->ini.debug.performance & 0x8000) {
                 this->write_performance_log(start_time);
             }
 
@@ -145,7 +159,7 @@ struct Session {
 
             constexpr std::array<unsigned, 4> timers{{ 30*60, 10*60, 5*60, 1*60, }};
             unsigned osd_state = timers.size();
-            const bool enable_osd = this->ini->globals.enable_osd;
+            const bool enable_osd = this->ini.globals.enable_osd;
 
             while (run_session) {
                 unsigned max = 0;
@@ -161,9 +175,9 @@ struct Session {
                     this->front->capture->capture_event.add_to_fd_set(rfds, max, timeout);
                 }
                 TODO("Looks like acl and mod can be unified into a common class, where events can happen");
-                TODO("move ptr_auth_event to acl");
-                if (this->acl) {
-                    this->ptr_auth_event->add_to_fd_set(rfds, max, timeout);
+                TODO("move auth_event to acl");
+                if (this->client) {
+                    this->client->auth_event.add_to_fd_set(rfds, max, timeout);
                 }
                 mm.mod->get_event().add_to_fd_set(rfds, max, timeout);
 
@@ -189,7 +203,7 @@ struct Session {
                 }
 
                 time_t now = time(NULL);
-                if (this->ini->debug.performance & 0x8000) {
+                if (this->ini.debug.performance & 0x8000) {
                     this->write_performance_log(now);
                 }
 
@@ -205,14 +219,14 @@ struct Session {
 
                 try {
                     if (this->front->up_and_running) {
-                        if (this->ini->video.inactivity_pause
+                        if (this->ini.video.inactivity_pause
                             && mm.connected
                             && this->front->capture) {
                             pause_record.check(now, *this->front);
                         }
                         // new value incomming from acl
-                        if (this->ini->check_from_acl()) {
-                            this->front->update_config(*this->ini);
+                        if (this->ini.check_from_acl()) {
+                            this->front->update_config(this->ini);
                             mm.check_module();
                         }
                         // Process incoming module trafic
@@ -229,34 +243,22 @@ struct Session {
                             this->front->periodic_snapshot();
                         }
                         // Incoming data from ACL, or opening acl
-                        if (!this->acl) {
+                        if (!this->client) {
                             if (!mm.last_module) {
                                 // acl never opened or closed by me (close box)
                                 try {
-                                    int client_sck = ip_connect(this->ini->globals.authip,
-                                                                this->ini->globals.authport,
+                                    int client_sck = ip_connect(this->ini.globals.authip,
+                                                                this->ini.globals.authport,
                                                                 30,
                                                                 1000,
-                                                                this->ini->debug.auth);
+                                                                this->ini.debug.auth);
 
                                     if (client_sck == -1) {
                                         LOG(LOG_ERR, "Failed to connect to authentifier");
                                         throw Error(ERR_SOCKET_CONNECT_FAILED);
                                     }
 
-                                    this->ptr_auth_trans = new SocketTransport( "Authentifier"
-                                                                                , client_sck
-                                                                                , this->ini->globals.authip
-                                                                                , this->ini->globals.authport
-                                                                                , this->ini->debug.auth
-                                                                                );
-                                    this->ptr_auth_event = new wait_obj(this->ptr_auth_trans);
-                                    this->acl = new SessionManager( *this->ini
-                                                                  , *front
-                                                                  , *this->ptr_auth_trans
-                                                                  , start_time // proxy start time
-                                                                  , now        // acl start time
-                                                                  );
+                                    this->client = new Client(client_sck, ini, *this->front, start_time, now);
 
                                     osd_state = [&](uint32_t enddata) -> unsigned {
                                         if (!enddata || enddata <= now) {
@@ -266,7 +268,7 @@ struct Session {
                                             timers.rbegin(), timers.rend(), enddata - start_time
                                         );
                                         return i ? i-1 : 0;
-                                    }(this->ini->context.end_date_cnx.get());
+                                    }(this->ini.context.end_date_cnx.get());
                                     signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {
@@ -275,14 +277,14 @@ struct Session {
                             }
                         }
                         else {
-                            if (this->ptr_auth_event->is_set(rfds)) {
+                            if (this->client->auth_event.is_set(rfds)) {
                                 // acl received updated values
-                                this->acl->receive();
+                                this->client->acl.receive();
                             }
                         }
 
                         if (enable_osd) {
-                            const uint32_t enddate = this->ini->context.end_date_cnx.get();
+                            const uint32_t enddate = this->ini.context.end_date_cnx.get();
                             if (enddate
                             && osd_state < timers.size()
                             && enddate - now <= timers[osd_state]
@@ -292,30 +294,28 @@ struct Session {
                                 const unsigned minutes = (enddate - now + 30) / 60;
                                 mes += std::to_string(minutes);
                                 mes += ' ';
-                                mes += TR("minute", *this->ini);
+                                mes += TR("minute", this->ini);
                                 if (minutes > 1) {
                                     mes += "s ";
                                 } else {
                                     mes += ' ';
                                 }
-                                mes += TR("before_closing", *this->ini);
+                                mes += TR("before_closing", this->ini);
                                 mm.osd_message(std::move(mes));
                                 ++osd_state;
                             }
                         }
 
-                        if (this->acl) {
-                            run_session = this->acl->check(mm, now, front_trans, signal);
+                        if (this->client) {
+                            run_session = this->client->acl.check(mm, now, front_trans, signal);
                         }
                         else if (signal == BACK_EVENT_STOP) {
                             mm.mod->get_event().reset();
                             run_session = false;
                         }
                         if (mm.last_module) {
-                            if (this->acl) {
-                                delete this->acl;
-                                this->acl = NULL;
-                            }
+                            delete this->client;
+                            this->client = nullptr;
                         }
                     }
                 } catch (Error & e) {
@@ -340,21 +340,19 @@ struct Session {
     }
 
     ~Session() {
-        if (this->ini->debug.performance & 0x8000) {
+        if (this->ini.debug.performance & 0x8000) {
             this->write_performance_log(this->perf_last_info_collect_time + 3);
         }
         if (this->perf_file) {
             ::fclose(this->perf_file);
         }
         delete this->front;
-        if (this->acl) { delete this->acl; }
-        if (this->ptr_auth_event) { delete this->ptr_auth_event; }
-        if (this->ptr_auth_trans) { delete this->ptr_auth_trans; }
+        delete this->client;
         // Suppress Session file from disk (original name with PID or renamed with session_id)
-        if (!this->ini->context.session_id.get().is_empty()) {
+        if (!this->ini.context.session_id.get().is_empty()) {
             char new_session_file[256];
             snprintf( new_session_file, sizeof(new_session_file), "%s/session_%s.pid"
-                    , PID_PATH , this->ini->context.session_id.get_cstr());
+                    , PID_PATH , this->ini.context.session_id.get_cstr());
             unlink(new_session_file);
         }
         else {
@@ -378,7 +376,7 @@ private:
 
             char filename[2048];
             snprintf(filename, sizeof(filename), "%s/rdpproxy,%04d%02d%02d-%02d%02d%02d,%d.perf",
-                this->ini->video.record_tmp_path.c_str(),
+                this->ini.video.record_tmp_path.c_str(),
                 tm_.tm_year + 1900, tm_.tm_mon, tm_.tm_mday, tm_.tm_hour, tm_.tm_min, tm_.tm_sec, this->perf_pid
                 );
 

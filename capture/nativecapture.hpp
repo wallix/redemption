@@ -77,10 +77,13 @@ public:
 
     bool externally_generated_breakpoint;
 
+    typedef GraphicToFile::SendInput SendInput;
+
     NativeCapture(const timeval & now, Transport & trans, int width, int height, int capture_bpp, BmpCache & bmp_cache,
-                  RDPDrawable & drawable, const Inifile & ini, bool externally_generated_breakpoint = false)
+                  RDPDrawable & drawable, const Inifile & ini, bool externally_generated_breakpoint = false,
+                  SendInput send_input = SendInput::NO)
     : bmp_cache(bmp_cache)
-    , recorder(now, &trans, width, height, capture_bpp, bmp_cache, drawable, ini, ini.debug.capture)
+    , recorder(now, &trans, width, height, capture_bpp, bmp_cache, drawable, ini, send_input, ini.debug.capture)
     , nb_file(0)
     , time_to_wait(0)
     , disable_keyboard_log_wrm(ini.video.disable_keyboard_log_wrm)

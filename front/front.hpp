@@ -105,17 +105,30 @@ public:
     } capture_state;
     Capture * capture;
 
+private:
     BmpCache          * bmp_cache;
     BmpCachePersister * bmp_cache_persister;
 
     GraphicsUpdatePDU * orders;
+
+public:
     Keymap2 keymap;
+
+private:
     CHANNELS::ChannelDefArray channel_list;
+
+public:
     int up_and_running;
+
+private:
     int share_id;
+
+public:
     ClientInfo client_info;
-    uint32_t packet_number;
-    Transport * trans;
+
+private:
+    Transport & trans;
+
     uint16_t userid;
     uint8_t pub_mod[512];
     uint8_t pri_exp[512];
@@ -123,7 +136,9 @@ public:
     CryptContext encrypt, decrypt;
 
     int order_level;
-    Inifile * ini;
+
+private:
+    Inifile & ini;
     uint32_t verbose;
 
     Font font;
@@ -134,7 +149,6 @@ public:
     bool palette_sent;
     bool palette_memblt_sent[6];
 
-private:
     BGRPalette palette332_rgb;
 
 public:
@@ -144,7 +158,6 @@ public:
 private:
     uint8_t capture_bpp;
 
-public:
     enum {
         CONNECTION_INITIATION,
         WAITING_FOR_LOGON_INFO,
@@ -152,7 +165,7 @@ public:
         ACTIVATE_AND_PROCESS_DATA
     } state;
 
-    Random * gen;
+    Random & gen;
 
     bool fastpath_support;                    // choice of programmer
     bool client_fastpath_input_event_support; // = choice of programmer
@@ -160,8 +173,6 @@ public:
     bool tls_client_active;
     bool mem3blt_support;
     int clientRequestedProtocols;
-
-    uint32_t bitmap_update_count;
 
     GeneralCaps        client_general_caps;
     BitmapCaps         client_bitmap_caps;
@@ -180,17 +191,18 @@ public:
     auth_api * authentifier;
     bool       auth_info_sent;
 
-    Front ( Transport * trans
+public:
+    Front ( Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
-          , Random * gen
-          , Inifile * ini
+          , Random & gen
+          , Inifile & ini
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = NULL
           )
-        : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
-        , authorization_channels(make_authorization_channels(ini->client.allow_channels, ini->client.deny_channels))
+        : FrontAPI(ini.globals.notimestamp, ini.globals.nomouse)
+        , authorization_channels(make_authorization_channels(ini.client.allow_channels, ini.client.deny_channels))
         , capture_state(CAPTURE_STATE_UNKNOWN)
         , capture(NULL)
         , bmp_cache(NULL)
@@ -198,13 +210,12 @@ public:
         , orders(NULL)
         , up_and_running(0)
         , share_id(65538)
-        , client_info(ini->globals.encryptionLevel, ini->client.bitmap_compression, ini->globals.bitmap_cache)
-        , packet_number(1)
+        , client_info(ini.globals.encryptionLevel, ini.client.bitmap_compression, ini.globals.bitmap_cache)
         , trans(trans)
         , userid(0)
         , order_level(0)
         , ini(ini)
-        , verbose(this->ini->debug.front)
+        , verbose(this->ini.debug.front)
         , font(default_font_name)
         , brush_cache()
         , pointer_cache()
@@ -219,7 +230,6 @@ public:
         , tls_client_active(true)
         , mem3blt_support(mem3blt_support)
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
-        , bitmap_update_count(0)
         , use_bitmapcache_rev2(false)
         , server_capabilities_filename(server_capabilities_filename)
         , persistent_key_list_transport(persistent_key_list_transport)
@@ -301,12 +311,8 @@ public:
 
     ~Front(){
         ERR_free_strings();
-        if (this->mppc_enc) {
-            delete this->mppc_enc;
-        }
-        if (this->mppc_enc_match_finder) {
-            delete this->mppc_enc_match_finder;
-        }
+        delete this->mppc_enc;
+        delete this->mppc_enc_match_finder;
 
         delete this->bmp_cache_persister;
 
@@ -315,13 +321,18 @@ public:
             delete this->bmp_cache;
         }
 
-        if (this->orders) {
-            delete this->orders;
-        }
+        delete this->orders;
+        delete this->capture;
+    }
 
-        if (this->capture){
-            delete this->capture;
-        }
+    uint64_t get_total_received() const
+    {
+        return this->trans.get_total_received();
+    }
+
+    uint64_t get_total_sent() const
+    {
+        return this->trans.get_total_sent();
     }
 
     bool authorized_channel(const char * channel_name) {
@@ -357,7 +368,7 @@ public:
 
                     auth_api * authentifier = this->authentifier;
                     this->stop_capture();
-                    this->start_capture(width, height, *this->ini, authentifier);
+                    this->start_capture(width, height, this->ini, authentifier);
 
                     this->capture_state = original_capture_state;
                 }
@@ -643,7 +654,7 @@ public:
     }
 
     void save_persistent_disk_bitmap_cache() const {
-        if (!this->ini->client.persistent_disk_bitmap_cache || !this->ini->client.persist_bitmap_cache_on_disk)
+        if (!this->ini.client.persistent_disk_bitmap_cache || !this->ini.client.persist_bitmap_cache_on_disk)
             return;
 
         const char * persistent_path = PERSISTENT_PATH "/client";
@@ -659,12 +670,12 @@ public:
         // Generates the name of file.
         char filename[2048];
         ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            persistent_path, this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
+            persistent_path, this->ini.globals.host.get_cstr(), this->bmp_cache->bpp);
         filename[sizeof(filename) - 1] = '\0';
 
         char filename_temporary[2048];
         ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
-            persistent_path, this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
+            persistent_path, this->ini.globals.host.get_cstr(), this->bmp_cache->bpp);
         filename_temporary[sizeof(filename_temporary) - 1] = '\0';
 
         int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
@@ -714,7 +725,7 @@ private:
             this->mppc_enc_match_finder = NULL;
         }
 
-        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini->client.rdp_compression - 1))
+        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini.client.rdp_compression - 1))
         {
         case PACKET_COMPR_TYPE_RDP61:
             if (this->verbose & 1) {
@@ -722,25 +733,25 @@ private:
             }
             this->mppc_enc_match_finder = new rdp_mppc_61_enc_hash_based_match_finder();
             //this->mppc_enc_match_finder = new rdp_mppc_61_enc_sequential_search_match_finder();
-            this->mppc_enc = new rdp_mppc_61_enc(this->mppc_enc_match_finder, this->ini->debug.compression);
+            this->mppc_enc = new rdp_mppc_61_enc(this->mppc_enc_match_finder, this->ini.debug.compression);
             break;
         case PACKET_COMPR_TYPE_RDP6:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 6.0 Bulk compression");
             }
-            this->mppc_enc = new rdp_mppc_60_enc(this->ini->debug.compression);
+            this->mppc_enc = new rdp_mppc_60_enc(this->ini.debug.compression);
             break;
         case PACKET_COMPR_TYPE_64K:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 5.0 Bulk compression");
             }
-            this->mppc_enc = new rdp_mppc_50_enc(this->ini->debug.compression);
+            this->mppc_enc = new rdp_mppc_50_enc(this->ini.debug.compression);
             break;
         case PACKET_COMPR_TYPE_8K:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 4.0 Bulk compression");
             }
-            this->mppc_enc = new rdp_mppc_40_enc(this->ini->debug.compression);
+            this->mppc_enc = new rdp_mppc_40_enc(this->ini.debug.compression);
             break;
         }
 
@@ -756,7 +767,7 @@ private:
                         this->client_info.bpp,
                         this->client_info.number_of_cache,
                         ((this->client_info.cache_flags & ALLOW_CACHE_WAITING_LIST_FLAG) &&
-                             this->ini->client.cache_waiting_list),
+                             this->ini.client.cache_waiting_list),
                         BmpCache::CacheOption(this->client_info.cache1_entries,
                                               this->client_info.cache1_size,
                                               this->client_info.cache1_persistent),
@@ -772,15 +783,15 @@ private:
                         BmpCache::CacheOption(this->client_info.cache5_entries,
                                               this->client_info.cache5_size,
                                               this->client_info.cache5_persistent),
-                        this->ini->debug.cache);
+                        this->ini.debug.cache);
 
-        if (this->ini->client.persistent_disk_bitmap_cache &&
-            this->ini->client.persist_bitmap_cache_on_disk &&
+        if (this->ini.client.persistent_disk_bitmap_cache &&
+            this->ini.client.persist_bitmap_cache_on_disk &&
             this->bmp_cache->has_cache_persistent()) {
             // Generates the name of file.
             char cache_filename[2048];
             ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
-                PERSISTENT_PATH "/client", this->ini->globals.host.get_cstr(), this->bmp_cache->bpp);
+                PERSISTENT_PATH "/client", this->ini.globals.host.get_cstr(), this->bmp_cache->bpp);
             cache_filename[sizeof(cache_filename) - 1] = '\0';
 
             int fd = ::open(cache_filename, O_RDONLY);
@@ -802,12 +813,12 @@ private:
 
         delete this->orders;
         this->orders = new GraphicsUpdatePDU(
-              trans
+              &this->trans
             , this->userid
             , this->share_id
             , this->client_info.encryptionLevel
             , this->encrypt
-            , *this->ini
+            , this->ini
             , this->client_info.bpp
             , *this->bmp_cache
             , this->client_info.bitmap_cache_version
@@ -815,8 +826,7 @@ private:
             , this->client_info.use_compact_packets
             , this->server_fastpath_update_support
             , this->mppc_enc
-            , this->ini->client.rdp_compression ? this->client_info.rdp_compression : 0
-            , this->ini->client.rdp_compression ? this->client_info.rdp_compression_type : 0
+            , this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0
             );
 
         this->pointer_cache.reset(this->client_info);
@@ -870,7 +880,7 @@ public:
         MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_data.size());
 
-        this->trans->send(x224_header, mcs_data);
+        this->trans.send(x224_header, mcs_data);
     }
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const
@@ -895,7 +905,7 @@ public:
 
         CHANNELS::VirtualChannelPDU virtual_channel_pdu(this->verbose);
 
-        virtual_channel_pdu.send_to_client( *this->trans, this->encrypt
+        virtual_channel_pdu.send_to_client( this->trans, this->encrypt
                                           , this->client_info.encryptionLevel, userid, channel.chanid
                                           , length, flags, chunk, chunk_size);
     }
@@ -1038,7 +1048,7 @@ public:
                     );
                 // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
                 // Fast-Path Update (TS_FP_UPDATE)
-                this->trans->send(SvrUpdPDU_s, stream);
+                this->trans.send(SvrUpdPDU_s, stream);
             }
 
             this->palette_sent = true;
@@ -1289,7 +1299,7 @@ public:
                 ((this->client_info.encryptionLevel > 1) ?
                  FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
                 this->encrypt);
-            this->trans->send(fastpath_header, stream);
+            this->trans.send(fastpath_header, stream);
         }
 
         if (this->capture &&
@@ -1404,7 +1414,7 @@ public:
                 ((this->client_info.encryptionLevel > 1) ?
                  FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
                 this->encrypt);
-            this->trans->send(fastpath_header, stream);
+            this->trans.send(fastpath_header, stream);
         }
 
         if (this->capture &&
@@ -1448,10 +1458,10 @@ public:
             {
                 Array array(65536);
                 uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                X224::RecvFactory fx224(this->trans, &end, array.size());
                 InStream stream(array, 0, 0, end - array.get_data());
 
-                X224::CR_TPDU_Recv x224(stream, this->ini->client.bogus_neg_request);
+                X224::CR_TPDU_Recv x224(stream, this->ini.client.bogus_neg_request);
                 if (x224._header_size != (size_t)(stream.size())){
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
                                  " %d bytes remains", stream.size() - x224._header_size);
@@ -1459,9 +1469,9 @@ public:
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
 
                 if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
-                    (!this->ini->client.tls_support || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
+                    (!this->ini.client.tls_support || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
                     // Fallback to legacy security protocol (RDP) is allowed.
-                    && this->ini->client.tls_fallback_legacy) {
+                    && this->ini.client.tls_fallback_legacy) {
                     LOG(LOG_INFO, "Fallback to legacy security protocol");
                     this->tls_client_active = false;
                 }
@@ -1492,10 +1502,10 @@ public:
                 }
 
                 X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
-                this->trans->send(stream);
+                this->trans.send(stream);
 
                 if (this->tls_client_active){
-                    this->trans->enable_server_tls(this->ini->globals.certificate_password);
+                    this->trans.enable_server_tls(this->ini.globals.certificate_password);
 
             // 2.2.10.2 Early User Authorization Result PDU
             // ============================================
@@ -1541,7 +1551,7 @@ public:
 
             Array array(65536);
             uint8_t * end = array.get_data();
-            X224::RecvFactory fx224(*this->trans, &end, array.size());
+            X224::RecvFactory fx224(this->trans, &end, array.size());
             InStream x224_data(array, 0, 0, end - array.get_data());
 
             X224::DT_TPDU_Recv x224(x224_data);
@@ -1596,9 +1606,9 @@ public:
                         default:
                         break;
                         }
-                        if (this->ini->client.max_color_depth) {
+                        if (this->ini.client.max_color_depth) {
                             this->client_info.bpp = std::min<int>(
-                                this->client_info.bpp, this->ini->client.max_color_depth);
+                                this->client_info.bpp, this->ini.client.max_color_depth);
                         }
                     }
                     break;
@@ -1744,7 +1754,7 @@ public:
                 sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
                 sc_sec1.encryptionLevel = this->client_info.encryptionLevel;
                 sc_sec1.serverRandomLen = 32;
-                this->gen->random(this->server_random, 32);
+                this->gen.random(this->server_random, 32);
                 memcpy(sc_sec1.serverRandom, this->server_random, 32);
                 sc_sec1.dwVersion = GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1;
                 sc_sec1.temporary = false;
@@ -1771,7 +1781,7 @@ public:
             GCC::Create_Response_Send(gcc_header, stream.size());
             MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, gcc_header.size() + stream.size(), MCS::BER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
-            this->trans->send(x224_header, mcs_header, gcc_header, stream);
+            this->trans.send(x224_header, mcs_header, gcc_header, stream);
 
             // Channel Connection
             // ------------------
@@ -1819,7 +1829,7 @@ public:
             {
                 Array array(256);
                 uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                X224::RecvFactory fx224(this->trans, &end, array.size());
                 InStream x224_data(array, 0, 0, end - array.get_data());
 
                 X224::DT_TPDU_Recv x224(x224_data);
@@ -1831,7 +1841,7 @@ public:
             {
                 Array array(256);
                 uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                X224::RecvFactory fx224(this->trans, &end, array.size());
                 InStream x224_data(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1844,7 +1854,7 @@ public:
                 HStream mcs_data(256, 512);
                 MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_data.size());
-                this->trans->send(x224_header, mcs_data);
+                this->trans.send(x224_header, mcs_data);
             }
 
             {
@@ -1852,7 +1862,7 @@ public:
                 // TPDU class 0    (3 bytes = LI F0 PDU_DT)
                 Array array(256);
                 uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                X224::RecvFactory fx224(this->trans, &end, array.size());
                 InStream x224_data(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1867,13 +1877,13 @@ public:
                                              true, mcs.channelId,
                                              MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-                this->trans->send(x224_header, mcs_cjcf_data);
+                this->trans.send(x224_header, mcs_cjcf_data);
             }
 
             {
                 Array array(256);
                 uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                X224::RecvFactory fx224(this->trans, &end, array.size());
                 InStream x224_data(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1891,7 +1901,7 @@ public:
                                              true, mcs.channelId,
                                              MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-                this->trans->send(x224_header, mcs_cjcf_data);
+                this->trans.send(x224_header, mcs_cjcf_data);
             }
 
             auto beg_disable_channel_id = this->disable_channel_id_sorted.begin();
@@ -1899,7 +1909,7 @@ public:
             for (size_t i = 0 ; i < this->channel_list.size() + this->disable_channel_id_sorted.size(); i++){
                 Array array(256);
                 uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                X224::RecvFactory fx224(this->trans, &end, array.size());
                 InStream x224_data(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1922,7 +1932,7 @@ public:
                                              true, mcs.channelId,
                                              MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-                this->trans->send(x224_header, mcs_cjcf_data);
+                this->trans.send(x224_header, mcs_cjcf_data);
 
                 if (beg_disable_channel_id != end_disable_channel_id && *beg_disable_channel_id == i) {
                     ++beg_disable_channel_id;
@@ -1976,7 +1986,7 @@ public:
                 LOG(LOG_INFO, "Legacy RDP mode: expecting exchange packet");
                 Array array(256);
                 uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(*this->trans, &end, array.size());
+                X224::RecvFactory fx224(this->trans, &end, array.size());
                 InStream pdu(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(pdu);
 
@@ -2049,7 +2059,7 @@ public:
 
             Array array(65536);
             uint8_t * end = array.get_data();
-            X224::RecvFactory fx224(*this->trans, &end, array.size());
+            X224::RecvFactory fx224(this->trans, &end, array.size());
             InStream stream(array, 0, 0, end - array.get_data());
             X224::DT_TPDU_Recv x224(stream);
 
@@ -2075,11 +2085,11 @@ public:
 
             /* this is the first test that the decrypt is working */
             this->client_info.process_logon_info( sec.payload
-                                                , ini->client.ignore_logon_password
-                                                , ini->client.performance_flags_default
-                                                , ini->client.performance_flags_force_present
-                                                , ini->client.performance_flags_force_not_present
-                                                , ini->debug.password
+                                                , ini.client.ignore_logon_password
+                                                , ini.client.performance_flags_default
+                                                , ini.client.performance_flags_force_present
+                                                , ini.client.performance_flags_force_not_present
+                                                , ini.debug.password
                                                 , (this->verbose & 128)
                                                 );
 
@@ -2090,7 +2100,7 @@ public:
 
             this->keymap.init_layout(this->client_info.keylayout);
             LOG(LOG_INFO, "Front Keyboard Layout = 0x%x", this->client_info.keylayout);
-            this->ini->client.keyboard_layout.set(this->client_info.keylayout);
+            this->ini.client.keyboard_layout.set(this->client_info.keylayout);
             if (this->client_info.is_mce) {
                 if (this->verbose & 2){
                     LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
@@ -2232,7 +2242,7 @@ public:
             }
             Array array(65536);
             uint8_t * end = array.get_data();
-            X224::RecvFactory fx224(*this->trans, &end, array.size());
+            X224::RecvFactory fx224(this->trans, &end, array.size());
             InStream stream(array, 0, 0, end - array.get_data());
             X224::DT_TPDU_Recv x224(stream);
 
@@ -2478,7 +2488,7 @@ public:
         {
             Array array(65536);
             uint8_t * end = array.get_data();
-            X224::RecvFactory fx224(*this->trans, &end, array.size(), true);
+            X224::RecvFactory fx224(this->trans, &end, array.size(), true);
             InStream stream(array, 0, 0, end - array.get_data());
 
             if (fx224.fast_path){
@@ -2520,7 +2530,7 @@ public:
                             }
 
                             if (this->up_and_running) {
-                                if (tsk_switch_shortcuts && this->ini->client.disable_tsk_switch_shortcuts.get()) {
+                                if (tsk_switch_shortcuts && this->ini.client.disable_tsk_switch_shortcuts.get()) {
                                     LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
@@ -2595,7 +2605,7 @@ public:
                 break;
             }
             else {
-//                X224::RecvFactory fx224(*this->trans, stream);
+//                X224::RecvFactory fx224(this->trans, stream);
                 TODO("We shall put a specific case when we get Disconnect Request")
                 if (fx224.type == X224::DR_TPDU){
                     TODO("What is the clean way to actually disconnect ?")
@@ -2666,7 +2676,7 @@ public:
                     size_t chunk_size = sec.payload.in_remain();
 
                     if (this->up_and_running){
-                        if (!this->ini->client.device_redirection.get()
+                        if (!this->ini.client.device_redirection.get()
                            && !strncmp(this->channel_list[num_channel_src].name, "rdpdr", 8)
                            ) {
                             LOG(LOG_INFO, "Front::incoming::rdpdr channel disabled");
@@ -2826,7 +2836,7 @@ public:
                                          MCS::PER_ENCODING);
 
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
-        this->trans->send(x224_header, mcs_header, stream);
+        this->trans.send(x224_header, mcs_header, stream);
     }
 
     void send_data_indication_ex(uint16_t channelId, HStream & stream)
@@ -2844,7 +2854,7 @@ public:
 
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
-        this->trans->send(x224_header, mcs_header, stream);
+        this->trans.send(x224_header, mcs_header, stream);
     }
 
 /*
@@ -2857,7 +2867,7 @@ public:
             , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
             , this->encrypt
             );
-        this->trans->send(fastpath_header, data);
+        this->trans.send(fastpath_header, data);
     }
 */
     virtual void send_fastpath_data(InStream & data) {
@@ -2878,7 +2888,7 @@ public:
             ((this->client_info.encryptionLevel > 1) ?
              FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
             this->encrypt);
-        this->trans->send(fastpath_header, stream);
+        this->trans.send(fastpath_header, stream);
     }
 
     virtual bool retrieve_client_capability_set(Capability & caps) {
@@ -2982,7 +2992,7 @@ public:
                 , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                 , this->encrypt
                 );
-            this->trans->send(fastpath_header, stream);
+            this->trans.send(fastpath_header, stream);
         }
     }
 
@@ -3079,7 +3089,7 @@ public:
         order_caps.emit(stream);
         caps_count++;
 
-        if (this->ini->client.persistent_disk_bitmap_cache) {
+        if (this->ini.client.persistent_disk_bitmap_cache) {
             BitmapCacheHostSupportCaps bitmap_cache_host_support_caps;
             if (this->verbose) {
                 bitmap_cache_host_support_caps.log("Sending to client");
@@ -3861,7 +3871,7 @@ public:
                             }
 
                             if (this->up_and_running) {
-                                if (tsk_switch_shortcuts && this->ini->client.disable_tsk_switch_shortcuts.get()) {
+                                if (tsk_switch_shortcuts && this->ini.client.disable_tsk_switch_shortcuts.get()) {
                                     LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
@@ -4101,9 +4111,9 @@ public:
                 this->up_and_running = 1;
                 cb.on_front_up_and_running();
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
-                this->ini->context.opt_width.set(this->client_info.width);
-                this->ini->context.opt_height.set(this->client_info.height);
-                this->ini->context.opt_bpp.set(this->client_info.bpp);
+                this->ini.context.opt_width.set(this->client_info.width);
+                this->ini.context.opt_height.set(this->client_info.height);
+                this->ini.context.opt_bpp.set(this->client_info.bpp);
 
                 if (!this->auth_info_sent) {
                     char         username_a_domain[512];
@@ -4117,9 +4127,9 @@ public:
                     else {
                         username = this->client_info.username;
                     }
-                    this->ini->parse_username(username);
+                    this->ini.parse_username(username);
                     if (this->client_info.password[0]) {
-                        this->ini->context_set_value(AUTHID_PASSWORD, this->client_info.password);
+                        this->ini.context_set_value(AUTHID_PASSWORD, this->client_info.password);
                     }
 
                     this->auth_info_sent = true;
@@ -4146,7 +4156,7 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
             }
 
-            if (this->ini->client.persistent_disk_bitmap_cache &&
+            if (this->ini.client.persistent_disk_bitmap_cache &&
                 this->bmp_cache_persister) {
                 RDP::PersistentKeyListPDUData pklpdud;
 

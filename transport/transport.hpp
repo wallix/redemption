@@ -27,6 +27,7 @@
 #include "error.hpp"
 #include "stream.hpp"
 #include "auth_api.hpp"
+#include "noncopyable.hpp"
 
 #include <sys/time.h>
 #include <stdint.h>
@@ -35,7 +36,7 @@
 
 using std::size_t;
 
-class Transport
+class Transport : noncopyable
 {
     uint64_t total_received;
     uint64_t total_sent;

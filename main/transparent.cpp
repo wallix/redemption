@@ -205,7 +205,7 @@ int main(int argc, char * argv[]) {
 
     const bool fastpath_support = true;
     const bool mem3blt_support  = true;
-    Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini,
+    Front front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini,
         fastpath_support, mem3blt_support, input_filename.c_str(), persistent_key_list_oft);
     null_mod no_mod(front);
 

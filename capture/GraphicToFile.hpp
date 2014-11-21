@@ -102,7 +102,7 @@ public:
     }
 };
 
-struct GraphicToFile : public RDPSerializer, public RDPCaptureDevice
+class GraphicToFile : public RDPSerializer, public RDPCaptureDevice
 REDOC("To keep things easy all chunks have 8 bytes headers"
       " starting with chunk_type, chunk_size"
       " and order_count (whatever it means, depending on chunks")
@@ -123,7 +123,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     const uint8_t  capture_bpp;
     uint16_t mouse_x;
     uint16_t mouse_y;
-    bool send_input;
+    const bool send_input;
     RDPDrawable & drawable;
 
     BStream keyboard_buffer_32;
@@ -137,7 +137,10 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     const uint8_t wrm_format_version;
 
-    const uint32_t verbose;
+    //const uint32_t verbose;
+
+public:
+    enum class SendInput { NO, YES };
 
     GraphicToFile(const timeval& now
                 , Transport * trans
@@ -147,6 +150,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
                 , BmpCache & bmp_cache
                 , RDPDrawable & drawable
                 , const Inifile & ini
+                , SendInput send_input = SendInput::NO
                 , uint32_t verbose = 0)
     : RDPSerializer( trans, this->buffer_stream_orders
                    , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, 0, 1, 1, ini)
@@ -162,7 +166,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     , capture_bpp(capture_bpp)
     , mouse_x(0)
     , mouse_y(0)
-    , send_input(false)
+    , send_input(send_input == SendInput::YES)
     , drawable(drawable)
     , keyboard_buffer_32(GTF_SIZE_KEYBUF_REC * sizeof(uint32_t))
     , ini(ini)
@@ -172,7 +176,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     , scot(*trans)
     , wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 4)) ? 4 : 3)
     //, wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 5)) ? 4 : 3)
-    , verbose(verbose)
+    //, verbose(verbose)
     {
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
@@ -196,6 +200,10 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     }
 
     ~GraphicToFile(){
+    }
+
+    void dump_png24(Transport & trans, bool bgr) const {
+        this->drawable.dump_png24(trans, bgr);
     }
 
     REDOC("Update timestamp but send nothing, the timestamp will be sent later with the next effective event");
@@ -278,8 +286,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     void send_image_chunk(void)
     {
         OutChunkedBufferingTransport<65536> png_trans(this->trans);
-
-        this->drawable.dump_png24(&png_trans, false);
+        this->drawable.dump_png24(png_trans, false);
     }
 
     void send_reset_chunk()
@@ -553,7 +560,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
         OutChunkedBufferingTransport<65536> png_trans(trans);
 
-        this->drawable.dump_png24(&png_trans, true);
+        this->drawable.dump_png24(png_trans, true);
 
         this->send_caches_chunk();
     }

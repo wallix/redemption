@@ -31,14 +31,13 @@
 
 #include <stdint.h>
 #include "log.hpp"
+#include "noncopyable.hpp"
 
-
-class Random
+class Random : noncopyable
 {
     public:
     virtual ~Random() {}
     virtual void random(void * dest, size_t size) = 0;
-
 };
 
 class LCGRandom : public Random

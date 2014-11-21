@@ -44,7 +44,7 @@ public:
     DiffieHellman(uint64_t generator, uint64_t modulus)
         : randgen()
         , rand(&this->randgen)
-        , max((UINT64_C(1) << DH_MAX_BITS) - 1)
+        , max((uint64_t(1) << DH_MAX_BITS) - 1)
         , gen(generator)
         , mod(modulus)
         , pub(0)
@@ -79,7 +79,7 @@ public:
     }
     uint64_t xpowymodn(uint64_t x, uint64_t y, uint64_t n) {
         uint64_t res = 1;
-        const uint64_t oneshift63 = UINT64_C(1) << 63;
+        const uint64_t oneshift63 = uint64_t(1) << 63;
         for (int i = 0; i < 64; i++) {
             res = (res*res) % n;
             if ((y & oneshift63) != 0) {

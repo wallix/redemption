@@ -56,8 +56,9 @@
 #include "RDP/pointer.hpp"
 #include "ellipse.hpp"
 #include "bitmap.hpp"
+#include "noncopyable.hpp"
 
-struct RDPGraphicDevice {
+struct RDPGraphicDevice : noncopyable {
     virtual void draw(const RDPOpaqueRect       & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPScrBlt           & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPDestBlt          & cmd, const Rect & clip) = 0;
@@ -106,7 +107,7 @@ public:
     virtual ~RDPGraphicDevice() {}
 };
 
-struct RDPCaptureDevice {
+struct RDPCaptureDevice : noncopyable {
     virtual void set_row(size_t rownum, const uint8_t * data) {}
 
     virtual void input(const timeval & now, Stream & input_data_32) {}

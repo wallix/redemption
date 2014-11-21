@@ -31,116 +31,68 @@
 #include "get_printable_password.hpp"
 
 struct ClientInfo {
-    int bpp;
-    uint16_t width;
-    uint16_t height;
+    int bpp = 0;
+    uint16_t width = 0;
+    uint16_t height = 0;
 
     /* bitmap cache info */
-    uint8_t number_of_cache;
-    uint32_t cache1_entries;
-    bool     cache1_persistent;
-    uint32_t cache1_size;
-    uint32_t cache2_entries;
-    bool     cache2_persistent;
-    uint32_t cache2_size;
-    uint32_t cache3_entries;
-    bool     cache3_persistent;
-    uint32_t cache3_size;
-    uint32_t cache4_entries;
-    bool     cache4_persistent;
-    uint32_t cache4_size;
-    uint32_t cache5_entries;
-    bool     cache5_persistent;
-    uint32_t cache5_size;
-    int cache_flags;
-    int bitmap_cache_version; /* 0 = original version, 2 = v2 */
+    uint8_t number_of_cache = 0;
+    uint32_t cache1_entries = 600;
+    bool     cache1_persistent = false;
+    uint32_t cache1_size = 256;
+    uint32_t cache2_entries = 300;
+    bool     cache2_persistent = false;
+    uint32_t cache2_size = 1024;
+    uint32_t cache3_entries = 262;
+    bool     cache3_persistent = false;
+    uint32_t cache3_size = 4096;
+    uint32_t cache4_entries = 262;
+    bool     cache4_persistent = false;
+    uint32_t cache4_size = 4096;
+    uint32_t cache5_entries = 262;
+    bool     cache5_persistent = false;
+    uint32_t cache5_size = 4096;
+    int cache_flags = 0;
+    int bitmap_cache_version = 0; /* 0 = original version, 2 = v2 */
 
     /* pointer info */
-    int pointer_cache_entries;
+    int pointer_cache_entries = 0;
     /* other */
     int use_bitmap_comp;
     int use_bitmap_cache;
     int op1; /* use smaller bitmap header, non cache */
-    uint32_t desktop_cache;
-    bool use_compact_packets; /* rdp5 smaller packets */
-    char hostname[512];
-    int build;
-    int keylayout;
-    char username[512];
-    char password[512];
-    char domain[512];
-    char program[512];
-    char directory[512];
+    uint32_t desktop_cache = 0;
+    bool use_compact_packets = false; /* rdp5 smaller packets */
+    char hostname[512] = {};
+    int build = 0;
+    int keylayout = 0;
+    char username[512] = {};
+    char password[512] = {};
+    char domain[512] = {};
+    char program[512] = {};
+    char directory[512] = {};
 
-    int rdp_compression;
+    int rdp_compression = 0;
     int rdp_compression_type;
-    int rdp_autologin;
+    int rdp_autologin = 0;
     int encryptionLevel; /* 1, 2, 3 = low, medium, high */
-    int sound_code; /* 1 = leave sound at server */
-    int is_mce;
-    uint32_t rdp5_performanceflags;
-    int brush_cache_code; /* 0 = no cache 1 = 8x8 standard cache
+    int sound_code = 0; /* 1 = leave sound at server */
+    int is_mce = 0;
+    uint32_t rdp5_performanceflags = 0;
+    int brush_cache_code = 0; /* 0 = no cache 1 = 8x8 standard cache
                            2 = arbitrary dimensions */
-    bool console_session;
+    bool console_session = false;
 
     InfoPacket infoPacket;
 
     TODO("as encryption_level, bitmap_compression and bitmap_cache are not really in client_info RDP structure we should probably not keep them here either")
 
-    ClientInfo(const int encryptionLevel, const bool bitmap_compression, const bool bitmap_cache) {
-        this->bpp = 0;
-        this->width = 0;
-        this->height = 0;
-        /* bitmap cache info */
-        this->number_of_cache = 0;
-        /* default 8 bit v1 color bitmap cache entries and size */
-        this->cache1_entries = 600;
-        this->cache1_persistent = false;
-        this->cache1_size = 256;
-        this->cache2_entries = 300;
-        this->cache2_persistent = false;
-        this->cache2_size = 1024;
-        this->cache3_entries = 262;
-        this->cache3_persistent = false;
-        this->cache3_size = 4096;
-        this->cache4_entries = 262;
-        this->cache4_persistent = false;
-        this->cache4_size = 4096;
-        this->cache5_entries = 262;
-        this->cache5_persistent = false;
-        this->cache5_size = 4096;
-
-        this->cache_flags = 0;
-        this->bitmap_cache_version = 0; /* 0 = original version, 2 = v2 */
-        /* pointer info */
-        this->pointer_cache_entries = 0;
-        /* other */
-        this->op1 = 0; /* use smaller bitmap header, non cache */
-        this->desktop_cache = 0;
-        this->use_compact_packets = false; /* rdp5 smaller packets */
-        memset(this->hostname, 0, sizeof(this->hostname));
-        this->build = 0;
-        this->keylayout = 0;
-        memset(this->username, 0, sizeof(this->username));
-        memset(this->password, 0, sizeof(this->password));
-        memset(this->domain, 0, sizeof(this->domain));
-        memset(this->program, 0, sizeof(this->program));
-        memset(this->directory, 0, sizeof(this->directory));
-        this->rdp_compression = 0;
-        this->rdp_compression_type = 0;
-        this->rdp_autologin = 0;
-        this->sound_code = 0; /* 1 = leave sound at server */
-        this->is_mce = 0;
-        this->rdp5_performanceflags = 0;
-        this->brush_cache_code = 0; /* 0 = no cache 1 = 8x8 standard cache
-                               2 = arbitrary dimensions */
-        this->console_session = false;
-        this->use_bitmap_cache = bitmap_cache?1:0;
-        this->use_bitmap_comp = bitmap_compression?1:0;
-
-        /*encryptionLevel: 1, 2, 3 = low, medium, high */
-        this->encryptionLevel = encryptionLevel + 1; // ini->globals.encryptionLevel + 1;
-    }
+    ClientInfo(const int encryptionLevel, const bool bitmap_compression, const bool bitmap_cache)
+    : use_bitmap_comp(bitmap_compression?1:0)
+    , use_bitmap_cache(bitmap_cache?1:0)
+    /*encryptionLevel: 1, 2, 3 = low, medium, high */
+    , encryptionLevel(encryptionLevel + 1) // ini->globals.encryptionLevel + 1;
+    {}
 
     void process_logon_info( Stream & stream
                            , bool ignore_logon_password
@@ -149,7 +101,7 @@ struct ClientInfo {
                            , uint32_t performance_flags_force_not_present
                            , uint32_t password_printing_mode
                            , bool verbose
-                           ) throw (Error)
+                           )
     {
         this->infoPacket.recv(stream);
         if (verbose) {
@@ -203,8 +155,7 @@ struct ClientInfo {
         }
         if (this->infoPacket.flags & INFO_COMPRESSION){
             this->rdp_compression      = 1;
-            this->rdp_compression_type =
-                ((this->infoPacket.flags & CompressionTypeMask) >> 9);
+            this->rdp_compression_type = ((this->infoPacket.flags & CompressionTypeMask) >> 9);
         }
     }
 };

@@ -67,7 +67,7 @@ public:
     }
 
     void dump24() const {
-        ::transport_dump_png24(&this->trans, this->drawable.data(),
+        ::transport_dump_png24(this->trans, this->drawable.data(),
             this->drawable.width(), this->drawable.height(),
             this->drawable.rowsize(),
             true);
@@ -79,7 +79,7 @@ public:
                    this->scaled_width, this->drawable.width(),
                    this->scaled_height, this->drawable.height(),
                    this->drawable.rowsize());
-        ::transport_dump_png24(&this->trans, scaled_data.get(),
+        ::transport_dump_png24(this->trans, scaled_data.get(),
                      this->scaled_width, this->scaled_height,
                      this->scaled_width * 3, true);
     }
