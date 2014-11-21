@@ -125,8 +125,6 @@ int main(int argc, char** argv)
 
     ("auto-output-file",  "append suffix to input base filename to generate output base filename automatically")
     ("remove-input-file", "remove input file"                                                                  )
-
-    ("get-duration,t", "get input file duration (in seconds)")
     ;
 
     Inifile ini;
