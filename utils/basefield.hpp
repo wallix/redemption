@@ -26,7 +26,6 @@
 // BASE64 TRY
 // #include "base64.hpp"
 #include "string.hpp"
-#include <algorithm>
 #include <set>
 #include <map>
 
@@ -359,9 +358,6 @@ struct FieldObserver : public ConfigurationHolder {
 
 
     class SetField {
-        SetField(const SetField &) = delete;
-        SetField & operator = (const SetField &) = delete;
-
         std::set<BaseField * > set_field;
 
     public:
@@ -392,7 +388,9 @@ struct FieldObserver : public ConfigurationHolder {
 
         template<class Function>
         void foreach(Function funct) const {
-            std::for_each(set_field.begin(), set_field.end(), std::move(funct));
+            for (auto & x : this->set_field) {
+                funct(x);
+            }
         }
     };
 
@@ -461,7 +459,7 @@ public:
 
     void reset() {
         this->something_changed = false;
-        changed_set.clear();
+        this->changed_set.clear();
     }
 
     void attach_field(BaseField* field, authid_t authid){

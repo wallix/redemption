@@ -73,6 +73,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     Inifile ini;
     LogTransport trans;
     AclSerializer acl(&ini, trans, 0);
+    ini.context_set_value(AUTHID_FORCEMODULE, "true");
     try {
         acl.send_acl_data();
     } catch (const Error & e){

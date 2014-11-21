@@ -198,7 +198,7 @@ public:
             BStream stream(8192);
             stream.out_uint32_be(0);
 
-            list.foreach([&stream, this](Inifile::BaseField * bfield) {
+            Inifile::SetField(list).foreach([&stream, this](Inifile::BaseField * bfield) {
                 this->out_item_new(stream, bfield);
             });
 

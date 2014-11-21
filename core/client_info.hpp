@@ -73,7 +73,7 @@ struct ClientInfo {
     char directory[512] = {};
 
     int rdp_compression = 0;
-    int rdp_compression_type;
+    int rdp_compression_type = 0;
     int rdp_autologin = 0;
     int encryptionLevel; /* 1, 2, 3 = low, medium, high */
     int sound_code = 0; /* 1 = leave sound at server */
