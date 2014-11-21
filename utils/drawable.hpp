@@ -463,10 +463,6 @@ public:
         return this->first_pixel() + y * this->rowsize();
     }
 
-    uint8_t * beginning_of_last_line(const Rect & rect) const noexcept {
-        return this->data_ + ((rect.y + rect.cy - 1) * this->width_ + rect.x) * Bpp;
-    }
-
 private:
     template<class>
     struct AssignOp;

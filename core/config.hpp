@@ -210,9 +210,6 @@ typedef enum
         AUTHID_REJECTED,        // rejected
 
         AUTHID_KEEPALIVE,
-        AUTHID_PROXY_TYPE,
-
-        AUTHID_TRACE_SEAL,      // after closing trace file trace is sealed using a signature hash
 
         AUTHID_SESSION_ID,      // session_id
 
@@ -323,9 +320,6 @@ typedef enum
 #define STRAUTHID_REJECTED                 "rejected"
 
 #define STRAUTHID_KEEPALIVE                "keepalive"
-#define STRAUTHID_PROXY_TYPE               "proxy_type"
-
-#define STRAUTHID_TRACE_SEAL               "trace_seal"
 
 #define STRAUTHID_SESSION_ID               "session_id"
 
@@ -436,9 +430,6 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_REJECTED,         // rejected
 
     STRAUTHID_KEEPALIVE,
-    STRAUTHID_PROXY_TYPE,
-
-    STRAUTHID_TRACE_SEAL,   // after closing trace file trace is sealed using a signature hash
 
     STRAUTHID_SESSION_ID,   // session_id
 
@@ -909,9 +900,6 @@ struct Inifile : public FieldObserver {
         BoolField          authenticated;            // AUTHID_AUTHENTICATED //
 
         BoolField          keepalive;                // AUTHID_KEEPALIVE //
-        StringField        proxy_type;               // AUTHID_PROXY_TYPE //
-
-        StringField        trace_seal;               // AUTHID_TRACE_SEAL //
 
         StringField        session_id;               // AUTHID_SESSION_ID //
 
@@ -946,7 +934,6 @@ public:
     Inifile()
     {
         //init to_send_set of authid
-        this->to_send_set.insert(AUTHID_PROXY_TYPE);
         this->to_send_set.insert(AUTHID_DISPLAY_MESSAGE);
         this->to_send_set.insert(AUTHID_ACCEPT_MESSAGE);
         this->to_send_set.insert(AUTHID_PASSWORD);
@@ -1139,8 +1126,6 @@ public:
 
         this->context.keepalive.set(false);
 
-        this->context.proxy_type.set_from_cstr("RDP");
-
         this->context.session_id.attach_ini(this, AUTHID_SESSION_ID);
 
         this->context.end_date_cnx.set(0);
@@ -1212,14 +1197,12 @@ public:
         this->context.accept_message.attach_ini(this,AUTHID_ACCEPT_MESSAGE);
         this->context.display_message.attach_ini(this,AUTHID_DISPLAY_MESSAGE);
 
-        this->context.proxy_type.attach_ini(this,AUTHID_PROXY_TYPE);
         this->context.real_target_device.attach_ini(this,AUTHID_REAL_TARGET_DEVICE);
 
         this->context.authchannel_answer.attach_ini(this,AUTHID_AUTHCHANNEL_ANSWER);
         this->context.authchannel_target.attach_ini(this,AUTHID_AUTHCHANNEL_TARGET);
         this->context.authchannel_result.attach_ini(this,AUTHID_AUTHCHANNEL_RESULT);
         this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
-        this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
     }
 
 public:

@@ -284,14 +284,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.context.authenticated.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.context.keepalive.is_asked());
-    BOOST_CHECK_EQUAL(false,                            ini.context.proxy_type.is_asked());
 
     BOOST_CHECK_EQUAL(false,                            ini.context.keepalive.get());
-    BOOST_CHECK_EQUAL("RDP",                            ini.context.proxy_type.get_cstr());
-
-    BOOST_CHECK_EQUAL(false,                            ini.context.trace_seal.is_asked());
-
-    BOOST_CHECK_EQUAL("",                               ini.context.trace_seal.get_cstr());
 
     BOOST_CHECK_EQUAL("",                               ini.context.session_id.get_cstr());
 
@@ -554,15 +548,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
 
     BOOST_CHECK_EQUAL(false,                             ini.context_is_asked(AUTHID_KEEPALIVE));
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_PROXY_TYPE));
 
     BOOST_CHECK_EQUAL("False",                          ini.context_get_value(AUTHID_KEEPALIVE));
-    BOOST_CHECK_EQUAL("RDP",                            ini.context_get_value(AUTHID_PROXY_TYPE));
-
-
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TRACE_SEAL));
-
-    BOOST_CHECK_EQUAL("",                               ini.context_get_value(AUTHID_TRACE_SEAL));
 
 
     BOOST_CHECK_EQUAL("",                               ini.context_get_value(AUTHID_SESSION_ID));
@@ -2515,34 +2502,6 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL("True",                           ini.context_get_value(AUTHID_KEEPALIVE));
 
 
-    // proxy_type
-    ini.context_ask(AUTHID_PROXY_TYPE);
-
-    BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_PROXY_TYPE));
-
-    ini.context_set_value(AUTHID_PROXY_TYPE,            "VNC");
-
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_PROXY_TYPE));
-
-    BOOST_CHECK_EQUAL("VNC",                            ini.context.proxy_type.get_cstr());
-
-    BOOST_CHECK_EQUAL("VNC",                            ini.context_get_value(AUTHID_PROXY_TYPE));
-
-
-    // trace_seal
-    ini.context_ask(AUTHID_TRACE_SEAL);
-
-    BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_TRACE_SEAL));
-
-    ini.context_set_value(AUTHID_TRACE_SEAL,            "trace_seal");
-
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TRACE_SEAL));
-
-    BOOST_CHECK_EQUAL("trace_seal",                     ini.context.trace_seal.get_cstr());
-
-    BOOST_CHECK_EQUAL("trace_seal",                     ini.context_get_value(AUTHID_TRACE_SEAL));
-
-
     // session_id
     ini.context_set_value(AUTHID_SESSION_ID,            "0123456789");
 
@@ -2625,7 +2584,6 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 //    BOOST_CHECK_EQUAL(AUTHID_OPT_WIDTH, authid_from_string(STRAUTHID_OPT_WIDTH));
 //    BOOST_CHECK_EQUAL(AUTHID_OPT_HEIGHT, authid_from_string(STRAUTHID_OPT_HEIGHT));
 //    BOOST_CHECK_EQUAL(AUTHID_OPT_BPP, authid_from_string(STRAUTHID_OPT_BPP));
-//    BOOST_CHECK_EQUAL(AUTHID_PROXY_TYPE, authid_from_string(STRAUTHID_PROXY_TYPE));
 //    BOOST_CHECK_EQUAL(AUTHID_AUTHENTICATED, authid_from_string(STRAUTHID_AUTHENTICATED));
 //    BOOST_CHECK_EQUAL(AUTHID_SELECTOR, authid_from_string(STRAUTHID_SELECTOR));
 //    BOOST_CHECK_EQUAL(AUTHID_KEEPALIVE, authid_from_string(STRAUTHID_KEEPALIVE));
@@ -2633,7 +2591,6 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 //    BOOST_CHECK_EQUAL(AUTHID_DISPLAY_MESSAGE, authid_from_string(STRAUTHID_DISPLAY_MESSAGE));
 //    BOOST_CHECK_EQUAL(AUTHID_ACCEPT_MESSAGE, authid_from_string(STRAUTHID_ACCEPT_MESSAGE));
 //    BOOST_CHECK_EQUAL(AUTHID_AUTH_ERROR_MESSAGE, authid_from_string(STRAUTHID_AUTH_ERROR_MESSAGE));
-//    BOOST_CHECK_EQUAL(AUTHID_PROXY_TYPE, authid_from_string(STRAUTHID_PROXY_TYPE));
 //    BOOST_CHECK_EQUAL(AUTHID_TRANS_BUTTON_OK, authid_from_string(STRAUTHID_TRANS_BUTTON_OK));
 //    BOOST_CHECK_EQUAL(AUTHID_TRANS_BUTTON_CANCEL, authid_from_string(STRAUTHID_TRANS_BUTTON_CANCEL));
 //    BOOST_CHECK_EQUAL(AUTHID_TRANS_BUTTON_HELP, authid_from_string(STRAUTHID_TRANS_BUTTON_HELP));
@@ -2778,14 +2735,12 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
     // those are initial values
     BOOST_CHECK_EQUAL(false, stringf.is_asked());
     BOOST_CHECK_EQUAL(true, stringf.has_changed());
-    BOOST_CHECK_EQUAL(false, stringf.has_been_read());
 
     // setting a string from initial value
     redemption::string initialstring("astring");
     stringf.set(initialstring);
     BOOST_CHECK_EQUAL(false, stringf.is_asked());
     BOOST_CHECK_EQUAL(true, stringf.has_changed());
-    BOOST_CHECK_EQUAL(false, stringf.has_been_read());
 
     // using the field set it as unchanged
     stringf.use();
@@ -2793,7 +2748,6 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
 
     // getting the string set it as read
     BOOST_CHECK_EQUAL("astring", stringf.get_cstr());
-    BOOST_CHECK_EQUAL(true, stringf.has_been_read());
 
     // asking for the field set it as changed
     stringf.ask();
@@ -2804,11 +2758,9 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
     stringf.set_from_cstr("anotherstring");
     BOOST_CHECK_EQUAL(false, stringf.is_asked());
     BOOST_CHECK_EQUAL(true, stringf.has_changed());
-    BOOST_CHECK_EQUAL(false, stringf.has_been_read());
 
     redemption::string tmp = stringf.get();
     BOOST_CHECK_EQUAL("anotherstring", tmp.c_str());
-    BOOST_CHECK_EQUAL(true, stringf.has_been_read());
     BOOST_CHECK_EQUAL(true, stringf.has_changed());
 
     stringf.use();
@@ -2816,7 +2768,6 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
 
     // setting the same string changes only the ask flag (as not asked)
     stringf.set_from_cstr("anotherstring");
-    BOOST_CHECK_EQUAL(true, stringf.has_been_read());
     BOOST_CHECK_EQUAL(false, stringf.has_changed());
 
 
@@ -2826,13 +2777,11 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
     Inifile::UnsignedField unsignedf;
     BOOST_CHECK_EQUAL(false, unsignedf.is_asked());
     BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
-    BOOST_CHECK_EQUAL(false, unsignedf.has_been_read());
     // setting a unsigned from initial value
 
     unsignedf.set(321);
     BOOST_CHECK_EQUAL(false, unsignedf.is_asked());
     BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
-    BOOST_CHECK_EQUAL(false, unsignedf.has_been_read());
 
     // using the field set it as unchanged
     unsignedf.use();
@@ -2840,7 +2789,6 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
 
     // getting the integer set it as read
     BOOST_CHECK_EQUAL(321, unsignedf.get());
-    BOOST_CHECK_EQUAL(true, unsignedf.has_been_read());
 
     // asking for the field set it as changed
     unsignedf.ask();
@@ -2851,10 +2799,8 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
     unsignedf.set(654321);
     BOOST_CHECK_EQUAL(false, unsignedf.is_asked());
     BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
-    BOOST_CHECK_EQUAL(false, unsignedf.has_been_read());
 
     BOOST_CHECK_EQUAL(654321, unsignedf.get());
-    BOOST_CHECK_EQUAL(true, unsignedf.has_been_read());
     BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
 
     unsignedf.use();
@@ -2862,7 +2808,6 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
 
     // setting the same integer changes only the ask flag (as not asked)
     unsignedf.set(654321);
-    BOOST_CHECK_EQUAL(true, unsignedf.has_been_read());
     BOOST_CHECK_EQUAL(false, unsignedf.has_changed());
 
 
@@ -2872,12 +2817,10 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
     Inifile::BoolField boolf;
     BOOST_CHECK_EQUAL(false, boolf.is_asked());
     BOOST_CHECK_EQUAL(true, boolf.has_changed());
-    BOOST_CHECK_EQUAL(false, boolf.has_been_read());
 
     boolf.set(true);
     BOOST_CHECK_EQUAL(false, boolf.is_asked());
     BOOST_CHECK_EQUAL(true, boolf.has_changed());
-    BOOST_CHECK_EQUAL(false, boolf.has_been_read());
 
     // using the field set it as unchanged
     boolf.use();
@@ -2885,7 +2828,6 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
 
     // getting the integer set it as read
     BOOST_CHECK_EQUAL(true, boolf.get());
-    BOOST_CHECK_EQUAL(true, boolf.has_been_read());
 
     // asking for the field set it as changed
     boolf.ask();
@@ -2896,10 +2838,8 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
     boolf.set(false);
     BOOST_CHECK_EQUAL(false, boolf.is_asked());
     BOOST_CHECK_EQUAL(true, boolf.has_changed());
-    BOOST_CHECK_EQUAL(false, boolf.has_been_read());
 
     BOOST_CHECK_EQUAL(false, boolf.get());
-    BOOST_CHECK_EQUAL(true, boolf.has_been_read());
     BOOST_CHECK_EQUAL(true, boolf.has_changed());
 
     boolf.use();
@@ -2907,6 +2847,5 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
 
     // setting the same integer changes only the ask flag (as not asked)
     boolf.set(false);
-    BOOST_CHECK_EQUAL(true, boolf.has_been_read());
     BOOST_CHECK_EQUAL(false, boolf.has_changed());
 }

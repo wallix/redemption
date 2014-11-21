@@ -43,13 +43,11 @@ struct FieldObserver : public ConfigurationHolder {
     protected:
         mutable bool      asked;         // the value is asked in the context
         mutable bool      modified;      // the value has been modified since last use
-        mutable bool      read;          // the value has been read since last set (modified)
         FieldObserver *   ini;           // Inifile to which the field is attached
         authid_t          authid;        // Auth Id of the field in the Inifile
         BaseField()
             : asked(false)
             , modified(true)
-            , read(false)
             , ini(NULL)
             , authid(AUTHID_UNKNOWN)
         {
@@ -95,12 +93,7 @@ struct FieldObserver : public ConfigurationHolder {
             }
 
         }
-        void set_to_send_field() {
-            if (this->authid != AUTHID_UNKNOWN
-                && this->ini) {
-                this->ini->to_send_set.insert(this->authid);
-            }
-        }
+
         /****************************************
          * Use this field to mark it as modified
          ****************************************
@@ -143,14 +136,6 @@ struct FieldObserver : public ConfigurationHolder {
         bool is_asked() {
             return this->asked;
         }
-        /**************************************************************
-         * Check if the field has been read (since last effective set)
-         **************************************************************
-         */
-        bool has_been_read() {
-            return this->read;
-        }
-
 
         authid_t get_authid() {
             return this->authid;
@@ -206,7 +191,6 @@ struct FieldObserver : public ConfigurationHolder {
         void set_empty() {
             if (!this->data.is_empty()){
                 this->modify();
-                this->read = false;
                 this->data.empty();
             }
         }
@@ -218,7 +202,6 @@ struct FieldObserver : public ConfigurationHolder {
         virtual void set_from_cstr(const char * cstr) {
             if (this->asked || strcmp(this->data.c_str(),cstr)) {
                 this->modify();
-                this->read = false;
                 this->data.copy_c_str(cstr);
             }
             this->asked = false;
@@ -227,7 +210,6 @@ struct FieldObserver : public ConfigurationHolder {
             return this->data.is_empty();
         }
         const redemption::string & get() const {
-            this->read = true;
             return this->data;
         }
 
@@ -259,7 +241,6 @@ struct FieldObserver : public ConfigurationHolder {
         void set(uint32_t that) {
             if (this->data != that || this->asked) {
                 this->modify();
-                this->read = false;
                 this->data = that;
             }
             this->asked = false;
@@ -279,7 +260,6 @@ struct FieldObserver : public ConfigurationHolder {
         }
 
         uint32_t get() const {
-            this->read = true;
             return this->data;
         }
 
@@ -309,7 +289,6 @@ struct FieldObserver : public ConfigurationHolder {
         void set(signed that) {
             if (this->data != that || this->asked) {
                 this->modify();
-                this->read = false;
                 this->data = that;
             }
             this->asked = false;
@@ -325,7 +304,6 @@ struct FieldObserver : public ConfigurationHolder {
         }
 
         signed get() const {
-            this->read = true;
             return this->data;
         }
         virtual const char * get_value() {
@@ -352,7 +330,6 @@ struct FieldObserver : public ConfigurationHolder {
         void set(bool that) {
             if (this->data != that || this->asked) {
                 this->modify();
-                this->read = false;
                 this->data = that;
             }
             this->asked = false;
@@ -367,7 +344,6 @@ struct FieldObserver : public ConfigurationHolder {
         }
 
         bool get() const {
-            this->read = true;
             return this->data;
         }
         virtual const char * get_value() {
