@@ -525,7 +525,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             const size_t entries = this->bmp_cache.get_cache(cache_id).entries();
             for (size_t i = 0; i < entries; i++){
 //                this->emit_bmp_cache(cache_id, i, false);
-                this->bmp_cache.SetCached(cache_id, i, false);
+                this->bmp_cache.set_cached(cache_id, i, false);
             }
         }
     }

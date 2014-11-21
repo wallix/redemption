@@ -537,15 +537,15 @@ public:
         return r[idx].bmp;
     }
 
-    bool IsCached(uint8_t id, uint16_t idx) {
+    bool is_cached(uint8_t id, uint16_t idx) const {
         REDASSERT(this->owner == Recorder);
         REDASSERT(!(id & IN_WAIT_LIST) && (id != MAXIMUM_NUMBER_OF_CACHES));
 
-        Cache<cache_element> & r = this->caches[id];
+        const Cache<cache_element> & r = this->caches[id];
         return r[idx].cached;
     }
 
-    void SetCached(uint8_t id, uint16_t idx, bool cached) {
+    void set_cached(uint8_t id, uint16_t idx, bool cached) {
         REDASSERT(this->owner == Recorder);
         REDASSERT(!(id & IN_WAIT_LIST) && (id != MAXIMUM_NUMBER_OF_CACHES));
 
