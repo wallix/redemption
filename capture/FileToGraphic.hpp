@@ -88,7 +88,6 @@ public:
     uint32_t total_orders_count;
 
     timeval record_now;
-    time_t  last_sent_record_now;
 
 private:
     timeval start_record_now;
@@ -212,7 +211,6 @@ public:
         , chunk_count(0)
         , remaining_order_count(0)
         , total_orders_count(0)
-        , last_sent_record_now(0)
         , nbconsumers(0)
         , meta_ok(false)
         , timestamp_ok(false)
@@ -1182,7 +1180,34 @@ public:
         }
     }
 
-    void play(void (* CbUpdateProgress)(void * user_data, time_t record_now) = nullptr, void * user_data = nullptr) {
+    void play() {
+        this->privplay([](time_t){});
+    }
+
+    template<class CbUpdateProgress = std::nullptr_t>
+    void play(CbUpdateProgress * update_progess = nullptr) {
+        if (update_progess) {
+            this->privplay([](time_t){});
+        }
+        else {
+            this->play([=](time_t record_now) { update_progess(record_now); });
+        }
+    }
+
+    template<class CbUpdateProgress>
+    void play(CbUpdateProgress update_progess) {
+        time_t last_sent_record_now = 0;
+        this->privplay([&](time_t record_now) {
+            if (last_sent_record_now != this->record_now.tv_sec) {
+                update_progess(this->record_now.tv_sec);
+                last_sent_record_now = this->record_now.tv_sec;
+            }
+        });
+    }
+
+private:
+    template<class CbUpdateProgress>
+    void privplay(CbUpdateProgress update_progess) {
         while (this->next_order()) {
             if (this->verbose > 8) {
                 LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
@@ -1199,11 +1224,7 @@ public:
 
                 this->ignore_frame_in_timeval = false;
 
-                if (CbUpdateProgress && (this->last_sent_record_now != this->record_now.tv_sec)) {
-                    CbUpdateProgress(user_data, this->record_now.tv_sec);
-
-                    this->last_sent_record_now = this->record_now.tv_sec;
-                }
+                update_progess(this->record_now.tv_sec);
             }
             if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
                 break;
