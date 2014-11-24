@@ -18,23 +18,23 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#ifndef REDEMPTION_UTILS_NONCOPYABLE_HPP
-#define REDEMPTION_UTILS_NONCOPYABLE_HPP
+#ifndef REDEMPTION_UTILS_MOVABLE_NONCOPYABLE_HPP
+#define REDEMPTION_UTILS_MOVABLE_NONCOPYABLE_HPP
 
 namespace adl_barrier
 {
-    class noncopyable
+    class movable_noncopyable
     {
     protected:
-        noncopyable() = default;
+        movable_noncopyable() = default;
+        movable_noncopyable(const movable_noncopyable&) = delete;
+        movable_noncopyable& operator=(movable_noncopyable&&) = default;
 
-        noncopyable(noncopyable&&) = delete;
-        noncopyable(const noncopyable&) = delete;
-        noncopyable& operator=(noncopyable&&) = delete;
-        noncopyable& operator=(const noncopyable&) = delete;
+        movable_noncopyable(movable_noncopyable&&) = default;
+        movable_noncopyable& operator=(const movable_noncopyable&) = delete;
     };
 }
 
-using noncopyable = adl_barrier::noncopyable;
+using movable_noncopyable = adl_barrier::movable_noncopyable;
 
 #endif

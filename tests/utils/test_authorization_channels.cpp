@@ -56,3 +56,18 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllAllow)
     BOOST_CHECK_EQUAL(authorization_channels.authorized("c"), !true);
     BOOST_CHECK_EQUAL(authorization_channels.authorized("d"), !false);
 }
+
+BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsCliprdr)
+{
+    AuthorizationChannels authorization_channels = make_authorization_channels("cliprdr", "*");
+    BOOST_CHECK_EQUAL(authorization_channels.authorized("cliprdr_up"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.authorized("cliprdr_down"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.authorized("cliprdr"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.authorized("d"), false);
+
+    authorization_channels = make_authorization_channels("cliprdr_up,cliprdr_down", "*");
+    BOOST_CHECK_EQUAL(authorization_channels.authorized("cliprdr_up"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.authorized("cliprdr_down"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.authorized("cliprdr"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.authorized("d"), false);
+}
