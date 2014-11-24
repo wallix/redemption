@@ -383,8 +383,9 @@ class Sesman():
         if not _status:
             return False, _error
 
-        if self.shared.get(u'proxy_type') not in [u'RDP', u'VNC']:
-            return False, TR(u'Unknown proxy type')
+        #if self.shared.get(u'proxy_type') not in [u'RDP', u'VNC']:
+        #    Logger().info(u"Unknown proxy type")
+        #    return False, TR(u'Unknown proxy type')
 
         if self.shared.get(u'login') == MAGICASK:
             return None, TR(u"Empty user, try again")
