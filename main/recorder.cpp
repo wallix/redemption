@@ -602,7 +602,7 @@ public:
         if (time_percentage != this->last_written_time_percentage) {
             char str_time_percentage[32];
 
-            ::snprintf(str_time_percentage, sizeof(str_time_percentage), "%u", time_percentage);
+            ::snprintf(str_time_percentage, sizeof(str_time_percentage), "%d", time_percentage);
 
             ::lseek(this->fd, 0, SEEK_SET);
             int write_result = ::write(this->fd, str_time_percentage, strlen(str_time_percentage));
@@ -713,12 +713,12 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
 
     int return_code = 0;
 
-    if (((bool)update_progress_data) && !update_progress_data->is_valid()) {
+    if (update_progress_data && !update_progress_data->is_valid()) {
         return_code = -1;
     }
     else {
         try {
-            player.play((((bool)update_progress_data) ? cb_update_progress : nullptr), update_progress_data.get());
+            player.play((update_progress_data ? cb_update_progress : nullptr), update_progress_data.get());
 
             if (show_statistics) {
                 cout << endl;

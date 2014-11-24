@@ -27,6 +27,7 @@ namespace adl_barrier
     {
     protected:
         noncopyable() = default;
+        ~noncopyable() = default;
 
         noncopyable(noncopyable&&) = delete;
         noncopyable(const noncopyable&) = delete;

@@ -152,8 +152,6 @@ void redemption_new_session()
 {
     char text[256];
     char source_ip[256];
-    int source_port = 0;
-    char target_ip[256];
     int target_port = 0;
     char real_target_ip[256];
 
@@ -194,6 +192,8 @@ void redemption_new_session()
     strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
     if (ini.globals.enable_ip_transparent) {
+        const int source_port = 0;
+        char target_ip[256];
         strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
         int fd = open("/proc/net/ip_conntrack", O_RDONLY);
         // source and dest are inverted because we get the information we want from reply path rule
