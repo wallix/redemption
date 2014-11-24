@@ -123,7 +123,6 @@ class Sesman():
         self.shared[u'target_host']     = MAGICASK
         self.shared[u'login']           = MAGICASK
         self.shared[u'ip_client']       = MAGICASK
-        self.shared[u'proxy_type  ']    = MAGICASK
         self.shared[u'target_protocol'] = MAGICASK
         self.shared[u'keyboard_layout'] = MAGICASK
 
@@ -383,9 +382,6 @@ class Sesman():
         if not _status:
             return False, _error
 
-        if self.shared.get(u'proxy_type') not in [u'RDP', u'VNC']:
-            return False, TR(u'Unknown proxy type')
-
         if self.shared.get(u'login') == MAGICASK:
             return None, TR(u"Empty user, try again")
 
@@ -419,7 +415,7 @@ class Sesman():
             if self.engine.is_x509_connected(
                         wab_login,
                         self.shared.get(u'ip_client'),
-                        self.shared.get(u'proxy_type'),
+                        u"RDP",
                         target_info,
                         self.shared.get(u'ip_target')):
                 # Prompt the user in proxy window
@@ -582,7 +578,6 @@ class Sesman():
                                            , u'proto_dest'              : proto_dest
                                            # , u'selector'                : u"True"
                                            , u'ip_client'               : self.shared.get(u'ip_client')
-                                           , u'proxy_type'              : self.shared.get(u'proxy_type')
                                            , u'selector_number_of_pages': u"0"
                                            # No lines sent, reset filters
                                            , u'selector_group_filter'   : u""
@@ -618,7 +613,6 @@ class Sesman():
                                            , u'end_time'                : u";".join(all_end_time)
                                            # , u'selector'                : u'True'
                                            , u'ip_client'               : self.shared.get(u'ip_client')
-                                           , u'proxy_type'              : self.shared.get(u'proxy_type')
                                            , u'selector_number_of_pages': "%s" % max(_number_of_pages, _current_page + 1)
                                            , u'selector_current_page'   : "%s" % (_current_page + 1)
                                            , u'selector_group_filter'   : self.shared.get(u'selector_group_filter')
