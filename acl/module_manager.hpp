@@ -301,7 +301,6 @@ class ModuleManager : public MMIni
 {
     struct module_osd
     : public mod_osd
-    , noncopyable
     {
         module_osd(
             ModuleManager & manager, const Rect & rect,
