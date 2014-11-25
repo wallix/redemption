@@ -349,10 +349,8 @@ int main(int argc, char** argv)
     };
 
     auto run = [&](Transport && trans) {
-        timeval begin_capture;
-        begin_capture.tv_sec = begin_cap; begin_capture.tv_usec = 0;
-        timeval end_capture;
-        end_capture.tv_sec   = end_cap;   end_capture.tv_usec   = 0;
+        timeval begin_capture = {0, 0};
+        timeval end_capture = {0, 0};
 
         int result = recompress_or_record( cctx, trans, begin_record, end_record, begin_capture, end_capture
                                          , output_filename, ini, file_count, order_count, clear, zoom

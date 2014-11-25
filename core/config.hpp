@@ -484,34 +484,83 @@ static inline const char * string_from_authid(authid_t authid) {
 
 #include "basefield.hpp"
 #include "theme.hpp"
+#include "noncopyable.hpp"
+
+#include <type_traits>
 
 struct Inifile : public FieldObserver {
 
     struct null_fill { null_fill() {}; };
 
-    template<std::size_t N>
-    class StaticString {
-        char str[N];
+    struct StringCopier
+    {
+        static void copy(char * dest, char const * src, std::size_t n) noexcept {
+            const char * e = dest + n - 1;
+            for (; dest != e && *src; ++src, ++dest) {
+                *dest = *src;
+            }
+            *dest = 0;
+        }
+    };
+
+    template<std::size_t N, class Copier = StringCopier, bool NullableString = false>
+    class StaticStringBase : noncopyable
+    {
+        struct disable_ctor { };
 
     public:
-        StaticString() noexcept
-        { this->str[0] = 0; }
-
-        StaticString(null_fill) noexcept
+        StaticStringBase(typename std::conditional<NullableString, null_fill, disable_ctor>::type) noexcept
         : str{}
         {}
 
-        StaticString(const char * s) noexcept
+        StaticStringBase() noexcept
+        { this->str[0] = 0; }
+
+        StaticStringBase(const char * s)
         { *this = s; }
 
-        StaticString& operator=(const char * s) noexcept {
-            char * p = this->str;
-            const char * e = p + N - 1;
-            for (; p != e && *s; ++s, ++p) {
-                *p = *s;
-            }
-            *p = 0;
+        StaticStringBase& operator=(const char * s) {
+            Copier::copy(this->str, s, this->max_size());
             return *this;
+        }
+
+        const char * c_str() const noexcept {
+            return this->str;
+        }
+
+        constexpr operator const char * () const noexcept {
+            return this->str;
+        }
+
+        constexpr std::size_t max_size() const noexcept {
+            return N;
+        }
+
+        char * data() noexcept {
+            return this->str;
+        }
+
+    protected:
+        char str[N];
+
+        // disable deleted constructor
+        friend class Inifile;
+        StaticStringBase(StaticStringBase &&);
+    };
+
+    template<std::size_t N>
+    using StaticString = StaticStringBase<N>;
+
+    template<std::size_t N>
+    using StaticNilString = StaticStringBase<N, StringCopier, true>;
+
+    template<std::size_t N>
+    struct StaticKeyString : StaticStringBase<N, null_fill, true>
+    {
+        using StaticStringBase<N, null_fill, true>::StaticStringBase;
+
+        StaticKeyString(const char * s) {
+            this->setmem(s);
         }
 
         void setmem(const char * s, std::size_t n) noexcept {
@@ -521,52 +570,21 @@ struct Inifile : public FieldObserver {
         void setmem(const char * s) noexcept {
             this->setmem(s, N);
         }
+    };
 
-        char * data() noexcept {
-            return this->str;
-        }
+    struct Ipv4Copier : StringCopier {};
+    using StaticIpString = StaticStringBase<16, Ipv4Copier>;
 
-        const char * c_str() const noexcept {
-            return this->str;
-        }
-
-        constexpr operator const char * () const noexcept {
-            return this->str;
-        }
-
-        constexpr std::size_t max_size() const noexcept {
-            return N;
+    struct PathCopier
+    {
+        static void copy(char * dest, char const * src, std::size_t n) {
+            pathncpy(dest, src, n);
         }
     };
 
     template<std::size_t N>
-    class StaticPath {
-        char str[N];
+    using StaticPath = StaticStringBase<N, PathCopier>;
 
-    public:
-        StaticPath() noexcept
-        { this->str[0] = 0; }
-
-        StaticPath(const char * s)
-        { *this = s; }
-
-        StaticPath& operator=(const char * s) {
-            pathncpy(this->str, s, this->max_size());
-            return *this;
-        }
-
-        const char * c_str() const noexcept {
-            return this->str;
-        }
-
-        constexpr operator const char * () const noexcept {
-            return this->str;
-        }
-
-        constexpr std::size_t max_size() const noexcept {
-            return N;
-        }
-    };
 
     struct Inifile_globals {
         BoolField capture_chunk;
@@ -584,7 +602,7 @@ struct Inifile : public FieldObserver {
         bool nomouse                    = false;
         bool notimestamp                = false;
         int  encryptionLevel            = 0; // 0=low, 1=medium, 2=high
-        StaticString<16> authip         = "127.0.0.1";
+        StaticIpString authip           = "127.0.0.1";
         unsigned authport               = 3350;
         bool autovalidate               = false; // dialog autovalidation for test
 
@@ -593,9 +611,9 @@ struct Inifile : public FieldObserver {
         unsigned keepalive_grace_delay  = 30;
         unsigned close_timeout          = 600; // timeout of close box in seconds (0 to desactivate)
 
-        StaticString<8>    auth_channel      = null_fill();
+        StaticNilString<8> auth_channel          = null_fill();
         BoolField          enable_file_encryption;  // AUTHID_OPT_FILE_ENCRYPTION //
-        StaticString<16>   listen_address        = "0.0.0.0";
+        StaticIpString     listen_address        = "0.0.0.0";
         bool               enable_ip_transparent = false;
         StaticString<256>  certificate_password  = "inquisition";
 
@@ -775,26 +793,16 @@ struct Inifile : public FieldObserver {
 
     // Section "crypto"
     struct Inifile_crypto {
-        StaticString<32> key0 = []() {
-            decltype(key0) ret;
-            ret.setmem(
-                "\x00\x01\x02\x03\x04\x05\x06\x07"
-                "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-                "\x10\x11\x12\x13\x14\x15\x16\x17"
-                "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-            );
-            return ret;
-        }();
-        StaticString<32> key1 = []() {
-            decltype(key1) ret;
-            ret.setmem(
-                "\x00\x01\x02\x03\x04\x05\x06\x07"
-                "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-                "\x10\x11\x12\x13\x14\x15\x16\x17"
-                "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-            );
-            return ret;
-        }();
+        StaticKeyString<32> key0 =
+            "\x00\x01\x02\x03\x04\x05\x06\x07"
+            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+            "\x10\x11\x12\x13\x14\x15\x16\x17"
+            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F";
+        StaticKeyString<32> key1 =
+            "\x00\x01\x02\x03\x04\x05\x06\x07"
+            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+            "\x10\x11\x12\x13\x14\x15\x16\x17"
+            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F";
 
         Inifile_crypto() = default;
     } crypto;
