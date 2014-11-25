@@ -10,24 +10,20 @@
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/parsers.hpp>
 
+#include <type_traits>
 #include <iostream>
 #include <cstring>
 #include <string>
 #include <cerrno>
 
-#include "version.hpp"
-
 #include "crypto_in_filename_transport.hpp"
 #include "out_file_transport.hpp"
 #include "fdbuf.hpp"
 
-#ifndef HASH_LEN
-#define HASH_LEN 64
-#endif
 
 template<class F>
 // crypto_context_initializer = int(CryptoContext&)
-int app_decrypter(int argc, char ** argv, F crypto_context_initializer)
+int app_decrypter(int argc, char ** argv, F crypto_context_initializer, const char * copyright_notice)
 {
     static_assert(
         std::is_same<int, decltype(crypto_context_initializer(std::declval<CryptoContext&>()))>::value
@@ -35,14 +31,6 @@ int app_decrypter(int argc, char ** argv, F crypto_context_initializer)
     );
 
     openlog("decrypter", LOG_CONS | LOG_PERROR, LOG_USER);
-
-    const char * copyright_notice =
-        "\n"
-        "ReDemPtion DECrypter " VERSION ".\n"
-        "Copyright (C) Wallix 2010-2013.\n"
-        "Christophe Grosjean, Raphael Zhou.\n"
-        "\n"
-        ;
 
     std::string input_filename;
     std::string output_filename;
@@ -67,15 +55,15 @@ int app_decrypter(int argc, char ** argv, F crypto_context_initializer)
     boost::program_options::notify(options);
 
     if (options.count("help") > 0) {
-        std::cout << copyright_notice;
+        std::cout << copyright_notice << "\n\n";
         std::cout << "Usage: redrec [options]\n\n";
         std::cout << desc << std::endl;
         return -1;
     }
 
     if (options.count("version") > 0) {
-        std::cout << copyright_notice;
-        return -1;
+        std::cout << copyright_notice << std::endl;
+        return 0;
     }
 
     if (input_filename.empty()) {
