@@ -39,17 +39,28 @@ class fdbuf
     int fd;
 
 public:
-    fdbuf(int fd = -1) /*noexcept*/
+    fdbuf(int fd = -1) noexcept
     : fd(fd)
     {}
 
-    //CPP_MOVE_CTOR(fdbuf) /*noexcept*/
-    //: fd(CPP_MOVE_CTOR_ARG().fd)
-    //{
-    //  CPP_MOVE_CTOR_ARG().fd = -1;
-    //}
+    fdbuf(fdbuf const &) = delete ;
+    fdbuf&operator=(fdbuf const &) = delete ;
 
-    ~fdbuf() /*noexcept*/
+    fdbuf(fdbuf && other) noexcept
+    : fd(other.fd)
+    {
+        other.fd = -1;
+    }
+
+    fdbuf& operator=(fdbuf && other) noexcept
+    {
+        const int tmp = fd;
+        fd = other.fd;
+        other.fd = tmp;
+        return *this;
+    }
+
+    ~fdbuf() noexcept
     {
         this->close();
     }
@@ -59,28 +70,28 @@ public:
     //   return this->fd;
     //}
 
-    int open(const char *pathname, int flags) /*noexcept*/
+    int open(const char *pathname, int flags) noexcept
     {
         this->close();
         this->fd = ::open(pathname, flags);
         return fd;
     }
 
-    int open(const char *pathname, int flags, mode_t mode) /*noexcept*/
+    int open(const char *pathname, int flags, mode_t mode) noexcept
     {
         this->close();
         this->fd = ::open(pathname, flags, mode);
         return fd;
     }
 
-    int open(int fd) /*noexcept*/
+    int open(int fd) noexcept
     {
         this->close();
         this->fd = fd;
         return fd;
     }
 
-    int close() /*noexcept*/
+    int close() noexcept
     {
         if (this->is_open()) {
             const int ret = ::close(this->fd);
@@ -90,37 +101,38 @@ public:
         return 0;
     }
 
-    bool is_open() const /*noexcept*/
+    bool is_open() const noexcept
     {
         return -1 != this->fd;
     }
 
-    ssize_t read(void * data, size_t len) const /*noexcept*/
+    explicit operator bool () const noexcept
+    {
+        return this->is_open();
+    }
+
+    ssize_t read(void * data, size_t len) const noexcept
     {
         return read_all(this->fd, data, len);
     }
 
-    ssize_t write(const void * data, size_t len) const /*noexcept*/
+    ssize_t write(const void * data, size_t len) const noexcept
     {
         return write_all(this->fd, data, len);
     }
 
-    off_t seek(off_t offset, int whence) const /*noexcept*/
+    off_t seek(off_t offset, int whence) const noexcept
     { return lseek(this->fd, offset, whence); }
 
-    void swap(fdbuf & other) /*noexcept*/
+    void swap(fdbuf & other) noexcept
     {
         this->close();
         this->fd = other.fd;
         other.fd = -1;
     }
-
-private:
-    fdbuf(fdbuf const &) /*= delete */;
-    fdbuf&operator=(fdbuf const &) /*= delete */;
 };
 
-inline void swap(fdbuf & a, fdbuf & b) /*noexcept*/
+inline void swap(fdbuf & a, fdbuf & b) noexcept
 { a.swap(b); }
 
 } //posix
