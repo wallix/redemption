@@ -44,8 +44,12 @@ private:
     string & operator=(const string & source) = delete;
 
 public:
-    const char * c_str() const {
+    const char * c_str() const noexcept {
         return this->internal_string.c_str();
+    }
+
+    const std::string & str() const noexcept {
+        return this->internal_string;
     }
 
     void concatenate_c_str(const char * source) {
@@ -72,11 +76,11 @@ public:
         return this->internal_string.find(s, pos);
     }
 
-    bool is_empty() const {
+    bool is_empty() const noexcept {
         return this->internal_string.empty();
     }
 
-    size_t length() const {
+    size_t length() const noexcept {
         return this->internal_string.length();
     }
 };  // class string

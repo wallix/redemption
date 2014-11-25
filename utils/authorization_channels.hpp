@@ -21,50 +21,63 @@
 #ifndef REDEMPTION_UTILS_AUTHORIZATION_CHANNELS_HPP
 #define REDEMPTION_UTILS_AUTHORIZATION_CHANNELS_HPP
 
+#include "movable_noncopyable.hpp"
 #include "splitter.hpp"
 #include "string.hpp"
 #include <iterator>
+#include <cstring>
 #include <string>
 
 struct AuthorizationChannels
+: public movable_noncopyable
 {
     AuthorizationChannels() = default;
 
     AuthorizationChannels(std::string allow, std::string deny)
-    : allow_(std::move(allow))
-    , deny_(std::move(deny))
+    : allow_(normalize(std::move(allow)))
+    , deny_(normalize(std::move(deny)))
     {}
 
     AuthorizationChannels(std::string allow, bool deny = true)
-    : allow_(std::move(allow))
+    : allow_(normalize(std::move(allow)))
     , all_deny_(deny)
     {}
 
     AuthorizationChannels(bool allow, std::string deny)
-    : deny_(std::move(deny))
+    : deny_(normalize(std::move(deny)))
     , all_allow_(allow)
     {}
 
-    AuthorizationChannels(AuthorizationChannels &&) = default;
-    AuthorizationChannels& operator=(AuthorizationChannels &&) = default;
-
-    AuthorizationChannels(AuthorizationChannels const &) = delete;
-    AuthorizationChannels& operator=(AuthorizationChannels const &) = delete;
-
-    bool authorized(const char * s) const {
+    bool authorized(const char * s) const noexcept {
+        const std::size_t len = strlen(s);
         if (this->all_deny_) {
-            return this->contains(this->allow_, s);
+            return contains(this->allow_, s, len);
         }
         if (this->all_allow_) {
-            return !this->contains(this->deny_, s);
+            return !contains(this->deny_, s, len);
         }
-        return !this->contains(this->deny_, s)
-            &&  this->contains(this->allow_, s);
+        return !contains(this->deny_, s, len)
+            &&  contains(this->allow_, s, len);
     }
 
 private:
-    bool contains(std::string const & s, const char * search) const {
-        const std::size_t len = strlen(search);
+    static std::string normalize(std::string s) {
+        constexpr const char * clipboard = "cliprdr";
+        if (contains(s, clipboard, strlen(clipboard))) {
+            s += ",cliprdr_down,cliprdr_up";
+        }
+        else {
+            constexpr const char * clipboard_up = "cliprdr_up";
+            constexpr const char * clipboard_down = "cliprdr_down";
+            if (contains(s, clipboard_up, strlen(clipboard_up))
+             && contains(s, clipboard_down, strlen(clipboard_down))) {
+                s += ",cliprdr";
+            }
+        }
+        return s;
+    }
+
+    static bool contains(std::string const & s, const char * search, std::size_t len) noexcept {
         for (auto & r : get_split(s, ',')) {
             if (r.size() == len && std::equal(r.begin(), r.end(), search)) {
                 return true;
@@ -81,17 +94,14 @@ private:
 
 
 AuthorizationChannels make_authorization_channels(const redemption::string & allow, const redemption::string & deny) {
-    if (deny.length() == 1 && deny.c_str()[0] == '*') {
-        return AuthorizationChannels(std::string(allow.c_str(), allow.length()), true);
+    if (deny.length() == 1 && deny.str()[0] == '*') {
+        return AuthorizationChannels(allow.str(), true);
     }
-    else if (allow.length() == 1 && allow.c_str()[0] == '*') {
-        return AuthorizationChannels(true, std::string(deny.c_str(), deny.length()));
+    else if (allow.length() == 1 && allow.str()[0] == '*') {
+        return AuthorizationChannels(true, deny.str());
     }
     else {
-        return AuthorizationChannels(
-            std::string(allow.c_str(), allow.length())
-          , std::string(deny.c_str(), deny.length())
-        );
+        return AuthorizationChannels(allow.str(), deny.str());
     }
 }
 

@@ -26,14 +26,15 @@
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/parsers.hpp>
 
+#include <functional>
 #include <iostream>
-#include <memory>
-#include <utility>
+#include <vector>
 #include <string>
 
 //#define LOGPRINT
 #include "version.hpp"
 
+#include "iter.hpp"
 #include "fileutils.hpp"
 #include "in_meta_sequence_transport.hpp"
 #include "capture.hpp"
@@ -299,8 +300,7 @@ int main(int argc, char** argv)
                   , verbose
                   );
     if (verbose) {
-        cout << endl << "Input file path: " << infile_path << infile_basename << infile_extension <<
-            endl;
+        cout << endl << "Input file path: " << infile_path << infile_basename << infile_extension << endl;
     }
 
     char infile_prefix [4096];
@@ -340,7 +340,7 @@ int main(int argc, char** argv)
     }
     catch (const Error & e) {
         if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)){
-            printf("Asked time not found in mwrm file\n");
+            cout << "Asked time not found in mwrm file\n";
         }
         else {
             cerr << "Exception code: " << e.id << endl;
@@ -348,40 +348,37 @@ int main(int argc, char** argv)
         exit(-1);
     };
 
-    std::unique_ptr<Transport> in_wrm_trans;
+    auto run = [&](Transport && trans) {
+        timeval begin_capture;
+        begin_capture.tv_sec = begin_cap; begin_capture.tv_usec = 0;
+        timeval end_capture;
+        end_capture.tv_sec   = end_cap;   end_capture.tv_usec   = 0;
 
-    if (infile_is_encrypted == false) {
-        in_wrm_trans.reset(new InMetaSequenceTransport(infile_prefix, infile_extension));
-    }
-    else {
-        in_wrm_trans.reset(new CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension));
-    }
+        int result = recompress_or_record( cctx, trans, begin_record, end_record, begin_capture, end_capture
+                                         , output_filename, ini, file_count, order_count, clear, zoom
+                                         , show_file_metadata, show_statistics, verbose);
 
-    timeval begin_capture;
-    begin_capture.tv_sec = begin_cap; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec   = end_cap;   end_capture.tv_usec   = 0;
-
-    int result = recompress_or_record( cctx, *in_wrm_trans.get(), begin_record, end_record, begin_capture, end_capture
-                                     , output_filename, ini, file_count, order_count, clear, zoom
-                                     , show_file_metadata, show_statistics, verbose);
-
-    if (!result && remove_input_file) {
-        if (infile_is_encrypted == false) {
-            InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
-            remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path, infile_basename, infile_extension
-                       , infile_is_encrypted);
+        if (!result && remove_input_file) {
+            if (infile_is_encrypted == false) {
+                InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
+                remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path, infile_basename, infile_extension
+                        , infile_is_encrypted);
+            }
+            else {
+                CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension);
+                remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path, infile_basename, infile_extension
+                        , infile_is_encrypted);
+            }
         }
-        else {
-            CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension);
-            remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path, infile_basename, infile_extension
-                       , infile_is_encrypted);
-        }
-    }
 
-    cout << endl;
+        cout << endl;
 
-    return result;
+        return result;
+    };
+
+    return infile_is_encrypted
+        ? run(CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension))
+        : run(InMetaSequenceTransport(infile_prefix, infile_extension));
 }
 
 template<typename InWrmTrans>
@@ -446,9 +443,9 @@ void remove_file( InWrmTrans & in_wrm_trans, const char * hash_path, const char 
     };
 
     cout << endl;
-    for (std::vector<std::string>::reverse_iterator rit = files.rbegin(); rit != files.rend(); ++rit) {
-        unlink(rit->c_str());
-        cout << "Removed : " << *rit << endl;
+    for (auto & s : iter(files.rbegin(), files.rend())) {
+        unlink(s.c_str());
+        cout << "Removed : " << s << endl;
     }
 }
 
@@ -485,52 +482,49 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
 
     int return_code = 0;
     try {
-        std::unique_ptr<Transport> wrm_trans;
+        auto run = [&](Transport && trans) {
+            ChunkToFile recorder( &trans
+
+                                , player.info_width
+                                , player.info_height
+                                , player.info_bpp
+                                , player.info_cache_0_entries
+                                , player.info_cache_0_size
+                                , player.info_cache_1_entries
+                                , player.info_cache_1_size
+                                , player.info_cache_2_entries
+                                , player.info_cache_2_size
+
+                                , player.info_number_of_cache
+                                , player.info_use_waiting_list
+
+                                , player.info_cache_0_persistent
+                                , player.info_cache_1_persistent
+                                , player.info_cache_2_persistent
+
+                                , player.info_cache_3_entries
+                                , player.info_cache_3_size
+                                , player.info_cache_3_persistent
+                                , player.info_cache_4_entries
+                                , player.info_cache_4_size
+                                , player.info_cache_4_persistent
+
+                                , ini);
+
+            player.add_consumer(&recorder);
+
+            player.play();
+        };
+
         if (ini.globals.enable_file_encryption.get()) {
-            wrm_trans.reset(
-                new CryptoOutMetaSequenceTransport( &cctx, outfile_path, ini.video.hash_path, outfile_basename
-                                                  , begin_record, player.info_width, player.info_height
-                                                  , ini.video.capture_groupid)
-                );
+            run(CryptoOutMetaSequenceTransport( &cctx, outfile_path, ini.video.hash_path, outfile_basename
+                                              , begin_record, player.info_width, player.info_height
+                                              , ini.video.capture_groupid));
         }
         else {
-            wrm_trans.reset(
-                new OutMetaSequenceTransport( outfile_path, outfile_basename, begin_record
-                                            , player.info_width, player.info_height, ini.video.capture_groupid)
-                );
+            run(OutMetaSequenceTransport( outfile_path, outfile_basename, begin_record
+                                        , player.info_width, player.info_height, ini.video.capture_groupid));
         }
-
-        ChunkToFile recorder( wrm_trans.get()
-
-                            , player.info_width
-                            , player.info_height
-                            , player.info_bpp
-                            , player.info_cache_0_entries
-                            , player.info_cache_0_size
-                            , player.info_cache_1_entries
-                            , player.info_cache_1_size
-                            , player.info_cache_2_entries
-                            , player.info_cache_2_size
-
-                            , player.info_number_of_cache
-                            , player.info_use_waiting_list
-
-                            , player.info_cache_0_persistent
-                            , player.info_cache_1_persistent
-                            , player.info_cache_2_persistent
-
-                            , player.info_cache_3_entries
-                            , player.info_cache_3_size
-                            , player.info_cache_3_persistent
-                            , player.info_cache_4_entries
-                            , player.info_cache_4_size
-                            , player.info_cache_4_persistent
-
-                            , ini);
-
-        player.add_consumer(&recorder);
-
-        player.play();
     }
     catch (...) {
         return_code = -1;
@@ -539,8 +533,7 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
     return return_code;
 }   // do_recompress
 
-struct UpdateProgressData {
-private:
+class UpdateProgressData : noncopyable {
     int fd;
 
     const time_t start_record;
@@ -553,7 +546,7 @@ private:
 public:
     UpdateProgressData( const char * progress_filename
                       , const time_t begin_record, const time_t end_record
-                      , const time_t begin_capture, const time_t end_capture)
+                      , const time_t begin_capture, const time_t end_capture) noexcept
     : fd(-1)
     , start_record(begin_capture ? begin_capture : begin_record)
     , stop_record(end_capture ? end_capture : end_record)
@@ -578,11 +571,11 @@ public:
         }
     }
 
-    bool is_valid() {
+    bool is_valid() const {
         return (this->fd != -1);
     }
 
-    void update(time_t record_now) {
+    void operator()(time_t record_now) {
         if (this->fd == -1) {
             return;
         }
@@ -602,6 +595,7 @@ public:
 
         REDASSERT(time_percentage < 100);
 
+        // TODO this->last_written_time_percentage never write
         if (time_percentage != this->last_written_time_percentage) {
             unsigned int elapsed_time = ::time(NULL) - this->processing_start_time;
 
@@ -622,12 +616,6 @@ public:
         }
     }
 };
-
-void cb_update_progress(void * user_data, time_t record_now) {
-    UpdateProgressData * update_progress_data = (UpdateProgressData *)user_data;
-
-    update_progress_data->update(record_now);
-}
 
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string & output_filename
@@ -661,10 +649,9 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
         }
     }
 
-    std::unique_ptr<Capture>            capture;
-    std::unique_ptr<UpdateProgressData> update_progress_data;
-
     player.max_order_count = order_count;
+
+    int return_code = 0;
 
     if (output_filename.length()) {
         char outfile_pid[32];
@@ -701,76 +688,77 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             ini.video.wrm_color_depth_selection_strategy = player.info_bpp;
         }
 
-        capture.reset(new Capture( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
-                                 , player.screen_rect.cx, player.screen_rect.cy
-                                 , player.info_bpp, ini.video.wrm_color_depth_selection_strategy
-                                 , outfile_path, outfile_path, ini.video.hash_path
-                                 , outfile_basename, false, false, NULL, ini, true));
-        if (capture->capture_png){
-            capture->psc->zoom(zoom);
+        Capture capture( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
+                       , player.screen_rect.cx, player.screen_rect.cy
+                       , player.info_bpp, ini.video.wrm_color_depth_selection_strategy
+                       , outfile_path, outfile_path, ini.video.hash_path
+                       , outfile_basename, false, false, NULL, ini, true);
+        if (capture.capture_png){
+            capture.psc->zoom(zoom);
         }
-        player.add_consumer((RDPGraphicDevice * )capture.get(), (RDPCaptureDevice * )capture.get());
-
+        player.add_consumer(&capture, &capture);
 
         char progress_filename[4096];
         snprintf(progress_filename, sizeof(progress_filename), "%s%s-%s.pgs",
             outfile_path, outfile_basename, outfile_pid);
 
-        update_progress_data.reset(new UpdateProgressData(
-              progress_filename
-            , begin_record.tv_sec, end_record.tv_sec, begin_capture.tv_sec, end_capture.tv_sec
-            )
+        UpdateProgressData update_progress_data(
+              progress_filename , begin_record.tv_sec, end_record.tv_sec, begin_capture.tv_sec, end_capture.tv_sec
         );
-    }
 
-    int return_code = 0;
-
-    if (((bool)update_progress_data) && !update_progress_data->is_valid()) {
-        return_code = -1;
+        if (update_progress_data.is_valid()) {
+            try {
+                player.play(std::ref(update_progress_data));
+            }
+            catch (Error const &) {
+                return_code = -1;
+            }
+        }
+        else {
+            return_code = -1;
+        }
     }
     else {
         try {
-            player.play((((bool)update_progress_data) ? cb_update_progress : nullptr), update_progress_data.get());
-
-            if (show_statistics) {
-                cout << endl;
-                cout << "DstBlt                : " << player.statistics.DstBlt                << endl;
-                cout << "MultiDstBlt           : " << player.statistics.MultiDstBlt           << endl;
-                cout << "PatBlt                : " << player.statistics.PatBlt                << endl;
-                cout << "MultiPatBlt           : " << player.statistics.MultiPatBlt           << endl;
-                cout << "OpaqueRect            : " << player.statistics.OpaqueRect            << endl;
-                cout << "MultiOpaqueRect       : " << player.statistics.MultiOpaqueRect       << endl;
-                cout << "ScrBlt                : " << player.statistics.ScrBlt                << endl;
-                cout << "MultiScrBlt           : " << player.statistics.MultiScrBlt           << endl;
-                cout << "MemBlt                : " << player.statistics.MemBlt                << endl;
-                cout << "Mem3Blt               : " << player.statistics.Mem3Blt               << endl;
-                cout << "LineTo                : " << player.statistics.LineTo                << endl;
-                cout << "GlyphIndex            : " << player.statistics.GlyphIndex            << endl;
-                cout << "Polyline              : " << player.statistics.Polyline              << endl;
-
-                cout << "CacheBitmap           : " << player.statistics.CacheBitmap           << endl;
-                cout << "CacheColorTable       : " << player.statistics.CacheColorTable       << endl;
-                cout << "CacheGlyph            : " << player.statistics.CacheGlyph            << endl;
-
-                cout << "FrameMarker           : " << player.statistics.FrameMarker           << endl;
-
-                cout << "BitmapUpdate          : " << player.statistics.BitmapUpdate          << endl;
-
-                cout << "CachePointer          : " << player.statistics.CachePointer          << endl;
-                cout << "PointerIndex          : " << player.statistics.PointerIndex          << endl;
-
-                cout << "graphics_update_chunk : " << player.statistics.graphics_update_chunk << endl;
-                cout << "bitmap_update_chunk   : " << player.statistics.bitmap_update_chunk   << endl;
-                cout << "timestamp_chunk       : " << player.statistics.timestamp_chunk       << endl;
-            }
+            player.play();
         }
-        catch (Error const & e) {
+        catch (Error const &) {
             return_code = -1;
         }
     }
 
-    update_progress_data.reset();
-    capture.reset();
+    if (show_statistics && return_code == 0) {
+        std::cout
+        << "\nDstBlt                : " << player.statistics.DstBlt
+        << "\nMultiDstBlt           : " << player.statistics.MultiDstBlt
+        << "\nPatBlt                : " << player.statistics.PatBlt
+        << "\nMultiPatBlt           : " << player.statistics.MultiPatBlt
+        << "\nOpaqueRect            : " << player.statistics.OpaqueRect
+        << "\nMultiOpaqueRect       : " << player.statistics.MultiOpaqueRect
+        << "\nScrBlt                : " << player.statistics.ScrBlt
+        << "\nMultiScrBlt           : " << player.statistics.MultiScrBlt
+        << "\nMemBlt                : " << player.statistics.MemBlt
+        << "\nMem3Blt               : " << player.statistics.Mem3Blt
+        << "\nLineTo                : " << player.statistics.LineTo
+        << "\nGlyphIndex            : " << player.statistics.GlyphIndex
+        << "\nPolyline              : " << player.statistics.Polyline
+
+        << "\nCacheBitmap           : " << player.statistics.CacheBitmap
+        << "\nCacheColorTable       : " << player.statistics.CacheColorTable
+        << "\nCacheGlyph            : " << player.statistics.CacheGlyph
+
+        << "\nFrameMarker           : " << player.statistics.FrameMarker
+
+        << "\nBitmapUpdate          : " << player.statistics.BitmapUpdate
+
+        << "\nCachePointer          : " << player.statistics.CachePointer
+        << "\nPointerIndex          : " << player.statistics.PointerIndex
+
+        << "\ngraphics_update_chunk : " << player.statistics.graphics_update_chunk
+        << "\nbitmap_update_chunk   : " << player.statistics.bitmap_update_chunk
+        << "\ntimestamp_chunk       : " << player.statistics.timestamp_chunk
+        << std::endl;
+    }
 
     return return_code;
 }   // do_record
