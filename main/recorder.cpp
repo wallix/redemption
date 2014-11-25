@@ -618,7 +618,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             outfile_path, outfile_basename, outfile_pid);
 
         UpdateProgressData update_progress_data(
-              progress_filename , begin_record.tv_sec, end_record.tv_sec, begin_capture.tv_sec, end_capture.tv_sec
+            progress_filename, begin_record.tv_sec, end_record.tv_sec, begin_capture.tv_sec, end_capture.tv_sec
         );
 
         if (update_progress_data.is_valid()) {
