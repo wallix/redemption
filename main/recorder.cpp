@@ -546,7 +546,9 @@ private:
     const time_t start_record;
     const time_t stop_record;
 
-    int last_written_time_percentage;
+    const time_t processing_start_time;
+
+    unsigned int last_written_time_percentage;
 
 public:
     UpdateProgressData( const char * progress_filename
@@ -555,10 +557,11 @@ public:
     : fd(-1)
     , start_record(begin_capture ? begin_capture : begin_record)
     , stop_record(end_capture ? end_capture : end_record)
-    , last_written_time_percentage(-1) {
+    , processing_start_time(::time(NULL))
+    , last_written_time_percentage(0) {
         this->fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
         if (this->fd != -1) {
-            int write_result = ::write(this->fd, "0", 1);
+            int write_result = ::write(this->fd, "0 -1", 4);
 (void)write_result;
         }
         else {
@@ -569,7 +572,7 @@ public:
     ~UpdateProgressData() {
         if (this->fd != -1) {
             ::lseek(this->fd, 0, SEEK_SET);
-            int write_result = ::write(this->fd, "100", 3);
+            int write_result = ::write(this->fd, "100 0", 5);
 (void)write_result;
             ::close(this->fd);
         }
@@ -584,7 +587,7 @@ public:
             return;
         }
 
-        int time_percentage;
+        unsigned int time_percentage;
 
         if (record_now <= this->start_record) {
             time_percentage = 0;
@@ -597,16 +600,25 @@ public:
                 (this->stop_record - this->start_record);
         }
 
-        REDASSERT((time_percentage > -1) && (time_percentage < 100));
+        REDASSERT(time_percentage < 100);
 
         if (time_percentage != this->last_written_time_percentage) {
-            char str_time_percentage[32];
+            unsigned int elapsed_time = ::time(NULL) - this->processing_start_time;
 
-            ::snprintf(str_time_percentage, sizeof(str_time_percentage), "%u", time_percentage);
+            char str_time_percentage[64];
+
+            ::snprintf( str_time_percentage, sizeof(str_time_percentage), "%u %u"
+                      , time_percentage
+                      , elapsed_time * 100 / time_percentage - elapsed_time);
 
             ::lseek(this->fd, 0, SEEK_SET);
             int write_result = ::write(this->fd, str_time_percentage, strlen(str_time_percentage));
-    (void)write_result;
+            if (write_result != -1) {
+                int truncate_result = ::ftruncate(this->fd, write_result);
+(void)truncate_result;
+            }
+
+            this->last_written_time_percentage = time_percentage;
         }
     }
 };
