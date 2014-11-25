@@ -80,7 +80,6 @@ public:
 
         REDASSERT(time_percentage < 100);
 
-        // TODO this->last_written_time_percentage never write
         if (time_percentage != this->last_written_time_percentage) {
             unsigned int elapsed_time = ::time(NULL) - this->processing_start_time;
 
