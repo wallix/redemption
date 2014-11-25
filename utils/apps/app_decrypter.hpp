@@ -6,6 +6,10 @@
    redrec video converter program
 */
 
+#ifndef REDEMPTION_UTILS_APPS_APP_DECRYPTER_HPP
+#define REDEMPTION_UTILS_APPS_APP_DECRYPTER_HPP
+
+
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -23,7 +27,7 @@
 
 template<class F>
 // crypto_context_initializer = int(CryptoContext&)
-int app_decrypter(int argc, char ** argv, F crypto_context_initializer, const char * copyright_notice)
+int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypto_context_initializer)
 {
     static_assert(
         std::is_same<int, decltype(crypto_context_initializer(std::declval<CryptoContext&>()))>::value
@@ -134,3 +138,5 @@ int app_decrypter(int argc, char ** argv, F crypto_context_initializer, const ch
 
     return 0;
 }
+
+#endif

@@ -28,6 +28,7 @@
 #include <cstdio>
 #include <sys/types.h>
 #include "log.hpp"
+#include "font.hpp"
 
 TODO("merge that with find and unlink")
 
