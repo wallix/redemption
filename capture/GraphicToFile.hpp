@@ -539,12 +539,20 @@ public:
         }
     }
 
+    void save_ptr_cache() {
+        for (int index = 0; index < PointerCache::max_pointer_count; ++index) {
+            this->pointer_cache.set_cached(index, false);
+        }
+    }
+
     void send_caches_chunk()
     {
         this->save_bmp_caches();
         if (this->order_count > 0){
             this->send_orders_chunk();
         }
+
+        this->save_ptr_cache();
     }
 
     void breakpoint()
