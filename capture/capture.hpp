@@ -193,6 +193,7 @@ public:
         delete this->pnc;
         delete this->wrm_trans;
         delete this->pnc_bmp_cache;
+        delete this->pnc_ptr_cache;
         delete this->drawable;
 
         if (this->clear_png) {
