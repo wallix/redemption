@@ -28,6 +28,8 @@
 //#define LOGPRINT
 #include "version.hpp"
 
+#include "capture.hpp"
+
 #include "apps/app_recorder.hpp"
 
 int main(int argc, char** argv)
