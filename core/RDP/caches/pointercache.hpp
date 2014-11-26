@@ -26,6 +26,7 @@
 #include "RDP/pointer.hpp"
 #include "drawable.hpp"
 #include "client_info.hpp"
+#include "noncopyable.hpp"
 
 
 enum {
@@ -34,8 +35,8 @@ enum {
 };
 
 /* difference caches */
-class PointerCache {
-    int pointer_cache_entries = 0;
+class PointerCache : noncopyable {
+    int pointer_cache_entries;
 
     /* pointer */
     int pointer_stamp = 0;
@@ -47,7 +48,8 @@ private:
     int stamps[32] = {0};
 
 public:
-    PointerCache() = default;
+    PointerCache(int pointer_cache_entries = 0)
+    : pointer_cache_entries(pointer_cache_entries) {}
     ~PointerCache() = default;
 
     TODO(" much duplicated code with constructor and destructor  create some intermediate functions or object")
@@ -73,11 +75,11 @@ public:
     {
         int i;
         int oldest = 0x7fffffff;
-        int index = 2;
+        int index = 0;
 
         this->pointer_stamp++;
         /* look for match */
-        for (i = 2; i < this->pointer_cache_entries; i++) {
+        for (i = 0; i < this->pointer_cache_entries; i++) {
             if (this->Pointers[i].x == cursor.x
             &&  this->Pointers[i].y == cursor.y
             &&  this->Pointers[i].width == cursor.width
@@ -91,7 +93,7 @@ public:
             }
         }
         /* look for oldest */
-        for (i = 2; i < this->pointer_cache_entries; i++) {
+        for (i = 0; i < this->pointer_cache_entries; i++) {
             if (this->stamps[i] < oldest) {
                 oldest = this->stamps[i];
                 index  = i;
@@ -103,7 +105,6 @@ public:
         this->add_pointer_static(cursor, index);
         return POINTER_TO_SEND;
     }
-
 };  // struct PointerCache
 
 #endif  // #ifndef _REDEMPTION_CORE_RDP_CACHES_POINTERCACHE_HPP_

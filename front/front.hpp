@@ -401,6 +401,7 @@ public:
 
     void server_set_pointer(const Pointer & cursor)
     {
+/*
         int cache_idx = 0;
         switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
         case POINTER_TO_SEND:
@@ -410,6 +411,12 @@ public:
         case POINTER_ALLREADY_SENT:
             this->set_pointer(cache_idx);
         break;
+        }
+*/
+        this->orders->server_set_pointer(cursor);
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->server_set_pointer(cursor);
         }
     }
 
@@ -821,6 +828,7 @@ private:
             , this->ini
             , this->client_info.bpp
             , *this->bmp_cache
+            , this->pointer_cache
             , this->client_info.bitmap_cache_version
             , this->client_info.use_bitmap_comp
             , this->client_info.use_compact_packets
@@ -835,6 +843,7 @@ private:
     }
 
 public:
+/*
     void init_pointers()
     {
         Pointer pointer0(Pointer::POINTER_CURSOR0);
@@ -845,6 +854,7 @@ public:
         this->pointer_cache.add_pointer_static(pointer1, 1);
         this->send_pointer(1, pointer1);
     }
+*/
 
     virtual void begin_update()
     {
@@ -1055,6 +1065,7 @@ public:
         }
     }
 
+/*
 //    2.2.9.1.1.4     Server Pointer Update PDU (TS_POINTER_PDU)
 //    ----------------------------------------------------------
 //    The Pointer Update PDU is sent from server to client and is used to convey
@@ -1224,7 +1235,7 @@ public:
 //      is being sent, then each scan-line will consume 2 bytes (7 pixels per
 //      scan-line multiplied by 1 bpp, rounded up to the next even number of
 //      bytes).
-        stream.out_copy_bytes(cursor.mask, cursor.mask_size()); /* mask */
+        stream.out_copy_bytes(cursor.mask, cursor.mask_size()); // mask
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
@@ -1245,7 +1256,7 @@ public:
 
             // Payload
             stream.out_uint16_le(RDP_POINTER_COLOR);
-            stream.out_uint16_le(0); /* pad */
+            stream.out_uint16_le(0); // pad
 
             GenerateColorPointerUpdateData(stream, cache_idx, cursor);
 
@@ -1288,7 +1299,7 @@ public:
                                       stream.size() - header_size,
                                       FastPath::FASTPATH_UPDATETYPE_COLOR,
                                       FastPath::FASTPATH_FRAGMENT_SINGLE,
-                                      /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0,
+                                      0,
                                       0);
 
             BStream fastpath_header(256);
@@ -1357,7 +1368,7 @@ public:
 
             // Payload
             stream.out_uint16_le(RDP_POINTER_CACHED);
-            stream.out_uint16_le(0); /* pad */
+            stream.out_uint16_le(0); // pad
             stream.out_uint16_le(cache_idx);
             stream.mark_end();
 
@@ -1402,7 +1413,7 @@ public:
                                       stream.size() - header_size,
                                       FastPath::FASTPATH_UPDATETYPE_CACHED,
                                       FastPath::FASTPATH_FRAGMENT_SINGLE,
-                                      /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0,
+                                      0,
                                       0);
 
             BStream fastpath_header(256);
@@ -1426,6 +1437,7 @@ public:
             LOG(LOG_INFO, "Front::set_pointer done");
         }
     }   // void set_pointer(int cache_idx)
+*/
 
     void incoming(Callback & cb) throw(Error)
     {
@@ -2735,7 +2747,7 @@ public:
                                 RDPColCache cmd(0, palette_local);
                                 this->orders->draw(cmd);
                             }
-                            this->init_pointers();
+//                            this->init_pointers();
                             if (this->verbose & 1){
                                 LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
                             }
@@ -3305,20 +3317,27 @@ public:
                 }
                 break;
             case CAPSTYPE_POINTER: {  /* 8 */
+                    PointerCaps pointer_caps;
+                    pointer_caps.recv(stream, capset_length);
                     if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_POINTER");
+                        pointer_caps.log("Receiving from client");
                     }
 
-                    expected = 4; /* color pointer(2) + pointer_cache_entries(2) */
+//                    expected = 4; /* color pointer(2) + pointer_cache_entries(2) */
+/*
                     if (!stream.in_check_rem(expected)){
                         LOG(LOG_ERR, "Truncated CAPSTYPE_POINTER, need=%u remains=%u",
                             expected, stream.in_remain());
                         throw Error(ERR_MCS_PDU_TRUNCATED);
                     }
+*/
 
-                    stream.in_skip_bytes(2); /* color pointer */
+/*
+                    stream.in_skip_bytes(2); // color pointer
                     int i = stream.in_uint16_le();
                     this->client_info.pointer_cache_entries = std::min(i, 32);
+*/
+                    this->client_info.pointer_cache_entries = std::min<int>(pointer_caps.colorPointerCacheSize, 32);
                 }
                 break;
             case CAPSTYPE_SHARE: /* 9 */
@@ -4102,7 +4121,7 @@ public:
                     RDPColCache cmd(0, palette_local);
                     this->orders->draw(cmd);
                 }
-                this->init_pointers();
+//                this->init_pointers();
 
                 if (this->verbose & (8|1)){
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");

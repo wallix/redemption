@@ -39,6 +39,7 @@
 #include "error.hpp"
 #include "config.hpp"
 #include "RDP/caches/bmpcache.hpp"
+#include "RDP/caches/pointercache.hpp"
 #include "colors.hpp"
 #include "bufferization_transport.hpp"
 #include "gzip_compression_transport.hpp"
@@ -148,12 +149,13 @@ public:
                 , const uint16_t height
                 , const uint8_t  capture_bpp
                 , BmpCache & bmp_cache
+                , PointerCache & ptr_cache
                 , RDPDrawable & drawable
                 , const Inifile & ini
                 , SendInput send_input = SendInput::NO
                 , uint32_t verbose = 0)
     : RDPSerializer( trans, this->buffer_stream_orders
-                   , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, 0, 1, 1, ini)
+                   , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, ptr_cache, 0, 1, 1, ini)
     , RDPCaptureDevice()
     , trans_target(trans)
     , trans(trans)
@@ -735,8 +737,13 @@ public:
         this->stream_bitmaps.reset();
     }
 
+    virtual void server_set_pointer(const Pointer & cursor) {
+        this->drawable.server_set_pointer(cursor);
+        this->RDPSerializer::server_set_pointer(cursor);
+    }
+
     virtual void send_pointer(int cache_idx, const Pointer & cursor) {
-        this->drawable.send_pointer(cache_idx, cursor);
+//        this->drawable.send_pointer(cache_idx, cursor);
 
         BStream header(8);
         size_t size =   2           // mouse x
@@ -764,7 +771,7 @@ public:
     }
 
     virtual void set_pointer(int cache_idx) {
-        this->drawable.set_pointer(cache_idx);
+//        this->drawable.set_pointer(cache_idx);
 
         BStream header(8);
         size_t size =   2                   // mouse x

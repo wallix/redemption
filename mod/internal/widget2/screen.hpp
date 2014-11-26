@@ -37,12 +37,17 @@ public:
 
     CompositeArray composite_array;
 
+    Pointer normal_pointer;
+    Pointer edit_pointer;
+
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height,
                  NotifyApi * notifier = NULL, Theme * theme = NULL)
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , theme(theme ? *theme : Theme())
         , tooltip(NULL)
         , current_over(NULL)
+        , normal_pointer(Pointer::POINTER_CURSOR0)
+        , edit_pointer(Pointer::POINTER_CURSOR1)
     {
         this->impl = &composite_array;
 
@@ -127,12 +132,20 @@ public:
     {
         Widget2 * w = this->last_widget_at_pos(x, y);
         if (this->current_over != w) {
+            if (((w != NULL) ? w->pointer_flag : NORMAL_POINTER) == EDIT_POINTER) {
+                this->drawable.server_set_pointer(edit_pointer);
+            }
+            else {
+                this->drawable.server_set_pointer(normal_pointer);
+            }
+/*
             if (w != NULL) {
                 this->drawable.set_pointer(w->pointer_flag);
             }
             else {
                 this->drawable.set_pointer(NORMAL_POINTER);
             }
+*/
             this->current_over = w;
         }
         if (this->tooltip) {

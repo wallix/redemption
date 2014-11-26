@@ -45,13 +45,13 @@ public:
     StaticCapture                * psc;
 
     Transport                    * wrm_trans;
+
 private:
     BmpCache      * pnc_bmp_cache;
+    PointerCache  * pnc_ptr_cache;
     NativeCapture * pnc;
 
     RDPDrawable * drawable;
-
-    PointerCache ptr_cache;
 
 public:
     wait_obj capture_event;
@@ -88,6 +88,7 @@ public:
     , psc(NULL)
     , wrm_trans(NULL)
     , pnc_bmp_cache(NULL)
+    , pnc_ptr_cache(NULL)
     , pnc(NULL)
     , drawable(NULL)
     , capture_event(wait_obj(NULL))
@@ -136,10 +137,14 @@ public:
             TODO("Also we may wonder why we are encrypting wrm and not png"
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
-            this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, capture_bpp, 3, false,
-                                                BmpCache::CacheOption(600, 768, false),
-                                                BmpCache::CacheOption(300, 3072, false),
-                                                BmpCache::CacheOption(262, 12288, false));
+            this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, capture_bpp, 3, false
+                                              , BmpCache::CacheOption(600, 768, false)
+                                              , BmpCache::CacheOption(300, 3072, false)
+                                              , BmpCache::CacheOption(262, 12288, false)
+                                              );
+            const int pointerCacheSize = 0x19;
+            this->pnc_ptr_cache = new PointerCache(pointerCacheSize);
+
             if (this->enable_file_encryption) {
                 this->wrm_trans = new CryptoOutMetaSequenceTransport( &this->crypto_ctx, wrm_path, hash_path, basename, now
                                                                     , width, height, ini.video.capture_groupid
@@ -150,10 +155,11 @@ public:
                                                               , width, height, ini.video.capture_groupid, authentifier);
             }
             this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
-                                         , *this->pnc_bmp_cache, *this->drawable, ini, externally_generated_breakpoint
-                                         , NativeCapture::SendInput::YES);
+                                         , *this->pnc_bmp_cache, *this->pnc_ptr_cache, *this->drawable, ini
+                                         , externally_generated_breakpoint, NativeCapture::SendInput::YES);
         }
 
+/*
         Pointer pointer0(Pointer::POINTER_CURSOR0);
         this->ptr_cache.add_pointer_static(pointer0, 0);
         if (this->drawable) {
@@ -164,6 +170,7 @@ public:
         if (this->drawable) {
             this->drawable->send_pointer(1, pointer1);
         }
+*/
 
         if (this->capture_wrm) {
             this->gd = this->pnc;
@@ -605,6 +612,10 @@ public:
 
     virtual void server_set_pointer(const Pointer & cursor)
     {
+        if (this->gd) {
+            this->gd->server_set_pointer(cursor);
+        }
+/*
         int cache_idx = 0;
         switch (this->ptr_cache.add_pointer(cursor, cache_idx)) {
         case POINTER_TO_SEND:
@@ -615,8 +626,10 @@ public:
             this->set_pointer(cache_idx);
         break;
         }
+*/
     }
 
+/*
     virtual void send_pointer(int cache_idx, const Pointer & cursor) {
         if (this->gd) {
            this->gd->send_pointer(cache_idx, cursor);
@@ -628,6 +641,7 @@ public:
             this->gd->set_pointer(cache_idx);
         }
     }
+*/
 
     virtual void set_mod_palette(const BGRPalette & palette) {
         if (this->capture_drawable) {

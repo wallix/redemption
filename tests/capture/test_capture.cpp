@@ -94,25 +94,25 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         const char * filename;
 
         filename = capture.png_trans->seqgen()->get(0);
-        BOOST_CHECK_EQUAL(3067, ::filesize(filename));
+        BOOST_CHECK_EQUAL(3098, ::filesize(filename));
         ::unlink(filename);
         filename = capture.png_trans->seqgen()->get(1);
-        BOOST_CHECK_EQUAL(3094, ::filesize(filename));
+        BOOST_CHECK_EQUAL(3125, ::filesize(filename));
         ::unlink(filename);
         filename = capture.png_trans->seqgen()->get(2);
-        BOOST_CHECK_EQUAL(3107, ::filesize(filename));
+        BOOST_CHECK_EQUAL(3140, ::filesize(filename));
         ::unlink(filename);
         filename = capture.png_trans->seqgen()->get(3);
-        BOOST_CHECK_EQUAL(3129, ::filesize(filename));
+        BOOST_CHECK_EQUAL(3158, ::filesize(filename));
         ::unlink(filename);
         filename = capture.png_trans->seqgen()->get(4);
-        BOOST_CHECK_EQUAL(3139, ::filesize(filename));
+        BOOST_CHECK_EQUAL(3172, ::filesize(filename));
         ::unlink(filename);
         filename = capture.png_trans->seqgen()->get(5);
-        BOOST_CHECK_EQUAL(3165, ::filesize(filename));
+        BOOST_CHECK_EQUAL(3197, ::filesize(filename));
         ::unlink(filename);
         filename = capture.png_trans->seqgen()->get(6);
-        BOOST_CHECK_EQUAL(3190, ::filesize(filename));
+        BOOST_CHECK_EQUAL(3223, ::filesize(filename));
         ::unlink(filename);
 
         const SequenceGenerator * wrm_seq = capture.seqgen();
@@ -165,6 +165,9 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         ini.video.capture_png = true;
         ini.globals.enable_file_encryption.set(false);
         Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, NULL, ini);
+
+        Pointer pointer1(Pointer::POINTER_CURSOR1);
+        capture.server_set_pointer(pointer1);
 
         capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr);
         now.tv_sec++;

@@ -420,6 +420,7 @@ public:
         this->mod.server_set_pointer(cursor);
     }
 
+/*
     virtual void send_pointer(int cache_idx, const Pointer & cursor) {
         this->mod.send_pointer(cache_idx, cursor);
     }
@@ -428,6 +429,7 @@ public:
     {
         this->mod.set_pointer(cache_idx);
     }
+*/
 
 /*
     virtual void set_pointer_display()

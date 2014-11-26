@@ -89,6 +89,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         to_cache_option(player.bmp_cache->get_cache(3)),
         to_cache_option(player.bmp_cache->get_cache(4))
     );
+    PointerCache ptr_cache;
 
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     NativeCapture wrm_recorder(
@@ -97,7 +98,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         player.screen_rect.cx,
         player.screen_rect.cy,
         24,
-        bmp_cache, drawable, ini);
+        bmp_cache, ptr_cache, drawable, ini);
 
     wrm_recorder.update_config(ini);
     player.add_consumer(&wrm_recorder, &wrm_recorder);

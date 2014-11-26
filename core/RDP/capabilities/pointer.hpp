@@ -85,14 +85,23 @@ struct PointerCaps : public Capability {
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->colorPointerFlag);
         stream.out_uint16_le(this->colorPointerCacheSize);
-        if (this->len  < 10 ) return;
+        if (this->len  < 10) return;
         stream.out_uint16_le(this->pointerCacheSize);
     }
 
     void recv(Stream & stream, uint16_t len){
         this->len = len;
+
+        unsigned int expected = 2 + 2 + ((this->len < 10) ? 0 : 2); /* colorPointerFlag(2) + colorPointerCacheSize(2) + pointerCacheSize*/
+        if (!stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "Truncated CAPSTYPE_POINTER, need=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
         this->colorPointerFlag = stream.in_uint16_le();
         this->colorPointerCacheSize = stream.in_uint16_le();
+        if (this->len < 10) return;
         this->pointerCacheSize = stream.in_uint16_le();
     }
 

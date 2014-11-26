@@ -90,8 +90,9 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
                        BmpCache::CacheOption(2, 256, false),
                        BmpCache::CacheOption(2, 1024, false),
                        BmpCache::CacheOption(2, 4096, false));
+    PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, ptr_cache, drawable, ini);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, BLUE), scr);
@@ -231,8 +232,9 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
                        BmpCache::CacheOption(2, 256, false),
                        BmpCache::CacheOption(2, 1024, false),
                        BmpCache::CacheOption(2, 4096, false));
+    PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, ptr_cache, drawable, ini);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, RED), scr);

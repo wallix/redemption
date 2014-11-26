@@ -184,9 +184,11 @@ public:
     virtual void server_set_pointer(const Pointer & cursor) {
         this->front.server_set_pointer(cursor);
     }
+/*
     virtual void set_pointer(int cache_idx) {
         this->front.set_pointer(cache_idx);
     }
+*/
 
     virtual void rdp_input_invalidate(const Rect& r)
     {

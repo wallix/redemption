@@ -17,14 +17,10 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x13"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x0e\xe0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 13 bytes |
-// Recv done on RDP Client (5) 13 bytes |
-// /* 0000 */ "\x00\x00\x00\x00\x00\x01\x00\x08\x00\x01\x00\x00\x00"             //............. |
-// Dump done on RDP Client (5) 13 bytes |
+// Socket RDP Client (5) receiving 15 bytes |
+// Recv done on RDP Client (5) 15 bytes |
+// /* 0000 */ "\x0e\xe0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x01\x00\x00\x00"     //............... |
+// Dump done on RDP Client (5) 15 bytes |
 // CR Recv: PROTOCOL TLS 1.0 |
 // Front::incoming::sending x224 connection confirm PDU |
 // -----------------> Front::TLS Support Enabled |
@@ -45,40 +41,36 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x01\xac"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 422 bytes |
-// Recv done on RDP Client (5) 422 bytes |
-// /* 0000 */ "\x80\x7f\x65\x82\x01\xa0\x04\x01\x01\x04\x01\x01\x01\x01\xff\x30" //..e............0 |
-// /* 0010 */ "\x19\x02\x01\x22\x02\x01\x02\x02\x01\x00\x02\x01\x01\x02\x01\x00" //..."............ |
-// /* 0020 */ "\x02\x01\x01\x02\x02\xff\xff\x02\x01\x02\x30\x19\x02\x01\x01\x02" //..........0..... |
-// /* 0030 */ "\x01\x01\x02\x01\x01\x02\x01\x01\x02\x01\x00\x02\x01\x01\x02\x02" //................ |
-// /* 0040 */ "\x04\x20\x02\x01\x02\x30\x1c\x02\x02\xff\xff\x02\x02\xfc\x17\x02" //. ...0.......... |
-// /* 0050 */ "\x02\xff\xff\x02\x01\x01\x02\x01\x00\x02\x01\x01\x02\x02\xff\xff" //................ |
-// /* 0060 */ "\x02\x01\x02\x04\x82\x01\x3f\x00\x05\x00\x14\x7c\x00\x01\x81\x36" //......?....|...6 |
-// /* 0070 */ "\x00\x08\x00\x10\x00\x01\xc0\x00\x44\x75\x63\x61\x81\x28\x01\xc0" //........Duca.(.. |
-// /* 0080 */ "\xd8\x00\x04\x00\x08\x00\x00\x04\x00\x03\x01\xca\x03\xaa\x0c\x04" //................ |
-// /* 0090 */ "\x00\x00\x71\x17\x00\x00\x52\x00\x44\x00\x50\x00\x2d\x00\x54\x00" //..q...R.D.P.-.T. |
-// /* 00a0 */ "\x45\x00\x53\x00\x54\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //E.S.T........... |
-// /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x0c\x00" //................ |
-// /* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// Socket RDP Client (5) receiving 424 bytes |
+// Recv done on RDP Client (5) 424 bytes |
+// /* 0000 */ "\x02\xf0\x80\x7f\x65\x82\x01\xa0\x04\x01\x01\x04\x01\x01\x01\x01" //....e........... |
+// /* 0010 */ "\xff\x30\x19\x02\x01\x22\x02\x01\x02\x02\x01\x00\x02\x01\x01\x02" //.0...".......... |
+// /* 0020 */ "\x01\x00\x02\x01\x01\x02\x02\xff\xff\x02\x01\x02\x30\x19\x02\x01" //............0... |
+// /* 0030 */ "\x01\x02\x01\x01\x02\x01\x01\x02\x01\x01\x02\x01\x00\x02\x01\x01" //................ |
+// /* 0040 */ "\x02\x02\x04\x20\x02\x01\x02\x30\x1c\x02\x02\xff\xff\x02\x02\xfc" //... ...0........ |
+// /* 0050 */ "\x17\x02\x02\xff\xff\x02\x01\x01\x02\x01\x00\x02\x01\x01\x02\x02" //................ |
+// /* 0060 */ "\xff\xff\x02\x01\x02\x04\x82\x01\x3f\x00\x05\x00\x14\x7c\x00\x01" //........?....|.. |
+// /* 0070 */ "\x81\x36\x00\x08\x00\x10\x00\x01\xc0\x00\x44\x75\x63\x61\x81\x28" //.6........Duca.( |
+// /* 0080 */ "\x01\xc0\xd8\x00\x04\x00\x08\x00\x00\x04\x00\x03\x01\xca\x03\xaa" //................ |
+// /* 0090 */ "\x0c\x04\x00\x00\xb0\x1d\x00\x00\x52\x00\x44\x00\x50\x00\x2d\x00" //........R.D.P.-. |
+// /* 00a0 */ "\x54\x00\x45\x00\x53\x00\x54\x00\x00\x00\x00\x00\x00\x00\x00\x00" //T.E.S.T......... |
+// /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 00c0 */ "\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0100 */ "\x00\x00\x01\xca\x01\x00\x00\x00\x00\x00\x10\x00\x0f\x00\x09\x00" //................ |
-// /* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 0100 */ "\x00\x00\x00\x00\x01\xca\x01\x00\x00\x00\x00\x00\x10\x00\x0f\x00" //................ |
+// /* 0110 */ "\x2d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //-............... |
 // /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0150 */ "\x00\x00\x01\x00\x00\x00\x04\xc0\x0c\x00\x0d\x00\x00\x00\x00\x00" //................ |
-// /* 0160 */ "\x00\x00\x02\xc0\x0c\x00\x1b\x00\x00\x00\x00\x00\x00\x00\x03\xc0" //................ |
-// /* 0170 */ "\x38\x00\x04\x00\x00\x00\x72\x64\x70\x64\x72\x00\x00\x00\x00\x00" //8.....rdpdr..... |
-// /* 0180 */ "\x80\x80\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0\x64\x72" //..rdpsnd......dr |
-// /* 0190 */ "\x64\x79\x6e\x76\x63\x00\x00\x00\x80\xc0\x63\x6c\x69\x70\x72\x64" //dynvc.....cliprd |
-// /* 01a0 */ "\x72\x00\x00\x00\xa0\xc0"                                         //r..... |
-// Dump done on RDP Client (5) 422 bytes |
+// /* 0150 */ "\x00\x00\x02\x00\x01\x00\x00\x00\x04\xc0\x0c\x00\x11\x00\x00\x00" //................ |
+// /* 0160 */ "\x00\x00\x00\x00\x02\xc0\x0c\x00\x1b\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 0170 */ "\x03\xc0\x38\x00\x04\x00\x00\x00\x72\x64\x70\x64\x72\x00\x00\x00" //..8.....rdpdr... |
+// /* 0180 */ "\x00\x00\x80\x80\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0" //....rdpsnd...... |
+// /* 0190 */ "\x64\x72\x64\x79\x6e\x76\x63\x00\x00\x00\x80\xc0\x63\x6c\x69\x70" //drdynvc.....clip |
+// /* 01a0 */ "\x72\x64\x72\x00\x00\x00\xa0\xc0"                                 //rdr..... |
+// Dump done on RDP Client (5) 424 bytes |
 // GCC::UserData tag=c001 length=216 |
 // Received from Client GCC User Data CS_CORE (216 bytes) |
 // cs_core::version [80004] RDP 5.0, 5.1, 5.2, and 6.0 clients) |
@@ -87,7 +79,7 @@ const char outdata[] =
 // cs_core::colorDepth    = [ca01] [RNS_UD_COLOR_8BPP] superseded by postBeta2ColorDepth |
 // cs_core::SASSequence   = [aa03] [Unknown] |
 // cs_core::keyboardLayout= 040c |
-// cs_core::clientBuild   = 6001 |
+// cs_core::clientBuild   = 7600 |
 // cs_core::clientName    = RDP-TEST |
 // cs_core::keyboardType  = [0004] IBM enhanced (101-key or 102-key) keyboard |
 // cs_core::keyboardSubType      = [0000] OEM code |
@@ -98,16 +90,18 @@ const char outdata[] =
 // cs_core::serialNumber = 0 |
 // cs_core::highColorDepth  = [0010] [16-bit 565 RGB mask] |
 // cs_core::supportedColorDepths  = [000f] [24/16/15/32] |
-// cs_core::earlyCapabilityFlags  = [0009] |
+// cs_core::earlyCapabilityFlags  = [002d] |
 // cs_core::earlyCapabilityFlags:RNS_UD_CS_SUPPORT_ERRINFO_PDU |
+// cs_core::earlyCapabilityFlags:RNS_UD_CS_SUPPORT_STATUSINFO_PDU |
 // cs_core::earlyCapabilityFlags:RNS_UD_CS_STRONG_ASYMMETRIC_KEYS |
+// cs_core::earlyCapabilityFlags:RNS_UD_CS_VALID_CONNECTION_TYPE |
 // cs_core::clientDigProductId=[00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 |
-// cs_core::connectionType  = 0 |
+// cs_core::connectionType  = 2 |
 // cs_core::pad1octet  = 0 |
 // cs_core::serverSelectedProtocol = 1 |
 // GCC::UserData tag=c004 length=12 |
 // Receiving from Client GCC User Data CS_CLUSTER (12 bytes) |
-// cs_cluster::flags [000d] |
+// cs_cluster::flags [0011] |
 // cs_cluster::redirectedSessionID = 0 |
 // GCC::UserData tag=c002 length=12 |
 // Received from Client GCC User Data CS_SECURITY (12 bytes) |
@@ -152,14 +146,10 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-// /* 0000 */ "\x80\x04\x01\x00\x01\x00"                                         //...... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+// /* 0000 */ "\x02\xf0\x80\x04\x01\x00\x01\x00"                                 //........ |
+// Dump done on RDP Client (5) 8 bytes |
 // Front::incoming::Recv MCS::AttachUserRequest |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -169,14 +159,10 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x08"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x80\x28"                                                         //.( |
-// Dump done on RDP Client (5) 2 bytes |
+// Socket RDP Client (5) receiving 4 bytes |
+// Recv done on RDP Client (5) 4 bytes |
+// /* 0000 */ "\x02\xf0\x80\x28"                                                 //...( |
+// Dump done on RDP Client (5) 4 bytes |
 // Front::incoming::Send MCS::AttachUserConfirm |
 // Sending on RDP Client (5) 11 bytes |
 /* 0000 */ "\x03\x00\x00\x0b\x02\xf0\x80\x2e\x00\x00\x00"                     //........... |
@@ -189,14 +175,10 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-// /* 0000 */ "\x80\x38\x00\x00\x03\xe9"                                         //.8.... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+// /* 0000 */ "\x02\xf0\x80\x38\x00\x00\x03\xe9"                                 //...8.... |
+// Dump done on RDP Client (5) 8 bytes |
 // Sending on RDP Client (5) 15 bytes |
 /* 0000 */ "\x03\x00\x00\x0f\x02\xf0\x80\x3e\x00\x00\x00\x03\xe9\x03\xe9"     //.......>....... |
 // Sent dumped on RDP Client (5) 15 bytes |
@@ -208,14 +190,10 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-// /* 0000 */ "\x80\x38\x00\x00\x03\xeb"                                         //.8.... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+// /* 0000 */ "\x02\xf0\x80\x38\x00\x00\x03\xeb"                                 //...8.... |
+// Dump done on RDP Client (5) 8 bytes |
 // Sending on RDP Client (5) 15 bytes |
 /* 0000 */ "\x03\x00\x00\x0f\x02\xf0\x80\x3e\x00\x00\x00\x03\xeb\x03\xeb"     //.......>....... |
 // Sent dumped on RDP Client (5) 15 bytes |
@@ -227,14 +205,10 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-// /* 0000 */ "\x80\x38\x00\x00\x03\xec"                                         //.8.... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+// /* 0000 */ "\x02\xf0\x80\x38\x00\x00\x03\xec"                                 //...8.... |
+// Dump done on RDP Client (5) 8 bytes |
 // cjrq[0] = 1004 -> cjcf |
 // Sending on RDP Client (5) 15 bytes |
 /* 0000 */ "\x03\x00\x00\x0f\x02\xf0\x80\x3e\x00\x00\x00\x03\xec\x03\xec"     //.......>....... |
@@ -247,14 +221,10 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-// /* 0000 */ "\x80\x38\x00\x00\x03\xed"                                         //.8.... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+// /* 0000 */ "\x02\xf0\x80\x38\x00\x00\x03\xed"                                 //...8.... |
+// Dump done on RDP Client (5) 8 bytes |
 // cjrq[1] = 1005 -> cjcf |
 // Sending on RDP Client (5) 15 bytes |
 /* 0000 */ "\x03\x00\x00\x0f\x02\xf0\x80\x3e\x00\x00\x00\x03\xed\x03\xed"     //.......>....... |
@@ -267,14 +237,10 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-// /* 0000 */ "\x80\x38\x00\x00\x03\xee"                                         //.8.... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+// /* 0000 */ "\x02\xf0\x80\x38\x00\x00\x03\xee"                                 //...8.... |
+// Dump done on RDP Client (5) 8 bytes |
 // cjrq[2] = 1006 -> cjcf |
 // Sending on RDP Client (5) 15 bytes |
 /* 0000 */ "\x03\x00\x00\x0f\x02\xf0\x80\x3e\x00\x00\x00\x03\xee\x03\xee"     //.......>....... |
@@ -287,14 +253,10 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-// /* 0000 */ "\x80\x38\x00\x00\x03\xef"                                         //.8.... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+// /* 0000 */ "\x02\xf0\x80\x38\x00\x00\x03\xef"                                 //...8.... |
+// Dump done on RDP Client (5) 8 bytes |
 // cjrq[3] = 1007 -> cjcf |
 // Sending on RDP Client (5) 15 bytes |
 /* 0000 */ "\x03\x00\x00\x0f\x02\xf0\x80\x3e\x00\x00\x00\x03\xef\x03\xef"     //.......>....... |
@@ -309,61 +271,65 @@ const char outdata[] =
 // Dump done on RDP Client (5) 1 bytes |
 // Socket RDP Client (5) receiving 3 bytes |
 // Recv done on RDP Client (5) 3 bytes |
-// /* 0000 */ "\x00\x01\x4b"                                                     //..K |
+// /* 0000 */ "\x00\x01\x89"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 325 bytes |
-// Recv done on RDP Client (5) 325 bytes |
-// /* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x81\x3c\x48\x00\x00\x00\x0c\x04\x0c" //.d....p.<H...... |
-// /* 0010 */ "\x04\xb3\x47\x03\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00" //..G............. |
-// /* 0020 */ "\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //.x.............1 |
-// /* 0030 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
-// /* 0040 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
-// /* 0050 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
-// /* 0060 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
-// /* 0070 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
-// /* 0080 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
-// /* 0090 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
-// /* 00a0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
-// /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00d0 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00e0 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
-// /* 00f0 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
+// Socket RDP Client (5) receiving 389 bytes |
+// Recv done on RDP Client (5) 389 bytes |
+// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x7a\x40\x00\x00\x00\x00" //...d....p.z@.... |
+// /* 0010 */ "\x00\x00\x00\xb3\x47\x0b\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00" //....G....@...... |
+// /* 0020 */ "\x00\x00\x00\x71\x00\x61\x00\x5c\x00\x61\x00\x64\x00\x6d\x00\x69" //...q.a...a.d.m.i |
+// /* 0030 */ "\x00\x6e\x00\x69\x00\x73\x00\x74\x00\x72\x00\x61\x00\x74\x00\x65" //.n.i.s.t.r.a.t.e |
+// /* 0040 */ "\x00\x75\x00\x72\x00\x40\x00\x77\x00\x69\x00\x6e\x00\x32\x00\x6b" //.u.r.@.w.i.n.2.k |
+// /* 0050 */ "\x00\x38\x00\x72\x00\x32\x00\x3a\x00\x72\x00\x64\x00\x70\x00\x3a" //.8.r.2.:.r.d.p.: |
+// /* 0060 */ "\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //.x.............1 |
+// /* 0070 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
+// /* 0080 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
+// /* 0090 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
+// /* 00a0 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
+// /* 00b0 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
+// /* 00c0 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
+// /* 00d0 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
+// /* 00e0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
+// /* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0120 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
-// /* 0130 */ "\x00\x00\x00\xc4\xff\xff\xff\x00\x00\x00\x00\x0f\x00\x00\x00\x00" //................ |
-// /* 0140 */ "\x00\x64\x00\x00\x00"                                             //.d... |
-// Dump done on RDP Client (5) 325 bytes |
+// /* 0110 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 0120 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
+// /* 0130 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
+// /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 0160 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
+// /* 0170 */ "\x00\x00\x00\xc4\xff\xff\xff\x00\x00\x00\x00\x07\x00\x00\x00\x00" //................ |
+// /* 0180 */ "\x00\x64\x00\x00\x00"                                             //.d... |
+// Dump done on RDP Client (5) 389 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x0c, 0x04, 0x0c, 0x04, 0xb3, 0x47, 0x03, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G.......... |
-// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,  // ....x........... |
-// /* 0020 */ 0x1a, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00,  // ..1.0...1.0...4. |
-// /* 0030 */ 0x37, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00,  // 7...1.7.5...@.C. |
-// /* 0040 */ 0x3a, 0x00, 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00,  // :...W.I.N.D.O.W. |
-// /* 0050 */ 0x53, 0x00, 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00,  // S...s.y.s.t.e.m. |
-// /* 0060 */ 0x33, 0x00, 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00,  // 3.2...m.s.t.s.c. |
-// /* 0070 */ 0x61, 0x00, 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff,  // a.x...d.l.l..... |
-// /* 0080 */ 0xff, 0xff, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00,  // ..P.a.r.i.s.,. . |
-// /* 0090 */ 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00,  // M.a.d.r.i.d..... |
-// /* 00a0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 00b0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 00c0 */ 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 00d0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00,  // ......P.a.r.i.s. |
-// /* 00e0 */ 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00,  // ,. .M.a.d.r.i.d. |
+// /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0xb3, 0x47, 0x0b, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G....@..... |
+// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x71, 0x00, 0x61, 0x00, 0x5c, 0x00, 0x61, 0x00, 0x64, 0x00, 0x6d, 0x00,  // ....q.a...a.d.m. |
+// /* 0020 */ 0x69, 0x00, 0x6e, 0x00, 0x69, 0x00, 0x73, 0x00, 0x74, 0x00, 0x72, 0x00, 0x61, 0x00, 0x74, 0x00,  // i.n.i.s.t.r.a.t. |
+// /* 0030 */ 0x65, 0x00, 0x75, 0x00, 0x72, 0x00, 0x40, 0x00, 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x32, 0x00,  // e.u.r.@.w.i.n.2. |
+// /* 0040 */ 0x6b, 0x00, 0x38, 0x00, 0x72, 0x00, 0x32, 0x00, 0x3a, 0x00, 0x72, 0x00, 0x64, 0x00, 0x70, 0x00,  // k.8.r.2.:.r.d.p. |
+// /* 0050 */ 0x3a, 0x00, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x1a, 0x00,  // :.x............. |
+// /* 0060 */ 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00, 0x37, 0x00,  // 1.0...1.0...4.7. |
+// /* 0070 */ 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00, 0x3a, 0x00,  // ..1.7.5...@.C.:. |
+// /* 0080 */ 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00,  // ..W.I.N.D.O.W.S. |
+// /* 0090 */ 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00, 0x33, 0x00,  // ..s.y.s.t.e.m.3. |
+// /* 00a0 */ 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00, 0x61, 0x00,  // 2...m.s.t.s.c.a. |
+// /* 00b0 */ 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff,  // x...d.l.l....... |
+// /* 00c0 */ 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00,  // P.a.r.i.s.,. .M. |
+// /* 00d0 */ 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // a.d.r.i.d....... |
+// /* 00e0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
 // /* 00f0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0100 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00,  // ................ |
-// /* 0120 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00,  // ................ |
-// /* 0130 */ 0x00, 0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                          // ....d... |
+// /* 0100 */ 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00,  // ....P.a.r.i.s.,. |
+// /* 0120 */ 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00,  //  .M.a.d.r.i.d... |
+// /* 0130 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0140 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0150 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
+// /* 0160 */ 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00,  // ................ |
+// /* 0170 */ 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                                // ..d... |
 // RDP-5 Style logon |
 // Receiving from client InfoPacket |
-// InfoPacket::CodePage 67896332 |
-// InfoPacket::flags 0x347b3 |
+// InfoPacket::CodePage 0 |
+// InfoPacket::flags 0xb47b3 |
 // InfoPacket::flags:INFO_MOUSE yes |
 // InfoPacket::flags:INFO_DISABLECTRLALTDEL yes |
 // InfoPacket::flags:INFO_AUTOLOGON no |
@@ -379,17 +345,17 @@ const char outdata[] =
 // InfoPacket::flags:INFO_LOGONERRORS yes |
 // InfoPacket::flags:INFO_MOUSE_HAS_WHEEL yes |
 // InfoPacket::flags:INFO_PASSWORD_IS_SC_PIN no |
-// InfoPacket::flags:INFO_NOAUDIOPLAYBACK no |
+// InfoPacket::flags:INFO_NOAUDIOPLAYBACK yes |
 // InfoPacket::flags:INFO_USING_SAVED_CREDS no |
 // InfoPacket::flags:RNS_INFO_AUDIOCAPTURE no |
 // InfoPacket::flags:RNS_INFO_VIDEO_DISABLE no |
 // InfoPacket::cbDomain 2 |
-// InfoPacket::cbUserName 4 |
+// InfoPacket::cbUserName 66 |
 // InfoPacket::cbPassword 2 |
 // InfoPacket::cbAlternateShell 2 |
 // InfoPacket::cbWorkingDir 2 |
 // InfoPacket::Domain  |
-// InfoPacket::UserName x |
+// InfoPacket::UserName qa\administrateur@win2k8r2:rdp:x |
 // InfoPacket::Password <hidden> |
 // InfoPacket::AlternateShell  |
 // InfoPacket::WorkingDir  |
@@ -399,7 +365,7 @@ const char outdata[] =
 // InfoPacket::ExtendedInfoPacket::cbClientDir 64 |
 // InfoPacket::ExtendedInfoPacket::clientDir C:\WINDOWS\system32\mstscax.dll |
 // InfoPacket::ExtendedInfoPacket::clientSessionId 0 |
-// InfoPacket::ExtendedInfoPacket::performanceFlags 15 |
+// InfoPacket::ExtendedInfoPacket::performanceFlags 7 |
 // InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen 0 |
 // InfoPacket::ExtendedInfoPacket::autoReconnectCookie  |
 // InfoPacket::ExtendedInfoPacket::reserved1 100 |
@@ -424,7 +390,8 @@ const char outdata[] =
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds 0 |
-// client info: performance flags before=0x0000000F after=0x0000000F default=0x00000000 present=0x00000000 not-present=0x00000000 |
+// client info: performance flags before=0x00000007 after=0x00000007 default=0x00000000 present=0x00000000 not-present=0x00000000 |
+// Front Keyboard Layout = 0x40c |
 // Front::incoming::licencing not client_info.is_mce |
 // Front::incoming::licencing send_lic_initial |
 // Sec clear payload to send: |
@@ -483,32 +450,28 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\xab"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 165 bytes |
-// Recv done on RDP Client (5) 165 bytes |
-// /* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\xe7\x47\x13\x83\x98" //.d....p.....G... |
-// /* 0010 */ "\x00\x01\x00\x00\x00\x00\x00\x01\x03\x24\x20\x28\x5c\xce\x8c\x5d" //.........$ (...] |
-// /* 0020 */ "\x38\xd7\x52\xb7\xfe\x7b\xef\x18\x1e\x39\xca\x1c\x9f\xca\x33\x62" //8.R..{...9....3b |
-// /* 0030 */ "\x50\x7a\x67\x2e\xa0\x97\xb5\x50\x3e\x00\x00\x48\x00\x9e\x44\xa0" //Pzg....P>..H..D. |
-// /* 0040 */ "\x21\x48\xec\x37\x5e\xd5\x04\x79\x8a\xfb\x7b\x0b\x21\xf3\x5a\x03" //!H.7^..y..{.!.Z. |
-// /* 0050 */ "\xc5\xaa\xe5\xca\x00\x09\x0d\xe0\x07\x08\x93\xfa\x4f\xa5\x4b\xfb" //............O.K. |
-// /* 0060 */ "\x97\xd7\x49\xb3\x28\x0a\x44\x91\x23\xca\x06\x1f\xee\xe9\x38\x86" //..I.(.D.#.....8. |
-// /* 0070 */ "\xf1\x40\x64\x3b\x9d\x77\x44\x83\x38\x11\xe5\xc0\x31\x00\x00\x00" //.@d;.wD.8...1... |
-// /* 0080 */ "\x00\x00\x00\x00\x00\x0f\x00\x0f\x00\x41\x64\x6d\x69\x6e\x69\x73" //.........Adminis |
-// /* 0090 */ "\x74\x72\x61\x74\x65\x75\x72\x00\x10\x00\x09\x00\x52\x44\x50\x2d" //trateur.....RDP- |
-// /* 00a0 */ "\x54\x45\x53\x54\x00"                                             //TEST. |
-// Dump done on RDP Client (5) 165 bytes |
+// Socket RDP Client (5) receiving 167 bytes |
+// Recv done on RDP Client (5) 167 bytes |
+// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\x6d\xef\x13" //...d....p....m.. |
+// /* 0010 */ "\x83\x98\x00\x01\x00\x00\x00\x00\x00\x01\x03\xbb\x60\x33\xbc\x38" //............`3.8 |
+// /* 0020 */ "\xc7\x41\xd7\xea\x6c\x5f\x95\x59\x78\xa5\xe3\xcd\x90\x28\x47\x63" //.A..l_.Yx....(Gc |
+// /* 0030 */ "\xf0\x8e\x79\x98\x82\x60\xda\xfc\x5f\x88\x5f\x00\x00\x48\x00\xf9" //..y..`.._._..H.. |
+// /* 0040 */ "\x0c\x32\x38\xcb\x3e\x0d\xa3\x9f\xaa\x08\xe9\x57\x03\xbe\xcf\x5d" //.28.>......W...] |
+// /* 0050 */ "\x12\x49\xdc\xc9\x89\x67\x94\x27\x6b\x87\xf1\x4c\x5b\x9a\x7a\x60" //.I...g.'k..L[.z` |
+// /* 0060 */ "\x3d\x21\x1e\x1a\x30\x6e\xc8\x1a\x1a\x32\xb5\xa4\x39\x5f\xef\x56" //=!..0n...2..9_.V |
+// /* 0070 */ "\x6e\xed\x56\x09\x5d\x54\x7b\x77\xd7\x37\xab\x65\xc6\xe8\x00\x00" //n.V.]T{w.7.e.... |
+// /* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x0f\x00\x41\x64\x6d\x69\x6e" //...........Admin |
+// /* 0090 */ "\x69\x73\x74\x72\x61\x74\x65\x75\x72\x00\x10\x00\x09\x00\x52\x44" //istrateur.....RD |
+// /* 00a0 */ "\x50\x2d\x54\x45\x53\x54\x00"                                     //P-TEST. |
+// Dump done on RDP Client (5) 167 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x24, 0x20, 0x28, 0x5c,  // ............$ (. |
-// /* 0010 */ 0xce, 0x8c, 0x5d, 0x38, 0xd7, 0x52, 0xb7, 0xfe, 0x7b, 0xef, 0x18, 0x1e, 0x39, 0xca, 0x1c, 0x9f,  // ..]8.R..{...9... |
-// /* 0020 */ 0xca, 0x33, 0x62, 0x50, 0x7a, 0x67, 0x2e, 0xa0, 0x97, 0xb5, 0x50, 0x3e, 0x00, 0x00, 0x48, 0x00,  // .3bPzg....P>..H. |
-// /* 0030 */ 0x9e, 0x44, 0xa0, 0x21, 0x48, 0xec, 0x37, 0x5e, 0xd5, 0x04, 0x79, 0x8a, 0xfb, 0x7b, 0x0b, 0x21,  // .D.!H.7^..y..{.! |
-// /* 0040 */ 0xf3, 0x5a, 0x03, 0xc5, 0xaa, 0xe5, 0xca, 0x00, 0x09, 0x0d, 0xe0, 0x07, 0x08, 0x93, 0xfa, 0x4f,  // .Z.............O |
-// /* 0050 */ 0xa5, 0x4b, 0xfb, 0x97, 0xd7, 0x49, 0xb3, 0x28, 0x0a, 0x44, 0x91, 0x23, 0xca, 0x06, 0x1f, 0xee,  // .K...I.(.D.#.... |
-// /* 0060 */ 0xe9, 0x38, 0x86, 0xf1, 0x40, 0x64, 0x3b, 0x9d, 0x77, 0x44, 0x83, 0x38, 0x11, 0xe5, 0xc0, 0x31,  // .8..@d;.wD.8...1 |
+// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0xbb, 0x60, 0x33, 0xbc,  // .............`3. |
+// /* 0010 */ 0x38, 0xc7, 0x41, 0xd7, 0xea, 0x6c, 0x5f, 0x95, 0x59, 0x78, 0xa5, 0xe3, 0xcd, 0x90, 0x28, 0x47,  // 8.A..l_.Yx....(G |
+// /* 0020 */ 0x63, 0xf0, 0x8e, 0x79, 0x98, 0x82, 0x60, 0xda, 0xfc, 0x5f, 0x88, 0x5f, 0x00, 0x00, 0x48, 0x00,  // c..y..`.._._..H. |
+// /* 0030 */ 0xf9, 0x0c, 0x32, 0x38, 0xcb, 0x3e, 0x0d, 0xa3, 0x9f, 0xaa, 0x08, 0xe9, 0x57, 0x03, 0xbe, 0xcf,  // ..28.>......W... |
+// /* 0040 */ 0x5d, 0x12, 0x49, 0xdc, 0xc9, 0x89, 0x67, 0x94, 0x27, 0x6b, 0x87, 0xf1, 0x4c, 0x5b, 0x9a, 0x7a,  // ].I...g.'k..L[.z |
+// /* 0050 */ 0x60, 0x3d, 0x21, 0x1e, 0x1a, 0x30, 0x6e, 0xc8, 0x1a, 0x1a, 0x32, 0xb5, 0xa4, 0x39, 0x5f, 0xef,  // `=!..0n...2..9_. |
+// /* 0060 */ 0x56, 0x6e, 0xed, 0x56, 0x09, 0x5d, 0x54, 0x7b, 0x77, 0xd7, 0x37, 0xab, 0x65, 0xc6, 0xe8, 0x00,  // Vn.V.]T{w.7.e... |
 // /* 0070 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x41, 0x64, 0x6d, 0x69,  // ............Admi |
 // /* 0080 */ 0x6e, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x75, 0x72, 0x00, 0x10, 0x00, 0x09, 0x00, 0x52,  // nistrateur.....R |
 // /* 0090 */ 0x44, 0x50, 0x2d, 0x54, 0x45, 0x53, 0x54, 0x00,                          // DP-TEST. |
@@ -625,7 +588,7 @@ const char outdata[] =
 // Input caps::keyboardType 0 |
 // Input caps::keyboardSubType 0 |
 // Input caps::keyboardFunctionKey 0 |
-// Input caps::imeFileName 597756992 |
+// Input caps::imeFileName 1352817568 |
 // Sec clear payload to send: |
 // /* 0000 */ 0x20, 0x01, 0x11, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x04, 0x00, 0x0a, 0x01, 0x52, 0x44,  //  .............RD |
 // /* 0010 */ 0x50, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x01, 0x00, 0x03, 0x00, 0x00, 0x02,  // P............... |
@@ -675,58 +638,55 @@ const char outdata[] =
 // Dump done on RDP Client (5) 1 bytes |
 // Socket RDP Client (5) receiving 3 bytes |
 // Recv done on RDP Client (5) 3 bytes |
-// /* 0000 */ "\x00\x02\x03"                                                     //... |
+// /* 0000 */ "\x00\x02\x07"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 509 bytes |
-// Recv done on RDP Client (5) 509 bytes |
-// /* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x81\xf4\xf4\x01\x13\x00\xe9\x03\x02" //.d....p......... |
-// /* 0010 */ "\x00\x01\x00\xe9\x03\x06\x00\xde\x01\x4d\x53\x54\x53\x43\x00\x13" //.........MSTSC.. |
-// /* 0020 */ "\x00\x00\x00\x01\x00\x18\x00\x01\x00\x03\x00\x00\x02\x00\x00\x00" //................ |
-// /* 0030 */ "\x00\x0d\x04\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1c\x00\x10" //................ |
-// /* 0040 */ "\x00\x01\x00\x01\x00\x01\x00\x00\x04\x00\x03\x00\x00\x01\x00\x01" //................ |
-// /* 0050 */ "\x00\x00\x08\x01\x00\x00\x00\x03\x00\x58\x00\x00\x00\x00\x00\x00" //.........X...... |
-// /* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01" //................ |
-// /* 0070 */ "\x00\x14\x00\x00\x00\x01\x00\x00\x00\x2a\x00\x01\x01\x01\x01\x01" //.........*...... |
-// /* 0080 */ "\x00\x00\x01\x01\x01\x00\x01\x00\x00\x00\x01\x01\x01\x01\x01\x01" //................ |
-// /* 0090 */ "\x01\x01\x00\x01\x01\x01\x00\x00\x00\x00\x00\xa1\x06\x00\x00\x00" //................ |
-// /* 00a0 */ "\x00\x00\x00\x00\x84\x03\x00\x00\x00\x00\x00\xe4\x04\x00\x00\x04" //................ |
-// /* 00b0 */ "\x00\x28\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //.(.............. |
-// /* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x78\x00\x00\x02\x78" //...........x...x |
-// /* 00d0 */ "\x00\x00\x08\x51\x01\x00\x20\x0a\x00\x08\x00\x06\x00\x00\x00\x07" //...Q.. ......... |
-// /* 00e0 */ "\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x0c\x00\x00" //................ |
-// /* 00f0 */ "\x00\x00\x00\x02\x00\x02\x00\x08\x00\x0a\x00\x01\x00\x14\x00\x15" //................ |
-// /* 0100 */ "\x00\x09\x00\x08\x00\x00\x00\x00\x00\x0d\x00\x58\x00\x91\x00\x20" //...........X...  |
-// /* 0110 */ "\x00\x0c\x04\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00" //................ |
+// Socket RDP Client (5) receiving 515 bytes |
+// Recv done on RDP Client (5) 515 bytes |
+// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\xf8\xf8\x01\x13\x00\xe9" //...d....p....... |
+// /* 0010 */ "\x03\x02\x00\x01\x00\xe9\x03\x06\x00\xe2\x01\x4d\x53\x54\x53\x43" //...........MSTSC |
+// /* 0020 */ "\x00\x13\x00\x00\x00\x01\x00\x18\x00\x01\x00\x03\x00\x00\x02\x00" //................ |
+// /* 0030 */ "\x00\x00\x00\x0d\x04\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1c" //................ |
+// /* 0040 */ "\x00\x10\x00\x01\x00\x01\x00\x01\x00\x00\x04\x00\x03\x00\x00\x01" //................ |
+// /* 0050 */ "\x00\x01\x00\x00\x08\x01\x00\x00\x00\x03\x00\x58\x00\x00\x00\x00" //...........X.... |
+// /* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 0070 */ "\x00\x01\x00\x14\x00\x00\x00\x01\x00\x00\x00\xaa\x00\x01\x01\x01" //................ |
+// /* 0080 */ "\x01\x01\x00\x00\x01\x01\x01\x00\x01\x00\x00\x00\x01\x01\x01\x01" //................ |
+// /* 0090 */ "\x01\x01\x01\x01\x00\x01\x01\x01\x00\x00\x00\x00\x00\xa1\x06\x06" //................ |
+// /* 00a0 */ "\x00\x00\x00\x00\x00\x00\x84\x03\x00\x00\x00\x00\x00\xe4\x04\x00" //................ |
+// /* 00b0 */ "\x00\x04\x00\x28\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //...(............ |
+// /* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x78\x00\x00" //.............x.. |
+// /* 00d0 */ "\x02\x78\x00\x00\x08\x51\x01\x00\x20\x0a\x00\x08\x00\x06\x00\x00" //.x...Q.. ....... |
+// /* 00e0 */ "\x00\x07\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x0c" //................ |
+// /* 00f0 */ "\x00\x00\x00\x00\x00\x02\x00\x02\x00\x08\x00\x0a\x00\x01\x00\x14" //................ |
+// /* 0100 */ "\x00\x15\x00\x09\x00\x08\x00\x00\x00\x00\x00\x0d\x00\x58\x00\x91" //.............X.. |
+// /* 0110 */ "\x00\x20\x00\x0c\x04\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x0c" //. .............. |
 // /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0160 */ "\x00\x0c\x00\x08\x00\x01\x00\x00\x00\x0e\x00\x08\x00\x01\x00\x00" //................ |
-// /* 0170 */ "\x00\x10\x00\x34\x00\xfe\x00\x04\x00\xfe\x00\x04\x00\xfe\x00\x08" //...4............ |
-// /* 0180 */ "\x00\xfe\x00\x08\x00\xfe\x00\x10\x00\xfe\x00\x20\x00\xfe\x00\x40" //........... ...@ |
-// /* 0190 */ "\x00\xfe\x00\x80\x00\xfe\x00\x00\x01\x40\x00\x00\x08\x00\x01\x00" //.........@...... |
-// /* 01a0 */ "\x01\x03\x00\x00\x00\x0f\x00\x08\x00\x01\x00\x00\x00\x11\x00\x0c" //................ |
-// /* 01b0 */ "\x00\x01\x00\x00\x00\x00\x14\x64\x00\x14\x00\x08\x00\x01\x00\x00" //.......d........ |
-// /* 01c0 */ "\x00\x15\x00\x0c\x00\x02\x00\x00\x00\x00\x0a\x00\x01\x16\x00\x28" //...............( |
-// /* 01d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 0160 */ "\x00\x00\x00\x0c\x00\x08\x00\x01\x00\x00\x00\x0e\x00\x08\x00\x01" //................ |
+// /* 0170 */ "\x00\x00\x00\x10\x00\x34\x00\xfe\x00\x04\x00\xfe\x00\x04\x00\xfe" //.....4.......... |
+// /* 0180 */ "\x00\x08\x00\xfe\x00\x08\x00\xfe\x00\x10\x00\xfe\x00\x20\x00\xfe" //............. .. |
+// /* 0190 */ "\x00\x40\x00\xfe\x00\x80\x00\xfe\x00\x00\x01\x40\x00\x00\x08\x00" //.@.........@.... |
+// /* 01a0 */ "\x01\x00\x01\x03\x00\x00\x00\x0f\x00\x08\x00\x01\x00\x00\x00\x11" //................ |
+// /* 01b0 */ "\x00\x0c\x00\x01\x00\x00\x00\x00\x14\x64\x00\x14\x00\x0c\x00\x01" //.........d...... |
+// /* 01c0 */ "\x00\x00\x00\x00\x00\x00\x00\x15\x00\x0c\x00\x02\x00\x00\x00\x00" //................ |
+// /* 01d0 */ "\x0a\x00\x01\x16\x00\x28\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //.....(.......... |
 // /* 01e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01f0 */ "\x00\x00\x00\x00\x00\x1a\x00\x08\x00\x00\x00\x00\x00"             //............. |
-// Dump done on RDP Client (5) 509 bytes |
+// /* 01f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1a\x00\x08\x00\x00" //................ |
+// /* 0200 */ "\x00\x00\x00"                                                     //... |
+// Dump done on RDP Client (5) 515 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0xf4, 0x01, 0x13, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0xe9, 0x03, 0x06, 0x00, 0xde, 0x01,  // ................ |
+// /* 0000 */ 0xf8, 0x01, 0x13, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0xe9, 0x03, 0x06, 0x00, 0xe2, 0x01,  // ................ |
 // /* 0010 */ 0x4d, 0x53, 0x54, 0x53, 0x43, 0x00, 0x13, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x01, 0x00,  // MSTSC........... |
 // /* 0020 */ 0x03, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
 // /* 0030 */ 0x00, 0x00, 0x02, 0x00, 0x1c, 0x00, 0x10, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x04,  // ................ |
 // /* 0040 */ 0x00, 0x03, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00, 0x03, 0x00,  // ................ |
 // /* 0050 */ 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // X............... |
 // /* 0060 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x14, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,  // ................ |
-// /* 0070 */ 0x2a, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x01, 0x01, 0x01, 0x00, 0x01, 0x00, 0x00,  // *............... |
+// /* 0070 */ 0xaa, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x01, 0x01, 0x01, 0x00, 0x01, 0x00, 0x00,  // ................ |
 // /* 0080 */ 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00,  // ................ |
-// /* 0090 */ 0x00, 0x00, 0xa1, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x84, 0x03, 0x00, 0x00, 0x00,  // ................ |
+// /* 0090 */ 0x00, 0x00, 0xa1, 0x06, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x84, 0x03, 0x00, 0x00, 0x00,  // ................ |
 // /* 00a0 */ 0x00, 0x00, 0xe4, 0x04, 0x00, 0x00, 0x04, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ........(....... |
 // /* 00b0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
 // /* 00c0 */ 0x00, 0x00, 0x78, 0x00, 0x00, 0x02, 0x78, 0x00, 0x00, 0x08, 0x51, 0x01, 0x00, 0x20, 0x0a, 0x00,  // ..x...x...Q.. .. |
@@ -744,16 +704,16 @@ const char outdata[] =
 // /* 0180 */ 0xfe, 0x00, 0x20, 0x00, 0xfe, 0x00, 0x40, 0x00, 0xfe, 0x00, 0x80, 0x00, 0xfe, 0x00, 0x00, 0x01,  // .. ...@......... |
 // /* 0190 */ 0x40, 0x00, 0x00, 0x08, 0x00, 0x01, 0x00, 0x01, 0x03, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x08, 0x00,  // @............... |
 // /* 01a0 */ 0x01, 0x00, 0x00, 0x00, 0x11, 0x00, 0x0c, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x14, 0x64, 0x00,  // ..............d. |
-// /* 01b0 */ 0x14, 0x00, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00, 0x15, 0x00, 0x0c, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
-// /* 01c0 */ 0x00, 0x0a, 0x00, 0x01, 0x16, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ......(......... |
+// /* 01b0 */ 0x14, 0x00, 0x0c, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x0c, 0x00,  // ................ |
+// /* 01c0 */ 0x02, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x01, 0x16, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00,  // ..........(..... |
 // /* 01d0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 01e0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1a, 0x00, 0x08, 0x00,  // ................ |
-// /* 01f0 */ 0x00, 0x00, 0x00, 0x00,                                      // .... |
+// /* 01e0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 01f0 */ 0x1a, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00,                          // ........ |
 // Front::incoming::sec_flags=0 |
 // Front received CONFIRMACTIVEPDU |
 // process_confirm_active |
 // lengthSourceDescriptor = 6 |
-// lengthCombinedCapabilities = 478 |
+// lengthCombinedCapabilities = 482 |
 // Front::capability 0 / 19 |
 // Receiving from client General caps (24 bytes) |
 // General caps::major 1 |
@@ -799,7 +759,7 @@ const char outdata[] =
 // Order caps::pad2octetsA 0 |
 // Order caps::maximumOrderLevel 1 |
 // Order caps::numberFonts 0 |
-// Order caps::orderFlags 42 |
+// Order caps::orderFlags 170 |
 // Order caps::orderSupport[TS_NEG_DSTBLT_INDEX] 1 |
 // Order caps::orderSupport[TS_NEG_PATBLT_INDEX] 1 |
 // Order caps::orderSupport[TS_NEG_SCRBLT_INDEX] 1 |
@@ -833,7 +793,7 @@ const char outdata[] =
 // Order caps::orderSupport[UnusedIndex10] 0 |
 // Order caps::orderSupport[UnusedIndex11] 0 |
 // Order caps::textFlags 1697 |
-// Order caps::orderSupportExFlags 0 |
+// Order caps::orderSupportExFlags 6 |
 // Order caps::pad4octetsB 0 |
 // Order caps::desktopSaveSize 230400 |
 // Order caps::pad2octetsC 0 |
@@ -861,7 +821,10 @@ const char outdata[] =
 // Front::capability 6 / 19 |
 // Receiving from client CAPSTYPE_CONTROL |
 // Front::capability 7 / 19 |
-// Receiving from client CAPSTYPE_POINTER |
+// Receiving from client Pointer caps (10 bytes) |
+// Pointer caps::colorPointerFlag 1 |
+// Pointer caps::colorPointerCacheSize 20 |
+// Pointer caps::pointerCacheSize 21 |
 // Front::capability 8 / 19 |
 // Receiving from client CAPSTYPE_SHARE |
 // Front::capability 9 / 19 |
@@ -890,426 +853,12 @@ const char outdata[] =
 // Front::capability 18 / 19 |
 // Receiving from client MultifragmentUpdate caps (8 bytes) |
 // MultifragmentUpdate caps::MaxRequestSize 0 |
-// process_confirm_active done p=0x7fff23aa1f1b end=0x7fff23aa1f1b |
+// process_confirm_active done p=0x7fff50ab6e57 end=0x7fff50ab6e57 |
 // Front::reset::use_bitmap_comp=1 |
 // Front::reset::use_compact_packets=1 |
 // Front::reset::bitmap_cache_version=0 |
 // Front: Use RDP 5.0 Bulk compression |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[0](2000) used=2 free=16276 |
-// Front::send_pointer(cache_idx=0 x=0 y=0) |
-// Front::send_pointer: fast-path |
-// Sending on RDP Client (5) 3220 bytes |
-/* 0000 */ "\x00\x8c\x94\x09\x8e\x0c\x00\x00\x00\x00\x00\x00\x20\x00\x20\x00" //............ . . |
-/* 0010 */ "\x80\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0030 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0040 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0050 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0070 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0090 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0160 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0170 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0180 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0190 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0200 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0210 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0220 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0230 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0240 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0250 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0260 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0270 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0280 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0290 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0300 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0310 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0320 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0330 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0340 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0350 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0360 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0370 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0380 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0390 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0400 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0410 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0420 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0430 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0440 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0450 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0460 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0470 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0480 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0490 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0500 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\x00" //................ |
-/* 0510 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0520 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0530 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0540 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0550 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0560 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff" //................ |
-/* 0570 */ "\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0580 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0590 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05c0 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff" //................ |
-/* 05d0 */ "\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0600 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0610 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0620 */ "\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00" //................ |
-/* 0630 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0640 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0650 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0660 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0670 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0680 */ "\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00" //................ |
-/* 0690 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06d0 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00" //................ |
-/* 06e0 */ "\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00" //................ |
-/* 06f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0700 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0710 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0720 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0730 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00" //................ |
-/* 0740 */ "\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00" //................ |
-/* 0750 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0760 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0770 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0780 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0790 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-/* 07a0 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07f0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0800 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0810 */ "\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0820 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0830 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0840 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0850 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0860 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff" //................ |
-/* 0870 */ "\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0880 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0890 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08b0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00" //................ |
-/* 08d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0900 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0910 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0920 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00" //................ |
-/* 0930 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0940 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0950 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0960 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0970 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0980 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0990 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09d0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09e0 */ "\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a30 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a40 */ "\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a50 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a90 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-/* 0aa0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ab0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ac0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ad0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ae0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0af0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00" //................ |
-/* 0b00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b30 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b40 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b50 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b90 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ba0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bb0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bc0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bd0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0be0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bf0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0c00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0c10 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c20 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c30 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c40 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xfe\x7f\xff\xff\xfc\x3f\xff\xff" //.............?.. |
-/* 0c50 */ "\xfc\x3f\xff\xff\xf8\x7f\xff\xff\x78\x7f\xff\xff\x30\xff\xff\xff" //.?......x...0... |
-/* 0c60 */ "\x10\xff\xff\xff\x01\xff\xff\xff\x00\x1f\xff\xff\x00\x3f\xff\xff" //.............?.. |
-/* 0c70 */ "\x00\x7f\xff\xff\x00\xff\xff\xff\x01\xff\xff\xff\x03\xff\xff\xff" //................ |
-/* 0c80 */ "\x07\xff\xff\xff\x0f\xff\xff\xff\x1f\xff\xff\xff\x3f\xff\xff\xff" //............?... |
-/* 0c90 */ "\x7f\xff\xff\xff"                                                 //.... |
-// Sent dumped on RDP Client (5) 3220 bytes |
-// Front::send_pointer done |
-// Front::send_pointer(cache_idx=1 x=15 y=16) |
-// Front::send_pointer: fast-path |
-// Sending on RDP Client (5) 3220 bytes |
-/* 0000 */ "\x00\x8c\x94\x09\x8e\x0c\x01\x00\x0f\x00\x10\x00\x20\x00\x20\x00" //............ . . |
-/* 0010 */ "\x80\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0030 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0040 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0050 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0070 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0090 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0160 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0170 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0180 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0190 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0200 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0210 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0220 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0230 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0240 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0250 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0260 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0270 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0280 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0290 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02d0 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 02e0 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 02f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0300 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0310 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0320 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0330 */ "\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0340 */ "\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-/* 0350 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0360 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0370 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0380 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0390 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 03a0 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 03b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0400 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0410 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0420 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0430 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0440 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0450 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0460 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0470 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0480 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0490 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 04c0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0500 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0510 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0520 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0530 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0540 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0550 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0560 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0570 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0580 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0590 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 05e0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0600 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0610 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0620 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0630 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0640 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0650 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0660 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0670 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0680 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0690 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 06a0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0700 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0710 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0720 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0730 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0740 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0750 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0760 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0770 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0780 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0790 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 07c0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0800 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0810 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0820 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0830 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0840 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0850 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0860 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0870 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0880 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0890 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08d0 */ "\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08e0 */ "\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-/* 08f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0900 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0910 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0920 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0930 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0940 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0950 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0960 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0970 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0980 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0990 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a30 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a40 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a50 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a90 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0aa0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ab0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ac0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ad0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ae0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0af0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b30 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b40 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b50 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b90 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ba0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bb0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bc0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bd0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0be0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bf0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0c00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0c10 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c20 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c30 */ "\xff\xe1\x0f\xff\xff\xe0\x0f\xff\xff\xe0\x0f\xff\xff\xfc\x7f\xff" //................ |
-/* 0c40 */ "\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff" //................ |
-/* 0c50 */ "\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff" //................ |
-/* 0c60 */ "\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xe0\x0f\xff" //................ |
-/* 0c70 */ "\xff\xe0\x0f\xff\xff\xe1\x0f\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c80 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c90 */ "\xff\xff\xff\xff"                                                 //.... |
-// Sent dumped on RDP Client (5) 3220 bytes |
-// Front::send_pointer done |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[0](2000) used=2 free=16276 |
 // Front received CONFIRMACTIVEPDU done |
 // Front::incoming() |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
@@ -1321,22 +870,18 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x24"                                                     //..$ |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 30 bytes |
-// Recv done on RDP Client (5) 30 bytes |
-// /* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x16\x16\x00\x17\x00\xe9\x03\x02\x00" //.d....p......... |
-// /* 0010 */ "\x01\x00\x00\x01\x08\x00\x1f\x00\x00\x00\x01\x00\xe9\x03"         //.............. |
-// Dump done on RDP Client (5) 30 bytes |
+// Socket RDP Client (5) receiving 32 bytes |
+// Recv done on RDP Client (5) 32 bytes |
+// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x16\x16\x00\x17\x00\xe9\x03" //...d....p....... |
+// /* 0010 */ "\x02\x00\x01\x00\x00\x01\x08\x00\x1f\x00\x00\x00\x01\x00\xe9\x03" //................ |
+// Dump done on RDP Client (5) 32 bytes |
 // sec decrypted payload: |
 // /* 0000 */ 0x16, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x01, 0x08, 0x00, 0x1f, 0x00,  // ................ |
 // /* 0010 */ 0x00, 0x00, 0x01, 0x00, 0xe9, 0x03,                                // ...... |
 // Front::incoming::sec_flags=0 |
 // Front received DATAPDU |
 // Front::process_data(...) |
-// sdata_in.pdutype2=31 sdata_in.len=8 sdata_in.compressedLen=0 remains=4 payload_len=4 |
+// sdata_in.pdutype2=31 sdata_in.len=8 sdata_in.compressedLen=0 remains=0 payload_len=4 |
 // PDUTYPE2_SYNCHRONIZE |
 // PDUTYPE2_SYNCHRONIZE messageType=1 controlId=1001 |
 // send_synchronize |
@@ -1361,23 +906,19 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x28"                                                     //..( |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 34 bytes |
-// Recv done on RDP Client (5) 34 bytes |
-// /* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x1a\x1a\x00\x17\x00\xe9\x03\x02\x00" //.d....p......... |
-// /* 0010 */ "\x01\x00\x00\x01\x0c\x00\x14\x00\x00\x00\x04\x00\x00\x00\x00\x00" //................ |
-// /* 0020 */ "\x00\x00"                                                         //.. |
-// Dump done on RDP Client (5) 34 bytes |
+// Socket RDP Client (5) receiving 36 bytes |
+// Recv done on RDP Client (5) 36 bytes |
+// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x1a\x1a\x00\x17\x00\xe9\x03" //...d....p....... |
+// /* 0010 */ "\x02\x00\x01\x00\x00\x01\x0c\x00\x14\x00\x00\x00\x04\x00\x00\x00" //................ |
+// /* 0020 */ "\x00\x00\x00\x00"                                                 //.... |
+// Dump done on RDP Client (5) 36 bytes |
 // sec decrypted payload: |
 // /* 0000 */ 0x1a, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x01, 0x0c, 0x00, 0x14, 0x00,  // ................ |
 // /* 0010 */ 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,                    // .......... |
 // Front::incoming::sec_flags=0 |
 // Front received DATAPDU |
 // Front::process_data(...) |
-// sdata_in.pdutype2=20 sdata_in.len=12 sdata_in.compressedLen=0 remains=8 payload_len=8 |
+// sdata_in.pdutype2=20 sdata_in.len=12 sdata_in.compressedLen=0 remains=0 payload_len=8 |
 // PDUTYPE2_CONTROL |
 // send_control action=4 |
 // Sec clear payload to send: |
@@ -1401,23 +942,19 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x28"                                                     //..( |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 34 bytes |
-// Recv done on RDP Client (5) 34 bytes |
-// /* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x1a\x1a\x00\x17\x00\xe9\x03\x02\x00" //.d....p......... |
-// /* 0010 */ "\x01\x00\x00\x01\x0c\x00\x14\x00\x00\x00\x01\x00\x00\x00\x00\x00" //................ |
-// /* 0020 */ "\x00\x00"                                                         //.. |
-// Dump done on RDP Client (5) 34 bytes |
+// Socket RDP Client (5) receiving 36 bytes |
+// Recv done on RDP Client (5) 36 bytes |
+// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x1a\x1a\x00\x17\x00\xe9\x03" //...d....p....... |
+// /* 0010 */ "\x02\x00\x01\x00\x00\x01\x0c\x00\x14\x00\x00\x00\x01\x00\x00\x00" //................ |
+// /* 0020 */ "\x00\x00\x00\x00"                                                 //.... |
+// Dump done on RDP Client (5) 36 bytes |
 // sec decrypted payload: |
 // /* 0000 */ 0x1a, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x01, 0x0c, 0x00, 0x14, 0x00,  // ................ |
 // /* 0010 */ 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,                    // .......... |
 // Front::incoming::sec_flags=0 |
 // Front received DATAPDU |
 // Front::process_data(...) |
-// sdata_in.pdutype2=20 sdata_in.len=12 sdata_in.compressedLen=0 remains=8 payload_len=8 |
+// sdata_in.pdutype2=20 sdata_in.len=12 sdata_in.compressedLen=0 remains=0 payload_len=8 |
 // PDUTYPE2_CONTROL |
 // send_control action=2 |
 // Sec clear payload to send: |
@@ -1441,23 +978,19 @@ const char outdata[] =
 // Recv done on RDP Client (5) 3 bytes |
 // /* 0000 */ "\x00\x00\x28"                                                     //..( |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-// /* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 34 bytes |
-// Recv done on RDP Client (5) 34 bytes |
-// /* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x1a\x1a\x00\x17\x00\xe9\x03\x02\x00" //.d....p......... |
-// /* 0010 */ "\x01\x00\x00\x01\x00\x00\x27\x00\x00\x00\x00\x00\x00\x00\x03\x00" //......'......... |
-// /* 0020 */ "\x32\x00"                                                         //2. |
-// Dump done on RDP Client (5) 34 bytes |
+// Socket RDP Client (5) receiving 36 bytes |
+// Recv done on RDP Client (5) 36 bytes |
+// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x1a\x1a\x00\x17\x00\xe9\x03" //...d....p....... |
+// /* 0010 */ "\x02\x00\x01\x00\x00\x01\x00\x00\x27\x00\x00\x00\x00\x00\x00\x00" //........'....... |
+// /* 0020 */ "\x03\x00\x32\x00"                                                 //..2. |
+// Dump done on RDP Client (5) 36 bytes |
 // sec decrypted payload: |
 // /* 0000 */ 0x1a, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x27, 0x00,  // ..............'. |
 // /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x32, 0x00,                    // ........2. |
 // Front::incoming::sec_flags=0 |
 // Front received DATAPDU |
 // Front::process_data(...) |
-// sdata_in.pdutype2=39 sdata_in.len=0 sdata_in.compressedLen=0 remains=8 payload_len=8 |
+// sdata_in.pdutype2=39 sdata_in.len=0 sdata_in.compressedLen=0 remains=0 payload_len=8 |
 // PDUTYPE2_FONTLIST |
 // send_fontmap |
 // Sec clear payload to send: |
@@ -1494,584 +1027,170 @@ const char outdata[] =
 // Sending on RDP Client (5) 5 bytes |
 /* 0000 */ "\x00\x05\x03\x00\x00"                                             //..... |
 // Sent dumped on RDP Client (5) 5 bytes |
-// Front::send_pointer(cache_idx=0 x=0 y=0) |
-// Front::send_pointer: fast-path |
-// Sending on RDP Client (5) 3220 bytes |
-/* 0000 */ "\x00\x8c\x94\x09\x8e\x0c\x00\x00\x00\x00\x00\x00\x20\x00\x20\x00" //............ . . |
-/* 0010 */ "\x80\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0030 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0040 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0050 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0070 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0090 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0160 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0170 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0180 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0190 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0200 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0210 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0220 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0230 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0240 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0250 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0260 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0270 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0280 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0290 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0300 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0310 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0320 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0330 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0340 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0350 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0360 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0370 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0380 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0390 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0400 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0410 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0420 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0430 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0440 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0450 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0460 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0470 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0480 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0490 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0500 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\x00" //................ |
-/* 0510 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0520 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0530 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0540 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0550 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0560 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff" //................ |
-/* 0570 */ "\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0580 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0590 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05c0 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff" //................ |
-/* 05d0 */ "\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0600 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0610 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0620 */ "\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00" //................ |
-/* 0630 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0640 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0650 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0660 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0670 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0680 */ "\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00" //................ |
-/* 0690 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06d0 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00" //................ |
-/* 06e0 */ "\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00" //................ |
-/* 06f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0700 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0710 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0720 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0730 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00" //................ |
-/* 0740 */ "\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00" //................ |
-/* 0750 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0760 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0770 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0780 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0790 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-/* 07a0 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07f0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0800 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0810 */ "\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0820 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0830 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0840 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0850 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0860 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff" //................ |
-/* 0870 */ "\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0880 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0890 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08b0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00" //................ |
-/* 08d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0900 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0910 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0920 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00" //................ |
-/* 0930 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0940 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0950 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0960 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0970 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0980 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0990 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09d0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09e0 */ "\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a30 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a40 */ "\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a50 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a90 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-/* 0aa0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ab0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ac0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ad0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ae0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0af0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00" //................ |
-/* 0b00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b30 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b40 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b50 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b90 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ba0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bb0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bc0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bd0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0be0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bf0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0c00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0c10 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c20 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c30 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c40 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xfe\x7f\xff\xff\xfc\x3f\xff\xff" //.............?.. |
-/* 0c50 */ "\xfc\x3f\xff\xff\xf8\x7f\xff\xff\x78\x7f\xff\xff\x30\xff\xff\xff" //.?......x...0... |
-/* 0c60 */ "\x10\xff\xff\xff\x01\xff\xff\xff\x00\x1f\xff\xff\x00\x3f\xff\xff" //.............?.. |
-/* 0c70 */ "\x00\x7f\xff\xff\x00\xff\xff\xff\x01\xff\xff\xff\x03\xff\xff\xff" //................ |
-/* 0c80 */ "\x07\xff\xff\xff\x0f\xff\xff\xff\x1f\xff\xff\xff\x3f\xff\xff\xff" //............?... |
-/* 0c90 */ "\x7f\xff\xff\xff"                                                 //.... |
-// Sent dumped on RDP Client (5) 3220 bytes |
-// Front::send_pointer done |
-// Front::send_pointer(cache_idx=1 x=15 y=16) |
-// Front::send_pointer: fast-path |
-// Sending on RDP Client (5) 3220 bytes |
-/* 0000 */ "\x00\x8c\x94\x09\x8e\x0c\x01\x00\x0f\x00\x10\x00\x20\x00\x20\x00" //............ . . |
-/* 0010 */ "\x80\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0030 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0040 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0050 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0070 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0090 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0160 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0170 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0180 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0190 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0200 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0210 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0220 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0230 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0240 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0250 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0260 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0270 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0280 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0290 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 02d0 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 02e0 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 02f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0300 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0310 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0320 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0330 */ "\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0340 */ "\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-/* 0350 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0360 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0370 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0380 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0390 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 03a0 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 03b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 03f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0400 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0410 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0420 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0430 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0440 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0450 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0460 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0470 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0480 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0490 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 04c0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 04f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0500 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0510 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0520 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0530 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0540 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0550 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0560 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0570 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0580 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0590 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 05e0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 05f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0600 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0610 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0620 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0630 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0640 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0650 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0660 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0670 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0680 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0690 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 06a0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 06f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0700 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0710 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0720 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0730 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0740 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0750 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0760 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0770 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0780 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0790 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 07c0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 07f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0800 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0810 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-/* 0820 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0830 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0840 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0850 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0860 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0870 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0880 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0890 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08d0 */ "\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 08e0 */ "\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-/* 08f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0900 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0910 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0920 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0930 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0940 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0950 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0960 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0970 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0980 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0990 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 09f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a30 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a40 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a50 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0a90 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0aa0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ab0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ac0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ad0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ae0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0af0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b30 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b40 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b50 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0b90 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0ba0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bb0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bc0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bd0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0be0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0bf0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0c00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0c10 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c20 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c30 */ "\xff\xe1\x0f\xff\xff\xe0\x0f\xff\xff\xe0\x0f\xff\xff\xfc\x7f\xff" //................ |
-/* 0c40 */ "\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff" //................ |
-/* 0c50 */ "\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff" //................ |
-/* 0c60 */ "\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xe0\x0f\xff" //................ |
-/* 0c70 */ "\xff\xe0\x0f\xff\xff\xe1\x0f\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c80 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-/* 0c90 */ "\xff\xff\xff\xff"                                                 //.... |
-// Sent dumped on RDP Client (5) 3220 bytes |
-// Front::send_pointer done |
 // --------------> UP AND RUNNING <---------------- |
 // asking for selector |
 // process_data done |
 // Front received DATAPDU done |
 // Front::begin_update() |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[1](23) used=1035 free=15243 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](23) used=1035 free=15243 |
 // order(10 clip(0,0,1,1)):opaquerect(rect(0,0,1024,768) color=0x00ffff) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[2](23) used=1044 free=15234 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](23) used=1044 free=15234 |
 // order(10 clip(0,0,1,1)):opaquerect(rect(5,5,1014,758) color=0x00f800) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[3](23) used=1052 free=15226 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](23) used=1052 free=15226 |
 // order(10 clip(0,0,1,1)):opaquerect(rect(10,10,1004,748) color=0x0007e0) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[4](23) used=1060 free=15218 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](23) used=1060 free=15218 |
 // order(10 clip(0,0,1,1)):opaquerect(rect(15,15,994,738) color=0x00001f) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[5](23) used=1068 free=15210 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](23) used=1068 free=15210 |
 // order(10 clip(0,0,1,1)):opaquerect(rect(20,20,984,728) color=0x000000) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[6](23) used=1075 free=15203 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[6](23) used=1075 free=15203 |
 // order(10 clip(0,0,1,1)):opaquerect(rect(30,30,964,708) color=0x000273) |
 // Widget_load: image file [./tests/fixtures/Philips_PM5544_640.png] is PNG file |
 // front::draw:draw_tile((192, 144, 64, 64) (0, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[7](8208) used=1083 free=15195 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[8](30) used=1211 free=15067 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[7](8208) used=1083 free=15195 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[8](30) used=1211 free=15067 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=0) |
 // front::draw:draw_tile((256, 144, 64, 64) (64, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[9](8208) used=1225 free=15053 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[10](30) used=1376 free=14902 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[9](8208) used=1225 free=15053 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[10](30) used=1376 free=14902 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=1) |
 // front::draw:draw_tile((320, 144, 64, 64) (128, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[11](8208) used=1382 free=14896 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[12](30) used=1489 free=14789 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[11](8208) used=1382 free=14896 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[12](30) used=1489 free=14789 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=2) |
 // front::draw:draw_tile((384, 144, 64, 64) (192, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[13](8208) used=1495 free=14783 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[14](30) used=1937 free=14341 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[13](8208) used=1495 free=14783 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[14](30) used=1937 free=14341 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=3) |
 // front::draw:draw_tile((448, 144, 64, 64) (256, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[15](8208) used=1943 free=14335 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[16](30) used=2195 free=14083 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[15](8208) used=1943 free=14335 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[16](30) used=2195 free=14083 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=4) |
 // front::draw:draw_tile((512, 144, 64, 64) (320, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[17](8208) used=2201 free=14077 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[18](30) used=2464 free=13814 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[17](8208) used=2201 free=14077 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[18](30) used=2464 free=13814 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=5) |
 // front::draw:draw_tile((576, 144, 64, 64) (384, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[19](8208) used=2470 free=13808 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[20](30) used=2924 free=13354 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[19](8208) used=2470 free=13808 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[20](30) used=2924 free=13354 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=6) |
 // front::draw:draw_tile((640, 144, 64, 64) (448, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[21](8208) used=2930 free=13348 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[22](30) used=3023 free=13255 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[21](8208) used=2930 free=13348 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[22](30) used=3023 free=13255 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=7) |
 // front::draw:draw_tile((704, 144, 64, 64) (512, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[23](8208) used=3029 free=13249 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[24](30) used=3183 free=13095 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[23](8208) used=3029 free=13249 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[24](30) used=3183 free=13095 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=8) |
 // front::draw:draw_tile((768, 144, 64, 64) (576, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[25](8208) used=3189 free=13089 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[26](30) used=3334 free=12944 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[25](8208) used=3189 free=13089 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[26](30) used=3334 free=12944 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=9) |
 // front::draw:draw_tile((192, 208, 64, 64) (0, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[27](8208) used=3340 free=12938 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[28](30) used=3443 free=12835 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[27](8208) used=3340 free=12938 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[28](30) used=3443 free=12835 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=10) |
 // front::draw:draw_tile((256, 208, 64, 64) (64, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[29](8208) used=3452 free=12826 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[30](30) used=3585 free=12693 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[29](8208) used=3452 free=12826 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[30](30) used=3585 free=12693 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=11) |
 // front::draw:draw_tile((320, 208, 64, 64) (128, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[31](8208) used=3591 free=12687 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[32](30) used=4143 free=12135 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[31](8208) used=3591 free=12687 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[32](30) used=4143 free=12135 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=12) |
 // front::draw:draw_tile((384, 208, 64, 64) (192, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[33](8208) used=4149 free=12129 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[34](30) used=4262 free=12016 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[33](8208) used=4149 free=12129 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[34](30) used=4262 free=12016 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=13) |
 // front::draw:draw_tile((448, 208, 64, 64) (256, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[35](8208) used=4268 free=12010 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[36](30) used=4308 free=11970 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[35](8208) used=4268 free=12010 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[36](30) used=4308 free=11970 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=14) |
 // front::draw:draw_tile((512, 208, 64, 64) (320, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[37](8208) used=4314 free=11964 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[38](30) used=4355 free=11923 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[37](8208) used=4314 free=11964 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[38](30) used=4355 free=11923 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=15) |
 // front::draw:draw_tile((576, 208, 64, 64) (384, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[39](8208) used=4361 free=11917 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[40](30) used=4452 free=11826 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[39](8208) used=4361 free=11917 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[40](30) used=4452 free=11826 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=16) |
 // front::draw:draw_tile((640, 208, 64, 64) (448, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[41](8208) used=4458 free=11820 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[42](30) used=5038 free=11240 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[41](8208) used=4458 free=11820 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[42](30) used=5038 free=11240 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=17) |
 // front::draw:draw_tile((704, 208, 64, 64) (512, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[43](8208) used=5044 free=11234 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[44](30) used=5177 free=11101 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[43](8208) used=5044 free=11234 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[44](30) used=5177 free=11101 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=18) |
 // front::draw:draw_tile((768, 208, 64, 64) (576, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[45](8208) used=5183 free=11095 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[46](30) used=5289 free=10989 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[45](8208) used=5183 free=11095 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[46](30) used=5289 free=10989 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=19) |
 // front::draw:draw_tile((192, 272, 64, 64) (0, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[47](8208) used=5295 free=10983 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[48](30) used=5400 free=10878 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[47](8208) used=5295 free=10983 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[48](30) used=5400 free=10878 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=20) |
 // front::draw:draw_tile((256, 272, 64, 64) (64, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[49](8208) used=5409 free=10869 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[50](30) used=5807 free=10471 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[49](8208) used=5409 free=10869 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[50](30) used=5807 free=10471 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=21) |
 // front::draw:draw_tile((320, 272, 64, 64) (128, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[51](8208) used=5813 free=10465 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[52](30) used=5959 free=10319 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[51](8208) used=5813 free=10465 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[52](30) used=5959 free=10319 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=22) |
 // front::draw:draw_tile((384, 272, 64, 64) (192, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[53](8208) used=5965 free=10313 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[54](30) used=6038 free=10240 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[53](8208) used=5965 free=10313 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[54](30) used=6038 free=10240 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=23) |
 // front::draw:draw_tile((448, 272, 64, 64) (256, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[55](8208) used=6044 free=10234 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[56](30) used=6118 free=10160 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[55](8208) used=6044 free=10234 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[56](30) used=6118 free=10160 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=24) |
 // front::draw:draw_tile((512, 272, 64, 64) (320, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[57](8208) used=6124 free=10154 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[58](30) used=6193 free=10085 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[57](8208) used=6124 free=10154 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[58](30) used=6193 free=10085 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=25) |
 // front::draw:draw_tile((576, 272, 64, 64) (384, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[59](8208) used=6199 free=10079 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[60](30) used=6270 free=10008 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[59](8208) used=6199 free=10079 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[60](30) used=6270 free=10008 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=26) |
 // front::draw:draw_tile((640, 272, 64, 64) (448, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[61](8208) used=6276 free=10002 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[62](30) used=6419 free=9859 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[61](8208) used=6276 free=10002 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[62](30) used=6419 free=9859 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=27) |
 // front::draw:draw_tile((704, 272, 64, 64) (512, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[63](8208) used=6425 free=9853 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[64](30) used=6844 free=9434 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[63](8208) used=6425 free=9853 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[64](30) used=6844 free=9434 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=28) |
 // front::draw:draw_tile((768, 272, 64, 64) (576, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[65](8208) used=6850 free=9428 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[66](30) used=6958 free=9320 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[65](8208) used=6850 free=9428 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[66](30) used=6958 free=9320 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=29) |
 // front::draw:draw_tile((192, 336, 64, 64) (0, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[67](8208) used=6964 free=9314 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[68](30) used=7049 free=9229 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[67](8208) used=6964 free=9314 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[68](30) used=7049 free=9229 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=30) |
 // front::draw:draw_tile((256, 336, 64, 64) (64, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[69](8208) used=7058 free=9220 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[70](30) used=7498 free=8780 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[69](8208) used=7058 free=9220 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[70](30) used=7498 free=8780 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=31) |
 // front::draw:draw_tile((320, 336, 64, 64) (128, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[71](8208) used=7504 free=8774 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[72](30) used=7618 free=8660 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[71](8208) used=7504 free=8774 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[72](30) used=7618 free=8660 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=32) |
 // front::draw:draw_tile((384, 336, 64, 64) (192, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[73](8208) used=7624 free=8654 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[74](30) used=7775 free=8503 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[73](8208) used=7624 free=8654 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[74](30) used=7775 free=8503 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=33) |
 // front::draw:draw_tile((448, 336, 64, 64) (256, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[75](8208) used=7781 free=8497 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[76](30) used=7955 free=8323 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[75](8208) used=7781 free=8497 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[76](30) used=7955 free=8323 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=34) |
 // front::draw:draw_tile((512, 336, 64, 64) (320, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[77](8208) used=7961 free=8317 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[78](30) used=8130 free=8148 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[77](8208) used=7961 free=8317 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[78](30) used=8130 free=8148 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=35) |
 // front::draw:draw_tile((576, 336, 64, 64) (384, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[79](8208) used=8136 free=8142 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[79](8208) used=8136 free=8142 |
 // GraphicsUpdatePDU::flush_orders: order_count=79 offset=0 |
 // GraphicsUpdatePDU::flush_orders: fast-path |
 // Sending on RDP Client (5) 5520 bytes |
@@ -2421,134 +1540,134 @@ const char outdata[] =
 /* 1570 */ "\xa5\x1a\xa9\x50\x04\x05\x65\x30\x17\x69\x8d\x08\x94\xb6\x03\x37" //...P..e0.i.....7 |
 /* 1580 */ "\x9c\xd1\xc5\x65\x22\x3d\x9e\x0c\x01\xdd\x9e\x1c\x08\xe8\x8c\x00" //...e"=.......... |
 // Sent dumped on RDP Client (5) 5520 bytes |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[1](30) used=151 free=16127 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](30) used=151 free=16127 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=36) |
 // front::draw:draw_tile((640, 336, 64, 64) (448, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[2](8208) used=157 free=16121 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[3](30) used=267 free=16011 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](8208) used=157 free=16121 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](30) used=267 free=16011 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=37) |
 // front::draw:draw_tile((704, 336, 64, 64) (512, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[4](8208) used=273 free=16005 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[5](30) used=723 free=15555 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](8208) used=273 free=16005 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](30) used=723 free=15555 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=38) |
 // front::draw:draw_tile((768, 336, 64, 64) (576, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[6](8208) used=729 free=15549 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[7](30) used=814 free=15464 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[6](8208) used=729 free=15549 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[7](30) used=814 free=15464 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=39) |
 // front::draw:draw_tile((192, 400, 64, 64) (0, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[8](8208) used=820 free=15458 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[9](30) used=913 free=15365 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[8](8208) used=820 free=15458 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[9](30) used=913 free=15365 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=40) |
 // front::draw:draw_tile((256, 400, 64, 64) (64, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[10](8208) used=922 free=15356 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[11](30) used=1372 free=14906 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[10](8208) used=922 free=15356 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[11](30) used=1372 free=14906 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=41) |
 // front::draw:draw_tile((320, 400, 64, 64) (128, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[12](8208) used=1378 free=14900 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[13](30) used=1633 free=14645 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[12](8208) used=1378 free=14900 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[13](30) used=1633 free=14645 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=42) |
 // front::draw:draw_tile((384, 400, 64, 64) (192, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[14](8208) used=1639 free=14639 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[15](30) used=1938 free=14340 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[14](8208) used=1639 free=14639 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[15](30) used=1938 free=14340 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=43) |
 // front::draw:draw_tile((448, 400, 64, 64) (256, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[16](8208) used=1944 free=14334 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[17](30) used=2267 free=14011 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[16](8208) used=1944 free=14334 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[17](30) used=2267 free=14011 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=44) |
 // front::draw:draw_tile((512, 400, 64, 64) (320, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[18](8208) used=2273 free=14005 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[19](30) used=2594 free=13684 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[18](8208) used=2273 free=14005 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[19](30) used=2594 free=13684 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=45) |
 // front::draw:draw_tile((576, 400, 64, 64) (384, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[20](8208) used=2600 free=13678 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[21](30) used=2899 free=13379 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[20](8208) used=2600 free=13678 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[21](30) used=2899 free=13379 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=46) |
 // front::draw:draw_tile((640, 400, 64, 64) (448, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[22](8208) used=2905 free=13373 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[23](30) used=3143 free=13135 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[22](8208) used=2905 free=13373 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[23](30) used=3143 free=13135 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=47) |
 // front::draw:draw_tile((704, 400, 64, 64) (512, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[24](8208) used=3149 free=13129 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[25](30) used=3584 free=12694 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[24](8208) used=3149 free=13129 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[25](30) used=3584 free=12694 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=48) |
 // front::draw:draw_tile((768, 400, 64, 64) (576, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[26](8208) used=3590 free=12688 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[27](30) used=3682 free=12596 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[26](8208) used=3590 free=12688 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[27](30) used=3682 free=12596 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=49) |
 // front::draw:draw_tile((192, 464, 64, 64) (0, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[28](8208) used=3688 free=12590 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[29](30) used=3808 free=12470 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[28](8208) used=3688 free=12590 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[29](30) used=3808 free=12470 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=50) |
 // front::draw:draw_tile((256, 464, 64, 64) (64, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[30](8208) used=3817 free=12461 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[31](30) used=4093 free=12185 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[30](8208) used=3817 free=12461 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[31](30) used=4093 free=12185 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=51) |
 // front::draw:draw_tile((320, 464, 64, 64) (128, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[32](8208) used=4099 free=12179 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[33](30) used=4605 free=11673 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[32](8208) used=4099 free=12179 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[33](30) used=4605 free=11673 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=52) |
 // front::draw:draw_tile((384, 464, 64, 64) (192, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[34](8208) used=4611 free=11667 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[35](30) used=4817 free=11461 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[34](8208) used=4611 free=11667 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[35](30) used=4817 free=11461 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=53) |
 // front::draw:draw_tile((448, 464, 64, 64) (256, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[36](8208) used=4823 free=11455 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[37](30) used=4985 free=11293 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[36](8208) used=4823 free=11455 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[37](30) used=4985 free=11293 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=54) |
 // front::draw:draw_tile((512, 464, 64, 64) (320, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[38](8208) used=4991 free=11287 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[39](30) used=5151 free=11127 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[38](8208) used=4991 free=11287 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[39](30) used=5151 free=11127 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=55) |
 // front::draw:draw_tile((576, 464, 64, 64) (384, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[40](8208) used=5157 free=11121 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[41](30) used=5348 free=10930 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[40](8208) used=5157 free=11121 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[41](30) used=5348 free=10930 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=56) |
 // front::draw:draw_tile((640, 464, 64, 64) (448, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[42](8208) used=5354 free=10924 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[43](30) used=5806 free=10472 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[42](8208) used=5354 free=10924 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[43](30) used=5806 free=10472 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=57) |
 // front::draw:draw_tile((704, 464, 64, 64) (512, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[44](8208) used=5812 free=10466 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[45](30) used=6071 free=10207 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[44](8208) used=5812 free=10466 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[45](30) used=6071 free=10207 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=58) |
 // front::draw:draw_tile((768, 464, 64, 64) (576, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[46](8208) used=6077 free=10201 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[47](30) used=6197 free=10081 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[46](8208) used=6077 free=10201 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[47](30) used=6197 free=10081 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=59) |
 // front::draw:draw_tile((192, 528, 64, 64) (0, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[48](8208) used=6203 free=10075 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[49](30) used=6327 free=9951 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[48](8208) used=6203 free=10075 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[49](30) used=6327 free=9951 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=60) |
 // front::draw:draw_tile((256, 528, 64, 64) (64, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[50](8208) used=6336 free=9942 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[51](30) used=6474 free=9804 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[50](8208) used=6336 free=9942 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[51](30) used=6474 free=9804 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=61) |
 // front::draw:draw_tile((320, 528, 64, 64) (128, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[52](8208) used=6480 free=9798 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[53](30) used=6834 free=9444 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[52](8208) used=6480 free=9798 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[53](30) used=6834 free=9444 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=62) |
 // front::draw:draw_tile((384, 528, 64, 64) (192, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[54](8208) used=6840 free=9438 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[55](30) used=7367 free=8911 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[54](8208) used=6840 free=9438 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[55](30) used=7367 free=8911 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=63) |
 // front::draw:draw_tile((448, 528, 64, 64) (256, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[56](8208) used=7373 free=8905 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[57](30) used=7455 free=8823 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[56](8208) used=7373 free=8905 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[57](30) used=7455 free=8823 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=64) |
 // front::draw:draw_tile((512, 528, 64, 64) (320, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[58](8208) used=7461 free=8817 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[59](30) used=7520 free=8758 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[58](8208) used=7461 free=8817 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[59](30) used=7520 free=8758 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=65) |
 // front::draw:draw_tile((576, 528, 64, 64) (384, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[60](8208) used=7526 free=8752 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[61](30) used=8005 free=8273 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[60](8208) used=7526 free=8752 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[61](30) used=8005 free=8273 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=66) |
 // front::draw:draw_tile((640, 528, 64, 64) (448, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[62](8208) used=8011 free=8267 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[63](30) used=8326 free=7952 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[62](8208) used=8011 free=8267 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[63](30) used=8326 free=7952 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=67) |
 // front::draw:draw_tile((704, 528, 64, 64) (512, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[64](8208) used=8332 free=7946 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[64](8208) used=8332 free=7946 |
 // GraphicsUpdatePDU::flush_orders: order_count=64 offset=0 |
 // GraphicsUpdatePDU::flush_orders: fast-path |
 // Sending on RDP Client (5) 5229 bytes |
@@ -2880,114 +1999,122 @@ const char outdata[] =
 /* 1450 */ "\x3e\x3e\x4c\xfd\x28\xfc\x4c\x04\x07\x7f\xa6\x3e\x3b\xfb\xdf\x81" //>>L.(.L....>;... |
 /* 1460 */ "\x6f\xc2\x77\xd4\x0d\xdf\xa2\x4f\xb8\x00\xc2\x18\x00"             //o.w....O..... |
 // Sent dumped on RDP Client (5) 5229 bytes |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[1](30) used=141 free=16137 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](30) used=141 free=16137 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=68) |
 // front::draw:draw_tile((768, 528, 64, 64) (576, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[2](8208) used=147 free=16131 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[3](30) used=277 free=16001 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](8208) used=147 free=16131 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](30) used=277 free=16001 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=69) |
 // front::draw:draw_tile((192, 592, 64, 32) (0, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[4](4112) used=283 free=15995 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[5](30) used=355 free=15923 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](4112) used=283 free=15995 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](30) used=355 free=15923 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=70) |
 // front::draw:draw_tile((256, 592, 64, 32) (64, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[6](4112) used=366 free=15912 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[7](30) used=449 free=15829 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[6](4112) used=366 free=15912 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[7](30) used=449 free=15829 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=71) |
 // front::draw:draw_tile((320, 592, 64, 32) (128, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[8](4112) used=455 free=15823 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[9](30) used=514 free=15764 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[8](4112) used=455 free=15823 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[9](30) used=514 free=15764 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=72) |
 // front::draw:draw_tile((384, 592, 64, 32) (192, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[10](4112) used=520 free=15758 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[11](30) used=617 free=15661 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[10](4112) used=520 free=15758 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[11](30) used=617 free=15661 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=73) |
 // front::draw:draw_tile((448, 592, 64, 32) (256, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[12](4112) used=623 free=15655 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[13](30) used=881 free=15397 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[12](4112) used=623 free=15655 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[13](30) used=881 free=15397 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=74) |
 // front::draw:draw_tile((512, 592, 64, 32) (320, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[14](4112) used=887 free=15391 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[15](30) used=1155 free=15123 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[14](4112) used=887 free=15391 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[15](30) used=1155 free=15123 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=75) |
 // front::draw:draw_tile((576, 592, 64, 32) (384, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[16](4112) used=1161 free=15117 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[17](30) used=1262 free=15016 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[16](4112) used=1161 free=15117 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[17](30) used=1262 free=15016 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=76) |
 // front::draw:draw_tile((640, 592, 64, 32) (448, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[18](4112) used=1268 free=15010 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[19](30) used=1321 free=14957 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[18](4112) used=1268 free=15010 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[19](30) used=1321 free=14957 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=77) |
 // front::draw:draw_tile((704, 592, 64, 32) (512, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[20](4112) used=1327 free=14951 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[21](30) used=1411 free=14867 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[20](4112) used=1327 free=14951 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[21](30) used=1411 free=14867 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=78) |
 // front::draw:draw_tile((768, 592, 64, 32) (576, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[22](4112) used=1417 free=14861 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[23](30) used=1498 free=14780 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[22](4112) used=1417 free=14861 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[23](30) used=1498 free=14780 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=79) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[24](32) used=1504 free=14774 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[25](32) used=1532 free=14746 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[26](32) used=1538 free=14740 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[27](32) used=1546 free=14732 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[28](32) used=1556 free=14722 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[29](32) used=1571 free=14707 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[30](32) used=1577 free=14701 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[31](32) used=1585 free=14693 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[32](82) used=1595 free=14683 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[33](66) used=1661 free=14617 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[34](66) used=1711 free=14567 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[35](66) used=1761 free=14517 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[36](66) used=1811 free=14467 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[37](20) used=1861 free=14417 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[38](297) used=1881 free=14397 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[39](66) used=1931 free=14347 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[40](66) used=1981 free=14297 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[41](66) used=2031 free=14247 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[42](297) used=2081 free=14197 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[43](82) used=2113 free=14165 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[44](66) used=2179 free=14099 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[45](66) used=2229 free=14049 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[46](297) used=2279 free=13999 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[47](82) used=2311 free=13967 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[48](66) used=2377 free=13901 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[49](66) used=2427 free=13851 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[50](297) used=2477 free=13801 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[51](66) used=2509 free=13769 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[52](66) used=2559 free=13719 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[53](66) used=2609 free=13669 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[54](297) used=2659 free=13619 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[24](32) used=1504 free=14774 |
+// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=200 starty=1198 endx=200 endy=145 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[25](32) used=1532 free=14746 |
+// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=200 starty=145 endx=200 endy=1198 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[26](32) used=1538 free=14740 |
+// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=201 starty=1198 endx=200 endy=145 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[27](32) used=1546 free=14732 |
+// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=200 starty=145 endx=201 endy=1198 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[28](32) used=1556 free=14722 |
+// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=1198 starty=200 endx=145 endy=200 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[29](32) used=1571 free=14707 |
+// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=145 starty=200 endx=1198 endy=200 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[30](32) used=1577 free=14701 |
+// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=1198 starty=201 endx=145 endy=200 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[31](32) used=1585 free=14693 |
+// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=145 starty=200 endx=1198 endy=201 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[32](82) used=1595 free=14683 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[33](66) used=1661 free=14617 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[34](66) used=1711 free=14567 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[35](66) used=1761 free=14517 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[36](66) used=1811 free=14467 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[37](20) used=1861 free=14417 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[38](297) used=1881 free=14397 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[39](66) used=1931 free=14347 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[40](66) used=1981 free=14297 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[41](66) used=2031 free=14247 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[42](297) used=2081 free=14197 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[43](82) used=2113 free=14165 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[44](66) used=2179 free=14099 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[45](66) used=2229 free=14049 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[46](297) used=2279 free=13999 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[47](82) used=2311 free=13967 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[48](66) used=2377 free=13901 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[49](66) used=2427 free=13851 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[50](297) used=2477 free=13801 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[51](66) used=2509 free=13769 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[52](66) used=2559 free=13719 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[53](66) used=2609 free=13669 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[54](297) used=2659 free=13619 |
 // Widget_load: image file [./tests/fixtures/xrdp24b-redemption.png] is PNG file |
 // front::draw:draw_tile((738, 613, 64, 64) (0, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[55](8208) used=2694 free=13584 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[56](30) used=3172 free=13106 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[55](8208) used=2694 free=13584 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[56](30) used=3172 free=13106 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(738,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=80) |
 // front::draw:draw_tile((802, 613, 64, 64) (64, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[57](8208) used=3181 free=13097 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[58](30) used=3892 free=12386 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[57](8208) used=3181 free=13097 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[58](30) used=3892 free=12386 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(802,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=81) |
 // front::draw:draw_tile((866, 613, 64, 64) (128, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[59](8208) used=3898 free=12380 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[60](30) used=4669 free=11609 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[59](8208) used=3898 free=12380 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[60](30) used=4669 free=11609 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(866,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=82) |
 // front::draw:draw_tile((930, 613, 64, 64) (192, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[61](8208) used=4675 free=11603 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[62](30) used=5357 free=10921 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[61](8208) used=4675 free=11603 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[62](30) used=5357 free=10921 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(930,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=83) |
 // front::draw:draw_tile((738, 677, 64, 61) (0, 64, 64, 61)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[63](7824) used=5363 free=10915 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[64](30) used=6302 free=9976 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[63](7824) used=5363 free=10915 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[64](30) used=6302 free=9976 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(738,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=84) |
 // front::draw:draw_tile((802, 677, 64, 61) (64, 64, 64, 61)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[65](7824) used=6313 free=9965 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[66](30) used=7625 free=8653 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[65](7824) used=6313 free=9965 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[66](30) used=7625 free=8653 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(802,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=85) |
 // front::draw:draw_tile((866, 677, 64, 61) (128, 64, 64, 61)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[67](7824) used=7631 free=8647 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[68](30) used=9027 free=7251 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[67](7824) used=7631 free=8647 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[68](30) used=9027 free=7251 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(866,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=86) |
 // front::draw:draw_tile((930, 677, 64, 61) (192, 64, 64, 61)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[69](7824) used=9033 free=7245 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[69](7824) used=9033 free=7245 |
 // GraphicsUpdatePDU::flush_orders: order_count=69 offset=0 |
 // GraphicsUpdatePDU::flush_orders: fast-path |
 // Sending on RDP Client (5) 6453 bytes |
@@ -3396,16 +2523,16 @@ const char outdata[] =
 /* 1920 */ "\x2f\xe2\xe8\x86\x10\x80\xd5\xfc\x57\x18\x2d\x51\x01\xad\x84\x80" ///.......W.-Q.... |
 /* 1930 */ "\x63\x76\x19\x56\x00"                                             //cv.V. |
 // Sent dumped on RDP Client (5) 6453 bytes |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[1](30) used=1082 free=15196 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](30) used=1082 free=15196 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(930,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=87) |
 // front::draw:draw_tile((0, 704, 32, 32) (32, 32, 32, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[2](2064) used=1088 free=15190 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[3](30) used=1110 free=15168 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](2064) used=1088 free=15190 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](30) used=1110 free=15168 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=1 rect(0,704,32,32) rop=cc srcx=0 srcy=0 cache_idx=0) |
 // Widget_load: image file [./tests/fixtures/ad8b.png] is PNG file |
 // front::draw:draw_tile((100, 100, 26, 32) (80, 50, 26, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[4](1808) used=1125 free=15153 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[5](30) used=1440 free=14838 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](1808) used=1125 free=15153 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](30) used=1440 free=14838 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=1 rect(100,100,26,32) rop=cc srcx=0 srcy=0 cache_idx=1) |
 // Front::end_update() |
 // GraphicsUpdatePDU::flush_orders: order_count=6 offset=0 |
@@ -3481,8 +2608,10 @@ const char outdata[] =
 /* 0430 */ "\x40\x14\x64\xa0\x06\x06\x79\x67\x7d\xc0\xc4\xc1\x36\xfc\x51\xde" //@.d...yg}...6.Q. |
 /* 0440 */ "\x52\x01\x0e\x01\x64\x00\x64\xc8\xf8\x00\x10\x00"                 //R...d.d..... |
 // Sent dumped on RDP Client (5) 1100 bytes |
+// Listener closed |
+// Incoming socket 5 (ip=10.10.47.175) |
 // Socket RDP Client (5) : closing connection |
-// RDP Client (0): total_received=1712, total_sent=32411 |
+// RDP Client (0): total_received=1778, total_sent=19531 |
 } /* end outdata */;
 
 const char indata[] =
@@ -3504,20 +2633,16 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x13"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x0e\xe0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 13 bytes |
-// Recv done on RDP Client (5) 13 bytes |
-/* 0000 */ "\x00\x00\x00\x00\x00\x01\x00\x08\x00\x01\x00\x00\x00"             //............. |
-// Dump done on RDP Client (5) 13 bytes |
+// Socket RDP Client (5) receiving 15 bytes |
+// Recv done on RDP Client (5) 15 bytes |
+/* 0000 */ "\x0e\xe0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x01\x00\x00\x00"     //............... |
+// Dump done on RDP Client (5) 15 bytes |
 // CR Recv: PROTOCOL TLS 1.0 |
 // Front::incoming::sending x224 connection confirm PDU |
 // -----------------> Front::TLS Support Enabled |
 // CC Send: PROTOCOL TLS 1.0 |
 // Sending on RDP Client (5) 19 bytes |
-// /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x01" //................ |
+// /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x01\x08\x00\x01" //................ |
 // /* 0010 */ "\x00\x00\x00"                                                     //... |
 // Sent dumped on RDP Client (5) 19 bytes |
 // RIO *::enable_server_tls() start |
@@ -3532,40 +2657,36 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x01\xac"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 422 bytes |
-// Recv done on RDP Client (5) 422 bytes |
-/* 0000 */ "\x80\x7f\x65\x82\x01\xa0\x04\x01\x01\x04\x01\x01\x01\x01\xff\x30" //..e............0 |
-/* 0010 */ "\x19\x02\x01\x22\x02\x01\x02\x02\x01\x00\x02\x01\x01\x02\x01\x00" //..."............ |
-/* 0020 */ "\x02\x01\x01\x02\x02\xff\xff\x02\x01\x02\x30\x19\x02\x01\x01\x02" //..........0..... |
-/* 0030 */ "\x01\x01\x02\x01\x01\x02\x01\x01\x02\x01\x00\x02\x01\x01\x02\x02" //................ |
-/* 0040 */ "\x04\x20\x02\x01\x02\x30\x1c\x02\x02\xff\xff\x02\x02\xfc\x17\x02" //. ...0.......... |
-/* 0050 */ "\x02\xff\xff\x02\x01\x01\x02\x01\x00\x02\x01\x01\x02\x02\xff\xff" //................ |
-/* 0060 */ "\x02\x01\x02\x04\x82\x01\x3f\x00\x05\x00\x14\x7c\x00\x01\x81\x36" //......?....|...6 |
-/* 0070 */ "\x00\x08\x00\x10\x00\x01\xc0\x00\x44\x75\x63\x61\x81\x28\x01\xc0" //........Duca.(.. |
-/* 0080 */ "\xd8\x00\x04\x00\x08\x00\x00\x04\x00\x03\x01\xca\x03\xaa\x0c\x04" //................ |
-/* 0090 */ "\x00\x00\x71\x17\x00\x00\x52\x00\x44\x00\x50\x00\x2d\x00\x54\x00" //..q...R.D.P.-.T. |
-/* 00a0 */ "\x45\x00\x53\x00\x54\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //E.S.T........... |
-/* 00b0 */ "\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x0c\x00" //................ |
-/* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// Socket RDP Client (5) receiving 424 bytes |
+// Recv done on RDP Client (5) 424 bytes |
+/* 0000 */ "\x02\xf0\x80\x7f\x65\x82\x01\xa0\x04\x01\x01\x04\x01\x01\x01\x01" //....e........... |
+/* 0010 */ "\xff\x30\x19\x02\x01\x22\x02\x01\x02\x02\x01\x00\x02\x01\x01\x02" //.0...".......... |
+/* 0020 */ "\x01\x00\x02\x01\x01\x02\x02\xff\xff\x02\x01\x02\x30\x19\x02\x01" //............0... |
+/* 0030 */ "\x01\x02\x01\x01\x02\x01\x01\x02\x01\x01\x02\x01\x00\x02\x01\x01" //................ |
+/* 0040 */ "\x02\x02\x04\x20\x02\x01\x02\x30\x1c\x02\x02\xff\xff\x02\x02\xfc" //... ...0........ |
+/* 0050 */ "\x17\x02\x02\xff\xff\x02\x01\x01\x02\x01\x00\x02\x01\x01\x02\x02" //................ |
+/* 0060 */ "\xff\xff\x02\x01\x02\x04\x82\x01\x3f\x00\x05\x00\x14\x7c\x00\x01" //........?....|.. |
+/* 0070 */ "\x81\x36\x00\x08\x00\x10\x00\x01\xc0\x00\x44\x75\x63\x61\x81\x28" //.6........Duca.( |
+/* 0080 */ "\x01\xc0\xd8\x00\x04\x00\x08\x00\x00\x04\x00\x03\x01\xca\x03\xaa" //................ |
+/* 0090 */ "\x0c\x04\x00\x00\xb0\x1d\x00\x00\x52\x00\x44\x00\x50\x00\x2d\x00" //........R.D.P.-. |
+/* 00a0 */ "\x54\x00\x45\x00\x53\x00\x54\x00\x00\x00\x00\x00\x00\x00\x00\x00" //T.E.S.T......... |
+/* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 00c0 */ "\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0100 */ "\x00\x00\x01\xca\x01\x00\x00\x00\x00\x00\x10\x00\x0f\x00\x09\x00" //................ |
-/* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 0100 */ "\x00\x00\x00\x00\x01\xca\x01\x00\x00\x00\x00\x00\x10\x00\x0f\x00" //................ |
+/* 0110 */ "\x2d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //-............... |
 /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0150 */ "\x00\x00\x01\x00\x00\x00\x04\xc0\x0c\x00\x0d\x00\x00\x00\x00\x00" //................ |
-/* 0160 */ "\x00\x00\x02\xc0\x0c\x00\x1b\x00\x00\x00\x00\x00\x00\x00\x03\xc0" //................ |
-/* 0170 */ "\x38\x00\x04\x00\x00\x00\x72\x64\x70\x64\x72\x00\x00\x00\x00\x00" //8.....rdpdr..... |
-/* 0180 */ "\x80\x80\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0\x64\x72" //..rdpsnd......dr |
-/* 0190 */ "\x64\x79\x6e\x76\x63\x00\x00\x00\x80\xc0\x63\x6c\x69\x70\x72\x64" //dynvc.....cliprd |
-/* 01a0 */ "\x72\x00\x00\x00\xa0\xc0"                                         //r..... |
-// Dump done on RDP Client (5) 422 bytes |
+/* 0150 */ "\x00\x00\x02\x00\x01\x00\x00\x00\x04\xc0\x0c\x00\x11\x00\x00\x00" //................ |
+/* 0160 */ "\x00\x00\x00\x00\x02\xc0\x0c\x00\x1b\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 0170 */ "\x03\xc0\x38\x00\x04\x00\x00\x00\x72\x64\x70\x64\x72\x00\x00\x00" //..8.....rdpdr... |
+/* 0180 */ "\x00\x00\x80\x80\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0" //....rdpsnd...... |
+/* 0190 */ "\x64\x72\x64\x79\x6e\x76\x63\x00\x00\x00\x80\xc0\x63\x6c\x69\x70" //drdynvc.....clip |
+/* 01a0 */ "\x72\x64\x72\x00\x00\x00\xa0\xc0"                                 //rdr..... |
+// Dump done on RDP Client (5) 424 bytes |
 // GCC::UserData tag=c001 length=216 |
 // Received from Client GCC User Data CS_CORE (216 bytes) |
 // cs_core::version [80004] RDP 5.0, 5.1, 5.2, and 6.0 clients) |
@@ -3574,7 +2695,7 @@ const char indata[] =
 // cs_core::colorDepth    = [ca01] [RNS_UD_COLOR_8BPP] superseded by postBeta2ColorDepth |
 // cs_core::SASSequence   = [aa03] [Unknown] |
 // cs_core::keyboardLayout= 040c |
-// cs_core::clientBuild   = 6001 |
+// cs_core::clientBuild   = 7600 |
 // cs_core::clientName    = RDP-TEST |
 // cs_core::keyboardType  = [0004] IBM enhanced (101-key or 102-key) keyboard |
 // cs_core::keyboardSubType      = [0000] OEM code |
@@ -3585,16 +2706,18 @@ const char indata[] =
 // cs_core::serialNumber = 0 |
 // cs_core::highColorDepth  = [0010] [16-bit 565 RGB mask] |
 // cs_core::supportedColorDepths  = [000f] [24/16/15/32] |
-// cs_core::earlyCapabilityFlags  = [0009] |
+// cs_core::earlyCapabilityFlags  = [002d] |
 // cs_core::earlyCapabilityFlags:RNS_UD_CS_SUPPORT_ERRINFO_PDU |
+// cs_core::earlyCapabilityFlags:RNS_UD_CS_SUPPORT_STATUSINFO_PDU |
 // cs_core::earlyCapabilityFlags:RNS_UD_CS_STRONG_ASYMMETRIC_KEYS |
+// cs_core::earlyCapabilityFlags:RNS_UD_CS_VALID_CONNECTION_TYPE |
 // cs_core::clientDigProductId=[00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 |
-// cs_core::connectionType  = 0 |
+// cs_core::connectionType  = 2 |
 // cs_core::pad1octet  = 0 |
 // cs_core::serverSelectedProtocol = 1 |
 // GCC::UserData tag=c004 length=12 |
 // Receiving from Client GCC User Data CS_CLUSTER (12 bytes) |
-// cs_cluster::flags [000d] |
+// cs_cluster::flags [0011] |
 // cs_cluster::redirectedSessionID = 0 |
 // GCC::UserData tag=c002 length=12 |
 // Received from Client GCC User Data CS_SECURITY (12 bytes) |
@@ -3639,14 +2762,10 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-/* 0000 */ "\x80\x04\x01\x00\x01\x00"                                         //...... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+/* 0000 */ "\x02\xf0\x80\x04\x01\x00\x01\x00"                                 //........ |
+// Dump done on RDP Client (5) 8 bytes |
 // Front::incoming::Recv MCS::AttachUserRequest |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3656,14 +2775,10 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x08"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x80\x28"                                                         //.( |
-// Dump done on RDP Client (5) 2 bytes |
+// Socket RDP Client (5) receiving 4 bytes |
+// Recv done on RDP Client (5) 4 bytes |
+/* 0000 */ "\x02\xf0\x80\x28"                                                 //...( |
+// Dump done on RDP Client (5) 4 bytes |
 // Front::incoming::Send MCS::AttachUserConfirm |
 // Sending on RDP Client (5) 11 bytes |
 // /* 0000 */ "\x03\x00\x00\x0b\x02\xf0\x80\x2e\x00\x00\x00"                     //........... |
@@ -3676,14 +2791,10 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-/* 0000 */ "\x80\x38\x00\x00\x03\xe9"                                         //.8.... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+/* 0000 */ "\x02\xf0\x80\x38\x00\x00\x03\xe9"                                 //...8.... |
+// Dump done on RDP Client (5) 8 bytes |
 // Sending on RDP Client (5) 15 bytes |
 // /* 0000 */ "\x03\x00\x00\x0f\x02\xf0\x80\x3e\x00\x00\x00\x03\xe9\x03\xe9"     //.......>....... |
 // Sent dumped on RDP Client (5) 15 bytes |
@@ -3695,14 +2806,10 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-/* 0000 */ "\x80\x38\x00\x00\x03\xeb"                                         //.8.... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+/* 0000 */ "\x02\xf0\x80\x38\x00\x00\x03\xeb"                                 //...8.... |
+// Dump done on RDP Client (5) 8 bytes |
 // Sending on RDP Client (5) 15 bytes |
 // /* 0000 */ "\x03\x00\x00\x0f\x02\xf0\x80\x3e\x00\x00\x00\x03\xeb\x03\xeb"     //.......>....... |
 // Sent dumped on RDP Client (5) 15 bytes |
@@ -3714,14 +2821,10 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-/* 0000 */ "\x80\x38\x00\x00\x03\xec"                                         //.8.... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+/* 0000 */ "\x02\xf0\x80\x38\x00\x00\x03\xec"                                 //...8.... |
+// Dump done on RDP Client (5) 8 bytes |
 // cjrq[0] = 1004 -> cjcf |
 // Sending on RDP Client (5) 15 bytes |
 // /* 0000 */ "\x03\x00\x00\x0f\x02\xf0\x80\x3e\x00\x00\x00\x03\xec\x03\xec"     //.......>....... |
@@ -3734,14 +2837,10 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-/* 0000 */ "\x80\x38\x00\x00\x03\xed"                                         //.8.... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+/* 0000 */ "\x02\xf0\x80\x38\x00\x00\x03\xed"                                 //...8.... |
+// Dump done on RDP Client (5) 8 bytes |
 // cjrq[1] = 1005 -> cjcf |
 // Sending on RDP Client (5) 15 bytes |
 // /* 0000 */ "\x03\x00\x00\x0f\x02\xf0\x80\x3e\x00\x00\x00\x03\xed\x03\xed"     //.......>....... |
@@ -3754,14 +2853,10 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-/* 0000 */ "\x80\x38\x00\x00\x03\xee"                                         //.8.... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+/* 0000 */ "\x02\xf0\x80\x38\x00\x00\x03\xee"                                 //...8.... |
+// Dump done on RDP Client (5) 8 bytes |
 // cjrq[2] = 1006 -> cjcf |
 // Sending on RDP Client (5) 15 bytes |
 // /* 0000 */ "\x03\x00\x00\x0f\x02\xf0\x80\x3e\x00\x00\x00\x03\xee\x03\xee"     //.......>....... |
@@ -3774,14 +2869,10 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x0c"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 6 bytes |
-// Recv done on RDP Client (5) 6 bytes |
-/* 0000 */ "\x80\x38\x00\x00\x03\xef"                                         //.8.... |
-// Dump done on RDP Client (5) 6 bytes |
+// Socket RDP Client (5) receiving 8 bytes |
+// Recv done on RDP Client (5) 8 bytes |
+/* 0000 */ "\x02\xf0\x80\x38\x00\x00\x03\xef"                                 //...8.... |
+// Dump done on RDP Client (5) 8 bytes |
 // cjrq[3] = 1007 -> cjcf |
 // Sending on RDP Client (5) 15 bytes |
 // /* 0000 */ "\x03\x00\x00\x0f\x02\xf0\x80\x3e\x00\x00\x00\x03\xef\x03\xef"     //.......>....... |
@@ -3796,61 +2887,65 @@ const char indata[] =
 // Dump done on RDP Client (5) 1 bytes |
 // Socket RDP Client (5) receiving 3 bytes |
 // Recv done on RDP Client (5) 3 bytes |
-/* 0000 */ "\x00\x01\x4b"                                                     //..K |
+/* 0000 */ "\x00\x01\x89"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 325 bytes |
-// Recv done on RDP Client (5) 325 bytes |
-/* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x81\x3c\x48\x00\x00\x00\x0c\x04\x0c" //.d....p.<H...... |
-/* 0010 */ "\x04\xb3\x47\x03\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00" //..G............. |
-/* 0020 */ "\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //.x.............1 |
-/* 0030 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
-/* 0040 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
-/* 0050 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
-/* 0060 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
-/* 0070 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
-/* 0080 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
-/* 0090 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
-/* 00a0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
-/* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00d0 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 00e0 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
-/* 00f0 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
+// Socket RDP Client (5) receiving 389 bytes |
+// Recv done on RDP Client (5) 389 bytes |
+/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x7a\x40\x00\x00\x00\x00" //...d....p.z@.... |
+/* 0010 */ "\x00\x00\x00\xb3\x47\x0b\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00" //....G....@...... |
+/* 0020 */ "\x00\x00\x00\x71\x00\x61\x00\x5c\x00\x61\x00\x64\x00\x6d\x00\x69" //...q.a...a.d.m.i |
+/* 0030 */ "\x00\x6e\x00\x69\x00\x73\x00\x74\x00\x72\x00\x61\x00\x74\x00\x65" //.n.i.s.t.r.a.t.e |
+/* 0040 */ "\x00\x75\x00\x72\x00\x40\x00\x77\x00\x69\x00\x6e\x00\x32\x00\x6b" //.u.r.@.w.i.n.2.k |
+/* 0050 */ "\x00\x38\x00\x72\x00\x32\x00\x3a\x00\x72\x00\x64\x00\x70\x00\x3a" //.8.r.2.:.r.d.p.: |
+/* 0060 */ "\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //.x.............1 |
+/* 0070 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
+/* 0080 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
+/* 0090 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
+/* 00a0 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
+/* 00b0 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
+/* 00c0 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
+/* 00d0 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
+/* 00e0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
+/* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0120 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
-/* 0130 */ "\x00\x00\x00\xc4\xff\xff\xff\x00\x00\x00\x00\x0f\x00\x00\x00\x00" //................ |
-/* 0140 */ "\x00\x64\x00\x00\x00"                                             //.d... |
-// Dump done on RDP Client (5) 325 bytes |
+/* 0110 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 0120 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
+/* 0130 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
+/* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 0160 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
+/* 0170 */ "\x00\x00\x00\xc4\xff\xff\xff\x00\x00\x00\x00\x07\x00\x00\x00\x00" //................ |
+/* 0180 */ "\x00\x64\x00\x00\x00"                                             //.d... |
+// Dump done on RDP Client (5) 389 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x0c, 0x04, 0x0c, 0x04, 0xb3, 0x47, 0x03, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G.......... |
-// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,  // ....x........... |
-// /* 0020 */ 0x1a, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00,  // ..1.0...1.0...4. |
-// /* 0030 */ 0x37, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00,  // 7...1.7.5...@.C. |
-// /* 0040 */ 0x3a, 0x00, 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00,  // :...W.I.N.D.O.W. |
-// /* 0050 */ 0x53, 0x00, 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00,  // S...s.y.s.t.e.m. |
-// /* 0060 */ 0x33, 0x00, 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00,  // 3.2...m.s.t.s.c. |
-// /* 0070 */ 0x61, 0x00, 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff,  // a.x...d.l.l..... |
-// /* 0080 */ 0xff, 0xff, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00,  // ..P.a.r.i.s.,. . |
-// /* 0090 */ 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00,  // M.a.d.r.i.d..... |
-// /* 00a0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 00b0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 00c0 */ 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 00d0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00,  // ......P.a.r.i.s. |
-// /* 00e0 */ 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00,  // ,. .M.a.d.r.i.d. |
+// /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0xb3, 0x47, 0x0b, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G....@..... |
+// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x71, 0x00, 0x61, 0x00, 0x5c, 0x00, 0x61, 0x00, 0x64, 0x00, 0x6d, 0x00,  // ....q.a...a.d.m. |
+// /* 0020 */ 0x69, 0x00, 0x6e, 0x00, 0x69, 0x00, 0x73, 0x00, 0x74, 0x00, 0x72, 0x00, 0x61, 0x00, 0x74, 0x00,  // i.n.i.s.t.r.a.t. |
+// /* 0030 */ 0x65, 0x00, 0x75, 0x00, 0x72, 0x00, 0x40, 0x00, 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x32, 0x00,  // e.u.r.@.w.i.n.2. |
+// /* 0040 */ 0x6b, 0x00, 0x38, 0x00, 0x72, 0x00, 0x32, 0x00, 0x3a, 0x00, 0x72, 0x00, 0x64, 0x00, 0x70, 0x00,  // k.8.r.2.:.r.d.p. |
+// /* 0050 */ 0x3a, 0x00, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x1a, 0x00,  // :.x............. |
+// /* 0060 */ 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00, 0x37, 0x00,  // 1.0...1.0...4.7. |
+// /* 0070 */ 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00, 0x3a, 0x00,  // ..1.7.5...@.C.:. |
+// /* 0080 */ 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00,  // ..W.I.N.D.O.W.S. |
+// /* 0090 */ 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00, 0x33, 0x00,  // ..s.y.s.t.e.m.3. |
+// /* 00a0 */ 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00, 0x61, 0x00,  // 2...m.s.t.s.c.a. |
+// /* 00b0 */ 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff,  // x...d.l.l....... |
+// /* 00c0 */ 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00,  // P.a.r.i.s.,. .M. |
+// /* 00d0 */ 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // a.d.r.i.d....... |
+// /* 00e0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
 // /* 00f0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0100 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00,  // ................ |
-// /* 0120 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00,  // ................ |
-// /* 0130 */ 0x00, 0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                          // ....d... |
+// /* 0100 */ 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00,  // ....P.a.r.i.s.,. |
+// /* 0120 */ 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00,  //  .M.a.d.r.i.d... |
+// /* 0130 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0140 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0150 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
+// /* 0160 */ 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00,  // ................ |
+// /* 0170 */ 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                                // ..d... |
 // RDP-5 Style logon |
 // Receiving from client InfoPacket |
-// InfoPacket::CodePage 67896332 |
-// InfoPacket::flags 0x347b3 |
+// InfoPacket::CodePage 0 |
+// InfoPacket::flags 0xb47b3 |
 // InfoPacket::flags:INFO_MOUSE yes |
 // InfoPacket::flags:INFO_DISABLECTRLALTDEL yes |
 // InfoPacket::flags:INFO_AUTOLOGON no |
@@ -3866,17 +2961,17 @@ const char indata[] =
 // InfoPacket::flags:INFO_LOGONERRORS yes |
 // InfoPacket::flags:INFO_MOUSE_HAS_WHEEL yes |
 // InfoPacket::flags:INFO_PASSWORD_IS_SC_PIN no |
-// InfoPacket::flags:INFO_NOAUDIOPLAYBACK no |
+// InfoPacket::flags:INFO_NOAUDIOPLAYBACK yes |
 // InfoPacket::flags:INFO_USING_SAVED_CREDS no |
 // InfoPacket::flags:RNS_INFO_AUDIOCAPTURE no |
 // InfoPacket::flags:RNS_INFO_VIDEO_DISABLE no |
 // InfoPacket::cbDomain 2 |
-// InfoPacket::cbUserName 4 |
+// InfoPacket::cbUserName 66 |
 // InfoPacket::cbPassword 2 |
 // InfoPacket::cbAlternateShell 2 |
 // InfoPacket::cbWorkingDir 2 |
 // InfoPacket::Domain  |
-// InfoPacket::UserName x |
+// InfoPacket::UserName qa\administrateur@win2k8r2:rdp:x |
 // InfoPacket::Password <hidden> |
 // InfoPacket::AlternateShell  |
 // InfoPacket::WorkingDir  |
@@ -3886,7 +2981,7 @@ const char indata[] =
 // InfoPacket::ExtendedInfoPacket::cbClientDir 64 |
 // InfoPacket::ExtendedInfoPacket::clientDir C:\WINDOWS\system32\mstscax.dll |
 // InfoPacket::ExtendedInfoPacket::clientSessionId 0 |
-// InfoPacket::ExtendedInfoPacket::performanceFlags 15 |
+// InfoPacket::ExtendedInfoPacket::performanceFlags 7 |
 // InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen 0 |
 // InfoPacket::ExtendedInfoPacket::autoReconnectCookie  |
 // InfoPacket::ExtendedInfoPacket::reserved1 100 |
@@ -3911,7 +3006,8 @@ const char indata[] =
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds 0 |
-// client info: performance flags before=0x0000000F after=0x0000000F default=0x00000000 present=0x00000000 not-present=0x00000000 |
+// client info: performance flags before=0x00000007 after=0x00000007 default=0x00000000 present=0x00000000 not-present=0x00000000 |
+// Front Keyboard Layout = 0x40c |
 // Front::incoming::licencing not client_info.is_mce |
 // Front::incoming::licencing send_lic_initial |
 // Sec clear payload to send: |
@@ -3970,32 +3066,28 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\xab"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 165 bytes |
-// Recv done on RDP Client (5) 165 bytes |
-/* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\xe7\x47\x13\x83\x98" //.d....p.....G... |
-/* 0010 */ "\x00\x01\x00\x00\x00\x00\x00\x01\x03\x24\x20\x28\x5c\xce\x8c\x5d" //.........$ (...] |
-/* 0020 */ "\x38\xd7\x52\xb7\xfe\x7b\xef\x18\x1e\x39\xca\x1c\x9f\xca\x33\x62" //8.R..{...9....3b |
-/* 0030 */ "\x50\x7a\x67\x2e\xa0\x97\xb5\x50\x3e\x00\x00\x48\x00\x9e\x44\xa0" //Pzg....P>..H..D. |
-/* 0040 */ "\x21\x48\xec\x37\x5e\xd5\x04\x79\x8a\xfb\x7b\x0b\x21\xf3\x5a\x03" //!H.7^..y..{.!.Z. |
-/* 0050 */ "\xc5\xaa\xe5\xca\x00\x09\x0d\xe0\x07\x08\x93\xfa\x4f\xa5\x4b\xfb" //............O.K. |
-/* 0060 */ "\x97\xd7\x49\xb3\x28\x0a\x44\x91\x23\xca\x06\x1f\xee\xe9\x38\x86" //..I.(.D.#.....8. |
-/* 0070 */ "\xf1\x40\x64\x3b\x9d\x77\x44\x83\x38\x11\xe5\xc0\x31\x00\x00\x00" //.@d;.wD.8...1... |
-/* 0080 */ "\x00\x00\x00\x00\x00\x0f\x00\x0f\x00\x41\x64\x6d\x69\x6e\x69\x73" //.........Adminis |
-/* 0090 */ "\x74\x72\x61\x74\x65\x75\x72\x00\x10\x00\x09\x00\x52\x44\x50\x2d" //trateur.....RDP- |
-/* 00a0 */ "\x54\x45\x53\x54\x00"                                             //TEST. |
-// Dump done on RDP Client (5) 165 bytes |
+// Socket RDP Client (5) receiving 167 bytes |
+// Recv done on RDP Client (5) 167 bytes |
+/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\x6d\xef\x13" //...d....p....m.. |
+/* 0010 */ "\x83\x98\x00\x01\x00\x00\x00\x00\x00\x01\x03\xbb\x60\x33\xbc\x38" //............`3.8 |
+/* 0020 */ "\xc7\x41\xd7\xea\x6c\x5f\x95\x59\x78\xa5\xe3\xcd\x90\x28\x47\x63" //.A..l_.Yx....(Gc |
+/* 0030 */ "\xf0\x8e\x79\x98\x82\x60\xda\xfc\x5f\x88\x5f\x00\x00\x48\x00\xf9" //..y..`.._._..H.. |
+/* 0040 */ "\x0c\x32\x38\xcb\x3e\x0d\xa3\x9f\xaa\x08\xe9\x57\x03\xbe\xcf\x5d" //.28.>......W...] |
+/* 0050 */ "\x12\x49\xdc\xc9\x89\x67\x94\x27\x6b\x87\xf1\x4c\x5b\x9a\x7a\x60" //.I...g.'k..L[.z` |
+/* 0060 */ "\x3d\x21\x1e\x1a\x30\x6e\xc8\x1a\x1a\x32\xb5\xa4\x39\x5f\xef\x56" //=!..0n...2..9_.V |
+/* 0070 */ "\x6e\xed\x56\x09\x5d\x54\x7b\x77\xd7\x37\xab\x65\xc6\xe8\x00\x00" //n.V.]T{w.7.e.... |
+/* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x0f\x00\x41\x64\x6d\x69\x6e" //...........Admin |
+/* 0090 */ "\x69\x73\x74\x72\x61\x74\x65\x75\x72\x00\x10\x00\x09\x00\x52\x44" //istrateur.....RD |
+/* 00a0 */ "\x50\x2d\x54\x45\x53\x54\x00"                                     //P-TEST. |
+// Dump done on RDP Client (5) 167 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x24, 0x20, 0x28, 0x5c,  // ............$ (. |
-// /* 0010 */ 0xce, 0x8c, 0x5d, 0x38, 0xd7, 0x52, 0xb7, 0xfe, 0x7b, 0xef, 0x18, 0x1e, 0x39, 0xca, 0x1c, 0x9f,  // ..]8.R..{...9... |
-// /* 0020 */ 0xca, 0x33, 0x62, 0x50, 0x7a, 0x67, 0x2e, 0xa0, 0x97, 0xb5, 0x50, 0x3e, 0x00, 0x00, 0x48, 0x00,  // .3bPzg....P>..H. |
-// /* 0030 */ 0x9e, 0x44, 0xa0, 0x21, 0x48, 0xec, 0x37, 0x5e, 0xd5, 0x04, 0x79, 0x8a, 0xfb, 0x7b, 0x0b, 0x21,  // .D.!H.7^..y..{.! |
-// /* 0040 */ 0xf3, 0x5a, 0x03, 0xc5, 0xaa, 0xe5, 0xca, 0x00, 0x09, 0x0d, 0xe0, 0x07, 0x08, 0x93, 0xfa, 0x4f,  // .Z.............O |
-// /* 0050 */ 0xa5, 0x4b, 0xfb, 0x97, 0xd7, 0x49, 0xb3, 0x28, 0x0a, 0x44, 0x91, 0x23, 0xca, 0x06, 0x1f, 0xee,  // .K...I.(.D.#.... |
-// /* 0060 */ 0xe9, 0x38, 0x86, 0xf1, 0x40, 0x64, 0x3b, 0x9d, 0x77, 0x44, 0x83, 0x38, 0x11, 0xe5, 0xc0, 0x31,  // .8..@d;.wD.8...1 |
+// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0xbb, 0x60, 0x33, 0xbc,  // .............`3. |
+// /* 0010 */ 0x38, 0xc7, 0x41, 0xd7, 0xea, 0x6c, 0x5f, 0x95, 0x59, 0x78, 0xa5, 0xe3, 0xcd, 0x90, 0x28, 0x47,  // 8.A..l_.Yx....(G |
+// /* 0020 */ 0x63, 0xf0, 0x8e, 0x79, 0x98, 0x82, 0x60, 0xda, 0xfc, 0x5f, 0x88, 0x5f, 0x00, 0x00, 0x48, 0x00,  // c..y..`.._._..H. |
+// /* 0030 */ 0xf9, 0x0c, 0x32, 0x38, 0xcb, 0x3e, 0x0d, 0xa3, 0x9f, 0xaa, 0x08, 0xe9, 0x57, 0x03, 0xbe, 0xcf,  // ..28.>......W... |
+// /* 0040 */ 0x5d, 0x12, 0x49, 0xdc, 0xc9, 0x89, 0x67, 0x94, 0x27, 0x6b, 0x87, 0xf1, 0x4c, 0x5b, 0x9a, 0x7a,  // ].I...g.'k..L[.z |
+// /* 0050 */ 0x60, 0x3d, 0x21, 0x1e, 0x1a, 0x30, 0x6e, 0xc8, 0x1a, 0x1a, 0x32, 0xb5, 0xa4, 0x39, 0x5f, 0xef,  // `=!..0n...2..9_. |
+// /* 0060 */ 0x56, 0x6e, 0xed, 0x56, 0x09, 0x5d, 0x54, 0x7b, 0x77, 0xd7, 0x37, 0xab, 0x65, 0xc6, 0xe8, 0x00,  // Vn.V.]T{w.7.e... |
 // /* 0070 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x41, 0x64, 0x6d, 0x69,  // ............Admi |
 // /* 0080 */ 0x6e, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x75, 0x72, 0x00, 0x10, 0x00, 0x09, 0x00, 0x52,  // nistrateur.....R |
 // /* 0090 */ 0x44, 0x50, 0x2d, 0x54, 0x45, 0x53, 0x54, 0x00,                          // DP-TEST. |
@@ -4112,7 +3204,7 @@ const char indata[] =
 // Input caps::keyboardType 0 |
 // Input caps::keyboardSubType 0 |
 // Input caps::keyboardFunctionKey 0 |
-// Input caps::imeFileName 597756992 |
+// Input caps::imeFileName 1352817568 |
 // Sec clear payload to send: |
 // /* 0000 */ 0x20, 0x01, 0x11, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x04, 0x00, 0x0a, 0x01, 0x52, 0x44,  //  .............RD |
 // /* 0010 */ 0x50, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x01, 0x00, 0x03, 0x00, 0x00, 0x02,  // P............... |
@@ -4162,58 +3254,55 @@ const char indata[] =
 // Dump done on RDP Client (5) 1 bytes |
 // Socket RDP Client (5) receiving 3 bytes |
 // Recv done on RDP Client (5) 3 bytes |
-/* 0000 */ "\x00\x02\x03"                                                     //... |
+/* 0000 */ "\x00\x02\x07"                                                     //... |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 509 bytes |
-// Recv done on RDP Client (5) 509 bytes |
-/* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x81\xf4\xf4\x01\x13\x00\xe9\x03\x02" //.d....p......... |
-/* 0010 */ "\x00\x01\x00\xe9\x03\x06\x00\xde\x01\x4d\x53\x54\x53\x43\x00\x13" //.........MSTSC.. |
-/* 0020 */ "\x00\x00\x00\x01\x00\x18\x00\x01\x00\x03\x00\x00\x02\x00\x00\x00" //................ |
-/* 0030 */ "\x00\x0d\x04\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1c\x00\x10" //................ |
-/* 0040 */ "\x00\x01\x00\x01\x00\x01\x00\x00\x04\x00\x03\x00\x00\x01\x00\x01" //................ |
-/* 0050 */ "\x00\x00\x08\x01\x00\x00\x00\x03\x00\x58\x00\x00\x00\x00\x00\x00" //.........X...... |
-/* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01" //................ |
-/* 0070 */ "\x00\x14\x00\x00\x00\x01\x00\x00\x00\x2a\x00\x01\x01\x01\x01\x01" //.........*...... |
-/* 0080 */ "\x00\x00\x01\x01\x01\x00\x01\x00\x00\x00\x01\x01\x01\x01\x01\x01" //................ |
-/* 0090 */ "\x01\x01\x00\x01\x01\x01\x00\x00\x00\x00\x00\xa1\x06\x00\x00\x00" //................ |
-/* 00a0 */ "\x00\x00\x00\x00\x84\x03\x00\x00\x00\x00\x00\xe4\x04\x00\x00\x04" //................ |
-/* 00b0 */ "\x00\x28\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //.(.............. |
-/* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x78\x00\x00\x02\x78" //...........x...x |
-/* 00d0 */ "\x00\x00\x08\x51\x01\x00\x20\x0a\x00\x08\x00\x06\x00\x00\x00\x07" //...Q.. ......... |
-/* 00e0 */ "\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x0c\x00\x00" //................ |
-/* 00f0 */ "\x00\x00\x00\x02\x00\x02\x00\x08\x00\x0a\x00\x01\x00\x14\x00\x15" //................ |
-/* 0100 */ "\x00\x09\x00\x08\x00\x00\x00\x00\x00\x0d\x00\x58\x00\x91\x00\x20" //...........X...  |
-/* 0110 */ "\x00\x0c\x04\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00" //................ |
+// Socket RDP Client (5) receiving 515 bytes |
+// Recv done on RDP Client (5) 515 bytes |
+/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\xf8\xf8\x01\x13\x00\xe9" //...d....p....... |
+/* 0010 */ "\x03\x02\x00\x01\x00\xe9\x03\x06\x00\xe2\x01\x4d\x53\x54\x53\x43" //...........MSTSC |
+/* 0020 */ "\x00\x13\x00\x00\x00\x01\x00\x18\x00\x01\x00\x03\x00\x00\x02\x00" //................ |
+/* 0030 */ "\x00\x00\x00\x0d\x04\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1c" //................ |
+/* 0040 */ "\x00\x10\x00\x01\x00\x01\x00\x01\x00\x00\x04\x00\x03\x00\x00\x01" //................ |
+/* 0050 */ "\x00\x01\x00\x00\x08\x01\x00\x00\x00\x03\x00\x58\x00\x00\x00\x00" //...........X.... |
+/* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 0070 */ "\x00\x01\x00\x14\x00\x00\x00\x01\x00\x00\x00\xaa\x00\x01\x01\x01" //................ |
+/* 0080 */ "\x01\x01\x00\x00\x01\x01\x01\x00\x01\x00\x00\x00\x01\x01\x01\x01" //................ |
+/* 0090 */ "\x01\x01\x01\x01\x00\x01\x01\x01\x00\x00\x00\x00\x00\xa1\x06\x06" //................ |
+/* 00a0 */ "\x00\x00\x00\x00\x00\x00\x84\x03\x00\x00\x00\x00\x00\xe4\x04\x00" //................ |
+/* 00b0 */ "\x00\x04\x00\x28\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //...(............ |
+/* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x78\x00\x00" //.............x.. |
+/* 00d0 */ "\x02\x78\x00\x00\x08\x51\x01\x00\x20\x0a\x00\x08\x00\x06\x00\x00" //.x...Q.. ....... |
+/* 00e0 */ "\x00\x07\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x0c" //................ |
+/* 00f0 */ "\x00\x00\x00\x00\x00\x02\x00\x02\x00\x08\x00\x0a\x00\x01\x00\x14" //................ |
+/* 0100 */ "\x00\x15\x00\x09\x00\x08\x00\x00\x00\x00\x00\x0d\x00\x58\x00\x91" //.............X.. |
+/* 0110 */ "\x00\x20\x00\x0c\x04\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x0c" //. .............. |
 /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0160 */ "\x00\x0c\x00\x08\x00\x01\x00\x00\x00\x0e\x00\x08\x00\x01\x00\x00" //................ |
-/* 0170 */ "\x00\x10\x00\x34\x00\xfe\x00\x04\x00\xfe\x00\x04\x00\xfe\x00\x08" //...4............ |
-/* 0180 */ "\x00\xfe\x00\x08\x00\xfe\x00\x10\x00\xfe\x00\x20\x00\xfe\x00\x40" //........... ...@ |
-/* 0190 */ "\x00\xfe\x00\x80\x00\xfe\x00\x00\x01\x40\x00\x00\x08\x00\x01\x00" //.........@...... |
-/* 01a0 */ "\x01\x03\x00\x00\x00\x0f\x00\x08\x00\x01\x00\x00\x00\x11\x00\x0c" //................ |
-/* 01b0 */ "\x00\x01\x00\x00\x00\x00\x14\x64\x00\x14\x00\x08\x00\x01\x00\x00" //.......d........ |
-/* 01c0 */ "\x00\x15\x00\x0c\x00\x02\x00\x00\x00\x00\x0a\x00\x01\x16\x00\x28" //...............( |
-/* 01d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 0160 */ "\x00\x00\x00\x0c\x00\x08\x00\x01\x00\x00\x00\x0e\x00\x08\x00\x01" //................ |
+/* 0170 */ "\x00\x00\x00\x10\x00\x34\x00\xfe\x00\x04\x00\xfe\x00\x04\x00\xfe" //.....4.......... |
+/* 0180 */ "\x00\x08\x00\xfe\x00\x08\x00\xfe\x00\x10\x00\xfe\x00\x20\x00\xfe" //............. .. |
+/* 0190 */ "\x00\x40\x00\xfe\x00\x80\x00\xfe\x00\x00\x01\x40\x00\x00\x08\x00" //.@.........@.... |
+/* 01a0 */ "\x01\x00\x01\x03\x00\x00\x00\x0f\x00\x08\x00\x01\x00\x00\x00\x11" //................ |
+/* 01b0 */ "\x00\x0c\x00\x01\x00\x00\x00\x00\x14\x64\x00\x14\x00\x0c\x00\x01" //.........d...... |
+/* 01c0 */ "\x00\x00\x00\x00\x00\x00\x00\x15\x00\x0c\x00\x02\x00\x00\x00\x00" //................ |
+/* 01d0 */ "\x0a\x00\x01\x16\x00\x28\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //.....(.......... |
 /* 01e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 01f0 */ "\x00\x00\x00\x00\x00\x1a\x00\x08\x00\x00\x00\x00\x00"             //............. |
-// Dump done on RDP Client (5) 509 bytes |
+/* 01f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1a\x00\x08\x00\x00" //................ |
+/* 0200 */ "\x00\x00\x00"                                                     //... |
+// Dump done on RDP Client (5) 515 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0xf4, 0x01, 0x13, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0xe9, 0x03, 0x06, 0x00, 0xde, 0x01,  // ................ |
+// /* 0000 */ 0xf8, 0x01, 0x13, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0xe9, 0x03, 0x06, 0x00, 0xe2, 0x01,  // ................ |
 // /* 0010 */ 0x4d, 0x53, 0x54, 0x53, 0x43, 0x00, 0x13, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x01, 0x00,  // MSTSC........... |
 // /* 0020 */ 0x03, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
 // /* 0030 */ 0x00, 0x00, 0x02, 0x00, 0x1c, 0x00, 0x10, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x04,  // ................ |
 // /* 0040 */ 0x00, 0x03, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00, 0x03, 0x00,  // ................ |
 // /* 0050 */ 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // X............... |
 // /* 0060 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x14, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,  // ................ |
-// /* 0070 */ 0x2a, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x01, 0x01, 0x01, 0x00, 0x01, 0x00, 0x00,  // *............... |
+// /* 0070 */ 0xaa, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x01, 0x01, 0x01, 0x00, 0x01, 0x00, 0x00,  // ................ |
 // /* 0080 */ 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00,  // ................ |
-// /* 0090 */ 0x00, 0x00, 0xa1, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x84, 0x03, 0x00, 0x00, 0x00,  // ................ |
+// /* 0090 */ 0x00, 0x00, 0xa1, 0x06, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x84, 0x03, 0x00, 0x00, 0x00,  // ................ |
 // /* 00a0 */ 0x00, 0x00, 0xe4, 0x04, 0x00, 0x00, 0x04, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ........(....... |
 // /* 00b0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
 // /* 00c0 */ 0x00, 0x00, 0x78, 0x00, 0x00, 0x02, 0x78, 0x00, 0x00, 0x08, 0x51, 0x01, 0x00, 0x20, 0x0a, 0x00,  // ..x...x...Q.. .. |
@@ -4231,16 +3320,16 @@ const char indata[] =
 // /* 0180 */ 0xfe, 0x00, 0x20, 0x00, 0xfe, 0x00, 0x40, 0x00, 0xfe, 0x00, 0x80, 0x00, 0xfe, 0x00, 0x00, 0x01,  // .. ...@......... |
 // /* 0190 */ 0x40, 0x00, 0x00, 0x08, 0x00, 0x01, 0x00, 0x01, 0x03, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x08, 0x00,  // @............... |
 // /* 01a0 */ 0x01, 0x00, 0x00, 0x00, 0x11, 0x00, 0x0c, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x14, 0x64, 0x00,  // ..............d. |
-// /* 01b0 */ 0x14, 0x00, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00, 0x15, 0x00, 0x0c, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
-// /* 01c0 */ 0x00, 0x0a, 0x00, 0x01, 0x16, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ......(......... |
+// /* 01b0 */ 0x14, 0x00, 0x0c, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x0c, 0x00,  // ................ |
+// /* 01c0 */ 0x02, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x01, 0x16, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00,  // ..........(..... |
 // /* 01d0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 01e0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1a, 0x00, 0x08, 0x00,  // ................ |
-// /* 01f0 */ 0x00, 0x00, 0x00, 0x00,                                      // .... |
+// /* 01e0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 01f0 */ 0x1a, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00,                          // ........ |
 // Front::incoming::sec_flags=0 |
 // Front received CONFIRMACTIVEPDU |
 // process_confirm_active |
 // lengthSourceDescriptor = 6 |
-// lengthCombinedCapabilities = 478 |
+// lengthCombinedCapabilities = 482 |
 // Front::capability 0 / 19 |
 // Receiving from client General caps (24 bytes) |
 // General caps::major 1 |
@@ -4286,7 +3375,7 @@ const char indata[] =
 // Order caps::pad2octetsA 0 |
 // Order caps::maximumOrderLevel 1 |
 // Order caps::numberFonts 0 |
-// Order caps::orderFlags 42 |
+// Order caps::orderFlags 170 |
 // Order caps::orderSupport[TS_NEG_DSTBLT_INDEX] 1 |
 // Order caps::orderSupport[TS_NEG_PATBLT_INDEX] 1 |
 // Order caps::orderSupport[TS_NEG_SCRBLT_INDEX] 1 |
@@ -4320,7 +3409,7 @@ const char indata[] =
 // Order caps::orderSupport[UnusedIndex10] 0 |
 // Order caps::orderSupport[UnusedIndex11] 0 |
 // Order caps::textFlags 1697 |
-// Order caps::orderSupportExFlags 0 |
+// Order caps::orderSupportExFlags 6 |
 // Order caps::pad4octetsB 0 |
 // Order caps::desktopSaveSize 230400 |
 // Order caps::pad2octetsC 0 |
@@ -4348,7 +3437,10 @@ const char indata[] =
 // Front::capability 6 / 19 |
 // Receiving from client CAPSTYPE_CONTROL |
 // Front::capability 7 / 19 |
-// Receiving from client CAPSTYPE_POINTER |
+// Receiving from client Pointer caps (10 bytes) |
+// Pointer caps::colorPointerFlag 1 |
+// Pointer caps::colorPointerCacheSize 20 |
+// Pointer caps::pointerCacheSize 21 |
 // Front::capability 8 / 19 |
 // Receiving from client CAPSTYPE_SHARE |
 // Front::capability 9 / 19 |
@@ -4377,426 +3469,12 @@ const char indata[] =
 // Front::capability 18 / 19 |
 // Receiving from client MultifragmentUpdate caps (8 bytes) |
 // MultifragmentUpdate caps::MaxRequestSize 0 |
-// process_confirm_active done p=0x7fff23aa1f1b end=0x7fff23aa1f1b |
+// process_confirm_active done p=0x7fff50ab6e57 end=0x7fff50ab6e57 |
 // Front::reset::use_bitmap_comp=1 |
 // Front::reset::use_compact_packets=1 |
 // Front::reset::bitmap_cache_version=0 |
 // Front: Use RDP 5.0 Bulk compression |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[0](2000) used=2 free=16276 |
-// Front::send_pointer(cache_idx=0 x=0 y=0) |
-// Front::send_pointer: fast-path |
-// Sending on RDP Client (5) 3220 bytes |
-// /* 0000 */ "\x00\x8c\x94\x09\x8e\x0c\x00\x00\x00\x00\x00\x00\x20\x00\x20\x00" //............ . . |
-// /* 0010 */ "\x80\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0030 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0040 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0050 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0070 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0090 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0160 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0170 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0180 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0190 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0200 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0210 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0220 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0230 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0240 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0250 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0260 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0270 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0280 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0290 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0300 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0310 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0320 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0330 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0340 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0350 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0360 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0370 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0380 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0390 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0400 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0410 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0420 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0430 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0440 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0450 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0460 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0470 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0480 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0490 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0500 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\x00" //................ |
-// /* 0510 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0520 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0530 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0540 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0550 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0560 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff" //................ |
-// /* 0570 */ "\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0580 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0590 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05c0 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff" //................ |
-// /* 05d0 */ "\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0600 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0610 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0620 */ "\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00" //................ |
-// /* 0630 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0640 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0650 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0660 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0670 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0680 */ "\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00" //................ |
-// /* 0690 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06d0 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06e0 */ "\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00" //................ |
-// /* 06f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0700 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0710 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0720 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0730 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00" //................ |
-// /* 0740 */ "\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00" //................ |
-// /* 0750 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0760 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0770 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0780 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0790 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-// /* 07a0 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07f0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0800 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0810 */ "\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0820 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0830 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0840 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0850 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0860 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff" //................ |
-// /* 0870 */ "\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0880 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0890 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08b0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00" //................ |
-// /* 08d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0900 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0910 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0920 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00" //................ |
-// /* 0930 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0940 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0950 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0960 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0970 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0980 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0990 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09d0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09e0 */ "\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a30 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a40 */ "\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a50 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a90 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-// /* 0aa0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ab0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ac0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ad0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ae0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0af0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00" //................ |
-// /* 0b00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b30 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b40 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b50 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b90 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ba0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bb0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bc0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bd0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0be0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bf0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0c00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0c10 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c20 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c30 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c40 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xfe\x7f\xff\xff\xfc\x3f\xff\xff" //.............?.. |
-// /* 0c50 */ "\xfc\x3f\xff\xff\xf8\x7f\xff\xff\x78\x7f\xff\xff\x30\xff\xff\xff" //.?......x...0... |
-// /* 0c60 */ "\x10\xff\xff\xff\x01\xff\xff\xff\x00\x1f\xff\xff\x00\x3f\xff\xff" //.............?.. |
-// /* 0c70 */ "\x00\x7f\xff\xff\x00\xff\xff\xff\x01\xff\xff\xff\x03\xff\xff\xff" //................ |
-// /* 0c80 */ "\x07\xff\xff\xff\x0f\xff\xff\xff\x1f\xff\xff\xff\x3f\xff\xff\xff" //............?... |
-// /* 0c90 */ "\x7f\xff\xff\xff"                                                 //.... |
-// Sent dumped on RDP Client (5) 3220 bytes |
-// Front::send_pointer done |
-// Front::send_pointer(cache_idx=1 x=15 y=16) |
-// Front::send_pointer: fast-path |
-// Sending on RDP Client (5) 3220 bytes |
-// /* 0000 */ "\x00\x8c\x94\x09\x8e\x0c\x01\x00\x0f\x00\x10\x00\x20\x00\x20\x00" //............ . . |
-// /* 0010 */ "\x80\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0030 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0040 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0050 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0070 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0090 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0160 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0170 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0180 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0190 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0200 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0210 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0220 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0230 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0240 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0250 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0260 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0270 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0280 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0290 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02d0 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 02e0 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 02f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0300 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0310 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0320 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0330 */ "\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0340 */ "\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-// /* 0350 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0360 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0370 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0380 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0390 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 03a0 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 03b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0400 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0410 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0420 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0430 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0440 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0450 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0460 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0470 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0480 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0490 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 04c0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0500 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0510 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0520 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0530 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0540 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0550 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0560 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0570 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0580 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0590 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 05e0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0600 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0610 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0620 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0630 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0640 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0650 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0660 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0670 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0680 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0690 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 06a0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0700 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0710 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0720 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0730 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0740 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0750 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0760 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0770 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0780 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0790 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 07c0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0800 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0810 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0820 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0830 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0840 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0850 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0860 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0870 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0880 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0890 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08d0 */ "\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08e0 */ "\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-// /* 08f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0900 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0910 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0920 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0930 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0940 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0950 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0960 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0970 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0980 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0990 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a30 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a40 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a50 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a90 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0aa0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ab0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ac0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ad0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ae0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0af0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b30 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b40 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b50 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b90 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ba0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bb0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bc0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bd0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0be0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bf0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0c00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0c10 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c20 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c30 */ "\xff\xe1\x0f\xff\xff\xe0\x0f\xff\xff\xe0\x0f\xff\xff\xfc\x7f\xff" //................ |
-// /* 0c40 */ "\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff" //................ |
-// /* 0c50 */ "\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff" //................ |
-// /* 0c60 */ "\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xe0\x0f\xff" //................ |
-// /* 0c70 */ "\xff\xe0\x0f\xff\xff\xe1\x0f\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c80 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c90 */ "\xff\xff\xff\xff"                                                 //.... |
-// Sent dumped on RDP Client (5) 3220 bytes |
-// Front::send_pointer done |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[0](2000) used=2 free=16276 |
 // Front received CONFIRMACTIVEPDU done |
 // Front::incoming() |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
@@ -4808,22 +3486,18 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x24"                                                     //..$ |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 30 bytes |
-// Recv done on RDP Client (5) 30 bytes |
-/* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x16\x16\x00\x17\x00\xe9\x03\x02\x00" //.d....p......... |
-/* 0010 */ "\x01\x00\x00\x01\x08\x00\x1f\x00\x00\x00\x01\x00\xe9\x03"         //.............. |
-// Dump done on RDP Client (5) 30 bytes |
+// Socket RDP Client (5) receiving 32 bytes |
+// Recv done on RDP Client (5) 32 bytes |
+/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x16\x16\x00\x17\x00\xe9\x03" //...d....p....... |
+/* 0010 */ "\x02\x00\x01\x00\x00\x01\x08\x00\x1f\x00\x00\x00\x01\x00\xe9\x03" //................ |
+// Dump done on RDP Client (5) 32 bytes |
 // sec decrypted payload: |
 // /* 0000 */ 0x16, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x01, 0x08, 0x00, 0x1f, 0x00,  // ................ |
 // /* 0010 */ 0x00, 0x00, 0x01, 0x00, 0xe9, 0x03,                                // ...... |
 // Front::incoming::sec_flags=0 |
 // Front received DATAPDU |
 // Front::process_data(...) |
-// sdata_in.pdutype2=31 sdata_in.len=8 sdata_in.compressedLen=0 remains=4 payload_len=4 |
+// sdata_in.pdutype2=31 sdata_in.len=8 sdata_in.compressedLen=0 remains=0 payload_len=4 |
 // PDUTYPE2_SYNCHRONIZE |
 // PDUTYPE2_SYNCHRONIZE messageType=1 controlId=1001 |
 // send_synchronize |
@@ -4848,23 +3522,19 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x28"                                                     //..( |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 34 bytes |
-// Recv done on RDP Client (5) 34 bytes |
-/* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x1a\x1a\x00\x17\x00\xe9\x03\x02\x00" //.d....p......... |
-/* 0010 */ "\x01\x00\x00\x01\x0c\x00\x14\x00\x00\x00\x04\x00\x00\x00\x00\x00" //................ |
-/* 0020 */ "\x00\x00"                                                         //.. |
-// Dump done on RDP Client (5) 34 bytes |
+// Socket RDP Client (5) receiving 36 bytes |
+// Recv done on RDP Client (5) 36 bytes |
+/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x1a\x1a\x00\x17\x00\xe9\x03" //...d....p....... |
+/* 0010 */ "\x02\x00\x01\x00\x00\x01\x0c\x00\x14\x00\x00\x00\x04\x00\x00\x00" //................ |
+/* 0020 */ "\x00\x00\x00\x00"                                                 //.... |
+// Dump done on RDP Client (5) 36 bytes |
 // sec decrypted payload: |
 // /* 0000 */ 0x1a, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x01, 0x0c, 0x00, 0x14, 0x00,  // ................ |
 // /* 0010 */ 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,                    // .......... |
 // Front::incoming::sec_flags=0 |
 // Front received DATAPDU |
 // Front::process_data(...) |
-// sdata_in.pdutype2=20 sdata_in.len=12 sdata_in.compressedLen=0 remains=8 payload_len=8 |
+// sdata_in.pdutype2=20 sdata_in.len=12 sdata_in.compressedLen=0 remains=0 payload_len=8 |
 // PDUTYPE2_CONTROL |
 // send_control action=4 |
 // Sec clear payload to send: |
@@ -4888,23 +3558,19 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x28"                                                     //..( |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 34 bytes |
-// Recv done on RDP Client (5) 34 bytes |
-/* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x1a\x1a\x00\x17\x00\xe9\x03\x02\x00" //.d....p......... |
-/* 0010 */ "\x01\x00\x00\x01\x0c\x00\x14\x00\x00\x00\x01\x00\x00\x00\x00\x00" //................ |
-/* 0020 */ "\x00\x00"                                                         //.. |
-// Dump done on RDP Client (5) 34 bytes |
+// Socket RDP Client (5) receiving 36 bytes |
+// Recv done on RDP Client (5) 36 bytes |
+/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x1a\x1a\x00\x17\x00\xe9\x03" //...d....p....... |
+/* 0010 */ "\x02\x00\x01\x00\x00\x01\x0c\x00\x14\x00\x00\x00\x01\x00\x00\x00" //................ |
+/* 0020 */ "\x00\x00\x00\x00"                                                 //.... |
+// Dump done on RDP Client (5) 36 bytes |
 // sec decrypted payload: |
 // /* 0000 */ 0x1a, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x01, 0x0c, 0x00, 0x14, 0x00,  // ................ |
 // /* 0010 */ 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,                    // .......... |
 // Front::incoming::sec_flags=0 |
 // Front received DATAPDU |
 // Front::process_data(...) |
-// sdata_in.pdutype2=20 sdata_in.len=12 sdata_in.compressedLen=0 remains=8 payload_len=8 |
+// sdata_in.pdutype2=20 sdata_in.len=12 sdata_in.compressedLen=0 remains=0 payload_len=8 |
 // PDUTYPE2_CONTROL |
 // send_control action=2 |
 // Sec clear payload to send: |
@@ -4928,23 +3594,19 @@ const char indata[] =
 // Recv done on RDP Client (5) 3 bytes |
 /* 0000 */ "\x00\x00\x28"                                                     //..( |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 2 bytes |
-// Recv done on RDP Client (5) 2 bytes |
-/* 0000 */ "\x02\xf0"                                                         //.. |
-// Dump done on RDP Client (5) 2 bytes |
-// Socket RDP Client (5) receiving 34 bytes |
-// Recv done on RDP Client (5) 34 bytes |
-/* 0000 */ "\x80\x64\x00\x00\x03\xeb\x70\x1a\x1a\x00\x17\x00\xe9\x03\x02\x00" //.d....p......... |
-/* 0010 */ "\x01\x00\x00\x01\x00\x00\x27\x00\x00\x00\x00\x00\x00\x00\x03\x00" //......'......... |
-/* 0020 */ "\x32\x00"                                                         //2. |
-// Dump done on RDP Client (5) 34 bytes |
+// Socket RDP Client (5) receiving 36 bytes |
+// Recv done on RDP Client (5) 36 bytes |
+/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x1a\x1a\x00\x17\x00\xe9\x03" //...d....p....... |
+/* 0010 */ "\x02\x00\x01\x00\x00\x01\x00\x00\x27\x00\x00\x00\x00\x00\x00\x00" //........'....... |
+/* 0020 */ "\x03\x00\x32\x00"                                                 //..2. |
+// Dump done on RDP Client (5) 36 bytes |
 // sec decrypted payload: |
 // /* 0000 */ 0x1a, 0x00, 0x17, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x27, 0x00,  // ..............'. |
 // /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x32, 0x00,                    // ........2. |
 // Front::incoming::sec_flags=0 |
 // Front received DATAPDU |
 // Front::process_data(...) |
-// sdata_in.pdutype2=39 sdata_in.len=0 sdata_in.compressedLen=0 remains=8 payload_len=8 |
+// sdata_in.pdutype2=39 sdata_in.len=0 sdata_in.compressedLen=0 remains=0 payload_len=8 |
 // PDUTYPE2_FONTLIST |
 // send_fontmap |
 // Sec clear payload to send: |
@@ -4981,584 +3643,170 @@ const char indata[] =
 // Sending on RDP Client (5) 5 bytes |
 // /* 0000 */ "\x00\x05\x03\x00\x00"                                             //..... |
 // Sent dumped on RDP Client (5) 5 bytes |
-// Front::send_pointer(cache_idx=0 x=0 y=0) |
-// Front::send_pointer: fast-path |
-// Sending on RDP Client (5) 3220 bytes |
-// /* 0000 */ "\x00\x8c\x94\x09\x8e\x0c\x00\x00\x00\x00\x00\x00\x20\x00\x20\x00" //............ . . |
-// /* 0010 */ "\x80\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0030 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0040 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0050 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0070 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0090 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0160 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0170 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0180 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0190 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0200 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0210 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0220 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0230 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0240 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0250 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0260 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0270 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0280 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0290 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0300 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0310 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0320 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0330 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0340 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0350 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0360 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0370 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0380 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0390 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0400 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0410 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0420 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0430 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0440 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0450 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0460 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0470 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0480 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0490 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0500 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\x00" //................ |
-// /* 0510 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0520 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0530 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0540 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0550 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0560 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff" //................ |
-// /* 0570 */ "\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0580 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0590 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05c0 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff" //................ |
-// /* 05d0 */ "\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0600 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0610 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0620 */ "\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00" //................ |
-// /* 0630 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0640 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0650 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0660 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0670 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0680 */ "\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00" //................ |
-// /* 0690 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06d0 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06e0 */ "\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00" //................ |
-// /* 06f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0700 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0710 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0720 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0730 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00" //................ |
-// /* 0740 */ "\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00" //................ |
-// /* 0750 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0760 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0770 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0780 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0790 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-// /* 07a0 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07f0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0800 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0810 */ "\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0820 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0830 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0840 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0850 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0860 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff" //................ |
-// /* 0870 */ "\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0880 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0890 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08b0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00" //................ |
-// /* 08d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0900 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0910 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0920 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00" //................ |
-// /* 0930 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0940 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0950 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0960 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0970 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0980 */ "\x00\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0990 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09d0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09e0 */ "\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a30 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a40 */ "\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a50 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a90 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-// /* 0aa0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ab0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ac0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ad0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ae0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0af0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00" //................ |
-// /* 0b00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b30 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b40 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b50 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b90 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ba0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bb0 */ "\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bc0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bd0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0be0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bf0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0c00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0c10 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c20 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c30 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c40 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xfe\x7f\xff\xff\xfc\x3f\xff\xff" //.............?.. |
-// /* 0c50 */ "\xfc\x3f\xff\xff\xf8\x7f\xff\xff\x78\x7f\xff\xff\x30\xff\xff\xff" //.?......x...0... |
-// /* 0c60 */ "\x10\xff\xff\xff\x01\xff\xff\xff\x00\x1f\xff\xff\x00\x3f\xff\xff" //.............?.. |
-// /* 0c70 */ "\x00\x7f\xff\xff\x00\xff\xff\xff\x01\xff\xff\xff\x03\xff\xff\xff" //................ |
-// /* 0c80 */ "\x07\xff\xff\xff\x0f\xff\xff\xff\x1f\xff\xff\xff\x3f\xff\xff\xff" //............?... |
-// /* 0c90 */ "\x7f\xff\xff\xff"                                                 //.... |
-// Sent dumped on RDP Client (5) 3220 bytes |
-// Front::send_pointer done |
-// Front::send_pointer(cache_idx=1 x=15 y=16) |
-// Front::send_pointer: fast-path |
-// Sending on RDP Client (5) 3220 bytes |
-// /* 0000 */ "\x00\x8c\x94\x09\x8e\x0c\x01\x00\x0f\x00\x10\x00\x20\x00\x20\x00" //............ . . |
-// /* 0010 */ "\x80\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0030 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0040 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0050 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0070 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0090 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0160 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0170 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0180 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0190 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 01f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0200 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0210 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0220 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0230 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0240 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0250 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0260 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0270 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0280 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0290 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 02d0 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 02e0 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 02f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0300 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0310 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0320 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0330 */ "\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0340 */ "\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-// /* 0350 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0360 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0370 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0380 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0390 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 03a0 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 03b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 03f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0400 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0410 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0420 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0430 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0440 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0450 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0460 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0470 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0480 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0490 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 04c0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 04f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0500 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0510 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0520 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0530 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0540 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0550 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0560 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0570 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0580 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0590 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 05e0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 05f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0600 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0610 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0620 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0630 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0640 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0650 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0660 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0670 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0680 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0690 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 06a0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 06f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0700 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0710 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0720 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0730 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0740 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0750 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0760 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0770 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0780 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0790 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 07c0 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 07f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0800 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0810 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" //................ |
-// /* 0820 */ "\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0830 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0840 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0850 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0860 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0870 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0880 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0890 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08d0 */ "\x00\x00\x00\x00\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 08e0 */ "\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff" //................ |
-// /* 08f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0900 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0910 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0920 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0930 */ "\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0940 */ "\xff\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0950 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0960 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0970 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0980 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0990 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 09f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a30 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a40 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a50 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0a90 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0aa0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ab0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ac0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ad0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ae0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0af0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b10 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b20 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b30 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b40 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b50 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b60 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b70 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b80 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0b90 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0ba0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bb0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bc0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bd0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0be0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0bf0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0c00 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0c10 */ "\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c20 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c30 */ "\xff\xe1\x0f\xff\xff\xe0\x0f\xff\xff\xe0\x0f\xff\xff\xfc\x7f\xff" //................ |
-// /* 0c40 */ "\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff" //................ |
-// /* 0c50 */ "\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff" //................ |
-// /* 0c60 */ "\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xfc\x7f\xff\xff\xe0\x0f\xff" //................ |
-// /* 0c70 */ "\xff\xe0\x0f\xff\xff\xe1\x0f\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c80 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" //................ |
-// /* 0c90 */ "\xff\xff\xff\xff"                                                 //.... |
-// Sent dumped on RDP Client (5) 3220 bytes |
-// Front::send_pointer done |
 // --------------> UP AND RUNNING <---------------- |
 // asking for selector |
 // process_data done |
 // Front received DATAPDU done |
 // Front::begin_update() |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[1](23) used=1035 free=15243 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](23) used=1035 free=15243 |
 // order(10 clip(0,0,1,1)):opaquerect(rect(0,0,1024,768) color=0x00ffff) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[2](23) used=1044 free=15234 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](23) used=1044 free=15234 |
 // order(10 clip(0,0,1,1)):opaquerect(rect(5,5,1014,758) color=0x00f800) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[3](23) used=1052 free=15226 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](23) used=1052 free=15226 |
 // order(10 clip(0,0,1,1)):opaquerect(rect(10,10,1004,748) color=0x0007e0) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[4](23) used=1060 free=15218 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](23) used=1060 free=15218 |
 // order(10 clip(0,0,1,1)):opaquerect(rect(15,15,994,738) color=0x00001f) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[5](23) used=1068 free=15210 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](23) used=1068 free=15210 |
 // order(10 clip(0,0,1,1)):opaquerect(rect(20,20,984,728) color=0x000000) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[6](23) used=1075 free=15203 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[6](23) used=1075 free=15203 |
 // order(10 clip(0,0,1,1)):opaquerect(rect(30,30,964,708) color=0x000273) |
 // Widget_load: image file [./tests/fixtures/Philips_PM5544_640.png] is PNG file |
 // front::draw:draw_tile((192, 144, 64, 64) (0, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[7](8208) used=1083 free=15195 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[8](30) used=1211 free=15067 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[7](8208) used=1083 free=15195 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[8](30) used=1211 free=15067 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=0) |
 // front::draw:draw_tile((256, 144, 64, 64) (64, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[9](8208) used=1225 free=15053 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[10](30) used=1376 free=14902 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[9](8208) used=1225 free=15053 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[10](30) used=1376 free=14902 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=1) |
 // front::draw:draw_tile((320, 144, 64, 64) (128, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[11](8208) used=1382 free=14896 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[12](30) used=1489 free=14789 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[11](8208) used=1382 free=14896 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[12](30) used=1489 free=14789 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=2) |
 // front::draw:draw_tile((384, 144, 64, 64) (192, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[13](8208) used=1495 free=14783 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[14](30) used=1937 free=14341 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[13](8208) used=1495 free=14783 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[14](30) used=1937 free=14341 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=3) |
 // front::draw:draw_tile((448, 144, 64, 64) (256, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[15](8208) used=1943 free=14335 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[16](30) used=2195 free=14083 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[15](8208) used=1943 free=14335 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[16](30) used=2195 free=14083 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=4) |
 // front::draw:draw_tile((512, 144, 64, 64) (320, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[17](8208) used=2201 free=14077 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[18](30) used=2464 free=13814 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[17](8208) used=2201 free=14077 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[18](30) used=2464 free=13814 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=5) |
 // front::draw:draw_tile((576, 144, 64, 64) (384, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[19](8208) used=2470 free=13808 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[20](30) used=2924 free=13354 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[19](8208) used=2470 free=13808 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[20](30) used=2924 free=13354 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=6) |
 // front::draw:draw_tile((640, 144, 64, 64) (448, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[21](8208) used=2930 free=13348 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[22](30) used=3023 free=13255 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[21](8208) used=2930 free=13348 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[22](30) used=3023 free=13255 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=7) |
 // front::draw:draw_tile((704, 144, 64, 64) (512, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[23](8208) used=3029 free=13249 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[24](30) used=3183 free=13095 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[23](8208) used=3029 free=13249 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[24](30) used=3183 free=13095 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=8) |
 // front::draw:draw_tile((768, 144, 64, 64) (576, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[25](8208) used=3189 free=13089 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[26](30) used=3334 free=12944 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[25](8208) used=3189 free=13089 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[26](30) used=3334 free=12944 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=9) |
 // front::draw:draw_tile((192, 208, 64, 64) (0, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[27](8208) used=3340 free=12938 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[28](30) used=3443 free=12835 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[27](8208) used=3340 free=12938 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[28](30) used=3443 free=12835 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=10) |
 // front::draw:draw_tile((256, 208, 64, 64) (64, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[29](8208) used=3452 free=12826 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[30](30) used=3585 free=12693 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[29](8208) used=3452 free=12826 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[30](30) used=3585 free=12693 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=11) |
 // front::draw:draw_tile((320, 208, 64, 64) (128, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[31](8208) used=3591 free=12687 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[32](30) used=4143 free=12135 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[31](8208) used=3591 free=12687 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[32](30) used=4143 free=12135 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=12) |
 // front::draw:draw_tile((384, 208, 64, 64) (192, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[33](8208) used=4149 free=12129 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[34](30) used=4262 free=12016 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[33](8208) used=4149 free=12129 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[34](30) used=4262 free=12016 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=13) |
 // front::draw:draw_tile((448, 208, 64, 64) (256, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[35](8208) used=4268 free=12010 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[36](30) used=4308 free=11970 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[35](8208) used=4268 free=12010 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[36](30) used=4308 free=11970 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=14) |
 // front::draw:draw_tile((512, 208, 64, 64) (320, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[37](8208) used=4314 free=11964 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[38](30) used=4355 free=11923 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[37](8208) used=4314 free=11964 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[38](30) used=4355 free=11923 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=15) |
 // front::draw:draw_tile((576, 208, 64, 64) (384, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[39](8208) used=4361 free=11917 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[40](30) used=4452 free=11826 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[39](8208) used=4361 free=11917 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[40](30) used=4452 free=11826 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=16) |
 // front::draw:draw_tile((640, 208, 64, 64) (448, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[41](8208) used=4458 free=11820 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[42](30) used=5038 free=11240 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[41](8208) used=4458 free=11820 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[42](30) used=5038 free=11240 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=17) |
 // front::draw:draw_tile((704, 208, 64, 64) (512, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[43](8208) used=5044 free=11234 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[44](30) used=5177 free=11101 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[43](8208) used=5044 free=11234 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[44](30) used=5177 free=11101 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=18) |
 // front::draw:draw_tile((768, 208, 64, 64) (576, 64, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[45](8208) used=5183 free=11095 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[46](30) used=5289 free=10989 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[45](8208) used=5183 free=11095 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[46](30) used=5289 free=10989 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=19) |
 // front::draw:draw_tile((192, 272, 64, 64) (0, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[47](8208) used=5295 free=10983 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[48](30) used=5400 free=10878 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[47](8208) used=5295 free=10983 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[48](30) used=5400 free=10878 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=20) |
 // front::draw:draw_tile((256, 272, 64, 64) (64, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[49](8208) used=5409 free=10869 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[50](30) used=5807 free=10471 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[49](8208) used=5409 free=10869 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[50](30) used=5807 free=10471 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=21) |
 // front::draw:draw_tile((320, 272, 64, 64) (128, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[51](8208) used=5813 free=10465 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[52](30) used=5959 free=10319 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[51](8208) used=5813 free=10465 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[52](30) used=5959 free=10319 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=22) |
 // front::draw:draw_tile((384, 272, 64, 64) (192, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[53](8208) used=5965 free=10313 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[54](30) used=6038 free=10240 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[53](8208) used=5965 free=10313 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[54](30) used=6038 free=10240 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=23) |
 // front::draw:draw_tile((448, 272, 64, 64) (256, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[55](8208) used=6044 free=10234 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[56](30) used=6118 free=10160 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[55](8208) used=6044 free=10234 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[56](30) used=6118 free=10160 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=24) |
 // front::draw:draw_tile((512, 272, 64, 64) (320, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[57](8208) used=6124 free=10154 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[58](30) used=6193 free=10085 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[57](8208) used=6124 free=10154 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[58](30) used=6193 free=10085 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=25) |
 // front::draw:draw_tile((576, 272, 64, 64) (384, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[59](8208) used=6199 free=10079 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[60](30) used=6270 free=10008 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[59](8208) used=6199 free=10079 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[60](30) used=6270 free=10008 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=26) |
 // front::draw:draw_tile((640, 272, 64, 64) (448, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[61](8208) used=6276 free=10002 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[62](30) used=6419 free=9859 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[61](8208) used=6276 free=10002 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[62](30) used=6419 free=9859 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=27) |
 // front::draw:draw_tile((704, 272, 64, 64) (512, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[63](8208) used=6425 free=9853 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[64](30) used=6844 free=9434 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[63](8208) used=6425 free=9853 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[64](30) used=6844 free=9434 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=28) |
 // front::draw:draw_tile((768, 272, 64, 64) (576, 128, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[65](8208) used=6850 free=9428 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[66](30) used=6958 free=9320 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[65](8208) used=6850 free=9428 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[66](30) used=6958 free=9320 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=29) |
 // front::draw:draw_tile((192, 336, 64, 64) (0, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[67](8208) used=6964 free=9314 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[68](30) used=7049 free=9229 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[67](8208) used=6964 free=9314 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[68](30) used=7049 free=9229 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=30) |
 // front::draw:draw_tile((256, 336, 64, 64) (64, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[69](8208) used=7058 free=9220 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[70](30) used=7498 free=8780 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[69](8208) used=7058 free=9220 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[70](30) used=7498 free=8780 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=31) |
 // front::draw:draw_tile((320, 336, 64, 64) (128, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[71](8208) used=7504 free=8774 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[72](30) used=7618 free=8660 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[71](8208) used=7504 free=8774 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[72](30) used=7618 free=8660 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=32) |
 // front::draw:draw_tile((384, 336, 64, 64) (192, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[73](8208) used=7624 free=8654 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[74](30) used=7775 free=8503 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[73](8208) used=7624 free=8654 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[74](30) used=7775 free=8503 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=33) |
 // front::draw:draw_tile((448, 336, 64, 64) (256, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[75](8208) used=7781 free=8497 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[76](30) used=7955 free=8323 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[75](8208) used=7781 free=8497 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[76](30) used=7955 free=8323 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=34) |
 // front::draw:draw_tile((512, 336, 64, 64) (320, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[77](8208) used=7961 free=8317 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[78](30) used=8130 free=8148 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[77](8208) used=7961 free=8317 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[78](30) used=8130 free=8148 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=35) |
 // front::draw:draw_tile((576, 336, 64, 64) (384, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[79](8208) used=8136 free=8142 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[79](8208) used=8136 free=8142 |
 // GraphicsUpdatePDU::flush_orders: order_count=79 offset=0 |
 // GraphicsUpdatePDU::flush_orders: fast-path |
 // Sending on RDP Client (5) 5520 bytes |
@@ -5908,134 +4156,134 @@ const char indata[] =
 // /* 1570 */ "\xa5\x1a\xa9\x50\x04\x05\x65\x30\x17\x69\x8d\x08\x94\xb6\x03\x37" //...P..e0.i.....7 |
 // /* 1580 */ "\x9c\xd1\xc5\x65\x22\x3d\x9e\x0c\x01\xdd\x9e\x1c\x08\xe8\x8c\x00" //...e"=.......... |
 // Sent dumped on RDP Client (5) 5520 bytes |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[1](30) used=151 free=16127 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](30) used=151 free=16127 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=36) |
 // front::draw:draw_tile((640, 336, 64, 64) (448, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[2](8208) used=157 free=16121 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[3](30) used=267 free=16011 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](8208) used=157 free=16121 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](30) used=267 free=16011 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=37) |
 // front::draw:draw_tile((704, 336, 64, 64) (512, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[4](8208) used=273 free=16005 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[5](30) used=723 free=15555 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](8208) used=273 free=16005 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](30) used=723 free=15555 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=38) |
 // front::draw:draw_tile((768, 336, 64, 64) (576, 192, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[6](8208) used=729 free=15549 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[7](30) used=814 free=15464 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[6](8208) used=729 free=15549 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[7](30) used=814 free=15464 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=39) |
 // front::draw:draw_tile((192, 400, 64, 64) (0, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[8](8208) used=820 free=15458 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[9](30) used=913 free=15365 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[8](8208) used=820 free=15458 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[9](30) used=913 free=15365 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=40) |
 // front::draw:draw_tile((256, 400, 64, 64) (64, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[10](8208) used=922 free=15356 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[11](30) used=1372 free=14906 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[10](8208) used=922 free=15356 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[11](30) used=1372 free=14906 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=41) |
 // front::draw:draw_tile((320, 400, 64, 64) (128, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[12](8208) used=1378 free=14900 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[13](30) used=1633 free=14645 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[12](8208) used=1378 free=14900 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[13](30) used=1633 free=14645 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=42) |
 // front::draw:draw_tile((384, 400, 64, 64) (192, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[14](8208) used=1639 free=14639 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[15](30) used=1938 free=14340 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[14](8208) used=1639 free=14639 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[15](30) used=1938 free=14340 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=43) |
 // front::draw:draw_tile((448, 400, 64, 64) (256, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[16](8208) used=1944 free=14334 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[17](30) used=2267 free=14011 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[16](8208) used=1944 free=14334 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[17](30) used=2267 free=14011 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=44) |
 // front::draw:draw_tile((512, 400, 64, 64) (320, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[18](8208) used=2273 free=14005 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[19](30) used=2594 free=13684 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[18](8208) used=2273 free=14005 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[19](30) used=2594 free=13684 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=45) |
 // front::draw:draw_tile((576, 400, 64, 64) (384, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[20](8208) used=2600 free=13678 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[21](30) used=2899 free=13379 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[20](8208) used=2600 free=13678 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[21](30) used=2899 free=13379 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=46) |
 // front::draw:draw_tile((640, 400, 64, 64) (448, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[22](8208) used=2905 free=13373 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[23](30) used=3143 free=13135 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[22](8208) used=2905 free=13373 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[23](30) used=3143 free=13135 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=47) |
 // front::draw:draw_tile((704, 400, 64, 64) (512, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[24](8208) used=3149 free=13129 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[25](30) used=3584 free=12694 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[24](8208) used=3149 free=13129 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[25](30) used=3584 free=12694 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=48) |
 // front::draw:draw_tile((768, 400, 64, 64) (576, 256, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[26](8208) used=3590 free=12688 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[27](30) used=3682 free=12596 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[26](8208) used=3590 free=12688 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[27](30) used=3682 free=12596 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=49) |
 // front::draw:draw_tile((192, 464, 64, 64) (0, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[28](8208) used=3688 free=12590 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[29](30) used=3808 free=12470 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[28](8208) used=3688 free=12590 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[29](30) used=3808 free=12470 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=50) |
 // front::draw:draw_tile((256, 464, 64, 64) (64, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[30](8208) used=3817 free=12461 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[31](30) used=4093 free=12185 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[30](8208) used=3817 free=12461 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[31](30) used=4093 free=12185 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=51) |
 // front::draw:draw_tile((320, 464, 64, 64) (128, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[32](8208) used=4099 free=12179 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[33](30) used=4605 free=11673 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[32](8208) used=4099 free=12179 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[33](30) used=4605 free=11673 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=52) |
 // front::draw:draw_tile((384, 464, 64, 64) (192, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[34](8208) used=4611 free=11667 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[35](30) used=4817 free=11461 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[34](8208) used=4611 free=11667 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[35](30) used=4817 free=11461 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=53) |
 // front::draw:draw_tile((448, 464, 64, 64) (256, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[36](8208) used=4823 free=11455 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[37](30) used=4985 free=11293 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[36](8208) used=4823 free=11455 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[37](30) used=4985 free=11293 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=54) |
 // front::draw:draw_tile((512, 464, 64, 64) (320, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[38](8208) used=4991 free=11287 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[39](30) used=5151 free=11127 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[38](8208) used=4991 free=11287 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[39](30) used=5151 free=11127 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=55) |
 // front::draw:draw_tile((576, 464, 64, 64) (384, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[40](8208) used=5157 free=11121 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[41](30) used=5348 free=10930 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[40](8208) used=5157 free=11121 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[41](30) used=5348 free=10930 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=56) |
 // front::draw:draw_tile((640, 464, 64, 64) (448, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[42](8208) used=5354 free=10924 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[43](30) used=5806 free=10472 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[42](8208) used=5354 free=10924 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[43](30) used=5806 free=10472 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=57) |
 // front::draw:draw_tile((704, 464, 64, 64) (512, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[44](8208) used=5812 free=10466 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[45](30) used=6071 free=10207 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[44](8208) used=5812 free=10466 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[45](30) used=6071 free=10207 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=58) |
 // front::draw:draw_tile((768, 464, 64, 64) (576, 320, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[46](8208) used=6077 free=10201 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[47](30) used=6197 free=10081 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[46](8208) used=6077 free=10201 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[47](30) used=6197 free=10081 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=59) |
 // front::draw:draw_tile((192, 528, 64, 64) (0, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[48](8208) used=6203 free=10075 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[49](30) used=6327 free=9951 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[48](8208) used=6203 free=10075 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[49](30) used=6327 free=9951 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=60) |
 // front::draw:draw_tile((256, 528, 64, 64) (64, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[50](8208) used=6336 free=9942 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[51](30) used=6474 free=9804 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[50](8208) used=6336 free=9942 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[51](30) used=6474 free=9804 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=61) |
 // front::draw:draw_tile((320, 528, 64, 64) (128, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[52](8208) used=6480 free=9798 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[53](30) used=6834 free=9444 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[52](8208) used=6480 free=9798 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[53](30) used=6834 free=9444 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=62) |
 // front::draw:draw_tile((384, 528, 64, 64) (192, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[54](8208) used=6840 free=9438 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[55](30) used=7367 free=8911 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[54](8208) used=6840 free=9438 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[55](30) used=7367 free=8911 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=63) |
 // front::draw:draw_tile((448, 528, 64, 64) (256, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[56](8208) used=7373 free=8905 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[57](30) used=7455 free=8823 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[56](8208) used=7373 free=8905 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[57](30) used=7455 free=8823 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=64) |
 // front::draw:draw_tile((512, 528, 64, 64) (320, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[58](8208) used=7461 free=8817 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[59](30) used=7520 free=8758 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[58](8208) used=7461 free=8817 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[59](30) used=7520 free=8758 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=65) |
 // front::draw:draw_tile((576, 528, 64, 64) (384, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[60](8208) used=7526 free=8752 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[61](30) used=8005 free=8273 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[60](8208) used=7526 free=8752 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[61](30) used=8005 free=8273 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=66) |
 // front::draw:draw_tile((640, 528, 64, 64) (448, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[62](8208) used=8011 free=8267 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[63](30) used=8326 free=7952 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[62](8208) used=8011 free=8267 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[63](30) used=8326 free=7952 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=67) |
 // front::draw:draw_tile((704, 528, 64, 64) (512, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[64](8208) used=8332 free=7946 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[64](8208) used=8332 free=7946 |
 // GraphicsUpdatePDU::flush_orders: order_count=64 offset=0 |
 // GraphicsUpdatePDU::flush_orders: fast-path |
 // Sending on RDP Client (5) 5229 bytes |
@@ -6367,114 +4615,122 @@ const char indata[] =
 // /* 1450 */ "\x3e\x3e\x4c\xfd\x28\xfc\x4c\x04\x07\x7f\xa6\x3e\x3b\xfb\xdf\x81" //>>L.(.L....>;... |
 // /* 1460 */ "\x6f\xc2\x77\xd4\x0d\xdf\xa2\x4f\xb8\x00\xc2\x18\x00"             //o.w....O..... |
 // Sent dumped on RDP Client (5) 5229 bytes |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[1](30) used=141 free=16137 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](30) used=141 free=16137 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=68) |
 // front::draw:draw_tile((768, 528, 64, 64) (576, 384, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[2](8208) used=147 free=16131 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[3](30) used=277 free=16001 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](8208) used=147 free=16131 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](30) used=277 free=16001 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=69) |
 // front::draw:draw_tile((192, 592, 64, 32) (0, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[4](4112) used=283 free=15995 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[5](30) used=355 free=15923 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](4112) used=283 free=15995 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](30) used=355 free=15923 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=70) |
 // front::draw:draw_tile((256, 592, 64, 32) (64, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[6](4112) used=366 free=15912 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[7](30) used=449 free=15829 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[6](4112) used=366 free=15912 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[7](30) used=449 free=15829 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=71) |
 // front::draw:draw_tile((320, 592, 64, 32) (128, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[8](4112) used=455 free=15823 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[9](30) used=514 free=15764 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[8](4112) used=455 free=15823 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[9](30) used=514 free=15764 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=72) |
 // front::draw:draw_tile((384, 592, 64, 32) (192, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[10](4112) used=520 free=15758 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[11](30) used=617 free=15661 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[10](4112) used=520 free=15758 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[11](30) used=617 free=15661 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=73) |
 // front::draw:draw_tile((448, 592, 64, 32) (256, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[12](4112) used=623 free=15655 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[13](30) used=881 free=15397 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[12](4112) used=623 free=15655 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[13](30) used=881 free=15397 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=74) |
 // front::draw:draw_tile((512, 592, 64, 32) (320, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[14](4112) used=887 free=15391 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[15](30) used=1155 free=15123 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[14](4112) used=887 free=15391 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[15](30) used=1155 free=15123 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=75) |
 // front::draw:draw_tile((576, 592, 64, 32) (384, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[16](4112) used=1161 free=15117 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[17](30) used=1262 free=15016 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[16](4112) used=1161 free=15117 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[17](30) used=1262 free=15016 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=76) |
 // front::draw:draw_tile((640, 592, 64, 32) (448, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[18](4112) used=1268 free=15010 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[19](30) used=1321 free=14957 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[18](4112) used=1268 free=15010 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[19](30) used=1321 free=14957 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=77) |
 // front::draw:draw_tile((704, 592, 64, 32) (512, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[20](4112) used=1327 free=14951 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[21](30) used=1411 free=14867 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[20](4112) used=1327 free=14951 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[21](30) used=1411 free=14867 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=78) |
 // front::draw:draw_tile((768, 592, 64, 32) (576, 448, 64, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[22](4112) used=1417 free=14861 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[23](30) used=1498 free=14780 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[22](4112) used=1417 free=14861 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[23](30) used=1498 free=14780 |
 // order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=79) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[24](32) used=1504 free=14774 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[25](32) used=1532 free=14746 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[26](32) used=1538 free=14740 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[27](32) used=1546 free=14732 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[28](32) used=1556 free=14722 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[29](32) used=1571 free=14707 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[30](32) used=1577 free=14701 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[31](32) used=1585 free=14693 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[32](82) used=1595 free=14683 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[33](66) used=1661 free=14617 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[34](66) used=1711 free=14567 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[35](66) used=1761 free=14517 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[36](66) used=1811 free=14467 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[37](20) used=1861 free=14417 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[38](297) used=1881 free=14397 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[39](66) used=1931 free=14347 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[40](66) used=1981 free=14297 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[41](66) used=2031 free=14247 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[42](297) used=2081 free=14197 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[43](82) used=2113 free=14165 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[44](66) used=2179 free=14099 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[45](66) used=2229 free=14049 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[46](297) used=2279 free=13999 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[47](82) used=2311 free=13967 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[48](66) used=2377 free=13901 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[49](66) used=2427 free=13851 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[50](297) used=2477 free=13801 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[51](66) used=2509 free=13769 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[52](66) used=2559 free=13719 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[53](66) used=2609 free=13669 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[54](297) used=2659 free=13619 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[24](32) used=1504 free=14774 |
+// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=200 starty=1198 endx=200 endy=145 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[25](32) used=1532 free=14746 |
+// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=200 starty=145 endx=200 endy=1198 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[26](32) used=1538 free=14740 |
+// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=201 starty=1198 endx=200 endy=145 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[27](32) used=1546 free=14732 |
+// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=200 starty=145 endx=201 endy=1198 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[28](32) used=1556 free=14722 |
+// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=1198 starty=200 endx=145 endy=200 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[29](32) used=1571 free=14707 |
+// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=145 starty=200 endx=1198 endy=200 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[30](32) used=1577 free=14701 |
+// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=1198 starty=201 endx=145 endy=200 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[31](32) used=1585 free=14693 |
+// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=145 starty=200 endx=1198 endy=201 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[32](82) used=1595 free=14683 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[33](66) used=1661 free=14617 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[34](66) used=1711 free=14567 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[35](66) used=1761 free=14517 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[36](66) used=1811 free=14467 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[37](20) used=1861 free=14417 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[38](297) used=1881 free=14397 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[39](66) used=1931 free=14347 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[40](66) used=1981 free=14297 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[41](66) used=2031 free=14247 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[42](297) used=2081 free=14197 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[43](82) used=2113 free=14165 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[44](66) used=2179 free=14099 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[45](66) used=2229 free=14049 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[46](297) used=2279 free=13999 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[47](82) used=2311 free=13967 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[48](66) used=2377 free=13901 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[49](66) used=2427 free=13851 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[50](297) used=2477 free=13801 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[51](66) used=2509 free=13769 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[52](66) used=2559 free=13719 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[53](66) used=2609 free=13669 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[54](297) used=2659 free=13619 |
 // Widget_load: image file [./tests/fixtures/xrdp24b-redemption.png] is PNG file |
 // front::draw:draw_tile((738, 613, 64, 64) (0, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[55](8208) used=2694 free=13584 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[56](30) used=3172 free=13106 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[55](8208) used=2694 free=13584 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[56](30) used=3172 free=13106 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(738,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=80) |
 // front::draw:draw_tile((802, 613, 64, 64) (64, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[57](8208) used=3181 free=13097 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[58](30) used=3892 free=12386 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[57](8208) used=3181 free=13097 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[58](30) used=3892 free=12386 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(802,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=81) |
 // front::draw:draw_tile((866, 613, 64, 64) (128, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[59](8208) used=3898 free=12380 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[60](30) used=4669 free=11609 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[59](8208) used=3898 free=12380 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[60](30) used=4669 free=11609 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(866,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=82) |
 // front::draw:draw_tile((930, 613, 64, 64) (192, 0, 64, 64)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[61](8208) used=4675 free=11603 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[62](30) used=5357 free=10921 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[61](8208) used=4675 free=11603 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[62](30) used=5357 free=10921 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(930,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=83) |
 // front::draw:draw_tile((738, 677, 64, 61) (0, 64, 64, 61)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[63](7824) used=5363 free=10915 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[64](30) used=6302 free=9976 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[63](7824) used=5363 free=10915 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[64](30) used=6302 free=9976 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(738,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=84) |
 // front::draw:draw_tile((802, 677, 64, 61) (64, 64, 64, 61)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[65](7824) used=6313 free=9965 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[66](30) used=7625 free=8653 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[65](7824) used=6313 free=9965 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[66](30) used=7625 free=8653 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(802,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=85) |
 // front::draw:draw_tile((866, 677, 64, 61) (128, 64, 64, 61)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[67](7824) used=7631 free=8647 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[68](30) used=9027 free=7251 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[67](7824) used=7631 free=8647 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[68](30) used=9027 free=7251 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(866,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=86) |
 // front::draw:draw_tile((930, 677, 64, 61) (192, 64, 64, 61)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[69](7824) used=9033 free=7245 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[69](7824) used=9033 free=7245 |
 // GraphicsUpdatePDU::flush_orders: order_count=69 offset=0 |
 // GraphicsUpdatePDU::flush_orders: fast-path |
 // Sending on RDP Client (5) 6453 bytes |
@@ -6883,16 +5139,16 @@ const char indata[] =
 // /* 1920 */ "\x2f\xe2\xe8\x86\x10\x80\xd5\xfc\x57\x18\x2d\x51\x01\xad\x84\x80" ///.......W.-Q.... |
 // /* 1930 */ "\x63\x76\x19\x56\x00"                                             //cv.V. |
 // Sent dumped on RDP Client (5) 6453 bytes |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[1](30) used=1082 free=15196 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](30) used=1082 free=15196 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(930,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=87) |
 // front::draw:draw_tile((0, 704, 32, 32) (32, 32, 32, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[2](2064) used=1088 free=15190 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[3](30) used=1110 free=15168 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](2064) used=1088 free=15190 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](30) used=1110 free=15168 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=1 rect(0,704,32,32) rop=cc srcx=0 srcy=0 cache_idx=0) |
 // Widget_load: image file [./tests/fixtures/ad8b.png] is PNG file |
 // front::draw:draw_tile((100, 100, 26, 32) (80, 50, 26, 32)) |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[4](1808) used=1125 free=15153 |
-// <Serializer 0x7fc29e1c2010> RDPSerializer::reserve_order[5](30) used=1440 free=14838 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](1808) used=1125 free=15153 |
+// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](30) used=1440 free=14838 |
 // order(13 clip(145,200,110,1)):memblt(cache_id=1 rect(100,100,26,32) rop=cc srcx=0 srcy=0 cache_idx=1) |
 // Front::end_update() |
 // GraphicsUpdatePDU::flush_orders: order_count=6 offset=0 |
@@ -6968,7 +5224,9 @@ const char indata[] =
 // /* 0430 */ "\x40\x14\x64\xa0\x06\x06\x79\x67\x7d\xc0\xc4\xc1\x36\xfc\x51\xde" //@.d...yg}...6.Q. |
 // /* 0440 */ "\x52\x01\x0e\x01\x64\x00\x64\xc8\xf8\x00\x10\x00"                 //R...d.d..... |
 // Sent dumped on RDP Client (5) 1100 bytes |
+// Listener closed |
+// Incoming socket 5 (ip=10.10.47.175) |
 // Socket RDP Client (5) : closing connection |
-// RDP Client (0): total_received=1712, total_sent=32411 |
+// RDP Client (0): total_received=1778, total_sent=19531 |
 } /* end indata */;
 

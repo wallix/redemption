@@ -94,6 +94,7 @@
 
 #include "config.hpp"
 #include "RDP/caches/bmpcache.hpp"
+#include "RDP/caches/pointercache.hpp"
 #include "RDP/share.hpp"
 #include "difftimeval.hpp"
 #include "stream.hpp"
@@ -168,8 +169,8 @@ protected:
     size_t bitmap_count;
 
     BmpCache & bmp_cache;
+    PointerCache & pointer_cache;
 
-private:
     const uint32_t verbose;
 
 public:
@@ -178,6 +179,7 @@ public:
                  , Stream & stream_bitmaps
                  , const uint8_t bpp
                  , BmpCache & bmp_cache
+                 , PointerCache & pointer_cache
                  , const int bitmap_cache_version
                  , const int use_bitmap_comp
                  , const int op2
@@ -213,6 +215,7 @@ public:
     , order_count(0)
     , bitmap_count(0)
     , bmp_cache(bmp_cache)
+    , pointer_cache(pointer_cache)
     , verbose(verbose) {}
 
     ~RDPSerializer() {}
@@ -220,8 +223,23 @@ public:
 protected:
     virtual void flush_orders() = 0;
     virtual void flush_bitmaps() = 0;
-public:
 
+    virtual void send_pointer(int cache_idx, const Pointer & cursor) = 0;
+    virtual void set_pointer(int cache_idx) = 0;
+
+public:
+/*
+    void init_pointers()
+    {
+        Pointer pointer0(Pointer::POINTER_CURSOR0);
+        this->pointer_cache.add_pointer_static(pointer0, 0);
+        this->send_pointer(0, pointer0);
+
+        Pointer pointer1(Pointer::POINTER_CURSOR1);
+        this->pointer_cache.add_pointer_static(pointer1, 1);
+        this->send_pointer(1, pointer1);
+    }
+*/
     /*****************************************************************************/
     // check if the next order will fit in available packet size
     // if not send previous orders we got and init a new packet
@@ -561,6 +579,19 @@ public:
         this->stream_bitmaps.out_copy_bytes(data, size);
         if (this->ini.debug.bitmap_update){
             bitmap_data.log(LOG_INFO, "RDPSerializer");
+        }
+    }
+
+    virtual void server_set_pointer(const Pointer & cursor) {
+        int cache_idx = 0;
+        switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
+        case POINTER_TO_SEND:
+            this->send_pointer(cache_idx, cursor);
+        break;
+        default:
+        case POINTER_ALLREADY_SENT:
+            this->set_pointer(cache_idx);
+        break;
         }
     }
 };

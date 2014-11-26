@@ -89,8 +89,10 @@ struct RDPGraphicDevice : noncopyable {
 
 
     virtual void server_set_pointer(const Pointer & cursor) {}
+/*
     virtual void send_pointer(int cache_idx, const Pointer & cursor) {}
     virtual void set_pointer(int cache_idx) {}
+*/
 
     virtual void set_mod_palette(const BGRPalette & palette) {};
 
