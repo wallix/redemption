@@ -22,6 +22,7 @@
 #define _REDEMPTION_CAPTURE_CHUNKTOFILE_HPP_
 
 #include "RDPChunkedDevice.hpp"
+#include "GraphicToFile.hpp"
 #include "bufferization_transport.hpp"
 #include "gzip_compression_transport.hpp"
 //#include "lzma_compression_transport.hpp"

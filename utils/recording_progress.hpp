@@ -18,6 +18,10 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
+#include "noncopyable.hpp"
+
+#include <iostream>
+
 class UpdateProgressData : noncopyable {
     int fd;
 
@@ -43,7 +47,7 @@ public:
 (void)write_result;
         }
         else {
-            cerr << "Failed to create file: \"" << progress_filename << "\"" << endl;
+            std::cerr << "Failed to create file: \"" << progress_filename << "\"" << std::endl;
         }
     }
 
@@ -85,12 +89,12 @@ public:
 
             char str_time_percentage[64];
 
-            ::snprintf( str_time_percentage, sizeof(str_time_percentage), "%u %u"
-                      , time_percentage
-                      , elapsed_time * 100 / time_percentage - elapsed_time);
+            std::size_t len = ::snprintf( str_time_percentage, sizeof(str_time_percentage), "%u %u"
+                                        , time_percentage
+                                        , elapsed_time * 100 / time_percentage - elapsed_time);
 
             ::lseek(this->fd, 0, SEEK_SET);
-            int write_result = ::write(this->fd, str_time_percentage, strlen(str_time_percentage));
+            int write_result = ::write(this->fd, str_time_percentage, len);
             if (write_result != -1) {
                 int truncate_result = ::ftruncate(this->fd, write_result);
 (void)truncate_result;
