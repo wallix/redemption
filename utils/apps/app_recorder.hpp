@@ -23,7 +23,6 @@
 
 #include "FileToChunk.hpp"
 #include "ChunkToFile.hpp"
-#include "capture.hpp"
 #include "out_meta_sequence_transport.hpp"
 #include "crypto_out_meta_sequence_transport.hpp"
 #include "in_meta_sequence_transport.hpp"
@@ -704,7 +703,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                             , player.screen_rect.cx, player.screen_rect.cy
                             , player.info_bpp, outfile_path, outfile_basename, outfile_extension
                             , ini, clear, verbose, std::forward<ExtraArguments>(extra_argument)...);
-        Capture & capture = capmake.capture;
+        auto & capture = capmake.capture;
 
         if (capture.capture_png){
             capture.psc->zoom(zoom);
