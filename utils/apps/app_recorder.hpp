@@ -189,6 +189,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
 
     Inifile ini;
+    ConfigurationLoader cfg_loader_full(ini, CFG_PATH "/" RDPPROXY_INI);
 
     if (options.count("compression") > 0) {
              if (0 == strcmp(wrm_compression_algorithm.c_str(), "none"       )) {
@@ -640,11 +641,12 @@ void show_metadata(FileToGraphic const & player) {
     std::cout.flush();
 }
 
-template<class CaptureMaker>
+template<class CaptureMaker, class... ExtraArguments>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string & output_filename
                     , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
-                    , bool show_file_metadata, bool show_statistics, uint32_t verbose) {
+                    , bool show_file_metadata, bool show_statistics, uint32_t verbose
+                    , ExtraArguments && ... extra_argument) {
     for (unsigned i = 1; i < file_count ; i++) {
         in_wrm_trans.next();
     }
@@ -700,7 +702,8 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
 
         CaptureMaker capmake( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                             , player.screen_rect.cx, player.screen_rect.cy
-                            , player.info_bpp, outfile_path, outfile_basename, ini, clear);
+                            , player.info_bpp, outfile_path, outfile_basename, outfile_extension
+                            , ini, clear, verbose, std::forward<ExtraArguments>(extra_argument)...);
         Capture & capture = capmake.capture;
 
         if (capture.capture_png){

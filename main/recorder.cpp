@@ -36,7 +36,8 @@ int main(int argc, char** argv)
         Capture capture;
 
         CaptureMaker( const timeval & now, uint16_t width, uint16_t height, int order_bpp
-                    , const char * path, const char * basename, Inifile & ini, bool /*clear*/)
+                    , const char * path, const char * basename, const char * /*extension*/
+                    , Inifile & ini, bool /*clear*/, uint32_t /*verbose*/)
         : capture( now, width, height, order_bpp
                  , ini.video.wrm_color_depth_selection_strategy
                  , path, path, ini.video.hash_path, basename
@@ -49,7 +50,15 @@ int main(int argc, char** argv)
         "Copyright (C) Wallix 2010-2014.\n"
         "Christophe Grosjean, Jonathan Poelen and Raphael Zhou."
       , [](boost::program_options::options_description_easy_init const &){}
-      , [](Inifile const &, boost::program_options::variables_map const &, std::string const & /*output_filename*/) { return 0; }
+      , [](Inifile const & ini, boost::program_options::variables_map const &, std::string const & output_filename) -> int {
+            if (   output_filename.length()
+                && !(  ini.video.capture_png | ini.video.capture_flv | ini.video.capture_ocr | ini.video.capture_wrm
+                    | ini.globals.capture_chunk.get())) {
+                std::cerr << "Missing target format : need --png or --wrm" << endl;
+                return -1;
+            }
+            return 0;
+      }
       , [](Inifile::Inifile_crypto const &) { return 0; }
       , [](Inifile const &) { return false; }/*has_extra_capture*/
     );
