@@ -36,30 +36,38 @@ enum {
 
 /* difference caches */
 class PointerCache : noncopyable {
+public:
+    static const int max_pointer_count = 32;
+
+private:
     int pointer_cache_entries;
 
     /* pointer */
     int pointer_stamp = 0;
+    int stamps[max_pointer_count] = { 0 };
+
+    bool cached[max_pointer_count] = { false };
 
 public:
-    Pointer Pointers[32];
-
-private:
-    int stamps[32] = {0};
+    Pointer Pointers[max_pointer_count];
 
 public:
     PointerCache(int pointer_cache_entries = 0)
     : pointer_cache_entries(pointer_cache_entries) {}
+
     ~PointerCache() = default;
 
     TODO(" much duplicated code with constructor and destructor  create some intermediate functions or object")
-    int reset(ClientInfo & client_info) {
-        memset(this, 0, sizeof(PointerCache));
-        this->pointer_cache_entries = client_info.pointer_cache_entries;
+    int reset(const ClientInfo & client_info) {
+//        memset(this, 0, sizeof(PointerCache));
+//        this->pointer_cache_entries = client_info.pointer_cache_entries;
+        this->~PointerCache();
+        new (this)PointerCache(client_info.pointer_cache_entries);
         return 0;
     }
 
     void add_pointer_static(const Pointer & cursor, int index) {
+        REDASSERT((index >= 0) && (index < max_pointer_count));
         this->Pointers[index].x = cursor.x;
         this->Pointers[index].y = cursor.y;
         this->Pointers[index].width = cursor.width;
@@ -68,6 +76,8 @@ public:
         memcpy(this->Pointers[index].data, cursor.data, cursor.data_size());
         memcpy(this->Pointers[index].mask, cursor.mask, cursor.mask_size());
         this->stamps[index] = this->pointer_stamp;
+
+        this->cached[index] = true;
     }
 
     /* check if the pointer is in the cache or not and if it should be sent      */
@@ -104,6 +114,14 @@ public:
         cache_idx = index;
         this->add_pointer_static(cursor, index);
         return POINTER_TO_SEND;
+    }
+
+    bool is_cached(int index) const {
+        return this->cached[index];
+    }
+
+    void set_cached(int index, bool cached) {
+        this->cached[index] = cached;
     }
 };  // struct PointerCache
 

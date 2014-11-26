@@ -590,6 +590,12 @@ public:
         break;
         default:
         case POINTER_ALLREADY_SENT:
+            if ((this->bmp_cache.owner == BmpCache::Recorder) && !this->pointer_cache.is_cached(cache_idx)) {
+                this->send_pointer(cache_idx, cursor);
+                this->pointer_cache.set_cached(cache_idx, true);
+                break;
+            }
+
             this->set_pointer(cache_idx);
         break;
         }
