@@ -254,10 +254,6 @@ protected:
 
                     this->buffer_stream_orders.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
 
-                    BStream x224_header(256);
-                    OutPerBStream mcs_header(256);
-                    BStream sec_header(256);
-
                     this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, this->buffer_stream_orders);
                 }
                 else {
