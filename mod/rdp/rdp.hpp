@@ -2432,6 +2432,7 @@ public:
             pointer_caps.pointerCacheSize      = 0;
             pointer_caps.colorPointerCacheSize = 20;
             pointer_caps.len                   = 8;
+            REDASSERT(pointer_caps.colorPointerCacheSize <= sizeof(this->cursors) / sizeof(Pointer));
         }
         if (this->verbose & 1) {
             pointer_caps.log("Sending to server");
