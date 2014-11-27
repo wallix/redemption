@@ -265,13 +265,6 @@ public:
                 break;
             }
         }
-/*
-        Pointer pointer0(Pointer::POINTER_CURSOR0);
-        this->ptr_cache.add_pointer_static(pointer0, 0);
-
-        Pointer pointer1(Pointer::POINTER_CURSOR1);
-        this->ptr_cache.add_pointer_static(pointer1, 1);
-*/
     }
 
     ~FileToGraphic()

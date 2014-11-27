@@ -4409,7 +4409,7 @@ public:
         }
         else {
             LOG(LOG_WARNING, "mod_rdp::process_cached_pointer_pdu: incalid cache cell index, use system default. index=%u", pointer_idx);
-            Pointer cursor(Pointer::POINTER_CURSOR0);
+            Pointer cursor(Pointer::POINTER_NORMAL);
             this->front.server_set_pointer(cursor);
         }
         if (this->verbose & 4){
@@ -4446,7 +4446,7 @@ public:
             break;
         default:
             {
-                Pointer cursor(Pointer::POINTER_CURSOR0);
+                Pointer cursor(Pointer::POINTER_NORMAL);
                 this->front.server_set_pointer(cursor);
             }
             break;
