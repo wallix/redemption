@@ -33,6 +33,7 @@ class UpdateProgressData : noncopyable {
     unsigned int last_written_time_percentage;
 
 public:
+    UpdateProgressData() = delete;
     UpdateProgressData( const char * progress_filename
                       , const time_t begin_record, const time_t end_record
                       , const time_t begin_capture, const time_t end_capture) noexcept
