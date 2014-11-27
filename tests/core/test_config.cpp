@@ -78,8 +78,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
-    BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
+    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
     BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
     BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
@@ -338,8 +337,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
-    BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
+    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
     BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
     BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
@@ -605,8 +603,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
-    BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
+    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
     BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
     BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
@@ -862,8 +859,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
-    BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
+    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
     BOOST_CHECK_EQUAL(50,                               ini.video.ocr_interval);
     BOOST_CHECK_EQUAL(true,                             ini.video.ocr_on_title_bar_only);
     BOOST_CHECK_EQUAL(50,                               ini.video.ocr_max_unrecog_char_rate);
@@ -1093,8 +1089,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
-    BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
+    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
     BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
     BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
@@ -1301,8 +1296,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
-    BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
+    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
     BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
     BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
@@ -1491,8 +1485,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
-    BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
+    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
     BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
     BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
@@ -1672,8 +1665,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
-    BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
+    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
     BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
     BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
@@ -1848,8 +1840,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
-    BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
+    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
     BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
     BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
@@ -2024,8 +2015,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
-    BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
+    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
     BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
     BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
