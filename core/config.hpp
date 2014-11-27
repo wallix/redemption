@@ -488,8 +488,8 @@ static inline const char * string_from_authid(authid_t authid) {
 
 #include <type_traits>
 
-struct Inifile : public FieldObserver {
-
+class Inifile : public FieldObserver
+{
     struct null_fill { null_fill() {}; };
 
     struct StringCopier
@@ -503,7 +503,7 @@ struct Inifile : public FieldObserver {
         }
     };
 
-    template<std::size_t N, class Copier = StringCopier, bool NullableString = false>
+    template<std::size_t N, class Copier, bool NullableString = false>
     class StaticStringBase : noncopyable
     {
         struct disable_ctor { };
@@ -520,7 +520,7 @@ struct Inifile : public FieldObserver {
         { *this = s; }
 
         StaticStringBase& operator=(const char * s) {
-            Copier::copy(this->str, s, this->max_size());
+            Copier::copy(this->str, s, N);
             return *this;
         }
 
@@ -533,7 +533,7 @@ struct Inifile : public FieldObserver {
         }
 
         constexpr std::size_t max_size() const noexcept {
-            return N;
+            return N-1;
         }
 
         char * data() noexcept {
@@ -548,8 +548,9 @@ struct Inifile : public FieldObserver {
         StaticStringBase(StaticStringBase &&);
     };
 
+public:
     template<std::size_t N>
-    using StaticString = StaticStringBase<N>;
+    using StaticString = StaticStringBase<N, StringCopier>;
 
     template<std::size_t N>
     using StaticNilString = StaticStringBase<N, StringCopier, true>;
@@ -557,8 +558,6 @@ struct Inifile : public FieldObserver {
     template<std::size_t N>
     struct StaticKeyString : StaticStringBase<N, null_fill, true>
     {
-        using StaticStringBase<N, null_fill, true>::StaticStringBase;
-
         StaticKeyString(const char * s) {
             this->setmem(s);
         }
@@ -569,6 +568,10 @@ struct Inifile : public FieldObserver {
 
         void setmem(const char * s) noexcept {
             this->setmem(s, N);
+        }
+
+        constexpr std::size_t max_size() const noexcept {
+            return N;
         }
     };
 

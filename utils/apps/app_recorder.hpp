@@ -54,12 +54,12 @@ template<typename InWrmTrans>
 void remove_file(InWrmTrans & in_wrm_trans, const char * hash_path, const char * infile_path
                 , const char * infile_basename, const char * infile_extension, bool is_encrypted);
 
-
-template<class CaptureMaker>
+template<class CaptureMaker, class... ExtraArguments>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string & output_filename
-                    , Inifile & ini, uint32_t order_count, uint32_t clear, unsigned zoom
-                    , bool show_file_metadata, bool show_statistics, uint32_t verbose);
+                    , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
+                    , bool show_file_metadata, bool show_statistics, uint32_t verbose
+                    , ExtraArguments && ... extra_argument);
 
 static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
                         , std::string & output_filename, Inifile & ini, uint32_t verbose);
