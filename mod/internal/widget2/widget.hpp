@@ -23,10 +23,11 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_HPP_
 
 #include <vector>
+
 #include "notify_api.hpp"
 #include "mod_api.hpp"
-#include <rect.hpp>
-#include <callback.hpp>
+#include "rect.hpp"
+#include "callback.hpp"
 #include "RDP/pointer.hpp"
 
 struct Keymap2;
@@ -43,27 +44,19 @@ enum NotifyEventType {
     NOTIFY_CUT,
 };
 
-
 class Widget2 : public RdpInput, public NotifyApi
 {
 public:
-
     TODO("using several booleans may be easier to read than flags")
     enum OptionTab {
-        IGNORE_TAB           = 0x00,
-        NORMAL_TAB           = 0x02
+        IGNORE_TAB = 0x00,
+        NORMAL_TAB = 0x02
     };
 
     enum OptionFocus {
         IGNORE_FOCUS = 0x00,
         NORMAL_FOCUS = 0x01
         // FORCE_FOCUS  = 0x04
-    };
-
-    // Warning: these numbers are not random but associed to Front pointer cache index
-    enum OptionPointer {
-        NORMAL_POINTER = 0x00,
-        EDIT_POINTER   = 0x01
     };
 
 public:
@@ -91,14 +84,11 @@ public:
     , group_id(group_id)
     , tab_flag(NORMAL_TAB)
     , focus_flag(NORMAL_FOCUS)
-    , pointer_flag(NORMAL_POINTER)
+    , pointer_flag(Pointer::POINTER_NORMAL)
     , has_focus(false)
-    , notify_value(0)
-    {
-    }
+    , notify_value(0) {}
 
-    virtual ~Widget2()
-    {}
+    virtual ~Widget2() {}
 
     virtual bool next_focus()
     {
@@ -153,7 +143,6 @@ public:
         }
         return w;
     }
-
 
     // External world can generate 4 kind of events
     // - keyboard event (scancode)
@@ -295,7 +284,6 @@ public:
     {
         return this->dy() - this->parent.dy();
     }
-
 };
 
 #endif

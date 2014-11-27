@@ -27,9 +27,9 @@
 struct Pointer {
     enum {
         POINTER_NULL,
-        POINTER_CURSOR0,
-        POINTER_CURSOR1,
-        POINTER_CURSOR2
+        POINTER_NORMAL,
+        POINTER_EDIT,
+        POINTER_DRAWABLE_DEFAULT
     };
 
 public:
@@ -70,7 +70,7 @@ public:
                 }
                 break;
 
-            case POINTER_CURSOR0:
+            case POINTER_NORMAL:
                 {
                     this->bpp    = 24;
                     this->width  = 32;
@@ -154,9 +154,9 @@ public:
                         ;
                     ::memcpy(this->mask, mask_cursor0, this->width * this->height / 8);
                 }
-                break;  // case POINTER_CURSOR0:
+                break;  // case POINTER_NORMAL:
 
-            case POINTER_CURSOR1:
+            case POINTER_EDIT:
                 {
                     this->bpp    = 24;
                     this->width  = 32;
@@ -239,9 +239,9 @@ public:
                         ;
                     ::memcpy(this->mask, mask_cursor1, this->width * this->height / 8);
                 }
-                break;  // case POINTER_CURSOR1:
+                break;  // case POINTER_EDIT:
 
-            case POINTER_CURSOR2:
+            case POINTER_DRAWABLE_DEFAULT:
                 {
                     this->bpp    = 24;
                     this->width  = 32;
@@ -325,7 +325,7 @@ public:
                         ;
                     ::memcpy(this->mask, mask_cursor2, this->width * this->height / 8);
                 }
-                break;  // case POINTER_CURSOR2:
+                break;  // case POINTER_DRAWABLE_DEFAULT:
         }   // switch (pointer_type)
     }   // Pointer(uint8_t pointer_type)
 

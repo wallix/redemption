@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         ini.globals.enable_file_encryption.set(false);
         Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, NULL, ini);
 
-        Pointer pointer1(Pointer::POINTER_CURSOR1);
+        Pointer pointer1(Pointer::POINTER_EDIT);
         capture.server_set_pointer(pointer1);
 
         capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr);

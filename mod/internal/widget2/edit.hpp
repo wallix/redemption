@@ -89,11 +89,10 @@ public:
         this->rect.cy += 2;
         --this->h_text;
 
-        this->pointer_flag = EDIT_POINTER;
+        this->pointer_flag = Pointer::POINTER_EDIT;
     }
 
-    virtual ~WidgetEdit()
-    {}
+    virtual ~WidgetEdit() {}
 
     virtual void set_text(const char * text/*, int position = 0*/)
     {
