@@ -728,28 +728,25 @@ protected:
         }
 
         if (this->fastpath_support == false) {
-            BStream stream(65536);
+            HStream target_stream(1024, 65536);
 
-            ShareData sdata(stream);
+            ShareData sdata(target_stream);
             sdata.emit_begin(PDUTYPE2_POINTER, this->shareid, RDP::STREAM_MED);
 
             // Payload
-            stream.out_uint16_le(RDP_POINTER_COLOR);
-            stream.out_uint16_le(0); /* pad */
+            target_stream.out_uint16_le(RDP_POINTER_COLOR);
+            target_stream.out_uint16_le(0); // pad
 
-            GenerateColorPointerUpdateData(stream, cache_idx, cursor);
+            GenerateColorPointerUpdateData(target_stream, cache_idx, cursor);
 
             // Packet trailer
             sdata.emit_end();
 
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
-                this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+                this->userid + GCC::MCS_USERCHANNEL_BASE, target_stream.size());
 
-            HStream target_stream(1024, 65536);
-            target_stream.out_copy_bytes(sctrl_header);
-            target_stream.out_copy_bytes(stream);
-            target_stream.mark_end();
+            target_stream.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
 
             if (this->verbose & 4) {
                 LOG(LOG_INFO, "Sec clear payload to send:");
@@ -833,29 +830,25 @@ protected:
         }
 
         if (this->fastpath_support == false) {
-            BStream stream(65536);
+            HStream target_stream(1024, 65536);
 
-            ShareData sdata(stream);
-            sdata.emit_begin(PDUTYPE2_POINTER, this->shareid,
-                RDP::STREAM_MED);
+            ShareData sdata(target_stream);
+            sdata.emit_begin(PDUTYPE2_POINTER, this->shareid, RDP::STREAM_MED);
 
             // Payload
-            stream.out_uint16_le(RDP_POINTER_CACHED);
-            stream.out_uint16_le(0); /* pad */
-            stream.out_uint16_le(cache_idx);
-            stream.mark_end();
+            target_stream.out_uint16_le(RDP_POINTER_CACHED);
+            target_stream.out_uint16_le(0); // pad
+            target_stream.out_uint16_le(cache_idx);
+            target_stream.mark_end();
 
             // Packet trailer
             sdata.emit_end();
 
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
-                this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+                this->userid + GCC::MCS_USERCHANNEL_BASE, target_stream.size());
 
-            HStream target_stream(1024, 65536);
-            target_stream.out_copy_bytes(sctrl_header);
-            target_stream.out_copy_bytes(stream);
-            target_stream.mark_end();
+            target_stream.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
 
             if (this->verbose & (128 | 4)) {
                 LOG(LOG_INFO, "Sec clear payload to send:");
@@ -885,7 +878,7 @@ protected:
                                       stream.size() - header_size,
                                       FastPath::FASTPATH_UPDATETYPE_CACHED,
                                       FastPath::FASTPATH_FRAGMENT_SINGLE,
-                                      /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0,
+                                      /*FastPath::FASTPATH_OUTPUT_COMPRESSION_USED*/0,
                                       0);
 
             BStream fastpath_header(256);
