@@ -401,18 +401,6 @@ public:
 
     void server_set_pointer(const Pointer & cursor)
     {
-/*
-        int cache_idx = 0;
-        switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
-        case POINTER_TO_SEND:
-            this->send_pointer(cache_idx, cursor);
-        break;
-        default:
-        case POINTER_ALLREADY_SENT:
-            this->set_pointer(cache_idx);
-        break;
-        }
-*/
         this->orders->server_set_pointer(cursor);
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -843,19 +831,6 @@ private:
     }
 
 public:
-/*
-    void init_pointers()
-    {
-        Pointer pointer0(Pointer::POINTER_CURSOR0);
-        this->pointer_cache.add_pointer_static(pointer0, 0);
-        this->send_pointer(0, pointer0);
-
-        Pointer pointer1(Pointer::POINTER_CURSOR1);
-        this->pointer_cache.add_pointer_static(pointer1, 1);
-        this->send_pointer(1, pointer1);
-    }
-*/
-
     virtual void begin_update()
     {
         if (this->verbose & 64){
@@ -954,41 +929,39 @@ public:
         stream.mark_end();
     }
 
-/*
-    void SendLogonInfo(const uint8_t * user_name)
-    {
-        BStream stream(65536);
-        ShareData sdata_out(stream);
-        sdata_out.emit_begin(PDUTYPE2_SAVE_SESSION_INFO, this->share_id,
-            RDP::STREAM_MED);
-
-        RDP::SaveSessionInfoPDUData_Send ssipdu(stream, RDP::INFOTYPE_LOGON);
-        RDP::LogonInfoVersion1_Send      liv1(stream,
-                                              reinterpret_cast<const uint8_t *>(""),
-                                              user_name, getpid());
-
-        stream.mark_end();
-
-        // Packet trailer
-        sdata_out.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
-            this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        if ((this->verbose & (128|8)) == (128|8)){
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.get_data(), target_stream.size());
-        }
-
-        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
-    }
-*/
+    //void SendLogonInfo(const uint8_t * user_name)
+    //{
+    //    BStream stream(65536);
+    //    ShareData sdata_out(stream);
+    //    sdata_out.emit_begin(PDUTYPE2_SAVE_SESSION_INFO, this->share_id,
+    //        RDP::STREAM_MED);
+    //
+    //    RDP::SaveSessionInfoPDUData_Send ssipdu(stream, RDP::INFOTYPE_LOGON);
+    //    RDP::LogonInfoVersion1_Send      liv1(stream,
+    //                                          reinterpret_cast<const uint8_t *>(""),
+    //                                          user_name, getpid());
+    //
+    //    stream.mark_end();
+    //
+    //    // Packet trailer
+    //    sdata_out.emit_end();
+    //
+    //    BStream sctrl_header(256);
+    //    ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+    //        this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+    //
+    //    HStream target_stream(1024, 65536);
+    //    target_stream.out_copy_bytes(sctrl_header);
+    //    target_stream.out_copy_bytes(stream);
+    //    target_stream.mark_end();
+    //
+    //    if ((this->verbose & (128|8)) == (128|8)){
+    //        LOG(LOG_INFO, "Sec clear payload to send:");
+    //        hexdump_d(target_stream.get_data(), target_stream.size());
+    //    }
+    //
+    //    this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+    //}
 
     void send_global_palette() throw (Error)
     {
@@ -1064,380 +1037,6 @@ public:
             this->palette_sent = true;
         }
     }
-
-/*
-//    2.2.9.1.1.4     Server Pointer Update PDU (TS_POINTER_PDU)
-//    ----------------------------------------------------------
-//    The Pointer Update PDU is sent from server to client and is used to convey
-//    pointer information, including pointers' bitmap images, use of system or
-//    hidden pointers, use of cached cursors and position updates.
-
-//    tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-//    x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-//      section 13.7.
-
-//    mcsSDin (variable): Variable-length PER-encoded MCS Domain PDU which
-//      encapsulates an MCS Send Data Indication structure, as specified in
-//      [T125] (the ASN.1 structure definitions are given in [T125] section 7,
-//      parts 7 and 10). The userData field of the MCS Send Data Indication
-//      contains a Security Header and the Pointer Update PDU data.
-
-//    securityHeader (variable): Optional security header. If the Encryption
-//      Level (sections 5.3.2 and 2.2.1.4.3) selected by the server is greater
-//      than ENCRYPTION_LEVEL_NONE (0) and the Encryption Method
-//      (sections 5.3.2 and 2.2.1.4.3) selected by the server is greater than
-//      ENCRYPTION_METHOD_NONE (0) then this field will contain one of the
-//      following headers:
-
-//      - Basic Security Header (section 2.2.8.1.1.2.1) if the Encryption Level
-//        selected by the server (see sections 5.3.2 and 2.2.1.4.3) is
-//        ENCRYPTION_LEVEL_LOW (1).
-
-//      - Non-FIPS Security Header (section 2.2.8.1.1.2.2) if the Encryption
-//        Level selected by the server (see sections 5.3.2 and 2.2.1.4.3) is
-//        ENCRYPTION_LEVEL_CLIENT_COMPATIBLE (2) or ENCRYPTION_LEVEL_HIGH (3).
-
-//      - FIPS Security Header (section 2.2.8.1.1.2.3) if the Encryption Level
-//        selected by the server (see sections 5.3.2 and 2.2.1.4.3) is
-//        ENCRYPTION_LEVEL_FIPS (4).
-
-//      If the Encryption Level (sections 5.3.2 and 2.2.1.4.3) selected by the
-//      server is ENCRYPTION_LEVEL_NONE (0) and the Encryption Method (sections
-//      5.3.2 and 2.2.1.4.3) selected by the server is ENCRYPTION_METHOD_NONE
-//      (0), then this header is not include " in the PDU.
-
-//    shareDataHeader (18 bytes): Share Data Header (section 2.2.8.1.1.1.2)
-//      containing information about the packet. The type subfield of the
-//      pduType field of the Share Control Header (section 2.2.8.1.1.1.1) MUST
-//      be set to PDUTYPE_DATAPDU (7). The pduType2 field of the Share Data
-//      Header MUST be set to PDUTYPE2_POINTER (27).
-
-//    messageType (2 bytes): A 16-bit, unsigned integer. Type of pointer update.
-
-//    +--------------------------------+---------------------------------------+
-//    | 0x0001 TS_PTRMSGTYPE_SYSTEM    | Indicates a System Pointer Update     |
-//    |                                | (section 2.2.9.1.1.4.3).              |
-//    +--------------------------------+---------------------------------------+
-//    | 0x0003 TS_PTRMSGTYPE_POSITION  | Indicates a Pointer Position Update   |
-//    |                                | (section 2.2.9.1.1.4.2).              |
-//    +--------------------------------+---------------------------------------+
-//    | 0x0006 TS_PTRMSGTYPE_COLOR     | Indicates a Color Pointer Update      |
-//    |                                | (section 2.2.9.1.1.4.4).              |
-//    +--------------------------------+---------------------------------------+
-//    | 0x0007 TS_PTRMSGTYPE_CACHED    | Indicates a Cached Pointer Update     |
-//    |                                | (section 2.2.9.1.1.4.6).              |
-//    +--------------------------------+---------------------------------------+
-//    | 0x0008 TS_PTRMSGTYPE_POINTER   | Indicates a New Pointer Update        |
-//    |                                | (section 2.2.9.1.1.4.5).              |
-//    +--------------------------------+---------------------------------------+
-
-
-//    2.2.9.1.1.4.2     Pointer Position Update (TS_POINTERPOSATTRIBUTE)
-//    -------------------------------------------------------------------
-//    The TS_POINTERPOSATTRIBUTE structure is used to indicate that the client
-//    pointer should be moved to the specified position relative to the top-left
-//    corner of the server's desktop (see [T128] section 8.14.4).
-
-//    position (4 bytes): Point (section 2.2.9.1.1.4.1) structure containing
-//     the new x-coordinates and y-coordinates of the pointer.
-//            2.2.9.1.1.4.1  Point (TS_POINT16)
-//            ---------------------------------
-//            The TS_POINT16 structure specifies a point relative to the
-//            top-left corner of the server's desktop.
-
-//            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
-//              relative to the top-left corner of the server's desktop.
-
-//            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
-//              relative to the top-left corner of the server's desktop.
-
-
-
-//    2.2.9.1.1.4.3     System Pointer Update (TS_SYSTEMPOINTERATTRIBUTE)
-//    -------------------------------------------------------------------
-//    The TS_SYSTEMPOINTERATTRIBUTE structure is used to hide the pointer or to
-//    set its shape to that of the operating system default (see [T128] section
-//    8.14.1).
-
-//    systemPointerType (4 bytes): A 32-bit, unsigned integer.
-//    The type of system pointer.
-//    +---------------------------|------------------------------+
-//    | 0x00000000 SYSPTR_NULL    | The hidden pointer.          |
-//    +---------------------------|------------------------------+
-//    | 0x00007F00 SYSPTR_DEFAULT | The default system pointer.  |
-//    +---------------------------|------------------------------+
-
-
-//    2.2.9.1.1.4.4     Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
-//    -----------------------------------------------------------------
-//    The TS_COLORPOINTERATTRIBUTE structure represents a regular T.128 24 bpp
-//    color pointer, as specified in [T128] section 8.14.3. This pointer update
-//    is used for both monochrome and color pointers in RDP.
-
-    void GenerateColorPointerUpdateData(Stream & stream, int cache_idx, const Pointer & cursor)
-    {
-//    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
-//      entry in the pointer cache in which to store the pointer image. The
-//      number of cache entries is negotiated using the Pointer Capability Set
-//      (section 2.2.7.1.5).
-
-        stream.out_uint16_le(cache_idx);
-
-//    hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1) structure containing the
-//      x-coordinates and y-coordinates of the pointer hotspot.
-//            2.2.9.1.1.4.1  Point (TS_POINT16)
-//            ---------------------------------
-//            The TS_POINT16 structure specifies a point relative to the
-//            top-left corner of the server's desktop.
-
-//            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
-//              relative to the top-left corner of the server's desktop.
-
-        stream.out_uint16_le(cursor.x);
-
-//            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
-//              relative to the top-left corner of the server's desktop.
-
-        stream.out_uint16_le(cursor.y);
-
-//    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
-//      pixels (the maximum allowed pointer width is 32 pixels).
-
-        stream.out_uint16_le(cursor.width);
-
-//    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
-//      in pixels (the maximum allowed pointer height is 32 pixels).
-
-        stream.out_uint16_le(cursor.height);
-
-//    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-//      the andMaskData field.
-
-        stream.out_uint16_le(cursor.mask_size());
-
-//    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-//      the xorMaskData field.
-
-        stream.out_uint16_le(cursor.data_size());
-
-//    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
-//      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
-//      boundary for each encoded scan-line. For example, if a 3x3 pixel cursor
-//      is being sent, then each scan-line will consume 10 bytes (3 pixels per
-//      scan-line multiplied by 3 bpp, rounded up to the next even number of
-//      bytes).
-        stream.out_copy_bytes(cursor.data, cursor.data_size());
-
-//    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
-//      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
-//      boundary for each encoded scan-line. For example, if a 7x7 pixel cursor
-//      is being sent, then each scan-line will consume 2 bytes (7 pixels per
-//      scan-line multiplied by 1 bpp, rounded up to the next even number of
-//      bytes).
-        stream.out_copy_bytes(cursor.mask, cursor.mask_size()); // mask
-
-//    colorPointerData (1 byte): Single byte representing unused padding.
-//      The contents of this byte should be ignored.
-        stream.mark_end();
-    }
-
-    virtual void send_pointer(int cache_idx, const Pointer & cursor) throw(Error) {
-        if (this->verbose & 4) {
-            LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)",
-                cache_idx, cursor.x, cursor.y);
-        }
-
-        if (this->server_fastpath_update_support == false) {
-            BStream stream(65536);
-
-            ShareData sdata(stream);
-            sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
-
-            // Payload
-            stream.out_uint16_le(RDP_POINTER_COLOR);
-            stream.out_uint16_le(0); // pad
-
-            GenerateColorPointerUpdateData(stream, cache_idx, cursor);
-
-            // Packet trailer
-            sdata.emit_end();
-
-            BStream sctrl_header(256);
-            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
-                this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-            HStream target_stream(1024, 65536);
-            target_stream.out_copy_bytes(sctrl_header);
-            target_stream.out_copy_bytes(stream);
-            target_stream.mark_end();
-
-            if (this->verbose & 4) {
-                LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(target_stream.get_data(), target_stream.size());
-            }
-
-            this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL,
-                target_stream);
-        }
-        else {
-            HStream stream(1024, 65536);
-
-            if (this->verbose & 4) {
-                LOG(LOG_INFO, "Front::send_pointer: fast-path");
-            }
-
-            size_t header_size = FastPath::Update_Send::GetSize(0);
-
-            stream.out_clear_bytes(header_size);    // Fast-Path Update (TS_FP_UPDATE structure) size
-
-            GenerateColorPointerUpdateData(stream, cache_idx, cursor);
-
-            SubStream Upd_s(stream, 0, header_size);
-
-            FastPath::Update_Send Upd(Upd_s,
-                                      stream.size() - header_size,
-                                      FastPath::FASTPATH_UPDATETYPE_COLOR,
-                                      FastPath::FASTPATH_FRAGMENT_SINGLE,
-                                      0,
-                                      0);
-
-            BStream fastpath_header(256);
-
-            FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                fastpath_header,
-                stream,
-                ((this->client_info.encryptionLevel > 1) ?
-                 FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
-                this->encrypt);
-            this->trans.send(fastpath_header, stream);
-        }
-
-        if (this->capture &&
-            (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->send_pointer(cache_idx, cursor);
-        }
-
-        if (this->verbose & 4) {
-            LOG(LOG_INFO, "Front::send_pointer done");
-        }
-    }   // void send_pointer(int cache_idx, const Pointer & cursor)
-
-//    2.2.9.1.1.4.5    New Pointer Update (TS_POINTERATTRIBUTE)
-//    ---------------------------------------------------------
-//    The TS_POINTERATTRIBUTE structure is used to send pointer data at an
-//    arbitrary color depth. Support for the New Pointer Update is advertised
-//    in the Pointer Capability Set (section 2.2.7.1.5).
-
-//    xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in
-//      bits-per-pixel of the XOR mask contained in the colorPtrAttr field.
-
-//    colorPtrAttr (variable): Encapsulated Color Pointer Update (section
-//      2.2.9.1.1.4.4) structure which contains information about the pointer.
-//      The Color Pointer Update fields are all used, as specified in section
-//      2.2.9.1.1.4.4; however, the XOR mask data alignment packing is slightly
-//      different. For monochrome (1 bpp) pointers the XOR data is always padded
-//      to a 4-byte boundary per scan line, while color pointer XOR data is
-//      still packed on a 2-byte boundary. Color XOR data is presented in the
-///     color depth described in the xorBpp field (for 8 bpp, each byte contains
-//      one palette index; for 4 bpp, there are two palette indices per byte).
-
-//    2.2.9.1.1.4.6    Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
-//    ------------------------------------------------------------------
-//    The TS_CACHEDPOINTERATTRIBUTE structure is used to instruct the client to
-//    change the current pointer shape to one already present in the pointer
-//    cache.
-
-//    cacheIndex (2 bytes): A 16-bit, unsigned integer. A zero-based cache entry
-//      containing the cache index of the cached pointer to which the client's
-//      pointer should be changed. The pointer data should have already been
-//      cached using either the Color Pointer Update (section 2.2.9.1.1.4.4) or
-//      New Pointer Update (section 2.2.9.1.1.4.5).
-
-    virtual void set_pointer(int cache_idx) {
-        if (this->verbose & 4) {
-            LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
-        }
-
-        if (this->server_fastpath_update_support == false) {
-            BStream stream(65536);
-
-            ShareData sdata(stream);
-            sdata.emit_begin(PDUTYPE2_POINTER, this->share_id,
-                RDP::STREAM_MED);
-
-            // Payload
-            stream.out_uint16_le(RDP_POINTER_CACHED);
-            stream.out_uint16_le(0); // pad
-            stream.out_uint16_le(cache_idx);
-            stream.mark_end();
-
-            // Packet trailer
-            sdata.emit_end();
-
-            BStream sctrl_header(256);
-            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
-                this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-            HStream target_stream(1024, 65536);
-            target_stream.out_copy_bytes(sctrl_header);
-            target_stream.out_copy_bytes(stream);
-            target_stream.mark_end();
-
-            if (this->verbose & (128 | 4)) {
-                LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(target_stream.get_data(), target_stream.size());
-            }
-
-            this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL,
-                target_stream);
-        }
-        else {
-            HStream stream(1024, 65536);
-
-            if (this->verbose & 4) {
-                LOG(LOG_INFO, "Front::set_pointer: fast-path");
-            }
-
-            size_t header_size = FastPath::Update_Send::GetSize(0);
-
-            stream.out_clear_bytes(header_size);    // Fast-Path Update (TS_FP_UPDATE structure) size
-
-            // Payload
-            stream.out_uint16_le(cache_idx);
-            stream.mark_end();
-
-            SubStream Upd_s(stream, 0, header_size);
-
-            FastPath::Update_Send Upd(Upd_s,
-                                      stream.size() - header_size,
-                                      FastPath::FASTPATH_UPDATETYPE_CACHED,
-                                      FastPath::FASTPATH_FRAGMENT_SINGLE,
-                                      0,
-                                      0);
-
-            BStream fastpath_header(256);
-
-             // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-            FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                fastpath_header,
-                stream,
-                ((this->client_info.encryptionLevel > 1) ?
-                 FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
-                this->encrypt);
-            this->trans.send(fastpath_header, stream);
-        }
-
-        if (this->capture &&
-            (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->set_pointer(cache_idx);
-        }
-
-        if (this->verbose & 4) {
-            LOG(LOG_INFO, "Front::set_pointer done");
-        }
-    }   // void set_pointer(int cache_idx)
-*/
 
     void incoming(Callback & cb) throw(Error)
     {
@@ -2572,10 +2171,8 @@ public:
                         }
                         break;
 
-/*
-                        case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
-                        break;
-*/
+                        //case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
+                        //break;
 
                         case FastPath::FASTPATH_INPUT_EVENT_SYNC:
                         {
@@ -2594,10 +2191,8 @@ public:
                         }
                         break;
 
-/*
-                        case FastPath::FASTPATH_INPUT_EVENT_UNICODE:
-                        break;
-*/
+                        //case FastPath::FASTPATH_INPUT_EVENT_UNICODE:
+                        //break;
 
                         default:
                             LOG(LOG_INFO,
@@ -2747,7 +2342,6 @@ public:
                                 RDPColCache cmd(0, palette_local);
                                 this->orders->draw(cmd);
                             }
-//                            this->init_pointers();
                             if (this->verbose & 1){
                                 LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
                             }
@@ -3323,21 +2917,8 @@ public:
                         pointer_caps.log("Receiving from client");
                     }
 
-//                    expected = 4; /* color pointer(2) + pointer_cache_entries(2) */
-/*
-                    if (!stream.in_check_rem(expected)){
-                        LOG(LOG_ERR, "Truncated CAPSTYPE_POINTER, need=%u remains=%u",
-                            expected, stream.in_remain());
-                        throw Error(ERR_MCS_PDU_TRUNCATED);
-                    }
-*/
-
-/*
-                    stream.in_skip_bytes(2); // color pointer
-                    int i = stream.in_uint16_le();
-                    this->client_info.pointer_cache_entries = std::min(i, 32);
-*/
-                    this->client_info.pointer_cache_entries = std::min<int>(pointer_caps.colorPointerCacheSize, 32);
+                    this->client_info.pointer_cache_entries =
+                        std::min<int>(pointer_caps.colorPointerCacheSize, MAX_POINTER_COUNT);
                 }
                 break;
             case CAPSTYPE_SHARE: /* 9 */
@@ -4121,7 +3702,6 @@ public:
                     RDPColCache cmd(0, palette_local);
                     this->orders->draw(cmd);
                 }
-//                this->init_pointers();
 
                 if (this->verbose & (8|1)){
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");

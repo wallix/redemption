@@ -533,14 +533,13 @@ public:
         ; ++cache_id) {
             const size_t entries = this->bmp_cache.get_cache(cache_id).entries();
             for (size_t i = 0; i < entries; i++){
-//                this->emit_bmp_cache(cache_id, i, false);
                 this->bmp_cache.set_cached(cache_id, i, false);
             }
         }
     }
 
     void save_ptr_cache() {
-        for (int index = 0; index < PointerCache::max_pointer_count; ++index) {
+        for (int index = 0; index < MAX_POINTER_COUNT; ++index) {
             this->pointer_cache.set_cached(index, false);
         }
     }
@@ -751,8 +750,6 @@ public:
     }
 
     virtual void send_pointer(int cache_idx, const Pointer & cursor) {
-//        this->drawable.send_pointer(cache_idx, cursor);
-
         BStream header(8);
         size_t size =   2           // mouse x
                       + 2           // mouse y
@@ -779,8 +776,6 @@ public:
     }
 
     virtual void set_pointer(int cache_idx) {
-//        this->drawable.set_pointer(cache_idx);
-
         BStream header(8);
         size_t size =   2                   // mouse x
                       + 2                   // mouse y

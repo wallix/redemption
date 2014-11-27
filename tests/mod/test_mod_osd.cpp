@@ -80,6 +80,13 @@ struct FakeMod : mod_api
     virtual void draw(const RDPEllipseSC       & cmd, const Rect & clip) { this->gd.draw(cmd, clip); }
     virtual void draw(const RDPEllipseCB       & cmd, const Rect & clip) { this->gd.draw(cmd, clip); }
     virtual void draw(const RDP::FrameMarker   & order)                  { this->gd.draw(order);     }
+
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+        size_t size, const Bitmap & bmp) {
+        this->gd.draw(bitmap_data, data, size, bmp);
+    }
+
+    virtual void server_set_pointer(const Pointer & cursor) { this->gd.server_set_pointer(cursor); }
 };
 
 BOOST_AUTO_TEST_CASE(TestModOSD)

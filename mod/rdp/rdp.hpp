@@ -5006,6 +5006,10 @@ public:
         this->front.draw(cmd, clip);
     }
 
+    virtual void server_set_pointer(const Pointer & cursor) {
+        this->front.server_set_pointer(cursor);
+    }
+
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         this->front.server_draw_text(x, y, text, fgcolor, bgcolor, clip);

@@ -517,7 +517,6 @@ public:
                                             now,
                                             true
                                             );
-//                this->front.init_pointers();
             }
             LOG(LOG_INFO, "ModuleManager::internal module Close ready");
             break;
