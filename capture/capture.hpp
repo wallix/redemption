@@ -159,19 +159,6 @@ public:
                                          , externally_generated_breakpoint, NativeCapture::SendInput::YES);
         }
 
-/*
-        Pointer pointer0(Pointer::POINTER_CURSOR0);
-        this->ptr_cache.add_pointer_static(pointer0, 0);
-        if (this->drawable) {
-            this->drawable->send_pointer(0, pointer0);
-        }
-        Pointer pointer1(Pointer::POINTER_CURSOR1);
-        this->ptr_cache.add_pointer_static(pointer1, 1);
-        if (this->drawable) {
-            this->drawable->send_pointer(1, pointer1);
-        }
-*/
-
         if (this->capture_wrm) {
             this->gd = this->pnc;
         }
@@ -616,33 +603,7 @@ public:
         if (this->gd) {
             this->gd->server_set_pointer(cursor);
         }
-/*
-        int cache_idx = 0;
-        switch (this->ptr_cache.add_pointer(cursor, cache_idx)) {
-        case POINTER_TO_SEND:
-            this->send_pointer(cache_idx, cursor);
-        break;
-        default:
-        case POINTER_ALLREADY_SENT:
-            this->set_pointer(cache_idx);
-        break;
-        }
-*/
     }
-
-/*
-    virtual void send_pointer(int cache_idx, const Pointer & cursor) {
-        if (this->gd) {
-           this->gd->send_pointer(cache_idx, cursor);
-        }
-    }
-
-    virtual void set_pointer(int cache_idx) {
-        if (this->gd) {
-            this->gd->set_pointer(cache_idx);
-        }
-    }
-*/
 
     virtual void set_mod_palette(const BGRPalette & palette) {
         if (this->capture_drawable) {

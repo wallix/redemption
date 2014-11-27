@@ -2432,6 +2432,7 @@ public:
             pointer_caps.pointerCacheSize      = 0;
             pointer_caps.colorPointerCacheSize = 20;
             pointer_caps.len                   = 8;
+            REDASSERT(pointer_caps.colorPointerCacheSize <= sizeof(this->cursors) / sizeof(Pointer));
         }
         if (this->verbose & 1) {
             pointer_caps.log("Sending to server");
@@ -5004,6 +5005,10 @@ public:
     virtual void draw(const RDPEllipseCB& cmd, const Rect & clip)
     {
         this->front.draw(cmd, clip);
+    }
+
+    virtual void server_set_pointer(const Pointer & cursor) {
+        this->front.server_set_pointer(cursor);
     }
 
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)

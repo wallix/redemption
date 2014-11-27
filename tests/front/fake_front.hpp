@@ -20,10 +20,10 @@
    Fake Front class for Unit Testing
 */
 
+#include <memory>
+
 #include "RDP/RDPDrawable.hpp"
 #include "front_api.hpp"
-//#include "openssl/ssl.h"
-#include <memory>
 
 class FakeFront : public FrontAPI {
 public:
@@ -42,39 +42,93 @@ public:
     RDPDrawable gd;
     std::unique_ptr<Font> font;
 
-    virtual void flush() {}
+    virtual void flush() {
+        if (this->verbose > 10) {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+             LOG(LOG_INFO, "flush()");
+             LOG(LOG_INFO, "========================================\n");
+        }
+    }
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         RDPOpaqueRect new_cmd24 = cmd;
         new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
         this->gd.draw(new_cmd24, clip);
     }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         this->gd.draw(cmd, clip);
     }
 
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         this->gd.draw(cmd, clip);
     }
 
     virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         this->gd.draw(cmd, clip);
     }
 
     virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         this->gd.draw(cmd, clip);
     }
 
     virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         this->gd.draw(cmd, clip);
     }
 
     virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         this->gd.draw(cmd, clip);
     }
 
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         RDPPatBlt new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
         new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
@@ -82,27 +136,55 @@ public:
     }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         this->gd.draw(cmd, clip, bitmap);
     }
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         this->gd.draw(cmd, clip, bitmap);
     }
 
     virtual void draw(const RDPLineTo & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         RDPLineTo new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
         new_cmd24.pen.color  = color_decode_opaquerect(cmd.pen.color,  this->mod_bpp, this->mod_palette);
         this->gd.draw(new_cmd24, clip);
-
     }
 
-    void draw(const RDPGlyphCache & cmd)
-    {
+    void draw(const RDPGlyphCache & cmd) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         this->gd.draw(cmd);
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         RDPGlyphIndex new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
         new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
@@ -110,12 +192,24 @@ public:
     }
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         RDPPolygonSC new_cmd24 = cmd;
         new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);
         this->gd.draw(new_cmd24, clip);
     }
 
     void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         RDPPolygonCB new_cmd24 = cmd;
         new_cmd24.foreColor  = color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette);
         new_cmd24.backColor  = color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette);
@@ -123,22 +217,61 @@ public:
     }
 
     void draw(const RDPPolyline & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         RDPPolyline new_cmd24 = cmd;
         new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);
         this->gd.draw(new_cmd24, clip);
     }
 
     virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         RDPEllipseSC new_cmd24 = cmd;
         new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
         this->gd.draw(new_cmd24, clip);
     }
 
     virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         RDPEllipseCB new_cmd24 = cmd;
         new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
         this->gd.draw(new_cmd24, clip);
+    }
+
+    virtual void draw(const RDP::FrameMarker & order) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+        size_t size, const Bitmap & bmp) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            bitmap_data.log(LOG_INFO, "FakeFront");
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(bitmap_data, data, size, bmp);
     }
 
     using FrontAPI::draw;
@@ -146,28 +279,66 @@ public:
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const { return cl; }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data, size_t length
-                                , size_t chunk_size, int flags) {}
+                                , size_t chunk_size, int flags) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "send_to_channel");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
 
-    virtual void send_pointer( int cache_idx, const Pointer &) {}
+    virtual void send_global_palette() throw (Error) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "send_global_palette()");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
 
-    virtual void send_global_palette() throw (Error) {}
+    virtual void begin_update() {
+        //if (this->verbose > 10) {
+        //    LOG(LOG_INFO, "--------- FRONT ------------------------");
+        //    LOG(LOG_INFO, "begin_update");
+        //    LOG(LOG_INFO, "========================================\n");
+        //}
+    }
 
-    virtual void set_pointer(int cache_idx) throw (Error) {}
+    virtual void end_update() {
+        //if (this->verbose > 10) {
+        //    LOG(LOG_INFO, "--------- FRONT ------------------------");
+        //    LOG(LOG_INFO, "end_update");
+        //    LOG(LOG_INFO, "========================================\n");
+        //}
+    }
 
-    virtual void begin_update() {}
+    virtual void set_mod_palette(const BGRPalette & palette) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "set_mod_palette");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
 
-    virtual void end_update() {}
+    virtual void server_set_pointer(const Pointer & cursor) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "server_set_pointer");
+            LOG(LOG_INFO, "========================================\n");
+        }
 
-    virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex) {}
-
-    virtual void set_mod_palette(const BGRPalette & palette) {}
-
-    virtual void server_set_pointer(const Pointer & cursor){}
+        this->gd.server_set_pointer(cursor);
+    }
 
     virtual void server_draw_text( int16_t x, int16_t y, const char * text, uint32_t fgcolor
                                  , uint32_t bgcolor, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "server_draw_text %s", text);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         if (!this->font) {
-            return ;
+            return;
         }
         this->gd.server_draw_text(
             x, y, text,
@@ -177,12 +348,17 @@ public:
         );
     }
 
-    virtual void text_metrics(const char* text, int& width, int& height)
-    {
+    virtual void text_metrics(const char* text, int& width, int& height) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "text_metrics");
+            LOG(LOG_INFO, "========================================\n");
+        }
+
         if (!this->font) {
             height = 0;
             width = 0;
-            return ;
+            return;
         }
         this->gd.text_metrics(text, width, height, *this->font);
     }
@@ -190,7 +366,7 @@ public:
     virtual int server_resize(int width, int height, int bpp) {
         this->mod_bpp = bpp;
         this->info.bpp = bpp;
-        if (verbose > 10) {
+        if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
             LOG(LOG_INFO, "========================================\n");
@@ -208,8 +384,7 @@ public:
         ::fclose(f);
     }
 
-    void save_to_png(const char * filename)
-    {
+    void save_to_png(const char * filename) {
         std::FILE * file = fopen(filename, "w+");
         dump_png24(file, this->gd.data(), this->gd.width(),
                    this->gd.height(), this->gd.rowsize(), true);
@@ -217,17 +392,16 @@ public:
     }
 
     FakeFront(ClientInfo & info, uint32_t verbose, const char * font_file = 0)
-            : FrontAPI(false, false)
-            , verbose(verbose)
-            , info(info)
-            , mod_bpp(info.bpp)
-            , mouse_x(0)
-            , mouse_y(0)
-            , notimestamp(true)
-            , nomouse(true)
-            , gd(info.width, info.height, 24)
-            , font(font_file ? new Font(font_file ): nullptr)
-    {
+    : FrontAPI(false, false)
+    , verbose(verbose)
+    , info(info)
+    , mod_bpp(info.bpp)
+    , mouse_x(0)
+    , mouse_y(0)
+    , notimestamp(true)
+    , nomouse(true)
+    , gd(info.width, info.height, 24)
+    , font(font_file ? new Font(font_file ) : nullptr) {
         // -------- Start of system wide SSL_Ctx option ------------------------------
 
         // ERR_load_crypto_strings() registers the error strings for all libcrypto

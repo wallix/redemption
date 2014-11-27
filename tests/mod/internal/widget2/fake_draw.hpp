@@ -21,12 +21,13 @@
 #ifndef REDEMPTION_TESTS_MOD_INTERNAL_WIDGET2_FAKE_DRAW_HPP
 #define REDEMPTION_TESTS_MOD_INTERNAL_WIDGET2_FAKE_DRAW_HPP
 
-#include <draw_api.hpp>
-#include <RDP/RDPDrawable.hpp>
 #include <cstdio>
 
+#include <draw_api.hpp>
+#include <RDP/RDPDrawable.hpp>
+
 #ifdef IN_IDE_PARSER
-# define FIXTURES_PATH
+#define FIXTURES_PATH
 #endif
 
 struct TestDraw : DrawApi
@@ -130,26 +131,30 @@ struct TestDraw : DrawApi
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::FrameMarker& order)
+    virtual void draw(const RDP::FrameMarker & order)
     {
         this->gd.draw(order);
     }
 
-    virtual void draw(const RDPBitmapData& bitmap_data, const uint8_t* data, size_t size, const Bitmap& bmp)
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp)
     {
         this->gd.draw(bitmap_data, data, size, bmp);
+    }
+
+    virtual void server_set_pointer(const Pointer & cursor) {
+        this->gd.server_set_pointer(cursor);
     }
 
     virtual void begin_update() {}
 
     virtual void end_update() {}
 
-    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
+    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
     }
 
-    virtual void text_metrics(const char* text, int& width, int& height)
+    virtual void text_metrics(const char * text, int & width, int & height)
     {
         this->gd.text_metrics(text, width, height, this->font);
     }

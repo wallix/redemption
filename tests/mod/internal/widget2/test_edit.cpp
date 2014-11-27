@@ -34,154 +34,15 @@
 // #include "internal/widget2/widget_composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 #include "text_metrics.hpp"
+#include "fake_draw.hpp"
 
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH
 #endif
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
-
-struct TestDraw : DrawApi
-{
-    RDPDrawable gd;
-    Font font;
-
-    TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, 24)
-    , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
-    {}
-
-    virtual void draw(const RDPOpaqueRect& cmd, const Rect& rect)
-    {
-        this->gd.draw(cmd, rect);
-    }
-
-    virtual void draw(const RDPScrBlt&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPDestBlt&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPMultiDstBlt &, const Rect &) {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPMultiOpaqueRect &, const Rect &) {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDP::RDPMultiPatBlt &, const Rect &) {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDP::RDPMultiScrBlt &, const Rect &) {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPPatBlt& cmd, const Rect& rect)
-    {
-        this->gd.draw(cmd, rect);
-    }
-
-    virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
-    {
-        this->gd.draw(cmd, rect, bmp);
-    }
-
-    virtual void draw(const RDPMem3Blt& cmd, const Rect& rect, const Bitmap& bmp)
-    {
-        this->gd.draw(cmd, rect, bmp);
-    }
-
-    virtual void draw(const RDPLineTo&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPGlyphIndex&, const Rect&, const GlyphCache * gly_cache)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPBrushCache&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPColCache&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPGlyphCache&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPPolygonSC &, const Rect &) {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPPolygonCB &, const Rect &) {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPPolyline &, const Rect &) {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPEllipseSC&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPEllipseCB&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDP::FrameMarker&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPBitmapData&, const uint8_t*, size_t, const Bitmap&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void begin_update()
-    {}
-
-    virtual void end_update()
-    {}
-
-    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
-    {
-        this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
-    }
-
-    virtual void text_metrics(const char* text, int& width, int& height)
-    {
-        ::text_metrics(this->font, text, width, height);
-    }
-
-    void save_to_png(const char * filename)
-    {
-        std::FILE * file = fopen(filename, "w+");
-        dump_png24(file, this->gd.data(), this->gd.width(),
-                   this->gd.height(), this->gd.rowsize(), true);
-        fclose(file);
-    }
-};
-
 
 BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
 {

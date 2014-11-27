@@ -68,7 +68,6 @@ public:
     timeval start_break_capture;
     uint64_t inter_frame_interval_start_break_capture;
 
-//    BmpCache & bmp_cache;
     GraphicToFile recorder;
     uint32_t nb_file;
     uint64_t time_to_wait;
@@ -82,8 +81,7 @@ public:
     NativeCapture( const timeval & now, Transport & trans, int width, int height, int capture_bpp, BmpCache & bmp_cache
                  , PointerCache & ptr_cache, RDPDrawable & drawable, const Inifile & ini
                  , bool externally_generated_breakpoint = false, SendInput send_input = SendInput::NO)
-    : /*bmp_cache(bmp_cache)
-    , */recorder(now, &trans, width, height, capture_bpp, bmp_cache, ptr_cache, drawable, ini, send_input, ini.debug.capture)
+    : recorder(now, &trans, width, height, capture_bpp, bmp_cache, ptr_cache, drawable, ini, send_input, ini.debug.capture)
     , nb_file(0)
     , time_to_wait(0)
     , disable_keyboard_log_wrm(ini.video.disable_keyboard_log_wrm)
@@ -251,16 +249,6 @@ public:
     virtual void server_set_pointer(const Pointer & cursor) {
         this->recorder.server_set_pointer(cursor);
     }
-
-/*
-    virtual void send_pointer(int cache_idx, const Pointer & cursor) {
-        this->recorder.send_pointer(cache_idx, cursor);
-    }
-
-    virtual void set_pointer(int cache_idx) {
-        this->recorder.set_pointer(cache_idx);
-    }
-*/
 
     // toggles externally genareted breakpoint.
     virtual void external_breakpoint() {

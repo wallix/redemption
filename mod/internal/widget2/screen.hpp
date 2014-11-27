@@ -138,14 +138,6 @@ public:
             else {
                 this->drawable.server_set_pointer(normal_pointer);
             }
-/*
-            if (w != NULL) {
-                this->drawable.set_pointer(w->pointer_flag);
-            }
-            else {
-                this->drawable.set_pointer(NORMAL_POINTER);
-            }
-*/
             this->current_over = w;
         }
         if (this->tooltip) {

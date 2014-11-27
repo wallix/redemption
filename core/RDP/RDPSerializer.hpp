@@ -228,18 +228,6 @@ protected:
     virtual void set_pointer(int cache_idx) = 0;
 
 public:
-/*
-    void init_pointers()
-    {
-        Pointer pointer0(Pointer::POINTER_CURSOR0);
-        this->pointer_cache.add_pointer_static(pointer0, 0);
-        this->send_pointer(0, pointer0);
-
-        Pointer pointer1(Pointer::POINTER_CURSOR1);
-        this->pointer_cache.add_pointer_static(pointer1, 1);
-        this->send_pointer(1, pointer1);
-    }
-*/
     /*****************************************************************************/
     // check if the next order will fit in available packet size
     // if not send previous orders we got and init a new packet

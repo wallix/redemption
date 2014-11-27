@@ -151,17 +151,17 @@ public:
         this->front.draw(order);
     }
 
-    virtual void draw(const RDPGlyphCache& cmd)
+    virtual void draw(const RDPGlyphCache & cmd)
     {
         this->front.draw(cmd);
     }
 
-    virtual void draw(const RDPColCache& cmd)
+    virtual void draw(const RDPColCache & cmd)
     {
         this->front.draw(cmd);
     }
 
-    virtual void draw(const RDPBitmapData& bitmap_data, const uint8_t* data, size_t size, const Bitmap& bmp)
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp)
     {
         this->front.draw(bitmap_data, data, size, bmp);
     }
@@ -184,11 +184,6 @@ public:
     virtual void server_set_pointer(const Pointer & cursor) {
         this->front.server_set_pointer(cursor);
     }
-/*
-    virtual void set_pointer(int cache_idx) {
-        this->front.set_pointer(cache_idx);
-    }
-*/
 
     virtual void rdp_input_invalidate(const Rect& r)
     {

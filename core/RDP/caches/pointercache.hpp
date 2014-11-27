@@ -34,22 +34,22 @@ enum {
     POINTER_ALLREADY_SENT
 };
 
+enum {
+    MAX_POINTER_COUNT = 32
+};
+
 /* difference caches */
 class PointerCache : noncopyable {
-public:
-    static const int max_pointer_count = 32;
-
-private:
     int pointer_cache_entries;
 
     /* pointer */
     int pointer_stamp = 0;
-    int stamps[max_pointer_count] = { 0 };
+    int stamps[MAX_POINTER_COUNT] = { 0 };
 
-    bool cached[max_pointer_count] = { false };
+    bool cached[MAX_POINTER_COUNT] = { false };
 
 public:
-    Pointer Pointers[max_pointer_count];
+    Pointer Pointers[MAX_POINTER_COUNT];
 
 public:
     PointerCache(int pointer_cache_entries = 0)
@@ -59,15 +59,13 @@ public:
 
     TODO(" much duplicated code with constructor and destructor  create some intermediate functions or object")
     int reset(const ClientInfo & client_info) {
-//        memset(this, 0, sizeof(PointerCache));
-//        this->pointer_cache_entries = client_info.pointer_cache_entries;
         this->~PointerCache();
         new (this)PointerCache(client_info.pointer_cache_entries);
         return 0;
     }
 
     void add_pointer_static(const Pointer & cursor, int index) {
-        REDASSERT((index >= 0) && (index < max_pointer_count));
+        REDASSERT((index >= 0) && (index < MAX_POINTER_COUNT));
         this->Pointers[index].x = cursor.x;
         this->Pointers[index].y = cursor.y;
         this->Pointers[index].width = cursor.width;

@@ -1025,28 +1025,6 @@ struct DrawablePointer {
     }
 };  // struct DrawablePointer
 
-struct DrawablePointerCache {
-private:
-    struct DrawablePointer pointers[32];
-
-public:
-    DrawablePointerCache() : pointers() {}
-
-    void cache_pointer(int hotspot_x, int hotspot_y, const uint8_t * pointer_data, const uint8_t * pointer_mask,
-                       unsigned int index) {
-        REDASSERT(index < (sizeof(this->pointers) / sizeof(this->pointers[0])));
-
-        this->pointers[index].initialize(hotspot_x, hotspot_y, pointer_data, pointer_mask);
-    }
-
-    const DrawablePointer & get_cached_pointer(unsigned int index) {
-        REDASSERT(index < (sizeof(this->pointers) / sizeof(this->pointers[0])));
-
-        return this->pointers[index];
-    }
-};  // struct DrawablePointerCache
-
-
 class Drawable
 : DrawableImpl<DepthColor::color24>
 {
@@ -1092,8 +1070,6 @@ public:
     bool dont_show_mouse_cursor;
 
 private:
-//    DrawablePointerCache pointer_cache;
-
     const DrawablePointer * current_pointer;
 
     DrawablePointer dynamic_pointer;
@@ -2326,17 +2302,6 @@ public:
             this->impl().horizontal_line(x, y, endx, color, Ops::CopySrc());
         }
     }
-
-/*
-    void cache_pointer(int hotspot_x, int hotspot_y, const uint8_t * pointer_data, const uint8_t * pointer_mask,
-                       unsigned int index) {
-        this->pointer_cache.cache_pointer(hotspot_x, hotspot_y, pointer_data, pointer_mask, index);
-    }
-
-    void use_cached_pointer(unsigned int index) {
-        this->current_pointer = &this->pointer_cache.get_cached_pointer(index);
-    }
-*/
 
     void use_pointer(int hotspot_x, int hotspot_y, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
         this->dynamic_pointer.initialize(hotspot_x, hotspot_y, pointer_data, pointer_mask);

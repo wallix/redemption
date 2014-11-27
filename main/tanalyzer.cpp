@@ -124,6 +124,8 @@ public:
     virtual void draw(const RDPBrushCache&) { REDASSERT(false); }
     virtual void draw(const RDPColCache&) { REDASSERT(false); }
 
+    virtual void server_set_pointer(const Pointer & cursor) { REDASSERT(false); }
+
     virtual void flush() { REDASSERT(false); }
 
     // DrawApi

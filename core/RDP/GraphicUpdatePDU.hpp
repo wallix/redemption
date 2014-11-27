@@ -831,10 +831,6 @@ protected:
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
-/*
-            this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL,
-                target_stream);
-*/
             BStream x224_header(256);
             OutPerBStream mcs_header(256);
             BStream sec_header(256);
@@ -954,10 +950,6 @@ protected:
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
-/*
-            this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL,
-                target_stream);
-*/
             BStream x224_header(256);
             OutPerBStream mcs_header(256);
             BStream sec_header(256);

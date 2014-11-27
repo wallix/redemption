@@ -70,14 +70,6 @@ public:
     {
         REDASSERT(order_bpp);
 
-/*
-        Pointer pointer0(Pointer::POINTER_CURSOR0);
-        this->drawable.cache_pointer(pointer0.x, pointer0.y, pointer0.data, pointer0.mask, 0);
-
-        Pointer pointer1(Pointer::POINTER_CURSOR1);
-        this->drawable.cache_pointer(pointer1.x, pointer1.y, pointer1.data, pointer1.mask, 1);
-*/
-
         init_palette332(this->mod_palette_rgb);
     }
 
@@ -402,7 +394,6 @@ private:
                                 bRop2,
                                 color);
         }
-
     }
 
 public:
@@ -688,19 +679,6 @@ public:
     virtual void server_set_pointer(const Pointer & cursor) {
         this->drawable.use_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
     }
-
-/*
-    virtual void send_pointer(int cache_idx, const Pointer & cursor)
-    {
-        this->drawable.cache_pointer(cursor.x, cursor.y, cursor.data, cursor.mask, cache_idx);
-
-        this->drawable.use_cached_pointer(cache_idx);
-    }
-
-    virtual void set_pointer(int cache_idx) {
-        this->drawable.use_cached_pointer(cache_idx);
-    }
-*/
 
     virtual void set_mod_palette(const BGRPalette & palette) {
         for (unsigned i = 0; i < 256 ; i++){

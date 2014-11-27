@@ -82,17 +82,12 @@ struct RDPGraphicDevice : noncopyable {
     virtual void draw(const RDPColCache   & cmd) {}
     virtual void draw(const RDPGlyphCache & cmd) {}
 
-    virtual void draw(const RDP::FrameMarker & order) {}
+    virtual void draw(const RDP::FrameMarker & order) = 0;
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) {}
+        size_t size, const Bitmap & bmp) = 0;
 
-
-    virtual void server_set_pointer(const Pointer & cursor) {}
-/*
-    virtual void send_pointer(int cache_idx, const Pointer & cursor) {}
-    virtual void set_pointer(int cache_idx) {}
-*/
+    virtual void server_set_pointer(const Pointer & cursor) = 0;
 
     virtual void set_mod_palette(const BGRPalette & palette) {};
 
