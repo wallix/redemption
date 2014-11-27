@@ -635,9 +635,6 @@ public:
         bool        enable_osd = true;
         // END globals
 
-        uint64_t flv_break_interval = 600000000l;  // time between 2 flv movies captures (in seconds)
-        unsigned flv_frame_interval = 1000000L;
-
         StaticPath<1024> persistent_path = PERSISTENT_PATH;
 
         Inifile_globals() = default;
@@ -748,6 +745,9 @@ public:
         unsigned frame_interval     = 40;   // time between 2 frame captures (in 1/100 seconds) (default: 2,5 frame per second)
         unsigned break_interval     = 600;  // time between 2 wrm movies (in seconds)
         unsigned png_limit          = 3;    // number of png captures to keep
+
+        uint64_t flv_break_interval = 0;  // time between 2 flv movies captures (in seconds)
+
         StaticString<1024> replay_path = "/tmp/";
 
         unsigned l_bitrate   = 20000; // bitrate for low quality
