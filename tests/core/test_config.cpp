@@ -2611,8 +2611,8 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
 BOOST_AUTO_TEST_CASE(TestConfigNotifications)
 {
-    Inifile             ini;
-    ConfigurationLoader cfg_loader(ini);
+//     Inifile             ini;
+//     ConfigurationLoader cfg_loader(ini);
     /*
     // nothing has been changed initialy
     //    BOOST_CHECK(!ini.check());
@@ -2723,6 +2723,18 @@ BOOST_AUTO_TEST_CASE(TestConfigSignedField)
 BOOST_AUTO_TEST_CASE(TestConfigBoolField)
 {
 
+}
+
+BOOST_AUTO_TEST_CASE(TestConfigIp)
+{
+    std::stringstream   oss(
+        "[globals]\n"
+        "authip=255.255.255.255\n"
+    );
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini, oss);
+
+    BOOST_CHECK_EQUAL("255.255.255.255", ini.globals.authip.c_str());
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigField)
