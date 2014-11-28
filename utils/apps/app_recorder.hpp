@@ -200,12 +200,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "snappy"    )) {
             ini.video.wrm_compression_algorithm = 2;
         }
-        else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "bufferized")) {
-            ini.video.wrm_compression_algorithm = 3;
-        }
-        //else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "lzma"      )) {
-        //    ini.video.wrm_compression_algorithm = 4;
-        //}
         else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "original"  )) {
             ini.video.wrm_compression_algorithm = USE_ORIGINAL_COMPRESSION_ALGORITHM;
         }

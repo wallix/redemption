@@ -79,11 +79,12 @@ public:
     , gzcot(*trans)
     //, lcot(*trans, true, ini.debug.capture)
     , scot(*trans)
-    //, wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 5)) ? 4 : 3)
-    , wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 4)) ? 4 : 3)
+    , wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 3)) ? 4 : 3)
     {
-        //REDASSERT(this->ini.video.wrm_compression_algorithm < 5);
-        REDASSERT(this->ini.video.wrm_compression_algorithm < 4);
+        if (this->ini.video.wrm_compression_algorithm > 2) {
+            LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
+               , this->ini.video.wrm_compression_algorithm);
+        }
 
         if (this->ini.video.wrm_compression_algorithm == 1) {
             this->trans = &this->gzcot;
@@ -91,12 +92,6 @@ public:
         else if (this->ini.video.wrm_compression_algorithm == 2) {
             this->trans = &this->scot;
         }
-        else if (this->ini.video.wrm_compression_algorithm == 3) {
-            this->trans = &this->bot;
-        }
-        //else if (this->ini.video.wrm_compression_algorithm == 4) {
-        //    this->trans = &this->lcot;
-        //}
 
         this->send_meta_chunk( info_width
                              , info_height
@@ -176,8 +171,7 @@ private:
             payload.out_uint16_le(info_cache_4_size);
             payload.out_uint8(info_cache_4_persistent);
 
-            //payload.out_uint8((ini.video.wrm_compression_algorithm < 5) ? this->ini.video.wrm_compression_algorithm : 0);
-            payload.out_uint8((ini.video.wrm_compression_algorithm < 4) ? this->ini.video.wrm_compression_algorithm : 0);
+            payload.out_uint8((ini.video.wrm_compression_algorithm < 3) ? this->ini.video.wrm_compression_algorithm : 0);
         }
         payload.mark_end();
 

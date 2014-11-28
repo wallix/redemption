@@ -176,10 +176,14 @@ public:
     , gzcot(*trans)
     //, lcot(*trans, false, verbose)
     , scot(*trans)
-    , wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 4)) ? 4 : 3)
-    //, wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 5)) ? 4 : 3)
+    , wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 3)) ? 4 : 3)
     //, verbose(verbose)
     {
+        if (this->ini.video.wrm_compression_algorithm > 2) {
+            LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
+               , this->ini.video.wrm_compression_algorithm);
+        }
+
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
         this->order_count = 0;
@@ -190,12 +194,6 @@ public:
         else if (this->ini.video.wrm_compression_algorithm == 2) {
             this->trans = &this->scot;
         }
-        else if (this->ini.video.wrm_compression_algorithm == 3) {
-            this->trans = &this->bot;
-        }
-        //else if (this->ini.video.wrm_compression_algorithm == 4) {
-        //    this->trans = &this->lcot;
-        //}
 
         this->send_meta_chunk();
         this->send_image_chunk();
@@ -272,8 +270,8 @@ public:
             payload.out_uint16_le(c4.bmp_size());
             payload.out_uint8(c4.persistent() ? 1 : 0);
 
-            payload.out_uint8((this->ini.video.wrm_compression_algorithm < 4) ? this->ini.video.wrm_compression_algorithm : 0);   // Compression algorithm
-            //payload.out_uint8((this->ini.video.wrm_compression_algorithm < 5) ? this->ini.video.wrm_compression_algorithm : 0);   // Compression algorithm
+            // Compression algorithm
+            payload.out_uint8((this->ini.video.wrm_compression_algorithm < 3) ? this->ini.video.wrm_compression_algorithm : 0);
         }
 
         payload.mark_end();
@@ -558,8 +556,7 @@ public:
     {
         this->flush_orders();
         this->flush_bitmaps();
-        if ((this->ini.video.wrm_compression_algorithm > 0) && (this->ini.video.wrm_compression_algorithm < 4)) {
-        //if ((this->ini.video.wrm_compression_algorithm > 0) && (this->ini.video.wrm_compression_algorithm < 5)) {
+        if ((this->ini.video.wrm_compression_algorithm > 0) && (this->ini.video.wrm_compression_algorithm < 3)) {
             this->send_reset_chunk();
         }
         this->trans->next();
