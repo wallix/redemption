@@ -35,29 +35,33 @@ BOOST_AUTO_TEST_CASE(TestBufferizationTransport)
     //for (unsigned int i = 0; i < 100000; i++) {
         MemoryTransport mt;
 
+        const char data1[] =
+            "azert"
+            "azert"
+            "azert"
+            "azert";
+        const char data2[] =
+            "wallix"
+            "wallix"
+            "wallix"
+            "wallix"
+            "wallix";
+        const char data3[] =
+            "0123456789ABCDEF"
+            "0123456789ABCDEF"
+            "0123456789ABCDEF"
+            "0123456789ABCDEF";
+        const char handle = 4;
+
         {
             BufferizationOutTransport out_trans(mt, 0xFFFF);
 
-            out_trans.send(
-                  "azert"
-                  "azert"
-                  "azert"
-                  "azert"
-                , 21);
-            out_trans.send(
-                  "wallix"
-                  "wallix"
-                  "wallix"
-                  "wallix"
-                  "wallix"
-                , 31);
+            out_trans.send(data1, sizeof(data1));
+            out_trans.send(data2, sizeof(data2));
+            BOOST_CHECK_EQUAL(mt.out_stream.get_offset(), 0);
             out_trans.next();
-            out_trans.send(
-                  "0123456789ABCDEF"
-                  "0123456789ABCDEF"
-                  "0123456789ABCDEF"
-                  "0123456789ABCDEF"
-                , 65);
+            BOOST_CHECK_EQUAL(mt.out_stream.get_offset(), sizeof(data1) + sizeof(data2) + handle);
+            out_trans.send(data3, sizeof(data3));
         }
 
         {
@@ -66,16 +70,12 @@ BOOST_AUTO_TEST_CASE(TestBufferizationTransport)
             char   in_data[128] = { 0 };
             char * in_buffer   = in_data;
 
-            in_trans.recv(&in_buffer, 21);
-            LOG(LOG_INFO, "in_data=\"%s\"", in_data);
-
-            in_buffer = in_data;
-            in_trans.recv(&in_buffer, 31);
-            LOG(LOG_INFO, "in_data=\"%s\"", in_data);
-
-            in_buffer = in_data;
-            in_trans.recv(&in_buffer, 65);
-            LOG(LOG_INFO, "in_data=\"%s\"", in_data);
+            in_trans.recv(&in_buffer, sizeof(data1));
+            BOOST_CHECK_EQUAL(in_data, data1); in_buffer = in_data;
+            in_trans.recv(&in_buffer, sizeof(data2));
+            BOOST_CHECK_EQUAL(in_data, data2); in_buffer = in_data;
+            in_trans.recv(&in_buffer, sizeof(data3));
+            BOOST_CHECK_EQUAL(in_data, data3);
         }
     //}
 }
