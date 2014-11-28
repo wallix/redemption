@@ -823,6 +823,7 @@ private:
             , this->server_fastpath_update_support
             , this->mppc_enc
             , this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0
+            , this->verbose
             );
 
         this->pointer_cache.reset(this->client_info);

@@ -14,6 +14,7 @@ Basic Output
                 FASTPATH_FRAGMENT_FIRST
                 FASTPATH_FRAGMENT_NEXT
 
+
 Drawing Order
     Primary Drawing Orders
         SaveBitmap ([MS-RDPEGDI] section 2.2.2.2.1.1.2.12) (Internal #5676 and Internal #5677)
@@ -60,6 +61,7 @@ Drawing Order
 
             Draw GDI+ End ([MS-RDPEGDI] section 2.2.2.2.1.3.6.7)
 
+
 Cache
     Offscreen Bitmap Cache ([MS-RDPEGDI] section 3.1.1.1.5)
 
@@ -67,10 +69,19 @@ Cache
 
     GDI+ Caches ([MS-RDPEGDI] section 3.1.1.1.7)
 
+
+Sound
+    Server Play Sound PDU ([MS-RDPBCGR] section 2.2.9.1.1.5)
+
+
 RDP 6.0 Bitmap Compression
     Chroma Subsampling and Super-Sampling ([MS-RDPEGDI] section 3.1.9.1.3) (Internal #6324)
 
     Color Loss Reduction ([MS-RDPEGDI] section 3.1.9.1.4) (Internal #6323)
+
+
+Surface
+    Surface Commands ([MS-RDPBCGR] section 2.2.9.2)
 
 
 
@@ -80,12 +91,13 @@ VNC
 ===
 
 
-MS-Logon I & MS-Logon II (Wish #5538)
+MS-Logon II (Wish #5538)
 http://www.uvnc.com/features/authentication.html
 
 
 Encodings
     Hextile encoding ([The RFB Protocol] section 6.6.4) (Wish #3460)
+
 
 Pseudo-encodings
     DesktopSize pseudo-encoding ([The RFB Protocol] section 6.7.2) (Wish #3461)

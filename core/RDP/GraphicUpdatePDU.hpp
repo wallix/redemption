@@ -37,6 +37,204 @@
 #include "RDP/fastpath.hpp"
 #include "RDPSerializer.hpp"
 
+void send_data_indication( Transport & trans, int encryptionLevel, CryptContext & encrypt
+                         , uint16_t initiator, HStream & stream)
+{
+    BStream security_header(256);
+    SEC::Sec_Send sec(security_header, stream, 0, encrypt, encryptionLevel);
+    stream.copy_to_head(security_header.get_data(), security_header.size());
+
+    OutPerBStream mcs_header(256);
+    MCS::SendDataIndication_Send mcs( mcs_header
+                                    , initiator
+                                    , GCC::MCS_GLOBAL_CHANNEL
+                                    , 1 // dataPriority
+                                    , 3 // segmentation
+                                    , stream.size()
+                                    , MCS::PER_ENCODING);
+
+    BStream x224_header(256);
+    X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
+
+    trans.send(x224_header, mcs_header, stream);
+}
+
+enum ServerUpdateType {
+    SERVER_UPDATE_GRAPHICS_ORDERS,
+    SERVER_UPDATE_GRAPHICS_BITMAP,
+    SERVER_UPDATE_POINTER_COLOR,
+    SERVER_UPDATE_POINTER_CACHED
+};
+
+void server_update( Transport & trans, bool fastpath_support, bool compression_support, rdp_mppc_enc * mppc_enc
+                  , uint32_t shareId, int encryptionLevel, CryptContext & encrypt
+                  , uint16_t initiator
+                  , ServerUpdateType type, uint16_t data_extra
+                  , HStream & data_common, uint32_t verbose) {
+    if (verbose & 4) {
+        LOG( LOG_INFO
+           , "server_update: fastpath_support=%s compression_support=%s shareId=%u encryptionLevel=%d "
+             "initiator=%u type=%d data_extra=%u"
+           , (fastpath_support ? "yes" : "no"), (compression_support ? "yes" : "no"), shareId
+           , encryptionLevel, initiator, type, data_extra
+           );
+    }
+
+    REDASSERT(!compression_support || mppc_enc);
+
+    HStream   data_common_compressed(1024, 65565);
+    std::reference_wrapper<HStream> data_common_ = std::ref(data_common);
+
+    uint8_t compressionFlags = 0;
+
+    if (fastpath_support) {
+        uint8_t updateCode = 0;
+
+        switch (type) {
+            case SERVER_UPDATE_GRAPHICS_BITMAP:
+                updateCode = FastPath::FASTPATH_UPDATETYPE_BITMAP;
+                break;
+
+            case SERVER_UPDATE_POINTER_COLOR:
+                updateCode = FastPath::FASTPATH_UPDATETYPE_COLOR;
+                break;
+
+            case SERVER_UPDATE_POINTER_CACHED:
+                updateCode = FastPath::FASTPATH_UPDATETYPE_CACHED;
+                break;
+
+            default:
+                REDASSERT(false);
+                break;
+        }
+
+        uint8_t compression = 0;
+
+        if (compression_support) {
+            uint16_t compressed_data_size;
+
+            mppc_enc->compress( data_common.get_data(), data_common.size()
+                              , compressionFlags, compressed_data_size
+                              , rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED
+                              );
+
+            if (compressionFlags & PACKET_COMPRESSED) {
+                compression = FastPath::FASTPATH_OUTPUT_COMPRESSION_USED;
+
+                mppc_enc->get_compressed_data(data_common_compressed);
+                data_common_compressed.mark_end();
+                data_common_ = std::ref(data_common_compressed);
+            }
+        }
+
+        BStream update_header(256);
+        // Fast-Path Update (TS_FP_UPDATE)
+        FastPath::Update_Send Upd( update_header
+                                 , ((HStream &)data_common_).size()
+                                 , updateCode
+                                 , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                 , compression
+                                 , compressionFlags
+                                 );
+        ((HStream &)data_common_).copy_to_head(update_header.get_data(), update_header.size());
+
+        BStream server_update_header(256);
+         // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+        FastPath::ServerUpdatePDU_Send SvrUpdPDU( server_update_header
+                                                , ((HStream &)data_common_)
+                                                , ((encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                                                , encrypt
+                                                );
+
+        trans.send(server_update_header, (HStream &)data_common_);
+    }
+    else {
+        uint8_t pduType2 = 0;
+
+        switch (type) {
+            case SERVER_UPDATE_GRAPHICS_BITMAP:
+                pduType2 = PDUTYPE2_UPDATE;
+                break;
+
+            case SERVER_UPDATE_POINTER_COLOR:
+            case SERVER_UPDATE_POINTER_CACHED:
+                {
+                    pduType2 = PDUTYPE2_POINTER;
+
+                    uint16_t updateType = 0;
+                    switch (type) {
+                        case SERVER_UPDATE_POINTER_COLOR:
+                            updateType = RDP_POINTER_COLOR;
+                            break;
+
+                        case SERVER_UPDATE_POINTER_CACHED:
+                            updateType = RDP_POINTER_CACHED;
+                            break;
+
+                        default:
+                            REDASSERT(false);
+                            break;
+                    }
+
+                    BStream data(64);
+
+                    data.out_uint16_le(updateType);
+                    data.out_clear_bytes(2);
+                    data.mark_end();
+
+                    data_common.copy_to_head(data.get_data(), data.size());
+                }
+                break;
+
+            default:
+                REDASSERT(false);
+                break;
+        }
+
+        if (compression_support) {
+            uint16_t compressed_data_size = 0;
+
+            mppc_enc->compress( data_common.get_data(), data_common.size()
+                              , compressionFlags, compressed_data_size
+                              , rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED
+                              );
+
+            if (compressionFlags & PACKET_COMPRESSED) {
+                mppc_enc->get_compressed_data(data_common_compressed);
+                data_common_compressed.mark_end();
+                data_common_ = std::ref(data_common_compressed);
+            }
+        }
+
+        BStream share_data_header(256);
+        ShareData share_data(share_data_header);
+        share_data.emit_begin( pduType2, shareId, RDP::STREAM_MED, data_common.size(), compressionFlags
+                             , ((HStream &)data_common_).size());
+        share_data.emit_end();
+        ((HStream &)data_common_).copy_to_head(share_data_header.get_data(), share_data_header.size());
+
+        BStream share_ctrl_header(256);
+        ShareControl_Send( share_ctrl_header, PDUTYPE_DATAPDU, initiator + GCC::MCS_USERCHANNEL_BASE
+                         , ((HStream &)data_common_).size());
+        ((HStream &)data_common_).copy_to_head(share_ctrl_header.get_data(), share_ctrl_header.size());
+
+        if (verbose & (128 | 4)) {
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(((HStream &)data_common_).get_data(), ((HStream &)data_common_).size());
+        }
+
+        ::send_data_indication(trans, encryptionLevel, encrypt, initiator, ((HStream &)data_common_));
+    }
+
+    if (verbose & 4) {
+        LOG(LOG_INFO, "server_update done");
+    }
+}   // server_update
+
+
+
+
+
 // MS-RDPEGDI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
 // The TS_FP_UPDATE_ORDERS structure contains primary, secondary, and alternate
@@ -135,10 +333,11 @@ public:
                      , bool fastpath_support
                      , rdp_mppc_enc * mppc_enc
                      , bool compression
+                     , uint32_t verbose
                      )
         : RDPSerializer( trans, this->buffer_stream_orders
                        , this->buffer_stream_bitmaps, bpp, bmp_cache, pointer_cache
-                       , bitmap_cache_version, use_bitmap_comp, op2, ini)
+                       , bitmap_cache_version, use_bitmap_comp, op2, ini, verbose)
         , buffer_stream_orders(1024, 65536)
         , buffer_stream_bitmaps(1024, 65536)
         , sdata_orders(this->stream_orders)
@@ -727,6 +926,7 @@ protected:
                 cache_idx, cursor.x, cursor.y);
         }
 
+/*
         if (this->fastpath_support == false) {
             HStream target_stream(1024, 65536);
 
@@ -774,7 +974,7 @@ protected:
                                       stream.size() - header_size,
                                       FastPath::FASTPATH_UPDATETYPE_COLOR,
                                       FastPath::FASTPATH_FRAGMENT_SINGLE,
-                                      /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0,
+                                      0,
                                       0);
 
             BStream fastpath_header(256);
@@ -787,6 +987,13 @@ protected:
                 this->encrypt);
             this->trans->send(fastpath_header, stream);
         }
+*/
+        HStream stream(1024, 65536);
+        GenerateColorPointerUpdateData(stream, cache_idx, cursor);
+
+        ::server_update( *this->trans, /*this->fastpath_support*/false, /*this->compression*/true, this->mppc_enc
+                       , this->shareid, this->encryptionLevel, this->encrypt, this->userid
+                       , SERVER_UPDATE_POINTER_COLOR, 0, stream, this->verbose);
 
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer done");
@@ -829,69 +1036,13 @@ protected:
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer(cache_idx=%u)", cache_idx);
         }
 
-        if (this->fastpath_support == false) {
-            HStream target_stream(1024, 65536);
+        HStream stream(1024, 65536);
+        stream.out_uint16_le(cache_idx);
+        stream.mark_end();
 
-            ShareData sdata(target_stream);
-            sdata.emit_begin(PDUTYPE2_POINTER, this->shareid, RDP::STREAM_MED);
-
-            // Payload
-            target_stream.out_uint16_le(RDP_POINTER_CACHED);
-            target_stream.out_uint16_le(0); // pad
-            target_stream.out_uint16_le(cache_idx);
-            target_stream.mark_end();
-
-            // Packet trailer
-            sdata.emit_end();
-
-            BStream sctrl_header(256);
-            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
-                this->userid + GCC::MCS_USERCHANNEL_BASE, target_stream.size());
-
-            target_stream.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
-
-            if (this->verbose & (128 | 4)) {
-                LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(target_stream.get_data(), target_stream.size());
-            }
-
-            this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
-        }
-        else {
-            HStream stream(1024, 65536);
-
-            if (this->verbose & 4) {
-                LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer: fast-path");
-            }
-
-            size_t header_size = FastPath::Update_Send::GetSize(0);
-
-            stream.out_clear_bytes(header_size);    // Fast-Path Update (TS_FP_UPDATE structure) size
-
-            // Payload
-            stream.out_uint16_le(cache_idx);
-            stream.mark_end();
-
-            SubStream Upd_s(stream, 0, header_size);
-
-            FastPath::Update_Send Upd(Upd_s,
-                                      stream.size() - header_size,
-                                      FastPath::FASTPATH_UPDATETYPE_CACHED,
-                                      FastPath::FASTPATH_FRAGMENT_SINGLE,
-                                      /*FastPath::FASTPATH_OUTPUT_COMPRESSION_USED*/0,
-                                      0);
-
-            BStream fastpath_header(256);
-
-             // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-            FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                fastpath_header,
-                stream,
-                ((this->encryptionLevel > 1) ?
-                 FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
-                this->encrypt);
-            this->trans->send(fastpath_header, stream);
-        }
+        ::server_update( *this->trans, this->fastpath_support, this->compression, this->mppc_enc
+                       , this->shareid, this->encryptionLevel, this->encrypt, this->userid
+                       , SERVER_UPDATE_POINTER_CACHED, 0, stream, this->verbose);
 
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer done");
