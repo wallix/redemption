@@ -524,6 +524,8 @@ unit-test test_bulk_compression_transport : tests/transport/test_bulk_compressio
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_snappy_compression_transport : tests/transport/test_snappy_compression_transport.cpp snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 
+unit-test test_compression_transport_wrapper : tests/utils/test_compression_transport_wrapper.cpp z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
 # unit-test test_buffering_buf : tests/transport/buffer/test_buffering_buf.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 ## @}
 
