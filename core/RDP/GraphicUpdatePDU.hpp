@@ -43,8 +43,6 @@ void send_data_indication( Transport & trans, int encryptionLevel, CryptContext 
     BStream security_header(256);
     SEC::Sec_Send sec(security_header, stream, 0, encrypt, encryptionLevel);
     stream.copy_to_head(security_header.get_data(), security_header.size());
-LOG(LOG_INFO, "Security Header");
-hexdump_d(security_header.get_data(), security_header.size());
 
     OutPerBStream mcs_header(256);
     MCS::SendDataIndication_Send mcs( mcs_header
@@ -54,13 +52,9 @@ hexdump_d(security_header.get_data(), security_header.size());
                                     , 3 // segmentation
                                     , stream.size()
                                     , MCS::PER_ENCODING);
-LOG(LOG_INFO, "mcs Header");
-hexdump_d(mcs_header.get_data(), mcs_header.size());
 
     BStream x224_header(256);
     X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
-LOG(LOG_INFO, "x224 Header");
-hexdump_d(x224_header.get_data(), x224_header.size());
 
     trans.send(x224_header, mcs_header, stream);
 }
@@ -184,8 +178,6 @@ void server_update( Transport & trans, bool fastpath_support, bool compression_s
                     data.mark_end();
 
                     data_common.copy_to_head(data.get_data(), data.size());
-LOG(LOG_INFO, "(New) buffer_stream_orders: size=%u", data_common.size());
-hexdump_d(data_common.get_data(), data_common.size());
                 }
                 break;
 
@@ -245,19 +237,18 @@ hexdump_d(data_common.get_data(), data_common.size());
 
         BStream share_data_header(256);
         ShareData share_data(share_data_header);
-        share_data.emit_begin( pduType2, shareId, RDP::STREAM_MED, data_common.size() + 18 /* TS_SHAREDATAHEADER(12) */, compressionFlags
-                             , (compressionFlags ? ((HStream &)data_common_).size() + 18 /* TS_SHAREDATAHEADER(12) */ : 0));
+        share_data.emit_begin( pduType2, shareId, RDP::STREAM_MED
+                             , data_common.size() + 18 /* TS_SHAREDATAHEADER(18) */
+                             , compressionFlags
+                             , (compressionFlags ? ((HStream &)data_common_).size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
+                             );
         share_data.emit_end();
         ((HStream &)data_common_).copy_to_head(share_data_header.get_data(), share_data_header.size());
-LOG(LOG_INFO, "Share Data Header");
-hexdump_d(share_data_header.get_data(), share_data_header.size());
 
         BStream share_ctrl_header(256);
         ShareControl_Send( share_ctrl_header, PDUTYPE_DATAPDU, initiator + GCC::MCS_USERCHANNEL_BASE
                          , ((HStream &)data_common_).size());
         ((HStream &)data_common_).copy_to_head(share_ctrl_header.get_data(), share_ctrl_header.size());
-LOG(LOG_INFO, "Share Ctrl Header");
-hexdump_d(share_ctrl_header.get_data(), share_ctrl_header.size());
 
         if (verbose & (128 | 4)) {
             LOG(LOG_INFO, "Sec clear payload to send:");
