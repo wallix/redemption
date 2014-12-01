@@ -63,6 +63,7 @@
 #include "rdp_params.hpp"
 #include "transparentrecorder.hpp"
 
+#include "client_info.hpp"
 #include "genrandom.hpp"
 #include "authorization_channels.hpp"
 

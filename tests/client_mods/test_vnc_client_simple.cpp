@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
     BOOST_CHECK(1);
 
-    ClientInfo info(1, true, true);
+    ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
     info.brush_cache_code = 0;

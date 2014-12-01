@@ -32,7 +32,7 @@
 
 BOOST_AUTO_TEST_CASE(TestBouncer2Mod)
 {
-    ClientInfo info(1, true, true);
+    ClientInfo info;
     info.keylayout = 0x040C;
     info.console_session = 0;
     info.brush_cache_code = 0;
