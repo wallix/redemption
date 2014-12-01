@@ -663,11 +663,11 @@ class Sesman():
                     # target_login can contains '@'
                     # device_name and service_name can not contain ':', nor '@'
 
-                    # service_split = [ *target_login* , device_name:service_name ]
-                    service_split = s[1].split('@')
-                    target_login = '@'.join(service_split[:-1])
+                    # target_split = [ *target_login* , device_name:service_name ]
+                    target_split = s[1].split('@')
+                    target_login = '@'.join(target_split[:-1])
                     # device_service_split = [ device_name, service_name ]
-                    device_service_split = s[1].split('@')[-1].split(':')
+                    device_service_split = target_split[-1].split(':')
                     device_name = device_service_split[0]
                     service_name = device_service_split[-1]
 
