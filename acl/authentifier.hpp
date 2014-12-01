@@ -205,7 +205,7 @@ public:
     }
 
 public:
-    bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
+    bool check(MMApi & mm, time_t now, BackEvent_t & signal) {
        // LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
        //     (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {

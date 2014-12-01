@@ -63,6 +63,7 @@
 #include "rdp_params.hpp"
 #include "transparentrecorder.hpp"
 
+#include "client_info.hpp"
 #include "genrandom.hpp"
 #include "authorization_channels.hpp"
 
@@ -3824,8 +3825,7 @@ public:
                     if (this->verbose & 1) {
                         general_caps.log("Received from server");
                     }
-                    if (output_file)
-                    {
+                    if (output_file) {
                         general_caps.dump(output_file);
                     }
                 }
@@ -3837,8 +3837,7 @@ public:
                     if (this->verbose & 1) {
                         bitmap_caps.log("Received from server");
                     }
-                    if (output_file)
-                    {
+                    if (output_file) {
                         bitmap_caps.dump(output_file);
                     }
                     this->bpp = bitmap_caps.preferredBitsPerPixel;
@@ -3853,8 +3852,7 @@ public:
                     if (this->verbose & 1) {
                         order_caps.log("Received from server");
                     }
-                    if (output_file)
-                    {
+                    if (output_file) {
                         order_caps.dump(output_file);
                     }
                 }

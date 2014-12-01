@@ -187,10 +187,10 @@ install install-etc-themes
 lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
 lib libboost_program_options : : <name>boost_program_options <link>shared ;
 lib openssl : : <name>ssl <link>shared ;
-lib X11 : : <name>X11 <link>shared ;
-lib Xfixes : : <name>Xfixes <link>static ;
+# lib X11 : : <name>X11 <link>shared ;
+# lib Xfixes : : <name>Xfixes <link>static ;
 # lib pthread : : <name>pthread <link>shared ;
-lib pam : : <name>pam <link>static ;
+# lib pam : : <name>pam <link>static ;
 
 lib krb5 : : <name>krb5 <link>shared ;
 lib gssglue : : <name>gssglue <link>shared ;
@@ -198,19 +198,19 @@ lib gssglue : : <name>gssglue <link>shared ;
 lib crypto : : <name>crypto <link>static ;
 lib z : : <name>z <link>static ;
 lib snappy : : <name>snappy <link>shared ;
-lib lzma : : <name>lzma <link>shared ;
+# lib lzma : : <name>lzma <link>shared ;
 lib dl : : <name>dl <link>shared ;
 
-lib lcms : : <name>lcms <link>shared ;
+# lib lcms : : <name>lcms <link>shared ;
 
-lib tiff : : <name>tiff <link>static ;
-lib freetype : : <name>freetype <link>static ;
-lib jpeg : : <name>jpeg <link>static ;
-lib Xext : : <name>Xext <link>static ;
+# lib tiff : : <name>tiff <link>static ;
+# lib freetype : : <name>freetype <link>static ;
+# lib jpeg : : <name>jpeg <link>static ;
+# lib Xext : : <name>Xext <link>static ;
 
 lib png : : <name>png <link>static ;
 
-lib icuuc : : <name>icuuc ;
+# lib icuuc : : <name>icuuc ;
 
 
 obj mainloop : core/mainloop.cpp ;
@@ -520,13 +520,13 @@ unit-test test_crypto_meta_sequence_transport : tests/transport/test_crypto_meta
 unit-test test_request_full_cleaning : tests/transport/test_request_full_cleaning.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_filename_transport : tests/transport/test_filename_transport.cpp z crypto dl cryptofile snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bulk_compression_transport : tests/transport/test_bulk_compression_transport.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp z libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_lzma_compression_transport : tests/transport/test_lzma_compression_transport.cpp lzma libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_bufferization_transport : tests/transport/test_bufferization_transport.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-
-unit-test test_buffering_buf : tests/transport/buffer/test_buffering_buf.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-
 unit-test test_snappy_compression_transport : tests/transport/test_snappy_compression_transport.cpp snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_compression_transport_wrapper : tests/utils/test_compression_transport_wrapper.cpp z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+
+# unit-test test_buffering_buf : tests/transport/buffer/test_buffering_buf.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 ## @}
 
 
@@ -539,6 +539,8 @@ unit-test test_RDPOrdersPrimaryScrBlt : tests/core/RDP/orders/test_RDPOrdersPrim
 unit-test test_RDPOrdersPrimaryMemBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryDestBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryMultiDstBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_RDPOrdersPrimaryMultiPatBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryMultiPatBlt.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_RDPOrdersPrimaryMultiScrBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryMultiScrBlt.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryMultiOpaqueRect : tests/core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryLineTo : tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryPolygonSC : tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

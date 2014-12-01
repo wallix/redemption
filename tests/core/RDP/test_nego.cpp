@@ -112,20 +112,20 @@ BOOST_AUTO_TEST_CASE(TestNego)
 }
 
 
-BOOST_AUTO_TEST_CASE(TestNego2)
-{
-    LOG(LOG_INFO, "============= Test Nego Server Side ===========");
-    const char client[65000] =
-/* 0000 */ "\x03\x00\x00\x2a\x25\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...*%......Cooki
-/* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x74\x65\x73\x74" //e: mstshash=test
-/* 0020 */ "\x0d\x0a\x01\x00\x08\x00\x03\x00\x00\x00"                         //..........
-        ;
-    const char server[65000] =
-/* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x02" //................
-/* 0010 */ "\x00\x00\x00"                                                     //...
-        ;
-    TestTransport logtrans("test", client, sizeof(client), server, sizeof(server));
-    RdpNego nego(true, &logtrans, "test", true, "127.0.0.1", false);
-    ClientInfo client_info(0, true, true);
-    nego.recv_resquest(NULL, client_info, true, true);
-}
+// BOOST_AUTO_TEST_CASE(TestNego2)
+// {
+//     LOG(LOG_INFO, "============= Test Nego Server Side ===========");
+//     const char client[65000] =
+// /* 0000 */ "\x03\x00\x00\x2a\x25\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...*%......Cooki
+// /* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x74\x65\x73\x74" //e: mstshash=test
+// /* 0020 */ "\x0d\x0a\x01\x00\x08\x00\x03\x00\x00\x00"                         //..........
+//         ;
+//     const char server[65000] =
+// /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x02" //................
+// /* 0010 */ "\x00\x00\x00"                                                     //...
+//         ;
+//     TestTransport logtrans("test", client, sizeof(client), server, sizeof(server));
+//     RdpNego nego(true, &logtrans, "test", true, "127.0.0.1", false);
+//     ClientInfo client_info(0, true);
+//     nego.recv_resquest(NULL, client_info, true, true);
+// }

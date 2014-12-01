@@ -1,7 +1,5 @@
 capture/capture 100 100
 capture/chunked_image_transport 100 100
-capture/ChunkToFile 100 100
-capture/FileToChunk 100 100
 capture/FileToGraphic 100 100
 capture/GraphicToFile 100 100
 capture/image_capture 100 100
@@ -115,15 +113,12 @@ mod/internal/bouncer2_mod 100 100
 mod/internal/copy_paste 100 100
 mod/internal/flat_dialog_mod 100 100
 mod/internal/flat_login_mod 100 100
-mod/internal/flat_selector2_mod 100 100
 mod/internal/flat_selector_mod 100 100
 mod/internal/flat_wab_close_mod 100 100
-mod/internal/flat_wait_mod 100 100
 mod/internal/interactive_password_mod 100 100
 mod/internal/internal_mod 100 100
 mod/internal/replay_mod 100 100
 mod/internal/test_card_mod 100 100
-mod/internal/transparent_replay_mod 100 100
 mod/internal/widget2/columnlayout 100 100
 mod/internal/widget2/composite 100 100
 mod/internal/widget2/edit 100 100
@@ -136,7 +131,6 @@ mod/internal/widget2/flat_login 100 100
 mod/internal/widget2/flat_selector2 100 100
 mod/internal/widget2/flat_selector 100 100
 mod/internal/widget2/flat_vnc_authentification 100 100
-mod/internal/widget2/flat_wab_close 100 100
 mod/internal/widget2/flat_wait 100 100
 mod/internal/widget2/grid 100 100
 mod/internal/widget2/group_box 100 100

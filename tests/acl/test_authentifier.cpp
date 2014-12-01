@@ -114,21 +114,20 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     SessionManager sesman(mm.ini, activity_checker, acl_trans, 10000, 10010);
     signal = BACK_EVENT_NEXT;
 
-    CountTransport keepalivetrans;
     // Ask next_module, send inital data to ACL
-    sesman.check(mm, 10011, keepalivetrans, signal);
+    sesman.check(mm, 10011, signal);
     // Receive answer, OK to connect
     sesman.receive();
     // instanciate new mod, start keepalive (proxy ASK keepalive and should receive result in less than keepalive_grace_delay)
-    sesman.check(mm, 10012, keepalivetrans, signal);
-    sesman.check(mm, 10042, keepalivetrans, signal);
+    sesman.check(mm, 10012, signal);
+    sesman.check(mm, 10042, signal);
     // Send keepalive=ASK
-    sesman.check(mm, 10043, keepalivetrans, signal);
-    sesman.check(mm, 10072, keepalivetrans, signal);
+    sesman.check(mm, 10043, signal);
+    sesman.check(mm, 10072, signal);
     // still connected
     BOOST_CHECK_EQUAL(mm.last_module, false);
     // If no keepalive is received after 30 seconds => disconnection
-    sesman.check(mm, 10073, keepalivetrans, signal);
+    sesman.check(mm, 10073, signal);
     BOOST_CHECK_EQUAL(mm.last_module, true);
 }
 
@@ -223,33 +222,33 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     CountTransport keepalivetrans;
     // Ask next_module, send inital data to ACL
-    sesman.check(mm, 10011, keepalivetrans, signal);
+    sesman.check(mm, 10011, signal);
     // Receive answer, OK to connect
     sesman.receive();
     // instanciate new mod, start keepalive (proxy ASK keepalive and should receive result in less than keepalive_grace_delay)
-    sesman.check(mm, 10012, keepalivetrans, signal);
-    sesman.check(mm, 10042, keepalivetrans, signal);
+    sesman.check(mm, 10012, signal);
+    sesman.check(mm, 10042, signal);
     // Send keepalive=ASK
-    sesman.check(mm, 10043, keepalivetrans, signal);
+    sesman.check(mm, 10043, signal);
 
     sesman.receive();
     //  keepalive=True
-    sesman.check(mm, 10045, keepalivetrans, signal);
+    sesman.check(mm, 10045, signal);
 
     // koopalive=True => unknown var...
     sesman.receive();
-    sesman.check(mm, 10072, keepalivetrans, signal);
-    sesman.check(mm, 10075, keepalivetrans, signal);
+    sesman.check(mm, 10072, signal);
+    sesman.check(mm, 10075, signal);
     BOOST_CHECK_EQUAL(mm.last_module, false);  // still connected
 
     // Renew Keepalive time:
     // Send keepalive=ASK
-    sesman.check(mm, 10076, keepalivetrans, signal);
-    sesman.check(mm, 10105, keepalivetrans, signal);
+    sesman.check(mm, 10076, signal);
+    sesman.check(mm, 10105, signal);
     BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
     // Keep alive not received, disconnection
-    sesman.check(mm, 10106, keepalivetrans, signal);
+    sesman.check(mm, 10106, signal);
     BOOST_CHECK_EQUAL(mm.last_module, true);  // close box
 }
 
@@ -420,57 +419,57 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
 
     // Ask next_module, send inital data to ACL
-    sesman.check(mm, 10011, keepalivetrans, signal);
+    sesman.check(mm, 10011, signal);
     // Receive answer, OK to connect
     sesman.receive();
     // instanciate new mod, start keepalive (proxy ASK keepalive and should receive result in less than keepalive_grace_delay)
-    sesman.check(mm, 10012, keepalivetrans, signal);
-    sesman.check(mm, 10042, keepalivetrans, signal);
+    sesman.check(mm, 10012, signal);
+    sesman.check(mm, 10042, signal);
     // Send keepalive=ASK
-    sesman.check(mm, 10043, keepalivetrans, signal);
+    sesman.check(mm, 10043, signal);
 
     sesman.receive();
     //  keepalive=True
-    sesman.check(mm, 10045, keepalivetrans, signal);
+    sesman.check(mm, 10045, signal);
 
     // keepalive=True
     sesman.receive();
-    sesman.check(mm, 10072, keepalivetrans, signal);
-    sesman.check(mm, 10075, keepalivetrans, signal);
+    sesman.check(mm, 10072, signal);
+    sesman.check(mm, 10075, signal);
     BOOST_CHECK_EQUAL(mm.last_module, false);  // still connected
 
     // Renew Keepalive time:
     // Send keepalive=ASK
-    sesman.check(mm, 10076, keepalivetrans, signal);
+    sesman.check(mm, 10076, signal);
     sesman.receive();
-    sesman.check(mm, 10079, keepalivetrans, signal);
+    sesman.check(mm, 10079, signal);
     BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
 
     // Send keepalive=ASK
-    sesman.check(mm, 10106, keepalivetrans, signal);
-    sesman.check(mm, 10135, keepalivetrans, signal);
+    sesman.check(mm, 10106, signal);
+    sesman.check(mm, 10135, signal);
     BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
     sesman.receive();
-    sesman.check(mm, 10136, keepalivetrans, signal);
-    sesman.check(mm, 10165, keepalivetrans, signal);
+    sesman.check(mm, 10136, signal);
+    sesman.check(mm, 10165, signal);
 
     BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
 
-    sesman.check(mm, 10166, keepalivetrans, signal);
+    sesman.check(mm, 10166, signal);
     sesman.receive();
-    sesman.check(mm, 10195, keepalivetrans, signal);
+    sesman.check(mm, 10195, signal);
     BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
     sesman.receive();
-    sesman.check(mm, 10196, keepalivetrans, signal);
-    sesman.check(mm, 10225, keepalivetrans, signal);
+    sesman.check(mm, 10196, signal);
+    sesman.check(mm, 10225, signal);
     BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
     sesman.receive();
-    sesman.check(mm, 10227, keepalivetrans, signal);
-    sesman.check(mm, 10255, keepalivetrans, signal);
+    sesman.check(mm, 10227, signal);
+    sesman.check(mm, 10255, signal);
     BOOST_CHECK_EQUAL(mm.last_module, true); // disconnected on inactivity
 }

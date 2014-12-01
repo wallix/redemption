@@ -23,23 +23,15 @@
 
 #include "RDPChunkedDevice.hpp"
 #include "GraphicToFile.hpp"
-#include "bufferization_transport.hpp"
-#include "gzip_compression_transport.hpp"
-//#include "lzma_compression_transport.hpp"
-#include "snappy_compression_transport.hpp"
+#include "compression_transport_wrapper.hpp"
 
 struct ChunkToFile : public RDPChunkedDevice {
 private:
-    Transport * trans_target;
-    Transport * trans;
+    CompressionOutTransportWrapper compression_wrapper;
+    Transport & trans_target;
+    Transport & trans;
 
     const Inifile & ini;
-
-
-    BufferizationOutTransport     bot;
-    GZipCompressionOutTransport   gzcot;
-    //LzmaCompressionOutTransport   lcot;
-    SnappyCompressionOutTransport scot;
 
     const uint8_t wrm_format_version;
 
@@ -72,31 +64,16 @@ public:
 
                , const Inifile & ini)
     : RDPChunkedDevice()
-    , trans_target(trans)
-    , trans(trans)
+    , compression_wrapper(*trans, ini.video.wrm_compression_algorithm)
+    , trans_target(*trans)
+    , trans(this->compression_wrapper.get())
     , ini(ini)
-    , bot(*trans)
-    , gzcot(*trans)
-    //, lcot(*trans, true, ini.debug.capture)
-    , scot(*trans)
-    //, wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 5)) ? 4 : 3)
-    , wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 4)) ? 4 : 3)
+    , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
     {
-        //REDASSERT(this->ini.video.wrm_compression_algorithm < 5);
-        REDASSERT(this->ini.video.wrm_compression_algorithm < 4);
-
-        if (this->ini.video.wrm_compression_algorithm == 1) {
-            this->trans = &this->gzcot;
+        if (this->ini.video.wrm_compression_algorithm != this->compression_wrapper.get_index_algorithm()) {
+            LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
+               , this->ini.video.wrm_compression_algorithm);
         }
-        else if (this->ini.video.wrm_compression_algorithm == 2) {
-            this->trans = &this->scot;
-        }
-        else if (this->ini.video.wrm_compression_algorithm == 3) {
-            this->trans = &this->bot;
-        }
-        //else if (this->ini.video.wrm_compression_algorithm == 4) {
-        //    this->trans = &this->lcot;
-        //}
 
         this->send_meta_chunk( info_width
                              , info_height
@@ -176,16 +153,15 @@ private:
             payload.out_uint16_le(info_cache_4_size);
             payload.out_uint8(info_cache_4_persistent);
 
-            //payload.out_uint8((ini.video.wrm_compression_algorithm < 5) ? this->ini.video.wrm_compression_algorithm : 0);
-            payload.out_uint8((ini.video.wrm_compression_algorithm < 4) ? this->ini.video.wrm_compression_algorithm : 0);
+            payload.out_uint8(this->compression_wrapper.get_index_algorithm());
         }
         payload.mark_end();
 
         BStream header(8);
         WRMChunk_Send chunk(header, META_FILE, payload.size(), 1);
 
-        this->trans_target->send(header);
-        this->trans_target->send(payload);
+        this->trans_target.send(header);
+        this->trans_target.send(payload);
     }
 
 public:
@@ -272,8 +248,8 @@ public:
                 BStream header(8);
                 WRMChunk_Send chunk(header, RESET_CHUNK, 0, 1);
 
-                this->trans->send(header);
-                this->trans->next();
+                this->trans.send(header);
+                this->trans.next();
             }
             break;
 
@@ -283,7 +259,7 @@ public:
                 timeval      record_now;
 
                 stream.in_timeval_from_uint64le_usec(record_now);
-                this->trans_target->timestamp(record_now);
+                this->trans_target.timestamp(record_now);
             }
         default:
             {
@@ -292,8 +268,8 @@ public:
                 BStream header(8);
                 WRMChunk_Send chunk(header, chunk_type, payload.size(), chunk_count);
 
-                this->trans->send(header);
-                this->trans->send(payload);
+                this->trans.send(header);
+                this->trans.send(payload);
             }
             break;
         }

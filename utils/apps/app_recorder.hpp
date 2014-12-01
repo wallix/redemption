@@ -200,12 +200,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "snappy"    )) {
             ini.video.wrm_compression_algorithm = 2;
         }
-        else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "bufferized")) {
-            ini.video.wrm_compression_algorithm = 3;
-        }
-        //else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "lzma"      )) {
-        //    ini.video.wrm_compression_algorithm = 4;
-        //}
         else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "original"  )) {
             ini.video.wrm_compression_algorithm = USE_ORIGINAL_COMPRESSION_ALGORITHM;
         }
@@ -244,11 +238,11 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     ini.video.capture_wrm    = (options.count("wrm") > 0);
     ini.video.capture_png    = (options.count("png") > 0);
 
-    ini.video.rt_display.set(ini.video.capture_png ? 1 : 0);
-
     if (int status = parse_format(ini, options, output_filename)) {
         return status;
     }
+
+    ini.video.rt_display.set(ini.video.capture_png ? 1 : 0);
 
     const bool infile_is_encrypted = is_encrypted_file(input_filename.c_str());
 
