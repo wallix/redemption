@@ -24,9 +24,13 @@
 #include "FileToGraphic.hpp"
 #include "transport.hpp"
 #include "RDPChunkedDevice.hpp"
+#include "compression_transport_wrapper.hpp"
 
 struct FileToChunk {
     BStream stream;
+
+private:
+    CompressionInTransportWrapper compression_wrapper;
 
     Transport * trans_source;
     Transport * trans;
@@ -70,13 +74,9 @@ public:
     bool     info_cache_4_persistent;
     uint8_t  info_compression_algorithm;
 
-    BufferizationInTransport     bit;
-    GZipCompressionInTransport   gzcit;
-    //LzmaCompressionInTransport   lcit;
-    SnappyCompressionInTransport scit;
-
     FileToChunk(Transport * trans, uint32_t verbose)
         : stream(65536)
+        , compression_wrapper(*trans, CompressionTransportBase::Algorithm::None)
         , trans_source(trans)
         , trans(trans)
         // variables used to read batch of orders "chunks"
@@ -109,10 +109,7 @@ public:
         , info_cache_4_size(0)
         , info_cache_4_persistent(false)
         , info_compression_algorithm(0)
-        , bit(*trans)
-        , gzcit(*trans)
-        //, lcit(*trans, verbose)
-        , scit(*trans) {
+    {
         while (this->next_chunk()) {
             this->interpret_chunk();
             if (this->meta_ok) {
@@ -197,26 +194,12 @@ public:
                 this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
 
                 this->info_compression_algorithm = this->stream.in_uint8();
-                //REDASSERT(this->info_compression_algorithm < 5);
-                REDASSERT(this->info_compression_algorithm < 4);
+                REDASSERT(this->info_compression_algorithm < CompressionTransportBase::max_algorithm);
 
-                switch (this->info_compression_algorithm) {
-                case 1:
-                    this->trans = &this->gzcit;
-                    break;
-                case 2:
-                    this->trans = &this->scit;
-                    break;
-                case 3:
-                    this->trans = &this->bit;
-                    break;
-                //case 4:
-                //    this->trans = &this->lcit;
-                //    break;
-                default:
-                    this->trans = this->trans_source;
-                    break;
-                }
+                // re-init
+                new (&this->compression_wrapper) CompressionInTransportWrapper(
+                    *this->trans_source, this->info_compression_algorithm);
+                this->trans = &this->compression_wrapper.get();
             }
 
             this->stream.p = this->stream.get_data();

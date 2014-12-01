@@ -122,6 +122,7 @@ public:
 
 private:
     int share_id;
+    int encryptionLevel; /* 1, 2, 3 = low, medium, high */
 
 public:
     ClientInfo client_info;
@@ -210,7 +211,7 @@ public:
         , orders(NULL)
         , up_and_running(0)
         , share_id(65538)
-        , client_info(ini.globals.encryptionLevel, ini.client.bitmap_compression, ini.globals.bitmap_cache)
+        , encryptionLevel(ini.globals.encryptionLevel + 1)
         , trans(trans)
         , userid(0)
         , order_level(0)
@@ -295,7 +296,7 @@ public:
         memset(this->decrypt.update_key, 0, 16);
         memset(this->encrypt.update_key, 0, 16);
 
-        switch (this->client_info.encryptionLevel) {
+        switch (this->encryptionLevel) {
         case 1:
         case 2:
             this->decrypt.encryptionMethod = 1; /* 40 bits */
@@ -706,7 +707,7 @@ public:
 private:
     virtual void reset(){
         if (this->verbose & 1){
-            LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->client_info.use_bitmap_comp);
+            LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->ini.client.bitmap_compression ? 1 : 0);
             LOG(LOG_INFO, "Front::reset::use_compact_packets=%u", this->client_info.use_compact_packets);
             LOG(LOG_INFO, "Front::reset::bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
         }
@@ -811,14 +812,14 @@ private:
               &this->trans
             , this->userid
             , this->share_id
-            , this->client_info.encryptionLevel
+            , this->encryptionLevel
             , this->encrypt
             , this->ini
             , this->client_info.bpp
             , *this->bmp_cache
             , this->pointer_cache
             , this->client_info.bitmap_cache_version
-            , this->client_info.use_bitmap_comp
+            , this->ini.client.bitmap_compression ? 1 : 0
             , this->client_info.use_compact_packets
             , this->server_fastpath_update_support
             , this->mppc_enc
@@ -892,7 +893,7 @@ public:
         CHANNELS::VirtualChannelPDU virtual_channel_pdu(this->verbose);
 
         virtual_channel_pdu.send_to_client( this->trans, this->encrypt
-                                          , this->client_info.encryptionLevel, userid, channel.chanid
+                                          , this->encryptionLevel, userid, channel.chanid
                                           , length, flags, chunk, chunk_size);
     }
 
@@ -1027,7 +1028,7 @@ public:
                 FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                       SvrUpdPDU_s
                     , stream
-                    , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                    , ((this->encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                     , this->encrypt
                     );
                 // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
@@ -1102,7 +1103,7 @@ public:
                     if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
                         rdp_neg_type = X224::RDP_NEG_RSP;
                         rdp_neg_code = X224::PROTOCOL_TLS;
-                        this->client_info.encryptionLevel = 0;
+                        this->encryptionLevel = 0;
                     }
                     else {
                         rdp_neg_type = X224::RDP_NEG_FAILURE;
@@ -1364,7 +1365,7 @@ public:
                 uint8_t rsa_keys_pub_exp[4] = { 0x01, 0x00, 0x01, 0x00 };
 
                 sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
-                sc_sec1.encryptionLevel = this->client_info.encryptionLevel;
+                sc_sec1.encryptionLevel = this->encryptionLevel;
                 sc_sec1.serverRandomLen = 32;
                 this->gen.random(this->server_random, 32);
                 memcpy(sc_sec1.serverRandom, this->server_random, 32);
@@ -1685,7 +1686,7 @@ public:
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
+            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
             if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
                 hexdump_d(sec.payload.get_data(), sec.payload.size());
@@ -1868,7 +1869,7 @@ public:
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
+            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
             if ((this->verbose & (128|2)) == (128|2)){
                 LOG(LOG_INFO, "sec decrypted payload:");
                 hexdump_d(sec.payload.get_data(), sec.payload.size());
@@ -2238,7 +2239,7 @@ public:
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
+                SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
                 if (this->verbose & 128){
                     LOG(LOG_INFO, "sec decrypted payload:");
                     hexdump_d(sec.payload.get_data(), sec.payload.size());
@@ -2452,7 +2453,7 @@ public:
         OutPerBStream mcs_header(256);
         BStream sec_header(256);
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
         stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
         MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channelId,
@@ -2471,7 +2472,7 @@ public:
         FastPath::ServerUpdatePDU_Send SvrUpdPDU(
               fastpath_header
             , data
-            , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+            , ((this->encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
             , this->encrypt
             );
         this->trans.send(fastpath_header, data);
@@ -2492,7 +2493,7 @@ public:
         FastPath::ServerUpdatePDU_Send SvrUpdPDU(
             fastpath_header,
             stream,
-            ((this->client_info.encryptionLevel > 1) ?
+            ((this->encryptionLevel > 1) ?
              FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
             this->encrypt);
         this->trans.send(fastpath_header, stream);
@@ -2596,7 +2597,7 @@ public:
             FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                   fastpath_header
                 , stream
-                , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                , ((this->encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                 , this->encrypt
                 );
             this->trans.send(fastpath_header, stream);

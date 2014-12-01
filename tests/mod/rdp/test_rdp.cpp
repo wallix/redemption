@@ -47,7 +47,7 @@
 
 BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 {
-    ClientInfo info(1, true, true);
+    ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
     info.brush_cache_code = 0;
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 
 BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
-    ClientInfo info(1, true, true);
+    ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
     info.brush_cache_code = 0;
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
 BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 {
-    ClientInfo info(1, true, true);
+    ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
     info.brush_cache_code = 0;
@@ -299,14 +299,14 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 //        }
         mod->draw_event(time(NULL));
     }
-    
+
 
 //    front.dump_png("trace_w2003_");
 }
 
 BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 {
-    ClientInfo info(1, true, true);
+    ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
     info.brush_cache_code = 0;

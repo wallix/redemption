@@ -41,10 +41,7 @@
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/pointercache.hpp"
 #include "colors.hpp"
-#include "bufferization_transport.hpp"
-#include "gzip_compression_transport.hpp"
-//#include "lzma_compression_transport.hpp"
-#include "snappy_compression_transport.hpp"
+#include "compression_transport_wrapper.hpp"
 #include "RDP/RDPDrawable.hpp"
 
 class WRMChunk_Send
@@ -62,15 +59,26 @@ class WRMChunk_Send
 template <size_t SZ>
 class OutChunkedBufferingTransport : public Transport
 {
-public:
-    Transport * trans;
+    Transport & trans;
     size_t max;
     BStream stream;
-    OutChunkedBufferingTransport(Transport * trans)
+
+public:
+    OutChunkedBufferingTransport(Transport & trans)
         : trans(trans)
         , max(SZ-8)
         , stream(SZ)
     {
+    }
+
+    virtual void flush() {
+        this->stream.mark_end();
+        if (this->stream.size() > 0){
+            BStream header(8);
+            WRMChunk_Send(header, LAST_IMAGE_CHUNK, this->stream.size(), 1);
+            this->trans.send(header);
+            this->trans.send(this->stream);
+        }
     }
 
 private:
@@ -79,27 +87,16 @@ private:
         while (this->stream.size() + to_buffer_len > max){
             BStream header(8);
             WRMChunk_Send(header, PARTIAL_IMAGE_CHUNK, max, 1);
-            this->trans->send(header);
-            this->trans->send(this->stream);
+            this->trans.send(header);
+            this->trans.send(this->stream);
             size_t to_send = max - this->stream.size();
-            this->trans->send(buffer + len - to_buffer_len, to_send);
+            this->trans.send(buffer + len - to_buffer_len, to_send);
             to_buffer_len -= to_send;
             this->stream.reset();
         }
         this->stream.out_copy_bytes(buffer + len - to_buffer_len, to_buffer_len);
         REDOC("Marking end here is necessary for chunking")
         this->stream.mark_end();
-    }
-
-public:
-    virtual void flush() {
-        this->stream.mark_end();
-        if (this->stream.size() > 0){
-            BStream header(8);
-            WRMChunk_Send(header, LAST_IMAGE_CHUNK, this->stream.size(), 1);
-            this->trans->send(header);
-            this->trans->send(this->stream);
-        }
     }
 };
 
@@ -112,8 +109,9 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         GTF_SIZE_KEYBUF_REC = 1024
     };
 
-    Transport * trans_target;
-    Transport * trans;
+    CompressionOutTransportWrapper compression_wrapper;
+    Transport & trans_target;
+    Transport & trans;
     BStream buffer_stream_orders;
     BStream buffer_stream_bitmaps;
 
@@ -130,11 +128,6 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     BStream keyboard_buffer_32;
 
     const Inifile & ini;
-
-    BufferizationOutTransport     bot;
-    GZipCompressionOutTransport   gzcot;
-    //LzmaCompressionOutTransport   lcot;
-    SnappyCompressionOutTransport scot;
 
     const uint8_t wrm_format_version;
 
@@ -157,8 +150,9 @@ public:
     : RDPSerializer( trans, this->buffer_stream_orders
                    , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, ptr_cache, 0, 1, 1, ini)
     , RDPCaptureDevice()
-    , trans_target(trans)
-    , trans(trans)
+    , compression_wrapper(*trans, ini.video.wrm_compression_algorithm)
+    , trans_target(*trans)
+    , trans(this->compression_wrapper.get())
     , buffer_stream_orders(65536)
     , buffer_stream_bitmaps(65536)
     , last_sent_timer()
@@ -172,30 +166,17 @@ public:
     , drawable(drawable)
     , keyboard_buffer_32(GTF_SIZE_KEYBUF_REC * sizeof(uint32_t))
     , ini(ini)
-    , bot(*trans)
-    , gzcot(*trans)
-    //, lcot(*trans, false, verbose)
-    , scot(*trans)
-    , wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 4)) ? 4 : 3)
-    //, wrm_format_version(((ini.video.wrm_compression_algorithm > 0) && (ini.video.wrm_compression_algorithm < 5)) ? 4 : 3)
+    , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
     //, verbose(verbose)
     {
+        if (this->ini.video.wrm_compression_algorithm != this->compression_wrapper.get_index_algorithm()) {
+            LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
+               , this->ini.video.wrm_compression_algorithm);
+        }
+
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
         this->order_count = 0;
-
-        if (this->ini.video.wrm_compression_algorithm == 1) {
-            this->trans = &this->gzcot;
-        }
-        else if (this->ini.video.wrm_compression_algorithm == 2) {
-            this->trans = &this->scot;
-        }
-        else if (this->ini.video.wrm_compression_algorithm == 3) {
-            this->trans = &this->bot;
-        }
-        //else if (this->ini.video.wrm_compression_algorithm == 4) {
-        //    this->trans = &this->lcot;
-        //}
 
         this->send_meta_chunk();
         this->send_image_chunk();
@@ -217,7 +198,7 @@ public:
             this->flush_orders();
             this->flush_bitmaps();
             this->timer = now;
-            this->trans->timestamp(now);
+            this->trans.timestamp(now);
         }
     }
 
@@ -272,16 +253,16 @@ public:
             payload.out_uint16_le(c4.bmp_size());
             payload.out_uint8(c4.persistent() ? 1 : 0);
 
-            payload.out_uint8((this->ini.video.wrm_compression_algorithm < 4) ? this->ini.video.wrm_compression_algorithm : 0);   // Compression algorithm
-            //payload.out_uint8((this->ini.video.wrm_compression_algorithm < 5) ? this->ini.video.wrm_compression_algorithm : 0);   // Compression algorithm
+            // Compression algorithm
+            payload.out_uint8(this->compression_wrapper.get_index_algorithm());
         }
 
         payload.mark_end();
 
         WRMChunk_Send chunk(header, META_FILE, payload.size(), 1);
 
-        this->trans_target->send(header);
-        this->trans_target->send(payload);
+        this->trans_target.send(header);
+        this->trans_target.send(payload);
     }
 
     // this one is used to store some embedded image inside WRM
@@ -295,7 +276,7 @@ public:
     {
         BStream header(8);
         WRMChunk_Send chunk(header, RESET_CHUNK, 0, 1);
-        this->trans->send(header);
+        this->trans.send(header);
     }
 
     void send_timestamp_chunk(bool ignore_time_interval = false)
@@ -326,8 +307,8 @@ public:
 
         BStream header(8);
         WRMChunk_Send chunk(header, TIMESTAMP, payload.size(), 1);
-        this->trans->send(header);
-        this->trans->send(payload);
+        this->trans.send(header);
+        this->trans.send(payload);
 
         this->last_sent_timer = this->timer;
     }
@@ -522,8 +503,8 @@ public:
 
         BStream header(8);
         WRMChunk_Send chunk(header, SAVE_STATE, payload.size(), 1);
-        this->trans->send(header);
-        this->trans->send(payload);
+        this->trans.send(header);
+        this->trans.send(payload);
     }
 
     void save_bmp_caches()
@@ -558,16 +539,15 @@ public:
     {
         this->flush_orders();
         this->flush_bitmaps();
-        if ((this->ini.video.wrm_compression_algorithm > 0) && (this->ini.video.wrm_compression_algorithm < 4)) {
-        //if ((this->ini.video.wrm_compression_algorithm > 0) && (this->ini.video.wrm_compression_algorithm < 5)) {
+        if (this->compression_wrapper.get_index_algorithm()) {
             this->send_reset_chunk();
         }
-        this->trans->next();
+        this->trans.next();
         this->send_meta_chunk();
         this->send_timestamp_chunk();
         this->send_save_state_chunk();
 
-        OutChunkedBufferingTransport<65536> png_trans(trans);
+        OutChunkedBufferingTransport<65536> png_trans(this->trans);
 
         this->drawable.dump_png24(png_trans, true);
 
@@ -591,8 +571,8 @@ public:
         this->stream_orders.mark_end();
         BStream header(8);
         WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->stream_orders.size(), this->order_count);
-        this->trans->send(header);
-        this->trans->send(this->stream_orders);
+        this->trans.send(header);
+        this->trans.send(this->stream_orders);
         this->order_count = 0;
         this->stream_orders.reset();
     }
@@ -738,8 +718,8 @@ public:
         this->stream_bitmaps.mark_end();
         BStream header(8);
         WRMChunk_Send chunk(header, RDP_UPDATE_BITMAP, this->stream_bitmaps.size(), this->bitmap_count);
-        this->trans->send(header);
-        this->trans->send(this->stream_bitmaps);
+        this->trans.send(header);
+        this->trans.send(this->stream_bitmaps);
         this->bitmap_count = 0;
         this->stream_bitmaps.reset();
     }
@@ -760,7 +740,7 @@ public:
                       + 128         // mask
                       ;
         WRMChunk_Send chunk(header, POINTER, size, 0);
-        this->trans->send(header);
+        this->trans.send(header);
 
         BStream payload(16);
         payload.out_uint16_le(this->mouse_x);
@@ -769,10 +749,10 @@ public:
         payload.out_uint8(cursor.x);
         payload.out_uint8(cursor.y);
         payload.mark_end();
-        this->trans->send(payload);
+        this->trans.send(payload);
 
-        this->trans->send(cursor.data, cursor.data_size());
-        this->trans->send(cursor.mask, cursor.mask_size());
+        this->trans.send(cursor.data, cursor.data_size());
+        this->trans.send(cursor.mask, cursor.mask_size());
     }
 
     virtual void set_pointer(int cache_idx) {
@@ -782,14 +762,14 @@ public:
                       + 1                   // cache index
                       ;
         WRMChunk_Send chunk(header, POINTER, size, 0);
-        this->trans->send(header);
+        this->trans.send(header);
 
         BStream payload(16);
         payload.out_uint16_le(this->mouse_x);
         payload.out_uint16_le(this->mouse_y);
         payload.out_uint8(cache_idx);
         payload.mark_end();
-        this->trans->send(payload);
+        this->trans.send(payload);
     }
 };  // struct GraphicToFile
 

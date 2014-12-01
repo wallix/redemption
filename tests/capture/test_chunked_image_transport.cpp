@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.flush();
 
-    OutChunkedBufferingTransport<100> png_trans(&trans);
+    OutChunkedBufferingTransport<100> png_trans(trans);
     try {
         consumer.dump_png24(png_trans, true);
     } catch (Error const & e) {
@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.flush();
 
-    OutChunkedBufferingTransport<16> png_trans(&trans);
+    OutChunkedBufferingTransport<16> png_trans(trans);
 
     consumer.dump_png24(png_trans, true);
 

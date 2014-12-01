@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH "."
 #endif
-        ClientInfo info(0, 0, 0);
+        ClientInfo info;
         info.width = 1;
         info.height = 1;
         FakeFront front(info, 0);

@@ -37,7 +37,7 @@
 
 BOOST_AUTO_TEST_CASE(TestDialogMod)
 {
-    ClientInfo info(1, true, true);
+    ClientInfo info;
     info.keylayout = 0x040C;
     info.console_session = 0;
     info.brush_cache_code = 0;
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
 
 BOOST_AUTO_TEST_CASE(TestDialogModReject)
 {
-    ClientInfo info(1, true, true);
+    ClientInfo info;
     info.keylayout = 0x040C;
     info.console_session = 0;
     info.brush_cache_code = 0;
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
 
 BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
 {
-    ClientInfo info(1, true, true);
+    ClientInfo info;
     info.keylayout = 0x040C;
     info.console_session = 0;
     info.brush_cache_code = 0;

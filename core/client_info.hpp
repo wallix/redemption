@@ -58,19 +58,14 @@ struct ClientInfo {
     /* pointer info */
     int pointer_cache_entries = 0;
     /* other */
-    int use_bitmap_comp;
-    int use_bitmap_cache;
-    int op1; /* use smaller bitmap header, non cache */
     uint32_t desktop_cache = 0;
     bool use_compact_packets = false; /* rdp5 smaller packets */
-    char hostname[512] = {};
+    char hostname[16] = {0};
     int build = 0;
     int keylayout = 0;
-    char username[512] = {};
-    char password[512] = {};
-    char domain[512] = {};
-    char program[512] = {};
-    char directory[512] = {};
+    char username[sizeof(InfoPacket::UserName)] = {0};
+    char password[sizeof(InfoPacket::Password)] = {0};
+    char domain[sizeof(InfoPacket::Domain)] = {0};
 
     int rdp_compression = 0;
     int rdp_compression_type = 0;
@@ -83,16 +78,7 @@ struct ClientInfo {
                            2 = arbitrary dimensions */
     bool console_session = false;
 
-    InfoPacket infoPacket;
-
-    TODO("as encryption_level, bitmap_compression and bitmap_cache are not really in client_info RDP structure we should probably not keep them here either")
-
-    ClientInfo(const int encryptionLevel, const bool bitmap_compression, const bool bitmap_cache)
-    : use_bitmap_comp(bitmap_compression?1:0)
-    , use_bitmap_cache(bitmap_cache?1:0)
-    /*encryptionLevel: 1, 2, 3 = low, medium, high */
-    , encryptionLevel(encryptionLevel + 1) // ini->globals.encryptionLevel + 1;
-    {}
+    ClientInfo() = default;
 
     void process_logon_info( Stream & stream
                            , bool ignore_logon_password
@@ -103,15 +89,17 @@ struct ClientInfo {
                            , bool verbose
                            )
     {
-        this->infoPacket.recv(stream);
+        InfoPacket infoPacket;
+
+        infoPacket.recv(stream);
         if (verbose) {
-            this->infoPacket.log("Receiving from client", password_printing_mode);
+            infoPacket.log("Receiving from client", password_printing_mode);
         }
 
-        memcpy(this->domain, this->infoPacket.Domain, sizeof(this->infoPacket.Domain));
-        memcpy(this->username, this->infoPacket.UserName, sizeof(this->infoPacket.UserName));
+        memcpy(this->domain, infoPacket.Domain, sizeof(infoPacket.Domain));
+        memcpy(this->username, infoPacket.UserName, sizeof(infoPacket.UserName));
         if (!ignore_logon_password){
-            memcpy(this->password, this->infoPacket.Password, sizeof(this->infoPacket.Password));
+            memcpy(this->password, infoPacket.Password, sizeof(infoPacket.Password));
         }
         else{
             if (verbose){
@@ -119,10 +107,8 @@ struct ClientInfo {
                     ::get_printable_password(this->password, password_printing_mode));
             }
         }
-        memcpy(this->program, this->infoPacket.AlternateShell, sizeof(this->infoPacket.AlternateShell));
-        memcpy(this->directory, this->infoPacket.WorkingDir, sizeof(this->infoPacket.WorkingDir));
 
-        this->rdp5_performanceflags = this->infoPacket.extendedInfoPacket.performanceFlags;
+        this->rdp5_performanceflags = infoPacket.extendedInfoPacket.performanceFlags;
 
         if (this->rdp5_performanceflags == 0){
             this->rdp5_performanceflags = performance_flags_default;
@@ -133,7 +119,7 @@ struct ClientInfo {
         if (verbose){
             LOG(LOG_INFO,
                 "client info: performance flags before=0x%08X after=0x%08X default=0x%08X present=0x%08X not-present=0x%08X",
-                this->infoPacket.extendedInfoPacket.performanceFlags, this->rdp5_performanceflags, performance_flags_default,
+                infoPacket.extendedInfoPacket.performanceFlags, this->rdp5_performanceflags, performance_flags_default,
                 performance_flags_force_present, performance_flags_force_not_present);
         }
 
@@ -143,19 +129,19 @@ struct ClientInfo {
                                        | INFO_MAXIMIZESHELL
                                        ;
 
-        if ((this->infoPacket.flags & mandatory_flags) != mandatory_flags){
+        if ((infoPacket.flags & mandatory_flags) != mandatory_flags){
             throw Error(ERR_SEC_PROCESS_LOGON_UNKNOWN_FLAGS);
         }
-        if (this->infoPacket.flags & INFO_REMOTECONSOLEAUDIO) {
+        if (infoPacket.flags & INFO_REMOTECONSOLEAUDIO) {
             this->sound_code = 1;
         }
         TODO("for now not allowing both autologon and mce");
-        if ((this->infoPacket.flags & INFO_AUTOLOGON) && (!this->is_mce)){
+        if ((infoPacket.flags & INFO_AUTOLOGON) && (!this->is_mce)){
             this->rdp_autologin = 1;
         }
-        if (this->infoPacket.flags & INFO_COMPRESSION){
+        if (infoPacket.flags & INFO_COMPRESSION){
             this->rdp_compression      = 1;
-            this->rdp_compression_type = ((this->infoPacket.flags & CompressionTypeMask) >> 9);
+            this->rdp_compression_type = ((infoPacket.flags & CompressionTypeMask) >> 9);
         }
     }
 };

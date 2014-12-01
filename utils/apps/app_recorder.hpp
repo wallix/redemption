@@ -56,13 +56,13 @@ void remove_file(InWrmTrans & in_wrm_trans, const char * hash_path, const char *
 
 template<class CaptureMaker, class... ExtraArguments>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
-                    , const timeval begin_capture, const timeval end_capture, std::string & output_filename
+                    , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , ExtraArguments && ... extra_argument);
 
 static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
-                        , std::string & output_filename, Inifile & ini, uint32_t verbose);
+                        , std::string const & output_filename, Inifile & ini, uint32_t verbose);
 
 
 static void show_statistics(FileToGraphic::Statistics const & statistics);
@@ -200,12 +200,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "snappy"    )) {
             ini.video.wrm_compression_algorithm = 2;
         }
-        else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "bufferized")) {
-            ini.video.wrm_compression_algorithm = 3;
-        }
-        //else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "lzma"      )) {
-        //    ini.video.wrm_compression_algorithm = 4;
-        //}
         else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "original"  )) {
             ini.video.wrm_compression_algorithm = USE_ORIGINAL_COMPRESSION_ALGORITHM;
         }
@@ -244,11 +238,11 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     ini.video.capture_wrm    = (options.count("wrm") > 0);
     ini.video.capture_png    = (options.count("png") > 0);
 
-    ini.video.rt_display.set(ini.video.capture_png ? 1 : 0);
-
     if (int status = parse_format(ini, options, output_filename)) {
         return status;
     }
+
+    ini.video.rt_display.set(ini.video.capture_png ? 1 : 0);
 
     const bool infile_is_encrypted = is_encrypted_file(input_filename.c_str());
 
@@ -380,7 +374,7 @@ int recompress_or_record( std::string & output_filename, std::string & input_fil
         return -1;
     };
 
-    auto run = [&](Transport && trans) {
+    auto run = [&](Transport && trans, ExtraArguments&&... extra_argument) {
         timeval begin_capture = {0, 0};
         timeval end_capture = {0, 0};
 
@@ -409,12 +403,12 @@ int recompress_or_record( std::string & output_filename, std::string & input_fil
             if (infile_is_encrypted == false) {
                 InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
                 remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path, infile_basename, infile_extension
-                        , infile_is_encrypted);
+                           , infile_is_encrypted);
             }
             else {
                 CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension);
                 remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path, infile_basename, infile_extension
-                        , infile_is_encrypted);
+                           , infile_is_encrypted);
             }
         }
 
@@ -424,8 +418,10 @@ int recompress_or_record( std::string & output_filename, std::string & input_fil
     };
 
     return infile_is_encrypted
-        ? run(CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension))
-        : run(InMetaSequenceTransport(infile_prefix, infile_extension));
+        ? run( CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension)
+             , std::forward<ExtraArguments>(extra_argument)...)
+        : run( InMetaSequenceTransport(infile_prefix, infile_extension)
+             , std::forward<ExtraArguments>(extra_argument)...);
 }
 
 template<typename InWrmTrans>
@@ -499,7 +495,7 @@ void remove_file( InWrmTrans & in_wrm_trans, const char * hash_path, const char 
 
 inline
 static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
-                        , std::string & output_filename, Inifile & ini, uint32_t verbose) {
+                        , std::string const & output_filename, Inifile & ini, uint32_t verbose) {
     FileToChunk player(&in_wrm_trans, 0);
 
     char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
@@ -642,7 +638,7 @@ void show_metadata(FileToGraphic const & player) {
 
 template<class CaptureMaker, class... ExtraArguments>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
-                    , const timeval begin_capture, const timeval end_capture, std::string & output_filename
+                    , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , ExtraArguments && ... extra_argument) {

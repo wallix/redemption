@@ -6,11 +6,6 @@ import re
 import os
 import os.path
 
-gccinfo = subprocess.Popen(["gcc", "--version"], stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
-#res = re.match("\s+(\d+[.]*\d+)[.]?\d+$", gccinfo)
-res = re.search(r"(\d+[.]*\d+[.]?\d+)\n", gccinfo)
-GCCVERSION = 'gcc-%s' % res.group(1)
-
 def grep(filename, ematch):
     result = None
     try:
@@ -22,24 +17,38 @@ def grep(filename, ematch):
             result = [line for line in f_in if re.search(ematch, line)]
     return result
 
-def bjam_gcc():
-    # get gcc version used in bjam config
+def jamfile_gcc(jamfilename):
     result = None
-    # bjam_user_config_path = "~/user-config.jam"
-    # print grep(bjam_user_config_path, r'^using gcc')
-    bjam_site_config_path = "/etc/site-config.jam"
-    matches = grep(bjam_site_config_path, r'^using gcc')
+    matches = grep(jamfilename, r'^using gcc')
     if matches:
         for line in matches:
-            res = re.search(r'^using gcc : (\d+[.]*\d+)', matches[0])
+            res = re.search(r'^using gcc : ([^:]*): ([^ ]+)', line)
             if res:
-                result = "gcc-%s" % res.group(1)
+                result = (res.group(1), res.group(2))
                 break
     return result
 
+def bjam_gcc():
+    # get gcc version used in bjam config
+    result = jamfile_gcc("%s/user-config.jam" % os.environ['HOME'])
+    if result:
+      return result
+    return jamfile_gcc("/etc/site-config.jam")
+
 BJAMGCC = bjam_gcc()
-if BJAMGCC:
-    GCCVERSION = BJAMGCC
+GCCVERSION = 'gcc'
+GCOVVERSION = 'gcov'
+
+if BJAMGCC and BJAMGCC[0]:
+  GCCVERSION += '-'+BJAMGCC[0]
+else:
+  gccinfo = subprocess.Popen(['gcc', "--version"], stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
+  #res = re.match("\s+(\d+[.]*\d+)[.]?\d+$", gccinfo)
+  res = re.search(r"(\d+[.]*\d+[.]?\d+)\n", gccinfo)
+  GCCVERSION = 'gcc-%s' % res.group(1)
+
+if BJAMGCC and BJAMGCC[1]:
+  GCOVVERSION = BJAMGCC[1].replace('g++', 'gcov')
 
 TESTSSUBDIR = ''
 if GCCVERSION[:9] in ['gcc-4.6.1']:
@@ -96,7 +105,7 @@ class Cover:
     def cover(self, module, name, extension):
         print "Computing coverage for %s" % module
         cmd1 = ["bjam", "coverage", "test_%s" % name]
-        cmd2 = ["gcov", "--unconditional-branches", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, "%s" % module[:-len(name)] if TESTSSUBDIR else '', name), "bin/%s/coverage/test_%s" % (GCCVERSION, name)]
+        cmd2 = [GCOVVERSION, "--unconditional-branches", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, "%s" % module[:-len(name)] if TESTSSUBDIR else '', name), "bin/%s/coverage/test_%s" % (GCCVERSION, name)]
         cmd3 = ["etags", "-o", "coverage/%s/%s%s.TAGS" % (module, name, extension), "%s%s" % (module, extension)]
 
         res = subprocess.Popen(cmd1, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
