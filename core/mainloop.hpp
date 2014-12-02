@@ -24,8 +24,8 @@
 #ifndef _REDEMPTION_CORE_MAINLOOP_HPP_
 #define _REDEMPTION_CORE_MAINLOOP_HPP_
 
-#include "config.hpp"
-#include "crypto_key_holder.hpp"
+class Inifile;
+class crypto_key_holder;
 
 int g_is_term(void);
 void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, crypto_key_holder & cryptoKeyHldr);

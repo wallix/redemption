@@ -22,6 +22,7 @@
 #define REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
 
 #include "composite.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 
 class WidgetGroupBox : public WidgetParent
 {

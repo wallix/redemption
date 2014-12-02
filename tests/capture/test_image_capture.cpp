@@ -27,16 +27,12 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "test_orders.hpp"
 
-#include "transport.hpp"
-#include "test_transport.hpp"
 #include "out_file_transport.hpp"
 #include "out_filename_sequence_transport.hpp"
+#include "test_transport.hpp"
 #include "image_capture.hpp"
 #include "staticcapture.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include <png.h>
 
 const char expected_red[] =
     /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....

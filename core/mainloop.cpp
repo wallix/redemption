@@ -35,6 +35,9 @@
 #include "session_server.hpp"
 #include "parse_ip_conntrack.hpp"
 
+#include "config.hpp"
+#include "crypto_key_holder.hpp"
+
 /*****************************************************************************/
 void shutdown(int sig)
 {

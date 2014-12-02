@@ -23,6 +23,29 @@
 #define REDEMPTION_PUBLIC_MOD_MOD_OSD_HPP
 
 #include "mod_api.hpp"
+#include "front_api.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "RDP/bitmapupdate.hpp"
+#include "bitmap.hpp"
 
 #include <functional>
 
@@ -250,7 +273,7 @@ public:
         this->split_draw(cmd.rect, cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPLineTo& cmd, const Rect & clip)
+    virtual void draw(const RDPLineTo & cmd, const Rect & clip)
     {
         this->split_draw(Rect(cmd.startx, cmd.starty, cmd.endx - cmd.startx, cmd.endy - cmd.starty), cmd, clip);
     }

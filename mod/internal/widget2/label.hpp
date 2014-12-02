@@ -23,6 +23,7 @@
 #define REDEMPTION_MOD_WIDGET2_LABEL_HPP
 
 #include "widget.hpp"
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 class WidgetLabel : public Widget2
 {

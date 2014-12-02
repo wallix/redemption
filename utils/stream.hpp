@@ -29,7 +29,6 @@
 
 #include <stdio.h>
 #include <string.h> // for memcpy, memset
-#include <algorithm>
 
 #include "error.hpp"
 #include "bitfu.hpp"
@@ -40,8 +39,8 @@ enum {
     AUTOSIZE = 65536
 };
 
-#include"array.hpp"
-#include"parse.hpp"
+#include "array.hpp"
+#include "parse.hpp"
 
 class InStream {
 public:

@@ -25,15 +25,6 @@
 #ifndef _REDEMPTION_MOD_RDP_RDP_HPP_
 #define _REDEMPTION_MOD_RDP_RDP_HPP_
 
-#include <unistd.h>
-#include <string.h>
-#include <assert.h>
-#include <netdb.h>
-#include <fcntl.h>
-#include <netinet/tcp.h>
-#include <stdlib.h>
-#include <math.h>
-
 #include "rdp/rdp_orders.hpp"
 
 /* include "ther h files */
@@ -41,6 +32,7 @@
 #include "ssl_calls.hpp"
 #include "mod_api.hpp"
 #include "auth_api.hpp"
+#include "front_api.hpp"
 
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
@@ -66,6 +58,7 @@
 #include "client_info.hpp"
 #include "genrandom.hpp"
 #include "authorization_channels.hpp"
+#include "parser.hpp"
 
 class mod_rdp : public mod_api {
 

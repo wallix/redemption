@@ -88,18 +88,37 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-#include "RDP/RDPGraphicDevice.hpp"
-
-#include "transport.hpp"
-
+#include "log.hpp"
 #include "config.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include "RDP/caches/pointercache.hpp"
-#include "RDP/share.hpp"
-#include "difftimeval.hpp"
 #include "stream.hpp"
-#include "rect.hpp"
-#include "colors.hpp"
+#include "transport.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
+#include "orders/RDPOrdersCommon.hpp"
+#include "orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "orders/RDPOrdersPrimaryMultiPatBlt.hpp"
+#include "orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "orders/RDPOrdersPrimaryLineTo.hpp"
+#include "orders/RDPOrdersPrimaryPolygonCB.hpp"
+#include "orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "orders/RDPOrdersPrimaryPolyline.hpp"
+#include "orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "orders/RDPOrdersPrimaryEllipseCB.hpp"
+#include "orders/RDPOrdersSecondaryBrushCache.hpp"
+#include "orders/RDPOrdersSecondaryColorCache.hpp"
+#include "orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "caches/bmpcache.hpp"
+#include "caches/pointercache.hpp"
+#include "bitmapupdate.hpp"
+
 
 enum {
 //    BREAKPOINT          = 1005,

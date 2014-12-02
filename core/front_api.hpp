@@ -24,18 +24,25 @@
 #ifndef _REDEMPTION_CORE_FRONT_API_HPP_
 #define _REDEMPTION_CORE_FRONT_API_HPP_
 
-#include "channel_list.hpp"
 #include "draw_api.hpp"
-#include "stream.hpp"
-#include "RDP/capabilities/order.hpp"
+
+class Capability;
+class HStream;
+class InStream;
+class OrderCaps;
+
+namespace CHANNELS {
+    class ChannelDefArray;
+    class ChannelDef;
+}
 
 class FrontAPI : public DrawApi {
     public:
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data
-                                , size_t length, size_t chunk_size, int flags) = 0;
+                                , std::size_t length, std::size_t chunk_size, int flags) = 0;
 
-    virtual void send_global_palette() throw(Error) = 0;
+    virtual void send_global_palette() = 0;
 
     virtual int server_resize(int width, int height, int bpp) = 0;
     //virtual void update_config(const timeval & now, const Inifile & ini) {}

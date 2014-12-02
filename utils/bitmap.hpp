@@ -41,7 +41,7 @@
 #include <cerrno>
 #include <cassert>
 #include <cstddef>
-#include <algorithm>
+#include <utility>
 #include <type_traits> // aligned_storage
 
 #include "error.h"
@@ -51,6 +51,8 @@
 #include "stream.hpp"
 #include "ssl_calls.hpp"
 #include "rect.hpp"
+
+using std::size_t;
 
 namespace aux_ {
     class BmpMemAlloc {

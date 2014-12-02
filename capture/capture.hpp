@@ -28,6 +28,8 @@
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 
+#include "RDP/compress_and_draw_bitmap_update.hpp"
+
 #include "wait_obj.hpp"
 #include "RDP/pointer.hpp"
 

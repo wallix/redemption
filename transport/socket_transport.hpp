@@ -23,10 +23,11 @@
 #ifndef REDEMPTION_TRANSPORT_SOCKET_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_SOCKET_TRANSPORT_HPP
 
-#include "config.hpp"
+#include "defines.hpp"
 #include "transport.hpp"
 #include "string.hpp"
 #include "netutils.hpp"
+#include "fileutils.hpp"
 #include "openssl_crypto.hpp"
 #include "openssl_tls.hpp"
 

@@ -21,7 +21,10 @@
 #ifndef WidgetTabREDEMPTION_MOD_WIDGET2_TAB_HPP
 #define WidgetTabREDEMPTION_MOD_WIDGET2_TAB_HPP
 
+#include "widget.hpp"
 #include "composite.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 
 class WidgetTab : public Widget2
 {

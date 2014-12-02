@@ -22,6 +22,7 @@
 #define _REDEMPTION_CORE_RDP_PROTOCOL_HPP_
 
 #include "RDP/capabilities.hpp"
+#include "colors.hpp"
 
 namespace RDP {
 
