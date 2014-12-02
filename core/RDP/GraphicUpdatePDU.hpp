@@ -37,8 +37,9 @@
 #include "RDP/fastpath.hpp"
 #include "RDPSerializer.hpp"
 
-void send_data_indication( Transport & trans, int encryptionLevel, CryptContext & encrypt
-                         , uint16_t initiator, HStream & stream)
+static inline void send_data_indication_ex( Transport & trans
+                                          , int encryptionLevel, CryptContext & encrypt
+                                          , uint16_t initiator, HStream & stream)
 {
     BStream security_header(256);
     SEC::Sec_Send sec(security_header, stream, 0, encrypt, encryptionLevel);
@@ -62,19 +63,20 @@ void send_data_indication( Transport & trans, int encryptionLevel, CryptContext 
 enum ServerUpdateType {
     SERVER_UPDATE_GRAPHICS_ORDERS,
     SERVER_UPDATE_GRAPHICS_BITMAP,
+    SERVER_UPDATE_GRAPHICS_PALETTE,
+    SERVER_UPDATE_GRAPHICS_SYNCHRONIZE,
     SERVER_UPDATE_POINTER_COLOR,
     SERVER_UPDATE_POINTER_CACHED
 };
 
-void server_update( Transport & trans, bool fastpath_support, bool compression_support, rdp_mppc_enc * mppc_enc
-                  , uint32_t shareId, int encryptionLevel, CryptContext & encrypt
-                  , uint16_t initiator
-                  , ServerUpdateType type, uint16_t data_extra
-                  , HStream & data_common, uint32_t verbose) {
+void send_server_update( Transport & trans, bool fastpath_support, bool compression_support
+                       , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
+                       , CryptContext & encrypt, uint16_t initiator, ServerUpdateType type
+                       , uint16_t data_extra, HStream & data_common, uint32_t verbose) {
     if (verbose & 4) {
         LOG( LOG_INFO
-           , "server_update: fastpath_support=%s compression_support=%s shareId=%u encryptionLevel=%d "
-             "initiator=%u type=%d data_extra=%u"
+           , "send_server_update: fastpath_support=%s compression_support=%s shareId=%u "
+             "encryptionLevel=%d initiator=%u type=%d data_extra=%u"
            , (fastpath_support ? "yes" : "no"), (compression_support ? "yes" : "no"), shareId
            , encryptionLevel, initiator, type, data_extra
            );
@@ -106,6 +108,14 @@ void server_update( Transport & trans, bool fastpath_support, bool compression_s
 
             case SERVER_UPDATE_GRAPHICS_BITMAP:
                 updateCode = FastPath::FASTPATH_UPDATETYPE_BITMAP;
+                break;
+
+            case SERVER_UPDATE_GRAPHICS_PALETTE:
+                updateCode = FastPath::FASTPATH_UPDATETYPE_PALETTE;
+                break;
+
+            case SERVER_UPDATE_GRAPHICS_SYNCHRONIZE:
+                updateCode = FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE;
                 break;
 
             case SERVER_UPDATE_POINTER_COLOR:
@@ -182,7 +192,22 @@ void server_update( Transport & trans, bool fastpath_support, bool compression_s
                 break;
 
             case SERVER_UPDATE_GRAPHICS_BITMAP:
+            case SERVER_UPDATE_GRAPHICS_PALETTE:
                 pduType2 = PDUTYPE2_UPDATE;
+                break;
+
+            case SERVER_UPDATE_GRAPHICS_SYNCHRONIZE:
+                {
+                    pduType2 = PDUTYPE2_UPDATE;
+
+                    BStream data(64);
+
+                    data.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
+                    data.out_clear_bytes(2);
+                    data.mark_end();
+
+                    data_common.copy_to_head(data.get_data(), data.size());
+                }
                 break;
 
             case SERVER_UPDATE_POINTER_COLOR:
@@ -255,13 +280,13 @@ void server_update( Transport & trans, bool fastpath_support, bool compression_s
             hexdump_d(((HStream &)data_common_).get_data(), ((HStream &)data_common_).size());
         }
 
-        ::send_data_indication(trans, encryptionLevel, encrypt, initiator, ((HStream &)data_common_));
+        ::send_data_indication_ex(trans, encryptionLevel, encrypt, initiator, ((HStream &)data_common_));
     }
 
     if (verbose & 4) {
-        LOG(LOG_INFO, "server_update done");
+        LOG(LOG_INFO, "send_server_update done");
     }
-}   // server_update
+}   // send_server_update
 
 
 
@@ -420,10 +445,10 @@ protected:
             }
             this->stream_orders.mark_end();
 
-            ::server_update( *this->trans, this->fastpath_support, this->compression, this->mppc_enc
-                           , this->shareid, this->encryptionLevel, this->encrypt, this->userid
-                           , SERVER_UPDATE_GRAPHICS_ORDERS, this->order_count, this->buffer_stream_orders
-                           , this->verbose);
+            ::send_server_update( *this->trans, this->fastpath_support, this->compression
+                                , this->mppc_enc, this->shareid, this->encryptionLevel
+                                , this->encrypt, this->userid, SERVER_UPDATE_GRAPHICS_ORDERS
+                                , this->order_count, this->buffer_stream_orders, this->verbose);
 
             this->order_count = 0;
             this->stream_orders.reset();
@@ -441,9 +466,10 @@ protected:
             this->stream_bitmaps.set_out_uint16_le(this->bitmap_count, this->offset_bitmap_count);
             this->stream_bitmaps.mark_end();
 
-            ::server_update( *this->trans, this->fastpath_support, this->compression, this->mppc_enc
-                           , this->shareid, this->encryptionLevel, this->encrypt, this->userid
-                           , SERVER_UPDATE_GRAPHICS_BITMAP, 0, this->buffer_stream_bitmaps, this->verbose);
+            ::send_server_update( *this->trans, this->fastpath_support, this->compression
+                                , this->mppc_enc, this->shareid, this->encryptionLevel, this->encrypt
+                                , this->userid, SERVER_UPDATE_GRAPHICS_BITMAP, 0
+                                , this->buffer_stream_bitmaps, this->verbose);
 
             this->bitmap_count = 0;
             this->stream_bitmaps.reset();
@@ -636,9 +662,10 @@ protected:
         HStream stream(1024, 65536);
         GenerateColorPointerUpdateData(stream, cache_idx, cursor);
 
-        ::server_update( *this->trans, this->fastpath_support, this->compression, this->mppc_enc
-                       , this->shareid, this->encryptionLevel, this->encrypt, this->userid
-                       , SERVER_UPDATE_POINTER_COLOR, 0, stream, this->verbose);
+        ::send_server_update( *this->trans, this->fastpath_support, this->compression
+                            , this->mppc_enc, this->shareid, this->encryptionLevel
+                            , this->encrypt, this->userid, SERVER_UPDATE_POINTER_COLOR
+                            , 0, stream, this->verbose);
 
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer done");
@@ -685,9 +712,10 @@ protected:
         stream.out_uint16_le(cache_idx);
         stream.mark_end();
 
-        ::server_update( *this->trans, this->fastpath_support, this->compression, this->mppc_enc
-                       , this->shareid, this->encryptionLevel, this->encrypt, this->userid
-                       , SERVER_UPDATE_POINTER_CACHED, 0, stream, this->verbose);
+        ::send_server_update( *this->trans, this->fastpath_support, this->compression
+                            , this->mppc_enc, this->shareid, this->encryptionLevel
+                            , this->encrypt, this->userid, SERVER_UPDATE_POINTER_CACHED
+                            , 0, stream, this->verbose);
 
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer done");
