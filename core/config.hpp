@@ -707,8 +707,7 @@ public:
         Inifile_mod_rdp() = default;
     } mod_rdp;
 
-    struct Inifile_mod_vnc
-    {
+    struct Inifile_mod_vnc {
         BoolField clipboard;                // AUTHID_OPT_CLIPBOARD //
 
         redemption::string encodings;
@@ -718,8 +717,7 @@ public:
         Inifile_mod_vnc() = default;
     } mod_vnc;
 
-    struct Inifile_mod_replay
-    {
+    struct Inifile_mod_replay {
         int on_end_of_data = 0; // 0 - Wait for Escape, 1 - End session
 
         Inifile_mod_replay() = default;

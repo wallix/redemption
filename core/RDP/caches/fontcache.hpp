@@ -30,6 +30,8 @@ struct char_item
 {
     int      stamp = 0;
     FontChar font_item;
+
+    char_item() = default;
 };
 
 /* difference caches */
@@ -41,7 +43,6 @@ struct GlyphCache
 
     GlyphCache()
     : char_stamp(0)
-    , char_items{}
     {
     }
 
@@ -129,13 +130,6 @@ private:
     }
 
 public:
-    void set_glyph(const FontChar & fc, size_t cacheid, size_t cacheidx)
-    {
-        this->char_stamp++;
-        this->char_items[cacheid][cacheidx].font_item = fc;
-        this->char_items[cacheid][cacheidx].stamp = this->char_stamp;
-    }
-
     void set_glyph(FontChar && fc, size_t cacheid, size_t cacheidx)
     {
         this->char_stamp++;

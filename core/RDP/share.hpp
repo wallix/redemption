@@ -88,7 +88,7 @@ enum {
 // In these case we have FlowTestPDU, FlowResponsePDU or FlowStopPDU
 // and not ShareControl header.
 inline bool peekFlowPDU(const Stream & stream) {
-    if (!stream.in_check_rem(2)){
+    if (!stream.in_check_rem(2)) {
         throw Error(ERR_SEC);
     }
     return (stream.get_data()[stream.get_offset()] == 0)
@@ -223,28 +223,28 @@ struct ShareControl_Recv
     ShareControl_Recv(Stream & stream)
     : totalLength(stream.incheck_uint16_le(ERR_SEC, "Truncated ShareControl packet"))
     , pduType(stream.incheck_uint16_le(ERR_SEC, "Truncated ShareControl packet") & 0xF)
-    , PDUSource([&stream, this](){
-        if (this->pduType == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4){
+    , PDUSource([&stream, this]() {
+        if (this->pduType == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4) {
             // should not happen
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
             return static_cast<uint16_t>(0);
         }
         return stream.in_uint16_le();
     }())
-    , payload([&stream, this](){
-        if (this->pduType == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4){
+    , payload([&stream, this]() {
+        if (this->pduType == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4) {
             // should not happen
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
             return SubStream(stream, stream.get_offset(), 0);
         }
 
-        if (this->totalLength < 6){
+        if (this->totalLength < 6) {
             LOG(LOG_ERR, "ShareControl packet too short totalLength=%u pduType=%u mcs_channel=%u",
                 this->totalLength, this->pduType, this->PDUSource);
             throw Error(ERR_SEC);
         }
 
-        if (!stream.in_check_rem(this->totalLength - 6)){
+        if (!stream.in_check_rem(this->totalLength - 6)) {
             LOG(LOG_ERR, "Truncated ShareControl packet, need=%u remains=%u",
                 this->totalLength - 6,
                 stream.in_remain());
@@ -469,7 +469,7 @@ enum {
 
 // Inheritance is only used to check if we have enough data available
 struct CheckShareData_Recv {
-    CheckShareData_Recv(const Stream & stream){
+    CheckShareData_Recv(const Stream & stream) {
         // share_id(4)
         // + ignored(1)
         // + streamid(1)
@@ -478,7 +478,7 @@ struct CheckShareData_Recv {
         // + compressedType(1)
         // + compressedLen(2)
         const unsigned expected = 12;
-        if (!stream.in_check_rem(expected)){
+        if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR, "sdata packet len too short: need %u, remains=%u",
                 expected, stream.in_remain());
             throw Error(ERR_SEC);
@@ -511,10 +511,10 @@ struct ShareData_Recv : private CheckShareData_Recv
     , pdutype2(stream.in_uint8())
     , compressedType(stream.in_uint8())
     , compressedLen(stream.in_uint16_le())
-    , payload([&stream, dec, this](){
+    , payload([&stream, dec, this]() {
         if (this->compressedType & PACKET_COMPRESSED) {
             if (!dec) {
-                LOG(LOG_INFO, "ShareData::recv_begin: got unexpected compressed share data");
+                LOG(LOG_INFO, "ShareData_Recv: got unexpected compressed share data");
                 throw Error(ERR_SEC);
             }
 
@@ -533,18 +533,20 @@ struct ShareData_Recv : private CheckShareData_Recv
     }())
     // BEGIN CONSTRUCTOR
     {
+        //LOG( LOG_INFO, "ShareData_Recv: len=%u compressedLen=%u payload_size=%u", this->len
+        //   , this->compressedLen, this->payload.size());
         stream.in_skip_bytes(this->payload.size());
     } // END CONSTRUCTOR
 
     ~ShareData_Recv() noexcept(false) {
         if (!this->payload.check_end()) {
-            LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains=%u",
-                this->len, this->compressedLen, payload.in_remain());
-                throw Error(ERR_SEC);
+            LOG( LOG_INFO
+               , "~ShareData_Recv: some payload data were not consumed len=%u compressedLen=%u remains=%u"
+               , this->len, this->compressedLen, payload.in_remain());
+            throw Error(ERR_SEC);
         }
     }
 }; // END CLASS ShareData_Recv
-
 
 //##############################################################################
 struct ShareData
@@ -610,12 +612,11 @@ struct ShareData
     {
         if (!this->uncompressedLen) {
             stream.set_out_uint16_le(  stream.get_offset()
-                                     + 6,                   // TS_SHAREDATAHEADER(6)
+                                     + 6,                   // TS_SHARECONTROLHEADER(6)
                                      6);
         }
         stream.mark_end();
     } // END METHOD emit_end
-
 }; // END CLASS ShareData
 
 //##############################################################################
