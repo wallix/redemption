@@ -1142,7 +1142,7 @@ namespace FastPath {
                    , uint8_t compressionFlags
                    ) {
             stream.out_uint8(
-                  updateCode
+                  (updateCode & 0x0F)
                 | (fragmentation & 0x3) << 4    // fragmentation
                 | (compression & 0x3) << 6      // compression
                 );
