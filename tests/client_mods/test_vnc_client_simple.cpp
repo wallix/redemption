@@ -32,15 +32,9 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-#include "stream.hpp"
-#include "transport.hpp"
 #include "test_transport.hpp"
-#include "wait_obj.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
-#include "channel_list.hpp"
 #include "client_info.hpp"
 #include "vnc/vnc.hpp"
-#include "RDP/pointer.hpp"
 #include "front/fake_front.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)

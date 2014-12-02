@@ -21,14 +21,18 @@
 #ifndef _REDEMPTION_MOD_MOD_API_HPP_
 #define _REDEMPTION_MOD_MOD_API_HPP_
 
-#include "RDP/RDPGraphicDevice.hpp"
-#include "front_api.hpp"
+#include "draw_api.hpp"
 #include "wait_obj.hpp"
 #include "callback.hpp"
-#include "font.hpp"
-#include "draw_api.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
 
+#include <ctime>
+
+
+class RDPGraphicDevice;
 class Inifile;
+class Stream;
+class HStream;
 
 enum {
     BUTTON_STATE_UP   = 0,

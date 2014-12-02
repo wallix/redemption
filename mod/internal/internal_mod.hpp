@@ -23,6 +23,9 @@
 
 #include "../mod/mod_api.hpp"
 #include "widget2/screen.hpp"
+#include "config.hpp"
+#include "front_api.hpp"
+#include "channel_list.hpp"
 
 struct InternalMod : public mod_api {
 public:
@@ -115,7 +118,7 @@ public:
         this->front.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPLineTo& cmd, const Rect & clip)
+    virtual void draw(const RDPLineTo & cmd, const Rect & clip)
     {
         this->front.draw(cmd, clip);
     }

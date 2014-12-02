@@ -28,14 +28,12 @@
 #ifndef _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_
 #define _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_
 
-#include "RDP/x224.hpp"
-#include "RDP/mcs.hpp"
-#include "RDP/share.hpp"
-#include "RDP/sec.hpp"
-#include "RDP/lic.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
-#include "RDP/fastpath.hpp"
+#include "log.hpp"
 #include "RDPSerializer.hpp"
+#include "gcc.hpp"
+#include "sec.hpp"
+#include "mcs.hpp"
+#include "x224.hpp"
 
 static inline void send_data_indication_ex( Transport & trans
                                           , int encryptionLevel, CryptContext & encrypt

@@ -72,6 +72,8 @@
 #include "RDP/SaveSessionInfoPDU.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
 
+#include "RDP/compress_and_draw_bitmap_update.hpp"
+
 #include "front_api.hpp"
 #include "activity_checker.hpp"
 #include "genrandom.hpp"
@@ -81,6 +83,7 @@
 #include "authorization_channels.hpp"
 #include "text_metrics.hpp"
 #include "splitter.hpp"
+#include "keymap2.hpp"
 
 enum {
     FRONT_DISCONNECTED,
@@ -965,7 +968,7 @@ public:
     //    this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     //}
 
-    void send_global_palette() throw (Error)
+    void send_global_palette()
     {
         if (!this->palette_sent && (this->client_info.bpp == 8)) {
             if (this->verbose & 4) {

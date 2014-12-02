@@ -28,13 +28,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-#include "RDP/RDPSerializer.hpp"
-#include "channel_list.hpp"
-#include "front_api.hpp"
-#include "wait_obj.hpp"
 
+#include "log.hpp"
+#include "error.hpp"
 #include "internal/test_card_mod.hpp"
 
 #include "../front/fake_front.hpp"

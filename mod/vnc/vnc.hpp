@@ -24,35 +24,20 @@
 #ifndef _REDEMPTION_MOD_VNC_VNC_HPP_
 #define _REDEMPTION_MOD_VNC_VNC_HPP_
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "colors.hpp"
-
-#include "array.hpp"
-#include "stream.hpp"
-#include "array.hpp"
-#include "d3des.hpp"
-#include "diffiehellman.hpp"
-#include "keymap2.hpp"
-#include "keymapSym.hpp"
-#include "mod_api.hpp"
-#include "channel_list.hpp"
-
-#include "RDP/clipboard.hpp"
-#include "RDP/pointer.hpp"
-
 #include "version.hpp"
 
+#include "log.hpp"
 #include "internal/widget2/flat_vnc_authentification.hpp"
 #include "internal/internal_mod.hpp"
-#include "internal/widget2/notify_api.hpp"
-
+#include "keymapSym.hpp"
+#include "diffiehellman.hpp"
+#include "d3des.hpp"
+#include "channel_list.hpp"
+#include "RDP/clipboard.hpp"
+#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "update_lock.hpp"
 
-#include <memory>
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -136,7 +121,7 @@ public:
            , Inifile & ini
            , const char * username
            , const char * password
-           , class FrontAPI & front
+           , FrontAPI & front
            , uint16_t front_width
            , uint16_t front_height
            , int keylayout

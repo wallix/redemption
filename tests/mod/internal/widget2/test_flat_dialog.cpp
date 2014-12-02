@@ -37,6 +37,7 @@
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
+#include "client_info.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH

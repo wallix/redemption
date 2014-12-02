@@ -23,8 +23,8 @@
 
 #include <cstdio>
 
-#include <draw_api.hpp>
-#include <RDP/RDPDrawable.hpp>
+#include "draw_api.hpp"
+#include "RDP/RDPDrawable.hpp"
 
 #ifdef IN_IDE_PARSER
 #define FIXTURES_PATH

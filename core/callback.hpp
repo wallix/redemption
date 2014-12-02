@@ -26,10 +26,11 @@
 #ifndef _REDEMPTION_CORE_CALLBACK_HPP_
 #define _REDEMPTION_CORE_CALLBACK_HPP_
 
-#include "keymap2.hpp"
-#include "channel_list.hpp"
 #include "darray.hpp"
 #include "rect.hpp"
+
+class Stream;
+class Keymap2;
 
 enum {
     RDP_INPUT_SYNCHRONIZE          = 0,
@@ -77,7 +78,7 @@ struct RdpInput
 struct Callback : RdpInput
 {
     virtual ~Callback() {}
-    virtual void send_to_mod_channel(const char * const front_channel_name, Stream & chunk, size_t length, uint32_t flags)
+    virtual void send_to_mod_channel(const char * const front_channel_name, Stream & chunk, std::size_t length, uint32_t flags)
     {
     }
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)

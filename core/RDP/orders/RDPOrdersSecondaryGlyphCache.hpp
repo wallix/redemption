@@ -89,23 +89,28 @@
 //   is not necessary for successfully decoding and caching the glyphs in the
 //   glyphData field.
 
+#include "string.h"
+#include "bitfu.hpp"
+#include "stream.hpp"
+#include "RDPOrdersCommon.hpp"
+
+using std::size_t;
+class RDPColCache;
 
 class RDPGlyphCache {
 
     public:
     uint8_t cacheId;
-    uint8_t cGlyphs;
+    uint8_t cGlyphs = 1;
     uint16_t glyphData_cacheIndex;
     uint16_t glyphData_x;
     uint16_t glyphData_y;
     uint16_t glyphData_cx;
     uint16_t glyphData_cy;
     //size_t size;
-    uint8_t * glyphData_aj;
+    uint8_t * glyphData_aj = nullptr;
 
-    RDPGlyphCache() : cGlyphs(1), glyphData_aj(NULL)
-    {
-    }
+    RDPGlyphCache() = default;
 
     RDPGlyphCache( uint8_t  cacheId
                  , uint8_t  cGlyphs
@@ -125,15 +130,13 @@ class RDPGlyphCache {
         , glyphData_cy(glyphData_cy)
     {
         size_t size = this->datasize();
-        this->glyphData_aj = static_cast<uint8_t*>(malloc(size));
+        this->glyphData_aj = new uint8_t[size];
         memcpy(this->glyphData_aj, glyphData_aj, size);
     }
 
     ~RDPGlyphCache()
     {
-        if (this->glyphData_aj){
-            free(this->glyphData_aj);
-        }
+        delete [] this->glyphData_aj;
     }
 
     inline int datasize() const

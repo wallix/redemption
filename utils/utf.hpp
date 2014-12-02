@@ -26,19 +26,20 @@
 #define _REDEMPTION_UTILS_UTF_HPP_
 
 #include <stdint.h>
+// #include <wctype.h>
 #include "log.hpp"
 
 // bool UTF32isValid(uint32_t c):
 // abstract: Check if some code point is a valid char or not (some UNICODE ranges are forbiden)
 // input: c = 32 bits Unicode codepoint
 // output: true or false
-static inline bool UTF32isValid(uint32_t c)
-{
-    // Note: FFFE and FFFF are specifically permitted by the
-    // Unicode standard for application internal use, but are not
-    // allowed for interchange.
-    return c < 0xD800 || (c > 0xDFFF && c <= 0x10FFFF);
-}
+// static inline bool UTF32isValid(uint32_t c)
+// {
+//     // Note: FFFE and FFFF are specifically permitted by the
+//     // Unicode standard for application internal use, but are not
+//     // allowed for interchange.
+//     return c < 0xD800 || (c > 0xDFFF && c <= 0x10FFFF);
+// }
 
 
 // Check if some string is valid utf8, zero terminated"
@@ -109,15 +110,15 @@ static inline size_t UTF8Len(const uint8_t * source)
 }
 
 // source_size is size of source in bytes
-static inline void UTF8Upper(uint8_t * source, size_t source_size) {
-    // size_t len = 0;
-    uint8_t c = 0;
-    for (size_t i = 0 ; ((0 != (c = source[i])) && (i < source_size)) ; i++){
-        if (c >= 0x61 && c <= 0x7A) {
-            source[i] -= 0x20;
-        }
-    }
-}
+// static inline void UTF8Upper(uint8_t * source, size_t source_size) {
+//     // size_t len = 0;
+//     uint8_t c = 0;
+//     for (size_t i = 0 ; ((0 != (c = source[i])) && (i < source_size)) ; i++){
+//         if (c >= 0x61 && c <= 0x7A) {
+//             source[i] -= 0x20;
+//         }
+//     }
+// }
 
 // static inline uint8_t findup(uint8_t c) {
 //     const uint8_t uppertable[] = { 0x38, 0x49, 0x78, 0x7F, 0x86 };
@@ -129,7 +130,8 @@ static inline void UTF8Upper(uint8_t * source, size_t source_size) {
 //     }
 // }
 
-static inline void UTF16Upper(uint8_t * source, size_t max_len) {
+static inline void UTF16Upper(uint8_t * source, size_t max_len)
+{
     size_t i_s = 0;
     for (size_t i = 0 ; i < max_len ; i++){
         uint8_t lo = source[i_s];
@@ -152,20 +154,20 @@ static inline void UTF16Upper(uint8_t * source, size_t max_len) {
     }
 }
 
-static inline void UTF16UpperW(uint8_t * source, size_t max_len) {
-    size_t i_s = 0;
-    for (size_t i = 0 ; i < max_len ; i++){
-        unsigned int wc = (unsigned int) source[i_s];
-        wc += (unsigned int) source[i_s+1] << 8;
-        // local should be set
-        unsigned int uwc = towupper(wc);
-        if (uwc != wc) {
-            source[i_s] = uwc & 0xFF;
-            source[i_s+1] = (uwc >> 8) & 0xFF;
-        }
-        i_s += 2;
-    }
-}
+// static inline void UTF16UpperW(uint8_t * source, size_t max_len) {
+//     size_t i_s = 0;
+//     for (size_t i = 0 ; i < max_len ; i++){
+//         unsigned int wc = source[i_s];
+//         wc += source[i_s+1] << 8;
+//         // local should be set
+//         const unsigned int uwc = towupper(wc);
+//         if (uwc != wc) {
+//             source[i_s] = uwc & 0xFF;
+//             source[i_s+1] = (uwc >> 8) & 0xFF;
+//         }
+//         i_s += 2;
+//     }
+// }
 
 
 REDOC("UTF8GetLen find the number of bytes of the len first characters of input."
@@ -184,47 +186,47 @@ static inline size_t UTF8GetPos(uint8_t * source, size_t len)
     return i;
 }
 
-REDOC("UTF8GetFirstCharLen returns the length in bytes of first character of input. It assumes input is valid utf8, zero terminated (that has been checked before).")
-static inline size_t UTF8GetFirstCharLen(const uint8_t * source)
-{
-    size_t    len = 0;
-    const uint8_t * p   = source;
+// REDOC("UTF8GetFirstCharLen returns the length in bytes of first character of input. It assumes input is valid utf8, zero terminated (that has been checked before).")
+// static inline size_t UTF8GetFirstCharLen(const uint8_t * source)
+// {
+//     size_t    len = 0;
+//     const uint8_t * p   = source;
+//
+//     while (*p)
+//     {
+//         switch (*p >> 6)
+//         {
+//         case 2:
+//             len++;
+//             p++;
+//             break;
+//
+//         case 3:
+//             if (len)
+//             {
+//                 return len;
+//             }
+//             else
+//             {
+//                 len++;
+//                 p++;
+//             }
+//             break;
+//
+//         default:
+//         case 0:
+//             return 1;
+//         }
+//     }
+//
+//     return len;
+// }
 
-    while (*p)
-    {
-        switch (*p >> 6)
-        {
-        case 2:
-            len++;
-            p++;
-            break;
-
-        case 3:
-            if (len)
-            {
-                return len;
-            }
-            else
-            {
-                len++;
-                p++;
-            }
-            break;
-
-        default:
-        case 0:
-            return 1;
-        }
-    }
-
-    return len;
-}
-
-REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before.")
-static inline void UTF8TruncateAtPos(uint8_t * source, size_t len)
-{
-    source[UTF8GetPos(source, len)] = 0;
-}
+// REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before.")
+// static inline void UTF8TruncateAtPos(uint8_t * source, size_t len)
+// {
+//     source[UTF8GetPos(source, len)] = 0;
+// }
 
 REDOC(
     "UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before"
@@ -314,10 +316,6 @@ static inline bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32
     }
     return UTF8InsertAtPos(source, len, to_insert, max_source);
 }
-
-struct utf8_str {
-    const uint8_t * data;
-};
 
 // UTF8toUTF16 never writes the trailing zero
 static inline size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, size_t t_len)

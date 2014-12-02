@@ -28,35 +28,41 @@
 #ifndef _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
 #define _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
 
-#include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
-#include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
-#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
-#include "RDP/bitmapupdate.hpp"
-#include "RDP/caches/fontcache.hpp"
-#include "RDP/pointer.hpp"
-#include "ellipse.hpp"
-#include "bitmap.hpp"
 #include "noncopyable.hpp"
+#include "colors.hpp"
+
+#include <cstddef>
+
+class Stream;
+class Pointer;
+class RDPBitmapData;
+class RDPGlyphCache;
+class RDPColCache;
+class RDPBrushCache;
+class RDPOpaqueRect;
+class RDPScrBlt;
+class RDPDestBlt;
+class RDPMultiDstBlt;
+class RDPMultiOpaqueRect;
+class RDPPatBlt;
+class RDPMemBlt;
+class RDPMem3Blt;
+class RDPLineTo;
+class RDPGlyphIndex;
+class RDPPolygonSC;
+class RDPPolygonCB;
+class RDPPolyline;
+class RDPEllipseSC;
+class RDPEllipseCB;
+class Rect;
+class Bitmap;
+class GlyphCache;
+
+namespace RDP {
+    class RDPMultiPatBlt;
+    class RDPMultiScrBlt;
+class FrameMarker;
+}
 
 struct RDPGraphicDevice : noncopyable {
     virtual void draw(const RDPOpaqueRect       & cmd, const Rect & clip) = 0;
@@ -84,8 +90,7 @@ struct RDPGraphicDevice : noncopyable {
 
     virtual void draw(const RDP::FrameMarker & order) = 0;
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) = 0;
+    virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data, std::size_t size, const Bitmap & bmp) = 0;
 
     virtual void server_set_pointer(const Pointer & cursor) = 0;
 
@@ -105,12 +110,11 @@ public:
 };
 
 struct RDPCaptureDevice : noncopyable {
-    virtual void set_row(size_t rownum, const uint8_t * data) {}
+    virtual void set_row(std::size_t rownum, const uint8_t * data) {}
 
     virtual void input(const timeval & now, Stream & input_data_32) {}
 
-    virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
-        bool ignore_frame_in_timeval) {}
+    virtual void snapshot(const timeval & now, int mouse_x, int mouse_y, bool ignore_frame_in_timeval) {}
 
     virtual void set_pointer_display() {}
 
@@ -129,21 +133,5 @@ public:
     // it does not looks really usefull.
     virtual ~RDPCaptureDevice() {}
 };
-
-inline
-void compress_and_draw_bitmap_update( const RDPBitmapData & bitmap_data, const Bitmap & bmp
-                                    , uint8_t target_bpp, RDPGraphicDevice & gd) {
-    BStream bmp_stream(65535);
-    bmp.compress(target_bpp, bmp_stream);
-    bmp_stream.mark_end();
-
-    RDPBitmapData target_bitmap_data = bitmap_data;
-
-    target_bitmap_data.bits_per_pixel = bmp.bpp();
-    target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
-    target_bitmap_data.bitmap_length  = bmp_stream.size();
-
-    gd.draw(target_bitmap_data, bmp_stream.get_data(), bmp_stream.size(), bmp);
-}
 
 #endif

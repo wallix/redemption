@@ -25,11 +25,13 @@
 
 #include <string.h>
 
-#include "in_file_transport.hpp"
 #include "log.hpp"
-#include "mod_api.hpp"
+#include "defines.hpp"
+#include "in_file_transport.hpp"
 #include "out_file_transport.hpp"
 #include "stream.hpp"
+#include "string.hpp"
+#include "fileutils.hpp"
 
 #include "RDP/protocol.hpp"
 
@@ -48,9 +50,16 @@
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/bmpcachepersister.hpp"
+#include "RDP/caches/fontcache.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
+
+class RDPGraphicDevice;
 
 /* orders */
 struct rdp_orders {

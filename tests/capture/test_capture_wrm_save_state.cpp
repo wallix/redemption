@@ -28,10 +28,8 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "test_orders.hpp"
 #include "out_filename_sequence_transport.hpp"
 #include "test_transport.hpp"
-#include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"
