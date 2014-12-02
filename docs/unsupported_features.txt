@@ -84,6 +84,12 @@ Surface
     Surface Commands ([MS-RDPBCGR] section 2.2.9.2)
 
 
+Server Pointer Update PDU
+    Pointer Position Update ([MS-RDPBCGR] section 2.2.9.1.1.4.2)
+
+    New Pointer Update ([MS-RDPBCGR] section 2.2.9.1.1.4.5)
+
+
 
 
 
