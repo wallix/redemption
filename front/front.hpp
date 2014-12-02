@@ -859,7 +859,7 @@ public:
         }
     }
 
-    void disconnect() throw (Error)
+    void disconnect() throw(Error)
     {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Front::disconnect");
@@ -914,7 +914,7 @@ public:
     // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
 
     void GeneratePaletteUpdateData(Stream & stream) {
-        const BGRPalette & palette = (this->mod_bpp == 8)?this->mod_palette_rgb:this->palette332_rgb;
+        const BGRPalette & palette = (this->mod_bpp == 8) ? this->mod_palette_rgb : this->palette332_rgb;
 
         // Payload
         stream.out_uint16_le(RDP_UPDATE_PALETTE);
@@ -936,36 +936,28 @@ public:
 
     //void SendLogonInfo(const uint8_t * user_name)
     //{
-    //    BStream stream(65536);
-    //    ShareData sdata_out(stream);
-    //    sdata_out.emit_begin(PDUTYPE2_SAVE_SESSION_INFO, this->share_id,
-    //        RDP::STREAM_MED);
+    //    HStream stream(1024, 2048);
     //
+    //    // Payload
     //    RDP::SaveSessionInfoPDUData_Send ssipdu(stream, RDP::INFOTYPE_LOGON);
     //    RDP::LogonInfoVersion1_Send      liv1(stream,
     //                                          reinterpret_cast<const uint8_t *>(""),
     //                                          user_name, getpid());
-    //
     //    stream.mark_end();
     //
-    //    // Packet trailer
-    //    sdata_out.emit_end();
-    //
-    //    BStream sctrl_header(256);
-    //    ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
-    //        this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-    //
-    //    HStream target_stream(1024, 65536);
-    //    target_stream.out_copy_bytes(sctrl_header);
-    //    target_stream.out_copy_bytes(stream);
-    //    target_stream.mark_end();
-    //
-    //    if ((this->verbose & (128 | 8)) == (128 | 8)) {
-    //        LOG(LOG_INFO, "Sec clear payload to send:");
-    //        hexdump_d(target_stream.get_data(), target_stream.size());
-    //    }
-    //
-    //    this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+    //    const uint32_t log_condition = (128 | 8);
+    //    ::send_share_data_ex( this->trans
+    //                        , PDUTYPE2_SAVE_SESSION_INFO
+    //                        , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+    //                        , this->mppc_enc
+    //                        , this->share_id
+    //                        , this->encryptionLevel
+    //                        , this->encrypt
+    //                        , this->userid
+    //                        , stream
+    //                        , log_condition
+    //                        , this->verbose
+    //                        );
     //}
 
     void send_global_palette()
@@ -2467,7 +2459,7 @@ public:
     }
 
     /*****************************************************************************/
-    void send_data_update_sync() throw (Error)
+    void send_data_update_sync() throw(Error)
     {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Front::send_data_update_sync");
@@ -2491,16 +2483,17 @@ public:
     }
 
     /*****************************************************************************/
-    void send_demand_active() throw (Error)
+    void send_demand_active() throw(Error)
     {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Front::send_demand_active");
         }
 
-        BStream stream(65536);
+        size_t caps_count = 0;
+
+        HStream stream(1024, 65536);
 
         // Payload
-        size_t caps_count = 0;
         stream.out_uint32_le(this->share_id);
         stream.out_uint16_le(4); /* 4 chars for RDP\0 */
 
@@ -2618,16 +2611,15 @@ public:
         caps_count++;
 
         InputCaps input_caps;
-// Slow/Fast-path
-        if (this->client_fastpath_input_event_support == false) {
-            input_caps.inputFlags = INPUT_FLAG_SCANCODES;
-        }
-        else {
-            input_caps.inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2;
-        }
-        input_caps.keyboardLayout = 0;
-        input_caps.keyboardType = 0;
-        input_caps.keyboardSubType = 0;
+
+        // Slow/Fast-path
+        input_caps.inputFlags          =
+              INPUT_FLAG_SCANCODES
+            | (  this->client_fastpath_input_event_support
+               ? (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2) : 0);
+        input_caps.keyboardLayout      = 0;
+        input_caps.keyboardType        = 0;
+        input_caps.keyboardSubType     = 0;
         input_caps.keyboardFunctionKey = 0;
         if (this->verbose) {
             input_caps.log("Sending to client");
@@ -2645,18 +2637,15 @@ public:
         BStream sctrl_header(256);
         ShareControl_Send(sctrl_header, PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
+        stream.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
 
         if ((this->verbose & (128 | 1)) == (128 | 1)) {
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.get_data(), target_stream.size());
+            hexdump_d(stream.get_data(), stream.size());
         }
 
-        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
-    }
+        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, stream);
+    }   // send_demand_active
 
     void process_confirm_active(Stream & stream)
     {
@@ -3067,38 +3056,30 @@ public:
             LOG(LOG_INFO, "send_synchronize");
         }
 
-        BStream stream(65536);
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
-
+        HStream stream(1024, 2048);
         // Payload
-        stream.out_uint16_le(1);    // messageType
-        stream.out_uint16_le(1002); // control id
+        stream.out_uint16_le(1);    // messageType = SYNCMSGTYPE_SYNC(1)
+        stream.out_uint16_le(1002); // targetUser (MCS channel ID of the target user.)
         stream.mark_end();
 
-        // Packet trailer
-        sdata.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        if ((this->verbose & (128 | 1)) == (128 | 1)) {
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.get_data(), target_stream.size());
-        }
-
-        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        const uint32_t log_condition = (128 | 1);
+        ::send_share_data_ex( this->trans
+                            , PDUTYPE2_SYNCHRONIZE
+                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , this->mppc_enc
+                            , this->share_id
+                            , this->encryptionLevel
+                            , this->encrypt
+                            , this->userid
+                            , stream
+                            , log_condition
+                            , this->verbose
+                            );
 
         if (this->verbose & 1) {
             LOG(LOG_INFO, "send_synchronize done");
         }
     }
-
 
 // 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
 // ============================================
@@ -3128,33 +3109,27 @@ public:
             LOG(LOG_INFO, "send_control action=%u", action);
         }
 
-        BStream stream(65536);
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
+        HStream stream(1024, 2048);
 
         // Payload
         stream.out_uint16_le(action);
-        stream.out_uint16_le(0); /* userid */
-        stream.out_uint32_le(1002); /* control id */
+        stream.out_uint16_le(0); // userid
+        stream.out_uint32_le(1002); // control id
         stream.mark_end();
 
-        // Packet trailer
-        sdata.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        if ((this->verbose & (128 | 1)) == (128 | 1)) {
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.get_data(), target_stream.size());
-        }
-
-        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        const uint32_t log_condition = (128 | 1);
+        ::send_share_data_ex( this->trans
+                            , PDUTYPE2_CONTROL
+                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , this->mppc_enc
+                            , this->share_id
+                            , this->encryptionLevel
+                            , this->encrypt
+                            , this->userid
+                            , stream
+                            , log_condition
+                            , this->verbose
+                            );
 
         if (this->verbose & 1) {
             LOG(LOG_INFO, "send_control done. action=%u", action);
@@ -3162,61 +3137,55 @@ public:
     }
 
     /*****************************************************************************/
-    void send_fontmap() throw (Error)
+    void send_fontmap() throw(Error)
     {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "send_fontmap");
         }
 
-    static uint8_t g_fontmap[172] = { 0xff, 0x02, 0xb6, 0x00, 0x28, 0x00, 0x00, 0x00,
-                                0x27, 0x00, 0x27, 0x00, 0x03, 0x00, 0x04, 0x00,
-                                0x00, 0x00, 0x26, 0x00, 0x01, 0x00, 0x1e, 0x00,
-                                0x02, 0x00, 0x1f, 0x00, 0x03, 0x00, 0x1d, 0x00,
-                                0x04, 0x00, 0x27, 0x00, 0x05, 0x00, 0x0b, 0x00,
-                                0x06, 0x00, 0x28, 0x00, 0x08, 0x00, 0x21, 0x00,
-                                0x09, 0x00, 0x20, 0x00, 0x0a, 0x00, 0x22, 0x00,
-                                0x0b, 0x00, 0x25, 0x00, 0x0c, 0x00, 0x24, 0x00,
-                                0x0d, 0x00, 0x23, 0x00, 0x0e, 0x00, 0x19, 0x00,
-                                0x0f, 0x00, 0x16, 0x00, 0x10, 0x00, 0x15, 0x00,
-                                0x11, 0x00, 0x1c, 0x00, 0x12, 0x00, 0x1b, 0x00,
-                                0x13, 0x00, 0x1a, 0x00, 0x14, 0x00, 0x17, 0x00,
-                                0x15, 0x00, 0x18, 0x00, 0x16, 0x00, 0x0e, 0x00,
-                                0x18, 0x00, 0x0c, 0x00, 0x19, 0x00, 0x0d, 0x00,
-                                0x1a, 0x00, 0x12, 0x00, 0x1b, 0x00, 0x14, 0x00,
-                                0x1f, 0x00, 0x13, 0x00, 0x20, 0x00, 0x00, 0x00,
-                                0x21, 0x00, 0x0a, 0x00, 0x22, 0x00, 0x06, 0x00,
-                                0x23, 0x00, 0x07, 0x00, 0x24, 0x00, 0x08, 0x00,
-                                0x25, 0x00, 0x09, 0x00, 0x26, 0x00, 0x04, 0x00,
-                                0x27, 0x00, 0x03, 0x00, 0x28, 0x00, 0x02, 0x00,
-                                0x29, 0x00, 0x01, 0x00, 0x2a, 0x00, 0x05, 0x00,
-                                0x2b, 0x00, 0x2a, 0x00
-                              };
+        static uint8_t g_fontmap[172] = { 0xff, 0x02, 0xb6, 0x00, 0x28, 0x00, 0x00, 0x00,
+                                          0x27, 0x00, 0x27, 0x00, 0x03, 0x00, 0x04, 0x00,
+                                          0x00, 0x00, 0x26, 0x00, 0x01, 0x00, 0x1e, 0x00,
+                                          0x02, 0x00, 0x1f, 0x00, 0x03, 0x00, 0x1d, 0x00,
+                                          0x04, 0x00, 0x27, 0x00, 0x05, 0x00, 0x0b, 0x00,
+                                          0x06, 0x00, 0x28, 0x00, 0x08, 0x00, 0x21, 0x00,
+                                          0x09, 0x00, 0x20, 0x00, 0x0a, 0x00, 0x22, 0x00,
+                                          0x0b, 0x00, 0x25, 0x00, 0x0c, 0x00, 0x24, 0x00,
+                                          0x0d, 0x00, 0x23, 0x00, 0x0e, 0x00, 0x19, 0x00,
+                                          0x0f, 0x00, 0x16, 0x00, 0x10, 0x00, 0x15, 0x00,
+                                          0x11, 0x00, 0x1c, 0x00, 0x12, 0x00, 0x1b, 0x00,
+                                          0x13, 0x00, 0x1a, 0x00, 0x14, 0x00, 0x17, 0x00,
+                                          0x15, 0x00, 0x18, 0x00, 0x16, 0x00, 0x0e, 0x00,
+                                          0x18, 0x00, 0x0c, 0x00, 0x19, 0x00, 0x0d, 0x00,
+                                          0x1a, 0x00, 0x12, 0x00, 0x1b, 0x00, 0x14, 0x00,
+                                          0x1f, 0x00, 0x13, 0x00, 0x20, 0x00, 0x00, 0x00,
+                                          0x21, 0x00, 0x0a, 0x00, 0x22, 0x00, 0x06, 0x00,
+                                          0x23, 0x00, 0x07, 0x00, 0x24, 0x00, 0x08, 0x00,
+                                          0x25, 0x00, 0x09, 0x00, 0x26, 0x00, 0x04, 0x00,
+                                          0x27, 0x00, 0x03, 0x00, 0x28, 0x00, 0x02, 0x00,
+                                          0x29, 0x00, 0x01, 0x00, 0x2a, 0x00, 0x05, 0x00,
+                                          0x2b, 0x00, 0x2a, 0x00
+                                        };
 
-        BStream stream(65536);
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_FONTMAP, this->share_id, RDP::STREAM_MED);
+        HStream stream(1024, 2048);
 
         // Payload
         stream.out_copy_bytes((char*)g_fontmap, 172);
         stream.mark_end();
 
-        // Packet trailer
-        sdata.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send sctrl(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65535);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        if ((this->verbose & (128 | 1)) == (128 | 1)) {
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.get_data(), target_stream.size());
-        }
-
-        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        const uint32_t log_condition = (128 | 1);
+        ::send_share_data_ex( this->trans
+                            , PDUTYPE2_FONTMAP
+                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , this->mppc_enc
+                            , this->share_id
+                            , this->encryptionLevel
+                            , this->encrypt
+                            , this->userid
+                            , stream
+                            , log_condition
+                            , this->verbose
+                            );
 
         if (this->verbose & 1) {
             LOG(LOG_INFO, "send_fontmap done");
@@ -3224,7 +3193,7 @@ public:
     }
 
     /* PDUTYPE_DATAPDU */
-    void process_data(Stream & stream, Callback & cb) throw (Error)
+    void process_data(Stream & stream, Callback & cb) throw(Error)
     {
         unsigned expected;
         if (this->verbose & 8) {
@@ -3494,30 +3463,26 @@ public:
             {
                 // when this message comes, send a PDUTYPE2_SHUTDOWN_DENIED back
                 // so the client is sure the connection is alive and it can ask
-                // if user really wants to disconnect */
+                // if user really wants to disconnect
 
-                BStream stream(65536);
-                ShareData sdata_out(stream);
-                sdata_out.emit_begin(PDUTYPE2_SHUTDOWN_DENIED, this->share_id, RDP::STREAM_MED);
+                HStream stream(1024, 2048);
+
+                // Payload
                 stream.mark_end();
 
-                // Packet trailer
-                sdata_out.emit_end();
-
-                BStream sctrl_header(256);
-                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-                HStream target_stream(1024, 65536);
-                target_stream.out_copy_bytes(sctrl_header);
-                target_stream.out_copy_bytes(stream);
-                target_stream.mark_end();
-
-                if ((this->verbose & (128 | 8)) == (128 | 8)) {
-                    LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(target_stream.get_data(), target_stream.size());
-                }
-
-                this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+                const uint32_t log_condition = (128 | 8);
+                ::send_share_data_ex( this->trans
+                                    , PDUTYPE2_SHUTDOWN_DENIED
+                                    , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                                    , this->mppc_enc
+                                    , this->share_id
+                                    , this->encryptionLevel
+                                    , this->encrypt
+                                    , this->userid
+                                    , stream
+                                    , log_condition
+                                    , this->verbose
+                                    );
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -3774,7 +3739,7 @@ public:
         }
     }
 
-    void send_deactive() throw (Error)
+    void send_deactive() throw(Error)
     {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "send_deactive");

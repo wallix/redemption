@@ -58,6 +58,56 @@ static inline void send_data_indication_ex( Transport & trans
     trans.send(x224_header, mcs_header, stream);
 }
 
+void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_support
+                       , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
+                       , CryptContext & encrypt, uint16_t initiator, HStream & data
+                       , uint32_t log_condition, uint32_t verbose) {
+    REDASSERT(!compression_support || mppc_enc);
+
+    HStream data_compressed(1024, 65565);
+    std::reference_wrapper<HStream> data_ = std::ref(data);
+
+    uint8_t compressionFlags = 0;
+
+    if (compression_support) {
+        uint16_t compressed_data_size = 0;
+
+        mppc_enc->compress( data.get_data(), data.size()
+                          , compressionFlags, compressed_data_size
+                          , rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED
+                          );
+
+        if (compressionFlags & PACKET_COMPRESSED) {
+            mppc_enc->get_compressed_data(data_compressed);
+            data_compressed.mark_end();
+            data_ = std::ref(data_compressed);
+        }
+    }
+
+
+    BStream share_data_header(256);
+    ShareData share_data(share_data_header);
+    share_data.emit_begin( pduType2, shareId, RDP::STREAM_MED
+                         , data.size() + 18 /* TS_SHAREDATAHEADER(18) */
+                         , compressionFlags
+                         , (compressionFlags ? ((HStream &)data_).size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
+                         );
+    share_data.emit_end();
+    ((HStream &)data_).copy_to_head(share_data_header.get_data(), share_data_header.size());
+
+    BStream share_ctrl_header(256);
+    ShareControl_Send( share_ctrl_header, PDUTYPE_DATAPDU, initiator + GCC::MCS_USERCHANNEL_BASE
+                     , ((HStream &)data_).size());
+    ((HStream &)data_).copy_to_head(share_ctrl_header.get_data(), share_ctrl_header.size());
+
+    if (verbose & log_condition) {
+        LOG(LOG_INFO, "Sec clear payload to send:");
+        hexdump_d(((HStream &)data_).get_data(), ((HStream &)data_).size());
+    }
+
+    ::send_data_indication_ex(trans, encryptionLevel, encrypt, initiator, ((HStream &)data_));
+}
+
 enum ServerUpdateType {
     SERVER_UPDATE_GRAPHICS_ORDERS,
     SERVER_UPDATE_GRAPHICS_BITMAP,
@@ -82,13 +132,12 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 
     REDASSERT(!compression_support || mppc_enc);
 
-    HStream   data_common_compressed(1024, 65565);
-    std::reference_wrapper<HStream> data_common_ = std::ref(data_common);
-
-    uint8_t compressionFlags = 0;
-
     if (fastpath_support) {
-        uint8_t updateCode = 0;
+        HStream data_common_compressed(1024, 65565);
+        std::reference_wrapper<HStream> data_common_ = std::ref(data_common);
+
+        uint8_t compressionFlags = 0;
+        uint8_t updateCode       = 0;
 
         switch (type) {
             case SERVER_UPDATE_GRAPHICS_ORDERS:
@@ -243,42 +292,10 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                 break;
         }
 
-        if (compression_support) {
-            uint16_t compressed_data_size = 0;
-
-            mppc_enc->compress( data_common.get_data(), data_common.size()
-                              , compressionFlags, compressed_data_size
-                              , rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED
-                              );
-
-            if (compressionFlags & PACKET_COMPRESSED) {
-                mppc_enc->get_compressed_data(data_common_compressed);
-                data_common_compressed.mark_end();
-                data_common_ = std::ref(data_common_compressed);
-            }
-        }
-
-        BStream share_data_header(256);
-        ShareData share_data(share_data_header);
-        share_data.emit_begin( pduType2, shareId, RDP::STREAM_MED
-                             , data_common.size() + 18 /* TS_SHAREDATAHEADER(18) */
-                             , compressionFlags
-                             , (compressionFlags ? ((HStream &)data_common_).size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
-                             );
-        share_data.emit_end();
-        ((HStream &)data_common_).copy_to_head(share_data_header.get_data(), share_data_header.size());
-
-        BStream share_ctrl_header(256);
-        ShareControl_Send( share_ctrl_header, PDUTYPE_DATAPDU, initiator + GCC::MCS_USERCHANNEL_BASE
-                         , ((HStream &)data_common_).size());
-        ((HStream &)data_common_).copy_to_head(share_ctrl_header.get_data(), share_ctrl_header.size());
-
-        if (verbose & (128 | 4)) {
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(((HStream &)data_common_).get_data(), ((HStream &)data_common_).size());
-        }
-
-        ::send_data_indication_ex(trans, encryptionLevel, encrypt, initiator, ((HStream &)data_common_));
+        const uint32_t log_condition = (128 | 4);
+        send_share_data_ex( trans, pduType2, compression_support, mppc_enc, shareId
+                          , encryptionLevel, encrypt, initiator, data_common
+                          , log_condition, verbose);
     }
 
     if (verbose & 4) {
