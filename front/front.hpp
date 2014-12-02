@@ -3065,7 +3065,7 @@ public:
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_SYNCHRONIZE
-                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , false
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
@@ -3120,7 +3120,7 @@ public:
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_CONTROL
-                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , false
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
@@ -3167,7 +3167,7 @@ public:
                                           0x2b, 0x00, 0x2a, 0x00
                                         };
 
-        HStream stream(1024, 2048);
+        HStream stream(1024, 4096);
 
         // Payload
         stream.out_copy_bytes((char*)g_fontmap, 172);
@@ -3176,7 +3176,7 @@ public:
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_FONTMAP
-                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , false
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
