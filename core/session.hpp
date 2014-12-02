@@ -307,7 +307,7 @@ public:
                         }
 
                         if (this->client) {
-                            run_session = this->client->acl.check(mm, now, front_trans, signal);
+                            run_session = this->client->acl.check(mm, now, signal);
                         }
                         else if (signal == BACK_EVENT_STOP) {
                             mm.mod->get_event().reset();
