@@ -63,20 +63,8 @@ struct FontChar
     FontChar() = default;
 
     FontChar(FontChar && other) = default;
-    void * operator new (size_t) = delete;
-
-    FontChar & operator=(FontChar const & other) {
-        this->offset = other.offset;
-        this->baseline = other.baseline;
-        this->width = other.width;
-        this->height = other.height;
-        this->incby = other.incby;
-        this->data = std::make_unique<uint8_t[]>(other.datasize());
-        memcpy(this->data.get(), other.data.get(), other.datasize());
-        return *this;
-    }
-
     FontChar & operator=(FontChar &&) = default;
+    void * operator new (size_t) = delete;
 
     FontChar(const FontChar & other)
         : offset(other.offset)
