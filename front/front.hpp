@@ -85,12 +85,6 @@
 #include "splitter.hpp"
 #include "keymap2.hpp"
 
-enum {
-    FRONT_DISCONNECTED,
-    FRONT_CONNECTING,
-    FRONT_RUNNING
-};
-
 class Front : public FrontAPI, public ActivityChecker{
     using FrontAPI::draw;
 
@@ -3559,9 +3553,8 @@ public:
                 if (this->verbose & (8|1)) {
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
-                cb.rdp_input_up_and_running();
                 this->up_and_running = 1;
-                cb.on_front_up_and_running();
+                cb.rdp_input_up_and_running();
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
                 this->ini.context.opt_width.set(this->client_info.width);
                 this->ini.context.opt_height.set(this->client_info.height);
