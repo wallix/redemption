@@ -28,20 +28,16 @@
 #ifndef _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
 #define _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
 
-//#include "RDP/x224.hpp"
-//#include "RDP/mcs.hpp"
-//#include "RDP/share.hpp"
-//#include "RDP/sec.hpp"
-//#include "RDP/lic.hpp"
-#include "RDP/RDPSerializer.hpp"
-#include "difftimeval.hpp"
-#include "png.hpp"
-#include "error.hpp"
-#include "config.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include "RDP/caches/pointercache.hpp"
 #include "colors.hpp"
 #include "compression_transport_wrapper.hpp"
+#include "difftimeval.hpp"
+#include "error.hpp"
+#include "config.hpp"
+#include "png.hpp"
+#include "RDP/caches/bmpcache.hpp"
+#include "RDP/caches/pointercache.hpp"
+#include "RDP/RDPSerializer.hpp"
+#include "RDP/share.hpp"
 #include "RDP/RDPDrawable.hpp"
 
 enum {

@@ -118,8 +118,6 @@
 #include "config.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/pointercache.hpp"
-#include "RDP/share.hpp"
-#include "difftimeval.hpp"
 #include "stream.hpp"
 #include "rect.hpp"
 #include "colors.hpp"

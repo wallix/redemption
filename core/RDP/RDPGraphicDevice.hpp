@@ -28,12 +28,10 @@
 #ifndef _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
 #define _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
 
-#include "noncopyable.hpp"
-#include "colors.hpp"
-
 #include <cstddef>
 
-class Stream;
+#include "noncopyable.hpp"
+#include "colors.hpp"
 
 class RDPDestBlt;
 class RDPMultiDstBlt;

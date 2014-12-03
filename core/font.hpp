@@ -90,7 +90,7 @@ struct FontChar
 
     /* compare the two font items returns 1 if they match */
     //==============================================================================
-    int item_compare(FontChar & glyph, bool ignore_incby = false) noexcept
+    int item_compare(FontChar & glyph, bool ignore_incby = true) noexcept
     //==============================================================================
     {
         bool result =
@@ -99,10 +99,10 @@ struct FontChar
             && (this->baseline == glyph.baseline)
             && (this->width == glyph.width)
             && (this->height == glyph.height)
-            && (!ignore_incby || (this->incby == glyph.incby))
+            && (ignore_incby || (this->incby == glyph.incby))
             && (0 == memcmp(this->data.get(), glyph.data.get(), glyph.datasize()));
 
-        if (result && !ignore_incby)
+        if (result && ignore_incby)
         {
             if ((this->incby < 0) && (glyph.incby >= 0))
             {
