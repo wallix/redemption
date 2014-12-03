@@ -1874,6 +1874,7 @@ public:
                                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.p = sdata.payload.end;
                                             }
                                             break;
                                         case WAITING_CTL_COOPERATE:
@@ -1884,6 +1885,7 @@ public:
                                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.p = sdata.payload.end;
                                             }
                                             break;
                                         case WAITING_GRANT_CONTROL_COOPERATE:
@@ -1894,6 +1896,7 @@ public:
                                             this->connection_finalization_state = WAITING_FONT_MAP;
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.p = sdata.payload.end;
                                             }
                                             break;
                                         case WAITING_FONT_MAP:
@@ -1908,6 +1911,7 @@ public:
                                             rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.p = sdata.payload.end;
                                             }
                                             break;
                                         case UP_AND_RUNNING:
