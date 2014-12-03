@@ -398,7 +398,7 @@ public:
 
     Front & front;
     null_mod no_mod;
-    Transport * mod_transport;
+    SocketTransport * mod_transport;
 
     ModuleManager(Front & front, Inifile & ini)
         : MMIni(ini)
@@ -690,7 +690,6 @@ public:
                                          , this->ini.context.opt_height.get()
                                          , this->ini.context.opt_bpp.get()
                                          );
-                this->mod->get_event().st = t;
                 this->ini.context.auth_error_message.empty();
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
                 this->connected = true;
@@ -791,7 +790,6 @@ public:
 
                 UdevRandom gen;
                 this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
-                this->mod->get_event().st = t;
 
                 // DArray<Rect> rects(1);
                 // rects[0] = Rect(0, 0, this->front.client_info.width, this->front.client_info.height);
@@ -846,7 +844,6 @@ public:
                                         , this->ini.mod_vnc.encodings.c_str()
                                         , this->ini.mod_vnc.allow_authentification_retries
                                         , this->ini.debug.mod_vnc);
-                this->mod->get_event().st = t;
 
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
                 this->ini.context.auth_error_message.empty();

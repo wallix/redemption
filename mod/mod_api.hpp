@@ -92,8 +92,7 @@ protected:
 
 public:
     mod_api(const uint16_t front_width, const uint16_t front_height)
-    : event(NULL)
-    , gd(this)
+    : gd(this)
     , front_width(front_width)
     , front_height(front_height)
     {

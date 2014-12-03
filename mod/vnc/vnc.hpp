@@ -37,7 +37,7 @@
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "update_lock.hpp"
-
+#include "socket_transport.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -56,9 +56,11 @@ struct mod_vnc : public InternalMod, public NotifyApi {
     int vnc_desktop;
     char username[256];
     char password[256];
-public:
-    Transport *t;
 
+private:
+    Transport * t;
+
+public:
     uint16_t width;
     uint16_t height;
     uint8_t  bpp;
@@ -115,6 +117,8 @@ private:
     bool is_first_incr;
     bool left_ctrl_pressed;
 
+    bool is_socket_transport = false;
+
 public:
     //==============================================================================================================
     mod_vnc( Transport * t
@@ -139,12 +143,20 @@ public:
                 0, 0, ini.theme,
                 TR("Authentification required", ini),
                 TR("VNC password", ini))
+    , mod_name{0}
+    , mod_mouse_state(0)
+    , palette{0}
+    , vnc_desktop(0)
+    , username{0}
+    , password{0}
+    , t(t)
     , verbose(verbose)
     , keymapSym(verbose)
     , incr(0)
     , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
     , enable_clipboard_in(clipboard_in)
     , enable_clipboard_out(clipboard_out)
+    , encodings(encodings)
     , state(WAIT_SECURITY_TYPES)
     , ini(ini)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
@@ -163,17 +175,9 @@ public:
         }
 
         init_palette332(this->palette332);
-        this->t = t;
         keymapSym.init_layout_sym(keylayout);
         // Initial state of keys (at least lock keys) is copied from Keymap2
         keymapSym.key_flags = key_flags;
-
-        memset(this->mod_name, 0, 256);
-        this->mod_mouse_state = 0;
-        memset(this->palette, 0, sizeof(BGRPalette));
-        this->vnc_desktop = 0;
-        memset(this->username, 0, 256);
-        memset(this->password, 0, 256);
 
 //        memcpy(this->username, username, sizeof(this->username)-1);
 //        this->username[sizeof(this->username)-1] = 0;
@@ -182,8 +186,6 @@ public:
 //        this->password[sizeof(this->password)-1] = 0;
         snprintf(this->password, sizeof(this->password), "%s", password);
 
-        this->encodings.copy_c_str(encodings);
-
         LOG(LOG_INFO, "Creation of new mod 'VNC' done");
     } // Constructor
 
@@ -191,6 +193,14 @@ public:
     virtual ~mod_vnc()
     {
         inflateEnd(&this->zstrm);
+
+        TODO("mod_vnc isn't owner of sck")
+        if (this->is_socket_transport) {
+            auto st = static_cast<SocketTransport*>(this->t);
+            if (st->sck > 0){
+                close(st->sck);
+            }
+        }
 
         this->screen.clear();
     }
@@ -544,7 +554,7 @@ public:
             try
             {
                 this->t->connect();
-                this->event.st = static_cast<SocketTransport *>(this->t);
+                this->is_socket_transport = true;
             }
             catch (Error const & e)
             {
@@ -558,7 +568,7 @@ public:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
-            if (this->event.can_recv()) {
+            if (this->is_socket_transport && static_cast<SocketTransport*>(this->t)->can_recv()) {
                 uint8_t data[1];
                 FixedSizeStream stream(data, 1);
                 stream.end = stream.p;
@@ -690,8 +700,8 @@ public:
                             {
                                 LOG(LOG_ERR, "vnc password failed");
 
-                                if (this->event.st) {
-                                    this->event.st->sck = -1;
+                                if (this->is_socket_transport) {
+                                    this->is_socket_transport = false;
                                 }
                                 this->t->disconnect();
 

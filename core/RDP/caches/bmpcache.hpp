@@ -31,17 +31,15 @@
 
 using std::size_t;
 
-enum {
-      BITMAP_FOUND_IN_CACHE
-    , BITMAP_ADDED_TO_CACHE
-};
-
-class BmpCache {
-
-public:
+struct BmpCache {
     static const uint8_t  MAXIMUM_NUMBER_OF_CACHES = 5;
 
     static const uint8_t IN_WAIT_LIST = 0x80;
+
+    enum {
+        FOUND_IN_CACHE
+      , ADDED_TO_CACHE
+    };
 
 private:
     static const uint16_t MAXIMUM_NUMBER_OF_CACHE_ENTRIES = 8192;
@@ -671,13 +669,13 @@ public:
             //    LOG(LOG_INFO, "cache_id    = %u;", id_real);
             //    LOG(LOG_INFO, "cache_index = %u;", cache_index_32);
             //    LOG(LOG_INFO,
-            //        "BOOST_CHECK_EQUAL(((BITMAP_FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), "
+            //        "BOOST_CHECK_EQUAL(((FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), "
             //            "bmp_cache.cache_bitmap(*bmp_%d));",
             //        this->finding_counter - 1);
             //    LOG(LOG_INFO, "delete bmp_%d;", this->finding_counter - 1);
             //    LOG(LOG_INFO, "");
             //}
-            return (BITMAP_FOUND_IN_CACHE << 24) | (id_real << 16) | cache_index_32;
+            return (FOUND_IN_CACHE << 24) | (id_real << 16) | cache_index_32;
         }
 
         uint8_t  id = id_real;
@@ -746,14 +744,14 @@ public:
         //    LOG(LOG_INFO, "cache_id    = %u;", id);
         //    LOG(LOG_INFO, "cache_index = %u;", oldest_cidx);
         //    LOG(LOG_INFO,
-        //        "BOOST_CHECK_EQUAL(((BITMAP_ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), "
+        //        "BOOST_CHECK_EQUAL(((ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), "
         //            "bmp_cache.cache_bitmap(bmp_%d));",
         //        this->finding_counter - 1);
         //    LOG(LOG_INFO, "}");
         //    LOG(LOG_INFO, "");
         //}
 
-        return (BITMAP_ADDED_TO_CACHE << 24) | (id << 16) | oldest_cidx;
+        return (ADDED_TO_CACHE << 24) | (id << 16) | oldest_cidx;
     }
 
     const Cache<cache_element> & get_cache(uint8_t cache_id) const {
