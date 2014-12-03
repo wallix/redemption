@@ -47,6 +47,7 @@ from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
 
 
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
+GENERICLOGIN = u'UNLIKELYVALUEWORKSASGENERICLOGIN'
 def mundane(value):
     if value == MAGICASK:
         return u'Unknown'
@@ -353,6 +354,14 @@ class Sesman():
         _status, _error = self.receive_data()
         if self.shared.get(u'display_message') != u'True':
             _status, _error = False, TR(u'not_accept_message')
+        return _status, _error
+
+    def interactive_target(self, data_to_send):
+        data_to_send.update({ u'module' : u'interactive_target' })
+        self.send_data(data_to_send)
+        _status, _error = self.receive_data()
+        if self.shared.get(u'display_message') != u'True':
+            _status, _error = False, TR(u'Connection closed by client')
         return _status, _error
 
     def interactive_close(self, target, message):
@@ -1117,19 +1126,50 @@ class Sesman():
                         target_password = self.engine.get_target_password(physical_target)
 
                     kv[u'target_password'] = target_password
+                    ###########
+                    # BEGIN INTERACTIVE TARGET INFO
+                    ##########
+                    interactive_data = {}
                     if not target_password:
-                        kv[u'target_password'] = u''
-                        Logger().info(u"auto logon is disabled")
-                        interactive_data = {}
-                        if kv.get(u'target_login'):
-                            interactive_data[u'target_login'] = kv.get(u'target_login')
-                        _status, _error = self.interactive_password(interactive_data)
+                        interactive_data[u'target_password'] = MAGICASK
+                        interactive_data[u'target_login'] = kv.get(u'target_login')
+                    if kv.get(u'target_login') == GENERICLOGIN:
+                        interactive_data[u'target_password'] = MAGICASK
+                        interactive_data[u'target_login'] = MAGICASK
+                    target_subnet = None
+                    if '/' in kv.get(u'target_host'): # target_host is a subnet
+                        target_subnet = kv.get(u'target_host')
+                        interactive_data[u'target_host'] = MAGICASK
+                        interactive_data[u'target_device'] = TR(u"in_subnet %s") % target_subnet
+                    if interactive_data:
+                        Logger().info(u"Interactive Target Info asking")
+                        if not target_subnet:
+                            interactive_data[u'target_host'] = kv.get(u'target_host')
+                            interactive_data[u'target_device'] = kv.get(u'target_device') if self.target_context else self.shared.get(u'target_device')
+                        if not interactive_data.get(u'target_password'):
+                            interactive_data[u'target_password'] = ''
+                        _status, _error = self.interactive_target(interactive_data)
                         if _status:
-                            kv[u'target_password'] = self.shared.get(u'target_password')
+                            if interactive_data.get(u'target_password') == MAGICASK:
+                                kv[u'target_password'] = self.shared.get(u'target_password')
+                            if interactive_data.get(u'target_login') == MAGICASK:
+                                kv[u'target_login'] = self.shared.get(u'target_login')
+                            if interactive_data.get(u'target_host') == MAGICASK:
+                                if self.check_hostname_in_subnet(self.shared.get(u'target_host'),
+                                                                 target_subnet):
+                                    kv[u'target_host'] = self.shared.get(u'target_host')
+                                    kv[u'target_device'] = self.shared.get(u'target_host')
+                                else:
+                                    _status = False
+                                    _error = TR("no_match_subnet %s %s") % (
+                                        self.shared.get(u'target_host'),
+                                        target_subnet)
+                    ###########
+                    # END INTERACTIVE TARGET INFO
+                    ##########
 
-
-                    if not _status:
-                        break
+                    # if not _status:
+                    #     break
 
                     if self.target_context:
                         self._physical_target_device = self.target_context.host
@@ -1358,7 +1398,16 @@ class Sesman():
             self.proxy_conx.close()
         except Exception:
             pass
-
+    def check_hostname_in_subnet(self, host, subnet):
+        try:
+            dnsname, alias, ip_list = socket.gethostbyaddr(host)
+            Logger().info("Resolve DNS Hostname %s -> %s" % (host,
+                                                             ip_list))
+            host_ip = ip_list[0] if ip_list else None
+        # except socket.error:
+        except Exception, e:
+            return False
+        return engine.is_device_in_subnet(host_ip, subnet)
     def update_session_parameters(self):
         params = self.engine.read_session_parameters()
         res = params.get("rt_display")

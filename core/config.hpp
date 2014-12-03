@@ -957,6 +957,8 @@ public:
         this->to_send_set.insert(AUTHID_SELECTOR_LINES_PER_PAGE);
         this->to_send_set.insert(AUTHID_SELECTOR_CURRENT_PAGE);
         this->to_send_set.insert(AUTHID_TARGET_PASSWORD);
+        this->to_send_set.insert(AUTHID_TARGET_HOST);
+        this->to_send_set.insert(AUTHID_TARGET_USER);
         this->to_send_set.insert(AUTHID_OPT_WIDTH);
         this->to_send_set.insert(AUTHID_OPT_HEIGHT);
         this->to_send_set.insert(AUTHID_OPT_BPP);
