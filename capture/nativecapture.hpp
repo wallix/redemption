@@ -48,6 +48,7 @@
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
 
+#include "CaptureDevice.hpp"
 
 #include "error.hpp"
 #include "config.hpp"

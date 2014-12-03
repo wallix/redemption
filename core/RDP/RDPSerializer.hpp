@@ -88,51 +88,41 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-#include "log.hpp"
-#include "config.hpp"
-#include "stream.hpp"
-#include "transport.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
-#include "orders/RDPOrdersCommon.hpp"
-#include "orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+
+#include "transport.hpp"
+
 #include "orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 #include "orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "orders/RDPOrdersPrimaryLineTo.hpp"
-#include "orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "orders/RDPOrdersPrimaryPolygonSC.hpp"
 #include "orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "orders/RDPOrdersPrimaryPolygonCB.hpp"
 #include "orders/RDPOrdersPrimaryPolyline.hpp"
 #include "orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "orders/RDPOrdersPrimaryEllipseCB.hpp"
-#include "orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "orders/RDPOrdersSecondaryColorCache.hpp"
 #include "orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "caches/bmpcache.hpp"
-#include "caches/pointercache.hpp"
 #include "bitmapupdate.hpp"
 
-
-enum {
-//    BREAKPOINT          = 1005,
-    META_FILE           = 1006,
-//    NEXT_FILE_ID        = 1007,
-    TIMESTAMP           = 1008,
-    POINTER             = 1009,
-    LAST_IMAGE_CHUNK    = 0x1000,   // 4096
-    PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
-    SAVE_STATE          = 0x1002,   // 4098
-    RESET_CHUNK         = 0x1003,   // 4099
-
-    INVALID_CHUNK       = 0x8000
-};
+#include "config.hpp"
+#include "RDP/caches/bmpcache.hpp"
+#include "RDP/caches/pointercache.hpp"
+#include "RDP/share.hpp"
+#include "difftimeval.hpp"
+#include "stream.hpp"
+#include "rect.hpp"
+#include "colors.hpp"
 
 struct RDPSerializer : public RDPGraphicDevice
 {

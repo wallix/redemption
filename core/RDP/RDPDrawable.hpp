@@ -22,10 +22,12 @@
 #ifndef _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
 #define _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
 
-#include "log.hpp"
+#include <utility>
+
 #include "drawable.hpp"
-#include "RDPGraphicDevice.hpp"
 #include "caches/fontcache.hpp"
+
+#include "RDPGraphicDevice.hpp"
 #include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "orders/RDPOrdersPrimaryEllipseCB.hpp"
 #include "orders/RDPOrdersPrimaryScrBlt.hpp"
@@ -44,13 +46,13 @@
 #include "orders/RDPOrdersPrimaryPolygonSC.hpp"
 #include "orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "orders/RDPOrdersPrimaryEllipseSC.hpp"
+
 #include "pointer.hpp"
 #include "bitmapupdate.hpp"
-#include "transport.hpp"
 #include "png.hpp"
 #include "text_metrics.hpp"
 
-#include <utility>
+#include "CaptureDevice.hpp"
 
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
