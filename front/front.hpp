@@ -87,12 +87,6 @@
 #include "splitter.hpp"
 #include "keymap2.hpp"
 
-enum {
-    FRONT_DISCONNECTED,
-    FRONT_CONNECTING,
-    FRONT_RUNNING
-};
-
 class Front : public FrontAPI, public ActivityChecker{
     using FrontAPI::draw;
 
@@ -3067,7 +3061,7 @@ public:
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_SYNCHRONIZE
-                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , false
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
@@ -3122,7 +3116,7 @@ public:
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_CONTROL
-                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , false
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
@@ -3169,7 +3163,7 @@ public:
                                           0x2b, 0x00, 0x2a, 0x00
                                         };
 
-        HStream stream(1024, 2048);
+        HStream stream(1024, 4096);
 
         // Payload
         stream.out_copy_bytes((char*)g_fontmap, 172);
@@ -3178,7 +3172,7 @@ public:
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_FONTMAP
-                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , false
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
@@ -3561,9 +3555,8 @@ public:
                 if (this->verbose & (8|1)) {
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
-                cb.rdp_input_up_and_running();
                 this->up_and_running = 1;
-                cb.on_front_up_and_running();
+                cb.rdp_input_up_and_running();
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
                 this->ini.context.opt_width.set(this->client_info.width);
                 this->ini.context.opt_height.set(this->client_info.height);

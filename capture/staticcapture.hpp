@@ -45,6 +45,8 @@
 #include "config.hpp"
 #include "sequence_generator.hpp"
 
+#include "CaptureDevice.hpp"
+
 struct StaticCaptureConfig {
     uint64_t png_interval;
     unsigned png_limit = 3;

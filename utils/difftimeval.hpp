@@ -24,7 +24,7 @@
 
 #include "timeval_ops.hpp"
 
-#include "log.hpp"
+//#include "log.hpp"
 
 class TimeObj {
 public:

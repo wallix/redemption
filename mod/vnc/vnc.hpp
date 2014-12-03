@@ -2282,11 +2282,11 @@ private:
 
     // Front calls this member function when it became up and running.
 public:
-    virtual void on_front_up_and_running()
+    virtual void rdp_input_up_and_running()
     {
         if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
             if (this->verbose) {
-                LOG(LOG_INFO, "Front up and running");
+                LOG(LOG_INFO, "Client up and running");
             }
             this->state = DO_INITIAL_CLEAR_SCREEN;
             this->event.set();

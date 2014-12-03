@@ -32,9 +32,10 @@
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/pointercache.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
-#include "RDP/RDPDrawable.hpp"
-#include "RDP/RDPSerializer.hpp"
-#include "RDP/share.hpp"
+//#include "RDP/RDPDrawable.hpp"
+//#include "RDP/RDPSerializer.hpp"
+//#include "RDP/share.hpp"
+#include "GraphicToFile.hpp"
 #include "difftimeval.hpp"
 #include "compression_transport_wrapper.hpp"
 #include "chunked_image_transport.hpp"
@@ -44,6 +45,7 @@ struct FileToGraphic
     enum {
         HEADER_SIZE = 8
     };
+
     BStream stream;
 
 private:

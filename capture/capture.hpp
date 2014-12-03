@@ -24,16 +24,16 @@
 #include "out_meta_sequence_transport.hpp"
 #include "crypto_out_meta_sequence_transport.hpp"
 #include "out_filename_sequence_transport.hpp"
+
 #include "RDP/caches/pointercache.hpp"
-#include "staticcapture.hpp"
+
 #include "nativecapture.hpp"
+#include "staticcapture.hpp"
 
 #include "RDP/compress_and_draw_bitmap_update.hpp"
 
-#include "wait_obj.hpp"
-#include "RDP/pointer.hpp"
-
 #include "auth_api.hpp"
+#include "wait_obj.hpp"
 
 class Capture : public RDPGraphicDevice, public RDPCaptureDevice {
 public:

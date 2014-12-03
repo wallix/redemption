@@ -1872,6 +1872,10 @@ public:
                                             }
                                             //this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
                                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
+                                            {
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.p = sdata.payload.end;
+                                            }
                                             break;
                                         case WAITING_CTL_COOPERATE:
                                             if (this->verbose & 1){
@@ -1879,6 +1883,10 @@ public:
                                             }
                                             //this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
+                                            {
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.p = sdata.payload.end;
+                                            }
                                             break;
                                         case WAITING_GRANT_CONTROL_COOPERATE:
                                             if (this->verbose & 1){
@@ -1886,6 +1894,10 @@ public:
                                             }
                                             //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_FONT_MAP;
+                                            {
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.p = sdata.payload.end;
+                                            }
                                             break;
                                         case WAITING_FONT_MAP:
                                             if (this->verbose & 1){
@@ -1897,6 +1909,10 @@ public:
                                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
                                             // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
                                             rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
+                                            {
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.p = sdata.payload.end;
+                                            }
                                             break;
                                         case UP_AND_RUNNING:
                                             if (this->enable_transparent_mode)

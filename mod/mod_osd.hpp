@@ -470,15 +470,10 @@ public:
         this->mod.send_auth_channel_data(data);
     }
 
+    // Client calls this member function when it became up and running.
     virtual void rdp_input_up_and_running()
     {
         this->mod.rdp_input_up_and_running();
-    }
-
-    // Front calls this member function when it became up and running.
-    virtual void on_front_up_and_running()
-    {
-        this->mod.on_front_up_and_running();
     }
 
     virtual void disconnect()

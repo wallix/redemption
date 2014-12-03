@@ -23,10 +23,10 @@
 
 #include <math.h>
 
-#include "RDP/pointer.hpp"
-#include "drawable.hpp"
-#include "client_info.hpp"
 #include "noncopyable.hpp"
+
+#include "RDP/pointer.hpp"
+#include "client_info.hpp"
 
 
 enum {

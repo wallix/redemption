@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 //    BOOST_CHECK(t.status);
 
     mod.draw_event(time(NULL));
-    mod.on_front_up_and_running();
+    mod.rdp_input_up_and_running();
     mod.draw_event(time(NULL));
 
     BOOST_CHECK_EQUAL(mod.get_front_width(), 1024);

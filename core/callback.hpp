@@ -73,20 +73,6 @@ struct RdpInput
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
     virtual void rdp_input_invalidate(const Rect & r) = 0;
-};
-
-struct Callback : RdpInput
-{
-    virtual ~Callback() {}
-    virtual void send_to_mod_channel(const char * const front_channel_name, Stream & chunk, std::size_t length, uint32_t flags)
-    {
-    }
-    // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
-    virtual void send_auth_channel_data(const char * data) {}
-    virtual void rdp_input_up_and_running() { /* LOG(LOG_ERR, "CB:UP_AND_RUNNING"); */}
-
-    // Front calls this member function when it became up and running.
-    virtual void on_front_up_and_running() {}
     virtual void rdp_input_invalidate2(const DArray<Rect> & vr) {
         for (size_t i = 0; i < vr.size(); i++) {
             if (!vr[i].isempty()) {
@@ -94,7 +80,17 @@ struct Callback : RdpInput
             }
         }
     }
+    // Client calls this member function when it became up and running.
+    virtual void rdp_input_up_and_running() { /* LOG(LOG_ERR, "CB:UP_AND_RUNNING"); */}
+};
 
+struct Callback : RdpInput
+{
+    virtual void send_to_mod_channel(const char * const front_channel_name, Stream & chunk, std::size_t length, uint32_t flags)
+    {
+    }
+    // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
+    virtual void send_auth_channel_data(const char * data) {}
 };
 
 #endif

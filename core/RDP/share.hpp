@@ -533,8 +533,8 @@ struct ShareData_Recv : private CheckShareData_Recv
     }())
     // BEGIN CONSTRUCTOR
     {
-        //LOG( LOG_INFO, "ShareData_Recv: len=%u compressedLen=%u payload_size=%u", this->len
-        //   , this->compressedLen, this->payload.size());
+        //LOG( LOG_INFO, "ShareData_Recv: pdutype2=%u len=%u compressedLen=%u payload_size=%u"
+        //   , this->pdutype2, this->len, this->compressedLen, this->payload.size());
         stream.in_skip_bytes(this->payload.size());
     } // END CONSTRUCTOR
 
