@@ -25,7 +25,7 @@
 
 //#define LOGNULL
 #define LOGPRINT
-#include "log.hpp"
+
 #include "RDP/RefreshRectPDU.hpp"
 #include "test_transport.hpp"
 

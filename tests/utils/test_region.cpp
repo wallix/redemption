@@ -30,7 +30,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "rect.hpp"
 #include "region.hpp"

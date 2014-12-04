@@ -27,14 +27,10 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestConvertBitmap
 #include <boost/test/auto_unit_test.hpp>
-#include <boost/test/unit_test.hpp>
 
-#include "log.hpp"
 #define LOGNULL
 
 #include "bitmap.hpp"
-#include "colors.hpp"
-#include "ssl_calls.hpp"
 #include "png.hpp"
 
 

@@ -33,6 +33,10 @@
 #include "log.hpp"
 #include "font.hpp"
 
+#ifndef FIXTURES_PATH
+#define FIXTURES_PATH ""
+#endif
+
 BOOST_AUTO_TEST_CASE(TestCreateFont)
 {
     // test loading a font from default file
@@ -41,7 +45,7 @@ BOOST_AUTO_TEST_CASE(TestCreateFont)
     LOG(LOG_DEBUG, "reading fonts\n");
 
     Font f(FIXTURES_PATH "/dejavu-sans-10.fv1");
-    BOOST_CHECK_EQUAL(std::string("DejaVu Sans"), std::string(f.name));
+    BOOST_CHECK_EQUAL("DejaVu Sans", f.name);
     BOOST_CHECK_EQUAL(1, f.style);
     BOOST_CHECK_EQUAL(10, f.size);
     BOOST_CHECK(!f.font_items[31]);

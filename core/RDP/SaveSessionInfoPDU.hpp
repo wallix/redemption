@@ -21,6 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_
 #define _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_
 
+#include "stream.hpp"
+
 namespace RDP {
 
 // [MS-RDPBCGR] - 2.2.10.1.1 Save Session Info PDU Data

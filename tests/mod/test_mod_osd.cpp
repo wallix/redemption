@@ -26,13 +26,10 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "transport.hpp"
 #include "out_filename_sequence_transport.hpp"
 #include "staticcapture.hpp"
 #include "../front/fake_front.hpp"
 #include "mod_osd.hpp"
-#include "rdp/rdp.hpp"
-#include "RDP/caches/bmpcache.hpp"
 
 struct FakeMod : mod_api
 {
@@ -98,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid);
 
-    struct timeval now;
+    timeval now;
     now.tv_sec = 1350998222;
     now.tv_usec = 0;
 

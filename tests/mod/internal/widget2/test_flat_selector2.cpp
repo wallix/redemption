@@ -29,9 +29,6 @@
 
 #include "internal/widget2/flat_selector2.hpp"
 #include "internal/widget2/screen.hpp"
-#include "png.hpp"
-#include "ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
 #ifndef FIXTURES_PATH

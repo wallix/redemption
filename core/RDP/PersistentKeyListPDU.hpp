@@ -21,7 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_PERSISTENTKEYLISTPDU_HPP_
 #define _REDEMPTION_CORE_RDP_PERSISTENTKEYLISTPDU_HPP_
 
- #include "caches/bmpcache.hpp"
+#include "log.hpp"
+#include <utility>
 
 namespace RDP {
 

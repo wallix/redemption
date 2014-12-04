@@ -29,7 +29,6 @@
 
 #include "stream.hpp"
 #include "config.hpp"
-#include "netutils.hpp"
 #include "transport.hpp"
 #include "translation.hpp"
 #include "get_printable_password.hpp"

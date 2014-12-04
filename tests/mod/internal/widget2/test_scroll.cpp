@@ -24,16 +24,11 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "internal/widget2/scroll.hpp"
 #include "internal/widget2/screen.hpp"
-#include "internal/widget2/composite.hpp"
 #include "internal/widget2/image.hpp"
 
-#include "png.hpp"
-#include "ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
 

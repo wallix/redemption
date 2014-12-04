@@ -4,7 +4,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "crypto_in_meta_sequence_transport.hpp"
 #include "crypto_out_meta_sequence_transport.hpp"

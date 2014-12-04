@@ -32,7 +32,6 @@
 
 #include "RDP/compress_and_draw_bitmap_update.hpp"
 
-#include "auth_api.hpp"
 #include "wait_obj.hpp"
 
 class Capture : public RDPGraphicDevice, public RDPCaptureDevice {

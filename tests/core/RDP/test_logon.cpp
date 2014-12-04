@@ -27,15 +27,12 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
-#include "config.hpp"
 #include "RDP/logon.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestLogon)
 {
-
     TODO("Really the test below is useless, we are testing assignment!"
          "Infopacket should be replaced by some constructor with parameters and test fixed")
     InfoPacket infoPacket;
@@ -63,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TestLogon)
     infoPacket.flags |= ((infoPacket.Password[0]|infoPacket.Password[1]) != 0) * INFO_AUTOLOGON;
     infoPacket.flags |= (infoPacket.rdp5_support != 0) * (INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK);
 
-    infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER 
+    infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER
                                                    | 1 * ( PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS);
 
     BOOST_CHECK_EQUAL(infoPacket.rdp5_support, static_cast<uint32_t>(1));
@@ -75,7 +72,7 @@ BOOST_AUTO_TEST_CASE(TestLogon)
         |INFO_ENABLEWINDOWSKEY
         |INFO_LOGONNOTIFY
         |INFO_AUTOLOGON
-        |INFO_LOGONERRORS 
+        |INFO_LOGONERRORS
         |INFO_NOAUDIOPLAYBACK
         ));
     BOOST_CHECK_EQUAL(std::string((char *) infoPacket.Domain), std::string("Domain_Test") );
@@ -88,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TestLogon)
     BOOST_CHECK_EQUAL(infoPacket.cbAlternateShell, (uint32_t)strlen((char *) infoPacket.AlternateShell));
     BOOST_CHECK_EQUAL(std::string((char *) infoPacket.WorkingDir), std::string("Directory_Test") );
     BOOST_CHECK_EQUAL(infoPacket.cbWorkingDir, (uint32_t)strlen((char *) infoPacket.WorkingDir));
-    BOOST_CHECK_EQUAL(infoPacket.extendedInfoPacket.performanceFlags, 
+    BOOST_CHECK_EQUAL(infoPacket.extendedInfoPacket.performanceFlags,
         (uint32_t)(PERF_DISABLE_WALLPAPER|PERF_DISABLE_FULLWINDOWDRAG|PERF_DISABLE_MENUANIMATIONS));
 
 }

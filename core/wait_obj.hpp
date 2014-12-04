@@ -25,10 +25,6 @@
 #ifndef _REDEMPTION_CORE_WAIT_OBJ_HPP_
 #define _REDEMPTION_CORE_WAIT_OBJ_HPP_
 
-#include "error.hpp"
-#include <stdint.h>
-#include <sys/un.h>
-#include <arpa/inet.h>
 #include "difftimeval.hpp"
 #include "noncopyable.hpp"
 

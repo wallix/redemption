@@ -31,7 +31,6 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
 #include "genrandom.hpp"
 

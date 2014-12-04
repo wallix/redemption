@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_SLOWPATH_HPP_
 #define _REDEMPTION_CORE_RDP_SLOWPATH_HPP_
 
+#include "stream.hpp"
+
 namespace SlowPath {
 
 // 2.2.8.1.1.3.1 Client Input Event PDU Data (TS_INPUT_PDU_DATA)
@@ -98,7 +100,7 @@ namespace SlowPath {
             }()
         )
         // (time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)) * 12
-        , payload(stream, stream.get_offset(), this->numEvents * 12) 
+        , payload(stream, stream.get_offset(), this->numEvents * 12)
         {
             // This is the constructor body, we skip payload now that it is packaged
 
@@ -812,7 +814,7 @@ struct GraphicsUpdate_Recv {
             stream.in_skip_bytes(2); // pad2Octets
             return stream.in_uint32_le();})
         // red(1) + green(1) + blue(1)
-        , payload(stream, stream.get_offset(), this->numberColors * 3) 
+        , payload(stream, stream.get_offset(), this->numberColors * 3)
         {
             stream.in_skip_bytes(this->payload.size());
         }

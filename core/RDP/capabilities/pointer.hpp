@@ -25,6 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_POINTER_HPP_
 
 #include "common.hpp"
+#include "stream.hpp"
 
 // 2.2.7.1.5 Pointer Capability Set (TS_POINTER_CAPABILITYSET)
 

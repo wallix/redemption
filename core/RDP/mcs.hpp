@@ -24,11 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_MCS_HPP_
 #define _REDEMPTION_CORE_RDP_MCS_HPP_
 
-#include <algorithm>
-
 #include "stream.hpp"
 #include "RDP/out_per_bstream.hpp"
-
 
 
 namespace MCS

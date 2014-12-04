@@ -46,6 +46,7 @@
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "transparentplayer.hpp"
 #include "version.hpp"
+#include "RDP/mppc_unified_dec.hpp"
 
 class Analyzer : public FrontAPI {
 private:

@@ -30,7 +30,6 @@
 
 #include <new>
 #include <memory>
-#include <algorithm>
 
 struct GeneratorTransport
 : InputTransport<transbuf::dynarray_base>

@@ -25,7 +25,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #undef FIXTURES_PATH
 #define FIXTURES_PATH "./tests/fixtures"
@@ -34,9 +33,6 @@
 
 #include "internal/widget2/flat_interactive_password.hpp"
 #include "internal/widget2/screen.hpp"
-#include "png.hpp"
-#include "ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH

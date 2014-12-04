@@ -29,13 +29,6 @@
 
 
 #define LOGNULL
-#include "log.hpp"
-
-#include <errno.h>
-#include <algorithm>
-
-#include <png.h>
-#include <stdint.h>
 
 #include "png.hpp"
 

@@ -53,6 +53,7 @@
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/bmpcachepersister.hpp"

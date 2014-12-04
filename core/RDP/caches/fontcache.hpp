@@ -22,7 +22,6 @@
 #define _REDEMPTION_CORE_RDP_CACHES_FONTCACHE_HPP_
 
 #include "font.hpp"
-#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "noncopyable.hpp"
 
 class ClientInfo;

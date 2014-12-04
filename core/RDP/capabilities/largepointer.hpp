@@ -25,6 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_LARGEPOINTER_HPP_
 
 #include "common.hpp"
+#include "stream.hpp"
 
 // 2.2.7.2.7 Large Pointer Capability Set (TS_LARGE_POINTER_CAPABILITYSET)
 // =======================================================================

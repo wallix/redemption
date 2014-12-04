@@ -25,7 +25,6 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
 #include "noncopyable.hpp"
 #include <type_traits>

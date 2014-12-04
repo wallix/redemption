@@ -22,7 +22,6 @@
 #define _REDEMPTION_CORE_SESSION_SERVER_HPP_
 
 #include "config.hpp"
-#include "ssl_calls.hpp"
 #include "server.hpp"
 #include "session.hpp"
 #include "crypto_key_holder.hpp"

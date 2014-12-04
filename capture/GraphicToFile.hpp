@@ -30,27 +30,12 @@
 
 #include "colors.hpp"
 #include "compression_transport_wrapper.hpp"
-#include "difftimeval.hpp"
-#include "error.hpp"
 #include "config.hpp"
-#include "png.hpp"
 #include "RDP/caches/bmpcache.hpp"
-#include "RDP/caches/pointercache.hpp"
 #include "RDP/RDPSerializer.hpp"
 #include "RDP/share.hpp"
 #include "RDP/RDPDrawable.hpp"
-
-enum {
-    META_FILE           = 1006,
-    TIMESTAMP           = 1008,
-    POINTER             = 1009,
-    LAST_IMAGE_CHUNK    = 0x1000,   // 4096
-    PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
-    SAVE_STATE          = 0x1002,   // 4098
-    RESET_CHUNK         = 0x1003,   // 4099
-
-    INVALID_CHUNK       = 0x8000
-};
+#include "wrm_label.hpp"
 
 class WRMChunk_Send
 {

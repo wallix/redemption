@@ -25,7 +25,7 @@
 #include <utility>
 
 #include "drawable.hpp"
-#include "caches/fontcache.hpp"
+#include "font.hpp"
 
 #include "RDPGraphicDevice.hpp"
 #include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -46,9 +46,11 @@
 #include "orders/RDPOrdersPrimaryPolygonSC.hpp"
 #include "orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "orders/RDPOrdersSecondaryGlyphCache.hpp"
 
 #include "pointer.hpp"
 #include "bitmapupdate.hpp"
+#include "caches/fontcache.hpp"
 #include "png.hpp"
 #include "text_metrics.hpp"
 

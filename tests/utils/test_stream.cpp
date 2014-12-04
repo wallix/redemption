@@ -29,7 +29,6 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
 #include "stream.hpp"
 #include "test_transport.hpp"

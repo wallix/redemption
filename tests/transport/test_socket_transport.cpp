@@ -24,27 +24,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
-
-#include <stdlib.h>
-#include <unistd.h>
 
 #include "socket_transport.hpp"
-#include "error.hpp"
-
-#include <unistd.h>
-#include <signal.h>
-#include <sys/un.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/tcp.h>
-
 #include "listen.hpp"
-#include "config.hpp"
-#include "ssl_calls.hpp"
-#include "wait_obj.hpp"
 #include "server.hpp"
 
 

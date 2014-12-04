@@ -22,8 +22,6 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_)
 #define REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_
 
-#include <vector>
-#include <algorithm>
 #include "widget.hpp"
 #include "keymap2.hpp"
 #include "region.hpp"

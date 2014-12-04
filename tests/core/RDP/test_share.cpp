@@ -27,10 +27,8 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "log.hpp"
 
 #include "stream.hpp"
-#include "RDP/x224.hpp"
 #include "RDP/share.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)

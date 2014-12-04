@@ -22,7 +22,6 @@
 #define REDEMPTION_TRANSPORT_BULK_COMPRESSION_TRANSPORT_HPP
 
 #include "transport.hpp"
-#include "RDP/mppc.hpp"
 #include "RDP/mppc_61.hpp"
 
 /*****************************

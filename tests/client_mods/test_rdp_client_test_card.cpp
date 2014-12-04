@@ -29,7 +29,6 @@
 
 #define LOGNULL
 
-#include "log.hpp"
 #include "error.hpp"
 #include "internal/test_card_mod.hpp"
 

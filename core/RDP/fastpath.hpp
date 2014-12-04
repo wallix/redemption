@@ -27,8 +27,8 @@
 
 #include "RDP/slowpath.hpp"
 
-#include "ssl_calls.hpp"
 #include "RDP/mppc.hpp"
+#include "ssl_calls.hpp"
 
 namespace FastPath {
 
@@ -237,7 +237,7 @@ namespace FastPath {
                 this->numEvents = stream.in_uint8();
             }
             return InStream(stream.array, stream.get_offset(), 0, stream.in_remain());
-        }()) 
+        }())
         {
             stream.in_skip_bytes(this->payload.size());
         }   // ClientInputEventPDU_Recv(Stream & stream)
@@ -781,7 +781,7 @@ namespace FastPath {
         }(this->fpOutputHeader))
         , secFlags((this->fpOutputHeader >> 6) & 3)
         , length(stream.in_2BUE())
-        , fipsInformation([&decrypt](){ 
+        , fipsInformation([&decrypt](){
             if (decrypt.encryptionMethod == ENCRYPTION_METHOD_FIPS){
                 TODO("RZ: we should treat fipsInformation ?");
                 LOG(LOG_ERR, "FIPS encryption not supported");
@@ -804,7 +804,7 @@ namespace FastPath {
                 decrypt.decrypt(stream.get_data() + stream.get_offset(), stream.in_remain());
             }
             return InStream(stream.array, stream.get_offset(), 0, stream.in_remain());
-        }()) 
+        }())
         // Body of constructor
         {
             stream.in_skip_bytes(this->payload.size());
@@ -1045,7 +1045,7 @@ namespace FastPath {
 //  |                            | processed first.                             |
 //  +----------------------------+----------------------------------------------+
 
-//  Instructions specifying how to set the compression flags can be found in 
+//  Instructions specifying how to set the compression flags can be found in
 // section 3.1.8.2.1.
 
 //  Possible compression types are as follows.

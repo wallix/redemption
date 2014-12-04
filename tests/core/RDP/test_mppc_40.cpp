@@ -25,15 +25,14 @@
 
 //#define LOGNULL
 #define LOGPRINT
-#include "log.hpp"
 
-#include "RDP/mppc.hpp"
+#include "RDP/mppc_40.hpp"
 
 BOOST_AUTO_TEST_CASE(TestRDP40BlukCompression4)
 {
     #include "../../fixtures/test_mppc_4.hpp"
 
-    rdp_mppc_40_enc * mppc_enc = new rdp_mppc_40_enc();
+    rdp_mppc_40_enc mppc_enc;
 
 
     BOOST_CHECK_EQUAL(sizeof(historyBuffer),     RDP_40_HIST_BUF_LEN);
@@ -43,55 +42,51 @@ BOOST_AUTO_TEST_CASE(TestRDP40BlukCompression4)
     BOOST_CHECK_EQUAL(sizeof(compressed_data),   18);
 
 
-    memcpy(mppc_enc->historyBuffer,           historyBuffer,    RDP_40_HIST_BUF_LEN);
-    memcpy(mppc_enc->outputBufferPlus,        outputBufferPlus, RDP_40_HIST_BUF_LEN + 64);
-    mppc_enc->historyOffset = 2974;
-    mppc_enc->bytes_in_opb  = 21;
-    mppc_enc->flags         = 0x20;
-    mppc_enc->flagsHold     = 0;
-    mppc_enc->first_pkt     = false;
-    memcpy(mppc_enc->hash_tab_mgr.hash_table, hash_table,       rdp_mppc_40_enc::hash_table_manager::get_table_size());
+    memcpy(mppc_enc.historyBuffer,           historyBuffer,    RDP_40_HIST_BUF_LEN);
+    memcpy(mppc_enc.outputBufferPlus,        outputBufferPlus, RDP_40_HIST_BUF_LEN + 64);
+    mppc_enc.historyOffset = 2974;
+    mppc_enc.bytes_in_opb  = 21;
+    mppc_enc.flags         = 0x20;
+    mppc_enc.flagsHold     = 0;
+    mppc_enc.first_pkt     = false;
+    memcpy(mppc_enc.hash_tab_mgr.hash_table, hash_table,       rdp_mppc_40_enc::hash_table_manager::get_table_size());
 
     uint8_t  compressionFlags;
     uint16_t datalen;
 
-    mppc_enc->compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen,
+    mppc_enc.compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen,
         rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
     int flags = PACKET_COMPRESSED;
 
     BOOST_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
     BOOST_CHECK_EQUAL(18,    datalen);
-    BOOST_CHECK_EQUAL(0,     memcmp( compressed_data, mppc_enc->outputBuffer
-                                   , mppc_enc->bytes_in_opb));
-
-    delete(mppc_enc);
+    BOOST_CHECK_EQUAL(0,     memcmp( compressed_data, mppc_enc.outputBuffer
+                                   , mppc_enc.bytes_in_opb));
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP50BlukDecompression6)
 {
     #include "../../fixtures/test_mppc_6.hpp"
 
-    rdp_mppc_40_dec * mppc_dec = new rdp_mppc_40_dec();
+    rdp_mppc_40_dec mppc_dec;
 
 
     BOOST_CHECK_EQUAL(sizeof(compressed_data),   2241);
     BOOST_CHECK_EQUAL(sizeof(uncompressed_data), 4312);
 
 
-    memcpy(mppc_dec->history_buf, historyBuffer, RDP_40_HIST_BUF_LEN);
-    mppc_dec->history_buf_end = mppc_dec->history_buf + 8191;
-    mppc_dec->history_ptr     = mppc_dec->history_buf + 4314;
+    memcpy(mppc_dec.history_buf, historyBuffer, RDP_40_HIST_BUF_LEN);
+    mppc_dec.history_buf_end = mppc_dec.history_buf + 8191;
+    mppc_dec.history_ptr     = mppc_dec.history_buf + 4314;
 
     uint8_t  compressionFlags = 0x60;
 
     const uint8_t * rdata;
     uint32_t        rlen;
 
-    mppc_dec->decompress(compressed_data, sizeof(compressed_data), compressionFlags, rdata, rlen);
+    mppc_dec.decompress(compressed_data, sizeof(compressed_data), compressionFlags, rdata, rlen);
 
     BOOST_CHECK_EQUAL(4312, rlen);
     BOOST_CHECK_EQUAL(0,   memcmp(uncompressed_data, rdata, rlen));
-
-    delete(mppc_dec);
 }

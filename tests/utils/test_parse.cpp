@@ -27,10 +27,8 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "log.hpp"
 
 #include "parse.hpp"
-#include <stdio.h>
 
 BOOST_AUTO_TEST_CASE(TestParse)
 {

@@ -27,7 +27,6 @@
 #include <string>
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "internal/copy_paste.hpp"
 #include "internal/widget2/edit.hpp"

@@ -25,7 +25,6 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
 #include "buffer/buffering_buf.hpp"
 #include "buffer/file_buf.hpp"

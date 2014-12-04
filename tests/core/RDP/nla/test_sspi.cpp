@@ -24,9 +24,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "log.hpp"
 #include "RDP/nla/sspi.hpp"
-#include "check_sig.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSecBuffer)
 {

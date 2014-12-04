@@ -38,12 +38,10 @@
 #include "RDP/nego.hpp"
 #include "RDP/mcs.hpp"
 #include "RDP/lic.hpp"
-#include "RDP/logon.hpp"
 #include "channel_list.hpp"
 #include "RDP/gcc.hpp"
 #include "RDP/sec.hpp"
 #include "colors.hpp"
-#include "RDP/capabilities.hpp"
 #include "RDP/fastpath.hpp"
 #include "RDP/slowpath.hpp"
 
@@ -70,11 +68,23 @@
 #include "out_file_transport.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
-#include "RDP/capabilities.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
 
 #include "RDP/compress_and_draw_bitmap_update.hpp"
+
+#include "RDP/capabilities/cap_bmpcache.hpp"
+#include "RDP/capabilities/offscreencache.hpp"
+#include "RDP/capabilities/bmpcache2.hpp"
+#include "RDP/capabilities/bitmapcachehostsupport.hpp"
+#include "RDP/capabilities/colcache.hpp"
+#include "RDP/capabilities/pointer.hpp"
+#include "RDP/capabilities/cap_share.hpp"
+#include "RDP/capabilities/cap_brushcache.hpp"
+#include "RDP/capabilities/input.hpp"
+#include "RDP/capabilities/multifragmentupdate.hpp"
+#include "RDP/capabilities/compdesk.hpp"
+#include "RDP/capabilities/cap_font.hpp"
 
 #include "front_api.hpp"
 #include "activity_checker.hpp"
@@ -84,8 +94,12 @@
 
 #include "authorization_channels.hpp"
 #include "text_metrics.hpp"
-#include "splitter.hpp"
 #include "keymap2.hpp"
+
+#include "RDP/mppc_40.hpp"
+#include "RDP/mppc_50.hpp"
+#include "RDP/mppc_60.hpp"
+#include "RDP/mppc_61.hpp"
 
 class Front : public FrontAPI, public ActivityChecker{
     using FrontAPI::draw;

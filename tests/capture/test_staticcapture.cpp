@@ -29,6 +29,8 @@
 
 #include "out_filename_sequence_transport.hpp"
 #include "staticcapture.hpp"
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "RDP/RDPDrawable.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestOneRedScreen)

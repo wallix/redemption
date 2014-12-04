@@ -22,6 +22,7 @@
 
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET2_COLUMNLAYOUT_HPP_
 #define _REDEMPTION_MOD_INTERNAL_WIDGET2_COLUMNLAYOUT_HPP_
+
 #include "widget.hpp"
 #include "layout.hpp"
 

@@ -25,6 +25,10 @@
 #include "bmpcache.hpp"
 #include "transport.hpp"
 
+namespace RDP {
+struct BitmapCachePersistentListEntry;
+}
+
 class BmpCachePersister
 {
 private:

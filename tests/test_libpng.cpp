@@ -27,15 +27,12 @@
 #define BOOST_TEST_MODULE TestLibPng
 #include <boost/test/auto_unit_test.hpp>
 
-
 #define LOGNULL
-#include "log.hpp"
 
-#include <errno.h>
-#include <algorithm>
+#include <unistd.h>
+#include <stdio.h>
 
 #include <png.h>
-#include <stdint.h>
 
 BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
 {

@@ -21,7 +21,6 @@
 #ifndef _REDEMPTION_CORE_RDP_NLA_KERBEROS_CREDENTIALS_HPP_
 #define _REDEMPTION_CORE_RDP_NLA_KERBEROS_CREDENTIALS_HPP_
 
-#include <stdio.h>
 #include <cstring>
 #include <krb5.h>
 

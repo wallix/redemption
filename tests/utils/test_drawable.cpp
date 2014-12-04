@@ -29,7 +29,6 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
 #include "check_sig.hpp"
 #include "png.hpp"

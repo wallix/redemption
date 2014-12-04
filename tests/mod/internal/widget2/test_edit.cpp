@@ -25,18 +25,11 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "internal/widget2/edit.hpp"
 #include "internal/widget2/screen.hpp"
-#include "internal/widget2/composite.hpp"
-
-// #include "internal/widget2/widget_composite.hpp"
-#include "png.hpp"
-#include "ssl_calls.hpp"
-#include "check_sig.hpp"
-#include "text_metrics.hpp"
 #include "fake_draw.hpp"
+#include "check_sig.hpp"
 
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH

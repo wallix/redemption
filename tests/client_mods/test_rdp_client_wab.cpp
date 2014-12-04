@@ -31,7 +31,6 @@
 #include "check_sig.hpp"
 
 #include "test_transport.hpp"
-#include "front_api.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
 

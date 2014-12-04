@@ -25,10 +25,8 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "log.hpp"
 
 #include "ssl_calls.hpp"
-#include "genrandom.hpp"
 
 // uint8_t data[512];
 

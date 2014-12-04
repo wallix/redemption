@@ -21,6 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_AUTO_RECONNECT_HPP_
 #define _REDEMPTION_CORE_RDP_AUTO_RECONNECT_HPP_
 
+#include "stream.hpp"
+
 namespace RDP {
 
 

@@ -26,7 +26,6 @@
 #include <algorithm>
 
 #include "bitmap.hpp"
-#include "RDP/PersistentKeyListPDU.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
 using std::size_t;

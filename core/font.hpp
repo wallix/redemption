@@ -30,7 +30,6 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
-#include <unistd.h>
 #include <limits.h>
 #include "make_unique.hpp"
 #include <bits/posix1_lim.h>

@@ -27,11 +27,9 @@
 
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
-#include "log.hpp"
+#define LOGNULL
 
 #include "stream.hpp"
-#include "transport.hpp"
 #include "test_transport.hpp"
 #include "RDP/sec.hpp"
 #include "RDP/x224.hpp"

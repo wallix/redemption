@@ -24,6 +24,7 @@
 #include "log.hpp"
 #include "widget.hpp"
 #include "keymap2.hpp"
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 static const uint16_t GRID_NB_COLUMNS_MAX = 10;
 static const uint16_t GRID_NB_ROWS_MAX    = 50;

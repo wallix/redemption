@@ -50,7 +50,7 @@
 #include "internal/widget_test_mod.hpp"
 
 #include "mod_osd.hpp"
-#include "noncopyable.hpp"
+#include "mm_api.hpp"
 
 #define STRMODULE_LOGIN            "login"
 #define STRMODULE_SELECTOR         "selector"
@@ -96,44 +96,6 @@ enum {
     MODULE_TRANSITORY,
     MODULE_AUTH,
     MODULE_CLI
-};
-
-class MMApi
-{
-public:
-
-    mod_api * mod;
-
-    bool last_module;
-    bool connected;
-
-    MMApi() : mod(NULL)
-        , last_module(false)
-        , connected(false) {}
-    virtual ~MMApi() {}
-    virtual void remove_mod() = 0;
-    virtual void new_mod(int target_module, time_t now, auth_api * acl) = 0;
-    virtual int next_module() = 0;
-    // virtual int get_mod_from_protocol() = 0;
-    virtual void invoke_close_box(const char * auth_error_message,
-                                  BackEvent_t & signal, time_t now) {
-        this->last_module = true;
-    };
-    virtual bool is_last_module() {
-        return this->last_module;
-    }
-    virtual bool is_connected() {
-        return this->connected;
-    }
-    virtual bool is_up_and_running() {
-        bool res = false;
-        if (this->mod) {
-            res = this->mod->is_up_and_running();
-        }
-        return res;
-    }
-    virtual void record(auth_api * acl) {}
-    virtual void check_module() { }
 };
 
 class MMIni : public MMApi {

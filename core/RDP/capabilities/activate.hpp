@@ -25,6 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_ACTIVATE_HPP_
 
 #include "common.hpp"
+#include "stream.hpp"
 
 // 2.2.7.2.3 Window Activation Capability Set
 //(TS_WINDOWACTIVATION_CAPABILITYSET)

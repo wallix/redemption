@@ -25,13 +25,8 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
-
-#include <stdlib.h>
-#include <unistd.h>
 
 #include "count_transport.hpp"
-#include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCountTransport)
 {

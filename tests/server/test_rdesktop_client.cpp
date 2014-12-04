@@ -29,11 +29,6 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
-
-#include <errno.h>
-#include <algorithm>
-#include <sys/un.h>
 
 #undef SHARE_PATH
 #define SHARE_PATH "./tests/fixtures"
@@ -41,9 +36,11 @@
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
 
-#include "listen.hpp"
-#include "session.hpp"
+#include "internal/test_card_mod.hpp"
 #include "test_transport.hpp"
+#include "null/null.hpp"
+#include "front.hpp"
+#include "config.hpp"
 
 BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 {
