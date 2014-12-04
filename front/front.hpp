@@ -456,7 +456,7 @@ public:
                 {
                     case GlyphCache::GLYPH_ADDED_TO_CACHE:
                     {
-                        RDPGlyphCache cmd(f, 1, c,
+                        RDPGlyphCache cmd(f, /*1, */c,
                             font_item.offset,
                             font_item.baseline,
                             font_item.width,
@@ -4206,7 +4206,7 @@ public:
         if (this->glyph_cache.add_glyph(std::move(font_item), cmd.cacheId, cacheidx) ==
             GlyphCache::GLYPH_ADDED_TO_CACHE)
         {
-            RDPGlyphCache cmd2(cmd.cacheId, 1, cacheidx,
+            RDPGlyphCache cmd2(cmd.cacheId, /*1, */cacheidx,
                             cmd.glyphData_x,
                             cmd.glyphData_y,
                             cmd.glyphData_cx,
