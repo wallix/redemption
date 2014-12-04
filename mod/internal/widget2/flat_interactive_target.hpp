@@ -128,18 +128,22 @@ public:
 
         // Center bloc positionning
         // Device, Login and Password boxes
-        int cbloc_w = std::max<int>(this->caption_label.rect.cx,
-                                    this->device_label.rect.cx +
-                                    device_show->rect.cx + 20);
-        cbloc_w = std::max<int>(cbloc_w,
-                                this->login_label.rect.cx + login_show->rect.cx + 20);
-        cbloc_w = std::max<int>(cbloc_w,
-                                this->password_label.rect.cx +
-                                this->password_edit.rect.cx + 20);
         int margin_w = std::max<int>(this->device_label.rect.cx,
                                      this->login_label.rect.cx);
         margin_w = std::max<int>(margin_w,
                                  this->password_label.rect.cx);
+
+        int cbloc_w = std::max<int>(this->caption_label.rect.cx,
+                                    margin_w + device_show->rect.cx + 20);
+        cbloc_w = std::max<int>(cbloc_w,
+                                margin_w + login_show->rect.cx + 20);
+        cbloc_w = std::max<int>(cbloc_w,
+                                margin_w + this->password_edit.rect.cx + 20);
+
+        if (ask_device) {
+            cbloc_w = std::max<int>(cbloc_w,
+                                    margin_w + this->device.rect.cx + 20);
+        }
 
         int extra_h = 0;
         if (password_show) {
