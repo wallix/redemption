@@ -1390,13 +1390,18 @@ class Sesman():
             self.proxy_conx.close()
         except Exception:
             pass
+
     def check_hostname_in_subnet(self, host, subnet):
         try:
             dnsname, alias, ip_list = socket.gethostbyaddr(host)
             Logger().info("Resolve DNS Hostname %s -> %s" % (host,
                                                              ip_list))
             host_ip = ip_list[0] if ip_list else None
-        # except socket.error:
+        except socket.error:
+            try:
+                host_ip = socket.gethostbyname(host)
+            except Exception, e:
+                return False
         except Exception, e:
             return False
         return engine.is_device_in_subnet(host_ip, subnet)
