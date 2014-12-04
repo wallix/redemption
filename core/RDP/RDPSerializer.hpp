@@ -88,9 +88,9 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-#include "RDP/RDPGraphicDevice.hpp"
-
 #include "transport.hpp"
+
+#include "RDP/RDPGraphicDevice.hpp"
 
 #include "orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "orders/RDPOrdersPrimaryMultiDstBlt.hpp"
@@ -119,8 +119,6 @@
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/pointercache.hpp"
 #include "stream.hpp"
-#include "rect.hpp"
-#include "colors.hpp"
 
 struct RDPSerializer : public RDPGraphicDevice
 {
@@ -175,7 +173,8 @@ protected:
     size_t order_count;
     size_t bitmap_count;
 
-    BmpCache & bmp_cache;
+    BmpCache     & bmp_cache;
+    //GlyphCache   & glyph_cache;
     PointerCache & pointer_cache;
 
     const uint32_t verbose;
@@ -186,6 +185,7 @@ public:
                  , Stream & stream_bitmaps
                  , const uint8_t bpp
                  , BmpCache & bmp_cache
+//                 , GlyphCache & glyph_cache
                  , PointerCache & pointer_cache
                  , const int bitmap_cache_version
                  , const int use_bitmap_comp
@@ -222,6 +222,7 @@ public:
     , order_count(0)
     , bitmap_count(0)
     , bmp_cache(bmp_cache)
+//    , glyph_cache(glyph_cache)
     , pointer_cache(pointer_cache)
     , verbose(verbose) {}
 
@@ -233,6 +234,8 @@ protected:
 
     virtual void send_pointer(int cache_idx, const Pointer & cursor) = 0;
     virtual void set_pointer(int cache_idx) = 0;
+
+//    virtual void send_glyph(uint8_t cacheId, uint8_t cache_idx, uint8_t cGlyphs, )
 
 public:
     /*****************************************************************************/

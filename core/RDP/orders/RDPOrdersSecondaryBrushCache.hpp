@@ -137,34 +137,33 @@
 // 24 bpp : 3 bytes RGB color triplet (1 byte per component).
 
 enum {
-    BMF_1BPP = 0x01,
-    BMF_8BPP = 0x03,
-    BMF_16BPP = 0x04,
-    BMF_24BPP = 0x05
+      BMF_1BPP  = 0x01
+    , BMF_8BPP  = 0x03
+    , BMF_16BPP = 0x04
+    , BMF_24BPP = 0x05
 };
 
-
 class RDPBrushCache {
-
-    public:
-    uint8_t cacheIndex;
-    uint8_t bpp;
-    uint8_t width;
-    uint8_t height;
-    uint8_t type;
-    uint8_t size;
+public:
+    uint8_t   cacheIndex;
+    uint8_t   bpp;
+    uint8_t   width;
+    uint8_t   height;
+    uint8_t   type;
+    uint8_t   size;
     uint8_t * data;
 
-    RDPBrushCache(uint8_t cacheIndex, uint8_t bpp, uint8_t width, uint8_t height, uint8_t type, uint8_t size, const uint8_t * pattern)
-        : cacheIndex(cacheIndex), bpp(bpp), width(width), height(height), type(type), size(size)
+    RDPBrushCache( uint8_t cacheIndex, uint8_t bpp, uint8_t width, uint8_t height, uint8_t type
+                 , uint8_t size, const uint8_t * pattern)
+    : cacheIndex(cacheIndex), bpp(bpp), width(width), height(height), type(type), size(size)
     {
-        this->data = (uint8_t*)malloc(this->size);
+        this->data = (uint8_t *)malloc(this->size);
         memcpy(this->data, pattern, this->size);
     }
 
     ~RDPBrushCache()
     {
-        if (this->data){
+        if (this->data) {
             free(this->data);
         }
     }
@@ -194,27 +193,34 @@ class RDPBrushCache {
         using namespace RDP;
 
         this->cacheIndex = stream.in_uint8();
-        this->bpp = stream.in_uint8();
-        this->width = stream.in_uint8();
-        this->height = stream.in_uint8();
-        this->type = stream.in_uint8();
-        uint8_t size = stream.in_uint8();
+        this->bpp        = stream.in_uint8();
+        this->width      = stream.in_uint8();
+        this->height     = stream.in_uint8();
+        this->type       = stream.in_uint8();
+        uint8_t size     = stream.in_uint8();
         if (this->size < size) {
             free(this->data);
-            this->data = (uint8_t *)malloc(size);
+            this->data   = (uint8_t *)malloc(size);
         }
-        this->size = size;
+        this->size       = size;
         memcpy(this->data, stream.in_uint8p(this->size), this->size);
     }
 
     bool operator==(const RDPBrushCache & other) const {
-        return true;
+        return (  (this->cacheIndex == other.cacheIndex)
+               && (this->bpp        == other.bpp       )
+               && (this->width      == other.width     )
+               && (this->height     == other.height    )
+               && (this->type       == other.type      )
+               && (this->size       == other.size      )
+               && !memcmp(this->data, other.data, this->size)
+               );
     }
 
     size_t str(char * buffer, size_t sz) const
     {
         size_t lg  = snprintf(buffer, sz, "RDPBrushCache()\n");
-        if (lg >= sz){
+        if (lg >= sz) {
             return sz;
         }
         return lg;
@@ -233,8 +239,6 @@ class RDPBrushCache {
         this->str(buffer, 1024);
         printf("%s", buffer);
     }
-
 };
-
 
 #endif
