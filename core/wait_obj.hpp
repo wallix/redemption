@@ -30,7 +30,7 @@
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include "difftimeval.hpp"
-#include "socket_transport.hpp"
+#include "noncopyable.hpp"
 
 enum BackEvent_t {
     BACK_EVENT_NONE = 0,
@@ -40,74 +40,27 @@ enum BackEvent_t {
 };
 
 
-class wait_obj
+class wait_obj : noncopyable
 {
 public:
-    SocketTransport * st;
-    bool              set_state;
-    BackEvent_t       signal;
-    struct timeval    trigger_time;
-    bool              object_and_time;
-    bool              waked_up_by_time;
+    bool        set_state;
+    BackEvent_t signal;
+    timeval     trigger_time;
+    bool        object_and_time;
+    bool        waked_up_by_time;
 
-    wait_obj(SocketTransport * socktrans, bool object_and_time = false)
-    : st(socktrans)
-    , set_state(false)
+    wait_obj()
+    : set_state(false)
     , signal(BACK_EVENT_NONE)
-    , object_and_time(object_and_time)
+    , object_and_time(false)
     , waked_up_by_time(false)
     {
         this->trigger_time = tvtime();
     }
 
-    ~wait_obj()
-    {
-        if ((this->st != NULL) && (this->st->sck > 0)){
-            close(this->st->sck);
-        }
-    }
-
-    void add_to_fd_set(fd_set & rfds, unsigned & max, timeval & timeout)
-    {
-        if ((this->st != NULL) && (this->st->sck > 0)){
-            FD_SET(this->st->sck, &rfds);
-            max = ((unsigned)this->st->sck > max)?this->st->sck:max;
-        }
-        if (((this->st == NULL) || (this->st->sck <= 0) || this->object_and_time) && this->set_state) {
-            struct timeval now;
-            now = tvtime();
-            timeval remain = how_long_to_wait(this->trigger_time, now);
-            if (lessthantimeval(remain, timeout)){
-                timeout = remain;
-            }
-        }
-    }
-
     void reset()
     {
         this->set_state = false;
-    }
-
-    bool is_set(fd_set & rfds)
-    {
-        this->waked_up_by_time = false;
-
-        if ((this->st != NULL) && (this->st->sck > 0)) {
-            bool res = FD_ISSET(this->st->sck, &rfds);
-
-            if (res || !this->object_and_time) {
-                return res;
-            }
-        }
-
-        if (this->set_state) {
-            if (tvtime() >= this->trigger_time) {
-                this->waked_up_by_time = true;
-                return true;
-            }
-        }
-
-        return false;
     }
 
     // Idle time in microsecond
@@ -138,30 +91,6 @@ public:
         else {
             this->set(idle_usec);
         }
-    }
-
-    bool can_recv()
-    {
-        fd_set rfds;
-        struct timeval time;
-        int rv = false;
-
-        time.tv_sec = 0;
-        time.tv_usec = 0;
-        FD_ZERO(&rfds);
-        if ((this->st != NULL) && (this->st->sck > 0)) {
-            FD_SET(this->st->sck, &rfds);
-            rv = select(this->st->sck + 1, &rfds, 0, 0, &time); /* don't wait */
-            if (rv > 0) {
-                int opt;
-                unsigned int opt_len = sizeof(opt);
-
-                if (getsockopt(this->st->sck, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&opt), &opt_len) == 0) {
-                    rv = (opt == 0);
-                }
-            }
-        }
-        return rv;
     }
 };
 

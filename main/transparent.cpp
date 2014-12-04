@@ -34,9 +34,10 @@
 #include "session.hpp"
 #include "socket_transport.hpp"
 #include "out_file_transport.hpp"
+#include "socket_transport_utility.hpp"
 #include "internal/transparent_replay_mod.hpp"
 
-void run_mod(mod_api & mod, Front & front, wait_obj & front_event);
+void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front);
 
 int main(int argc, char * argv[]) {
     openlog("transparent", LOG_CONS | LOG_PERROR, LOG_USER);
@@ -183,7 +184,7 @@ int main(int argc, char * argv[]) {
     }
     SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
                                , ini.debug.front, 0);
-    wait_obj front_event(&front_trans);
+    wait_obj front_event;
 
     LCGRandom gen(0);
 
@@ -221,7 +222,7 @@ int main(int argc, char * argv[]) {
             TransparentReplayMod mod(front, play_filename.c_str(),
                 front.client_info.width, front.client_info.height, NULL);
 
-            run_mod(mod, front, front_event);
+            run_mod(mod, front, front_event, nullptr, &front_trans);
         }
         else {
             OutFileTransport * record_oft = NULL;
@@ -292,9 +293,8 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.deny_channels                       = &(ini.mod_rdp.deny_channels.get());
 
             mod_rdp mod(&mod_trans, front, client_info, gen, mod_rdp_params);
-            mod.get_event().st = &mod_trans;
 
-            run_mod(mod, front, front_event);
+            run_mod(mod, front, front_event, &mod_trans, &front_trans);
 
             if (client_sck != -1) {
                 shutdown(client_sck, 2);
@@ -335,7 +335,7 @@ int main(int argc, char * argv[]) {
     return 0;
 }
 
-void run_mod(mod_api & mod, Front & front, wait_obj & front_event) {
+void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front) {
     struct      timeval time_mark = { 0, 50000 };
     bool        run_session       = true;
     BackEvent_t mod_event_signal  = BACK_EVENT_NONE;
@@ -350,10 +350,10 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event) {
             FD_ZERO(&wfds);
             struct timeval timeout = time_mark;
 
-            front_event.add_to_fd_set(rfds, max, timeout);
-            mod.get_event().add_to_fd_set(rfds, max, timeout);
+            add_to_fd_set(front_event, st_front, rfds, max, timeout);
+            add_to_fd_set(mod.get_event(), st_mod, rfds, max, timeout);
 
-            if (mod.get_event().is_set(rfds)) {
+            if (is_set(mod.get_event(), st_mod, rfds)) {
                 timeout.tv_sec  = 0;
                 timeout.tv_usec = 0;
             }
@@ -369,7 +369,7 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event) {
                 break;
             }
 
-            if (front_event.is_set(rfds)) {
+            if (is_set(front_event, st_front, rfds)) {
                 try {
                     front.incoming(mod);
                 }
@@ -380,7 +380,7 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event) {
             }
 
             if (front.up_and_running) {
-                if (mod.get_event().is_set(rfds)) {
+                if (is_set(mod.get_event(), st_mod, rfds)) {
                     mod.get_event().reset();
                     mod.draw_event(time(NULL));
                     if (mod.get_event().signal != BACK_EVENT_NONE) {

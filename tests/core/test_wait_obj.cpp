@@ -27,10 +27,11 @@
 #define LOGNULL
 #include "log.hpp"
 #include "wait_obj.hpp"
+#include "socket_transport_utility.hpp"
 
 BOOST_AUTO_TEST_CASE(Testwait_obj)
 {
-    wait_obj nonsocketobj(NULL);
+    wait_obj nonsocketobj;
     unsigned max = 0;
 
     // nonsocketobj never interact with system fd_set and max;
@@ -44,40 +45,40 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
 
 
     // initialy, wait obj is not set
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, false);
 
     nonsocketobj.reset();
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, false);
 
     // add to fd set does not change anything on
     // timeout if the wait obj is not set
-    nonsocketobj.add_to_fd_set(rfds, max, timeout);
+    add_to_fd_set(nonsocketobj, nullptr, rfds, max, timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 2L);
     BOOST_CHECK_EQUAL(timeout.tv_usec, 0L);
 
 
     // set wait obj (no timer)
     nonsocketobj.set();
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, true);
 
     // adding it to fd set change the time out
-    nonsocketobj.add_to_fd_set(rfds, max, timeout);
+    add_to_fd_set(nonsocketobj, nullptr, rfds, max, timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 0L);
     BOOST_CHECK_EQUAL(timeout.tv_usec, 0L);
     timeout.tv_sec = 2L;
 
     // reset
     nonsocketobj.reset();
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, false);
 
     // set a waitobj with a timer will set it
     // after the timeout is triggered
     nonsocketobj.set(500000);
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, false);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 2L);
     BOOST_CHECK_EQUAL(timeout.tv_usec, 0);
@@ -85,7 +86,7 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
     // adding it to fd set while it has a timer to be set
     // will change de timeout to the remaining time to be set
     // if the timeout is longer than this remaining time.
-    nonsocketobj.add_to_fd_set(rfds,max,timeout);
+    add_to_fd_set(nonsocketobj, nullptr, rfds,max,timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 0L);
     BOOST_CHECK_EQUAL((timeout.tv_usec <= 500000L) &&
                       (timeout.tv_usec > 200000L), true);
@@ -93,15 +94,15 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
     timeout.tv_sec = 2L;
     // adding two non socket waitobj to fd set
     // setting them with differents timers.
-    wait_obj nonsocketobj2(NULL);
+    wait_obj nonsocketobj2;
     nonsocketobj.set(1500000);
     nonsocketobj2.set(300000);
 
-    nonsocketobj.add_to_fd_set(rfds,max,timeout);
+    add_to_fd_set(nonsocketobj, nullptr, rfds,max,timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 1L);
     BOOST_CHECK_EQUAL((timeout.tv_usec <= 500000L) &&
                       (timeout.tv_usec > 0L), true);
-    nonsocketobj2.add_to_fd_set(rfds,max,timeout);
+    add_to_fd_set(nonsocketobj2, nullptr, rfds,max,timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 0L);
     BOOST_CHECK_EQUAL((timeout.tv_usec <= 300000L) &&
                       (timeout.tv_usec > 0L), true);
@@ -111,13 +112,13 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
     // only the last timer will be considered
     timeout.tv_sec = 2L;
     nonsocketobj.set(300000);
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, false);
     nonsocketobj.set(1400000);
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, false);
 
-    nonsocketobj.add_to_fd_set(rfds,max,timeout);
+    add_to_fd_set(nonsocketobj, nullptr, rfds,max,timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 1L);
     BOOST_CHECK_EQUAL((timeout.tv_usec <= 500000L) &&
                       (timeout.tv_usec > 200000L), true);
@@ -130,13 +131,13 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
 
     nonsocketobj.reset();
     nonsocketobj.update(300000);
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, false);
     nonsocketobj.update(1400000);
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, false);
 
-    nonsocketobj.add_to_fd_set(rfds,max,timeout);
+    add_to_fd_set(nonsocketobj, nullptr, rfds,max,timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 0L);
     BOOST_CHECK_EQUAL((timeout.tv_usec <= 300000L) &&
                       (timeout.tv_usec > 0L), true);
@@ -147,14 +148,14 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
 
     nonsocketobj.reset();
     nonsocketobj.update(1400000);
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, false);
     nonsocketobj.update(800000);
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, false);
 
 
-    nonsocketobj.add_to_fd_set(rfds,max,timeout);
+    add_to_fd_set(nonsocketobj, nullptr, rfds,max,timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 0L);
     BOOST_CHECK_EQUAL((timeout.tv_usec <= 800000L) &&
                       (timeout.tv_usec > 500000L), true);
@@ -165,14 +166,14 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
 
     nonsocketobj.reset();
     nonsocketobj.update(1400000);
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, false);
     nonsocketobj.update(2800000);
-    res = nonsocketobj.is_set(rfds);
+    res = is_set(nonsocketobj, nullptr, rfds);
     BOOST_CHECK_EQUAL(res, false);
 
 
-    nonsocketobj.add_to_fd_set(rfds,max,timeout);
+    add_to_fd_set(nonsocketobj, nullptr, rfds,max,timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 1L);
     BOOST_CHECK_EQUAL((timeout.tv_usec <= 400000L) &&
                       (timeout.tv_usec > 100000L), true);

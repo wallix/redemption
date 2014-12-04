@@ -412,7 +412,7 @@ public:
                 cache_id, cache_idx, (in_wait_list ? "true" : "false"));
         }
 
-        if ((res >> 24) == BITMAP_ADDED_TO_CACHE) {
+        if ((res >> 24) == BmpCache::ADDED_TO_CACHE) {
             this->emit_bmp_cache(cache_id, cache_idx, in_wait_list);
         }
         else if ((this->bmp_cache.owner == BmpCache::Recorder) && !this->bmp_cache.is_cached(cache_id, cache_idx)) {
