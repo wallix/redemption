@@ -27,7 +27,8 @@
 #include "edit.hpp"
 #include "password.hpp"
 #include "flat_button.hpp"
-#include <keymap2.hpp>
+#include "keymap2.hpp"
+#include "colors.hpp"
 
 class WidgetEditValid : public Widget2 {
 public:
