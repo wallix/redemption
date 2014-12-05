@@ -370,7 +370,6 @@ class Sesman():
             interactive_data = {}
             if not extkv[u'target_password']:
                 interactive_data[u'target_password'] = MAGICASK
-                interactive_data[u'target_login'] = extkv.get(u'target_login')
             if (extkv.get(u'target_login') == GENERICLOGIN or
                 not extkv.get(u'target_login')):
                 interactive_data[u'target_password'] = MAGICASK
@@ -391,6 +390,8 @@ class Sesman():
                     interactive_data[u'target_device'] = kv.get(u'target_device') if self.target_context else self.shared.get(u'target_device')
                 if not interactive_data.get(u'target_password'):
                     interactive_data[u'target_password'] = ''
+                if not interactive_data.get(u'target_login'):
+                    interactive_data[u'target_login'] = extkv.get(u'target_login')
                 _status, _error = self.interactive_target(interactive_data)
                 if _status:
                     if interactive_data.get(u'target_password') == MAGICASK:
