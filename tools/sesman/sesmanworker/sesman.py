@@ -63,6 +63,9 @@ def mdecode(item):
         pass
     return item
 
+def truncat_string(item, maxsize=20):
+    return (item[:maxsize] + '..') if len(item) > maxsize else item
+
 class AuthentifierSocketClosed(Exception):
     pass
 
@@ -355,6 +358,60 @@ class Sesman():
         if self.shared.get(u'display_message') != u'True':
             _status, _error = False, TR(u'Connection closed by client')
         return _status, _error
+
+
+    def complete_target_info(self, kv):
+        keylist = [ u'target_password', u'target_login', u'target_host' ]
+        extkv = dict((x, kv.get(x)) for x in keylist if kv.get(x) is not None)
+        tries = 3
+        _status, _error = None, None
+        while (tries > 0) and (_status is None) :
+            tries -= 1
+            interactive_data = {}
+            if not extkv[u'target_password']:
+                interactive_data[u'target_password'] = MAGICASK
+                interactive_data[u'target_login'] = extkv.get(u'target_login')
+            if (extkv.get(u'target_login') == GENERICLOGIN or
+                not extkv.get(u'target_login')):
+                interactive_data[u'target_password'] = MAGICASK
+                interactive_data[u'target_login'] = MAGICASK
+            target_subnet = None
+            if '/' in extkv.get(u'target_host'): # target_host is a subnet
+                target_subnet = extkv.get(u'target_host')
+                interactive_data[u'target_host'] = MAGICASK
+                if _error:
+                    host_note = TR("error %s") % _error
+                else:
+                    host_note = TR(u"in_subnet %s") % target_subnet
+                interactive_data[u'target_device'] = host_note
+            if interactive_data:
+                Logger().info(u"Interactive Target Info asking")
+                if not target_subnet:
+                    interactive_data[u'target_host'] = extkv.get(u'target_host')
+                    interactive_data[u'target_device'] = kv.get(u'target_device') if self.target_context else self.shared.get(u'target_device')
+                if not interactive_data.get(u'target_password'):
+                    interactive_data[u'target_password'] = ''
+                _status, _error = self.interactive_target(interactive_data)
+                if _status:
+                    if interactive_data.get(u'target_password') == MAGICASK:
+                        extkv[u'target_password'] = self.shared.get(u'target_password')
+                    if interactive_data.get(u'target_login') == MAGICASK:
+                        extkv[u'target_login'] = self.shared.get(u'target_login')
+                    if interactive_data.get(u'target_host') == MAGICASK:
+                        if self.check_hostname_in_subnet(self.shared.get(u'target_host'),
+                                                         target_subnet):
+                            extkv[u'target_host'] = self.shared.get(u'target_host')
+                            extkv[u'target_device'] = self.shared.get(u'target_host')
+                        else:
+                            extkv[u'target_host'] = target_subnet
+                            _status = None
+                            _error = TR("no_match_subnet %s %s") % (
+                                truncat_string(self.shared.get(u'target_host')),
+                                target_subnet)
+            else:
+                _status, _error = True, "OK"
+        return extkv, _status, _error
+
 
     def interactive_close(self, target, message):
         data_to_send = { u'error_message'  : message
@@ -1118,50 +1175,8 @@ class Sesman():
                         target_password = self.engine.get_target_password(physical_target)
 
                     kv[u'target_password'] = target_password
-                    ###########
-                    # BEGIN INTERACTIVE TARGET INFO
-                    ##########
-                    interactive_data = {}
-                    if not target_password:
-                        interactive_data[u'target_password'] = MAGICASK
-                        interactive_data[u'target_login'] = kv.get(u'target_login')
-                    if kv.get(u'target_login') == GENERICLOGIN:
-                        interactive_data[u'target_password'] = MAGICASK
-                        interactive_data[u'target_login'] = MAGICASK
-                    target_subnet = None
-                    if '/' in kv.get(u'target_host'): # target_host is a subnet
-                        target_subnet = kv.get(u'target_host')
-                        interactive_data[u'target_host'] = MAGICASK
-                        interactive_data[u'target_device'] = TR(u"in_subnet %s") % target_subnet
-                    if interactive_data:
-                        Logger().info(u"Interactive Target Info asking")
-                        if not target_subnet:
-                            interactive_data[u'target_host'] = kv.get(u'target_host')
-                            interactive_data[u'target_device'] = kv.get(u'target_device') if self.target_context else self.shared.get(u'target_device')
-                        if not interactive_data.get(u'target_password'):
-                            interactive_data[u'target_password'] = ''
-                        _status, _error = self.interactive_target(interactive_data)
-                        if _status:
-                            if interactive_data.get(u'target_password') == MAGICASK:
-                                kv[u'target_password'] = self.shared.get(u'target_password')
-                            if interactive_data.get(u'target_login') == MAGICASK:
-                                kv[u'target_login'] = self.shared.get(u'target_login')
-                            if interactive_data.get(u'target_host') == MAGICASK:
-                                if self.check_hostname_in_subnet(self.shared.get(u'target_host'),
-                                                                 target_subnet):
-                                    kv[u'target_host'] = self.shared.get(u'target_host')
-                                    kv[u'target_device'] = self.shared.get(u'target_host')
-                                else:
-                                    _status = False
-                                    _error = TR("no_match_subnet %s %s") % (
-                                        self.shared.get(u'target_host'),
-                                        target_subnet)
-                    ###########
-                    # END INTERACTIVE TARGET INFO
-                    ##########
-
-                    # if not _status:
-                    #     break
+                    extra_kv, _status, _error = self.complete_target_info(kv)
+                    kv.update(extra_kv)
 
                     if self.target_context:
                         self._physical_target_device = self.target_context.host

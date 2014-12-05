@@ -144,6 +144,7 @@ class SesmanConfig(object):
             , u'passthrough_auth_failed_wab %s' : u"Echec de l'authentification passthrough pour l'utilisateur %s."
             , u'in_subnet %s'           : u"dans le sous-réseau %s."
             , u'no_match_subnet %s %s'  : u"%s n'appartient pas au sous-réseau %s."
+            , u'error %s'               : u'Erreur: %s'
             }
         , u'en':
             { u'login'                  : u"Login"
@@ -221,6 +222,7 @@ class SesmanConfig(object):
             , u'passthrough_auth_failed_wab %s' : u'Passthrough authentication failed for user %s.'
             , u'in_subnet %s'           : u"in %s subnet."
             , u'no_match_subnet %s %s'  : u"%s not in %s subnet."
+            , u'error %s'               : u'Error: %s'
             }
         }
 
