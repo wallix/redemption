@@ -24,9 +24,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 #include "RDP/nla/nla.hpp"
-#include "check_sig.hpp"
 
 #include "test_transport.hpp"
 

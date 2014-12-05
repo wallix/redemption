@@ -28,10 +28,7 @@
 #define BOOST_TEST_MODULE TestKeymap
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
 #define LOGNULL
-
-#include <stdint.h>
 
 #include "stream.hpp"
 #include "keymap2.hpp"

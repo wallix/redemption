@@ -23,7 +23,7 @@
 
 #include "noncopyable.hpp"
 
-#include "stream.hpp"
+class Stream;
 
 struct RDPCaptureDevice : noncopyable {
     virtual void set_row(size_t rownum, const uint8_t * data) {}

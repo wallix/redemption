@@ -22,6 +22,7 @@
 
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET2_LAYOUT_HPP_
 #define _REDEMPTION_MOD_INTERNAL_WIDGET2_LAYOUT_HPP_
+
 #include "widget.hpp"
 
 static const size_t LAYOUT_SIZE_MAX = 50;

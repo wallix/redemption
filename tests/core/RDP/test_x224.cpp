@@ -27,12 +27,8 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
-#include "stream.hpp"
-#include "transport.hpp"
 #include "test_transport.hpp"
 #include "RDP/x224.hpp"
-#include "config.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
 {
@@ -51,12 +47,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
     Array array;
     uint8_t * end = array.get_data();
     X224::RecvFactory fac_x224(t, &end, array.size());
-    
+
     InStream stream(array, 0, 0, end - array.get_data());
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL(tpkt_len, (size_t)fac_x224.length);
-
-    Inifile ini;
 
     X224::CR_TPDU_Recv x224(stream, false, true);
 
@@ -122,7 +116,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
 
-    Inifile ini;
     Array array(65536);
     uint8_t * end = array.get_data();
     X224::RecvFactory fac_x224(t, &end, array.size());
@@ -147,10 +140,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_overfull_stream)
     // stream is too small to hold received data
     Array array(4);
     try {
-        Inifile ini;
         uint8_t * end = array.get_data();
         X224::RecvFactory fac_x224(t, &end, array.size());
-        
+
         InStream stream(array, 0, 0, end - array.get_data());
         X224::CR_TPDU_Recv x224(stream, false);
         BOOST_CHECK(false);
@@ -166,7 +158,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_TPDU_truncated_header)
 
     Array array(20);
     try {
-        Inifile ini;
         uint8_t * end = array.get_data();
         X224::RecvFactory fac_x224(t, &end, array.size());
         InStream stream(array, 0, 0, end - array.get_data());
@@ -184,7 +175,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
 
     Array array(20);
     try {
-        Inifile ini;
         uint8_t * end = array.get_data();
         X224::RecvFactory fac_x224(t, &end, array.size());
         InStream stream(array, 0, 0, end - array.get_data());
@@ -208,7 +198,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
 
     Array array(100);
     try {
-        Inifile ini;
         uint8_t * end = array.get_data();
         X224::RecvFactory fac_x224(t, &end, array.size());
         InStream stream(array, 0, 0, end - array.get_data());
@@ -232,7 +221,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
 
     Array array(100);
     try {
-        Inifile ini;
         uint8_t * end = array.get_data();
         X224::RecvFactory fac_x224(t, &end, array.size());
         InStream stream(array, 0, 0, end - array.get_data());
@@ -256,7 +244,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_trailing_data)
 
     Array array(100);
     try {
-        Inifile ini;
         uint8_t * end = array.get_data();
         X224::RecvFactory fac_x224(t, &end, array.size());
         InStream stream(array, 0, 0, end - array.get_data());
@@ -278,8 +265,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
     InStream stream(array, 0, 0, end - array.get_data());
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
-
-    Inifile ini;
 
     X224::CR_TPDU_Recv x224(stream, false);
 
@@ -319,8 +304,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL(tpkt_len, (size_t)fac_x224.length);
 
-    Inifile ini;
-
     try {
         X224::CR_TPDU_Recv x224(stream, false);
 
@@ -337,7 +320,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
 
         BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
         BOOST_CHECK_EQUAL(x224._header_size, stream.size());
-    } catch(Error & e) {
+    } catch(Error const &) {
         BOOST_CHECK(false);
     };
 }
@@ -596,7 +579,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_wrong_opcode)
     try {
         uint8_t * end = array.get_data();
         X224::RecvFactory fac_x224(t, &end, array.size());
-        
+
         InStream stream(array, 0, 0, end - array.get_data());
         X224::DT_TPDU_Recv x224(stream);
         BOOST_CHECK(false);

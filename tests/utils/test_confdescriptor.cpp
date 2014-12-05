@@ -23,7 +23,6 @@
 #define BOOST_TEST_MODULE TestConfDescriptor
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
 #define LOGNULL
 
 using namespace std;

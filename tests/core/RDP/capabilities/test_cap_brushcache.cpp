@@ -27,7 +27,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 #include "RDP/capabilities/cap_brushcache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityBrushCacheEmit)

@@ -25,6 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_COMPDESK_HPP_
 
 #include "common.hpp"
+#include "stream.hpp"
 
 // 2.2.7.2.8 Desktop Composition Capability Set (TS_COMPDESK_CAPABILITYSET)
 // ========================================================================

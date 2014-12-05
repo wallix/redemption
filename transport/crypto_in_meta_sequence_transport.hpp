@@ -25,8 +25,6 @@
 #include "mixin_transport.hpp"
 #include "buffer/crypto_filename_buf.hpp"
 
-#include "in_meta_sequence_transport.hpp"
-
 struct CryptoInMetaSequenceTransport
 : InputNextTransport<detail::in_meta_sequence_buf<transbuf::icrypto_filename_base, transbuf::icrypto_filename_base> >
 {

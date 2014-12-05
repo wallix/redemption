@@ -25,6 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BITMAP_HPP_
 
 #include "common.hpp"
+#include "stream.hpp"
 
 // 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)
 // ============================================================
@@ -178,7 +179,7 @@ struct BitmapCaps : public Capability {
         stream.out_uint16_le(this->pad2octetsB);
     }
 
-    void recv(Stream & stream, uint16_t len) throw(Error){
+    void recv(Stream & stream, uint16_t len) {
         this->len = len;
 
         /* preferredBitsPerPixel(2) + receive1BitPerPixel(2) + receive4BitsPerPixel(2) + receive8BitsPerPixel(2) +

@@ -26,13 +26,11 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
 #include "RDP/bitmapupdate.hpp"
 #include "check_sig.hpp"
 #include "png.hpp"
 #include "RDP/RDPDrawable.hpp"
-#include "ssl_calls.hpp"
 
 inline bool check_sig(RDPDrawable & data, char * message, const char * shasig)
 {

@@ -25,9 +25,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestOrderMemBlt
 #include <boost/test/auto_unit_test.hpp>
-#include <algorithm>
 
-#include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 
 #include "test_orders.hpp"

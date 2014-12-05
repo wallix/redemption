@@ -25,8 +25,8 @@
 
 #include <stdint.h>
 #include "log.hpp"
-#include "stream.hpp"
-#include "RDP/orders/RDPOrdersCommon.hpp"
+
+class Stream;
 
 // 2.2.1.13.1.1.1 Capability Set (TS_CAPS_SET)
 // ===========================================

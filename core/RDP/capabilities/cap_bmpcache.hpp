@@ -25,6 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BMPCACHE_HPP_
 
 #include "common.hpp"
+#include "stream.hpp"
 
 // 2.2.7.1.4 Bitmap Cache Capability Set
 
@@ -120,7 +121,7 @@ struct BmpCacheCaps : public Capability {
         stream.out_uint16_le(this->cache2MaximumCellSize);
     }
 
-    void recv(Stream & stream, uint16_t len) throw(Error){
+    void recv(Stream & stream, uint16_t len) {
         this->len = len;
 
         /* pad1(4) + pad2(4) + pad3(4) + pad4(4) + pad5(4) + pad6(4) + cache0Entries(2) + cache0MaximumCellSize(2) +

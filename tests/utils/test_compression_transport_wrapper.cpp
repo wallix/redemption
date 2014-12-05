@@ -25,7 +25,7 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include <compression_transport_wrapper.hpp>
+#include "compression_transport_wrapper.hpp"
 
 #include <iostream>
 #include <sstream>

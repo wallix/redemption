@@ -28,7 +28,6 @@
 
 //#define LOGNULL
 #define LOGPRINT
-#include "log.hpp"
 
 #include "stream.hpp"
 #include "RDP/out_per_bstream.hpp"
@@ -36,7 +35,8 @@
 BOOST_AUTO_TEST_CASE(TestOutPerBStream)
 {
     // test we can create a Stream object
-    Stream * s = new OutPerBStream();
+    OutPerBStream out_per_stream;
+    Stream * s = &out_per_stream;
     BOOST_CHECK(s);
 
     BOOST_CHECK(s->get_capacity() == AUTOSIZE);
@@ -46,9 +46,6 @@ BOOST_AUTO_TEST_CASE(TestOutPerBStream)
     BOOST_CHECK(s->get_data());
     BOOST_CHECK(s->get_data() == s->p);
     BOOST_CHECK(s->get_data() == s->end);
-
-    // and we can destroy Stream.
-    delete s;
 }
 
 
@@ -93,7 +90,6 @@ BOOST_AUTO_TEST_CASE(TestOutPerBStream_per_integer_small)
     BOOST_CHECK(0 == memcmp(stream.get_data(), "\x01\x12", stream.size()));
 }
 
-#include "transport.hpp"
 #include "test_transport.hpp"
 #include "RDP/gcc.hpp"
 
@@ -164,19 +160,19 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     OutPerBStream gcc_header(65536);
     GCC::Create_Request_Send(gcc_header, stream.size());
     t.send(gcc_header);
-    
+
     BStream stream2(65536);
-    stream2.out_copy_bytes(gcc_conference_create_request_expected, 
+    stream2.out_copy_bytes(gcc_conference_create_request_expected,
                   sizeof(gcc_conference_create_request_expected)-1); // -1 to ignore final 0
     stream2.mark_end();
     stream2.rewind();
-    
+
     try {
         GCC::Create_Request_Recv header(stream2);
-    } catch(Error & e) {
+    } catch(Error const &) {
         BOOST_CHECK(false);
     };
-    
+
 //    BOOST_CHECK(t.get_status());
 }
 

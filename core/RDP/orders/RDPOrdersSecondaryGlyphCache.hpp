@@ -88,7 +88,6 @@
 //   is not necessary for successfully decoding and caching the glyphs in the
 //   glyphData field.
 
-//#include "string.h"
 #include "bitfu.hpp"
 #include "stream.hpp"
 #include "RDPOrdersCommon.hpp"

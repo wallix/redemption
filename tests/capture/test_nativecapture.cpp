@@ -30,7 +30,6 @@
 #include "out_filename_sequence_transport.hpp"
 #include "nativecapture.hpp"
 #include "RDP/caches/bmpcache.hpp"
-#include "config.hpp"
 #include "fileutils.hpp"
 
 

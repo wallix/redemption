@@ -23,6 +23,7 @@
 
 #include <cstdio>
 
+#include "font.hpp"
 #include "draw_api.hpp"
 #include "RDP/RDPDrawable.hpp"
 

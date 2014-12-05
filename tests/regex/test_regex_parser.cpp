@@ -27,7 +27,6 @@
 #define BOOST_TEST_MODULE TestDfaRegexParser
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
 #define LOGNULL
 
 #include "regex_parser.hpp"

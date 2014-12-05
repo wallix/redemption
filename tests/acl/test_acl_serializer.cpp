@@ -26,7 +26,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 #include "acl_serializer.hpp"
 #include "test_transport.hpp"
 

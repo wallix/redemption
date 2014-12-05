@@ -26,9 +26,8 @@
 #define _REDEMPTION_CAPTURE_CHUNKED_IMAGE_TRANSPORT_HPP_
 
 #include "transport.hpp"
-#include "RDP/RDPDrawable.hpp"
-#include "RDP/RDPSerializer.hpp"
-#include "png.hpp"
+#include "stream.hpp"
+#include "wrm_label.hpp"
 
 
 class InChunkedImageTransport : public Transport {

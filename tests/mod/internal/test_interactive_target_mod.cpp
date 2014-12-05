@@ -21,7 +21,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestInteractivePasswordMod
+#define BOOST_TEST_MODULE TestInteractiveTargetMod
 #include <boost/test/auto_unit_test.hpp>
 
 #undef FIXTURES_PATH
@@ -30,10 +30,11 @@
 #define SHARE_PATH "./tests/fixtures"
 
 #define LOGNULL
-#include "log.hpp"
 
-#include "internal/interactive_password_mod.hpp"
+#include "internal/interactive_target_mod.hpp"
 #include "../../front/fake_front.hpp"
+
+TODO("Need more tests, with or without device/login/password asking, ")
 
 BOOST_AUTO_TEST_CASE(TestDialogMod)
 {
@@ -48,11 +49,14 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     FakeFront front(info, 0);
 
     Inifile             ini;
+    ini.context_set_value(AUTHID_TARGET_HOST, "somehost");
+    ini.context_set_value(AUTHID_TARGET_USER, "someuser");
+    ini.context_ask(AUTHID_TARGET_PASSWORD);
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    InteractivePasswordMod d(ini, front, 800, 600);
+    InteractiveTargetMod d(ini, front, 800, 600);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -79,7 +83,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    InteractivePasswordMod d(ini, front, 800, 600);
+    InteractiveTargetMod d(ini, front, 800, 600);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -101,11 +105,14 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     FakeFront front(info, 0);
 
     Inifile ini;
+    ini.context_set_value(AUTHID_TARGET_HOST, "somehost");
+    ini.context_set_value(AUTHID_TARGET_USER, "someuser");
+    ini.context_ask(AUTHID_TARGET_PASSWORD);
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    InteractivePasswordMod d(ini, front, 800, 600);
+    InteractiveTargetMod d(ini, front, 800, 600);
 
     BStream decoded_data(256);
     bool    ctrl_alt_del;

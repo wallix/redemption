@@ -24,12 +24,10 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "RDP/nla/credssp.hpp"
 #include "RDP/nla/ntlm/ntlm_message_challenge.hpp"
 
-#include "ssl_calls.hpp"
 #include "check_sig.hpp"
 
 BOOST_AUTO_TEST_CASE(TestChallenge)

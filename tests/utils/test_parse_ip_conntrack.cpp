@@ -25,9 +25,12 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
-#include <fcntl.h>
 #include "parse_ip_conntrack.hpp"
+
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 
 BOOST_AUTO_TEST_CASE(ParseIpConntrack)

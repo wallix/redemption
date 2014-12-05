@@ -27,14 +27,12 @@
 #define BOOST_TEST_MODULE TestNdfaRegex
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
 #define LOGNULL
 
 #include "regex_parser.hpp"
 #include "regex_st_automate.hpp"
 
 #include <vector>
-#include <sstream>
 
 using namespace re;
 

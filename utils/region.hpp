@@ -26,7 +26,6 @@
 #define _REDEMPTION_UTILS_REGION_HPP_
 
 #include <vector>
-#include <stdio.h>
 #include "rect.hpp"
 
 /* region */
@@ -68,7 +67,7 @@ struct Region {
                 }
             }
         }
-        this->rects.swap(new_rects); // this->rects = std::move(new_rects);
+        this->rects = std::move(new_rects);
     }
 
     void add_rect(const Rect & rect) {

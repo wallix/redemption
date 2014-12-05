@@ -25,13 +25,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "internal/widget2/image.hpp"
 #include "internal/widget2/screen.hpp"
-// #include "internal/widget2/widget_composite.hpp"
-#include "png.hpp"
-#include "ssl_calls.hpp"
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
 

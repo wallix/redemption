@@ -26,9 +26,10 @@
 #define _REDEMPTION_CORE_CLIENT_INFO_HPP_
 
 #include <string.h>
-#include "stream.hpp"
 #include "RDP/logon.hpp"
 #include "get_printable_password.hpp"
+
+class Stream;
 
 struct ClientInfo {
     int bpp = 0;

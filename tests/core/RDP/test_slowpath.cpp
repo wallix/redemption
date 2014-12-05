@@ -28,10 +28,8 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "stream.hpp"
-#include "transport.hpp"
 #include "test_transport.hpp"
 #include "RDP/slowpath.hpp"
 

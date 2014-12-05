@@ -24,19 +24,13 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "internal/widget2/columnlayout.hpp"
 #include "internal/widget2/linelayout.hpp"
-#include "internal/widget2/grid.hpp"
 #include "internal/widget2/screen.hpp"
 #include "internal/widget2/stacklayout.hpp"
 #include "internal/widget2/label.hpp"
-#include "internal/widget2/widget2_rect.hpp"
 #include "internal/widget2/flat_button.hpp"
-#include "png.hpp"
-#include "ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "fake_draw.hpp"
 
 #undef OUTPUT_FILE_PATH

@@ -21,6 +21,7 @@
 #ifndef _REDEMPTION_CORE_RDP_BITMAPUPDATE_HPP_
 #define _REDEMPTION_CORE_RDP_BITMAPUPDATE_HPP_
 
+#include "stream.hpp"
 #include "capabilities/general.hpp"
 
 // 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)

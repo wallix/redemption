@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "RDP/sec.hpp"
+#include "ssl_calls.hpp"
 
 // Sent by server:
 // 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).

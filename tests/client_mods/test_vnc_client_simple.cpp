@@ -28,7 +28,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "test_orders.hpp"
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 

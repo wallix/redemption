@@ -25,7 +25,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #undef FIXTURES_PATH
 #define FIXTURES_PATH "./tests/fixtures"
@@ -34,12 +33,7 @@
 
 #include "internal/widget2/flat_login.hpp"
 #include "internal/widget2/screen.hpp"
-#include "internal/widget2/notify_api.hpp"
-#include "png.hpp"
-#include "ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
-#include "client_info.hpp"
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
@@ -107,15 +101,6 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
 
 BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
-
-
     TestDraw drawable(800, 600);
     struct Notify : NotifyApi {
         Widget2* sender;
@@ -145,7 +130,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     flat_login.rdp_input_scancode(0, 0, 0, 0, &keymap);
 

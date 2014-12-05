@@ -25,7 +25,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
+
 #include "wait_obj.hpp"
 #include "socket_transport_utility.hpp"
 

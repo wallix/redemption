@@ -21,10 +21,9 @@
 #ifndef _REDEMPTION_CAPTURE_RDPCHUNKEDDEVICE_HPP_
 #define _REDEMPTION_CAPTURE_RDPCHUNKEDDEVICE_HPP_
 
-#include "stream.hpp"
+class Stream;
 
 struct RDPChunkedDevice {
-public:
     virtual ~RDPChunkedDevice () {}
 
     virtual void chunk(uint16_t chunk_type, uint16_t chunk_count, const Stream & data) = 0;

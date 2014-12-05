@@ -26,9 +26,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestOrderPolygonCB
 #include <boost/test/auto_unit_test.hpp>
-#include <algorithm>
 
-#include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 
 #include "test_orders.hpp"

@@ -22,13 +22,9 @@
 #ifndef _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
 #define _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
 
-#include <errno.h>
-
 #include "CaptureDevice.hpp"
 #include "difftimeval.hpp"
-#include "error.hpp"
 #include "GraphicToFile.hpp"
-#include "png.hpp"
 
 class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice
 {

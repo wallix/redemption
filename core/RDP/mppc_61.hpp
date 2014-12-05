@@ -22,7 +22,6 @@
 #define _REDEMPTION_CORE_RDP_MPPC_61_HPP_
 
 #include "mppc_50.hpp"
-#include <string.h>
 
 // [MS-RDPEGDI] 2.2.2.4.1 RDP 6.1 Compressed Data (RDP61_COMPRESSED_DATA)
 // ======================================================================
