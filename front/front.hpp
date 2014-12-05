@@ -85,6 +85,7 @@
 #include "RDP/capabilities/multifragmentupdate.hpp"
 #include "RDP/capabilities/compdesk.hpp"
 #include "RDP/capabilities/cap_font.hpp"
+#include "RDP/capabilities/glyphcache.hpp"
 
 #include "front_api.hpp"
 #include "activity_checker.hpp"

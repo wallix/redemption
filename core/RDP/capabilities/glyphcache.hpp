@@ -133,18 +133,20 @@
 //  size in bytes of an entry in the cache.
 
 struct GlyphCacheCaps : public Capability {
-    static const uint16_t LENGTH_CAPABILITY = 52;   // capabilitySetType(2) + lengthCapability(2) +
-                                                    //     GlyphCache(40) + FragCache(4) +
-                                                    //     GlyphSupportLevel(2) + pad2octets(2)
+    enum {
+        LENGTH_CAPABILITY = 52  // capabilitySetType(2) + lengthCapability(2) +
+                                //     GlyphCache(40) + FragCache(4) +
+                                //     GlyphSupportLevel(2) + pad2octets(2)
+    };
 
-    static const uint8_t NUMBER_OF_CACHE = 10;
+    static constexpr uint8_t NUMBER_OF_CACHE = 10;
 
     struct CacheDefinition {
         uint16_t CacheEntries;
         uint16_t CacheMaximumCellSize;
     } GlyphCache[NUMBER_OF_CACHE] = {
-        { 254,   4 }, { 254,   4 }, { 254,   8 }, { 254,   8 }, { 254,  16 },
-        { 254,  32 }, { 254,  64 }, { 254, 128 }, { 254, 256 }, { 254, 256 }
+        { 254,    4 }, { 254,    4 }, { 254,    8 }, { 254,    8 }, { 254,   16 },
+        { 254,   32 }, { 254,   64 }, { 254,  128 }, { 254,  256 }, {  64, 2048 }
     };
 
     uint32_t FragCache =
