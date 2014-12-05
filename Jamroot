@@ -579,7 +579,6 @@ unit-test test_number_edit : tests/mod/internal/widget2/test_number_edit.cpp png
 unit-test test_edit_valid : tests/mod/internal/widget2/test_edit_valid.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 # unit-test test_radio_list : tests/mod/internal/widget2/test_radio_list.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_dialog : tests/mod/internal/widget2/test_flat_dialog.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_interactive_password : tests/mod/internal/widget2/test_flat_interactive_password.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_widget : tests/mod/internal/widget2/test_widget.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 
@@ -607,7 +606,6 @@ unit-test test_flat_interactive_target : tests/mod/internal/widget2/test_flat_in
 ## Mod tests
 ## @{
 unit-test test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_interactive_password_mod : tests/mod/internal/test_interactive_password_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_login_mod : tests/mod/internal/test_flat_login_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_selector_mod : tests/mod/internal/test_flat_selector_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
