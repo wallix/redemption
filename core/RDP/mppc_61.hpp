@@ -23,6 +23,9 @@
 
 #include "mppc_50.hpp"
 
+#include <type_traits> // std:is_base_of
+
+
 // [MS-RDPEGDI] 2.2.2.4.1 RDP 6.1 Compressed Data (RDP61_COMPRESSED_DATA)
 // ======================================================================
 
@@ -176,10 +179,9 @@ struct rdp_mppc_61_dec : public rdp_mppc_dec {
      * Initialize rdp_mppc_61_dec structure
      */
     rdp_mppc_61_dec() : rdp_mppc_dec()
+    , historyBuffer{0}
     , historyOffset(0)
-    {
-        ::memset(this->historyBuffer, 0, sizeof(this->historyBuffer));
-    }
+    {}
 
     /**
      * Deinitialize rdp_mppc_61_dec structure
@@ -559,7 +561,12 @@ public:
     }
 };
 
-struct rdp_mppc_61_enc : public rdp_mppc_enc {
+template<class MatchFinder>
+class rdp_mppc_61_enc : public rdp_mppc_enc {
+    static_assert(
+        std::is_base_of<rdp_mppc_enc_match_finder, MatchFinder>::value
+      , "MatchFinder must be derived from rdp_mppc_enc_match_finder");
+
     uint8_t    historyBuffer[RDP_61_HISTORY_BUFFER_LENGTH];   // Level-1 history buffer.
     uint32_t   historyOffset;   // Level-1 history buffer associated history offset.
 
@@ -575,25 +582,21 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
     uint8_t  * outputBuffer;
     uint16_t   bytes_in_output_buffer;
 
-    rdp_mppc_enc_match_finder * match_finder;
+    MatchFinder match_finder;
 
-    /**
-     * Initialize rdp_mppc_61_enc structure
-     */
-    rdp_mppc_61_enc(rdp_mppc_enc_match_finder * match_finder, uint32_t verbose = 0)
+public:
+    rdp_mppc_61_enc(uint32_t verbose = 0)
         : rdp_mppc_enc(verbose)
+        , historyBuffer{0}
         , historyOffset(0)
+        , level_1_output_buffer{0}
         , level_1_compressed_data_size(0)
         , level_1_compr_flags_hold(L1_PACKET_AT_FRONT)
         , Level1ComprFlags(0)
         , Level2ComprFlags(0)
         , outputBuffer(NULL)
         , bytes_in_output_buffer(0)
-        , match_finder(match_finder)
-    {
-        ::memset(this->historyBuffer, 0, sizeof(this->historyBuffer));
-        ::memset(this->level_1_output_buffer, 0, sizeof(this->level_1_output_buffer));
-    }
+    {}
 
     /**
      * Deinitialize rdp_mppc_61_enc structure
@@ -635,7 +638,7 @@ private:
             this->historyOffset = 0;
 
             ::memset(this->historyBuffer, 0, RDP_61_HISTORY_BUFFER_LENGTH * sizeof(uint8_t));
-            this->match_finder->process_packet_at_front();
+            this->match_finder.process_packet_at_front();
         }
 
         // Add/append new data to historyBuffer.
@@ -645,9 +648,9 @@ private:
             this->Level1ComprFlags |= L1_NO_COMPRESSION;
         }
         else {
-            this->match_finder->find_match(this->historyBuffer, this->historyOffset, uncompressed_data_size);
+            this->match_finder.find_match(this->historyBuffer, this->historyOffset, uncompressed_data_size);
             FixedSizeStream level_1_output_stream(this->level_1_output_buffer, RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE);
-            uint32_t match_details_data_size = this->match_finder->match_details_stream.size();
+            uint32_t match_details_data_size = this->match_finder.match_details_stream.size();
             uint32_t MatchCount = (match_details_data_size ?
                                    match_details_data_size / 8 :   // sizeof(RDP61_COMPRESSED_DATA) = 8
                                    0);
@@ -658,14 +661,14 @@ private:
                 throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
             }
             level_1_output_stream.out_uint16_le(MatchCount);
-            level_1_output_stream.out_copy_bytes(this->match_finder->match_details_stream.get_data(),
+            level_1_output_stream.out_copy_bytes(this->match_finder.match_details_stream.get_data(),
                 match_details_data_size);
-            this->match_finder->match_details_stream.rewind();
+            this->match_finder.match_details_stream.rewind();
             uint16_t current_output_offset = 0;
             for (uint32_t match_index = 0; match_index < MatchCount; match_index++) {
-                uint16_t match_length        = this->match_finder->match_details_stream.in_uint16_le();
-                uint16_t match_output_offset = this->match_finder->match_details_stream.in_uint16_le();
-                this->match_finder->match_details_stream.in_skip_bytes(4);
+                uint16_t match_length        = this->match_finder.match_details_stream.in_uint16_le();
+                uint16_t match_output_offset = this->match_finder.match_details_stream.in_uint16_le();
+                this->match_finder.match_details_stream.in_skip_bytes(4);
 
                 if (match_output_offset > current_output_offset) {
                     expected = match_output_offset - current_output_offset;
@@ -715,7 +718,7 @@ private:
             }
             else {
                 // Data compression results in an expansion of the data size.
-                if (!this->match_finder->undo_last_changes()) {
+                if (!this->match_finder.undo_last_changes()) {
                     this->level_1_compr_flags_hold |= L1_PACKET_AT_FRONT;
                 }
                 else {
@@ -783,7 +786,7 @@ public:
 
         this->level_2_compressor.dump(mini_dump);
 
-        this->match_finder->dump(mini_dump);
+        this->match_finder.dump(mini_dump);
     }
 
     virtual void get_compressed_data(Stream & stream) const {
@@ -799,5 +802,7 @@ public:
         stream.out_copy_bytes(this->outputBuffer, this->bytes_in_output_buffer);
     }
 };  // struct rdp_mppc_61_enc
+
+typedef rdp_mppc_61_enc<rdp_mppc_61_enc_hash_based_match_finder> rdp_mppc_61_enc_hash_based;
 
 #endif  // #ifndef _REDEMPTION_CORE_RDP_MPPC_61_HPP_

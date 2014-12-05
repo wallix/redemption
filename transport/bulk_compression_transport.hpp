@@ -116,8 +116,7 @@ private:
 class BulkCompressionOutTransport : public Transport {
     Transport & target_transport;
 
-    rdp_mppc_61_enc_hash_based_match_finder mppc_enc_match_finder;
-    rdp_mppc_61_enc                         mppc_enc;
+    rdp_mppc_61_enc_hash_based mppc_enc;
 
     bool reset_compressor;
 
@@ -126,7 +125,7 @@ class BulkCompressionOutTransport : public Transport {
 public:
     BulkCompressionOutTransport(Transport & tt, uint32_t verbose_compression = 0)
     : target_transport(tt)
-    , mppc_enc(&this->mppc_enc_match_finder, verbose_compression)
+    , mppc_enc(verbose_compression)
     , reset_compressor(false)
     , verbose_compression(verbose_compression) {}
 
@@ -184,10 +183,8 @@ public:
         this->reset_compressor = true;
 
         this->mppc_enc.~rdp_mppc_61_enc();
-        this->mppc_enc_match_finder.~rdp_mppc_61_enc_hash_based_match_finder();
 
-        new (&this->mppc_enc_match_finder)rdp_mppc_61_enc_hash_based_match_finder();
-        new (&this->mppc_enc) rdp_mppc_61_enc(&this->mppc_enc_match_finder, this->verbose_compression);
+        new (&this->mppc_enc) rdp_mppc_61_enc_hash_based(this->verbose_compression);
 
         return this->target_transport.next();
     }

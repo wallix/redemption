@@ -200,7 +200,6 @@ private:
     Transport          * persistent_key_list_transport;
 
     rdp_mppc_enc              * mppc_enc;
-    rdp_mppc_enc_match_finder * mppc_enc_match_finder;
 
     auth_api * authentifier;
     bool       auth_info_sent;
@@ -248,7 +247,6 @@ public:
         , server_capabilities_filename(server_capabilities_filename)
         , persistent_key_list_transport(persistent_key_list_transport)
         , mppc_enc(NULL)
-        , mppc_enc_match_finder(NULL)
         , authentifier(NULL)
         , auth_info_sent(false)
     {
@@ -326,7 +324,6 @@ public:
     ~Front() {
         ERR_free_strings();
         delete this->mppc_enc;
-        delete this->mppc_enc_match_finder;
 
         delete this->bmp_cache_persister;
 
@@ -729,10 +726,6 @@ private:
             delete this->mppc_enc;
             this->mppc_enc = NULL;
         }
-        if (this->mppc_enc_match_finder) {
-            delete this->mppc_enc_match_finder;
-            this->mppc_enc_match_finder = NULL;
-        }
 
         switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini.client.rdp_compression - 1))
         {
@@ -740,9 +733,8 @@ private:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 6.1 Bulk compression");
             }
-            this->mppc_enc_match_finder = new rdp_mppc_61_enc_hash_based_match_finder();
             //this->mppc_enc_match_finder = new rdp_mppc_61_enc_sequential_search_match_finder();
-            this->mppc_enc = new rdp_mppc_61_enc(this->mppc_enc_match_finder, this->ini.debug.compression);
+            this->mppc_enc = new rdp_mppc_61_enc_hash_based(this->ini.debug.compression);
             break;
         case PACKET_COMPR_TYPE_RDP6:
             if (this->verbose & 1) {

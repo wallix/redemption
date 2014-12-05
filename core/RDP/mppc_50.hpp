@@ -34,11 +34,11 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
     /**
      * Initialize rdp_mppc_50_dec structure
      */
-    rdp_mppc_50_dec() {
-        ::memset(this->history_buf, 0, sizeof(this->history_buf));
-        this->history_ptr     = this->history_buf;
-        this->history_buf_end = this->history_buf + RDP_50_HIST_BUF_LEN - 1;
-    }
+    rdp_mppc_50_dec()
+    : history_buf{0}
+    , history_buf_end(this->history_buf + RDP_50_HIST_BUF_LEN - 1)
+    , history_ptr(this->history_buf)
+    {}
 
     /**
      * Deinitialize rdp_mppc_50_dec structure
@@ -500,7 +500,10 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
      */
     rdp_mppc_50_enc(uint32_t verbose = 0)
         : rdp_mppc_enc(verbose)
-        , outputBuffer(NULL)        /* contains compressed data */
+        TODO("making it static and large enough should be good for both RDP4 and RDP5")
+        , historyBuffer{0}
+        , outputBuffer(this->outputBufferPlus + 64)  /* contains compressed data */
+        , outputBufferPlus{0}
         , outputBufferSize(RDP_50_HIST_BUF_LEN - 1)
         , historyOffset(0)          /* next free slot in historyBuffer */
         , bytes_in_opb(0)           /* compressed bytes available in outputBuffer */
@@ -509,12 +512,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
         , first_pkt(true)           /* this is the first pkt passing through enc */
         , hash_tab_mgr(RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH,
               MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
-    {
-        TODO("making it static and large enough should be good for both RDP4 and RDP5");
-        ::memset(this->historyBuffer, 0, sizeof(this->historyBuffer));
-        ::memset(this->outputBufferPlus, 0, sizeof(this->outputBufferPlus));
-        this->outputBuffer = this->outputBufferPlus + 64;
-    }
+    {}
 
     /**
      * Deinitialize rdp_mppc_50_enc structure
