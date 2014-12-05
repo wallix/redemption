@@ -27,14 +27,82 @@
 #include <stdint.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <cstddef>
 #include "log.hpp"
 
 typedef uint32_t BGRColor;
-typedef BGRColor BGRPalette[256];
 
 static inline BGRColor RGBtoBGR(const BGRColor & c){
     return ((c << 16) & 0xFF0000)|(c & 0x00FF00)|((c>>16) & 0x0000FF);
 }
+
+struct BGRPalette
+{
+    BGRPalette() = delete;
+
+    struct no_init {};
+    explicit BGRPalette(no_init)
+    {}
+
+    explicit BGRPalette(std::nullptr_t) noexcept
+    : palette{0}
+    {}
+
+    explicit BGRPalette(uint8_t const * palette_data) noexcept
+    { this->set_data(palette_data); }
+
+    static const BGRPalette & classic_332_rgb() noexcept
+    {
+        static const BGRPalette palette([](int c) { return RGBtoBGR(c); }, 1);
+        return palette;
+    }
+
+    static const BGRPalette & classic_332() noexcept
+    {
+        static const BGRPalette palette([](int c) { return static_cast<BGRColor>(c); }, 1);
+        return palette;
+    }
+
+    BGRColor operator[](std::size_t i) const noexcept
+    { return this->palette[i]; }
+
+    void set_color(std::size_t i, BGRColor c) noexcept
+    { this->palette[i] = c; }
+
+    void set_data(uint8_t const * palette_data) noexcept
+    { memcpy(this->palette, palette_data, sizeof(this->palette)); }
+
+    const char * data() const noexcept
+    { return reinterpret_cast<char const*>(this->palette); }
+
+    static constexpr std::size_t data_size() noexcept
+    { return sizeof(palette); }
+
+private:
+    BGRColor palette[256];
+
+    template<class Transform>
+    /*constexpr*/ BGRPalette(Transform trans, int) noexcept
+    {
+        /* rgb332 palette */
+        for (int bindex = 0; bindex < 4; bindex++) {
+            for (int gindex = 0; gindex < 8; gindex++) {
+                for (int rindex = 0; rindex < 8; rindex++) {
+                    this->palette[(rindex << 5) | (gindex << 2) | bindex] =
+                    trans(
+                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
+                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                    | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
+                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
+                    | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
+                }
+            }
+        }
+    }
+};
+
+// typedef BGRColor BGRPalette[256];
 
 // Those are in BGR
 enum {
@@ -151,7 +219,7 @@ static inline unsigned color_from_cstr(const char * str) {
 // |    24 bpp   |    3 bytes |     RGB color triplet (1 byte per component).  |
 // +-------------+------------+------------------------------------------------+
 
-static inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, const uint32_t (& palette)[256]){
+static inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, const BGRPalette & palette){
     switch (in_bpp){
     case 1:
     {
@@ -192,7 +260,7 @@ static inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, cons
 }
 
 
-static inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, const uint32_t (& palette)[256]){
+static inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, const BGRPalette & palette){
     switch (in_bpp){
     case 8:
       return RGBtoBGR(palette[static_cast<uint8_t>(c)]);
@@ -223,26 +291,6 @@ static inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t i
         break;
     }
     return 0;
-}
-
-TODO("move that to default palette constructor, make it an actual object")
-static inline void init_palette332(BGRPalette & palette)
-{
-    /* rgb332 palette */
-    for (int bindex = 0; bindex < 4; bindex++) {
-        for (int gindex = 0; gindex < 8; gindex++) {
-            for (int rindex = 0; rindex < 8; rindex++) {
-                palette[(rindex << 5) | (gindex << 2) | bindex] =
-                static_cast<BGRColor>(
-                // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-                    (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
-                // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
-                   | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
-                // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
-                   | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
-            }
-        }
-    }
 }
 
 static inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){

@@ -163,10 +163,10 @@ private:
     bool palette_sent;
     bool palette_memblt_sent[6];
 
-    BGRPalette palette332_rgb;
+    BGRPalette palette332_rgb = BGRPalette::classic_332_rgb();
 
 public:
-    BGRPalette mod_palette_rgb;
+    BGRPalette mod_palette_rgb {BGRPalette::no_init()};
     uint8_t mod_bpp;
 
 private:
@@ -283,14 +283,6 @@ public:
         SSL_library_init();
 
         // --------------------------------------------------------
-
-        {
-            BGRPalette palette_local;
-            init_palette332(palette_local);
-            for (unsigned i = 0; i < 256 ; i++) {
-                this->palette332_rgb[i] = RGBtoBGR(palette_local[i]);
-            }
-        }
 
         this->palette_sent = false;
         for (size_t i = 0; i < 6 ; i++) {
@@ -2291,9 +2283,7 @@ public:
                             this->reset();
                             // resizing done
                             {
-                                BGRPalette palette_local;
-                                init_palette332(palette_local);
-                                RDPColCache cmd(0, palette_local);
+                                RDPColCache cmd(0, BGRPalette::classic_332());
                                 this->orders->draw(cmd);
                             }
                             if (this->verbose & 1) {
@@ -3552,9 +3542,7 @@ public:
                 this->send_data_update_sync();
 
                 if (this->client_info.bpp == 8) {
-                    BGRPalette palette_local;
-                    init_palette332(palette_local);
-                    RDPColCache cmd(0, palette_local);
+                    RDPColCache cmd(0, BGRPalette::classic_332());
                     this->orders->draw(cmd);
                 }
 
@@ -4478,9 +4466,7 @@ public:
 
     void set_mod_palette(const BGRPalette & palette)
     {
-        for (unsigned i = 0; i < 256 ; i++) {
-            this->mod_palette_rgb[i] = palette[i];
-        }
+        this->mod_palette_rgb = palette;
         this->palette_sent = false;
 
         if (  this->capture
