@@ -2473,11 +2473,11 @@ public:
         }
         confirm_active_pdu.emit_capability_set(font_caps);
 
-        GlyphSupportCaps glyphsupport_caps;
+        GlyphCacheCaps glyphcache_caps;
         if (this->verbose & 1) {
-            glyphsupport_caps.log("Sending to server");
+            glyphcache_caps.log("Sending to server");
         }
-        confirm_active_pdu.emit_capability_set(glyphsupport_caps);
+        confirm_active_pdu.emit_capability_set(glyphcache_caps);
 
 //        BrushCacheCaps brushcache_caps;
 //        brushcache_caps.log("Sending brushcache caps to server");
