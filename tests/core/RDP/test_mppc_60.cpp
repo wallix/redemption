@@ -25,13 +25,12 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
-#include "RDP/mppc.hpp"
+#include "RDP/mppc_60.hpp"
 
 BOOST_AUTO_TEST_CASE(TestRDP60BlukCompression)
 {
-    rdp_mppc_60_enc * mppc_enc = new rdp_mppc_60_enc();
+    rdp_mppc_60_enc mppc_enc;
 
     uint8_t uncompressed_data[] = {
         0x01, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x0a, 0x00,
@@ -40,17 +39,15 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukCompression)
 
     uint8_t  compressionFlags;
     uint16_t datalen;
-    mppc_enc->compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen,
+    mppc_enc.compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen,
         rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
     int flags = PACKET_COMPRESSED;
 
     BOOST_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
 
-    LOG(LOG_INFO, "bytes_in_opb=%d", mppc_enc->bytes_in_opb);
-    hexdump_d(mppc_enc->outputBuffer, mppc_enc->bytes_in_opb);
-
-    delete mppc_enc;
+//     LOG(LOG_INFO, "bytes_in_opb=%d", mppc_enc.bytes_in_opb);
+//     hexdump_d(mppc_enc.outputBuffer, mppc_enc.bytes_in_opb);
 
 /*
     int bits_left = 8;
@@ -79,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukCompression)
 
 BOOST_AUTO_TEST_CASE(TestRDP60BlukCompression2)
 {
-    rdp_mppc_60_enc * mppc_enc = new rdp_mppc_60_enc();
+    rdp_mppc_60_enc mppc_enc;
 
     uint8_t uncompressed_data[] = {
         0x01, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x0a, 0x00,
@@ -88,22 +85,20 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukCompression2)
 
     uint8_t  compressionFlags;
     uint16_t datalen;
-    mppc_enc->compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen,
+    mppc_enc.compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen,
         rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
     int flags = PACKET_COMPRESSED;
 
     BOOST_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
 
-    //LOG(LOG_INFO, "bytes_in_opb=%d", mppc_enc->bytes_in_opb);
-    //hexdump_d(mppc_enc->outputBuffer, mppc_enc->bytes_in_opb);
-
-    delete mppc_enc;
+    //LOG(LOG_INFO, "bytes_in_opb=%d", mppc_enc.bytes_in_opb);
+    //hexdump_d(mppc_enc.outputBuffer, mppc_enc.bytes_in_opb);
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BlukCompression3)
 {
-    rdp_mppc_60_enc * mppc_enc = new rdp_mppc_60_enc();
+    rdp_mppc_60_enc mppc_enc;
 
     uint8_t uncompressed_data[] = {
 /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03, 0xfc, 0x03, 0x00, 0x00, 0x01, 0x00, 0x00,  // ................
@@ -176,22 +171,20 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukCompression3)
 
     uint8_t  compressionFlags;
     uint16_t datalen;
-    mppc_enc->compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen,
+    mppc_enc.compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen,
         rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
     int flags = PACKET_COMPRESSED;
 
     BOOST_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
 
-    LOG(LOG_INFO, "bytes_in_opb=%d", mppc_enc->bytes_in_opb);
-    hexdump_d(mppc_enc->outputBuffer, mppc_enc->bytes_in_opb);
-
-    delete mppc_enc;
+//     LOG(LOG_INFO, "bytes_in_opb=%d", mppc_enc.bytes_in_opb);
+//     hexdump_d(mppc_enc.outputBuffer, mppc_enc.bytes_in_opb);
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression)
 {
-    rdp_mppc_60_dec * mppc_dec = new rdp_mppc_60_dec();
+    rdp_mppc_60_dec mppc_dec;
 
     uint8_t compressed_data[] = {
         0x24, 0x91, 0x8b, 0x74, 0x9e, 0x26, 0x4c, 0x06,
@@ -207,7 +200,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression)
     const uint8_t * rdata;
     uint32_t        rlen;
 
-    mppc_dec->decompress(compressed_data, sizeof(compressed_data),
+    mppc_dec.decompress(compressed_data, sizeof(compressed_data),
         compressionFlags, rdata, rlen);
 
     BOOST_CHECK_EQUAL(sizeof(uncompressed_data), rlen);
@@ -216,13 +209,11 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression)
 
     //LOG(LOG_INFO, "rlen=%d", rlen);
     //hexdump_d(rdata, rlen);
-
-    delete(mppc_dec);
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression1)
 {
-    rdp_mppc_60_dec * mppc_dec = new rdp_mppc_60_dec();
+    rdp_mppc_60_dec mppc_dec;
 
     uint8_t compressed_data[] = {
         0x24, 0x41, 0x10, 0xe9, 0x3c, 0x4d, 0x98, 0x0c,
@@ -238,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression1)
     const uint8_t * rdata;
     uint32_t        rlen;
 
-    mppc_dec->decompress(compressed_data, sizeof(compressed_data),
+    mppc_dec.decompress(compressed_data, sizeof(compressed_data),
         compressionFlags, rdata, rlen);
 
     BOOST_CHECK_EQUAL(sizeof(uncompressed_data), rlen);
@@ -247,13 +238,11 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression1)
 
     //LOG(LOG_INFO, "rlen=%d", rlen);
     //hexdump_d(rdata, rlen);
-
-    delete(mppc_dec);
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression2)
 {
-    rdp_mppc_60_dec * mppc_dec = new rdp_mppc_60_dec();
+    rdp_mppc_60_dec mppc_dec;
 
     uint8_t compressed_data[] = {
         0x24, 0x41, 0x10, 0xe9, 0x3c, 0x4d, 0xc4, 0x7f,
@@ -269,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression2)
     const uint8_t * rdata;
     uint32_t        rlen;
 
-    mppc_dec->decompress(compressed_data, sizeof(compressed_data),
+    mppc_dec.decompress(compressed_data, sizeof(compressed_data),
         compressionFlags, rdata, rlen);
 
     BOOST_CHECK_EQUAL(sizeof(uncompressed_data), rlen);
@@ -278,13 +267,11 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression2)
 
     //LOG(LOG_INFO, "rlen=%d", rlen);
     //hexdump_d(rdata, rlen);
-
-    delete(mppc_dec);
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression3)
 {
-    rdp_mppc_60_dec * mppc_dec = new rdp_mppc_60_dec();
+    rdp_mppc_60_dec mppc_dec;
 
     uint8_t compressed_data[] = {
 /* 0000 */ 0x04, 0x41, 0x10, 0x64, 0x21, 0x91, 0x55, 0x11, 0xba, 0xfc, 0x0f, 0x82, 0xd8, 0xbe, 0x80, 0x3b,  // .A.d!.U........;
@@ -395,7 +382,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression3)
     const uint8_t * rdata;
     uint32_t        rlen;
 
-    mppc_dec->decompress(compressed_data, sizeof(compressed_data),
+    mppc_dec.decompress(compressed_data, sizeof(compressed_data),
         compressionFlags, rdata, rlen);
 
     BOOST_CHECK_EQUAL(sizeof(uncompressed_data), rlen);
@@ -404,26 +391,24 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression3)
 
     //LOG(LOG_INFO, "rlen=%d", rlen);
     //hexdump_d(rdata, rlen);
-
-    delete(mppc_dec);
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
 {
     #include "../../fixtures/test_mppc_7.hpp"
 
-    rdp_mppc_60_dec * mppc_dec = new rdp_mppc_60_dec();
+    rdp_mppc_60_dec mppc_dec;
 
-    memcpy(mppc_dec->history_buf, __historyBuffer, sizeof(__historyBuffer));
-    memcpy(mppc_dec->offset_cache, __offsetCache, sizeof(__offsetCache));
-    mppc_dec->history_ptr = mppc_dec->history_buf + __historyOffset;
+    memcpy(mppc_dec.history_buf, __historyBuffer, sizeof(__historyBuffer));
+    memcpy(mppc_dec.offset_cache, __offsetCache, sizeof(__offsetCache));
+    mppc_dec.history_ptr = mppc_dec.history_buf + __historyOffset;
 
     uint8_t  compressionFlags = 0x22;
 
     const uint8_t * rdata;
     uint32_t        rlen;
 
-    mppc_dec->decompress(__outputBuffer, sizeof(__outputBuffer),
+    mppc_dec.decompress(__outputBuffer, sizeof(__outputBuffer),
         compressionFlags, rdata, rlen);
 
     BOOST_CHECK_EQUAL(sizeof(__srcData), rlen);
@@ -431,8 +416,6 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
 
     LOG(LOG_INFO, "rlen=%d", rlen);
     hexdump_d(rdata, rlen);
-
-    delete(mppc_dec);
 }
 
 BOOST_AUTO_TEST_CASE(TestCacheAdd) {

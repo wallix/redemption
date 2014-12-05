@@ -20,10 +20,13 @@
    Fake Front class for Unit Testing
 */
 
-#include <memory>
-
-#include "RDP/RDPDrawable.hpp"
+#include "log.hpp"
 #include "front_api.hpp"
+#include "channel_list.hpp"
+#include "client_info.hpp"
+#include "RDP/RDPDrawable.hpp"
+
+#include <memory>
 
 class FakeFront : public FrontAPI {
 public:
@@ -401,7 +404,7 @@ public:
     , notimestamp(true)
     , nomouse(true)
     , gd(info.width, info.height, 24)
-    , font(font_file ? new Font(font_file ) : nullptr) {
+    , font(font_file ? new Font(font_file) : nullptr) {
         // -------- Start of system wide SSL_Ctx option ------------------------------
 
         // ERR_load_crypto_strings() registers the error strings for all libcrypto

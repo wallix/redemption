@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    New RDP Orders Coder / Decoder
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYGLYPHCACHE_HPP_
@@ -89,26 +88,27 @@
 //   is not necessary for successfully decoding and caching the glyphs in the
 //   glyphData field.
 
+#include "bitfu.hpp"
+#include "stream.hpp"
+#include "RDPOrdersCommon.hpp"
+
+using std::size_t;
 
 class RDPGlyphCache {
+public:
+    uint8_t    cacheId;
+    uint8_t    cGlyphs = 1;
+    uint16_t   glyphData_cacheIndex;
+    uint16_t   glyphData_x;
+    uint16_t   glyphData_y;
+    uint16_t   glyphData_cx;
+    uint16_t   glyphData_cy;
+    uint8_t  * glyphData_aj = nullptr;
 
-    public:
-    uint8_t cacheId;
-    uint8_t cGlyphs;
-    uint16_t glyphData_cacheIndex;
-    uint16_t glyphData_x;
-    uint16_t glyphData_y;
-    uint16_t glyphData_cx;
-    uint16_t glyphData_cy;
-    //size_t size;
-    uint8_t * glyphData_aj;
+    RDPGlyphCache() = default;
 
-    RDPGlyphCache() : cGlyphs(1), glyphData_aj(NULL)
-    {
-    }
-
-    RDPGlyphCache( uint8_t  cacheId
-                 , uint8_t  cGlyphs
+    RDPGlyphCache( uint8_t cacheId
+                 //, uint8_t cGlyphs
                  , uint16_t glyphData_cacheIndex
                  , uint16_t glyphData_x
                  , uint16_t glyphData_y
@@ -125,15 +125,13 @@ class RDPGlyphCache {
         , glyphData_cy(glyphData_cy)
     {
         size_t size = this->datasize();
-        this->glyphData_aj = static_cast<uint8_t*>(malloc(size));
+        this->glyphData_aj = new uint8_t[size];
         memcpy(this->glyphData_aj, glyphData_aj, size);
     }
 
     ~RDPGlyphCache()
     {
-        if (this->glyphData_aj){
-            free(this->glyphData_aj);
-        }
+        delete [] this->glyphData_aj;
     }
 
     inline int datasize() const
@@ -174,17 +172,6 @@ class RDPGlyphCache {
 
     void receive(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
-        using namespace RDP;
-
-        // uint8_t cacheIndex = stream.in_uint8();
-        // this->bpp = stream.in_uint8();
-        // this->width = stream.in_uint8();
-        // this->height = stream.in_uint8();
-        // this->type = stream.in_uint8();
-        // this->size = stream.in_uint8();
-        // this->data = (uint8_t *)malloc(this->size);
-        // memcpy(this->data, stream.in_uint8p(this->size), this->size);
-
         this->cacheId              = stream.in_uint8();
         this->cGlyphs              = stream.in_uint8();
         this->glyphData_cacheIndex = stream.in_uint16_le();
@@ -199,14 +186,10 @@ class RDPGlyphCache {
         memcpy(this->glyphData_aj, stream.in_uint8p(size), size);
     }
 
-    bool operator==(const RDPColCache & other) const {
-        return true;
-    }
-
     size_t str(char * buffer, size_t sz) const
     {
-        size_t lg  = snprintf(buffer, sz, "RDPBrushCache()\n");
-        if (lg >= sz){
+        size_t lg  = snprintf(buffer, sz, "RDPGlyphCache()\n");
+        if (lg >= sz) {
             return sz;
         }
         return lg;

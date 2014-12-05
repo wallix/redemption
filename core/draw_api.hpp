@@ -26,9 +26,6 @@
 class DrawApi : public RDPGraphicDevice
 {
 public:
-    virtual ~DrawApi()
-    {}
-
     virtual void begin_update() = 0;
     virtual void end_update() = 0;
 

@@ -28,18 +28,9 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "test_orders.hpp"
 
-#include "stream.hpp"
-#include "transport.hpp"
-#include "socket_transport.hpp"
+// #include "socket_transport.hpp"
 #include "test_transport.hpp"
-#include "RDP/x224.hpp"
-#include "RDP/mcs.hpp"
-#include "RDP/sec.hpp"
-#include "wait_obj.hpp"
-#include "channel_list.hpp"
-#include "front_api.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
 

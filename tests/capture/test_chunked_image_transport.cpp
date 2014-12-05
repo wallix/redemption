@@ -28,8 +28,6 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "test_orders.hpp"
-#include "transport.hpp"
 #include "test_transport.hpp"
 #include "out_filename_sequence_transport.hpp"
 #include "FileToGraphic.hpp"
@@ -74,7 +72,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     ;
 
     // Timestamps are applied only when flushing
-    struct timeval now;
+    timeval now;
     now.tv_usec = 0;
     now.tv_sec = 1000;
 
@@ -149,7 +147,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
         ;
 
     // Timestamps are applied only when flushing
-    struct timeval now;
+    timeval now;
     now.tv_usec = 0;
     now.tv_sec = 1000;
 
@@ -233,7 +231,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
         ;
 
     // Timestamps are applied only when flushing
-    struct timeval now;
+    timeval now;
     now.tv_usec = 0;
     now.tv_sec = 1000;
 

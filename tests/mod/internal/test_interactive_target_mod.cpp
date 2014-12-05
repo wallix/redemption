@@ -30,7 +30,6 @@
 #define SHARE_PATH "./tests/fixtures"
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "internal/interactive_target_mod.hpp"
 #include "../../front/fake_front.hpp"

@@ -24,14 +24,15 @@
 #include "out_meta_sequence_transport.hpp"
 #include "crypto_out_meta_sequence_transport.hpp"
 #include "out_filename_sequence_transport.hpp"
+
 #include "RDP/caches/pointercache.hpp"
-#include "staticcapture.hpp"
+
 #include "nativecapture.hpp"
+#include "staticcapture.hpp"
+
+#include "RDP/compress_and_draw_bitmap_update.hpp"
 
 #include "wait_obj.hpp"
-#include "RDP/pointer.hpp"
-
-#include "auth_api.hpp"
 
 class Capture : public RDPGraphicDevice, public RDPCaptureDevice {
 public:
@@ -84,17 +85,16 @@ public:
     , capture_drawable(ini.video.capture_wrm||(ini.video.png_limit > 0))
     , capture_png(ini.video.png_limit > 0)
     , enable_file_encryption(ini.globals.enable_file_encryption.get())
-    , png_trans(NULL)
-    , psc(NULL)
-    , wrm_trans(NULL)
-    , pnc_bmp_cache(NULL)
-    , pnc_ptr_cache(NULL)
-    , pnc(NULL)
-    , drawable(NULL)
-    , capture_event(wait_obj(NULL))
+    , png_trans(nullptr)
+    , psc(nullptr)
+    , wrm_trans(nullptr)
+    , pnc_bmp_cache(nullptr)
+    , pnc_ptr_cache(nullptr)
+    , pnc(nullptr)
+    , drawable(nullptr)
     , png_path(png_path)
     , basename(basename)
-    , gd(NULL)
+    , gd(nullptr)
     , last_now(now)
     , last_x(width / 2)
     , last_y(height / 2)

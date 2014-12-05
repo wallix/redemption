@@ -25,28 +25,13 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRdpClientTLSW2008
 #include <boost/test/auto_unit_test.hpp>
-#include <errno.h>
-#include <algorithm>
 
 #define LOGNULL
 //#define LOGPRINT
-#include "test_orders.hpp"
 
-#include "stream.hpp"
-#include "transport.hpp"
 #include "test_transport.hpp"
-#include "RDP/x224.hpp"
-#include "RDP/mcs.hpp"
-#include "RDP/sec.hpp"
-#include "wait_obj.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
-#include "channel_list.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
-#include "ssl_calls.hpp"
-#include "png.hpp"
-#include "RDP/RDPDrawable.hpp"
-#include "staticcapture.hpp"
 
 #include "../front/fake_front.hpp"
 

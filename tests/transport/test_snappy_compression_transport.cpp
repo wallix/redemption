@@ -25,7 +25,6 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
 #include "snappy_compression_transport.hpp"
 #include "test_transport.hpp"
@@ -69,16 +68,30 @@ BOOST_AUTO_TEST_CASE(TestSnappyCompressionTransport)
             char   in_data[128] = { 0 };
             char * in_buffer   = in_data;
 
+
             in_trans.recv(&in_buffer, 21);
-            LOG(LOG_INFO, "in_data=\"%s\"", in_data);
+            BOOST_CHECK_EQUAL(in_data,
+                "azert"
+                "azert"
+                "azert"
+                "azert");
 
             in_buffer = in_data;
             in_trans.recv(&in_buffer, 31);
-            LOG(LOG_INFO, "in_data=\"%s\"", in_data);
+            BOOST_CHECK_EQUAL(in_data,
+                "wallix"
+                "wallix"
+                "wallix"
+                "wallix"
+                "wallix");
 
             in_buffer = in_data;
             in_trans.recv(&in_buffer, 65);
-            LOG(LOG_INFO, "in_data=\"%s\"", in_data);
+            BOOST_CHECK_EQUAL(in_data,
+                "0123456789ABCDEF"
+                "0123456789ABCDEF"
+                "0123456789ABCDEF"
+                "0123456789ABCDEF");
         }
     //}
 }

@@ -25,11 +25,13 @@
 
 #include <string.h>
 
-#include "in_file_transport.hpp"
 #include "log.hpp"
-#include "mod_api.hpp"
+#include "defines.hpp"
+#include "in_file_transport.hpp"
 #include "out_file_transport.hpp"
 #include "stream.hpp"
+#include "string.hpp"
+#include "fileutils.hpp"
 
 #include "RDP/protocol.hpp"
 
@@ -48,9 +50,17 @@
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/bmpcachepersister.hpp"
+#include "RDP/caches/fontcache.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
+
+class RDPGraphicDevice;
 
 /* orders */
 struct rdp_orders {
@@ -291,7 +301,7 @@ public:
     {
         FontChar fi(offset, baseline, width, height, 0);
         memcpy(fi.data.get(), data, fi.datasize());
-        RDPGlyphCache cmd(font, 1, character, fi.offset, fi.baseline, fi.width, fi.height, fi.data.get());
+        RDPGlyphCache cmd(font, /*1, */character, fi.offset, fi.baseline, fi.width, fi.height, fi.data.get());
         this->gly_cache.set_glyph(std::move(fi), cmd.cacheId, cmd.glyphData_cacheIndex);
         gd.draw(cmd);
     }

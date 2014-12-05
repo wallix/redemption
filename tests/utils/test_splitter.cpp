@@ -25,10 +25,9 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
 #include "splitter.hpp"
-#include <iterator>
+#include <string>
 
 BOOST_AUTO_TEST_CASE(TestSplitter)
 {

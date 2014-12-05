@@ -22,15 +22,13 @@
 #ifndef _REDEMPTION_UTILS_DRAWABLE_HPP_
 #define _REDEMPTION_UTILS_DRAWABLE_HPP_
 
-#include <algorithm>
+#include <utility>
 #include <memory>
 
 #include "bitmap.hpp"
 #include "colors.hpp"
 #include "rect.hpp"
 #include "ellipse.hpp"
-#include "difftimeval.hpp"
-#include <RDP/orders/RDPOrdersPrimaryEllipseSC.hpp>
 
 using std::size_t;
 

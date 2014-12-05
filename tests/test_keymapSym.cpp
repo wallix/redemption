@@ -29,9 +29,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #include "log.hpp"
-#define LOGNULL
-
-#include <stdint.h>
 
 #include "keymapSym.hpp"
 

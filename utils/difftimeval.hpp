@@ -24,7 +24,7 @@
 
 #include "timeval_ops.hpp"
 
-#include "log.hpp"
+//#include "log.hpp"
 
 class TimeObj {
 public:
@@ -76,7 +76,7 @@ static inline uint64_t ustime() {
     return ustime(tvtime());
 }
 
-REDOC("as gettimeofday is not monotonic we may get surprising results (overflow). In these case we choose to send 0.")
+// TODO REDOC("as gettimeofday is not monotonic we may get surprising results (overflow). In these case we choose to send 0.")
 static inline uint64_t difftimeval(const timeval& endtime, const timeval& starttime)
 {
     uint64_t d = ustime(endtime) - ustime(starttime);

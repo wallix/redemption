@@ -27,10 +27,8 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "bitfu.hpp"
-#include <stdio.h>
 
 //#include "rdtsc.hpp"
 //long long ustime() {

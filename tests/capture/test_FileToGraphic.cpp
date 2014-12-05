@@ -29,9 +29,9 @@
 
 #include "out_filename_sequence_transport.hpp"
 #include "in_file_transport.hpp"
-#include "staticcapture.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
+#include "image_capture.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSample0WRM)
 {

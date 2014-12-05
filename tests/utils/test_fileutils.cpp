@@ -25,10 +25,11 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
-#include <fcntl.h>
 #include "fileutils.hpp"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
 {

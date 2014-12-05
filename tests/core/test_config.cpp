@@ -25,17 +25,12 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestConfig
 #include <boost/test/auto_unit_test.hpp>
-#include <stdio.h>
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
 #include "config.hpp"
 #include <sstream>
-#include <string>
-
-#include "fileutils.hpp"
 
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH ""

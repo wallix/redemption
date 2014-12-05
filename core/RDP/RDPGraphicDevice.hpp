@@ -28,45 +28,51 @@
 #ifndef _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
 #define _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
 
-#include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
-#include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
-#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
-#include "RDP/bitmapupdate.hpp"
-#include "RDP/caches/fontcache.hpp"
-#include "RDP/pointer.hpp"
-#include "ellipse.hpp"
-#include "bitmap.hpp"
+#include <cstddef>
+
 #include "noncopyable.hpp"
+#include "colors.hpp"
+
+class RDPDestBlt;
+class RDPMultiDstBlt;
+class RDPPatBlt;
+class RDPOpaqueRect;
+class RDPMultiOpaqueRect;
+class RDPScrBlt;
+class RDPMemBlt;
+class RDPMem3Blt;
+class RDPLineTo;
+class RDPGlyphIndex;
+class RDPPolygonSC;
+class RDPPolygonCB;
+class RDPPolyline;
+class RDPEllipseSC;
+class RDPEllipseCB;
+class RDPColCache;
+class RDPGlyphCache;
+class RDPBrushCache;
+
+class RDPBitmapData;
+class Pointer;
+class Rect;
+class Bitmap;
+class GlyphCache;
+
+namespace RDP {
+    class RDPMultiPatBlt;
+    class RDPMultiScrBlt;
+    class FrameMarker;
+}
 
 struct RDPGraphicDevice : noncopyable {
-    virtual void draw(const RDPOpaqueRect       & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPScrBlt           & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPDestBlt          & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPMultiDstBlt      & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPMultiOpaqueRect  & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPPatBlt           & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPOpaqueRect       & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPMultiOpaqueRect  & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPScrBlt           & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPMemBlt           & cmd, const Rect & clip, const Bitmap & bmp) = 0;
     virtual void draw(const RDPMem3Blt          & cmd, const Rect & clip, const Bitmap & bmp) = 0;
     virtual void draw(const RDPLineTo           & cmd, const Rect & clip) = 0;
@@ -78,14 +84,14 @@ struct RDPGraphicDevice : noncopyable {
     virtual void draw(const RDPEllipseCB        & cmd, const Rect & clip) = 0;
 
     TODO("The 3 methods below should not exist and cache access be done before calling drawing orders")
-    virtual void draw(const RDPBrushCache & cmd) {}
     virtual void draw(const RDPColCache   & cmd) {}
     virtual void draw(const RDPGlyphCache & cmd) {}
+    virtual void draw(const RDPBrushCache & cmd) {}
 
     virtual void draw(const RDP::FrameMarker & order) = 0;
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) = 0;
+    virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data, std::size_t size
+                     , const Bitmap & bmp) = 0;
 
     virtual void server_set_pointer(const Pointer & cursor) = 0;
 
@@ -103,47 +109,5 @@ public:
     // it does not looks really usefull.
     virtual ~RDPGraphicDevice() {}
 };
-
-struct RDPCaptureDevice : noncopyable {
-    virtual void set_row(size_t rownum, const uint8_t * data) {}
-
-    virtual void input(const timeval & now, Stream & input_data_32) {}
-
-    virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
-        bool ignore_frame_in_timeval) {}
-
-    virtual void set_pointer_display() {}
-
-    // toggles externally genareted breakpoint.
-    virtual void external_breakpoint() {}
-
-    virtual void external_time(const timeval & now) {}
-
-protected:
-    // this to avoid calling constructor of base abstract class
-    RDPCaptureDevice() {}
-
-public:
-    // we choosed to make destructor virtual to allow destructing object
-    // through pointer of base class. As this class is interface only
-    // it does not looks really usefull.
-    virtual ~RDPCaptureDevice() {}
-};
-
-inline
-void compress_and_draw_bitmap_update( const RDPBitmapData & bitmap_data, const Bitmap & bmp
-                                    , uint8_t target_bpp, RDPGraphicDevice & gd) {
-    BStream bmp_stream(65535);
-    bmp.compress(target_bpp, bmp_stream);
-    bmp_stream.mark_end();
-
-    RDPBitmapData target_bitmap_data = bitmap_data;
-
-    target_bitmap_data.bits_per_pixel = bmp.bpp();
-    target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
-    target_bitmap_data.bitmap_length  = bmp_stream.size();
-
-    gd.draw(target_bitmap_data, bmp_stream.get_data(), bmp_stream.size(), bmp);
-}
 
 #endif

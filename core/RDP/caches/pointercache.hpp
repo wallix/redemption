@@ -21,12 +21,11 @@
 #ifndef _REDEMPTION_CORE_RDP_CACHES_POINTERCACHE_HPP_
 #define _REDEMPTION_CORE_RDP_CACHES_POINTERCACHE_HPP_
 
-#include <math.h>
+
+#include "noncopyable.hpp"
 
 #include "RDP/pointer.hpp"
-#include "drawable.hpp"
 #include "client_info.hpp"
-#include "noncopyable.hpp"
 
 
 enum {

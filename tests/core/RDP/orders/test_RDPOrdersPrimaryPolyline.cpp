@@ -25,12 +25,10 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestOrderPolyline
 #include <boost/test/auto_unit_test.hpp>
-#include <algorithm>
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 
 #include "test_orders.hpp"

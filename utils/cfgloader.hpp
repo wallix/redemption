@@ -25,7 +25,6 @@
 #include <fstream>
 
 #include "log.hpp"
-#include "parser.hpp"
 
 struct ConfigurationHolder {
     virtual ~ConfigurationHolder() {}

@@ -22,12 +22,11 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_)
 #define REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_
 
-#include <vector>
-#include <algorithm>
 #include "widget.hpp"
 #include "keymap2.hpp"
 #include "region.hpp"
 #include "draw_api.hpp"
+#include <RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp>
 
 inline void fill_region(DrawApi & drawable, const Region & region, int bg_color) {
     for (const Rect & rect : region.rects) {

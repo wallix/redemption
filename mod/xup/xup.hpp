@@ -33,7 +33,13 @@
 
 /* include "ther h files */
 #include "RDP/pointer.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "front_api.hpp"
+#include "transport.hpp"
 #include "stream.hpp"
+#include "bitmap.hpp"
 
 struct xup_mod : public mod_api {
 
@@ -303,7 +309,7 @@ enum {
                     break;
                     case 19:
                     {
-                        struct Pointer cursor;
+                        Pointer cursor;
                         cursor.x = stream.in_sint16_le();
                         cursor.y = stream.in_sint16_le();
                         stream.in_copy_bytes(cursor.data, 32 * (32 * 3));

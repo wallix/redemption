@@ -25,14 +25,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "internal/widget2/number_edit.hpp"
 #include "internal/widget2/screen.hpp"
-#include "internal/widget2/composite.hpp"
-#include "png.hpp"
-#include "ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
 #ifndef FIXTURES_PATH

@@ -28,21 +28,14 @@
 #ifndef _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
 #define _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
 
-#include "RDP/x224.hpp"
-#include "RDP/mcs.hpp"
-#include "RDP/share.hpp"
-#include "RDP/sec.hpp"
-#include "RDP/lic.hpp"
-#include "RDP/RDPSerializer.hpp"
-#include "difftimeval.hpp"
-#include "png.hpp"
-#include "error.hpp"
-#include "config.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include "RDP/caches/pointercache.hpp"
 #include "colors.hpp"
 #include "compression_transport_wrapper.hpp"
+#include "config.hpp"
+#include "RDP/caches/bmpcache.hpp"
+#include "RDP/RDPSerializer.hpp"
+#include "RDP/share.hpp"
 #include "RDP/RDPDrawable.hpp"
+#include "wrm_label.hpp"
 
 class WRMChunk_Send
 {
@@ -73,7 +66,7 @@ public:
 
     virtual void flush() {
         this->stream.mark_end();
-        if (this->stream.size() > 0){
+        if (this->stream.size() > 0) {
             BStream header(8);
             WRMChunk_Send(header, LAST_IMAGE_CHUNK, this->stream.size(), 1);
             this->trans.send(header);
@@ -84,7 +77,7 @@ public:
 private:
     virtual void do_send(const char * const buffer, size_t len) {
         size_t to_buffer_len = len;
-        while (this->stream.size() + to_buffer_len > max){
+        while (this->stream.size() + to_buffer_len > max) {
             BStream header(8);
             WRMChunk_Send(header, PARTIAL_IMAGE_CHUNK, max, 1);
             this->trans.send(header);
@@ -136,7 +129,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 public:
     enum class SendInput { NO, YES };
 
-    GraphicToFile(const timeval& now
+    GraphicToFile(const timeval & now
                 , Transport * trans
                 , const uint16_t width
                 , const uint16_t height
@@ -182,8 +175,8 @@ public:
         this->send_image_chunk();
     }
 
-    ~GraphicToFile(){
-    }
+//    ~GraphicToFile() {
+//    }
 
     void dump_png24(Transport & trans, bool bgr) const {
         this->drawable.dump_png24(trans, bgr);
@@ -194,7 +187,7 @@ public:
     {
         uint64_t old_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
         uint64_t current_timer = now.tv_sec * 1000000ULL + now.tv_usec;
-        if (old_timer < current_timer){
+        if (old_timer < current_timer) {
             this->flush_orders();
             this->flush_bitmaps();
             this->timer = now;
@@ -283,7 +276,7 @@ public:
     {
         BStream payload(12 + GTF_SIZE_KEYBUF_REC * sizeof(uint32_t) + 1);
         payload.out_timeval_to_uint64le_usec(this->timer);
-        if (this->send_input){
+        if (this->send_input) {
             payload.out_uint16_le(this->mouse_x);
             payload.out_uint16_le(this->mouse_y);
 
@@ -513,7 +506,7 @@ public:
         ; cache_id < this->bmp_cache.number_of_cache
         ; ++cache_id) {
             const size_t entries = this->bmp_cache.get_cache(cache_id).entries();
-            for (size_t i = 0; i < entries; i++){
+            for (size_t i = 0; i < entries; i++) {
                 this->bmp_cache.set_cached(cache_id, i, false);
             }
         }
@@ -528,7 +521,7 @@ public:
     void send_caches_chunk()
     {
         this->save_bmp_caches();
-        if (this->order_count > 0){
+        if (this->order_count > 0) {
             this->send_orders_chunk();
         }
 
@@ -557,8 +550,8 @@ public:
 protected:
     virtual void flush_orders()
     {
-        if (this->order_count > 0){
-            if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0){
+        if (this->order_count > 0) {
+            if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0) {
                 this->send_timestamp_chunk();
             }
             this->send_orders_chunk();

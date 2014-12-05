@@ -22,6 +22,7 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_DIALOG_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_DIALOG_HPP
 
+#include "defines.hpp"
 #include "composite.hpp"
 #include "flat_button.hpp"
 #include "multiline.hpp"

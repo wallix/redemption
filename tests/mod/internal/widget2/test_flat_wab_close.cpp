@@ -30,13 +30,9 @@
 #define SHARE_PATH "./tests/fixtures"
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "internal/widget2/flat_wab_close.hpp"
 #include "internal/widget2/screen.hpp"
-#include "png.hpp"
-#include "ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
 
@@ -251,14 +247,6 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 
 BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
-
     struct Notify : NotifyApi {
         Widget2* sender;
         notify_event_t event;
@@ -338,7 +326,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     notifier.event = 0;
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     flat_wab_close.rdp_input_scancode(0, 0, 0, 0, &keymap);
 

@@ -25,16 +25,11 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
 #include "internal/widget2/edit.hpp"
 #include "internal/widget2/flat_button.hpp"
 #include "internal/widget2/tab.hpp"
 #include "internal/widget2/screen.hpp"
-#include "internal/widget2/composite.hpp"
-#include "png.hpp"
-#include "ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
 

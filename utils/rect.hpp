@@ -25,10 +25,9 @@
 #ifndef _REDEMPTION_UTILS_RECT_HPP_
 #define _REDEMPTION_UTILS_RECT_HPP_
 
-#include <algorithm>
+#include <utility>
 #include <iosfwd>
-#include <stdint.h>
-#include "log.hpp"
+#include <cstdint>
 
 struct Rect {
     int16_t x;

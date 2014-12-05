@@ -23,6 +23,7 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_MULTILINE_HPP
 
 #include "widget.hpp"
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 class WidgetMultiLine : public Widget2
 {

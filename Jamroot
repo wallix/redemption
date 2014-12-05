@@ -372,7 +372,7 @@ unit-test test_make_unique : tests/utils/test_make_unique.cpp libboost_unit_test
 ## @}
 
 unit-test test_stream : tests/utils/test_stream.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_inputarray : tests/utils/test_inputarray.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+# unit-test test_inputarray : tests/utils/test_inputarray.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_utf : tests/utils/test_utf.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rect : tests/utils/test_rect.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_ellipse : tests/utils/test_ellipse.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -391,7 +391,7 @@ unit-test test_mppc_40 : tests/core/RDP/test_mppc_40.cpp libboost_unit_test : <v
 unit-test test_mppc_50 : tests/core/RDP/test_mppc_50.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_mppc_60 : tests/core/RDP/test_mppc_60.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_mppc_61 : tests/core/RDP/test_mppc_61.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_gcc : tests/core/RDP/test_gcc.cpp crypto dl z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_gcc : tests/core/RDP/test_gcc.cpp dl z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_sec : tests/core/RDP/test_sec.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_lic : tests/core/RDP/test_lic.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_share : tests/core/RDP/test_share.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -400,10 +400,10 @@ unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp libboost_unit_test : 
 
 unit-test test_authentifier : tests/acl/test_authentifier.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_module_manager : tests/acl/test_module_manager.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_acl_serializer : tests/acl/test_acl_serializer.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_acl_serializer : tests/acl/test_acl_serializer.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_capture : tests/capture/test_capture.cpp crypto dl png z snappy cryptofile libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transport.cpp crypto png z snappy libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp png z crypto snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transport.cpp png z snappy crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp png z snappy crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp png z crypto snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_nativecapture : tests/capture/test_nativecapture.cpp png z crypto snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_staticcapture : tests/capture/test_staticcapture.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -418,13 +418,11 @@ unit-test test_client_info : tests/core/test_client_info.cpp libboost_unit_test 
 unit-test test_config : tests/core/test_config.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_theme : tests/utils/test_theme.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_confdescriptor : tests/utils/test_confdescriptor.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_constants : tests/core/test_constants.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_error : tests/core/test_error.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_font : tests/core/test_font.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_front_api : tests/core/test_front_api.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_listen : tests/core/test_listen.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_mainloop : tests/core/test_mainloop.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp libboost_unit_test png z crypto : <variant>coverage:<library>gcov ;
+unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bmpcache : tests/core/RDP/caches/test_bmpcache.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_brushcache : tests/core/RDP/caches/test_brushcache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -502,7 +500,7 @@ unit-test test_log : tests/utils/test_log.cpp libboost_unit_test : <variant>cove
 unit-test test_netutils : tests/utils/test_netutils.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_png : tests/utils/test_png.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdtsc : tests/utils/test_rdtsc.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp crypto dl z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp openssl crypto dl z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_string : tests/utils/test_string.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
@@ -518,7 +516,7 @@ unit-test test_socket_transport : tests/transport/test_socket_transport.cpp open
 unit-test test_file_transport : tests/transport/test_file_transport.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_crypto_meta_sequence_transport : tests/transport/test_crypto_meta_sequence_transport.cpp cryptofile crypto snappy dl z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_request_full_cleaning : tests/transport/test_request_full_cleaning.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_filename_transport : tests/transport/test_filename_transport.cpp z crypto dl cryptofile snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_filename_transport : tests/transport/test_filename_transport.cpp z dl cryptofile snappy crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bulk_compression_transport : tests/transport/test_bulk_compression_transport.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp z libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -531,9 +529,9 @@ unit-test test_compression_transport_wrapper : tests/utils/test_compression_tran
 
 
 #unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_image_capture : tests/capture/test_image_capture.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
-#unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z openssl crypto libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp png z crypto snappy libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_image_capture : tests/capture/test_image_capture.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+#unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp png z snappy crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryOpaqueRect : tests/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryScrBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryMemBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -550,13 +548,12 @@ unit-test test_RDPOrdersPrimaryEllipseSC : tests/core/RDP/orders/test_RDPOrdersP
 unit-test test_RDPOrdersPrimaryEllipseCB : tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryPatBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryPatBlt.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryGlyphIndex : tests/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_RDPOrdersSecondaryBmpCache : tests/core/RDP/orders/test_RDPOrdersSecondaryBmpCache.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_RDPOrdersSecondaryBmpCache : tests/core/RDP/orders/test_RDPOrdersSecondaryBmpCache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersSecondaryColorCache : tests/core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersSecondaryBrushCache : tests/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
-#unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png z openssl crypto dl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_rdp : tests/mod/rdp/test_rdp.cpp cryptofile krb5 gssglue png crypto d3des z dl libboost_unit_test : <variant>coverage:<library>gcov ;
+#unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png z crypto dl libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_rdp : tests/mod/rdp/test_rdp.cpp cryptofile krb5 gssglue png d3des z dl crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp z png crypto dl openssl libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp krb5 gssglue png crypto d3des z dl openssl libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdp_client_wab : tests/client_mods/test_rdp_client_wab.cpp krb5 gssglue png crypto d3des z dl krb5 gssglue libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -570,59 +567,60 @@ unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test : <varian
 
 ## Widget tests
 ## @{
-unit-test test_widget2_rect : tests/mod/internal/widget2/test_widget2_rect.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_image : tests/mod/internal/widget2/test_image.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_label : tests/mod/internal/widget2/test_label.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_tooltip : tests/mod/internal/widget2/test_tooltip.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_button : tests/mod/internal/widget2/test_flat_button.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_edit : tests/mod/internal/widget2/test_edit.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_multiline : tests/mod/internal/widget2/test_multiline.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_password : tests/mod/internal/widget2/test_password.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_number_edit : tests/mod/internal/widget2/test_number_edit.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_edit_valid : tests/mod/internal/widget2/test_edit_valid.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-# unit-test test_radio_list : tests/mod/internal/widget2/test_radio_list.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_dialog : tests/mod/internal/widget2/test_flat_dialog.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_widget : tests/mod/internal/widget2/test_widget.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_widget2_rect : tests/mod/internal/widget2/test_widget2_rect.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_image : tests/mod/internal/widget2/test_image.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_label : tests/mod/internal/widget2/test_label.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_tooltip : tests/mod/internal/widget2/test_tooltip.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_button : tests/mod/internal/widget2/test_flat_button.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_edit : tests/mod/internal/widget2/test_edit.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_multiline : tests/mod/internal/widget2/test_multiline.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_password : tests/mod/internal/widget2/test_password.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_number_edit : tests/mod/internal/widget2/test_number_edit.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_edit_valid : tests/mod/internal/widget2/test_edit_valid.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+# unit-test test_radio_list : tests/mod/internal/widget2/test_radio_list.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_dialog : tests/mod/internal/widget2/test_flat_dialog.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_interactive_password : tests/mod/internal/widget2/test_flat_interactive_password.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_widget : tests/mod/internal/widget2/test_widget.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 
-#unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z openssl crypto dl libboost_unit_test : <variant>coverage:<library>gcov ;
+#unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z crypto dl libboost_unit_test : <variant>coverage:<library>gcov ;
 
-unit-test test_flat_login : tests/mod/internal/widget2/test_flat_login.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_wab_close : tests/mod/internal/widget2/test_flat_wab_close.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_selector : tests/mod/internal/widget2/test_flat_selector.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_screen : tests/mod/internal/widget2/test_screen.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_login : tests/mod/internal/widget2/test_flat_login.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_wab_close : tests/mod/internal/widget2/test_flat_wab_close.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_selector : tests/mod/internal/widget2/test_flat_selector.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_screen : tests/mod/internal/widget2/test_screen.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 
-# unit-test test_columnlayout : tests/mod/internal/widget2/test_columnlayout.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-# unit-test test_linelayout : tests/mod/internal/widget2/test_linelayout.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-# unit-test test_stacklayout : tests/mod/internal/widget2/test_stacklayout.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_grid : tests/mod/internal/widget2/test_grid.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_labelgrid : tests/mod/internal/widget2/test_labelgrid.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
+# unit-test test_columnlayout : tests/mod/internal/widget2/test_columnlayout.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+# unit-test test_linelayout : tests/mod/internal/widget2/test_linelayout.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+# unit-test test_stacklayout : tests/mod/internal/widget2/test_stacklayout.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_grid : tests/mod/internal/widget2/test_grid.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_labelgrid : tests/mod/internal/widget2/test_labelgrid.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 
-unit-test test_flat_selector2 : tests/mod/internal/widget2/test_flat_selector2.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_group_box : tests/mod/internal/widget2/test_group_box.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-# unit-test test_scroll : tests/mod/internal/widget2/test_scroll.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-# unit-test test_tab : tests/mod/internal/widget2/test_tab.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_interactive_target : tests/mod/internal/widget2/test_flat_interactive_target.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_selector2 : tests/mod/internal/widget2/test_flat_selector2.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_group_box : tests/mod/internal/widget2/test_group_box.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+# unit-test test_scroll : tests/mod/internal/widget2/test_scroll.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+# unit-test test_tab : tests/mod/internal/widget2/test_tab.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_interactive_target : tests/mod/internal/widget2/test_flat_interactive_target.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 ## @}
 
 
 ## Mod tests
 ## @{
-unit-test test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_login_mod : tests/mod/internal/test_flat_login_mod.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_selector_mod : tests/mod/internal/test_flat_selector_mod.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_widget_test_mod : tests/mod/internal/test_widget_test_mod.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_interactive_password_mod : tests/mod/internal/test_interactive_password_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_login_mod : tests/mod/internal/test_flat_login_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_selector_mod : tests/mod/internal/test_flat_selector_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_widget_test_mod : tests/mod/internal/test_widget_test_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 
-unit-test test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_test_card_mod : tests/mod/internal/test_test_card_mod.cpp openssl libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_test_card_mod : tests/mod/internal/test_test_card_mod.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
-unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp openssl libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
-unit-test test_copy_paste : tests/mod/internal/test_copy_paste.cpp openssl libboost_unit_test png z crypto : <variant>coverage:<library>gcov ;
-
+unit-test test_copy_paste : tests/mod/internal/test_copy_paste.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 ## @}
 
 
@@ -636,7 +634,7 @@ unit-test test_regex : tests/regex/test_regex.cpp libboost_unit_test : <variant>
 # unit-test benchmark_regex_search : tests/benchmark/search.cpp ;
 ## @}
 
-unit-test test_base64 : tests/utils/test_base64.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+# unit-test test_base64 : tests/utils/test_base64.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_translation : tests/utils/test_translation.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
@@ -646,16 +644,16 @@ unit-test test_translation : tests/utils/test_translation.cpp libboost_unit_test
 unit-test test_ber : tests/core/RDP/nla/asn1/test_ber.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_credssp : tests/core/RDP/nla/test_credssp.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_sspi : tests/core/RDP/nla/test_sspi.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_nla : tests/core/RDP/nla/test_nla.cpp dl crypto krb5 gssglue z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_nla : tests/core/RDP/nla/test_nla.cpp dl krb5 gssglue z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 
 alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
 
 unit-test test_ntlm_message_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_ntlm_message_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_ntlm_message_authenticate : tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_ntlm_context : tests/core/RDP/nla/ntlm/test_ntlm_context.cpp crypto dl z libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm.cpp crypto dl z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_ntlm_context : tests/core/RDP/nla/ntlm/test_ntlm_context.cpp dl z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm.cpp dl z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_credentials : tests/core/RDP/nla/kerberos/test_credentials.cpp krb5 libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp krb5 gssglue libboost_unit_test : <variant>coverage:<library>gcov ;
 ## @}
@@ -665,8 +663,8 @@ unit-test test_darray : tests/utils/test_darray.cpp libboost_unit_test : <varian
 
 ## Widget for workflow
 ## @{
-unit-test test_flat_wait : tests/mod/internal/widget2/test_flat_wait.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_form : tests/mod/internal/widget2/test_flat_form.cpp png z crypto openssl libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_wait : tests/mod/internal/widget2/test_flat_wait.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_form : tests/mod/internal/widget2/test_flat_form.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 ## @}
 
 unit-test test_authorization_channels : tests/utils/test_authorization_channels.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

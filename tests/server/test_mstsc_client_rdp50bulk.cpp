@@ -28,10 +28,6 @@
 
 #include <boost/test/auto_unit_test.hpp>
 
-#include <errno.h>
-#include <algorithm>
-#include <sys/un.h>
-
 #undef SHARE_PATH
 #define SHARE_PATH "./tests/fixtures"
 
@@ -40,11 +36,13 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
-#include "listen.hpp"
-#include "session.hpp"
+#include "null/null.hpp"
+#include "internal/test_card_mod.hpp"
 #include "test_transport.hpp"
+#include "config.hpp"
+#include "front.hpp"
+
 
 BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 {

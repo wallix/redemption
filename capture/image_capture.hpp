@@ -26,10 +26,10 @@
 #define _REDEMPTION_CAPTURE_IMAGE_CAPTURE_HPP_
 
 #include "png.hpp"
+#include "drawable.hpp"
 
 #include <memory>
 
-#include "RDP/RDPDrawable.hpp"
 
 class ImageCapture {
 public:

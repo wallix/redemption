@@ -23,27 +23,10 @@
 #define _REDEMPTION_CAPTURE_STATICCAPTURE_HPP_
 
 #include "image_capture.hpp"
-
-#include <stdio.h>
-#include <png.h>
-
-#include "bitmap.hpp"
-#include "rect.hpp"
 #include "difftimeval.hpp"
-
-#include "RDP/orders/RDPOrdersCommon.hpp"
-
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-
-#include "png.hpp"
-#include "error.hpp"
-#include "config.hpp"
-#include "colors.hpp"
-
-#include "RDP/RDPDrawable.hpp"
 #include "config.hpp"
 #include "sequence_generator.hpp"
+#include "CaptureDevice.hpp"
 
 struct StaticCaptureConfig {
     uint64_t png_interval;

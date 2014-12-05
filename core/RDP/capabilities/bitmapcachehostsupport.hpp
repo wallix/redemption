@@ -25,6 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAPCACHEHOSTSUPPORT_HPP_
 
 #include "common.hpp"
+#include "stream.hpp"
 
 // 2.2.7.2.1 Bitmap Cache Host Support Capability Set (TS_BITMAPCACHE_HOSTSUPPORT_CAPABILITYSET)
 // =============================================================================================

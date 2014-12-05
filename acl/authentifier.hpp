@@ -25,16 +25,12 @@
 #ifndef _REDEMPTION_ACL_AUTHENTIFIER_HPP_
 #define _REDEMPTION_ACL_AUTHENTIFIER_HPP_
 
-#include <unistd.h>
-#include <fcntl.h>
-
-#include "stream.hpp"
+#include "log.hpp"
 #include "config.hpp"
-#include "netutils.hpp"
+#include "activity_checker.hpp"
 #include "acl_serializer.hpp"
 #include "module_manager.hpp"
-#include "translation.hpp"
-#include "activity_checker.hpp"
+#include "front.hpp"
 
 class KeepAlive {
     // Keep alive Variables

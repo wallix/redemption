@@ -26,16 +26,11 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
 #include "internal/widget2/label.hpp"
 #include "internal/widget2/grid.hpp"
 #include "internal/widget2/screen.hpp"
-#include "internal/widget2/composite.hpp"
 #include "internal/widget2/flat_button.hpp"
-#include "png.hpp"
-#include "ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
 #ifndef FIXTURES_PATH

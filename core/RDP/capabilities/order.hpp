@@ -25,6 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_ORDER_HPP_
 
 #include "common.hpp"
+#include "stream.hpp"
 
 // 2.2.7.1.3 Order Capability Set (TS_ORDER_CAPABILITYSET)
 // =======================================================
@@ -386,7 +387,7 @@ struct OrderCaps : public Capability {
         stream.out_uint16_le(this->pad2octetsE);
     }
 
-    void recv(Stream & stream, uint16_t len) throw(Error){
+    void recv(Stream & stream, uint16_t len) {
         this->len = len;
 
         /* terminalDescriptor(16) + pad4octetsA(4) + desktopSaveXGranularity(2) + desktopSaveYGranularity(2) +

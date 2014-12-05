@@ -25,6 +25,8 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BRUSHCACHE_HPP_
 
 #include "common.hpp"
+#include "stream.hpp"
+#include "error.hpp"
 
 // 2.2.7.1.7 Brush Capability Set (TS_BRUSH_CAPABILITYSET)
 // ======================================================

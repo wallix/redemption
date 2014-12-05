@@ -43,7 +43,7 @@ private:
 public:
     uint16_t nbconsumers;
 
-    struct RDPChunkedDevice * consumers[10];
+    RDPChunkedDevice * consumers[10];
 
     timeval record_now;
 

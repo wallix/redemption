@@ -51,6 +51,8 @@
 
 #include "authentifier.hpp"
 
+#include "socket_transport_utility.hpp"
+
 using namespace std;
 
 enum {
@@ -87,9 +89,11 @@ class Session {
 
     class Client {
         SocketTransport auth_trans;
+        TODO("Looks like acl and mod can be unified into a common class, where events can happen")
+        TODO("move auth_event to acl")
+        wait_obj        auth_event;
 
     public:
-        wait_obj        auth_event;
         SessionManager  acl;
 
         Client( int client_sck, Inifile & ini, ActivityChecker & activity_checker, time_t start_time, time_t now )
@@ -99,7 +103,6 @@ class Session {
                     , ini.globals.authport
                     , ini.debug.auth
         )
-        , auth_event(&this->auth_trans)
         , acl( ini
              , activity_checker
              , this->auth_trans
@@ -107,6 +110,14 @@ class Session {
              , now        // acl start time
         )
         {}
+
+        bool is_set(fd_set & rfds) {
+            return ::is_set(this->auth_event, &this->auth_trans, rfds);
+        }
+
+        void add_to_fd_set(fd_set & rfds, unsigned & max, timeval & timeout) {
+            return ::add_to_fd_set(this->auth_event, &this->auth_trans, rfds, max, timeout);
+        }
     };
 
     Client * client = nullptr;
@@ -126,7 +137,7 @@ public:
             , perf_file(nullptr) {
         try {
             SocketTransport front_trans("RDP Client", sck, "", 0, this->ini.debug.front);
-            wait_obj front_event(&front_trans);
+            wait_obj front_event;
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
             //  here instead of inside Sessionmanager
 
@@ -170,19 +181,16 @@ public:
                 FD_ZERO(&wfds);
                 timeval timeout = time_mark;
 
-                front_event.add_to_fd_set(rfds, max, timeout);
+                add_to_fd_set(front_event, &front_trans, rfds, max, timeout);
                 if (this->front->capture) {
-                    this->front->capture->capture_event.add_to_fd_set(rfds, max, timeout);
+                    add_to_fd_set(this->front->capture->capture_event, nullptr, rfds, max, timeout);
                 }
-                TODO("Looks like acl and mod can be unified into a common class, where events can happen");
-                TODO("move auth_event to acl");
                 if (this->client) {
-                    this->client->auth_event.add_to_fd_set(rfds, max, timeout);
+                    this->client->add_to_fd_set(rfds, max, timeout);
                 }
-                mm.mod->get_event().add_to_fd_set(rfds, max, timeout);
+                add_to_fd_set(mm.mod->get_event(), mm.mod_transport, rfds, max, timeout);
 
-                const bool has_pending_data =
-                    (front_event.st->tls && SSL_pending(front_event.st->allocated_ssl));
+                const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.allocated_ssl));
                 if (has_pending_data)
                     memset(&timeout, 0, sizeof(timeout));
 
@@ -207,8 +215,7 @@ public:
                     this->write_performance_log(now);
                 }
 
-                if (front_event.is_set(rfds) ||
-                    (front_event.st->tls && SSL_pending(front_event.st->allocated_ssl))) {
+                if (is_set(front_event, &front_trans, rfds) || (front_trans.tls && SSL_pending(front_trans.allocated_ssl))) {
                     try {
                         this->front->incoming(*mm.mod);
                     } catch (...) {
@@ -230,7 +237,7 @@ public:
                             mm.check_module();
                         }
                         // Process incoming module trafic
-                        if (mm.mod->get_event().is_set(rfds)) {
+                        if (is_set(mm.mod->get_event(), mm.mod_transport, rfds)) {
                             mm.mod->draw_event(now);
 
                             if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
@@ -238,8 +245,7 @@ public:
                                 mm.mod->get_event().reset();
                             }
                         }
-                        if (this->front->capture
-                            && this->front->capture->capture_event.is_set(rfds)) {
+                        if (this->front->capture && is_set(this->front->capture->capture_event, nullptr, rfds)) {
                             this->front->periodic_snapshot();
                         }
                         // Incoming data from ACL, or opening acl
@@ -277,7 +283,7 @@ public:
                             }
                         }
                         else {
-                            if (this->client->auth_event.is_set(rfds)) {
+                            if (this->client->is_set(rfds)) {
                                 // acl received updated values
                                 this->client->acl.receive();
                             }

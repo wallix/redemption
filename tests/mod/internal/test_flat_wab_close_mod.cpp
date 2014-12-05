@@ -29,7 +29,6 @@
 #define SHARE_PATH "./tests/fixtures"
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "internal/flat_wab_close_mod.hpp"
 #include "../../front/fake_front.hpp"

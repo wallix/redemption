@@ -26,7 +26,6 @@
 
 // #define LOGNULL
 #define LOGPRINT
-#include "log.hpp"
 
 #include "darray.hpp"
 struct Something {

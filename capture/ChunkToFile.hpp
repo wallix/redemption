@@ -22,8 +22,8 @@
 #define _REDEMPTION_CAPTURE_CHUNKTOFILE_HPP_
 
 #include "RDPChunkedDevice.hpp"
-#include "GraphicToFile.hpp"
 #include "compression_transport_wrapper.hpp"
+#include "config.hpp"
 
 struct ChunkToFile : public RDPChunkedDevice {
 private:

@@ -25,15 +25,6 @@
 #ifndef _REDEMPTION_MOD_RDP_RDP_HPP_
 #define _REDEMPTION_MOD_RDP_RDP_HPP_
 
-#include <unistd.h>
-#include <string.h>
-#include <assert.h>
-#include <netdb.h>
-#include <fcntl.h>
-#include <netinet/tcp.h>
-#include <stdlib.h>
-#include <math.h>
-
 #include "rdp/rdp_orders.hpp"
 
 /* include "ther h files */
@@ -41,6 +32,7 @@
 #include "ssl_calls.hpp"
 #include "mod_api.hpp"
 #include "auth_api.hpp"
+#include "front_api.hpp"
 
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
@@ -60,12 +52,27 @@
 #include "RDP/RefreshRectPDU.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
 #include "RDP/pointer.hpp"
+#include "RDP/mppc_unified_dec.hpp"
+#include "RDP/capabilities/cap_bitmap.hpp"
+#include "RDP/capabilities/order.hpp"
+#include "RDP/capabilities/cap_bmpcache.hpp"
+#include "RDP/capabilities/bmpcache2.hpp"
+#include "RDP/capabilities/colcache.hpp"
+#include "RDP/capabilities/activate.hpp"
+#include "RDP/capabilities/control.hpp"
+#include "RDP/capabilities/pointer.hpp"
+#include "RDP/capabilities/cap_share.hpp"
+#include "RDP/capabilities/input.hpp"
+#include "RDP/capabilities/cap_sound.hpp"
+#include "RDP/capabilities/cap_font.hpp"
+#include "RDP/capabilities/glyphcache.hpp"
 #include "rdp_params.hpp"
 #include "transparentrecorder.hpp"
 
 #include "client_info.hpp"
 #include "genrandom.hpp"
 #include "authorization_channels.hpp"
+#include "parser.hpp"
 
 class mod_rdp : public mod_api {
 
@@ -1879,6 +1886,10 @@ public:
                                             }
                                             //this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
                                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
+                                            {
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.p = sdata.payload.end;
+                                            }
                                             break;
                                         case WAITING_CTL_COOPERATE:
                                             if (this->verbose & 1){
@@ -1886,6 +1897,10 @@ public:
                                             }
                                             //this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
+                                            {
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.p = sdata.payload.end;
+                                            }
                                             break;
                                         case WAITING_GRANT_CONTROL_COOPERATE:
                                             if (this->verbose & 1){
@@ -1893,6 +1908,10 @@ public:
                                             }
                                             //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_FONT_MAP;
+                                            {
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.p = sdata.payload.end;
+                                            }
                                             break;
                                         case WAITING_FONT_MAP:
                                             if (this->verbose & 1){
@@ -1904,6 +1923,10 @@ public:
                                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
                                             // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
                                             rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
+                                            {
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.p = sdata.payload.end;
+                                            }
                                             break;
                                         case UP_AND_RUNNING:
                                             if (this->enable_transparent_mode)

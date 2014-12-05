@@ -26,10 +26,6 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
-
-#include <stdlib.h>
-#include <unistd.h>
 
 #include "test_transport.hpp"
 #include "error.hpp"

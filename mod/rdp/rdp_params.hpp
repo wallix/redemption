@@ -26,9 +26,6 @@
 
 class Transport;
 class auth_api;
-namespace redemption {
-    class string;
-}
 
 struct ModRDPParams {
     const char * target_user;

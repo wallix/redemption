@@ -25,17 +25,11 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestBitmap
 #include <boost/test/auto_unit_test.hpp>
-#include <boost/test/unit_test.hpp>
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
 #include "bitmap.hpp"
-#include "colors.hpp"
-#include "config.hpp"
-#include "out_filename_transport.hpp"
-#include "png.hpp"
 #include "drawable.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)

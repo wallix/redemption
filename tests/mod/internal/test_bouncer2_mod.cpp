@@ -25,7 +25,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
 
 #include "internal/bouncer2_mod.hpp"
 #include "../../front/fake_front.hpp"

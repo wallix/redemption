@@ -32,6 +32,8 @@ Drawing Order
         MultiDrawNineGrid ([MS-RDPEGDI] section 2.2.2.2.1.1.2.22)
 
     Secondary Drawing Order Header
+        Cache Glyph - Revision 1 ([MS-RDPEGDI] section 2.2.2.2.1.2.5) (Internal #7826)
+
         Cache Glyph - Revision 2 ([MS-RDPEGDI] section 2.2.2.2.1.2.6) (Internal #5688 and Internal #5689)
 
         Cache Bitmap - Revision 3 ([MS-RDPEGDI] section 2.2.2.2.1.2.8)
@@ -82,6 +84,12 @@ RDP 6.0 Bitmap Compression
 
 Surface
     Surface Commands ([MS-RDPBCGR] section 2.2.9.2)
+
+
+Server Pointer Update PDU
+    Pointer Position Update ([MS-RDPBCGR] section 2.2.9.1.1.4.2)
+
+    New Pointer Update ([MS-RDPBCGR] section 2.2.9.1.1.4.5)
 
 
 

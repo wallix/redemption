@@ -22,31 +22,35 @@
 #define _REDEMPTION_CORE_RDP_CACHES_FONTCACHE_HPP_
 
 #include "font.hpp"
-#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "noncopyable.hpp"
 
 class ClientInfo;
 
-struct char_item
-{
-    int      stamp = 0;
-    FontChar font_item;
-
-    char_item() = default;
-};
 
 /* difference caches */
-struct GlyphCache
+class GlyphCache : noncopyable
 {
+    class char_item
+    {
+        friend struct GlyphCache;
+
+        int      stamp = 0;
+
+    public:
+        FontChar font_item;
+
+        char_item() = default;
+    };
+
     /* font */
-    int       char_stamp;
+    int       char_stamp = 0;
+
+public:
     char_item char_items[12][256];
 
-    GlyphCache()
-    : char_stamp(0)
-    {
-    }
+    GlyphCache() = default;
 
-    int reset(ClientInfo & client_info)
+    int reset(ClientInfo const & client_info)
     {
         /* free all the cached font items */
         reset_internal();
@@ -122,7 +126,7 @@ private:
             }
         }
 
-        this->char_items[cacheid][c].stamp     = this->char_stamp;
+        this->char_items[cacheid][c].stamp = this->char_stamp;
 
         cacheidx = c;
 

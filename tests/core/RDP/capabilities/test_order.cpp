@@ -27,7 +27,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
+
 #include "RDP/capabilities/order.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)

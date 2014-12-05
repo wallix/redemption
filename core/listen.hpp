@@ -24,8 +24,6 @@
 #ifndef _REDEMPTION_CORE_LISTEN_HPP_
 #define _REDEMPTION_CORE_LISTEN_HPP_
 
-#include "mainloop.hpp"
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h> // for sockaddr_in

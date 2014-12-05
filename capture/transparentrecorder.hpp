@@ -95,7 +95,7 @@ private:
     void make_chunk_header(Stream & stream, uint8_t chunk_type, uint16_t data_size) {
         stream.out_uint8(chunk_type);
         stream.out_uint16_le(data_size);
-        struct timeval now = tvtime();
+        timeval now = tvtime();
         stream.out_timeval_to_uint64le_usec(now);
         stream.mark_end();
     }

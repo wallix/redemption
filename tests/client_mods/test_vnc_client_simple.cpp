@@ -28,19 +28,12 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "test_orders.hpp"
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-#include "stream.hpp"
-#include "transport.hpp"
 #include "test_transport.hpp"
-#include "wait_obj.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
-#include "channel_list.hpp"
 #include "client_info.hpp"
 #include "vnc/vnc.hpp"
-#include "RDP/pointer.hpp"
 #include "front/fake_front.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
@@ -280,7 +273,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 //    BOOST_CHECK(t.status);
 
     mod.draw_event(time(NULL));
-    mod.on_front_up_and_running();
+    mod.rdp_input_up_and_running();
     mod.draw_event(time(NULL));
 
     BOOST_CHECK_EQUAL(mod.get_front_width(), 1024);

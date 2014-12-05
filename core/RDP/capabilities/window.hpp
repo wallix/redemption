@@ -26,6 +26,7 @@
 
 #include "common.hpp"
 #include "virchan.hpp"
+#include "stream.hpp"
 
 // 2.2.1.1.2  Window List Capability Set
 // =====================================

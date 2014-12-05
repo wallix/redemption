@@ -23,10 +23,11 @@
 #ifndef REDEMPTION_TRANSPORT_SOCKET_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_SOCKET_TRANSPORT_HPP
 
-#include "config.hpp"
+#include "defines.hpp"
 #include "transport.hpp"
 #include "string.hpp"
 #include "netutils.hpp"
+#include "fileutils.hpp"
 #include "openssl_crypto.hpp"
 #include "openssl_tls.hpp"
 
@@ -1111,6 +1112,28 @@ public:
             this->sck_closed = 0;
         }
         return true;
+    }
+
+    bool can_recv()
+    {
+        int rv = 0;
+        fd_set rfds;
+
+        FD_ZERO(&rfds);
+        if (this->sck > 0) {
+            FD_SET(this->sck, &rfds);
+            timeval time { 0, 0 };
+            rv = select(this->sck + 1, &rfds, 0, 0, &time); /* don't wait */
+            if (rv > 0) {
+                int opt;
+                unsigned int opt_len = sizeof(opt);
+
+                if (getsockopt(this->sck, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&opt), &opt_len) == 0) {
+                    rv = (opt == 0);
+                }
+            }
+        }
+        return rv;
     }
 
     virtual void do_recv(char ** pbuffer, size_t len)

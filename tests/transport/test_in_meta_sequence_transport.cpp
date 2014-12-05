@@ -26,12 +26,7 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "log.hpp"
 
-#include <stdlib.h>
-#include <unistd.h>
-
-// #include "inbymetasequencetransport.hpp"
 #include "in_meta_sequence_transport.hpp"
 #include "error.hpp"
 

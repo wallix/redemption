@@ -88,32 +88,37 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
+#include "transport.hpp"
+
 #include "RDP/RDPGraphicDevice.hpp"
 
-#include "transport.hpp"
+#include "orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "orders/RDPOrdersPrimaryMultiPatBlt.hpp"
+#include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "orders/RDPOrdersPrimaryLineTo.hpp"
+#include "orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "orders/RDPOrdersPrimaryPolygonCB.hpp"
+#include "orders/RDPOrdersPrimaryPolyline.hpp"
+#include "orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "orders/RDPOrdersPrimaryEllipseCB.hpp"
+#include "orders/RDPOrdersSecondaryColorCache.hpp"
+#include "orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "orders/RDPOrdersSecondaryBrushCache.hpp"
+#include "orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "bitmapupdate.hpp"
 
 #include "config.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/pointercache.hpp"
-#include "RDP/share.hpp"
-#include "difftimeval.hpp"
 #include "stream.hpp"
-#include "rect.hpp"
-#include "colors.hpp"
-
-enum {
-//    BREAKPOINT          = 1005,
-    META_FILE           = 1006,
-//    NEXT_FILE_ID        = 1007,
-    TIMESTAMP           = 1008,
-    POINTER             = 1009,
-    LAST_IMAGE_CHUNK    = 0x1000,   // 4096
-    PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
-    SAVE_STATE          = 0x1002,   // 4098
-    RESET_CHUNK         = 0x1003,   // 4099
-
-    INVALID_CHUNK       = 0x8000
-};
 
 struct RDPSerializer : public RDPGraphicDevice
 {
@@ -168,7 +173,8 @@ protected:
     size_t order_count;
     size_t bitmap_count;
 
-    BmpCache & bmp_cache;
+    BmpCache     & bmp_cache;
+    //GlyphCache   & glyph_cache;
     PointerCache & pointer_cache;
 
     const uint32_t verbose;
@@ -179,6 +185,7 @@ public:
                  , Stream & stream_bitmaps
                  , const uint8_t bpp
                  , BmpCache & bmp_cache
+//                 , GlyphCache & glyph_cache
                  , PointerCache & pointer_cache
                  , const int bitmap_cache_version
                  , const int use_bitmap_comp
@@ -215,6 +222,7 @@ public:
     , order_count(0)
     , bitmap_count(0)
     , bmp_cache(bmp_cache)
+//    , glyph_cache(glyph_cache)
     , pointer_cache(pointer_cache)
     , verbose(verbose) {}
 
@@ -226,6 +234,8 @@ protected:
 
     virtual void send_pointer(int cache_idx, const Pointer & cursor) = 0;
     virtual void set_pointer(int cache_idx) = 0;
+
+//    virtual void send_glyph(uint8_t cacheId, uint8_t cache_idx, uint8_t cGlyphs, )
 
 public:
     /*****************************************************************************/
@@ -402,7 +412,7 @@ public:
                 cache_id, cache_idx, (in_wait_list ? "true" : "false"));
         }
 
-        if ((res >> 24) == BITMAP_ADDED_TO_CACHE) {
+        if ((res >> 24) == BmpCache::ADDED_TO_CACHE) {
             this->emit_bmp_cache(cache_id, cache_idx, in_wait_list);
         }
         else if ((this->bmp_cache.owner == BmpCache::Recorder) && !this->bmp_cache.is_cached(cache_id, cache_idx)) {

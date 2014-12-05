@@ -23,6 +23,8 @@
 #define REDEMPTION_MOD_WIDGET2_IMAGE_HPP
 
 #include "widget.hpp"
+#include "bitmap.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 
 class WidgetImage : public Widget2
 {

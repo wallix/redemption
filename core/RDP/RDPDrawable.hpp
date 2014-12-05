@@ -22,33 +22,39 @@
 #ifndef _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
 #define _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
 
-#include "drawable.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include "RDP/caches/pointercache.hpp"
+#include <utility>
 
-#include "RDP/RDPGraphicDevice.hpp"
-#include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
-#include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
+#include "drawable.hpp"
 #include "font.hpp"
+
+#include "RDPGraphicDevice.hpp"
+#include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "orders/RDPOrdersPrimaryEllipseCB.hpp"
+#include "orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "orders/RDPOrdersPrimaryMultiPatBlt.hpp"
+#include "orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "orders/RDPOrdersPrimaryLineTo.hpp"
+#include "orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "orders/RDPOrdersPrimaryPolyline.hpp"
+#include "orders/RDPOrdersPrimaryPolygonCB.hpp"
+#include "orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "orders/RDPOrdersSecondaryGlyphCache.hpp"
+
+#include "pointer.hpp"
+#include "bitmapupdate.hpp"
+#include "caches/fontcache.hpp"
 #include "png.hpp"
 #include "text_metrics.hpp"
 
-#include <tuple>
+#include "CaptureDevice.hpp"
 
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
@@ -130,12 +136,12 @@ private:
         );
     }
 
-    std::tuple<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const
+    std::pair<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const
     {
         if (this->order_bpp == 24) {
-            return std::tuple<Color, Color>{this->u32_to_color(color1), this->u32_to_color(color2)};
+            return std::pair<Color, Color>{this->u32_to_color(color1), this->u32_to_color(color2)};
         }
-        return std::tuple<Color, Color>{
+        return std::pair<Color, Color>{
             this->u32_to_color(::color_decode_opaquerect(color1, this->order_bpp, this->mod_palette_rgb)),
             this->u32_to_color(::color_decode_opaquerect(color2, this->order_bpp, this->mod_palette_rgb))
         };

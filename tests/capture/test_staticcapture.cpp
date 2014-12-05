@@ -26,13 +26,11 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "test_orders.hpp"
-#include "transport.hpp"
+
 #include "out_filename_sequence_transport.hpp"
-#include "image_capture.hpp"
 #include "staticcapture.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include <png.h>
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "RDP/RDPDrawable.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestOneRedScreen)
@@ -41,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
 
-    struct timeval now;
+    timeval now;
     now.tv_sec = 1350998222;
     now.tv_usec = 0;
 
@@ -86,7 +84,7 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
 
-    struct timeval now;
+    timeval now;
     now.tv_sec = 1350998222;
     now.tv_usec = 0;
 

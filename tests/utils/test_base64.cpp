@@ -26,11 +26,9 @@
 #define BOOST_TEST_MODULE TestBase64
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
 #define LOGNULL
 
 #include "base64.hpp"
-#include "stream.hpp"
 #include "genrandom.hpp"
 #include <string>
 
@@ -46,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestEncoding)
 
     BOOST_CHECK_EQUAL(res, 8);
     output[res] = 0;
-    BOOST_CHECK_EQUAL(std::string("SGkhSGkh"), std::string((const char *)output));
+    BOOST_CHECK_EQUAL("SGkhSGkh", std::string((const char *)output));
 
 
     unsigned char input2[] = "test un texte";
@@ -55,8 +53,7 @@ BOOST_AUTO_TEST_CASE(TestEncoding)
 
     BOOST_CHECK_EQUAL(res2, 20);
     output2[res2] = 0;
-    BOOST_CHECK_EQUAL(std::string("dGVzdCB1biB0ZXh0ZQ=="),
-                      std::string((const char *)output2));
+    BOOST_CHECK_EQUAL("dGVzdCB1biB0ZXh0ZQ==", std::string((const char *)output2));
 
     unsigned char input3[] = "test some text";
     unsigned char output3[64];
@@ -64,8 +61,7 @@ BOOST_AUTO_TEST_CASE(TestEncoding)
 
     BOOST_CHECK_EQUAL(res3, 20);
     output3[res2] = 0;
-    BOOST_CHECK_EQUAL(std::string("dGVzdCBzb21lIHRleHQ="),
-                      std::string((const char *)output3));
+    BOOST_CHECK_EQUAL("dGVzdCBzb21lIHRleHQ=", std::string((const char *)output3));
 }
 
 BOOST_AUTO_TEST_CASE(TestDecoding)
@@ -78,8 +74,7 @@ BOOST_AUTO_TEST_CASE(TestDecoding)
     size_t res = b64converter.decode(output, 64, input, sizeof(input)-1);
     BOOST_CHECK_EQUAL(res, 14);
     output[res] = 0;
-    BOOST_CHECK_EQUAL(std::string("test some text"),
-                      std::string((const char*)output));
+    BOOST_CHECK_EQUAL("test some text", std::string((const char*)output));
 
     unsigned char input2[] = "dGVzdCB1biB0ZXh0ZQ==";
     unsigned char output2[64];
@@ -87,8 +82,7 @@ BOOST_AUTO_TEST_CASE(TestDecoding)
     size_t res2 = b64converter.decode(output2, 64, input2, sizeof(input2)-1);
     BOOST_CHECK_EQUAL(res2, 13);
     output2[res2] = 0;
-    BOOST_CHECK_EQUAL(std::string("test un texte"),
-                      std::string((const char*)output2));
+    BOOST_CHECK_EQUAL("test un texte", std::string((const char*)output2));
 
     unsigned char input3[] = "SGkhSGkh";
     unsigned char output3[64];
@@ -96,10 +90,7 @@ BOOST_AUTO_TEST_CASE(TestDecoding)
     size_t res3 = b64converter.decode(output3, 64, input3, sizeof(input3)-1);
     BOOST_CHECK_EQUAL(res2, 13);
     output3[res3] = 0;
-    BOOST_CHECK_EQUAL(std::string("Hi!Hi!"),
-                      std::string((const char*)output3));
-
-
+    BOOST_CHECK_EQUAL("Hi!Hi!", std::string((const char*)output3));
 }
 
 BOOST_AUTO_TEST_CASE(TestRandom)

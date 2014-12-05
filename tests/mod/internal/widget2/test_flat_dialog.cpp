@@ -34,9 +34,6 @@
 
 #include "internal/widget2/flat_dialog.hpp"
 #include "internal/widget2/screen.hpp"
-#include "png.hpp"
-#include "ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH
@@ -332,14 +329,6 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
 
 BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
-
     TestDraw drawable(800, 600);
 
     WidgetScreen parent(drawable, 800, 600);
@@ -442,7 +431,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     notifier.event = 0;
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     flat_dialog.rdp_input_scancode(0, 0, 0, 0, &keymap);
     BOOST_CHECK(notifier.sender == &flat_dialog);
@@ -453,14 +442,6 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
 BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
-
     TestDraw drawable(800, 600);
 
     WidgetScreen parent(drawable, 800, 600);
@@ -522,7 +503,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
     }
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
     flat_dialog.rdp_input_scancode(0, 0, 0, 0, &keymap);
     BOOST_CHECK(notifier.sender == &flat_dialog);

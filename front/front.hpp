@@ -30,18 +30,18 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 #include "stream.hpp"
 #include "transport.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
 #include "RDP/mcs.hpp"
 #include "RDP/lic.hpp"
-#include "RDP/logon.hpp"
 #include "channel_list.hpp"
 #include "RDP/gcc.hpp"
 #include "RDP/sec.hpp"
 #include "colors.hpp"
-#include "RDP/capabilities.hpp"
 #include "RDP/fastpath.hpp"
 #include "RDP/slowpath.hpp"
 
@@ -68,9 +68,23 @@
 #include "out_file_transport.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
-#include "RDP/capabilities.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
+
+#include "RDP/compress_and_draw_bitmap_update.hpp"
+
+#include "RDP/capabilities/cap_bmpcache.hpp"
+#include "RDP/capabilities/offscreencache.hpp"
+#include "RDP/capabilities/bmpcache2.hpp"
+#include "RDP/capabilities/bitmapcachehostsupport.hpp"
+#include "RDP/capabilities/colcache.hpp"
+#include "RDP/capabilities/pointer.hpp"
+#include "RDP/capabilities/cap_share.hpp"
+#include "RDP/capabilities/cap_brushcache.hpp"
+#include "RDP/capabilities/input.hpp"
+#include "RDP/capabilities/multifragmentupdate.hpp"
+#include "RDP/capabilities/compdesk.hpp"
+#include "RDP/capabilities/cap_font.hpp"
 
 #include "front_api.hpp"
 #include "activity_checker.hpp"
@@ -80,13 +94,12 @@
 
 #include "authorization_channels.hpp"
 #include "text_metrics.hpp"
-#include "splitter.hpp"
+#include "keymap2.hpp"
 
-enum {
-    FRONT_DISCONNECTED,
-    FRONT_CONNECTING,
-    FRONT_RUNNING
-};
+#include "RDP/mppc_40.hpp"
+#include "RDP/mppc_50.hpp"
+#include "RDP/mppc_60.hpp"
+#include "RDP/mppc_61.hpp"
 
 class Front : public FrontAPI, public ActivityChecker{
     using FrontAPI::draw;
@@ -459,7 +472,7 @@ public:
                 {
                     case GlyphCache::GLYPH_ADDED_TO_CACHE:
                     {
-                        RDPGlyphCache cmd(f, 1, c,
+                        RDPGlyphCache cmd(f, /*1, */c,
                             font_item.offset,
                             font_item.baseline,
                             font_item.width,
@@ -957,7 +970,7 @@ public:
     //                        );
     //}
 
-    void send_global_palette() throw(Error)
+    void send_global_palette()
     {
         if (!this->palette_sent && (this->client_info.bpp == 8)) {
             if (this->verbose & 4) {
@@ -3062,7 +3075,7 @@ public:
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_SYNCHRONIZE
-                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , false
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
@@ -3117,7 +3130,7 @@ public:
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_CONTROL
-                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , false
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
@@ -3164,7 +3177,7 @@ public:
                                           0x2b, 0x00, 0x2a, 0x00
                                         };
 
-        HStream stream(1024, 2048);
+        HStream stream(1024, 4096);
 
         // Payload
         stream.out_copy_bytes((char*)g_fontmap, 172);
@@ -3173,7 +3186,7 @@ public:
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_FONTMAP
-                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , false
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
@@ -3556,9 +3569,8 @@ public:
                 if (this->verbose & (8|1)) {
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
-                cb.rdp_input_up_and_running();
                 this->up_and_running = 1;
-                cb.on_front_up_and_running();
+                cb.rdp_input_up_and_running();
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
                 this->ini.context.opt_width.set(this->client_info.width);
                 this->ini.context.opt_height.set(this->client_info.height);
@@ -4210,7 +4222,7 @@ public:
         if (this->glyph_cache.add_glyph(std::move(font_item), cmd.cacheId, cacheidx) ==
             GlyphCache::GLYPH_ADDED_TO_CACHE)
         {
-            RDPGlyphCache cmd2(cmd.cacheId, 1, cacheidx,
+            RDPGlyphCache cmd2(cmd.cacheId, /*1, */cacheidx,
                             cmd.glyphData_x,
                             cmd.glyphData_y,
                             cmd.glyphData_cx,
