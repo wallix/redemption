@@ -142,6 +142,9 @@ class SesmanConfig(object):
             , u'Your password will expire in %s days. Please change it.': u'Votre mot de passe expirera dans %s jours. Vous devriez le changer.'
             , u'Your password will expire soon. Please change it.': u"L'expiration de votre mot de passe est imminente. Saisissez un nouveau mot de passe."
             , u'passthrough_auth_failed_wab %s' : u"Echec de l'authentification passthrough pour l'utilisateur %s."
+            , u'in_subnet %s'           : u"dans le sous-réseau %s."
+            , u'no_match_subnet %s %s'  : u"%s n'appartient pas au sous-réseau %s."
+            , u'error %s'               : u'Erreur: %s'
             }
         , u'en':
             { u'login'                  : u"Login"
@@ -217,6 +220,9 @@ class SesmanConfig(object):
             , u'Your password will expire in %s days. Please change it.': u'Your password will expire in %s days. Please change it.'
             , u'Your password will expire soon. Please change it.': u'Your password will expire soon. Please change it.'
             , u'passthrough_auth_failed_wab %s' : u'Passthrough authentication failed for user %s.'
+            , u'in_subnet %s'           : u"in %s subnet."
+            , u'no_match_subnet %s %s'  : u"%s not in %s subnet."
+            , u'error %s'               : u'Error: %s'
             }
         }
 

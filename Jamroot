@@ -548,7 +548,7 @@ unit-test test_RDPOrdersPrimaryEllipseSC : tests/core/RDP/orders/test_RDPOrdersP
 unit-test test_RDPOrdersPrimaryEllipseCB : tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryPatBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryPatBlt.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryGlyphIndex : tests/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_RDPOrdersSecondaryBmpCache : tests/core/RDP/orders/test_RDPOrdersSecondaryBmpCache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_RDPOrdersSecondaryBmpCache : tests/core/RDP/orders/test_RDPOrdersSecondaryBmpCache.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersSecondaryColorCache : tests/core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersSecondaryBrushCache : tests/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -579,7 +579,6 @@ unit-test test_number_edit : tests/mod/internal/widget2/test_number_edit.cpp png
 unit-test test_edit_valid : tests/mod/internal/widget2/test_edit_valid.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 # unit-test test_radio_list : tests/mod/internal/widget2/test_radio_list.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_dialog : tests/mod/internal/widget2/test_flat_dialog.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_interactive_password : tests/mod/internal/widget2/test_flat_interactive_password.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_widget : tests/mod/internal/widget2/test_widget.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 
@@ -600,17 +599,18 @@ unit-test test_flat_selector2 : tests/mod/internal/widget2/test_flat_selector2.c
 unit-test test_group_box : tests/mod/internal/widget2/test_group_box.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 # unit-test test_scroll : tests/mod/internal/widget2/test_scroll.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 # unit-test test_tab : tests/mod/internal/widget2/test_tab.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_flat_interactive_target : tests/mod/internal/widget2/test_flat_interactive_target.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 ## @}
 
 
 ## Mod tests
 ## @{
 unit-test test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_interactive_password_mod : tests/mod/internal/test_interactive_password_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_login_mod : tests/mod/internal/test_flat_login_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_selector_mod : tests/mod/internal/test_flat_selector_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_widget_test_mod : tests/mod/internal/test_widget_test_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_test_card_mod : tests/mod/internal/test_test_card_mod.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

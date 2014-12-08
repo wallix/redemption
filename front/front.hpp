@@ -85,6 +85,7 @@
 #include "RDP/capabilities/multifragmentupdate.hpp"
 #include "RDP/capabilities/compdesk.hpp"
 #include "RDP/capabilities/cap_font.hpp"
+#include "RDP/capabilities/glyphcache.hpp"
 
 #include "front_api.hpp"
 #include "activity_checker.hpp"
@@ -2834,9 +2835,15 @@ public:
                     this->client_info.brush_cache_code = brushcache_caps.brushSupportLevel;
                 }
                 break;
-            case CAPSTYPE_GLYPHCACHE: /* 16 */
-                if (this->verbose) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
+            case CAPSTYPE_GLYPHCACHE: { /* 16 */
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
+                    }
+                    GlyphCacheCaps glyph_cache_caps;
+                    glyph_cache_caps.recv(stream, capset_length);
+                    if (this->verbose) {
+                        glyph_cache_caps.log("Receiving from client");
+                    }
                 }
                 break;
             case CAPSTYPE_OFFSCREENCACHE: /* 17 */

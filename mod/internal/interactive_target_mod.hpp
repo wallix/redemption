@@ -19,27 +19,37 @@
  *              Meng Tan
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_INTERACTIVE_PASSWORD_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_INTERACTIVE_PASSWORD_MOD_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_INTERACTIVE_TARGET_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_INTERACTIVE_TARGET_MOD_HPP
 
 #include "translation.hpp"
 #include "front_api.hpp"
 #include "config.hpp"
-#include "widget2/flat_interactive_password.hpp"
+#include "widget2/flat_interactive_target.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
 
-class InteractivePasswordMod : public InternalMod, public NotifyApi
+class InteractiveTargetMod : public InternalMod, public NotifyApi
 {
-    FlatInteractivePassword challenge;
+    bool ask_device;
+    bool ask_login;
+    bool ask_password;
+    FlatInteractiveTarget challenge;
 
     Inifile & ini;
 
 public:
-    InteractivePasswordMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
+    InteractiveTargetMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height, &ini)
-        , challenge(*this, width, height, this->screen, this,
-                    0 , 0, ini.theme, TR("authentication_required", ini),
+        , ask_device(ini.context_is_asked(AUTHID_TARGET_HOST))
+        , ask_login(ini.context_is_asked(AUTHID_TARGET_USER))
+        , ask_password((this->ask_login || ini.context_is_asked(AUTHID_TARGET_PASSWORD)))
+        , challenge(*this, width, height, this->screen, this, 0,
+                    ini.context_is_asked(AUTHID_TARGET_HOST),
+                    ini.context_is_asked(AUTHID_TARGET_USER),
+                    ini.context_is_asked(AUTHID_TARGET_PASSWORD),
+                    ini.theme, TR("target_info_required", ini),
+                    TR("device", ini), ini.context_get_value(AUTHID_TARGET_DEVICE),
                     TR("login", ini), ini.context_get_value(AUTHID_TARGET_USER),
                     TR("password", ini))
         , ini(ini)
@@ -48,12 +58,22 @@ public:
         this->challenge.password_edit.set_text("");
         this->screen.set_widget_focus(&this->challenge,
                                       Widget2::focus_reason_tabkey);
-        this->challenge.set_widget_focus(&this->challenge.password_edit,
-                                         Widget2::focus_reason_tabkey);
+        if (this->ask_device) {
+            this->challenge.set_widget_focus(&this->challenge.device_edit,
+                                             Widget2::focus_reason_tabkey);
+        }
+        else if (this->ask_login) {
+            this->challenge.set_widget_focus(&this->challenge.login_edit,
+                                             Widget2::focus_reason_tabkey);
+        }
+        else {
+            this->challenge.set_widget_focus(&this->challenge.password_edit,
+                                             Widget2::focus_reason_tabkey);
+        }
         this->screen.refresh(this->screen.rect);
     }
 
-    virtual ~InteractivePasswordMod()
+    virtual ~InteractiveTargetMod()
     {
         this->screen.clear();
     }
@@ -71,8 +91,18 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void accepted()
     {
-        this->ini.context_set_value(AUTHID_TARGET_PASSWORD,
-                                    this->challenge.password_edit.get_text());
+        if (this->ask_device) {
+            this->ini.context_set_value(AUTHID_TARGET_HOST,
+                                        this->challenge.device_edit.get_text());
+        }
+        if (this->ask_login) {
+            this->ini.context_set_value(AUTHID_TARGET_USER,
+                                        this->challenge.login_edit.get_text());
+        }
+        if (this->ask_password) {
+            this->ini.context_set_value(AUTHID_TARGET_PASSWORD,
+                                        this->challenge.password_edit.get_text());
+        }
         this->ini.context_set_value(AUTHID_DISPLAY_MESSAGE, "True");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();

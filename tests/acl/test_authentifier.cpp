@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     char outdata[] =
         // Time: 10011
-           "\x00\x00\x01\x91"
+           "\x00\x00\x01\xA1"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
@@ -68,6 +68,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
            "selector_proto_filter\n!\n"
            "selector_lines_per_page\n!0\n"
            "target_password\nASK\n"
+           "target_host\nASK\n"
            "proto_dest\nASK\n"
            "password\nASK\n"
            "reporting\n!\n"
@@ -147,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     char outdata[] =
         // Time 10011
-           "\x00\x00\x01\x91"
+           "\x00\x00\x01\xA1"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
@@ -163,6 +164,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
            "selector_proto_filter\n!\n"
            "selector_lines_per_page\n!0\n"
            "target_password\nASK\n"
+           "target_host\nASK\n"
            "proto_dest\nASK\n"
            "password\nASK\n"
            "reporting\n!\n"
@@ -265,7 +267,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     char outdata[] =
         // Time 10011
-           "\x00\x00\x01\x91"
+           "\x00\x00\x01\xA1"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
@@ -281,6 +283,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
            "selector_proto_filter\n!\n"
            "selector_lines_per_page\n!0\n"
            "target_password\nASK\n"
+           "target_host\nASK\n"
            "proto_dest\nASK\n"
            "password\nASK\n"
            "reporting\n!\n"

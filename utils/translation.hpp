@@ -60,7 +60,7 @@ private:
         { return !(*this == k); }
     };
 
-    typedef std::array<value_type, 48> trans_t;
+    typedef std::array<value_type, 50> trans_t;
 
     language_t lang;
     trans_t trans;
@@ -153,6 +153,10 @@ private:
         {"information", {"Information", "Information"}},
         {"authentication_required", {"Authentication Required",
                                      "Authentification Requise"}},
+        {"target_info_required", {"Target Information Required",
+                                  "Informations Cible Requises"}},
+        {"device", {"Device",
+                    "Machine"}},
         {"disable_osd", {"(hidden with ctrl+esc or left click)",
                          "(cacher avec ctrl+esc ou clic gauche)"}},
         }}

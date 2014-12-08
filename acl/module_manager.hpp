@@ -46,7 +46,7 @@
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
 #include "internal/flat_wait_mod.hpp"
-#include "internal/interactive_password_mod.hpp"
+#include "internal/interactive_target_mod.hpp"
 #include "internal/widget_test_mod.hpp"
 
 #include "mod_osd.hpp"
@@ -61,7 +61,7 @@
 #define STRMODULE_TRANSITORY       "transitory"
 #define STRMODULE_CLOSE            "close"
 #define STRMODULE_CONNECTION       "connection"
-#define STRMODULE_PASSWORD         "interactive_password"
+#define STRMODULE_TARGET           "interactive_target"
 #define STRMODULE_MESSAGE          "message"
 #define STRMODULE_RDP              "RDP"
 #define STRMODULE_VNC              "VNC"
@@ -85,7 +85,7 @@ enum {
     MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE,
     MODULE_INTERNAL_DIALOG_VALID_MESSAGE,
     MODULE_INTERNAL_DIALOG_CHALLENGE,
-    MODULE_INTERNAL_PASSWORD,
+    MODULE_INTERNAL_TARGET,
     MODULE_INTERNAL_BOUNCER2,
     MODULE_INTERNAL_TEST,
     MODULE_INTERNAL_WIDGET2_SELECTOR,
@@ -181,9 +181,9 @@ public:
             LOG(LOG_INFO, "===========> MODULE_WAITINFO");
             return MODULE_INTERNAL_WAIT_INFO;
         }
-        else if (!strcmp(module_cstr, STRMODULE_PASSWORD)) {
-            LOG(LOG_INFO, "===========> MODULE_INTERACTIVE_PASSWORD");
-            return MODULE_INTERNAL_PASSWORD;
+        else if (!strcmp(module_cstr, STRMODULE_TARGET)) {
+            LOG(LOG_INFO, "===========> MODULE_INTERACTIVE_TARGET");
+            return MODULE_INTERNAL_TARGET;
         }
         else if (!strcmp(module_cstr, STRMODULE_TRANSITORY)) {
             LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
@@ -482,14 +482,14 @@ public:
             }
             LOG(LOG_INFO, "ModuleManager::internal module Close ready");
             break;
-        case MODULE_INTERNAL_PASSWORD:
+        case MODULE_INTERNAL_TARGET:
             {
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Interactive Password'");
-                this->mod = new InteractivePasswordMod(this->ini,
-                                                       this->front,
-                                                       this->front.client_info.width,
-                                                       this->front.client_info.height);
-                LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Password' ready");
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Interactive Target'");
+                this->mod = new InteractiveTargetMod(this->ini,
+                                                     this->front,
+                                                     this->front.client_info.width,
+                                                     this->front.client_info.height);
+                LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Target' ready");
             }
             break;
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
