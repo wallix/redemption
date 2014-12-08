@@ -805,6 +805,7 @@ public:
                                         , enable_clipboard_out && this->ini.mod_vnc.clipboard.get()
                                         , this->ini.mod_vnc.encodings.c_str()
                                         , this->ini.mod_vnc.allow_authentification_retries
+                                        , true
                                         , this->ini.debug.mod_vnc);
 
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
