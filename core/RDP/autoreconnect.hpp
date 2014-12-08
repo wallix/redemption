@@ -25,9 +25,9 @@
 
 namespace RDP {
 
+// [MS-RDPBCGR] - 2.2.4.2 Server Auto-Reconnect Packet (ARC_SC_PRIVATE_PACKET)
+// ===========================================================================
 
-// 2.2.4.2 Server Auto-Reconnect Packet (ARC_SC_PRIVATE_PACKET)
-// ============================================================
 // The ARC_SC_PRIVATE_PACKET structure contains server-supplied information
 //  used to seamlessly re-establish a connection to a server after network
 //  interruption. It is sent as part of the Save Session Info PDU logon
@@ -59,12 +59,12 @@ namespace RDP {
 // Version (4 bytes): A 32-bit, unsigned integer. The value representing the
 //  auto-reconnect version.
 
-// +--------------------------+------------------------------+
-// | Value                    | Meaning                      |
-// +--------------------------+------------------------------+
-// | AUTO_RECONNECT_VERSION_1 | Version 1 of auto-reconnect. |
-// | 0x00000001               |                              |
-// +--------------------------+------------------------------+
+//  +--------------------------+------------------------------+
+//  | Value                    | Meaning                      |
+//  +--------------------------+------------------------------+
+//  | AUTO_RECONNECT_VERSION_1 | Version 1 of auto-reconnect. |
+//  | 0x00000001               |                              |
+//  +--------------------------+------------------------------+
 
 // LogonId (4 bytes): A 32-bit, unsigned integer. The session identifier for
 //  reconnection.
