@@ -75,7 +75,7 @@ private:
     uint8_t order_bpp;
     uint8_t capture_bpp;
 
-    BGRPalette mod_palette_rgb;
+    const BGRPalette & mod_palette_rgb = BGRPalette::classic_332_rgb();
 
 public:
     Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp, const char * wrm_path
@@ -164,12 +164,6 @@ public:
         }
         else if (this->capture_drawable) {
             this->gd = this->drawable;
-        }
-
-        BGRPalette palette_local;
-        init_palette332(palette_local);
-        for (unsigned i = 0; i < 256 ; i++) {
-            this->mod_palette_rgb[i] = RGBtoBGR(palette_local[i]);
         }
     }
 

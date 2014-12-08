@@ -279,7 +279,7 @@ class Bitmap
                 this->sha1_is_init_ = true;
                 SslSha1 sha1;
                 if (this->bpp_ == 8) {
-                    sha1.update(reinterpret_cast<const uint8_t *>(this->palette()), sizeof(BGRPalette));
+                    sha1.update(this->data_palette(), sizeof(BGRPalette));
                 }
                 sha1.update(&this->bpp_, sizeof(this->bpp_));
                 sha1.update(reinterpret_cast<const uint8_t *>(&this->cx_), sizeof(this->cx_));
@@ -298,6 +298,13 @@ class Bitmap
             return this->ptr_;
         }
 
+    private:
+        uint8_t const * data_palette() const {
+            //REDASSERT(this->bpp() == 8);
+            return reinterpret_cast<uint8_t const*>(this) + palette_index;
+        }
+
+    public:
         BGRPalette & palette() {
             //REDASSERT(this->bpp() == 8);
             return reinterpret_cast<BGRPalette &>(reinterpret_cast<uint8_t*>(this)[palette_index]);
@@ -417,10 +424,10 @@ public:
 
         if (bpp == 8){
             if (palette){
-                memcpy(this->data_bitmap->palette(), *palette, sizeof(BGRPalette));
+                this->data_bitmap->palette() = *palette;
             }
             else {
-                init_palette332(this->data_bitmap->palette());
+                this->data_bitmap->palette() = BGRPalette::classic_332();
             }
         }
 
@@ -462,7 +469,7 @@ public:
 
         this->data_bitmap = DataBitmap::construct(src_bmp.bpp(), r.cx, r.cy);
         if (this->bpp() == 8){
-            memcpy(this->data_bitmap->palette(), src_bmp.data_bitmap->palette(), sizeof(BGRPalette));
+            this->data_bitmap->palette() = src_bmp.data_bitmap->palette();
         }
 
         // bitmapDataStream (variable): A variable-sized array of bytes.
@@ -548,7 +555,7 @@ public:
             }
         }
         else {
-            BGRPalette palette1;
+            BGRPalette palette1{BGRPalette::no_init()};
             char type1[4];
 
             /* header for bmp file */
@@ -670,7 +677,7 @@ public:
                         uint8_t g = stream.in_uint8();
                         uint8_t b = stream.in_uint8();
                         stream.in_skip_bytes(1); // skip alpha channel
-                        palette1[i] = (b << 16)|(g << 8)|r;
+                        palette1.set_color(i, (b << 16)|(g << 8)|r);
                     }
                     break;
                 default:
@@ -739,8 +746,7 @@ public:
                         break;
                     }
 
-                    uint32_t px = color_decode(pixel, static_cast<uint8_t>(header.bit_count),
-                                               palette1);
+                    uint32_t px = color_decode(pixel, static_cast<uint8_t>(header.bit_count), palette1);
                     ::out_bytes_le(dest + y * line_size + x * Bpp, Bpp, px);
                 }
                 if (line_size > header.image_width * Bpp){
@@ -2506,7 +2512,7 @@ public:
             }
 
             if (out_bpp == 8){
-                init_palette332(this->data_bitmap->palette());
+                this->data_bitmap->palette() = BGRPalette::classic_332();
             }
         }
         else {
@@ -2521,10 +2527,10 @@ public:
         //LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
         if (bpp == 8){
             if (palette){
-                memcpy(this->data_bitmap->palette(), *palette, sizeof(BGRPalette));
+                this->data_bitmap->palette() = *palette;
             }
             else {
-                init_palette332(this->data_bitmap->palette());
+                this->data_bitmap->palette() = BGRPalette::classic_332();
             }
         }
 

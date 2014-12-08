@@ -35,8 +35,7 @@
 BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 {
     const unsigned white = 0xFF;
-    BGRPalette palette332;
-    init_palette332(palette332);
+    const BGRPalette & palette332 = BGRPalette::classic_332();
 
     // test COLOR COUNT EMPTY
     {
@@ -333,22 +332,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 {
-    BGRPalette palette332;
-    /* rgb332 palette */
-    for (int bindex = 0; bindex < 4; bindex++) {
-        for (int gindex = 0; gindex < 8; gindex++) {
-            for (int rindex = 0; rindex < 8; rindex++) {
-                palette332[(rindex << 5) | (gindex << 2) | bindex] =
-                (BGRColor)(
-                // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-                    (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
-                // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
-                   | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
-                // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
-                   | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
-            }
-        }
-    }
+    BGRPalette const & palette332 = BGRPalette::classic_332();
 
     // test COPY
     {
@@ -4001,8 +3985,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 }
 
 BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
-    BGRPalette palette332;
-    init_palette332(palette332);
+    const BGRPalette & palette332 = BGRPalette::classic_332();
 
     int bpp = 8;
     const uint8_t * const data = 0;
@@ -4335,8 +4318,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression3) {
 */
 
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression4) {
-    BGRPalette palette332;
-    init_palette332(palette332);
+    const BGRPalette & palette332 = BGRPalette::classic_332();
 
     const char * filename = "tests/fixtures/red_box_20x20.png";
 
@@ -4481,8 +4463,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapDecompression1) {
 
 BOOST_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
     uint8_t bpp = 16;
-    BGRPalette palette332;
-    init_palette332(palette332);
+    const BGRPalette & palette332 = BGRPalette::classic_332();
 
     // x=591; y=138; w=368; h=10; dw=367; dh=10; bpp=16; cf=1; sz=756
     uint8_t compressed[] ={

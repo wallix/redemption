@@ -66,7 +66,6 @@ BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
     uint16_t width = 1440;
     uint16_t height = 850;
     Rect screen_rect(0, 0, width, height);
-    BGRPalette palette;
 
     RDPDrawable gd(width, height, 16);
     gd.draw(RDPOpaqueRect(screen_rect, color_encode(0x2F2F2F, 16)), screen_rect);
@@ -181,7 +180,7 @@ BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 /* 0280 */ 0x5a, 0x91, 0xc5,                                         // Z..
     };
 
-    memcpy(palette, raw_palette, sizeof(palette));
+    BGRPalette palette(raw_palette);
 
     Bitmap bmp(16, 24, &palette, 8, 600, raw_bitmap, sizeof(raw_bitmap), true);
 

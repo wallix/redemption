@@ -828,16 +828,13 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    BGRPalette palette;
-    init_palette332(palette);
 
     RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(screen_rect, 0x2F2F2F), screen_rect);
     gd.draw(RDPOpaqueRect(Rect(100,100,20, 20), BLUE), screen_rect);
 
     uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
-    BGRPalette palette332;
-    init_palette332(palette332);
+    BGRPalette const & palette332 = BGRPalette::classic_332();
     Bitmap bmp(24, 24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
 
     // red square
@@ -866,7 +863,6 @@ BOOST_AUTO_TEST_CASE(TestMemblt2)
     uint16_t width = 320;
     uint16_t height = 200;
     Rect screen_rect(0, 0, width, height);
-    BGRPalette palette;
 
     RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(screen_rect, 0x2F2F2F), screen_rect);
@@ -977,7 +973,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt2)
 /* 0240 */ 0x1e, 0x00, 0x6b, 0x00, 0x0f, 0x60, 0x91, 0x09,                          // ..k..`..
     };
 
-    memcpy(palette, raw_palette, sizeof(palette));
+    const BGRPalette palette(raw_palette);
 
     Bitmap bmp(8, 8, &palette, 64, 22, raw_bitmap, sizeof(raw_bitmap), true);
 
@@ -1001,7 +997,6 @@ BOOST_AUTO_TEST_CASE(TestMemblt3)
     uint16_t width = 320;
     uint16_t height = 200;
     Rect screen_rect(0, 0, width, height);
-    BGRPalette palette;
 
     RDPDrawable gd(width, height, 24);
     gd.draw(RDPOpaqueRect(screen_rect, 0x2F2F2F), screen_rect);
@@ -1100,7 +1095,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt3)
 /* 0180 */ 0x08, 0x84, 0xb4, 0x1d, 0xb4, 0x1d, 0xb4, 0x1d, 0xb4, 0x1d,                    // ..........
     };
 
-    memcpy(palette, raw_palette, sizeof(palette));
+    const BGRPalette palette(raw_palette);
 
     Bitmap bmp(15, 15, &palette, 32, 32, raw_bitmap, sizeof(raw_bitmap), true);
 

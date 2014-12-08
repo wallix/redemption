@@ -304,7 +304,7 @@ struct DrawableTraitColor24
 
     struct toColor8
     {
-        const uint32_t (& palette)[256];
+        const BGRPalette & palette;
 
         color_t operator()(const uint8_t * p) const noexcept
         {

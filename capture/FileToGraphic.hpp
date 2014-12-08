@@ -130,7 +130,7 @@ public:
     uint8_t  input[8192];
     bool real_time;
 
-    BGRPalette palette;
+    const BGRPalette & palette = BGRPalette::classic_332(); // We don't really care movies are always 24 bits for now
 
     const timeval begin_capture;
     const timeval end_capture;
@@ -270,8 +270,6 @@ public:
         , ignore_frame_in_timeval(false)
         , statistics()
     {
-        init_palette332(this->palette); // We don't really care movies are always 24 bits for now
-
         while (this->next_order()){
             this->interpret_order();
             if (this->meta_ok && this->timestamp_ok){

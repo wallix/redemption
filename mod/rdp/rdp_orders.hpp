@@ -81,9 +81,6 @@ struct rdp_orders {
     RDPPolyline        polyline;
     RDPEllipseSC       ellipseSC;
 
-private:
-    BGRPalette cache_colormap[6];
-public:
     BGRPalette global_palette;
 
     BmpCache * bmp_cache;
@@ -101,25 +98,25 @@ public:
 
     rdp_orders( const char * target_host, bool enable_persistent_disk_bitmap_cache
               , bool persist_bitmap_cache_on_disk, uint32_t verbose)
-            : common(RDP::PATBLT, Rect(0, 0, 1, 1))
-            , memblt(0, Rect(), 0, 0, 0, 0)
-            , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
-            , opaquerect(Rect(), 0)
-            , scrblt(Rect(), 0, 0, 0)
-            , destblt(Rect(), 0)
-            , patblt(Rect(), 0, 0, 0, RDPBrush())
-            , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
-            , glyph_index( 0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
-                         , reinterpret_cast<const uint8_t *>(""))
-            , bmp_cache(NULL)
-            , verbose(verbose)
-            , recv_bmp_cache_count(0)
-            , recv_order_count(0)
-            , target_host(target_host)
-            , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache)
-            , persist_bitmap_cache_on_disk(persist_bitmap_cache_on_disk) {
-        memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
-        memset(this->global_palette, 0, sizeof(this->global_palette));
+    : common(RDP::PATBLT, Rect(0, 0, 1, 1))
+    , memblt(0, Rect(), 0, 0, 0, 0)
+    , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
+    , opaquerect(Rect(), 0)
+    , scrblt(Rect(), 0, 0, 0)
+    , destblt(Rect(), 0)
+    , patblt(Rect(), 0, 0, 0, RDPBrush())
+    , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
+    , glyph_index( 0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
+                 , reinterpret_cast<const uint8_t *>(""))
+    , global_palette(nullptr)
+    , bmp_cache(NULL)
+    , verbose(verbose)
+    , recv_bmp_cache_count(0)
+    , recv_order_count(0)
+    , target_host(target_host)
+    , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache)
+    , persist_bitmap_cache_on_disk(persist_bitmap_cache_on_disk)
+    {
     }
 
     void reset()
@@ -139,9 +136,6 @@ public:
         this->glyph_index = RDPGlyphIndex( 0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1)
                                          , RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
         this->polyline        = RDPPolyline();
-
-        memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
-        memset(this->global_palette, 0, sizeof(this->global_palette));
     }
 
     ~rdp_orders() {
@@ -336,7 +330,6 @@ public:
         }
         RDPColCache colormap;
         colormap.receive(stream, control, header);
-        memcpy(this->cache_colormap[colormap.cacheIndex], &colormap.palette, sizeof(BGRPalette));
         RDPColCache cmd(colormap.cacheIndex, colormap.palette);
         gd.draw(cmd);
 

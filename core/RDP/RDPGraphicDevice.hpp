@@ -31,8 +31,9 @@
 #include <cstddef>
 
 #include "noncopyable.hpp"
-#include "colors.hpp"
+#include "log.hpp"
 
+class BGRPalette;
 class RDPDestBlt;
 class RDPMultiDstBlt;
 class RDPPatBlt;
