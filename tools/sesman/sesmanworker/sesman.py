@@ -282,7 +282,7 @@ class Sesman():
             level_1_items, wab_login = level_0_items[0].split(u'@'), level_0_items[-1]
             target_login, target_device = '@'.join(level_1_items[:-1]), level_1_items[-1]
         if self.passthrough_mode:
-            if not self.passthrough_target_login:
+            if self.passthrough_target_login is None:
                 self.passthrough_target_login = wab_login
             if self.default_login:
                 effective_login = self.passthrough_target_login
