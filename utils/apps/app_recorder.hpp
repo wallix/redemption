@@ -719,7 +719,8 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                 player.play(std::ref(update_progress_data));
             }
             catch (Error const & e) {
-                update_progress_data.raise_error(e.id, e.errmsg());
+                const bool msg_with_error_id = false;
+                update_progress_data.raise_error(e.id, e.errmsg(msg_with_error_id));
 
                 return_code = -1;
             }

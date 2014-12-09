@@ -32,6 +32,8 @@ class UpdateProgressData : noncopyable {
 
     unsigned int last_written_time_percentage;
 
+    mutable bool error_raised = false;
+
 public:
     UpdateProgressData() = delete;
     UpdateProgressData( const char * progress_filename
@@ -54,9 +56,11 @@ public:
 
     ~UpdateProgressData() {
         if (this->fd != -1) {
-            ::lseek(this->fd, 0, SEEK_SET);
-            int write_result = ::write(this->fd, "100 0", 5);
+            if (!this->error_raised) {
+                ::lseek(this->fd, 0, SEEK_SET);
+                int write_result = ::write(this->fd, "100 0", 5);
 (void)write_result;
+            }
             ::close(this->fd);
         }
     }
@@ -123,5 +127,7 @@ public:
             int truncate_result = ::ftruncate(this->fd, write_result);
 (void)truncate_result;
         }
+
+        this->error_raised = true;
     }
 };

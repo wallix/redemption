@@ -28,6 +28,7 @@
 
 enum error_type {
     NO_ERROR = 0,
+
     ERR_STREAM_MEMORY_TOO_SMALL,
     ERR_STREAM_MEMORY_ALLOCATION_ERROR,
     ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7,
@@ -205,7 +206,6 @@ enum error_type {
     ERR_SERVER_SET_POINTER,
     ERR_SERVER_SEND_TO_CHANNEL,
     ERR_SERVER_END_UPDATE,
-
     ERR_SERVER_RDP_RECV_ERR,
 
     ERR_SESSION_UNKNOWN_BACKEND = 13000,
@@ -277,11 +277,11 @@ enum error_type {
     ERR_WIDGET = 21000,
     ERR_WIDGET_INVALID_COMPOSITE_DESTROY,
 
-    ERR_RDP61_DECOMPRESS                 = 22000,
+    ERR_RDP61_DECOMPRESS = 22000,
     ERR_RDP61_DECOMPRESS_DATA_TRUNCATED,
     ERR_RDP61_DECOMPRESS_LEVEL_2,
 
-    ERR_RDP45_COMPRESS_BUFFER_OVERFLOW   = 22100,
+    ERR_RDP45_COMPRESS_BUFFER_OVERFLOW = 22100,
 
     ERR_NLA_AUTHENTICATION_FAILED = 23000,
 
@@ -301,31 +301,32 @@ enum error_type {
     ERR_SSL_CALL_SHA1_FINAL_FAILED
 };
 
-struct Error
-{
+struct Error {
     int id;
     int errnum;
 
 private:
-    mutable char errstr[64] = { 0 };
+    enum {
+          MSG_NULL
+        , MSG_WITH_ID
+        , MSG_WITHOUT_ID
+    };
+    mutable int  msg_type = MSG_NULL;
+    mutable char msg[64]  = { 0 };
 
     Error() = delete;
 
 public:
     Error(int id, int errnum = 0) noexcept
     : id(id)
-    , errnum(errnum)
-    {
-//        LOG(LOG_ERR, "error=%u", this->id);
-//        exit(0);
-    }
+    , errnum(errnum) {}
 
-    const char * errmsg() const noexcept {
+    const char * errmsg(bool with_id = true) const noexcept {
         switch(this->id) {
         case NO_ERROR:
             return "No error";
         case ERR_SESSION_UNKNOWN_BACKEND:
-            return  "Unknown Backend";
+            return "Unknown Backend";
         case ERR_NLA_AUTHENTICATION_FAILED:
             return "NLA Authentication Failed";
         case ERR_TRANSPORT_OPEN_FAILED:
@@ -337,11 +338,24 @@ public:
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
             return "Composite Widget Destroyed without child list not empty.";
         default:
-            if (!this->errstr[0]) {
-                snprintf(this->errstr, sizeof(errstr), "Exception Error no : %d", this->id);
-                this->errstr[sizeof(this->errstr)-1] = 0;
+            {
+                int requested_message_type = (with_id ? MSG_WITH_ID : MSG_WITHOUT_ID);
+
+                if (requested_message_type != this->msg_type) {
+                    if (requested_message_type == MSG_WITH_ID) {
+                        snprintf( this->msg, sizeof(this->msg)
+                                , "Exception Error no : %d", this->id);
+                    }
+                    else {
+                        snprintf( this->msg, sizeof(this->msg)
+                                , "Exception");
+                    }
+                    this->msg[sizeof(this->msg) - 1] = 0;
+
+                    this->msg_type = requested_message_type;
+                }
+                return this->msg;
             }
-            return this->errstr;
         }
     }
 };
