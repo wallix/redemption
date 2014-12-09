@@ -116,7 +116,7 @@ private:
     bool is_first_incr;
     bool left_ctrl_pressed;
 
-    bool is_socket_transport = false;
+    const bool is_socket_transport;
 
 public:
     //==============================================================================================================
@@ -133,6 +133,7 @@ public:
            , bool clipboard_out
            , const char * encodings
            , bool allow_authentification_retries
+           , bool is_socket_transport
            , uint32_t verbose
            )
     //==============================================================================================================
@@ -162,6 +163,7 @@ public:
     , is_first_membelt(true)
     , is_first_incr(true)
     , left_ctrl_pressed(false)
+    , is_socket_transport(is_socket_transport)
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -552,7 +554,6 @@ public:
             try
             {
                 this->t->connect();
-                this->is_socket_transport = true;
             }
             catch (Error const & e)
             {
@@ -698,9 +699,6 @@ public:
                             {
                                 LOG(LOG_ERR, "vnc password failed");
 
-                                if (this->is_socket_transport) {
-                                    this->is_socket_transport = false;
-                                }
                                 this->t->disconnect();
 
                                 this->state = ASK_PASSWORD;

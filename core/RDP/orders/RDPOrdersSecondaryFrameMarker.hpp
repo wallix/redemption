@@ -28,6 +28,7 @@ namespace RDP {
 
 // [MS-RDPEGDI] - 2.2.2.2.1.3.7 Frame Marker
 // =========================================
+
 // The Frame Marker Alternate Secondary Drawing Order is used by the server to
 //  indicate to the client the beginning and end of a logical frame of
 //  graphics data. Breaking graphics data up into logical frames indicates to
@@ -51,17 +52,17 @@ namespace RDP {
 // action (4 bytes): A 32-bit, unsigned integer. Indicates the start or end
 //  of a logical frame.
 
-// +----------------+----------------------------------------------------------+
-// | Value          | Meaning                                                  |
-// +----------------+----------------------------------------------------------+
-// | TS_FRAME_START | Start of a logical frame of graphics data. All drawing   |
-// | 0x00000000     | orders from this point in the graphics stream are part   |
-// |                | of the same logical frame and can be rendered as one     |
-// |                | cohesive unit to prevent tearing.                        |
-// +----------------+----------------------------------------------------------+
-// | TS_FRAME_END   | End of a logical frame of graphics data.                 |
-// | 0x00000001     |                                                          |
-// +----------------+----------------------------------------------------------+
+//  +----------------+---------------------------------------------------------+
+//  | Value          | Meaning                                                 |
+//  +----------------+---------------------------------------------------------+
+//  | TS_FRAME_START | Start of a logical frame of graphics data. All drawing  |
+//  | 0x00000000     | orders from this point in the graphics stream are part  |
+//  |                | of the same logical frame and can be rendered as one    |
+//  |                | cohesive unit to prevent tearing.                       |
+//  +----------------+---------------------------------------------------------+
+//  | TS_FRAME_END   | End of a logical frame of graphics data.                |
+//  | 0x00000001     |                                                         |
+//  +----------------+---------------------------------------------------------+
 
 class FrameMarker {
 public:
@@ -120,4 +121,3 @@ public:
 }   // namespace RDP
 
 #endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYFRAMEMARKER_HPP_
-

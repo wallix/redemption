@@ -28,8 +28,8 @@
 
 namespace RDP {
 
-// 2.2.2.1 Orders Update (TS_UPDATE_ORDERS_PDU_DATA)
-// =================================================
+// [MS-RDPEGDI] - 2.2.2.1 Orders Update (TS_UPDATE_ORDERS_PDU_DATA)
+// ================================================================
 
 // The TS_UPDATE_ORDERS_PDU_DATA structure contains primary, secondary, and
 //  alternate secondary drawing orders aligned on byte boundaries. This
@@ -83,8 +83,8 @@ namespace RDP {
 //  controlFlags field of the Drawing Order identifies the type of drawing
 //  order.
 
-// 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
-// =====================================================
+// [MS-RDPEGDI] - 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
+// ====================================================================
 
 // The TS_FP_UPDATE_ORDERS structure contains primary, secondary, and
 //  alternate secondary drawing orders aligned on byte boundaries. This
@@ -143,8 +143,8 @@ struct OrdersUpdate_Recv {
     }
 };
 
-// 2.2.2.2.1 Drawing Order (DRAWING_ORDER)
-// =======================================
+// [MS-RDPEGDI] - 2.2.2.2.1 Drawing Order (DRAWING_ORDER)
+// ======================================================
 // The DRAWING_ORDER structure is used to describe and encapsulate a single
 //  primary, secondary, or alternate secondary drawing order sent from server
 //  to client. All drawing orders conform to this basic structure (see
@@ -171,13 +171,13 @@ struct OrdersUpdate_Recv {
 //  More flags MAY be present, depending on the drawing order class. The flags
 //   listed are common to all three classes of drawing orders.
 
-// +--------------+-------+
-// | Name         | Value |
-// +--------------+-------+
-// | TS_STANDARD  | 0x01  |
-// +--------------+-------+
-// | TS_SECONDARY | 0x02  |
-// +--------------+-------+
+//  +--------------+-------+
+//  | Name         | Value |
+//  +--------------+-------+
+//  | TS_STANDARD  | 0x01  |
+//  +--------------+-------+
+//  | TS_SECONDARY | 0x02  |
+//  +--------------+-------+
 
 //  orderSpecificData (variable): Variable-length data specific to the drawing
 //   order class and the drawing order itself.
@@ -190,8 +190,9 @@ struct DrawingOrder_RecvFactory {
     }
 };
 
-// 2.2.9.1.1.3.1.1.1 Palette Update Data (TS_UPDATE_PALETTE_DATA)
-// ==============================================================
+// [MS-RDPBCGR] - 2.2.9.1.1.3.1.1.1 Palette Update Data
+//  (TS_UPDATE_PALETTE_DATA)
+// ====================================================
 
 // The TS_UPDATE_PALETTE_DATA encapsulates the palette data that defines a
 //  Palette Update (section 2.2.9.1.1.3.1.1).
@@ -223,8 +224,8 @@ struct DrawingOrder_RecvFactory {
 //  format (section 2.2.9.1.1.3.1.1.2) packed on byte boundaries. The number
 //  of triplet entries is given by the numberColors field.
 
-// 2.2.9.1.1.3.1.1.2 RGB Palette Entry (TS_PALETTE_ENTRY)
-// ======================================================
+// [MS-RDPBCGR] - 2.2.9.1.1.3.1.1.2 RGB Palette Entry (TS_PALETTE_ENTRY)
+// =====================================================================
 
 // The TS_PALETTE_ENTRY structure is used to express the red, green, and blue
 //  components necessary to reproduce a color in the additive RGB space.
@@ -264,8 +265,8 @@ struct UpdatePaletteData_Recv {
     }
 };
 
-// 2.2.1.13.2 Client Confirm Active PDU
-// ====================================
+// [MS-RDPBCGR] - 2.2.1.13.2 Client Confirm Active PDU
+// ===================================================
 
 // The Confirm Active PDU is an RDP Connection Sequence PDU sent from client
 //  to server during the Capabilities Exchange phase of the RDP Connection
@@ -330,8 +331,9 @@ struct UpdatePaletteData_Recv {
 // confirmActivePduData (variable): The contents of the Confirm Active PDU, as
 //  specified in section 2.2.1.13.2.1.
 
-// 2.2.1.13.2.1 Confirm Active PDU Data (TS_CONFIRM_ACTIVE_PDU)
-// ============================================================
+// [MS-RDPBCGR] - 2.2.1.13.2.1 Confirm Active PDU Data
+//  (TS_CONFIRM_ACTIVE_PDU)
+// ===================================================
 
 // The TS_CONFIRM_ACTIVE_PDU structure is a standard T.128 Confirm Active PDU
 //  (see [T128] section 8.4.1).
@@ -479,8 +481,8 @@ struct ConfirmActivePDU_Send {
     }
 };  // struct ConfirmActivePDU_Send
 
-// 2.2.6.1 Virtual Channel PDU
-// ===========================
+// [MS-RDPBCGR] - 2.2.6.1 Virtual Channel PDU
+// ==========================================
 
 // The Virtual Channel PDU is sent from client to server or from server to
 //  client and is used to transport data between static virtual channel
@@ -576,8 +578,8 @@ struct ConfirmActivePDU_Send {
 //  channel chunk size is specified in the optional VCChunkSize field of the
 //  Virtual Channel Capability Set (section 2.2.7.1.10).
 
-// 2.2.6.1.1 Channel PDU Header (CHANNEL_PDU_HEADER)
-// =================================================
+// [MS-RDPBCGR] - 2.2.6.1.1 Channel PDU Header (CHANNEL_PDU_HEADER)
+// ================================================================
 
 // The CHANNEL_PDU_HEADER MUST precede all opaque static virtual channel
 //  traffic chunks transmitted via RDP between a client and server.
@@ -598,83 +600,87 @@ struct ConfirmActivePDU_Send {
 
 // flags (4 bytes): A 32-bit, unsigned integer. The channel control flags.
 
-// +----------------------------+----------------------------------------------+
-// | Flag                       | Meaning                                      |
-// +----------------------------+----------------------------------------------+
-// | CHANNEL_FLAG_FIRST         | Indicates that the chunk is the first in a   |
-// | 0x00000001                 | sequence.                                    |
-// +----------------------------+----------------------------------------------+
-// | CHANNEL_FLAG_LAST          | Indicates that the chunk is the last in a    |
-// | 0x00000002                 | sequence.                                    |
-// +----------------------------+----------------------------------------------+
-// | CHANNEL_FLAG_SHOW_PROTOCOL | The Channel PDU Header MUST be visible to    |
-// | 0x00000010                 | the application endpoint (see section        |
-// |                            | 2.2.1.3.4.1).                                |
-// +----------------------------+----------------------------------------------+
-// | CHANNEL_FLAG_SUSPEND       | All virtual channel traffic MUST be          |
-// | 0x00000020 suspended.      | This flag is only valid in server-to-client  |
-// |                            | virtual channel traffic. It MUST be ignored  |
-// |                            | in client-to-server data.                    |
-// +----------------------------+----------------------------------------------+
-// | CHANNEL_FLAG_RESUME        | All virtual channel traffic MUST be resumed. |
-// | 0x00000040                 | This flag is only valid in server-to-client  |
-// |                            | virtual channel traffic. It MUST be ignored  |
-// |                            | in client-to-server data.                    |
-// +----------------------------+----------------------------------------------+
-// | CHANNEL_PACKET_COMPRESSED  | The virtual channel data is compressed. This |
-// | 0x00200000                 | flag is equivalent to MPPC bit C (for more   |
-// |                            | information see [RFC2118] section 3.1).      |
-// +----------------------------+----------------------------------------------+
-// | CHANNEL_PACKET_AT_FRONT    | The decompressed packet MUST be placed at    |
-// | 0x00400000                 | the beginning of the history buffer. This    |
-// |                            | flag is equivalent to MPPC bit B (for more   |
-// |                            | information see [RFC2118] section 3.1).      |
-// +----------------------------+----------------------------------------------+
-// | CHANNEL_PACKET_FLUSHED     | The decompressor MUST reinitialize the       |
-// | 0x00800000                 | history buffer (by filling it with zeros)    |
-// |                            | and reset the HistoryOffset to zero. After   |
-// |                            | it has been reinitialized, the entire        |
-// |                            | history buffer is immediately regarded as    |
-// |                            | valid. This flag is equivalent to MPPC bit A |
-// |                            | (for more information see [RFC2118] section  |
-// |                            | 3.1). If the CHANNEL_PACKET_COMPRESSED       |
-// |                            | (0x00200000) flag is also present, then the  |
-// |                            | CHANNEL_PACKET_FLUSHED flag MUST be          |
-// |                            | processed first.                             |
-// +----------------------------+----------------------------------------------+
-// | CompressionTypeMask        | Indicates the compression package which was  |
-// | 0x000F0000                 | used to compress the data. See the           |
-// |                            | discussion which follows this table for a    |
-// |                            | list of compression packages.                |
-// +----------------------------+----------------------------------------------+
+//  +----------------------------+---------------------------------------------+
+//  | Flag                       | Meaning                                     |
+//  +----------------------------+---------------------------------------------+
+//  | CHANNEL_FLAG_FIRST         | Indicates that the chunk is the first in a  |
+//  | 0x00000001                 | sequence.                                   |
+//  +----------------------------+---------------------------------------------+
+//  | CHANNEL_FLAG_LAST          | Indicates that the chunk is the last in a   |
+//  | 0x00000002                 | sequence.                                   |
+//  +----------------------------+---------------------------------------------+
+//  | CHANNEL_FLAG_SHOW_PROTOCOL | The Channel PDU Header MUST be visible to   |
+//  | 0x00000010                 | the application endpoint (see section       |
+//  |                            | 2.2.1.3.4.1).                               |
+//  +----------------------------+---------------------------------------------+
+//  | CHANNEL_FLAG_SUSPEND       | All virtual channel traffic MUST be         |
+//  | 0x00000020 suspended.      | This flag is only valid in server-to-client |
+//  |                            | virtual channel traffic. It MUST be ignored |
+//  |                            | in client-to-server data.                   |
+//  +----------------------------+---------------------------------------------+
+//  | CHANNEL_FLAG_RESUME        | All virtual channel traffic MUST be         |
+//  | 0x00000040                 | resumed. This flag is only valid in         |
+//  |                            | server-to-client virtual channel traffic.   |
+//  |                            | It MUST be ignored in client-to-server      |
+//  |                            | data.                                       |
+//  +----------------------------+---------------------------------------------+
+//  | CHANNEL_PACKET_COMPRESSED  | The virtual channel data is compressed.     |
+//  | 0x00200000                 | This flag is equivalent to MPPC bit C (for  |
+//  |                            | more information see [RFC2118] section      |
+//  |                            | 3.1).                                       |
+//  +----------------------------+---------------------------------------------+
+//  | CHANNEL_PACKET_AT_FRONT    | The decompressed packet MUST be placed at   |
+//  | 0x00400000                 | the beginning of the history buffer. This   |
+//  |                            | flag is equivalent to MPPC bit B (for more  |
+//  |                            | information see [RFC2118] section 3.1).     |
+//  +----------------------------+---------------------------------------------+
+//  | CHANNEL_PACKET_FLUSHED     | The decompressor MUST reinitialize the      |
+//  | 0x00800000                 | history buffer (by filling it with zeros)   |
+//  |                            | and reset the HistoryOffset to zero. After  |
+//  |                            | it has been reinitialized, the entire       |
+//  |                            | history buffer is immediately regarded as   |
+//  |                            | valid. This flag is equivalent to MPPC bit  |
+//  |                            | A (for more information see [RFC2118]       |
+//  |                            | section 3.1). If the                        |
+//  |                            | CHANNEL_PACKET_COMPRESSED (0x00200000) flag |
+//  |                            | is also present, then the                   |
+//  |                            | CHANNEL_PACKET_FLUSHED flag MUST be         |
+//  |                            | processed first.                            |
+//  +----------------------------+---------------------------------------------+
+//  | CompressionTypeMask        | Indicates the compression package which was |
+//  | 0x000F0000                 | used to compress the data. See the          |
+//  |                            | discussion which follows this table for a   |
+//  |                            | list of compression packages.               |
+//  +----------------------------+---------------------------------------------+
 
-// If neither the CHANNEL_FLAG_FIRST (0x00000001) nor the CHANNEL_FLAG_LAST
-//  (0x00000002) flag is present, the chunk is from the middle of a sequence.
+//  If neither the CHANNEL_FLAG_FIRST (0x00000001) nor the CHANNEL_FLAG_LAST
+//   (0x00000002) flag is present, the chunk is from the middle of a
+//   sequence.
 
-// Instructions specifying how to set the compression flags can be found in
-//  section 3.1.8.2.1.
+//  Instructions specifying how to set the compression flags can be found in
+//   section 3.1.8.2.1.
 
-// Possible compression types are as follows.
+//  Possible compression types are as follows.
 
-// +-------------------------+-------------------------------------------------+
-// | Value                   | Meaning                                         |
-// +-------------------------+-------------------------------------------------+
-// | PACKET_COMPR_TYPE_8K    | RDP 4.0 bulk compression (see section           |
-// | 0x0                     | 3.1.8.4.1).                                     |
-// +-------------------------+-------------------------------------------------+
-// | PACKET_COMPR_TYPE_64K   | RDP 5.0 bulk compression (see section           |
-// | 0x1                     | 3.1.8.4.2).                                     |
-// +-------------------------+-------------------------------------------------+
-// | PACKET_COMPR_TYPE_RDP6  | RDP 6.0 bulk compression (see [MS-RDPEGDI]      |
-// | 0x2                     | section 3.1.8.1).                               |
-// +-------------------------+-------------------------------------------------+
-// | PACKET_COMPR_TYPE_RDP61 | RDP 6.1 bulk compression (see [MS-RDPEGDI]      |
-// | 0x3                     | section 3.1.8.2).                               |
-// +-------------------------+-------------------------------------------------+
+//  +-------------------------+------------------------------------------------+
+//  | Value                   | Meaning                                        |
+//  +-------------------------+------------------------------------------------+
+//  | PACKET_COMPR_TYPE_8K    | RDP 4.0 bulk compression (see section          |
+//  | 0x0                     | 3.1.8.4.1).                                    |
+//  +-------------------------+------------------------------------------------+
+//  | PACKET_COMPR_TYPE_64K   | RDP 5.0 bulk compression (see section          |
+//  | 0x1                     | 3.1.8.4.2).                                    |
+//  +-------------------------+------------------------------------------------+
+//  | PACKET_COMPR_TYPE_RDP6  | RDP 6.0 bulk compression (see [MS-RDPEGDI]     |
+//  | 0x2                     | section 3.1.8.1).                              |
+//  +-------------------------+------------------------------------------------+
+//  | PACKET_COMPR_TYPE_RDP61 | RDP 6.1 bulk compression (see [MS-RDPEGDI]     |
+//  | 0x3                     | section 3.1.8.2).                              |
+//  +-------------------------+------------------------------------------------+
 
-// Instructions detailing how to compress a data stream are listed in section
-//  3.1.8.2, while decompression of a data stream is described in section
-//  3.1.8.3.
+//  Instructions detailing how to compress a data stream are listed in
+//   section 3.1.8.2, while decompression of a data stream is described in
+//   section 3.1.8.3.
 
 }   // namespace RDP
 

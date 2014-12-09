@@ -158,9 +158,8 @@ public:
 
     struct DeltaEncodedRectangle deltaEncodedRectangles[45];
 
-    static uint8_t id(void)
-    {
-        return RDP::MULTIPATBLT;
+    static uint8_t id(void) {
+        return MULTIPATBLT;
     }
 
     RDPMultiPatBlt()
@@ -238,14 +237,15 @@ public:
 
     void emit( Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
              , const RDPMultiPatBlt & oldcmd) const {
-        RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
+        RDPPrimaryOrderHeader header(STANDARD, 0);
 
         if (!common.clip.contains(this->rect)){
             header.control |= BOUNDS;
         }
 
-        // MultiPatBlt fields bytes (2 byte)
-        // =================================
+        // MultiPatBlt field encoding bytes (2)
+        // ====================================
+
         // 0x0001: nLeftRect
         // 0x0002: nTopRect
         // 0x0004: nWidth
@@ -287,7 +287,7 @@ public:
                       | (
                          (this->nDeltaEntries != oldcmd.nDeltaEntries) ||
                          memcmp(this->deltaEncodedRectangles, oldcmd.deltaEncodedRectangles,
-                                this->nDeltaEntries * sizeof(RDP::DeltaEncodedRectangle))
+                                this->nDeltaEntries * sizeof(DeltaEncodedRectangle))
                                                                     ) * 0x2000
                       ;
 
@@ -471,7 +471,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
-        printf("%s", buffer);
+        printf("%s\n", buffer);
     }
 };  // class RDPMultiPatBlt
 

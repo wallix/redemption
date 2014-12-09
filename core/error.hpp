@@ -307,7 +307,7 @@ struct Error
     int errnum;
 
 private:
-    char errstr[64];
+    mutable char errstr[64] = { 0 };
 
     Error() = delete;
 
@@ -320,7 +320,7 @@ public:
 //        exit(0);
     }
 
-    const char * errmsg() noexcept {
+    const char * errmsg() const noexcept {
         switch(this->id) {
         case NO_ERROR:
             return "No error";
@@ -337,8 +337,10 @@ public:
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
             return "Composite Widget Destroyed without child list not empty.";
         default:
-            snprintf(this->errstr, sizeof(errstr), "Exception Error no : %d", this->id);
-            this->errstr[sizeof(this->errstr)-1] = 0;
+            if (!this->errstr[0]) {
+                snprintf(this->errstr, sizeof(errstr), "Exception Error no : %d", this->id);
+                this->errstr[sizeof(this->errstr)-1] = 0;
+            }
             return this->errstr;
         }
     }

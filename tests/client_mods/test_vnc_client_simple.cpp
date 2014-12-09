@@ -55,6 +55,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 //    const char * name = "VNC Target";
 //    ClientSocketTransport t(name, "10.10.3.103", 5900, 3, 1000, verbose);
 //    t.connect();
+//    const bool is_socket_transport = true;
 
 
 //    wait_obj back_event(t.sck);
@@ -240,6 +241,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     };
 
     TestTransport t("test_vnc_client_simple", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    const bool is_socket_transport = false;
 
     // To always get the same client random, in tests
 //    LCGRandom gen(0);
@@ -264,6 +266,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , true          /* clipboard */
         , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
         , false         /* allow authentification retries */
+        , is_socket_transport
         , verbose);
     mod.get_event().set();
 

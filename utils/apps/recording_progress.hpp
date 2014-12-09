@@ -104,4 +104,24 @@ public:
             this->last_written_time_percentage = time_percentage;
         }
     }
+
+    void raise_error(int code, const char * message) const {
+        if (this->fd == -1) {
+            return;
+        }
+
+        char str_error_message[1024];
+
+        std::size_t len = ::snprintf( str_error_message, sizeof(str_error_message), "-1 %s(%u)"
+                                    , (message ? message : "")
+                                    , code
+                                    );
+
+        ::lseek(this->fd, 0, SEEK_SET);
+        int write_result = ::write(this->fd, str_error_message, len);
+        if (write_result != -1) {
+            int truncate_result = ::ftruncate(this->fd, write_result);
+(void)truncate_result;
+        }
+    }
 };
