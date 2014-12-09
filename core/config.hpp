@@ -67,7 +67,6 @@ enum authid_t
     // Options
     AUTHID_KEYBOARD_LAYOUT,         // keyboard_layout
     AUTHID_OPT_CLIPBOARD,           // clipboard
-    AUTHID_OPT_DEVICEREDIRECTION,   // device_redirection
     AUTHID_OPT_FILE_ENCRYPTION,     // file encryption
 
     // Video capture
@@ -181,7 +180,6 @@ enum authid_t
 // Options
 #define STRAUTHID_KEYBOARD_LAYOUT          "keyboard_layout"
 #define STRAUTHID_OPT_CLIPBOARD            "clipboard"
-#define STRAUTHID_OPT_DEVICEREDIRECTION    "device_redirection"
 #define STRAUTHID_OPT_FILE_ENCRYPTION      "file_encryption"
 // Video capture
 #define STRAUTHID_OPT_CODEC_ID             "codec_id"
@@ -261,7 +259,6 @@ enum authid_t
 #define STRAUTHID_SHOWFORM                 "showform"
 #define STRAUTHID_FORMFLAG                 "formflag"
 #define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS        "disable_tsk_switch_shortcuts"
-
 #define STRAUTHID_ALLOW_CHANNELS           "allow_channels"
 #define STRAUTHID_DENY_CHANNELS            "deny_channels"
 
@@ -293,7 +290,6 @@ static const char * const authstr[MAX_AUTHID - 1] = {
     // Options
     STRAUTHID_KEYBOARD_LAYOUT,         // keyboard_layout
     STRAUTHID_OPT_CLIPBOARD,            // clipboard
-    STRAUTHID_OPT_DEVICEREDIRECTION,    // device_redirection
     STRAUTHID_OPT_FILE_ENCRYPTION,      // file encryption
 
     // Video capture
@@ -574,8 +570,6 @@ public:
         bool tls_support         = true;
         bool bogus_neg_request   = false; // needed to connect with jrdp, based on bogus X224 layer code
 
-        BoolField device_redirection;       // AUTHID_OPT_DEVICEREDIRECTION //
-
         BoolField disable_tsk_switch_shortcuts; // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS //
 
         int rdp_compression = 0; // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
@@ -592,8 +586,8 @@ public:
          * channel1,channel2,etc
          * @{
          */
-        redemption::string allow_channels = "*";
-        redemption::string deny_channels;
+        StringField allow_channels;
+        StringField deny_channels;
         // @}
 
         Inifile_client() = default;
@@ -616,14 +610,6 @@ public:
         bool persistent_disk_bitmap_cache   = false;
         bool cache_waiting_list             = true;
         bool persist_bitmap_cache_on_disk   = false;
-
-        /**
-         * channel1,channel2,etc
-         * @{
-         */
-        StringField allow_channels;
-        StringField deny_channels;
-        // @}
 
         Inifile_mod_rdp() = default;
     } mod_rdp;
@@ -935,18 +921,15 @@ public:
         this->client.keyboard_layout.set(0);
         this->to_send_set.insert(AUTHID_KEYBOARD_LAYOUT);
 
-        this->client.device_redirection.attach_ini(this,AUTHID_OPT_DEVICEREDIRECTION);
-        this->client.device_redirection.set(true);
-
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
         // End Section "client"
 
         // Begin section "mod_rdp"
-        this->mod_rdp.allow_channels.set_from_cstr("*");
-        this->mod_rdp.allow_channels.attach_ini(this, AUTHID_ALLOW_CHANNELS);
+        this->client.allow_channels.set_from_cstr("*");
+        this->client.allow_channels.attach_ini(this, AUTHID_ALLOW_CHANNELS);
         //this->mod_rdp.deny_channels.set_from_cstr("");
-        this->mod_rdp.deny_channels.attach_ini(this, AUTHID_DENY_CHANNELS);
+        this->client.deny_channels.attach_ini(this, AUTHID_DENY_CHANNELS);
         // End Section "mod_rdp"
 
         // Begin section "mod_vnc"
@@ -1254,9 +1237,6 @@ public:
             else if (0 == strcmp(key, "bogus_neg_request")) {
                 this->client.bogus_neg_request = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "device_redirection")) {
-                this->client.device_redirection.set_from_cstr(value);
-            }
             else if (0 == strcmp(key, "rdp_compression")) {
                 this->client.rdp_compression = ulong_from_cstr(value);
                 if (this->client.rdp_compression < 0)
@@ -1289,10 +1269,10 @@ public:
                 this->client.persist_bitmap_cache_on_disk = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "allow_channels")) {
-                this->client.allow_channels.copy_c_str(value);
+                this->client.allow_channels.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "deny_channels")) {
-                this->client.deny_channels.copy_c_str(value);
+                this->client.deny_channels.set_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -1332,12 +1312,6 @@ public:
             }
             else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
                 this->mod_rdp.persist_bitmap_cache_on_disk = bool_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "allow_channels")) {
-                this->mod_rdp.allow_channels.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "deny_channels")) {
-                this->mod_rdp.deny_channels.set_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
