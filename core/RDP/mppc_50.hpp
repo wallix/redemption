@@ -483,6 +483,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
     typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
     typedef hash_table_manager::hash_type                hash_type;
 
+    TODO("making it static and large enough should be good for both RDP4 and RDP5")
     uint8_t    historyBuffer[RDP_50_HIST_BUF_LEN];       /* contains uncompressed data */
     uint8_t  * outputBuffer;        /* contains compressed data */
     uint8_t    outputBufferPlus[RDP_50_HIST_BUF_LEN + 64 + 8];
@@ -500,7 +501,6 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
      */
     rdp_mppc_50_enc(uint32_t verbose = 0)
         : rdp_mppc_enc(verbose)
-        TODO("making it static and large enough should be good for both RDP4 and RDP5")
         , historyBuffer{0}
         , outputBuffer(this->outputBufferPlus + 64)  /* contains compressed data */
         , outputBufferPlus{0}
