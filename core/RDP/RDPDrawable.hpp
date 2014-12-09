@@ -73,10 +73,9 @@ public:
     : drawable(width, height)
     , frame_start_count(0)
     , order_bpp(order_bpp)
+    , mod_palette_rgb(BGRPalette::classic_332())
     {
         REDASSERT(order_bpp);
-
-        init_palette332(this->mod_palette_rgb);
     }
 
     const uint8_t * data() const noexcept {
@@ -687,9 +686,7 @@ public:
     }
 
     virtual void set_mod_palette(const BGRPalette & palette) {
-        for (unsigned i = 0; i < 256 ; i++){
-            this->mod_palette_rgb[i] = palette[i];
-        }
+        this->mod_palette_rgb = palette;
     }
 
     void dump_png24(Transport & trans, bool bgr) const {

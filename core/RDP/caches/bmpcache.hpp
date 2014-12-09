@@ -606,13 +606,9 @@ public:
         //    if (this->finding_counter == 500) {
         //        BOOM;
         //    }
-        //    LOG(LOG_INFO, "uint8_t palette_data_%d[] = {", this->finding_counter);
-        //    hexdump_d((const char *)(void *)oldbmp.original_palette, sizeof(oldbmp.original_palette));
-        //    LOG(LOG_INFO, "};", this->finding_counter);
         //    LOG(LOG_INFO, "uint8_t bitmap_data_%d[] = {", this->finding_counter);
         //    hexdump_d((const char *)(void *)oldbmp.data_bitmap.get(), oldbmp.bmp_size);
-        //    LOG(LOG_INFO, "};", this->finding_counter);
-        //    LOG(LOG_INFO, "memcpy(palette, palette_data_%d, sizeof(palette));", this->finding_counter);
+        //    LOG(LOG_INFO, "};");
         //    LOG(LOG_INFO, "init_palette332(palette);", this->finding_counter);
         //    LOG(LOG_INFO,
         //        "{Bitmap bmp_%d(%u, %u, &palette, %u, %u, bitmap_data_%d, %u, false);",

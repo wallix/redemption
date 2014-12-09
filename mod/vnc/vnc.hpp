@@ -78,7 +78,6 @@ private:
     uint8_t green_shift;
     uint8_t blue_shift;
 
-    BGRPalette palette332;
     uint32_t   verbose;
     KeymapSym  keymapSym;
     int        incr;
@@ -146,7 +145,7 @@ public:
                 TR("VNC password", ini))
     , mod_name{0}
     , mod_mouse_state(0)
-    , palette{0}
+    , palette(nullptr)
     , vnc_desktop(0)
     , username{0}
     , password{0}
@@ -176,7 +175,6 @@ public:
             throw Error(ERR_VNC_ZLIB_INITIALIZATION);
         }
 
-        init_palette332(this->palette332);
         keymapSym.init_layout_sym(keylayout);
         // Initial state of keys (at least lock keys) is copied from Keymap2
         keymapSym.key_flags = key_flags;
@@ -1769,10 +1767,10 @@ private:
 
         if (num_colors <= 256) {
             for (int i = 0; i < num_colors; i++) {
-                int r = stream2.in_uint16_be() >> 8;
-                int g = stream2.in_uint16_be() >> 8;
-                int b = stream2.in_uint16_be() >> 8;
-                this->palette[first_color + i] = (r << 16) | (g << 8) | b;
+                const int r = stream2.in_uint16_be() >> 8;
+                const int g = stream2.in_uint16_be() >> 8;
+                const int b = stream2.in_uint16_be() >> 8;
+                this->palette.set_color(first_color + i, (r << 16) | (g << 8) | b);
             }
         }
         else {

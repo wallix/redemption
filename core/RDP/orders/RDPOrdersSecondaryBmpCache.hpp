@@ -1002,7 +1002,7 @@ class RDPBmpCache {
                 "RDPBmpCache::receive_raw_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                 session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
             LOG(LOG_INFO, "Palette");
-            hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+            hexdump_d(palette.data(), palette.data_size());
             LOG(LOG_INFO, "Bitmap");
             hexdump_d(bitmapDataStream, bitmapLength);
             LOG(LOG_INFO, "");
@@ -1086,7 +1086,7 @@ class RDPBmpCache {
                 "Uncompressed bitmap v1: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                 session_color_depth, bpp, width, height, bufsize);
             LOG(LOG_INFO, "Palette");
-            hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+            hexdump_d(palette.data(), palette.data_size());
             LOG(LOG_INFO, "Bitmap");
             hexdump_d(buf, bufsize);
             LOG(LOG_INFO, "");
@@ -1156,7 +1156,7 @@ class RDPBmpCache {
                     "CRDPBmpCache::receive_compressed_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                     session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
                 LOG(LOG_INFO, "Palette");
-                hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+                hexdump_d(palette.data(), palette.data_size());
                 LOG(LOG_INFO, "Bitmap");
                 hexdump_d(bitmapDataStream, bitmapLength);
                 LOG(LOG_INFO, "");
@@ -1178,7 +1178,7 @@ class RDPBmpCache {
                     "RDPBmpCache::receive_compressed_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                     session_color_depth, bpp, bitmapWidth, bitmapWidth, cbCompMainBodySize);
                 LOG(LOG_INFO, "Palette");
-                hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+                hexdump_d(palette.data(), palette.data_size());
                 LOG(LOG_INFO, "Bitmap");
                 hexdump_d(bitmapDataStream, cbCompMainBodySize);
                 LOG(LOG_INFO, "");
@@ -1217,7 +1217,7 @@ class RDPBmpCache {
                     "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                     session_color_depth, bpp, width, height, bufsize);
                 LOG(LOG_INFO, "Palette");
-                hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+                hexdump_d(palette.data(), palette.data_size());
                 LOG(LOG_INFO, "Bitmap");
                 hexdump_d(data, bufsize);
                 LOG(LOG_INFO, "");
@@ -1236,7 +1236,7 @@ class RDPBmpCache {
                     "Compressed bitmap v1: session_bpp=%u bpp=%u width=%u height=%u size=%u",
                     session_color_depth, bpp, width, height, size);
                 LOG(LOG_INFO, "Palette");
-                hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+                hexdump_d(palette.data(), palette.data_size());
                 LOG(LOG_INFO, "Bitmap");
                 hexdump_d(data, size);
                 LOG(LOG_INFO, "");

@@ -32,7 +32,7 @@
 
 class TestCardMod : public InternalMod
 {
-    BGRPalette palette332;
+    BGRPalette const & palette332 = BGRPalette::classic_332();
 
     bool unit_test;
 
@@ -40,9 +40,7 @@ public:
     TestCardMod(FrontAPI & front, uint16_t width, uint16_t height, bool unit_test = true)
     : InternalMod(front, width, height)
     , unit_test(unit_test)
-    {
-        init_palette332(this->palette332);
-    }
+    {}
 
     virtual ~TestCardMod()
     {

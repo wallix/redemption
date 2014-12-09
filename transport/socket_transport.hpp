@@ -169,7 +169,7 @@ public:
             TODO("this should be an error, no need to commute two times to TLS");
             return;
         }
-        LOG(LOG_INFO, "RIO *::enable_server_tls() start");
+        LOG(LOG_INFO, "SocketTransport::enable_server_tls() start");
 
         // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
         // ------------------------------------------------------------------------------------
@@ -359,12 +359,12 @@ public:
         // Allow legacy insecure renegotiation between OpenSSL and unpatched servers only: this option
         // is currently set by default. See the SECURE RENEGOTIATION section for more details.
 
-        LOG(LOG_INFO, "RIO *::SSL_CTX_set_options()");
+        LOG(LOG_INFO, "SocketTransport::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
         SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
         SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
 
-//        LOG(LOG_INFO, "RIO *::SSL_CTX_set_ciphers(HIGH:!ADH:!3DES)");
+//        LOG(LOG_INFO, "SocketTransport::SSL_CTX_set_ciphers(HIGH:!ADH:!3DES)");
 //        SSL_CTX_set_cipher_list(ctx, "ALL:!aNULL:!eNULL:!ADH:!EXP");
 // Not compatible with MSTSC 6.1 on XP and W2K3
 //        SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH:!3DES");
@@ -440,7 +440,7 @@ public:
         this->tls = true;
 
         BIO_free(bio_err);
-        LOG(LOG_INFO, "RIO *::enable_server_tls() done");
+        LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
     }
 
     virtual void enable_client_tls(bool ignore_certificate_change) throw (Error)
@@ -638,7 +638,7 @@ public:
         // Allow legacy insecure renegotiation between OpenSSL and unpatched servers only: this option
         // is currently set by default. See the SECURE RENEGOTIATION section for more details.
 
-//        LOG(LOG_INFO, "RIO *::SSL_CTX_set_options()");
+//        LOG(LOG_INFO, "SocketTransport::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
 
         // -------- End of system wide SSL_Ctx option ----------------------------------
@@ -990,16 +990,16 @@ public:
         // and a corresponding private key.
 
 
-        LOG(LOG_INFO, "RIO *::X509_get_pubkey()");
+        LOG(LOG_INFO, "SocketTransport::X509_get_pubkey()");
         // extract the public key
         EVP_PKEY* pkey = X509_get_pubkey(px509);
         if (!pkey)
         {
-            LOG(LOG_INFO, "RIO *::crypto_cert_get_public_key: X509_get_pubkey() failed");
+            LOG(LOG_INFO, "SocketTransport::crypto_cert_get_public_key: X509_get_pubkey() failed");
             return;
         }
 
-        LOG(LOG_INFO, "RIO *::i2d_PublicKey()");
+        LOG(LOG_INFO, "SocketTransport::i2d_PublicKey()");
 
         // i2d_X509() encodes the structure pointed to by x into DER format.
         // If out is not NULL is writes the DER encoded data to the buffer at *out,
@@ -1010,7 +1010,7 @@ public:
         // export the public key to DER format
         this->public_key_length = i2d_PublicKey(pkey, NULL);
         this->public_key.reset(new uint8_t[this->public_key_length]);
-        LOG(LOG_INFO, "RIO *::i2d_PublicKey()");
+        LOG(LOG_INFO, "SocketTransport::i2d_PublicKey()");
         // hexdump_c(this->public_key, this->public_key_length);
         uint8_t * tmp = this->public_key.get();
         i2d_PublicKey(pkey, &tmp);
@@ -1078,7 +1078,7 @@ public:
        this->io = ssl;
        this->tls = true;
 
-       LOG(LOG_INFO, "RIO *::enable_tls() done");
+       LOG(LOG_INFO, "SocketTransport::enable_tls() done");
     }
 
     virtual bool disconnect(){

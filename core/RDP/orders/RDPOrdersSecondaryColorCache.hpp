@@ -81,15 +81,16 @@ class RDPColCache {
     BGRPalette palette;
     uint8_t cacheIndex;
 
-    RDPColCache() : cacheIndex(0)
+    RDPColCache()
+      : palette(BGRPalette::no_init())
+      , cacheIndex(0)
     {
     }
 
     RDPColCache(uint8_t cacheIndex, const BGRPalette & palette)
-        : cacheIndex(cacheIndex)
-    {
-        memcpy(this->palette, palette, sizeof(palette));
-    }
+        : palette(palette)
+        , cacheIndex(cacheIndex)
+    {}
 
     void emit(Stream & stream) const
     {
@@ -131,7 +132,7 @@ class RDPColCache {
             uint8_t g = stream.in_uint8();
             uint8_t r = stream.in_uint8();
             stream.in_skip_bytes(1);
-            this->palette[i] = b|(g << 8)| (r << 16);
+            this->palette.set_color(i, b|(g << 8)| (r << 16));
         }
     }
 

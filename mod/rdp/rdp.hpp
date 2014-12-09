@@ -707,8 +707,7 @@ public:
                             , stream_data.size());
     }
 
-    void send_to_channel( const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length
-                          , uint32_t flags) {
+    void send_to_channel(const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length, uint32_t flags) {
         if (this->verbose & 16) {
             LOG( LOG_INFO, "mod_rdp::send_to_channel length=%u chunk_size=%u", static_cast<unsigned>(length)
                  , (unsigned)chunk.size());

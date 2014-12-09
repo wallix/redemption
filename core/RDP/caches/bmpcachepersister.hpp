@@ -144,11 +144,11 @@ private:
             uint16_t cx           = stream.in_uint16_le();
             uint16_t cy           = stream.in_uint16_le();
 
-            BGRPalette original_palette;
+            BGRPalette original_palette{BGRPalette::no_init()};
             if (original_bpp == 8) {
                 t.recv(&stream.end, sizeof(original_palette));
 
-                stream.in_copy_bytes(reinterpret_cast<uint8_t *>(original_palette), sizeof(original_palette));
+                stream.in_copy_bytes(const_cast<char*>(original_palette.data()), sizeof(original_palette));
             }
 
             uint16_t bmp_size;
@@ -287,11 +287,11 @@ private:
             uint16_t cx           = stream.in_uint16_le();
             uint16_t cy           = stream.in_uint16_le();
 
-            BGRPalette original_palette;
+            BGRPalette original_palette{BGRPalette::no_init()};
             if (original_bpp == 8) {
                 t.recv(&stream.end, sizeof(original_palette));
 
-                stream.in_copy_bytes(reinterpret_cast<uint8_t *>(original_palette), sizeof(original_palette));
+                stream.in_copy_bytes(const_cast<char*>(original_palette.data()), sizeof(original_palette));
             }
 
             uint16_t bmp_size;
@@ -406,8 +406,7 @@ private:
                 stream.out_uint16_le(bmp.cx());
                 stream.out_uint16_le(bmp.cy());
                 if (bmp.bpp() == 8) {
-                    stream.out_copy_bytes( reinterpret_cast<const uint8_t *>(bmp.palette())
-                                         , sizeof(bmp.palette()));
+                    stream.out_copy_bytes(bmp.palette().data(), sizeof(bmp.palette()));
                 }
                 stream.out_uint16_le(bmp_size);
                 stream.mark_end();

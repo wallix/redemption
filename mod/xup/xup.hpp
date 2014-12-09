@@ -72,7 +72,7 @@ enum {
     Transport * t;
     int rop;
     int fgcolor;
-    BGRPalette palette332;
+    BGRPalette const & palette332 = BGRPalette::classic_332();
 
     xup_mod( Transport * t
            , class FrontAPI & front
@@ -89,7 +89,6 @@ enum {
     , bpp(context_bpp)
     {
         this->rop = 0xCC;
-        init_palette332(this->palette332);
 
         try {
             this->t = t;

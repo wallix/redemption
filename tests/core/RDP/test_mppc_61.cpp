@@ -30,9 +30,7 @@
 
 BOOST_AUTO_TEST_CASE(TestRDP61BlukCompression)
 {
-    rdp_mppc_61_enc_hash_based_match_finder mppc_enc_match_finder_d;
-    rdp_mppc_enc_match_finder & mppc_enc_match_finder = mppc_enc_match_finder_d;
-    rdp_mppc_61_enc mppc_61_enc(&mppc_enc_match_finder);
+    rdp_mppc_61_enc<rdp_mppc_61_enc_hash_based_match_finder> mppc_61_enc;
 }
 
 
@@ -40,7 +38,6 @@ BOOST_AUTO_TEST_CASE(TestRDP61BlukCompressionSequentialSearchMatchFinder)
 {
     rdp_mppc_61_enc_sequential_search_match_finder mppc_enc_match_finder_d;
     rdp_mppc_enc_match_finder & mppc_enc_match_finder = mppc_enc_match_finder_d;
-    rdp_mppc_61_enc mppc_61_enc(&mppc_enc_match_finder);
 
 
     uint8_t historyBuffer[] = {

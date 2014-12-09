@@ -36,26 +36,15 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
     bool     use_waiting_list = false;
     uint32_t verbose          = 1;
 
-    struct BmpCacheParams {
-        uint16_t entiers;
-        int      size;
-        bool     persistent;
-    } bmp_cache_params [] = {
-        { 120,  nbbytes(bpp) * 16 * 16, false },
-        { 120,  nbbytes(bpp) * 32 * 32, false },
-        { 2553, nbbytes(bpp) * 64 * 64, true  }
-    };
-
     BmpCache bmp_cache( BmpCache::Recorder, bpp, 3, use_waiting_list
-                      , BmpCache::CacheOption(bmp_cache_params[0].entiers, bmp_cache_params[0].size, bmp_cache_params[0].persistent)
-                      , BmpCache::CacheOption(bmp_cache_params[1].entiers, bmp_cache_params[1].size, bmp_cache_params[1].persistent)
-                      , BmpCache::CacheOption(bmp_cache_params[2].entiers, bmp_cache_params[2].size, bmp_cache_params[2].persistent)
+                      , BmpCache::CacheOption(120,  nbbytes(bpp) * 16 * 16, false)
+                      , BmpCache::CacheOption(120,  nbbytes(bpp) * 32 * 32, false)
+                      , BmpCache::CacheOption(2553, nbbytes(bpp) * 64 * 64, true)
                       , BmpCache::CacheOption()
                       , BmpCache::CacheOption()
                       , verbose
                       );
 
-    BGRPalette   palette;
     int          result;
 
 
@@ -131,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
 /* 0020 */ 0x62, 0xf7, 0xf9, 0x00, 0x17, 0x00, 0x1f, 0x41, 0x09, 0x00, 0x1a, 0x60, 0x1e, 0xf7, 0x00, 0x20,  // b......A...`...
 /* 0030 */ 0x41, 0x0d, 0x00, 0x19, 0xf3, 0x03, 0x08, 0xf7,                          // A.......
     };
-    memcpy(palette, raw_palette_0, sizeof(palette));
+    BGRPalette   palette(raw_palette_0);
     {Bitmap bmp(8, 8, &palette, 64, 64, raw_bitmap_0, sizeof(raw_bitmap_0), true);
     result = bmp_cache.cache_bitmap(bmp);
     }
@@ -215,7 +204,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
 /* 0080 */ 0x01, 0x40, 0x00, 0x04, 0x0d, 0x43, 0x81, 0x01, 0x03, 0x1a, 0x14, 0x50, 0xa5, 0x0b, 0x57, 0xab,  // .@...C.....P..W.
 /* 0090 */ 0xd5, 0x22, 0x00, 0x82, 0xc3, 0xc7, 0x8f, 0xc7, 0xe3, 0xc1, 0x98, 0x31, 0xf0, 0x00, 0x08,     // .".........1...
     };
-    memcpy(palette, raw_palette_1, sizeof(palette));
+    palette.set_data(raw_palette_1);
     {Bitmap bmp(8, 8, &palette, 64, 64, raw_bitmap_1, sizeof(raw_bitmap_1), true);
     result = bmp_cache.cache_bitmap(bmp);
     }
@@ -293,7 +282,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
 /* 0020 */ 0xfa, 0x00, 0x10, 0x00, 0x1f, 0x41, 0xc1, 0x00, 0x12, 0x43, 0x8b, 0xd0, 0x02, 0x00, 0x07, 0xf3,  // .....A...C......
 /* 0030 */ 0x40, 0x08, 0xf7,                                         // @..
     };
-    memcpy(palette, raw_palette_2, sizeof(palette));
+    palette.set_data(raw_palette_2);
     {Bitmap bmp(8, 8, &palette, 64, 64, raw_bitmap_2, sizeof(raw_bitmap_2), true);
     result = bmp_cache.cache_bitmap(bmp);
     }
@@ -313,20 +302,10 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister1)
     bool     use_waiting_list = false;
     uint32_t verbose          = 1;
 
-    struct BmpCacheParams {
-        uint16_t entiers;
-        int      size;
-        bool     persistent;
-    } bmp_cache_params [] = {
-        { 120,  nbbytes(bpp) * 16 * 16, false },
-        { 120,  nbbytes(bpp) * 32 * 32, false },
-        { 2553, nbbytes(bpp) * 64 * 64, true  }
-    };
-
     BmpCache bmp_cache( BmpCache::Recorder, bpp, 3, use_waiting_list
-                      , BmpCache::CacheOption(bmp_cache_params[0].entiers, bmp_cache_params[0].size, bmp_cache_params[0].persistent)
-                      , BmpCache::CacheOption(bmp_cache_params[1].entiers, bmp_cache_params[1].size, bmp_cache_params[1].persistent)
-                      , BmpCache::CacheOption(bmp_cache_params[2].entiers, bmp_cache_params[2].size, bmp_cache_params[2].persistent)
+                      , BmpCache::CacheOption(120,  nbbytes(bpp) * 16 * 16, false)
+                      , BmpCache::CacheOption(120,  nbbytes(bpp) * 32 * 32, false)
+                      , BmpCache::CacheOption(2553, nbbytes(bpp) * 64 * 64, true)
                       , BmpCache::CacheOption()
                       , BmpCache::CacheOption()
                       , verbose
@@ -364,20 +343,10 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister2)
     bool     use_waiting_list = false;
     uint32_t verbose          = 1;
 
-    struct BmpCacheParams {
-        uint16_t entiers;
-        int      size;
-        bool     persistent;
-    } bmp_cache_params [] = {
-        { 120,  nbbytes(bpp) * 16 * 16, false },
-        { 120,  nbbytes(bpp) * 32 * 32, false },
-        { 2553, nbbytes(bpp) * 64 * 64, true  }
-    };
-
     BmpCache bmp_cache( BmpCache::Recorder, bpp, 3, use_waiting_list
-                      , BmpCache::CacheOption(bmp_cache_params[0].entiers, bmp_cache_params[0].size, bmp_cache_params[0].persistent)
-                      , BmpCache::CacheOption(bmp_cache_params[1].entiers, bmp_cache_params[1].size, bmp_cache_params[1].persistent)
-                      , BmpCache::CacheOption(bmp_cache_params[2].entiers, bmp_cache_params[2].size, bmp_cache_params[2].persistent)
+                      , BmpCache::CacheOption(120,  nbbytes(bpp) * 16 * 16, false)
+                      , BmpCache::CacheOption(120,  nbbytes(bpp) * 32 * 32, false)
+                      , BmpCache::CacheOption(2553, nbbytes(bpp) * 64 * 64, true)
                       , BmpCache::CacheOption()
                       , BmpCache::CacheOption()
                       , verbose

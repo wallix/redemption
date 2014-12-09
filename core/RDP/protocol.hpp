@@ -260,7 +260,7 @@ struct UpdatePaletteData_Recv {
             r = stream.in_uint8();
             g = stream.in_uint8();
             b = stream.in_uint8();
-            palette[i] = (r << 16) | (g << 8) | b;
+            palette.set_color(i, (r << 16) | (g << 8) | b);
         }
     }
 };

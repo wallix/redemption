@@ -168,7 +168,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -176,8 +175,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
-    BOOST_CHECK_EQUAL("*",                              ini.client.allow_channels.c_str());
-    BOOST_CHECK_EQUAL("",                               ini.client.deny_channels.c_str());
+    BOOST_CHECK_EQUAL("*",                              ini.client.allow_channels.get().str());
+    BOOST_CHECK_EQUAL("",                               ini.client.deny_channels.get().str());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -188,8 +187,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
-    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels.get_cstr());
-    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels.get_cstr());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
@@ -423,7 +420,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -431,8 +427,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
-    BOOST_CHECK_EQUAL("*",                              ini.client.allow_channels.c_str());
-    BOOST_CHECK_EQUAL("",                               ini.client.deny_channels.c_str());
+    BOOST_CHECK_EQUAL("*",                              ini.client.allow_channels.get().str());
+    BOOST_CHECK_EQUAL("",                               ini.client.deny_channels.get().str());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -443,8 +439,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
-    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels.get_cstr());
-    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels.get_cstr());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -695,7 +689,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -703,8 +696,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
-    BOOST_CHECK_EQUAL("*",                              ini.client.allow_channels.c_str());
-    BOOST_CHECK_EQUAL("",                               ini.client.deny_channels.c_str());
+    BOOST_CHECK_EQUAL("*",                              ini.client.allow_channels.get().str());
+    BOOST_CHECK_EQUAL("",                               ini.client.deny_channels.get().str());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -715,8 +708,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
-    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels.get_cstr());
-    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels.get_cstr());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
@@ -770,7 +761,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "performance_flags_force_present=0x1\n"
                           "performance_flags_force_not_present=0x0\n"
                           "tls_fallback_legacy=yes\n"
-                          "device_redirection=no\n"
                           "tls_support=no\n"
                           "rdp_compression=1\n"
                           "disable_tsk_switch_shortcuts=yes\n"
@@ -791,8 +781,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "persistent_disk_bitmap_cache=false\n"
                           "cache_waiting_list=no\n"
                           "persist_bitmap_cache_on_disk=true\n"
-                          "allow_channels=audin\n"
-                          "deny_channels=*\n"
                           "\n"
                           "[mod_vnc]\n"
                           "clipboard=yes\n"
@@ -948,7 +936,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(false,                            ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(1,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -956,8 +943,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(true,                             ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
-    BOOST_CHECK_EQUAL("audin",                          ini.client.allow_channels.c_str());
-    BOOST_CHECK_EQUAL("*",                              ini.client.deny_channels.c_str());
+    BOOST_CHECK_EQUAL("audin",                          ini.client.allow_channels.get().str());
+    BOOST_CHECK_EQUAL("*",                              ini.client.deny_channels.get().str());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.disconnect_on_logon_user_change);
@@ -968,8 +955,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persist_bitmap_cache_on_disk);
-    BOOST_CHECK_EQUAL("audin",                          ini.mod_rdp.allow_channels.get_cstr());
-    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.deny_channels.get_cstr());
 
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.clipboard.get());
     BOOST_CHECK_EQUAL("16,2,0,1,-239",                  ini.mod_vnc.encodings.c_str());
@@ -1176,7 +1161,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(8,                                ini.client.max_color_depth);
@@ -1379,7 +1363,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -1566,7 +1549,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -1746,7 +1728,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -1921,7 +1902,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -2096,7 +2076,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -2756,8 +2735,7 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
     BOOST_CHECK_EQUAL(false, stringf.is_asked());
     BOOST_CHECK_EQUAL(true, stringf.has_changed());
 
-    redemption::string tmp = stringf.get();
-    BOOST_CHECK_EQUAL("anotherstring", tmp.c_str());
+    BOOST_CHECK_EQUAL("anotherstring", stringf.get_cstr());
     BOOST_CHECK_EQUAL(true, stringf.has_changed());
 
     stringf.use();

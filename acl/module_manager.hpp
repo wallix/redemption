@@ -747,8 +747,8 @@ public:
 
                 mod_rdp_params.extra_orders                        = this->ini.mod_rdp.extra_orders.c_str();
 
-                mod_rdp_params.allow_channels                      = &(this->ini.mod_rdp.allow_channels.get());
-                mod_rdp_params.deny_channels                       = &(this->ini.mod_rdp.deny_channels.get());
+                mod_rdp_params.allow_channels                      = &(this->ini.client.allow_channels.get());
+                mod_rdp_params.deny_channels                       = &(this->ini.client.deny_channels.get());
 
                 UdevRandom gen;
                 this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
@@ -789,8 +789,10 @@ public:
 
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
 
-                const bool enable_clipboard_in  = this->front.authorized_channel(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_up");
-                const bool enable_clipboard_out = this->front.authorized_channel(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_down");
+                const AuthorizationChannels authorization_channel
+                  = make_authorization_channels(this->ini.client.allow_channels.get(), this->ini.client.deny_channels.get());
+                const bool enable_clipboard_in  = authorization_channel.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_up");
+                const bool enable_clipboard_out = authorization_channel.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_down");
 
                 this->mod = new mod_vnc(t
                                         , this->ini

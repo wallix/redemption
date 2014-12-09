@@ -228,12 +228,11 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec {
      * Initialize rdp_mppc_60_dec structure
      */
     rdp_mppc_60_dec()
-    : history_buf_end(this->history_buf + RDP_60_HIST_BUF_LEN - 1)
+    : history_buf{0}
+    , offset_cache{0}
+    , history_buf_end(this->history_buf + RDP_60_HIST_BUF_LEN - 1)
     , history_ptr(this->history_buf)
-    {
-        memset(this->history_buf, 0, sizeof(this->history_buf));
-        memset(this->offset_cache, 0, sizeof(this->offset_cache));
-    }
+    {}
 
     /**
      * Deinitialize rdp_mppc_60_dec structure
@@ -711,25 +710,21 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
 
     rdp_mppc_60_enc(uint32_t verbose = 0)
         : rdp_mppc_enc(verbose)
-        , historyOffset(0)
-        , bytes_in_opb(0)
-        , flags(0)
-        , flagsHold(PACKET_FLUSHED)
-        , hash_tab_mgr(MINIMUM_MATCH_LENGTH,
-              MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
-    {
         // The HistoryOffset MUST start initialized to zero, while the
         //     history buffer MUST be filled with zeros. After it has been
         //     initialized, the entire history buffer is immediately
         //     regarded as valid.
-        ::memset(this->historyBuffer, 0, sizeof(this->historyBuffer));
-
+        , historyBuffer{0}
+        , historyOffset(0)
         // Whenever the history buffer is initialized or reinitialized, the
         //     OffsetCache MUST be emptied.
-        ::memset(this->offsetCache, 0, sizeof(this->offsetCache));
-
-        ::memset(this->outputBuffer, 0, sizeof(this->outputBuffer));
-    }
+        , offsetCache{0}
+        , outputBuffer{0}
+        , bytes_in_opb(0)
+        , flags(0)
+        , flagsHold(PACKET_FLUSHED)
+        , hash_tab_mgr(MINIMUM_MATCH_LENGTH, MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
+    {}
 
     virtual ~rdp_mppc_60_enc()
     {}

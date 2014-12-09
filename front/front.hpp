@@ -93,7 +93,6 @@
 
 #include "auth_api.hpp"
 
-#include "authorization_channels.hpp"
 #include "text_metrics.hpp"
 #include "keymap2.hpp"
 
@@ -102,11 +101,9 @@
 #include "RDP/mppc_60.hpp"
 #include "RDP/mppc_61.hpp"
 
+
 class Front : public FrontAPI, public ActivityChecker{
     using FrontAPI::draw;
-
-    std::vector<unsigned> disable_channel_id_sorted;
-    AuthorizationChannels authorization_channels;
 
     bool has_activity = true;
 
@@ -164,10 +161,10 @@ private:
     bool palette_sent;
     bool palette_memblt_sent[6];
 
-    BGRPalette palette332_rgb;
+    BGRPalette palette332_rgb = BGRPalette::classic_332_rgb();
 
 public:
-    BGRPalette mod_palette_rgb;
+    BGRPalette mod_palette_rgb {BGRPalette::no_init()};
     uint8_t mod_bpp;
 
 private:
@@ -201,7 +198,6 @@ private:
     Transport          * persistent_key_list_transport;
 
     rdp_mppc_enc              * mppc_enc;
-    rdp_mppc_enc_match_finder * mppc_enc_match_finder;
 
     auth_api * authentifier;
     bool       auth_info_sent;
@@ -217,7 +213,6 @@ public:
           , Transport * persistent_key_list_transport = NULL
           )
         : FrontAPI(ini.globals.notimestamp, ini.globals.nomouse)
-        , authorization_channels(make_authorization_channels(ini.client.allow_channels, ini.client.deny_channels))
         , capture_state(CAPTURE_STATE_UNKNOWN)
         , capture(NULL)
         , bmp_cache(NULL)
@@ -249,7 +244,6 @@ public:
         , server_capabilities_filename(server_capabilities_filename)
         , persistent_key_list_transport(persistent_key_list_transport)
         , mppc_enc(NULL)
-        , mppc_enc_match_finder(NULL)
         , authentifier(NULL)
         , auth_info_sent(false)
     {
@@ -287,14 +281,6 @@ public:
 
         // --------------------------------------------------------
 
-        {
-            BGRPalette palette_local;
-            init_palette332(palette_local);
-            for (unsigned i = 0; i < 256 ; i++) {
-                this->palette332_rgb[i] = RGBtoBGR(palette_local[i]);
-            }
-        }
-
         this->palette_sent = false;
         for (size_t i = 0; i < 6 ; i++) {
             this->palette_memblt_sent[i] = false;
@@ -327,7 +313,6 @@ public:
     ~Front() {
         ERR_free_strings();
         delete this->mppc_enc;
-        delete this->mppc_enc_match_finder;
 
         delete this->bmp_cache_persister;
 
@@ -348,10 +333,6 @@ public:
     uint64_t get_total_sent() const
     {
         return this->trans.get_total_sent();
-    }
-
-    bool authorized_channel(const char * channel_name) {
-        return this->authorization_channels.authorized(channel_name);
     }
 
     int server_resize(int width, int height, int bpp)
@@ -730,10 +711,6 @@ private:
             delete this->mppc_enc;
             this->mppc_enc = NULL;
         }
-        if (this->mppc_enc_match_finder) {
-            delete this->mppc_enc_match_finder;
-            this->mppc_enc_match_finder = NULL;
-        }
 
         switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini.client.rdp_compression - 1))
         {
@@ -741,9 +718,8 @@ private:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 6.1 Bulk compression");
             }
-            this->mppc_enc_match_finder = new rdp_mppc_61_enc_hash_based_match_finder();
             //this->mppc_enc_match_finder = new rdp_mppc_61_enc_sequential_search_match_finder();
-            this->mppc_enc = new rdp_mppc_61_enc(this->mppc_enc_match_finder, this->ini.debug.compression);
+            this->mppc_enc = new rdp_mppc_61_enc_hash_based(this->ini.debug.compression);
             break;
         case PACKET_COMPR_TYPE_RDP6:
             if (this->verbose & 1) {
@@ -1201,16 +1177,11 @@ public:
                         cs_net.recv(f.payload);
                         for (uint32_t index = 0; index < cs_net.channelCount; index++) {
                             const auto & channel_def = cs_net.channelDefArray[index];
-                            if (this->authorization_channels.authorized(channel_def.name)) {
-                                CHANNELS::ChannelDef channel_item;
-                                memcpy(channel_item.name, channel_def.name, 8);
-                                channel_item.flags = channel_def.options;
-                                channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
-                                this->channel_list.push_back(channel_item);
-                            }
-                            else {
-                                this->disable_channel_id_sorted.push_back(index);
-                            }
+                            CHANNELS::ChannelDef channel_item;
+                            memcpy(channel_item.name, channel_def.name, 8);
+                            channel_item.flags = channel_def.options;
+                            channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
+                            this->channel_list.push_back(channel_item);
                         }
                         if (this->verbose & 1) {
                             cs_net.log("Received from Client");
@@ -1264,11 +1235,10 @@ public:
             sc_core.emit(stream);
             // ------------------------------------------------------------------
             GCC::UserData::SCNet sc_net;
-            const uint8_t num_channels = this->channel_list.size();
             sc_net.MCSChannelId = GCC::MCS_GLOBAL_CHANNEL;
-            sc_net.channelCount = num_channels;
-            for (int index = 0; index < num_channels; index++) {
-                sc_net.channelDefArray[index].id = GCC::MCS_GLOBAL_CHANNEL + index + 1;
+            sc_net.channelCount = this->channel_list.size();
+            for (size_t index = 0; index < this->channel_list.size(); ++index) {
+                sc_net.channelDefArray[index].id = this->channel_list[index].chanid;
             }
             if (this->verbose & 1) {
                 sc_net.log("Sending to client");
@@ -1478,9 +1448,7 @@ public:
                 this->trans.send(x224_header, mcs_cjcf_data);
             }
 
-            auto beg_disable_channel_id = this->disable_channel_id_sorted.begin();
-            auto end_disable_channel_id = this->disable_channel_id_sorted.end();
-            for (size_t i = 0 ; i < this->channel_list.size() + this->disable_channel_id_sorted.size(); i++) {
+            for (size_t i = 0 ; i < this->channel_list.size(); ++i) {
                 Array array(256);
                 uint8_t * end = array.get_data();
                 X224::RecvFactory fx224(this->trans, &end, array.size());
@@ -1508,16 +1476,8 @@ public:
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
                 this->trans.send(x224_header, mcs_cjcf_data);
 
-                if (beg_disable_channel_id != end_disable_channel_id && *beg_disable_channel_id == i) {
-                    ++beg_disable_channel_id;
-                }
-                else {
-                    const size_t real_index = i - (beg_disable_channel_id - this->disable_channel_id_sorted.begin());
-                    this->channel_list.set_chanid(real_index, mcs.channelId);
-                }
+                this->channel_list.set_chanid(i, mcs.channelId);
             }
-            this->disable_channel_id_sorted.clear();
-            this->disable_channel_id_sorted.shrink_to_fit();
 
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");
@@ -2246,19 +2206,12 @@ public:
                     size_t chunk_size = sec.payload.in_remain();
 
                     if (this->up_and_running) {
-                        if (!this->ini.client.device_redirection.get()
-                           && !strncmp(this->channel_list[num_channel_src].name, "rdpdr", 8)
-                           ) {
-                            LOG(LOG_INFO, "Front::incoming::rdpdr channel disabled");
+                        if (this->verbose & 16) {
+                            LOG(LOG_INFO, "Front::send_to_mod_channel");
                         }
-                        else {
-                            if (this->verbose & 16) {
-                                LOG(LOG_INFO, "Front::send_to_mod_channel");
-                            }
-                            SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
+                        SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
 
-                            cb.send_to_mod_channel(channel.name, chunk, length, flags);
-                        }
+                        cb.send_to_mod_channel(channel.name, chunk, length, flags);
                     }
                     else {
                         if (this->verbose & 16) {
@@ -2300,9 +2253,7 @@ public:
                             this->reset();
                             // resizing done
                             {
-                                BGRPalette palette_local;
-                                init_palette332(palette_local);
-                                RDPColCache cmd(0, palette_local);
+                                RDPColCache cmd(0, BGRPalette::classic_332());
                                 this->orders->draw(cmd);
                             }
                             if (this->verbose & 1) {
@@ -3567,9 +3518,7 @@ public:
                 this->send_data_update_sync();
 
                 if (this->client_info.bpp == 8) {
-                    BGRPalette palette_local;
-                    init_palette332(palette_local);
-                    RDPColCache cmd(0, palette_local);
+                    RDPColCache cmd(0, BGRPalette::classic_332());
                     this->orders->draw(cmd);
                 }
 
@@ -4493,9 +4442,7 @@ public:
 
     void set_mod_palette(const BGRPalette & palette)
     {
-        for (unsigned i = 0; i < 256 ; i++) {
-            this->mod_palette_rgb[i] = palette[i];
-        }
+        this->mod_palette_rgb = palette;
         this->palette_sent = false;
 
         if (  this->capture
