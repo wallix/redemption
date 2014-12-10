@@ -408,14 +408,14 @@ public:
         if (mod_rdp_params.target_application_account && *mod_rdp_params.target_application_account) {
             const char * user_marker = "${USER}";
             size_t pos = alternate_shell.find(user_marker, 0);
-            if (pos != string::npos) {
+            if (pos != std::string::npos) {
                 alternate_shell.replace(pos, strlen(user_marker), mod_rdp_params.target_application_account);
             }
         }
         if (mod_rdp_params.target_application_password && *mod_rdp_params.target_application_password) {
             const char * password_marker = "${PASSWORD}";
             size_t pos = alternate_shell.find(password_marker, 0);
-            if (pos != string::npos) {
+            if (pos != std::string::npos) {
                 alternate_shell.replace(pos, strlen(password_marker), mod_rdp_params.target_application_password);
             }
         }
