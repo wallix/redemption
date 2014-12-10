@@ -67,7 +67,9 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
 
 static void show_statistics(FileToGraphic::Statistics const & statistics);
 
-void show_metadata(FileToGraphic const & player);
+static void show_metadata(FileToGraphic const & player);
+
+static void raise_error(std::string const & output_filename, int code, const char * message, uint32_t verbose);
 
 bool is_encrypted_file(const char * input_filename);
 
@@ -167,7 +169,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         return -1;
     }
 
-    if (input_filename.empty()){
+    if (input_filename.empty()) {
         cout << "Missing input filename : use -i filename\n\n";
         return -1;
     }
@@ -365,12 +367,14 @@ int recompress_or_record( std::string & output_filename, std::string & input_fil
         }
     }
     catch (const Error & e) {
-        if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)){
+        if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
             std::cout << "Asked time not found in mwrm file\n";
         }
         else {
             std::cerr << "Exception code: " << e.id << std::endl;
         }
+        const bool msg_with_error_id = false;
+        raise_error(output_filename, e.id, e.errmsg(msg_with_error_id), verbose);
         return -1;
     };
 
@@ -451,9 +455,8 @@ unsigned get_file_count( InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32
         while (true);
     }
     catch (const Error & e) {
-        if (e.id != static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)){
-            cerr << "Exception code: " << e.id << endl;
-            exit(-1);
+        if (e.id != static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
+            throw;
         }
     };
     return result;
@@ -480,7 +483,7 @@ void remove_file( InWrmTrans & in_wrm_trans, const char * hash_path, const char 
         }
         while (true);
     }
-    catch (const Error & e){
+    catch (const Error & e) {
         if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
             throw;
         }
@@ -612,7 +615,7 @@ static void show_statistics(FileToGraphic::Statistics const & statistics) {
 }
 
 inline
-void show_metadata(FileToGraphic const & player) {
+static void show_metadata(FileToGraphic const & player) {
     std::cout
     << "\nWRM file version      : " << player.info_version
     << "\nWidth                 : " << player.info_width
@@ -634,6 +637,38 @@ void show_metadata(FileToGraphic const & player) {
         std::cout << "Compression algorithm : " << static_cast<int>(player.info_compression_algorithm) << '\n';
     }
     std::cout.flush();
+}
+
+inline
+static void raise_error(std::string const & output_filename, int code, const char * message, uint32_t verbose) {
+    if (!output_filename.length()) {
+        return;
+    }
+
+    char outfile_pid[32];
+    snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
+
+    char outfile_path     [1024] = "./"           ; // default value, actual one should come from output_filename
+    char outfile_basename [1024] = "redrec_output"; // default value actual one should come from output_filename
+    char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
+
+    canonical_path( output_filename.c_str()
+                  , outfile_path
+                  , sizeof(outfile_path)
+                  , outfile_basename
+                  , sizeof(outfile_basename)
+                  , outfile_extension
+                  , sizeof(outfile_extension)
+                  , verbose
+                  );
+
+    char progress_filename[4096];
+    snprintf( progress_filename, sizeof(progress_filename), "%s%s-%s.pgs"
+            , outfile_path, outfile_basename, outfile_pid);
+
+    UpdateProgressData update_progress_data(progress_filename, 0, 0, 0, 0);
+
+    update_progress_data.raise_error(code, message);
 }
 
 template<class CaptureMaker, class... ExtraArguments>
@@ -701,7 +736,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                             , ini, clear, verbose, std::forward<ExtraArguments>(extra_argument)...);
         auto & capture = capmake.capture;
 
-        if (capture.capture_png){
+        if (capture.capture_png) {
             capture.psc->zoom(zoom);
         }
         player.add_consumer(&capture, &capture);
