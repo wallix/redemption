@@ -382,26 +382,33 @@ int recompress_or_record( std::string & output_filename, std::string & input_fil
         timeval begin_capture = {0, 0};
         timeval end_capture = {0, 0};
 
-        const int result = (
-            force_record
-         || ini.video.capture_png
-         || ini.video.wrm_color_depth_selection_strategy != USE_ORIGINAL_COLOR_DEPTH
-         || show_file_metadata
-         || show_statistics
-         || file_count > 1
-         || order_count)
-            ? ((verbose ? void(std::cout << "[A]"<< std::endl) : void())
-              , do_record<CaptureMaker>(
-                  trans, begin_record, end_record, begin_capture, end_capture
-                , output_filename, ini, file_count, order_count, clear, zoom
-                , show_file_metadata, show_statistics, verbose
-                , std::forward<ExtraArguments>(extra_argument)...
+        int result = -1;
+        try {
+            result = (
+                force_record
+             || ini.video.capture_png
+             || ini.video.wrm_color_depth_selection_strategy != USE_ORIGINAL_COLOR_DEPTH
+             || show_file_metadata
+             || show_statistics
+             || file_count > 1
+             || order_count)
+                ? ((verbose ? void(std::cout << "[A]"<< std::endl) : void())
+                  , do_record<CaptureMaker>(
+                      trans, begin_record, end_record, begin_capture, end_capture
+                    , output_filename, ini, file_count, order_count, clear, zoom
+                    , show_file_metadata, show_statistics, verbose
+                    , std::forward<ExtraArguments>(extra_argument)...
+                    )
                 )
-            )
-            : ((verbose ? void(std::cout << "[B]"<< std::endl) : void())
-              , do_recompress(cctx, trans, begin_record, output_filename, ini, verbose)
-            )
-        ;
+                : ((verbose ? void(std::cout << "[B]"<< std::endl) : void())
+                  , do_recompress(cctx, trans, begin_record, output_filename, ini, verbose)
+                )
+            ;
+        }
+        catch (const Error & e) {
+            const bool msg_with_error_id = false;
+            raise_error(output_filename, e.id, e.errmsg(msg_with_error_id), verbose);
+        }
 
         if (!result && remove_input_file) {
             if (infile_is_encrypted == false) {
