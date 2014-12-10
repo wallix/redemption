@@ -709,7 +709,15 @@ public:
                                                           );
                 this->mod_transport = t;
 
+                // READ PROXY_OPT
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
+
+                auto pair = update_authorized_channels(this->ini.client.allow_channels.get().str(),
+                                                       this->ini.client.deny_channels.get().str(),
+                                                       this->ini.context.proxy_opt.get().str());
+                this->ini.client.allow_channels.set_from_cstr(pair.first.c_str());
+                this->ini.client.deny_channels.set_from_cstr(pair.second.c_str());
+                // READ PROXY_OPT END
 
                 ModRDPParams mod_rdp_params( this->ini.globals.target_user.get_cstr()
                                            , this->ini.context.target_password.get_cstr()

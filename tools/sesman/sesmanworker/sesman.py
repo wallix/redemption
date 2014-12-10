@@ -277,7 +277,8 @@ class Sesman():
         if len(level_0_items) > 1:
             if len(level_0_items) > 3:
                 Logger().info(u"username parse error %s" % wab_login)
-                return False, (TR(u'Username_parse_error %s') % wab_login), wab_login, target_login, target_device, target_service, effective_login
+                return (False, (TR(u'Username_parse_error %s') % wab_login), wab_login,
+                        target_login, target_device, target_service, effective_login)
             target_service = u'' if len(level_0_items) <= 2 else level_0_items[-2]
             level_1_items, wab_login = level_0_items[0].split(u'@'), level_0_items[-1]
             target_login, target_device = '@'.join(level_1_items[:-1]), level_1_items[-1]
@@ -289,7 +290,8 @@ class Sesman():
                 wab_login = self.default_login
             Logger().info(u'ip_target="%s" real_target_device="%s"' % (
                 self.shared.get(u'ip_target'), self.shared.get(u'real_target_device')))
-        return True, "", wab_login, target_login, target_device, target_service, effective_login
+        return (True, "", wab_login, target_login, target_device, target_service,
+                effective_login)
 
     def interactive_ask_x509_connection(self):
         """ Send a message to the proxy to prompt the user to validate x509 in his browser
@@ -387,7 +389,8 @@ class Sesman():
                 Logger().info(u"Interactive Target Info asking")
                 if not target_subnet:
                     interactive_data[u'target_host'] = extkv.get(u'target_host')
-                    interactive_data[u'target_device'] = kv.get(u'target_device') if self.target_context else self.shared.get(u'target_device')
+                    interactive_data[u'target_device'] = kv.get(u'target_device') \
+                        if self.target_context else self.shared.get(u'target_device')
                 if not interactive_data.get(u'target_password'):
                     interactive_data[u'target_password'] = ''
                 if not interactive_data.get(u'target_login'):
@@ -463,7 +466,8 @@ class Sesman():
                 not target_device == MAGICASK):
                 if (self.target_service_name and
                     not self.target_service_name == MAGICASK):
-                    target_info = u"%s@%s:%s" % (target_login, target_device, self.target_service_name)
+                    target_info = u"%s@%s:%s" % (target_login, target_device,
+                                                 self.target_service_name)
                 else:
                     target_info = u"%s@%s" % (target_login, target_device)
             try:
@@ -479,7 +483,8 @@ class Sesman():
                         self.shared.get(u'ip_target')):
                 # Prompt the user in proxy window
                 # Wait for confirmation from GUI (or timeout)
-                if not (self.interactive_ask_x509_connection() and self.engine.x509_authenticate()):
+                if not (self.interactive_ask_x509_connection() and
+                        self.engine.x509_authenticate()):
                     return False, TR(u"x509 browser authentication not validated by user")
             elif self.passthrough_mode:
                 # Passthrough Authentification
@@ -1063,6 +1068,8 @@ class Sesman():
             target_login_info = self.engine.get_target_login_info(selected_target)
             proto_info = self.engine.get_target_protocols(selected_target)
             kv[u'proto_dest'] = proto_info.protocol
+            if proto_info.protocol == u'RDP':
+                kv[u'proxy_opt'] = ";".join(proto_info.subprotocols)
             kv[u'target_port'] = target_login_info.service_port
             kv[u'timezone'] = str(altzone if daylight else timezone)
 
@@ -1117,8 +1124,6 @@ class Sesman():
                 module = u'INTERNAL'
             kv[u'module'] = module
             proto = u'RDP' if  kv.get(u'proto_dest') != u'VNC' else u'VNC'
-            kv[u'device_redirection'] = SESMANCONF[proto][u'device_redirection']
-            kv[u'clipboard'] = SESMANCONF[proto][u'clipboard']
             kv[u'mode_console'] = u"allow"
 
             self.reporting_reason  = None

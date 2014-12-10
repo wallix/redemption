@@ -105,4 +105,69 @@ AuthorizationChannels make_authorization_channels(const redemption::string & all
     }
 }
 
+std::pair<std::string, std::string> update_authorized_channels(const std::string & allow,
+                                                               const std::string & deny,
+                                                               const std::string & proxy_opt) {
+    auto remove=[](std::string & str, const char * pattern) {
+        auto pos = str.find(pattern);
+        if (pos != std::string::npos) {
+            str.erase(pos, strlen(pattern));
+        }
+    };
+
+    std::string allow_channels = allow + ',';
+    std::string deny_channels = deny + ',';
+
+    const bool clip_up      = (proxy_opt.find("RDP_CLIPBOARD_UP")
+                               != std::string::npos);
+    const bool clip_down    = (proxy_opt.find("RDP_CLIPBOARD_DOWN")
+                               != std::string::npos);
+    const bool dev_redirect = (proxy_opt.find("RDP_DEVICE_REDIRECTION")
+                               != std::string::npos);
+    remove(deny_channels, "cliprdr,");
+    remove(deny_channels, "cliprdr_up,");
+    remove(deny_channels, "cliprdr_down,");
+    remove(deny_channels, "rdpdr,");
+    if (!deny_channels.empty() && deny_channels.back() == ',') {
+        deny_channels.pop_back();
+    }
+    remove(allow_channels, "cliprdr,");
+    remove(allow_channels, "cliprdr_up,");
+    remove(allow_channels, "cliprdr_down,");
+    remove(allow_channels, "rdpdr,");
+    if (!allow_channels.empty() && allow_channels.back() == ',') {
+        allow_channels.pop_back();
+    }
+
+    if (clip_up) {
+        allow_channels += ",cliprdr_up";
+    }
+    else {
+        deny_channels += ",cliprdr_up";
+    }
+
+    if (clip_down) {
+        allow_channels += ",cliprdr_down";
+    }
+    else {
+        deny_channels += ",cliprdr_down";
+    }
+
+    if (dev_redirect) {
+        allow_channels += ",rdpdr";
+    }
+    else {
+        deny_channels += ",rdpdr";
+    }
+    if (!deny_channels.empty() && deny_channels.front() == ',') {
+        deny_channels.erase(0,1);
+    }
+    if (!allow_channels.empty() && allow_channels.front() == ',') {
+        allow_channels.erase(0,1);
+    }
+
+    return std::make_pair(allow_channels, deny_channels);
+}
+
+
 #endif
