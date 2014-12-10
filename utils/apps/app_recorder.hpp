@@ -724,6 +724,11 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
 
                 return_code = -1;
             }
+            catch (...) {
+                update_progress_data.raise_error(65536, "Unknown error");
+
+                return_code = -1;
+            }
         }
         else {
             return_code = -1;

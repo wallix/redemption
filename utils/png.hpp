@@ -26,12 +26,25 @@
 
 #include "transport.hpp"
 
+struct NoExceptTransport {
+    Transport * trans;
+    int         error_id;
+};
+
 static inline void png_write_data(png_structp png_ptr, png_bytep data, png_size_t length){
-    static_cast<Transport*>(png_ptr->io_ptr)->send(data, length);
+    try {
+        static_cast<NoExceptTransport *>(png_ptr->io_ptr)->trans->send(data, length);
+    } catch (...) {
+        static_cast<NoExceptTransport *>(png_ptr->io_ptr)->error_id = -1;
+    }
 }
 
 static inline void png_flush_data(png_structp png_ptr){
-    static_cast<Transport*>(png_ptr->io_ptr)->flush();
+    try {
+        static_cast<NoExceptTransport *>(png_ptr->io_ptr)->trans->flush();
+    } catch (...) {
+        static_cast<NoExceptTransport *>(png_ptr->io_ptr)->error_id = -1;
+    }
 }
 
 static inline void transport_dump_png24(Transport & trans, const uint8_t * data,
@@ -40,8 +53,10 @@ static inline void transport_dump_png24(Transport & trans, const uint8_t * data,
                             const size_t rowsize,
                             const bool bgr)
 {
+    NoExceptTransport no_except_transport = { &trans, 0 };
+
     png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    png_set_write_fn(ppng, &trans, &png_write_data, &png_flush_data);
+    png_set_write_fn(ppng, &no_except_transport, &png_write_data, &png_flush_data);
 
     png_info * pinfo = png_create_info_struct(ppng);
     png_set_IHDR(ppng, pinfo, width, height, 8,
@@ -53,7 +68,7 @@ static inline void transport_dump_png24(Transport & trans, const uint8_t * data,
 
     // send image buffer to file, one pixel row at once
     const uint8_t * row = data;
-    for (size_t k = 0 ; k < height ; ++k) {
+    for (size_t k = 0 ; k < height && !no_except_transport.error_id ; ++k) {
         if (bgr){
             uint32_t bgrtmp[8192];
             const uint32_t * s = reinterpret_cast<const uint32_t*>(row);
@@ -82,14 +97,15 @@ static inline void transport_dump_png24(Transport & trans, const uint8_t * data,
         }
         row += rowsize;
     }
-    png_write_end(ppng, pinfo);
+    if (!no_except_transport.error_id) {
+        png_write_end(ppng, pinfo);
+        trans.flush();
+    }
 
-    trans.flush();
     png_destroy_write_struct(&ppng, &pinfo);
     // commented line below it to create row capture
     // fwrite(this->data, 3, this->width * this->height, fd);
 }
-
 
 static inline void dump_png24(FILE * fd, const uint8_t * data,
                             const size_t width,
@@ -147,7 +163,6 @@ static inline void dump_png24(FILE * fd, const uint8_t * data,
     // fwrite(this->data, 3, this->width * this->height, fd);
 }
 
-
 inline void read_png24(FILE * fd, const uint8_t * data,
                       const size_t width,
                       const size_t height,
@@ -189,6 +204,5 @@ inline void transport_read_png24(Transport * trans, const uint8_t * data,
     png_read_end(ppng, pinfo);
     png_destroy_read_struct(&ppng, &pinfo, NULL);
 }
-
 
 #endif

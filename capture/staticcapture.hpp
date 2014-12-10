@@ -64,9 +64,12 @@ public:
     }
 
     virtual ~StaticCapture() {
-        if (this->first_picture_capture_delayed && this->rt_display) {
-            this->breakpoint(this->first_picture_capture_now);
+        try {
+            if (this->first_picture_capture_delayed && this->rt_display) {
+                this->breakpoint(this->first_picture_capture_now);
+            }
         }
+        catch (...) {}
 
         // delete all captured files at the end of the RDP client session
         if (this->clear_png){

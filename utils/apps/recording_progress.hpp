@@ -104,6 +104,9 @@ public:
                 int truncate_result = ::ftruncate(this->fd, write_result);
 (void)truncate_result;
             }
+            else {
+                LOG(LOG_INFO, "Failed to write progress information file!");
+            }
 
             this->last_written_time_percentage = time_percentage;
         }
@@ -126,6 +129,9 @@ public:
         if (write_result != -1) {
             int truncate_result = ::ftruncate(this->fd, write_result);
 (void)truncate_result;
+        }
+        else {
+            LOG(LOG_INFO, "Failed to write progress information file!");
         }
 
         this->error_raised = true;

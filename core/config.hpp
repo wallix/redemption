@@ -1,39 +1,37 @@
 /*
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
+    This program is free software; you can redistribute it and/or modify it
+     under the terms of the GNU General Public License as published by the
+     Free Software Foundation; either version 2 of the License, or (at your
+     option) any later version.
 
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+     Public License for more details.
 
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+    You should have received a copy of the GNU General Public License along
+     with this program; if not, write to the Free Software Foundation, Inc.,
+     675 Mass Ave, Cambridge, MA 02139, USA.
 
-  Product name: redemption, a FLOSS RDP proxy
-  Copyright (C) Wallix 2012
-  Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
+    Product name: redemption, a FLOSS RDP proxy
+    Copyright (C) Wallix 2014
+    Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 
-  configuration file,
-  parsing config file rdpproxy.ini
+    Configuration file,
+    parsing config file rdpproxy.ini
 */
 
 #ifndef _REDEMPTION_CORE_CONFIG_HPP_
 #define _REDEMPTION_CORE_CONFIG_HPP_
 
 #include <stdio.h>
-
-#include "log.hpp"
-
 #include <stdint.h>
+
 #include <stdexcept>
 
+#include "log.hpp"
 #include "fileutils.hpp"
 #include "string.hpp"
-
 #include "defines.hpp"
 
 using namespace std;
@@ -43,8 +41,7 @@ struct IniAccounts {
     char password[255]; // should use string
 };
 
-enum authid_t
-{
+enum authid_t {
     AUTHID_UNKNOWN = 0,
 
     // Translation text
@@ -98,13 +95,15 @@ enum authid_t
     AUTHID_SELECTOR_LINES_PER_PAGE,     // number of lines per page
     AUTHID_SELECTOR_NUMBER_OF_PAGES,    // number of pages
 
-    AUTHID_TARGET_DEVICE,       // target_device
-    AUTHID_TARGET_PASSWORD,     // target_password
-    AUTHID_TARGET_HOST,       // target_host
-    AUTHID_TARGET_PORT,         // target_port
-    AUTHID_TARGET_PROTOCOL,     // proto_dest
-    AUTHID_TARGET_USER,         // target_login
-    AUTHID_TARGET_APPLICATION,  // target_application
+    AUTHID_TARGET_DEVICE,               // target_device
+    AUTHID_TARGET_PASSWORD,             // target_password
+    AUTHID_TARGET_HOST,                 // target_host
+    AUTHID_TARGET_PORT,                 // target_port
+    AUTHID_TARGET_PROTOCOL,             // proto_dest
+    AUTHID_TARGET_USER,                 // target_login
+    AUTHID_TARGET_APPLICATION,          // target_application
+    AUTHID_TARGET_APPLICATION_ACCOUNT,  // target_application_account
+    AUTHID_TARGET_APPLICATION_PASSWORD, // target_application_password
 
     AUTHID_AUTH_USER,       // login
     AUTHID_HOST,            // ip_client
@@ -123,7 +122,6 @@ enum authid_t
 
     AUTHID_ACCEPT_MESSAGE,  // display a dialog to valid a message
     AUTHID_DISPLAY_MESSAGE, // display a dialog box with a message
-
 
     AUTHID_AUTHENTICATED,
     AUTHID_REJECTED,        // rejected
@@ -163,111 +161,109 @@ enum authid_t
 };
 
 // Translation text
-#define STRAUTHID_TRANS_BUTTON_OK          "trans_ok"
-#define STRAUTHID_TRANS_BUTTON_CANCEL      "trans_cancel"
-#define STRAUTHID_TRANS_BUTTON_HELP        "trans_help"
-#define STRAUTHID_TRANS_BUTTON_CLOSE       "trans_close"
-#define STRAUTHID_TRANS_BUTTON_REFUSED     "trans_refused"
-#define STRAUTHID_TRANS_LOGIN              "trans_login"
-#define STRAUTHID_TRANS_USERNAME           "trans_username"
-#define STRAUTHID_TRANS_PASSWORD           "trans_password"
-#define STRAUTHID_TRANS_TARGET             "trans_target"
-#define STRAUTHID_TRANS_DIAGNOSTIC         "trans_diagnostic"
-#define STRAUTHID_TRANS_CONNECTION_CLOSED  "trans_connection_closed"
-#define STRAUTHID_TRANS_HELP_MESSAGE       "trans_help_message"
-#define STRAUTHID_TRANS_MANAGER_CLOSE_CNX  "trans_manager_close_cnx"
-#define STRAUTHID_LANGUAGE                 "language"
+#define STRAUTHID_TRANS_BUTTON_OK               "trans_ok"
+#define STRAUTHID_TRANS_BUTTON_CANCEL           "trans_cancel"
+#define STRAUTHID_TRANS_BUTTON_HELP             "trans_help"
+#define STRAUTHID_TRANS_BUTTON_CLOSE            "trans_close"
+#define STRAUTHID_TRANS_BUTTON_REFUSED          "trans_refused"
+#define STRAUTHID_TRANS_LOGIN                   "trans_login"
+#define STRAUTHID_TRANS_USERNAME                "trans_username"
+#define STRAUTHID_TRANS_PASSWORD                "trans_password"
+#define STRAUTHID_TRANS_TARGET                  "trans_target"
+#define STRAUTHID_TRANS_DIAGNOSTIC              "trans_diagnostic"
+#define STRAUTHID_TRANS_CONNECTION_CLOSED       "trans_connection_closed"
+#define STRAUTHID_TRANS_HELP_MESSAGE            "trans_help_message"
+#define STRAUTHID_TRANS_MANAGER_CLOSE_CNX       "trans_manager_close_cnx"
+#define STRAUTHID_LANGUAGE                      "language"
 // Options
-#define STRAUTHID_KEYBOARD_LAYOUT          "keyboard_layout"
-#define STRAUTHID_OPT_CLIPBOARD            "clipboard"
-#define STRAUTHID_OPT_FILE_ENCRYPTION      "file_encryption"
+#define STRAUTHID_KEYBOARD_LAYOUT               "keyboard_layout"
+#define STRAUTHID_OPT_CLIPBOARD                 "clipboard"
+#define STRAUTHID_OPT_FILE_ENCRYPTION           "file_encryption"
 // Video capture
-#define STRAUTHID_OPT_CODEC_ID             "codec_id"
-#define STRAUTHID_OPT_MOVIE                "is_rec"
-#define STRAUTHID_OPT_MOVIE_PATH           "rec_path"
-#define STRAUTHID_VIDEO_QUALITY            "video_quality"
+#define STRAUTHID_OPT_CODEC_ID                  "codec_id"
+#define STRAUTHID_OPT_MOVIE                     "is_rec"
+#define STRAUTHID_OPT_MOVIE_PATH                "rec_path"
+#define STRAUTHID_VIDEO_QUALITY                 "video_quality"
 // Alternate shell
-#define STRAUTHID_ALTERNATE_SHELL          "alternate_shell"
-#define STRAUTHID_SHELL_WORKING_DIRECTORY  "shell_working_directory"
+#define STRAUTHID_ALTERNATE_SHELL               "alternate_shell"
+#define STRAUTHID_SHELL_WORKING_DIRECTORY       "shell_working_directory"
 // Context
-#define STRAUTHID_OPT_BITRATE              "bitrate"
-#define STRAUTHID_OPT_FRAMERATE            "framerate"
-#define STRAUTHID_OPT_QSCALE               "qscale"
-#define STRAUTHID_OPT_BPP                  "bpp"
-#define STRAUTHID_OPT_HEIGHT               "height"
-#define STRAUTHID_OPT_WIDTH                "width"
+#define STRAUTHID_OPT_BITRATE                   "bitrate"
+#define STRAUTHID_OPT_FRAMERATE                 "framerate"
+#define STRAUTHID_OPT_QSCALE                    "qscale"
+#define STRAUTHID_OPT_BPP                       "bpp"
+#define STRAUTHID_OPT_HEIGHT                    "height"
+#define STRAUTHID_OPT_WIDTH                     "width"
 
-#define STRAUTHID_AUTH_ERROR_MESSAGE       "error_message"
+#define STRAUTHID_AUTH_ERROR_MESSAGE            "error_message"
 
-#define STRAUTHID_SELECTOR                 "selector"
-#define STRAUTHID_SELECTOR_CURRENT_PAGE    "selector_current_page"
-#define STRAUTHID_SELECTOR_DEVICE_FILTER   "selector_device_filter"
-#define STRAUTHID_SELECTOR_GROUP_FILTER    "selector_group_filter"
-#define STRAUTHID_SELECTOR_PROTO_FILTER    "selector_proto_filter"
-#define STRAUTHID_SELECTOR_LINES_PER_PAGE  "selector_lines_per_page"
-#define STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
+#define STRAUTHID_SELECTOR                      "selector"
+#define STRAUTHID_SELECTOR_CURRENT_PAGE         "selector_current_page"
+#define STRAUTHID_SELECTOR_DEVICE_FILTER        "selector_device_filter"
+#define STRAUTHID_SELECTOR_GROUP_FILTER         "selector_group_filter"
+#define STRAUTHID_SELECTOR_PROTO_FILTER         "selector_proto_filter"
+#define STRAUTHID_SELECTOR_LINES_PER_PAGE       "selector_lines_per_page"
+#define STRAUTHID_SELECTOR_NUMBER_OF_PAGES      "selector_number_of_pages"
 
-#define STRAUTHID_TARGET_DEVICE            "target_device"
-#define STRAUTHID_TARGET_PASSWORD          "target_password"
-#define STRAUTHID_TARGET_HOST              "target_host"
-#define STRAUTHID_TARGET_PORT              "target_port"
-#define STRAUTHID_TARGET_PROTOCOL          "proto_dest"
-#define STRAUTHID_TARGET_USER              "target_login"
-#define STRAUTHID_TARGET_APPLICATION       "target_application"
+#define STRAUTHID_TARGET_DEVICE                 "target_device"
+#define STRAUTHID_TARGET_PASSWORD               "target_password"
+#define STRAUTHID_TARGET_HOST                   "target_host"
+#define STRAUTHID_TARGET_PORT                   "target_port"
+#define STRAUTHID_TARGET_PROTOCOL               "proto_dest"
+#define STRAUTHID_TARGET_USER                   "target_login"
+#define STRAUTHID_TARGET_APPLICATION            "target_application"
+#define STRAUTHID_TARGET_APPLICATION_ACCOUNT    "target_application_account"
+#define STRAUTHID_TARGET_APPLICATION_PASSWORD   "target_application_password"
 
-#define STRAUTHID_AUTH_USER                "login"
-#define STRAUTHID_HOST                     "ip_client"
-#define STRAUTHID_TARGET                   "ip_target"
-#define STRAUTHID_PASSWORD                 "password"
+#define STRAUTHID_AUTH_USER                     "login"
+#define STRAUTHID_HOST                          "ip_client"
+#define STRAUTHID_TARGET                        "ip_target"
+#define STRAUTHID_PASSWORD                      "password"
 
-#define STRAUTHID_REPORTING                "reporting"
+#define STRAUTHID_REPORTING                     "reporting"
 
-#define STRAUTHID_AUTHCHANNEL_ANSWER       "auth_channel_answer"
-#define STRAUTHID_AUTHCHANNEL_RESULT       "auth_channel_result"
-#define STRAUTHID_AUTHCHANNEL_TARGET       "auth_channel_target"
+#define STRAUTHID_AUTHCHANNEL_ANSWER            "auth_channel_answer"
+#define STRAUTHID_AUTHCHANNEL_RESULT            "auth_channel_result"
+#define STRAUTHID_AUTHCHANNEL_TARGET            "auth_channel_target"
 
-#define STRAUTHID_MESSAGE                  "message"
-#define STRAUTHID_PATTERN_KILL             "pattern_kill"
-#define STRAUTHID_PATTERN_NOTIFY           "pattern_notify"
+#define STRAUTHID_MESSAGE                       "message"
+#define STRAUTHID_PATTERN_KILL                  "pattern_kill"
+#define STRAUTHID_PATTERN_NOTIFY                "pattern_notify"
 
-#define STRAUTHID_ACCEPT_MESSAGE           "accept_message"
-#define STRAUTHID_DISPLAY_MESSAGE          "display_message"
+#define STRAUTHID_ACCEPT_MESSAGE                "accept_message"
+#define STRAUTHID_DISPLAY_MESSAGE               "display_message"
 
 
-#define STRAUTHID_AUTHENTICATED            "authenticated"
-#define STRAUTHID_REJECTED                 "rejected"
+#define STRAUTHID_AUTHENTICATED                 "authenticated"
+#define STRAUTHID_REJECTED                      "rejected"
 
-#define STRAUTHID_KEEPALIVE                "keepalive"
+#define STRAUTHID_KEEPALIVE                     "keepalive"
 
-#define STRAUTHID_SESSION_ID               "session_id"
+#define STRAUTHID_SESSION_ID                    "session_id"
 
-#define STRAUTHID_END_DATE_CNX             "timeclose"
-#define STRAUTHID_END_TIME                 "end_time"
+#define STRAUTHID_END_DATE_CNX                  "timeclose"
+#define STRAUTHID_END_TIME                      "end_time"
 
-#define STRAUTHID_MODE_CONSOLE             "mode_console"
-#define STRAUTHID_TIMEZONE                 "timezone"
+#define STRAUTHID_MODE_CONSOLE                  "mode_console"
+#define STRAUTHID_TIMEZONE                      "timezone"
 
-#define STRAUTHID_REAL_TARGET_DEVICE       "real_target_device"
+#define STRAUTHID_REAL_TARGET_DEVICE            "real_target_device"
 
-#define STRAUTHID_AUTHENTICATION_CHALLENGE "authentication_challenge"
-#define STRAUTHID_MODULE                   "module"
-#define STRAUTHID_FORCEMODULE              "forcemodule"
-#define STRAUTHID_TICKET                   "ticket"
-#define STRAUTHID_COMMENT                  "comment"
-#define STRAUTHID_DURATION                 "duration"
-#define STRAUTHID_WAITINFORETURN           "waitinforeturn"
-#define STRAUTHID_SHOWFORM                 "showform"
-#define STRAUTHID_FORMFLAG                 "formflag"
-#define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS        "disable_tsk_switch_shortcuts"
-#define STRAUTHID_ALLOW_CHANNELS           "allow_channels"
-#define STRAUTHID_DENY_CHANNELS            "deny_channels"
+#define STRAUTHID_AUTHENTICATION_CHALLENGE      "authentication_challenge"
+#define STRAUTHID_MODULE                        "module"
+#define STRAUTHID_FORCEMODULE                   "forcemodule"
+#define STRAUTHID_TICKET                        "ticket"
+#define STRAUTHID_COMMENT                       "comment"
+#define STRAUTHID_DURATION                      "duration"
+#define STRAUTHID_WAITINFORETURN                "waitinforeturn"
+#define STRAUTHID_SHOWFORM                      "showform"
+#define STRAUTHID_FORMFLAG                      "formflag"
+#define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS  "disable_tsk_switch_shortcuts"
+#define STRAUTHID_ALLOW_CHANNELS                "allow_channels"
+#define STRAUTHID_DENY_CHANNELS                 "deny_channels"
 
-#define STRAUTHID_DISABLE_KEYBOARD_LOG     "disable_keyboard_log"
-#define STRAUTHID_RT_DISPLAY               "rt_display"
-
-namespace detail_ {
-
-}
+#define STRAUTHID_DISABLE_KEYBOARD_LOG          "disable_keyboard_log"
+#define STRAUTHID_RT_DISPLAY                    "rt_display"
 
 static const char * const authstr[MAX_AUTHID - 1] = {
     // Translation text
@@ -321,13 +317,15 @@ static const char * const authstr[MAX_AUTHID - 1] = {
     STRAUTHID_SELECTOR_LINES_PER_PAGE,  // number of lines per page
     STRAUTHID_SELECTOR_NUMBER_OF_PAGES, // number of pages
 
-    STRAUTHID_TARGET_DEVICE,        // target_device
-    STRAUTHID_TARGET_PASSWORD,      // target_password
-    STRAUTHID_TARGET_HOST,          // target_host
-    STRAUTHID_TARGET_PORT,          // target_port
-    STRAUTHID_TARGET_PROTOCOL,      // proto_dest
-    STRAUTHID_TARGET_USER,          // target_login
-    STRAUTHID_TARGET_APPLICATION,   // target_application
+    STRAUTHID_TARGET_DEVICE,                // target_device
+    STRAUTHID_TARGET_PASSWORD,              // target_password
+    STRAUTHID_TARGET_HOST,                  // target_host
+    STRAUTHID_TARGET_PORT,                  // target_port
+    STRAUTHID_TARGET_PROTOCOL,              // proto_dest
+    STRAUTHID_TARGET_USER,                  // target_login
+    STRAUTHID_TARGET_APPLICATION,           // target_application
+    STRAUTHID_TARGET_APPLICATION_ACCOUNT,   // target_application_account
+    STRAUTHID_TARGET_APPLICATION_PASSWORD,  // target_application_password
 
     STRAUTHID_AUTH_USER,        // login
     STRAUTHID_HOST,             // ip_client
@@ -509,12 +507,14 @@ public:
     struct Inifile_globals {
         BoolField capture_chunk;
 
-        StringField auth_user;           // AUTHID_AUTH_USER
-        StringField host;                // client_ip AUTHID_HOST
-        StringField target;              // target ip AUTHID_TARGET
-        StringField target_device;       // AUTHID_TARGET_DEVICE
-        StringField target_user;         // AUTHID_TARGET_USER
-        StringField target_application;  // AUTHID_TARGET_APPLICATION
+        StringField auth_user;                      // AUTHID_AUTH_USER
+        StringField host;                           // client_ip AUTHID_HOST
+        StringField target;                         // target ip AUTHID_TARGET
+        StringField target_device;                  // AUTHID_TARGET_DEVICE
+        StringField target_user;                    // AUTHID_TARGET_USER
+        StringField target_application;             // AUTHID_TARGET_APPLICATION
+        StringField target_application_account;     // AUTHID_TARGET_APPLICATION_ACCOUNT
+        StringField target_application_password;    // AUTHID_TARGET_APPLICATION_PASSWORD
 
         // BEGIN globals
         bool bitmap_cache               = true;
@@ -888,7 +888,9 @@ public:
         this->to_send_set.insert(AUTHID_TARGET_USER);
         this->globals.target_user.attach_ini(this,            AUTHID_TARGET_USER);
 
-        this->globals.target_application.attach_ini(this,     AUTHID_TARGET_APPLICATION);
+        this->globals.target_application.attach_ini(this,           AUTHID_TARGET_APPLICATION);
+        this->globals.target_application_account.attach_ini(this,   AUTHID_TARGET_APPLICATION_ACCOUNT);
+        this->globals.target_application_password.attach_ini(this,  AUTHID_TARGET_APPLICATION_PASSWORD);
 
         this->to_send_set.insert(AUTHID_TARGET_DEVICE);
         this->globals.target_device.attach_ini(this,          AUTHID_TARGET_DEVICE);

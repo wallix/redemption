@@ -406,6 +406,7 @@ public:
                 switch (this->common.order) {
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
+                    //this->glyph_index.log(LOG_INFO, cmd_clip);
                     gd.draw(this->glyph_index, cmd_clip, &this->gly_cache);
                     break;
                 case DESTBLT:
