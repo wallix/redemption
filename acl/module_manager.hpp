@@ -734,6 +734,8 @@ public:
                 mod_rdp_params.auth_channel                        = this->ini.globals.auth_channel;
                 mod_rdp_params.alternate_shell                     = this->ini.globals.alternate_shell.get_cstr();
                 mod_rdp_params.shell_working_directory             = this->ini.globals.shell_working_directory.get_cstr();
+                mod_rdp_params.target_application_account          = this->ini.globals.target_application_account.get_cstr();
+                mod_rdp_params.target_application_password         = this->ini.globals.target_application_password.get_cstr();
                 mod_rdp_params.rdp_compression                     = this->ini.mod_rdp.rdp_compression;
                 mod_rdp_params.error_message                       = &this->ini.context.auth_error_message;
                 mod_rdp_params.disconnect_on_logon_user_change     = this->ini.mod_rdp.disconnect_on_logon_user_change;

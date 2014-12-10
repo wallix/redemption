@@ -1145,6 +1145,11 @@ class Sesman():
                     kv[u'target_application'] = "%s@%s" % \
                         (target_login_info.account_login,
                          target_login_info.target_name)
+                    if app_params.params.find(u'${USER}') != -1:
+                        kv[u'target_application_account'] = selected_target.account.login
+                    if app_params.params.find(u'${PASSWORD}') != -1:
+                        kv[u'target_application_password'] = self.engine.get_target_password(selected_target)
+
                     # kv[u'target_application'] = selected_target.service_login
                     kv[u'disable_tsk_switch_shortcuts'] = u'yes'
                 self.cn = target_login_info.target_name

@@ -46,13 +46,15 @@ struct ModRDPParams {
     Transport  * persistent_key_list_transport;
     Transport  * transparent_recorder_transport;
 
-    int      key_flags;
+    int key_flags;
 
     auth_api * acl;
 
     const char * auth_channel;
     const char * alternate_shell;
     const char * shell_working_directory;
+    const char * target_application_account;
+    const char * target_application_password;
 
     int rdp_compression;
 
@@ -108,6 +110,8 @@ struct ModRDPParams {
         , auth_channel("")
         , alternate_shell("")
         , shell_working_directory("")
+        , target_application_account("")
+        , target_application_password("")
 
         , rdp_compression(0)
 
@@ -145,7 +149,7 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams enable_tls=%s",                          (this->enable_tls ? "yes" : "no"));
         LOG(LOG_INFO,
-            "ModRDPParams enable_nla=%s",                         (this->enable_nla ? "yes" : "no"));
+            "ModRDPParams enable_nla=%s",                          (this->enable_nla ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams enable_krb=%s",                          (this->enable_krb ? "yes" : "no"));
         LOG(LOG_INFO,
@@ -178,6 +182,10 @@ struct ModRDPParams {
             "ModRDPParams alternate_shell=\"%s\"",                 (this->alternate_shell ? this->alternate_shell : "<null>"));
         LOG(LOG_INFO,
             "ModRDPParams shell_working_directory=\"%s\"",         (this->shell_working_directory ? this->shell_working_directory : "<null>"));
+        LOG(LOG_INFO,
+            "ModRDPParams target_application_account=\"%s\"",      (this->target_application_account ? this->target_application_account : "<null>"));
+        LOG(LOG_INFO,
+            "ModRDPParams target_application_password=\"%s\"",     (this->target_application_password ? "<hidden>" : "<null>"));
 
         LOG(LOG_INFO,
             "ModRDPParams rdp_compression=%d",                     this->rdp_compression);
