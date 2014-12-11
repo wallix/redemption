@@ -1,3 +1,5 @@
+#include <iostream>
+
 /*
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -66,6 +68,7 @@
 #include "RDP/capabilities/cap_sound.hpp"
 #include "RDP/capabilities/cap_font.hpp"
 #include "RDP/capabilities/glyphcache.hpp"
+#include <RDP/channels/rdpdr.hpp>
 #include "rdp_params.hpp"
 #include "transparentrecorder.hpp"
 
@@ -80,7 +83,8 @@ class mod_rdp : public mod_api {
 
     CHANNELS::ChannelDefArray mod_channel_list;
 
-    AuthorizationChannels make_authorization_channels_with_rdp_params(const ModRDPParams & mod_rdp_params) {
+    static AuthorizationChannels
+    make_authorization_channels_with_rdp_params(const ModRDPParams & mod_rdp_params) {
         if (mod_rdp_params.allow_channels || mod_rdp_params.deny_channels) {
             return make_authorization_channels(
                 mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : "",
@@ -657,6 +661,71 @@ public:
             }
         } trace(this->verbose, front_channel_name);
 
+        if (!strcmp(front_channel_name, "rdpdr")) {
+            auto p = chunk.p;
+
+            const rdpdr::PacketId packet_id = rdpdr::SharedHeader::read_packet_id(chunk);
+
+            if (packet_id == rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY) {
+                const bool rdpdr_authorization_type[] {
+                    0&& this->authorization_channels.authorized("rdpdr_general"),
+                    0&& this->authorization_channels.authorized("rdpdr_printer"),
+                    0&& this->authorization_channels.authorized("rdpdr_port"),
+                    0&& this->authorization_channels.authorized("rdpdr_drive"),
+                    0&& this->authorization_channels.authorized("rdpdr_smartcard")
+                };
+                auto auth = [&](uint16_t type) {
+                    return type - 1 < sizeof(rdpdr_authorization_type) && rdpdr_authorization_type[type-1];
+                };
+
+                const auto p_num = chunk.p;
+
+                const uint16_t num_capabilities = rdpdr::read_num_capability(chunk);
+                uint16_t i = 0;
+
+                while (i < num_capabilities) {
+                    const uint16_t captype = chunk.in_uint16_le();
+                    const uint16_t caplen = chunk.in_uint16_le();
+                    chunk.p += caplen - 4;
+
+                    std::cout << " ## # type: " << captype << "  len: " << caplen;
+
+                    ++i;
+                    if (!auth(captype)) {
+                        std::cout << "  noop" << std::endl;
+                        uint8_t * p = chunk.p - (caplen - 4);
+                        uint16_t real_num_capabilities = i - 1;
+                        for (; i < num_capabilities; ++i) {
+                            const uint16_t captype = chunk.in_uint16_le();
+                            const uint16_t caplen = chunk.in_uint16_le();
+                            chunk.p += caplen - 4;
+                            std::cout << " ## # type: " << captype << "  len: " << caplen;
+                            if (auth(captype)) {
+                                std::cout << "  ok" << std::endl;
+                                p = std::copy(chunk.p - (caplen - 4), chunk.p, p);
+                                ++real_num_capabilities;
+                            }
+                            else {
+                                std::cout << "  noop" << std::endl;
+                            }
+                        }
+
+                        length -= chunk.p - p;
+                        chunk.end -= chunk.p - p;
+                        std::cout << "chunk.p - p: " << (chunk.p - p) << std::endl;
+                        std::cout << "real_num_capabilities: " << (real_num_capabilities) << std::endl;
+                        chunk.p = p_num;
+                        chunk.out_uint16_le(real_num_capabilities);
+                    }
+                    else {
+                        std::cout << "  ok" << std::endl;
+                    }
+                }
+            }
+
+            chunk.p = p;
+        }
+
         // Clipboard is unavailable and is a Clipboard PDU
         if (!this->enable_clipboard_in && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
             if (this->verbose & 1) {
@@ -888,7 +957,7 @@ public:
                                 cs_net.channelCount = num_channels;
                                 for (size_t index = 0; index < num_channels; index++) {
                                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
-                                    if (this->authorization_channels.authorized(channel_list[index].name)) {
+                                    if (1 || this->authorization_channels.authorized(channel_list[index].name)) {
                                         memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
                                     }
                                     else {
