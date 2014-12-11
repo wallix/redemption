@@ -709,7 +709,15 @@ public:
                                                           );
                 this->mod_transport = t;
 
+                // READ PROXY_OPT
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
+
+                auto pair = update_authorized_channels(this->ini.client.allow_channels.get().str(),
+                                                       this->ini.client.deny_channels.get().str(),
+                                                       this->ini.context.proxy_opt.get().str());
+                this->ini.client.allow_channels.set_from_cstr(pair.first.c_str());
+                this->ini.client.deny_channels.set_from_cstr(pair.second.c_str());
+                // READ PROXY_OPT END
 
                 ModRDPParams mod_rdp_params( this->ini.globals.target_user.get_cstr()
                                            , this->ini.context.target_password.get_cstr()
@@ -734,6 +742,8 @@ public:
                 mod_rdp_params.auth_channel                        = this->ini.globals.auth_channel;
                 mod_rdp_params.alternate_shell                     = this->ini.globals.alternate_shell.get_cstr();
                 mod_rdp_params.shell_working_directory             = this->ini.globals.shell_working_directory.get_cstr();
+                mod_rdp_params.target_application_account          = this->ini.globals.target_application_account.get_cstr();
+                mod_rdp_params.target_application_password         = this->ini.globals.target_application_password.get_cstr();
                 mod_rdp_params.rdp_compression                     = this->ini.mod_rdp.rdp_compression;
                 mod_rdp_params.error_message                       = &this->ini.context.auth_error_message;
                 mod_rdp_params.disconnect_on_logon_user_change     = this->ini.mod_rdp.disconnect_on_logon_user_change;

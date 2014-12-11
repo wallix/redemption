@@ -404,8 +404,23 @@ public:
         strncpy(this->password, mod_rdp_params.target_password, sizeof(this->password) - 1);
         this->password[sizeof(this->password) - 1] = 0;
 
+        std::string alternate_shell(mod_rdp_params.alternate_shell);
+        if (mod_rdp_params.target_application_account && *mod_rdp_params.target_application_account) {
+            const char * user_marker = "${USER}";
+            size_t pos = alternate_shell.find(user_marker, 0);
+            if (pos != std::string::npos) {
+                alternate_shell.replace(pos, strlen(user_marker), mod_rdp_params.target_application_account);
+            }
+        }
+        if (mod_rdp_params.target_application_password && *mod_rdp_params.target_application_password) {
+            const char * password_marker = "${PASSWORD}";
+            size_t pos = alternate_shell.find(password_marker, 0);
+            if (pos != std::string::npos) {
+                alternate_shell.replace(pos, strlen(password_marker), mod_rdp_params.target_application_password);
+            }
+        }
 
-        strncpy(this->program, mod_rdp_params.alternate_shell, sizeof(this->program) - 1);
+        strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
         this->program[sizeof(this->program) - 1] = 0;
         strncpy(this->directory, mod_rdp_params.shell_working_directory, sizeof(this->directory) - 1);
         this->directory[sizeof(this->directory) - 1] = 0;

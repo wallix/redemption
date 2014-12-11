@@ -152,6 +152,7 @@ enum authid_t {
     AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
     AUTHID_ALLOW_CHANNELS,
     AUTHID_DENY_CHANNELS,
+    AUTHID_PROXY_OPT,
 
     AUTHID_DISABLE_KEYBOARD_LOG,
 
@@ -261,6 +262,7 @@ enum authid_t {
 #define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS  "disable_tsk_switch_shortcuts"
 #define STRAUTHID_ALLOW_CHANNELS                "allow_channels"
 #define STRAUTHID_DENY_CHANNELS                 "deny_channels"
+#define STRAUTHID_PROXY_OPT                     "proxy_opt"
 
 #define STRAUTHID_DISABLE_KEYBOARD_LOG          "disable_keyboard_log"
 #define STRAUTHID_RT_DISPLAY                    "rt_display"
@@ -375,6 +377,7 @@ static const char * const authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_ALLOW_CHANNELS,
     STRAUTHID_DENY_CHANNELS,
+    STRAUTHID_PROXY_OPT,
 
     STRAUTHID_DISABLE_KEYBOARD_LOG,
     STRAUTHID_RT_DISPLAY
@@ -840,6 +843,7 @@ public:
 
         StringField        module;                   // AUTHID_MODULE //
         BoolField          forcemodule;              // AUTHID_FORCEMODULE //
+        StringField        proxy_opt;                // AUTHID_PROXY_OPT //
 
         Inifile_context() = default;
     } context;
@@ -1059,6 +1063,7 @@ public:
         this->context.authentication_challenge.ask();
         this->context.authentication_challenge.attach_ini(this, AUTHID_AUTHENTICATION_CHALLENGE);
 
+
         this->to_send_set.insert(AUTHID_MODULE);
         this->to_send_set.insert(AUTHID_TICKET);
         this->to_send_set.insert(AUTHID_COMMENT);
@@ -1072,6 +1077,8 @@ public:
         this->context.module.use();
         this->context.forcemodule.set(false);
         this->context.forcemodule.attach_ini(this, AUTHID_FORCEMODULE);
+
+        this->context.proxy_opt.attach_ini(this, AUTHID_PROXY_OPT);
 
         this->context.ticket.set_from_cstr("");
         this->context.ticket.attach_ini(this, AUTHID_TICKET);
