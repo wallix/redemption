@@ -678,8 +678,7 @@ public:
         // send it if module has a matching channel, if no matching channel is found just forget it
         if (mod_channel) {
             if (this->verbose & 16) {
-                const int index = this->mod_channel_list.get_index_by_name(front_channel_name);
-                mod_channel->log(index);
+                mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
             }
             this->send_to_channel(*mod_channel, chunk, length, flags);
         }
@@ -873,18 +872,22 @@ public:
                                 GCC::UserData::CSNet cs_net;
                                 cs_net.channelCount = num_channels;
                                 for (size_t index = 0; index < num_channels; index++) {
+                                    const CHANNELS::ChannelDef & channel_item = channel_list[index];
                                     if (this->authorization_channels.authorized(channel_list[index].name)) {
-                                        const CHANNELS::ChannelDef & channel_item = channel_list[index];
                                         memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
-                                        cs_net.channelDefArray[index].options = channel_item.flags;
-                                        CHANNELS::ChannelDef def;
-                                        memcpy(def.name, cs_net.channelDefArray[index].name, 8);
-                                        def.flags = channel_item.flags;
-                                        if (this->verbose & 16){
-                                            def.log(index);
-                                        }
-                                        this->mod_channel_list.push_back(def);
                                     }
+                                    else {
+                                        memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
+                                        //memset(cs_net.channelDefArray[i].name, 0, 8);
+                                    }
+                                    cs_net.channelDefArray[index].options = channel_item.flags;
+                                    CHANNELS::ChannelDef def;
+                                    memcpy(def.name, cs_net.channelDefArray[index].name, 8);
+                                    def.flags = channel_item.flags;
+                                    if (this->verbose & 16){
+                                        def.log(index);
+                                    }
+                                    this->mod_channel_list.push_back(def);
                                 }
 
                                 // Inject a new channel for auth_channel virtual channel (wablauncher)
@@ -1211,7 +1214,7 @@ public:
                                 channels_id[index+2] = this->mod_channel_list[index].chanid;
                             }
 
-                            for (size_t index = 0; index < num_channels+2; index++){
+                            for (size_t index = 0; index < num_channels+2; index++) {
                                 BStream x224_header(256);
                                 HStream mcs_cjrq_data(256, 512);
                                 if (this->verbose & 16){
