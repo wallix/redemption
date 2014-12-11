@@ -289,8 +289,8 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.password_printing_mode              = ini.debug.password;
             mod_rdp_params.cache_verbose                       = ini.debug.cache;
 
-            mod_rdp_params.allow_channels                      = &(ini.client.allow_channels.get());
-            mod_rdp_params.deny_channels                       = &(ini.client.deny_channels.get());
+            mod_rdp_params.allow_channels                      = &(ini.mod_rdp.allow_channels);
+            mod_rdp_params.deny_channels                       = &(ini.mod_rdp.deny_channels);
 
             mod_rdp mod(&mod_trans, front, client_info, gen, mod_rdp_params);
 

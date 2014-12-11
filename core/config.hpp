@@ -150,8 +150,6 @@ enum authid_t {
     AUTHID_FORMFLAG,
 
     AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
-    AUTHID_ALLOW_CHANNELS,
-    AUTHID_DENY_CHANNELS,
     AUTHID_PROXY_OPT,
 
     AUTHID_DISABLE_KEYBOARD_LOG,
@@ -260,8 +258,6 @@ enum authid_t {
 #define STRAUTHID_SHOWFORM                      "showform"
 #define STRAUTHID_FORMFLAG                      "formflag"
 #define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS  "disable_tsk_switch_shortcuts"
-#define STRAUTHID_ALLOW_CHANNELS                "allow_channels"
-#define STRAUTHID_DENY_CHANNELS                 "deny_channels"
 #define STRAUTHID_PROXY_OPT                     "proxy_opt"
 
 #define STRAUTHID_DISABLE_KEYBOARD_LOG          "disable_keyboard_log"
@@ -375,8 +371,6 @@ static const char * const authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
 
-    STRAUTHID_ALLOW_CHANNELS,
-    STRAUTHID_DENY_CHANNELS,
     STRAUTHID_PROXY_OPT,
 
     STRAUTHID_DISABLE_KEYBOARD_LOG,
@@ -585,14 +579,6 @@ public:
 
         bool bitmap_compression = true;
 
-        /**
-         * channel1,channel2,etc
-         * @{
-         */
-        StringField allow_channels;
-        StringField deny_channels;
-        // @}
-
         Inifile_client() = default;
     } client;
 
@@ -613,6 +599,14 @@ public:
         bool persistent_disk_bitmap_cache   = false;
         bool cache_waiting_list             = true;
         bool persist_bitmap_cache_on_disk   = false;
+
+        /**
+         * channel1,channel2,etc
+         * @{
+         */
+        redemption::string allow_channels = "*";
+        redemption::string deny_channels;
+        // @}
 
         Inifile_mod_rdp() = default;
     } mod_rdp;
@@ -930,13 +924,6 @@ public:
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
         // End Section "client"
-
-        // Begin section "mod_rdp"
-        this->client.allow_channels.set_from_cstr("*");
-        this->client.allow_channels.attach_ini(this, AUTHID_ALLOW_CHANNELS);
-        //this->mod_rdp.deny_channels.set_from_cstr("");
-        this->client.deny_channels.attach_ini(this, AUTHID_DENY_CHANNELS);
-        // End Section "mod_rdp"
 
         // Begin section "mod_vnc"
         this->mod_vnc.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
@@ -1277,12 +1264,6 @@ public:
             else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
                 this->client.persist_bitmap_cache_on_disk = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "allow_channels")) {
-                this->client.allow_channels.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "deny_channels")) {
-                this->client.deny_channels.set_from_cstr(value);
-            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1321,6 +1302,12 @@ public:
             }
             else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
                 this->mod_rdp.persist_bitmap_cache_on_disk = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "allow_channels")) {
+                this->mod_rdp.allow_channels.copy_c_str(value);
+            }
+            else if (0 == strcmp(key, "deny_channels")) {
+                this->mod_rdp.deny_channels.copy_c_str(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

@@ -709,15 +709,15 @@ public:
                                                           );
                 this->mod_transport = t;
 
-                // READ PROXY_OPT
+                // BEGIN READ PROXY_OPT
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
 
-                auto pair = update_authorized_channels(this->ini.client.allow_channels.get().str(),
-                                                       this->ini.client.deny_channels.get().str(),
+                auto pair = update_authorized_channels(this->ini.mod_rdp.allow_channels.str(),
+                                                       this->ini.mod_rdp.deny_channels.str(),
                                                        this->ini.context.proxy_opt.get().str());
-                this->ini.client.allow_channels.set_from_cstr(pair.first.c_str());
-                this->ini.client.deny_channels.set_from_cstr(pair.second.c_str());
-                // READ PROXY_OPT END
+                this->ini.mod_rdp.allow_channels.copy_std_str(pair.first);
+                this->ini.mod_rdp.deny_channels.copy_std_str(pair.second);
+                // END READ PROXY_OPT
 
                 ModRDPParams mod_rdp_params( this->ini.globals.target_user.get_cstr()
                                            , this->ini.context.target_password.get_cstr()
@@ -757,8 +757,8 @@ public:
 
                 mod_rdp_params.extra_orders                        = this->ini.mod_rdp.extra_orders.c_str();
 
-                mod_rdp_params.allow_channels                      = &(this->ini.client.allow_channels.get());
-                mod_rdp_params.deny_channels                       = &(this->ini.client.deny_channels.get());
+                mod_rdp_params.allow_channels                      = &(this->ini.mod_rdp.allow_channels);
+                mod_rdp_params.deny_channels                       = &(this->ini.mod_rdp.deny_channels);
 
                 UdevRandom gen;
                 this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
@@ -799,11 +799,6 @@ public:
 
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
 
-                const AuthorizationChannels authorization_channel
-                  = make_authorization_channels(this->ini.client.allow_channels.get(), this->ini.client.deny_channels.get());
-                const bool enable_clipboard_in  = authorization_channel.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_up");
-                const bool enable_clipboard_out = authorization_channel.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_down");
-
                 this->mod = new mod_vnc(t
                                         , this->ini
                                         , this->ini.globals.target_user.get_cstr()
@@ -813,8 +808,8 @@ public:
                                         , this->front.client_info.height
                                         , this->front.client_info.keylayout
                                         , this->front.keymap.key_flags
-                                        , enable_clipboard_in  && this->ini.mod_vnc.clipboard.get()
-                                        , enable_clipboard_out && this->ini.mod_vnc.clipboard.get()
+                                        , this->ini.mod_vnc.clipboard.get()
+                                        , this->ini.mod_vnc.clipboard.get()
                                         , this->ini.mod_vnc.encodings.c_str()
                                         , this->ini.mod_vnc.allow_authentification_retries
                                         , true

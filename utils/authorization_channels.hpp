@@ -159,6 +159,7 @@ std::pair<std::string, std::string> update_authorized_channels(const std::string
     else {
         deny_channels += ",rdpdr";
     }
+
     if (!deny_channels.empty() && deny_channels.front() == ',') {
         deny_channels.erase(0,1);
     }
@@ -166,7 +167,7 @@ std::pair<std::string, std::string> update_authorized_channels(const std::string
         allow_channels.erase(0,1);
     }
 
-    return std::make_pair(allow_channels, deny_channels);
+    return {std::move(allow_channels), std::move(deny_channels)};
 }
 
 

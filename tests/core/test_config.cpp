@@ -175,8 +175,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
-    BOOST_CHECK_EQUAL("*",                              ini.client.allow_channels.get().str());
-    BOOST_CHECK_EQUAL("",                               ini.client.deny_channels.get().str());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -187,6 +185,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels.str());
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels.str());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
@@ -427,8 +427,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
-    BOOST_CHECK_EQUAL("*",                              ini.client.allow_channels.get().str());
-    BOOST_CHECK_EQUAL("",                               ini.client.deny_channels.get().str());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -439,6 +437,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels.str());
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels.str());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -696,8 +696,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
-    BOOST_CHECK_EQUAL("*",                              ini.client.allow_channels.get().str());
-    BOOST_CHECK_EQUAL("",                               ini.client.deny_channels.get().str());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -708,6 +706,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels.str());
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels.str());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
@@ -769,8 +769,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "cache_waiting_list=no\n"
                           "persist_bitmap_cache_on_disk=yes\n"
                           "bitmap_compression=true\n"
-                          "allow_channels=audin\n"
-                          "deny_channels=*\n"
                           "\n"
                           "[mod_rdp]\n"
                           "disconnect_on_logon_user_change=yes\n"
@@ -781,6 +779,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "persistent_disk_bitmap_cache=false\n"
                           "cache_waiting_list=no\n"
                           "persist_bitmap_cache_on_disk=true\n"
+                          "allow_channels=audin\n"
+                          "deny_channels=*\n"
                           "\n"
                           "[mod_vnc]\n"
                           "clipboard=yes\n"
@@ -943,8 +943,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(true,                             ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
-    BOOST_CHECK_EQUAL("audin",                          ini.client.allow_channels.get().str());
-    BOOST_CHECK_EQUAL("*",                              ini.client.deny_channels.get().str());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.disconnect_on_logon_user_change);
@@ -955,6 +953,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL("audin",                          ini.mod_rdp.allow_channels.str());
+    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.deny_channels.str());
 
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.clipboard.get());
     BOOST_CHECK_EQUAL("16,2,0,1,-239",                  ini.mod_vnc.encodings.c_str());
