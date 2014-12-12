@@ -93,7 +93,7 @@ class mod_rdp : public mod_api {
         }
         return AuthorizationChannels();
     }
-    AuthorizationChannels authorization_channels;
+    const AuthorizationChannels authorization_channels;
 
 
     int  use_rdp5;
@@ -166,8 +166,6 @@ class mod_rdp : public mod_api {
     char clientAddr[512];
 
     const bool enable_bitmap_update;
-    const bool enable_clipboard_in;                // true clipboard available, false clipboard unavailable
-    const bool enable_clipboard_out;               // true clipboard available, false clipboard unavailable
     const bool enable_fastpath;                    // choice of programmer
           bool enable_fastpath_client_input_event; // choice of programmer + capability of server
     const bool enable_fastpath_server_update;      // = choice of programmer
@@ -252,8 +250,6 @@ public:
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
               , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
         , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
-        , enable_clipboard_in(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_up"))
-        , enable_clipboard_out(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_down"))
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
@@ -661,23 +657,13 @@ public:
             }
         } trace(this->verbose, front_channel_name);
 
-        if (!strcmp(front_channel_name, "rdpdr")) {
+        // filtering specific redirection (printer, smartcard, etc)
+        if (0 && !strcmp(front_channel_name, "rdpdr")) {
             auto p = chunk.p;
 
             const rdpdr::PacketId packet_id = rdpdr::SharedHeader::read_packet_id(chunk);
 
             if (packet_id == rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY) {
-                const bool rdpdr_authorization_type[] {
-                    0&& this->authorization_channels.authorized("rdpdr_general"),
-                    0&& this->authorization_channels.authorized("rdpdr_printer"),
-                    0&& this->authorization_channels.authorized("rdpdr_port"),
-                    0&& this->authorization_channels.authorized("rdpdr_drive"),
-                    0&& this->authorization_channels.authorized("rdpdr_smartcard")
-                };
-                auto auth = [&](uint16_t type) {
-                    return type - 1 < sizeof(rdpdr_authorization_type) && rdpdr_authorization_type[type-1];
-                };
-
                 const auto p_num = chunk.p;
 
                 const uint16_t num_capabilities = rdpdr::read_num_capability(chunk);
@@ -691,18 +677,18 @@ public:
                     std::cout << " ## # type: " << captype << "  len: " << caplen;
 
                     ++i;
-                    if (!auth(captype)) {
+                    if (!this->authorization_channels.rdpdr_type_is_authorized(captype)) {
                         std::cout << "  noop" << std::endl;
-                        uint8_t * p = chunk.p - (caplen - 4);
+                        uint8_t * p = chunk.p - caplen;
                         uint16_t real_num_capabilities = i - 1;
                         for (; i < num_capabilities; ++i) {
                             const uint16_t captype = chunk.in_uint16_le();
                             const uint16_t caplen = chunk.in_uint16_le();
                             chunk.p += caplen - 4;
                             std::cout << " ## # type: " << captype << "  len: " << caplen;
-                            if (auth(captype)) {
+                            if (this->authorization_channels.rdpdr_type_is_authorized(captype)) {
                                 std::cout << "  ok" << std::endl;
-                                p = std::copy(chunk.p - (caplen - 4), chunk.p, p);
+                                p = std::copy(chunk.p - caplen, chunk.p, p);
                                 ++real_num_capabilities;
                             }
                             else {
@@ -727,7 +713,7 @@ public:
         }
 
         // Clipboard is unavailable and is a Clipboard PDU
-        if (!this->enable_clipboard_in && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+        if (!this->authorization_channels.cliprdr_up_is_authorized() && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "mod_rdp clipboard PDU");
             }
@@ -740,7 +726,7 @@ public:
 
             uint16_t msgType = chunk.in_uint16_le();
 
-            if (this->enable_clipboard_out) {
+            if (this->authorization_channels.cliprdr_down_is_authorized()) {
                 if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
                     this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(true, "\0");
                     return;
@@ -957,7 +943,7 @@ public:
                                 cs_net.channelCount = num_channels;
                                 for (size_t index = 0; index < num_channels; index++) {
                                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
-                                    if (1 || this->authorization_channels.authorized(channel_list[index].name)) {
+                                    if (this->authorization_channels.is_authorized(channel_list[index].name)) {
                                         memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
                                     }
                                     else {
@@ -1883,7 +1869,7 @@ public:
                                 //    this->auth_channel_state = 0;
                                 //}
                             }
-                            else if (!this->enable_clipboard_out && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+                            else if (!this->authorization_channels.cliprdr_down_is_authorized() && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
                                 // Clipboard is unavailable and is a Clipboard PDU
 
                                 TODO("RZ: Don't reject clipboard update, this can block rdesktop. (until 1.7.1 ?)");
@@ -1894,7 +1880,7 @@ public:
 
                                 const uint16_t msgType = sec.payload.in_uint16_le();
 
-                                if (this->enable_clipboard_in) {
+                                if (this->authorization_channels.cliprdr_up_is_authorized()) {
                                     if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
                                         this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(true, "\0");
                                     }

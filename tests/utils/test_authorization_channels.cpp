@@ -31,42 +31,82 @@
 BOOST_AUTO_TEST_CASE(TestAuthorizationChannels)
 {
     AuthorizationChannels authorization_channels = make_authorization_channels("a,b,c", "b,d");
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("a"), true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("b"), false);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("c"), true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("d"), false);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("e"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("a"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("b"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("c"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("d"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("e"), false);
 }
 
 BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllDeny)
 {
     AuthorizationChannels authorization_channels = make_authorization_channels("a,b,c", "*");
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("a"), true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("b"), true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("c"), true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("d"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("a"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("b"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("c"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("d"), false);
 }
 
 BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllAllow)
 {
     AuthorizationChannels authorization_channels = make_authorization_channels("*", "a,b,c");
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("a"), !true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("b"), !true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("c"), !true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("d"), !false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("a"), !true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("b"), !true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("c"), !true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("d"), !false);
 }
 
 BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsCliprdr)
 {
     AuthorizationChannels authorization_channels = make_authorization_channels("cliprdr", "*");
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("cliprdr_up"), true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("cliprdr_down"), true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("cliprdr"), true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("d"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr_up"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr_down"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("d"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_down_is_authorized(), true);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_up_is_authorized(), true);
 
     authorization_channels = make_authorization_channels("cliprdr_up,cliprdr_down", "*");
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("cliprdr_up"), true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("cliprdr_down"), true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("cliprdr"), true);
-    BOOST_CHECK_EQUAL(authorization_channels.authorized("d"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr_up"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr_down"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("d"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_down_is_authorized(), true);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_up_is_authorized(), true);
+
+    authorization_channels = make_authorization_channels("cliprdr_down", "*");
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr_up"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr_down"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("d"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_down_is_authorized(), true);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_up_is_authorized(), false);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
+{
+    auto pair = update_authorized_channels(
+      "cliprdr,drdynvc,cliprdr_down,rdpdr_general,rdpdr,rdpsnd",
+      "rdpdr_port",
+      ""
+    );
+    BOOST_CHECK_EQUAL(std::get<0>(pair), "drdynvc,rdpsnd");
+    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_down,rdpdr");
+
+    pair = update_authorized_channels(
+      "cliprdr,drdynvc,cliprdr_down,rdpdr_general,rdpdr,rdpsnd",
+      "",
+      "RDP_DEVICE_REDIRECTION"
+    );
+    BOOST_CHECK_EQUAL(std::get<0>(pair), "drdynvc,rdpsnd,rdpdr");
+    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_down");
+
+    pair = update_authorized_channels(
+      "",
+      "",
+      "RDP_CLIPBOARD_DOWN"
+    );
+    BOOST_CHECK_EQUAL(std::get<0>(pair), "cliprdr_down");
+    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,rdpdr");
 }

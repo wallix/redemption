@@ -716,8 +716,8 @@ public:
                     auto pair = update_authorized_channels(this->ini.mod_rdp.allow_channels.str(),
                                                            this->ini.mod_rdp.deny_channels.str(),
                                                            this->ini.context.proxy_opt.get().str());
-                    this->ini.mod_rdp.allow_channels.copy_std_str(pair.first);
-                    this->ini.mod_rdp.deny_channels.copy_std_str(pair.second);
+                    this->ini.mod_rdp.allow_channels.copy_std_str(std::get<0>(pair));
+                    this->ini.mod_rdp.deny_channels.copy_std_str(std::get<1>(pair));
                 }
                 // END READ PROXY_OPT
 
