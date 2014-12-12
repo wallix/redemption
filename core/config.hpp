@@ -63,7 +63,8 @@ enum authid_t {
 
     // Options
     AUTHID_KEYBOARD_LAYOUT,         // keyboard_layout
-    AUTHID_OPT_CLIPBOARD,           // clipboard
+    AUTHID_VNC_CLIPBOARD_UP,        // clipboard_up
+    AUTHID_VNC_CLIPBOARD_DOWN,      // clipboard_down
     AUTHID_OPT_FILE_ENCRYPTION,     // file encryption
 
     // Video capture
@@ -176,7 +177,8 @@ enum authid_t {
 #define STRAUTHID_LANGUAGE                      "language"
 // Options
 #define STRAUTHID_KEYBOARD_LAYOUT               "keyboard_layout"
-#define STRAUTHID_OPT_CLIPBOARD                 "clipboard"
+#define STRAUTHID_VNC_CLIPBOARD_UP              "clipboard_up"
+#define STRAUTHID_VNC_CLIPBOARD_DOWN            "clipboard_down"
 #define STRAUTHID_OPT_FILE_ENCRYPTION           "file_encryption"
 // Video capture
 #define STRAUTHID_OPT_CODEC_ID                  "codec_id"
@@ -283,8 +285,9 @@ static const char * const authstr[MAX_AUTHID - 1] = {
 
     // Options
     STRAUTHID_KEYBOARD_LAYOUT,         // keyboard_layout
-    STRAUTHID_OPT_CLIPBOARD,            // clipboard
-    STRAUTHID_OPT_FILE_ENCRYPTION,      // file encryption
+    STRAUTHID_VNC_CLIPBOARD_UP,        // clipboard_up
+    STRAUTHID_VNC_CLIPBOARD_DOWN,      // clipboard_down
+    STRAUTHID_OPT_FILE_ENCRYPTION,     // file encryption
 
     // Video capture
     STRAUTHID_OPT_CODEC_ID,     // CODEC_ID for video encoding
@@ -551,6 +554,8 @@ public:
 
         StaticPath<1024> persistent_path = PERSISTENT_PATH;
 
+        bool disable_proxy_opt = false;
+
         Inifile_globals() = default;
     } globals;
 
@@ -612,7 +617,8 @@ public:
     } mod_rdp;
 
     struct Inifile_mod_vnc {
-        BoolField clipboard;                // AUTHID_OPT_CLIPBOARD //
+        BoolField clipboard_up;           // AUTHID_VNC_CLIPBOARD_UP //
+        BoolField clipboard_down;         // AUTHID_VNC_CLIPBOARD_DOWN //
 
         redemption::string encodings;
 
@@ -926,7 +932,8 @@ public:
         // End Section "client"
 
         // Begin section "mod_vnc"
-        this->mod_vnc.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
+        this->mod_vnc.clipboard_up.attach_ini(this,AUTHID_VNC_CLIPBOARD_UP);
+        this->mod_vnc.clipboard_down.attach_ini(this,AUTHID_VNC_CLIPBOARD_DOWN);
         // End Section "mod_vnc"
 
         // Begin section video
@@ -1207,6 +1214,9 @@ public:
             else if (0 == strcmp(key, "persistent_path")) {
                 this->globals.persistent_path = value;
             }
+            else if (0 == strcmp(key, "disable_proxy_opt")) {
+                this->globals.disable_proxy_opt = bool_from_cstr(value);
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1314,8 +1324,11 @@ public:
             }
         }
         else if (0 == strcmp(context, "mod_vnc")) {
-            if (0 == strcmp(key, "clipboard")) {
-                this->mod_vnc.clipboard.set_from_cstr(value);
+            if (0 == strcmp(key, "clipboard_up")) {
+                this->mod_vnc.clipboard_up.set_from_cstr(value);
+            }
+            if (0 == strcmp(key, "clipboard_down")) {
+                this->mod_vnc.clipboard_down.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "encodings")) {
                 this->mod_vnc.encodings.copy_c_str(value);
