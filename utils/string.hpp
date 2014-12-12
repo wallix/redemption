@@ -68,6 +68,10 @@ public:
         this->internal_string = source.internal_string;
     }
 
+    void copy_std_str(const std::string & source) {
+        this->internal_string = source;
+    }
+
     void empty() {
         this->internal_string.clear();
     }

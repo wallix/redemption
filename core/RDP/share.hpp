@@ -132,7 +132,7 @@ struct ShareFlow_Recv
     , flowNumber(stream.incheck_uint8(     ERR_SEC, "Truncated flow number"))
     , mcs_channel(stream.incheck_uint16_le(ERR_SEC, "Truncated ShareFlow PDU packet"))
     {
-        LOG(LOG_ERR, "Flow control packet %0.4x (offset=%u)", this->flowMarker, stream.get_offset());
+        LOG(LOG_INFO, "Flow control packet %0.4x (offset=%u)", this->flowMarker, stream.get_offset());
         if (this->flowMarker != 0x8000) {
             LOG(LOG_ERR, "Expected flow control packet, got %0.4x", this->flowMarker);
             throw Error(ERR_SEC);
