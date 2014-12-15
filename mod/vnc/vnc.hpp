@@ -38,6 +38,7 @@
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "update_lock.hpp"
 #include "socket_transport.hpp"
+#include "channel_names.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -1787,7 +1788,7 @@ private:
 
     /******************************************************************************/
     void lib_open_clip_channel(void) {
-        const CHANNELS::ChannelDef * channel = this->get_channel_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+        const CHANNELS::ChannelDef * channel = this->get_channel_by_name(channel_names::cliprdr);
 
         if (channel) {
             // Monitor ready PDU send to front
@@ -1811,7 +1812,7 @@ private:
             size_t length     = out_s.size();
             size_t chunk_size = length;
 
-            this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+            this->send_to_front_channel( channel_names::cliprdr
                                        , out_s.get_data()
                                        , length
                                        , chunk_size
@@ -1892,7 +1893,7 @@ private:
             this->t->recv(&drop.end, remaining);
         }
 
-        if (this->enable_clipboard_in && this->get_channel_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+        if (this->enable_clipboard_in && this->get_channel_by_name(channel_names::cliprdr)) {
             LOG(LOG_INFO, "Clipboard Channel Redirection available");
 
             RDPECLIP::FormatListPDU format_list_pdu;
@@ -1903,7 +1904,7 @@ private:
             size_t length     = out_s.size();
             size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
-            this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+            this->send_to_front_channel( channel_names::cliprdr
                                        , out_s.get_data()
                                        , length
                                        , chunk_size
@@ -2023,7 +2024,7 @@ private:
                     size_t length     = out_s.size();
                     size_t chunk_size = length;
 
-                    this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                    this->send_to_front_channel( channel_names::cliprdr
                                                , out_s.get_data()
                                                , length
                                                , chunk_size
@@ -2042,7 +2043,7 @@ private:
                     length     = out_s.size();
                     chunk_size = length;
 
-                    this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                    this->send_to_front_channel( channel_names::cliprdr
                                                , out_s.get_data()
                                                , length
                                                , chunk_size
@@ -2067,7 +2068,7 @@ private:
                 //    size_t length     = out_s.size();
                 //    size_t chunk_size = length;
 
-                //    this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                //    this->send_to_front_channel( channel_names::cliprdr
                 //                               , out_s.get_data()
                 //                               , length
                 //                               , chunk_size
@@ -2134,7 +2135,7 @@ private:
                                         : CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                       );
 
-                        this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                        this->send_to_front_channel( channel_names::cliprdr
                                                    , chunk_data
                                                    , length
                                                    , chunk_size

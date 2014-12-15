@@ -1,4 +1,4 @@
-#include <iostream>
+#include <iostream> // TODO
 
 /*
   This program is free software; you can redistribute it and/or modify
@@ -76,6 +76,7 @@
 #include "genrandom.hpp"
 #include "authorization_channels.hpp"
 #include "parser.hpp"
+#include "channel_names.hpp"
 
 class mod_rdp : public mod_api {
 
@@ -626,7 +627,7 @@ private:
 
         format_data_response_pdu.emit(out_s, args...);
 
-        this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+        this->send_to_front_channel( channel_names::cliprdr
                                    , out_s.get_data()
                                    , out_s.size()
                                    , out_s.size()
@@ -658,7 +659,7 @@ public:
         } trace(this->verbose, front_channel_name);
 
         // filtering specific redirection (printer, smartcard, etc)
-        if (0 && !strcmp(front_channel_name, "rdpdr")) {
+        if (!strcmp(front_channel_name, channel_names::rdpdr)) {
             auto p = chunk.p;
 
             const rdpdr::PacketId packet_id = rdpdr::SharedHeader::read_packet_id(chunk);
@@ -713,7 +714,7 @@ public:
         }
 
         // Clipboard is unavailable and is a Clipboard PDU
-        if (!this->authorization_channels.cliprdr_up_is_authorized() && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+        if (!this->authorization_channels.cliprdr_up_is_authorized() && !::strcmp(front_channel_name, channel_names::cliprdr)) {
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "mod_rdp clipboard PDU");
             }
@@ -724,7 +725,7 @@ public:
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
 
-            uint16_t msgType = chunk.in_uint16_le();
+            const uint16_t msgType = chunk.in_uint16_le();
 
             if (this->authorization_channels.cliprdr_down_is_authorized()) {
                 if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
@@ -742,6 +743,8 @@ public:
                 this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(response_ok);
                 return;
             }
+
+            chunk.p -= 2;
         }
 
         const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
@@ -1869,7 +1872,7 @@ public:
                                 //    this->auth_channel_state = 0;
                                 //}
                             }
-                            else if (!this->authorization_channels.cliprdr_down_is_authorized() && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+                            else if (!this->authorization_channels.cliprdr_down_is_authorized() && !strcmp(mod_channel.name, channel_names::cliprdr)) {
                                 // Clipboard is unavailable and is a Clipboard PDU
 
                                 TODO("RZ: Don't reject clipboard update, this can block rdesktop. (until 1.7.1 ?)");

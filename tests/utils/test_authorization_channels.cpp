@@ -45,6 +45,9 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllDeny)
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("b"), true);
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("c"), true);
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("d"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("d"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_up_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(1), false);
 }
 
 BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllAllow)
@@ -54,6 +57,8 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllAllow)
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("b"), !true);
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("c"), !true);
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("d"), !false);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_up_is_authorized(), !false);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(1), !false);
 }
 
 BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsCliprdr)
@@ -81,6 +86,29 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsCliprdr)
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("d"), false);
     BOOST_CHECK_EQUAL(authorization_channels.cliprdr_down_is_authorized(), true);
     BOOST_CHECK_EQUAL(authorization_channels.cliprdr_up_is_authorized(), false);
+
+    authorization_channels = make_authorization_channels("cliprdr_down", "cliprdr_up");
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr_up"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr_down"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("d"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_down_is_authorized(), true);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_up_is_authorized(), false);
+}
+
+BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsRdpdr)
+{
+    AuthorizationChannels authorization_channels = make_authorization_channels("*", "rdpdr_printer");
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(1), true);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(2), false);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(3), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr"), true);
+    authorization_channels = make_authorization_channels("rdpdr_port,rdpdr_general", "rdpdr_printer");
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(1), true);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(2), false);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(3), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr_port"), false);
 }
 
 

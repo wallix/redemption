@@ -25,11 +25,10 @@
 #include "splitter.hpp"
 #include "string.hpp"
 
-#include <functional> // std:ref
-#include <iterator>
 #include <cstring>
 #include <string>
 #include <array>
+#include <iosfwd>
 
 
 struct AuthorizationChannels
@@ -40,22 +39,29 @@ struct AuthorizationChannels
     AuthorizationChannels(std::string allow, std::string deny)
     : allow_(std::move(allow))
     , deny_(std::move(deny))
+    , rdpdr_restriction_{}
+    , cliprdr_restriction_{}
     {
-        this->normalize();
+        this->normalize(this->allow_);
+        this->normalize(this->deny_);
     }
 
     AuthorizationChannels(std::string allow, bool deny = true)
     : allow_(std::move(allow))
     , all_deny_(deny)
+    , rdpdr_restriction_{{!deny, !deny, !deny, !deny, !deny}}
+    , cliprdr_restriction_{{!deny, !deny}}
     {
-        this->normalize();
+        this->normalize(this->allow_);
     }
 
     AuthorizationChannels(bool allow, std::string deny)
     : deny_(std::move(deny))
     , all_allow_(allow)
+    , rdpdr_restriction_{{allow, allow, allow, allow, allow}}
+    , cliprdr_restriction_{{allow, allow}}
     {
-        this->normalize();
+        this->normalize(this->deny_);
     }
 
     bool is_authorized(const char * s) const noexcept {
@@ -82,17 +88,52 @@ struct AuthorizationChannels
         return this->cliprdr_restriction_[1];
     }
 
+
+    template<class CharT, class Traits>
+    friend std::basic_ostream<CharT, Traits> &
+    operator<<(std::basic_ostream<CharT, Traits> & os, AuthorizationChannels const & auth) {
+        auto p = [&](std::string const & s, bool all, const char * name) {
+            if (all) {
+                os << name << "=*\n";
+            }
+            else {
+                os << name << '=';
+                for (size_t i = 0; i < auth.cliprdr_restriction_.size(); ++i) {
+                    os << cliprde_list[i];
+                }
+                for (size_t i = 0; i < auth.rdpdr_restriction_.size(); ++i) {
+                    os << rdpdr_list[i];
+                }
+                os << s << '\n';
+            }
+        };
+        p(auth.allow_, auth.all_allow_, "allow");
+        p(auth.deny_, auth.all_deny_, "deny");
+        return os;
+    }
+
 private:
+    template<class Cont>
+    static bool contains_true(Cont const & cont) {
+        for (bool x : cont) {
+            if (x) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     template<std::size_t N>
     std::string normalize(
       std::string & s, bool set, std::array<bool, N> & values,
-      const char * channel_name, std::initializer_list<char const *> restriction_names
+      const char * channel_name, std::array<char const *, N> restriction_names
     ) {
         bool has = false;
         bool add = false;
 
         auto pos = s.find(channel_name);
         if (pos != std::string::npos) {
+            s.erase(pos, strlen(channel_name));
             for (auto & x : values) {
                 x = set;
             }
@@ -110,26 +151,32 @@ private:
             ++first;
         }
 
-        if (!has && add) {
-            s += channel_name;
-        }
-
         return s;
     }
 
-    void normalize() {
-        typedef std::initializer_list<const char *> list_t;
-        const list_t cliprde {"cliprdr_up,", "cliprdr_down,"};
-        const list_t rdpdr {"rdpdr_general,", "rdpdr_printer,", "rdpdr_port,", "rdpdr_drive,", "rdpdr_smartcard,"};
+    static constexpr const std::array<const char *, 2> cliprde_list {{"cliprdr_up,", "cliprdr_down,"}};
+    static constexpr const std::array<const char *, 5> rdpdr_list {{
+        "rdpdr_general,", "rdpdr_printer,", "rdpdr_port,", "rdpdr_drive,", "rdpdr_smartcard,"
+    }};
 
-        auto l = {std::ref(this->allow_), std::ref(this->deny_)};
-        for (unsigned i = 0; i < l.size(); ++i) {
-            std::string & s = l.begin()[i];
-            if (!s.empty()) {
-                s += ',';
-                this->normalize(s, !i, this->cliprdr_restriction_, "cliprdr,", cliprde);
-                this->normalize(s, !i, this->rdpdr_restriction_, "rdpdr,", rdpdr);
+    void normalize(std::string & s) {
+        const bool set = (&s == &this->allow_);
+        if (!s.empty()) {
+            s += ',';
+            this->normalize(s, set, this->cliprdr_restriction_, "cliprdr,", cliprde_list);
+            this->normalize(s, set, this->rdpdr_restriction_, "rdpdr,", rdpdr_list);
+            if (!s.empty() && s.front() == ',') {
+                s.erase(0, 1);
             }
+        }
+        if (set == contains_true(this->cliprdr_restriction_)) {
+            s += "cliprdr,";
+        }
+        if (set == contains_true(this->rdpdr_restriction_)) {
+            s += "rdpdr,";
+        }
+        if (!s.empty() && s.back() == ',') {
+            s.pop_back();
         }
     }
 
@@ -151,6 +198,8 @@ private:
     std::array<bool, 5> rdpdr_restriction_;
     std::array<bool, 2> cliprdr_restriction_;
 };
+constexpr decltype(AuthorizationChannels::cliprde_list) AuthorizationChannels::cliprde_list;
+constexpr decltype(AuthorizationChannels::rdpdr_list) AuthorizationChannels::rdpdr_list;
 
 
 AuthorizationChannels make_authorization_channels(const redemption::string & allow, const redemption::string & deny) {
