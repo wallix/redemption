@@ -147,7 +147,7 @@ private:
 
         {"note_duration_format",
                 {"format \"[hours]h[mins]m\" each unit is optional.",
-                 "format \"[heures]h[mins]m\" chaque unité est optionnel."}},
+                 "format \"[heures]h[mins]m\" chaque unité est optionnelle."}},
         {"note_required", {"(*) required fields", "(*) champs requis"}},
         {"confirm", {"Confirm", "Confirmer"}},
         {"information", {"Information", "Information"}},
