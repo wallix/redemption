@@ -1,5 +1,3 @@
-#include <iostream> // TODO
-
 /*
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -675,37 +673,24 @@ public:
                     const uint16_t caplen = chunk.in_uint16_le();
                     chunk.p += caplen - 4;
 
-                    std::cout << " ## # type: " << captype << "  len: " << caplen;
-
                     ++i;
                     if (!this->authorization_channels.rdpdr_type_is_authorized(captype)) {
-                        std::cout << "  noop" << std::endl;
                         uint8_t * p = chunk.p - caplen;
                         uint16_t real_num_capabilities = i - 1;
                         for (; i < num_capabilities; ++i) {
                             const uint16_t captype = chunk.in_uint16_le();
                             const uint16_t caplen = chunk.in_uint16_le();
                             chunk.p += caplen - 4;
-                            std::cout << " ## # type: " << captype << "  len: " << caplen;
                             if (this->authorization_channels.rdpdr_type_is_authorized(captype)) {
-                                std::cout << "  ok" << std::endl;
                                 p = std::copy(chunk.p - caplen, chunk.p, p);
                                 ++real_num_capabilities;
-                            }
-                            else {
-                                std::cout << "  noop" << std::endl;
                             }
                         }
 
                         length -= chunk.p - p;
                         chunk.end -= chunk.p - p;
-                        std::cout << "chunk.p - p: " << (chunk.p - p) << std::endl;
-                        std::cout << "real_num_capabilities: " << (real_num_capabilities) << std::endl;
                         chunk.p = p_num;
                         chunk.out_uint16_le(real_num_capabilities);
-                    }
-                    else {
-                        std::cout << "  ok" << std::endl;
                     }
                 }
             }
