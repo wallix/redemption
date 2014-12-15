@@ -26,7 +26,6 @@
 
 class ClientInfo;
 
-
 /* difference caches */
 class GlyphCache : noncopyable
 {
@@ -34,7 +33,7 @@ class GlyphCache : noncopyable
     {
         friend struct GlyphCache;
 
-        int      stamp = 0;
+        int stamp = 0;
 
     public:
         FontChar font_item;
@@ -43,7 +42,7 @@ class GlyphCache : noncopyable
     };
 
     /* font */
-    int       char_stamp = 0;
+    int char_stamp = 0;
 
 public:
     char_item char_items[12][256];

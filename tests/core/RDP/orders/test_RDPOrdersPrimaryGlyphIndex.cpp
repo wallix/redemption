@@ -109,3 +109,98 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
             "Text 1");
     }
 }
+
+BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
+{
+    using namespace RDP;
+
+    {
+        BStream stream(1000);
+        TODO(" actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
+
+        RDPOrderCommon state_common(RDP::PATBLT, Rect(0, 0, 1024, 768));
+        RDPGlyphIndex  statecmd(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (const uint8_t *)"");
+        RDPOrderCommon newcommon(GLYPHINDEX, Rect(0, 0, 1024, 768));
+        RDPGlyphIndex  newcmd( 7, 3, 0, 1
+                             , 0x00ffff
+                             , 0x00092d
+                             , Rect(308, 155, 174, 14)
+                             , Rect(0, 0, 1, 1)
+                             , RDPBrush(0, 0, 0, 0, (const uint8_t *)"\0\0\0\0\0\0\0")
+                             , 0x0134, 0x00a6
+                             , 50
+                             , (const uint8_t *)"\x00\x00\x01\x08\x02\x07\x03\x07"
+                                                "\x04\x07\x05\x05\x01\x05\x04\x07"
+                                                "\x03\x05\x07\x0a\x03\x07\x08\x0a"
+                                                "\x03\x06\x08\x07\x08\x06\x09\x06"
+                                                "\x0a\x03\x0b\x07\x0c\x0a\x09\x0b"
+                                                "\x0b\x03\x07\x07\x0a\x07\x0d\x07"
+                                                "\x08\x09"
+                             );
+
+        newcmd.emit(stream, newcommon, state_common, statecmd);
+
+        BOOST_CHECK_EQUAL((uint8_t)GLYPHINDEX, newcommon.order);
+        BOOST_CHECK_EQUAL(Rect(0, 0, 1024, 768), newcommon.clip);
+
+        TODO(" DELTA is disabled because it does not works with rdesktop")
+        uint8_t datas[] = {
+              CHANGE | STANDARD
+            , GLYPHINDEX
+            , 0xfb, 0x03, 0x38                                  // fieldFlags
+            , 0x07                                              // cacheId
+            , 0x03                                              // flAccel
+            , 0x01                                              // fOpRedundant
+            , 0xff, 0xff, 0x00                                  // BackColor
+            , 0x2d, 0x09, 0x00                                  // ForeColor
+            , 0x34, 0x01, 0x9b, 0x00, 0xe1, 0x01, 0xa8, 0x00    // Bk rect
+            , 0x34, 0x01, 0xa6, 0x00                            // X, Y
+            , 0x32                                              // cbData
+            , 0x00, 0x00, 0x01, 0x08, 0x02, 0x07, 0x03, 0x07, 0x04, 0x07, 0x05, 0x05, 0x01, 0x05, 0x04, 0x07
+            , 0x03, 0x05, 0x07, 0x0a, 0x03, 0x07, 0x08, 0x0a, 0x03, 0x06, 0x08, 0x07, 0x08, 0x06, 0x09, 0x06
+            , 0x0a, 0x03, 0x0b, 0x07, 0x0c, 0x0a, 0x09, 0x0b, 0x0b, 0x03, 0x07, 0x07, 0x0a, 0x07, 0x0d, 0x07
+            , 0x08, 0x09
+        };
+
+        check_datas(stream.p - stream.get_data(), stream.get_data(), sizeof(datas), datas, "Text 2");
+        stream.mark_end();
+        stream.p = stream.get_data();
+
+        RDPOrderCommon common_cmd = state_common;
+        uint8_t        control    = stream.in_uint8();
+        BOOST_CHECK(control & STANDARD);
+
+        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        BOOST_CHECK_EQUAL((uint8_t)0x09, header.control);
+        BOOST_CHECK_EQUAL((uint32_t)0x3803fb, header.fields);
+
+        BOOST_CHECK_EQUAL((uint8_t)GLYPHINDEX, common_cmd.order);
+        BOOST_CHECK_EQUAL(Rect(0, 0, 1024, 768), common_cmd.clip);
+
+        RDPGlyphIndex cmd = statecmd;
+        cmd.receive(stream, header);
+
+        BOOST_CHECK(RDPBrush(0, 0, 0x0, 0x0, (const uint8_t *)"\0\0\0\0\0\0\0") == cmd.brush);
+
+        TODO(" actual data is much more complex than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
+        check<RDPGlyphIndex>( common_cmd, cmd
+                            , RDPOrderCommon(GLYPHINDEX, Rect(0, 0, 1024, 768))
+                            , RDPGlyphIndex( 7, 3, 0, 1
+                                           , 0x00ffff
+                                           , 0x00092d
+                                           , Rect(308, 155, 174, 14)
+                                           , Rect(0, 0, 1, 1)
+                                           , RDPBrush(0, 0, 0x0, 0x0, (const uint8_t *)"\0\0\0\0\0\0\0")
+                                           , 0x0134, 0x00a6
+                                           , 50
+                                           , (const uint8_t *)"\x00\x00\x01\x08\x02\x07\x03\x07"
+                                                              "\x04\x07\x05\x05\x01\x05\x04\x07"
+                                                              "\x03\x05\x07\x0a\x03\x07\x08\x0a"
+                                                              "\x03\x06\x08\x07\x08\x06\x09\x06"
+                                                              "\x0a\x03\x0b\x07\x0c\x0a\x09\x0b"
+                                                              "\x0b\x03\x07\x07\x0a\x07\x0d\x07"
+                                                              "\x08\x09")
+                            , "Text 1"
+                            );
+    }
+}

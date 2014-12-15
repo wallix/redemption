@@ -308,8 +308,8 @@ public:
         int nglyphs = stream.in_uint8();
         for (int i = 0; i < nglyphs; i++) {
             int character = stream.in_uint16_le();
-            int offset    = stream.in_uint16_le();
-            int baseline  = stream.in_uint16_le();
+            int offset    = stream.in_sint16_le();
+            int baseline  = stream.in_sint16_le();
             int width     = stream.in_uint16_le();
             int height    = stream.in_uint16_le();
 

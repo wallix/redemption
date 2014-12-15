@@ -99,8 +99,8 @@ public:
     uint8_t    cacheId;
     uint8_t    cGlyphs = 1;
     uint16_t   glyphData_cacheIndex;
-    uint16_t   glyphData_x;
-    uint16_t   glyphData_y;
+    int16_t    glyphData_x;
+    int16_t    glyphData_y;
     uint16_t   glyphData_cx;
     uint16_t   glyphData_cy;
     uint8_t  * glyphData_aj = nullptr;
@@ -110,8 +110,8 @@ public:
     RDPGlyphCache( uint8_t cacheId
                  //, uint8_t cGlyphs
                  , uint16_t glyphData_cacheIndex
-                 , uint16_t glyphData_x
-                 , uint16_t glyphData_y
+                 , int16_t glyphData_x
+                 , int16_t glyphData_y
                  , uint16_t glyphData_cx
                  , uint16_t glyphData_cy
                  , const uint8_t * glyphData_aj

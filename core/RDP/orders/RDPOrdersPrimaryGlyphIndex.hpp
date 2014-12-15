@@ -432,7 +432,7 @@ public:
         if (header.fields & 0x0100) { stream.out_uint16_le(this->bk.x + this->bk.cx - 1); }
         if (header.fields & 0x0200) { stream.out_uint16_le(this->bk.y + this->bk.cy - 1); }
 
-        if (header.fields & 0x0040) { stream.out_uint16_le(this->op.x); }
+        if (header.fields & 0x0400) { stream.out_uint16_le(this->op.x); }
         if (header.fields & 0x0800) { stream.out_uint16_le(this->op.y); }
         if (header.fields & 0x1000) { stream.out_uint16_le(this->op.x + this->op.cx - 1); }
         if (header.fields & 0x2000) { stream.out_uint16_le(this->op.y + this->op.cy - 1); }
@@ -446,7 +446,6 @@ public:
             stream.out_uint8(this->data_len);
             stream.out_copy_bytes(this->data, this->data_len);
         }
-
     }
 
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
@@ -519,7 +518,7 @@ public:
                         "back_color=%.6x fore_color=%.6x "
                         "bk=(%d,%d,%d,%d) "
                         "op=(%d,%d,%d,%d) "
-                        "brush.(org_x=%.2x, org_y=%.2x, style=%d hatch=%d extra=[%.2x,%.2x,%.2x,%.2x,%.2x,%.2x,%.2x]) "
+                        "brush.(org_x=%d, org_y=%d, style=%d hatch=%d extra=[%.2x,%.2x,%.2x,%.2x,%.2x,%.2x,%.2x]) "
                         "glyph_x=%.2x glyph_y=%.2x data_len=%d "
                       , this->cache_id
                       , this->fl_accel
@@ -537,9 +536,8 @@ public:
                       );
         lg += snprintf(buffer + lg, sz - lg, "[");
         for (int i = 0; i < this->data_len; i++) {
-            lg += snprintf( buffer + lg, sz - lg, "%.2x(%c) "
-                          , (char)this->data[i]
-                          , ((this->data[i] & 0x80) || (this->data[i] < 32)) ? ' ' : (char)this->data[i]
+            lg += snprintf( buffer + lg, sz - lg, "0x%.2x "
+                          , (unsigned char)this->data[i]
                           );
         }
         lg += snprintf(buffer + lg, sz - lg, "]");
