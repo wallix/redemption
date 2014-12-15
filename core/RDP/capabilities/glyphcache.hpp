@@ -72,6 +72,10 @@
 //  ordered specification of the layout of each of the glyph caches with IDs
 //  0 through to 9 ([MS-RDPEGDI] section 3.1.1.1.2).
 
+enum {
+      NUMBER_OF_GLYPH_CACHES = 10
+};
+
 // FragCache (4 bytes): Fragment cache data. The maximum number of entries
 //  allowed in the cache is 256, and the largest allowed maximum size of an
 //  element is 256 bytes.

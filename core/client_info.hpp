@@ -26,8 +26,10 @@
 #define _REDEMPTION_CORE_CLIENT_INFO_HPP_
 
 #include <string.h>
-#include "RDP/logon.hpp"
+
 #include "get_printable_password.hpp"
+#include "RDP/logon.hpp"
+#include "RDP/capabilities/glyphcache.hpp"
 
 class Stream;
 
@@ -78,6 +80,8 @@ struct ClientInfo {
     int brush_cache_code = 0; /* 0 = no cache 1 = 8x8 standard cache
                            2 = arbitrary dimensions */
     bool console_session = false;
+
+    uint8_t number_of_entries_in_glyph_cache[NUMBER_OF_GLYPH_CACHES] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
     ClientInfo() = default;
 
