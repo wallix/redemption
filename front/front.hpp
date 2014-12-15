@@ -2803,6 +2803,10 @@ public:
                     if (this->verbose) {
                         glyph_cache_caps.log("Receiving from client");
                     }
+                    for (uint8_t i = 0; i < NUMBER_OF_GLYPH_CACHES; ++i) {
+                        this->client_info.number_of_entries_in_glyph_cache[i] =
+                            glyph_cache_caps.GlyphCache[i].CacheEntries;
+                    }
                 }
                 break;
             case CAPSTYPE_OFFSCREENCACHE: /* 17 */
@@ -4117,7 +4121,25 @@ public:
                         //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
                         FontChar & fc = const_cast<FontChar&>(gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item);
                         REDASSERT(fc);
-                        int g_idx = this->glyph_cache.find_glyph(fc, new_cmd.cache_id);
+
+                        int g_idx;
+                        if (this->glyph_cache.add_glyph(fc, new_cmd.cache_id, g_idx) ==
+                            GlyphCache::GLYPH_ADDED_TO_CACHE) {
+                            RDPGlyphCache cmd2(new_cmd.cache_id, /*1, */g_idx,
+                                            fc.offset,
+                                            fc.baseline,
+                                            fc.width,
+                                            fc.height,
+                                            fc.data.get());
+
+                            this->orders->draw(cmd2);
+
+                            if (  this->capture
+                               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                                this->capture->draw(cmd2);
+                            }
+                        }
+
                         REDASSERT(g_idx >= 0);
                         new_cmd.data[i] = static_cast<uint8_t>(g_idx);
                         if (has_delta_byte)
@@ -4130,6 +4152,9 @@ public:
                             {
                                 i++;
                             }
+                        }
+                        else {
+                            i++;
                         }
                     }
                     else if (new_cmd.data[i] == 0xFE)
