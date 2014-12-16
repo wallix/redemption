@@ -424,9 +424,9 @@ public:
                     if (this->verbose > 32){
                         cmd.log(LOG_INFO);
                     }
-                    FontChar fc(cmd.glyphData_x, cmd.glyphData_y, cmd.glyphData_cx, cmd.glyphData_cy, -1);
-                    memcpy(fc.data.get(), cmd.glyphData_aj, fc.datasize());
-                    this->gly_cache.set_glyph(std::move(fc), cmd.cacheId, cmd.glyphData_cacheIndex);
+                    FontChar fc(cmd.x, cmd.y, cmd.cx, cmd.cy, -1);
+                    memcpy(fc.data.get(), cmd.aj, fc.datasize());
+                    this->gly_cache.set_glyph(std::move(fc), cmd.cacheId, cmd.cacheIndex);
                     for (size_t i = 0; i < this->nbconsumers; i++){
                         this->consumers[i].graphic_device->draw(cmd);
                     }

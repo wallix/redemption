@@ -60,6 +60,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
@@ -315,6 +316,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
@@ -578,6 +580,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
@@ -742,6 +745,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "[globals]\n"
                           "movie=yes\n"
                           "bitmap_cache=yes\n"
+                          "glyph_cache=yes\n"
                           "port=3390\n"
                           "encryptionLevel=low\n"
                           "enable_file_encryption=yes\n"
@@ -829,6 +833,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3390,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
@@ -1055,6 +1060,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(1,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
@@ -1210,6 +1216,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     std::stringstream oss(
                           "[globals]\n"
                           "bitmap_cache=no\n"
+                          "glyph_cache=no\n"
                           "encryptionLevel=high\n"
                           "enable_file_encryption=true\n"
                           "listen_address=127.0.0.1\n"
@@ -1261,6 +1268,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(2,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
@@ -1449,6 +1457,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3390,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
@@ -1599,6 +1608,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "listen_address=192.168.1.1\n"
                            "certificate_password=\n"
                            "enable_ip_transparent=yes\n"
+                           "glyph_cache=yes\n"
                            "[client]\n"
                            "bitmap_compression=no\n"
                            "persist_bitmap_cache_on_disk=yes\n"
@@ -1628,6 +1638,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3390,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
@@ -1802,6 +1813,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
@@ -1976,6 +1988,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
