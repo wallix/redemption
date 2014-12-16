@@ -586,7 +586,6 @@ unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z c
 
 unit-test test_flat_login : tests/mod/internal/widget2/test_flat_login.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_wab_close : tests/mod/internal/widget2/test_flat_wab_close.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_selector : tests/mod/internal/widget2/test_flat_selector.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_screen : tests/mod/internal/widget2/test_screen.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 
 # unit-test test_columnlayout : tests/mod/internal/widget2/test_columnlayout.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -607,7 +606,6 @@ unit-test test_flat_interactive_target : tests/mod/internal/widget2/test_flat_in
 ## @{
 unit-test test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_login_mod : tests/mod/internal/test_flat_login_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_flat_selector_mod : tests/mod/internal/test_flat_selector_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_widget_test_mod : tests/mod/internal/test_widget_test_mod.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;

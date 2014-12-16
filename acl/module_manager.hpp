@@ -41,7 +41,6 @@
 #include "translation.hpp"
 
 #include "internal/flat_login_mod.hpp"
-#include "internal/flat_selector_mod.hpp"
 #include "internal/flat_selector2_mod.hpp"
 #include "internal/flat_wab_close_mod.hpp"
 #include "internal/flat_dialog_mod.hpp"
@@ -441,6 +440,7 @@ public:
             LOG(LOG_INFO, "ModuleManager::internal module 'test_card' ready");
             break;
         case MODULE_INTERNAL_WIDGET2_SELECTOR:
+        case MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
             this->mod = new FlatSelector2Mod(this->ini,
                         // new FlatSelectorMod(this->ini,
@@ -451,18 +451,6 @@ public:
                                         );
             if (this->verbose){
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
-            }
-            break;
-        case MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY:
-            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector legacy'");
-            this->mod = new FlatSelectorMod(this->ini,
-                        // new SelectorMod(this->ini,
-                                        this->front,
-                                        this->front.client_info.width,
-                                        this->front.client_info.height
-                                        );
-            if (this->verbose){
-                LOG(LOG_INFO, "ModuleManager::internal module 'selector legacy' ready");
             }
             break;
         case MODULE_INTERNAL_CLOSE:

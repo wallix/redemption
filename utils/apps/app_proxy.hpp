@@ -357,14 +357,16 @@ int app_proxy(
         << " : " << errno << ":'" << strerror(errno) << "'\n";
         return 1;
     }
-    const int pid = getpid();
-    char text[256];
-    size_t lg = snprintf(text, 255, "%d", pid);
-    if (write(fd, text, lg) == -1) {
-        LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/redemption/" LOCKFILE, strerror(errno));
-        return 1;
+    {
+        io::posix::fdbuf file(fd);
+        const int pid = getpid();
+        char text[256];
+        size_t lg = snprintf(text, 255, "%d", pid);
+        if (file.write(text, lg) == -1) {
+            LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/redemption/" LOCKFILE, strerror(errno));
+            return 1;
+        }
     }
-    close(fd);
 
     if (!options.count("nodaemon")) {
         daemonize(PID_PATH "/redemption/" LOCKFILE);
