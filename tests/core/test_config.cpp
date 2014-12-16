@@ -188,7 +188,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels.str());
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels.str());
 
-    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
@@ -442,7 +443,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
 
     BOOST_CHECK_EQUAL("OK",                             ini.context_get_value(AUTHID_TRANS_BUTTON_OK));
     BOOST_CHECK_EQUAL("Cancel",                         ini.context_get_value(AUTHID_TRANS_BUTTON_CANCEL));
@@ -709,7 +711,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels.str());
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels.str());
 
-    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
@@ -783,7 +786,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "deny_channels=*\n"
                           "\n"
                           "[mod_vnc]\n"
-                          "clipboard=yes\n"
+                          "clipboard_up=yes\n"
                           "encodings=16,2,0,1,-239\n"
                           "allow_authentification_retries=yes\n"
                           "\n"
@@ -956,7 +959,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("audin",                          ini.mod_rdp.allow_channels.str());
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.deny_channels.str());
 
-    BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.clipboard.get());
+    BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.clipboard_up.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("16,2,0,1,-239",                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.allow_authentification_retries);
 
