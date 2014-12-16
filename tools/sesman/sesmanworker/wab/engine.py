@@ -370,11 +370,11 @@ class Engine(object):
         self.target_right = None
 
     def valid_device_name(self, protocols, target_device):
-        Logger().info("VALID DEVICE NAME target_device = '%s'" % target_device)
+        # Logger().info("VALID DEVICE NAME target_device = '%s'" % target_device)
         prights = self.wabengine.get_proxy_rights(protocols, target_device,
                                                  check_timeframes=False)
         rights = prights.rights
-        Logger().info("VALID DEVICE NAME Rights = '%s', len = %s" % (rights, len(rights)))
+        # Logger().info("VALID DEVICE NAME Rights = '%s', len = %s" % (rights, len(rights)))
         if rights:
             return True
         return False
