@@ -580,8 +580,8 @@ class Engine(object):
     def check_target(self, target, pid=None, request_ticket=None):
         status, infos = self.wabengine.check_target(target, self.get_pidhandler(pid),
                                                     request_ticket)
-        Logger().info("status : %s" % status)
-        Logger().info("infos : %s" % infos)
+        # Logger().info("status : %s" % status)
+        # Logger().info("infos : %s" % infos)
         deconnection_time = infos.get("deconnection_time")
         if deconnection_time:
             Logger().info("deconnection_time updated from %s to %s" % (target.deconnection_time, deconnection_time))
