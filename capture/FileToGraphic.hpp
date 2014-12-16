@@ -1175,16 +1175,6 @@ public:
         this->privplay([](time_t){});
     }
 
-    template<class CbUpdateProgress = std::nullptr_t>
-    void play(CbUpdateProgress * update_progess = nullptr) {
-        if (update_progess) {
-            this->privplay([](time_t){});
-        }
-        else {
-            this->play([=](time_t record_now) { update_progess(record_now); });
-        }
-    }
-
     template<class CbUpdateProgress>
     void play(CbUpdateProgress update_progess) {
         time_t last_sent_record_now = 0;
