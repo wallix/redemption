@@ -959,12 +959,21 @@ class Sesman():
         ticketfields = infos.get("ticket_fields")
         flag = 0
         if ticketfields:
-            if ticketfields.get("description") == APPREQ_REQUIRED:
+            field = ticketfields.get("description")
+            if field:
                 flag += 1
-            if ticketfields.get("ticket") == APPREQ_REQUIRED:
-                flag += 2
-            if ticketfields.get("duration") == APPREQ_REQUIRED:
+                if field == APPREQ_REQUIRED:
+                    flag += 2
+            field = ticketfields.get("ticket")
+            if field:
                 flag += 4
+                if field == APPREQ_REQUIRED:
+                    flag += 8
+            field = ticketfields.get("duration")
+            if field:
+                flag += 16
+                if field == APPREQ_REQUIRED:
+                    flag += 32
         if status == APPROVAL_NONE:
             tosend["showform"] = True
             tosend["formflag"] = flag

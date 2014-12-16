@@ -60,7 +60,7 @@ private:
         { return !(*this == k); }
     };
 
-    typedef std::array<value_type, 50> trans_t;
+    typedef std::array<value_type, 51> trans_t;
 
     language_t lang;
     trans_t trans;
@@ -140,8 +140,8 @@ private:
         {"exit", {"Exit", "Sortir"}},
         {"comment", {"Comment", "Commentaire"}},
         {"comment_r", {"Comment *", "Commentaire *"}},
-        {"ticket", {"Ticket n°", "Ticket n°"}},
-        {"ticket_r", {"Ticket n° *", "Ticket n° *"}},
+        {"ticket", {"Ticket ref.", "Ticket ref."}},
+        {"ticket_r", {"Ticket ref. *", "Ticket ref. *"}},
         {"duration", {"Duration", "Durée"}},
         {"duration_r", {"Duration *", "Durée *"}},
 
@@ -150,6 +150,8 @@ private:
                  "format \"[heures]h[mins]m\" chaque unité est optionnelle."}},
         {"note_required", {"(*) required fields", "(*) champs requis"}},
         {"confirm", {"Confirm", "Confirmer"}},
+        {"%s field_required", {"Warning: %s field is required.",
+                               "Attention: le champ %s est requis."}},
         {"information", {"Information", "Information"}},
         {"authentication_required", {"Authentication Required",
                                      "Authentification Requise"}},

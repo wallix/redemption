@@ -56,7 +56,7 @@ public:
         , bg_color(theme.global.bgcolor)
         , dialog(drawable, 0, 0, this->groupbox, NULL, text, true, -10,
                  theme.global.fgcolor, theme.global.bgcolor, 10, 2)
-        , form(drawable, width - 80, 140, *this, this, -20, ini, theme, required)
+        , form(drawable, width - 80, 150, *this, this, -20, ini, theme, required)
         , goselector(drawable, 0, 0, this->groupbox, this, TR("back_selector", ini), true, -12,
                      theme.global.fgcolor, theme.global.bgcolor,
                      theme.global.focus_color, 6, 2)
