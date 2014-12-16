@@ -361,7 +361,7 @@ class Engine(object):
                             , temp_resource_service_protocol_cn
                             )
                            )
-        Logger().info("targets list = %s'" % targets)
+        # Logger().info("targets list = %s'" % targets)
         return targets, item_filtered
 
     def reset_proxy_rights(self):
