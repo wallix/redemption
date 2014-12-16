@@ -660,6 +660,8 @@ public:
             }
         } trace(this->verbose, front_channel_name);
 
+                                        std::cout << this->authorization_channels << std::endl;
+
         // filtering specific redirection (printer, smartcard, etc)
         if (!strcmp(front_channel_name, channel_names::rdpdr)) {
             auto p = chunk.p;

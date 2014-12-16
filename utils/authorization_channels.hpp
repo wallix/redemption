@@ -39,8 +39,6 @@ struct AuthorizationChannels
     AuthorizationChannels(std::string allow, std::string deny)
     : allow_(std::move(allow))
     , deny_(std::move(deny))
-    , rdpdr_restriction_{}
-    , cliprdr_restriction_{}
     {
         this->normalize(this->allow_);
         this->normalize(this->deny_);
@@ -92,23 +90,27 @@ struct AuthorizationChannels
     template<class CharT, class Traits>
     friend std::basic_ostream<CharT, Traits> &
     operator<<(std::basic_ostream<CharT, Traits> & os, AuthorizationChannels const & auth) {
-        auto p = [&](std::string const & s, bool all, const char * name) {
+        auto p = [&](std::string const & s, bool all, bool val_ok, const char * name) {
             if (all) {
                 os << name << "=*\n";
             }
             else {
                 os << name << '=';
                 for (size_t i = 0; i < auth.cliprdr_restriction_.size(); ++i) {
-                    os << cliprde_list[i];
+                    if (auth.cliprdr_restriction_[i] == val_ok) {
+                        os << cliprde_list[i];
+                    }
                 }
                 for (size_t i = 0; i < auth.rdpdr_restriction_.size(); ++i) {
-                    os << rdpdr_list[i];
+                    if (auth.rdpdr_restriction_[i] == val_ok) {
+                        os << rdpdr_list[i];
+                    }
                 }
                 os << s << '\n';
             }
         };
-        p(auth.allow_, auth.all_allow_, "allow");
-        p(auth.deny_, auth.all_deny_, "deny");
+        p(auth.allow_, auth.all_allow_, true, "allow");
+        p(auth.deny_, auth.all_deny_, false, "deny");
         return os;
     }
 
@@ -195,8 +197,8 @@ private:
     std::string deny_;
     bool all_allow_ = false;
     bool all_deny_ = false;
-    std::array<bool, 5> rdpdr_restriction_;
-    std::array<bool, 2> cliprdr_restriction_;
+    std::array<bool, 5> rdpdr_restriction_ {};
+    std::array<bool, 2> cliprdr_restriction_ {};
 };
 constexpr decltype(AuthorizationChannels::cliprde_list) AuthorizationChannels::cliprde_list;
 constexpr decltype(AuthorizationChannels::rdpdr_list) AuthorizationChannels::rdpdr_list;

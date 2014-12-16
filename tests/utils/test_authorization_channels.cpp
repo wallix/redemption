@@ -103,12 +103,21 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsRdpdr)
     BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(2), false);
     BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(3), true);
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr"), true);
+
     authorization_channels = make_authorization_channels("rdpdr_port,rdpdr_general", "rdpdr_printer");
     BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(1), true);
     BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(2), false);
     BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(3), true);
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr"), true);
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr_port"), false);
+
+    authorization_channels = make_authorization_channels("*", "");
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(1), true);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(2), true);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_up_is_authorized(), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr_port"), true);
 }
 
 
