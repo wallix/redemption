@@ -1,3 +1,5 @@
+#include <iostream> // TODO
+
 /*
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -696,6 +698,34 @@ public:
             }
 
             chunk.p = p;
+        }
+
+        if (this->authorization_channels.cliprdr_up_is_authorized() && !strcmp(front_channel_name, channel_names::cliprdr)) {
+            const uint16_t msgType = chunk.in_uint16_le();
+            if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
+                std::cout << " # # RDPECLIP::CB_FILECONTENTS_REQUEST" << std::endl;
+
+                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FileContentsResponse>(false);
+                return ;
+            }
+            else if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
+                std::cout << " # # RDPECLIP::CB_FORMAT_DATA_REQUEST" << std::endl;
+                chunk.p += 6;
+                std::cout << "requestFormatId: " << chunk.in_uint32_le() << '\n';
+                chunk.p -= 10;
+            }
+            else if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+                std::cout << " # # RDPECLIP::CB_FORMAT_LIST" << std::endl;
+                chunk.p += 2;
+                const int32_t len = chunk.in_uint32_le();
+                char * data = new char[len];
+                std::cout << " # len: " << (len) << std::endl;
+                chunk.in_copy_bytes(data, len);
+                hexdump(data, len);
+                delete [] data;
+                chunk.p -= len + 6;
+            }
+            chunk.p -= 2;
         }
 
         // Clipboard is unavailable and is a Clipboard PDU
@@ -1899,6 +1929,43 @@ public:
                                                          );
                                 }
                             }
+
+        else if (this->authorization_channels.cliprdr_down_is_authorized() && !strcmp(mod_channel.name, channel_names::cliprdr)) {
+            const uint16_t msgType = sec.payload.in_uint16_le();
+            if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
+                std::cout << " # # # RDPECLIP::CB_FILECONTENTS_REQUEST" << std::endl;
+                BStream                         out_s(256);
+                RDPECLIP::FileContentsResponse(false).emit(out_s);
+
+                this->send_to_channel(
+                    mod_channel, out_s, out_s.size(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                );
+            }
+            else if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
+                std::cout << " # # RDPECLIP::CB_FORMAT_DATA_REQUEST" << std::endl;
+                sec.payload.p += 6;
+                std::cout << "requestFormatId: " << sec.payload.in_uint32_le() << '\n';
+                sec.payload.p += 10;
+                sec.payload.p -= 2;
+                this->send_to_front_channel(mod_channel.name, sec.payload.p, length, chunk_size, flags);
+            }
+            else if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+                std::cout << " # # # RDPECLIP::CB_FORMAT_LIST" << std::endl;
+                sec.payload.p += 2;
+                const int32_t len = sec.payload.in_uint32_le();
+                char * data = new char[len];
+                std::cout << " # len: " << (len) << std::endl;
+                sec.payload.in_copy_bytes(data, len);
+                hexdump(data, len);
+                delete [] data;
+                sec.payload.p -= len + 6;
+            }
+            else {
+                sec.payload.p -= 2;
+                this->send_to_front_channel(mod_channel.name, sec.payload.p, length, chunk_size, flags);
+            }
+        }
                             else {
                                 this->send_to_front_channel(mod_channel.name, sec.payload.p, length, chunk_size, flags);
                             }

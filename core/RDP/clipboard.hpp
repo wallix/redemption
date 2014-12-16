@@ -521,6 +521,20 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 };
 
 
+struct FileContentsResponse : CliprdrHeader {
+
+    FileContentsResponse(bool response_ok = false)
+    : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 0)
+    {}
+
+    void emit(Stream & stream) {
+        CliprdrHeader::emit(stream);
+//         stream.out_uint32_le(0);
+//         stream.out_uint64_le(0);
+    }
+};
+
+
 struct PacketFileList {
     uint32_t cItems;
     /*variable fileDescriptorArray*/
