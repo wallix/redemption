@@ -39,12 +39,20 @@ public:
 
 enum {
     NONE = 0x00,
-    COMMENT_MANDATORY = 0x01,
-    TICKET_MANDATORY = 0x02,
-    DURATION_MANDATORY = 0x04
+    COMMENT_DISPLAY = 0x01,
+    COMMENT_MANDATORY = 0x02,
+    TICKET_DISPLAY = 0x04,
+    TICKET_MANDATORY = 0x08,
+    DURATION_DISPLAY = 0x10,
+    DURATION_MANDATORY = 0x20,
 };
-
+    const char * generic_warning;
+    const char * field_comment;
+    const char * field_ticket;
+    const char * field_duration;
+    char warning_buffer[512];
     // WidgetGroupBox groupbox;
+    WidgetLabel warning_msg;
 
     WidgetLabel comment_label;
     WidgetEdit comment_edit;
@@ -63,6 +71,13 @@ enum {
              Widget2 & parent, NotifyApi* notifier, int group_id, Inifile & ini,
              Theme & theme, int flags = 0)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
+        , generic_warning(TR("%s field_required", ini))
+        , field_comment(TR("comment", ini))
+        , field_ticket(TR("ticket", ini))
+        , field_duration(TR("duration", ini))
+        , warning_buffer()
+        , warning_msg(drawable, 10, 0, *this, NULL, "", true, group_id,
+                  theme.global.fgcolor, theme.global.bgcolor)
         , comment_label(drawable, 0, 10, *this, NULL, TR("comment", ini), true,
                         group_id, theme.global.fgcolor, theme.global.bgcolor)
         , comment_edit(drawable, this->comment_label.lx() + 20, 10, 300, *this, this,
@@ -89,12 +104,20 @@ enum {
     {
         this->set_bg_color(theme.global.bgcolor);
         this->impl = &composite_array;
-        this->add_widget(&this->comment_label);
-        this->add_widget(&this->comment_edit);
-        this->add_widget(&this->ticket_label);
-        this->add_widget(&this->ticket_edit);
-        this->add_widget(&this->duration_label);
-        this->add_widget(&this->duration_edit);
+        this->add_widget(&this->warning_msg);
+        if (this->flags & COMMENT_DISPLAY) {
+            this->add_widget(&this->comment_label);
+            this->add_widget(&this->comment_edit);
+        }
+        if (this->flags & TICKET_DISPLAY) {
+            this->add_widget(&this->ticket_label);
+            this->add_widget(&this->ticket_edit);
+        }
+        if (this->flags & DURATION_DISPLAY) {
+            this->add_widget(&this->duration_label);
+            this->add_widget(&this->duration_edit);
+            this->add_widget(&this->duration_format);
+        }
         if (this->flags & COMMENT_MANDATORY) {
             this->comment_label.set_text(TR("comment_r", ini));
         }
@@ -108,17 +131,39 @@ enum {
         int labelmaxwidth = std::max(this->comment_label.cx(),
                                      std::max(this->ticket_label.cx(),
                                               this->duration_label.cx()));
+        this->warning_msg.rect.x = labelmaxwidth + 20;
         this->comment_edit.set_edit_x(labelmaxwidth + 20);
         this->ticket_edit.set_edit_x(labelmaxwidth + 20);
         this->duration_edit.set_edit_x(labelmaxwidth + 20);
         this->comment_edit.set_edit_cx(width - labelmaxwidth - 20);
         this->ticket_edit.set_edit_cx(width - labelmaxwidth - 20);
         this->duration_edit.set_edit_cx(width - labelmaxwidth - 20);
-        this->add_widget(&this->duration_format);
         this->duration_format.rect.x = labelmaxwidth + 20;
-        if (this->flags) {
+        if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
             this->add_widget(&this->notes);
             this->notes.rect.x = labelmaxwidth + 20;
+        }
+
+        int y = 20;
+        if (this->flags & COMMENT_DISPLAY) {
+            this->comment_label.set_xy(this->comment_label.dx(), y);
+            this->comment_edit.set_edit_y(y);
+            y += 30;
+        }
+        if (this->flags & TICKET_DISPLAY) {
+            this->ticket_label.set_xy(this->ticket_label.dx(), y);
+            this->ticket_edit.set_edit_y(y);
+            y += 30;
+        }
+        if (this->flags & DURATION_DISPLAY) {
+            this->duration_label.set_xy(this->duration_label.dx(), y);
+            this->duration_edit.set_edit_y(y);
+            y += 30;
+            this->duration_format.set_xy(this->duration_format.dx(), y);
+            y += 20;
+        }
+        if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
+            this->notes.set_xy(this->notes.dx(), y);
         }
 
         this->add_widget(&this->confirm);
@@ -150,20 +195,34 @@ enum {
         }
     }
 
+    void set_warning_buffer(const char * field) {
+        sprintf(this->warning_buffer, this->generic_warning, field);
+        this->warning_msg.set_text(this->warning_buffer);
+    }
+
     void check_confirmation() {
-        if (((this->flags & COMMENT_MANDATORY) == COMMENT_MANDATORY) &&
+        if (((this->flags & COMMENT_DISPLAY) == COMMENT_DISPLAY) &&
+            ((this->flags & COMMENT_MANDATORY) == COMMENT_MANDATORY) &&
             (this->comment_edit.num_chars == 0)) {
+            this->set_warning_buffer(this->field_comment);
             this->set_widget_focus(&this->comment_edit, focus_reason_mousebutton1);
+            this->draw(this->warning_msg.rect);
             return;
         }
-        if (((this->flags & TICKET_MANDATORY) == TICKET_MANDATORY) &&
+        if (((this->flags & TICKET_DISPLAY) == TICKET_DISPLAY) &&
+            ((this->flags & TICKET_MANDATORY) == TICKET_MANDATORY) &&
             (this->ticket_edit.num_chars == 0)) {
+            this->set_warning_buffer(this->field_ticket);
             this->set_widget_focus(&this->ticket_edit, focus_reason_mousebutton1);
+            this->draw(this->rect);
             return;
         }
-        if (((this->flags & DURATION_MANDATORY) == DURATION_MANDATORY) &&
+        if (((this->flags & DURATION_DISPLAY) == DURATION_DISPLAY) &&
+            ((this->flags & DURATION_MANDATORY) == DURATION_MANDATORY) &&
             (this->duration_edit.num_chars == 0)) {
+            this->set_warning_buffer(this->field_duration);
             this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
+            this->draw(this->rect);
             return;
         }
         if (this->notifier) {

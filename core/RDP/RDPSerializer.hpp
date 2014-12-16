@@ -247,7 +247,7 @@ public:
         // To support 64x64 32-bit bitmap.
         size_t max_packet_size = std::min(this->stream_orders.get_capacity(), static_cast<size_t>(MAX_ORDERS_SIZE));
         size_t used_size = this->stream_orders.get_offset();
-        if (this->ini.debug.primary_orders > 3){
+        if (this->ini.debug.primary_orders > 3) {
             LOG( LOG_INFO
                , "<Serializer %p> RDPSerializer::reserve_order[%u](%u) used=%u free=%u"
                , this
@@ -256,7 +256,7 @@ public:
                , max_packet_size - used_size - 106
                );
         }
-        if (asked_size + 106 > max_packet_size){
+        if (asked_size + 106 > max_packet_size) {
             LOG( LOG_ERR
                , "(asked size (%u) + 106 = %d) > order batch capacity (%u)"
                , asked_size
@@ -284,7 +284,7 @@ public:
         this->common = newcommon;
         this->opaquerect = cmd;
 
-        if (this->ini.debug.primary_orders){
+        if (this->ini.debug.primary_orders) {
             cmd.log(LOG_INFO, common.clip);
         }
         //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect done");
@@ -297,7 +297,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->scrblt);
         this->common = newcommon;
         this->scrblt = cmd;
-        if (this->ini.debug.primary_orders){
+        if (this->ini.debug.primary_orders) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -309,7 +309,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->destblt);
         this->common = newcommon;
         this->destblt = cmd;
-        if (this->ini.debug.primary_orders){
+        if (this->ini.debug.primary_orders) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -366,7 +366,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->patblt);
         this->common = newcommon;
         this->patblt = cmd;
-        if (this->ini.debug.primary_orders){
+        if (this->ini.debug.primary_orders) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -388,7 +388,7 @@ protected:
         cmd_cache.emit( this->bpp, this->stream_orders, this->bitmap_cache_version, this->use_bitmap_comp
                       , this->op2);
 
-        if (this->ini.debug.secondary_orders){
+        if (this->ini.debug.secondary_orders) {
             cmd_cache.log(LOG_INFO);
         }
     }
@@ -429,7 +429,7 @@ public:
         newcmd.emit(this->stream_orders, newcommon, this->common, this_memblt);
         this->common = newcommon;
         this_memblt = newcmd;
-        if (this->ini.debug.primary_orders){
+        if (this->ini.debug.primary_orders) {
             newcmd.log(LOG_INFO, common.clip);
         }
     }
@@ -452,7 +452,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->lineto);
         this->common = newcommon;
         this->lineto = cmd;
-        if (this->ini.debug.primary_orders){
+        if (this->ini.debug.primary_orders) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -465,6 +465,9 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->glyphindex);
         this->common = newcommon;
         this->glyphindex = cmd;
+        if (this->ini.debug.primary_orders) {
+            cmd.log(LOG_INFO, common.clip);
+        }
     }
 
     virtual void draw(const RDPBrushCache & cmd)
@@ -483,6 +486,9 @@ public:
     {
         this->reserve_order(cmd.total_order_size() + 16 /* majoration */);
         cmd.emit(this->stream_orders);
+        if (this->ini.debug.secondary_orders) {
+            cmd.log(LOG_INFO);
+        }
     }
 
     virtual void draw(const RDPPolygonSC & cmd, const Rect & clip) {
@@ -507,7 +513,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->polyline);
         this->common   = newcommon;
         this->polyline = cmd;
-        if (this->ini.debug.primary_orders){
+        if (this->ini.debug.primary_orders) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -533,6 +539,9 @@ public:
     virtual void draw(const RDP::FrameMarker & order) {
         this->reserve_order(5);
         order.emit(this->stream_orders);
+        if (this->ini.debug.secondary_orders) {
+            order.log(LOG_INFO);
+        }
     }
 
     // check if the next bitmap will fit in available packet size
@@ -575,7 +584,7 @@ public:
 
         bitmap_data.emit(this->stream_bitmaps);
         this->stream_bitmaps.out_copy_bytes(data, size);
-        if (this->ini.debug.bitmap_update){
+        if (this->ini.debug.bitmap_update) {
             bitmap_data.log(LOG_INFO, "RDPSerializer");
         }
     }

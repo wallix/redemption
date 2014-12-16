@@ -36,7 +36,7 @@
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "/tmp/"
+#define OUTPUT_FILE_PATH "./"
 
 #include "fake_draw.hpp"
 
@@ -52,18 +52,23 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
 
+    int flag = FlatForm::COMMENT_DISPLAY | FlatForm::TICKET_DISPLAY |
+        FlatForm::DURATION_DISPLAY;
 
-    FlatForm form(drawable, 600, 140, parent, notifier, 0, ini, colors);
+    flag += FlatForm::DURATION_MANDATORY;
+
+    FlatForm form(drawable, 600, 150, parent, notifier, 0, ini, colors, flag);
     // ask to widget to redraw at it's current position
     form.move_xy(70, 70);
     form.rdp_input_invalidate(form.rect);
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "ticket_form.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "ticket_form.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x0e\x9a\x61\x56\xae\x43\x24\xe9\x7f\xa6\x4b\x81\xfe\x84\xad\x6b\x12\xc3\x7d\x3f"
-    )){
+                   "\x57\x41\x85\x8d\x7e\x06\x51\x48\x43\x27"
+                   "\xa3\xeb\x02\x5e\x6d\x94\x3a\xba\x39\xb7"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

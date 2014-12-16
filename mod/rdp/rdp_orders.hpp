@@ -296,7 +296,7 @@ public:
         FontChar fi(offset, baseline, width, height, 0);
         memcpy(fi.data.get(), data, fi.datasize());
         RDPGlyphCache cmd(font, /*1, */character, fi.offset, fi.baseline, fi.width, fi.height, fi.data.get());
-        this->gly_cache.set_glyph(std::move(fi), cmd.cacheId, cmd.glyphData_cacheIndex);
+        this->gly_cache.set_glyph(std::move(fi), cmd.cacheId, cmd.cacheIndex);
         gd.draw(cmd);
     }
 

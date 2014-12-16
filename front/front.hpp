@@ -192,6 +192,7 @@ private:
     BmpCacheCaps       client_bmpcache_caps;
     OffScreenCacheCaps client_offscreencache_caps;
     BmpCache2Caps      client_bmpcache2_caps;
+    GlyphCacheCaps     client_glyphcache_caps;
     bool               use_bitmapcache_rev2;
 
     redemption::string   server_capabilities_filename;
@@ -2416,6 +2417,10 @@ public:
                 }
                 ::memcpy(&caps, &this->client_bmpcache2_caps, sizeof(this->client_bmpcache2_caps));
             break;
+
+            case CAPSTYPE_GLYPHCACHE:
+                ::memcpy(&caps, &this->client_glyphcache_caps, sizeof(this->client_glyphcache_caps));
+            break;
         }
         return true;
     }
@@ -2798,10 +2803,13 @@ public:
                     if (this->verbose) {
                         LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
                     }
-                    GlyphCacheCaps glyph_cache_caps;
-                    glyph_cache_caps.recv(stream, capset_length);
+                    this->client_glyphcache_caps.recv(stream, capset_length);
                     if (this->verbose) {
-                        glyph_cache_caps.log("Receiving from client");
+                        this->client_glyphcache_caps.log("Receiving from client");
+                    }
+                    for (uint8_t i = 0; i < NUMBER_OF_GLYPH_CACHES; ++i) {
+                        this->client_info.number_of_entries_in_glyph_cache[i] =
+                            this->client_glyphcache_caps.GlyphCache[i].CacheEntries;
                     }
                 }
                 break;
@@ -4117,7 +4125,25 @@ public:
                         //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
                         FontChar & fc = const_cast<FontChar&>(gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item);
                         REDASSERT(fc);
-                        int g_idx = this->glyph_cache.find_glyph(fc, new_cmd.cache_id);
+
+                        int g_idx;
+                        if (this->glyph_cache.add_glyph(fc, new_cmd.cache_id, g_idx) ==
+                            GlyphCache::GLYPH_ADDED_TO_CACHE) {
+                            RDPGlyphCache cmd2(new_cmd.cache_id, /*1, */g_idx,
+                                            fc.offset,
+                                            fc.baseline,
+                                            fc.width,
+                                            fc.height,
+                                            fc.data.get());
+
+                            this->orders->draw(cmd2);
+
+                            if (  this->capture
+                               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                                this->capture->draw(cmd2);
+                            }
+                        }
+
                         REDASSERT(g_idx >= 0);
                         new_cmd.data[i] = static_cast<uint8_t>(g_idx);
                         if (has_delta_byte)
@@ -4130,6 +4156,9 @@ public:
                             {
                                 i++;
                             }
+                        }
+                        else {
+                            i++;
                         }
                     }
                     else if (new_cmd.data[i] == 0xFE)
@@ -4169,21 +4198,22 @@ public:
 
     void draw(const RDPGlyphCache & cmd)
     {
-        FontChar font_item(cmd.glyphData_x, cmd.glyphData_y,
-            cmd.glyphData_cx, cmd.glyphData_cy, -1);
-        memcpy(font_item.data.get(), cmd.glyphData_aj, font_item.datasize());
+        FontChar font_item(cmd.x, cmd.y, cmd.cx, cmd.cy, -1);
+        memcpy(font_item.data.get(), cmd.aj, font_item.datasize());
 
         int cacheidx = 0;
 
         if (this->glyph_cache.add_glyph(std::move(font_item), cmd.cacheId, cacheidx) ==
-            GlyphCache::GLYPH_ADDED_TO_CACHE)
-        {
-            RDPGlyphCache cmd2(cmd.cacheId, /*1, */cacheidx,
-                            cmd.glyphData_x,
-                            cmd.glyphData_y,
-                            cmd.glyphData_cx,
-                            cmd.glyphData_cy,
-                            cmd.glyphData_aj);
+                                        GlyphCache::GLYPH_ADDED_TO_CACHE) {
+            RDPGlyphCache cmd2( cmd.cacheId
+                              /*, 1 */
+                              , cacheidx
+                              , cmd.x
+                              , cmd.y
+                              , cmd.cx
+                              , cmd.cy
+                              , cmd.aj
+                              );
 
             this->orders->draw(cmd2);
 

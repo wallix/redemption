@@ -113,7 +113,6 @@ mod/internal/bouncer2_mod 100 100
 mod/internal/copy_paste 100 100
 mod/internal/flat_dialog_mod 100 100
 mod/internal/flat_login_mod 100 100
-mod/internal/flat_selector_mod 100 100
 mod/internal/flat_wab_close_mod 100 100
 mod/internal/interactive_password_mod 100 100
 mod/internal/internal_mod 100 100
@@ -129,7 +128,6 @@ mod/internal/widget2/flat_form 100 100
 mod/internal/widget2/flat_interactive_password 100 100
 mod/internal/widget2/flat_login 100 100
 mod/internal/widget2/flat_selector2 100 100
-mod/internal/widget2/flat_selector 100 100
 mod/internal/widget2/flat_vnc_authentification 100 100
 mod/internal/widget2/flat_wait 100 100
 mod/internal/widget2/grid 100 100

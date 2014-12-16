@@ -119,7 +119,7 @@ public:
 
         char str_error_message[1024];
 
-        std::size_t len = ::snprintf( str_error_message, sizeof(str_error_message), "-1 %s (%u)"
+        std::size_t len = ::snprintf( str_error_message, sizeof(str_error_message), "-1 %s (%d)"
                                     , (message ? message : "")
                                     , code
                                     );
