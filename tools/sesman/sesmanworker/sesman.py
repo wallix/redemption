@@ -960,17 +960,17 @@ class Sesman():
         flag = 0
         if ticketfields:
             field = ticketfields.get("description")
-            if field:
+            if field is not None:
                 flag += 1
                 if field == APPREQ_REQUIRED:
                     flag += 2
             field = ticketfields.get("ticket")
-            if field:
+            if field is not None:
                 flag += 4
                 if field == APPREQ_REQUIRED:
                     flag += 8
             field = ticketfields.get("duration")
-            if field:
+            if field is not None:
                 flag += 16
                 if field == APPREQ_REQUIRED:
                     flag += 32
