@@ -1,5 +1,3 @@
-#include <iostream> // TODO
-
 /*
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -706,8 +704,6 @@ public:
             !this->authorization_channels.cliprdr_up_is_authorized()
          && !strcmp(front_channel_name, channel_names::cliprdr)
         ) {
-            std::cout << " # # # filtre cliprdr up" << std::endl;
-
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "mod_rdp clipboard PDU");
             }
@@ -725,12 +721,8 @@ public:
                     this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(false, "\0");
                     return;
                 }
-                else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
-                    std::cout << " # # # RDPECLIP::CB_FILECONTENTS_REQUEST" << std::endl;
-                }
             }
             else if (msgType == RDPECLIP::CB_FORMAT_LIST) {
-                std::cout << " ## failure forlat list" << std::endl;
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                 }
@@ -751,10 +743,6 @@ public:
         ) {
             const uint16_t msgType = chunk.in_uint16_le();
             if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
-                std::cout << " # # RDPECLIP::CB_FILECONTENTS_REQUEST" << std::endl;
-
-                std::cout << " # # authorization_cliprdr_file: " << (this->authorization_channels.cliprdr_file_is_authorized()) << std::endl;
-
                 this->send_clipboard_pdu_to_front_channel<RDPECLIP::FileContentsResponse>(false);
                 return ;
             }
@@ -1894,8 +1882,6 @@ public:
                             ) {
                                 // Clipboard is unavailable and is a Clipboard PDU
 
-                                std::cout << " # # # filtre cliprdr down" << std::endl;
-
                                 TODO("RZ: Don't reject clipboard update, this can block rdesktop."
                                      " (until 1.7.1 ?)");
 
@@ -1905,14 +1891,10 @@ public:
 
                                 const uint16_t msgType = sec.payload.in_uint16_le();
 
-                                std::cout << "msgType: " << (msgType) << std::endl;
-
                                 if (this->authorization_channels.cliprdr_up_is_authorized()) {
                                     if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
                                         BStream out_s(256);
                                         RDPECLIP::FormatDataResponsePDU(false).emit(out_s, "\0");
-
-                                        std::cout << "out_s.size(): " << (out_s.size()) << std::endl;
 
                                         this->send_to_channel(
                                             mod_channel, out_s, out_s.size(),
@@ -1923,12 +1905,6 @@ public:
                                         sec.payload.p -= 2;
                                         this->send_to_front_channel(
                                             mod_channel.name, sec.payload.p, length, chunk_size, flags);
-                                    }
-                                    if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
-                                        std::cout << " # # # RDPECLIP::CB_FILECONTENTS_REQUEST" << std::endl;
-                                    }
-                                    if (msgType == RDPECLIP::CB_FILECONTENTS_RESPONSE) {
-                                        std::cout << " # # # RDPECLIP::CB_FILECONTENTS_RESPONSE" << std::endl;
                                     }
                                 }
                                 else if (msgType == RDPECLIP::CB_FORMAT_LIST) {
@@ -1955,8 +1931,6 @@ public:
                             ) {
                                 const uint16_t msgType = sec.payload.in_uint16_le();
                                 if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
-                                    std::cout << " # # # RDPECLIP::CB_FILECONTENTS_REQUEST" << std::endl;
-                                    std::cout << " # # authorization_cliprdr_file: " << (this->authorization_channels.cliprdr_file_is_authorized()) << std::endl;
                                     BStream out_s(256);
                                     const bool response_ok = false;
                                     RDPECLIP::FileContentsResponse(response_ok).emit(out_s);
