@@ -660,8 +660,6 @@ public:
             }
         } trace(this->verbose, front_channel_name);
 
-                                        std::cout << this->authorization_channels << std::endl;
-
         // filtering specific redirection (printer, smartcard, etc)
         if (!strcmp(front_channel_name, channel_names::rdpdr)) {
             auto p = chunk.p;
@@ -1950,8 +1948,7 @@ public:
                 std::cout << " # # RDPECLIP::CB_FORMAT_DATA_REQUEST" << std::endl;
                 sec.payload.p += 6;
                 std::cout << "requestFormatId: " << sec.payload.in_uint32_le() << '\n';
-                sec.payload.p += 10;
-                sec.payload.p -= 2;
+                sec.payload.p -= 12;
                 this->send_to_front_channel(mod_channel.name, sec.payload.p, length, chunk_size, flags);
             }
             else if (msgType == RDPECLIP::CB_FORMAT_LIST) {
@@ -1963,7 +1960,8 @@ public:
                 sec.payload.in_copy_bytes(data, len);
                 hexdump(data, len);
                 delete [] data;
-                sec.payload.p -= len + 6;
+                sec.payload.p -= len + 6 + 2;
+                this->send_to_front_channel(mod_channel.name, sec.payload.p, length, chunk_size, flags);
             }
             else {
                 sec.payload.p -= 2;

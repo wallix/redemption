@@ -130,16 +130,12 @@ private:
       std::string & s, bool set, std::array<bool, N> & values,
       const char * channel_name, std::array<char const *, N> restriction_names
     ) {
-        bool has = false;
-        bool add = false;
-
         auto pos = s.find(channel_name);
         if (pos != std::string::npos) {
             s.erase(pos, strlen(channel_name));
             for (auto & x : values) {
                 x = set;
             }
-            has = true;
         }
 
         auto first = values.begin();
@@ -148,7 +144,6 @@ private:
             if (pos != std::string::npos) {
                 s.erase(pos, strlen(name));
                 *first = set;
-                add = true;
             }
             ++first;
         }
@@ -197,8 +192,8 @@ private:
     std::string deny_;
     bool all_allow_ = false;
     bool all_deny_ = false;
-    std::array<bool, 5> rdpdr_restriction_ {};
-    std::array<bool, 2> cliprdr_restriction_ {};
+    std::array<bool, 5> rdpdr_restriction_ {{}};
+    std::array<bool, 2> cliprdr_restriction_ {{}};
 };
 constexpr decltype(AuthorizationChannels::cliprde_list) AuthorizationChannels::cliprde_list;
 constexpr decltype(AuthorizationChannels::rdpdr_list) AuthorizationChannels::rdpdr_list;
