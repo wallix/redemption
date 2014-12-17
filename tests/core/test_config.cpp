@@ -2699,7 +2699,13 @@ BOOST_AUTO_TEST_CASE(TestConfigSignedField)
 
 BOOST_AUTO_TEST_CASE(TestConfigBoolField)
 {
-
+    BOOST_CHECK_EQUAL(true, bool_from_cstr("1"));
+    BOOST_CHECK_EQUAL(true, bool_from_cstr("yes"));
+    BOOST_CHECK_EQUAL(true, bool_from_cstr("true"));
+    BOOST_CHECK_EQUAL(true, bool_from_cstr("True"));
+    BOOST_CHECK_EQUAL(true, bool_from_cstr("TRUE"));
+    BOOST_CHECK_EQUAL(false, bool_from_cstr("Tru"));
+    BOOST_CHECK_EQUAL(false, bool_from_cstr("111"));
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigIp)
