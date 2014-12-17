@@ -361,7 +361,7 @@ class Engine(object):
                             , temp_resource_service_protocol_cn
                             )
                            )
-        Logger().info("targets list = %s'" % targets)
+        # Logger().info("targets list = %s'" % targets)
         return targets, item_filtered
 
     def reset_proxy_rights(self):
@@ -370,11 +370,11 @@ class Engine(object):
         self.target_right = None
 
     def valid_device_name(self, protocols, target_device):
-        Logger().info("VALID DEVICE NAME target_device = '%s'" % target_device)
+        # Logger().info("VALID DEVICE NAME target_device = '%s'" % target_device)
         prights = self.wabengine.get_proxy_rights(protocols, target_device,
                                                  check_timeframes=False)
         rights = prights.rights
-        Logger().info("VALID DEVICE NAME Rights = '%s', len = %s" % (rights, len(rights)))
+        # Logger().info("VALID DEVICE NAME Rights = '%s', len = %s" % (rights, len(rights)))
         if rights:
             return True
         return False
@@ -580,8 +580,8 @@ class Engine(object):
     def check_target(self, target, pid=None, request_ticket=None):
         status, infos = self.wabengine.check_target(target, self.get_pidhandler(pid),
                                                     request_ticket)
-        Logger().info("status : %s" % status)
-        Logger().info("infos : %s" % infos)
+        # Logger().info("status : %s" % status)
+        # Logger().info("infos : %s" % infos)
         deconnection_time = infos.get("deconnection_time")
         if deconnection_time:
             Logger().info("deconnection_time updated from %s to %s" % (target.deconnection_time, deconnection_time))
