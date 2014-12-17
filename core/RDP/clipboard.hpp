@@ -500,11 +500,10 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
 
-        if (this->msgFlags_ == CB_RESPONSE_OK) {
-            uint16_t offset_dataLen_;
+        const uint32_t offset_dataLen_ = stream.get_offset();
+        stream.out_uint32_le(0);
 
-            offset_dataLen_ = stream.get_offset();
-            stream.out_uint32_le(0);
+        if (this->msgFlags_ == CB_RESPONSE_OK) {
 
             stream.out_unistr_crlf(utf8_string);
 
@@ -512,9 +511,9 @@ struct FormatDataResponsePDU : public CliprdrHeader {
                                       - offset_dataLen_
                                       - 4                   /* dataLen_(4) */
                                     , offset_dataLen_);
-
-            stream.mark_end();
         }
+
+        stream.mark_end();
     }
 
     using CliprdrHeader::recv;
