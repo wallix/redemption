@@ -221,13 +221,27 @@ std::array<std::string, 2> update_authorized_channels(const std::string & allow,
                                                       const std::string & deny,
                                                       const std::string & proxy_opt) {
     auto remove=[](std::string & str, const char * pattern) {
-        auto pos = str.find(pattern);
-        if (pos != std::string::npos) {
+        size_t pos = 0;
+        while ((pos = str.find(pattern, pos)) != std::string::npos) {
             str.erase(pos, strlen(pattern));
         }
     };
 
     std::array<std::string, 2> ret{{allow + ',', deny + ','}};
+
+    char const * opts_channel_name[] = {
+        "drdynvc,",
+        "pnpdr,",
+        "tsmf,",
+        "tsvctkt,",
+        "xpsrd,",
+        "wmsdl,",
+        "wmsaud,",
+        "rdpsnd,",
+        "urbdrc,",
+        "xpsrd,",
+        "tsvctk,"
+    };
 
     for (std::string & s : ret) {
         remove(s, "cliprdr,");
@@ -236,6 +250,9 @@ std::array<std::string, 2> update_authorized_channels(const std::string & allow,
             remove(s, str);
         }
         for (auto str : AuthorizationChannels::rdpdr_list) {
+            remove(s, str);
+        }
+        for (auto str : opts_channel_name) {
             remove(s, str);
         }
         if (!s.empty() && s.back() == ',') {
@@ -257,10 +274,23 @@ std::array<std::string, 2> update_authorized_channels(const std::string & allow,
         {"RDP_DEVICE_REDIRECTION_PORT", ",rdpdr_port"},
         {"RDP_DEVICE_REDIRECTION_DRIVE", ",rdpdr_drive"},
         {"RDP_DEVICE_REDIRECTION_SMARTCARD", ",rdpdr_smartcard"},
+        {"RDP_DRDYNVC", ",drdynvc"},
+        {"RDP_PNPDR", ",pnpdr"},
+        {"RDP_TSMF", ",tsmf"},
+        {"RDP_TSVCTKT", ",tsvctkt"},
+        {"RDP_XPSRD", ",xpsrd"},
+        {"RDP_WMSDL", ",wmsdl"},
+        {"RDP_WMSAUD", ",wmsaud"},
+        {"RDP_RDPSND", ",rdpsnd"},
+        {"RDP_URBDRC", ",urbdrc"},
+        {"RDP_XPSRD", ",xpsrd"},
+        {"RDP_TSVCTK", ",tsvctk"}
     };
 
     static_assert(
-        AuthorizationChannels::rdpdr_list.size() + AuthorizationChannels::cliprde_list.size()
+        AuthorizationChannels::rdpdr_list.size()
+      + AuthorizationChannels::cliprde_list.size()
+      + std::extent<decltype(opts_channel_name)>::value
      == std::extent<decltype(opts_channels)>::value
     , "RDP_OPTION.size() error");
 

@@ -133,24 +133,45 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsRdpdr)
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr_port"), true);
 }
 
+BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllAll)
+{
+    AuthorizationChannels authorization_channels = make_authorization_channels("*", "*");
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpsnd"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(1), false);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_up_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_down_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_file_is_authorized(), false);
+
+    authorization_channels = make_authorization_channels("*,rdpsnd", "*");
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpsnd"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(1), false);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_up_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_down_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization_channels.cliprdr_file_is_authorized(), false);
+}
+
 
 BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
 {
     auto pair = update_authorized_channels(
-      "cliprdr,drdynvc,cliprdr_down,rdpdr_general,rdpdr,rdpsnd",
+      "cliprdr,drdynvc,cliprdr_down,echo,rdpdr_general,rdpdr,rdpsnd,blah",
       "rdpdr_port",
       ""
     );
-    BOOST_CHECK_EQUAL(std::get<0>(pair), "drdynvc,rdpsnd");
-    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_general,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard");
+    BOOST_CHECK_EQUAL(std::get<0>(pair), "echo,blah");
+    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_general,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard,drdynvc,pnpdr,tsmf,tsvctkt,xpsrd,wmsdl,wmsaud,rdpsnd,urbdrc,xpsrd,tsvctk");
 
     pair = update_authorized_channels(
       "cliprdr,drdynvc,cliprdr_down,rdpdr_general,rdpsnd",
       "",
       "RDP_DEVICE_REDIRECTION_GENERAL"
     );
-    BOOST_CHECK_EQUAL(std::get<0>(pair), "drdynvc,rdpsnd,rdpdr_general");
-    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard");
+    BOOST_CHECK_EQUAL(std::get<0>(pair), "rdpdr_general");
+    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard,drdynvc,pnpdr,tsmf,tsvctkt,xpsrd,wmsdl,wmsaud,rdpsnd,urbdrc,xpsrd,tsvctk");
 
     pair = update_authorized_channels(
       "",
@@ -158,7 +179,7 @@ BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
       "RDP_CLIPBOARD_DOWN"
     );
     BOOST_CHECK_EQUAL(std::get<0>(pair), "cliprdr_down");
-    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_file,rdpdr_general,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard");
+    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_file,rdpdr_general,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard,drdynvc,pnpdr,tsmf,tsvctkt,xpsrd,wmsdl,wmsaud,rdpsnd,urbdrc,xpsrd,tsvctk");
 
     pair = update_authorized_channels(
       "*",
@@ -166,5 +187,21 @@ BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
       "RDP_CLIPBOARD_DOWN"
     );
     BOOST_CHECK_EQUAL(std::get<0>(pair), "*,cliprdr_down");
-    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_file,rdpdr_general,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard");
+    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_file,rdpdr_general,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard,drdynvc,pnpdr,tsmf,tsvctkt,xpsrd,wmsdl,wmsaud,rdpsnd,urbdrc,xpsrd,tsvctk");
+
+    pair = update_authorized_channels(
+      "rdpdr_port,tsmf",
+      "rdpdr",
+      "RDP_CLIPBOARD_DOWN,RDP_DRDYNVC,RDP_DEVICE_REDIRECTION_PORT"
+    );
+    BOOST_CHECK_EQUAL(std::get<0>(pair), "cliprdr_down,rdpdr_port,drdynvc");
+    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_file,rdpdr_general,rdpdr_printer,rdpdr_drive,rdpdr_smartcard,pnpdr,tsmf,tsvctkt,xpsrd,wmsdl,wmsaud,rdpsnd,urbdrc,xpsrd,tsvctk");
+
+    pair = update_authorized_channels(
+      "*,rdpdr_port,rdpdr_port,tsmf,tsmf",
+      "rdpdr,rdpdr,rdpdr",
+      "RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_DOWN"
+    );
+    BOOST_CHECK_EQUAL(std::get<0>(pair), "*,cliprdr_down");
+    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_file,rdpdr_general,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard,drdynvc,pnpdr,tsmf,tsvctkt,xpsrd,wmsdl,wmsaud,rdpsnd,urbdrc,xpsrd,tsvctk");
 }
