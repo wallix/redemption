@@ -697,14 +697,16 @@ public:
                                                           );
                 this->mod_transport = t;
 
-                // BEGIN READ PROXY_OPT
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
 
-                auto pair = update_authorized_channels(this->ini.mod_rdp.allow_channels.str(),
-                                                       this->ini.mod_rdp.deny_channels.str(),
-                                                       this->ini.context.proxy_opt.get().str());
-                this->ini.mod_rdp.allow_channels.copy_std_str(pair.first);
-                this->ini.mod_rdp.deny_channels.copy_std_str(pair.second);
+                // BEGIN READ PROXY_OPT
+                if (!this->ini.globals.disable_proxy_opt) {
+                    auto pair = update_authorized_channels(this->ini.mod_rdp.allow_channels.str(),
+                                                           this->ini.mod_rdp.deny_channels.str(),
+                                                           this->ini.context.proxy_opt.get().str());
+                    this->ini.mod_rdp.allow_channels.copy_std_str(std::get<0>(pair));
+                    this->ini.mod_rdp.deny_channels.copy_std_str(std::get<1>(pair));
+                }
                 // END READ PROXY_OPT
 
                 ModRDPParams mod_rdp_params( this->ini.globals.target_user.get_cstr()
@@ -797,8 +799,8 @@ public:
                                         , this->front.client_info.height
                                         , this->front.client_info.keylayout
                                         , this->front.keymap.key_flags
-                                        , this->ini.mod_vnc.clipboard.get()
-                                        , this->ini.mod_vnc.clipboard.get()
+                                        , this->ini.mod_vnc.clipboard_up.get()
+                                        , this->ini.mod_vnc.clipboard_down.get()
                                         , this->ini.mod_vnc.encodings.c_str()
                                         , this->ini.mod_vnc.allow_authentification_retries
                                         , true

@@ -500,11 +500,10 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
 
-        if (this->msgFlags_ == CB_RESPONSE_OK) {
-            uint16_t offset_dataLen_;
+        const uint32_t offset_dataLen_ = stream.get_offset();
+        stream.out_uint32_le(0);
 
-            offset_dataLen_ = stream.get_offset();
-            stream.out_uint32_le(0);
+        if (this->msgFlags_ == CB_RESPONSE_OK) {
 
             stream.out_unistr_crlf(utf8_string);
 
@@ -512,12 +511,94 @@ struct FormatDataResponsePDU : public CliprdrHeader {
                                       - offset_dataLen_
                                       - 4                   /* dataLen_(4) */
                                     , offset_dataLen_);
-
-            stream.mark_end();
         }
+
+        stream.mark_end();
     }
 
     using CliprdrHeader::recv;
+};
+
+
+struct FileContentsResponse : CliprdrHeader {
+
+    FileContentsResponse(bool response_ok = false)
+    : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 0)
+    {}
+
+    void emit(Stream & stream) {
+        CliprdrHeader::emit(stream);
+//         stream.out_uint32_le(0);
+//         stream.out_uint64_le(0);
+    }
+};
+
+
+struct PacketFileList {
+    uint32_t cItems;
+    /*variable fileDescriptorArray*/
+};
+
+
+// +----------------------------------------------------------------------------------------------------+
+//  Value                                |  Meaning                                                     |
+// +----------------------------------------------------------------------------------------------------+
+// FD_ATTRIBUTES  0x00000004             | The fileAttributes field contains valid data.                |
+// +----------------------------------------------------------------------------------------------------+
+// FD_FILESIZE  0x00000040               | The fileSizeHigh and fileSizeLow fields contain valid data.  |
+// +----------------------------------------------------------------------------------------------------+
+// FD_WRITESTIME  0x00000020             | The lastWriteTime field contains valid data.                 |
+// +----------------------------------------------------------------------------------------------------+
+// FD_SHOWPROGRESSUI 0x00004000          | A progress indicator SHOULD be shown when copying the file.  |
+// +----------------------------------------------------------------------------------------------------+
+
+
+enum FileDescriptorType : uint32_t {
+    FD_ATTRIBUTES     = 0x0004,
+    FD_FILESIZE       = 0x0040,
+    FD_WRITESTIME     = 0x0020,
+    FD_SHOWPROGRESSUI = 0x4000
+};
+
+// +---------------------------------------------------------------------------------------------------------------+
+//  Value                                |  Meaning                                                                |
+// +---------------------------------------------------------------------------------------------------------------+
+// FILE_ATTRIBUTE_READONLY  0x00000001   | A file that is read-only. Applications can read the file,               |
+//                                         but cannot write to it or delete it.                                    |
+// +---------------------------------------------------------------------------------------------------------------+
+// FILE_ATTRIBUTE_HIDDEN  0x00000002     | The file or directory is hidden.                                        |
+//                                         It is not included in an ordinary directory listing.                    |
+// +---------------------------------------------------------------------------------------------------------------+
+// FILE_ATTRIBUTE_SYSTEM  0x00000004     | A file or directory that the operating system uses a part of,           |
+//                                         or uses exclusively.                                                    |
+// +---------------------------------------------------------------------------------------------------------------+
+// FILE_ATTRIBUTE_DIRECTORY  0x00000010  | Identifies a directory.                                                 |
+// +---------------------------------------------------------------------------------------------------------------+
+// FILE_ATTRIBUTE_ARCHIVE  0x00000020    | A file or directory that is an archive file or directory. Applications  |
+//                                         typically use this attribute to mark files for backup or removal.       |
+// +---------------------------------------------------------------------------------------------------------------+
+// FILE_ATTRIBUTE_NORMAL  0x00000080     |  A file that does not have other attributes set.                        |
+//                                          This attribute is valid only when used alone.                          |
+// +---------------------------------------------------------------------------------------------------------------+
+
+enum FileAttributes : uint32_t {
+    FILE_ATTRIBUTES_READONLY  = 0x0001,
+    FILE_ATTRIBUTES_HIDDEN    = 0x0002,
+    FILE_ATTRIBUTES_SYSTEM    = 0x0004,
+    FILE_ATTRIBUTES_DIRECTORY = 0x0010,
+    FILE_ATTRIBUTES_ARCHIVE   = 0x0020,
+    FILE_ATTRIBUTES_NORMAL    = 0x0080
+};
+
+struct FileDescriptor {
+    FileDescriptorType flags;
+    //uint32_t reserved1 = 0;
+    FileAttributes fileAttributes;
+    //uint16_t reserved2 = 0;
+    uint64_t lastWriteTime;
+    uint32_t fileSizeHigh;
+    uint32_t fileSizeLow;
+    char fileName[520];
 };
 
 }   // namespace RDPECLIP
