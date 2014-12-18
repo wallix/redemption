@@ -159,4 +159,12 @@ BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
     );
     BOOST_CHECK_EQUAL(std::get<0>(pair), "cliprdr_down");
     BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_file,rdpdr_general,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard");
+
+    pair = update_authorized_channels(
+      "*",
+      "",
+      "RDP_CLIPBOARD_DOWN"
+    );
+    BOOST_CHECK_EQUAL(std::get<0>(pair), "*,cliprdr_down");
+    BOOST_CHECK_EQUAL(std::get<1>(pair), "cliprdr_up,cliprdr_file,rdpdr_general,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard");
 }
