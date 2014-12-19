@@ -355,7 +355,7 @@ public:
         delete this->front;
         delete this->client;
         // Suppress Session file from disk (original name with PID or renamed with session_id)
-        if (!this->ini.context.session_id.get().is_empty()) {
+        if (!this->ini.context.session_id.get().empty()) {
             char new_session_file[256];
             snprintf( new_session_file, sizeof(new_session_file), "%s/session_%s.pid"
                     , PID_PATH , this->ini.context.session_id.get_cstr());

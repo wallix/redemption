@@ -228,7 +228,7 @@ public:
 
         // Close by rejeted message received
         if (!this->ini.context.rejected.is_empty()) {
-            this->ini.context.auth_error_message.copy_str(this->ini.context.rejected.get());
+            this->ini.context.auth_error_message = this->ini.context.rejected.get();
             LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini.context.rejected.get_cstr());
             this->ini.context.rejected.set_empty();
             mm.invoke_close_box(NULL, signal, now);
@@ -327,7 +327,7 @@ public:
         TODO("Check if this->mod is RDP MODULE");
         if (mm.connected && this->ini.globals.auth_channel[0]) {
             // Get sesman answer to AUTHCHANNEL_TARGET
-            if (!this->ini.context.authchannel_answer.get().is_empty()) {
+            if (!this->ini.context.authchannel_answer.get().empty()) {
                 // If set, transmit to auth_channel channel
                 mm.mod->send_auth_channel_data(this->ini.context.authchannel_answer.get_cstr());
                 this->ini.context.authchannel_answer.use();

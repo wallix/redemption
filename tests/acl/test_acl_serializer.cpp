@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     AclSerializer acl(&ini, trans, 0);
     ini.context.session_id.set_empty();
     ini.context_set_value(AUTHID_AUTH_USER,"testuser");
-    BOOST_CHECK(ini.context.session_id.get().is_empty());
+    BOOST_CHECK(ini.context.session_id.get().empty());
     BOOST_CHECK(!ini.context_is_asked(AUTHID_AUTH_USER));
 
     try {
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
         BOOST_CHECK(false);
     }
     BOOST_CHECK(ini.context_is_asked(AUTHID_AUTH_USER));
-    BOOST_CHECK(!ini.context.session_id.get().is_empty());
+    BOOST_CHECK(!ini.context.session_id.get().empty());
 
     // CASE EXCEPTION
     // try exception

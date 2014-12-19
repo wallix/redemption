@@ -141,9 +141,9 @@ public:
         if (this->verbose & 0x40){
             LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %u", size);
         }
-        bool flag = this->ini->context.session_id.get().is_empty();
+        bool flag = this->ini->context.session_id.get().empty();
         this->in_items(stream);
-        if (flag && !this->ini->context.session_id.get().is_empty()) {
+        if (flag && !this->ini->context.session_id.get().empty()) {
             int child_pid = getpid();
             char old_session_file[256];
             sprintf(old_session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);

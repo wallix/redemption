@@ -103,7 +103,7 @@ private:
     };
 
 public:
-    redemption::string encodings;
+    std::string encodings;
 
 private:
     int state;

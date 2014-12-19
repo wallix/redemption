@@ -24,13 +24,13 @@
 #define _REDEMPTION_MOD_RDP_RDP_ORDERS_HPP_
 
 #include <string.h>
+#include <string>
 
 #include "log.hpp"
 #include "defines.hpp"
 #include "in_file_transport.hpp"
 #include "out_file_transport.hpp"
 #include "stream.hpp"
-#include "string.hpp"
 #include "fileutils.hpp"
 
 #include "RDP/protocol.hpp"
@@ -92,9 +92,9 @@ struct rdp_orders {
     size_t recv_bmp_cache_count;
     size_t recv_order_count;
 
-    redemption::string target_host;
-    bool               enable_persistent_disk_bitmap_cache;
-    bool               persist_bitmap_cache_on_disk;
+    std::string target_host;
+    bool        enable_persistent_disk_bitmap_cache;
+    bool        persist_bitmap_cache_on_disk;
 
     rdp_orders( const char * target_host, bool enable_persistent_disk_bitmap_cache
               , bool persist_bitmap_cache_on_disk, uint32_t verbose)

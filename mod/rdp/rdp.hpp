@@ -181,17 +181,17 @@ class mod_rdp : public mod_api {
 
     rdp_mppc_unified_dec mppc_dec;
 
-    redemption::string * error_message;
+    std::string * error_message;
 
     const bool     disconnect_on_logon_user_change;
     const uint32_t open_session_timeout;
 
     Timeout  open_session_timeout_checker;
 
-    redemption::string output_filename;
+    std::string output_filename;
 
-    redemption::string end_session_reason;
-    redemption::string end_session_message;
+    std::string end_session_reason;
+    std::string end_session_message;
 
     const unsigned certificate_change_action;
 
@@ -290,7 +290,7 @@ public:
             else {
                 LOG(LOG_INFO, "Creation of new mod 'RDP Transparent'");
 
-                if (this->output_filename.is_empty()) {
+                if (this->output_filename.empty()) {
                     LOG(LOG_INFO, "Use transparent capabilities.");
                 }
                 else {
@@ -476,8 +476,8 @@ public:
     {
         delete this->transparent_recorder;
 
-        if (this->acl && !this->end_session_reason.is_empty() &&
-            !this->end_session_message.is_empty()) {
+        if (this->acl && !this->end_session_reason.empty() &&
+            !this->end_session_message.empty()) {
             this->acl->report(this->end_session_reason.c_str(),
                 this->end_session_message.c_str());
         }
@@ -1854,7 +1854,7 @@ public:
                             if ( this->auth_channel[0] /*&& this->acl */
                              && !strcmp(mod_channel.name, this->auth_channel)
                             ) {
-                                redemption::string auth_channel_message((const char *)sec.payload.p, sec.payload.in_remain());
+                                std::string auth_channel_message((const char *)sec.payload.p, sec.payload.in_remain());
                                 LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message.c_str());
                                 //if (this->auth_channel_state == 0) {
                                     this->auth_channel_flags = flags;
@@ -2260,15 +2260,15 @@ public:
                     }
                 }
             }
-            catch(Error & e){
+            catch(Error const & e){
                 if (this->acl)
                 {
                     char message[128];
                     snprintf(message, sizeof(message), "Code=%d", e.id);
                     this->acl->report("SESSION_EXCEPTION", message);
 
-                    this->end_session_reason.empty();
-                    this->end_session_message.empty();
+                    this->end_session_reason.clear();
+                    this->end_session_message.clear();
                 }
 
                 BStream stream(256);
@@ -2277,7 +2277,7 @@ public:
                     this->nego.trans->send(stream);
                     LOG(LOG_INFO, "Connection to server closed");
                 }
-                catch(Error & e){
+                catch(Error const & e){
                     LOG(LOG_INFO, "Connection to server Already closed: error=%d", e.id);
                 };
                 this->event.signal = BACK_EVENT_NEXT;
@@ -2295,8 +2295,7 @@ public:
             switch(this->open_session_timeout_checker.check(now)) {
             case Timeout::TIMEOUT_REACHED:
                 if (this->error_message) {
-                    this->error_message->copy_c_str(
-                        "Logon timer expired!");
+                    *this->error_message = "Logon timer expired!";
                 }
                 LOG(LOG_ERR,
                     "Logon timer expired on %s. The session will be disconnected.",
@@ -3816,8 +3815,7 @@ public:
                strcasecmp(domain_username_format_1, this->username) &&
                strcasecmp(username, this->username))))) {
             if (this->error_message) {
-                this->error_message->copy_c_str(
-                    "Unauthorized logon user change detected!");
+                *this->error_message = "Unauthorized logon user change detected!";
             }
             LOG(LOG_ERR,
                 "Unauthorized logon user change detected on %s (%s\\%s) -> (%s\\%s). "
@@ -3828,9 +3826,8 @@ public:
                     "The session will be disconnected.",
                 this->hostname, domain, username);
 
-            this->end_session_reason.copy_c_str("OPEN_SESSION_FAILED");
-            this->end_session_message.copy_c_str(
-                "Unauthorized logon user change detected.");
+            this->end_session_reason = "OPEN_SESSION_FAILED";
+            this->end_session_message = "Unauthorized logon user change detected.";
 
             throw Error(ERR_RDP_LOGON_USER_CHANGED);
         }
@@ -3839,8 +3836,8 @@ public:
         {
             this->acl->report("OPEN_SESSION_SUCCESSFUL", "Ok.");
         }
-        this->end_session_reason.copy_c_str("CLOSE_SESSION_SUCCESSFUL");
-        this->end_session_message.copy_c_str("OK.");
+        this->end_session_reason = "CLOSE_SESSION_SUCCESSFUL";
+        this->end_session_message = "OK.";
 
         if (this->open_session_timeout) {
             this->open_session_timeout_checker.cancel_timeout();
@@ -3919,7 +3916,7 @@ public:
             }
         };
         FILE * const output_file =
-            !this->output_filename.is_empty()
+            !this->output_filename.empty()
             ? fopen(this->output_filename.c_str(), "w")
             : nullptr;
         autoclose_file autoclose{output_file};

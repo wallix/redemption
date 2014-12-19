@@ -25,7 +25,6 @@
 
 #include "defines.hpp"
 #include "transport.hpp"
-#include "string.hpp"
 #include "netutils.hpp"
 #include "fileutils.hpp"
 #include "openssl_crypto.hpp"
@@ -35,6 +34,7 @@
 #include <fcntl.h>
 
 #include <memory>
+#include <string>
 
 // X509_NAME_print_ex() prints a human readable version of nm to BIO out.
 // Each line (for multiline formats) is indented by indent spaces.
@@ -110,7 +110,7 @@ public:
     size_t public_key_length;
     TODO("check if buffer is defined before accessing it")
 
-    redemption::string * error_message;
+    std::string * error_message;
 
     SSL_CTX * allocated_ctx;
     SSL     * allocated_ssl;
@@ -118,7 +118,7 @@ public:
     SSL * io;
 
     SocketTransport( const char * name, int sck, const char *ip_address, int port
-                   , uint32_t verbose, redemption::string * error_message = 0)
+                   , uint32_t verbose, std::string * error_message = 0)
     : tls(false)
     , sck(sck)
     , sck_closed(0)
@@ -801,7 +801,7 @@ public:
         if (recursive_create_directory(CERTIF_PATH "/", S_IRWXU|S_IRWXG, 0) != 0) {
             LOG(LOG_ERR, "Failed to create certificate directory: " CERTIF_PATH "/");
             if (this->error_message) {
-                this->error_message->copy_c_str("Failed to create certificate directory: \"" CERTIF_PATH "/\"");
+                *this->error_message = "Failed to create certificate directory: \"" CERTIF_PATH "/\"";
             }
             throw Error(ERR_TRANSPORT, 0);
         }
@@ -819,9 +819,9 @@ public:
                 // failed to open stored certificate file
                 LOG(LOG_ERR, "Failed to open stored certificate: \"%s\"\n", filename);
                 if (this->error_message) {
-                    this->error_message->copy_c_str("Failed to open stored certificate: \"");
-                    this->error_message->concatenate_c_str(filename);
-                    this->error_message->concatenate_c_str("\"\n");
+                    *this->error_message = "Failed to open stored certificate: \"";
+                    *this->error_message += filename;
+                    *this->error_message += "\"\n";
                 }
                 throw Error(ERR_TRANSPORT, 0);
             }
@@ -839,9 +839,9 @@ public:
                 // failed to read stored certificate file
                 LOG(LOG_ERR, "Failed to read stored certificate: \"%s\"\n", filename);
                 if (this->error_message) {
-                    this->error_message->copy_c_str("Failed to read stored certificate: \"");
-                    this->error_message->concatenate_c_str(filename);
-                    this->error_message->concatenate_c_str("\"\n");
+                    *this->error_message = "Failed to read stored certificate: \"";
+                    *this->error_message += filename;
+                    *this->error_message += "\"\n";
                 }
                 throw Error(ERR_TRANSPORT, 0);
             }
@@ -916,7 +916,7 @@ public:
                     char buff[256];
                     snprintf(buff, sizeof(buff), "The certificate for host %s:%d has changed!",
                              this->ip_address, this->port);
-                    this->error_message->copy_c_str(buff);
+                    *this->error_message = buff;
                 }
                 LOG(LOG_ERR, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
                     this->ip_address, this->port,

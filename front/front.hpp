@@ -195,7 +195,7 @@ private:
     GlyphCacheCaps     client_glyphcache_caps;
     bool               use_bitmapcache_rev2;
 
-    redemption::string   server_capabilities_filename;
+    std::string        server_capabilities_filename;
     Transport          * persistent_key_list_transport;
 
     rdp_mppc_enc              * mppc_enc;
@@ -2479,7 +2479,7 @@ public:
         if (this->fastpath_support) {
             general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
         }
-        if (!this->server_capabilities_filename.is_empty()) {
+        if (!this->server_capabilities_filename.empty()) {
             GeneralCapsLoader generalcaps_loader(general_caps);
 
             ConfigurationLoader cfg_loader(generalcaps_loader, this->server_capabilities_filename.c_str());
@@ -2495,7 +2495,7 @@ public:
         bitmap_caps.desktopWidth = this->client_info.width;
         bitmap_caps.desktopHeight = this->client_info.height;
         bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
-        if (!this->server_capabilities_filename.is_empty()) {
+        if (!this->server_capabilities_filename.empty()) {
             BitmapCapsLoader bitmapcaps_loader(bitmap_caps);
 
             ConfigurationLoader cfg_loader(bitmapcaps_loader, this->server_capabilities_filename.c_str());
@@ -2532,7 +2532,7 @@ public:
         order_caps.pad4octetsB = 0x0f4240;
         order_caps.desktopSaveSize = 0x0f4240;
         order_caps.pad2octetsC = 1;
-        if (!this->server_capabilities_filename.is_empty()) {
+        if (!this->server_capabilities_filename.empty()) {
             OrderCapsLoader ordercaps_loader(order_caps);
 
             ConfigurationLoader cfg_loader(ordercaps_loader, this->server_capabilities_filename.c_str());

@@ -25,10 +25,11 @@
 #include "cfgloader.hpp"
 // BASE64 TRY
 // #include "base64.hpp"
-#include "string.hpp"
+
 #include "parser.hpp"
 #include <set>
 #include <map>
+#include <string>
 
 struct FieldObserver : public ConfigurationHolder {
     /******************************************************
@@ -182,37 +183,37 @@ struct FieldObserver : public ConfigurationHolder {
      */
     class StringField : public BaseField {
     protected:
-        redemption::string data;
+        std::string data;
     public:
         StringField() : BaseField()
         {
         }
 
-        void set(redemption::string const & string) {
+        void set(std::string const & string) {
             this->set_from_cstr(string.c_str());
         }
         void set_empty() {
-            if (!this->data.is_empty()){
+            if (!this->data.empty()){
                 this->modify();
-                this->data.empty();
+                this->data.clear();
             }
         }
         virtual void set_from_acl(const char * cstr) {
             this->modify_from_acl();
-            this->data.copy_c_str(cstr);
+            this->data = cstr;
             this->asked = false;
         }
         virtual void set_from_cstr(const char * cstr) {
-            if (this->asked || strcmp(this->data.c_str(),cstr)) {
+            if (this->asked || this->data.compare(cstr)) {
                 this->modify();
-                this->data.copy_c_str(cstr);
+                this->data = cstr;
             }
             this->asked = false;
         }
         bool is_empty(){
-            return this->data.is_empty();
+            return this->data.empty();
         }
-        const redemption::string & get() const {
+        const std::string & get() const {
             return this->data;
         }
 

@@ -22,7 +22,8 @@
 #define _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_
 
 #include "log.hpp"
-#include "string.hpp"
+
+#include <string>
 
 class Transport;
 class auth_api;
@@ -59,9 +60,9 @@ struct ModRDPParams {
 
     int rdp_compression;
 
-    redemption::string * error_message;
-    bool                 disconnect_on_logon_user_change;
-    uint32_t             open_session_timeout;
+    std::string * error_message;
+    bool          disconnect_on_logon_user_change;
+    uint32_t      open_session_timeout;
 
     unsigned certificate_change_action;
 
@@ -73,8 +74,8 @@ struct ModRDPParams {
 
     uint32_t password_printing_mode;
 
-    const redemption::string * allow_channels;
-    const redemption::string * deny_channels;
+    const std::string * allow_channels;
+    const std::string * deny_channels;
 
     uint32_t verbose;
     uint32_t cache_verbose;

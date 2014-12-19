@@ -23,7 +23,6 @@
 
 #include "movable_noncopyable.hpp"
 #include "splitter.hpp"
-#include "string.hpp"
 
 #include <cstring>
 #include <string>
@@ -205,21 +204,21 @@ constexpr decltype(AuthorizationChannels::cliprde_list) AuthorizationChannels::c
 constexpr decltype(AuthorizationChannels::rdpdr_list) AuthorizationChannels::rdpdr_list;
 
 
-AuthorizationChannels make_authorization_channels(const redemption::string & allow, const redemption::string & deny) {
-    if (deny.length() == 1 && deny.str()[0] == '*') {
-        return AuthorizationChannels(allow.str(), true);
+AuthorizationChannels make_authorization_channels(const std::string & allow, const std::string & deny) {
+    if (deny.length() == 1 && deny[0] == '*') {
+        return AuthorizationChannels(allow, true);
     }
-    else if (allow.length() == 1 && allow.str()[0] == '*') {
-        return AuthorizationChannels(true, deny.str());
+    else if (allow.length() == 1 && allow[0] == '*') {
+        return AuthorizationChannels(true, deny);
     }
     else {
-        return AuthorizationChannels(allow.str(), deny.str());
+        return AuthorizationChannels(allow, deny);
     }
 }
 
-std::array<std::string, 2> update_authorized_channels(const std::string & allow,
-                                                      const std::string & deny,
-                                                      const std::string & proxy_opt) {
+void update_authorized_channels(std::string & allow,
+                                std::string & deny,
+                                const std::string & proxy_opt) {
     auto remove=[](std::string & str, const char * pattern) {
         size_t pos = 0;
         while ((pos = str.find(pattern, pos)) != std::string::npos) {
@@ -227,7 +226,16 @@ std::array<std::string, 2> update_authorized_channels(const std::string & allow,
         }
     };
 
-    std::array<std::string, 2> ret{{allow + ',', deny + ','}};
+    allow += ',';
+    deny += ',';
+
+    struct ref_string {
+        std::string & s;
+        std::string & get() { return this->s; };
+        operator std::string & () { return this->s; };
+    };
+
+    std::array<ref_string, 2> ret{{{allow}, {deny}}};
 
     char const * opts_channel_name[] = {
         "drdynvc,",
@@ -295,7 +303,7 @@ std::array<std::string, 2> update_authorized_channels(const std::string & allow,
     , "RDP_OPTION.size() error");
 
     for (auto & x : opts_channels) {
-        ret[(proxy_opt.find(x.opt) != std::string::npos) ? 0 : 1] += x.channel;
+        ret[(proxy_opt.find(x.opt) != std::string::npos) ? 0 : 1].get() += x.channel;
     }
 
     for (std::string & s : ret) {
@@ -303,8 +311,6 @@ std::array<std::string, 2> update_authorized_channels(const std::string & allow,
             s.erase(0,1);
         }
     }
-
-    return ret;
 }
 
 #endif

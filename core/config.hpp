@@ -28,10 +28,10 @@
 #include <stdint.h>
 
 #include <stdexcept>
+#include <string>
 
 #include "log.hpp"
 #include "fileutils.hpp"
-#include "string.hpp"
 #include "defines.hpp"
 
 using namespace std;
@@ -596,7 +596,7 @@ public:
 
         unsigned certificate_change_action   = 0; // 0 - Interrupt connection, 1 - Replace certificate then continue
 
-        redemption::string extra_orders;
+        std::string extra_orders;
 
         bool enable_nla      = true;
         bool enable_kerberos = false;
@@ -609,8 +609,8 @@ public:
          * channel1,channel2,etc
          * @{
          */
-        redemption::string allow_channels = "*";
-        redemption::string deny_channels;
+        std::string allow_channels = "*";
+        std::string deny_channels;
         // @}
 
         Inifile_mod_rdp() = default;
@@ -620,7 +620,7 @@ public:
         BoolField clipboard_up;           // AUTHID_VNC_CLIPBOARD_UP //
         BoolField clipboard_down;         // AUTHID_VNC_CLIPBOARD_DOWN //
 
-        redemption::string encodings;
+        std::string encodings;
 
         bool allow_authentification_retries = false;
 
@@ -781,10 +781,10 @@ public:
         UnsignedField      opt_height;               // AUTHID_OPT_HEIGHT //
         UnsignedField      opt_width;                // AUTHID_OPT_WIDTH //
 
-        // auth_error_message is left as redemption::string type
+        // auth_error_message is left as std::string type
         // because SocketTransport and ReplayMod take it as argument on
-        // constructor and modify it as a redemption::string
-        redemption::string auth_error_message;       // AUTHID_AUTH_ERROR_MESSAGE --
+        // constructor and modify it as a std::string
+        std::string        auth_error_message;       // AUTHID_AUTH_ERROR_MESSAGE --
 
         BoolField          selector;                 // AUTHID_SELECTOR //
         UnsignedField      selector_current_page;    // AUTHID_SELECTOR_CURRENT_PAGE //
@@ -1296,7 +1296,7 @@ public:
                 this->mod_rdp.certificate_change_action = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "extra_orders")) {
-                this->mod_rdp.extra_orders.copy_c_str(value);
+                this->mod_rdp.extra_orders = value;
             }
             else if (0 == strcmp(key, "enable_nla")) {
                 this->mod_rdp.enable_nla = bool_from_cstr(value);
@@ -1314,10 +1314,10 @@ public:
                 this->mod_rdp.persist_bitmap_cache_on_disk = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "allow_channels")) {
-                this->mod_rdp.allow_channels.copy_c_str(value);
+                this->mod_rdp.allow_channels = value;
             }
             else if (0 == strcmp(key, "deny_channels")) {
-                this->mod_rdp.deny_channels.copy_c_str(value);
+                this->mod_rdp.deny_channels = value;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -1331,7 +1331,7 @@ public:
                 this->mod_vnc.clipboard_down.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "encodings")) {
-                this->mod_vnc.encodings.copy_c_str(value);
+                this->mod_vnc.encodings = value;
             }
             else if (0 == strcmp(key, "allow_authentification_retries")) {
                 this->mod_vnc.allow_authentification_retries = bool_from_cstr(value);
@@ -1659,7 +1659,7 @@ public:
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
             if (authid == AUTHID_AUTH_ERROR_MESSAGE) {
-                this->context.auth_error_message.copy_c_str(value);
+                this->context.auth_error_message = value;
             }
             else {
                 if (BaseField * field = this->get_field(authid)) {
@@ -1698,7 +1698,7 @@ public:
             {
             // Context
             case AUTHID_AUTH_ERROR_MESSAGE:
-                this->context.auth_error_message.copy_c_str(value);
+                this->context.auth_error_message = value;
                 break;
             default:
                 if (BaseField * field = this->get_field(authid)) {

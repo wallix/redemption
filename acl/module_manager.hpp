@@ -123,7 +123,7 @@ public:
                                   BackEvent_t & signal, time_t now) {
         this->last_module = true;
         if (auth_error_message) {
-            this->ini.context.auth_error_message.copy_c_str(auth_error_message);
+            this->ini.context.auth_error_message = auth_error_message;
         }
         if (this->mod) {
             this->mod->disconnect();
@@ -146,9 +146,8 @@ public:
             (!strcmp(module_cstr, STRMODULE_RDP) ||
              !strcmp(module_cstr, STRMODULE_VNC))) {
             LOG(LOG_INFO, "===========> MODULE_CLOSE");
-            if (this->ini.context.auth_error_message.is_empty()) {
-                this->ini.context.auth_error_message.copy_c_str(TR("end_connection",
-                                                                   this->ini));
+            if (this->ini.context.auth_error_message.empty()) {
+                this->ini.context.auth_error_message = TR("end_connection", this->ini);
             }
             return MODULE_INTERNAL_CLOSE;
         }
@@ -456,8 +455,8 @@ public:
         case MODULE_INTERNAL_CLOSE:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::Close'");
-                if (this->ini.context.auth_error_message.is_empty()) {
-                    this->ini.context.auth_error_message.copy_c_str("Connection to server ended");
+                if (this->ini.context.auth_error_message.empty()) {
+                    this->ini.context.auth_error_message = "Connection to server ended";
                 }
                 this->mod = new FlatWabCloseMod(this->ini,
                             // new WabCloseMod(this->ini,
@@ -620,7 +619,7 @@ public:
                                             this->ini.debug.mod_xup);
 
                 if (client_sck == -1){
-                    this->ini.context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
+                    this->ini.context.auth_error_message = "failed to connect to remote TCP host";
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -631,7 +630,7 @@ public:
                                                           , this->ini.debug.mod_xup);
                 this->mod_transport = t;
 
-                this->ini.context.auth_error_message.copy_c_str("failed authentification on remote X host");
+                this->ini.context.auth_error_message = "failed authentification on remote X host";
                 this->mod = new xup_mod( t
                                          , this->front
                                          , this->front.client_info.width
@@ -640,7 +639,7 @@ public:
                                          , this->ini.context.opt_height.get()
                                          , this->ini.context.opt_bpp.get()
                                          );
-                this->ini.context.auth_error_message.empty();
+                this->ini.context.auth_error_message.clear();
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
                 this->connected = true;
             }
@@ -682,7 +681,7 @@ public:
                                             this->ini.debug.mod_rdp);
 
                 if (client_sck == -1){
-                    this->ini.context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
+                    this->ini.context.auth_error_message = "failed to connect to remote TCP host";
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -697,15 +696,13 @@ public:
                                                           );
                 this->mod_transport = t;
 
-                this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
+                this->ini.context.auth_error_message = "failed authentification on remote RDP host";
 
                 // BEGIN READ PROXY_OPT
                 if (!this->ini.globals.disable_proxy_opt) {
-                    auto pair = update_authorized_channels(this->ini.mod_rdp.allow_channels.str(),
-                                                           this->ini.mod_rdp.deny_channels.str(),
-                                                           this->ini.context.proxy_opt.get().str());
-                    this->ini.mod_rdp.allow_channels.copy_std_str(std::get<0>(pair));
-                    this->ini.mod_rdp.deny_channels.copy_std_str(std::get<1>(pair));
+                    update_authorized_channels(this->ini.mod_rdp.allow_channels,
+                                               this->ini.mod_rdp.deny_channels,
+                                               this->ini.context.proxy_opt.get());
                 }
                 // END READ PROXY_OPT
 
@@ -759,7 +756,7 @@ public:
                 // this->mod->rdp_input_invalidate2(rects);
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
-                this->ini.context.auth_error_message.empty();
+                this->ini.context.auth_error_message.clear();
                 this->connected = true;
             }
             break;
@@ -777,7 +774,7 @@ public:
                                             this->ini.debug.mod_vnc);
 
                 if (client_sck == -1){
-                    this->ini.context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
+                    this->ini.context.auth_error_message = "failed to connect to remote TCP host";
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -788,7 +785,7 @@ public:
                                                           , this->ini.debug.mod_vnc);
                 this->mod_transport = t;
 
-                this->ini.context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
+                this->ini.context.auth_error_message = "failed authentification on remote VNC host";
 
                 this->mod = new mod_vnc(t
                                         , this->ini
@@ -807,7 +804,7 @@ public:
                                         , this->ini.debug.mod_vnc);
 
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
-                this->ini.context.auth_error_message.empty();
+                this->ini.context.auth_error_message.clear();
                 this->connected = true;
             }
             break;

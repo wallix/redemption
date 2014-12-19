@@ -27,7 +27,7 @@
 
 class TransparentReplayMod : public InternalMod {
 private:
-    redemption::string * auth_error_message;
+    std::string * auth_error_message;
 
     int fd;
     InFileTransport ift;
@@ -38,7 +38,7 @@ public:
                         , const char * replay_path
                         , uint16_t width
                         , uint16_t height
-                        , redemption::string * auth_error_message)
+                        , std::string * auth_error_message)
     : InternalMod(front, width, height)
     , auth_error_message(auth_error_message)
     , fd([&]() {
@@ -67,7 +67,7 @@ public:
         catch (Error const & e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
                 if (this->auth_error_message) {
-                    this->auth_error_message->copy_c_str("The recorded file is inaccessible or corrupted!");
+                    *this->auth_error_message = "The recorded file is inaccessible or corrupted!";
                 }
 
                 this->event.signal = BACK_EVENT_NEXT;

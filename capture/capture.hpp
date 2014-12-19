@@ -58,8 +58,8 @@ public:
     wait_obj capture_event;
 
 private:
-    redemption::string png_path;
-    redemption::string basename;
+    std::string png_path;
+    std::string basename;
 
     CryptoContext crypto_ctx;
 
@@ -196,7 +196,7 @@ public:
 
     void pause() {
         if (this->capture_png) {
-            struct timeval now = tvtime();
+            timeval now = tvtime();
             this->psc->pause_snapshot(now);
         }
     }
@@ -204,7 +204,7 @@ public:
     void resume() {
         if (this->capture_wrm){
             this->wrm_trans->next();
-            struct timeval now = tvtime();
+            timeval now = tvtime();
             this->pnc->recorder.timestamp(now);
             this->pnc->recorder.send_timestamp_chunk(true);
         }
