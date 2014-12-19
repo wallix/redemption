@@ -215,7 +215,7 @@ class mod_rdp : public mod_api {
     bool deactivation_reactivation_in_progress;
 
 public:
-    mod_rdp( Transport * trans
+    mod_rdp( Transport & trans
            , FrontAPI & front
            , const ClientInfo & info
            , Random & gen
@@ -773,7 +773,7 @@ public:
         stream_data.out_copy_bytes(string_data, data_size);
         stream_data.mark_end();
 
-        virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
+        virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
                             , this->userid, this->auth_channel_chanid
                             , stream_data.size()
                             , this->auth_channel_flags
@@ -794,7 +794,7 @@ public:
 
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
-        virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
+        virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
                                             , this->userid, channel.chanid, length, flags, chunk.get_data(), chunk.size());
 
         if (this->verbose & 16) {
@@ -816,7 +816,7 @@ public:
 
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
-        this->nego.trans->send(x224_header, mcs_header, stream);
+        this->nego.trans.send(x224_header, mcs_header, stream);
 
         if (this->verbose & 16) {
             LOG(LOG_INFO, "send data request done");
@@ -837,7 +837,7 @@ public:
 
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
-        this->nego.trans->send(x224_header, mcs_header, stream);
+        this->nego.trans.send(x224_header, mcs_header, stream);
     }
 
     virtual void draw_event(time_t now)
@@ -998,7 +998,7 @@ public:
 
                             BStream x224_header(256);
                             X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
-                            this->nego.trans->send(x224_header, mcs_header, gcc_header, stream);
+                            this->nego.trans.send(x224_header, mcs_header, gcc_header, stream);
 
                             this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
                         }
@@ -1013,7 +1013,7 @@ public:
                     {
                         Array array(65536);
                         uint8_t * end = array.get_data();
-                        X224::RecvFactory f(*this->nego.trans, &end, array.size());
+                        X224::RecvFactory f(this->nego.trans, &end, array.size());
                         InStream x224_data(array, 0, 0, end - array.get_data());
                         X224::DT_TPDU_Recv x224(x224_data);
 
@@ -1244,7 +1244,7 @@ public:
 
                         MCS::ErectDomainRequest_Send mcs(mcs_header, 0, 0, MCS::PER_ENCODING);
                         X224::DT_TPDU_Send(x224_header, mcs_header.size());
-                        this->nego.trans->send(x224_header, mcs_header, data);
+                        this->nego.trans.send(x224_header, mcs_header, data);
                     }
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "Send MCS::AttachUserRequest");
@@ -1256,7 +1256,7 @@ public:
                         MCS::AttachUserRequest_Send mcs(mcs_data, MCS::PER_ENCODING);
 
                         X224::DT_TPDU_Send(x224_header, mcs_data.size());
-                        this->nego.trans->send(x224_header, mcs_data);
+                        this->nego.trans.send(x224_header, mcs_data);
                     }
                     this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER;
                     break;
@@ -1269,7 +1269,7 @@ public:
                         {
                             Array array(65536);
                             uint8_t * end = array.get_data();
-                            X224::RecvFactory f(*this->nego.trans, &end, array.size());
+                            X224::RecvFactory f(this->nego.trans, &end, array.size());
                             InStream stream(array, 0, 0, end - array.get_data());
                             X224::DT_TPDU_Recv x224(stream);
                             SubStream & payload = x224.payload;
@@ -1297,11 +1297,11 @@ public:
                                 }
                                 MCS::ChannelJoinRequest_Send(mcs_cjrq_data, this->userid, channels_id[index], MCS::PER_ENCODING);
                                 X224::DT_TPDU_Send(x224_header, mcs_cjrq_data.size());
-                                this->nego.trans->send(x224_header, mcs_cjrq_data);
+                                this->nego.trans.send(x224_header, mcs_cjrq_data);
 
                                 Array array(65536);
                                 uint8_t * end = array.get_data();
-                                X224::RecvFactory f(*this->nego.trans, &end, array.size());
+                                X224::RecvFactory f(this->nego.trans, &end, array.size());
                                 InStream x224_data(array, 0, 0, end - array.get_data());
 
                                 X224::DT_TPDU_Recv x224(x224_data);
@@ -1472,7 +1472,7 @@ public:
 
                         Array array(65536);
                         uint8_t * end = array.get_data();
-                        X224::RecvFactory f(*this->nego.trans, &end, array.size());
+                        X224::RecvFactory f(this->nego.trans, &end, array.size());
                         InStream stream(array, 0, 0, end - array.get_data());
                         X224::DT_TPDU_Recv x224(stream);
                         TODO("Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here")
@@ -1721,7 +1721,7 @@ public:
                         // Detect fast-path PDU
                         Array array(65536);
                         uint8_t * end = array.get_data();
-                        X224::RecvFactory fx224(*this->nego.trans, &end, array.size(), true);
+                        X224::RecvFactory fx224(this->nego.trans, &end, array.size(), true);
                         InStream stream(array, 0, 0, end - array.get_data());
 
                         if (fx224.fast_path) {
@@ -2274,7 +2274,7 @@ public:
                 BStream stream(256);
                 X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
                 try {
-                    this->nego.trans->send(stream);
+                    this->nego.trans.send(stream);
                     LOG(LOG_INFO, "Connection to server closed");
                 }
                 catch(Error const & e){
@@ -4347,7 +4347,7 @@ public:
 
         FastPath::ClientInputEventPDU_Send out_cie(fastpath_header, stream, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
 
-        this->nego.trans->send(fastpath_header, stream);
+        this->nego.trans.send(fastpath_header, stream);
 
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::send_input_fastpath done");
@@ -4377,7 +4377,7 @@ public:
 
                 rrpdu.addInclusiveRect(r.x, r.y, r.x + r.cx - 1, r.y + r.cy - 1);
 
-                rrpdu.emit(*this->nego.trans);
+                rrpdu.emit(this->nego.trans);
             }
         }
         if (this->verbose & 4){
@@ -4400,7 +4400,7 @@ public:
                     rrpdu.addInclusiveRect(vr[i].x, vr[i].y, vr[i].x + vr[i].cx - 1, vr[i].y + vr[i].cy - 1);
                 }
             }
-            rrpdu.emit(*this->nego.trans);
+            rrpdu.emit(this->nego.trans);
         }
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
@@ -5212,7 +5212,7 @@ public:
         HStream mcs_data(256, 512);
         MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_data.size());
-        this->nego.trans->send(x224_header, mcs_data);
+        this->nego.trans.send(x224_header, mcs_data);
     }
 
     void send_flow_response_pdu(uint8_t flow_id, uint8_t flow_number) {

@@ -70,7 +70,7 @@ struct RdpNego
     uint32_t requested_protocol;
     uint32_t enabled_protocols;
     char username[128];
-    Transport * trans;
+    Transport & trans;
 
     uint8_t hostname[16];
     uint8_t user[128];
@@ -82,7 +82,7 @@ struct RdpNego
     bool test;
     const uint32_t verbose;
 
-    RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla,
+    RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
             const char * target_host, const char krb, const uint32_t verbose = 0)
     : flags(0)
     , tls(nla || tls)
@@ -275,7 +275,7 @@ struct RdpNego
 
         Array array(65536);
         uint8_t * end = array.get_data();
-        X224::RecvFactory f(*this->trans, &end, array.size());
+        X224::RecvFactory f(this->trans, &end, array.size());
         InStream stream(array, 0, 0, end - array.get_data());
         X224::CC_TPDU_Recv x224(stream);
 
@@ -294,9 +294,9 @@ struct RdpNego
                 //     this->restricted_admin_mode = true;
                 // }
                 LOG(LOG_INFO, "activating SSL");
-                this->trans->enable_client_tls(ignore_certificate_change);
+                this->trans.enable_client_tls(ignore_certificate_change);
                 LOG(LOG_INFO, "activating CREDSSP");
-                rdpCredssp credssp(*this->trans, this->user,
+                rdpCredssp credssp(this->trans, this->user,
                                    this->domain, this->password,
                                    this->hostname, this->target_host,
                                    this->krb, this->restricted_admin_mode,
@@ -332,8 +332,8 @@ struct RdpNego
             }
             LOG(LOG_INFO, "Can't activate NLA");
             this->nla = false;
-            this->trans->disconnect();
-            if (!this->trans->connect()){
+            this->trans.disconnect();
+            if (!this->trans.connect()){
                 LOG(LOG_ERR, "Failed to fallback to SSL only");
                 throw Error(ERR_SOCKET_CONNECT_FAILED);
             }
@@ -346,7 +346,7 @@ struct RdpNego
             if (x224.rdp_neg_type == X224::RDP_NEG_RSP
             && x224.rdp_neg_code == X224::PROTOCOL_TLS){
                 LOG(LOG_INFO, "activating SSL");
-                this->trans->enable_client_tls(ignore_certificate_change);
+                this->trans.enable_client_tls(ignore_certificate_change);
                 this->state = NEGO_STATE_FINAL;
             }
             else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE
@@ -354,8 +354,8 @@ struct RdpNego
             || x224.rdp_neg_code == X224::SSL_CERT_NOT_ON_SERVER)){
                 LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
                 this->tls = false;
-                this->trans->disconnect();
-                if (!this->trans->connect()){
+                this->trans.disconnect();
+                if (!this->trans.connect()){
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
                 this->send_negotiation_request();
@@ -365,12 +365,12 @@ struct RdpNego
             else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE
                      && x224.rdp_neg_code == X224::HYBRID_REQUIRED_BY_SERVER) {
                 LOG(LOG_INFO, "Enable NLA is probably required");
-                this->trans->disconnect();
+                this->trans.disconnect();
                 throw Error(ERR_NEGO_HYBRID_REQUIRED_BY_SERVER);
             }
             else {
                 // "Other cases are errors, set an appropriate error message"
-                this->trans->disconnect();
+                this->trans.disconnect();
                 x224.throw_error();
             }
         }
@@ -382,7 +382,7 @@ struct RdpNego
             else {
                 // Other cases are errors, set an appropriate error message
                 LOG(LOG_INFO, "Enable TLS is probably required");
-                this->trans->disconnect();
+                this->trans.disconnect();
                 x224.throw_error();
             }
             TODO("Check tpdu has no embedded negotiation code");
@@ -443,7 +443,7 @@ struct RdpNego
                            // X224::RESTRICTED_ADMIN_MODE_REQUIRED,
                            0,
                            rdp_neg_requestedProtocols);
-        this->trans->send(stream);
+        this->trans.send(stream);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
 
@@ -544,7 +544,7 @@ struct RdpNego
 //
 //             Array array(65536);
 //             uint8_t * end = array.get_data();
-//             X224::RecvFactory fac_x224(*this->trans, &end, array.size());
+//             X224::RecvFactory fac_x224(this->trans, &end, array.size());
 //             InStream stream(array, 0, 0, end - array.get_data());
 //             X224::CR_TPDU_Recv x224(stream, false);
 //             if (x224._header_size != (size_t)(stream.size())){
@@ -598,10 +598,10 @@ struct RdpNego
 //             }
 //
 //             X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
-//             this->trans->send(stream);
+//             this->trans.send(stream);
 //
 //             if (this->tls){
-//                 this->trans->enable_server_tls(certificate_password);
+//                 this->trans.enable_server_tls(certificate_password);
 //             }
 //         }
 //     }

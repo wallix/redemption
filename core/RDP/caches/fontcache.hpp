@@ -45,8 +45,10 @@ class GlyphCache : noncopyable {
 public:
     char_item char_items[NUMBER_OF_GLYPH_CACHES][256];
 
-    uint8_t number_of_entries_in_cache[NUMBER_OF_GLYPH_CACHES] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+private:
+    decltype(ClientInfo::number_of_entries_in_glyph_cache) number_of_entries_in_cache = {};
 
+public:
     GlyphCache() {
         reset_internal();
     }
@@ -55,16 +57,7 @@ public:
         /* free all the cached font items */
         reset_internal();
 
-        this->number_of_entries_in_cache[0] = client_info.number_of_entries_in_glyph_cache[0];
-        this->number_of_entries_in_cache[1] = client_info.number_of_entries_in_glyph_cache[1];
-        this->number_of_entries_in_cache[2] = client_info.number_of_entries_in_glyph_cache[2];
-        this->number_of_entries_in_cache[3] = client_info.number_of_entries_in_glyph_cache[3];
-        this->number_of_entries_in_cache[4] = client_info.number_of_entries_in_glyph_cache[4];
-        this->number_of_entries_in_cache[5] = client_info.number_of_entries_in_glyph_cache[5];
-        this->number_of_entries_in_cache[6] = client_info.number_of_entries_in_glyph_cache[6];
-        this->number_of_entries_in_cache[7] = client_info.number_of_entries_in_glyph_cache[7];
-        this->number_of_entries_in_cache[8] = client_info.number_of_entries_in_glyph_cache[8];
-        this->number_of_entries_in_cache[9] = client_info.number_of_entries_in_glyph_cache[9];
+        this->number_of_entries_in_cache = client_info.number_of_entries_in_glyph_cache;
 
         return 0;
     }

@@ -69,13 +69,13 @@ enum {
     int width;
     int height;
     int bpp;
-    Transport * t;
+    Transport & t;
     int rop;
     int fgcolor;
     BGRPalette const & palette332 = BGRPalette::classic_332();
 
-    xup_mod( Transport * t
-           , class FrontAPI & front
+    xup_mod( Transport & t
+           , FrontAPI & front
            , uint16_t front_width
            , uint16_t front_height
            , int context_width
@@ -87,40 +87,30 @@ enum {
     , width(context_width)
     , height(context_height)
     , bpp(context_bpp)
+    , t(t)
+    , rop(0xCC)
     {
-        this->rop = 0xCC;
-
-        try {
-            this->t = t;
-            BStream stream(32768);
-            uint8_t * hdr = stream.p;
-            stream.p += 4;
-            stream.out_uint16_le(103);
-            stream.out_uint32_le(200);
-            /* x and y */
-            int xy = 0;
-            stream.out_uint32_le(xy);
-            /* width and height */
-            int cxcy = ((this->width & 0xffff) << 16) | this->height;
-            stream.out_uint32_le(cxcy);
-            stream.out_uint32_le(0);
-            stream.out_uint32_le(0);
-            stream.mark_end();
-            stream.p = hdr;
-            stream.out_uint32_le(stream.size());
-            this->t->send(stream);
-
-        }
-        catch(...){
-            delete this->t;
-            throw;
-        }
+        BStream stream(32768);
+        uint8_t * hdr = stream.p;
+        stream.p += 4;
+        stream.out_uint16_le(103);
+        stream.out_uint32_le(200);
+        /* x and y */
+        int xy = 0;
+        stream.out_uint32_le(xy);
+        /* width and height */
+        int cxcy = ((this->width & 0xffff) << 16) | this->height;
+        stream.out_uint32_le(cxcy);
+        stream.out_uint32_le(0);
+        stream.out_uint32_le(0);
+        stream.mark_end();
+        stream.p = hdr;
+        stream.out_uint32_le(stream.size());
+        this->t.send(stream);
     }
 
     virtual ~xup_mod()
-    {
-        delete this->t;
-    }
+    {}
 
     enum {
         XUPWM_INVALIDATE = 200
@@ -197,20 +187,20 @@ enum {
         stream.out_uint32_le(param4);
         uint32_t len = stream.get_offset();
         stream.set_out_uint32_le(len, 0);
-        this->t->send(stream.get_data(), len);
+        this->t.send(stream.get_data(), len);
     }
 
     virtual void draw_event(time_t now)
     {
         try{
             BStream stream(32768);
-            this->t->recv(&stream.end, 8);
+            this->t.recv(&stream.end, 8);
             int type = stream.in_uint16_le();
             int num_orders = stream.in_uint16_le();
             int len = stream.in_uint32_le();
             if (type == 1) {
                 stream.init(len);
-                this->t->recv(&stream.end, len);
+                this->t.recv(&stream.end, len);
 
                 for (int index = 0; index < num_orders; index++) {
                     type = stream.in_uint16_le();

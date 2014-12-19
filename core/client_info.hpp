@@ -25,7 +25,8 @@
 #ifndef _REDEMPTION_CORE_CLIENT_INFO_HPP_
 #define _REDEMPTION_CORE_CLIENT_INFO_HPP_
 
-#include <string.h>
+#include <array>
+#include <cstring>
 
 #include "get_printable_password.hpp"
 #include "RDP/logon.hpp"
@@ -81,7 +82,7 @@ struct ClientInfo {
                            2 = arbitrary dimensions */
     bool console_session = false;
 
-    uint8_t number_of_entries_in_glyph_cache[NUMBER_OF_GLYPH_CACHES] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    std::array<uint8_t, NUMBER_OF_GLYPH_CACHES> number_of_entries_in_glyph_cache = {};
 
     ClientInfo() = default;
 

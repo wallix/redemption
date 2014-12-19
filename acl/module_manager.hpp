@@ -322,6 +322,23 @@ class ModuleManager : public MMIni
     static const int padw = 16;
     static const int padh = 16;
 
+    struct sock_mod_barrier {};
+    template<class Mod>
+    struct ModWithSocket : private SocketTransport, Mod
+    {
+        template<class... Args>
+        ModWithSocket( ModuleManager & mm, const char * name, int sck, uint32_t verbose
+                     , std::string * error_message, sock_mod_barrier, Args && ... mod_args)
+        : SocketTransport( name, sck
+                         , mm.ini.context.target_host.get_cstr()
+                         , mm.ini.context.target_port.get()
+                         , verbose, error_message)
+        , Mod(*this, std::forward<Args>(mod_args)...)
+        {
+            mm.mod_transport = this;
+        }
+    };
+
 public:
     void clear_osd_message() {
         if (this->osd) {
@@ -358,13 +375,12 @@ public:
 
     Front & front;
     null_mod no_mod;
-    SocketTransport * mod_transport;
+    SocketTransport * mod_transport = nullptr;
 
     ModuleManager(Front & front, Inifile & ini)
         : MMIni(ini)
         , front(front)
         , no_mod(this->front)
-        , mod_transport(NULL)
     {
         this->no_mod.get_event().reset();
         this->mod = &this->no_mod;
@@ -376,11 +392,8 @@ public:
 
         if (this->mod != &this->no_mod){
             delete this->mod;
-            if (this->mod_transport) {
-                delete this->mod_transport;
-                this->mod_transport = NULL;
-            }
             this->mod = &this->no_mod;
+            this->mod_transport = nullptr;
         }
     }
 
@@ -623,22 +636,22 @@ public:
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                SocketTransport * t = new SocketTransport(name
-                                                          , client_sck
-                                                          , this->ini.context.target_host.get_cstr()
-                                                          , this->ini.context.target_port.get()
-                                                          , this->ini.debug.mod_xup);
-                this->mod_transport = t;
-
                 this->ini.context.auth_error_message = "failed authentification on remote X host";
-                this->mod = new xup_mod( t
-                                         , this->front
-                                         , this->front.client_info.width
-                                         , this->front.client_info.height
-                                         , this->ini.context.opt_width.get()
-                                         , this->ini.context.opt_height.get()
-                                         , this->ini.context.opt_bpp.get()
-                                         );
+
+                this->mod = new ModWithSocket<xup_mod>( *this
+                                                      , name
+                                                      , client_sck
+                                                      , this->ini.debug.mod_xup
+                                                      , nullptr
+                                                      , sock_mod_barrier()
+                                                      , this->front
+                                                      , this->front.client_info.width
+                                                      , this->front.client_info.height
+                                                      , this->ini.context.opt_width.get()
+                                                      , this->ini.context.opt_height.get()
+                                                      , this->ini.context.opt_bpp.get()
+                );
+
                 this->ini.context.auth_error_message.clear();
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
                 this->connected = true;
@@ -684,17 +697,6 @@ public:
                     this->ini.context.auth_error_message = "failed to connect to remote TCP host";
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
-
-                TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
-                SocketTransport * t = new SocketTransport(
-                                                          name
-                                                          , client_sck
-                                                          , this->ini.context.target_host.get_cstr()
-                                                          , this->ini.context.target_port.get()
-                                                          , this->ini.debug.mod_rdp
-                                                          , &this->ini.context.auth_error_message
-                                                          );
-                this->mod_transport = t;
 
                 this->ini.context.auth_error_message = "failed authentification on remote RDP host";
 
@@ -749,7 +751,19 @@ public:
                 mod_rdp_params.deny_channels                       = &(this->ini.mod_rdp.deny_channels);
 
                 UdevRandom gen;
-                this->mod = new mod_rdp(t, this->front, client_info, gen, mod_rdp_params);
+
+                TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
+                this->mod = new ModWithSocket<mod_rdp>( *this
+                                                      , name
+                                                      , client_sck
+                                                      , this->ini.debug.mod_rdp
+                                                      , &this->ini.context.auth_error_message
+                                                      , sock_mod_barrier()
+                                                      , this->front
+                                                      , client_info
+                                                      , gen
+                                                      , mod_rdp_params
+                                                      );
 
                 // DArray<Rect> rects(1);
                 // rects[0] = Rect(0, 0, this->front.client_info.width, this->front.client_info.height);
@@ -778,30 +792,29 @@ public:
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                SocketTransport * t = new SocketTransport(name
-                                                          , client_sck
-                                                          , this->ini.context.target_host.get_cstr()
-                                                          , this->ini.context.target_port.get()
-                                                          , this->ini.debug.mod_vnc);
-                this->mod_transport = t;
-
                 this->ini.context.auth_error_message = "failed authentification on remote VNC host";
 
-                this->mod = new mod_vnc(t
-                                        , this->ini
-                                        , this->ini.globals.target_user.get_cstr()
-                                        , this->ini.context.target_password.get_cstr()
-                                        , this->front
-                                        , this->front.client_info.width
-                                        , this->front.client_info.height
-                                        , this->front.client_info.keylayout
-                                        , this->front.keymap.key_flags
-                                        , this->ini.mod_vnc.clipboard_up.get()
-                                        , this->ini.mod_vnc.clipboard_down.get()
-                                        , this->ini.mod_vnc.encodings.c_str()
-                                        , this->ini.mod_vnc.allow_authentification_retries
-                                        , true
-                                        , this->ini.debug.mod_vnc);
+                this->mod = new ModWithSocket<mod_vnc>( *this
+                                                      , name
+                                                      , client_sck
+                                                      , this->ini.debug.mod_vnc
+                                                      , nullptr
+                                                      , sock_mod_barrier()
+                                                      , this->ini
+                                                      , this->ini.globals.target_user.get_cstr()
+                                                      , this->ini.context.target_password.get_cstr()
+                                                      , this->front
+                                                      , this->front.client_info.width
+                                                      , this->front.client_info.height
+                                                      , this->front.client_info.keylayout
+                                                      , this->front.keymap.key_flags
+                                                      , this->ini.mod_vnc.clipboard_up.get()
+                                                      , this->ini.mod_vnc.clipboard_down.get()
+                                                      , this->ini.mod_vnc.encodings.c_str()
+                                                      , this->ini.mod_vnc.allow_authentification_retries
+                                                      , true
+                                                      , this->ini.debug.mod_vnc
+                );
 
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
                 this->ini.context.auth_error_message.clear();

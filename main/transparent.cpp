@@ -292,7 +292,7 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.allow_channels                      = &(ini.mod_rdp.allow_channels);
             mod_rdp_params.deny_channels                       = &(ini.mod_rdp.deny_channels);
 
-            mod_rdp mod(&mod_trans, front, client_info, gen, mod_rdp_params);
+            mod_rdp mod(mod_trans, front, client_info, gen, mod_rdp_params);
 
             run_mod(mod, front, front_event, &mod_trans, &front_trans);
 

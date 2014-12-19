@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp mod_(&t, front, info, gen, mod_rdp_params);
+    mod_rdp mod_(t, front, info, gen, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {

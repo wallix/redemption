@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestNego)
     char domain[] = "Ithaque";
     char pass[] = "Pénélope";
     char host[] = "Télémaque";
-    RdpNego nego(true, &logtrans, "test", true, "127.0.0.1", false);
+    RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false);
     nego.test = true;
     nego.set_identity(user, domain, pass, host);
     nego.server_event(true);

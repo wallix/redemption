@@ -253,7 +253,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     Inifile ini;
 
     mod_vnc mod(
-          &t
+          t
         , ini
         , "10.10.3.103"
         , "SecureLinux"

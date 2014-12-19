@@ -28,6 +28,7 @@
 
 #include "log.hpp"
 #include "internal/widget2/flat_vnc_authentification.hpp"
+#include "internal/widget2/notify_api.hpp"
 #include "internal/internal_mod.hpp"
 #include "keymapSym.hpp"
 #include "diffiehellman.hpp"
@@ -45,9 +46,7 @@
 
 #define MAX_VNC_2_RDP_CLIP_DATA_SIZE 8000
 
-//###############################################################################################################
-struct mod_vnc : public InternalMod, public NotifyApi {
-//###############################################################################################################
+struct mod_vnc : public InternalMod, private NotifyApi {
     FlatVNCAuthentification challenge;
 
     /* mod data */
@@ -59,7 +58,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
     char password[256];
 
 private:
-    Transport * t;
+    Transport & t;
 
 public:
     uint16_t width;
@@ -121,7 +120,7 @@ private:
 
 public:
     //==============================================================================================================
-    mod_vnc( Transport * t
+    mod_vnc( Transport & t
            , Inifile & ini
            , const char * username
            , const char * password
@@ -139,7 +138,7 @@ public:
            )
     //==============================================================================================================
     : InternalMod(front, front_width, front_height, &ini)
-    , challenge(*this, front_width, front_height, this->screen, this,
+    , challenge(*this, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION,
                 0, 0, ini.theme,
                 TR("Authentification required", ini),
@@ -197,9 +196,9 @@ public:
 
         TODO("mod_vnc isn't owner of sck")
         if (this->is_socket_transport) {
-            auto st = static_cast<SocketTransport*>(this->t);
-            if (st->sck > 0){
-                close(st->sck);
+            auto & st = static_cast<SocketTransport&>(this->t);
+            if (st.sck > 0){
+                close(st.sck);
             }
         }
 
@@ -240,26 +239,26 @@ public:
         stream.out_copy_bytes(cp_username, 256);
         stream.out_copy_bytes(cp_password, 64);
 
-        this->t->send(stream.get_data(), 8+256+64);
+        this->t.send(stream.get_data(), 8+256+64);
         // sec result
         if (this->verbose) {
             LOG(LOG_INFO, "Waiting for password ack");
         }
         stream.init(8192);
-        this->t->recv(&stream.end, 4);
+        this->t.recv(&stream.end, 4);
         int i = stream.in_uint32_be();
         if (i != 0) {
             // vnc password failed
             LOG(LOG_INFO, "MS LOGON password FAILED\n");
             // Optionnal
             try {
-                this->t->recv(&stream.end, 4);
+                this->t.recv(&stream.end, 4);
                 uint32_t reason_length = stream.in_uint32_be();
 
                 char   reason[256];
                 char * preason = reason;
 
-                this->t->recv(&preason, std::min<size_t>(sizeof(reason) - 1, reason_length));
+                this->t.recv(&preason, std::min<size_t>(sizeof(reason) - 1, reason_length));
                 *preason = 0;
 
                 LOG(LOG_INFO, "Reason for the connection failure: %s", preason);
@@ -323,7 +322,7 @@ public:
         stream.out_uint8(this->mod_mouse_state);
         stream.out_uint16_be(x);
         stream.out_uint16_be(y);
-        this->t->send(stream.get_data(), 6);
+        this->t.send(stream.get_data(), 6);
     } // change_mouse_state
 
     TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?")
@@ -418,7 +417,7 @@ public:
         stream.out_uint8(down_flag); /* down/up flag */
         stream.out_clear_bytes(2);
         stream.out_uint32_be(key);
-        this->t->send(stream.get_data(), 8);
+        this->t.send(stream.get_data(), 8);
         this->event.set(1000);
     }
 
@@ -437,7 +436,7 @@ public:
         stream.out_uint32_be(length);             // length
         stream.out_copy_bytes(data, length);      // text
 
-        this->t->send(stream.get_data(), (length + 8)); // message-type(1) + padding(3) + length(4)
+        this->t.send(stream.get_data(), (length + 8)); // message-type(1) + padding(3) + length(4)
 
         this->event.set(1000);
     } // rdp_input_clip_data
@@ -484,7 +483,7 @@ public:
             stream.out_uint16_be(r.y);
             stream.out_uint16_be(r.cx);
             stream.out_uint16_be(r.cy);
-            this->t->send(stream.get_data(), 10);
+            this->t.send(stream.get_data(), 10);
         }
     } // rdp_input_invalidate
 
@@ -554,7 +553,7 @@ public:
             }
             try
             {
-                this->t->connect();
+                this->t.connect();
             }
             catch (Error const & e)
             {
@@ -568,12 +567,12 @@ public:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
-            if (this->is_socket_transport && static_cast<SocketTransport*>(this->t)->can_recv()) {
+            if (this->is_socket_transport && static_cast<SocketTransport&>(this->t).can_recv()) {
                 uint8_t data[1];
                 FixedSizeStream stream(data, 1);
                 stream.end = stream.p;
                 try {
-                    this->t->recv(&stream.end, 1);
+                    this->t.recv(&stream.end, 1);
                     char type = stream.in_uint8();  /* message-type */
                     switch (type) {
                         case 0: /* framebuffer update */
@@ -621,7 +620,7 @@ public:
                 BStream stream(32768);
 
                 /* protocol version */
-                this->t->recv(&stream.end, 12);
+                this->t.recv(&stream.end, 12);
                 uint8_t server_protoversion[12];
                 stream.in_copy_bytes(server_protoversion, 12);
                 server_protoversion[11] = 0;
@@ -629,11 +628,11 @@ public:
                     LOG(LOG_INFO, "Server Protocol Version=%s\n",
                         server_protoversion);
                 }
-                this->t->send("RFB 003.003\n", 12);
+                this->t.send("RFB 003.003\n", 12);
                 // sec type
 
                 stream.init(8192);
-                this->t->recv(&stream.end, 4);
+                this->t.recv(&stream.end, 4);
                 int32_t security_level = stream.in_sint32_be();
                 if (this->verbose) {
                     LOG(LOG_INFO, "security level is %d "
@@ -650,7 +649,7 @@ public:
                             LOG(LOG_INFO, "Receiving VNC Server Random");
                         }
                         stream.init(8192);
-                        this->t->recv(&stream.end, 16);
+                        this->t.recv(&stream.end, 16);
 
                         // taken from vncauth.c
                         {
@@ -666,14 +665,14 @@ public:
                         if (this->verbose) {
                             LOG(LOG_INFO, "Sending Password");
                         }
-                        this->t->send(stream.get_data(), 16);
+                        this->t.send(stream.get_data(), 16);
 
                         // sec result
                         if (this->verbose) {
                             LOG(LOG_INFO, "Waiting for password ack");
                         }
                         stream.init(8192);
-                        this->t->recv(&stream.end, 4);
+                        this->t.recv(&stream.end, 4);
                         int i = stream.in_uint32_be();
                         if (i != 0) {
                             // vnc password failed
@@ -681,13 +680,13 @@ public:
                             // Optionnal
                             try
                             {
-                                this->t->recv(&stream.end, 4);
+                                this->t.recv(&stream.end, 4);
                                 uint32_t reason_length = stream.in_uint32_be();
 
                                 char   reason[256];
                                 char * preason = reason;
 
-                                this->t->recv(&preason, std::min<size_t>(sizeof(reason) - 1, reason_length));
+                                this->t.recv(&preason, std::min<size_t>(sizeof(reason) - 1, reason_length));
                                 *preason = 0;
 
                                 LOG(LOG_INFO, "Reason for the connection failure: %s", preason);
@@ -700,7 +699,7 @@ public:
                             {
                                 LOG(LOG_ERR, "vnc password failed");
 
-                                this->t->disconnect();
+                                this->t.disconnect();
 
                                 this->state = ASK_PASSWORD;
                                 this->event.object_and_time = true;
@@ -724,7 +723,7 @@ public:
                     {
                         LOG(LOG_INFO, "VNC MS-LOGON Auth");
                         stream.init(8192);
-                        this->t->recv(&stream.end, 8+8+8);
+                        this->t.recv(&stream.end, 8+8+8);
                         uint64_t gen = stream.in_uint64_be();
                         uint64_t mod = stream.in_uint64_be();
                         uint64_t resp = stream.in_uint64_be();
@@ -735,10 +734,10 @@ public:
                     {
                         LOG(LOG_INFO, "VNC INVALID Auth");
                         stream.init(8192);
-                        this->t->recv(&stream.end, 4);
+                        this->t.recv(&stream.end, 4);
                         size_t reason_length = stream.in_uint32_be();
                         stream.init(8192);
-                        this->t->recv(&stream.end, reason_length);
+                        this->t.recv(&stream.end, reason_length);
                         hexdump_c(stream.get_data(), reason_length);
                         throw Error(ERR_VNC_CONNECTION_ERROR);
 
@@ -747,7 +746,7 @@ public:
                         LOG(LOG_ERR, "vnc unexpected security level");
                         throw Error(ERR_VNC_CONNECTION_ERROR);
                 }
-                this->t->send("\x01", 1); // share flag
+                this->t.send("\x01", 1); // share flag
 
                 // 7.3.2   ServerInit
                 // ------------------
@@ -828,7 +827,7 @@ public:
 
                 {
                     BStream stream(32768);
-                    this->t->recv(&stream.end, 24); // server init
+                    this->t.recv(&stream.end, 24); // server init
                     this->width = stream.in_uint16_be();
                     this->height = stream.in_uint16_be();
                     this->bpp    = stream.in_uint8();
@@ -852,7 +851,7 @@ public:
                         throw Error(ERR_VNC_CONNECTION_ERROR);
                     }
                     char * end = this->mod_name;
-                    this->t->recv(&end, lg);
+                    this->t.recv(&end, lg);
                     this->mod_name[lg] = 0;
                     // LOG(LOG_INFO, "VNC received: mod_name='%s'", this->mod_name);
                 }
@@ -942,7 +941,7 @@ public:
                         "\x00" // blue shift      : 1 bytes =  0
                         "\0\0\0"; // padding      : 3 bytes
                     stream.out_copy_bytes(pixel_format, 16);
-                    this->t->send(stream.get_data(), 20);
+                    this->t.send(stream.get_data(), 20);
 
                     this->bpp = 16;
                     this->depth  = 16;
@@ -1000,14 +999,14 @@ public:
                         stream.out_uint32_be(0xffffff11);   // cursor
 
                         stream.set_out_uint16_be(4, number_of_encodings_offset);
-                        this->t->send(stream.get_data(),
+                        this->t.send(stream.get_data(),
                             20  // 4 + 4 * 4
                             );
                     }
                     else
                     {
                         stream.set_out_uint16_be(number_of_encodings, number_of_encodings_offset);
-                        this->t->send(stream.get_data(), 4 + number_of_encodings * 4);
+                        this->t.send(stream.get_data(), 4 + number_of_encodings * 4);
                     }
                 }
 
@@ -1443,7 +1442,7 @@ private:
         uint8_t data_rec[256];
         FixedSizeStream stream_rec(data_rec, sizeof(data_rec));
         stream_rec.end = stream_rec.p;
-        this->t->recv(&stream_rec.end, 3);
+        this->t.recv(&stream_rec.end, 3);
         stream_rec.in_skip_bytes(1);
         size_t num_recs = stream_rec.in_uint16_be();
 
@@ -1451,7 +1450,7 @@ private:
         for (size_t i = 0; i < num_recs; i++) {
             stream_rec.p = stream_rec.get_data();
             stream_rec.end = stream_rec.get_data();
-            this->t->recv(&stream_rec.end, 12);
+            this->t.recv(&stream_rec.end, 12);
             const uint16_t x = stream_rec.in_uint16_be();
             const uint16_t y = stream_rec.in_uint16_be();
             const uint16_t cx = stream_rec.in_uint16_be();
@@ -1471,7 +1470,7 @@ private:
                 for (uint16_t yy = y ; yy < y + cy ; yy += 16) {
                     uint8_t * tmp = raw.get();
                     uint16_t cyy = std::min<uint16_t>(16, cy-(yy-y));
-                    this->t->recv(&tmp, cyy*cx*Bpp);
+                    this->t.recv(&tmp, cyy*cx*Bpp);
 //                    LOG(LOG_INFO, "draw vnc: x=%d y=%d cx=%d cy=%d", x, yy, cx, cyy);
                     this->draw_tile(Rect(x, yy, cx, cyy), raw.get());
                 }
@@ -1482,7 +1481,7 @@ private:
                 uint8_t data_copy_rect[4];
                 FixedSizeStream stream_copy_rect(data_copy_rect, sizeof(data_copy_rect));
                 stream_copy_rect.end = stream_copy_rect.p;
-                this->t->recv(&stream_copy_rect.end, 4);
+                this->t.recv(&stream_copy_rect.end, 4);
                 const int srcx = stream_copy_rect.in_uint16_be();
                 const int srcy = stream_copy_rect.in_uint16_be();
 //                LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
@@ -1511,7 +1510,7 @@ private:
                 FixedSizeStream stream_rre(data_rre, sizeof(data_rre));
                 stream_rre.end = stream_rre.p;
 
-                this->t->recv(&stream_rre.end,
+                this->t.recv(&stream_rre.end,
                       4   /* number-of-subrectangles */
                     + Bpp /* background-pixel-value */
                     );
@@ -1546,7 +1545,7 @@ private:
                     number_of_subrectangles_read = min<uint32_t>(4096, number_of_subrectangles_remain);
 
                     subrectangles.reset();
-                    this->t->recv(&subrectangles.end, (Bpp + 8) * number_of_subrectangles_read);
+                    this->t.recv(&subrectangles.end, (Bpp + 8) * number_of_subrectangles_read);
 
                     number_of_subrectangles_remain -= number_of_subrectangles_read;
 
@@ -1586,7 +1585,7 @@ private:
                 stream_zrle.end = stream_zrle.p;
 
                 //LOG(LOG_INFO, "VNC Encoding: ZRLE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-                this->t->recv(&stream_zrle.end, 4);
+                this->t.recv(&stream_zrle.end, 4);
 
                 uint32_t zlib_compressed_data_length = stream_zrle.in_uint32_be();
 
@@ -1606,7 +1605,7 @@ private:
                 }
 
                 BStream zlib_compressed_data(65536);
-                this->t->recv(&zlib_compressed_data.end,
+                this->t.recv(&zlib_compressed_data.end,
                     zlib_compressed_data_length);
                 REDASSERT(zlib_compressed_data.in_remain() == zlib_compressed_data_length);
 
@@ -1681,7 +1680,7 @@ private:
                 const int sz_pixel_array = cx * cy * Bpp;
                 const int sz_bitmask = nbbytes(cx) * cy;
                 BStream stream_cursor(sz_pixel_array + sz_bitmask);
-                this->t->recv(&stream_cursor.end, sz_pixel_array + sz_bitmask);
+                this->t.recv(&stream_cursor.end, sz_pixel_array + sz_bitmask);
 
                 const uint8_t *vnc_pointer_data = stream_cursor.in_uint8p(sz_pixel_array);
                 const uint8_t *vnc_pointer_mask = stream_cursor.in_uint8p(sz_bitmask);
@@ -1758,13 +1757,13 @@ private:
     void lib_palette_update(void) {
     //==============================================================================================================
         BStream stream(32768);
-        this->t->recv(&stream.end, 5);
+        this->t.recv(&stream.end, 5);
         stream.in_skip_bytes(1);
         int first_color = stream.in_uint16_be();
         int num_colors = stream.in_uint16_be();
 
         BStream stream2(8192);
-        this->t->recv(&stream2.end, num_colors * 6);
+        this->t.recv(&stream2.end, num_colors * 6);
 
         if (num_colors <= 256) {
             for (int i = 0; i < num_colors; i++) {
@@ -1847,7 +1846,7 @@ private:
         // NB : Whether the clipboard is available or not, read the incoming data to prevent a jam in transport layer
         // Store the clipboard into *to_rdp_clipboard_data*, data length will be (to_rdp_clipboard_data.size())
         BStream stream(32768);
-        this->t->recv(&stream.end, 7);
+        this->t.recv(&stream.end, 7);
         stream.in_skip_bytes(3); /* padding */
         size_t clip_data_size = stream.in_uint32_be(); /* length */
 
@@ -1860,7 +1859,7 @@ private:
             }
 
             // The size of <stream> must be larger than MAX_VNC_2_RDP_CLIP_DATA_SIZE.
-            this->t->recv(&stream.end, chunk_size); /* text */
+            this->t.recv(&stream.end, chunk_size); /* text */
             // Add two trailing zero if not already there to ensure we have UTF8sz content
             if (stream.end[-1]) { *stream.end = 0; stream.end++; }
             if (stream.end[-1]) { *stream.end = 0; stream.end++; }
@@ -1886,11 +1885,11 @@ private:
             BStream drop(4096);
             while (remaining > 4096) {
                 drop.end = drop.get_data();
-                this->t->recv(&drop.end, 4096);
+                this->t.recv(&drop.end, 4096);
                 remaining -= 4096;
             }
             drop.end = drop.get_data();
-            this->t->recv(&drop.end, remaining);
+            this->t.recv(&drop.end, remaining);
         }
 
         if (this->enable_clipboard_in && this->get_channel_by_name(channel_names::cliprdr)) {
