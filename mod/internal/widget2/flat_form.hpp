@@ -32,6 +32,7 @@
 #include "theme.hpp"
 #include "group_box.hpp"
 #include "translation.hpp"
+#include "regex.hpp"
 
 class FlatForm : public WidgetParent
 {
@@ -47,6 +48,7 @@ enum {
     DURATION_MANDATORY = 0x20,
 };
     const char * generic_warning;
+    const char * format_warning;
     const char * field_comment;
     const char * field_ticket;
     const char * field_duration;
@@ -72,6 +74,7 @@ enum {
              Theme & theme, int flags = 0)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
         , generic_warning(TR("%s field_required", ini))
+        , format_warning(TR("%s invalid_format", ini))
         , field_comment(TR("comment", ini))
         , field_ticket(TR("ticket", ini))
         , field_duration(TR("duration", ini))
@@ -195,16 +198,48 @@ enum {
         }
     }
 
-    void set_warning_buffer(const char * field) {
-        sprintf(this->warning_buffer, this->generic_warning, field);
+    void set_warning_buffer(const char * field, const char * format) {
+        sprintf(this->warning_buffer, format, field);
         this->warning_msg.set_text(this->warning_buffer);
+    }
+
+    bool check_duration(const char * duration) {
+        bool res = false;
+        long d = 0;
+        char * end_p = 0;
+        try {
+            d = strtol(duration, &end_p, 10);
+            if (*end_p == 'h') {
+                res = (d > 0);
+                end_p++;
+                d = strtol(end_p, &end_p, 10);
+                if (*end_p == 'm') {
+                    res |= (d > 0);
+                    end_p++;
+                }
+                else if (d > 0) {
+                    res = false;
+                }
+            }
+            else if (*end_p == 'm') {
+                res = (d > 0);
+                end_p++;
+            }
+        }
+        catch (...) {
+            res = false;
+        }
+        if (res && *end_p != 0) {
+            res = false;
+        }
+        return res;
     }
 
     void check_confirmation() {
         if (((this->flags & COMMENT_DISPLAY) == COMMENT_DISPLAY) &&
             ((this->flags & COMMENT_MANDATORY) == COMMENT_MANDATORY) &&
             (this->comment_edit.num_chars == 0)) {
-            this->set_warning_buffer(this->field_comment);
+            this->set_warning_buffer(this->field_comment, this->generic_warning);
             this->set_widget_focus(&this->comment_edit, focus_reason_mousebutton1);
             this->draw(this->warning_msg.rect);
             return;
@@ -212,7 +247,7 @@ enum {
         if (((this->flags & TICKET_DISPLAY) == TICKET_DISPLAY) &&
             ((this->flags & TICKET_MANDATORY) == TICKET_MANDATORY) &&
             (this->ticket_edit.num_chars == 0)) {
-            this->set_warning_buffer(this->field_ticket);
+            this->set_warning_buffer(this->field_ticket, this->generic_warning);
             this->set_widget_focus(&this->ticket_edit, focus_reason_mousebutton1);
             this->draw(this->rect);
             return;
@@ -220,11 +255,21 @@ enum {
         if (((this->flags & DURATION_DISPLAY) == DURATION_DISPLAY) &&
             ((this->flags & DURATION_MANDATORY) == DURATION_MANDATORY) &&
             (this->duration_edit.num_chars == 0)) {
-            this->set_warning_buffer(this->field_duration);
+            this->set_warning_buffer(this->field_duration, this->generic_warning);
             this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
             this->draw(this->rect);
             return;
         }
+        if (((this->flags & DURATION_DISPLAY) == DURATION_DISPLAY) &&
+            (this->duration_edit.num_chars != 0) &&
+            (this->check_duration(this->duration_edit.get_text()) == 0)) {
+            this->duration_edit.set_text("");
+            this->set_warning_buffer(this->field_duration, this->format_warning);
+            this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
+            this->draw(this->rect);
+            return;
+        }
+
         if (this->notifier) {
             this->notifier->notify(&this->confirm, NOTIFY_SUBMIT);
         }

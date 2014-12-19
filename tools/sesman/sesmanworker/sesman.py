@@ -946,6 +946,8 @@ class Sesman():
                     duration += 60*60*int(hres.group(1))
                 if duration == 0:
                     duration = None
+                if duration > 31000000: # slightly more than 1 year
+                    duration = 31000000
             except Exception, e:
                 duration = None
         return duration
