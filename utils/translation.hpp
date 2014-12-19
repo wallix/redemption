@@ -60,7 +60,7 @@ private:
         { return !(*this == k); }
     };
 
-    typedef std::array<value_type, 51> trans_t;
+    typedef std::array<value_type, 52> trans_t;
 
     language_t lang;
     trans_t trans;
@@ -152,6 +152,8 @@ private:
         {"confirm", {"Confirm", "Confirmer"}},
         {"%s field_required", {"Warning: %s field is required.",
                                "Attention: le champ %s est requis."}},
+        {"%s invalid_format", {"Warning: %s invalid format.",
+                               "Attention: format %s invalide."}},
         {"information", {"Information", "Information"}},
         {"authentication_required", {"Authentication Required",
                                      "Authentification Requise"}},
