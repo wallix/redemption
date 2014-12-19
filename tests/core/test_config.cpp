@@ -67,7 +67,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), ini.globals.persistent_path.c_str());
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
@@ -324,7 +323,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -589,7 +587,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -843,7 +840,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL("/var/tmp/wab/persistent/rdp/",   ini.globals.persistent_path.c_str());
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
@@ -1071,7 +1067,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -1279,7 +1274,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -1468,7 +1462,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -1649,7 +1642,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -1824,7 +1816,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -1999,7 +1990,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 

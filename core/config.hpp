@@ -525,7 +525,6 @@ public:
         int  encryptionLevel            = 0; // 0=low, 1=medium, 2=high
         StaticIpString authip           = "127.0.0.1";
         unsigned authport               = 3350;
-        bool autovalidate               = false; // dialog autovalidation for test
 
         // keepalive and no traffic auto deconnexion
         unsigned max_tick               = 30;
@@ -1153,9 +1152,6 @@ public:
             }
             else if (0 == strcmp(key, "authport")) {
                 this->globals.authport = ulong_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "autovalidate")) {
-                this->globals.autovalidate = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "max_tick") ||
                      0 == strcmp(key, "inactivity_time")) {
