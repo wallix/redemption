@@ -67,7 +67,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), ini.globals.persistent_path.c_str());
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
@@ -189,7 +188,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels.str());
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels.str());
 
-    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
@@ -323,7 +323,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -444,7 +443,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
 
     BOOST_CHECK_EQUAL("OK",                             ini.context_get_value(AUTHID_TRANS_BUTTON_OK));
     BOOST_CHECK_EQUAL("Cancel",                         ini.context_get_value(AUTHID_TRANS_BUTTON_CANCEL));
@@ -587,7 +587,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -712,7 +711,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels.str());
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels.str());
 
-    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
@@ -787,7 +787,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "deny_channels=*\n"
                           "\n"
                           "[mod_vnc]\n"
-                          "clipboard=yes\n"
+                          "clipboard_up=yes\n"
                           "encodings=16,2,0,1,-239\n"
                           "allow_authentification_retries=yes\n"
                           "\n"
@@ -840,7 +840,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL("/var/tmp/wab/persistent/rdp/",   ini.globals.persistent_path.c_str());
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
@@ -961,7 +960,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("audin",                          ini.mod_rdp.allow_channels.str());
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.deny_channels.str());
 
-    BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.clipboard.get());
+    BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.clipboard_up.get());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("16,2,0,1,-239",                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.allow_authentification_retries);
 
@@ -1067,7 +1067,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -1275,7 +1274,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -1464,7 +1462,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -1645,7 +1642,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -1820,7 +1816,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -1995,7 +1990,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
 
@@ -2699,7 +2693,13 @@ BOOST_AUTO_TEST_CASE(TestConfigSignedField)
 
 BOOST_AUTO_TEST_CASE(TestConfigBoolField)
 {
-
+    BOOST_CHECK_EQUAL(true, bool_from_cstr("1"));
+    BOOST_CHECK_EQUAL(true, bool_from_cstr("yes"));
+    BOOST_CHECK_EQUAL(true, bool_from_cstr("true"));
+    BOOST_CHECK_EQUAL(true, bool_from_cstr("True"));
+    BOOST_CHECK_EQUAL(true, bool_from_cstr("TRUE"));
+    BOOST_CHECK_EQUAL(false, bool_from_cstr("Tru"));
+    BOOST_CHECK_EQUAL(false, bool_from_cstr("111"));
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigIp)

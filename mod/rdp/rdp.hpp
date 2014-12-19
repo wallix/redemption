@@ -66,6 +66,7 @@
 #include "RDP/capabilities/cap_sound.hpp"
 #include "RDP/capabilities/cap_font.hpp"
 #include "RDP/capabilities/glyphcache.hpp"
+#include <RDP/channels/rdpdr.hpp>
 #include "rdp_params.hpp"
 #include "transparentrecorder.hpp"
 
@@ -73,6 +74,7 @@
 #include "genrandom.hpp"
 #include "authorization_channels.hpp"
 #include "parser.hpp"
+#include "channel_names.hpp"
 
 class mod_rdp : public mod_api {
 
@@ -80,7 +82,8 @@ class mod_rdp : public mod_api {
 
     CHANNELS::ChannelDefArray mod_channel_list;
 
-    AuthorizationChannels make_authorization_channels_with_rdp_params(const ModRDPParams & mod_rdp_params) {
+    static AuthorizationChannels
+    make_authorization_channels_with_rdp_params(const ModRDPParams & mod_rdp_params) {
         if (mod_rdp_params.allow_channels || mod_rdp_params.deny_channels) {
             return make_authorization_channels(
                 mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : "",
@@ -89,7 +92,7 @@ class mod_rdp : public mod_api {
         }
         return AuthorizationChannels();
     }
-    AuthorizationChannels authorization_channels;
+    const AuthorizationChannels authorization_channels;
 
 
     int  use_rdp5;
@@ -162,8 +165,6 @@ class mod_rdp : public mod_api {
     char clientAddr[512];
 
     const bool enable_bitmap_update;
-    const bool enable_clipboard_in;                // true clipboard available, false clipboard unavailable
-    const bool enable_clipboard_out;               // true clipboard available, false clipboard unavailable
     const bool enable_fastpath;                    // choice of programmer
           bool enable_fastpath_client_input_event; // choice of programmer + capability of server
     const bool enable_fastpath_server_update;      // = choice of programmer
@@ -249,8 +250,6 @@ public:
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
               , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
         , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
-        , enable_clipboard_in(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_up"))
-        , enable_clipboard_out(this->authorization_channels.authorized(CLIPBOARD_VIRTUAL_CHANNEL_NAME "_down"))
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
@@ -628,7 +627,7 @@ private:
 
         format_data_response_pdu.emit(out_s, args...);
 
-        this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
+        this->send_to_front_channel( channel_names::cliprdr
                                    , out_s.get_data()
                                    , out_s.size()
                                    , out_s.size()
@@ -659,8 +658,52 @@ public:
             }
         } trace(this->verbose, front_channel_name);
 
+        // filtering device redirection (printer, smartcard, etc)
+        if (!strcmp(front_channel_name, channel_names::rdpdr)) {
+            auto p = chunk.p;
+
+            const rdpdr::PacketId packet_id = rdpdr::SharedHeader::read_packet_id(chunk);
+
+            if (packet_id == rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY) {
+                const auto p_num = chunk.p;
+
+                const uint16_t num_capabilities = rdpdr::read_num_capability(chunk);
+                uint16_t i = 0;
+
+                while (i < num_capabilities) {
+                    const uint16_t captype = chunk.in_uint16_le();
+                    const uint16_t caplen = chunk.in_uint16_le();
+                    chunk.p += caplen - 4;
+
+                    ++i;
+                    if (!this->authorization_channels.rdpdr_type_is_authorized(captype)) {
+                        uint8_t * p = chunk.p - caplen;
+                        uint16_t real_num_capabilities = i - 1;
+                        for (; i < num_capabilities; ++i) {
+                            const uint16_t captype = chunk.in_uint16_le();
+                            const uint16_t caplen = chunk.in_uint16_le();
+                            chunk.p += caplen - 4;
+                            if (this->authorization_channels.rdpdr_type_is_authorized(captype)) {
+                                p = std::copy(chunk.p - caplen, chunk.p, p);
+                                ++real_num_capabilities;
+                            }
+                        }
+
+                        length -= chunk.p - p;
+                        chunk.end -= chunk.p - p;
+                        chunk.p = p_num;
+                        chunk.out_uint16_le(real_num_capabilities);
+                    }
+                }
+            }
+
+            chunk.p = p;
+        }
         // Clipboard is unavailable and is a Clipboard PDU
-        if (!this->enable_clipboard_in && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+        else if (
+            !this->authorization_channels.cliprdr_up_is_authorized()
+         && !strcmp(front_channel_name, channel_names::cliprdr)
+        ) {
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "mod_rdp clipboard PDU");
             }
@@ -671,11 +714,11 @@ public:
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
 
-            uint16_t msgType = chunk.in_uint16_le();
+            const uint16_t msgType = chunk.in_uint16_le();
 
-            if (this->enable_clipboard_out) {
-                if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
-                    this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(true, "\0");
+            if (this->authorization_channels.cliprdr_down_is_authorized()) {
+                if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
+                    this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(false, "\0");
                     return;
                 }
             }
@@ -689,6 +732,21 @@ public:
                 this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(response_ok);
                 return;
             }
+
+            chunk.p -= 2;
+        }
+        //  Clipboard is available and is copy file is unavailable
+        else if (
+             this->authorization_channels.cliprdr_up_is_authorized()
+         && !this->authorization_channels.cliprdr_file_is_authorized()
+         && !strcmp(front_channel_name, channel_names::cliprdr)
+        ) {
+            const uint16_t msgType = chunk.in_uint16_le();
+            if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
+                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FileContentsResponse>(false);
+                return ;
+            }
+            chunk.p -= 2;
         }
 
         const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
@@ -890,7 +948,7 @@ public:
                                 cs_net.channelCount = num_channels;
                                 for (size_t index = 0; index < num_channels; index++) {
                                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
-                                    if (this->authorization_channels.authorized(channel_list[index].name)) {
+                                    if (this->authorization_channels.is_authorized(channel_list[index].name)) {
                                         memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
                                     }
                                     else {
@@ -1793,7 +1851,9 @@ public:
                             size_t chunk_size = sec.payload.in_remain();
 
                             // If channel name is our virtual channel, then don't send data to front
-                            if (this->auth_channel[0] /*&& this->acl */&& !strcmp(mod_channel.name, this->auth_channel)){
+                            if ( this->auth_channel[0] /*&& this->acl */
+                             && !strcmp(mod_channel.name, this->auth_channel)
+                            ) {
                                 redemption::string auth_channel_message((const char *)sec.payload.p, sec.payload.in_remain());
                                 LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message.c_str());
                                 //if (this->auth_channel_state == 0) {
@@ -1816,10 +1876,14 @@ public:
                                 //    this->auth_channel_state = 0;
                                 //}
                             }
-                            else if (!this->enable_clipboard_out && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+                            else if (
+                                !this->authorization_channels.cliprdr_down_is_authorized()
+                             && !strcmp(mod_channel.name, channel_names::cliprdr)
+                            ) {
                                 // Clipboard is unavailable and is a Clipboard PDU
 
-                                TODO("RZ: Don't reject clipboard update, this can block rdesktop. (until 1.7.1 ?)");
+                                TODO("RZ: Don't reject clipboard update, this can block rdesktop."
+                                     " (until 1.7.1 ?)");
 
                                 if (this->verbose & 1) {
                                     LOG(LOG_INFO, "mod_rdp clipboard PDU");
@@ -1827,9 +1891,15 @@ public:
 
                                 const uint16_t msgType = sec.payload.in_uint16_le();
 
-                                if (this->enable_clipboard_in) {
-                                    if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
-                                        this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(true, "\0");
+                                if (this->authorization_channels.cliprdr_up_is_authorized()) {
+                                    if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
+                                        BStream out_s(256);
+                                        RDPECLIP::FormatDataResponsePDU(false).emit(out_s, "\0");
+
+                                        this->send_to_channel(
+                                            mod_channel, out_s, out_s.size(),
+                                            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                                        );
                                     }
                                     else {
                                         sec.payload.p -= 2;
@@ -1842,20 +1912,38 @@ public:
                                         LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                                     }
 
-                                    const bool response_ok = true;
                                     // Build and send the CB_FORMAT_LIST_RESPONSE (with status = OK)
                                     // 03 00 01 00 00 00 00 00
-                                    RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
-                                    BStream                         out_s(256);
+                                    BStream out_s(256);
+                                    const bool response_ok = true;
+                                    RDPECLIP::FormatListResponsePDU(response_ok).emit(out_s);
 
-                                    format_list_response_pdu.emit(out_s);
+                                    this->send_to_channel(
+                                        mod_channel, out_s, out_s.size(),
+                                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                                    );
+                                }
+                            }
+                            else if (
+                                 this->authorization_channels.cliprdr_down_is_authorized()
+                             && !this->authorization_channels.cliprdr_file_is_authorized()
+                             && !strcmp(mod_channel.name, channel_names::cliprdr)
+                            ) {
+                                const uint16_t msgType = sec.payload.in_uint16_le();
+                                if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
+                                    BStream out_s(256);
+                                    const bool response_ok = false;
+                                    RDPECLIP::FileContentsResponse(response_ok).emit(out_s);
 
-                                    this->send_to_channel( mod_channel
-                                                         , out_s
-                                                         , out_s.size()
-                                                         , CHANNELS::CHANNEL_FLAG_FIRST
-                                                         | CHANNELS::CHANNEL_FLAG_LAST
-                                                         );
+                                    this->send_to_channel(
+                                        mod_channel, out_s, out_s.size(),
+                                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                                    );
+                                }
+                                else {
+                                    sec.payload.p -= 2;
+                                    this->send_to_front_channel(
+                                        mod_channel.name, sec.payload.p, length, chunk_size, flags);
                                 }
                             }
                             else {
