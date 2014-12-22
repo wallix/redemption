@@ -31,6 +31,7 @@
 #include "get_printable_password.hpp"
 #include "RDP/logon.hpp"
 #include "RDP/capabilities/glyphcache.hpp"
+#include "RDP/caches/glyphcache.hpp"
 
 class Stream;
 
@@ -82,7 +83,12 @@ struct ClientInfo {
                            2 = arbitrary dimensions */
     bool console_session = false;
 
-    std::array<uint8_t, NUMBER_OF_GLYPH_CACHES> number_of_entries_in_glyph_cache = {};
+    decltype(GlyphCache::number_of_entries_in_cache) number_of_entries_in_glyph_cache = { {
+          NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
+        , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
+        , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
+        , NUMBER_OF_GLYPH_CACHE_ENTRIES
+    } };
 
     ClientInfo() = default;
 

@@ -818,7 +818,7 @@ private:
 
         this->pointer_cache.reset(this->client_info);
         this->brush_cache.reset(this->client_info);
-        this->glyph_cache.reset(this->client_info);
+        this->glyph_cache.reset(this->client_info.number_of_entries_in_glyph_cache);
     }
 
 public:

@@ -21,7 +21,6 @@
 #ifndef _REDEMPTION_CORE_RDP_CACHES_GLYPHCACHE_HPP_
 #define _REDEMPTION_CORE_RDP_CACHES_GLYPHCACHE_HPP_
 
-#include "client_info.hpp"
 #include "font.hpp"
 #include "noncopyable.hpp"
 #include "RDP/capabilities/glyphcache.hpp"
@@ -45,20 +44,24 @@ class GlyphCache : noncopyable {
 public:
     char_item char_items[NUMBER_OF_GLYPH_CACHES][NUMBER_OF_GLYPH_CACHE_ENTRIES];
 
-
 private:
-    decltype(ClientInfo::number_of_entries_in_glyph_cache) number_of_entries_in_cache = {};
+    std::array<uint8_t, NUMBER_OF_GLYPH_CACHES> number_of_entries_in_cache = { {
+          NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
+        , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
+        , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
+        , NUMBER_OF_GLYPH_CACHE_ENTRIES
+    } };
 
 public:
     GlyphCache() {
         reset_internal();
     }
 
-    int reset(ClientInfo const & client_info) {
+    int reset(std::array<uint8_t, NUMBER_OF_GLYPH_CACHES> & number_of_entries_in_glyph_cache) {
         /* free all the cached font items */
         reset_internal();
 
-        this->number_of_entries_in_cache = client_info.number_of_entries_in_glyph_cache;
+        this->number_of_entries_in_cache = number_of_entries_in_glyph_cache;
 
         return 0;
     }
