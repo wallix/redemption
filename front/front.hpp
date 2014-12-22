@@ -4121,7 +4121,7 @@ public:
                     if (new_cmd.data[i] <= 0xFD)
                     {
                         //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
-                        FontChar & fc = const_cast<FontChar&>(gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item);
+                        FontChar & fc = const_cast<FontChar&>(gly_cache->glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item);
                         REDASSERT(fc);
 
                         int g_idx;

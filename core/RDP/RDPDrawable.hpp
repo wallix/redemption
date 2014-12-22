@@ -490,7 +490,7 @@ public:
                 uint8_t  data     = aj.in_uint8();
                 if (data <= 0xFD)
                 {
-                    FontChar const & fc = this->gly_cache.char_items[cmd.cache_id][data].font_item;
+                    FontChar const & fc = this->gly_cache.glyphs[cmd.cache_id][data].font_item;
                     if (!fc)
                     {
                         LOG( LOG_INFO
