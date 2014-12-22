@@ -50,7 +50,7 @@
 
 #include "pointer.hpp"
 #include "bitmapupdate.hpp"
-#include "caches/fontcache.hpp"
+#include "caches/glyphcache.hpp"
 #include "png.hpp"
 #include "text_metrics.hpp"
 
@@ -404,6 +404,9 @@ private:
 public:
     virtual void draw(const RDPGlyphCache & cmd)
     {
+        //LOG( LOG_INFO
+        //   , "RDPDrawable::draw(RDPGlyphCache, ...): cacheId=%u cacheIndex=%u"
+        //   , cmd.cacheId, cmd.cacheIndex);
         FontChar fc(cmd.x, cmd.y, cmd.cx, cmd.cy, -1);
         memcpy(fc.data.get(), cmd.aj, fc.datasize());
         this->gly_cache.set_glyph(std::move(fc), cmd.cacheId, cmd.cacheIndex);
@@ -446,7 +449,7 @@ private:
     }
 
 public:
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * /*gly_cache*/)
     {
         Bitmap glyph_fragments(24, NULL, cmd.bk.cx, cmd.bk.cy);
 
@@ -490,7 +493,9 @@ public:
                     FontChar const & fc = this->gly_cache.char_items[cmd.cache_id][data].font_item;
                     if (!fc)
                     {
-                        LOG(LOG_INFO, "RDPDrawable::draw(RDPGlyphIndex, ...): Unknown glyph=%u", data);
+                        LOG( LOG_INFO
+                           , "RDPDrawable::draw(RDPGlyphIndex, ...): Unknown glyph, cacheId=%u cacheIndex=%u"
+                           , cmd.cache_id, data);
                         REDASSERT(fc);
                     }
 

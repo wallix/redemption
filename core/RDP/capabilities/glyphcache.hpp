@@ -133,6 +133,10 @@ enum {
 //  in the cache. The maximum number of entries allowed in a cache is 254,
 //  and the largest allowed maximum size of an element is 2048 bytes.
 
+enum {
+      NUMBER_OF_GLYPH_CACHE_ENTRIES = 254
+};
+
 // CacheMaximumCellSize (2 bytes): A 16-bit, unsigned integer. The maximum
 //  size in bytes of an entry in the cache.
 

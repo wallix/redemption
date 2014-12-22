@@ -426,7 +426,7 @@ unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp png z crypto 
 unit-test test_bmpcache : tests/core/RDP/caches/test_bmpcache.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_brushcache : tests/core/RDP/caches/test_brushcache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_fontcache : tests/core/RDP/caches/test_fontcache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_glyphcache : tests/core/RDP/caches/test_glyphcache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bmpcache_put_get : tests/core/RDP/caches/test_bmpcache_put_get.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 
@@ -446,7 +446,7 @@ unit-test test_drawninegridcache : tests/core/RDP/capabilities/test_drawninegrid
 unit-test test_cap_font : tests/core/RDP/capabilities/test_cap_font.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_frameacknowledge : tests/core/RDP/capabilities/test_frameacknowledge.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_general : tests/core/RDP/capabilities/test_general.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_glyphcache : tests/core/RDP/capabilities/test_glyphcache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_cap_glyphcache : tests/core/RDP/capabilities/test_glyphcache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_input : tests/core/RDP/capabilities/test_input.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_largepointer : tests/core/RDP/capabilities/test_largepointer.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_multifragmentupdate : tests/core/RDP/capabilities/test_multifragmentupdate.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -501,7 +501,6 @@ unit-test test_netutils : tests/utils/test_netutils.cpp libboost_unit_test : <va
 unit-test test_png : tests/utils/test_png.cpp png z libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdtsc : tests/utils/test_rdtsc.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp openssl crypto dl z libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_string : tests/utils/test_string.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 

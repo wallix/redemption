@@ -54,7 +54,7 @@
 #include "bitmap.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/bmpcachepersister.hpp"
-#include "RDP/caches/fontcache.hpp"
+#include "RDP/caches/glyphcache.hpp"
 #include "RDP/caches/pointercache.hpp"
 #include "RDP/caches/brushcache.hpp"
 #include "client_info.hpp"
@@ -451,28 +451,26 @@ public:
                     return std::ref(this->font.font_items[static_cast<unsigned>('?')]);
                 }().get();
                 TODO(" avoid passing parameters by reference to get results")
-                switch (this->glyph_cache.add_glyph(font_item, f, c))
-                {
-                    case GlyphCache::GLYPH_ADDED_TO_CACHE:
-                    {
-                        RDPGlyphCache cmd(f, /*1, */c,
-                            font_item.offset,
-                            font_item.baseline,
-                            font_item.width,
-                            font_item.height,
-                            font_item.data.get());
+                const GlyphCache::t_glyph_cache_result cache_result =
+                    this->glyph_cache.add_glyph(font_item, f, c);
 
-                        this->orders->draw(cmd);
+                RDPGlyphCache cmd(f, /*1, */c,
+                    font_item.offset,
+                    font_item.baseline,
+                    font_item.width,
+                    font_item.height,
+                    font_item.data.get());
 
-                        if (  this->capture
-                           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                            this->capture->draw(cmd);
-                        }
-                    }
-                    break;
-                    default:
-                    break;
+                if (cache_result == GlyphCache::GLYPH_ADDED_TO_CACHE) {
+//LOG(LOG_INFO, "Front::draw(RDPGlyphCache, ...): cacheId=%u cacheIndex=%u", f, c);
+                    this->orders->draw(cmd);
                 }
+
+                if (  this->capture
+                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                    this->capture->draw(cmd);
+                }
+
                 *data_begin = c;
                 ++data_begin;
                 *data_begin = distance_from_previous_fragment;
@@ -485,21 +483,21 @@ public:
             const Rect bk(x, y, total_width + 1, total_height + 1);
 
             RDPGlyphIndex glyphindex(
-                f, // cache_id
-                0x03, // fl_accel
-                0x0, // ui_charinc
-                1, // f_op_redundant,
-                fgcolor, // BackColor (text color)
-                bgcolor, // ForeColor (color of the opaque rectangle)
-                bk, // bk
-                bk, // op
+                f,                  // cache_id
+                0x03,               // fl_accel
+                0x0,                // ui_charinc
+                1,                  // f_op_redundant,
+                fgcolor,            // BackColor (text color)
+                bgcolor,            // ForeColor (color of the opaque rectangle)
+                bk,                 // bk
+                bk,                 // op
                 // brush
                 RDPBrush(0, 0, 3, 0xaa,
                     (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
-                x,  // glyph_x
-                y + total_height, // glyph_y
-                data_begin - data, // data_len in bytes
-                data // data
+                x,                  // glyph_x
+                y + total_height,   // glyph_y
+                data_begin - data,  // data_len in bytes
+                data                // data
             );
 
             x += total_width;
@@ -4136,6 +4134,7 @@ public:
                                             fc.height,
                                             fc.data.get());
 
+//LOG(LOG_INFO, "Front::draw(RDPGlyphCache, ...): cacheId=%u cacheIndex=%u", new_cmd.cache_id, g_idx);
                             this->orders->draw(cmd2);
 
                             if (  this->capture
@@ -4191,6 +4190,7 @@ public:
                     new_cmd.back_color = cmd.back_color;
                     new_cmd.fore_color = cmd.fore_color;
                 }
+//LOG(LOG_INFO, "Front::draw(RDPGlyphIndex, ...): cacheId=%u", new_cmd.cache_id);
                 this->capture->draw(new_cmd, clip, gly_cache);
             }
         }
@@ -4215,6 +4215,7 @@ public:
                               , cmd.aj
                               );
 
+//LOG(LOG_INFO, "Front::draw(RDPGlyphCache, ...): cacheId=%u cacheIndex=%u", cmd.cacheId, cacheidx);
             this->orders->draw(cmd2);
 
             if (  this->capture

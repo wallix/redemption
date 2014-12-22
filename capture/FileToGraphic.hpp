@@ -31,7 +31,7 @@
 #include "transport.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/pointercache.hpp"
-#include "RDP/caches/fontcache.hpp"
+#include "RDP/caches/glyphcache.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"

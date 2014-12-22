@@ -57,7 +57,7 @@
 
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/bmpcachepersister.hpp"
-#include "RDP/caches/fontcache.hpp"
+#include "RDP/caches/glyphcache.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 
 class RDPGraphicDevice;
@@ -300,9 +300,9 @@ public:
         gd.draw(cmd);
     }
 
-    void process_fontcache(Stream & stream, int flags, RDPGraphicDevice & gd) {
+    void process_glyphcache(Stream & stream, int flags, RDPGraphicDevice & gd) {
         if (this->verbose & 64) {
-            LOG(LOG_INFO, "rdp_orders_process_fontcache");
+            LOG(LOG_INFO, "rdp_orders_process_glyphcache");
         }
         int font    = stream.in_uint8();
         int nglyphs = stream.in_uint8();
@@ -319,7 +319,7 @@ public:
             this->server_add_char(font, character, offset, baseline, width, height, data, gd);
         }
         if (this->verbose & 64) {
-            LOG(LOG_INFO, "rdp_orders_process_fontcache done");
+            LOG(LOG_INFO, "rdp_orders_process_glyphcache done");
         }
     }
 
@@ -383,7 +383,7 @@ public:
                     this->process_colormap(stream, drawing_order.control_flags, header, gd);
                     break;
                 case TS_CACHE_GLYPH:
-                    this->process_fontcache(stream, header.flags, gd);
+                    this->process_glyphcache(stream, header.flags, gd);
                     break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV3:
                     LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)"

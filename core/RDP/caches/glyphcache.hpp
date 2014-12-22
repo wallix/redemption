@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CACHES_FONTCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CACHES_FONTCACHE_HPP_
+#ifndef _REDEMPTION_CORE_RDP_CACHES_GLYPHCACHE_HPP_
+#define _REDEMPTION_CORE_RDP_CACHES_GLYPHCACHE_HPP_
 
 #include "client_info.hpp"
 #include "font.hpp"
@@ -43,7 +43,8 @@ class GlyphCache : noncopyable {
     int char_stamp = 0;
 
 public:
-    char_item char_items[NUMBER_OF_GLYPH_CACHES][256];
+    char_item char_items[NUMBER_OF_GLYPH_CACHES][NUMBER_OF_GLYPH_CACHE_ENTRIES];
+
 
 private:
     decltype(ClientInfo::number_of_entries_in_glyph_cache) number_of_entries_in_cache = {};
@@ -77,14 +78,12 @@ private:
     }
 
 public:
-    enum t_glyph_cache_result
-    {
-        GLYPH_FOUND_IN_CACHE,
-        GLYPH_ADDED_TO_CACHE
+    enum t_glyph_cache_result {
+          GLYPH_FOUND_IN_CACHE
+        , GLYPH_ADDED_TO_CACHE
     };
 
-    t_glyph_cache_result add_glyph(FontChar & font_item, int cacheid, int & cacheidx)
-    {
+    t_glyph_cache_result add_glyph(FontChar & font_item, int cacheid, int & cacheidx) {
         const t_glyph_cache_result ret = priv_add_glyph(font_item, cacheid, cacheidx);
         if (ret == GLYPH_ADDED_TO_CACHE) {
             this->char_items[cacheid][cacheidx].font_item = FontChar(font_item);
@@ -92,8 +91,7 @@ public:
         return ret;
     }
 
-    t_glyph_cache_result add_glyph(FontChar && font_item, int cacheid, int & cacheidx)
-    {
+    t_glyph_cache_result add_glyph(FontChar && font_item, int cacheid, int & cacheidx) {
         const t_glyph_cache_result ret = priv_add_glyph(font_item, cacheid, cacheidx);
         if (ret == GLYPH_ADDED_TO_CACHE) {
             this->char_items[cacheid][cacheidx].font_item = std::move(font_item);
@@ -102,21 +100,10 @@ public:
     }
 
 private:
-    t_glyph_cache_result priv_add_glyph(FontChar & font_item, int cacheid, int & cacheidx)
-    {
+    t_glyph_cache_result priv_add_glyph(FontChar & font_item, int cacheid, int & cacheidx) {
         this->char_stamp++;
 
         /* look for match */
-        // for (char_item & item : this->char_items[cacheid])
-        // {
-        //     if (item.font_item && item.font_item.item_compare(font_item))
-        //     {
-        //         item.stamp = this->char_stamp;
-        //         cacheidx   = &item - std::begin(this->char_items[cacheid]);
-
-        //         return GLYPH_FOUND_IN_CACHE;
-        //     }
-        // }
         int ci     = 0;
         int oldest = 0x7fffffff;
         for (uint8_t cacheIndex = 0; cacheIndex < this->number_of_entries_in_cache[cacheid]; ++ cacheIndex) {
@@ -137,18 +124,6 @@ private:
             }
         }
 
-        /* look for oldest */
-        // int c      = 0;
-        // int oldest = 0x7fffffff;
-        // for (char_item & item : this->char_items[cacheid])
-        // {
-        //     if (item.stamp < oldest)
-        //     {
-        //         oldest = item.stamp;
-        //         c      = &item - std::begin(this->char_items[cacheid]);
-        //     }
-        // }
-
         this->char_items[cacheid][ci].stamp = this->char_stamp;
 
         cacheidx = ci;
@@ -167,13 +142,6 @@ public:
     int find_glyph(FontChar & font_item, int cacheid)
     {
         /* look for match */
-        // for (char_item & item : this->char_items[cacheid])
-        // {
-        //     if (item.font_item && item.font_item.item_compare(font_item))
-        //     {
-        //         return &item - std::begin(this->char_items[cacheid]);
-        //     }
-        // }
         for (uint8_t cacheIndex = 0; cacheIndex < this->number_of_entries_in_cache[cacheid]; ++cacheIndex) {
             char_item & item = this->char_items[cacheid][cacheIndex];
             if (item.font_item && item.font_item.item_compare(font_item)) {
@@ -183,6 +151,6 @@ public:
 
         return -1;
     }
-};
+};  // class GlyphCache
 
-#endif
+#endif  // #ifndef _REDEMPTION_CORE_RDP_CACHES_GLYPHCACHE_HPP_
