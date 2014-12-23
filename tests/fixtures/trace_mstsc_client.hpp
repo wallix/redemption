@@ -6,7 +6,7 @@ const char outdata[] =
 // Reading font file ./tests/fixtures/sans-10.fv1 |
 // font name <Bitstream Vera Sans> size <10> |
 // Font file ./tests/fixtures/sans-10.fv1 defines glyphs up to 256 |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming:CONNECTION_INITIATION |
 // Front::incoming::receiving x224 request PDU |
 // Socket RDP Client (5) receiving 1 bytes |
@@ -29,9 +29,9 @@ const char outdata[] =
 /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x01\x08\x00\x01" //................ |
 /* 0010 */ "\x00\x00\x00"                                                     //... |
 // Sent dumped on RDP Client (5) 19 bytes |
-// RIO *::enable_server_tls() start |
-// RIO *::SSL_CTX_set_options() |
-// RIO *::enable_server_tls() done |
+// SocketTransport::enable_server_tls() start |
+// SocketTransport::SSL_CTX_set_options() |
+// SocketTransport::enable_server_tls() done |
 // Front::incoming::Basic Settings Exchange |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -64,7 +64,7 @@ const char outdata[] =
 // /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0150 */ "\x00\x00\x02\x00\x01\x00\x00\x00\x04\xc0\x0c\x00\x11\x00\x00\x00" //................ |
+// /* 0150 */ "\x00\x00\x06\x00\x01\x00\x00\x00\x04\xc0\x0c\x00\x11\x00\x00\x00" //................ |
 // /* 0160 */ "\x00\x00\x00\x00\x02\xc0\x0c\x00\x1b\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 0170 */ "\x03\xc0\x38\x00\x04\x00\x00\x00\x72\x64\x70\x64\x72\x00\x00\x00" //..8.....rdpdr... |
 // /* 0180 */ "\x00\x00\x80\x80\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0" //....rdpsnd...... |
@@ -96,7 +96,7 @@ const char outdata[] =
 // cs_core::earlyCapabilityFlags:RNS_UD_CS_STRONG_ASYMMETRIC_KEYS |
 // cs_core::earlyCapabilityFlags:RNS_UD_CS_VALID_CONNECTION_TYPE |
 // cs_core::clientDigProductId=[00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 |
-// cs_core::connectionType  = 2 |
+// cs_core::connectionType  = 6 |
 // cs_core::pad1octet  = 0 |
 // cs_core::serverSelectedProtocol = 1 |
 // GCC::UserData tag=c004 length=12 |
@@ -263,7 +263,7 @@ const char outdata[] =
 // Sent dumped on RDP Client (5) 15 bytes |
 // Front::incoming::RDP Security Commencement |
 // TLS mode: exchange packet disabled |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::Secure Settings Exchange |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -271,65 +271,57 @@ const char outdata[] =
 // Dump done on RDP Client (5) 1 bytes |
 // Socket RDP Client (5) receiving 3 bytes |
 // Recv done on RDP Client (5) 3 bytes |
-// /* 0000 */ "\x00\x01\x89"                                                     //... |
+// /* 0000 */ "\x00\x01\x49"                                                     //..I |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 389 bytes |
-// Recv done on RDP Client (5) 389 bytes |
-// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x7a\x40\x00\x00\x00\x00" //...d....p.z@.... |
-// /* 0010 */ "\x00\x00\x00\xb3\x47\x0b\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00" //....G....@...... |
-// /* 0020 */ "\x00\x00\x00\x71\x00\x61\x00\x5c\x00\x61\x00\x64\x00\x6d\x00\x69" //...q.a...a.d.m.i |
-// /* 0030 */ "\x00\x6e\x00\x69\x00\x73\x00\x74\x00\x72\x00\x61\x00\x74\x00\x65" //.n.i.s.t.r.a.t.e |
-// /* 0040 */ "\x00\x75\x00\x72\x00\x40\x00\x77\x00\x69\x00\x6e\x00\x32\x00\x6b" //.u.r.@.w.i.n.2.k |
-// /* 0050 */ "\x00\x38\x00\x72\x00\x32\x00\x3a\x00\x72\x00\x64\x00\x70\x00\x3a" //.8.r.2.:.r.d.p.: |
-// /* 0060 */ "\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //.x.............1 |
-// /* 0070 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
-// /* 0080 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
-// /* 0090 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
-// /* 00a0 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
-// /* 00b0 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
-// /* 00c0 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
-// /* 00d0 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
-// /* 00e0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
-// /* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// Socket RDP Client (5) receiving 325 bytes |
+// Recv done on RDP Client (5) 325 bytes |
+// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x3a\x40\x00\x00\x00\x00" //...d....p.:@.... |
+// /* 0010 */ "\x00\x00\x00\xb3\x47\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //....G........... |
+// /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //...............1 |
+// /* 0030 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
+// /* 0040 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
+// /* 0050 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
+// /* 0060 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
+// /* 0070 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
+// /* 0080 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
+// /* 0090 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
+// /* 00a0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
+// /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 00d0 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 00e0 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
+// /* 00f0 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
 // /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0110 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0120 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
-// /* 0130 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
-// /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0160 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
-// /* 0170 */ "\x00\x00\x00\xc4\xff\xff\xff\x00\x00\x00\x00\x07\x00\x00\x00\x00" //................ |
-// /* 0180 */ "\x00\x64\x00\x00\x00"                                             //.d... |
-// Dump done on RDP Client (5) 389 bytes |
+// /* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 0120 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
+// /* 0130 */ "\x00\x00\x00\xc4\xff\xff\xff\x02\x00\x00\x00\x01\x01\x00\x00\x00" //................ |
+// /* 0140 */ "\x00\x64\x00\x00\x00"                                             //.d... |
+// Dump done on RDP Client (5) 325 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0xb3, 0x47, 0x0b, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G....@..... |
-// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x71, 0x00, 0x61, 0x00, 0x5c, 0x00, 0x61, 0x00, 0x64, 0x00, 0x6d, 0x00,  // ....q.a...a.d.m. |
-// /* 0020 */ 0x69, 0x00, 0x6e, 0x00, 0x69, 0x00, 0x73, 0x00, 0x74, 0x00, 0x72, 0x00, 0x61, 0x00, 0x74, 0x00,  // i.n.i.s.t.r.a.t. |
-// /* 0030 */ 0x65, 0x00, 0x75, 0x00, 0x72, 0x00, 0x40, 0x00, 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x32, 0x00,  // e.u.r.@.w.i.n.2. |
-// /* 0040 */ 0x6b, 0x00, 0x38, 0x00, 0x72, 0x00, 0x32, 0x00, 0x3a, 0x00, 0x72, 0x00, 0x64, 0x00, 0x70, 0x00,  // k.8.r.2.:.r.d.p. |
-// /* 0050 */ 0x3a, 0x00, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x1a, 0x00,  // :.x............. |
-// /* 0060 */ 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00, 0x37, 0x00,  // 1.0...1.0...4.7. |
-// /* 0070 */ 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00, 0x3a, 0x00,  // ..1.7.5...@.C.:. |
-// /* 0080 */ 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00,  // ..W.I.N.D.O.W.S. |
-// /* 0090 */ 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00, 0x33, 0x00,  // ..s.y.s.t.e.m.3. |
-// /* 00a0 */ 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00, 0x61, 0x00,  // 2...m.s.t.s.c.a. |
-// /* 00b0 */ 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff,  // x...d.l.l....... |
-// /* 00c0 */ 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00,  // P.a.r.i.s.,. .M. |
-// /* 00d0 */ 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // a.d.r.i.d....... |
-// /* 00e0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0xb3, 0x47, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G.......... |
+// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x1a, 0x00,  // ................ |
+// /* 0020 */ 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00, 0x37, 0x00,  // 1.0...1.0...4.7. |
+// /* 0030 */ 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00, 0x3a, 0x00,  // ..1.7.5...@.C.:. |
+// /* 0040 */ 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00,  // ..W.I.N.D.O.W.S. |
+// /* 0050 */ 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00, 0x33, 0x00,  // ..s.y.s.t.e.m.3. |
+// /* 0060 */ 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00, 0x61, 0x00,  // 2...m.s.t.s.c.a. |
+// /* 0070 */ 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff,  // x...d.l.l....... |
+// /* 0080 */ 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00,  // P.a.r.i.s.,. .M. |
+// /* 0090 */ 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // a.d.r.i.d....... |
+// /* 00a0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00b0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00c0 */ 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00d0 */ 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00,  // ....P.a.r.i.s.,. |
+// /* 00e0 */ 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00,  //  .M.a.d.r.i.d... |
 // /* 00f0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0100 */ 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00,  // ....P.a.r.i.s.,. |
-// /* 0120 */ 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00,  //  .M.a.d.r.i.d... |
-// /* 0130 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0140 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0150 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
-// /* 0160 */ 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00,  // ................ |
-// /* 0170 */ 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                                // ..d... |
+// /* 0100 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
+// /* 0120 */ 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x02, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00,  // ................ |
+// /* 0130 */ 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                                // ..d... |
 // RDP-5 Style logon |
 // Receiving from client InfoPacket |
 // InfoPacket::CodePage 0 |
-// InfoPacket::flags 0xb47b3 |
+// InfoPacket::flags 0x347b3 |
 // InfoPacket::flags:INFO_MOUSE yes |
 // InfoPacket::flags:INFO_DISABLECTRLALTDEL yes |
 // InfoPacket::flags:INFO_AUTOLOGON no |
@@ -345,17 +337,17 @@ const char outdata[] =
 // InfoPacket::flags:INFO_LOGONERRORS yes |
 // InfoPacket::flags:INFO_MOUSE_HAS_WHEEL yes |
 // InfoPacket::flags:INFO_PASSWORD_IS_SC_PIN no |
-// InfoPacket::flags:INFO_NOAUDIOPLAYBACK yes |
+// InfoPacket::flags:INFO_NOAUDIOPLAYBACK no |
 // InfoPacket::flags:INFO_USING_SAVED_CREDS no |
 // InfoPacket::flags:RNS_INFO_AUDIOCAPTURE no |
 // InfoPacket::flags:RNS_INFO_VIDEO_DISABLE no |
 // InfoPacket::cbDomain 2 |
-// InfoPacket::cbUserName 66 |
+// InfoPacket::cbUserName 2 |
 // InfoPacket::cbPassword 2 |
 // InfoPacket::cbAlternateShell 2 |
 // InfoPacket::cbWorkingDir 2 |
 // InfoPacket::Domain  |
-// InfoPacket::UserName qa\administrateur@win2k8r2:rdp:x |
+// InfoPacket::UserName  |
 // InfoPacket::Password <hidden> |
 // InfoPacket::AlternateShell  |
 // InfoPacket::WorkingDir  |
@@ -364,8 +356,8 @@ const char outdata[] =
 // InfoPacket::ExtendedInfoPacket::clientAddress 10.10.47.175 |
 // InfoPacket::ExtendedInfoPacket::cbClientDir 64 |
 // InfoPacket::ExtendedInfoPacket::clientDir C:\WINDOWS\system32\mstscax.dll |
-// InfoPacket::ExtendedInfoPacket::clientSessionId 0 |
-// InfoPacket::ExtendedInfoPacket::performanceFlags 7 |
+// InfoPacket::ExtendedInfoPacket::clientSessionId 2 |
+// InfoPacket::ExtendedInfoPacket::performanceFlags 257 |
 // InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen 0 |
 // InfoPacket::ExtendedInfoPacket::autoReconnectCookie  |
 // InfoPacket::ExtendedInfoPacket::reserved1 100 |
@@ -390,7 +382,7 @@ const char outdata[] =
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds 0 |
-// client info: performance flags before=0x00000007 after=0x00000007 default=0x00000000 present=0x00000000 not-present=0x00000000 |
+// client info: performance flags before=0x00000101 after=0x00000101 default=0x00000000 present=0x00000000 not-present=0x00000000 |
 // Front Keyboard Layout = 0x40c |
 // Front::incoming::licencing not client_info.is_mce |
 // Front::incoming::licencing send_lic_initial |
@@ -440,7 +432,7 @@ const char outdata[] =
 /* 0150 */ "\x00"                                                             //. |
 // Sent dumped on RDP Client (5) 337 bytes |
 // Front::incoming::waiting for answer to lic_initial |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -452,26 +444,26 @@ const char outdata[] =
 // Dump done on RDP Client (5) 3 bytes |
 // Socket RDP Client (5) receiving 167 bytes |
 // Recv done on RDP Client (5) 167 bytes |
-// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\x58\xee\x13" //...d....p....X.. |
-// /* 0010 */ "\x83\x98\x00\x01\x00\x00\x00\x00\x00\x01\x03\x0c\xb5\x5f\xe9\xe6" //............._.. |
-// /* 0020 */ "\x8a\x5f\x3c\x52\xf1\x50\x9f\xac\x07\xd4\xd6\xaa\xc6\x2a\x23\xfb" //._<R.P.......*#. |
-// /* 0030 */ "\x32\xc1\xa8\x31\xb8\x69\xaa\x9e\x72\xea\x34\x00\x00\x48\x00\x6a" //2..1.i..r.4..H.j |
-// /* 0040 */ "\x80\x49\xc5\xca\xf5\xe4\x30\x3e\xfc\x98\x1e\xfc\x6a\x97\x34\x7b" //.I....0>....j.4{ |
-// /* 0050 */ "\xd3\x26\x58\xc0\xab\x10\xca\x9c\x87\xbd\x96\x1d\x04\xf9\x29\xce" //.&X...........). |
-// /* 0060 */ "\x52\x23\x7b\xfe\x41\xcb\xe9\x10\x8c\xe4\x99\x2d\x45\xb1\xb6\xd6" //R#{.A......-E... |
-// /* 0070 */ "\xdd\x8f\x45\xd9\xa9\x59\x21\x96\x6d\x40\x90\xa3\xef\xf8\x30\x00" //..E..Y!.m@....0. |
+// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\xa9\x01\x13" //...d....p....... |
+// /* 0010 */ "\x83\x98\x00\x01\x00\x00\x00\x00\x00\x01\x03\x43\xbc\xb3\x0b\x5f" //...........C..._ |
+// /* 0020 */ "\xcc\xd5\xa2\xe6\x3a\xed\x1c\x47\x61\x04\x52\x78\x89\x4c\x91\x35" //....:..Ga.Rx.L.5 |
+// /* 0030 */ "\xf6\xa3\x87\x44\xd7\x9d\x78\x0d\x7e\x7a\x77\x00\x00\x48\x00\x32" //...D..x.~zw..H.2 |
+// /* 0040 */ "\x42\x6e\x4d\xf3\x01\x69\xab\x3a\xe3\xc8\x14\x9a\xd6\x10\x64\x3b" //BnM..i.:......d; |
+// /* 0050 */ "\x1d\x8e\x31\x5b\x96\xe8\x40\xf2\xde\x45\xca\xcd\x46\x73\xe8\x18" //..1[..@..E..Fs.. |
+// /* 0060 */ "\x9b\x65\x89\xc2\x2e\xda\xc6\x00\xc9\xed\xb8\x7a\xa5\xbf\xc6\x1c" //.e.........z.... |
+// /* 0070 */ "\x70\xfc\xb3\x52\xf1\xc0\x36\x59\x25\xf3\xef\xbf\xda\x61\x4a\x00" //p..R..6Y%....aJ. |
 // /* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x0f\x00\x41\x64\x6d\x69\x6e" //...........Admin |
 // /* 0090 */ "\x69\x73\x74\x72\x61\x74\x65\x75\x72\x00\x10\x00\x09\x00\x52\x44" //istrateur.....RD |
 // /* 00a0 */ "\x50\x2d\x54\x45\x53\x54\x00"                                     //P-TEST. |
 // Dump done on RDP Client (5) 167 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x0c, 0xb5, 0x5f, 0xe9,  // .............._. |
-// /* 0010 */ 0xe6, 0x8a, 0x5f, 0x3c, 0x52, 0xf1, 0x50, 0x9f, 0xac, 0x07, 0xd4, 0xd6, 0xaa, 0xc6, 0x2a, 0x23,  // .._<R.P.......*# |
-// /* 0020 */ 0xfb, 0x32, 0xc1, 0xa8, 0x31, 0xb8, 0x69, 0xaa, 0x9e, 0x72, 0xea, 0x34, 0x00, 0x00, 0x48, 0x00,  // .2..1.i..r.4..H. |
-// /* 0030 */ 0x6a, 0x80, 0x49, 0xc5, 0xca, 0xf5, 0xe4, 0x30, 0x3e, 0xfc, 0x98, 0x1e, 0xfc, 0x6a, 0x97, 0x34,  // j.I....0>....j.4 |
-// /* 0040 */ 0x7b, 0xd3, 0x26, 0x58, 0xc0, 0xab, 0x10, 0xca, 0x9c, 0x87, 0xbd, 0x96, 0x1d, 0x04, 0xf9, 0x29,  // {.&X...........) |
-// /* 0050 */ 0xce, 0x52, 0x23, 0x7b, 0xfe, 0x41, 0xcb, 0xe9, 0x10, 0x8c, 0xe4, 0x99, 0x2d, 0x45, 0xb1, 0xb6,  // .R#{.A......-E.. |
-// /* 0060 */ 0xd6, 0xdd, 0x8f, 0x45, 0xd9, 0xa9, 0x59, 0x21, 0x96, 0x6d, 0x40, 0x90, 0xa3, 0xef, 0xf8, 0x30,  // ...E..Y!.m@....0 |
+// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x43, 0xbc, 0xb3, 0x0b,  // ............C... |
+// /* 0010 */ 0x5f, 0xcc, 0xd5, 0xa2, 0xe6, 0x3a, 0xed, 0x1c, 0x47, 0x61, 0x04, 0x52, 0x78, 0x89, 0x4c, 0x91,  // _....:..Ga.Rx.L. |
+// /* 0020 */ 0x35, 0xf6, 0xa3, 0x87, 0x44, 0xd7, 0x9d, 0x78, 0x0d, 0x7e, 0x7a, 0x77, 0x00, 0x00, 0x48, 0x00,  // 5...D..x.~zw..H. |
+// /* 0030 */ 0x32, 0x42, 0x6e, 0x4d, 0xf3, 0x01, 0x69, 0xab, 0x3a, 0xe3, 0xc8, 0x14, 0x9a, 0xd6, 0x10, 0x64,  // 2BnM..i.:......d |
+// /* 0040 */ 0x3b, 0x1d, 0x8e, 0x31, 0x5b, 0x96, 0xe8, 0x40, 0xf2, 0xde, 0x45, 0xca, 0xcd, 0x46, 0x73, 0xe8,  // ;..1[..@..E..Fs. |
+// /* 0050 */ 0x18, 0x9b, 0x65, 0x89, 0xc2, 0x2e, 0xda, 0xc6, 0x00, 0xc9, 0xed, 0xb8, 0x7a, 0xa5, 0xbf, 0xc6,  // ..e.........z... |
+// /* 0060 */ 0x1c, 0x70, 0xfc, 0xb3, 0x52, 0xf1, 0xc0, 0x36, 0x59, 0x25, 0xf3, 0xef, 0xbf, 0xda, 0x61, 0x4a,  // .p..R..6Y%....aJ |
 // /* 0070 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x41, 0x64, 0x6d, 0x69,  // ............Admi |
 // /* 0080 */ 0x6e, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x75, 0x72, 0x00, 0x10, 0x00, 0x09, 0x00, 0x52,  // nistrateur.....R |
 // /* 0090 */ 0x44, 0x50, 0x2d, 0x54, 0x45, 0x53, 0x54, 0x00,                          // DP-TEST. |
@@ -588,7 +580,7 @@ const char outdata[] =
 // Input caps::keyboardType 0 |
 // Input caps::keyboardSubType 0 |
 // Input caps::keyboardFunctionKey 0 |
-// Input caps::imeFileName 2253037488 |
+// Input caps::imeFileName 1102523952 |
 // Sec clear payload to send: |
 // /* 0000 */ 0x20, 0x01, 0x11, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x04, 0x00, 0x0a, 0x01, 0x52, 0x44,  //  .............RD |
 // /* 0010 */ 0x50, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x01, 0x00, 0x03, 0x00, 0x00, 0x02,  // P............... |
@@ -630,7 +622,7 @@ const char outdata[] =
 /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"     //............... |
 // Sent dumped on RDP Client (5) 303 bytes |
 // Front::incoming::ACTIVATED (new license request) |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -834,6 +826,30 @@ const char outdata[] =
 // Front::capability 11 / 19 |
 // Front::capability 12 / 19 |
 // Receiving from client CAPSTYPE_GLYPHCACHE |
+// Receiving from client GlyphCache caps (52 bytes) |
+// GlyphCache caps::GlyphCache[0].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[0].CacheMaximumCellSize=4 |
+// GlyphCache caps::GlyphCache[1].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[1].CacheMaximumCellSize=4 |
+// GlyphCache caps::GlyphCache[2].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[2].CacheMaximumCellSize=8 |
+// GlyphCache caps::GlyphCache[3].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[3].CacheMaximumCellSize=8 |
+// GlyphCache caps::GlyphCache[4].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[4].CacheMaximumCellSize=16 |
+// GlyphCache caps::GlyphCache[5].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[5].CacheMaximumCellSize=32 |
+// GlyphCache caps::GlyphCache[6].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[6].CacheMaximumCellSize=64 |
+// GlyphCache caps::GlyphCache[7].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[7].CacheMaximumCellSize=128 |
+// GlyphCache caps::GlyphCache[8].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[8].CacheMaximumCellSize=256 |
+// GlyphCache caps::GlyphCache[9].CacheEntries=64 |
+// GlyphCache caps::GlyphCache[9].CacheMaximumCellSize=2048 |
+// GlyphCache caps::FragCache 16777472 |
+// GlyphCache caps::GlyphSupportLevel 3 |
+// GlyphCache caps::pad2octets 0 |
 // Front::capability 13 / 19 |
 // Receiving from client CAPSTYPE_BRUSH |
 // Receiving from client BrushCache caps (8 bytes) |
@@ -853,12 +869,12 @@ const char outdata[] =
 // Front::capability 18 / 19 |
 // Receiving from client MultifragmentUpdate caps (8 bytes) |
 // MultifragmentUpdate caps::MaxRequestSize 0 |
-// process_confirm_active done p=0x7fff8653b267 end=0x7fff8653b267 |
+// process_confirm_active done p=0x7fff41bf3cc7 end=0x7fff41bf3cc7 |
 // Front::reset::use_bitmap_comp=1 |
 // Front::reset::use_compact_packets=1 |
 // Front::reset::bitmap_cache_version=0 |
 // Front received CONFIRMACTIVEPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -894,7 +910,7 @@ const char outdata[] =
 // send_synchronize done |
 // process_data done |
 // Front received DATAPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -930,7 +946,7 @@ const char outdata[] =
 // send_control done. action=4 |
 // process_data done |
 // Front received DATAPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -966,29 +982,7 @@ const char outdata[] =
 // send_control done. action=2 |
 // process_data done |
 // Front received DATAPDU done |
-// Front::incoming() |
-// Front::incoming::ACTIVATE_AND_PROCESS_DATA |
-// Socket RDP Client (5) receiving 1 bytes |
-// Recv done on RDP Client (5) 1 bytes |
-// /* 0000 */ "\x10"                                                             //. |
-// Dump done on RDP Client (5) 1 bytes |
-// Socket RDP Client (5) receiving 1 bytes |
-// Recv done on RDP Client (5) 1 bytes |
-// /* 0000 */ "\x0e"                                                             //. |
-// Dump done on RDP Client (5) 1 bytes |
-// Socket RDP Client (5) receiving 12 bytes |
-// Recv done on RDP Client (5) 12 bytes |
-// /* 0000 */ "\x01\x0f\x62\x01\x0f\x20\x00\x08\x4c\x02\x40\x02"                 //..b.. ..L.@. |
-// Dump done on RDP Client (5) 12 bytes |
-// Front::Received fast-path PUD, scancode keyboardFlags=0xC000, keyCode=0xF |
-// Front::Received fast-path PUD done |
-// Front::Received fast-path PUD, sync eventFlags=0x2 |
-// Front::Received fast-path PUD done |
-// Front::Received fast-path PUD, scancode keyboardFlags=0xC000, keyCode=0xF |
-// Front::Received fast-path PUD done |
-// Front::Received fast-path PUD, mouse pointerFlags=0x800, xPos=0x24C, yPos=0x240 |
-// Front::Received fast-path PUD done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -1043,16 +1037,17 @@ const char outdata[] =
 // Sent dumped on RDP Client (5) 205 bytes |
 // send_fontmap done |
 // Front::send_data_update_sync |
-// Front::send_data_update_sync: fast-path |
+// send_server_update: fastpath_support=yes compression_support=no shareId=65538 encryptionLevel=0 initiator=0 type=3 data_extra=0 |
 // Sending on RDP Client (5) 5 bytes |
 /* 0000 */ "\x00\x05\x03\x00\x00"                                             //..... |
 // Sent dumped on RDP Client (5) 5 bytes |
+// send_server_update done |
 // --------------> UP AND RUNNING <---------------- |
 // asking for selector |
 // process_data done |
 // Front received DATAPDU done |
 // hostname=RDP-TEST |
-// Front::begin_update() |
+// Front::begin_update |
 // Widget_load: image file [./tests/fixtures/Philips_PM5544_640.png] is PNG file |
 // front::draw:draw_tile((192, 144, 64, 64) (0, 0, 64, 64)) |
 // front::draw:draw_tile((256, 144, 64, 64) (64, 0, 64, 64)) |
@@ -1091,6 +1086,7 @@ const char outdata[] =
 // front::draw:draw_tile((448, 336, 64, 64) (256, 192, 64, 64)) |
 // front::draw:draw_tile((512, 336, 64, 64) (320, 192, 64, 64)) |
 // front::draw:draw_tile((576, 336, 64, 64) (384, 192, 64, 64)) |
+// send_server_update: fastpath_support=yes compression_support=no shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=79 |
 // Sending on RDP Client (5) 8142 bytes |
 /* 0000 */ "\x00\x9f\xce\x00\xc8\x1f\x4f\x00\x03\xfc\x03\x00\x00\x01\x00\x00" //......O......... |
 /* 0010 */ "\x01\x00\x00\x00\x00\x55\x00\x00\x00\xaa\x00\x00\x00\xff\x00\x00" //.....U.......... |
@@ -1602,6 +1598,7 @@ const char outdata[] =
 /* 1fb0 */ "\xa9\x81\x76\xb1\xc2\x25\x2d\x81\xb7\xb9\xc7\x15\xa9\x11\x81\x02" //..v..%-......... |
 /* 1fc0 */ "\x10\x60\x0e\x1f\xf8\xf0\x40\x07\x11\x02\x01\x40\x23\x00"         //.`....@....@#. |
 // Sent dumped on RDP Client (5) 8142 bytes |
+// send_server_update done |
 // front::draw:draw_tile((640, 336, 64, 64) (448, 192, 64, 64)) |
 // front::draw:draw_tile((704, 336, 64, 64) (512, 192, 64, 64)) |
 // front::draw:draw_tile((768, 336, 64, 64) (576, 192, 64, 64)) |
@@ -1634,6 +1631,7 @@ const char outdata[] =
 // front::draw:draw_tile((576, 528, 64, 64) (384, 384, 64, 64)) |
 // front::draw:draw_tile((640, 528, 64, 64) (448, 384, 64, 64)) |
 // front::draw:draw_tile((704, 528, 64, 64) (512, 384, 64, 64)) |
+// send_server_update: fastpath_support=yes compression_support=no shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=64 |
 // Sending on RDP Client (5) 8338 bytes |
 /* 0000 */ "\x00\xa0\x92\x00\x8c\x20\x40\x00\x03\x88\x00\x00\x04\x02\x02\x00" //..... @......... |
 /* 0010 */ "\x40\x40\x10\x86\x00\x24\x00\x19\x81\x55\xad\x21\x81\xdb\xde\x00" //@@...$...U.!.... |
@@ -2158,6 +2156,7 @@ const char outdata[] =
 /* 2080 */ "\x82\xff\xff\x55\xad\x00\x1f\x63\xff\xff\x00\x3e\x11\x02\x01\x40" //...U...c...>...@ |
 /* 2090 */ "\x43\x00"                                                         //C. |
 // Sent dumped on RDP Client (5) 8338 bytes |
+// send_server_update done |
 // front::draw:draw_tile((768, 528, 64, 64) (576, 384, 64, 64)) |
 // front::draw:draw_tile((192, 592, 64, 32) (0, 448, 64, 32)) |
 // front::draw:draw_tile((256, 592, 64, 32) (64, 448, 64, 32)) |
@@ -2178,6 +2177,7 @@ const char outdata[] =
 // front::draw:draw_tile((802, 677, 64, 61) (64, 64, 64, 61)) |
 // front::draw:draw_tile((866, 677, 64, 61) (128, 64, 64, 61)) |
 // front::draw:draw_tile((930, 677, 64, 61) (192, 64, 64, 61)) |
+// send_server_update: fastpath_support=yes compression_support=no shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=69 |
 // Sending on RDP Client (5) 9039 bytes |
 /* 0000 */ "\x00\xa3\x4f\x00\x49\x23\x45\x00\x03\x7e\x00\x00\x04\x02\x02\x00" //..O.I#E..~...... |
 /* 0010 */ "\x40\x40\x10\x7c\x00\x44\x00\xc3\x10\x84\x81\x92\x94\xc2\xff\xff" //@@.|.D.......... |
@@ -2279,24 +2279,24 @@ const char outdata[] =
 /* 0610 */ "\x65\x1e\xc8\x00\x91\x00\xc9\x00\xae\x04\x45\x1e\xf0\xc9\x37\x36" //e.........E...76 |
 /* 0620 */ "\xca\xae\x04\xc8\x00\x91\x00\xc8\x00\x65\x0a\x91\x00\xae\x04\x65" //.........e.....e |
 /* 0630 */ "\x0e\xae\x04\xc9\x00\x91\x00\x65\x1e\x91\x00\xc8\x00\xae\x04\xc9" //.......e........ |
-/* 0640 */ "\x00\x03\x35\x00\x08\x00\x03\x07\x01\x00\x00\xfc\xff\xf0\xff\x18" //..5............. |
-/* 0650 */ "\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x42\x00\x08" //.............B.. |
-/* 0660 */ "\x42\x00\x04\x44\x00\x04\xa4\x00\x04\xa4\x00\x02\xa8\x00\x02\xa8" //B..D............ |
-/* 0670 */ "\x00\x01\x10\x00\x01\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0680 */ "\x00\x00\x00\x03\x25\x00\x08\x00\x03\x07\x01\x01\x00\xfc\xff\xf0" //....%........... |
-/* 0690 */ "\xff\x10\x00\x10\x00\x00\x00\x04\x00\x04\x00\x04\x00\x04\x00\x05" //................ |
-/* 06a0 */ "\xc0\x06\x20\x04\x20\x04\x20\x04\x20\x04\x20\x04\x20\x00\x00\x00" //.. . . . . . ... |
-/* 06b0 */ "\x00\x00\x00\x00\x00\x03\x25\x00\x08\x00\x03\x07\x01\x02\x00\xfc" //......%......... |
-/* 06c0 */ "\xff\xf0\xff\x10\x00\x10\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00" //................ |
-/* 06d0 */ "\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x00" //................ |
-/* 06e0 */ "\x00\x00\x00\x00\x00\x00\x00\x03\x25\x00\x08\x00\x03\x07\x01\x03" //........%....... |
-/* 06f0 */ "\x00\xfc\xff\xf0\xff\x10\x00\x10\x00\x00\x00\x00\x00\x00\x00\x04" //................ |
-/* 0700 */ "\x00\x04\x00\x0f\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x07" //................ |
-/* 0710 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x25\x00\x08\x00\x03\x07" //..........%..... |
-/* 0720 */ "\x01\x04\x00\xfc\xff\xf0\xff\x10\x00\x10\x00\x00\x00\x00\x00\x00" //................ |
-/* 0730 */ "\x00\x00\x00\x00\x00\x03\xc0\x06\x60\x04\x20\x07\xe0\x04\x00\x06" //........`. ..... |
-/* 0740 */ "\x20\x01\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x03\x07\x00\x00\x00" // ............... |
-/* 0750 */ "\x07\x00\x01\x08\x08\x81\x08\xaa\xaa\x55\xaa\x55\xaa\x55\xaa\x09" //.........U.U.U.. |
+/* 0640 */ "\x00\x03\x07\x00\x00\x00\x07\x00\x01\x08\x08\x81\x08\xaa\xaa\x55" //...............U |
+/* 0650 */ "\xaa\x55\xaa\x55\xaa\x03\x35\x00\x08\x00\x03\x07\x01\x00\x00\xfc" //.U.U..5......... |
+/* 0660 */ "\xff\xf0\xff\x18\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 0670 */ "\x08\x42\x00\x08\x42\x00\x04\x44\x00\x04\xa4\x00\x04\xa4\x00\x02" //.B..B..D........ |
+/* 0680 */ "\xa8\x00\x02\xa8\x00\x01\x10\x00\x01\x10\x00\x00\x00\x00\x00\x00" //................ |
+/* 0690 */ "\x00\x00\x00\x00\x00\x00\x00\x03\x25\x00\x08\x00\x03\x07\x01\x01" //........%....... |
+/* 06a0 */ "\x00\xfc\xff\xf0\xff\x10\x00\x10\x00\x00\x00\x04\x00\x04\x00\x04" //................ |
+/* 06b0 */ "\x00\x04\x00\x05\xc0\x06\x20\x04\x20\x04\x20\x04\x20\x04\x20\x04" //...... . . . . . |
+/* 06c0 */ "\x20\x00\x00\x00\x00\x00\x00\x00\x00\x03\x25\x00\x08\x00\x03\x07" // .........%..... |
+/* 06d0 */ "\x01\x02\x00\xfc\xff\xf0\xff\x10\x00\x10\x00\x00\x00\x00\x00\x04" //................ |
+/* 06e0 */ "\x00\x00\x00\x00\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04" //................ |
+/* 06f0 */ "\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x25\x00\x08\x00" //............%... |
+/* 0700 */ "\x03\x07\x01\x03\x00\xfc\xff\xf0\xff\x10\x00\x10\x00\x00\x00\x00" //................ |
+/* 0710 */ "\x00\x00\x00\x04\x00\x04\x00\x0f\x00\x04\x00\x04\x00\x04\x00\x04" //................ |
+/* 0720 */ "\x00\x04\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x25\x00" //..............%. |
+/* 0730 */ "\x08\x00\x03\x07\x01\x04\x00\xfc\xff\xf0\xff\x10\x00\x10\x00\x00" //................ |
+/* 0740 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\xc0\x06\x60\x04\x20\x07" //............`. . |
+/* 0750 */ "\xe0\x04\x00\x06\x20\x01\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x09" //.... ........... |
 /* 0760 */ "\x1b\xdb\x3f\x3d\x07\x03\x01\xff\xff\x00\x1e\x00\x1e\x00\x41\x00" //..?=..........A. |
 /* 0770 */ "\x2e\x00\x1e\x00\x1e\x00\x41\x00\x2e\x00\x81\xaa\x55\xaa\x55\xaa" //......A.....U.U. |
 /* 0780 */ "\x55\xaa\x1e\x00\x2e\x00\x0a\x00\x00\x01\x0b\x02\x08\x03\x03\x04" //U............... |
@@ -2745,10 +2745,12 @@ const char outdata[] =
 /* 2330 */ "\x00\x10\x81\xd2\x13\x00\x0e\x81\x23\x00\x10\x81\xd7\x0a\x00\x0e" //........#....... |
 /* 2340 */ "\x81\x00\x00\x10\x81\xdb\x09\x00\x06\x11\x02\x01\x40\x56\x00"     //............@V. |
 // Sent dumped on RDP Client (5) 9039 bytes |
+// send_server_update done |
 // front::draw:draw_tile((0, 704, 32, 32) (32, 32, 32, 32)) |
 // Widget_load: image file [./tests/fixtures/ad8b.png] is PNG file |
 // front::draw:draw_tile((100, 100, 26, 32) (80, 50, 26, 32)) |
-// Front::end_update() |
+// Front::end_update |
+// send_server_update: fastpath_support=yes compression_support=no shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=6 |
 // Sending on RDP Client (5) 1457 bytes |
 /* 0000 */ "\x00\x85\xb1\x00\xab\x05\x06\x00\x03\x2b\x04\x00\x04\x02\x02\x00" //.........+...... |
 /* 0010 */ "\x40\x3d\x10\x29\x04\x57\x00\x00\x20\xf0\x48\x01\x86\x82\x10\x49" //@=.).W.. .H....I |
@@ -2843,10 +2845,11 @@ const char outdata[] =
 /* 05a0 */ "\x13\x6f\x18\xc6\x00\x52\x01\x0e\x01\x64\x00\x64\x00\x1a\x00\x01" //.o...R...d.d.... |
 /* 05b0 */ "\x00"                                                             //. |
 // Sent dumped on RDP Client (5) 1457 bytes |
+// send_server_update done |
 // Listener closed |
 // Incoming socket 5 (ip=10.10.47.175) |
 // Socket RDP Client (5) : closing connection |
-// RDP Client (0): total_received=1792, total_sent=28205 |
+// RDP Client (0): total_received=1714, total_sent=28205 |
 } /* end outdata */;
 
 const char indata[] =
@@ -2857,7 +2860,7 @@ const char indata[] =
 // Reading font file ./tests/fixtures/sans-10.fv1 |
 // font name <Bitstream Vera Sans> size <10> |
 // Font file ./tests/fixtures/sans-10.fv1 defines glyphs up to 256 |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming:CONNECTION_INITIATION |
 // Front::incoming::receiving x224 request PDU |
 // Socket RDP Client (5) receiving 1 bytes |
@@ -2880,9 +2883,9 @@ const char indata[] =
 // /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x01\x08\x00\x01" //................ |
 // /* 0010 */ "\x00\x00\x00"                                                     //... |
 // Sent dumped on RDP Client (5) 19 bytes |
-// RIO *::enable_server_tls() start |
-// RIO *::SSL_CTX_set_options() |
-// RIO *::enable_server_tls() done |
+// SocketTransport::enable_server_tls() start |
+// SocketTransport::SSL_CTX_set_options() |
+// SocketTransport::enable_server_tls() done |
 // Front::incoming::Basic Settings Exchange |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -2915,7 +2918,7 @@ const char indata[] =
 /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0150 */ "\x00\x00\x02\x00\x01\x00\x00\x00\x04\xc0\x0c\x00\x11\x00\x00\x00" //................ |
+/* 0150 */ "\x00\x00\x06\x00\x01\x00\x00\x00\x04\xc0\x0c\x00\x11\x00\x00\x00" //................ |
 /* 0160 */ "\x00\x00\x00\x00\x02\xc0\x0c\x00\x1b\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0170 */ "\x03\xc0\x38\x00\x04\x00\x00\x00\x72\x64\x70\x64\x72\x00\x00\x00" //..8.....rdpdr... |
 /* 0180 */ "\x00\x00\x80\x80\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0" //....rdpsnd...... |
@@ -2947,7 +2950,7 @@ const char indata[] =
 // cs_core::earlyCapabilityFlags:RNS_UD_CS_STRONG_ASYMMETRIC_KEYS |
 // cs_core::earlyCapabilityFlags:RNS_UD_CS_VALID_CONNECTION_TYPE |
 // cs_core::clientDigProductId=[00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 |
-// cs_core::connectionType  = 2 |
+// cs_core::connectionType  = 6 |
 // cs_core::pad1octet  = 0 |
 // cs_core::serverSelectedProtocol = 1 |
 // GCC::UserData tag=c004 length=12 |
@@ -3114,7 +3117,7 @@ const char indata[] =
 // Sent dumped on RDP Client (5) 15 bytes |
 // Front::incoming::RDP Security Commencement |
 // TLS mode: exchange packet disabled |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::Secure Settings Exchange |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3122,65 +3125,57 @@ const char indata[] =
 // Dump done on RDP Client (5) 1 bytes |
 // Socket RDP Client (5) receiving 3 bytes |
 // Recv done on RDP Client (5) 3 bytes |
-/* 0000 */ "\x00\x01\x89"                                                     //... |
+/* 0000 */ "\x00\x01\x49"                                                     //..I |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 389 bytes |
-// Recv done on RDP Client (5) 389 bytes |
-/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x7a\x40\x00\x00\x00\x00" //...d....p.z@.... |
-/* 0010 */ "\x00\x00\x00\xb3\x47\x0b\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00" //....G....@...... |
-/* 0020 */ "\x00\x00\x00\x71\x00\x61\x00\x5c\x00\x61\x00\x64\x00\x6d\x00\x69" //...q.a...a.d.m.i |
-/* 0030 */ "\x00\x6e\x00\x69\x00\x73\x00\x74\x00\x72\x00\x61\x00\x74\x00\x65" //.n.i.s.t.r.a.t.e |
-/* 0040 */ "\x00\x75\x00\x72\x00\x40\x00\x77\x00\x69\x00\x6e\x00\x32\x00\x6b" //.u.r.@.w.i.n.2.k |
-/* 0050 */ "\x00\x38\x00\x72\x00\x32\x00\x3a\x00\x72\x00\x64\x00\x70\x00\x3a" //.8.r.2.:.r.d.p.: |
-/* 0060 */ "\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //.x.............1 |
-/* 0070 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
-/* 0080 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
-/* 0090 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
-/* 00a0 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
-/* 00b0 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
-/* 00c0 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
-/* 00d0 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
-/* 00e0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
-/* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// Socket RDP Client (5) receiving 325 bytes |
+// Recv done on RDP Client (5) 325 bytes |
+/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x3a\x40\x00\x00\x00\x00" //...d....p.:@.... |
+/* 0010 */ "\x00\x00\x00\xb3\x47\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //....G........... |
+/* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //...............1 |
+/* 0030 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
+/* 0040 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
+/* 0050 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
+/* 0060 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
+/* 0070 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
+/* 0080 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
+/* 0090 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
+/* 00a0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
+/* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 00d0 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 00e0 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
+/* 00f0 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
 /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0110 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0120 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
-/* 0130 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
-/* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0160 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
-/* 0170 */ "\x00\x00\x00\xc4\xff\xff\xff\x00\x00\x00\x00\x07\x00\x00\x00\x00" //................ |
-/* 0180 */ "\x00\x64\x00\x00\x00"                                             //.d... |
-// Dump done on RDP Client (5) 389 bytes |
+/* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 0120 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
+/* 0130 */ "\x00\x00\x00\xc4\xff\xff\xff\x02\x00\x00\x00\x01\x01\x00\x00\x00" //................ |
+/* 0140 */ "\x00\x64\x00\x00\x00"                                             //.d... |
+// Dump done on RDP Client (5) 325 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0xb3, 0x47, 0x0b, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G....@..... |
-// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x71, 0x00, 0x61, 0x00, 0x5c, 0x00, 0x61, 0x00, 0x64, 0x00, 0x6d, 0x00,  // ....q.a...a.d.m. |
-// /* 0020 */ 0x69, 0x00, 0x6e, 0x00, 0x69, 0x00, 0x73, 0x00, 0x74, 0x00, 0x72, 0x00, 0x61, 0x00, 0x74, 0x00,  // i.n.i.s.t.r.a.t. |
-// /* 0030 */ 0x65, 0x00, 0x75, 0x00, 0x72, 0x00, 0x40, 0x00, 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x32, 0x00,  // e.u.r.@.w.i.n.2. |
-// /* 0040 */ 0x6b, 0x00, 0x38, 0x00, 0x72, 0x00, 0x32, 0x00, 0x3a, 0x00, 0x72, 0x00, 0x64, 0x00, 0x70, 0x00,  // k.8.r.2.:.r.d.p. |
-// /* 0050 */ 0x3a, 0x00, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x1a, 0x00,  // :.x............. |
-// /* 0060 */ 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00, 0x37, 0x00,  // 1.0...1.0...4.7. |
-// /* 0070 */ 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00, 0x3a, 0x00,  // ..1.7.5...@.C.:. |
-// /* 0080 */ 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00,  // ..W.I.N.D.O.W.S. |
-// /* 0090 */ 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00, 0x33, 0x00,  // ..s.y.s.t.e.m.3. |
-// /* 00a0 */ 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00, 0x61, 0x00,  // 2...m.s.t.s.c.a. |
-// /* 00b0 */ 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff,  // x...d.l.l....... |
-// /* 00c0 */ 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00,  // P.a.r.i.s.,. .M. |
-// /* 00d0 */ 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // a.d.r.i.d....... |
-// /* 00e0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0xb3, 0x47, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G.......... |
+// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x1a, 0x00,  // ................ |
+// /* 0020 */ 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00, 0x37, 0x00,  // 1.0...1.0...4.7. |
+// /* 0030 */ 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00, 0x3a, 0x00,  // ..1.7.5...@.C.:. |
+// /* 0040 */ 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00,  // ..W.I.N.D.O.W.S. |
+// /* 0050 */ 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00, 0x33, 0x00,  // ..s.y.s.t.e.m.3. |
+// /* 0060 */ 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00, 0x61, 0x00,  // 2...m.s.t.s.c.a. |
+// /* 0070 */ 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff,  // x...d.l.l....... |
+// /* 0080 */ 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00,  // P.a.r.i.s.,. .M. |
+// /* 0090 */ 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // a.d.r.i.d....... |
+// /* 00a0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00b0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00c0 */ 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00d0 */ 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00,  // ....P.a.r.i.s.,. |
+// /* 00e0 */ 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00,  //  .M.a.d.r.i.d... |
 // /* 00f0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0100 */ 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00,  // ....P.a.r.i.s.,. |
-// /* 0120 */ 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00,  //  .M.a.d.r.i.d... |
-// /* 0130 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0140 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0150 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
-// /* 0160 */ 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00,  // ................ |
-// /* 0170 */ 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                                // ..d... |
+// /* 0100 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
+// /* 0120 */ 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x02, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00,  // ................ |
+// /* 0130 */ 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                                // ..d... |
 // RDP-5 Style logon |
 // Receiving from client InfoPacket |
 // InfoPacket::CodePage 0 |
-// InfoPacket::flags 0xb47b3 |
+// InfoPacket::flags 0x347b3 |
 // InfoPacket::flags:INFO_MOUSE yes |
 // InfoPacket::flags:INFO_DISABLECTRLALTDEL yes |
 // InfoPacket::flags:INFO_AUTOLOGON no |
@@ -3196,17 +3191,17 @@ const char indata[] =
 // InfoPacket::flags:INFO_LOGONERRORS yes |
 // InfoPacket::flags:INFO_MOUSE_HAS_WHEEL yes |
 // InfoPacket::flags:INFO_PASSWORD_IS_SC_PIN no |
-// InfoPacket::flags:INFO_NOAUDIOPLAYBACK yes |
+// InfoPacket::flags:INFO_NOAUDIOPLAYBACK no |
 // InfoPacket::flags:INFO_USING_SAVED_CREDS no |
 // InfoPacket::flags:RNS_INFO_AUDIOCAPTURE no |
 // InfoPacket::flags:RNS_INFO_VIDEO_DISABLE no |
 // InfoPacket::cbDomain 2 |
-// InfoPacket::cbUserName 66 |
+// InfoPacket::cbUserName 2 |
 // InfoPacket::cbPassword 2 |
 // InfoPacket::cbAlternateShell 2 |
 // InfoPacket::cbWorkingDir 2 |
 // InfoPacket::Domain  |
-// InfoPacket::UserName qa\administrateur@win2k8r2:rdp:x |
+// InfoPacket::UserName  |
 // InfoPacket::Password <hidden> |
 // InfoPacket::AlternateShell  |
 // InfoPacket::WorkingDir  |
@@ -3215,8 +3210,8 @@ const char indata[] =
 // InfoPacket::ExtendedInfoPacket::clientAddress 10.10.47.175 |
 // InfoPacket::ExtendedInfoPacket::cbClientDir 64 |
 // InfoPacket::ExtendedInfoPacket::clientDir C:\WINDOWS\system32\mstscax.dll |
-// InfoPacket::ExtendedInfoPacket::clientSessionId 0 |
-// InfoPacket::ExtendedInfoPacket::performanceFlags 7 |
+// InfoPacket::ExtendedInfoPacket::clientSessionId 2 |
+// InfoPacket::ExtendedInfoPacket::performanceFlags 257 |
 // InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen 0 |
 // InfoPacket::ExtendedInfoPacket::autoReconnectCookie  |
 // InfoPacket::ExtendedInfoPacket::reserved1 100 |
@@ -3241,7 +3236,7 @@ const char indata[] =
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds 0 |
-// client info: performance flags before=0x00000007 after=0x00000007 default=0x00000000 present=0x00000000 not-present=0x00000000 |
+// client info: performance flags before=0x00000101 after=0x00000101 default=0x00000000 present=0x00000000 not-present=0x00000000 |
 // Front Keyboard Layout = 0x40c |
 // Front::incoming::licencing not client_info.is_mce |
 // Front::incoming::licencing send_lic_initial |
@@ -3291,7 +3286,7 @@ const char indata[] =
 // /* 0150 */ "\x00"                                                             //. |
 // Sent dumped on RDP Client (5) 337 bytes |
 // Front::incoming::waiting for answer to lic_initial |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3303,26 +3298,26 @@ const char indata[] =
 // Dump done on RDP Client (5) 3 bytes |
 // Socket RDP Client (5) receiving 167 bytes |
 // Recv done on RDP Client (5) 167 bytes |
-/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\x58\xee\x13" //...d....p....X.. |
-/* 0010 */ "\x83\x98\x00\x01\x00\x00\x00\x00\x00\x01\x03\x0c\xb5\x5f\xe9\xe6" //............._.. |
-/* 0020 */ "\x8a\x5f\x3c\x52\xf1\x50\x9f\xac\x07\xd4\xd6\xaa\xc6\x2a\x23\xfb" //._<R.P.......*#. |
-/* 0030 */ "\x32\xc1\xa8\x31\xb8\x69\xaa\x9e\x72\xea\x34\x00\x00\x48\x00\x6a" //2..1.i..r.4..H.j |
-/* 0040 */ "\x80\x49\xc5\xca\xf5\xe4\x30\x3e\xfc\x98\x1e\xfc\x6a\x97\x34\x7b" //.I....0>....j.4{ |
-/* 0050 */ "\xd3\x26\x58\xc0\xab\x10\xca\x9c\x87\xbd\x96\x1d\x04\xf9\x29\xce" //.&X...........). |
-/* 0060 */ "\x52\x23\x7b\xfe\x41\xcb\xe9\x10\x8c\xe4\x99\x2d\x45\xb1\xb6\xd6" //R#{.A......-E... |
-/* 0070 */ "\xdd\x8f\x45\xd9\xa9\x59\x21\x96\x6d\x40\x90\xa3\xef\xf8\x30\x00" //..E..Y!.m@....0. |
+/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\xa9\x01\x13" //...d....p....... |
+/* 0010 */ "\x83\x98\x00\x01\x00\x00\x00\x00\x00\x01\x03\x43\xbc\xb3\x0b\x5f" //...........C..._ |
+/* 0020 */ "\xcc\xd5\xa2\xe6\x3a\xed\x1c\x47\x61\x04\x52\x78\x89\x4c\x91\x35" //....:..Ga.Rx.L.5 |
+/* 0030 */ "\xf6\xa3\x87\x44\xd7\x9d\x78\x0d\x7e\x7a\x77\x00\x00\x48\x00\x32" //...D..x.~zw..H.2 |
+/* 0040 */ "\x42\x6e\x4d\xf3\x01\x69\xab\x3a\xe3\xc8\x14\x9a\xd6\x10\x64\x3b" //BnM..i.:......d; |
+/* 0050 */ "\x1d\x8e\x31\x5b\x96\xe8\x40\xf2\xde\x45\xca\xcd\x46\x73\xe8\x18" //..1[..@..E..Fs.. |
+/* 0060 */ "\x9b\x65\x89\xc2\x2e\xda\xc6\x00\xc9\xed\xb8\x7a\xa5\xbf\xc6\x1c" //.e.........z.... |
+/* 0070 */ "\x70\xfc\xb3\x52\xf1\xc0\x36\x59\x25\xf3\xef\xbf\xda\x61\x4a\x00" //p..R..6Y%....aJ. |
 /* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x0f\x00\x41\x64\x6d\x69\x6e" //...........Admin |
 /* 0090 */ "\x69\x73\x74\x72\x61\x74\x65\x75\x72\x00\x10\x00\x09\x00\x52\x44" //istrateur.....RD |
 /* 00a0 */ "\x50\x2d\x54\x45\x53\x54\x00"                                     //P-TEST. |
 // Dump done on RDP Client (5) 167 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x0c, 0xb5, 0x5f, 0xe9,  // .............._. |
-// /* 0010 */ 0xe6, 0x8a, 0x5f, 0x3c, 0x52, 0xf1, 0x50, 0x9f, 0xac, 0x07, 0xd4, 0xd6, 0xaa, 0xc6, 0x2a, 0x23,  // .._<R.P.......*# |
-// /* 0020 */ 0xfb, 0x32, 0xc1, 0xa8, 0x31, 0xb8, 0x69, 0xaa, 0x9e, 0x72, 0xea, 0x34, 0x00, 0x00, 0x48, 0x00,  // .2..1.i..r.4..H. |
-// /* 0030 */ 0x6a, 0x80, 0x49, 0xc5, 0xca, 0xf5, 0xe4, 0x30, 0x3e, 0xfc, 0x98, 0x1e, 0xfc, 0x6a, 0x97, 0x34,  // j.I....0>....j.4 |
-// /* 0040 */ 0x7b, 0xd3, 0x26, 0x58, 0xc0, 0xab, 0x10, 0xca, 0x9c, 0x87, 0xbd, 0x96, 0x1d, 0x04, 0xf9, 0x29,  // {.&X...........) |
-// /* 0050 */ 0xce, 0x52, 0x23, 0x7b, 0xfe, 0x41, 0xcb, 0xe9, 0x10, 0x8c, 0xe4, 0x99, 0x2d, 0x45, 0xb1, 0xb6,  // .R#{.A......-E.. |
-// /* 0060 */ 0xd6, 0xdd, 0x8f, 0x45, 0xd9, 0xa9, 0x59, 0x21, 0x96, 0x6d, 0x40, 0x90, 0xa3, 0xef, 0xf8, 0x30,  // ...E..Y!.m@....0 |
+// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x43, 0xbc, 0xb3, 0x0b,  // ............C... |
+// /* 0010 */ 0x5f, 0xcc, 0xd5, 0xa2, 0xe6, 0x3a, 0xed, 0x1c, 0x47, 0x61, 0x04, 0x52, 0x78, 0x89, 0x4c, 0x91,  // _....:..Ga.Rx.L. |
+// /* 0020 */ 0x35, 0xf6, 0xa3, 0x87, 0x44, 0xd7, 0x9d, 0x78, 0x0d, 0x7e, 0x7a, 0x77, 0x00, 0x00, 0x48, 0x00,  // 5...D..x.~zw..H. |
+// /* 0030 */ 0x32, 0x42, 0x6e, 0x4d, 0xf3, 0x01, 0x69, 0xab, 0x3a, 0xe3, 0xc8, 0x14, 0x9a, 0xd6, 0x10, 0x64,  // 2BnM..i.:......d |
+// /* 0040 */ 0x3b, 0x1d, 0x8e, 0x31, 0x5b, 0x96, 0xe8, 0x40, 0xf2, 0xde, 0x45, 0xca, 0xcd, 0x46, 0x73, 0xe8,  // ;..1[..@..E..Fs. |
+// /* 0050 */ 0x18, 0x9b, 0x65, 0x89, 0xc2, 0x2e, 0xda, 0xc6, 0x00, 0xc9, 0xed, 0xb8, 0x7a, 0xa5, 0xbf, 0xc6,  // ..e.........z... |
+// /* 0060 */ 0x1c, 0x70, 0xfc, 0xb3, 0x52, 0xf1, 0xc0, 0x36, 0x59, 0x25, 0xf3, 0xef, 0xbf, 0xda, 0x61, 0x4a,  // .p..R..6Y%....aJ |
 // /* 0070 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x41, 0x64, 0x6d, 0x69,  // ............Admi |
 // /* 0080 */ 0x6e, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x75, 0x72, 0x00, 0x10, 0x00, 0x09, 0x00, 0x52,  // nistrateur.....R |
 // /* 0090 */ 0x44, 0x50, 0x2d, 0x54, 0x45, 0x53, 0x54, 0x00,                          // DP-TEST. |
@@ -3439,7 +3434,7 @@ const char indata[] =
 // Input caps::keyboardType 0 |
 // Input caps::keyboardSubType 0 |
 // Input caps::keyboardFunctionKey 0 |
-// Input caps::imeFileName 2253037488 |
+// Input caps::imeFileName 1102523952 |
 // Sec clear payload to send: |
 // /* 0000 */ 0x20, 0x01, 0x11, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x04, 0x00, 0x0a, 0x01, 0x52, 0x44,  //  .............RD |
 // /* 0010 */ 0x50, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x01, 0x00, 0x03, 0x00, 0x00, 0x02,  // P............... |
@@ -3481,7 +3476,7 @@ const char indata[] =
 // /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"     //............... |
 // Sent dumped on RDP Client (5) 303 bytes |
 // Front::incoming::ACTIVATED (new license request) |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3685,6 +3680,30 @@ const char indata[] =
 // Front::capability 11 / 19 |
 // Front::capability 12 / 19 |
 // Receiving from client CAPSTYPE_GLYPHCACHE |
+// Receiving from client GlyphCache caps (52 bytes) |
+// GlyphCache caps::GlyphCache[0].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[0].CacheMaximumCellSize=4 |
+// GlyphCache caps::GlyphCache[1].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[1].CacheMaximumCellSize=4 |
+// GlyphCache caps::GlyphCache[2].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[2].CacheMaximumCellSize=8 |
+// GlyphCache caps::GlyphCache[3].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[3].CacheMaximumCellSize=8 |
+// GlyphCache caps::GlyphCache[4].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[4].CacheMaximumCellSize=16 |
+// GlyphCache caps::GlyphCache[5].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[5].CacheMaximumCellSize=32 |
+// GlyphCache caps::GlyphCache[6].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[6].CacheMaximumCellSize=64 |
+// GlyphCache caps::GlyphCache[7].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[7].CacheMaximumCellSize=128 |
+// GlyphCache caps::GlyphCache[8].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[8].CacheMaximumCellSize=256 |
+// GlyphCache caps::GlyphCache[9].CacheEntries=64 |
+// GlyphCache caps::GlyphCache[9].CacheMaximumCellSize=2048 |
+// GlyphCache caps::FragCache 16777472 |
+// GlyphCache caps::GlyphSupportLevel 3 |
+// GlyphCache caps::pad2octets 0 |
 // Front::capability 13 / 19 |
 // Receiving from client CAPSTYPE_BRUSH |
 // Receiving from client BrushCache caps (8 bytes) |
@@ -3704,12 +3723,12 @@ const char indata[] =
 // Front::capability 18 / 19 |
 // Receiving from client MultifragmentUpdate caps (8 bytes) |
 // MultifragmentUpdate caps::MaxRequestSize 0 |
-// process_confirm_active done p=0x7fff8653b267 end=0x7fff8653b267 |
+// process_confirm_active done p=0x7fff41bf3cc7 end=0x7fff41bf3cc7 |
 // Front::reset::use_bitmap_comp=1 |
 // Front::reset::use_compact_packets=1 |
 // Front::reset::bitmap_cache_version=0 |
 // Front received CONFIRMACTIVEPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3745,7 +3764,7 @@ const char indata[] =
 // send_synchronize done |
 // process_data done |
 // Front received DATAPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3781,7 +3800,7 @@ const char indata[] =
 // send_control done. action=4 |
 // process_data done |
 // Front received DATAPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3817,29 +3836,7 @@ const char indata[] =
 // send_control done. action=2 |
 // process_data done |
 // Front received DATAPDU done |
-// Front::incoming() |
-// Front::incoming::ACTIVATE_AND_PROCESS_DATA |
-// Socket RDP Client (5) receiving 1 bytes |
-// Recv done on RDP Client (5) 1 bytes |
-/* 0000 */ "\x10"                                                             //. |
-// Dump done on RDP Client (5) 1 bytes |
-// Socket RDP Client (5) receiving 1 bytes |
-// Recv done on RDP Client (5) 1 bytes |
-/* 0000 */ "\x0e"                                                             //. |
-// Dump done on RDP Client (5) 1 bytes |
-// Socket RDP Client (5) receiving 12 bytes |
-// Recv done on RDP Client (5) 12 bytes |
-/* 0000 */ "\x01\x0f\x62\x01\x0f\x20\x00\x08\x4c\x02\x40\x02"                 //..b.. ..L.@. |
-// Dump done on RDP Client (5) 12 bytes |
-// Front::Received fast-path PUD, scancode keyboardFlags=0xC000, keyCode=0xF |
-// Front::Received fast-path PUD done |
-// Front::Received fast-path PUD, sync eventFlags=0x2 |
-// Front::Received fast-path PUD done |
-// Front::Received fast-path PUD, scancode keyboardFlags=0xC000, keyCode=0xF |
-// Front::Received fast-path PUD done |
-// Front::Received fast-path PUD, mouse pointerFlags=0x800, xPos=0x24C, yPos=0x240 |
-// Front::Received fast-path PUD done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3894,16 +3891,17 @@ const char indata[] =
 // Sent dumped on RDP Client (5) 205 bytes |
 // send_fontmap done |
 // Front::send_data_update_sync |
-// Front::send_data_update_sync: fast-path |
+// send_server_update: fastpath_support=yes compression_support=no shareId=65538 encryptionLevel=0 initiator=0 type=3 data_extra=0 |
 // Sending on RDP Client (5) 5 bytes |
 // /* 0000 */ "\x00\x05\x03\x00\x00"                                             //..... |
 // Sent dumped on RDP Client (5) 5 bytes |
+// send_server_update done |
 // --------------> UP AND RUNNING <---------------- |
 // asking for selector |
 // process_data done |
 // Front received DATAPDU done |
 // hostname=RDP-TEST |
-// Front::begin_update() |
+// Front::begin_update |
 // Widget_load: image file [./tests/fixtures/Philips_PM5544_640.png] is PNG file |
 // front::draw:draw_tile((192, 144, 64, 64) (0, 0, 64, 64)) |
 // front::draw:draw_tile((256, 144, 64, 64) (64, 0, 64, 64)) |
@@ -3942,6 +3940,7 @@ const char indata[] =
 // front::draw:draw_tile((448, 336, 64, 64) (256, 192, 64, 64)) |
 // front::draw:draw_tile((512, 336, 64, 64) (320, 192, 64, 64)) |
 // front::draw:draw_tile((576, 336, 64, 64) (384, 192, 64, 64)) |
+// send_server_update: fastpath_support=yes compression_support=no shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=79 |
 // Sending on RDP Client (5) 8142 bytes |
 // /* 0000 */ "\x00\x9f\xce\x00\xc8\x1f\x4f\x00\x03\xfc\x03\x00\x00\x01\x00\x00" //......O......... |
 // /* 0010 */ "\x01\x00\x00\x00\x00\x55\x00\x00\x00\xaa\x00\x00\x00\xff\x00\x00" //.....U.......... |
@@ -4453,6 +4452,7 @@ const char indata[] =
 // /* 1fb0 */ "\xa9\x81\x76\xb1\xc2\x25\x2d\x81\xb7\xb9\xc7\x15\xa9\x11\x81\x02" //..v..%-......... |
 // /* 1fc0 */ "\x10\x60\x0e\x1f\xf8\xf0\x40\x07\x11\x02\x01\x40\x23\x00"         //.`....@....@#. |
 // Sent dumped on RDP Client (5) 8142 bytes |
+// send_server_update done |
 // front::draw:draw_tile((640, 336, 64, 64) (448, 192, 64, 64)) |
 // front::draw:draw_tile((704, 336, 64, 64) (512, 192, 64, 64)) |
 // front::draw:draw_tile((768, 336, 64, 64) (576, 192, 64, 64)) |
@@ -4485,6 +4485,7 @@ const char indata[] =
 // front::draw:draw_tile((576, 528, 64, 64) (384, 384, 64, 64)) |
 // front::draw:draw_tile((640, 528, 64, 64) (448, 384, 64, 64)) |
 // front::draw:draw_tile((704, 528, 64, 64) (512, 384, 64, 64)) |
+// send_server_update: fastpath_support=yes compression_support=no shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=64 |
 // Sending on RDP Client (5) 8338 bytes |
 // /* 0000 */ "\x00\xa0\x92\x00\x8c\x20\x40\x00\x03\x88\x00\x00\x04\x02\x02\x00" //..... @......... |
 // /* 0010 */ "\x40\x40\x10\x86\x00\x24\x00\x19\x81\x55\xad\x21\x81\xdb\xde\x00" //@@...$...U.!.... |
@@ -5009,6 +5010,7 @@ const char indata[] =
 // /* 2080 */ "\x82\xff\xff\x55\xad\x00\x1f\x63\xff\xff\x00\x3e\x11\x02\x01\x40" //...U...c...>...@ |
 // /* 2090 */ "\x43\x00"                                                         //C. |
 // Sent dumped on RDP Client (5) 8338 bytes |
+// send_server_update done |
 // front::draw:draw_tile((768, 528, 64, 64) (576, 384, 64, 64)) |
 // front::draw:draw_tile((192, 592, 64, 32) (0, 448, 64, 32)) |
 // front::draw:draw_tile((256, 592, 64, 32) (64, 448, 64, 32)) |
@@ -5029,6 +5031,7 @@ const char indata[] =
 // front::draw:draw_tile((802, 677, 64, 61) (64, 64, 64, 61)) |
 // front::draw:draw_tile((866, 677, 64, 61) (128, 64, 64, 61)) |
 // front::draw:draw_tile((930, 677, 64, 61) (192, 64, 64, 61)) |
+// send_server_update: fastpath_support=yes compression_support=no shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=69 |
 // Sending on RDP Client (5) 9039 bytes |
 // /* 0000 */ "\x00\xa3\x4f\x00\x49\x23\x45\x00\x03\x7e\x00\x00\x04\x02\x02\x00" //..O.I#E..~...... |
 // /* 0010 */ "\x40\x40\x10\x7c\x00\x44\x00\xc3\x10\x84\x81\x92\x94\xc2\xff\xff" //@@.|.D.......... |
@@ -5130,24 +5133,24 @@ const char indata[] =
 // /* 0610 */ "\x65\x1e\xc8\x00\x91\x00\xc9\x00\xae\x04\x45\x1e\xf0\xc9\x37\x36" //e.........E...76 |
 // /* 0620 */ "\xca\xae\x04\xc8\x00\x91\x00\xc8\x00\x65\x0a\x91\x00\xae\x04\x65" //.........e.....e |
 // /* 0630 */ "\x0e\xae\x04\xc9\x00\x91\x00\x65\x1e\x91\x00\xc8\x00\xae\x04\xc9" //.......e........ |
-// /* 0640 */ "\x00\x03\x35\x00\x08\x00\x03\x07\x01\x00\x00\xfc\xff\xf0\xff\x18" //..5............. |
-// /* 0650 */ "\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x42\x00\x08" //.............B.. |
-// /* 0660 */ "\x42\x00\x04\x44\x00\x04\xa4\x00\x04\xa4\x00\x02\xa8\x00\x02\xa8" //B..D............ |
-// /* 0670 */ "\x00\x01\x10\x00\x01\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0680 */ "\x00\x00\x00\x03\x25\x00\x08\x00\x03\x07\x01\x01\x00\xfc\xff\xf0" //....%........... |
-// /* 0690 */ "\xff\x10\x00\x10\x00\x00\x00\x04\x00\x04\x00\x04\x00\x04\x00\x05" //................ |
-// /* 06a0 */ "\xc0\x06\x20\x04\x20\x04\x20\x04\x20\x04\x20\x04\x20\x00\x00\x00" //.. . . . . . ... |
-// /* 06b0 */ "\x00\x00\x00\x00\x00\x03\x25\x00\x08\x00\x03\x07\x01\x02\x00\xfc" //......%......... |
-// /* 06c0 */ "\xff\xf0\xff\x10\x00\x10\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00" //................ |
-// /* 06d0 */ "\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x00" //................ |
-// /* 06e0 */ "\x00\x00\x00\x00\x00\x00\x00\x03\x25\x00\x08\x00\x03\x07\x01\x03" //........%....... |
-// /* 06f0 */ "\x00\xfc\xff\xf0\xff\x10\x00\x10\x00\x00\x00\x00\x00\x00\x00\x04" //................ |
-// /* 0700 */ "\x00\x04\x00\x0f\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x07" //................ |
-// /* 0710 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x25\x00\x08\x00\x03\x07" //..........%..... |
-// /* 0720 */ "\x01\x04\x00\xfc\xff\xf0\xff\x10\x00\x10\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0730 */ "\x00\x00\x00\x00\x00\x03\xc0\x06\x60\x04\x20\x07\xe0\x04\x00\x06" //........`. ..... |
-// /* 0740 */ "\x20\x01\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x03\x07\x00\x00\x00" // ............... |
-// /* 0750 */ "\x07\x00\x01\x08\x08\x81\x08\xaa\xaa\x55\xaa\x55\xaa\x55\xaa\x09" //.........U.U.U.. |
+// /* 0640 */ "\x00\x03\x07\x00\x00\x00\x07\x00\x01\x08\x08\x81\x08\xaa\xaa\x55" //...............U |
+// /* 0650 */ "\xaa\x55\xaa\x55\xaa\x03\x35\x00\x08\x00\x03\x07\x01\x00\x00\xfc" //.U.U..5......... |
+// /* 0660 */ "\xff\xf0\xff\x18\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 0670 */ "\x08\x42\x00\x08\x42\x00\x04\x44\x00\x04\xa4\x00\x04\xa4\x00\x02" //.B..B..D........ |
+// /* 0680 */ "\xa8\x00\x02\xa8\x00\x01\x10\x00\x01\x10\x00\x00\x00\x00\x00\x00" //................ |
+// /* 0690 */ "\x00\x00\x00\x00\x00\x00\x00\x03\x25\x00\x08\x00\x03\x07\x01\x01" //........%....... |
+// /* 06a0 */ "\x00\xfc\xff\xf0\xff\x10\x00\x10\x00\x00\x00\x04\x00\x04\x00\x04" //................ |
+// /* 06b0 */ "\x00\x04\x00\x05\xc0\x06\x20\x04\x20\x04\x20\x04\x20\x04\x20\x04" //...... . . . . . |
+// /* 06c0 */ "\x20\x00\x00\x00\x00\x00\x00\x00\x00\x03\x25\x00\x08\x00\x03\x07" // .........%..... |
+// /* 06d0 */ "\x01\x02\x00\xfc\xff\xf0\xff\x10\x00\x10\x00\x00\x00\x00\x00\x04" //................ |
+// /* 06e0 */ "\x00\x00\x00\x00\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04" //................ |
+// /* 06f0 */ "\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x25\x00\x08\x00" //............%... |
+// /* 0700 */ "\x03\x07\x01\x03\x00\xfc\xff\xf0\xff\x10\x00\x10\x00\x00\x00\x00" //................ |
+// /* 0710 */ "\x00\x00\x00\x04\x00\x04\x00\x0f\x00\x04\x00\x04\x00\x04\x00\x04" //................ |
+// /* 0720 */ "\x00\x04\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x25\x00" //..............%. |
+// /* 0730 */ "\x08\x00\x03\x07\x01\x04\x00\xfc\xff\xf0\xff\x10\x00\x10\x00\x00" //................ |
+// /* 0740 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\xc0\x06\x60\x04\x20\x07" //............`. . |
+// /* 0750 */ "\xe0\x04\x00\x06\x20\x01\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x09" //.... ........... |
 // /* 0760 */ "\x1b\xdb\x3f\x3d\x07\x03\x01\xff\xff\x00\x1e\x00\x1e\x00\x41\x00" //..?=..........A. |
 // /* 0770 */ "\x2e\x00\x1e\x00\x1e\x00\x41\x00\x2e\x00\x81\xaa\x55\xaa\x55\xaa" //......A.....U.U. |
 // /* 0780 */ "\x55\xaa\x1e\x00\x2e\x00\x0a\x00\x00\x01\x0b\x02\x08\x03\x03\x04" //U............... |
@@ -5596,10 +5599,12 @@ const char indata[] =
 // /* 2330 */ "\x00\x10\x81\xd2\x13\x00\x0e\x81\x23\x00\x10\x81\xd7\x0a\x00\x0e" //........#....... |
 // /* 2340 */ "\x81\x00\x00\x10\x81\xdb\x09\x00\x06\x11\x02\x01\x40\x56\x00"     //............@V. |
 // Sent dumped on RDP Client (5) 9039 bytes |
+// send_server_update done |
 // front::draw:draw_tile((0, 704, 32, 32) (32, 32, 32, 32)) |
 // Widget_load: image file [./tests/fixtures/ad8b.png] is PNG file |
 // front::draw:draw_tile((100, 100, 26, 32) (80, 50, 26, 32)) |
-// Front::end_update() |
+// Front::end_update |
+// send_server_update: fastpath_support=yes compression_support=no shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=6 |
 // Sending on RDP Client (5) 1457 bytes |
 // /* 0000 */ "\x00\x85\xb1\x00\xab\x05\x06\x00\x03\x2b\x04\x00\x04\x02\x02\x00" //.........+...... |
 // /* 0010 */ "\x40\x3d\x10\x29\x04\x57\x00\x00\x20\xf0\x48\x01\x86\x82\x10\x49" //@=.).W.. .H....I |
@@ -5694,9 +5699,10 @@ const char indata[] =
 // /* 05a0 */ "\x13\x6f\x18\xc6\x00\x52\x01\x0e\x01\x64\x00\x64\x00\x1a\x00\x01" //.o...R...d.d.... |
 // /* 05b0 */ "\x00"                                                             //. |
 // Sent dumped on RDP Client (5) 1457 bytes |
+// send_server_update done |
 // Listener closed |
 // Incoming socket 5 (ip=10.10.47.175) |
 // Socket RDP Client (5) : closing connection |
-// RDP Client (0): total_received=1792, total_sent=28205 |
+// RDP Client (0): total_received=1714, total_sent=28205 |
 } /* end indata */;
 

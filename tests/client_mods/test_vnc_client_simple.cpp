@@ -57,10 +57,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 //    t.connect();
 //    const bool is_socket_transport = true;
 
-
-//    wait_obj back_event(t.sck);
-
-
     const char outdata[] =
     {
 // connecting to VNC Target (10.10.3.103:5900)

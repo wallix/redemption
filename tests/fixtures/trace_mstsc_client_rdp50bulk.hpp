@@ -6,7 +6,7 @@ const char outdata[] =
 // Reading font file ./tests/fixtures/sans-10.fv1 |
 // font name <Bitstream Vera Sans> size <10> |
 // Font file ./tests/fixtures/sans-10.fv1 defines glyphs up to 256 |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming:CONNECTION_INITIATION |
 // Front::incoming::receiving x224 request PDU |
 // Socket RDP Client (5) receiving 1 bytes |
@@ -29,9 +29,9 @@ const char outdata[] =
 /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x01\x08\x00\x01" //................ |
 /* 0010 */ "\x00\x00\x00"                                                     //... |
 // Sent dumped on RDP Client (5) 19 bytes |
-// RIO *::enable_server_tls() start |
-// RIO *::SSL_CTX_set_options() |
-// RIO *::enable_server_tls() done |
+// SocketTransport::enable_server_tls() start |
+// SocketTransport::SSL_CTX_set_options() |
+// SocketTransport::enable_server_tls() done |
 // Front::incoming::Basic Settings Exchange |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -64,7 +64,7 @@ const char outdata[] =
 // /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0150 */ "\x00\x00\x02\x00\x01\x00\x00\x00\x04\xc0\x0c\x00\x11\x00\x00\x00" //................ |
+// /* 0150 */ "\x00\x00\x06\x00\x01\x00\x00\x00\x04\xc0\x0c\x00\x11\x00\x00\x00" //................ |
 // /* 0160 */ "\x00\x00\x00\x00\x02\xc0\x0c\x00\x1b\x00\x00\x00\x00\x00\x00\x00" //................ |
 // /* 0170 */ "\x03\xc0\x38\x00\x04\x00\x00\x00\x72\x64\x70\x64\x72\x00\x00\x00" //..8.....rdpdr... |
 // /* 0180 */ "\x00\x00\x80\x80\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0" //....rdpsnd...... |
@@ -96,7 +96,7 @@ const char outdata[] =
 // cs_core::earlyCapabilityFlags:RNS_UD_CS_STRONG_ASYMMETRIC_KEYS |
 // cs_core::earlyCapabilityFlags:RNS_UD_CS_VALID_CONNECTION_TYPE |
 // cs_core::clientDigProductId=[00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 |
-// cs_core::connectionType  = 2 |
+// cs_core::connectionType  = 6 |
 // cs_core::pad1octet  = 0 |
 // cs_core::serverSelectedProtocol = 1 |
 // GCC::UserData tag=c004 length=12 |
@@ -263,7 +263,7 @@ const char outdata[] =
 // Sent dumped on RDP Client (5) 15 bytes |
 // Front::incoming::RDP Security Commencement |
 // TLS mode: exchange packet disabled |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::Secure Settings Exchange |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -271,65 +271,57 @@ const char outdata[] =
 // Dump done on RDP Client (5) 1 bytes |
 // Socket RDP Client (5) receiving 3 bytes |
 // Recv done on RDP Client (5) 3 bytes |
-// /* 0000 */ "\x00\x01\x89"                                                     //... |
+// /* 0000 */ "\x00\x01\x49"                                                     //..I |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 389 bytes |
-// Recv done on RDP Client (5) 389 bytes |
-// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x7a\x40\x00\x00\x00\x00" //...d....p.z@.... |
-// /* 0010 */ "\x00\x00\x00\xb3\x47\x0b\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00" //....G....@...... |
-// /* 0020 */ "\x00\x00\x00\x71\x00\x61\x00\x5c\x00\x61\x00\x64\x00\x6d\x00\x69" //...q.a...a.d.m.i |
-// /* 0030 */ "\x00\x6e\x00\x69\x00\x73\x00\x74\x00\x72\x00\x61\x00\x74\x00\x65" //.n.i.s.t.r.a.t.e |
-// /* 0040 */ "\x00\x75\x00\x72\x00\x40\x00\x77\x00\x69\x00\x6e\x00\x32\x00\x6b" //.u.r.@.w.i.n.2.k |
-// /* 0050 */ "\x00\x38\x00\x72\x00\x32\x00\x3a\x00\x72\x00\x64\x00\x70\x00\x3a" //.8.r.2.:.r.d.p.: |
-// /* 0060 */ "\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //.x.............1 |
-// /* 0070 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
-// /* 0080 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
-// /* 0090 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
-// /* 00a0 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
-// /* 00b0 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
-// /* 00c0 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
-// /* 00d0 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
-// /* 00e0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
-// /* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// Socket RDP Client (5) receiving 325 bytes |
+// Recv done on RDP Client (5) 325 bytes |
+// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x3a\x40\x00\x00\x00\x00" //...d....p.:@.... |
+// /* 0010 */ "\x00\x00\x00\xb3\x47\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //....G........... |
+// /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //...............1 |
+// /* 0030 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
+// /* 0040 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
+// /* 0050 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
+// /* 0060 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
+// /* 0070 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
+// /* 0080 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
+// /* 0090 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
+// /* 00a0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
+// /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 00d0 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 00e0 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
+// /* 00f0 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
 // /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0110 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0120 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
-// /* 0130 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
-// /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-// /* 0160 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
-// /* 0170 */ "\x00\x00\x00\xc4\xff\xff\xff\x00\x00\x00\x00\x07\x00\x00\x00\x00" //................ |
-// /* 0180 */ "\x00\x64\x00\x00\x00"                                             //.d... |
-// Dump done on RDP Client (5) 389 bytes |
+// /* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// /* 0120 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
+// /* 0130 */ "\x00\x00\x00\xc4\xff\xff\xff\x02\x00\x00\x00\x01\x01\x00\x00\x00" //................ |
+// /* 0140 */ "\x00\x64\x00\x00\x00"                                             //.d... |
+// Dump done on RDP Client (5) 325 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0xb3, 0x47, 0x0b, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G....@..... |
-// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x71, 0x00, 0x61, 0x00, 0x5c, 0x00, 0x61, 0x00, 0x64, 0x00, 0x6d, 0x00,  // ....q.a...a.d.m. |
-// /* 0020 */ 0x69, 0x00, 0x6e, 0x00, 0x69, 0x00, 0x73, 0x00, 0x74, 0x00, 0x72, 0x00, 0x61, 0x00, 0x74, 0x00,  // i.n.i.s.t.r.a.t. |
-// /* 0030 */ 0x65, 0x00, 0x75, 0x00, 0x72, 0x00, 0x40, 0x00, 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x32, 0x00,  // e.u.r.@.w.i.n.2. |
-// /* 0040 */ 0x6b, 0x00, 0x38, 0x00, 0x72, 0x00, 0x32, 0x00, 0x3a, 0x00, 0x72, 0x00, 0x64, 0x00, 0x70, 0x00,  // k.8.r.2.:.r.d.p. |
-// /* 0050 */ 0x3a, 0x00, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x1a, 0x00,  // :.x............. |
-// /* 0060 */ 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00, 0x37, 0x00,  // 1.0...1.0...4.7. |
-// /* 0070 */ 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00, 0x3a, 0x00,  // ..1.7.5...@.C.:. |
-// /* 0080 */ 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00,  // ..W.I.N.D.O.W.S. |
-// /* 0090 */ 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00, 0x33, 0x00,  // ..s.y.s.t.e.m.3. |
-// /* 00a0 */ 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00, 0x61, 0x00,  // 2...m.s.t.s.c.a. |
-// /* 00b0 */ 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff,  // x...d.l.l....... |
-// /* 00c0 */ 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00,  // P.a.r.i.s.,. .M. |
-// /* 00d0 */ 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // a.d.r.i.d....... |
-// /* 00e0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0xb3, 0x47, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G.......... |
+// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x1a, 0x00,  // ................ |
+// /* 0020 */ 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00, 0x37, 0x00,  // 1.0...1.0...4.7. |
+// /* 0030 */ 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00, 0x3a, 0x00,  // ..1.7.5...@.C.:. |
+// /* 0040 */ 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00,  // ..W.I.N.D.O.W.S. |
+// /* 0050 */ 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00, 0x33, 0x00,  // ..s.y.s.t.e.m.3. |
+// /* 0060 */ 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00, 0x61, 0x00,  // 2...m.s.t.s.c.a. |
+// /* 0070 */ 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff,  // x...d.l.l....... |
+// /* 0080 */ 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00,  // P.a.r.i.s.,. .M. |
+// /* 0090 */ 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // a.d.r.i.d....... |
+// /* 00a0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00b0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00c0 */ 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00d0 */ 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00,  // ....P.a.r.i.s.,. |
+// /* 00e0 */ 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00,  //  .M.a.d.r.i.d... |
 // /* 00f0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0100 */ 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00,  // ....P.a.r.i.s.,. |
-// /* 0120 */ 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00,  //  .M.a.d.r.i.d... |
-// /* 0130 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0140 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0150 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
-// /* 0160 */ 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00,  // ................ |
-// /* 0170 */ 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                                // ..d... |
+// /* 0100 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
+// /* 0120 */ 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x02, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00,  // ................ |
+// /* 0130 */ 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                                // ..d... |
 // RDP-5 Style logon |
 // Receiving from client InfoPacket |
 // InfoPacket::CodePage 0 |
-// InfoPacket::flags 0xb47b3 |
+// InfoPacket::flags 0x347b3 |
 // InfoPacket::flags:INFO_MOUSE yes |
 // InfoPacket::flags:INFO_DISABLECTRLALTDEL yes |
 // InfoPacket::flags:INFO_AUTOLOGON no |
@@ -345,17 +337,17 @@ const char outdata[] =
 // InfoPacket::flags:INFO_LOGONERRORS yes |
 // InfoPacket::flags:INFO_MOUSE_HAS_WHEEL yes |
 // InfoPacket::flags:INFO_PASSWORD_IS_SC_PIN no |
-// InfoPacket::flags:INFO_NOAUDIOPLAYBACK yes |
+// InfoPacket::flags:INFO_NOAUDIOPLAYBACK no |
 // InfoPacket::flags:INFO_USING_SAVED_CREDS no |
 // InfoPacket::flags:RNS_INFO_AUDIOCAPTURE no |
 // InfoPacket::flags:RNS_INFO_VIDEO_DISABLE no |
 // InfoPacket::cbDomain 2 |
-// InfoPacket::cbUserName 66 |
+// InfoPacket::cbUserName 2 |
 // InfoPacket::cbPassword 2 |
 // InfoPacket::cbAlternateShell 2 |
 // InfoPacket::cbWorkingDir 2 |
 // InfoPacket::Domain  |
-// InfoPacket::UserName qa\administrateur@win2k8r2:rdp:x |
+// InfoPacket::UserName  |
 // InfoPacket::Password <hidden> |
 // InfoPacket::AlternateShell  |
 // InfoPacket::WorkingDir  |
@@ -364,8 +356,8 @@ const char outdata[] =
 // InfoPacket::ExtendedInfoPacket::clientAddress 10.10.47.175 |
 // InfoPacket::ExtendedInfoPacket::cbClientDir 64 |
 // InfoPacket::ExtendedInfoPacket::clientDir C:\WINDOWS\system32\mstscax.dll |
-// InfoPacket::ExtendedInfoPacket::clientSessionId 0 |
-// InfoPacket::ExtendedInfoPacket::performanceFlags 7 |
+// InfoPacket::ExtendedInfoPacket::clientSessionId 2 |
+// InfoPacket::ExtendedInfoPacket::performanceFlags 257 |
 // InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen 0 |
 // InfoPacket::ExtendedInfoPacket::autoReconnectCookie  |
 // InfoPacket::ExtendedInfoPacket::reserved1 100 |
@@ -390,7 +382,7 @@ const char outdata[] =
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds 0 |
-// client info: performance flags before=0x00000007 after=0x00000007 default=0x00000000 present=0x00000000 not-present=0x00000000 |
+// client info: performance flags before=0x00000101 after=0x00000101 default=0x00000000 present=0x00000000 not-present=0x00000000 |
 // Front Keyboard Layout = 0x40c |
 // Front::incoming::licencing not client_info.is_mce |
 // Front::incoming::licencing send_lic_initial |
@@ -440,7 +432,7 @@ const char outdata[] =
 /* 0150 */ "\x00"                                                             //. |
 // Sent dumped on RDP Client (5) 337 bytes |
 // Front::incoming::waiting for answer to lic_initial |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -452,26 +444,26 @@ const char outdata[] =
 // Dump done on RDP Client (5) 3 bytes |
 // Socket RDP Client (5) receiving 167 bytes |
 // Recv done on RDP Client (5) 167 bytes |
-// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\x6d\xef\x13" //...d....p....m.. |
-// /* 0010 */ "\x83\x98\x00\x01\x00\x00\x00\x00\x00\x01\x03\xbb\x60\x33\xbc\x38" //............`3.8 |
-// /* 0020 */ "\xc7\x41\xd7\xea\x6c\x5f\x95\x59\x78\xa5\xe3\xcd\x90\x28\x47\x63" //.A..l_.Yx....(Gc |
-// /* 0030 */ "\xf0\x8e\x79\x98\x82\x60\xda\xfc\x5f\x88\x5f\x00\x00\x48\x00\xf9" //..y..`.._._..H.. |
-// /* 0040 */ "\x0c\x32\x38\xcb\x3e\x0d\xa3\x9f\xaa\x08\xe9\x57\x03\xbe\xcf\x5d" //.28.>......W...] |
-// /* 0050 */ "\x12\x49\xdc\xc9\x89\x67\x94\x27\x6b\x87\xf1\x4c\x5b\x9a\x7a\x60" //.I...g.'k..L[.z` |
-// /* 0060 */ "\x3d\x21\x1e\x1a\x30\x6e\xc8\x1a\x1a\x32\xb5\xa4\x39\x5f\xef\x56" //=!..0n...2..9_.V |
-// /* 0070 */ "\x6e\xed\x56\x09\x5d\x54\x7b\x77\xd7\x37\xab\x65\xc6\xe8\x00\x00" //n.V.]T{w.7.e.... |
+// /* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\x4f\xc9\x13" //...d....p....O.. |
+// /* 0010 */ "\x83\x98\x00\x01\x00\x00\x00\x00\x00\x01\x03\x5d\x5c\xd2\x6e\x06" //...........]..n. |
+// /* 0020 */ "\x32\x5e\x9e\xdd\xd7\x3b\x49\xeb\x8f\x8d\xe5\xc4\xfe\xea\x18\xb9" //2^...;I......... |
+// /* 0030 */ "\x89\x86\x4f\xab\xac\x89\x1a\x65\xc8\x32\x18\x00\x00\x48\x00\x67" //..O....e.2...H.g |
+// /* 0040 */ "\x56\xd1\xec\x82\xb3\xfa\x7f\x54\xd7\x8f\x48\xd0\xef\x31\x81\xde" //V......T..H..1.. |
+// /* 0050 */ "\x8f\x40\xe4\x3c\x9e\xa0\x61\x96\x8a\xcd\xa7\x22\x75\xc8\xf2\x67" //.@.<..a...."u..g |
+// /* 0060 */ "\xae\x39\xcf\x4f\x85\x8f\xbb\xa8\x1c\x49\xf2\xa1\xbe\xce\x33\x62" //.9.O.....I....3b |
+// /* 0070 */ "\xf3\x34\x0b\x59\x78\x4c\xa1\x98\x65\x30\x0e\x96\x18\xc1\x1b\x00" //.4.YxL..e0...... |
 // /* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x0f\x00\x41\x64\x6d\x69\x6e" //...........Admin |
 // /* 0090 */ "\x69\x73\x74\x72\x61\x74\x65\x75\x72\x00\x10\x00\x09\x00\x52\x44" //istrateur.....RD |
 // /* 00a0 */ "\x50\x2d\x54\x45\x53\x54\x00"                                     //P-TEST. |
 // Dump done on RDP Client (5) 167 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0xbb, 0x60, 0x33, 0xbc,  // .............`3. |
-// /* 0010 */ 0x38, 0xc7, 0x41, 0xd7, 0xea, 0x6c, 0x5f, 0x95, 0x59, 0x78, 0xa5, 0xe3, 0xcd, 0x90, 0x28, 0x47,  // 8.A..l_.Yx....(G |
-// /* 0020 */ 0x63, 0xf0, 0x8e, 0x79, 0x98, 0x82, 0x60, 0xda, 0xfc, 0x5f, 0x88, 0x5f, 0x00, 0x00, 0x48, 0x00,  // c..y..`.._._..H. |
-// /* 0030 */ 0xf9, 0x0c, 0x32, 0x38, 0xcb, 0x3e, 0x0d, 0xa3, 0x9f, 0xaa, 0x08, 0xe9, 0x57, 0x03, 0xbe, 0xcf,  // ..28.>......W... |
-// /* 0040 */ 0x5d, 0x12, 0x49, 0xdc, 0xc9, 0x89, 0x67, 0x94, 0x27, 0x6b, 0x87, 0xf1, 0x4c, 0x5b, 0x9a, 0x7a,  // ].I...g.'k..L[.z |
-// /* 0050 */ 0x60, 0x3d, 0x21, 0x1e, 0x1a, 0x30, 0x6e, 0xc8, 0x1a, 0x1a, 0x32, 0xb5, 0xa4, 0x39, 0x5f, 0xef,  // `=!..0n...2..9_. |
-// /* 0060 */ 0x56, 0x6e, 0xed, 0x56, 0x09, 0x5d, 0x54, 0x7b, 0x77, 0xd7, 0x37, 0xab, 0x65, 0xc6, 0xe8, 0x00,  // Vn.V.]T{w.7.e... |
+// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x5d, 0x5c, 0xd2, 0x6e,  // ............]..n |
+// /* 0010 */ 0x06, 0x32, 0x5e, 0x9e, 0xdd, 0xd7, 0x3b, 0x49, 0xeb, 0x8f, 0x8d, 0xe5, 0xc4, 0xfe, 0xea, 0x18,  // .2^...;I........ |
+// /* 0020 */ 0xb9, 0x89, 0x86, 0x4f, 0xab, 0xac, 0x89, 0x1a, 0x65, 0xc8, 0x32, 0x18, 0x00, 0x00, 0x48, 0x00,  // ...O....e.2...H. |
+// /* 0030 */ 0x67, 0x56, 0xd1, 0xec, 0x82, 0xb3, 0xfa, 0x7f, 0x54, 0xd7, 0x8f, 0x48, 0xd0, 0xef, 0x31, 0x81,  // gV......T..H..1. |
+// /* 0040 */ 0xde, 0x8f, 0x40, 0xe4, 0x3c, 0x9e, 0xa0, 0x61, 0x96, 0x8a, 0xcd, 0xa7, 0x22, 0x75, 0xc8, 0xf2,  // ..@.<..a...."u.. |
+// /* 0050 */ 0x67, 0xae, 0x39, 0xcf, 0x4f, 0x85, 0x8f, 0xbb, 0xa8, 0x1c, 0x49, 0xf2, 0xa1, 0xbe, 0xce, 0x33,  // g.9.O.....I....3 |
+// /* 0060 */ 0x62, 0xf3, 0x34, 0x0b, 0x59, 0x78, 0x4c, 0xa1, 0x98, 0x65, 0x30, 0x0e, 0x96, 0x18, 0xc1, 0x1b,  // b.4.YxL..e0..... |
 // /* 0070 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x41, 0x64, 0x6d, 0x69,  // ............Admi |
 // /* 0080 */ 0x6e, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x75, 0x72, 0x00, 0x10, 0x00, 0x09, 0x00, 0x52,  // nistrateur.....R |
 // /* 0090 */ 0x44, 0x50, 0x2d, 0x54, 0x45, 0x53, 0x54, 0x00,                          // DP-TEST. |
@@ -588,7 +580,7 @@ const char outdata[] =
 // Input caps::keyboardType 0 |
 // Input caps::keyboardSubType 0 |
 // Input caps::keyboardFunctionKey 0 |
-// Input caps::imeFileName 1352817568 |
+// Input caps::imeFileName 7224624 |
 // Sec clear payload to send: |
 // /* 0000 */ 0x20, 0x01, 0x11, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x04, 0x00, 0x0a, 0x01, 0x52, 0x44,  //  .............RD |
 // /* 0010 */ 0x50, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x01, 0x00, 0x03, 0x00, 0x00, 0x02,  // P............... |
@@ -630,7 +622,7 @@ const char outdata[] =
 /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"     //............... |
 // Sent dumped on RDP Client (5) 303 bytes |
 // Front::incoming::ACTIVATED (new license request) |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -834,6 +826,30 @@ const char outdata[] =
 // Front::capability 11 / 19 |
 // Front::capability 12 / 19 |
 // Receiving from client CAPSTYPE_GLYPHCACHE |
+// Receiving from client GlyphCache caps (52 bytes) |
+// GlyphCache caps::GlyphCache[0].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[0].CacheMaximumCellSize=4 |
+// GlyphCache caps::GlyphCache[1].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[1].CacheMaximumCellSize=4 |
+// GlyphCache caps::GlyphCache[2].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[2].CacheMaximumCellSize=8 |
+// GlyphCache caps::GlyphCache[3].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[3].CacheMaximumCellSize=8 |
+// GlyphCache caps::GlyphCache[4].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[4].CacheMaximumCellSize=16 |
+// GlyphCache caps::GlyphCache[5].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[5].CacheMaximumCellSize=32 |
+// GlyphCache caps::GlyphCache[6].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[6].CacheMaximumCellSize=64 |
+// GlyphCache caps::GlyphCache[7].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[7].CacheMaximumCellSize=128 |
+// GlyphCache caps::GlyphCache[8].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[8].CacheMaximumCellSize=256 |
+// GlyphCache caps::GlyphCache[9].CacheEntries=64 |
+// GlyphCache caps::GlyphCache[9].CacheMaximumCellSize=2048 |
+// GlyphCache caps::FragCache 16777472 |
+// GlyphCache caps::GlyphSupportLevel 3 |
+// GlyphCache caps::pad2octets 0 |
 // Front::capability 13 / 19 |
 // Receiving from client CAPSTYPE_BRUSH |
 // Receiving from client BrushCache caps (8 bytes) |
@@ -853,14 +869,13 @@ const char outdata[] =
 // Front::capability 18 / 19 |
 // Receiving from client MultifragmentUpdate caps (8 bytes) |
 // MultifragmentUpdate caps::MaxRequestSize 0 |
-// process_confirm_active done p=0x7fff50ab6e57 end=0x7fff50ab6e57 |
+// process_confirm_active done p=0x7fff00764bc7 end=0x7fff00764bc7 |
 // Front::reset::use_bitmap_comp=1 |
 // Front::reset::use_compact_packets=1 |
 // Front::reset::bitmap_cache_version=0 |
 // Front: Use RDP 5.0 Bulk compression |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[0](2000) used=2 free=16276 |
 // Front received CONFIRMACTIVEPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -896,7 +911,7 @@ const char outdata[] =
 // send_synchronize done |
 // process_data done |
 // Front received DATAPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -932,7 +947,7 @@ const char outdata[] =
 // send_control done. action=4 |
 // process_data done |
 // Front received DATAPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -968,7 +983,7 @@ const char outdata[] =
 // send_control done. action=2 |
 // process_data done |
 // Front received DATAPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -1023,176 +1038,56 @@ const char outdata[] =
 // Sent dumped on RDP Client (5) 205 bytes |
 // send_fontmap done |
 // Front::send_data_update_sync |
-// Front::send_data_update_sync: fast-path |
+// send_server_update: fastpath_support=yes compression_support=yes shareId=65538 encryptionLevel=0 initiator=0 type=3 data_extra=0 |
 // Sending on RDP Client (5) 5 bytes |
 /* 0000 */ "\x00\x05\x03\x00\x00"                                             //..... |
 // Sent dumped on RDP Client (5) 5 bytes |
+// send_server_update done |
 // --------------> UP AND RUNNING <---------------- |
 // asking for selector |
 // process_data done |
 // Front received DATAPDU done |
-// Front::begin_update() |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](23) used=1035 free=15243 |
-// order(10 clip(0,0,1,1)):opaquerect(rect(0,0,1024,768) color=0x00ffff) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](23) used=1044 free=15234 |
-// order(10 clip(0,0,1,1)):opaquerect(rect(5,5,1014,758) color=0x00f800) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](23) used=1052 free=15226 |
-// order(10 clip(0,0,1,1)):opaquerect(rect(10,10,1004,748) color=0x0007e0) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](23) used=1060 free=15218 |
-// order(10 clip(0,0,1,1)):opaquerect(rect(15,15,994,738) color=0x00001f) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](23) used=1068 free=15210 |
-// order(10 clip(0,0,1,1)):opaquerect(rect(20,20,984,728) color=0x000000) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[6](23) used=1075 free=15203 |
-// order(10 clip(0,0,1,1)):opaquerect(rect(30,30,964,708) color=0x000273) |
+// hostname=RDP-TEST |
+// Front::begin_update |
 // Widget_load: image file [./tests/fixtures/Philips_PM5544_640.png] is PNG file |
 // front::draw:draw_tile((192, 144, 64, 64) (0, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[7](8208) used=1083 free=15195 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[8](30) used=1211 free=15067 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=0) |
 // front::draw:draw_tile((256, 144, 64, 64) (64, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[9](8208) used=1225 free=15053 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[10](30) used=1376 free=14902 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=1) |
 // front::draw:draw_tile((320, 144, 64, 64) (128, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[11](8208) used=1382 free=14896 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[12](30) used=1489 free=14789 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=2) |
 // front::draw:draw_tile((384, 144, 64, 64) (192, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[13](8208) used=1495 free=14783 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[14](30) used=1937 free=14341 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=3) |
 // front::draw:draw_tile((448, 144, 64, 64) (256, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[15](8208) used=1943 free=14335 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[16](30) used=2195 free=14083 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=4) |
 // front::draw:draw_tile((512, 144, 64, 64) (320, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[17](8208) used=2201 free=14077 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[18](30) used=2464 free=13814 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=5) |
 // front::draw:draw_tile((576, 144, 64, 64) (384, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[19](8208) used=2470 free=13808 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[20](30) used=2924 free=13354 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=6) |
 // front::draw:draw_tile((640, 144, 64, 64) (448, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[21](8208) used=2930 free=13348 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[22](30) used=3023 free=13255 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=7) |
 // front::draw:draw_tile((704, 144, 64, 64) (512, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[23](8208) used=3029 free=13249 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[24](30) used=3183 free=13095 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=8) |
 // front::draw:draw_tile((768, 144, 64, 64) (576, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[25](8208) used=3189 free=13089 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[26](30) used=3334 free=12944 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=9) |
 // front::draw:draw_tile((192, 208, 64, 64) (0, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[27](8208) used=3340 free=12938 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[28](30) used=3443 free=12835 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=10) |
 // front::draw:draw_tile((256, 208, 64, 64) (64, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[29](8208) used=3452 free=12826 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[30](30) used=3585 free=12693 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=11) |
 // front::draw:draw_tile((320, 208, 64, 64) (128, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[31](8208) used=3591 free=12687 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[32](30) used=4143 free=12135 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=12) |
 // front::draw:draw_tile((384, 208, 64, 64) (192, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[33](8208) used=4149 free=12129 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[34](30) used=4262 free=12016 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=13) |
 // front::draw:draw_tile((448, 208, 64, 64) (256, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[35](8208) used=4268 free=12010 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[36](30) used=4308 free=11970 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=14) |
 // front::draw:draw_tile((512, 208, 64, 64) (320, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[37](8208) used=4314 free=11964 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[38](30) used=4355 free=11923 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=15) |
 // front::draw:draw_tile((576, 208, 64, 64) (384, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[39](8208) used=4361 free=11917 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[40](30) used=4452 free=11826 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=16) |
 // front::draw:draw_tile((640, 208, 64, 64) (448, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[41](8208) used=4458 free=11820 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[42](30) used=5038 free=11240 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=17) |
 // front::draw:draw_tile((704, 208, 64, 64) (512, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[43](8208) used=5044 free=11234 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[44](30) used=5177 free=11101 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=18) |
 // front::draw:draw_tile((768, 208, 64, 64) (576, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[45](8208) used=5183 free=11095 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[46](30) used=5289 free=10989 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=19) |
 // front::draw:draw_tile((192, 272, 64, 64) (0, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[47](8208) used=5295 free=10983 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[48](30) used=5400 free=10878 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=20) |
 // front::draw:draw_tile((256, 272, 64, 64) (64, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[49](8208) used=5409 free=10869 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[50](30) used=5807 free=10471 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=21) |
 // front::draw:draw_tile((320, 272, 64, 64) (128, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[51](8208) used=5813 free=10465 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[52](30) used=5959 free=10319 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=22) |
 // front::draw:draw_tile((384, 272, 64, 64) (192, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[53](8208) used=5965 free=10313 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[54](30) used=6038 free=10240 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=23) |
 // front::draw:draw_tile((448, 272, 64, 64) (256, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[55](8208) used=6044 free=10234 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[56](30) used=6118 free=10160 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=24) |
 // front::draw:draw_tile((512, 272, 64, 64) (320, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[57](8208) used=6124 free=10154 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[58](30) used=6193 free=10085 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=25) |
 // front::draw:draw_tile((576, 272, 64, 64) (384, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[59](8208) used=6199 free=10079 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[60](30) used=6270 free=10008 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=26) |
 // front::draw:draw_tile((640, 272, 64, 64) (448, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[61](8208) used=6276 free=10002 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[62](30) used=6419 free=9859 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=27) |
 // front::draw:draw_tile((704, 272, 64, 64) (512, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[63](8208) used=6425 free=9853 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[64](30) used=6844 free=9434 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=28) |
 // front::draw:draw_tile((768, 272, 64, 64) (576, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[65](8208) used=6850 free=9428 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[66](30) used=6958 free=9320 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=29) |
 // front::draw:draw_tile((192, 336, 64, 64) (0, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[67](8208) used=6964 free=9314 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[68](30) used=7049 free=9229 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=30) |
 // front::draw:draw_tile((256, 336, 64, 64) (64, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[69](8208) used=7058 free=9220 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[70](30) used=7498 free=8780 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=31) |
 // front::draw:draw_tile((320, 336, 64, 64) (128, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[71](8208) used=7504 free=8774 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[72](30) used=7618 free=8660 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=32) |
 // front::draw:draw_tile((384, 336, 64, 64) (192, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[73](8208) used=7624 free=8654 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[74](30) used=7775 free=8503 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=33) |
 // front::draw:draw_tile((448, 336, 64, 64) (256, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[75](8208) used=7781 free=8497 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[76](30) used=7955 free=8323 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=34) |
 // front::draw:draw_tile((512, 336, 64, 64) (320, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[77](8208) used=7961 free=8317 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[78](30) used=8130 free=8148 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=35) |
 // front::draw:draw_tile((576, 336, 64, 64) (384, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[79](8208) used=8136 free=8142 |
-// GraphicsUpdatePDU::flush_orders: order_count=79 offset=0 |
-// GraphicsUpdatePDU::flush_orders: fast-path |
+// send_server_update: fastpath_support=yes compression_support=yes shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=79 |
 // Sending on RDP Client (5) 5520 bytes |
 /* 0000 */ "\x00\x95\x90\x80\x61\x89\x15\x4f\x00\x03\xbe\x01\x80\x00\x00\xfc" //....a..O........ |
 /* 0010 */ "\x39\x00\x00\x55\xf8\x89\x57\xc4\x5f\xfe\x20\x00\x93\xe8\x3e\x22" //9..U..W._. ...>" |
@@ -1540,136 +1435,40 @@ const char outdata[] =
 /* 1570 */ "\xa5\x1a\xa9\x50\x04\x05\x65\x30\x17\x69\x8d\x08\x94\xb6\x03\x37" //...P..e0.i.....7 |
 /* 1580 */ "\x9c\xd1\xc5\x65\x22\x3d\x9e\x0c\x01\xdd\x9e\x1c\x08\xe8\x8c\x00" //...e"=.......... |
 // Sent dumped on RDP Client (5) 5520 bytes |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](30) used=151 free=16127 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=36) |
+// send_server_update done |
 // front::draw:draw_tile((640, 336, 64, 64) (448, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](8208) used=157 free=16121 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](30) used=267 free=16011 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=37) |
 // front::draw:draw_tile((704, 336, 64, 64) (512, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](8208) used=273 free=16005 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](30) used=723 free=15555 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=38) |
 // front::draw:draw_tile((768, 336, 64, 64) (576, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[6](8208) used=729 free=15549 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[7](30) used=814 free=15464 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=39) |
 // front::draw:draw_tile((192, 400, 64, 64) (0, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[8](8208) used=820 free=15458 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[9](30) used=913 free=15365 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=40) |
 // front::draw:draw_tile((256, 400, 64, 64) (64, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[10](8208) used=922 free=15356 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[11](30) used=1372 free=14906 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=41) |
 // front::draw:draw_tile((320, 400, 64, 64) (128, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[12](8208) used=1378 free=14900 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[13](30) used=1633 free=14645 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=42) |
 // front::draw:draw_tile((384, 400, 64, 64) (192, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[14](8208) used=1639 free=14639 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[15](30) used=1938 free=14340 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=43) |
 // front::draw:draw_tile((448, 400, 64, 64) (256, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[16](8208) used=1944 free=14334 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[17](30) used=2267 free=14011 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=44) |
 // front::draw:draw_tile((512, 400, 64, 64) (320, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[18](8208) used=2273 free=14005 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[19](30) used=2594 free=13684 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=45) |
 // front::draw:draw_tile((576, 400, 64, 64) (384, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[20](8208) used=2600 free=13678 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[21](30) used=2899 free=13379 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=46) |
 // front::draw:draw_tile((640, 400, 64, 64) (448, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[22](8208) used=2905 free=13373 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[23](30) used=3143 free=13135 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=47) |
 // front::draw:draw_tile((704, 400, 64, 64) (512, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[24](8208) used=3149 free=13129 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[25](30) used=3584 free=12694 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=48) |
 // front::draw:draw_tile((768, 400, 64, 64) (576, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[26](8208) used=3590 free=12688 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[27](30) used=3682 free=12596 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=49) |
 // front::draw:draw_tile((192, 464, 64, 64) (0, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[28](8208) used=3688 free=12590 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[29](30) used=3808 free=12470 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=50) |
 // front::draw:draw_tile((256, 464, 64, 64) (64, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[30](8208) used=3817 free=12461 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[31](30) used=4093 free=12185 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=51) |
 // front::draw:draw_tile((320, 464, 64, 64) (128, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[32](8208) used=4099 free=12179 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[33](30) used=4605 free=11673 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=52) |
 // front::draw:draw_tile((384, 464, 64, 64) (192, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[34](8208) used=4611 free=11667 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[35](30) used=4817 free=11461 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=53) |
 // front::draw:draw_tile((448, 464, 64, 64) (256, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[36](8208) used=4823 free=11455 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[37](30) used=4985 free=11293 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=54) |
 // front::draw:draw_tile((512, 464, 64, 64) (320, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[38](8208) used=4991 free=11287 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[39](30) used=5151 free=11127 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=55) |
 // front::draw:draw_tile((576, 464, 64, 64) (384, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[40](8208) used=5157 free=11121 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[41](30) used=5348 free=10930 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=56) |
 // front::draw:draw_tile((640, 464, 64, 64) (448, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[42](8208) used=5354 free=10924 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[43](30) used=5806 free=10472 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=57) |
 // front::draw:draw_tile((704, 464, 64, 64) (512, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[44](8208) used=5812 free=10466 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[45](30) used=6071 free=10207 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=58) |
 // front::draw:draw_tile((768, 464, 64, 64) (576, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[46](8208) used=6077 free=10201 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[47](30) used=6197 free=10081 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=59) |
 // front::draw:draw_tile((192, 528, 64, 64) (0, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[48](8208) used=6203 free=10075 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[49](30) used=6327 free=9951 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=60) |
 // front::draw:draw_tile((256, 528, 64, 64) (64, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[50](8208) used=6336 free=9942 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[51](30) used=6474 free=9804 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=61) |
 // front::draw:draw_tile((320, 528, 64, 64) (128, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[52](8208) used=6480 free=9798 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[53](30) used=6834 free=9444 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=62) |
 // front::draw:draw_tile((384, 528, 64, 64) (192, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[54](8208) used=6840 free=9438 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[55](30) used=7367 free=8911 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=63) |
 // front::draw:draw_tile((448, 528, 64, 64) (256, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[56](8208) used=7373 free=8905 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[57](30) used=7455 free=8823 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=64) |
 // front::draw:draw_tile((512, 528, 64, 64) (320, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[58](8208) used=7461 free=8817 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[59](30) used=7520 free=8758 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=65) |
 // front::draw:draw_tile((576, 528, 64, 64) (384, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[60](8208) used=7526 free=8752 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[61](30) used=8005 free=8273 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=66) |
 // front::draw:draw_tile((640, 528, 64, 64) (448, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[62](8208) used=8011 free=8267 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[63](30) used=8326 free=7952 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=67) |
 // front::draw:draw_tile((704, 528, 64, 64) (512, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[64](8208) used=8332 free=7946 |
-// GraphicsUpdatePDU::flush_orders: order_count=64 offset=0 |
-// GraphicsUpdatePDU::flush_orders: fast-path |
+// send_server_update: fastpath_support=yes compression_support=yes shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=64 |
 // Sending on RDP Client (5) 5229 bytes |
 /* 0000 */ "\x00\x94\x6d\x80\x21\x66\x14\x40\x00\x03\x84\x79\xc7\x18\x36\x15" //..m.!f.@...y..6. |
 /* 0010 */ "\xfe\x0c\xf9\xb7\x5f\x09\x38\x10\x38\x58\xc7\x9a\x76\xf3\x2c\x70" //...._.8.8X..v.,p |
@@ -1999,126 +1798,30 @@ const char outdata[] =
 /* 1450 */ "\x3e\x3e\x4c\xfd\x28\xfc\x4c\x04\x07\x7f\xa6\x3e\x3b\xfb\xdf\x81" //>>L.(.L....>;... |
 /* 1460 */ "\x6f\xc2\x77\xd4\x0d\xdf\xa2\x4f\xb8\x00\xc2\x18\x00"             //o.w....O..... |
 // Sent dumped on RDP Client (5) 5229 bytes |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](30) used=141 free=16137 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=68) |
+// send_server_update done |
 // front::draw:draw_tile((768, 528, 64, 64) (576, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](8208) used=147 free=16131 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](30) used=277 free=16001 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=69) |
 // front::draw:draw_tile((192, 592, 64, 32) (0, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](4112) used=283 free=15995 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](30) used=355 free=15923 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=70) |
 // front::draw:draw_tile((256, 592, 64, 32) (64, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[6](4112) used=366 free=15912 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[7](30) used=449 free=15829 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=71) |
 // front::draw:draw_tile((320, 592, 64, 32) (128, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[8](4112) used=455 free=15823 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[9](30) used=514 free=15764 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=72) |
 // front::draw:draw_tile((384, 592, 64, 32) (192, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[10](4112) used=520 free=15758 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[11](30) used=617 free=15661 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=73) |
 // front::draw:draw_tile((448, 592, 64, 32) (256, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[12](4112) used=623 free=15655 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[13](30) used=881 free=15397 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=74) |
 // front::draw:draw_tile((512, 592, 64, 32) (320, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[14](4112) used=887 free=15391 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[15](30) used=1155 free=15123 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=75) |
 // front::draw:draw_tile((576, 592, 64, 32) (384, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[16](4112) used=1161 free=15117 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[17](30) used=1262 free=15016 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=76) |
 // front::draw:draw_tile((640, 592, 64, 32) (448, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[18](4112) used=1268 free=15010 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[19](30) used=1321 free=14957 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=77) |
 // front::draw:draw_tile((704, 592, 64, 32) (512, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[20](4112) used=1327 free=14951 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[21](30) used=1411 free=14867 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=78) |
 // front::draw:draw_tile((768, 592, 64, 32) (576, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[22](4112) used=1417 free=14861 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[23](30) used=1498 free=14780 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=79) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[24](32) used=1504 free=14774 |
-// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=200 starty=1198 endx=200 endy=145 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[25](32) used=1532 free=14746 |
-// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=200 starty=145 endx=200 endy=1198 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[26](32) used=1538 free=14740 |
-// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=201 starty=1198 endx=200 endy=145 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[27](32) used=1546 free=14732 |
-// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=200 starty=145 endx=201 endy=1198 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[28](32) used=1556 free=14722 |
-// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=1198 starty=200 endx=145 endy=200 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[29](32) used=1571 free=14707 |
-// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=145 starty=200 endx=1198 endy=200 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[30](32) used=1577 free=14701 |
-// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=1198 starty=201 endx=145 endy=200 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[31](32) used=1585 free=14693 |
-// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=145 starty=200 endx=1198 endy=201 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[32](82) used=1595 free=14683 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[33](66) used=1661 free=14617 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[34](66) used=1711 free=14567 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[35](66) used=1761 free=14517 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[36](66) used=1811 free=14467 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[37](20) used=1861 free=14417 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[38](297) used=1881 free=14397 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[39](66) used=1931 free=14347 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[40](66) used=1981 free=14297 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[41](66) used=2031 free=14247 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[42](297) used=2081 free=14197 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[43](82) used=2113 free=14165 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[44](66) used=2179 free=14099 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[45](66) used=2229 free=14049 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[46](297) used=2279 free=13999 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[47](82) used=2311 free=13967 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[48](66) used=2377 free=13901 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[49](66) used=2427 free=13851 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[50](297) used=2477 free=13801 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[51](66) used=2509 free=13769 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[52](66) used=2559 free=13719 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[53](66) used=2609 free=13669 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[54](297) used=2659 free=13619 |
 // Widget_load: image file [./tests/fixtures/xrdp24b-redemption.png] is PNG file |
 // front::draw:draw_tile((738, 613, 64, 64) (0, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[55](8208) used=2694 free=13584 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[56](30) used=3172 free=13106 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(738,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=80) |
 // front::draw:draw_tile((802, 613, 64, 64) (64, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[57](8208) used=3181 free=13097 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[58](30) used=3892 free=12386 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(802,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=81) |
 // front::draw:draw_tile((866, 613, 64, 64) (128, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[59](8208) used=3898 free=12380 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[60](30) used=4669 free=11609 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(866,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=82) |
 // front::draw:draw_tile((930, 613, 64, 64) (192, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[61](8208) used=4675 free=11603 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[62](30) used=5357 free=10921 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(930,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=83) |
 // front::draw:draw_tile((738, 677, 64, 61) (0, 64, 64, 61)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[63](7824) used=5363 free=10915 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[64](30) used=6302 free=9976 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(738,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=84) |
 // front::draw:draw_tile((802, 677, 64, 61) (64, 64, 64, 61)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[65](7824) used=6313 free=9965 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[66](30) used=7625 free=8653 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(802,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=85) |
 // front::draw:draw_tile((866, 677, 64, 61) (128, 64, 64, 61)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[67](7824) used=7631 free=8647 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[68](30) used=9027 free=7251 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(866,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=86) |
 // front::draw:draw_tile((930, 677, 64, 61) (192, 64, 64, 61)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[69](7824) used=9033 free=7245 |
-// GraphicsUpdatePDU::flush_orders: order_count=69 offset=0 |
-// GraphicsUpdatePDU::flush_orders: fast-path |
-// Sending on RDP Client (5) 6453 bytes |
-/* 0000 */ "\x00\x99\x35\x80\x21\x2e\x19\x45\x00\x03\x7e\xe4\x53\x8b\xe0\x02" //..5.!..E..~.S... |
+// send_server_update: fastpath_support=yes compression_support=yes shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=69 |
+// Sending on RDP Client (5) 6454 bytes |
+/* 0000 */ "\x00\x99\x36\x80\x21\x2f\x19\x45\x00\x03\x7e\xe4\x53\x8b\xe0\x02" //..6.!/.E..~.S... |
 /* 0010 */ "\x26\x00\x9a\xcf\xb4\x6e\xfd\xa9\xe3\x80\x92\xa1\x81\x52\x58\xab" //&....n.......RX. |
 /* 0020 */ "\xfb\x83\x80\xe2\x87\xc5\x8d\x82\x14\x26\x5f\x4d\xed\x27\x10\x17" //.........&_M.'.. |
 /* 0030 */ "\xb9\x25\x00\x14\x85\xd3\xb3\xe3\xb1\x44\xe0\x0e\x69\x93\x8b\xe0" //.%.......D..i... |
@@ -2180,363 +1883,355 @@ const char outdata[] =
 /* 03b0 */ "\xe3\x25\xc0\x9f\x3a\x03\x40\x40\x2f\x00\x0c\xa2\x91\x1f\x9e\x65" //.%..:.@@/......e |
 /* 03c0 */ "\x16\xa4\xfc\x64\x44\x01\x94\x7b\xec\xc7\xcc\x84\x51\xeb\x85\x24" //...dD..{....Q..$ |
 /* 03d0 */ "\xdc\xda\x95\xfa\xaa\x90\x00\xca\x15\xf9\xe4\x3a\x5c\x09\x49\xfa" //...........:..I. |
-/* 03e0 */ "\x06\x51\xef\xa9\x1f\x32\x00\xcd\x71\x8b\x80\x0f\x07\x51\x80\x2f" //.Q...2..q....Q./ |
-/* 03f0 */ "\x97\xfb\x85\xfc\x63\x16\x24\xbe\x0e\x38\x38\xed\xf0\xc0\x88\x80" //....c.$..88..... |
-/* 0400 */ "\x00\x92\x4f\x87\x00\x52\x8f\x87\x00\x22\x1f\x0e\x3e\x0e\x80\x64" //..O..R..."..>..d |
-/* 0410 */ "\xbe\x02\xa0\x1f\x01\x48\x87\x80\xa4\x13\xe1\x58\x2d\x00\x18\x80" //.....H.....X-... |
-/* 0420 */ "\x13\xe1\x63\xf6\x5f\x06\x7f\x96\x00\x5f\xcb\x3f\xe9\x1f\x06\x3f" //..c._...._.?...? |
-/* 0430 */ "\xb4\x7c\x2c\xbe\x0e\x1f\xcb\x00\x3f\xe5\xaf\xee\xa0\xff\x88\xf8" //.|,.....?....... |
-/* 0440 */ "\x58\x60\xd4\xc7\xc1\xbf\xe5\x80\x27\xf2\xdf\xe0\xc0\x1d\x00\x19" //X`......'....... |
-/* 0450 */ "\x80\x10\x80\x1e\xc0\x08\x00\x0d\xd0\x7d\xf4\x5f\x06\x40\xff\xec" //.........}._.@.. |
-/* 0460 */ "\x03\x80\x00\x84\x04\x40\x42\x25\x52\xa5\x5f\x85\x21\x23\x75\xb3" //.....@B%R._.!#u. |
-/* 0470 */ "\xf3\xd0\x70\x30\x1e\xa4\x41\xef\x84\x41\xe1\x24\xf9\x18\x40\x7e" //..p0..A..A.$..@~ |
-/* 0480 */ "\xfb\xe1\x40\xf7\xcc\x60\xd9\xd0\x08\x58\x10\x40\x18\x18\x20\x2f" //..@..`...X.@.. / |
-/* 0490 */ "\x8e\x30\x05\xf1\xc6\xe0\xf4\x0f\x61\x47\x8d\x94\x00\x44\x0f\x91" //.0......aG...D.. |
-/* 04a0 */ "\x00\x9f\x67\x0f\x35\x62\x0d\xfc\xb4\x20\xf8\x54\x07\x60\xf3\x54" //..g.5b... .T.`.T |
-/* 04b0 */ "\x7c\x28\x06\x60\x03\xb0\x7d\x87\xc1\x9f\xe5\x80\x3f\xf2\xd3\xe0" //|(.`..}.....?... |
-/* 04c0 */ "\xf6\x80\xc4\x0e\xcc\x38\x76\x0c\x80\x0f\x80\x10\xbe\x35\xa1\x00" //.....8v......5.. |
-/* 04d0 */ "\x05\x02\x80\x02\x04\x03\x04\x03\x84\x03\x82\x70\xc6\xc0\x23\xc2" //...........p..#. |
-/* 04e0 */ "\x53\xc3\x1b\x50\x1b\x80\x00\x10\x47\x01\xb7\xc3\x93\x8f\xe4\xf8" //S..P....G....... |
-/* 04f0 */ "\x71\xf4\x9f\x61\xf0\x74\xf2\xa6\x01\x3e\x02\x9f\x2a\x6c\x0b\x00" //q..a.t...>..*l.. |
-/* 0500 */ "\x06\xff\xcf\x85\x87\xc1\xc3\xf9\x60\x15\xfc\xb9\x38\x7c\x72\xfa" //........`...8|r. |
-/* 0510 */ "\x1a\x2c\x00\xfd\x90\x88\xa0\x0a\xdf\x1a\xd5\x80\x02\xb0\xdf\x28" //.,.............( |
-/* 0520 */ "\x28\x10\x14\x10\x20\x28\x23\xd0\xd8\x05\xf8\x4a\x7d\x0d\xa8\x3d" //(... (#....J}..= |
-/* 0530 */ "\x80\x03\x81\x93\xe1\xd7\xcc\xdf\xe0\xe9\xe5\x4c\x03\x3c\x05\x3e" //...........L.<.> |
-/* 0540 */ "\x54\xaf\x3a\x47\xc2\xe2\xf8\x38\x7f\x2c\x03\x7f\x96\x7f\x07\x0f" //T.:G...8.,...... |
-/* 0550 */ "\x3e\x47\xc2\xb6\x00\x39\x07\xd1\x7c\x19\xf4\x34\x0f\x80\x00\x2d" //>G...9..|..4...- |
-/* 0560 */ "\x70\x46\x35\x7c\x6b\x6a\x00\x0a\x0b\x00\x0c\x09\x0d\x03\x04\xe0" //pF5|kj.......... |
-/* 0570 */ "\x9c\xf0\x96\x01\xde\x12\xe3\x03\xe2\x0c\xe1\xad\x1e\x12\xdb\xf9" //................ |
-/* 0580 */ "\x60\x1f\xfc\xb9\x20\x00\xd8\x10\x39\xf0\xa0\x19\x00\x0e\x01\xf4" //`... ...9....... |
-/* 0590 */ "\x5f\x06\x7f\x96\x02\x1f\xcb\x3f\xc9\x1f\x0a\x50\x01\x20\x00\xa0" //_......?...P. .. |
-/* 05a0 */ "\x00\xd8\xe3\x0c\x09\x00\x04\x40\xfb\x2f\x83\x20\x33\x0e\x20\x4c" //.......@./. 3. L |
-/* 05b0 */ "\x7b\x05\x2d\xd8\x13\x84\xfd\xf1\xad\xfb\xcf\x34\x1c\x06\x1e\x10" //{.-........4.... |
-/* 05c0 */ "\x20\x0e\x07\x51\xc0\x50\xf8\xd3\xc0\x54\x30\xf8\xc9\x06\x91\x40" // ..Q.P...T0....@ |
-/* 05d0 */ "\x03\x61\xb4\x40\x48\x18\x03\xe0\x44\x0b\x08\x35\x02\xef\xa4\x8c" //.a.@H...D..5.... |
-/* 05e0 */ "\x09\xc0\x48\x21\x0e\x00\x00\x10\x20\x01\x04\x19\x80\xc9\x08\x9c" //..H!.... ....... |
-/* 05f0 */ "\x05\x06\x61\x81\x57\xa1\x06\x40\x31\x01\x00\x48\xf9\xca\xc0\x94" //..a.W..@1..H.... |
-/* 0600 */ "\x08\x00\x21\x06\x90\x2f\x01\x00\x20\x74\xff\x60\x02\x0f\xbd\x00" //..!../.. t.`.... |
-/* 0610 */ "\x06\x02\xf8\x29\xf8\x83\x60\x13\xfc\x8c\x3b\x52\xfe\x81\x78\x0a" //...)..`...;R..x. |
-/* 0620 */ "\x0c\xe3\xc1\x47\x0f\xa4\x40\x17\x80\x90\x44\x04\xc8\x44\xff\xc4" //...G..@...D..D.. |
-/* 0630 */ "\x58\x05\xa0\x24\x0d\x1e\x06\x50\x30\xed\xd3\xf1\x05\xbe\xf0\x4e" //X..$...P0......N |
-/* 0640 */ "\x04\x83\x68\x00\x08\xfd\x88\x07\xce\x08\x78\x52\x4a\x3e\x71\xc0" //..h.......xRJ>q. |
-/* 0650 */ "\x5b\xc2\x51\x58\xf9\x45\x8f\x88\x60\xf0\x82\x51\xf2\x10\x0f\x88" //[.QX.E..`..Q.... |
-/* 0660 */ "\x50\xf0\x83\xe4\x3e\x84\xac\x7c\xc7\xe0\x20\xd4\x3e\x61\xa3\xca" //P...>..|.. .>a.. |
-/* 0670 */ "\x83\x0f\x00\x48\x80\x97\xa2\x1e\x52\x04\x20\xda\x3c\x80\x38\x11" //...H....R. .<.8. |
-/* 0680 */ "\xf9\x51\x58\xfa\x00\x04\x1a\x47\xe8\x81\x1f\x88\x6a\x61\xb4\x07" //.QX....G....ja.. |
-/* 0690 */ "\xfa\x55\xf3\xd1\x0c\x6c\x62\x38\x41\xb0\x0c\xc0\x48\x1e\x3c\x12" //.U...lb8A...H.<. |
-/* 06a0 */ "\x9c\x7b\x28\xd0\x83\x60\x6b\xfb\xf0\x41\xeb\x08\xb0\x05\xe3\x0f" //.{(..`k..A...... |
-/* 06b0 */ "\x60\x01\xc1\x03\xc2\x0d\x41\xb7\xea\xc7\xad\xe6\x92\x83\x48\x81" //`.....A.......H. |
-/* 06c0 */ "\x20\xd4\x10\x6c\x0e\x2c\x36\x8f\x75\xbf\x29\x80\x3d\x86\xd0\x21" // ..l.,6.u.).=..! |
-/* 06d0 */ "\xff\x98\x0f\xdc\x41\x10\xf8\xb0\xd1\xf1\x5c\x10\x5f\x15\x85\x79" //....A......._..y |
-/* 06e0 */ "\xa9\x06\xb1\xf3\x08\x33\x0f\x8a\x20\x84\x7c\x58\x60\xf8\xa0\x03" //.....3.. .|X`... |
-/* 06f0 */ "\x0f\x8b\x18\x47\xb9\xf8\x22\x91\xc1\x3e\x7c\xf2\x90\x00\x04\xc0" //...G.."..>|..... |
-/* 0700 */ "\xd0\x6b\x04\x11\x8e\x01\x54\x40\xf0\x00\x09\x05\x41\xb4\x20\xd2" //.k....T@....A. . |
-/* 0710 */ "\x10\x64\x04\x0e\x00\x07\x18\x7a\xd1\xed\xf5\x00\x39\x06\x31\x06" //.d.....z....9.1. |
-/* 0720 */ "\x20\x68\x20\x60\x20\x58\x20\x48\xc1\xee\xc2\x0b\x9c\x27\x09\x56" // h ` X H.....'.V |
-/* 0730 */ "\x06\x43\x45\x80\x6c\x42\xa4\x0a\x00\x00\x73\xac\x12\x03\x8c\xe0" //.CE.lB....s..... |
-/* 0740 */ "\x09\x44\x02\x8d\xed\x32\x0d\x22\xa0\x06\x01\x80\x40\x06\xc1\x34" //.D...2."....@..4 |
-/* 0750 */ "\x00\x68\xe8\x4c\x05\xec\x24\x75\x9d\x86\xd1\x50\x03\x20\x78\x01" //.h.L..$u...P. x. |
-/* 0760 */ "\x80\xdc\x40\x1d\xfe\x90\x8f\x89\x9b\xd1\x0c\x05\x24\xc1\x9f\x29" //..@.........$..) |
-/* 0770 */ "\x66\x14\x0e\x34\xfd\x18\xfc\x80\x22\x06\x80\x18\x0a\x3f\xd1\x53" //f..4...."....?.S |
-/* 0780 */ "\xb8\xa0\xb0\x5f\xca\x40\x03\x8b\xaf\x82\xf0\x11\x30\x90\x00\x48" //..._.@......0..H |
-/* 0790 */ "\x13\x0d\xa0\x01\x23\x0a\x57\xa0\x2b\x41\x22\xd0\x15\x80\x90\x00" //....#.W.+A"..... |
-/* 07a0 */ "\x5f\xda\xa8\x00\xc0\x45\x02\x45\xa0\x51\xc0\x9e\xae\x0f\xdf\x09" //_....E.E.Q...... |
-/* 07b0 */ "\x00\x30\x1a\x7f\x88\x67\x03\xc0\x44\x13\xf8\xbb\x6a\xa1\x5e\x00" //.0...g..D...j.^. |
-/* 07c0 */ "\x42\xf9\x81\xb0\x30\xc1\xc3\x09\x71\xbe\x72\xa1\xf3\xa4\x02\xb0" //B...0...q.r..... |
-/* 07d0 */ "\x03\xec\xa4\x73\xc1\xa3\x5f\x06\xcb\x0e\x0c\x77\x2c\x7c\xe3\xd7" //...s.._....w,|.. |
-/* 07e0 */ "\xce\x90\x0e\xc9\x21\x30\x1f\x05\xc1\x17\x82\xdf\x41\xe5\x84\xbb" //....!0......A... |
-/* 07f0 */ "\xfe\x30\xa6\x8b\xe7\x47\xa7\x4d\x3f\x39\x89\xc5\xdf\x3a\x0e\x00" //.0...G.M?9...:.. |
-/* 0800 */ "\x60\x24\x9f\x39\x87\xd8\x00\xfe\x13\x3d\xf8\x14\x6f\xe7\x12\x00" //`$.9.....=..o... |
-/* 0810 */ "\x18\x0f\xc8\x0b\x40\x5f\x3e\x63\xda\x15\xeb\xda\x24\xf5\x63\xe8" //....@_>c....$.c. |
-/* 0820 */ "\x3c\x22\xf5\xd4\x42\x7e\x74\xf8\xf6\x19\xfe\x73\xd6\xef\x9c\x00" //<"..B~t....s.... |
-/* 0830 */ "\xb4\x00\xf8\xdc\x2f\xe9\xc7\xce\x82\x04\x8f\x34\xc3\xd7\x82\x8b" //..../......4.... |
-/* 0840 */ "\x21\x38\x2a\x51\xef\x70\x20\x01\x80\x0c\x04\x54\x27\xc1\xb1\xeb" //!8*Q.p ....T'... |
-/* 0850 */ "\x90\x0c\x04\x82\x31\xf4\xde\x20\x54\x3f\xa1\x1b\xe2\x21\x40\x01" //....1.. T?...!@. |
-/* 0860 */ "\x35\x00\x52\x0a\xc0\x0f\xae\x1e\xbc\x81\x58\x13\x48\x02\xc0\x4d" //5.R.......X.H..M |
-/* 0870 */ "\x40\x20\x5f\xdc\xee\x1e\xca\x80\x28\x02\x07\xb2\x6a\xe0\x00\x25" //@ _.....(...j..% |
-/* 0880 */ "\x03\x45\xc5\x95\xe5\xa0\x96\x38\xe8\x48\x45\x40\x19\x06\x01\xc0" //.E.....8.HE@.... |
-/* 0890 */ "\xbe\x8d\x82\x43\x20\xc0\x38\x96\x0c\xd0\x01\x2e\x00\x13\x09\x7a" //...C .8........z |
-/* 08a0 */ "\x09\x66\x8e\x84\x83\xf1\x0a\x61\x5b\x97\x90\xde\x91\x8a\x4a\xc0" //.f.....a[.....J. |
-/* 08b0 */ "\x4c\x0d\x67\xec\x9f\x02\x5b\x23\xa1\x20\xde\x14\x80\x82\x08\x07" //L.g...[#. ...... |
-/* 08c0 */ "\x87\x42\x61\x2c\x01\xf1\xd0\x90\x58\x17\x12\x00\xc5\x40\x23\xca" //.Ba,....X....@#. |
-/* 08d0 */ "\x60\x0f\x49\x47\x23\x45\x00\x00\x61\xab\xff\x3d\x5a\x12\x81\x71" //`.IG#E..a..=Z..q |
-/* 08e0 */ "\x2d\x04\x60\xe3\x07\xb2\x23\x19\xf0\xaa\x04\x0a\x18\x87\xa9\xe1" //-.`...#......... |
-/* 08f0 */ "\x46\x1c\x68\x71\x88\x61\xdb\x18\xf7\xb0\x00\x3b\x10\x5c\x38\x08" //F.hq.a.....;..8. |
-/* 0900 */ "\xc0\xff\x02\x48\x1f\x80\xf8\xec\x3f\xed\x37\x17\xd9\x7b\x09\xf9" //...H....?.7..{.. |
-/* 0910 */ "\x83\x6f\x8b\x1d\x4c\xc3\xfe\xa0\x7c\x56\x04\x43\x0f\xf9\xed\xf8" //.o..L...|V.C.... |
-/* 0920 */ "\x27\xdc\xc1\xff\x7d\xc6\x24\x59\x00\x0f\x43\x9f\x02\x5e\xfc\xd2" //'...}.$Y..C..^.. |
-/* 0930 */ "\x59\x09\x58\x09\x36\x09\x15\x09\x13\x01\xb8\xfa\xc1\x2c\x00\x69" //Y.X.6........,.i |
-/* 0940 */ "\xe9\xe0\x22\x00\xe5\xae\xa0\x05\xc7\x02\x6e\x75\x1c\x2b\x44\x11" //..".......nu.+D. |
-/* 0950 */ "\xc0\x03\x45\x1c\x1f\xa4\xe3\x1b\x8d\xd0\x09\x4b\x06\x20\x1f\x02" //..E........K. .. |
-/* 0960 */ "\x68\x00\x1c\x09\xd2\x41\xea\x00\xab\x08\xff\x18\xb8\x10\x80\xca" //h....A.......... |
-/* 0970 */ "\x47\x40\x03\xb8\xa2\x84\x20\x30\xe1\x4f\x92\x59\xf9\x28\x98\x9f" //G@.... 0.O.Y.(.. |
-/* 0980 */ "\xc9\x2c\x7c\x93\xc0\x57\xc9\x7d\x27\x15\x22\x08\xf8\xd4\x06\x80" //.,|..W.}'."..... |
-/* 0990 */ "\x15\x49\x80\x8b\x04\xf1\x12\x38\xf8\x0c\x8c\x3c\x35\x01\x40\x0a" //.I.....8...<5.@. |
-/* 09a0 */ "\xe7\x01\x11\xc0\x91\x18\x0a\x58\xa8\xd4\x06\x00\x16\x23\xe9\x43" //.......X.....#.C |
-/* 09b0 */ "\x97\xdc\x28\x0a\x0d\x40\x6c\x02\x82\x3c\x15\x58\xd4\x0c\x26\x35" //..(..@l..<.X..&5 |
-/* 09c0 */ "\x01\x20\x1e\x11\xf4\xc0\x4a\x02\x74\x14\x35\x02\x40\x1f\x20\xc0" //. ....J.t.5.@. . |
-/* 09d0 */ "\x61\x6b\x80\x03\x9f\xe8\x01\x0f\xbd\x30\x8f\xc0\x50\x00\x44\x3d" //ak.......0..P.D= |
-/* 09e0 */ "\xc6\x13\x80\x83\xf8\x49\x20\x0a\x0f\xf0\x21\xd3\xee\x03\x3c\x24" //.....I ...!...<$ |
-/* 09f0 */ "\xb0\x09\x87\xff\x80\xa4\x06\xe3\xe0\x42\x00\xa8\x7f\xe6\x0a\x40" //.........B.....@ |
-/* 0a00 */ "\x6e\xc2\x5e\x2a\x0f\x07\x7b\x8c\xeb\xf9\x97\xb0\x97\xbf\x01\x18" //n.^*..{......... |
-/* 0a10 */ "\x30\x99\xd0\x54\x25\xdb\xe8\x28\x9e\x04\x80\x10\xce\x04\x2e\x21" //0..T%..(.......! |
-/* 0a20 */ "\xd1\x29\x1d\x1a\x80\x80\x05\x85\xc0\x80\xb8\x69\x85\xe0\x32\xef" //.).........i..2. |
-/* 0a30 */ "\x2b\x10\x05\x02\xf8\x06\x1e\x3e\xe2\x67\xe1\x44\x80\x54\x2b\x8c" //+......>.g.D.T+. |
-/* 0a40 */ "\x29\xe7\xe7\x23\x01\x5e\x2e\x0f\x04\xfc\xe3\xd4\x74\x26\x05\x3c" //)..#.^......t&.< |
-/* 0a50 */ "\xf5\x7b\xcb\x4a\x80\x35\x03\x04\xbd\x88\x80\x05\x42\x5f\x3f\x19" //.{.J.5......B_?. |
-/* 0a60 */ "\x94\x78\x6b\xe8\x82\x80\x7d\xea\x7d\xf9\xe6\xa1\x5f\x9e\x60\x01" //.xk...}.}..._.`. |
-/* 0a70 */ "\x01\x7e\xf9\x8b\x47\x83\x23\x19\x4d\xbd\xd0\x42\xf0\x4b\x00\x01" //.~..G.#.M..B.K.. |
-/* 0a80 */ "\x80\xe0\x57\x20\x0b\x06\x17\x18\x62\xa8\x20\x14\x12\x38\x13\x80" //..W ....b. ..8.. |
-/* 0a90 */ "\x7e\x1c\x23\x5e\x13\x40\x48\x00\x78\xd0\xae\x00\x1c\xae\x62\x81" //~.#^.@H.x.....b. |
-/* 0aa0 */ "\xea\x23\x06\x00\x1c\x70\x11\x54\x00\xae\x3f\x5c\xc1\xe6\x15\x03" //.#...p.T..?..... |
-/* 0ab0 */ "\x0b\x7d\xbd\x68\xa8\x01\x7e\x88\x20\x0b\xf7\xe0\x54\x7f\x8a\x42" //.}.h..~. ...T..B |
-/* 0ac0 */ "\xa0\x07\x0b\xfa\x0a\x00\x0f\xf2\x0f\x0f\x70\x53\x54\x01\x04\x82" //..........pST... |
-/* 0ad0 */ "\x40\x60\x30\x00\x01\xa8\x13\x00\xfa\x06\x0e\xc2\x3e\x04\xa2\x80" //@`0.........>... |
-/* 0ae0 */ "\x61\x8a\xa4\x06\x40\x3d\xe2\x58\x80\x00\x8d\xf9\x2c\xd2\x01\x50" //a...@=.X....,..P |
-/* 0af0 */ "\x06\x45\xfe\xc6\x0f\x14\x28\x01\x43\x7c\x81\xd5\x16\x9f\x9e\x00" //.E....(.C|...... |
-/* 0b00 */ "\xf1\x30\x83\xe2\x3c\x4a\x08\x85\x60\x22\xf7\xdc\x79\xf8\x2b\x44" //.0..<J..`"..y.+D |
-/* 0b10 */ "\x20\x01\x14\x81\x3d\x84\xb4\x76\x6e\x00\x40\x58\x00\x5f\xd8\x47" // ...=..vn.@X._.G |
-/* 0b20 */ "\xc4\xe0\x4b\x01\x24\x80\x1c\x66\xd8\xd6\x14\xc0\x3f\xc6\x75\x72" //..K.$..f....?.ur |
-/* 0b30 */ "\xfd\xcc\x49\xb6\x21\xe3\x36\x58\x09\x67\x00\xe3\x37\x00\x02\xb8" //..I.!.6X.g..7... |
-/* 0b40 */ "\xf9\xf4\xf4\x13\x2d\x00\xe3\x41\x12\x00\xb0\x00\xae\x41\x09\x67" //....-..A.....A.g |
-/* 0b50 */ "\xe7\x70\xd8\x84\x00\xa0\x00\x78\x1b\xd8\x4d\xcb\x91\xc3\x03\xf7" //.p.....x..M..... |
-/* 0b60 */ "\x20\x3f\x58\x09\xf7\x97\x1f\x9e\xc3\xbc\x68\x09\x00\xf8\xec\x19" // ?X.......h..... |
-/* 0b70 */ "\xf3\x8c\x38\x4c\x26\x9d\xc5\xfc\x44\x00\xf9\xf5\x16\x01\x51\xdc" //..8L&...D.....Q. |
-/* 0b80 */ "\x30\xcd\x10\x18\x00\xa7\x1a\xe6\x3b\x06\x0f\xc0\x6c\x1c\x6e\x23" //0.......;...l.n# |
-/* 0b90 */ "\xb6\x53\x8e\x4c\x50\x07\xbe\x62\x00\x2b\xf1\x44\x1f\x82\x2c\x01" //.S.LP..b.+.D..,. |
-/* 0ba0 */ "\x5f\x15\xc9\x98\x3f\x02\x40\xf2\xfc\x61\x1c\xe8\x60\xfc\x50\x41" //_...?.@..a..`.PA |
-/* 0bb0 */ "\xf8\xa2\x00\x15\x40\x0b\x90\x85\xb0\x77\xbf\x71\xc9\x85\x20\x00" //....@....w.q.. . |
-/* 0bc0 */ "\x38\xef\x1c\x9c\x63\x60\x4a\x60\x14\x01\xb6\x11\xf8\x11\x00\xf9" //8...c`J`........ |
-/* 0bd0 */ "\x00\x08\x9b\x00\x67\xbc\x16\x0f\xe6\x81\x30\x8f\xc0\x3c\x64\xfa" //....g.....0..<d. |
-/* 0be0 */ "\xcc\x03\xe6\x1e\xf9\xc9\x00\xa0\x8d\x16\x02\x2d\x07\x00\x0a\x40" //...........-...@ |
-/* 0bf0 */ "\x0a\x90\x05\x30\x05\xa0\x0a\x48\x3f\x33\x0a\x6a\xb8\x18\x80\x7c" //...0...H?3.j...| |
-/* 0c00 */ "\xda\x81\xc8\x00\x40\x05\x28\x03\xcc\x00\x1e\x00\x20\x0a\xe0\x96" //....@.(..... ... |
-/* 0c10 */ "\x06\x37\x24\x48\x02\xa0\x03\xc3\xdf\x84\x40\x02\xff\xf4\x26\xc0" //.7$H......@...&. |
-/* 0c20 */ "\x16\xc0\x3e\xfb\xf8\x0c\x02\x98\x65\x16\x20\x40\x1e\x72\x0e\x78" //..>.....e. @.r.x |
-/* 0c30 */ "\x84\xc0\x01\xf3\xe7\xe2\x87\xdf\x3e\xf1\x00\x2f\xd6\xb1\xf7\x8c" //........>../.... |
-/* 0c40 */ "\x03\xe3\x7c\x35\x4c\x1c\x9f\x90\x1b\x00\x58\xdf\x82\x1e\x4a\x01" //..|5L.....X...J. |
-/* 0c50 */ "\x70\x3d\x40\x07\xb8\xd2\xc7\xe7\x7d\xa8\x90\x70\x8a\x79\x28\x07" //p=@.....}..p.y(. |
-/* 0c60 */ "\xf6\x14\x01\xee\x41\xf1\xeb\xe7\xd8\x80\x01\x4f\xcb\x14\x0c\x89" //....A......O.... |
-/* 0c70 */ "\xb8\xf8\xa1\xbe\x49\xac\x33\x33\x1c\x09\x9c\x2b\x42\xb8\x40\x2d" //....I.33...+B.@- |
-/* 0c80 */ "\xc4\xb6\x20\x03\xdf\x25\xc4\x95\xe1\xa6\x01\x35\x01\xf0\x70\x7f" //.. ..%.....5..p. |
-/* 0c90 */ "\x38\xe0\xb0\x03\xe0\x1a\x1b\x80\xf9\x7c\x07\xef\x90\xdf\xcd\x7c" //8........|.....| |
-/* 0ca0 */ "\x92\x07\xc9\x70\x43\x7e\x67\xc9\x70\x9a\x01\xf1\x4e\x7d\xb7\xc9" //...pC~g.p...N}.. |
-/* 0cb0 */ "\x8a\x07\xc9\x20\x71\xaf\x7a\xe0\x37\xc1\x32\x00\xe0\x20\x1e\x7a" //... q.z.7.2.. .z |
-/* 0cc0 */ "\x7d\xb0\x17\x81\x1e\x92\x8f\xde\x02\xf3\x28\x73\xc0\x31\xc6\x18" //}.........(s.1.. |
-/* 0cd0 */ "\x15\xec\x49\xe3\x54\x81\x00\x00\xd8\x07\x87\x78\x8f\x07\xe0\x56" //..I.T......x...V |
-/* 0ce0 */ "\x00\x04\x01\xe7\xef\xaf\x1c\x0b\x10\x0f\x6c\x3e\x64\x48\x07\xb8" //..........l>dH.. |
-/* 0cf0 */ "\x0c\x47\xac\x01\x5e\xc6\x70\x18\x8b\x00\xa0\x65\x2c\x80\x06\x0d" //.G..^.p....e,... |
-/* 0d00 */ "\xc2\x94\x15\xf5\x01\x6c\x1c\x10\x4c\x00\x5f\x60\x80\x16\x18\xc0" //.....l..L._`.... |
-/* 0d10 */ "\x27\xf2\x20\x07\x08\x95\x88\x07\xb8\xaa\x39\x8e\xbc\x6a\xe0\x79" //'. .......9..j.y |
-/* 0d20 */ "\x1c\x2c\xc3\xdf\xe5\xd1\x15\x89\xdb\xdc\x08\xc3\xd0\x1a\x00\xa7" //.,.............. |
-/* 0d30 */ "\x16\xa6\x33\xa7\x00\x0f\xf1\x09\x0f\x72\xd1\x77\x36\x73\x98\x50" //..3......r.w6s.P |
-/* 0d40 */ "\x05\x38\xba\x00\x03\x60\x40\x03\xd8\x03\x18\x3b\x02\x60\x1e\xa0" //.8...`@....;.`.. |
-/* 0d50 */ "\x71\x76\x8c\x72\xc8\xf9\x51\xdb\xf8\x00\x15\xf6\xd4\x0e\x82\xb0" //qv.r..Q......... |
-/* 0d60 */ "\x00\x13\x02\xa0\x0a\x20\x71\x85\x8e\xba\x30\x3f\x60\x0a\xc1\xe4" //..... q...0?`... |
-/* 0d70 */ "\xd0\x0d\x02\x00\x15\x90\x00\x3c\x7c\xa0\x24\x09\x80\x56\x40\x02" //.......<|.$..V@. |
-/* 0d80 */ "\xf5\xf2\x80\x30\x3e\x1f\xc1\x49\x07\x0d\xf8\x1e\x82\x10\x0f\xa0" //...0>..I........ |
-/* 0d90 */ "\x0a\xd8\x02\x98\x30\x08\x28\x00\x6a\x0b\x00\x1e\x20\x15\xa0\x05" //....0.(.j... ... |
-/* 0da0 */ "\xd8\x30\x6e\x63\xca\x60\x0a\x00\x0c\x84\x2e\x13\x20\x14\x80\x0a" //.0nc.`...... ... |
-/* 0db0 */ "\x70\x06\x0a\x48\x02\xec\x01\x44\x01\x4c\x00\x2c\x00\x17\x32\x6f" //p..H...D.L.,..2o |
-/* 0dc0 */ "\xb8\x11\x02\x01\x40\x53\x00\x03\x8f\x01\x80\x71\x70\x93\xd1\x08" //....@S.....qp... |
-/* 0dd0 */ "\xe6\x09\xb7\x82\x0b\x85\xe0\x06\x0f\x02\xc4\x7d\x2b\x5a\xd1\x63" //...........}+Z.c |
-/* 0de0 */ "\x1d\x2d\x6a\xd0\x73\x86\xce\x42\xf8\xe5\x05\x16\x9a\xb3\xd7\xf0" //.-j.s..B........ |
-/* 0df0 */ "\x9f\xac\x75\xd5\x14\x21\x47\xae\xed\x35\xfb\xff\x06\x84\x43\x00" //..u..!G..5....C. |
-/* 0e00 */ "\xac\x54\x60\x73\x1d\x2a\x1f\x6e\xed\x5f\x52\x70\x07\xc4\x8e\x60" //.T`s.*.n._Rp...` |
-/* 0e10 */ "\xfe\x25\x40\x0e\x44\x10\x03\x06\xbd\xdf\xad\x76\xa2\x4b\x4d\x8e" //.%@.D......v.KM. |
-/* 0e20 */ "\xd1\x06\xb4\xda\xed\x55\x00\x3a\x5f\x39\x66\x01\x0c\x76\x4c\x0e" //.....U.:_9f..vL. |
-/* 0e30 */ "\x54\x01\x12\x71\xf5\x1a\x0d\x69\x66\x61\xb4\x70\x97\x0c\x60\x06" //T..q...ifa.p..`. |
-/* 0e40 */ "\xf7\x7f\x30\xdd\x40\x0c\x9f\x0a\x53\xa3\x57\xee\xf7\x0c\x3a\x88" //..0.@...S.W...:. |
-/* 0e50 */ "\xc0\x31\x0c\x01\x76\x50\xfa\xc9\x0f\x66\x63\xd5\xda\xa0\x14\x90" //.1..vP...fc..... |
-/* 0e60 */ "\x04\xff\xf5\x93\x0f\xac\x78\xfa\xd0\x00\x02\xd1\x5f\xbf\x82\x60" //......x....._..` |
-/* 0e70 */ "\x12\x9a\x90\x0d\x40\x80\x0c\x1e\x6e\xd8\x03\x45\x80\x4a\xe4\x6a" //....@...n..E.J.j |
-/* 0e80 */ "\x04\x40\xe1\x12\xba\x07\xe0\x07\xf7\x86\xe4\x20\x67\xfb\xaa\x00" //.@......... g... |
-/* 0e90 */ "\x91\xa1\xec\x57\x28\xba\x51\x67\xc2\xf5\x00\x45\x10\xcf\x26\x02" //...W(.Qg...E..&. |
-/* 0ea0 */ "\x05\x30\x09\xd0\x62\x06\x01\x80\x6d\x18\x00\x18\x07\x67\xe7\x58" //.0..b...m....g.X |
-/* 0eb0 */ "\x9f\x5f\xea\x00\x80\x80\x20\x35\x00\x48\xf0\x3f\x70\x08\xc0\x29" //._.... 5.H.?p..) |
-/* 0ec0 */ "\xb2\xc1\x80\x85\xc8\x0c\x5e\x08\x59\xed\x38\x2f\xf9\xd1\xb1\x5f" //......^.Y.8/..._ |
-/* 0ed0 */ "\xbf\xce\xaf\xd5\x00\x2b\x38\x08\x0c\x04\x12\xd3\x50\x05\xb6\x7a" //.....+8.....P..z |
-/* 0ee0 */ "\x5d\x80\x59\xa6\x11\x8b\x06\x04\x18\x70\x45\xe0\xc8\x11\x0c\x01" //].Y......pE..... |
-/* 0ef0 */ "\x62\xaf\xdf\xe0\x67\x37\x6a\xbd\xd5\xf6\xff\x50\x05\x23\xfd\x8c" //b...g7j....P.#.. |
-/* 0f00 */ "\x02\xf9\x33\x01\x8e\xee\xee\xe1\x2f\xc8\x04\x30\x0c\x01\x64\xaf" //..3...../..0..d. |
-/* 0f10 */ "\xdf\xc1\x7d\x48\xfb\x2a\xc6\x01\xda\x0c\x7b\x3d\x02\x49\xb5\x46" //..}H.*....{=.I.F |
-/* 0f20 */ "\xaf\xc1\x7e\xce\x79\xe6\x46\x05\xaa\x00\xc4\x08\x00\x3e\x3d\x41" //..~.y.F......>=A |
-/* 0f30 */ "\x4a\x6d\x4e\x37\x49\xb5\xd4\xe6\xed\x77\xba\xd4\x01\x43\x02\xfc" //JmN7I....w...C.. |
-/* 0f40 */ "\xbb\x38\x0a\x32\x10\x05\xaa\x01\x0c\x3c\x94\x1f\xed\xdc\x4d\x40" //.8.2.....<....M@ |
-/* 0f50 */ "\xf2\x39\xc0\x5b\xc1\xc1\x4e\x0c\x0f\x98\x8c\x0a\xfb\x0c\xdf\xf6" //.9.[..N......... |
-/* 0f60 */ "\xe3\x82\xdd\x0a\xfd\xf7\xd3\x70\x45\x91\x52\x1f\x94\xe0\x77\x78" //.......pE.R...wx |
-/* 0f70 */ "\x0a\xe6\x85\x7c\x2b\x1c\x0d\x67\xc3\x30\xe0\xc3\x68\x07\xf3\x8b" //...|+..g.0..h... |
-/* 0f80 */ "\xe7\xbc\xf2\x20\x84\x60\x28\x64\x23\xfb\xb0\x14\x93\x01\x8d\x41" //... .`(d#......A |
-/* 0f90 */ "\x03\x07\xc8\x54\x04\xbc\x3c\xc0\x44\x00\x7e\x00\xef\x04\x48\x86" //...T..<.D.~...H. |
-/* 0fa0 */ "\x02\x77\x42\x3d\xdc\xe0\x33\x38\x09\xd1\x80\xa4\xc3\x1e\x14\x8c" //.wB=..38........ |
-/* 0fb0 */ "\x05\x77\x0c\x02\x1e\x44\x39\x30\xda\x02\x3d\xdb\x7c\x7a\x82\x08" //.w...D90..=.|z.. |
-/* 0fc0 */ "\x35\x8e\x5f\x0f\x0f\x10\x66\x18\x0a\xa5\x18\x73\xfb\xb1\xe3\xc8" //5._...f....s.... |
-/* 0fd0 */ "\x41\xac\x07\x7d\x77\x84\x81\x1e\x5b\x7c\x77\x99\xc1\x7f\xba\x24" //A..}w...[|w....$ |
-/* 0fe0 */ "\x0e\xac\x36\x8c\x03\x68\xf3\xe0\x4f\xbf\x41\x40\x04\x03\x05\x29" //..6..h..O.A@...) |
-/* 0ff0 */ "\x08\x12\x08\x22\x08\x36\x07\x66\x1b\x40\x4f\xa7\xdf\xee\x28\xc8" //...".6.f.@O...(. |
-/* 1000 */ "\x35\x08\x12\x0d\x61\x06\xd0\xf3\xfe\x08\x35\x00\x9f\x62\x18\x05" //5...a.....5..b.. |
-/* 1010 */ "\x7e\x58\x81\x63\xe5\x9c\x3b\x53\x10\x65\x1d\x4e\xe3\x06\x6d\x30" //~X.c..;S.e.N..m0 |
-/* 1020 */ "\x01\x0a\xa0\x00\x30\x15\x80\xbb\x98\x00\x7c\x83\x60\x00\x30\xc5" //....0.....|.`.0. |
-/* 1030 */ "\x6c\x8f\x00\x3b\x7b\x90\x6a\x04\x3c\xab\x58\x01\x84\x00\x1d\x03" //l..;{.j.<.X..... |
-/* 1040 */ "\x41\xb4\x60\x03\xa0\xc7\x2a\x87\x9c\xc0\x01\x98\x0a\xda\x20\x00" //A.`...*....... . |
-/* 1050 */ "\x05\x1c\xa6\xde\x91\x30\x06\xb0\xda\x20\x9e\x2b\x4c\x30\x16\x09" //.....0... .+L0.. |
-/* 1060 */ "\x00\x3b\xd6\x46\x01\x16\x1b\x47\xe2\x88\x40\x01\x07\x08\x20\x87" //.;.F...G..@... . |
-/* 1070 */ "\x2f\xd5\xa3\xc3\x22\x08\x87\x59\xd7\x85\x0c\x02\x8c\x36\x80\xbf" ///..."..Y.....6.. |
-/* 1080 */ "\x1f\xba\x7c\x3c\x08\xf8\xa5\x8f\x8a\x00\x28\xf2\x94\x52\x08\x12" //..|<......(..R.. |
-/* 1090 */ "\x20\x88\x32\x84\x19\xc6\x03\x03\x5a\x3a\x91\x30\x1e\xa5\xff\x76" // .2.....Z:.0...v |
-/* 10a0 */ "\x36\x0c\x60\x9c\x76\x03\x98\x08\x60\xdf\xb5\x88\x0a\x4a\x04\x7a" //6.`.v...`....J.z |
-/* 10b0 */ "\x00\xa8\x00\x06\x27\x81\x45\x9c\x9d\xa8\x44\x17\x27\xdd\x88\x2e" //....'.E...D.'... |
-/* 10c0 */ "\x10\x1c\x05\x7f\x14\x00\xa8\xe8\x4d\x0a\x38\x13\x42\x7c\x09\xec" //........M.8.B|.. |
-/* 10d0 */ "\x42\x7a\x09\xa1\x2c\x84\xc3\x70\x03\xfd\xf5\xdd\x5c\x00\x13\xc4" //Bz..,..p........ |
-/* 10e0 */ "\x66\x29\x4a\x4c\x6e\x2c\x76\xe5\xa0\x93\xac\x38\xb6\xc0\x17\x06" //f)JLn,v....8.... |
-/* 10f0 */ "\x0c\x06\x4e\x81\x47\x4c\xaf\xdc\xa7\x62\x0f\x7e\xaf\x0d\xc7\x62" //..N.GL...b.~...b |
-/* 1100 */ "\x68\x50\xbc\x01\x44\x01\xc5\x27\xca\x25\x7f\x1a\x34\x05\x24\xa0" //hP..D..'.%..4.$. |
-/* 1110 */ "\x30\x39\x96\x19\xe5\x2d\x60\x24\xb4\x09\x75\x2e\x3f\x77\x6b\xe5" //09...-`$..u.?wk. |
-/* 1120 */ "\x8a\x9e\x9d\x31\x77\x4b\x76\xdb\x01\xc0\x46\x00\x6a\x00\x6d\xcd" //...1wKv...F.j.m. |
-/* 1130 */ "\x7c\x6a\x22\x02\xac\x65\xd3\xac\x3a\x44\xff\x6f\x6c\xff\x20\x26" //|j"..e..:D.ol. & |
-/* 1140 */ "\x35\x90\x18\x0c\x77\xf1\x18\x7e\x42\x7f\x77\xa8\x02\x41\xfa\x2f" //5...w..~B.w..A./ |
-/* 1150 */ "\xa2\xd2\x3e\x90\x2a\xf4\x32\xa0\x07\x20\x10\x01\x84\x8f\xd7\xe7" //..>.*.2.. ...... |
-/* 1160 */ "\xcb\x67\xa4\x43\xa3\x51\xd3\x29\xf2\xdb\xf4\x96\x3f\x6f\xfe\xa0" //.g.C.Q.)....?o.. |
-/* 1170 */ "\x32\x0b\x7f\x83\xc4\x25\x60\x30\x7a\xfd\xfe\x7a\x64\xf4\x13\x4f" //2....%`0z..zd..O |
-/* 1180 */ "\x00\x7e\xbf\xd7\xef\xf3\x6a\x66\x02\x8c\x02\x30\xe0\xb0\x34\x74" //.~....jf...0..4t |
-/* 1190 */ "\xcb\x01\x08\x20\x55\xd1\x11\xe6\xcf\x01\x84\x79\x30\xac\x17\x60" //... U......y0..` |
-/* 11a0 */ "\x18\x0d\x79\x8f\xc9\xa8\x1c\x8a\xd0\xdb\x73\xba\xd9\x3f\x48\x0c" //..y.......s..?H. |
-/* 11b0 */ "\x83\x97\xfa\x7f\x56\x6d\xf1\xe0\x10\x8d\x64\x07\x01\x92\x2d\xfc" //....Vm....d...-. |
-/* 11c0 */ "\x7e\xe2\x04\xc5\x60\x8e\x04\xe1\x06\xf0\x1a\x06\x03\xf8\x4f\xe9" //~...`.........O. |
-/* 11d0 */ "\xd4\xa8\x02\x55\x40\x09\x00\xcf\xc0\x60\x02\xbf\xc8\x20\x39\x01" //...U@....`... 9. |
-/* 11e0 */ "\x63\x29\xb5\x40\x67\x4b\x5f\x8a\xfd\x4a\xa8\x01\x21\x53\x7c\x64" //c).@gK_..J..!S|d |
-/* 11f0 */ "\xf4\x13\xc2\x2a\x80\x15\x85\xa8\x06\x87\x76\x15\x80\xc7\xee\xfd" //...*......v..... |
-/* 1200 */ "\x4b\xd3\xfa\x73\x7f\xe0\x8a\x01\x1f\x9b\x61\xaf\x0c\xb9\xc5\x40" //K..s......a....@ |
-/* 1210 */ "\x12\x40\x57\xcb\x4e\x17\x4a\xbd\x4c\x1e\x8a\x87\xf8\x70\xd3\xe1" //.@W.N.J.L....p.. |
-/* 1220 */ "\xc3\x01\x88\x0d\x40\x16\xc6\x82\x03\x01\x1d\x43\x00\xf9\xeb\x1d" //....@......C.... |
-/* 1230 */ "\x5c\x06\x02\xfd\x1d\xa2\xa1\x5d\xaa\x00\x96\x18\x5f\x85\x04\x01" //.......]...._... |
-/* 1240 */ "\x1f\x54\x01\x5f\xfc\x88\x0c\x94\x06\x02\x7a\x96\xc0\x05\xe2\xf8" //.T._......z..... |
-/* 1250 */ "\x90\x1c\xf9\x85\xef\x15\x83\xc3\xe0\x48\x05\xc3\xf4\x24\x0f\x3f" //.........H...$.? |
-/* 1260 */ "\x28\x46\xd3\xe2\x9a\x23\xe7\xe8\x8e\x1d\x79\x19\x5d\x3a\xa8\x01" //(F...#....y.]:.. |
-/* 1270 */ "\xb0\x04\x04\xc0\x6b\xf5\x6a\x80\x15\x80\xef\xc0\x02\x2e\x09\xe5" //....k.j......... |
-/* 1280 */ "\xb0\x18\x0b\xfd\xbf\x01\xe3\x8e\xfd\x7c\x60\xf0\xf8\x0c\x06\x58" //.........|`....X |
-/* 1290 */ "\x03\x02\x7d\xbf\xab\x9c\xb0\x01\xf8\x72\x2c\x30\x3e\x0d\x51\x03" //..}......r,0>.Q. |
-/* 12a0 */ "\x7f\xa3\x0f\x4f\xbf\x3c\x64\x43\x67\x01\x93\xd7\xc5\x00\x1c\xfe" //...O.<dCg....... |
-/* 12b0 */ "\xc7\xf1\x40\xa2\x57\x41\x26\x16\x00\x4f\xd8\x04\x41\x81\x80\xb3" //..@.WA&..O..A... |
-/* 12c0 */ "\x70\x96\x5f\xeb\xde\x79\x43\x3f\x1b\xd5\x4a\x80\x14\x85\x68\x06" //p._..yC?..J...h. |
-/* 12d0 */ "\x07\x5b\xbf\x50\xed\x16\xd8\x43\x00\x2f\x0c\x31\xea\x5d\x44\x00" //.[.P...C./.1.]D. |
-/* 12e0 */ "\xa4\x06\x05\x1f\xa7\x78\xf4\x08\xc0\x21\xf9\x96\x0a\xc8\x0d\x40" //.....x...!.....@ |
-/* 12f0 */ "\x04\x8e\xec\x03\x04\x59\xbb\x12\x5a\x58\x6d\x12\x89\x83\x00\x3c" //.....Y..ZXm....< |
-/* 1300 */ "\x74\x26\x0e\x3a\x87\x7e\x86\x0f\x4d\x9f\xe8\xc7\xf3\xe5\xe8\xeb" //t&.:.~..M....... |
-/* 1310 */ "\xea\x9b\x3f\xfa\x2e\x95\x51\x28\x31\x3e\x27\x29\x55\xa9\x8f\x92" //..?...Q(1>')U... |
-/* 1320 */ "\xc9\x8e\xa0\xc0\x37\x1d\x09\x65\xf9\x47\xa1\x11\x6c\x05\x4c\xa4" //....7..e.G..l.L. |
-/* 1330 */ "\x51\xc0\x20\x6f\x58\x0c\xfc\xf8\x12\x3b\x01\x35\x19\xc0\xa3\x51" //Q. oX....;.5...Q |
-/* 1340 */ "\xc9\x61\x06\x02\xc1\x2d\x26\x90\x09\x68\x05\xc7\x02\x2a\x05\x70" //.a...-&..h...*.p |
-/* 1350 */ "\x3a\x72\xa0\x11\x80\x8e\xa0\x8b\x00\x68\xc4\x10\x07\x00\x56\x2e" //:r.......h....V. |
-/* 1360 */ "\x18\x12\xac\x23\x02\x41\x9c\x60\x47\xc8\xc0\x19\x33\x03\x67\x00" //...#.A.`G...3.g. |
-/* 1370 */ "\xb9\x00\x3e\x04\xe0\x3d\xf3\xc6\x04\x9d\x89\x68\x07\x60\xe4\x0c" //..>..=.....h.`.. |
-/* 1380 */ "\x8b\x01\xc3\x9e\xc2\x43\x30\x38\x6b\x02\x38\xc5\xcb\x00\x71\x46" //.....C08k.8...qF |
-/* 1390 */ "\x02\x39\x5c\xb0\xc7\xd1\x06\xc1\x80\x7b\x23\x02\x34\x41\xb8\x4e" //.9.......{#.4A.N |
-/* 13a0 */ "\x3a\xfd\x84\x6c\x02\xee\xa2\xf1\xcb\x71\x04\x24\x60\x59\x47\xd8" //:..l.....q.$`YG. |
-/* 13b0 */ "\x3e\x04\xf6\x30\x71\xf6\x54\x5b\xc2\x7d\x9a\xe8\x66\xc0\x8c\xaf" //>..0q.T[.}..f... |
-/* 13c0 */ "\x22\x41\x20\x06\x1a\xc4\x60\x1a\x78\x05\xb0\xf0\xa9\x01\x74\x6e" //"A ...`.x.....tn |
-/* 13d0 */ "\x60\x47\x16\x05\x62\x8e\xca\x4f\x25\xb8\x1c\xb8\x6c\x10\x6a\x1e" //`G..b..O%...l.j. |
-/* 13e0 */ "\x09\x14\x60\x5b\x1a\xa7\x80\x60\x07\x76\x05\x78\x54\x00\xac\xdf" //..`[...`.v.xT... |
-/* 13f0 */ "\xc4\x06\xc2\xb1\xd2\x32\x1f\x3c\x44\x14\x09\xc5\x11\x71\x50\x02" //.....2.<D....qP. |
-/* 1400 */ "\x1c\xf1\x08\x10\x82\x91\x81\x72\x29\x64\x27\xb4\x5c\x60\x68\x72" //.......r)d'..`hr |
-/* 1410 */ "\x0d\x63\x83\x5b\xc9\x8b\x97\x8d\xa7\xea\x3a\x89\x22\x1f\x4d\xd7" //.c.[......:.".M. |
-/* 1420 */ "\x71\x2d\xf0\xb3\x02\x46\x38\x86\x88\x25\x00\x3e\x34\x60\x57\xf8" //q-...F8..%.>4`W. |
-/* 1430 */ "\xf1\x1b\x03\x88\x81\x7d\x54\xf7\x30\x5f\x01\x99\x3c\x34\x06\x61" //.....}T.0_..<4.a |
-/* 1440 */ "\x88\x78\xb2\x30\x31\x5c\x1b\x04\xe2\x32\x48\xf8\xe1\x6c\x06\x52" //.x.01....2H..l.R |
-/* 1450 */ "\x00\x08\xc0\x5d\x8f\x0b\x46\x07\x22\x03\xff\xc7\x00\x38\xf9\x2f" //...]..F."....8./ |
-/* 1460 */ "\x7c\x57\xc9\x7b\xb6\x2e\x60\x1f\xc6\x7d\xc5\x18\x1c\x1c\x11\xe6" //|W.{..`..}...... |
-/* 1470 */ "\xd7\x06\xd8\xf9\x2c\x0d\xf7\x88\x3e\x02\xbb\x60\x60\x68\xf9\x2c" //....,...>..``h., |
-/* 1480 */ "\x0b\xcf\x18\x14\x1d\xd1\x94\x20\x03\x80\x13\xd8\x1b\xc2\x45\x02" //....... ......E. |
-/* 1490 */ "\x47\xa0\x3e\x84\x04\x10\x74\x78\x78\x0c\x2d\x81\x33\x43\xdc\x97" //G.>...txx.-.3C.. |
-/* 14a0 */ "\x55\x12\x08\x47\xa5\x30\x02\xe7\xa0\xeb\xb0\x06\x41\x8c\x7a\x4e" //U..G.0......A.zN |
-/* 14b0 */ "\xb0\x37\xb0\x03\xe8\xc0\x29\x07\xd1\x7a\x5a\x25\x9e\xa4\x7d\x18" //.7....)..zZ%..}. |
-/* 14c0 */ "\x04\xc0\xea\x90\x47\xf4\x5e\x96\x60\x69\xb7\x62\xf7\xa9\xde\x27" //....G.^.`i.b...' |
-/* 14d0 */ "\x7a\x66\x87\x7b\xce\x42\xa8\x00\x1b\x3f\x3e\x6c\x59\x41\x55\xb9" //zf.{.B...?>lYAU. |
-/* 14e0 */ "\xf3\x32\x01\x2a\x00\x3d\x40\x0a\xc0\x12\x2c\x07\xbc\xed\xee\xc0" //.2.*.=@...,..... |
-/* 14f0 */ "\x2d\x70\x15\xf2\x54\x0c\x07\x7e\xc0\x7a\x00\x4f\x9c\x1a\xe3\x0a" //-p..T..~.z.O.... |
-/* 1500 */ "\x1e\x01\x81\xc9\x8c\x5d\x65\xab\xb6\xfe\x78\x91\x8a\xec\xc0\x38" //.....]e...x....8 |
-/* 1510 */ "\x9d\xcd\xf2\xe0\x07\x9e\x7b\x12\xee\xbe\x5c\x63\x98\x28\xc5\x03" //......{....c.(.. |
-/* 1520 */ "\x6f\x96\x81\x1a\xc9\x48\x00\x46\xb9\x7c\x3b\x28\xa4\xc6\x33\xeb" //o....H.F.|;(..3. |
-/* 1530 */ "\xbf\x1f\x67\x6d\x97\x28\x67\x02\xe0\x1e\x0f\x57\x54\x00\x79\xf0" //..gm.(g....WT.y. |
-/* 1540 */ "\xaa\x18\x74\x19\xc2\xa5\x87\xa7\x23\xeb\xc4\x08\x40\x07\x0a\x3e" //..t.....#...@..> |
-/* 1550 */ "\x00\x00\x10\x07\xc6\x60\x2c\x03\xfc\xbb\xde\x95\x3a\xcb\x78\x2e" //.....`,.....:.x. |
-/* 1560 */ "\xb9\x3a\x44\x29\x4b\xe2\xad\x6b\x5f\xe5\x45\xe4\xae\x04\xc9\x88" //.:D)K..k_.E..... |
-/* 1570 */ "\xea\x80\x24\xea\xad\xf5\x1f\x29\x03\x9f\xe1\xe8\xf0\x00\xf6\x04" //..$....)........ |
-/* 1580 */ "\x3b\x73\x41\x77\x64\x8c\x38\xd4\xc4\x0d\x8b\xc4\xf5\x8a\xef\x93" //;sAwd.8......... |
-/* 1590 */ "\x3c\xdf\xfe\x70\x81\x0b\x9a\x58\x90\x02\xa0\x1a\xca\x52\x42\x09" //<..p...X.....RB. |
-/* 15a0 */ "\x92\xde\x0c\xa5\x34\x01\x4c\x0a\x04\xf3\x04\x4f\xee\xf2\x21\x0c" //....4.L....O..!. |
-/* 15b0 */ "\x08\xfa\xa8\x02\x3e\xdb\xc0\x60\x51\xde\x9b\x0a\x80\x1d\x0b\xcc" //....>..`Q....... |
-/* 15c0 */ "\x4f\x03\x45\x40\x12\x7f\x77\x01\x81\x52\xd6\x98\x02\xc6\xb9\x88" //O.E@..w..R...... |
-/* 15d0 */ "\x87\xbc\x12\x23\xc6\xaf\xa8\xf5\xde\xa0\x0d\x22\xe5\x32\xc2\x0d" //...#.......".2.. |
-/* 15e0 */ "\xee\x79\xd4\x06\xa3\xcd\x22\x40\xd0\x7c\x56\x04\xb5\x2d\x00\xc0" //.y...."@.|V..-.. |
-/* 15f0 */ "\x8c\x60\x84\x1e\xf4\x01\x20\x79\x34\x06\x95\xed\x47\xdd\x61\x08" //.`.... y4...G.a. |
-/* 1600 */ "\x90\x0d\x40\x1b\xd8\x6e\x01\x63\xaf\xae\xf9\x53\xe5\x78\x9b\x4d" //..@..n.c...S.x.M |
-/* 1610 */ "\x68\x00\x1f\xb1\x40\x0b\xfa\x0f\x68\x40\x37\xb4\x2c\x17\x0f\x4d" //h...@...h@7.,..M |
-/* 1620 */ "\xb8\x49\x2d\xe0\x30\x18\xb3\x1e\x05\x50\xaf\xaa\x03\x23\x21\xc3" //.I-.0....P...#!. |
-/* 1630 */ "\x71\x51\xc3\x05\x81\x63\xe2\xa0\x03\x00\xe3\x3a\x04\xf2\x3a\xa3" //qQ...c.....:..:. |
-/* 1640 */ "\xec\xc8\x05\xf3\x94\xb1\xa8\x80\xc0\x97\xa3\xbd\x52\x40\x4c\xff" //............R@L. |
-/* 1650 */ "\x74\x06\xd4\xd6\x03\xea\xf3\x08\x44\x83\x02\xf8\xb2\x8b\xe0\x06" //t.......D....... |
-/* 1660 */ "\xa0\x19\xec\x27\x87\x90\x5a\xb0\x0c\x06\x7a\x23\xce\x86\x60\x37" //...'..Z...z#..`7 |
-/* 1670 */ "\xfa\xb7\x4e\xf5\x40\x06\x9f\xfc\x1e\x53\x9c\x4c\x06\xf6\xe8\x06" //..N.@....S.L.... |
-/* 1680 */ "\xc1\x80\x20\x5e\x34\x8a\x18\xc0\x0d\x47\xc3\x70\x0a\xb5\xe8\xb7" //.. ^4....G.p.... |
-/* 1690 */ "\xe9\x01\xa0\x73\xa0\x57\xef\xf7\xde\xb6\x52\x6d\xcf\x5c\x7b\x5f" //...s.W....Rm..{_ |
-/* 16a0 */ "\x01\x81\x62\x41\xa7\xb9\x61\x00\x7f\xc6\x8f\x28\xbc\x68\xc4\xc1" //..bA..a....(.h.. |
-/* 16b0 */ "\x80\x0a\x11\x00\x04\x0f\x12\xee\xc5\x8c\x62\xa0\x0d\xc2\x81\xeb" //..........b..... |
-/* 16c0 */ "\xc0\x08\x0c\x09\xff\x09\x59\x3f\xda\xa0\x09\x51\xe2\xbc\x10\x82" //......Y?...Q.... |
-/* 16d0 */ "\x60\x61\x74\x0a\x80\x2a\x50\x85\xc0\x42\xa1\xce\x6c\x58\x9c\x05" //`at..*P..B..lX.. |
-/* 16e0 */ "\x4b\x5a\x21\x62\x45\x29\x80\xe1\xfa\xfa\x01\x81\xc7\x9f\x27\xa7" //KZ!bE)........'. |
-/* 16f0 */ "\x51\xe7\xce\x20\xa8\x19\xfc\xf8\xf5\x2c\x75\x0e\xa0\x09\x8d\x11" //Q.. .....,u..... |
-/* 1700 */ "\xd8\x75\xf0\xc1\x81\x90\x80\x03\xf1\x69\xaf\x55\xc7\x15\xd6\x00" //.u.......i.U.... |
-/* 1710 */ "\x11\x04\x54\x00\xa8\xe7\x20\x3d\x9e\x14\x26\x00\x8c\x03\x8a\x81" //..T... =..&..... |
-/* 1720 */ "\xb7\x76\xec\x40\x38\x6d\x44\x06\x21\x04\x0b\xa8\x00\xf8\x85\xc7" //.v.@8mD.!....... |
-/* 1730 */ "\x3d\x74\x8e\x04\xc0\x63\xd2\x5c\x01\xbe\x8a\x73\x88\x00\xb5\x62" //=t...c.....s...b |
-/* 1740 */ "\x14\x92\x07\x1b\x41\x5a\xe0\x5d\x40\x09\xfb\xb1\x68\x09\xeb\x81" //....AZ.]@...h... |
-/* 1750 */ "\xa1\xf9\xf3\xa3\xe8\x20\x06\x08\x3f\x5f\x3d\x22\x8e\x84\xc7\x54" //..... ..?_="...T |
-/* 1760 */ "\xea\x00\xbd\x98\x10\x47\xe7\xce\x50\xe0\x0b\x06\x07\x30\x58\xc8" //.....G..P....0X. |
-/* 1770 */ "\xe8\x57\x38\xe5\x40\x0f\x14\xca\xc4\xfa\xef\x44\xf9\x60\x25\xaa" //.W8.@......D.`%. |
-/* 1780 */ "\x76\x01\xb7\x10\xfd\x64\x1e\x3a\x12\xfa\x55\x7e\x86\x1f\x4f\x87" //v....d.:..U~..O. |
-/* 1790 */ "\xa6\xd3\xe8\x25\xf4\x67\x04\xe6\xa1\x57\xd1\x95\xe7\x4a\xf4\xd5" //...%.g...W...J.. |
-/* 17a0 */ "\xfe\x8d\x1e\x92\x9e\xa5\xc7\x42\x63\x81\x2d\x18\x15\xb1\xc8\x74" //.......Bc.-....t |
-/* 17b0 */ "\x29\x42\x2c\x63\xa8\x01\xd3\xde\xf8\x07\x44\x8b\x10\x76\x30\x43" //)B,c......D..v0C |
-/* 17c0 */ "\xf4\x60\x70\xc4\x17\x8f\xd0\x0b\x03\xd5\xaa\x00\x97\xba\xf0\x0d" //.`p............. |
-/* 17d0 */ "\x47\xce\x90\xda\xd7\x4f\x7b\xc1\x0e\x48\x14\x67\x03\xed\x06\x78" //G....O{..H.g...x |
-/* 17e0 */ "\x12\xb8\x43\xb8\x34\xc5\x45\x9b\x82\x48\x63\x29\x0a\xb0\x43\x94" //..C.4.E..Hc)..C. |
-/* 17f0 */ "\x32\x7a\x9e\x30\x5a\xbb\xee\x46\x52\xd9\x54\x67\xb7\x70\x1c\x7f" //2z.0Z..FR.Tg.p.. |
-/* 1800 */ "\x90\x15\xc0\xfd\x53\x92\xb5\x1c\x22\xe2\x89\x3e\xbb\xd4\x62\x51" //....S..."..>..bQ |
-/* 1810 */ "\x40\x1c\x4d\xe2\x15\x80\xa7\xf0\xa2\x01\x48\x00\x40\x7a\x82\xa0" //@.M.......H.@z.. |
-/* 1820 */ "\x58\x92\xfe\x05\x20\x2a\x9e\x97\x00\x0a\xb8\x00\x60\x0c\xc2\xcf" //X... *......`... |
-/* 1830 */ "\x97\x98\x1a\x38\x09\xc7\x3c\x44\x3e\x33\x81\x25\xd8\x11\x90\x09" //...8..<D>3.%.... |
-/* 1840 */ "\x01\x27\xf1\x14\x60\x49\x58\x04\xc1\x1b\xf3\x40\xe5\xcb\x02\x38" //.'..`IX....@...8 |
-/* 1850 */ "\x1e\x2d\x91\x1e\x80\x90\x11\x6f\xfc\x60\xc1\x1c\xa8\xe6\x08\xe5" //.-.....o.`...... |
-/* 1860 */ "\x5e\xc2\x70\x3c\x98\x7b\x04\x7e\xc6\x08\xe5\x8b\x1f\xf7\x98\x06" //^.p<.{.~........ |
-/* 1870 */ "\x07\x71\x9a\x7f\x87\x54\x8c\x11\xae\xa0\x00\xf8\xa1\xd2\x20\x27" //.q...T........ ' |
-/* 1880 */ "\x01\xa6\xf8\x04\x40\x16\x21\x02\x44\xe9\x56\x12\x80\xcc\xbc\x0d" //....@.!.D.V..... |
-/* 1890 */ "\x18\x13\x6a\x39\xd4\x84\xa0\x33\x7f\x23\xa4\x02\xb8\x13\x5d\xd0" //..j9...3.#....]. |
-/* 18a0 */ "\x7c\x23\x01\x9e\x78\x58\x00\x3e\x25\xd0\x29\xee\x74\x06\x0b\xe1" //|#..xX.>%.).t... |
-/* 18b0 */ "\x69\x20\x14\xa6\xd8\x04\xf1\x51\xfb\x9f\xc8\x46\x03\x0a\x1d\x60" //i .....Q...F...` |
-/* 18c0 */ "\x08\x61\x1f\x05\xf1\xb8\x46\x02\xde\x29\x81\x47\x00\x3c\xee\x82" //.a....F..).G.<.. |
-/* 18d0 */ "\x10\x17\x41\x3f\x96\xc2\xf5\xac\x03\x02\x79\xc1\x42\x50\x8a\x01" //..A?......y.BP.. |
-/* 18e0 */ "\x82\x80\x60\x88\x7f\xeb\x4b\xd7\xe1\x23\x63\xeb\x58\xb8\xfd\xf1" //..`...K..#c.X... |
-/* 18f0 */ "\x58\xaf\xc9\x34\xfc\x91\x86\x0a\x4c\x80\x2f\x92\x15\xc1\x49\x8f" //X..4....L./...I. |
-/* 1900 */ "\xcc\x59\x09\x0f\x80\x8d\x05\x00\x07\xf4\x6d\x38\x7f\xc5\x8f\xf8" //.Y........m8.... |
-/* 1910 */ "\xc5\x3b\xef\xad\x18\x29\xf6\x21\x5f\x25\x6d\xfe\x30\x8f\xf2\x55" //.;...).!_%m.0..U |
-/* 1920 */ "\x2f\xe2\xe8\x86\x10\x80\xd5\xfc\x57\x18\x2d\x51\x01\xad\x84\x80" ///.......W.-Q.... |
-/* 1930 */ "\x63\x76\x19\x56\x00"                                             //cv.V. |
-// Sent dumped on RDP Client (5) 6453 bytes |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](30) used=1082 free=15196 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(930,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=87) |
+/* 03e0 */ "\x06\x51\xef\xa9\x1f\x32\x00\xf0\x63\xfb\x18\xea\x80\x42\x02\x20" //.Q...2..c....B.  |
+/* 03f0 */ "\x21\x12\xa9\x52\xaf\xc2\x90\x33\x5c\x63\x08\x03\xc1\xd6\xe0\x0b" //!..R...3.c...... |
+/* 0400 */ "\xe5\xfe\xe1\x7f\x18\xc5\x8b\xaf\x83\x8e\x0e\x4f\x7c\x30\x22\x20" //...........O|0"  |
+/* 0410 */ "\x00\x24\x93\xe1\xc0\x14\xa3\xe1\xc0\x08\x87\xc3\x8f\x83\xa0\x19" //.$.............. |
+/* 0420 */ "\x2f\x80\xa8\x07\xc0\x52\x21\xe0\x29\x04\xf8\x56\x0b\x40\x06\x20" ///....R!.)..V.@.  |
+/* 0430 */ "\x04\xf8\x58\xfd\x97\xc1\x9f\xe5\x80\x17\xf2\xcf\xfa\x47\xc1\x8f" //..X..........G.. |
+/* 0440 */ "\xed\x1f\x0b\x2f\x83\x87\xf2\xc0\x0f\xf9\x6b\xfb\xa8\x3f\xe2\x3e" //.../......k..?.> |
+/* 0450 */ "\x16\x1e\xa1\x8f\x83\x5f\xcb\x00\x4f\xe5\xbf\xc1\x80\x3a\x00\x33" //....._..O....:.3 |
+/* 0460 */ "\x00\x21\x00\x3d\x80\x10\x00\x1b\xa1\x9b\xe8\xbe\x0c\x84\x8d\xd6" //.!.=............ |
+/* 0470 */ "\xcf\xcf\x41\xc0\xc0\x7a\x91\x07\xbe\x11\x07\x84\x93\xe4\x61\x01" //..A..z........a. |
+/* 0480 */ "\xf7\x4b\xe1\x40\xf7\xcc\x60\xd9\xd0\x08\x58\x10\x40\x18\x18\x20" //.K.@..`...X.@..  |
+/* 0490 */ "\x2f\x89\x30\x05\xf1\x26\xe0\xf4\x0f\x57\x47\x88\x94\x00\x44\x0f" ///.0..&...WG...D. |
+/* 04a0 */ "\x91\x00\x9f\x67\x0f\x2b\x62\x0d\xfc\xb4\x20\xf8\x54\x07\x60\xf2" //...g.+b... .T.`. |
+/* 04b0 */ "\xb4\x7c\x28\x06\x60\x03\xb0\x7d\x87\xc1\x9f\xe5\x80\x3f\xf2\xd3" //.|(.`..}.....?.. |
+/* 04c0 */ "\xe0\xf6\x80\xc4\x0e\xcc\x38\x76\x0c\x80\x0f\x80\x10\xbe\x35\xa1" //......8v......5. |
+/* 04d0 */ "\x00\x05\x02\x80\x02\x04\x03\x04\x03\x84\x03\x82\x70\xb2\xc0\x23" //............p..# |
+/* 04e0 */ "\xc2\x53\xc2\xcb\x50\x1b\x80\x00\x10\x47\x00\x77\xc3\x93\x8f\xe4" //.S..P....G.w.... |
+/* 04f0 */ "\xf8\x71\xf4\x9f\x61\xf0\x74\xf2\xa6\x01\x3e\x02\x9f\x2a\x6c\x0b" //.q..a.t...>..*l. |
+/* 0500 */ "\x00\x06\xff\xcf\x85\x87\xc1\xc3\xf9\x60\x15\xfc\xb9\x38\x72\x72" //.........`...8rr |
+/* 0510 */ "\xfa\x1a\x2c\x00\xfd\x90\x88\xa0\x0a\xdf\x1a\xd5\x80\x02\xb0\xdf" //..,............. |
+/* 0520 */ "\x28\x28\x10\x14\x10\x20\x28\x23\xd0\xd8\x05\xf8\x4a\x7d\x0d\xa8" //((... (#....J}.. |
+/* 0530 */ "\x3d\x80\x03\x81\x93\xe1\xd7\xcc\xdf\xe0\xe9\xe5\x4c\x03\x3c\x05" //=...........L.<. |
+/* 0540 */ "\x3e\x54\xaf\x3a\x47\xc2\xe2\xf8\x38\x7f\x2c\x03\x7f\x96\x7f\x07" //>T.:G...8.,..... |
+/* 0550 */ "\x0f\x3e\x47\xc2\xb6\x00\x39\x07\xd1\x7c\x19\xf4\x34\x0f\x80\x00" //.>G...9..|..4... |
+/* 0560 */ "\x2d\x70\x46\x35\x7c\x6b\x6a\x00\x0a\x0b\x00\x0c\x09\x0d\x03\x04" //-pF5|kj......... |
+/* 0570 */ "\xe0\x9c\xf0\x96\x01\xde\x12\xe3\x03\xe2\x0c\xe1\xad\x1e\x12\xdb" //................ |
+/* 0580 */ "\xf9\x60\x1f\xfc\xb9\x20\x00\xd8\x10\x39\xf0\xa0\x19\x00\x0e\x01" //.`... ...9...... |
+/* 0590 */ "\xf4\x5f\x06\x7f\x96\x02\x1f\xcb\x3f\xc9\x1f\x0a\x50\x01\x20\x00" //._......?...P. . |
+/* 05a0 */ "\xa0\x00\xd8\xe3\x0c\x09\x00\x04\x40\xfb\x2f\x83\x20\x33\x0e\x20" //........@./. 3.  |
+/* 05b0 */ "\x4c\x7b\x05\x2d\xd8\x13\x84\xfd\xf1\xad\xfb\xcf\x34\x1c\x06\x1e" //L{.-........4... |
+/* 05c0 */ "\x10\x20\x0e\x07\x51\xc0\x50\xf8\xd3\xc0\x54\x30\xf8\xc9\x06\x91" //. ..Q.P...T0.... |
+/* 05d0 */ "\x40\x03\x61\xb4\x40\x48\x18\x03\xe0\x44\x0b\x08\x35\x02\xef\xa4" //@.a.@H...D..5... |
+/* 05e0 */ "\x8c\x09\xc0\x48\x21\x0e\x00\x00\x10\x20\x01\x04\x19\x80\xc9\x08" //...H!.... ...... |
+/* 05f0 */ "\x9c\x05\x06\x61\x81\x57\xa1\x06\x40\x31\x01\x00\x48\xf9\xca\xc0" //...a.W..@1..H... |
+/* 0600 */ "\x94\x08\x00\x21\x06\x90\x2f\x01\x00\x20\x74\xff\x60\x02\x0f\xbd" //...!../.. t.`... |
+/* 0610 */ "\x00\x06\x02\xf8\x29\xf8\x83\x60\x13\xfc\x8c\x3b\x52\xfe\x81\x78" //....)..`...;R..x |
+/* 0620 */ "\x0a\x0c\xe3\xc1\x47\x0f\xa4\x40\x17\x80\x90\x44\x04\xc8\x44\xff" //....G..@...D..D. |
+/* 0630 */ "\xc4\x58\x05\xa0\x24\x0d\x1e\x06\x50\x30\xed\xd3\xf1\x05\xbe\xf0" //.X..$...P0...... |
+/* 0640 */ "\x4e\x04\x83\x68\x00\x08\xfd\x88\x07\xce\x08\x78\x52\x4a\x3e\x71" //N..h.......xRJ>q |
+/* 0650 */ "\xc0\x5b\xc2\x51\x58\xf9\x45\x8f\x88\x60\xf0\x82\x51\xf2\x10\x0f" //.[.QX.E..`..Q... |
+/* 0660 */ "\x88\x50\xf0\x83\xe4\x3e\x84\xac\x7c\xc7\xe0\x20\xd4\x3e\x61\xa3" //.P...>..|.. .>a. |
+/* 0670 */ "\xca\x83\x0f\x00\x48\x80\x97\xa2\x1e\x52\x04\x20\xda\x3c\x80\x38" //....H....R. .<.8 |
+/* 0680 */ "\x11\xf9\x51\x58\xfa\x00\x04\x1a\x47\xe8\x81\x1f\x88\x6a\x61\xb4" //..QX....G....ja. |
+/* 0690 */ "\x07\xfa\x55\xf3\xd1\x0c\x6c\x62\x38\x41\xb0\x0c\xc0\x48\x1e\x3c" //..U...lb8A...H.< |
+/* 06a0 */ "\x12\x9c\x7b\x28\xd0\x83\x60\x6b\xfb\xf0\x41\xeb\x08\xb0\x05\xe3" //..{(..`k..A..... |
+/* 06b0 */ "\x0f\x60\x01\xc1\x03\xc2\x0d\x41\xb7\xea\xc7\xad\xe6\x92\x83\x48" //.`.....A.......H |
+/* 06c0 */ "\x81\x20\xd4\x10\x6c\x0e\x2c\x36\x8f\x75\xbf\x29\x80\x3d\x86\xd0" //. ..l.,6.u.).=.. |
+/* 06d0 */ "\x21\xff\x98\x0f\xdc\x41\x10\xf8\xb0\xd1\xf1\x5c\x10\x5f\x15\x85" //!....A......._.. |
+/* 06e0 */ "\x79\xa9\x06\xb1\xf3\x08\x33\x0f\x8a\x20\x84\x7c\x58\x60\xf8\xa0" //y.....3.. .|X`.. |
+/* 06f0 */ "\x03\x0f\x8b\x18\x47\xb9\xf8\x22\x91\xc1\x3e\x7c\xf2\x90\x00\x04" //....G.."..>|.... |
+/* 0700 */ "\xc0\xd0\x6b\x04\x11\x8e\x01\x54\x40\xf0\x00\x09\x05\x41\xb4\x20" //..k....T@....A.  |
+/* 0710 */ "\xd2\x10\x64\x04\x0e\x00\x07\x18\x7a\xd1\xed\xf5\x00\x39\x06\x31" //..d.....z....9.1 |
+/* 0720 */ "\x06\x20\x68\x20\x60\x20\x58\x20\x48\xc1\xee\xc2\x0b\x9c\x27\x09" //. h ` X H.....'. |
+/* 0730 */ "\x56\x06\x43\x45\x80\x6c\x42\xa4\x0a\x00\x00\x73\xac\x12\x03\x8c" //V.CE.lB....s.... |
+/* 0740 */ "\xe0\x09\x44\x02\x8d\xed\x32\x0d\x22\xa0\x06\x01\x80\x40\x06\xc1" //..D...2."....@.. |
+/* 0750 */ "\x34\x00\x68\xe8\x4c\x05\xec\x24\x75\x9d\x86\xd1\x50\x03\x20\x78" //4.h.L..$u...P. x |
+/* 0760 */ "\x01\x80\xdc\x40\x1d\xfe\x90\x8f\x89\x9b\xd1\x0c\x05\x24\xc1\x9f" //...@.........$.. |
+/* 0770 */ "\x29\x66\x14\x0e\x34\xfd\x18\xfc\x80\x22\x06\x80\x18\x0a\x3f\xd1" //)f..4...."....?. |
+/* 0780 */ "\x53\xb8\xa0\xb0\x5f\xca\x40\x03\x8b\xaf\x82\xf0\x11\x30\x90\x00" //S..._.@......0.. |
+/* 0790 */ "\x48\x13\x0d\xa0\x01\x23\x0a\x57\xa0\x2b\x41\x22\xd0\x15\x80\x90" //H....#.W.+A".... |
+/* 07a0 */ "\x00\x5f\xda\xa8\x00\xc0\x45\x02\x45\xa0\x51\xc0\x9e\xab\x8f\xdf" //._....E.E.Q..... |
+/* 07b0 */ "\x09\x00\x30\x1a\x7f\x88\x67\x03\xc0\x44\x13\xf8\xbb\x6a\xa1\x5e" //..0...g..D...j.^ |
+/* 07c0 */ "\x00\x42\xf9\x81\xb0\x30\xc1\xc3\x09\x71\xbe\x72\xa1\xf3\xa4\x02" //.B...0...q.r.... |
+/* 07d0 */ "\xb0\x03\xec\xa4\x73\xc1\xa3\x5f\x06\xcb\x0e\x0c\x77\x2c\x7c\xe3" //....s.._....w,|. |
+/* 07e0 */ "\xd7\xce\x90\x0e\xc9\x21\x30\x1f\x05\xc1\x17\x82\xdf\x41\xe5\x84" //.....!0......A.. |
+/* 07f0 */ "\xbb\xfe\x30\xa6\x8b\xe7\x47\xa7\x4d\x3f\x39\x89\xc5\xdf\x3a\x0e" //..0...G.M?9...:. |
+/* 0800 */ "\x00\x60\x24\x9f\x39\x87\xd8\x00\xfe\x13\x3d\xf8\x14\x6f\xe7\x12" //.`$.9.....=..o.. |
+/* 0810 */ "\x00\x18\x0f\xc8\x0b\x40\x5f\x3e\x63\xda\x15\xeb\xda\x24\xf5\x63" //.....@_>c....$.c |
+/* 0820 */ "\xe8\x3c\x22\xf5\xd4\x42\x7e\x74\xf8\xf6\x19\xfe\x73\xd6\xef\x9c" //.<"..B~t....s... |
+/* 0830 */ "\x00\xb4\x00\xf8\xdc\x2f\xe9\xc7\xce\x82\x04\x8f\x34\xc3\xd7\x82" //...../......4... |
+/* 0840 */ "\x8b\x21\x38\x2a\x51\xef\x70\x20\x01\x80\x0c\x04\x54\x27\xc1\xb1" //.!8*Q.p ....T'.. |
+/* 0850 */ "\xeb\x90\x0c\x04\x82\x31\xf4\xde\x20\x54\x3f\xa1\x1b\xe2\x21\x40" //.....1.. T?...!@ |
+/* 0860 */ "\x01\x35\x00\x52\x0a\xc0\x0f\xae\x1e\xbc\x81\x58\x13\x48\x02\xc0" //.5.R.......X.H.. |
+/* 0870 */ "\x4d\x40\x20\x5f\xdc\xee\x1e\xca\x80\x28\x02\x07\xb2\x6a\xe0\x00" //M@ _.....(...j.. |
+/* 0880 */ "\x25\x03\x45\xc5\x95\xe5\xa0\x96\x38\xe8\x48\x45\x40\x19\x06\x01" //%.E.....8.HE@... |
+/* 0890 */ "\xc0\xbe\x8d\x82\x43\x20\xc0\x38\x96\x0c\xd0\x01\x2e\x00\x13\x09" //....C .8........ |
+/* 08a0 */ "\x7a\x09\x66\x8e\x84\x83\xf1\x0a\x61\x5b\x97\x90\xde\x91\x8a\x4a" //z.f.....a[.....J |
+/* 08b0 */ "\xc0\x4c\x0d\x67\xec\x9f\x02\x5b\x23\xa1\x20\xde\x14\x80\x82\x08" //.L.g...[#. ..... |
+/* 08c0 */ "\x07\x87\x42\x61\x2c\x01\xf1\xd0\x90\x58\x17\x12\x00\xc5\x40\x23" //..Ba,....X....@# |
+/* 08d0 */ "\xca\x60\x0f\x49\x47\x23\x45\x00\x00\x61\xab\xff\x3d\x5a\x12\x81" //.`.IG#E..a..=Z.. |
+/* 08e0 */ "\x71\x2d\x04\x60\xe3\x07\xb2\x23\x19\xf0\xaa\x04\x0a\x18\x87\xa9" //q-.`...#........ |
+/* 08f0 */ "\xe1\x46\x1c\x68\x71\x88\x61\xdb\x18\xf7\xb0\x00\x3b\x10\x5c\x38" //.F.hq.a.....;..8 |
+/* 0900 */ "\x08\xc0\xff\x02\x48\x1f\x80\xf8\xec\x3f\xed\x37\x17\xd9\x7b\x09" //....H....?.7..{. |
+/* 0910 */ "\xf9\x83\x6f\x8b\x1d\x4c\xc3\xfe\xa0\x7c\x56\x04\x43\x0f\xf9\xed" //..o..L...|V.C... |
+/* 0920 */ "\xf8\x27\xdc\xc1\xff\x7d\xc6\x24\x59\x00\x0f\x43\x9f\x02\x5e\xfc" //.'...}.$Y..C..^. |
+/* 0930 */ "\xd2\x59\x09\x58\x09\x36\x09\x15\x09\x13\x01\xb8\xfa\xc1\x2c\x00" //.Y.X.6........,. |
+/* 0940 */ "\x69\xe9\xe0\x22\x00\xe5\xae\xa0\x05\xc7\x02\x6e\x75\x1c\x2b\x44" //i..".......nu.+D |
+/* 0950 */ "\x11\xc0\x03\x45\x1c\x1f\xa4\xe3\x1b\x8d\xd0\x09\x4b\x06\x20\x1f" //...E........K. . |
+/* 0960 */ "\x02\x68\x00\x1c\x09\xd2\x41\xea\x00\xab\x08\xff\x18\xb8\x10\x80" //.h....A......... |
+/* 0970 */ "\xca\x47\x40\x03\xb8\xa2\x84\x20\x30\xe1\x4f\x92\x59\xf9\x28\x98" //.G@.... 0.O.Y.(. |
+/* 0980 */ "\x9f\xc9\x2c\x7c\x93\xc0\x57\xc9\x7d\x27\x15\x22\x08\xf8\xd4\x06" //..,|..W.}'.".... |
+/* 0990 */ "\x80\x15\x49\x80\x8b\x04\xf1\x12\x38\xf8\x0c\x8c\x3c\x35\x01\x40" //..I.....8...<5.@ |
+/* 09a0 */ "\x0a\xe7\x01\x11\xc0\x91\x18\x0a\x58\xa8\xd4\x06\x00\x16\x23\xe9" //........X.....#. |
+/* 09b0 */ "\x43\x97\xdc\x28\x0a\x0d\x40\x6c\x02\x82\x3c\x15\x58\xd4\x0c\x26" //C..(..@l..<.X..& |
+/* 09c0 */ "\x35\x01\x20\x1e\x11\xf4\xc0\x4a\x02\x74\x14\x35\x02\x40\x1f\x20" //5. ....J.t.5.@.  |
+/* 09d0 */ "\xc0\x61\x6b\x80\x03\x9f\xe8\x01\x0f\xbd\x30\x8f\xc0\x50\x00\x44" //.ak.......0..P.D |
+/* 09e0 */ "\x3d\xc6\x13\x80\x83\xf8\x49\x20\x0a\x0f\xf0\x21\xd3\xee\x03\x3c" //=.....I ...!...< |
+/* 09f0 */ "\x24\xb0\x09\x87\xff\x80\xa4\x06\xe3\xe0\x42\x00\xa8\x7f\xe6\x0a" //$.........B..... |
+/* 0a00 */ "\x40\x6e\xc2\x5e\x2a\x0f\x07\x7b\x8c\xeb\xf9\x97\xb0\x97\xbf\x01" //@n.^*..{........ |
+/* 0a10 */ "\x18\x30\x99\xd0\x54\x25\xdb\xe8\x28\x9e\x04\x80\x10\xce\x04\x2e" //.0..T%..(....... |
+/* 0a20 */ "\x21\xd1\x29\x1d\x1a\x80\x80\x05\x85\xc0\x80\xb8\x69\x85\xe0\x32" //!.).........i..2 |
+/* 0a30 */ "\xef\x2b\x10\x05\x02\xf8\x06\x1e\x3e\xe2\x67\xe1\x44\x80\x54\x2b" //.+......>.g.D.T+ |
+/* 0a40 */ "\x8c\x29\xe7\xe7\x23\x01\x5e\x2e\x0f\x04\xfc\xe3\xd4\x74\x26\x05" //.)..#.^......t&. |
+/* 0a50 */ "\x3c\xf5\x7b\xcb\x4a\x80\x35\x03\x04\xbd\x88\x80\x05\x42\x5f\x3f" //<.{.J.5......B_? |
+/* 0a60 */ "\x19\x94\x78\x6b\xe8\x82\x80\x7d\xea\x7d\xf9\xe6\xa1\x5f\x9e\x60" //..xk...}.}..._.` |
+/* 0a70 */ "\x01\x01\x7e\xf9\x8b\x47\x83\x23\x19\x4d\xbd\xd0\x42\xf0\x4b\x00" //..~..G.#.M..B.K. |
+/* 0a80 */ "\x01\x80\xe0\x57\x20\x0b\x06\x17\x18\x62\xa8\x20\x14\x12\x38\x13" //...W ....b. ..8. |
+/* 0a90 */ "\x80\x7e\x1c\x23\x5e\x13\x40\x48\x00\x78\xd0\xae\x00\x1c\xae\x62" //.~.#^.@H.x.....b |
+/* 0aa0 */ "\x81\xea\x23\x06\x00\x1c\x70\x11\x54\x00\xae\x3f\x5c\xc1\xe6\x15" //..#...p.T..?.... |
+/* 0ab0 */ "\x03\x0b\x7d\xbd\x68\xa8\x01\x7e\x88\x20\x0b\xf7\xe0\x54\x7f\x8a" //..}.h..~. ...T.. |
+/* 0ac0 */ "\x42\xa0\x07\x0b\xfa\x0a\x00\x0f\xf2\x0f\x0f\x70\x53\x54\x01\x04" //B..........pST.. |
+/* 0ad0 */ "\x82\x40\x60\x30\x00\x01\xa8\x13\x00\xfa\x06\x0e\xc2\x3e\x04\xa2" //.@`0.........>.. |
+/* 0ae0 */ "\x80\x61\x8a\xa4\x06\x40\x3d\xe2\x58\x80\x00\x8d\xf9\x2c\xd2\x01" //.a...@=.X....,.. |
+/* 0af0 */ "\x50\x06\x45\xfe\xc6\x0f\x14\x28\x01\x43\x7c\x81\xd5\x16\x9f\x9e" //P.E....(.C|..... |
+/* 0b00 */ "\x00\xf1\x30\x83\xe2\x3c\x4a\x08\x85\x60\x22\xf7\xdc\x79\xf8\x2b" //..0..<J..`"..y.+ |
+/* 0b10 */ "\x44\x20\x01\x14\x81\x3d\x84\xb4\x76\x6e\x00\x40\x58\x00\x5f\xd8" //D ...=..vn.@X._. |
+/* 0b20 */ "\x47\xc4\xe0\x4b\x01\x24\x80\x1c\x66\xd8\xd6\x14\xc0\x3f\xc6\x75" //G..K.$..f....?.u |
+/* 0b30 */ "\x72\xfd\xcc\x49\xb6\x21\xe3\x36\x58\x09\x67\x00\xe3\x37\x00\x02" //r..I.!.6X.g..7.. |
+/* 0b40 */ "\xb8\xf9\xf4\xf4\x13\x2d\x00\xe3\x41\x12\x00\xb0\x00\xae\x41\x09" //.....-..A.....A. |
+/* 0b50 */ "\x67\xe7\x70\xd8\x84\x00\xa0\x00\x78\x1b\xd8\x4d\xcb\x91\xc3\x03" //g.p.....x..M.... |
+/* 0b60 */ "\xf7\x20\x3f\x58\x09\xf7\x97\x1f\x9e\xc3\xbc\x68\x09\x00\xf8\xec" //. ?X.......h.... |
+/* 0b70 */ "\x19\xf3\x8c\x38\x4c\x26\x9d\xc5\xfc\x44\x00\xf9\xf5\x16\x01\x51" //...8L&...D.....Q |
+/* 0b80 */ "\xdc\x30\xcd\x10\x18\x00\xa7\x1a\xe6\x3b\x06\x0f\xc0\x6c\x1c\x6e" //.0.......;...l.n |
+/* 0b90 */ "\x23\xb6\x53\x8e\x4c\x50\x07\xbe\x62\x00\x2b\xf1\x44\x1f\x82\x2c" //#.S.LP..b.+.D.., |
+/* 0ba0 */ "\x01\x5f\x15\xc9\x98\x3f\x02\x40\xf2\xfc\x61\x1c\xe8\x60\xfc\x50" //._...?.@..a..`.P |
+/* 0bb0 */ "\x41\xf8\xa2\x00\x15\x40\x0b\x90\x85\xb0\x77\xbf\x71\xc9\x85\x20" //A....@....w.q..  |
+/* 0bc0 */ "\x00\x38\xef\x1c\x9c\x63\x60\x4a\x60\x14\x01\xb6\x11\xf8\x11\x00" //.8...c`J`....... |
+/* 0bd0 */ "\xf9\x00\x08\x9b\x00\x67\xbc\x16\x0f\xe6\x81\x30\x8f\xc0\x3c\x64" //.....g.....0..<d |
+/* 0be0 */ "\xfa\xcc\x03\xbe\x1e\xf9\xc9\x00\xa0\x8d\x16\x02\x2d\x07\x00\x0a" //............-... |
+/* 0bf0 */ "\x40\x0a\x90\x05\x30\x05\xa0\x0a\x48\x3f\x33\x0a\x6a\xb8\x18\x80" //@...0...H?3.j... |
+/* 0c00 */ "\x7c\xda\x81\xc8\x00\x40\x05\x28\x03\xcc\x00\x1e\x00\x20\x0a\xe0" //|....@.(..... .. |
+/* 0c10 */ "\x96\x06\x37\x24\x48\x02\xa0\x03\xc3\xdf\x84\x40\x02\xff\xf4\x26" //..7$H......@...& |
+/* 0c20 */ "\xc0\x16\xc0\x3e\xfb\xf8\x0c\x02\x98\x65\x16\x20\x40\x1e\x72\x0e" //...>.....e. @.r. |
+/* 0c30 */ "\x78\x84\xc0\x01\xf3\xe7\xe2\x87\xdf\x3e\xf1\x00\x2f\xd6\xb1\xf7" //x........>../... |
+/* 0c40 */ "\x8c\x03\xe3\x7c\x35\x4c\x1c\x9f\x90\x1b\x00\x58\xdf\x82\x1e\x4a" //...|5L.....X...J |
+/* 0c50 */ "\x01\x70\x3d\x40\x07\xb8\xd2\xc7\xe7\x7d\xa8\x90\x70\x8a\x79\x28" //.p=@.....}..p.y( |
+/* 0c60 */ "\x07\xf6\x14\x01\xee\x41\xf1\xeb\xe7\xd8\x80\x01\x4f\xcb\x14\x0c" //.....A......O... |
+/* 0c70 */ "\x89\xb8\xf8\xa1\xbe\x49\xac\x33\x33\x1c\x09\x9c\x2b\x42\xb8\x40" //.....I.33...+B.@ |
+/* 0c80 */ "\x2d\xc4\xb6\x20\x03\xdf\x25\xc4\x95\xe1\xa6\x01\x35\x01\xf0\x70" //-.. ..%.....5..p |
+/* 0c90 */ "\x7f\x38\xe0\xb0\x03\xe0\x1a\x1b\x80\xf9\x7c\x07\xef\x90\xdf\xcd" //.8........|..... |
+/* 0ca0 */ "\x7c\x92\x07\xc9\x70\x43\x7e\x67\xc9\x70\x9a\x01\xf1\x4e\x7d\xb7" //|...pC~g.p...N}. |
+/* 0cb0 */ "\xc9\x8a\x07\xc9\x20\x71\xaf\x7a\xe0\x37\xc1\x32\x00\xe0\x20\x1e" //.... q.z.7.2.. . |
+/* 0cc0 */ "\x7a\x7d\xb0\x17\x81\x1e\x92\x8f\xde\x02\xf3\x28\x73\xc0\x31\xc6" //z}.........(s.1. |
+/* 0cd0 */ "\x18\x15\xec\x49\xe3\x54\x81\x00\x00\xd8\x07\x87\x78\x8f\x07\xe0" //...I.T......x... |
+/* 0ce0 */ "\x56\x00\x04\x01\xe7\xef\xaf\x1c\x0b\x10\x0f\x6c\x3e\x64\x48\x07" //V..........l>dH. |
+/* 0cf0 */ "\xb8\x0c\x47\xac\x01\x5e\xc6\x70\x18\x8b\x00\xa0\x65\x2c\x80\x06" //..G..^.p....e,.. |
+/* 0d00 */ "\x0d\xc2\x94\x15\xf5\x01\x6c\x1c\x10\x4c\x00\x5f\x60\x80\x16\x18" //......l..L._`... |
+/* 0d10 */ "\xc0\x27\xf2\x20\x07\x08\x95\x88\x07\xb8\xaa\x39\x8e\xbc\x6a\xe0" //.'. .......9..j. |
+/* 0d20 */ "\x79\x1c\x2c\xc3\xdf\xe5\xd1\x15\x89\xdb\xdc\x08\xc3\xd0\x1a\x00" //y.,............. |
+/* 0d30 */ "\xa7\x16\xa6\x33\xa7\x00\x0f\xf1\x09\x0f\x72\xd1\x77\x36\x73\x98" //...3......r.w6s. |
+/* 0d40 */ "\x50\x05\x38\xba\x00\x03\x60\x40\x03\xd8\x03\x18\x3b\x02\x60\x1e" //P.8...`@....;.`. |
+/* 0d50 */ "\xa0\x71\x76\x8c\x72\xc8\xf9\x51\xdb\xf8\x00\x15\xf6\xd4\x0e\x82" //.qv.r..Q........ |
+/* 0d60 */ "\xb0\x00\x13\x02\xa0\x0a\x20\x71\x85\x8e\xba\x30\x3f\x60\x0a\xc1" //...... q...0?`.. |
+/* 0d70 */ "\xe4\xd0\x0d\x02\x00\x15\x90\x00\x3c\x7c\xa0\x24\x09\x80\x56\x40" //........<|.$..V@ |
+/* 0d80 */ "\x02\xf5\xf2\x80\x30\x3e\x1f\xc1\x49\x07\x0d\xf8\x1e\x82\x10\x0f" //....0>..I....... |
+/* 0d90 */ "\xa0\x0a\xd8\x02\x98\x30\x08\x28\x00\x6a\x0b\x00\x1e\x20\x15\xa0" //.....0.(.j... .. |
+/* 0da0 */ "\x05\xd8\x30\x6e\x63\xca\x60\x0a\x00\x0c\x84\x2e\x13\x20\x14\x80" //..0nc.`...... .. |
+/* 0db0 */ "\x0a\x70\x06\x0a\x48\x02\xec\x01\x44\x01\x4c\x00\x2c\x00\x17\x32" //.p..H...D.L.,..2 |
+/* 0dc0 */ "\x6f\xb8\x11\x02\x01\x40\x53\x00\x03\x8f\x01\x80\x71\x70\x93\xd1" //o....@S.....qp.. |
+/* 0dd0 */ "\x08\xe6\x09\xb7\x82\x0b\x85\xe0\x06\x0f\x02\xc4\x7d\x2b\x5a\xd1" //............}+Z. |
+/* 0de0 */ "\x63\x1d\x2d\x6a\xd0\x73\x86\xce\x42\xf8\xe5\x05\x16\x9a\xb3\xd7" //c.-j.s..B....... |
+/* 0df0 */ "\xf0\x9f\xac\x75\xd5\x14\x21\x47\xae\xed\x35\xfb\xff\x06\x84\x43" //...u..!G..5....C |
+/* 0e00 */ "\x00\xac\x54\x60\x73\x1d\x2a\x1f\x6e\xed\x5f\x52\x70\x07\xc4\x8e" //..T`s.*.n._Rp... |
+/* 0e10 */ "\x60\xfe\x25\x40\x0e\x44\x10\x03\x06\xbd\xdf\xad\x76\xa2\x4b\x4d" //`.%@.D......v.KM |
+/* 0e20 */ "\x8e\xd1\x06\xb4\xda\xed\x55\x00\x3a\x5f\x39\x66\x01\x0c\x76\x4c" //......U.:_9f..vL |
+/* 0e30 */ "\x0e\x54\x01\x12\x71\xf5\x1a\x0d\x69\x66\x61\xb4\x70\x97\x0c\x60" //.T..q...ifa.p..` |
+/* 0e40 */ "\x06\xf7\x7f\x30\xdd\x40\x0c\x9f\x0a\x53\xa3\x57\xee\xf7\x0c\x3a" //...0.@...S.W...: |
+/* 0e50 */ "\x88\xc0\x31\x0c\x01\x76\x50\xfa\xc9\x0f\x66\x63\xd5\xda\xa0\x14" //..1..vP...fc.... |
+/* 0e60 */ "\x90\x04\xff\xf5\x93\x0f\xac\x78\xfa\xd0\x00\x02\xd1\x5f\xbf\x82" //.......x....._.. |
+/* 0e70 */ "\x60\x12\x9a\x90\x0d\x40\x80\x0c\x1e\x6e\xd8\x03\x45\x80\x4a\xe4" //`....@...n..E.J. |
+/* 0e80 */ "\x6a\x04\x40\xe1\x12\xba\x07\xe0\x07\xf7\x86\xe4\x20\x67\xfb\xaa" //j.@......... g.. |
+/* 0e90 */ "\x00\x91\xa1\xec\x57\x28\xba\x51\x67\xc2\xf5\x00\x45\x10\xcf\x26" //....W(.Qg...E..& |
+/* 0ea0 */ "\x02\x05\x30\x09\xd0\x62\x06\x01\x80\x6d\x18\x00\x18\x07\x67\xe7" //..0..b...m....g. |
+/* 0eb0 */ "\x58\x9f\x5f\xea\x00\x80\x80\x20\x35\x00\x48\xf0\x3f\x70\x08\xc0" //X._.... 5.H.?p.. |
+/* 0ec0 */ "\x29\xb2\xc1\x80\x85\xc8\x0c\x5e\x08\x59\xed\x38\x2f\xf9\xd1\xb1" //)......^.Y.8/... |
+/* 0ed0 */ "\x5f\xbf\xce\xaf\xd5\x00\x2b\x38\x08\x0c\x04\x12\xd3\x50\x05\xb6" //_.....+8.....P.. |
+/* 0ee0 */ "\x7a\x5d\x80\x59\xa6\x11\x8b\x06\x04\x18\x70\x45\xe0\xc8\x11\x0c" //z].Y......pE.... |
+/* 0ef0 */ "\x01\x62\xaf\xdf\xe0\x67\x37\x6a\xbd\xd5\xf6\xff\x50\x05\x23\xfd" //.b...g7j....P.#. |
+/* 0f00 */ "\x8c\x02\xf9\x33\x01\x8e\xee\xee\xe1\x2f\xc8\x04\x30\x0c\x01\x64" //...3...../..0..d |
+/* 0f10 */ "\xaf\xdf\xc1\x7d\x48\xfb\x2a\xc6\x01\xda\x0c\x7b\x3d\x02\x49\xb5" //...}H.*....{=.I. |
+/* 0f20 */ "\x46\xaf\xc1\x7e\xce\x79\xe6\x46\x05\xaa\x00\xc4\x08\x00\x3e\x3d" //F..~.y.F......>= |
+/* 0f30 */ "\x41\x4a\x6d\x4e\x37\x49\xb5\xd4\xe6\xed\x77\xba\xd4\x01\x43\x02" //AJmN7I....w...C. |
+/* 0f40 */ "\xfc\xbb\x38\x0a\x32\x10\x05\xaa\x01\x0c\x3c\x94\x1f\xed\xdc\x4d" //..8.2.....<....M |
+/* 0f50 */ "\x40\xf2\x39\xc0\x5b\xc1\xc1\x4e\x0c\x0f\x98\x8c\x0a\xfb\x0c\xdf" //@.9.[..N........ |
+/* 0f60 */ "\xf6\xe3\x82\xdd\x0a\xfd\xf7\xd3\x70\x45\x91\x52\x1f\x94\xe0\x77" //........pE.R...w |
+/* 0f70 */ "\x78\x0a\xe6\x85\x7c\x2b\x1c\x0d\x67\xc3\x30\xe0\xc3\x68\x07\xf3" //x...|+..g.0..h.. |
+/* 0f80 */ "\x8b\xe7\xbc\xf2\x20\x84\x60\x28\x64\x23\xfb\xb0\x14\x93\x01\x8d" //.... .`(d#...... |
+/* 0f90 */ "\x41\x03\x07\xc8\x54\x04\xbc\x3c\xc0\x44\x00\x7e\x00\xef\x04\x48" //A...T..<.D.~...H |
+/* 0fa0 */ "\x86\x02\x77\x42\x3d\xdc\xe0\x33\x38\x09\xd1\x80\xa4\xc3\x1e\x14" //..wB=..38....... |
+/* 0fb0 */ "\x8c\x05\x77\x0c\x02\x1e\x44\x39\x30\xda\x02\x3d\xdb\x7c\x7a\x82" //..w...D90..=.|z. |
+/* 0fc0 */ "\x08\x35\x8e\x5f\x0f\x0f\x10\x66\x18\x0a\xa5\x18\x73\xfb\xb1\xe3" //.5._...f....s... |
+/* 0fd0 */ "\xc8\x41\xac\x07\x7d\x77\x84\x81\x1e\x5b\x7c\x77\x99\xc1\x7f\xba" //.A..}w...[|w.... |
+/* 0fe0 */ "\x24\x0e\xac\x36\x8c\x03\x68\xf3\xe0\x4f\xbf\x41\x40\x04\x03\x05" //$..6..h..O.A@... |
+/* 0ff0 */ "\x29\x08\x12\x08\x22\x08\x36\x07\x66\x1b\x40\x4f\xa7\xdf\xee\x28" //)...".6.f.@O...( |
+/* 1000 */ "\xc8\x35\x08\x12\x0d\x61\x06\xd0\xf3\xfe\x08\x35\x00\x9f\x62\x18" //.5...a.....5..b. |
+/* 1010 */ "\x05\x7e\x58\x81\x63\xe5\x9c\x3b\x53\x10\x65\x1d\x4e\xe3\x06\x6d" //.~X.c..;S.e.N..m |
+/* 1020 */ "\x30\x01\x0a\xa0\x00\x30\x15\x80\xbb\x98\x00\x7c\x83\x60\x00\x30" //0....0.....|.`.0 |
+/* 1030 */ "\xc5\x6c\x8f\x00\x3b\x7b\x90\x6a\x04\x3c\xab\x58\x01\x84\x00\x1d" //.l..;{.j.<.X.... |
+/* 1040 */ "\x03\x41\xb4\x60\x03\xa0\xc7\x2a\x87\x9c\xc0\x01\x98\x0a\xda\x20" //.A.`...*.......  |
+/* 1050 */ "\x00\x05\x1c\xa6\xde\x91\x30\x06\xb0\xda\x20\x9e\x2b\x4c\x30\x16" //......0... .+L0. |
+/* 1060 */ "\x09\x00\x3b\xd6\x46\x01\x16\x1b\x47\xe2\x88\x40\x01\x07\x08\x20" //..;.F...G..@...  |
+/* 1070 */ "\x87\x2f\xd5\xa3\xc3\x22\x08\x87\x59\xd7\x85\x0c\x02\x8c\x36\x80" //./..."..Y.....6. |
+/* 1080 */ "\xbf\x1f\xba\x7c\x3c\x08\xf8\xa5\x8f\x8a\x00\x28\xf2\x94\x52\x08" //...|<......(..R. |
+/* 1090 */ "\x12\x20\x88\x32\x84\x19\xc6\x03\x03\x5a\x3a\x91\x30\x1e\xa5\xff" //. .2.....Z:.0... |
+/* 10a0 */ "\x76\x36\x0c\x60\x9c\x76\x03\x98\x08\x60\xdf\xb5\x88\x0a\x4a\x04" //v6.`.v...`....J. |
+/* 10b0 */ "\x7a\x00\xa8\x00\x06\x27\x81\x45\x9c\x9d\xa8\x44\x17\x27\xdd\x88" //z....'.E...D.'.. |
+/* 10c0 */ "\x2e\x10\x1c\x05\x7f\x14\x00\xa8\xe8\x4d\x0a\x38\x13\x42\x7c\x09" //.........M.8.B|. |
+/* 10d0 */ "\xec\x42\x7a\x09\xa1\x2c\x84\xc3\x70\x03\xfd\xf5\xdd\x5c\x00\x13" //.Bz..,..p....... |
+/* 10e0 */ "\xc4\x66\x29\x4a\x4c\x6e\x2c\x76\xe5\xa0\x93\xac\x38\xb6\xc0\x17" //.f)JLn,v....8... |
+/* 10f0 */ "\x06\x0c\x06\x4e\x81\x47\x4c\xaf\xdc\xa7\x62\x0f\x7e\xaf\x0d\xc7" //...N.GL...b.~... |
+/* 1100 */ "\x62\x68\x50\xbc\x01\x44\x01\xc5\x27\xca\x25\x7f\x1a\x34\x05\x24" //bhP..D..'.%..4.$ |
+/* 1110 */ "\xa0\x30\x39\x96\x19\xe5\x2d\x60\x24\xb4\x09\x75\x2e\x3f\x77\x6b" //.09...-`$..u.?wk |
+/* 1120 */ "\xe5\x8a\x9e\x9d\x31\x77\x4b\x76\xdb\x01\xc0\x46\x00\x6a\x00\x6d" //....1wKv...F.j.m |
+/* 1130 */ "\xcd\x7c\x6a\x22\x02\xac\x65\xd3\xac\x3a\x44\xff\x6f\x6c\xff\x20" //.|j"..e..:D.ol.  |
+/* 1140 */ "\x26\x35\x90\x18\x0c\x77\xf1\x18\x7e\x42\x7f\x77\xa8\x02\x41\xfa" //&5...w..~B.w..A. |
+/* 1150 */ "\x2f\xa2\xd2\x3e\x90\x2a\xf4\x32\xa0\x07\x20\x10\x01\x84\x8f\xd7" ///..>.*.2.. ..... |
+/* 1160 */ "\xe7\xcb\x67\xa4\x43\xa3\x51\xd3\x29\xf2\xdb\xf4\x96\x3f\x6f\xfe" //..g.C.Q.)....?o. |
+/* 1170 */ "\xa0\x32\x0b\x7f\x83\xc4\x25\x60\x30\x7a\xfd\xfe\x7a\x64\xf4\x13" //.2....%`0z..zd.. |
+/* 1180 */ "\x4f\x00\x7e\xbf\xd7\xef\xf3\x6a\x66\x02\x8c\x02\x30\xe0\xb0\x34" //O.~....jf...0..4 |
+/* 1190 */ "\x74\xcb\x01\x08\x20\x55\xd1\x11\xe6\xcf\x01\x84\x79\x30\xac\x17" //t... U......y0.. |
+/* 11a0 */ "\x60\x18\x0d\x79\x8f\xc9\xa8\x1c\x8a\xd0\xdb\x73\xba\xd9\x3f\x48" //`..y.......s..?H |
+/* 11b0 */ "\x0c\x83\x97\xfa\x7f\x56\x6d\xf1\xe0\x10\x8d\x64\x07\x01\x92\x2d" //.....Vm....d...- |
+/* 11c0 */ "\xfc\x7e\xe2\x04\xc5\x60\x8e\x04\xe1\x06\xf0\x1a\x06\x03\xf8\x4f" //.~...`.........O |
+/* 11d0 */ "\xe9\xd4\xa8\x02\x55\x40\x09\x00\xcf\xc0\x60\x02\xbf\xc8\x20\x39" //....U@....`... 9 |
+/* 11e0 */ "\x01\x63\x29\xb5\x40\x67\x4b\x5f\x8a\xfd\x4a\xa8\x01\x21\x53\x7c" //.c).@gK_..J..!S| |
+/* 11f0 */ "\x64\xf4\x13\xc2\x2a\x80\x15\x85\xa8\x06\x87\x76\x15\x80\xc7\xee" //d...*......v.... |
+/* 1200 */ "\xfd\x4b\xd3\xfa\x73\x7f\xe0\x8a\x01\x1f\x9b\x61\xaf\x0c\xb9\xc5" //.K..s......a.... |
+/* 1210 */ "\x40\x12\x40\x57\xcb\x4e\x17\x4a\xbd\x4c\x1e\x8a\x87\xf8\x70\xd3" //@.@W.N.J.L....p. |
+/* 1220 */ "\xe1\xc3\x01\x88\x0d\x40\x16\xc6\x82\x03\x01\x1d\x43\x00\xf9\xeb" //.....@......C... |
+/* 1230 */ "\x1d\x5c\x06\x02\xfd\x1d\xa2\xa1\x5d\xaa\x00\x96\x18\x5f\x85\x04" //........]...._.. |
+/* 1240 */ "\x01\x1f\x54\x01\x5f\xfc\x88\x0c\x94\x06\x02\x7a\x96\xc0\x05\xe2" //..T._......z.... |
+/* 1250 */ "\xf8\x90\x1c\xf9\x85\xef\x15\x83\xc3\xe0\x48\x05\xc3\xf4\x24\x0f" //..........H...$. |
+/* 1260 */ "\x3f\x28\x46\xd3\xe2\x9a\x23\xe7\xe8\x8e\x1d\x79\x19\x5d\x3a\xa8" //?(F...#....y.]:. |
+/* 1270 */ "\x01\xb0\x04\x04\xc0\x6b\xf5\x6a\x80\x15\x80\xef\xc0\x02\x2e\x09" //.....k.j........ |
+/* 1280 */ "\xe5\xb0\x18\x0b\xfd\xbf\x01\xe3\x8e\xfd\x7c\x60\xf0\xf8\x0c\x06" //..........|`.... |
+/* 1290 */ "\x58\x03\x02\x7d\xbf\xab\x9c\xb0\x01\xf8\x72\x2c\x30\x3e\x0d\x51" //X..}......r,0>.Q |
+/* 12a0 */ "\x03\x7f\xa3\x0f\x4f\xbf\x3c\x64\x43\x67\x01\x93\xd7\xc5\x00\x1c" //....O.<dCg...... |
+/* 12b0 */ "\xfe\xc7\xf1\x40\xa2\x57\x41\x26\x16\x00\x4f\xd8\x04\x41\x81\x80" //...@.WA&..O..A.. |
+/* 12c0 */ "\xb3\x70\x96\x5f\xeb\xde\x79\x43\x3f\x1b\xd5\x4a\x80\x14\x85\x68" //.p._..yC?..J...h |
+/* 12d0 */ "\x06\x07\x5b\xbf\x50\xed\x16\xd8\x43\x00\x2f\x0c\x31\xea\x5d\x44" //..[.P...C./.1.]D |
+/* 12e0 */ "\x00\xa4\x06\x05\x1f\xa7\x78\xf4\x08\xc0\x21\xf9\x96\x0a\xc8\x0d" //......x...!..... |
+/* 12f0 */ "\x40\x04\x8e\xec\x03\x04\x59\xbb\x12\x5a\x58\x6d\x12\x89\x83\x00" //@.....Y..ZXm.... |
+/* 1300 */ "\x3c\x74\x26\x0e\x3a\x87\x7e\x86\x0f\x4d\x9f\xe8\xc7\xf3\xe5\xe8" //<t&.:.~..M...... |
+/* 1310 */ "\xeb\xea\x9b\x3f\xfa\x2e\x95\x51\x28\x31\x3e\x27\x29\x55\xa9\x8f" //...?...Q(1>')U.. |
+/* 1320 */ "\x92\xc9\x8e\xa0\xc0\x37\x1d\x09\x65\xf9\x47\xa1\x11\x6c\x05\x4c" //.....7..e.G..l.L |
+/* 1330 */ "\xa4\x51\xc0\x20\x6f\x58\x0c\xfc\xf8\x12\x3b\x01\x35\x19\xc0\xa3" //.Q. oX....;.5... |
+/* 1340 */ "\x51\xc9\x61\x06\x02\xc1\x2d\x26\x90\x09\x68\x05\xc7\x02\x2a\x05" //Q.a...-&..h...*. |
+/* 1350 */ "\x70\x3a\x72\xa0\x11\x80\x8e\xa0\x8b\x00\x68\xc4\x10\x07\x00\x56" //p:r.......h....V |
+/* 1360 */ "\x2e\x18\x12\xac\x23\x02\x41\x9c\x60\x47\xc8\xc0\x19\x33\x03\x67" //....#.A.`G...3.g |
+/* 1370 */ "\x00\xb9\x00\x3e\x04\xe0\x3d\xf3\xc6\x04\x9d\x89\x68\x07\x60\xe4" //...>..=.....h.`. |
+/* 1380 */ "\x0c\x8b\x01\xc3\x9e\xc2\x43\x30\x38\x6b\x02\x38\xc5\xcb\x00\x71" //......C08k.8...q |
+/* 1390 */ "\x46\x02\x39\x5c\xb0\xc7\xd1\x06\xc1\x80\x7b\x23\x02\x34\x41\xb8" //F.9.......{#.4A. |
+/* 13a0 */ "\x4e\x3a\xfd\x84\x6c\x02\xee\xa2\xf1\xcb\x71\x04\x24\x60\x59\x47" //N:..l.....q.$`YG |
+/* 13b0 */ "\xd8\x3e\x04\xf6\x30\x71\xf6\x54\x5b\xc2\x7d\x9a\xe8\x66\xc0\x8c" //.>..0q.T[.}..f.. |
+/* 13c0 */ "\xaf\x22\x41\x20\x06\x1a\xc4\x60\x1a\x78\x05\xb0\xf0\xa9\x01\x74" //."A ...`.x.....t |
+/* 13d0 */ "\x6e\x60\x47\x16\x05\x62\x8e\xca\x4f\x25\xb8\x1c\xb8\x6c\x10\x6a" //n`G..b..O%...l.j |
+/* 13e0 */ "\x1e\x09\x14\x60\x5b\x1a\xa7\x80\x60\x07\x76\x05\x78\x54\x00\xac" //...`[...`.v.xT.. |
+/* 13f0 */ "\xdf\xc4\x06\xc2\xb1\xd2\x32\x1f\x3c\x44\x14\x09\xc5\x11\x71\x50" //......2.<D....qP |
+/* 1400 */ "\x02\x1c\xf1\x08\x10\x82\x91\x81\x72\x29\x64\x27\xb4\x5c\x60\x68" //........r)d'..`h |
+/* 1410 */ "\x72\x0d\x63\x83\x5b\xc9\x8b\x97\x8d\xa7\xea\x3a\x89\x22\x1f\x4d" //r.c.[......:.".M |
+/* 1420 */ "\xd7\x71\x2d\xf0\xb3\x02\x46\x38\x86\x88\x25\x00\x3e\x34\x60\x57" //.q-...F8..%.>4`W |
+/* 1430 */ "\xf8\xf1\x1b\x03\x88\x81\x7d\x54\xf7\x30\x5f\x01\x99\x3c\x34\x06" //......}T.0_..<4. |
+/* 1440 */ "\x61\x88\x78\xb2\x30\x31\x5c\x1b\x04\xe2\x32\x48\xf8\xe1\x6c\x06" //a.x.01....2H..l. |
+/* 1450 */ "\x52\x00\x08\xc0\x5d\x8f\x0b\x46\x07\x22\x03\xff\xc7\x00\x38\xf9" //R...]..F."....8. |
+/* 1460 */ "\x2f\x7c\x57\xc9\x7b\xb6\x2e\x60\x1f\xc6\x7d\xc5\x18\x1c\x1c\x11" ///|W.{..`..}..... |
+/* 1470 */ "\xe6\xd7\x06\xd8\xf9\x2c\x0d\xf7\x88\x3e\x02\xbb\x60\x60\x68\xf9" //.....,...>..``h. |
+/* 1480 */ "\x2c\x0b\xcf\x18\x14\x1d\xd1\x94\x20\x03\x80\x13\xd8\x1b\xc2\x45" //,....... ......E |
+/* 1490 */ "\x02\x47\xa0\x3e\x84\x04\x10\x74\x78\x78\x0c\x2d\x81\x33\x43\xdc" //.G.>...txx.-.3C. |
+/* 14a0 */ "\x97\x55\x12\x08\x47\xa5\x30\x02\xe7\xa0\xeb\xb0\x06\x41\x8c\x7a" //.U..G.0......A.z |
+/* 14b0 */ "\x4e\xb0\x37\xb0\x03\xe8\xc0\x29\x07\xd1\x7a\x5a\x25\x9e\xa4\x7d" //N.7....)..zZ%..} |
+/* 14c0 */ "\x18\x04\xc0\xea\x90\x47\xf4\x5e\x96\x60\x69\xb7\x62\xf7\xa9\xde" //.....G.^.`i.b... |
+/* 14d0 */ "\x27\x7a\x66\x87\x7b\xce\x42\xa8\x00\x1b\x3f\x3e\x6c\x59\x41\x55" //'zf.{.B...?>lYAU |
+/* 14e0 */ "\xb9\xf3\x32\x01\x2a\x00\x3d\x40\x0a\xc0\x12\x2c\x07\xbc\xed\xee" //..2.*.=@...,.... |
+/* 14f0 */ "\xc0\x2d\x70\x15\xf2\x54\x0c\x07\x7e\xc0\x7a\x00\x4f\x9c\x1a\xe3" //.-p..T..~.z.O... |
+/* 1500 */ "\x0a\x1e\x01\x81\xc9\x8c\x5d\x65\xab\xb6\xfe\x78\x91\x8a\xec\xc0" //......]e...x.... |
+/* 1510 */ "\x38\x9d\xcd\xf2\xe0\x07\x9e\x7b\x12\xee\xbe\x5c\x63\x98\x28\xc5" //8......{....c.(. |
+/* 1520 */ "\x03\x6f\x96\x81\x1a\xc9\x48\x00\x46\xb9\x7c\x3b\x28\xa4\xc6\x33" //.o....H.F.|;(..3 |
+/* 1530 */ "\xeb\xbf\x1f\x67\x6d\x97\x28\x67\x02\xe0\x1e\x0f\x57\x54\x00\x79" //...gm.(g....WT.y |
+/* 1540 */ "\xf0\xaa\x18\x74\x19\xc2\xa5\x87\xa7\x23\xeb\xc4\x08\x40\x07\x0a" //...t.....#...@.. |
+/* 1550 */ "\x3e\x00\x00\x10\x07\xc6\x60\x2c\x03\xfc\xbb\xde\x95\x3a\xcb\x78" //>.....`,.....:.x |
+/* 1560 */ "\x2e\xb9\x3a\x44\x29\x4b\xe2\xad\x6b\x5f\xe5\x45\xe4\xae\x04\xc9" //..:D)K..k_.E.... |
+/* 1570 */ "\x88\xea\x80\x24\xea\xad\xf5\x1f\x29\x03\x9f\xe1\xe8\xf0\x00\xf6" //...$....)....... |
+/* 1580 */ "\x04\x3b\x73\x41\x77\x64\x8c\x38\xd4\xc4\x0d\x8b\xc4\xf5\x8a\xef" //.;sAwd.8........ |
+/* 1590 */ "\x93\x3c\xdf\xfe\x70\x81\x0b\x9a\x58\x90\x02\xa0\x1a\xca\x52\x42" //.<..p...X.....RB |
+/* 15a0 */ "\x09\x92\xde\x0c\xa5\x34\x01\x4c\x0a\x04\xf3\x04\x4f\xee\xf2\x21" //.....4.L....O..! |
+/* 15b0 */ "\x0c\x08\xfa\xa8\x02\x3e\xdb\xc0\x60\x51\xde\x9b\x0a\x80\x1d\x0b" //.....>..`Q...... |
+/* 15c0 */ "\xcc\x4f\x03\x45\x40\x12\x7f\x77\x01\x81\x52\xd6\x98\x02\xc6\xb9" //.O.E@..w..R..... |
+/* 15d0 */ "\x88\x87\xbc\x12\x23\xc6\xaf\xa8\xf5\xde\xa0\x0d\x22\xe5\x32\xc2" //....#.......".2. |
+/* 15e0 */ "\x0d\xee\x79\xd4\x06\xa3\xcd\x22\x40\xd0\x7c\x56\x04\xb5\x2d\x00" //..y...."@.|V..-. |
+/* 15f0 */ "\xc0\x8c\x60\x84\x1e\xf4\x01\x20\x79\x34\x06\x95\xed\x47\xdd\x61" //..`.... y4...G.a |
+/* 1600 */ "\x08\x90\x0d\x40\x1b\xd8\x6e\x01\x63\xaf\xae\xf9\x53\xe5\x78\x9b" //...@..n.c...S.x. |
+/* 1610 */ "\x4d\x68\x00\x1f\xb1\x40\x0b\xfa\x0f\x68\x40\x37\xb4\x2c\x17\x0f" //Mh...@...h@7.,.. |
+/* 1620 */ "\x4d\xb8\x49\x2d\xe0\x30\x18\xb3\x1e\x05\x50\xaf\xaa\x03\x23\x21" //M.I-.0....P...#! |
+/* 1630 */ "\xc3\x71\x51\xc3\x05\x81\x63\xe2\xa0\x03\x00\xe3\x3a\x04\xf2\x3a" //.qQ...c.....:..: |
+/* 1640 */ "\xa3\xec\xc8\x05\xf3\x94\xb1\xa8\x80\xc0\x97\xa3\xbd\x52\x40\x4c" //.............R@L |
+/* 1650 */ "\xff\x74\x06\xd4\xd6\x03\xea\xf3\x08\x44\x83\x02\xf8\xb2\x8b\xe0" //.t.......D...... |
+/* 1660 */ "\x06\xa0\x19\xec\x27\x87\x90\x5a\xb0\x0c\x06\x7a\x23\xce\x86\x60" //....'..Z...z#..` |
+/* 1670 */ "\x37\xfa\xb7\x4e\xf5\x40\x06\x9f\xfc\x1e\x53\x9c\x4c\x06\xf6\xe8" //7..N.@....S.L... |
+/* 1680 */ "\x06\xc1\x80\x20\x5e\x34\x8a\x18\xc0\x0d\x47\xc3\x70\x0a\xb5\xe8" //... ^4....G.p... |
+/* 1690 */ "\xb7\xe9\x01\xa0\x73\xa0\x57\xef\xf7\xde\xb6\x52\x6d\xcf\x5c\x7b" //....s.W....Rm..{ |
+/* 16a0 */ "\x5f\x01\x81\x62\x41\xa7\xb9\x61\x00\x7f\xc6\x8f\x28\xbc\x68\xc4" //_..bA..a....(.h. |
+/* 16b0 */ "\xc1\x80\x0a\x11\x00\x04\x0f\x12\xee\xc5\x8c\x62\xa0\x0d\xc2\x81" //...........b.... |
+/* 16c0 */ "\xeb\xc0\x08\x0c\x09\xff\x09\x59\x3f\xda\xa0\x09\x51\xe2\xbc\x10" //.......Y?...Q... |
+/* 16d0 */ "\x82\x60\x61\x74\x0a\x80\x2a\x50\x85\xc0\x42\xa1\xce\x6c\x58\x9c" //.`at..*P..B..lX. |
+/* 16e0 */ "\x05\x4b\x5a\x21\x62\x45\x29\x80\xe1\xfa\xfa\x01\x81\xc7\x9f\x27" //.KZ!bE)........' |
+/* 16f0 */ "\xa7\x51\xe7\xce\x20\xa8\x19\xfc\xf8\xf5\x2c\x75\x0e\xa0\x09\x8d" //.Q.. .....,u.... |
+/* 1700 */ "\x11\xd8\x75\xf0\xc1\x81\x90\x80\x03\xf1\x69\xaf\x55\xc7\x15\xd6" //..u.......i.U... |
+/* 1710 */ "\x00\x11\x04\x54\x00\xa8\xe7\x20\x3d\x9e\x14\x26\x00\x8c\x03\x8a" //...T... =..&.... |
+/* 1720 */ "\x81\xb7\x76\xec\x40\x38\x6d\x44\x06\x21\x04\x0b\xa8\x00\xf8\x85" //..v.@8mD.!...... |
+/* 1730 */ "\xc7\x3d\x74\x8e\x04\xc0\x63\xd2\x5c\x01\xbe\x8a\x73\x88\x00\xb5" //.=t...c.....s... |
+/* 1740 */ "\x62\x14\x92\x07\x1b\x41\x5a\xe0\x5d\x40\x09\xfb\xb1\x68\x09\xeb" //b....AZ.]@...h.. |
+/* 1750 */ "\x81\xa1\xf9\xf3\xa3\xe8\x20\x06\x08\x3f\x5f\x3d\x22\x8e\x84\xc7" //...... ..?_="... |
+/* 1760 */ "\x54\xea\x00\xbd\x98\x10\x47\xe7\xce\x50\xe0\x0b\x06\x07\x30\x58" //T.....G..P....0X |
+/* 1770 */ "\xc8\xe8\x57\x38\xe5\x40\x0f\x14\xca\xc4\xfa\xef\x44\xf9\x60\x25" //..W8.@......D.`% |
+/* 1780 */ "\xaa\x76\x01\xb7\x10\xfd\x64\x1e\x3a\x12\xfa\x55\x7e\x86\x1f\x4f" //.v....d.:..U~..O |
+/* 1790 */ "\x87\xa6\xd3\xe8\x25\xf4\x67\x04\xe6\xa1\x57\xd1\x95\xe7\x4a\xf4" //....%.g...W...J. |
+/* 17a0 */ "\xd5\xfe\x8d\x1e\x92\x9e\xa5\xc7\x42\x63\x81\x2d\x18\x15\xb1\xc8" //........Bc.-.... |
+/* 17b0 */ "\x74\x29\x42\x2c\x63\xa8\x01\xd3\xde\xf8\x07\x44\x8b\x10\x76\x30" //t)B,c......D..v0 |
+/* 17c0 */ "\x43\xf4\x60\x70\xc4\x17\x8f\xd0\x0b\x03\xd5\xaa\x00\x97\xba\xf0" //C.`p............ |
+/* 17d0 */ "\x0d\x47\xce\x90\xda\xd7\x4f\x7b\xc1\x0e\x48\x14\x67\x03\xed\x06" //.G....O{..H.g... |
+/* 17e0 */ "\x78\x12\xb8\x43\xb8\x34\xc5\x45\x9b\x82\x48\x63\x29\x0a\xb0\x43" //x..C.4.E..Hc)..C |
+/* 17f0 */ "\x94\x32\x7a\x9e\x30\x5a\xbb\xee\x46\x52\xd9\x54\x67\xb7\x70\x1c" //.2z.0Z..FR.Tg.p. |
+/* 1800 */ "\x7f\x90\x15\xc0\xfd\x53\x92\xb5\x1c\x22\xe2\x89\x3e\xbb\xd4\x62" //.....S..."..>..b |
+/* 1810 */ "\x51\x40\x1c\x4d\xe2\x15\x80\xa7\xf0\xa2\x01\x48\x00\x40\x7a\x82" //Q@.M.......H.@z. |
+/* 1820 */ "\xa0\x58\x92\xfe\x05\x20\x2a\x9e\x97\x00\x0a\xb8\x00\x60\x0c\xc2" //.X... *......`.. |
+/* 1830 */ "\xcf\x97\x98\x1a\x38\x09\xc7\x3c\x44\x3e\x33\x81\x25\xd8\x11\x90" //....8..<D>3.%... |
+/* 1840 */ "\x09\x01\x27\xf1\x14\x60\x49\x58\x04\xc1\x1b\xf3\x40\xe5\xcb\x02" //..'..`IX....@... |
+/* 1850 */ "\x38\x1e\x2d\x91\x1e\x80\x90\x11\x6f\xfc\x60\xc1\x1c\xa8\xe6\x08" //8.-.....o.`..... |
+/* 1860 */ "\xe5\x5e\xc2\x70\x3c\x98\x7b\x04\x7e\xc6\x08\xe5\x8b\x1f\xf7\x98" //.^.p<.{.~....... |
+/* 1870 */ "\x06\x07\x71\x9a\x7f\x87\x54\x8c\x11\xae\xa0\x00\xf8\xa1\xd2\x20" //..q...T........  |
+/* 1880 */ "\x27\x01\xa6\xf8\x04\x40\x16\x21\x02\x44\xe9\x56\x12\x80\xcc\xbc" //'....@.!.D.V.... |
+/* 1890 */ "\x0d\x18\x13\x6a\x39\xd4\x84\xa0\x33\x7f\x23\xa4\x02\xb8\x13\x5d" //...j9...3.#....] |
+/* 18a0 */ "\xd0\x7c\x23\x01\x9e\x78\x58\x00\x3e\x25\xd0\x29\xee\x74\x06\x0b" //.|#..xX.>%.).t.. |
+/* 18b0 */ "\xe1\x69\x20\x14\xa6\xd8\x04\xf1\x51\xfb\x9f\xc8\x46\x03\x0a\x1d" //.i .....Q...F... |
+/* 18c0 */ "\x60\x08\x61\x1f\x05\xf1\xb8\x46\x02\xde\x29\x81\x47\x00\x3c\xee" //`.a....F..).G.<. |
+/* 18d0 */ "\x82\x10\x17\x41\x3f\x96\xc2\xf5\xac\x03\x02\x79\xc1\x42\x50\x8a" //...A?......y.BP. |
+/* 18e0 */ "\x01\x82\x80\x60\x88\x7f\xeb\x4b\xd7\xe1\x23\x63\xeb\x58\xb8\xfd" //...`...K..#c.X.. |
+/* 18f0 */ "\xf1\x58\xaf\xc9\x34\xfc\x91\x86\x0a\x4c\x80\x2f\x92\x15\xc1\x49" //.X..4....L./...I |
+/* 1900 */ "\x8f\xcc\x59\x09\x0f\x80\x8d\x05\x00\x07\xf4\x6d\x38\x7f\xc5\x8f" //..Y........m8... |
+/* 1910 */ "\xf8\xc5\x3b\xef\xad\x18\x29\xf6\x21\x5f\x25\x6d\xfe\x30\x8f\xf2" //..;...).!_%m.0.. |
+/* 1920 */ "\x55\x2f\xe2\xe8\x86\x10\x80\xd5\xfc\x57\x18\x2d\x51\x01\xad\x84" //U/.......W.-Q... |
+/* 1930 */ "\x80\x63\x76\x19\x56\x00"                                         //.cv.V. |
+// Sent dumped on RDP Client (5) 6454 bytes |
+// send_server_update done |
 // front::draw:draw_tile((0, 704, 32, 32) (32, 32, 32, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](2064) used=1088 free=15190 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](30) used=1110 free=15168 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=1 rect(0,704,32,32) rop=cc srcx=0 srcy=0 cache_idx=0) |
 // Widget_load: image file [./tests/fixtures/ad8b.png] is PNG file |
 // front::draw:draw_tile((100, 100, 26, 32) (80, 50, 26, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](1808) used=1125 free=15153 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](30) used=1440 free=14838 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=1 rect(100,100,26,32) rop=cc srcx=0 srcy=0 cache_idx=1) |
-// Front::end_update() |
-// GraphicsUpdatePDU::flush_orders: order_count=6 offset=0 |
-// GraphicsUpdatePDU::flush_orders: fast-path |
+// Front::end_update |
+// send_server_update: fastpath_support=yes compression_support=yes shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=6 |
 // Sending on RDP Client (5) 1100 bytes |
 /* 0000 */ "\x00\x84\x4c\x80\x21\x45\x04\xc9\xdd\xa2\xbc\x1f\x84\xe8\x79\x45" //..L.!E........yE |
 /* 0010 */ "\x20\x8a\xe0\x18\x05\x88\x90\x03\x06\x81\x08\x24\xa5\x06\x31\x96" // ..........$..1. |
@@ -2588,7 +2283,7 @@ const char outdata[] =
 /* 02f0 */ "\xfe\x00\x08\x7d\x39\xc1\x25\x6e\xec\x2f\xa6\xb0\x0a\xe1\x3e\x67" //...}9.%n./....>g |
 /* 0300 */ "\xc9\x82\x01\xec\x13\x9d\x1f\x24\xc0\x3d\x82\x7c\xe3\xe4\xa0\x03" //.......$.=.|.... |
 /* 0310 */ "\xdf\x6e\xe4\x02\xbe\x14\x60\xbc\x3a\xf4\x83\xf5\x82\xc5\x39\x80" //.n....`.:.....9. |
-/* 0320 */ "\x42\xb8\x00\x1e\x2d\xb6\x02\x76\xca\x10\x10\x08\x61\x70\xe8\xa0" //B...-..v....ap.. |
+/* 0320 */ "\x42\xb8\x00\x1e\x2d\xb6\x02\x76\xca\x10\x10\x08\x61\x73\x78\xa0" //B...-..v....asx. |
 /* 0330 */ "\x08\x63\xe5\x45\x80\x0c\x04\x7c\x07\x00\xda\xb1\x0d\xf3\x0a\x3e" //.c.E...|.......> |
 /* 0340 */ "\x3e\x43\x0f\xd7\xd7\x9e\x58\x72\x9d\xf6\x54\x41\x8a\x34\x0a\xe7" //>C....Xr..TA.4.. |
 /* 0350 */ "\x35\xb6\x49\x68\xb6\x78\xac\x06\xd7\x1d\xa2\x8c\x51\xa9\x37\xfb" //5.Ih.x......Q.7. |
@@ -2608,10 +2303,11 @@ const char outdata[] =
 /* 0430 */ "\x40\x14\x64\xa0\x06\x06\x79\x67\x7d\xc0\xc4\xc1\x36\xfc\x51\xde" //@.d...yg}...6.Q. |
 /* 0440 */ "\x52\x01\x0e\x01\x64\x00\x64\xc8\xf8\x00\x10\x00"                 //R...d.d..... |
 // Sent dumped on RDP Client (5) 1100 bytes |
+// send_server_update done |
 // Listener closed |
 // Incoming socket 5 (ip=10.10.47.175) |
 // Socket RDP Client (5) : closing connection |
-// RDP Client (0): total_received=1778, total_sent=19531 |
+// RDP Client (0): total_received=1714, total_sent=19532 |
 } /* end outdata */;
 
 const char indata[] =
@@ -2622,7 +2318,7 @@ const char indata[] =
 // Reading font file ./tests/fixtures/sans-10.fv1 |
 // font name <Bitstream Vera Sans> size <10> |
 // Font file ./tests/fixtures/sans-10.fv1 defines glyphs up to 256 |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming:CONNECTION_INITIATION |
 // Front::incoming::receiving x224 request PDU |
 // Socket RDP Client (5) receiving 1 bytes |
@@ -2645,9 +2341,9 @@ const char indata[] =
 // /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x01\x08\x00\x01" //................ |
 // /* 0010 */ "\x00\x00\x00"                                                     //... |
 // Sent dumped on RDP Client (5) 19 bytes |
-// RIO *::enable_server_tls() start |
-// RIO *::SSL_CTX_set_options() |
-// RIO *::enable_server_tls() done |
+// SocketTransport::enable_server_tls() start |
+// SocketTransport::SSL_CTX_set_options() |
+// SocketTransport::enable_server_tls() done |
 // Front::incoming::Basic Settings Exchange |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -2680,7 +2376,7 @@ const char indata[] =
 /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0150 */ "\x00\x00\x02\x00\x01\x00\x00\x00\x04\xc0\x0c\x00\x11\x00\x00\x00" //................ |
+/* 0150 */ "\x00\x00\x06\x00\x01\x00\x00\x00\x04\xc0\x0c\x00\x11\x00\x00\x00" //................ |
 /* 0160 */ "\x00\x00\x00\x00\x02\xc0\x0c\x00\x1b\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0170 */ "\x03\xc0\x38\x00\x04\x00\x00\x00\x72\x64\x70\x64\x72\x00\x00\x00" //..8.....rdpdr... |
 /* 0180 */ "\x00\x00\x80\x80\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0" //....rdpsnd...... |
@@ -2712,7 +2408,7 @@ const char indata[] =
 // cs_core::earlyCapabilityFlags:RNS_UD_CS_STRONG_ASYMMETRIC_KEYS |
 // cs_core::earlyCapabilityFlags:RNS_UD_CS_VALID_CONNECTION_TYPE |
 // cs_core::clientDigProductId=[00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 |
-// cs_core::connectionType  = 2 |
+// cs_core::connectionType  = 6 |
 // cs_core::pad1octet  = 0 |
 // cs_core::serverSelectedProtocol = 1 |
 // GCC::UserData tag=c004 length=12 |
@@ -2879,7 +2575,7 @@ const char indata[] =
 // Sent dumped on RDP Client (5) 15 bytes |
 // Front::incoming::RDP Security Commencement |
 // TLS mode: exchange packet disabled |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::Secure Settings Exchange |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -2887,65 +2583,57 @@ const char indata[] =
 // Dump done on RDP Client (5) 1 bytes |
 // Socket RDP Client (5) receiving 3 bytes |
 // Recv done on RDP Client (5) 3 bytes |
-/* 0000 */ "\x00\x01\x89"                                                     //... |
+/* 0000 */ "\x00\x01\x49"                                                     //..I |
 // Dump done on RDP Client (5) 3 bytes |
-// Socket RDP Client (5) receiving 389 bytes |
-// Recv done on RDP Client (5) 389 bytes |
-/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x7a\x40\x00\x00\x00\x00" //...d....p.z@.... |
-/* 0010 */ "\x00\x00\x00\xb3\x47\x0b\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00" //....G....@...... |
-/* 0020 */ "\x00\x00\x00\x71\x00\x61\x00\x5c\x00\x61\x00\x64\x00\x6d\x00\x69" //...q.a...a.d.m.i |
-/* 0030 */ "\x00\x6e\x00\x69\x00\x73\x00\x74\x00\x72\x00\x61\x00\x74\x00\x65" //.n.i.s.t.r.a.t.e |
-/* 0040 */ "\x00\x75\x00\x72\x00\x40\x00\x77\x00\x69\x00\x6e\x00\x32\x00\x6b" //.u.r.@.w.i.n.2.k |
-/* 0050 */ "\x00\x38\x00\x72\x00\x32\x00\x3a\x00\x72\x00\x64\x00\x70\x00\x3a" //.8.r.2.:.r.d.p.: |
-/* 0060 */ "\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //.x.............1 |
-/* 0070 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
-/* 0080 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
-/* 0090 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
-/* 00a0 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
-/* 00b0 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
-/* 00c0 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
-/* 00d0 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
-/* 00e0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
-/* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+// Socket RDP Client (5) receiving 325 bytes |
+// Recv done on RDP Client (5) 325 bytes |
+/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x3a\x40\x00\x00\x00\x00" //...d....p.:@.... |
+/* 0010 */ "\x00\x00\x00\xb3\x47\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //....G........... |
+/* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x1a\x00\x31" //...............1 |
+/* 0030 */ "\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00\x37\x00\x2e" //.0...1.0...4.7.. |
+/* 0040 */ "\x00\x31\x00\x37\x00\x35\x00\x00\x00\x40\x00\x43\x00\x3a\x00\x5c" //.1.7.5...@.C.:.. |
+/* 0050 */ "\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x5c" //.W.I.N.D.O.W.S.. |
+/* 0060 */ "\x00\x73\x00\x79\x00\x73\x00\x74\x00\x65\x00\x6d\x00\x33\x00\x32" //.s.y.s.t.e.m.3.2 |
+/* 0070 */ "\x00\x5c\x00\x6d\x00\x73\x00\x74\x00\x73\x00\x63\x00\x61\x00\x78" //...m.s.t.s.c.a.x |
+/* 0080 */ "\x00\x2e\x00\x64\x00\x6c\x00\x6c\x00\x00\x00\xc4\xff\xff\xff\x50" //...d.l.l.......P |
+/* 0090 */ "\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20\x00\x4d\x00\x61" //.a.r.i.s.,. .M.a |
+/* 00a0 */ "\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00\x00\x00\x00\x00" //.d.r.i.d........ |
+/* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 00d0 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 00e0 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
+/* 00f0 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
 /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0110 */ "\x00\x0a\x00\x00\x00\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0120 */ "\x00\x00\x00\x50\x00\x61\x00\x72\x00\x69\x00\x73\x00\x2c\x00\x20" //...P.a.r.i.s.,.  |
-/* 0130 */ "\x00\x4d\x00\x61\x00\x64\x00\x72\x00\x69\x00\x64\x00\x00\x00\x00" //.M.a.d.r.i.d.... |
-/* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-/* 0160 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
-/* 0170 */ "\x00\x00\x00\xc4\xff\xff\xff\x00\x00\x00\x00\x07\x00\x00\x00\x00" //................ |
-/* 0180 */ "\x00\x64\x00\x00\x00"                                             //.d... |
-// Dump done on RDP Client (5) 389 bytes |
+/* 0110 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+/* 0120 */ "\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00" //................ |
+/* 0130 */ "\x00\x00\x00\xc4\xff\xff\xff\x02\x00\x00\x00\x01\x01\x00\x00\x00" //................ |
+/* 0140 */ "\x00\x64\x00\x00\x00"                                             //.d... |
+// Dump done on RDP Client (5) 325 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0xb3, 0x47, 0x0b, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G....@..... |
-// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x71, 0x00, 0x61, 0x00, 0x5c, 0x00, 0x61, 0x00, 0x64, 0x00, 0x6d, 0x00,  // ....q.a...a.d.m. |
-// /* 0020 */ 0x69, 0x00, 0x6e, 0x00, 0x69, 0x00, 0x73, 0x00, 0x74, 0x00, 0x72, 0x00, 0x61, 0x00, 0x74, 0x00,  // i.n.i.s.t.r.a.t. |
-// /* 0030 */ 0x65, 0x00, 0x75, 0x00, 0x72, 0x00, 0x40, 0x00, 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x32, 0x00,  // e.u.r.@.w.i.n.2. |
-// /* 0040 */ 0x6b, 0x00, 0x38, 0x00, 0x72, 0x00, 0x32, 0x00, 0x3a, 0x00, 0x72, 0x00, 0x64, 0x00, 0x70, 0x00,  // k.8.r.2.:.r.d.p. |
-// /* 0050 */ 0x3a, 0x00, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x1a, 0x00,  // :.x............. |
-// /* 0060 */ 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00, 0x37, 0x00,  // 1.0...1.0...4.7. |
-// /* 0070 */ 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00, 0x3a, 0x00,  // ..1.7.5...@.C.:. |
-// /* 0080 */ 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00,  // ..W.I.N.D.O.W.S. |
-// /* 0090 */ 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00, 0x33, 0x00,  // ..s.y.s.t.e.m.3. |
-// /* 00a0 */ 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00, 0x61, 0x00,  // 2...m.s.t.s.c.a. |
-// /* 00b0 */ 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff,  // x...d.l.l....... |
-// /* 00c0 */ 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00,  // P.a.r.i.s.,. .M. |
-// /* 00d0 */ 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // a.d.r.i.d....... |
-// /* 00e0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0xb3, 0x47, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // .....G.......... |
+// /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x1a, 0x00,  // ................ |
+// /* 0020 */ 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x30, 0x00, 0x2e, 0x00, 0x34, 0x00, 0x37, 0x00,  // 1.0...1.0...4.7. |
+// /* 0030 */ 0x2e, 0x00, 0x31, 0x00, 0x37, 0x00, 0x35, 0x00, 0x00, 0x00, 0x40, 0x00, 0x43, 0x00, 0x3a, 0x00,  // ..1.7.5...@.C.:. |
+// /* 0040 */ 0x5c, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00,  // ..W.I.N.D.O.W.S. |
+// /* 0050 */ 0x5c, 0x00, 0x73, 0x00, 0x79, 0x00, 0x73, 0x00, 0x74, 0x00, 0x65, 0x00, 0x6d, 0x00, 0x33, 0x00,  // ..s.y.s.t.e.m.3. |
+// /* 0060 */ 0x32, 0x00, 0x5c, 0x00, 0x6d, 0x00, 0x73, 0x00, 0x74, 0x00, 0x73, 0x00, 0x63, 0x00, 0x61, 0x00,  // 2...m.s.t.s.c.a. |
+// /* 0070 */ 0x78, 0x00, 0x2e, 0x00, 0x64, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff,  // x...d.l.l....... |
+// /* 0080 */ 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00, 0x20, 0x00, 0x4d, 0x00,  // P.a.r.i.s.,. .M. |
+// /* 0090 */ 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // a.d.r.i.d....... |
+// /* 00a0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00b0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00c0 */ 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 00d0 */ 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00,  // ....P.a.r.i.s.,. |
+// /* 00e0 */ 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00,  //  .M.a.d.r.i.d... |
 // /* 00f0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0100 */ 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x61, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x2c, 0x00,  // ....P.a.r.i.s.,. |
-// /* 0120 */ 0x20, 0x00, 0x4d, 0x00, 0x61, 0x00, 0x64, 0x00, 0x72, 0x00, 0x69, 0x00, 0x64, 0x00, 0x00, 0x00,  //  .M.a.d.r.i.d... |
-// /* 0130 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0140 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
-// /* 0150 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
-// /* 0160 */ 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00,  // ................ |
-// /* 0170 */ 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                                // ..d... |
+// /* 0100 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................ |
+// /* 0110 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00,  // ................ |
+// /* 0120 */ 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff, 0x02, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00,  // ................ |
+// /* 0130 */ 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,                                // ..d... |
 // RDP-5 Style logon |
 // Receiving from client InfoPacket |
 // InfoPacket::CodePage 0 |
-// InfoPacket::flags 0xb47b3 |
+// InfoPacket::flags 0x347b3 |
 // InfoPacket::flags:INFO_MOUSE yes |
 // InfoPacket::flags:INFO_DISABLECTRLALTDEL yes |
 // InfoPacket::flags:INFO_AUTOLOGON no |
@@ -2961,17 +2649,17 @@ const char indata[] =
 // InfoPacket::flags:INFO_LOGONERRORS yes |
 // InfoPacket::flags:INFO_MOUSE_HAS_WHEEL yes |
 // InfoPacket::flags:INFO_PASSWORD_IS_SC_PIN no |
-// InfoPacket::flags:INFO_NOAUDIOPLAYBACK yes |
+// InfoPacket::flags:INFO_NOAUDIOPLAYBACK no |
 // InfoPacket::flags:INFO_USING_SAVED_CREDS no |
 // InfoPacket::flags:RNS_INFO_AUDIOCAPTURE no |
 // InfoPacket::flags:RNS_INFO_VIDEO_DISABLE no |
 // InfoPacket::cbDomain 2 |
-// InfoPacket::cbUserName 66 |
+// InfoPacket::cbUserName 2 |
 // InfoPacket::cbPassword 2 |
 // InfoPacket::cbAlternateShell 2 |
 // InfoPacket::cbWorkingDir 2 |
 // InfoPacket::Domain  |
-// InfoPacket::UserName qa\administrateur@win2k8r2:rdp:x |
+// InfoPacket::UserName  |
 // InfoPacket::Password <hidden> |
 // InfoPacket::AlternateShell  |
 // InfoPacket::WorkingDir  |
@@ -2980,8 +2668,8 @@ const char indata[] =
 // InfoPacket::ExtendedInfoPacket::clientAddress 10.10.47.175 |
 // InfoPacket::ExtendedInfoPacket::cbClientDir 64 |
 // InfoPacket::ExtendedInfoPacket::clientDir C:\WINDOWS\system32\mstscax.dll |
-// InfoPacket::ExtendedInfoPacket::clientSessionId 0 |
-// InfoPacket::ExtendedInfoPacket::performanceFlags 7 |
+// InfoPacket::ExtendedInfoPacket::clientSessionId 2 |
+// InfoPacket::ExtendedInfoPacket::performanceFlags 257 |
 // InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen 0 |
 // InfoPacket::ExtendedInfoPacket::autoReconnectCookie  |
 // InfoPacket::ExtendedInfoPacket::reserved1 100 |
@@ -3006,7 +2694,7 @@ const char indata[] =
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond 0 |
 // InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds 0 |
-// client info: performance flags before=0x00000007 after=0x00000007 default=0x00000000 present=0x00000000 not-present=0x00000000 |
+// client info: performance flags before=0x00000101 after=0x00000101 default=0x00000000 present=0x00000000 not-present=0x00000000 |
 // Front Keyboard Layout = 0x40c |
 // Front::incoming::licencing not client_info.is_mce |
 // Front::incoming::licencing send_lic_initial |
@@ -3056,7 +2744,7 @@ const char indata[] =
 // /* 0150 */ "\x00"                                                             //. |
 // Sent dumped on RDP Client (5) 337 bytes |
 // Front::incoming::waiting for answer to lic_initial |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3068,26 +2756,26 @@ const char indata[] =
 // Dump done on RDP Client (5) 3 bytes |
 // Socket RDP Client (5) receiving 167 bytes |
 // Recv done on RDP Client (5) 167 bytes |
-/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\x6d\xef\x13" //...d....p....m.. |
-/* 0010 */ "\x83\x98\x00\x01\x00\x00\x00\x00\x00\x01\x03\xbb\x60\x33\xbc\x38" //............`3.8 |
-/* 0020 */ "\xc7\x41\xd7\xea\x6c\x5f\x95\x59\x78\xa5\xe3\xcd\x90\x28\x47\x63" //.A..l_.Yx....(Gc |
-/* 0030 */ "\xf0\x8e\x79\x98\x82\x60\xda\xfc\x5f\x88\x5f\x00\x00\x48\x00\xf9" //..y..`.._._..H.. |
-/* 0040 */ "\x0c\x32\x38\xcb\x3e\x0d\xa3\x9f\xaa\x08\xe9\x57\x03\xbe\xcf\x5d" //.28.>......W...] |
-/* 0050 */ "\x12\x49\xdc\xc9\x89\x67\x94\x27\x6b\x87\xf1\x4c\x5b\x9a\x7a\x60" //.I...g.'k..L[.z` |
-/* 0060 */ "\x3d\x21\x1e\x1a\x30\x6e\xc8\x1a\x1a\x32\xb5\xa4\x39\x5f\xef\x56" //=!..0n...2..9_.V |
-/* 0070 */ "\x6e\xed\x56\x09\x5d\x54\x7b\x77\xd7\x37\xab\x65\xc6\xe8\x00\x00" //n.V.]T{w.7.e.... |
+/* 0000 */ "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x9c\x80\x00\x4f\xc9\x13" //...d....p....O.. |
+/* 0010 */ "\x83\x98\x00\x01\x00\x00\x00\x00\x00\x01\x03\x5d\x5c\xd2\x6e\x06" //...........]..n. |
+/* 0020 */ "\x32\x5e\x9e\xdd\xd7\x3b\x49\xeb\x8f\x8d\xe5\xc4\xfe\xea\x18\xb9" //2^...;I......... |
+/* 0030 */ "\x89\x86\x4f\xab\xac\x89\x1a\x65\xc8\x32\x18\x00\x00\x48\x00\x67" //..O....e.2...H.g |
+/* 0040 */ "\x56\xd1\xec\x82\xb3\xfa\x7f\x54\xd7\x8f\x48\xd0\xef\x31\x81\xde" //V......T..H..1.. |
+/* 0050 */ "\x8f\x40\xe4\x3c\x9e\xa0\x61\x96\x8a\xcd\xa7\x22\x75\xc8\xf2\x67" //.@.<..a...."u..g |
+/* 0060 */ "\xae\x39\xcf\x4f\x85\x8f\xbb\xa8\x1c\x49\xf2\xa1\xbe\xce\x33\x62" //.9.O.....I....3b |
+/* 0070 */ "\xf3\x34\x0b\x59\x78\x4c\xa1\x98\x65\x30\x0e\x96\x18\xc1\x1b\x00" //.4.YxL..e0...... |
 /* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x0f\x00\x41\x64\x6d\x69\x6e" //...........Admin |
 /* 0090 */ "\x69\x73\x74\x72\x61\x74\x65\x75\x72\x00\x10\x00\x09\x00\x52\x44" //istrateur.....RD |
 /* 00a0 */ "\x50\x2d\x54\x45\x53\x54\x00"                                     //P-TEST. |
 // Dump done on RDP Client (5) 167 bytes |
 // sec decrypted payload: |
-// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0xbb, 0x60, 0x33, 0xbc,  // .............`3. |
-// /* 0010 */ 0x38, 0xc7, 0x41, 0xd7, 0xea, 0x6c, 0x5f, 0x95, 0x59, 0x78, 0xa5, 0xe3, 0xcd, 0x90, 0x28, 0x47,  // 8.A..l_.Yx....(G |
-// /* 0020 */ 0x63, 0xf0, 0x8e, 0x79, 0x98, 0x82, 0x60, 0xda, 0xfc, 0x5f, 0x88, 0x5f, 0x00, 0x00, 0x48, 0x00,  // c..y..`.._._..H. |
-// /* 0030 */ 0xf9, 0x0c, 0x32, 0x38, 0xcb, 0x3e, 0x0d, 0xa3, 0x9f, 0xaa, 0x08, 0xe9, 0x57, 0x03, 0xbe, 0xcf,  // ..28.>......W... |
-// /* 0040 */ 0x5d, 0x12, 0x49, 0xdc, 0xc9, 0x89, 0x67, 0x94, 0x27, 0x6b, 0x87, 0xf1, 0x4c, 0x5b, 0x9a, 0x7a,  // ].I...g.'k..L[.z |
-// /* 0050 */ 0x60, 0x3d, 0x21, 0x1e, 0x1a, 0x30, 0x6e, 0xc8, 0x1a, 0x1a, 0x32, 0xb5, 0xa4, 0x39, 0x5f, 0xef,  // `=!..0n...2..9_. |
-// /* 0060 */ 0x56, 0x6e, 0xed, 0x56, 0x09, 0x5d, 0x54, 0x7b, 0x77, 0xd7, 0x37, 0xab, 0x65, 0xc6, 0xe8, 0x00,  // Vn.V.]T{w.7.e... |
+// /* 0000 */ 0x13, 0x83, 0x98, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x5d, 0x5c, 0xd2, 0x6e,  // ............]..n |
+// /* 0010 */ 0x06, 0x32, 0x5e, 0x9e, 0xdd, 0xd7, 0x3b, 0x49, 0xeb, 0x8f, 0x8d, 0xe5, 0xc4, 0xfe, 0xea, 0x18,  // .2^...;I........ |
+// /* 0020 */ 0xb9, 0x89, 0x86, 0x4f, 0xab, 0xac, 0x89, 0x1a, 0x65, 0xc8, 0x32, 0x18, 0x00, 0x00, 0x48, 0x00,  // ...O....e.2...H. |
+// /* 0030 */ 0x67, 0x56, 0xd1, 0xec, 0x82, 0xb3, 0xfa, 0x7f, 0x54, 0xd7, 0x8f, 0x48, 0xd0, 0xef, 0x31, 0x81,  // gV......T..H..1. |
+// /* 0040 */ 0xde, 0x8f, 0x40, 0xe4, 0x3c, 0x9e, 0xa0, 0x61, 0x96, 0x8a, 0xcd, 0xa7, 0x22, 0x75, 0xc8, 0xf2,  // ..@.<..a...."u.. |
+// /* 0050 */ 0x67, 0xae, 0x39, 0xcf, 0x4f, 0x85, 0x8f, 0xbb, 0xa8, 0x1c, 0x49, 0xf2, 0xa1, 0xbe, 0xce, 0x33,  // g.9.O.....I....3 |
+// /* 0060 */ 0x62, 0xf3, 0x34, 0x0b, 0x59, 0x78, 0x4c, 0xa1, 0x98, 0x65, 0x30, 0x0e, 0x96, 0x18, 0xc1, 0x1b,  // b.4.YxL..e0..... |
 // /* 0070 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x41, 0x64, 0x6d, 0x69,  // ............Admi |
 // /* 0080 */ 0x6e, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x75, 0x72, 0x00, 0x10, 0x00, 0x09, 0x00, 0x52,  // nistrateur.....R |
 // /* 0090 */ 0x44, 0x50, 0x2d, 0x54, 0x45, 0x53, 0x54, 0x00,                          // DP-TEST. |
@@ -3204,7 +2892,7 @@ const char indata[] =
 // Input caps::keyboardType 0 |
 // Input caps::keyboardSubType 0 |
 // Input caps::keyboardFunctionKey 0 |
-// Input caps::imeFileName 1352817568 |
+// Input caps::imeFileName 7224624 |
 // Sec clear payload to send: |
 // /* 0000 */ 0x20, 0x01, 0x11, 0x00, 0xe9, 0x03, 0x02, 0x00, 0x01, 0x00, 0x04, 0x00, 0x0a, 0x01, 0x52, 0x44,  //  .............RD |
 // /* 0010 */ 0x50, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x01, 0x00, 0x03, 0x00, 0x00, 0x02,  // P............... |
@@ -3246,7 +2934,7 @@ const char indata[] =
 // /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"     //............... |
 // Sent dumped on RDP Client (5) 303 bytes |
 // Front::incoming::ACTIVATED (new license request) |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3450,6 +3138,30 @@ const char indata[] =
 // Front::capability 11 / 19 |
 // Front::capability 12 / 19 |
 // Receiving from client CAPSTYPE_GLYPHCACHE |
+// Receiving from client GlyphCache caps (52 bytes) |
+// GlyphCache caps::GlyphCache[0].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[0].CacheMaximumCellSize=4 |
+// GlyphCache caps::GlyphCache[1].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[1].CacheMaximumCellSize=4 |
+// GlyphCache caps::GlyphCache[2].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[2].CacheMaximumCellSize=8 |
+// GlyphCache caps::GlyphCache[3].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[3].CacheMaximumCellSize=8 |
+// GlyphCache caps::GlyphCache[4].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[4].CacheMaximumCellSize=16 |
+// GlyphCache caps::GlyphCache[5].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[5].CacheMaximumCellSize=32 |
+// GlyphCache caps::GlyphCache[6].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[6].CacheMaximumCellSize=64 |
+// GlyphCache caps::GlyphCache[7].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[7].CacheMaximumCellSize=128 |
+// GlyphCache caps::GlyphCache[8].CacheEntries=254 |
+// GlyphCache caps::GlyphCache[8].CacheMaximumCellSize=256 |
+// GlyphCache caps::GlyphCache[9].CacheEntries=64 |
+// GlyphCache caps::GlyphCache[9].CacheMaximumCellSize=2048 |
+// GlyphCache caps::FragCache 16777472 |
+// GlyphCache caps::GlyphSupportLevel 3 |
+// GlyphCache caps::pad2octets 0 |
 // Front::capability 13 / 19 |
 // Receiving from client CAPSTYPE_BRUSH |
 // Receiving from client BrushCache caps (8 bytes) |
@@ -3469,14 +3181,13 @@ const char indata[] =
 // Front::capability 18 / 19 |
 // Receiving from client MultifragmentUpdate caps (8 bytes) |
 // MultifragmentUpdate caps::MaxRequestSize 0 |
-// process_confirm_active done p=0x7fff50ab6e57 end=0x7fff50ab6e57 |
+// process_confirm_active done p=0x7fff00764bc7 end=0x7fff00764bc7 |
 // Front::reset::use_bitmap_comp=1 |
 // Front::reset::use_compact_packets=1 |
 // Front::reset::bitmap_cache_version=0 |
 // Front: Use RDP 5.0 Bulk compression |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[0](2000) used=2 free=16276 |
 // Front received CONFIRMACTIVEPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3512,7 +3223,7 @@ const char indata[] =
 // send_synchronize done |
 // process_data done |
 // Front received DATAPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3548,7 +3259,7 @@ const char indata[] =
 // send_control done. action=4 |
 // process_data done |
 // Front received DATAPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3584,7 +3295,7 @@ const char indata[] =
 // send_control done. action=2 |
 // process_data done |
 // Front received DATAPDU done |
-// Front::incoming() |
+// Front::incoming |
 // Front::incoming::ACTIVATE_AND_PROCESS_DATA |
 // Socket RDP Client (5) receiving 1 bytes |
 // Recv done on RDP Client (5) 1 bytes |
@@ -3639,176 +3350,56 @@ const char indata[] =
 // Sent dumped on RDP Client (5) 205 bytes |
 // send_fontmap done |
 // Front::send_data_update_sync |
-// Front::send_data_update_sync: fast-path |
+// send_server_update: fastpath_support=yes compression_support=yes shareId=65538 encryptionLevel=0 initiator=0 type=3 data_extra=0 |
 // Sending on RDP Client (5) 5 bytes |
 // /* 0000 */ "\x00\x05\x03\x00\x00"                                             //..... |
 // Sent dumped on RDP Client (5) 5 bytes |
+// send_server_update done |
 // --------------> UP AND RUNNING <---------------- |
 // asking for selector |
 // process_data done |
 // Front received DATAPDU done |
-// Front::begin_update() |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](23) used=1035 free=15243 |
-// order(10 clip(0,0,1,1)):opaquerect(rect(0,0,1024,768) color=0x00ffff) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](23) used=1044 free=15234 |
-// order(10 clip(0,0,1,1)):opaquerect(rect(5,5,1014,758) color=0x00f800) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](23) used=1052 free=15226 |
-// order(10 clip(0,0,1,1)):opaquerect(rect(10,10,1004,748) color=0x0007e0) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](23) used=1060 free=15218 |
-// order(10 clip(0,0,1,1)):opaquerect(rect(15,15,994,738) color=0x00001f) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](23) used=1068 free=15210 |
-// order(10 clip(0,0,1,1)):opaquerect(rect(20,20,984,728) color=0x000000) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[6](23) used=1075 free=15203 |
-// order(10 clip(0,0,1,1)):opaquerect(rect(30,30,964,708) color=0x000273) |
+// hostname=RDP-TEST |
+// Front::begin_update |
 // Widget_load: image file [./tests/fixtures/Philips_PM5544_640.png] is PNG file |
 // front::draw:draw_tile((192, 144, 64, 64) (0, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[7](8208) used=1083 free=15195 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[8](30) used=1211 free=15067 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=0) |
 // front::draw:draw_tile((256, 144, 64, 64) (64, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[9](8208) used=1225 free=15053 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[10](30) used=1376 free=14902 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=1) |
 // front::draw:draw_tile((320, 144, 64, 64) (128, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[11](8208) used=1382 free=14896 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[12](30) used=1489 free=14789 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=2) |
 // front::draw:draw_tile((384, 144, 64, 64) (192, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[13](8208) used=1495 free=14783 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[14](30) used=1937 free=14341 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=3) |
 // front::draw:draw_tile((448, 144, 64, 64) (256, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[15](8208) used=1943 free=14335 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[16](30) used=2195 free=14083 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=4) |
 // front::draw:draw_tile((512, 144, 64, 64) (320, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[17](8208) used=2201 free=14077 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[18](30) used=2464 free=13814 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=5) |
 // front::draw:draw_tile((576, 144, 64, 64) (384, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[19](8208) used=2470 free=13808 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[20](30) used=2924 free=13354 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=6) |
 // front::draw:draw_tile((640, 144, 64, 64) (448, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[21](8208) used=2930 free=13348 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[22](30) used=3023 free=13255 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=7) |
 // front::draw:draw_tile((704, 144, 64, 64) (512, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[23](8208) used=3029 free=13249 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[24](30) used=3183 free=13095 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=8) |
 // front::draw:draw_tile((768, 144, 64, 64) (576, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[25](8208) used=3189 free=13089 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[26](30) used=3334 free=12944 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,144,64,64) rop=cc srcx=0 srcy=0 cache_idx=9) |
 // front::draw:draw_tile((192, 208, 64, 64) (0, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[27](8208) used=3340 free=12938 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[28](30) used=3443 free=12835 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=10) |
 // front::draw:draw_tile((256, 208, 64, 64) (64, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[29](8208) used=3452 free=12826 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[30](30) used=3585 free=12693 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=11) |
 // front::draw:draw_tile((320, 208, 64, 64) (128, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[31](8208) used=3591 free=12687 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[32](30) used=4143 free=12135 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=12) |
 // front::draw:draw_tile((384, 208, 64, 64) (192, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[33](8208) used=4149 free=12129 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[34](30) used=4262 free=12016 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=13) |
 // front::draw:draw_tile((448, 208, 64, 64) (256, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[35](8208) used=4268 free=12010 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[36](30) used=4308 free=11970 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=14) |
 // front::draw:draw_tile((512, 208, 64, 64) (320, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[37](8208) used=4314 free=11964 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[38](30) used=4355 free=11923 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=15) |
 // front::draw:draw_tile((576, 208, 64, 64) (384, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[39](8208) used=4361 free=11917 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[40](30) used=4452 free=11826 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=16) |
 // front::draw:draw_tile((640, 208, 64, 64) (448, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[41](8208) used=4458 free=11820 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[42](30) used=5038 free=11240 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=17) |
 // front::draw:draw_tile((704, 208, 64, 64) (512, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[43](8208) used=5044 free=11234 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[44](30) used=5177 free=11101 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=18) |
 // front::draw:draw_tile((768, 208, 64, 64) (576, 64, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[45](8208) used=5183 free=11095 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[46](30) used=5289 free=10989 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,208,64,64) rop=cc srcx=0 srcy=0 cache_idx=19) |
 // front::draw:draw_tile((192, 272, 64, 64) (0, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[47](8208) used=5295 free=10983 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[48](30) used=5400 free=10878 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=20) |
 // front::draw:draw_tile((256, 272, 64, 64) (64, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[49](8208) used=5409 free=10869 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[50](30) used=5807 free=10471 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=21) |
 // front::draw:draw_tile((320, 272, 64, 64) (128, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[51](8208) used=5813 free=10465 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[52](30) used=5959 free=10319 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=22) |
 // front::draw:draw_tile((384, 272, 64, 64) (192, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[53](8208) used=5965 free=10313 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[54](30) used=6038 free=10240 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=23) |
 // front::draw:draw_tile((448, 272, 64, 64) (256, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[55](8208) used=6044 free=10234 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[56](30) used=6118 free=10160 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=24) |
 // front::draw:draw_tile((512, 272, 64, 64) (320, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[57](8208) used=6124 free=10154 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[58](30) used=6193 free=10085 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=25) |
 // front::draw:draw_tile((576, 272, 64, 64) (384, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[59](8208) used=6199 free=10079 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[60](30) used=6270 free=10008 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=26) |
 // front::draw:draw_tile((640, 272, 64, 64) (448, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[61](8208) used=6276 free=10002 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[62](30) used=6419 free=9859 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=27) |
 // front::draw:draw_tile((704, 272, 64, 64) (512, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[63](8208) used=6425 free=9853 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[64](30) used=6844 free=9434 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=28) |
 // front::draw:draw_tile((768, 272, 64, 64) (576, 128, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[65](8208) used=6850 free=9428 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[66](30) used=6958 free=9320 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,272,64,64) rop=cc srcx=0 srcy=0 cache_idx=29) |
 // front::draw:draw_tile((192, 336, 64, 64) (0, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[67](8208) used=6964 free=9314 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[68](30) used=7049 free=9229 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=30) |
 // front::draw:draw_tile((256, 336, 64, 64) (64, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[69](8208) used=7058 free=9220 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[70](30) used=7498 free=8780 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=31) |
 // front::draw:draw_tile((320, 336, 64, 64) (128, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[71](8208) used=7504 free=8774 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[72](30) used=7618 free=8660 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=32) |
 // front::draw:draw_tile((384, 336, 64, 64) (192, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[73](8208) used=7624 free=8654 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[74](30) used=7775 free=8503 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=33) |
 // front::draw:draw_tile((448, 336, 64, 64) (256, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[75](8208) used=7781 free=8497 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[76](30) used=7955 free=8323 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=34) |
 // front::draw:draw_tile((512, 336, 64, 64) (320, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[77](8208) used=7961 free=8317 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[78](30) used=8130 free=8148 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=35) |
 // front::draw:draw_tile((576, 336, 64, 64) (384, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[79](8208) used=8136 free=8142 |
-// GraphicsUpdatePDU::flush_orders: order_count=79 offset=0 |
-// GraphicsUpdatePDU::flush_orders: fast-path |
+// send_server_update: fastpath_support=yes compression_support=yes shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=79 |
 // Sending on RDP Client (5) 5520 bytes |
 // /* 0000 */ "\x00\x95\x90\x80\x61\x89\x15\x4f\x00\x03\xbe\x01\x80\x00\x00\xfc" //....a..O........ |
 // /* 0010 */ "\x39\x00\x00\x55\xf8\x89\x57\xc4\x5f\xfe\x20\x00\x93\xe8\x3e\x22" //9..U..W._. ...>" |
@@ -4156,136 +3747,40 @@ const char indata[] =
 // /* 1570 */ "\xa5\x1a\xa9\x50\x04\x05\x65\x30\x17\x69\x8d\x08\x94\xb6\x03\x37" //...P..e0.i.....7 |
 // /* 1580 */ "\x9c\xd1\xc5\x65\x22\x3d\x9e\x0c\x01\xdd\x9e\x1c\x08\xe8\x8c\x00" //...e"=.......... |
 // Sent dumped on RDP Client (5) 5520 bytes |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](30) used=151 free=16127 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=36) |
+// send_server_update done |
 // front::draw:draw_tile((640, 336, 64, 64) (448, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](8208) used=157 free=16121 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](30) used=267 free=16011 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=37) |
 // front::draw:draw_tile((704, 336, 64, 64) (512, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](8208) used=273 free=16005 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](30) used=723 free=15555 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=38) |
 // front::draw:draw_tile((768, 336, 64, 64) (576, 192, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[6](8208) used=729 free=15549 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[7](30) used=814 free=15464 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,336,64,64) rop=cc srcx=0 srcy=0 cache_idx=39) |
 // front::draw:draw_tile((192, 400, 64, 64) (0, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[8](8208) used=820 free=15458 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[9](30) used=913 free=15365 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=40) |
 // front::draw:draw_tile((256, 400, 64, 64) (64, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[10](8208) used=922 free=15356 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[11](30) used=1372 free=14906 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=41) |
 // front::draw:draw_tile((320, 400, 64, 64) (128, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[12](8208) used=1378 free=14900 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[13](30) used=1633 free=14645 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=42) |
 // front::draw:draw_tile((384, 400, 64, 64) (192, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[14](8208) used=1639 free=14639 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[15](30) used=1938 free=14340 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=43) |
 // front::draw:draw_tile((448, 400, 64, 64) (256, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[16](8208) used=1944 free=14334 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[17](30) used=2267 free=14011 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=44) |
 // front::draw:draw_tile((512, 400, 64, 64) (320, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[18](8208) used=2273 free=14005 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[19](30) used=2594 free=13684 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=45) |
 // front::draw:draw_tile((576, 400, 64, 64) (384, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[20](8208) used=2600 free=13678 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[21](30) used=2899 free=13379 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=46) |
 // front::draw:draw_tile((640, 400, 64, 64) (448, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[22](8208) used=2905 free=13373 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[23](30) used=3143 free=13135 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=47) |
 // front::draw:draw_tile((704, 400, 64, 64) (512, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[24](8208) used=3149 free=13129 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[25](30) used=3584 free=12694 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=48) |
 // front::draw:draw_tile((768, 400, 64, 64) (576, 256, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[26](8208) used=3590 free=12688 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[27](30) used=3682 free=12596 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,400,64,64) rop=cc srcx=0 srcy=0 cache_idx=49) |
 // front::draw:draw_tile((192, 464, 64, 64) (0, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[28](8208) used=3688 free=12590 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[29](30) used=3808 free=12470 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=50) |
 // front::draw:draw_tile((256, 464, 64, 64) (64, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[30](8208) used=3817 free=12461 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[31](30) used=4093 free=12185 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=51) |
 // front::draw:draw_tile((320, 464, 64, 64) (128, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[32](8208) used=4099 free=12179 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[33](30) used=4605 free=11673 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=52) |
 // front::draw:draw_tile((384, 464, 64, 64) (192, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[34](8208) used=4611 free=11667 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[35](30) used=4817 free=11461 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=53) |
 // front::draw:draw_tile((448, 464, 64, 64) (256, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[36](8208) used=4823 free=11455 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[37](30) used=4985 free=11293 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=54) |
 // front::draw:draw_tile((512, 464, 64, 64) (320, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[38](8208) used=4991 free=11287 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[39](30) used=5151 free=11127 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=55) |
 // front::draw:draw_tile((576, 464, 64, 64) (384, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[40](8208) used=5157 free=11121 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[41](30) used=5348 free=10930 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=56) |
 // front::draw:draw_tile((640, 464, 64, 64) (448, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[42](8208) used=5354 free=10924 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[43](30) used=5806 free=10472 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=57) |
 // front::draw:draw_tile((704, 464, 64, 64) (512, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[44](8208) used=5812 free=10466 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[45](30) used=6071 free=10207 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=58) |
 // front::draw:draw_tile((768, 464, 64, 64) (576, 320, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[46](8208) used=6077 free=10201 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[47](30) used=6197 free=10081 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,464,64,64) rop=cc srcx=0 srcy=0 cache_idx=59) |
 // front::draw:draw_tile((192, 528, 64, 64) (0, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[48](8208) used=6203 free=10075 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[49](30) used=6327 free=9951 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=60) |
 // front::draw:draw_tile((256, 528, 64, 64) (64, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[50](8208) used=6336 free=9942 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[51](30) used=6474 free=9804 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=61) |
 // front::draw:draw_tile((320, 528, 64, 64) (128, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[52](8208) used=6480 free=9798 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[53](30) used=6834 free=9444 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=62) |
 // front::draw:draw_tile((384, 528, 64, 64) (192, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[54](8208) used=6840 free=9438 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[55](30) used=7367 free=8911 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=63) |
 // front::draw:draw_tile((448, 528, 64, 64) (256, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[56](8208) used=7373 free=8905 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[57](30) used=7455 free=8823 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=64) |
 // front::draw:draw_tile((512, 528, 64, 64) (320, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[58](8208) used=7461 free=8817 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[59](30) used=7520 free=8758 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=65) |
 // front::draw:draw_tile((576, 528, 64, 64) (384, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[60](8208) used=7526 free=8752 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[61](30) used=8005 free=8273 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=66) |
 // front::draw:draw_tile((640, 528, 64, 64) (448, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[62](8208) used=8011 free=8267 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[63](30) used=8326 free=7952 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=67) |
 // front::draw:draw_tile((704, 528, 64, 64) (512, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[64](8208) used=8332 free=7946 |
-// GraphicsUpdatePDU::flush_orders: order_count=64 offset=0 |
-// GraphicsUpdatePDU::flush_orders: fast-path |
+// send_server_update: fastpath_support=yes compression_support=yes shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=64 |
 // Sending on RDP Client (5) 5229 bytes |
 // /* 0000 */ "\x00\x94\x6d\x80\x21\x66\x14\x40\x00\x03\x84\x79\xc7\x18\x36\x15" //..m.!f.@...y..6. |
 // /* 0010 */ "\xfe\x0c\xf9\xb7\x5f\x09\x38\x10\x38\x58\xc7\x9a\x76\xf3\x2c\x70" //...._.8.8X..v.,p |
@@ -4615,126 +4110,30 @@ const char indata[] =
 // /* 1450 */ "\x3e\x3e\x4c\xfd\x28\xfc\x4c\x04\x07\x7f\xa6\x3e\x3b\xfb\xdf\x81" //>>L.(.L....>;... |
 // /* 1460 */ "\x6f\xc2\x77\xd4\x0d\xdf\xa2\x4f\xb8\x00\xc2\x18\x00"             //o.w....O..... |
 // Sent dumped on RDP Client (5) 5229 bytes |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](30) used=141 free=16137 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=68) |
+// send_server_update done |
 // front::draw:draw_tile((768, 528, 64, 64) (576, 384, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](8208) used=147 free=16131 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](30) used=277 free=16001 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,528,64,64) rop=cc srcx=0 srcy=0 cache_idx=69) |
 // front::draw:draw_tile((192, 592, 64, 32) (0, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](4112) used=283 free=15995 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](30) used=355 free=15923 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(192,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=70) |
 // front::draw:draw_tile((256, 592, 64, 32) (64, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[6](4112) used=366 free=15912 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[7](30) used=449 free=15829 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(256,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=71) |
 // front::draw:draw_tile((320, 592, 64, 32) (128, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[8](4112) used=455 free=15823 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[9](30) used=514 free=15764 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(320,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=72) |
 // front::draw:draw_tile((384, 592, 64, 32) (192, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[10](4112) used=520 free=15758 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[11](30) used=617 free=15661 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(384,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=73) |
 // front::draw:draw_tile((448, 592, 64, 32) (256, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[12](4112) used=623 free=15655 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[13](30) used=881 free=15397 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(448,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=74) |
 // front::draw:draw_tile((512, 592, 64, 32) (320, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[14](4112) used=887 free=15391 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[15](30) used=1155 free=15123 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(512,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=75) |
 // front::draw:draw_tile((576, 592, 64, 32) (384, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[16](4112) used=1161 free=15117 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[17](30) used=1262 free=15016 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(576,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=76) |
 // front::draw:draw_tile((640, 592, 64, 32) (448, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[18](4112) used=1268 free=15010 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[19](30) used=1321 free=14957 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(640,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=77) |
 // front::draw:draw_tile((704, 592, 64, 32) (512, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[20](4112) used=1327 free=14951 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[21](30) used=1411 free=14867 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(704,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=78) |
 // front::draw:draw_tile((768, 592, 64, 32) (576, 448, 64, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[22](4112) used=1417 free=14861 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[23](30) used=1498 free=14780 |
-// order(13 clip(0,0,1,1)):memblt(cache_id=2 rect(768,592,64,32) rop=cc srcx=0 srcy=0 cache_idx=79) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[24](32) used=1504 free=14774 |
-// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=200 starty=1198 endx=200 endy=145 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[25](32) used=1532 free=14746 |
-// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=200 starty=145 endx=200 endy=1198 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[26](32) used=1538 free=14740 |
-// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=201 starty=1198 endx=200 endy=145 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[27](32) used=1546 free=14732 |
-// order(9 clip(200,145,1,110)):lineto(back_mode=01 startx=200 starty=145 endx=201 endy=1198 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[28](32) used=1556 free=14722 |
-// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=1198 starty=200 endx=145 endy=200 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[29](32) used=1571 free=14707 |
-// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=145 starty=200 endx=1198 endy=200 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[30](32) used=1577 free=14701 |
-// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=1198 starty=201 endx=145 endy=200 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[31](32) used=1585 free=14693 |
-// order(9 clip(145,200,110,1)):lineto(back_mode=01 startx=145 starty=200 endx=1198 endy=201 rop2=13 back_color=000000pen.style=0 pen.width=1 pen.color=00f800  |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[32](82) used=1595 free=14683 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[33](66) used=1661 free=14617 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[34](66) used=1711 free=14567 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[35](66) used=1761 free=14517 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[36](66) used=1811 free=14467 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[37](20) used=1861 free=14417 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[38](297) used=1881 free=14397 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[39](66) used=1931 free=14347 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[40](66) used=1981 free=14297 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[41](66) used=2031 free=14247 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[42](297) used=2081 free=14197 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[43](82) used=2113 free=14165 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[44](66) used=2179 free=14099 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[45](66) used=2229 free=14049 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[46](297) used=2279 free=13999 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[47](82) used=2311 free=13967 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[48](66) used=2377 free=13901 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[49](66) used=2427 free=13851 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[50](297) used=2477 free=13801 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[51](66) used=2509 free=13769 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[52](66) used=2559 free=13719 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[53](66) used=2609 free=13669 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[54](297) used=2659 free=13619 |
 // Widget_load: image file [./tests/fixtures/xrdp24b-redemption.png] is PNG file |
 // front::draw:draw_tile((738, 613, 64, 64) (0, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[55](8208) used=2694 free=13584 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[56](30) used=3172 free=13106 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(738,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=80) |
 // front::draw:draw_tile((802, 613, 64, 64) (64, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[57](8208) used=3181 free=13097 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[58](30) used=3892 free=12386 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(802,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=81) |
 // front::draw:draw_tile((866, 613, 64, 64) (128, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[59](8208) used=3898 free=12380 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[60](30) used=4669 free=11609 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(866,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=82) |
 // front::draw:draw_tile((930, 613, 64, 64) (192, 0, 64, 64)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[61](8208) used=4675 free=11603 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[62](30) used=5357 free=10921 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(930,613,64,64) rop=cc srcx=0 srcy=0 cache_idx=83) |
 // front::draw:draw_tile((738, 677, 64, 61) (0, 64, 64, 61)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[63](7824) used=5363 free=10915 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[64](30) used=6302 free=9976 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(738,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=84) |
 // front::draw:draw_tile((802, 677, 64, 61) (64, 64, 64, 61)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[65](7824) used=6313 free=9965 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[66](30) used=7625 free=8653 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(802,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=85) |
 // front::draw:draw_tile((866, 677, 64, 61) (128, 64, 64, 61)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[67](7824) used=7631 free=8647 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[68](30) used=9027 free=7251 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(866,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=86) |
 // front::draw:draw_tile((930, 677, 64, 61) (192, 64, 64, 61)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[69](7824) used=9033 free=7245 |
-// GraphicsUpdatePDU::flush_orders: order_count=69 offset=0 |
-// GraphicsUpdatePDU::flush_orders: fast-path |
-// Sending on RDP Client (5) 6453 bytes |
-// /* 0000 */ "\x00\x99\x35\x80\x21\x2e\x19\x45\x00\x03\x7e\xe4\x53\x8b\xe0\x02" //..5.!..E..~.S... |
+// send_server_update: fastpath_support=yes compression_support=yes shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=69 |
+// Sending on RDP Client (5) 6454 bytes |
+// /* 0000 */ "\x00\x99\x36\x80\x21\x2f\x19\x45\x00\x03\x7e\xe4\x53\x8b\xe0\x02" //..6.!/.E..~.S... |
 // /* 0010 */ "\x26\x00\x9a\xcf\xb4\x6e\xfd\xa9\xe3\x80\x92\xa1\x81\x52\x58\xab" //&....n.......RX. |
 // /* 0020 */ "\xfb\x83\x80\xe2\x87\xc5\x8d\x82\x14\x26\x5f\x4d\xed\x27\x10\x17" //.........&_M.'.. |
 // /* 0030 */ "\xb9\x25\x00\x14\x85\xd3\xb3\xe3\xb1\x44\xe0\x0e\x69\x93\x8b\xe0" //.%.......D..i... |
@@ -4796,363 +4195,355 @@ const char indata[] =
 // /* 03b0 */ "\xe3\x25\xc0\x9f\x3a\x03\x40\x40\x2f\x00\x0c\xa2\x91\x1f\x9e\x65" //.%..:.@@/......e |
 // /* 03c0 */ "\x16\xa4\xfc\x64\x44\x01\x94\x7b\xec\xc7\xcc\x84\x51\xeb\x85\x24" //...dD..{....Q..$ |
 // /* 03d0 */ "\xdc\xda\x95\xfa\xaa\x90\x00\xca\x15\xf9\xe4\x3a\x5c\x09\x49\xfa" //...........:..I. |
-// /* 03e0 */ "\x06\x51\xef\xa9\x1f\x32\x00\xcd\x71\x8b\x80\x0f\x07\x51\x80\x2f" //.Q...2..q....Q./ |
-// /* 03f0 */ "\x97\xfb\x85\xfc\x63\x16\x24\xbe\x0e\x38\x38\xed\xf0\xc0\x88\x80" //....c.$..88..... |
-// /* 0400 */ "\x00\x92\x4f\x87\x00\x52\x8f\x87\x00\x22\x1f\x0e\x3e\x0e\x80\x64" //..O..R..."..>..d |
-// /* 0410 */ "\xbe\x02\xa0\x1f\x01\x48\x87\x80\xa4\x13\xe1\x58\x2d\x00\x18\x80" //.....H.....X-... |
-// /* 0420 */ "\x13\xe1\x63\xf6\x5f\x06\x7f\x96\x00\x5f\xcb\x3f\xe9\x1f\x06\x3f" //..c._...._.?...? |
-// /* 0430 */ "\xb4\x7c\x2c\xbe\x0e\x1f\xcb\x00\x3f\xe5\xaf\xee\xa0\xff\x88\xf8" //.|,.....?....... |
-// /* 0440 */ "\x58\x60\xd4\xc7\xc1\xbf\xe5\x80\x27\xf2\xdf\xe0\xc0\x1d\x00\x19" //X`......'....... |
-// /* 0450 */ "\x80\x10\x80\x1e\xc0\x08\x00\x0d\xd0\x7d\xf4\x5f\x06\x40\xff\xec" //.........}._.@.. |
-// /* 0460 */ "\x03\x80\x00\x84\x04\x40\x42\x25\x52\xa5\x5f\x85\x21\x23\x75\xb3" //.....@B%R._.!#u. |
-// /* 0470 */ "\xf3\xd0\x70\x30\x1e\xa4\x41\xef\x84\x41\xe1\x24\xf9\x18\x40\x7e" //..p0..A..A.$..@~ |
-// /* 0480 */ "\xfb\xe1\x40\xf7\xcc\x60\xd9\xd0\x08\x58\x10\x40\x18\x18\x20\x2f" //..@..`...X.@.. / |
-// /* 0490 */ "\x8e\x30\x05\xf1\xc6\xe0\xf4\x0f\x61\x47\x8d\x94\x00\x44\x0f\x91" //.0......aG...D.. |
-// /* 04a0 */ "\x00\x9f\x67\x0f\x35\x62\x0d\xfc\xb4\x20\xf8\x54\x07\x60\xf3\x54" //..g.5b... .T.`.T |
-// /* 04b0 */ "\x7c\x28\x06\x60\x03\xb0\x7d\x87\xc1\x9f\xe5\x80\x3f\xf2\xd3\xe0" //|(.`..}.....?... |
-// /* 04c0 */ "\xf6\x80\xc4\x0e\xcc\x38\x76\x0c\x80\x0f\x80\x10\xbe\x35\xa1\x00" //.....8v......5.. |
-// /* 04d0 */ "\x05\x02\x80\x02\x04\x03\x04\x03\x84\x03\x82\x70\xc6\xc0\x23\xc2" //...........p..#. |
-// /* 04e0 */ "\x53\xc3\x1b\x50\x1b\x80\x00\x10\x47\x01\xb7\xc3\x93\x8f\xe4\xf8" //S..P....G....... |
-// /* 04f0 */ "\x71\xf4\x9f\x61\xf0\x74\xf2\xa6\x01\x3e\x02\x9f\x2a\x6c\x0b\x00" //q..a.t...>..*l.. |
-// /* 0500 */ "\x06\xff\xcf\x85\x87\xc1\xc3\xf9\x60\x15\xfc\xb9\x38\x7c\x72\xfa" //........`...8|r. |
-// /* 0510 */ "\x1a\x2c\x00\xfd\x90\x88\xa0\x0a\xdf\x1a\xd5\x80\x02\xb0\xdf\x28" //.,.............( |
-// /* 0520 */ "\x28\x10\x14\x10\x20\x28\x23\xd0\xd8\x05\xf8\x4a\x7d\x0d\xa8\x3d" //(... (#....J}..= |
-// /* 0530 */ "\x80\x03\x81\x93\xe1\xd7\xcc\xdf\xe0\xe9\xe5\x4c\x03\x3c\x05\x3e" //...........L.<.> |
-// /* 0540 */ "\x54\xaf\x3a\x47\xc2\xe2\xf8\x38\x7f\x2c\x03\x7f\x96\x7f\x07\x0f" //T.:G...8.,...... |
-// /* 0550 */ "\x3e\x47\xc2\xb6\x00\x39\x07\xd1\x7c\x19\xf4\x34\x0f\x80\x00\x2d" //>G...9..|..4...- |
-// /* 0560 */ "\x70\x46\x35\x7c\x6b\x6a\x00\x0a\x0b\x00\x0c\x09\x0d\x03\x04\xe0" //pF5|kj.......... |
-// /* 0570 */ "\x9c\xf0\x96\x01\xde\x12\xe3\x03\xe2\x0c\xe1\xad\x1e\x12\xdb\xf9" //................ |
-// /* 0580 */ "\x60\x1f\xfc\xb9\x20\x00\xd8\x10\x39\xf0\xa0\x19\x00\x0e\x01\xf4" //`... ...9....... |
-// /* 0590 */ "\x5f\x06\x7f\x96\x02\x1f\xcb\x3f\xc9\x1f\x0a\x50\x01\x20\x00\xa0" //_......?...P. .. |
-// /* 05a0 */ "\x00\xd8\xe3\x0c\x09\x00\x04\x40\xfb\x2f\x83\x20\x33\x0e\x20\x4c" //.......@./. 3. L |
-// /* 05b0 */ "\x7b\x05\x2d\xd8\x13\x84\xfd\xf1\xad\xfb\xcf\x34\x1c\x06\x1e\x10" //{.-........4.... |
-// /* 05c0 */ "\x20\x0e\x07\x51\xc0\x50\xf8\xd3\xc0\x54\x30\xf8\xc9\x06\x91\x40" // ..Q.P...T0....@ |
-// /* 05d0 */ "\x03\x61\xb4\x40\x48\x18\x03\xe0\x44\x0b\x08\x35\x02\xef\xa4\x8c" //.a.@H...D..5.... |
-// /* 05e0 */ "\x09\xc0\x48\x21\x0e\x00\x00\x10\x20\x01\x04\x19\x80\xc9\x08\x9c" //..H!.... ....... |
-// /* 05f0 */ "\x05\x06\x61\x81\x57\xa1\x06\x40\x31\x01\x00\x48\xf9\xca\xc0\x94" //..a.W..@1..H.... |
-// /* 0600 */ "\x08\x00\x21\x06\x90\x2f\x01\x00\x20\x74\xff\x60\x02\x0f\xbd\x00" //..!../.. t.`.... |
-// /* 0610 */ "\x06\x02\xf8\x29\xf8\x83\x60\x13\xfc\x8c\x3b\x52\xfe\x81\x78\x0a" //...)..`...;R..x. |
-// /* 0620 */ "\x0c\xe3\xc1\x47\x0f\xa4\x40\x17\x80\x90\x44\x04\xc8\x44\xff\xc4" //...G..@...D..D.. |
-// /* 0630 */ "\x58\x05\xa0\x24\x0d\x1e\x06\x50\x30\xed\xd3\xf1\x05\xbe\xf0\x4e" //X..$...P0......N |
-// /* 0640 */ "\x04\x83\x68\x00\x08\xfd\x88\x07\xce\x08\x78\x52\x4a\x3e\x71\xc0" //..h.......xRJ>q. |
-// /* 0650 */ "\x5b\xc2\x51\x58\xf9\x45\x8f\x88\x60\xf0\x82\x51\xf2\x10\x0f\x88" //[.QX.E..`..Q.... |
-// /* 0660 */ "\x50\xf0\x83\xe4\x3e\x84\xac\x7c\xc7\xe0\x20\xd4\x3e\x61\xa3\xca" //P...>..|.. .>a.. |
-// /* 0670 */ "\x83\x0f\x00\x48\x80\x97\xa2\x1e\x52\x04\x20\xda\x3c\x80\x38\x11" //...H....R. .<.8. |
-// /* 0680 */ "\xf9\x51\x58\xfa\x00\x04\x1a\x47\xe8\x81\x1f\x88\x6a\x61\xb4\x07" //.QX....G....ja.. |
-// /* 0690 */ "\xfa\x55\xf3\xd1\x0c\x6c\x62\x38\x41\xb0\x0c\xc0\x48\x1e\x3c\x12" //.U...lb8A...H.<. |
-// /* 06a0 */ "\x9c\x7b\x28\xd0\x83\x60\x6b\xfb\xf0\x41\xeb\x08\xb0\x05\xe3\x0f" //.{(..`k..A...... |
-// /* 06b0 */ "\x60\x01\xc1\x03\xc2\x0d\x41\xb7\xea\xc7\xad\xe6\x92\x83\x48\x81" //`.....A.......H. |
-// /* 06c0 */ "\x20\xd4\x10\x6c\x0e\x2c\x36\x8f\x75\xbf\x29\x80\x3d\x86\xd0\x21" // ..l.,6.u.).=..! |
-// /* 06d0 */ "\xff\x98\x0f\xdc\x41\x10\xf8\xb0\xd1\xf1\x5c\x10\x5f\x15\x85\x79" //....A......._..y |
-// /* 06e0 */ "\xa9\x06\xb1\xf3\x08\x33\x0f\x8a\x20\x84\x7c\x58\x60\xf8\xa0\x03" //.....3.. .|X`... |
-// /* 06f0 */ "\x0f\x8b\x18\x47\xb9\xf8\x22\x91\xc1\x3e\x7c\xf2\x90\x00\x04\xc0" //...G.."..>|..... |
-// /* 0700 */ "\xd0\x6b\x04\x11\x8e\x01\x54\x40\xf0\x00\x09\x05\x41\xb4\x20\xd2" //.k....T@....A. . |
-// /* 0710 */ "\x10\x64\x04\x0e\x00\x07\x18\x7a\xd1\xed\xf5\x00\x39\x06\x31\x06" //.d.....z....9.1. |
-// /* 0720 */ "\x20\x68\x20\x60\x20\x58\x20\x48\xc1\xee\xc2\x0b\x9c\x27\x09\x56" // h ` X H.....'.V |
-// /* 0730 */ "\x06\x43\x45\x80\x6c\x42\xa4\x0a\x00\x00\x73\xac\x12\x03\x8c\xe0" //.CE.lB....s..... |
-// /* 0740 */ "\x09\x44\x02\x8d\xed\x32\x0d\x22\xa0\x06\x01\x80\x40\x06\xc1\x34" //.D...2."....@..4 |
-// /* 0750 */ "\x00\x68\xe8\x4c\x05\xec\x24\x75\x9d\x86\xd1\x50\x03\x20\x78\x01" //.h.L..$u...P. x. |
-// /* 0760 */ "\x80\xdc\x40\x1d\xfe\x90\x8f\x89\x9b\xd1\x0c\x05\x24\xc1\x9f\x29" //..@.........$..) |
-// /* 0770 */ "\x66\x14\x0e\x34\xfd\x18\xfc\x80\x22\x06\x80\x18\x0a\x3f\xd1\x53" //f..4...."....?.S |
-// /* 0780 */ "\xb8\xa0\xb0\x5f\xca\x40\x03\x8b\xaf\x82\xf0\x11\x30\x90\x00\x48" //..._.@......0..H |
-// /* 0790 */ "\x13\x0d\xa0\x01\x23\x0a\x57\xa0\x2b\x41\x22\xd0\x15\x80\x90\x00" //....#.W.+A"..... |
-// /* 07a0 */ "\x5f\xda\xa8\x00\xc0\x45\x02\x45\xa0\x51\xc0\x9e\xae\x0f\xdf\x09" //_....E.E.Q...... |
-// /* 07b0 */ "\x00\x30\x1a\x7f\x88\x67\x03\xc0\x44\x13\xf8\xbb\x6a\xa1\x5e\x00" //.0...g..D...j.^. |
-// /* 07c0 */ "\x42\xf9\x81\xb0\x30\xc1\xc3\x09\x71\xbe\x72\xa1\xf3\xa4\x02\xb0" //B...0...q.r..... |
-// /* 07d0 */ "\x03\xec\xa4\x73\xc1\xa3\x5f\x06\xcb\x0e\x0c\x77\x2c\x7c\xe3\xd7" //...s.._....w,|.. |
-// /* 07e0 */ "\xce\x90\x0e\xc9\x21\x30\x1f\x05\xc1\x17\x82\xdf\x41\xe5\x84\xbb" //....!0......A... |
-// /* 07f0 */ "\xfe\x30\xa6\x8b\xe7\x47\xa7\x4d\x3f\x39\x89\xc5\xdf\x3a\x0e\x00" //.0...G.M?9...:.. |
-// /* 0800 */ "\x60\x24\x9f\x39\x87\xd8\x00\xfe\x13\x3d\xf8\x14\x6f\xe7\x12\x00" //`$.9.....=..o... |
-// /* 0810 */ "\x18\x0f\xc8\x0b\x40\x5f\x3e\x63\xda\x15\xeb\xda\x24\xf5\x63\xe8" //....@_>c....$.c. |
-// /* 0820 */ "\x3c\x22\xf5\xd4\x42\x7e\x74\xf8\xf6\x19\xfe\x73\xd6\xef\x9c\x00" //<"..B~t....s.... |
-// /* 0830 */ "\xb4\x00\xf8\xdc\x2f\xe9\xc7\xce\x82\x04\x8f\x34\xc3\xd7\x82\x8b" //..../......4.... |
-// /* 0840 */ "\x21\x38\x2a\x51\xef\x70\x20\x01\x80\x0c\x04\x54\x27\xc1\xb1\xeb" //!8*Q.p ....T'... |
-// /* 0850 */ "\x90\x0c\x04\x82\x31\xf4\xde\x20\x54\x3f\xa1\x1b\xe2\x21\x40\x01" //....1.. T?...!@. |
-// /* 0860 */ "\x35\x00\x52\x0a\xc0\x0f\xae\x1e\xbc\x81\x58\x13\x48\x02\xc0\x4d" //5.R.......X.H..M |
-// /* 0870 */ "\x40\x20\x5f\xdc\xee\x1e\xca\x80\x28\x02\x07\xb2\x6a\xe0\x00\x25" //@ _.....(...j..% |
-// /* 0880 */ "\x03\x45\xc5\x95\xe5\xa0\x96\x38\xe8\x48\x45\x40\x19\x06\x01\xc0" //.E.....8.HE@.... |
-// /* 0890 */ "\xbe\x8d\x82\x43\x20\xc0\x38\x96\x0c\xd0\x01\x2e\x00\x13\x09\x7a" //...C .8........z |
-// /* 08a0 */ "\x09\x66\x8e\x84\x83\xf1\x0a\x61\x5b\x97\x90\xde\x91\x8a\x4a\xc0" //.f.....a[.....J. |
-// /* 08b0 */ "\x4c\x0d\x67\xec\x9f\x02\x5b\x23\xa1\x20\xde\x14\x80\x82\x08\x07" //L.g...[#. ...... |
-// /* 08c0 */ "\x87\x42\x61\x2c\x01\xf1\xd0\x90\x58\x17\x12\x00\xc5\x40\x23\xca" //.Ba,....X....@#. |
-// /* 08d0 */ "\x60\x0f\x49\x47\x23\x45\x00\x00\x61\xab\xff\x3d\x5a\x12\x81\x71" //`.IG#E..a..=Z..q |
-// /* 08e0 */ "\x2d\x04\x60\xe3\x07\xb2\x23\x19\xf0\xaa\x04\x0a\x18\x87\xa9\xe1" //-.`...#......... |
-// /* 08f0 */ "\x46\x1c\x68\x71\x88\x61\xdb\x18\xf7\xb0\x00\x3b\x10\x5c\x38\x08" //F.hq.a.....;..8. |
-// /* 0900 */ "\xc0\xff\x02\x48\x1f\x80\xf8\xec\x3f\xed\x37\x17\xd9\x7b\x09\xf9" //...H....?.7..{.. |
-// /* 0910 */ "\x83\x6f\x8b\x1d\x4c\xc3\xfe\xa0\x7c\x56\x04\x43\x0f\xf9\xed\xf8" //.o..L...|V.C.... |
-// /* 0920 */ "\x27\xdc\xc1\xff\x7d\xc6\x24\x59\x00\x0f\x43\x9f\x02\x5e\xfc\xd2" //'...}.$Y..C..^.. |
-// /* 0930 */ "\x59\x09\x58\x09\x36\x09\x15\x09\x13\x01\xb8\xfa\xc1\x2c\x00\x69" //Y.X.6........,.i |
-// /* 0940 */ "\xe9\xe0\x22\x00\xe5\xae\xa0\x05\xc7\x02\x6e\x75\x1c\x2b\x44\x11" //..".......nu.+D. |
-// /* 0950 */ "\xc0\x03\x45\x1c\x1f\xa4\xe3\x1b\x8d\xd0\x09\x4b\x06\x20\x1f\x02" //..E........K. .. |
-// /* 0960 */ "\x68\x00\x1c\x09\xd2\x41\xea\x00\xab\x08\xff\x18\xb8\x10\x80\xca" //h....A.......... |
-// /* 0970 */ "\x47\x40\x03\xb8\xa2\x84\x20\x30\xe1\x4f\x92\x59\xf9\x28\x98\x9f" //G@.... 0.O.Y.(.. |
-// /* 0980 */ "\xc9\x2c\x7c\x93\xc0\x57\xc9\x7d\x27\x15\x22\x08\xf8\xd4\x06\x80" //.,|..W.}'."..... |
-// /* 0990 */ "\x15\x49\x80\x8b\x04\xf1\x12\x38\xf8\x0c\x8c\x3c\x35\x01\x40\x0a" //.I.....8...<5.@. |
-// /* 09a0 */ "\xe7\x01\x11\xc0\x91\x18\x0a\x58\xa8\xd4\x06\x00\x16\x23\xe9\x43" //.......X.....#.C |
-// /* 09b0 */ "\x97\xdc\x28\x0a\x0d\x40\x6c\x02\x82\x3c\x15\x58\xd4\x0c\x26\x35" //..(..@l..<.X..&5 |
-// /* 09c0 */ "\x01\x20\x1e\x11\xf4\xc0\x4a\x02\x74\x14\x35\x02\x40\x1f\x20\xc0" //. ....J.t.5.@. . |
-// /* 09d0 */ "\x61\x6b\x80\x03\x9f\xe8\x01\x0f\xbd\x30\x8f\xc0\x50\x00\x44\x3d" //ak.......0..P.D= |
-// /* 09e0 */ "\xc6\x13\x80\x83\xf8\x49\x20\x0a\x0f\xf0\x21\xd3\xee\x03\x3c\x24" //.....I ...!...<$ |
-// /* 09f0 */ "\xb0\x09\x87\xff\x80\xa4\x06\xe3\xe0\x42\x00\xa8\x7f\xe6\x0a\x40" //.........B.....@ |
-// /* 0a00 */ "\x6e\xc2\x5e\x2a\x0f\x07\x7b\x8c\xeb\xf9\x97\xb0\x97\xbf\x01\x18" //n.^*..{......... |
-// /* 0a10 */ "\x30\x99\xd0\x54\x25\xdb\xe8\x28\x9e\x04\x80\x10\xce\x04\x2e\x21" //0..T%..(.......! |
-// /* 0a20 */ "\xd1\x29\x1d\x1a\x80\x80\x05\x85\xc0\x80\xb8\x69\x85\xe0\x32\xef" //.).........i..2. |
-// /* 0a30 */ "\x2b\x10\x05\x02\xf8\x06\x1e\x3e\xe2\x67\xe1\x44\x80\x54\x2b\x8c" //+......>.g.D.T+. |
-// /* 0a40 */ "\x29\xe7\xe7\x23\x01\x5e\x2e\x0f\x04\xfc\xe3\xd4\x74\x26\x05\x3c" //)..#.^......t&.< |
-// /* 0a50 */ "\xf5\x7b\xcb\x4a\x80\x35\x03\x04\xbd\x88\x80\x05\x42\x5f\x3f\x19" //.{.J.5......B_?. |
-// /* 0a60 */ "\x94\x78\x6b\xe8\x82\x80\x7d\xea\x7d\xf9\xe6\xa1\x5f\x9e\x60\x01" //.xk...}.}..._.`. |
-// /* 0a70 */ "\x01\x7e\xf9\x8b\x47\x83\x23\x19\x4d\xbd\xd0\x42\xf0\x4b\x00\x01" //.~..G.#.M..B.K.. |
-// /* 0a80 */ "\x80\xe0\x57\x20\x0b\x06\x17\x18\x62\xa8\x20\x14\x12\x38\x13\x80" //..W ....b. ..8.. |
-// /* 0a90 */ "\x7e\x1c\x23\x5e\x13\x40\x48\x00\x78\xd0\xae\x00\x1c\xae\x62\x81" //~.#^.@H.x.....b. |
-// /* 0aa0 */ "\xea\x23\x06\x00\x1c\x70\x11\x54\x00\xae\x3f\x5c\xc1\xe6\x15\x03" //.#...p.T..?..... |
-// /* 0ab0 */ "\x0b\x7d\xbd\x68\xa8\x01\x7e\x88\x20\x0b\xf7\xe0\x54\x7f\x8a\x42" //.}.h..~. ...T..B |
-// /* 0ac0 */ "\xa0\x07\x0b\xfa\x0a\x00\x0f\xf2\x0f\x0f\x70\x53\x54\x01\x04\x82" //..........pST... |
-// /* 0ad0 */ "\x40\x60\x30\x00\x01\xa8\x13\x00\xfa\x06\x0e\xc2\x3e\x04\xa2\x80" //@`0.........>... |
-// /* 0ae0 */ "\x61\x8a\xa4\x06\x40\x3d\xe2\x58\x80\x00\x8d\xf9\x2c\xd2\x01\x50" //a...@=.X....,..P |
-// /* 0af0 */ "\x06\x45\xfe\xc6\x0f\x14\x28\x01\x43\x7c\x81\xd5\x16\x9f\x9e\x00" //.E....(.C|...... |
-// /* 0b00 */ "\xf1\x30\x83\xe2\x3c\x4a\x08\x85\x60\x22\xf7\xdc\x79\xf8\x2b\x44" //.0..<J..`"..y.+D |
-// /* 0b10 */ "\x20\x01\x14\x81\x3d\x84\xb4\x76\x6e\x00\x40\x58\x00\x5f\xd8\x47" // ...=..vn.@X._.G |
-// /* 0b20 */ "\xc4\xe0\x4b\x01\x24\x80\x1c\x66\xd8\xd6\x14\xc0\x3f\xc6\x75\x72" //..K.$..f....?.ur |
-// /* 0b30 */ "\xfd\xcc\x49\xb6\x21\xe3\x36\x58\x09\x67\x00\xe3\x37\x00\x02\xb8" //..I.!.6X.g..7... |
-// /* 0b40 */ "\xf9\xf4\xf4\x13\x2d\x00\xe3\x41\x12\x00\xb0\x00\xae\x41\x09\x67" //....-..A.....A.g |
-// /* 0b50 */ "\xe7\x70\xd8\x84\x00\xa0\x00\x78\x1b\xd8\x4d\xcb\x91\xc3\x03\xf7" //.p.....x..M..... |
-// /* 0b60 */ "\x20\x3f\x58\x09\xf7\x97\x1f\x9e\xc3\xbc\x68\x09\x00\xf8\xec\x19" // ?X.......h..... |
-// /* 0b70 */ "\xf3\x8c\x38\x4c\x26\x9d\xc5\xfc\x44\x00\xf9\xf5\x16\x01\x51\xdc" //..8L&...D.....Q. |
-// /* 0b80 */ "\x30\xcd\x10\x18\x00\xa7\x1a\xe6\x3b\x06\x0f\xc0\x6c\x1c\x6e\x23" //0.......;...l.n# |
-// /* 0b90 */ "\xb6\x53\x8e\x4c\x50\x07\xbe\x62\x00\x2b\xf1\x44\x1f\x82\x2c\x01" //.S.LP..b.+.D..,. |
-// /* 0ba0 */ "\x5f\x15\xc9\x98\x3f\x02\x40\xf2\xfc\x61\x1c\xe8\x60\xfc\x50\x41" //_...?.@..a..`.PA |
-// /* 0bb0 */ "\xf8\xa2\x00\x15\x40\x0b\x90\x85\xb0\x77\xbf\x71\xc9\x85\x20\x00" //....@....w.q.. . |
-// /* 0bc0 */ "\x38\xef\x1c\x9c\x63\x60\x4a\x60\x14\x01\xb6\x11\xf8\x11\x00\xf9" //8...c`J`........ |
-// /* 0bd0 */ "\x00\x08\x9b\x00\x67\xbc\x16\x0f\xe6\x81\x30\x8f\xc0\x3c\x64\xfa" //....g.....0..<d. |
-// /* 0be0 */ "\xcc\x03\xe6\x1e\xf9\xc9\x00\xa0\x8d\x16\x02\x2d\x07\x00\x0a\x40" //...........-...@ |
-// /* 0bf0 */ "\x0a\x90\x05\x30\x05\xa0\x0a\x48\x3f\x33\x0a\x6a\xb8\x18\x80\x7c" //...0...H?3.j...| |
-// /* 0c00 */ "\xda\x81\xc8\x00\x40\x05\x28\x03\xcc\x00\x1e\x00\x20\x0a\xe0\x96" //....@.(..... ... |
-// /* 0c10 */ "\x06\x37\x24\x48\x02\xa0\x03\xc3\xdf\x84\x40\x02\xff\xf4\x26\xc0" //.7$H......@...&. |
-// /* 0c20 */ "\x16\xc0\x3e\xfb\xf8\x0c\x02\x98\x65\x16\x20\x40\x1e\x72\x0e\x78" //..>.....e. @.r.x |
-// /* 0c30 */ "\x84\xc0\x01\xf3\xe7\xe2\x87\xdf\x3e\xf1\x00\x2f\xd6\xb1\xf7\x8c" //........>../.... |
-// /* 0c40 */ "\x03\xe3\x7c\x35\x4c\x1c\x9f\x90\x1b\x00\x58\xdf\x82\x1e\x4a\x01" //..|5L.....X...J. |
-// /* 0c50 */ "\x70\x3d\x40\x07\xb8\xd2\xc7\xe7\x7d\xa8\x90\x70\x8a\x79\x28\x07" //p=@.....}..p.y(. |
-// /* 0c60 */ "\xf6\x14\x01\xee\x41\xf1\xeb\xe7\xd8\x80\x01\x4f\xcb\x14\x0c\x89" //....A......O.... |
-// /* 0c70 */ "\xb8\xf8\xa1\xbe\x49\xac\x33\x33\x1c\x09\x9c\x2b\x42\xb8\x40\x2d" //....I.33...+B.@- |
-// /* 0c80 */ "\xc4\xb6\x20\x03\xdf\x25\xc4\x95\xe1\xa6\x01\x35\x01\xf0\x70\x7f" //.. ..%.....5..p. |
-// /* 0c90 */ "\x38\xe0\xb0\x03\xe0\x1a\x1b\x80\xf9\x7c\x07\xef\x90\xdf\xcd\x7c" //8........|.....| |
-// /* 0ca0 */ "\x92\x07\xc9\x70\x43\x7e\x67\xc9\x70\x9a\x01\xf1\x4e\x7d\xb7\xc9" //...pC~g.p...N}.. |
-// /* 0cb0 */ "\x8a\x07\xc9\x20\x71\xaf\x7a\xe0\x37\xc1\x32\x00\xe0\x20\x1e\x7a" //... q.z.7.2.. .z |
-// /* 0cc0 */ "\x7d\xb0\x17\x81\x1e\x92\x8f\xde\x02\xf3\x28\x73\xc0\x31\xc6\x18" //}.........(s.1.. |
-// /* 0cd0 */ "\x15\xec\x49\xe3\x54\x81\x00\x00\xd8\x07\x87\x78\x8f\x07\xe0\x56" //..I.T......x...V |
-// /* 0ce0 */ "\x00\x04\x01\xe7\xef\xaf\x1c\x0b\x10\x0f\x6c\x3e\x64\x48\x07\xb8" //..........l>dH.. |
-// /* 0cf0 */ "\x0c\x47\xac\x01\x5e\xc6\x70\x18\x8b\x00\xa0\x65\x2c\x80\x06\x0d" //.G..^.p....e,... |
-// /* 0d00 */ "\xc2\x94\x15\xf5\x01\x6c\x1c\x10\x4c\x00\x5f\x60\x80\x16\x18\xc0" //.....l..L._`.... |
-// /* 0d10 */ "\x27\xf2\x20\x07\x08\x95\x88\x07\xb8\xaa\x39\x8e\xbc\x6a\xe0\x79" //'. .......9..j.y |
-// /* 0d20 */ "\x1c\x2c\xc3\xdf\xe5\xd1\x15\x89\xdb\xdc\x08\xc3\xd0\x1a\x00\xa7" //.,.............. |
-// /* 0d30 */ "\x16\xa6\x33\xa7\x00\x0f\xf1\x09\x0f\x72\xd1\x77\x36\x73\x98\x50" //..3......r.w6s.P |
-// /* 0d40 */ "\x05\x38\xba\x00\x03\x60\x40\x03\xd8\x03\x18\x3b\x02\x60\x1e\xa0" //.8...`@....;.`.. |
-// /* 0d50 */ "\x71\x76\x8c\x72\xc8\xf9\x51\xdb\xf8\x00\x15\xf6\xd4\x0e\x82\xb0" //qv.r..Q......... |
-// /* 0d60 */ "\x00\x13\x02\xa0\x0a\x20\x71\x85\x8e\xba\x30\x3f\x60\x0a\xc1\xe4" //..... q...0?`... |
-// /* 0d70 */ "\xd0\x0d\x02\x00\x15\x90\x00\x3c\x7c\xa0\x24\x09\x80\x56\x40\x02" //.......<|.$..V@. |
-// /* 0d80 */ "\xf5\xf2\x80\x30\x3e\x1f\xc1\x49\x07\x0d\xf8\x1e\x82\x10\x0f\xa0" //...0>..I........ |
-// /* 0d90 */ "\x0a\xd8\x02\x98\x30\x08\x28\x00\x6a\x0b\x00\x1e\x20\x15\xa0\x05" //....0.(.j... ... |
-// /* 0da0 */ "\xd8\x30\x6e\x63\xca\x60\x0a\x00\x0c\x84\x2e\x13\x20\x14\x80\x0a" //.0nc.`...... ... |
-// /* 0db0 */ "\x70\x06\x0a\x48\x02\xec\x01\x44\x01\x4c\x00\x2c\x00\x17\x32\x6f" //p..H...D.L.,..2o |
-// /* 0dc0 */ "\xb8\x11\x02\x01\x40\x53\x00\x03\x8f\x01\x80\x71\x70\x93\xd1\x08" //....@S.....qp... |
-// /* 0dd0 */ "\xe6\x09\xb7\x82\x0b\x85\xe0\x06\x0f\x02\xc4\x7d\x2b\x5a\xd1\x63" //...........}+Z.c |
-// /* 0de0 */ "\x1d\x2d\x6a\xd0\x73\x86\xce\x42\xf8\xe5\x05\x16\x9a\xb3\xd7\xf0" //.-j.s..B........ |
-// /* 0df0 */ "\x9f\xac\x75\xd5\x14\x21\x47\xae\xed\x35\xfb\xff\x06\x84\x43\x00" //..u..!G..5....C. |
-// /* 0e00 */ "\xac\x54\x60\x73\x1d\x2a\x1f\x6e\xed\x5f\x52\x70\x07\xc4\x8e\x60" //.T`s.*.n._Rp...` |
-// /* 0e10 */ "\xfe\x25\x40\x0e\x44\x10\x03\x06\xbd\xdf\xad\x76\xa2\x4b\x4d\x8e" //.%@.D......v.KM. |
-// /* 0e20 */ "\xd1\x06\xb4\xda\xed\x55\x00\x3a\x5f\x39\x66\x01\x0c\x76\x4c\x0e" //.....U.:_9f..vL. |
-// /* 0e30 */ "\x54\x01\x12\x71\xf5\x1a\x0d\x69\x66\x61\xb4\x70\x97\x0c\x60\x06" //T..q...ifa.p..`. |
-// /* 0e40 */ "\xf7\x7f\x30\xdd\x40\x0c\x9f\x0a\x53\xa3\x57\xee\xf7\x0c\x3a\x88" //..0.@...S.W...:. |
-// /* 0e50 */ "\xc0\x31\x0c\x01\x76\x50\xfa\xc9\x0f\x66\x63\xd5\xda\xa0\x14\x90" //.1..vP...fc..... |
-// /* 0e60 */ "\x04\xff\xf5\x93\x0f\xac\x78\xfa\xd0\x00\x02\xd1\x5f\xbf\x82\x60" //......x....._..` |
-// /* 0e70 */ "\x12\x9a\x90\x0d\x40\x80\x0c\x1e\x6e\xd8\x03\x45\x80\x4a\xe4\x6a" //....@...n..E.J.j |
-// /* 0e80 */ "\x04\x40\xe1\x12\xba\x07\xe0\x07\xf7\x86\xe4\x20\x67\xfb\xaa\x00" //.@......... g... |
-// /* 0e90 */ "\x91\xa1\xec\x57\x28\xba\x51\x67\xc2\xf5\x00\x45\x10\xcf\x26\x02" //...W(.Qg...E..&. |
-// /* 0ea0 */ "\x05\x30\x09\xd0\x62\x06\x01\x80\x6d\x18\x00\x18\x07\x67\xe7\x58" //.0..b...m....g.X |
-// /* 0eb0 */ "\x9f\x5f\xea\x00\x80\x80\x20\x35\x00\x48\xf0\x3f\x70\x08\xc0\x29" //._.... 5.H.?p..) |
-// /* 0ec0 */ "\xb2\xc1\x80\x85\xc8\x0c\x5e\x08\x59\xed\x38\x2f\xf9\xd1\xb1\x5f" //......^.Y.8/..._ |
-// /* 0ed0 */ "\xbf\xce\xaf\xd5\x00\x2b\x38\x08\x0c\x04\x12\xd3\x50\x05\xb6\x7a" //.....+8.....P..z |
-// /* 0ee0 */ "\x5d\x80\x59\xa6\x11\x8b\x06\x04\x18\x70\x45\xe0\xc8\x11\x0c\x01" //].Y......pE..... |
-// /* 0ef0 */ "\x62\xaf\xdf\xe0\x67\x37\x6a\xbd\xd5\xf6\xff\x50\x05\x23\xfd\x8c" //b...g7j....P.#.. |
-// /* 0f00 */ "\x02\xf9\x33\x01\x8e\xee\xee\xe1\x2f\xc8\x04\x30\x0c\x01\x64\xaf" //..3...../..0..d. |
-// /* 0f10 */ "\xdf\xc1\x7d\x48\xfb\x2a\xc6\x01\xda\x0c\x7b\x3d\x02\x49\xb5\x46" //..}H.*....{=.I.F |
-// /* 0f20 */ "\xaf\xc1\x7e\xce\x79\xe6\x46\x05\xaa\x00\xc4\x08\x00\x3e\x3d\x41" //..~.y.F......>=A |
-// /* 0f30 */ "\x4a\x6d\x4e\x37\x49\xb5\xd4\xe6\xed\x77\xba\xd4\x01\x43\x02\xfc" //JmN7I....w...C.. |
-// /* 0f40 */ "\xbb\x38\x0a\x32\x10\x05\xaa\x01\x0c\x3c\x94\x1f\xed\xdc\x4d\x40" //.8.2.....<....M@ |
-// /* 0f50 */ "\xf2\x39\xc0\x5b\xc1\xc1\x4e\x0c\x0f\x98\x8c\x0a\xfb\x0c\xdf\xf6" //.9.[..N......... |
-// /* 0f60 */ "\xe3\x82\xdd\x0a\xfd\xf7\xd3\x70\x45\x91\x52\x1f\x94\xe0\x77\x78" //.......pE.R...wx |
-// /* 0f70 */ "\x0a\xe6\x85\x7c\x2b\x1c\x0d\x67\xc3\x30\xe0\xc3\x68\x07\xf3\x8b" //...|+..g.0..h... |
-// /* 0f80 */ "\xe7\xbc\xf2\x20\x84\x60\x28\x64\x23\xfb\xb0\x14\x93\x01\x8d\x41" //... .`(d#......A |
-// /* 0f90 */ "\x03\x07\xc8\x54\x04\xbc\x3c\xc0\x44\x00\x7e\x00\xef\x04\x48\x86" //...T..<.D.~...H. |
-// /* 0fa0 */ "\x02\x77\x42\x3d\xdc\xe0\x33\x38\x09\xd1\x80\xa4\xc3\x1e\x14\x8c" //.wB=..38........ |
-// /* 0fb0 */ "\x05\x77\x0c\x02\x1e\x44\x39\x30\xda\x02\x3d\xdb\x7c\x7a\x82\x08" //.w...D90..=.|z.. |
-// /* 0fc0 */ "\x35\x8e\x5f\x0f\x0f\x10\x66\x18\x0a\xa5\x18\x73\xfb\xb1\xe3\xc8" //5._...f....s.... |
-// /* 0fd0 */ "\x41\xac\x07\x7d\x77\x84\x81\x1e\x5b\x7c\x77\x99\xc1\x7f\xba\x24" //A..}w...[|w....$ |
-// /* 0fe0 */ "\x0e\xac\x36\x8c\x03\x68\xf3\xe0\x4f\xbf\x41\x40\x04\x03\x05\x29" //..6..h..O.A@...) |
-// /* 0ff0 */ "\x08\x12\x08\x22\x08\x36\x07\x66\x1b\x40\x4f\xa7\xdf\xee\x28\xc8" //...".6.f.@O...(. |
-// /* 1000 */ "\x35\x08\x12\x0d\x61\x06\xd0\xf3\xfe\x08\x35\x00\x9f\x62\x18\x05" //5...a.....5..b.. |
-// /* 1010 */ "\x7e\x58\x81\x63\xe5\x9c\x3b\x53\x10\x65\x1d\x4e\xe3\x06\x6d\x30" //~X.c..;S.e.N..m0 |
-// /* 1020 */ "\x01\x0a\xa0\x00\x30\x15\x80\xbb\x98\x00\x7c\x83\x60\x00\x30\xc5" //....0.....|.`.0. |
-// /* 1030 */ "\x6c\x8f\x00\x3b\x7b\x90\x6a\x04\x3c\xab\x58\x01\x84\x00\x1d\x03" //l..;{.j.<.X..... |
-// /* 1040 */ "\x41\xb4\x60\x03\xa0\xc7\x2a\x87\x9c\xc0\x01\x98\x0a\xda\x20\x00" //A.`...*....... . |
-// /* 1050 */ "\x05\x1c\xa6\xde\x91\x30\x06\xb0\xda\x20\x9e\x2b\x4c\x30\x16\x09" //.....0... .+L0.. |
-// /* 1060 */ "\x00\x3b\xd6\x46\x01\x16\x1b\x47\xe2\x88\x40\x01\x07\x08\x20\x87" //.;.F...G..@... . |
-// /* 1070 */ "\x2f\xd5\xa3\xc3\x22\x08\x87\x59\xd7\x85\x0c\x02\x8c\x36\x80\xbf" ///..."..Y.....6.. |
-// /* 1080 */ "\x1f\xba\x7c\x3c\x08\xf8\xa5\x8f\x8a\x00\x28\xf2\x94\x52\x08\x12" //..|<......(..R.. |
-// /* 1090 */ "\x20\x88\x32\x84\x19\xc6\x03\x03\x5a\x3a\x91\x30\x1e\xa5\xff\x76" // .2.....Z:.0...v |
-// /* 10a0 */ "\x36\x0c\x60\x9c\x76\x03\x98\x08\x60\xdf\xb5\x88\x0a\x4a\x04\x7a" //6.`.v...`....J.z |
-// /* 10b0 */ "\x00\xa8\x00\x06\x27\x81\x45\x9c\x9d\xa8\x44\x17\x27\xdd\x88\x2e" //....'.E...D.'... |
-// /* 10c0 */ "\x10\x1c\x05\x7f\x14\x00\xa8\xe8\x4d\x0a\x38\x13\x42\x7c\x09\xec" //........M.8.B|.. |
-// /* 10d0 */ "\x42\x7a\x09\xa1\x2c\x84\xc3\x70\x03\xfd\xf5\xdd\x5c\x00\x13\xc4" //Bz..,..p........ |
-// /* 10e0 */ "\x66\x29\x4a\x4c\x6e\x2c\x76\xe5\xa0\x93\xac\x38\xb6\xc0\x17\x06" //f)JLn,v....8.... |
-// /* 10f0 */ "\x0c\x06\x4e\x81\x47\x4c\xaf\xdc\xa7\x62\x0f\x7e\xaf\x0d\xc7\x62" //..N.GL...b.~...b |
-// /* 1100 */ "\x68\x50\xbc\x01\x44\x01\xc5\x27\xca\x25\x7f\x1a\x34\x05\x24\xa0" //hP..D..'.%..4.$. |
-// /* 1110 */ "\x30\x39\x96\x19\xe5\x2d\x60\x24\xb4\x09\x75\x2e\x3f\x77\x6b\xe5" //09...-`$..u.?wk. |
-// /* 1120 */ "\x8a\x9e\x9d\x31\x77\x4b\x76\xdb\x01\xc0\x46\x00\x6a\x00\x6d\xcd" //...1wKv...F.j.m. |
-// /* 1130 */ "\x7c\x6a\x22\x02\xac\x65\xd3\xac\x3a\x44\xff\x6f\x6c\xff\x20\x26" //|j"..e..:D.ol. & |
-// /* 1140 */ "\x35\x90\x18\x0c\x77\xf1\x18\x7e\x42\x7f\x77\xa8\x02\x41\xfa\x2f" //5...w..~B.w..A./ |
-// /* 1150 */ "\xa2\xd2\x3e\x90\x2a\xf4\x32\xa0\x07\x20\x10\x01\x84\x8f\xd7\xe7" //..>.*.2.. ...... |
-// /* 1160 */ "\xcb\x67\xa4\x43\xa3\x51\xd3\x29\xf2\xdb\xf4\x96\x3f\x6f\xfe\xa0" //.g.C.Q.)....?o.. |
-// /* 1170 */ "\x32\x0b\x7f\x83\xc4\x25\x60\x30\x7a\xfd\xfe\x7a\x64\xf4\x13\x4f" //2....%`0z..zd..O |
-// /* 1180 */ "\x00\x7e\xbf\xd7\xef\xf3\x6a\x66\x02\x8c\x02\x30\xe0\xb0\x34\x74" //.~....jf...0..4t |
-// /* 1190 */ "\xcb\x01\x08\x20\x55\xd1\x11\xe6\xcf\x01\x84\x79\x30\xac\x17\x60" //... U......y0..` |
-// /* 11a0 */ "\x18\x0d\x79\x8f\xc9\xa8\x1c\x8a\xd0\xdb\x73\xba\xd9\x3f\x48\x0c" //..y.......s..?H. |
-// /* 11b0 */ "\x83\x97\xfa\x7f\x56\x6d\xf1\xe0\x10\x8d\x64\x07\x01\x92\x2d\xfc" //....Vm....d...-. |
-// /* 11c0 */ "\x7e\xe2\x04\xc5\x60\x8e\x04\xe1\x06\xf0\x1a\x06\x03\xf8\x4f\xe9" //~...`.........O. |
-// /* 11d0 */ "\xd4\xa8\x02\x55\x40\x09\x00\xcf\xc0\x60\x02\xbf\xc8\x20\x39\x01" //...U@....`... 9. |
-// /* 11e0 */ "\x63\x29\xb5\x40\x67\x4b\x5f\x8a\xfd\x4a\xa8\x01\x21\x53\x7c\x64" //c).@gK_..J..!S|d |
-// /* 11f0 */ "\xf4\x13\xc2\x2a\x80\x15\x85\xa8\x06\x87\x76\x15\x80\xc7\xee\xfd" //...*......v..... |
-// /* 1200 */ "\x4b\xd3\xfa\x73\x7f\xe0\x8a\x01\x1f\x9b\x61\xaf\x0c\xb9\xc5\x40" //K..s......a....@ |
-// /* 1210 */ "\x12\x40\x57\xcb\x4e\x17\x4a\xbd\x4c\x1e\x8a\x87\xf8\x70\xd3\xe1" //.@W.N.J.L....p.. |
-// /* 1220 */ "\xc3\x01\x88\x0d\x40\x16\xc6\x82\x03\x01\x1d\x43\x00\xf9\xeb\x1d" //....@......C.... |
-// /* 1230 */ "\x5c\x06\x02\xfd\x1d\xa2\xa1\x5d\xaa\x00\x96\x18\x5f\x85\x04\x01" //.......]...._... |
-// /* 1240 */ "\x1f\x54\x01\x5f\xfc\x88\x0c\x94\x06\x02\x7a\x96\xc0\x05\xe2\xf8" //.T._......z..... |
-// /* 1250 */ "\x90\x1c\xf9\x85\xef\x15\x83\xc3\xe0\x48\x05\xc3\xf4\x24\x0f\x3f" //.........H...$.? |
-// /* 1260 */ "\x28\x46\xd3\xe2\x9a\x23\xe7\xe8\x8e\x1d\x79\x19\x5d\x3a\xa8\x01" //(F...#....y.]:.. |
-// /* 1270 */ "\xb0\x04\x04\xc0\x6b\xf5\x6a\x80\x15\x80\xef\xc0\x02\x2e\x09\xe5" //....k.j......... |
-// /* 1280 */ "\xb0\x18\x0b\xfd\xbf\x01\xe3\x8e\xfd\x7c\x60\xf0\xf8\x0c\x06\x58" //.........|`....X |
-// /* 1290 */ "\x03\x02\x7d\xbf\xab\x9c\xb0\x01\xf8\x72\x2c\x30\x3e\x0d\x51\x03" //..}......r,0>.Q. |
-// /* 12a0 */ "\x7f\xa3\x0f\x4f\xbf\x3c\x64\x43\x67\x01\x93\xd7\xc5\x00\x1c\xfe" //...O.<dCg....... |
-// /* 12b0 */ "\xc7\xf1\x40\xa2\x57\x41\x26\x16\x00\x4f\xd8\x04\x41\x81\x80\xb3" //..@.WA&..O..A... |
-// /* 12c0 */ "\x70\x96\x5f\xeb\xde\x79\x43\x3f\x1b\xd5\x4a\x80\x14\x85\x68\x06" //p._..yC?..J...h. |
-// /* 12d0 */ "\x07\x5b\xbf\x50\xed\x16\xd8\x43\x00\x2f\x0c\x31\xea\x5d\x44\x00" //.[.P...C./.1.]D. |
-// /* 12e0 */ "\xa4\x06\x05\x1f\xa7\x78\xf4\x08\xc0\x21\xf9\x96\x0a\xc8\x0d\x40" //.....x...!.....@ |
-// /* 12f0 */ "\x04\x8e\xec\x03\x04\x59\xbb\x12\x5a\x58\x6d\x12\x89\x83\x00\x3c" //.....Y..ZXm....< |
-// /* 1300 */ "\x74\x26\x0e\x3a\x87\x7e\x86\x0f\x4d\x9f\xe8\xc7\xf3\xe5\xe8\xeb" //t&.:.~..M....... |
-// /* 1310 */ "\xea\x9b\x3f\xfa\x2e\x95\x51\x28\x31\x3e\x27\x29\x55\xa9\x8f\x92" //..?...Q(1>')U... |
-// /* 1320 */ "\xc9\x8e\xa0\xc0\x37\x1d\x09\x65\xf9\x47\xa1\x11\x6c\x05\x4c\xa4" //....7..e.G..l.L. |
-// /* 1330 */ "\x51\xc0\x20\x6f\x58\x0c\xfc\xf8\x12\x3b\x01\x35\x19\xc0\xa3\x51" //Q. oX....;.5...Q |
-// /* 1340 */ "\xc9\x61\x06\x02\xc1\x2d\x26\x90\x09\x68\x05\xc7\x02\x2a\x05\x70" //.a...-&..h...*.p |
-// /* 1350 */ "\x3a\x72\xa0\x11\x80\x8e\xa0\x8b\x00\x68\xc4\x10\x07\x00\x56\x2e" //:r.......h....V. |
-// /* 1360 */ "\x18\x12\xac\x23\x02\x41\x9c\x60\x47\xc8\xc0\x19\x33\x03\x67\x00" //...#.A.`G...3.g. |
-// /* 1370 */ "\xb9\x00\x3e\x04\xe0\x3d\xf3\xc6\x04\x9d\x89\x68\x07\x60\xe4\x0c" //..>..=.....h.`.. |
-// /* 1380 */ "\x8b\x01\xc3\x9e\xc2\x43\x30\x38\x6b\x02\x38\xc5\xcb\x00\x71\x46" //.....C08k.8...qF |
-// /* 1390 */ "\x02\x39\x5c\xb0\xc7\xd1\x06\xc1\x80\x7b\x23\x02\x34\x41\xb8\x4e" //.9.......{#.4A.N |
-// /* 13a0 */ "\x3a\xfd\x84\x6c\x02\xee\xa2\xf1\xcb\x71\x04\x24\x60\x59\x47\xd8" //:..l.....q.$`YG. |
-// /* 13b0 */ "\x3e\x04\xf6\x30\x71\xf6\x54\x5b\xc2\x7d\x9a\xe8\x66\xc0\x8c\xaf" //>..0q.T[.}..f... |
-// /* 13c0 */ "\x22\x41\x20\x06\x1a\xc4\x60\x1a\x78\x05\xb0\xf0\xa9\x01\x74\x6e" //"A ...`.x.....tn |
-// /* 13d0 */ "\x60\x47\x16\x05\x62\x8e\xca\x4f\x25\xb8\x1c\xb8\x6c\x10\x6a\x1e" //`G..b..O%...l.j. |
-// /* 13e0 */ "\x09\x14\x60\x5b\x1a\xa7\x80\x60\x07\x76\x05\x78\x54\x00\xac\xdf" //..`[...`.v.xT... |
-// /* 13f0 */ "\xc4\x06\xc2\xb1\xd2\x32\x1f\x3c\x44\x14\x09\xc5\x11\x71\x50\x02" //.....2.<D....qP. |
-// /* 1400 */ "\x1c\xf1\x08\x10\x82\x91\x81\x72\x29\x64\x27\xb4\x5c\x60\x68\x72" //.......r)d'..`hr |
-// /* 1410 */ "\x0d\x63\x83\x5b\xc9\x8b\x97\x8d\xa7\xea\x3a\x89\x22\x1f\x4d\xd7" //.c.[......:.".M. |
-// /* 1420 */ "\x71\x2d\xf0\xb3\x02\x46\x38\x86\x88\x25\x00\x3e\x34\x60\x57\xf8" //q-...F8..%.>4`W. |
-// /* 1430 */ "\xf1\x1b\x03\x88\x81\x7d\x54\xf7\x30\x5f\x01\x99\x3c\x34\x06\x61" //.....}T.0_..<4.a |
-// /* 1440 */ "\x88\x78\xb2\x30\x31\x5c\x1b\x04\xe2\x32\x48\xf8\xe1\x6c\x06\x52" //.x.01....2H..l.R |
-// /* 1450 */ "\x00\x08\xc0\x5d\x8f\x0b\x46\x07\x22\x03\xff\xc7\x00\x38\xf9\x2f" //...]..F."....8./ |
-// /* 1460 */ "\x7c\x57\xc9\x7b\xb6\x2e\x60\x1f\xc6\x7d\xc5\x18\x1c\x1c\x11\xe6" //|W.{..`..}...... |
-// /* 1470 */ "\xd7\x06\xd8\xf9\x2c\x0d\xf7\x88\x3e\x02\xbb\x60\x60\x68\xf9\x2c" //....,...>..``h., |
-// /* 1480 */ "\x0b\xcf\x18\x14\x1d\xd1\x94\x20\x03\x80\x13\xd8\x1b\xc2\x45\x02" //....... ......E. |
-// /* 1490 */ "\x47\xa0\x3e\x84\x04\x10\x74\x78\x78\x0c\x2d\x81\x33\x43\xdc\x97" //G.>...txx.-.3C.. |
-// /* 14a0 */ "\x55\x12\x08\x47\xa5\x30\x02\xe7\xa0\xeb\xb0\x06\x41\x8c\x7a\x4e" //U..G.0......A.zN |
-// /* 14b0 */ "\xb0\x37\xb0\x03\xe8\xc0\x29\x07\xd1\x7a\x5a\x25\x9e\xa4\x7d\x18" //.7....)..zZ%..}. |
-// /* 14c0 */ "\x04\xc0\xea\x90\x47\xf4\x5e\x96\x60\x69\xb7\x62\xf7\xa9\xde\x27" //....G.^.`i.b...' |
-// /* 14d0 */ "\x7a\x66\x87\x7b\xce\x42\xa8\x00\x1b\x3f\x3e\x6c\x59\x41\x55\xb9" //zf.{.B...?>lYAU. |
-// /* 14e0 */ "\xf3\x32\x01\x2a\x00\x3d\x40\x0a\xc0\x12\x2c\x07\xbc\xed\xee\xc0" //.2.*.=@...,..... |
-// /* 14f0 */ "\x2d\x70\x15\xf2\x54\x0c\x07\x7e\xc0\x7a\x00\x4f\x9c\x1a\xe3\x0a" //-p..T..~.z.O.... |
-// /* 1500 */ "\x1e\x01\x81\xc9\x8c\x5d\x65\xab\xb6\xfe\x78\x91\x8a\xec\xc0\x38" //.....]e...x....8 |
-// /* 1510 */ "\x9d\xcd\xf2\xe0\x07\x9e\x7b\x12\xee\xbe\x5c\x63\x98\x28\xc5\x03" //......{....c.(.. |
-// /* 1520 */ "\x6f\x96\x81\x1a\xc9\x48\x00\x46\xb9\x7c\x3b\x28\xa4\xc6\x33\xeb" //o....H.F.|;(..3. |
-// /* 1530 */ "\xbf\x1f\x67\x6d\x97\x28\x67\x02\xe0\x1e\x0f\x57\x54\x00\x79\xf0" //..gm.(g....WT.y. |
-// /* 1540 */ "\xaa\x18\x74\x19\xc2\xa5\x87\xa7\x23\xeb\xc4\x08\x40\x07\x0a\x3e" //..t.....#...@..> |
-// /* 1550 */ "\x00\x00\x10\x07\xc6\x60\x2c\x03\xfc\xbb\xde\x95\x3a\xcb\x78\x2e" //.....`,.....:.x. |
-// /* 1560 */ "\xb9\x3a\x44\x29\x4b\xe2\xad\x6b\x5f\xe5\x45\xe4\xae\x04\xc9\x88" //.:D)K..k_.E..... |
-// /* 1570 */ "\xea\x80\x24\xea\xad\xf5\x1f\x29\x03\x9f\xe1\xe8\xf0\x00\xf6\x04" //..$....)........ |
-// /* 1580 */ "\x3b\x73\x41\x77\x64\x8c\x38\xd4\xc4\x0d\x8b\xc4\xf5\x8a\xef\x93" //;sAwd.8......... |
-// /* 1590 */ "\x3c\xdf\xfe\x70\x81\x0b\x9a\x58\x90\x02\xa0\x1a\xca\x52\x42\x09" //<..p...X.....RB. |
-// /* 15a0 */ "\x92\xde\x0c\xa5\x34\x01\x4c\x0a\x04\xf3\x04\x4f\xee\xf2\x21\x0c" //....4.L....O..!. |
-// /* 15b0 */ "\x08\xfa\xa8\x02\x3e\xdb\xc0\x60\x51\xde\x9b\x0a\x80\x1d\x0b\xcc" //....>..`Q....... |
-// /* 15c0 */ "\x4f\x03\x45\x40\x12\x7f\x77\x01\x81\x52\xd6\x98\x02\xc6\xb9\x88" //O.E@..w..R...... |
-// /* 15d0 */ "\x87\xbc\x12\x23\xc6\xaf\xa8\xf5\xde\xa0\x0d\x22\xe5\x32\xc2\x0d" //...#.......".2.. |
-// /* 15e0 */ "\xee\x79\xd4\x06\xa3\xcd\x22\x40\xd0\x7c\x56\x04\xb5\x2d\x00\xc0" //.y...."@.|V..-.. |
-// /* 15f0 */ "\x8c\x60\x84\x1e\xf4\x01\x20\x79\x34\x06\x95\xed\x47\xdd\x61\x08" //.`.... y4...G.a. |
-// /* 1600 */ "\x90\x0d\x40\x1b\xd8\x6e\x01\x63\xaf\xae\xf9\x53\xe5\x78\x9b\x4d" //..@..n.c...S.x.M |
-// /* 1610 */ "\x68\x00\x1f\xb1\x40\x0b\xfa\x0f\x68\x40\x37\xb4\x2c\x17\x0f\x4d" //h...@...h@7.,..M |
-// /* 1620 */ "\xb8\x49\x2d\xe0\x30\x18\xb3\x1e\x05\x50\xaf\xaa\x03\x23\x21\xc3" //.I-.0....P...#!. |
-// /* 1630 */ "\x71\x51\xc3\x05\x81\x63\xe2\xa0\x03\x00\xe3\x3a\x04\xf2\x3a\xa3" //qQ...c.....:..:. |
-// /* 1640 */ "\xec\xc8\x05\xf3\x94\xb1\xa8\x80\xc0\x97\xa3\xbd\x52\x40\x4c\xff" //............R@L. |
-// /* 1650 */ "\x74\x06\xd4\xd6\x03\xea\xf3\x08\x44\x83\x02\xf8\xb2\x8b\xe0\x06" //t.......D....... |
-// /* 1660 */ "\xa0\x19\xec\x27\x87\x90\x5a\xb0\x0c\x06\x7a\x23\xce\x86\x60\x37" //...'..Z...z#..`7 |
-// /* 1670 */ "\xfa\xb7\x4e\xf5\x40\x06\x9f\xfc\x1e\x53\x9c\x4c\x06\xf6\xe8\x06" //..N.@....S.L.... |
-// /* 1680 */ "\xc1\x80\x20\x5e\x34\x8a\x18\xc0\x0d\x47\xc3\x70\x0a\xb5\xe8\xb7" //.. ^4....G.p.... |
-// /* 1690 */ "\xe9\x01\xa0\x73\xa0\x57\xef\xf7\xde\xb6\x52\x6d\xcf\x5c\x7b\x5f" //...s.W....Rm..{_ |
-// /* 16a0 */ "\x01\x81\x62\x41\xa7\xb9\x61\x00\x7f\xc6\x8f\x28\xbc\x68\xc4\xc1" //..bA..a....(.h.. |
-// /* 16b0 */ "\x80\x0a\x11\x00\x04\x0f\x12\xee\xc5\x8c\x62\xa0\x0d\xc2\x81\xeb" //..........b..... |
-// /* 16c0 */ "\xc0\x08\x0c\x09\xff\x09\x59\x3f\xda\xa0\x09\x51\xe2\xbc\x10\x82" //......Y?...Q.... |
-// /* 16d0 */ "\x60\x61\x74\x0a\x80\x2a\x50\x85\xc0\x42\xa1\xce\x6c\x58\x9c\x05" //`at..*P..B..lX.. |
-// /* 16e0 */ "\x4b\x5a\x21\x62\x45\x29\x80\xe1\xfa\xfa\x01\x81\xc7\x9f\x27\xa7" //KZ!bE)........'. |
-// /* 16f0 */ "\x51\xe7\xce\x20\xa8\x19\xfc\xf8\xf5\x2c\x75\x0e\xa0\x09\x8d\x11" //Q.. .....,u..... |
-// /* 1700 */ "\xd8\x75\xf0\xc1\x81\x90\x80\x03\xf1\x69\xaf\x55\xc7\x15\xd6\x00" //.u.......i.U.... |
-// /* 1710 */ "\x11\x04\x54\x00\xa8\xe7\x20\x3d\x9e\x14\x26\x00\x8c\x03\x8a\x81" //..T... =..&..... |
-// /* 1720 */ "\xb7\x76\xec\x40\x38\x6d\x44\x06\x21\x04\x0b\xa8\x00\xf8\x85\xc7" //.v.@8mD.!....... |
-// /* 1730 */ "\x3d\x74\x8e\x04\xc0\x63\xd2\x5c\x01\xbe\x8a\x73\x88\x00\xb5\x62" //=t...c.....s...b |
-// /* 1740 */ "\x14\x92\x07\x1b\x41\x5a\xe0\x5d\x40\x09\xfb\xb1\x68\x09\xeb\x81" //....AZ.]@...h... |
-// /* 1750 */ "\xa1\xf9\xf3\xa3\xe8\x20\x06\x08\x3f\x5f\x3d\x22\x8e\x84\xc7\x54" //..... ..?_="...T |
-// /* 1760 */ "\xea\x00\xbd\x98\x10\x47\xe7\xce\x50\xe0\x0b\x06\x07\x30\x58\xc8" //.....G..P....0X. |
-// /* 1770 */ "\xe8\x57\x38\xe5\x40\x0f\x14\xca\xc4\xfa\xef\x44\xf9\x60\x25\xaa" //.W8.@......D.`%. |
-// /* 1780 */ "\x76\x01\xb7\x10\xfd\x64\x1e\x3a\x12\xfa\x55\x7e\x86\x1f\x4f\x87" //v....d.:..U~..O. |
-// /* 1790 */ "\xa6\xd3\xe8\x25\xf4\x67\x04\xe6\xa1\x57\xd1\x95\xe7\x4a\xf4\xd5" //...%.g...W...J.. |
-// /* 17a0 */ "\xfe\x8d\x1e\x92\x9e\xa5\xc7\x42\x63\x81\x2d\x18\x15\xb1\xc8\x74" //.......Bc.-....t |
-// /* 17b0 */ "\x29\x42\x2c\x63\xa8\x01\xd3\xde\xf8\x07\x44\x8b\x10\x76\x30\x43" //)B,c......D..v0C |
-// /* 17c0 */ "\xf4\x60\x70\xc4\x17\x8f\xd0\x0b\x03\xd5\xaa\x00\x97\xba\xf0\x0d" //.`p............. |
-// /* 17d0 */ "\x47\xce\x90\xda\xd7\x4f\x7b\xc1\x0e\x48\x14\x67\x03\xed\x06\x78" //G....O{..H.g...x |
-// /* 17e0 */ "\x12\xb8\x43\xb8\x34\xc5\x45\x9b\x82\x48\x63\x29\x0a\xb0\x43\x94" //..C.4.E..Hc)..C. |
-// /* 17f0 */ "\x32\x7a\x9e\x30\x5a\xbb\xee\x46\x52\xd9\x54\x67\xb7\x70\x1c\x7f" //2z.0Z..FR.Tg.p.. |
-// /* 1800 */ "\x90\x15\xc0\xfd\x53\x92\xb5\x1c\x22\xe2\x89\x3e\xbb\xd4\x62\x51" //....S..."..>..bQ |
-// /* 1810 */ "\x40\x1c\x4d\xe2\x15\x80\xa7\xf0\xa2\x01\x48\x00\x40\x7a\x82\xa0" //@.M.......H.@z.. |
-// /* 1820 */ "\x58\x92\xfe\x05\x20\x2a\x9e\x97\x00\x0a\xb8\x00\x60\x0c\xc2\xcf" //X... *......`... |
-// /* 1830 */ "\x97\x98\x1a\x38\x09\xc7\x3c\x44\x3e\x33\x81\x25\xd8\x11\x90\x09" //...8..<D>3.%.... |
-// /* 1840 */ "\x01\x27\xf1\x14\x60\x49\x58\x04\xc1\x1b\xf3\x40\xe5\xcb\x02\x38" //.'..`IX....@...8 |
-// /* 1850 */ "\x1e\x2d\x91\x1e\x80\x90\x11\x6f\xfc\x60\xc1\x1c\xa8\xe6\x08\xe5" //.-.....o.`...... |
-// /* 1860 */ "\x5e\xc2\x70\x3c\x98\x7b\x04\x7e\xc6\x08\xe5\x8b\x1f\xf7\x98\x06" //^.p<.{.~........ |
-// /* 1870 */ "\x07\x71\x9a\x7f\x87\x54\x8c\x11\xae\xa0\x00\xf8\xa1\xd2\x20\x27" //.q...T........ ' |
-// /* 1880 */ "\x01\xa6\xf8\x04\x40\x16\x21\x02\x44\xe9\x56\x12\x80\xcc\xbc\x0d" //....@.!.D.V..... |
-// /* 1890 */ "\x18\x13\x6a\x39\xd4\x84\xa0\x33\x7f\x23\xa4\x02\xb8\x13\x5d\xd0" //..j9...3.#....]. |
-// /* 18a0 */ "\x7c\x23\x01\x9e\x78\x58\x00\x3e\x25\xd0\x29\xee\x74\x06\x0b\xe1" //|#..xX.>%.).t... |
-// /* 18b0 */ "\x69\x20\x14\xa6\xd8\x04\xf1\x51\xfb\x9f\xc8\x46\x03\x0a\x1d\x60" //i .....Q...F...` |
-// /* 18c0 */ "\x08\x61\x1f\x05\xf1\xb8\x46\x02\xde\x29\x81\x47\x00\x3c\xee\x82" //.a....F..).G.<.. |
-// /* 18d0 */ "\x10\x17\x41\x3f\x96\xc2\xf5\xac\x03\x02\x79\xc1\x42\x50\x8a\x01" //..A?......y.BP.. |
-// /* 18e0 */ "\x82\x80\x60\x88\x7f\xeb\x4b\xd7\xe1\x23\x63\xeb\x58\xb8\xfd\xf1" //..`...K..#c.X... |
-// /* 18f0 */ "\x58\xaf\xc9\x34\xfc\x91\x86\x0a\x4c\x80\x2f\x92\x15\xc1\x49\x8f" //X..4....L./...I. |
-// /* 1900 */ "\xcc\x59\x09\x0f\x80\x8d\x05\x00\x07\xf4\x6d\x38\x7f\xc5\x8f\xf8" //.Y........m8.... |
-// /* 1910 */ "\xc5\x3b\xef\xad\x18\x29\xf6\x21\x5f\x25\x6d\xfe\x30\x8f\xf2\x55" //.;...).!_%m.0..U |
-// /* 1920 */ "\x2f\xe2\xe8\x86\x10\x80\xd5\xfc\x57\x18\x2d\x51\x01\xad\x84\x80" ///.......W.-Q.... |
-// /* 1930 */ "\x63\x76\x19\x56\x00"                                             //cv.V. |
-// Sent dumped on RDP Client (5) 6453 bytes |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[1](30) used=1082 free=15196 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=2 rect(930,677,64,61) rop=cc srcx=0 srcy=0 cache_idx=87) |
+// /* 03e0 */ "\x06\x51\xef\xa9\x1f\x32\x00\xf0\x63\xfb\x18\xea\x80\x42\x02\x20" //.Q...2..c....B.  |
+// /* 03f0 */ "\x21\x12\xa9\x52\xaf\xc2\x90\x33\x5c\x63\x08\x03\xc1\xd6\xe0\x0b" //!..R...3.c...... |
+// /* 0400 */ "\xe5\xfe\xe1\x7f\x18\xc5\x8b\xaf\x83\x8e\x0e\x4f\x7c\x30\x22\x20" //...........O|0"  |
+// /* 0410 */ "\x00\x24\x93\xe1\xc0\x14\xa3\xe1\xc0\x08\x87\xc3\x8f\x83\xa0\x19" //.$.............. |
+// /* 0420 */ "\x2f\x80\xa8\x07\xc0\x52\x21\xe0\x29\x04\xf8\x56\x0b\x40\x06\x20" ///....R!.)..V.@.  |
+// /* 0430 */ "\x04\xf8\x58\xfd\x97\xc1\x9f\xe5\x80\x17\xf2\xcf\xfa\x47\xc1\x8f" //..X..........G.. |
+// /* 0440 */ "\xed\x1f\x0b\x2f\x83\x87\xf2\xc0\x0f\xf9\x6b\xfb\xa8\x3f\xe2\x3e" //.../......k..?.> |
+// /* 0450 */ "\x16\x1e\xa1\x8f\x83\x5f\xcb\x00\x4f\xe5\xbf\xc1\x80\x3a\x00\x33" //....._..O....:.3 |
+// /* 0460 */ "\x00\x21\x00\x3d\x80\x10\x00\x1b\xa1\x9b\xe8\xbe\x0c\x84\x8d\xd6" //.!.=............ |
+// /* 0470 */ "\xcf\xcf\x41\xc0\xc0\x7a\x91\x07\xbe\x11\x07\x84\x93\xe4\x61\x01" //..A..z........a. |
+// /* 0480 */ "\xf7\x4b\xe1\x40\xf7\xcc\x60\xd9\xd0\x08\x58\x10\x40\x18\x18\x20" //.K.@..`...X.@..  |
+// /* 0490 */ "\x2f\x89\x30\x05\xf1\x26\xe0\xf4\x0f\x57\x47\x88\x94\x00\x44\x0f" ///.0..&...WG...D. |
+// /* 04a0 */ "\x91\x00\x9f\x67\x0f\x2b\x62\x0d\xfc\xb4\x20\xf8\x54\x07\x60\xf2" //...g.+b... .T.`. |
+// /* 04b0 */ "\xb4\x7c\x28\x06\x60\x03\xb0\x7d\x87\xc1\x9f\xe5\x80\x3f\xf2\xd3" //.|(.`..}.....?.. |
+// /* 04c0 */ "\xe0\xf6\x80\xc4\x0e\xcc\x38\x76\x0c\x80\x0f\x80\x10\xbe\x35\xa1" //......8v......5. |
+// /* 04d0 */ "\x00\x05\x02\x80\x02\x04\x03\x04\x03\x84\x03\x82\x70\xb2\xc0\x23" //............p..# |
+// /* 04e0 */ "\xc2\x53\xc2\xcb\x50\x1b\x80\x00\x10\x47\x00\x77\xc3\x93\x8f\xe4" //.S..P....G.w.... |
+// /* 04f0 */ "\xf8\x71\xf4\x9f\x61\xf0\x74\xf2\xa6\x01\x3e\x02\x9f\x2a\x6c\x0b" //.q..a.t...>..*l. |
+// /* 0500 */ "\x00\x06\xff\xcf\x85\x87\xc1\xc3\xf9\x60\x15\xfc\xb9\x38\x72\x72" //.........`...8rr |
+// /* 0510 */ "\xfa\x1a\x2c\x00\xfd\x90\x88\xa0\x0a\xdf\x1a\xd5\x80\x02\xb0\xdf" //..,............. |
+// /* 0520 */ "\x28\x28\x10\x14\x10\x20\x28\x23\xd0\xd8\x05\xf8\x4a\x7d\x0d\xa8" //((... (#....J}.. |
+// /* 0530 */ "\x3d\x80\x03\x81\x93\xe1\xd7\xcc\xdf\xe0\xe9\xe5\x4c\x03\x3c\x05" //=...........L.<. |
+// /* 0540 */ "\x3e\x54\xaf\x3a\x47\xc2\xe2\xf8\x38\x7f\x2c\x03\x7f\x96\x7f\x07" //>T.:G...8.,..... |
+// /* 0550 */ "\x0f\x3e\x47\xc2\xb6\x00\x39\x07\xd1\x7c\x19\xf4\x34\x0f\x80\x00" //.>G...9..|..4... |
+// /* 0560 */ "\x2d\x70\x46\x35\x7c\x6b\x6a\x00\x0a\x0b\x00\x0c\x09\x0d\x03\x04" //-pF5|kj......... |
+// /* 0570 */ "\xe0\x9c\xf0\x96\x01\xde\x12\xe3\x03\xe2\x0c\xe1\xad\x1e\x12\xdb" //................ |
+// /* 0580 */ "\xf9\x60\x1f\xfc\xb9\x20\x00\xd8\x10\x39\xf0\xa0\x19\x00\x0e\x01" //.`... ...9...... |
+// /* 0590 */ "\xf4\x5f\x06\x7f\x96\x02\x1f\xcb\x3f\xc9\x1f\x0a\x50\x01\x20\x00" //._......?...P. . |
+// /* 05a0 */ "\xa0\x00\xd8\xe3\x0c\x09\x00\x04\x40\xfb\x2f\x83\x20\x33\x0e\x20" //........@./. 3.  |
+// /* 05b0 */ "\x4c\x7b\x05\x2d\xd8\x13\x84\xfd\xf1\xad\xfb\xcf\x34\x1c\x06\x1e" //L{.-........4... |
+// /* 05c0 */ "\x10\x20\x0e\x07\x51\xc0\x50\xf8\xd3\xc0\x54\x30\xf8\xc9\x06\x91" //. ..Q.P...T0.... |
+// /* 05d0 */ "\x40\x03\x61\xb4\x40\x48\x18\x03\xe0\x44\x0b\x08\x35\x02\xef\xa4" //@.a.@H...D..5... |
+// /* 05e0 */ "\x8c\x09\xc0\x48\x21\x0e\x00\x00\x10\x20\x01\x04\x19\x80\xc9\x08" //...H!.... ...... |
+// /* 05f0 */ "\x9c\x05\x06\x61\x81\x57\xa1\x06\x40\x31\x01\x00\x48\xf9\xca\xc0" //...a.W..@1..H... |
+// /* 0600 */ "\x94\x08\x00\x21\x06\x90\x2f\x01\x00\x20\x74\xff\x60\x02\x0f\xbd" //...!../.. t.`... |
+// /* 0610 */ "\x00\x06\x02\xf8\x29\xf8\x83\x60\x13\xfc\x8c\x3b\x52\xfe\x81\x78" //....)..`...;R..x |
+// /* 0620 */ "\x0a\x0c\xe3\xc1\x47\x0f\xa4\x40\x17\x80\x90\x44\x04\xc8\x44\xff" //....G..@...D..D. |
+// /* 0630 */ "\xc4\x58\x05\xa0\x24\x0d\x1e\x06\x50\x30\xed\xd3\xf1\x05\xbe\xf0" //.X..$...P0...... |
+// /* 0640 */ "\x4e\x04\x83\x68\x00\x08\xfd\x88\x07\xce\x08\x78\x52\x4a\x3e\x71" //N..h.......xRJ>q |
+// /* 0650 */ "\xc0\x5b\xc2\x51\x58\xf9\x45\x8f\x88\x60\xf0\x82\x51\xf2\x10\x0f" //.[.QX.E..`..Q... |
+// /* 0660 */ "\x88\x50\xf0\x83\xe4\x3e\x84\xac\x7c\xc7\xe0\x20\xd4\x3e\x61\xa3" //.P...>..|.. .>a. |
+// /* 0670 */ "\xca\x83\x0f\x00\x48\x80\x97\xa2\x1e\x52\x04\x20\xda\x3c\x80\x38" //....H....R. .<.8 |
+// /* 0680 */ "\x11\xf9\x51\x58\xfa\x00\x04\x1a\x47\xe8\x81\x1f\x88\x6a\x61\xb4" //..QX....G....ja. |
+// /* 0690 */ "\x07\xfa\x55\xf3\xd1\x0c\x6c\x62\x38\x41\xb0\x0c\xc0\x48\x1e\x3c" //..U...lb8A...H.< |
+// /* 06a0 */ "\x12\x9c\x7b\x28\xd0\x83\x60\x6b\xfb\xf0\x41\xeb\x08\xb0\x05\xe3" //..{(..`k..A..... |
+// /* 06b0 */ "\x0f\x60\x01\xc1\x03\xc2\x0d\x41\xb7\xea\xc7\xad\xe6\x92\x83\x48" //.`.....A.......H |
+// /* 06c0 */ "\x81\x20\xd4\x10\x6c\x0e\x2c\x36\x8f\x75\xbf\x29\x80\x3d\x86\xd0" //. ..l.,6.u.).=.. |
+// /* 06d0 */ "\x21\xff\x98\x0f\xdc\x41\x10\xf8\xb0\xd1\xf1\x5c\x10\x5f\x15\x85" //!....A......._.. |
+// /* 06e0 */ "\x79\xa9\x06\xb1\xf3\x08\x33\x0f\x8a\x20\x84\x7c\x58\x60\xf8\xa0" //y.....3.. .|X`.. |
+// /* 06f0 */ "\x03\x0f\x8b\x18\x47\xb9\xf8\x22\x91\xc1\x3e\x7c\xf2\x90\x00\x04" //....G.."..>|.... |
+// /* 0700 */ "\xc0\xd0\x6b\x04\x11\x8e\x01\x54\x40\xf0\x00\x09\x05\x41\xb4\x20" //..k....T@....A.  |
+// /* 0710 */ "\xd2\x10\x64\x04\x0e\x00\x07\x18\x7a\xd1\xed\xf5\x00\x39\x06\x31" //..d.....z....9.1 |
+// /* 0720 */ "\x06\x20\x68\x20\x60\x20\x58\x20\x48\xc1\xee\xc2\x0b\x9c\x27\x09" //. h ` X H.....'. |
+// /* 0730 */ "\x56\x06\x43\x45\x80\x6c\x42\xa4\x0a\x00\x00\x73\xac\x12\x03\x8c" //V.CE.lB....s.... |
+// /* 0740 */ "\xe0\x09\x44\x02\x8d\xed\x32\x0d\x22\xa0\x06\x01\x80\x40\x06\xc1" //..D...2."....@.. |
+// /* 0750 */ "\x34\x00\x68\xe8\x4c\x05\xec\x24\x75\x9d\x86\xd1\x50\x03\x20\x78" //4.h.L..$u...P. x |
+// /* 0760 */ "\x01\x80\xdc\x40\x1d\xfe\x90\x8f\x89\x9b\xd1\x0c\x05\x24\xc1\x9f" //...@.........$.. |
+// /* 0770 */ "\x29\x66\x14\x0e\x34\xfd\x18\xfc\x80\x22\x06\x80\x18\x0a\x3f\xd1" //)f..4...."....?. |
+// /* 0780 */ "\x53\xb8\xa0\xb0\x5f\xca\x40\x03\x8b\xaf\x82\xf0\x11\x30\x90\x00" //S..._.@......0.. |
+// /* 0790 */ "\x48\x13\x0d\xa0\x01\x23\x0a\x57\xa0\x2b\x41\x22\xd0\x15\x80\x90" //H....#.W.+A".... |
+// /* 07a0 */ "\x00\x5f\xda\xa8\x00\xc0\x45\x02\x45\xa0\x51\xc0\x9e\xab\x8f\xdf" //._....E.E.Q..... |
+// /* 07b0 */ "\x09\x00\x30\x1a\x7f\x88\x67\x03\xc0\x44\x13\xf8\xbb\x6a\xa1\x5e" //..0...g..D...j.^ |
+// /* 07c0 */ "\x00\x42\xf9\x81\xb0\x30\xc1\xc3\x09\x71\xbe\x72\xa1\xf3\xa4\x02" //.B...0...q.r.... |
+// /* 07d0 */ "\xb0\x03\xec\xa4\x73\xc1\xa3\x5f\x06\xcb\x0e\x0c\x77\x2c\x7c\xe3" //....s.._....w,|. |
+// /* 07e0 */ "\xd7\xce\x90\x0e\xc9\x21\x30\x1f\x05\xc1\x17\x82\xdf\x41\xe5\x84" //.....!0......A.. |
+// /* 07f0 */ "\xbb\xfe\x30\xa6\x8b\xe7\x47\xa7\x4d\x3f\x39\x89\xc5\xdf\x3a\x0e" //..0...G.M?9...:. |
+// /* 0800 */ "\x00\x60\x24\x9f\x39\x87\xd8\x00\xfe\x13\x3d\xf8\x14\x6f\xe7\x12" //.`$.9.....=..o.. |
+// /* 0810 */ "\x00\x18\x0f\xc8\x0b\x40\x5f\x3e\x63\xda\x15\xeb\xda\x24\xf5\x63" //.....@_>c....$.c |
+// /* 0820 */ "\xe8\x3c\x22\xf5\xd4\x42\x7e\x74\xf8\xf6\x19\xfe\x73\xd6\xef\x9c" //.<"..B~t....s... |
+// /* 0830 */ "\x00\xb4\x00\xf8\xdc\x2f\xe9\xc7\xce\x82\x04\x8f\x34\xc3\xd7\x82" //...../......4... |
+// /* 0840 */ "\x8b\x21\x38\x2a\x51\xef\x70\x20\x01\x80\x0c\x04\x54\x27\xc1\xb1" //.!8*Q.p ....T'.. |
+// /* 0850 */ "\xeb\x90\x0c\x04\x82\x31\xf4\xde\x20\x54\x3f\xa1\x1b\xe2\x21\x40" //.....1.. T?...!@ |
+// /* 0860 */ "\x01\x35\x00\x52\x0a\xc0\x0f\xae\x1e\xbc\x81\x58\x13\x48\x02\xc0" //.5.R.......X.H.. |
+// /* 0870 */ "\x4d\x40\x20\x5f\xdc\xee\x1e\xca\x80\x28\x02\x07\xb2\x6a\xe0\x00" //M@ _.....(...j.. |
+// /* 0880 */ "\x25\x03\x45\xc5\x95\xe5\xa0\x96\x38\xe8\x48\x45\x40\x19\x06\x01" //%.E.....8.HE@... |
+// /* 0890 */ "\xc0\xbe\x8d\x82\x43\x20\xc0\x38\x96\x0c\xd0\x01\x2e\x00\x13\x09" //....C .8........ |
+// /* 08a0 */ "\x7a\x09\x66\x8e\x84\x83\xf1\x0a\x61\x5b\x97\x90\xde\x91\x8a\x4a" //z.f.....a[.....J |
+// /* 08b0 */ "\xc0\x4c\x0d\x67\xec\x9f\x02\x5b\x23\xa1\x20\xde\x14\x80\x82\x08" //.L.g...[#. ..... |
+// /* 08c0 */ "\x07\x87\x42\x61\x2c\x01\xf1\xd0\x90\x58\x17\x12\x00\xc5\x40\x23" //..Ba,....X....@# |
+// /* 08d0 */ "\xca\x60\x0f\x49\x47\x23\x45\x00\x00\x61\xab\xff\x3d\x5a\x12\x81" //.`.IG#E..a..=Z.. |
+// /* 08e0 */ "\x71\x2d\x04\x60\xe3\x07\xb2\x23\x19\xf0\xaa\x04\x0a\x18\x87\xa9" //q-.`...#........ |
+// /* 08f0 */ "\xe1\x46\x1c\x68\x71\x88\x61\xdb\x18\xf7\xb0\x00\x3b\x10\x5c\x38" //.F.hq.a.....;..8 |
+// /* 0900 */ "\x08\xc0\xff\x02\x48\x1f\x80\xf8\xec\x3f\xed\x37\x17\xd9\x7b\x09" //....H....?.7..{. |
+// /* 0910 */ "\xf9\x83\x6f\x8b\x1d\x4c\xc3\xfe\xa0\x7c\x56\x04\x43\x0f\xf9\xed" //..o..L...|V.C... |
+// /* 0920 */ "\xf8\x27\xdc\xc1\xff\x7d\xc6\x24\x59\x00\x0f\x43\x9f\x02\x5e\xfc" //.'...}.$Y..C..^. |
+// /* 0930 */ "\xd2\x59\x09\x58\x09\x36\x09\x15\x09\x13\x01\xb8\xfa\xc1\x2c\x00" //.Y.X.6........,. |
+// /* 0940 */ "\x69\xe9\xe0\x22\x00\xe5\xae\xa0\x05\xc7\x02\x6e\x75\x1c\x2b\x44" //i..".......nu.+D |
+// /* 0950 */ "\x11\xc0\x03\x45\x1c\x1f\xa4\xe3\x1b\x8d\xd0\x09\x4b\x06\x20\x1f" //...E........K. . |
+// /* 0960 */ "\x02\x68\x00\x1c\x09\xd2\x41\xea\x00\xab\x08\xff\x18\xb8\x10\x80" //.h....A......... |
+// /* 0970 */ "\xca\x47\x40\x03\xb8\xa2\x84\x20\x30\xe1\x4f\x92\x59\xf9\x28\x98" //.G@.... 0.O.Y.(. |
+// /* 0980 */ "\x9f\xc9\x2c\x7c\x93\xc0\x57\xc9\x7d\x27\x15\x22\x08\xf8\xd4\x06" //..,|..W.}'.".... |
+// /* 0990 */ "\x80\x15\x49\x80\x8b\x04\xf1\x12\x38\xf8\x0c\x8c\x3c\x35\x01\x40" //..I.....8...<5.@ |
+// /* 09a0 */ "\x0a\xe7\x01\x11\xc0\x91\x18\x0a\x58\xa8\xd4\x06\x00\x16\x23\xe9" //........X.....#. |
+// /* 09b0 */ "\x43\x97\xdc\x28\x0a\x0d\x40\x6c\x02\x82\x3c\x15\x58\xd4\x0c\x26" //C..(..@l..<.X..& |
+// /* 09c0 */ "\x35\x01\x20\x1e\x11\xf4\xc0\x4a\x02\x74\x14\x35\x02\x40\x1f\x20" //5. ....J.t.5.@.  |
+// /* 09d0 */ "\xc0\x61\x6b\x80\x03\x9f\xe8\x01\x0f\xbd\x30\x8f\xc0\x50\x00\x44" //.ak.......0..P.D |
+// /* 09e0 */ "\x3d\xc6\x13\x80\x83\xf8\x49\x20\x0a\x0f\xf0\x21\xd3\xee\x03\x3c" //=.....I ...!...< |
+// /* 09f0 */ "\x24\xb0\x09\x87\xff\x80\xa4\x06\xe3\xe0\x42\x00\xa8\x7f\xe6\x0a" //$.........B..... |
+// /* 0a00 */ "\x40\x6e\xc2\x5e\x2a\x0f\x07\x7b\x8c\xeb\xf9\x97\xb0\x97\xbf\x01" //@n.^*..{........ |
+// /* 0a10 */ "\x18\x30\x99\xd0\x54\x25\xdb\xe8\x28\x9e\x04\x80\x10\xce\x04\x2e" //.0..T%..(....... |
+// /* 0a20 */ "\x21\xd1\x29\x1d\x1a\x80\x80\x05\x85\xc0\x80\xb8\x69\x85\xe0\x32" //!.).........i..2 |
+// /* 0a30 */ "\xef\x2b\x10\x05\x02\xf8\x06\x1e\x3e\xe2\x67\xe1\x44\x80\x54\x2b" //.+......>.g.D.T+ |
+// /* 0a40 */ "\x8c\x29\xe7\xe7\x23\x01\x5e\x2e\x0f\x04\xfc\xe3\xd4\x74\x26\x05" //.)..#.^......t&. |
+// /* 0a50 */ "\x3c\xf5\x7b\xcb\x4a\x80\x35\x03\x04\xbd\x88\x80\x05\x42\x5f\x3f" //<.{.J.5......B_? |
+// /* 0a60 */ "\x19\x94\x78\x6b\xe8\x82\x80\x7d\xea\x7d\xf9\xe6\xa1\x5f\x9e\x60" //..xk...}.}..._.` |
+// /* 0a70 */ "\x01\x01\x7e\xf9\x8b\x47\x83\x23\x19\x4d\xbd\xd0\x42\xf0\x4b\x00" //..~..G.#.M..B.K. |
+// /* 0a80 */ "\x01\x80\xe0\x57\x20\x0b\x06\x17\x18\x62\xa8\x20\x14\x12\x38\x13" //...W ....b. ..8. |
+// /* 0a90 */ "\x80\x7e\x1c\x23\x5e\x13\x40\x48\x00\x78\xd0\xae\x00\x1c\xae\x62" //.~.#^.@H.x.....b |
+// /* 0aa0 */ "\x81\xea\x23\x06\x00\x1c\x70\x11\x54\x00\xae\x3f\x5c\xc1\xe6\x15" //..#...p.T..?.... |
+// /* 0ab0 */ "\x03\x0b\x7d\xbd\x68\xa8\x01\x7e\x88\x20\x0b\xf7\xe0\x54\x7f\x8a" //..}.h..~. ...T.. |
+// /* 0ac0 */ "\x42\xa0\x07\x0b\xfa\x0a\x00\x0f\xf2\x0f\x0f\x70\x53\x54\x01\x04" //B..........pST.. |
+// /* 0ad0 */ "\x82\x40\x60\x30\x00\x01\xa8\x13\x00\xfa\x06\x0e\xc2\x3e\x04\xa2" //.@`0.........>.. |
+// /* 0ae0 */ "\x80\x61\x8a\xa4\x06\x40\x3d\xe2\x58\x80\x00\x8d\xf9\x2c\xd2\x01" //.a...@=.X....,.. |
+// /* 0af0 */ "\x50\x06\x45\xfe\xc6\x0f\x14\x28\x01\x43\x7c\x81\xd5\x16\x9f\x9e" //P.E....(.C|..... |
+// /* 0b00 */ "\x00\xf1\x30\x83\xe2\x3c\x4a\x08\x85\x60\x22\xf7\xdc\x79\xf8\x2b" //..0..<J..`"..y.+ |
+// /* 0b10 */ "\x44\x20\x01\x14\x81\x3d\x84\xb4\x76\x6e\x00\x40\x58\x00\x5f\xd8" //D ...=..vn.@X._. |
+// /* 0b20 */ "\x47\xc4\xe0\x4b\x01\x24\x80\x1c\x66\xd8\xd6\x14\xc0\x3f\xc6\x75" //G..K.$..f....?.u |
+// /* 0b30 */ "\x72\xfd\xcc\x49\xb6\x21\xe3\x36\x58\x09\x67\x00\xe3\x37\x00\x02" //r..I.!.6X.g..7.. |
+// /* 0b40 */ "\xb8\xf9\xf4\xf4\x13\x2d\x00\xe3\x41\x12\x00\xb0\x00\xae\x41\x09" //.....-..A.....A. |
+// /* 0b50 */ "\x67\xe7\x70\xd8\x84\x00\xa0\x00\x78\x1b\xd8\x4d\xcb\x91\xc3\x03" //g.p.....x..M.... |
+// /* 0b60 */ "\xf7\x20\x3f\x58\x09\xf7\x97\x1f\x9e\xc3\xbc\x68\x09\x00\xf8\xec" //. ?X.......h.... |
+// /* 0b70 */ "\x19\xf3\x8c\x38\x4c\x26\x9d\xc5\xfc\x44\x00\xf9\xf5\x16\x01\x51" //...8L&...D.....Q |
+// /* 0b80 */ "\xdc\x30\xcd\x10\x18\x00\xa7\x1a\xe6\x3b\x06\x0f\xc0\x6c\x1c\x6e" //.0.......;...l.n |
+// /* 0b90 */ "\x23\xb6\x53\x8e\x4c\x50\x07\xbe\x62\x00\x2b\xf1\x44\x1f\x82\x2c" //#.S.LP..b.+.D.., |
+// /* 0ba0 */ "\x01\x5f\x15\xc9\x98\x3f\x02\x40\xf2\xfc\x61\x1c\xe8\x60\xfc\x50" //._...?.@..a..`.P |
+// /* 0bb0 */ "\x41\xf8\xa2\x00\x15\x40\x0b\x90\x85\xb0\x77\xbf\x71\xc9\x85\x20" //A....@....w.q..  |
+// /* 0bc0 */ "\x00\x38\xef\x1c\x9c\x63\x60\x4a\x60\x14\x01\xb6\x11\xf8\x11\x00" //.8...c`J`....... |
+// /* 0bd0 */ "\xf9\x00\x08\x9b\x00\x67\xbc\x16\x0f\xe6\x81\x30\x8f\xc0\x3c\x64" //.....g.....0..<d |
+// /* 0be0 */ "\xfa\xcc\x03\xbe\x1e\xf9\xc9\x00\xa0\x8d\x16\x02\x2d\x07\x00\x0a" //............-... |
+// /* 0bf0 */ "\x40\x0a\x90\x05\x30\x05\xa0\x0a\x48\x3f\x33\x0a\x6a\xb8\x18\x80" //@...0...H?3.j... |
+// /* 0c00 */ "\x7c\xda\x81\xc8\x00\x40\x05\x28\x03\xcc\x00\x1e\x00\x20\x0a\xe0" //|....@.(..... .. |
+// /* 0c10 */ "\x96\x06\x37\x24\x48\x02\xa0\x03\xc3\xdf\x84\x40\x02\xff\xf4\x26" //..7$H......@...& |
+// /* 0c20 */ "\xc0\x16\xc0\x3e\xfb\xf8\x0c\x02\x98\x65\x16\x20\x40\x1e\x72\x0e" //...>.....e. @.r. |
+// /* 0c30 */ "\x78\x84\xc0\x01\xf3\xe7\xe2\x87\xdf\x3e\xf1\x00\x2f\xd6\xb1\xf7" //x........>../... |
+// /* 0c40 */ "\x8c\x03\xe3\x7c\x35\x4c\x1c\x9f\x90\x1b\x00\x58\xdf\x82\x1e\x4a" //...|5L.....X...J |
+// /* 0c50 */ "\x01\x70\x3d\x40\x07\xb8\xd2\xc7\xe7\x7d\xa8\x90\x70\x8a\x79\x28" //.p=@.....}..p.y( |
+// /* 0c60 */ "\x07\xf6\x14\x01\xee\x41\xf1\xeb\xe7\xd8\x80\x01\x4f\xcb\x14\x0c" //.....A......O... |
+// /* 0c70 */ "\x89\xb8\xf8\xa1\xbe\x49\xac\x33\x33\x1c\x09\x9c\x2b\x42\xb8\x40" //.....I.33...+B.@ |
+// /* 0c80 */ "\x2d\xc4\xb6\x20\x03\xdf\x25\xc4\x95\xe1\xa6\x01\x35\x01\xf0\x70" //-.. ..%.....5..p |
+// /* 0c90 */ "\x7f\x38\xe0\xb0\x03\xe0\x1a\x1b\x80\xf9\x7c\x07\xef\x90\xdf\xcd" //.8........|..... |
+// /* 0ca0 */ "\x7c\x92\x07\xc9\x70\x43\x7e\x67\xc9\x70\x9a\x01\xf1\x4e\x7d\xb7" //|...pC~g.p...N}. |
+// /* 0cb0 */ "\xc9\x8a\x07\xc9\x20\x71\xaf\x7a\xe0\x37\xc1\x32\x00\xe0\x20\x1e" //.... q.z.7.2.. . |
+// /* 0cc0 */ "\x7a\x7d\xb0\x17\x81\x1e\x92\x8f\xde\x02\xf3\x28\x73\xc0\x31\xc6" //z}.........(s.1. |
+// /* 0cd0 */ "\x18\x15\xec\x49\xe3\x54\x81\x00\x00\xd8\x07\x87\x78\x8f\x07\xe0" //...I.T......x... |
+// /* 0ce0 */ "\x56\x00\x04\x01\xe7\xef\xaf\x1c\x0b\x10\x0f\x6c\x3e\x64\x48\x07" //V..........l>dH. |
+// /* 0cf0 */ "\xb8\x0c\x47\xac\x01\x5e\xc6\x70\x18\x8b\x00\xa0\x65\x2c\x80\x06" //..G..^.p....e,.. |
+// /* 0d00 */ "\x0d\xc2\x94\x15\xf5\x01\x6c\x1c\x10\x4c\x00\x5f\x60\x80\x16\x18" //......l..L._`... |
+// /* 0d10 */ "\xc0\x27\xf2\x20\x07\x08\x95\x88\x07\xb8\xaa\x39\x8e\xbc\x6a\xe0" //.'. .......9..j. |
+// /* 0d20 */ "\x79\x1c\x2c\xc3\xdf\xe5\xd1\x15\x89\xdb\xdc\x08\xc3\xd0\x1a\x00" //y.,............. |
+// /* 0d30 */ "\xa7\x16\xa6\x33\xa7\x00\x0f\xf1\x09\x0f\x72\xd1\x77\x36\x73\x98" //...3......r.w6s. |
+// /* 0d40 */ "\x50\x05\x38\xba\x00\x03\x60\x40\x03\xd8\x03\x18\x3b\x02\x60\x1e" //P.8...`@....;.`. |
+// /* 0d50 */ "\xa0\x71\x76\x8c\x72\xc8\xf9\x51\xdb\xf8\x00\x15\xf6\xd4\x0e\x82" //.qv.r..Q........ |
+// /* 0d60 */ "\xb0\x00\x13\x02\xa0\x0a\x20\x71\x85\x8e\xba\x30\x3f\x60\x0a\xc1" //...... q...0?`.. |
+// /* 0d70 */ "\xe4\xd0\x0d\x02\x00\x15\x90\x00\x3c\x7c\xa0\x24\x09\x80\x56\x40" //........<|.$..V@ |
+// /* 0d80 */ "\x02\xf5\xf2\x80\x30\x3e\x1f\xc1\x49\x07\x0d\xf8\x1e\x82\x10\x0f" //....0>..I....... |
+// /* 0d90 */ "\xa0\x0a\xd8\x02\x98\x30\x08\x28\x00\x6a\x0b\x00\x1e\x20\x15\xa0" //.....0.(.j... .. |
+// /* 0da0 */ "\x05\xd8\x30\x6e\x63\xca\x60\x0a\x00\x0c\x84\x2e\x13\x20\x14\x80" //..0nc.`...... .. |
+// /* 0db0 */ "\x0a\x70\x06\x0a\x48\x02\xec\x01\x44\x01\x4c\x00\x2c\x00\x17\x32" //.p..H...D.L.,..2 |
+// /* 0dc0 */ "\x6f\xb8\x11\x02\x01\x40\x53\x00\x03\x8f\x01\x80\x71\x70\x93\xd1" //o....@S.....qp.. |
+// /* 0dd0 */ "\x08\xe6\x09\xb7\x82\x0b\x85\xe0\x06\x0f\x02\xc4\x7d\x2b\x5a\xd1" //............}+Z. |
+// /* 0de0 */ "\x63\x1d\x2d\x6a\xd0\x73\x86\xce\x42\xf8\xe5\x05\x16\x9a\xb3\xd7" //c.-j.s..B....... |
+// /* 0df0 */ "\xf0\x9f\xac\x75\xd5\x14\x21\x47\xae\xed\x35\xfb\xff\x06\x84\x43" //...u..!G..5....C |
+// /* 0e00 */ "\x00\xac\x54\x60\x73\x1d\x2a\x1f\x6e\xed\x5f\x52\x70\x07\xc4\x8e" //..T`s.*.n._Rp... |
+// /* 0e10 */ "\x60\xfe\x25\x40\x0e\x44\x10\x03\x06\xbd\xdf\xad\x76\xa2\x4b\x4d" //`.%@.D......v.KM |
+// /* 0e20 */ "\x8e\xd1\x06\xb4\xda\xed\x55\x00\x3a\x5f\x39\x66\x01\x0c\x76\x4c" //......U.:_9f..vL |
+// /* 0e30 */ "\x0e\x54\x01\x12\x71\xf5\x1a\x0d\x69\x66\x61\xb4\x70\x97\x0c\x60" //.T..q...ifa.p..` |
+// /* 0e40 */ "\x06\xf7\x7f\x30\xdd\x40\x0c\x9f\x0a\x53\xa3\x57\xee\xf7\x0c\x3a" //...0.@...S.W...: |
+// /* 0e50 */ "\x88\xc0\x31\x0c\x01\x76\x50\xfa\xc9\x0f\x66\x63\xd5\xda\xa0\x14" //..1..vP...fc.... |
+// /* 0e60 */ "\x90\x04\xff\xf5\x93\x0f\xac\x78\xfa\xd0\x00\x02\xd1\x5f\xbf\x82" //.......x....._.. |
+// /* 0e70 */ "\x60\x12\x9a\x90\x0d\x40\x80\x0c\x1e\x6e\xd8\x03\x45\x80\x4a\xe4" //`....@...n..E.J. |
+// /* 0e80 */ "\x6a\x04\x40\xe1\x12\xba\x07\xe0\x07\xf7\x86\xe4\x20\x67\xfb\xaa" //j.@......... g.. |
+// /* 0e90 */ "\x00\x91\xa1\xec\x57\x28\xba\x51\x67\xc2\xf5\x00\x45\x10\xcf\x26" //....W(.Qg...E..& |
+// /* 0ea0 */ "\x02\x05\x30\x09\xd0\x62\x06\x01\x80\x6d\x18\x00\x18\x07\x67\xe7" //..0..b...m....g. |
+// /* 0eb0 */ "\x58\x9f\x5f\xea\x00\x80\x80\x20\x35\x00\x48\xf0\x3f\x70\x08\xc0" //X._.... 5.H.?p.. |
+// /* 0ec0 */ "\x29\xb2\xc1\x80\x85\xc8\x0c\x5e\x08\x59\xed\x38\x2f\xf9\xd1\xb1" //)......^.Y.8/... |
+// /* 0ed0 */ "\x5f\xbf\xce\xaf\xd5\x00\x2b\x38\x08\x0c\x04\x12\xd3\x50\x05\xb6" //_.....+8.....P.. |
+// /* 0ee0 */ "\x7a\x5d\x80\x59\xa6\x11\x8b\x06\x04\x18\x70\x45\xe0\xc8\x11\x0c" //z].Y......pE.... |
+// /* 0ef0 */ "\x01\x62\xaf\xdf\xe0\x67\x37\x6a\xbd\xd5\xf6\xff\x50\x05\x23\xfd" //.b...g7j....P.#. |
+// /* 0f00 */ "\x8c\x02\xf9\x33\x01\x8e\xee\xee\xe1\x2f\xc8\x04\x30\x0c\x01\x64" //...3...../..0..d |
+// /* 0f10 */ "\xaf\xdf\xc1\x7d\x48\xfb\x2a\xc6\x01\xda\x0c\x7b\x3d\x02\x49\xb5" //...}H.*....{=.I. |
+// /* 0f20 */ "\x46\xaf\xc1\x7e\xce\x79\xe6\x46\x05\xaa\x00\xc4\x08\x00\x3e\x3d" //F..~.y.F......>= |
+// /* 0f30 */ "\x41\x4a\x6d\x4e\x37\x49\xb5\xd4\xe6\xed\x77\xba\xd4\x01\x43\x02" //AJmN7I....w...C. |
+// /* 0f40 */ "\xfc\xbb\x38\x0a\x32\x10\x05\xaa\x01\x0c\x3c\x94\x1f\xed\xdc\x4d" //..8.2.....<....M |
+// /* 0f50 */ "\x40\xf2\x39\xc0\x5b\xc1\xc1\x4e\x0c\x0f\x98\x8c\x0a\xfb\x0c\xdf" //@.9.[..N........ |
+// /* 0f60 */ "\xf6\xe3\x82\xdd\x0a\xfd\xf7\xd3\x70\x45\x91\x52\x1f\x94\xe0\x77" //........pE.R...w |
+// /* 0f70 */ "\x78\x0a\xe6\x85\x7c\x2b\x1c\x0d\x67\xc3\x30\xe0\xc3\x68\x07\xf3" //x...|+..g.0..h.. |
+// /* 0f80 */ "\x8b\xe7\xbc\xf2\x20\x84\x60\x28\x64\x23\xfb\xb0\x14\x93\x01\x8d" //.... .`(d#...... |
+// /* 0f90 */ "\x41\x03\x07\xc8\x54\x04\xbc\x3c\xc0\x44\x00\x7e\x00\xef\x04\x48" //A...T..<.D.~...H |
+// /* 0fa0 */ "\x86\x02\x77\x42\x3d\xdc\xe0\x33\x38\x09\xd1\x80\xa4\xc3\x1e\x14" //..wB=..38....... |
+// /* 0fb0 */ "\x8c\x05\x77\x0c\x02\x1e\x44\x39\x30\xda\x02\x3d\xdb\x7c\x7a\x82" //..w...D90..=.|z. |
+// /* 0fc0 */ "\x08\x35\x8e\x5f\x0f\x0f\x10\x66\x18\x0a\xa5\x18\x73\xfb\xb1\xe3" //.5._...f....s... |
+// /* 0fd0 */ "\xc8\x41\xac\x07\x7d\x77\x84\x81\x1e\x5b\x7c\x77\x99\xc1\x7f\xba" //.A..}w...[|w.... |
+// /* 0fe0 */ "\x24\x0e\xac\x36\x8c\x03\x68\xf3\xe0\x4f\xbf\x41\x40\x04\x03\x05" //$..6..h..O.A@... |
+// /* 0ff0 */ "\x29\x08\x12\x08\x22\x08\x36\x07\x66\x1b\x40\x4f\xa7\xdf\xee\x28" //)...".6.f.@O...( |
+// /* 1000 */ "\xc8\x35\x08\x12\x0d\x61\x06\xd0\xf3\xfe\x08\x35\x00\x9f\x62\x18" //.5...a.....5..b. |
+// /* 1010 */ "\x05\x7e\x58\x81\x63\xe5\x9c\x3b\x53\x10\x65\x1d\x4e\xe3\x06\x6d" //.~X.c..;S.e.N..m |
+// /* 1020 */ "\x30\x01\x0a\xa0\x00\x30\x15\x80\xbb\x98\x00\x7c\x83\x60\x00\x30" //0....0.....|.`.0 |
+// /* 1030 */ "\xc5\x6c\x8f\x00\x3b\x7b\x90\x6a\x04\x3c\xab\x58\x01\x84\x00\x1d" //.l..;{.j.<.X.... |
+// /* 1040 */ "\x03\x41\xb4\x60\x03\xa0\xc7\x2a\x87\x9c\xc0\x01\x98\x0a\xda\x20" //.A.`...*.......  |
+// /* 1050 */ "\x00\x05\x1c\xa6\xde\x91\x30\x06\xb0\xda\x20\x9e\x2b\x4c\x30\x16" //......0... .+L0. |
+// /* 1060 */ "\x09\x00\x3b\xd6\x46\x01\x16\x1b\x47\xe2\x88\x40\x01\x07\x08\x20" //..;.F...G..@...  |
+// /* 1070 */ "\x87\x2f\xd5\xa3\xc3\x22\x08\x87\x59\xd7\x85\x0c\x02\x8c\x36\x80" //./..."..Y.....6. |
+// /* 1080 */ "\xbf\x1f\xba\x7c\x3c\x08\xf8\xa5\x8f\x8a\x00\x28\xf2\x94\x52\x08" //...|<......(..R. |
+// /* 1090 */ "\x12\x20\x88\x32\x84\x19\xc6\x03\x03\x5a\x3a\x91\x30\x1e\xa5\xff" //. .2.....Z:.0... |
+// /* 10a0 */ "\x76\x36\x0c\x60\x9c\x76\x03\x98\x08\x60\xdf\xb5\x88\x0a\x4a\x04" //v6.`.v...`....J. |
+// /* 10b0 */ "\x7a\x00\xa8\x00\x06\x27\x81\x45\x9c\x9d\xa8\x44\x17\x27\xdd\x88" //z....'.E...D.'.. |
+// /* 10c0 */ "\x2e\x10\x1c\x05\x7f\x14\x00\xa8\xe8\x4d\x0a\x38\x13\x42\x7c\x09" //.........M.8.B|. |
+// /* 10d0 */ "\xec\x42\x7a\x09\xa1\x2c\x84\xc3\x70\x03\xfd\xf5\xdd\x5c\x00\x13" //.Bz..,..p....... |
+// /* 10e0 */ "\xc4\x66\x29\x4a\x4c\x6e\x2c\x76\xe5\xa0\x93\xac\x38\xb6\xc0\x17" //.f)JLn,v....8... |
+// /* 10f0 */ "\x06\x0c\x06\x4e\x81\x47\x4c\xaf\xdc\xa7\x62\x0f\x7e\xaf\x0d\xc7" //...N.GL...b.~... |
+// /* 1100 */ "\x62\x68\x50\xbc\x01\x44\x01\xc5\x27\xca\x25\x7f\x1a\x34\x05\x24" //bhP..D..'.%..4.$ |
+// /* 1110 */ "\xa0\x30\x39\x96\x19\xe5\x2d\x60\x24\xb4\x09\x75\x2e\x3f\x77\x6b" //.09...-`$..u.?wk |
+// /* 1120 */ "\xe5\x8a\x9e\x9d\x31\x77\x4b\x76\xdb\x01\xc0\x46\x00\x6a\x00\x6d" //....1wKv...F.j.m |
+// /* 1130 */ "\xcd\x7c\x6a\x22\x02\xac\x65\xd3\xac\x3a\x44\xff\x6f\x6c\xff\x20" //.|j"..e..:D.ol.  |
+// /* 1140 */ "\x26\x35\x90\x18\x0c\x77\xf1\x18\x7e\x42\x7f\x77\xa8\x02\x41\xfa" //&5...w..~B.w..A. |
+// /* 1150 */ "\x2f\xa2\xd2\x3e\x90\x2a\xf4\x32\xa0\x07\x20\x10\x01\x84\x8f\xd7" ///..>.*.2.. ..... |
+// /* 1160 */ "\xe7\xcb\x67\xa4\x43\xa3\x51\xd3\x29\xf2\xdb\xf4\x96\x3f\x6f\xfe" //..g.C.Q.)....?o. |
+// /* 1170 */ "\xa0\x32\x0b\x7f\x83\xc4\x25\x60\x30\x7a\xfd\xfe\x7a\x64\xf4\x13" //.2....%`0z..zd.. |
+// /* 1180 */ "\x4f\x00\x7e\xbf\xd7\xef\xf3\x6a\x66\x02\x8c\x02\x30\xe0\xb0\x34" //O.~....jf...0..4 |
+// /* 1190 */ "\x74\xcb\x01\x08\x20\x55\xd1\x11\xe6\xcf\x01\x84\x79\x30\xac\x17" //t... U......y0.. |
+// /* 11a0 */ "\x60\x18\x0d\x79\x8f\xc9\xa8\x1c\x8a\xd0\xdb\x73\xba\xd9\x3f\x48" //`..y.......s..?H |
+// /* 11b0 */ "\x0c\x83\x97\xfa\x7f\x56\x6d\xf1\xe0\x10\x8d\x64\x07\x01\x92\x2d" //.....Vm....d...- |
+// /* 11c0 */ "\xfc\x7e\xe2\x04\xc5\x60\x8e\x04\xe1\x06\xf0\x1a\x06\x03\xf8\x4f" //.~...`.........O |
+// /* 11d0 */ "\xe9\xd4\xa8\x02\x55\x40\x09\x00\xcf\xc0\x60\x02\xbf\xc8\x20\x39" //....U@....`... 9 |
+// /* 11e0 */ "\x01\x63\x29\xb5\x40\x67\x4b\x5f\x8a\xfd\x4a\xa8\x01\x21\x53\x7c" //.c).@gK_..J..!S| |
+// /* 11f0 */ "\x64\xf4\x13\xc2\x2a\x80\x15\x85\xa8\x06\x87\x76\x15\x80\xc7\xee" //d...*......v.... |
+// /* 1200 */ "\xfd\x4b\xd3\xfa\x73\x7f\xe0\x8a\x01\x1f\x9b\x61\xaf\x0c\xb9\xc5" //.K..s......a.... |
+// /* 1210 */ "\x40\x12\x40\x57\xcb\x4e\x17\x4a\xbd\x4c\x1e\x8a\x87\xf8\x70\xd3" //@.@W.N.J.L....p. |
+// /* 1220 */ "\xe1\xc3\x01\x88\x0d\x40\x16\xc6\x82\x03\x01\x1d\x43\x00\xf9\xeb" //.....@......C... |
+// /* 1230 */ "\x1d\x5c\x06\x02\xfd\x1d\xa2\xa1\x5d\xaa\x00\x96\x18\x5f\x85\x04" //........]...._.. |
+// /* 1240 */ "\x01\x1f\x54\x01\x5f\xfc\x88\x0c\x94\x06\x02\x7a\x96\xc0\x05\xe2" //..T._......z.... |
+// /* 1250 */ "\xf8\x90\x1c\xf9\x85\xef\x15\x83\xc3\xe0\x48\x05\xc3\xf4\x24\x0f" //..........H...$. |
+// /* 1260 */ "\x3f\x28\x46\xd3\xe2\x9a\x23\xe7\xe8\x8e\x1d\x79\x19\x5d\x3a\xa8" //?(F...#....y.]:. |
+// /* 1270 */ "\x01\xb0\x04\x04\xc0\x6b\xf5\x6a\x80\x15\x80\xef\xc0\x02\x2e\x09" //.....k.j........ |
+// /* 1280 */ "\xe5\xb0\x18\x0b\xfd\xbf\x01\xe3\x8e\xfd\x7c\x60\xf0\xf8\x0c\x06" //..........|`.... |
+// /* 1290 */ "\x58\x03\x02\x7d\xbf\xab\x9c\xb0\x01\xf8\x72\x2c\x30\x3e\x0d\x51" //X..}......r,0>.Q |
+// /* 12a0 */ "\x03\x7f\xa3\x0f\x4f\xbf\x3c\x64\x43\x67\x01\x93\xd7\xc5\x00\x1c" //....O.<dCg...... |
+// /* 12b0 */ "\xfe\xc7\xf1\x40\xa2\x57\x41\x26\x16\x00\x4f\xd8\x04\x41\x81\x80" //...@.WA&..O..A.. |
+// /* 12c0 */ "\xb3\x70\x96\x5f\xeb\xde\x79\x43\x3f\x1b\xd5\x4a\x80\x14\x85\x68" //.p._..yC?..J...h |
+// /* 12d0 */ "\x06\x07\x5b\xbf\x50\xed\x16\xd8\x43\x00\x2f\x0c\x31\xea\x5d\x44" //..[.P...C./.1.]D |
+// /* 12e0 */ "\x00\xa4\x06\x05\x1f\xa7\x78\xf4\x08\xc0\x21\xf9\x96\x0a\xc8\x0d" //......x...!..... |
+// /* 12f0 */ "\x40\x04\x8e\xec\x03\x04\x59\xbb\x12\x5a\x58\x6d\x12\x89\x83\x00" //@.....Y..ZXm.... |
+// /* 1300 */ "\x3c\x74\x26\x0e\x3a\x87\x7e\x86\x0f\x4d\x9f\xe8\xc7\xf3\xe5\xe8" //<t&.:.~..M...... |
+// /* 1310 */ "\xeb\xea\x9b\x3f\xfa\x2e\x95\x51\x28\x31\x3e\x27\x29\x55\xa9\x8f" //...?...Q(1>')U.. |
+// /* 1320 */ "\x92\xc9\x8e\xa0\xc0\x37\x1d\x09\x65\xf9\x47\xa1\x11\x6c\x05\x4c" //.....7..e.G..l.L |
+// /* 1330 */ "\xa4\x51\xc0\x20\x6f\x58\x0c\xfc\xf8\x12\x3b\x01\x35\x19\xc0\xa3" //.Q. oX....;.5... |
+// /* 1340 */ "\x51\xc9\x61\x06\x02\xc1\x2d\x26\x90\x09\x68\x05\xc7\x02\x2a\x05" //Q.a...-&..h...*. |
+// /* 1350 */ "\x70\x3a\x72\xa0\x11\x80\x8e\xa0\x8b\x00\x68\xc4\x10\x07\x00\x56" //p:r.......h....V |
+// /* 1360 */ "\x2e\x18\x12\xac\x23\x02\x41\x9c\x60\x47\xc8\xc0\x19\x33\x03\x67" //....#.A.`G...3.g |
+// /* 1370 */ "\x00\xb9\x00\x3e\x04\xe0\x3d\xf3\xc6\x04\x9d\x89\x68\x07\x60\xe4" //...>..=.....h.`. |
+// /* 1380 */ "\x0c\x8b\x01\xc3\x9e\xc2\x43\x30\x38\x6b\x02\x38\xc5\xcb\x00\x71" //......C08k.8...q |
+// /* 1390 */ "\x46\x02\x39\x5c\xb0\xc7\xd1\x06\xc1\x80\x7b\x23\x02\x34\x41\xb8" //F.9.......{#.4A. |
+// /* 13a0 */ "\x4e\x3a\xfd\x84\x6c\x02\xee\xa2\xf1\xcb\x71\x04\x24\x60\x59\x47" //N:..l.....q.$`YG |
+// /* 13b0 */ "\xd8\x3e\x04\xf6\x30\x71\xf6\x54\x5b\xc2\x7d\x9a\xe8\x66\xc0\x8c" //.>..0q.T[.}..f.. |
+// /* 13c0 */ "\xaf\x22\x41\x20\x06\x1a\xc4\x60\x1a\x78\x05\xb0\xf0\xa9\x01\x74" //."A ...`.x.....t |
+// /* 13d0 */ "\x6e\x60\x47\x16\x05\x62\x8e\xca\x4f\x25\xb8\x1c\xb8\x6c\x10\x6a" //n`G..b..O%...l.j |
+// /* 13e0 */ "\x1e\x09\x14\x60\x5b\x1a\xa7\x80\x60\x07\x76\x05\x78\x54\x00\xac" //...`[...`.v.xT.. |
+// /* 13f0 */ "\xdf\xc4\x06\xc2\xb1\xd2\x32\x1f\x3c\x44\x14\x09\xc5\x11\x71\x50" //......2.<D....qP |
+// /* 1400 */ "\x02\x1c\xf1\x08\x10\x82\x91\x81\x72\x29\x64\x27\xb4\x5c\x60\x68" //........r)d'..`h |
+// /* 1410 */ "\x72\x0d\x63\x83\x5b\xc9\x8b\x97\x8d\xa7\xea\x3a\x89\x22\x1f\x4d" //r.c.[......:.".M |
+// /* 1420 */ "\xd7\x71\x2d\xf0\xb3\x02\x46\x38\x86\x88\x25\x00\x3e\x34\x60\x57" //.q-...F8..%.>4`W |
+// /* 1430 */ "\xf8\xf1\x1b\x03\x88\x81\x7d\x54\xf7\x30\x5f\x01\x99\x3c\x34\x06" //......}T.0_..<4. |
+// /* 1440 */ "\x61\x88\x78\xb2\x30\x31\x5c\x1b\x04\xe2\x32\x48\xf8\xe1\x6c\x06" //a.x.01....2H..l. |
+// /* 1450 */ "\x52\x00\x08\xc0\x5d\x8f\x0b\x46\x07\x22\x03\xff\xc7\x00\x38\xf9" //R...]..F."....8. |
+// /* 1460 */ "\x2f\x7c\x57\xc9\x7b\xb6\x2e\x60\x1f\xc6\x7d\xc5\x18\x1c\x1c\x11" ///|W.{..`..}..... |
+// /* 1470 */ "\xe6\xd7\x06\xd8\xf9\x2c\x0d\xf7\x88\x3e\x02\xbb\x60\x60\x68\xf9" //.....,...>..``h. |
+// /* 1480 */ "\x2c\x0b\xcf\x18\x14\x1d\xd1\x94\x20\x03\x80\x13\xd8\x1b\xc2\x45" //,....... ......E |
+// /* 1490 */ "\x02\x47\xa0\x3e\x84\x04\x10\x74\x78\x78\x0c\x2d\x81\x33\x43\xdc" //.G.>...txx.-.3C. |
+// /* 14a0 */ "\x97\x55\x12\x08\x47\xa5\x30\x02\xe7\xa0\xeb\xb0\x06\x41\x8c\x7a" //.U..G.0......A.z |
+// /* 14b0 */ "\x4e\xb0\x37\xb0\x03\xe8\xc0\x29\x07\xd1\x7a\x5a\x25\x9e\xa4\x7d" //N.7....)..zZ%..} |
+// /* 14c0 */ "\x18\x04\xc0\xea\x90\x47\xf4\x5e\x96\x60\x69\xb7\x62\xf7\xa9\xde" //.....G.^.`i.b... |
+// /* 14d0 */ "\x27\x7a\x66\x87\x7b\xce\x42\xa8\x00\x1b\x3f\x3e\x6c\x59\x41\x55" //'zf.{.B...?>lYAU |
+// /* 14e0 */ "\xb9\xf3\x32\x01\x2a\x00\x3d\x40\x0a\xc0\x12\x2c\x07\xbc\xed\xee" //..2.*.=@...,.... |
+// /* 14f0 */ "\xc0\x2d\x70\x15\xf2\x54\x0c\x07\x7e\xc0\x7a\x00\x4f\x9c\x1a\xe3" //.-p..T..~.z.O... |
+// /* 1500 */ "\x0a\x1e\x01\x81\xc9\x8c\x5d\x65\xab\xb6\xfe\x78\x91\x8a\xec\xc0" //......]e...x.... |
+// /* 1510 */ "\x38\x9d\xcd\xf2\xe0\x07\x9e\x7b\x12\xee\xbe\x5c\x63\x98\x28\xc5" //8......{....c.(. |
+// /* 1520 */ "\x03\x6f\x96\x81\x1a\xc9\x48\x00\x46\xb9\x7c\x3b\x28\xa4\xc6\x33" //.o....H.F.|;(..3 |
+// /* 1530 */ "\xeb\xbf\x1f\x67\x6d\x97\x28\x67\x02\xe0\x1e\x0f\x57\x54\x00\x79" //...gm.(g....WT.y |
+// /* 1540 */ "\xf0\xaa\x18\x74\x19\xc2\xa5\x87\xa7\x23\xeb\xc4\x08\x40\x07\x0a" //...t.....#...@.. |
+// /* 1550 */ "\x3e\x00\x00\x10\x07\xc6\x60\x2c\x03\xfc\xbb\xde\x95\x3a\xcb\x78" //>.....`,.....:.x |
+// /* 1560 */ "\x2e\xb9\x3a\x44\x29\x4b\xe2\xad\x6b\x5f\xe5\x45\xe4\xae\x04\xc9" //..:D)K..k_.E.... |
+// /* 1570 */ "\x88\xea\x80\x24\xea\xad\xf5\x1f\x29\x03\x9f\xe1\xe8\xf0\x00\xf6" //...$....)....... |
+// /* 1580 */ "\x04\x3b\x73\x41\x77\x64\x8c\x38\xd4\xc4\x0d\x8b\xc4\xf5\x8a\xef" //.;sAwd.8........ |
+// /* 1590 */ "\x93\x3c\xdf\xfe\x70\x81\x0b\x9a\x58\x90\x02\xa0\x1a\xca\x52\x42" //.<..p...X.....RB |
+// /* 15a0 */ "\x09\x92\xde\x0c\xa5\x34\x01\x4c\x0a\x04\xf3\x04\x4f\xee\xf2\x21" //.....4.L....O..! |
+// /* 15b0 */ "\x0c\x08\xfa\xa8\x02\x3e\xdb\xc0\x60\x51\xde\x9b\x0a\x80\x1d\x0b" //.....>..`Q...... |
+// /* 15c0 */ "\xcc\x4f\x03\x45\x40\x12\x7f\x77\x01\x81\x52\xd6\x98\x02\xc6\xb9" //.O.E@..w..R..... |
+// /* 15d0 */ "\x88\x87\xbc\x12\x23\xc6\xaf\xa8\xf5\xde\xa0\x0d\x22\xe5\x32\xc2" //....#.......".2. |
+// /* 15e0 */ "\x0d\xee\x79\xd4\x06\xa3\xcd\x22\x40\xd0\x7c\x56\x04\xb5\x2d\x00" //..y...."@.|V..-. |
+// /* 15f0 */ "\xc0\x8c\x60\x84\x1e\xf4\x01\x20\x79\x34\x06\x95\xed\x47\xdd\x61" //..`.... y4...G.a |
+// /* 1600 */ "\x08\x90\x0d\x40\x1b\xd8\x6e\x01\x63\xaf\xae\xf9\x53\xe5\x78\x9b" //...@..n.c...S.x. |
+// /* 1610 */ "\x4d\x68\x00\x1f\xb1\x40\x0b\xfa\x0f\x68\x40\x37\xb4\x2c\x17\x0f" //Mh...@...h@7.,.. |
+// /* 1620 */ "\x4d\xb8\x49\x2d\xe0\x30\x18\xb3\x1e\x05\x50\xaf\xaa\x03\x23\x21" //M.I-.0....P...#! |
+// /* 1630 */ "\xc3\x71\x51\xc3\x05\x81\x63\xe2\xa0\x03\x00\xe3\x3a\x04\xf2\x3a" //.qQ...c.....:..: |
+// /* 1640 */ "\xa3\xec\xc8\x05\xf3\x94\xb1\xa8\x80\xc0\x97\xa3\xbd\x52\x40\x4c" //.............R@L |
+// /* 1650 */ "\xff\x74\x06\xd4\xd6\x03\xea\xf3\x08\x44\x83\x02\xf8\xb2\x8b\xe0" //.t.......D...... |
+// /* 1660 */ "\x06\xa0\x19\xec\x27\x87\x90\x5a\xb0\x0c\x06\x7a\x23\xce\x86\x60" //....'..Z...z#..` |
+// /* 1670 */ "\x37\xfa\xb7\x4e\xf5\x40\x06\x9f\xfc\x1e\x53\x9c\x4c\x06\xf6\xe8" //7..N.@....S.L... |
+// /* 1680 */ "\x06\xc1\x80\x20\x5e\x34\x8a\x18\xc0\x0d\x47\xc3\x70\x0a\xb5\xe8" //... ^4....G.p... |
+// /* 1690 */ "\xb7\xe9\x01\xa0\x73\xa0\x57\xef\xf7\xde\xb6\x52\x6d\xcf\x5c\x7b" //....s.W....Rm..{ |
+// /* 16a0 */ "\x5f\x01\x81\x62\x41\xa7\xb9\x61\x00\x7f\xc6\x8f\x28\xbc\x68\xc4" //_..bA..a....(.h. |
+// /* 16b0 */ "\xc1\x80\x0a\x11\x00\x04\x0f\x12\xee\xc5\x8c\x62\xa0\x0d\xc2\x81" //...........b.... |
+// /* 16c0 */ "\xeb\xc0\x08\x0c\x09\xff\x09\x59\x3f\xda\xa0\x09\x51\xe2\xbc\x10" //.......Y?...Q... |
+// /* 16d0 */ "\x82\x60\x61\x74\x0a\x80\x2a\x50\x85\xc0\x42\xa1\xce\x6c\x58\x9c" //.`at..*P..B..lX. |
+// /* 16e0 */ "\x05\x4b\x5a\x21\x62\x45\x29\x80\xe1\xfa\xfa\x01\x81\xc7\x9f\x27" //.KZ!bE)........' |
+// /* 16f0 */ "\xa7\x51\xe7\xce\x20\xa8\x19\xfc\xf8\xf5\x2c\x75\x0e\xa0\x09\x8d" //.Q.. .....,u.... |
+// /* 1700 */ "\x11\xd8\x75\xf0\xc1\x81\x90\x80\x03\xf1\x69\xaf\x55\xc7\x15\xd6" //..u.......i.U... |
+// /* 1710 */ "\x00\x11\x04\x54\x00\xa8\xe7\x20\x3d\x9e\x14\x26\x00\x8c\x03\x8a" //...T... =..&.... |
+// /* 1720 */ "\x81\xb7\x76\xec\x40\x38\x6d\x44\x06\x21\x04\x0b\xa8\x00\xf8\x85" //..v.@8mD.!...... |
+// /* 1730 */ "\xc7\x3d\x74\x8e\x04\xc0\x63\xd2\x5c\x01\xbe\x8a\x73\x88\x00\xb5" //.=t...c.....s... |
+// /* 1740 */ "\x62\x14\x92\x07\x1b\x41\x5a\xe0\x5d\x40\x09\xfb\xb1\x68\x09\xeb" //b....AZ.]@...h.. |
+// /* 1750 */ "\x81\xa1\xf9\xf3\xa3\xe8\x20\x06\x08\x3f\x5f\x3d\x22\x8e\x84\xc7" //...... ..?_="... |
+// /* 1760 */ "\x54\xea\x00\xbd\x98\x10\x47\xe7\xce\x50\xe0\x0b\x06\x07\x30\x58" //T.....G..P....0X |
+// /* 1770 */ "\xc8\xe8\x57\x38\xe5\x40\x0f\x14\xca\xc4\xfa\xef\x44\xf9\x60\x25" //..W8.@......D.`% |
+// /* 1780 */ "\xaa\x76\x01\xb7\x10\xfd\x64\x1e\x3a\x12\xfa\x55\x7e\x86\x1f\x4f" //.v....d.:..U~..O |
+// /* 1790 */ "\x87\xa6\xd3\xe8\x25\xf4\x67\x04\xe6\xa1\x57\xd1\x95\xe7\x4a\xf4" //....%.g...W...J. |
+// /* 17a0 */ "\xd5\xfe\x8d\x1e\x92\x9e\xa5\xc7\x42\x63\x81\x2d\x18\x15\xb1\xc8" //........Bc.-.... |
+// /* 17b0 */ "\x74\x29\x42\x2c\x63\xa8\x01\xd3\xde\xf8\x07\x44\x8b\x10\x76\x30" //t)B,c......D..v0 |
+// /* 17c0 */ "\x43\xf4\x60\x70\xc4\x17\x8f\xd0\x0b\x03\xd5\xaa\x00\x97\xba\xf0" //C.`p............ |
+// /* 17d0 */ "\x0d\x47\xce\x90\xda\xd7\x4f\x7b\xc1\x0e\x48\x14\x67\x03\xed\x06" //.G....O{..H.g... |
+// /* 17e0 */ "\x78\x12\xb8\x43\xb8\x34\xc5\x45\x9b\x82\x48\x63\x29\x0a\xb0\x43" //x..C.4.E..Hc)..C |
+// /* 17f0 */ "\x94\x32\x7a\x9e\x30\x5a\xbb\xee\x46\x52\xd9\x54\x67\xb7\x70\x1c" //.2z.0Z..FR.Tg.p. |
+// /* 1800 */ "\x7f\x90\x15\xc0\xfd\x53\x92\xb5\x1c\x22\xe2\x89\x3e\xbb\xd4\x62" //.....S..."..>..b |
+// /* 1810 */ "\x51\x40\x1c\x4d\xe2\x15\x80\xa7\xf0\xa2\x01\x48\x00\x40\x7a\x82" //Q@.M.......H.@z. |
+// /* 1820 */ "\xa0\x58\x92\xfe\x05\x20\x2a\x9e\x97\x00\x0a\xb8\x00\x60\x0c\xc2" //.X... *......`.. |
+// /* 1830 */ "\xcf\x97\x98\x1a\x38\x09\xc7\x3c\x44\x3e\x33\x81\x25\xd8\x11\x90" //....8..<D>3.%... |
+// /* 1840 */ "\x09\x01\x27\xf1\x14\x60\x49\x58\x04\xc1\x1b\xf3\x40\xe5\xcb\x02" //..'..`IX....@... |
+// /* 1850 */ "\x38\x1e\x2d\x91\x1e\x80\x90\x11\x6f\xfc\x60\xc1\x1c\xa8\xe6\x08" //8.-.....o.`..... |
+// /* 1860 */ "\xe5\x5e\xc2\x70\x3c\x98\x7b\x04\x7e\xc6\x08\xe5\x8b\x1f\xf7\x98" //.^.p<.{.~....... |
+// /* 1870 */ "\x06\x07\x71\x9a\x7f\x87\x54\x8c\x11\xae\xa0\x00\xf8\xa1\xd2\x20" //..q...T........  |
+// /* 1880 */ "\x27\x01\xa6\xf8\x04\x40\x16\x21\x02\x44\xe9\x56\x12\x80\xcc\xbc" //'....@.!.D.V.... |
+// /* 1890 */ "\x0d\x18\x13\x6a\x39\xd4\x84\xa0\x33\x7f\x23\xa4\x02\xb8\x13\x5d" //...j9...3.#....] |
+// /* 18a0 */ "\xd0\x7c\x23\x01\x9e\x78\x58\x00\x3e\x25\xd0\x29\xee\x74\x06\x0b" //.|#..xX.>%.).t.. |
+// /* 18b0 */ "\xe1\x69\x20\x14\xa6\xd8\x04\xf1\x51\xfb\x9f\xc8\x46\x03\x0a\x1d" //.i .....Q...F... |
+// /* 18c0 */ "\x60\x08\x61\x1f\x05\xf1\xb8\x46\x02\xde\x29\x81\x47\x00\x3c\xee" //`.a....F..).G.<. |
+// /* 18d0 */ "\x82\x10\x17\x41\x3f\x96\xc2\xf5\xac\x03\x02\x79\xc1\x42\x50\x8a" //...A?......y.BP. |
+// /* 18e0 */ "\x01\x82\x80\x60\x88\x7f\xeb\x4b\xd7\xe1\x23\x63\xeb\x58\xb8\xfd" //...`...K..#c.X.. |
+// /* 18f0 */ "\xf1\x58\xaf\xc9\x34\xfc\x91\x86\x0a\x4c\x80\x2f\x92\x15\xc1\x49" //.X..4....L./...I |
+// /* 1900 */ "\x8f\xcc\x59\x09\x0f\x80\x8d\x05\x00\x07\xf4\x6d\x38\x7f\xc5\x8f" //..Y........m8... |
+// /* 1910 */ "\xf8\xc5\x3b\xef\xad\x18\x29\xf6\x21\x5f\x25\x6d\xfe\x30\x8f\xf2" //..;...).!_%m.0.. |
+// /* 1920 */ "\x55\x2f\xe2\xe8\x86\x10\x80\xd5\xfc\x57\x18\x2d\x51\x01\xad\x84" //U/.......W.-Q... |
+// /* 1930 */ "\x80\x63\x76\x19\x56\x00"                                         //.cv.V. |
+// Sent dumped on RDP Client (5) 6454 bytes |
+// send_server_update done |
 // front::draw:draw_tile((0, 704, 32, 32) (32, 32, 32, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[2](2064) used=1088 free=15190 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[3](30) used=1110 free=15168 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=1 rect(0,704,32,32) rop=cc srcx=0 srcy=0 cache_idx=0) |
 // Widget_load: image file [./tests/fixtures/ad8b.png] is PNG file |
 // front::draw:draw_tile((100, 100, 26, 32) (80, 50, 26, 32)) |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[4](1808) used=1125 free=15153 |
-// <Serializer 0x7f702541c010> RDPSerializer::reserve_order[5](30) used=1440 free=14838 |
-// order(13 clip(145,200,110,1)):memblt(cache_id=1 rect(100,100,26,32) rop=cc srcx=0 srcy=0 cache_idx=1) |
-// Front::end_update() |
-// GraphicsUpdatePDU::flush_orders: order_count=6 offset=0 |
-// GraphicsUpdatePDU::flush_orders: fast-path |
+// Front::end_update |
+// send_server_update: fastpath_support=yes compression_support=yes shareId=65538 encryptionLevel=0 initiator=0 type=0 data_extra=6 |
 // Sending on RDP Client (5) 1100 bytes |
 // /* 0000 */ "\x00\x84\x4c\x80\x21\x45\x04\xc9\xdd\xa2\xbc\x1f\x84\xe8\x79\x45" //..L.!E........yE |
 // /* 0010 */ "\x20\x8a\xe0\x18\x05\x88\x90\x03\x06\x81\x08\x24\xa5\x06\x31\x96" // ..........$..1. |
@@ -5204,7 +4595,7 @@ const char indata[] =
 // /* 02f0 */ "\xfe\x00\x08\x7d\x39\xc1\x25\x6e\xec\x2f\xa6\xb0\x0a\xe1\x3e\x67" //...}9.%n./....>g |
 // /* 0300 */ "\xc9\x82\x01\xec\x13\x9d\x1f\x24\xc0\x3d\x82\x7c\xe3\xe4\xa0\x03" //.......$.=.|.... |
 // /* 0310 */ "\xdf\x6e\xe4\x02\xbe\x14\x60\xbc\x3a\xf4\x83\xf5\x82\xc5\x39\x80" //.n....`.:.....9. |
-// /* 0320 */ "\x42\xb8\x00\x1e\x2d\xb6\x02\x76\xca\x10\x10\x08\x61\x70\xe8\xa0" //B...-..v....ap.. |
+// /* 0320 */ "\x42\xb8\x00\x1e\x2d\xb6\x02\x76\xca\x10\x10\x08\x61\x73\x78\xa0" //B...-..v....asx. |
 // /* 0330 */ "\x08\x63\xe5\x45\x80\x0c\x04\x7c\x07\x00\xda\xb1\x0d\xf3\x0a\x3e" //.c.E...|.......> |
 // /* 0340 */ "\x3e\x43\x0f\xd7\xd7\x9e\x58\x72\x9d\xf6\x54\x41\x8a\x34\x0a\xe7" //>C....Xr..TA.4.. |
 // /* 0350 */ "\x35\xb6\x49\x68\xb6\x78\xac\x06\xd7\x1d\xa2\x8c\x51\xa9\x37\xfb" //5.Ih.x......Q.7. |
@@ -5224,9 +4615,10 @@ const char indata[] =
 // /* 0430 */ "\x40\x14\x64\xa0\x06\x06\x79\x67\x7d\xc0\xc4\xc1\x36\xfc\x51\xde" //@.d...yg}...6.Q. |
 // /* 0440 */ "\x52\x01\x0e\x01\x64\x00\x64\xc8\xf8\x00\x10\x00"                 //R...d.d..... |
 // Sent dumped on RDP Client (5) 1100 bytes |
+// send_server_update done |
 // Listener closed |
 // Incoming socket 5 (ip=10.10.47.175) |
 // Socket RDP Client (5) : closing connection |
-// RDP Client (0): total_received=1778, total_sent=19531 |
+// RDP Client (0): total_received=1714, total_sent=19532 |
 } /* end indata */;
 
