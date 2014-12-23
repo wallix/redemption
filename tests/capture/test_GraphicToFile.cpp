@@ -180,9 +180,10 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
+    GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
-    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, ptr_cache, drawable, ini);
+    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
 
@@ -355,9 +356,10 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
+    GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
-    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, ptr_cache, drawable, ini);
+    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect);
@@ -405,9 +407,10 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
+    GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
-    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, ptr_cache, drawable, ini);
+    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
     BOOST_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);

@@ -171,6 +171,7 @@ public:
         this->gd.draw(new_cmd24, clip);
     }
 
+/*
     void draw(const RDPGlyphCache & cmd) {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -180,6 +181,7 @@ public:
 
         this->gd.draw(cmd);
     }
+*/
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
         if (this->verbose > 10) {

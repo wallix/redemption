@@ -195,10 +195,11 @@ private:
     GlyphCacheCaps     client_glyphcache_caps;
     bool               use_bitmapcache_rev2;
 
-    std::string        server_capabilities_filename;
-    Transport          * persistent_key_list_transport;
+    std::string server_capabilities_filename;
 
-    rdp_mppc_enc              * mppc_enc;
+    Transport * persistent_key_list_transport;
+
+    rdp_mppc_enc * mppc_enc;
 
     auth_api * authentifier;
     bool       auth_info_sent;
@@ -213,41 +214,40 @@ public:
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = NULL
           )
-        : FrontAPI(ini.globals.notimestamp, ini.globals.nomouse)
-        , capture_state(CAPTURE_STATE_UNKNOWN)
-        , capture(NULL)
-        , bmp_cache(NULL)
-        , bmp_cache_persister(NULL)
-        , orders(NULL)
-        , up_and_running(0)
-        , share_id(65538)
-        , encryptionLevel(ini.globals.encryptionLevel + 1)
-        , trans(trans)
-        , userid(0)
-        , order_level(0)
-        , ini(ini)
-        , verbose(this->ini.debug.front)
-        , font(default_font_name)
-        , brush_cache()
-        , pointer_cache()
-        , glyph_cache()
-        , mod_bpp(0)
-        , capture_bpp(0)
-        , state(CONNECTION_INITIATION)
-        , gen(gen)
-        , fastpath_support(fp_support)
-        , client_fastpath_input_event_support(fp_support)
-        , server_fastpath_update_support(false)
-        , tls_client_active(true)
-        , mem3blt_support(mem3blt_support)
-        , clientRequestedProtocols(X224::PROTOCOL_RDP)
-        , use_bitmapcache_rev2(false)
-        , server_capabilities_filename(server_capabilities_filename)
-        , persistent_key_list_transport(persistent_key_list_transport)
-        , mppc_enc(NULL)
-        , authentifier(NULL)
-        , auth_info_sent(false)
-    {
+    : FrontAPI(ini.globals.notimestamp, ini.globals.nomouse)
+    , capture_state(CAPTURE_STATE_UNKNOWN)
+    , capture(NULL)
+    , bmp_cache(NULL)
+    , bmp_cache_persister(NULL)
+    , orders(NULL)
+    , up_and_running(0)
+    , share_id(65538)
+    , encryptionLevel(ini.globals.encryptionLevel + 1)
+    , trans(trans)
+    , userid(0)
+    , order_level(0)
+    , ini(ini)
+    , verbose(this->ini.debug.front)
+    , font(default_font_name)
+    , brush_cache()
+    , pointer_cache()
+    , glyph_cache()
+    , mod_bpp(0)
+    , capture_bpp(0)
+    , state(CONNECTION_INITIATION)
+    , gen(gen)
+    , fastpath_support(fp_support)
+    , client_fastpath_input_event_support(fp_support)
+    , server_fastpath_update_support(false)
+    , tls_client_active(true)
+    , mem3blt_support(mem3blt_support)
+    , clientRequestedProtocols(X224::PROTOCOL_RDP)
+    , use_bitmapcache_rev2(false)
+    , server_capabilities_filename(server_capabilities_filename)
+    , persistent_key_list_transport(persistent_key_list_transport)
+    , mppc_enc(NULL)
+    , authentifier(NULL)
+    , auth_info_sent(false) {
         // init TLS
         // --------------------------------------------------------
 
@@ -417,14 +417,9 @@ public:
     TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
-        this->send_global_palette();
+        static GlyphCache mod_glyph_cache;
 
-        // add text to glyph cache
-        //int len = strlen(text);
-        //TODO("we should put some loop here for text to be splitted between chunks of UTF8 characters and loop on them")
-        //if (len > 120) {
-        //    len = 120;
-        //}
+        this->send_global_palette();
 
         UTF8toUnicodeIterator unicode_iter(text);
         while (*unicode_iter) {
@@ -434,7 +429,7 @@ public:
             auto data_begin = std::begin(data);
             const auto data_end = std::end(data)-2;
 
-            const int f = 7;
+            const int cacheId = 7;
             int distance_from_previous_fragment = 0;
             while (data_begin != data_end) {
                 const uint32_t charnum = *unicode_iter;
@@ -443,7 +438,7 @@ public:
                 }
                 ++unicode_iter;
 
-                int c = 0;
+                int cacheIndex = 0;
                 FontChar & font_item = this->font.glyph_defined(charnum) && this->font.font_items[charnum]
                 ? this->font.font_items[charnum]
                 : [&]() {
@@ -452,9 +447,12 @@ public:
                 }().get();
                 TODO(" avoid passing parameters by reference to get results")
                 const GlyphCache::t_glyph_cache_result cache_result =
-                    this->glyph_cache.add_glyph(font_item, f, c);
-
-                RDPGlyphCache cmd(f, /*1, */c,
+                    mod_glyph_cache.add_glyph(font_item, cacheId, cacheIndex);
+(void)cache_result;
+/*
+                RDPGlyphCache cmd(cacheId,
+                    //1,
+                    cacheIndex,
                     font_item.offset,
                     font_item.baseline,
                     font_item.width,
@@ -462,7 +460,7 @@ public:
                     font_item.data.get());
 
                 if (cache_result == GlyphCache::GLYPH_ADDED_TO_CACHE) {
-//LOG(LOG_INFO, "Front::draw(RDPGlyphCache, ...): cacheId=%u cacheIndex=%u", f, c);
+//LOG(LOG_INFO, "Front::draw(RDPGlyphCache, ...): cacheId=%u cacheIndex=%u", cacheId, cacheIndex);
                     this->orders->draw(cmd);
                 }
 
@@ -470,8 +468,9 @@ public:
                    && (this->capture_state == CAPTURE_STATE_STARTED)) {
                     this->capture->draw(cmd);
                 }
+*/
 
-                *data_begin = c;
+                *data_begin = cacheIndex;
                 ++data_begin;
                 *data_begin = distance_from_previous_fragment;
                 ++data_begin;
@@ -483,7 +482,7 @@ public:
             const Rect bk(x, y, total_width + 1, total_height + 1);
 
             RDPGlyphIndex glyphindex(
-                f,                  // cache_id
+                cacheId,                  // cache_id
                 0x03,               // fl_accel
                 0x0,                // ui_charinc
                 1,                  // f_op_redundant,
@@ -502,7 +501,7 @@ public:
 
             x += total_width;
 
-            this->draw(glyphindex, clip, NULL);
+            this->draw(glyphindex, clip, &mod_glyph_cache);
         }
     }
 
@@ -806,6 +805,7 @@ private:
             , this->ini
             , this->client_info.bpp
             , *this->bmp_cache
+            , this->glyph_cache
             , this->pointer_cache
             , this->client_info.bitmap_cache_version
             , this->ini.client.bitmap_compression ? 1 : 0
@@ -4113,9 +4113,10 @@ public:
                 new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
             }
 
+/*
             if (gly_cache)
             {
-                bool has_delta_byte = (!new_cmd.ui_charinc && !(new_cmd.fl_accel & 0x20/*SO_CHAR_INC_EQUAL_BM_BASE*/));
+                bool has_delta_byte = (!new_cmd.ui_charinc && !(new_cmd.fl_accel & SO_CHAR_INC_EQUAL_BM_BASE));
                 for (uint8_t i = 0; i < new_cmd.data_len;)
                 {
                     if (new_cmd.data[i] <= 0xFD)
@@ -4127,7 +4128,9 @@ public:
                         int g_idx;
                         if (this->glyph_cache.add_glyph(fc, new_cmd.cache_id, g_idx) ==
                             GlyphCache::GLYPH_ADDED_TO_CACHE) {
-                            RDPGlyphCache cmd2(new_cmd.cache_id, /*1, */g_idx,
+                            RDPGlyphCache cmd2(new_cmd.cache_id,
+                                            //1,
+                                            g_idx,
                                             fc.offset,
                                             fc.baseline,
                                             fc.width,
@@ -4172,6 +4175,7 @@ public:
                     }
                 }
             }
+*/
 
             // this may change the brush and send it to to remote cache
             this->cache_brush(new_cmd.brush);
@@ -4190,40 +4194,40 @@ public:
                     new_cmd.back_color = cmd.back_color;
                     new_cmd.fore_color = cmd.fore_color;
                 }
-//LOG(LOG_INFO, "Front::draw(RDPGlyphIndex, ...): cacheId=%u", new_cmd.cache_id);
+LOG(LOG_INFO, "Front::draw(RDPGlyphIndex, ...): cacheId=%u", new_cmd.cache_id);
                 this->capture->draw(new_cmd, clip, gly_cache);
             }
         }
     }
 
-    void draw(const RDPGlyphCache & cmd)
-    {
-        FontChar font_item(cmd.x, cmd.y, cmd.cx, cmd.cy, -1);
-        memcpy(font_item.data.get(), cmd.aj, font_item.datasize());
-
-        int cacheidx = 0;
-
-        if (this->glyph_cache.add_glyph(std::move(font_item), cmd.cacheId, cacheidx) ==
-                                        GlyphCache::GLYPH_ADDED_TO_CACHE) {
-            RDPGlyphCache cmd2( cmd.cacheId
-                              /*, 1 */
-                              , cacheidx
-                              , cmd.x
-                              , cmd.y
-                              , cmd.cx
-                              , cmd.cy
-                              , cmd.aj
-                              );
-
-//LOG(LOG_INFO, "Front::draw(RDPGlyphCache, ...): cacheId=%u cacheIndex=%u", cmd.cacheId, cacheidx);
-            this->orders->draw(cmd2);
-
-            if (  this->capture
-               && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                this->capture->draw(cmd2);
-            }
-        }
-    }
+//    void draw(const RDPGlyphCache & cmd)
+//    {
+//        FontChar font_item(cmd.x, cmd.y, cmd.cx, cmd.cy, -1);
+//        memcpy(font_item.data.get(), cmd.aj, font_item.datasize());
+//
+//        int cacheidx = 0;
+//
+//        if (this->glyph_cache.add_glyph(std::move(font_item), cmd.cacheId, cacheidx) ==
+//                                        GlyphCache::GLYPH_ADDED_TO_CACHE) {
+//            RDPGlyphCache cmd2( cmd.cacheId
+//                              //, 1
+//                              , cacheidx
+//                              , cmd.x
+//                              , cmd.y
+//                              , cmd.cx
+//                              , cmd.cy
+//                              , cmd.aj
+//                              );
+//
+////LOG(LOG_INFO, "Front::draw(RDPGlyphCache, ...): cacheId=%u cacheIndex=%u", cmd.cacheId, cacheidx);
+//            this->orders->draw(cmd2);
+//
+//            if (  this->capture
+//               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+//                this->capture->draw(cmd2);
+//            }
+//        }
+//    }
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) {
         int16_t minx, miny, maxx, maxy, previousx, previousy;

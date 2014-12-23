@@ -86,7 +86,7 @@ struct RDPGraphicDevice : noncopyable {
 
     TODO("The 3 methods below should not exist and cache access be done before calling drawing orders")
     virtual void draw(const RDPColCache   & cmd) {}
-    virtual void draw(const RDPGlyphCache & cmd) {}
+//    virtual void draw(const RDPGlyphCache & cmd) {}
     virtual void draw(const RDPBrushCache & cmd) {}
 
     virtual void draw(const RDP::FrameMarker & order) = 0;

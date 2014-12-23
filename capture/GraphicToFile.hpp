@@ -135,13 +135,14 @@ public:
                 , const uint16_t height
                 , const uint8_t  capture_bpp
                 , BmpCache & bmp_cache
+                , GlyphCache & gly_cache
                 , PointerCache & ptr_cache
                 , RDPDrawable & drawable
                 , const Inifile & ini
                 , SendInput send_input = SendInput::NO
                 , uint32_t verbose = 0)
     : RDPSerializer( trans, this->buffer_stream_orders
-                   , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, ptr_cache, 0, 1, 1, ini)
+                   , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, gly_cache, ptr_cache, 0, 1, 1, ini)
     , RDPCaptureDevice()
     , compression_wrapper(*trans, ini.video.wrm_compression_algorithm)
     , trans_target(*trans)
@@ -636,11 +637,13 @@ public:
         this->RDPSerializer::draw(cmd, clip);
     }
 
+/*
     virtual void draw(const RDPGlyphCache & cmd)
     {
         this->drawable.draw(cmd);
         this->RDPSerializer::draw(cmd);
     }
+*/
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {

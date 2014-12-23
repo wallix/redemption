@@ -85,8 +85,9 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
                            BmpCache::CacheOption(300, 1024, false),
                            BmpCache::CacheOption(262, 4096, false));
         PointerCache ptr_cache;
+        GlyphCache gly_cache;
         RDPDrawable drawable(scr.cx, scr.cy, 24);
-        GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, ptr_cache, drawable, ini);
+        GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
         consumer.draw(RDPOpaqueRect(scr, RED), scr);
         consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
         consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -158,9 +159,10 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
+    GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, ptr_cache, drawable, ini);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -242,9 +244,10 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
+    GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, ptr_cache, drawable, ini);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);

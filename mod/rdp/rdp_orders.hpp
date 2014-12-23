@@ -63,7 +63,7 @@
 class RDPGraphicDevice;
 
 /* orders */
-struct rdp_orders {
+class rdp_orders {
     // State
     RDPOrderCommon     common;
     RDPMemBlt          memblt;
@@ -81,21 +81,26 @@ struct rdp_orders {
     RDPPolyline        polyline;
     RDPEllipseSC       ellipseSC;
 
+public:
     BGRPalette global_palette;
 
     BmpCache * bmp_cache;
 
+private:
     GlyphCache gly_cache;
 
     uint32_t verbose;
 
+public:
     size_t recv_bmp_cache_count;
     size_t recv_order_count;
 
+private:
     std::string target_host;
     bool        enable_persistent_disk_bitmap_cache;
     bool        persist_bitmap_cache_on_disk;
 
+public:
     rdp_orders( const char * target_host, bool enable_persistent_disk_bitmap_cache
               , bool persist_bitmap_cache_on_disk, uint32_t verbose)
     : common(RDP::PATBLT, Rect(0, 0, 1, 1))
@@ -145,6 +150,7 @@ struct rdp_orders {
         }
     }
 
+private:
     void save_persistent_disk_bitmap_cache() const {
         if (!this->enable_persistent_disk_bitmap_cache || !this->persist_bitmap_cache_on_disk) {
             return;
@@ -203,6 +209,7 @@ struct rdp_orders {
         }
     }
 
+public:
     void create_cache_bitmap(const uint8_t bpp,
         uint16_t small_entries, uint16_t small_size, bool small_persistent,
         uint16_t medium_entries, uint16_t medium_size, bool medium_persistent,
@@ -253,7 +260,7 @@ struct rdp_orders {
         }
     }
 
-public:
+private:
     void process_framemarker( Stream & stream, const RDP::AltsecDrawingOrderHeader & header
                             , RDPGraphicDevice & gd) {
         if (this->verbose & 64) {
@@ -297,7 +304,7 @@ public:
         memcpy(fi.data.get(), data, fi.datasize());
         RDPGlyphCache cmd(font, /*1, */character, fi.offset, fi.baseline, fi.width, fi.height, fi.data.get());
         this->gly_cache.set_glyph(std::move(fi), cmd.cacheId, cmd.cacheIndex);
-        gd.draw(cmd);
+//        gd.draw(cmd);
     }
 
     void process_glyphcache(Stream & stream, int flags, RDPGraphicDevice & gd) {
@@ -338,6 +345,7 @@ public:
         }
     }
 
+public:
     /*****************************************************************************/
     int process_orders(uint8_t bpp, Stream & stream, bool fast_path, RDPGraphicDevice & gd,
                        uint16_t front_width, uint16_t front_height) {

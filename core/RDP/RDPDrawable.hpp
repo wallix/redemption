@@ -63,7 +63,7 @@ class RDPDrawable : public RDPGraphicDevice, public RDPCaptureDevice
     using Color = Drawable::Color;
 
     Drawable drawable;
-    GlyphCache gly_cache;
+//    GlyphCache gly_cache;
     int frame_start_count;
     int order_bpp;
     BGRPalette mod_palette_rgb;
@@ -401,6 +401,7 @@ private:
         }
     }
 
+/*
 public:
     virtual void draw(const RDPGlyphCache & cmd)
     {
@@ -411,6 +412,7 @@ public:
         memcpy(fc.data.get(), cmd.aj, fc.datasize());
         this->gly_cache.set_glyph(std::move(fc), cmd.cacheId, cmd.cacheIndex);
     }
+*/
 
 private:
     void draw_glyph(Bitmap & bmp, FontChar const & fc, size_t offset_x, Color color) const
@@ -449,7 +451,7 @@ private:
     }
 
 public:
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * /*gly_cache*/)
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
         Bitmap glyph_fragments(24, NULL, cmd.bk.cx, cmd.bk.cy);
 
@@ -490,7 +492,8 @@ public:
                 uint8_t  data     = aj.in_uint8();
                 if (data <= 0xFD)
                 {
-                    FontChar const & fc = this->gly_cache.glyphs[cmd.cache_id][data].font_item;
+//                    FontChar const & fc = this->gly_cache.glyphs[cmd.cache_id][data].font_item;
+                    FontChar const & fc = gly_cache->glyphs[cmd.cache_id][data].font_item;
                     if (!fc)
                     {
                         LOG( LOG_INFO
@@ -547,11 +550,13 @@ public:
         return font.font_items[c];
     }
 
+    // for testing purposes
     void text_metrics(const char * text, int & width, int & height, const Font & font)
     {
         ::text_metrics(font, text, width, height);
     }
 
+    // for testing purposes
     void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip, Font& font)
     {
         TODO("Merge common code with Front::server_draw_text()");

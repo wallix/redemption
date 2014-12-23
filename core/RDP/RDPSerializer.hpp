@@ -174,7 +174,7 @@ protected:
     size_t bitmap_count;
 
     BmpCache     & bmp_cache;
-    //GlyphCache   & glyph_cache;
+    GlyphCache   & glyph_cache;
     PointerCache & pointer_cache;
 
     const uint32_t verbose;
@@ -185,7 +185,7 @@ public:
                  , Stream & stream_bitmaps
                  , const uint8_t bpp
                  , BmpCache & bmp_cache
-//                 , GlyphCache & glyph_cache
+                 , GlyphCache & glyph_cache
                  , PointerCache & pointer_cache
                  , const int bitmap_cache_version
                  , const int use_bitmap_comp
@@ -222,7 +222,7 @@ public:
     , order_count(0)
     , bitmap_count(0)
     , bmp_cache(bmp_cache)
-//    , glyph_cache(glyph_cache)
+    , glyph_cache(glyph_cache)
     , pointer_cache(pointer_cache)
     , verbose(verbose) {}
 
@@ -393,6 +393,18 @@ protected:
         }
     }
 
+    void emit_glyph_cache(uint8_t cacheId, uint8_t cacheIndex) {
+        FontChar & fc = this->glyph_cache.glyphs[cacheId][cacheIndex].font_item;
+        RDPGlyphCache cmd(cacheId, /*1, */cacheIndex, fc.offset, fc.baseline, fc.width, fc.height, fc.data.get());
+        this->reserve_order(cmd.total_order_size());
+//LOG(LOG_INFO, "RDPSerializer::emit_glyph_cache: pos = %u", this->stream_orders.p - this->stream_orders.get_data());
+        cmd.emit(this->stream_orders);
+
+        if (this->ini.debug.secondary_orders) {
+            cmd.log(LOG_INFO);
+        }
+    }
+
 public:
     template<class MemBlt>
     void draw_memblt(const MemBlt & cmd, MemBlt & this_memblt, const Rect & clip, const Bitmap & oldbmp)
@@ -445,7 +457,7 @@ public:
         this->draw_memblt(cmd, this->mem3blt, clip, oldbmp);
     }
 
-    virtual void draw(const RDPLineTo& cmd, const Rect & clip)
+    virtual void draw(const RDPLineTo & cmd, const Rect & clip)
     {
         this->reserve_order(32);
         RDPOrderCommon newcommon(RDP::LINE, clip);
@@ -458,15 +470,55 @@ public:
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
-        const GlyphCache * gly_cache)
-    {
+        const GlyphCache * gly_cache) {
+        REDASSERT(gly_cache);
+
+        RDPGlyphIndex new_cmd = cmd;
+        bool has_delta_byte = (!new_cmd.ui_charinc && !(new_cmd.fl_accel & SO_CHAR_INC_EQUAL_BM_BASE));
+        for (uint8_t i = 0; i < new_cmd.data_len; ) {
+            if (new_cmd.data[i] <= 0xFD) {
+                //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
+                FontChar & fc = const_cast<FontChar &>(gly_cache->glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item);
+                REDASSERT(fc);
+
+                int cacheIndex;
+                if (this->glyph_cache.add_glyph(fc, new_cmd.cache_id, cacheIndex) ==
+                    GlyphCache::GLYPH_ADDED_TO_CACHE) {
+                    this->emit_glyph_cache(new_cmd.cache_id, cacheIndex);
+                }
+
+                REDASSERT(cacheIndex >= 0);
+                new_cmd.data[i] = static_cast<uint8_t>(cacheIndex);
+                if (has_delta_byte) {
+                    if (new_cmd.data[++i] == 0x80) {
+                        i += 3;
+                    }
+                    else {
+                        i++;
+                    }
+                }
+                else {
+                    i++;
+                }
+            }
+            else if (new_cmd.data[i] == 0xFE) {
+                LOG(LOG_INFO, "RDPSerializer::draw(RDPGlyphIndex, ...): Unsupported data");
+                throw Error(ERR_RDP_UNSUPPORTED);
+            }
+            else if (new_cmd.data[i] == 0xFF) {
+                i += 3;
+                REDASSERT(i == new_cmd.data_len);
+            }
+        }
+
         this->reserve_order(297);
+//LOG(LOG_INFO, "RDPSerializer::draw(RDPGlyphIndex): pos = %u", this->stream_orders.p - this->stream_orders.get_data());
         RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->glyphindex);
+        new_cmd.emit(this->stream_orders, newcommon, this->common, this->glyphindex);
         this->common = newcommon;
-        this->glyphindex = cmd;
+        this->glyphindex = new_cmd;
         if (this->ini.debug.primary_orders) {
-            cmd.log(LOG_INFO, common.clip);
+            new_cmd.log(LOG_INFO, common.clip);
         }
     }
 
@@ -482,14 +534,16 @@ public:
         cmd.emit(this->stream_orders);
     }
 
-    virtual void draw(const RDPGlyphCache & cmd)
-    {
-        this->reserve_order(cmd.total_order_size() + 16 /* majoration */);
-        cmd.emit(this->stream_orders);
-        if (this->ini.debug.secondary_orders) {
-            cmd.log(LOG_INFO);
-        }
-    }
+//    virtual void draw(const RDPGlyphCache & cmd)
+//    {
+//        this->reserve_order(cmd.total_order_size() +
+//                            16 // majoration
+//                           );
+//        cmd.emit(this->stream_orders);
+//        if (this->ini.debug.secondary_orders) {
+//            cmd.log(LOG_INFO);
+//        }
+//    }
 
     virtual void draw(const RDPPolygonSC & cmd, const Rect & clip) {
         this->reserve_order(256);

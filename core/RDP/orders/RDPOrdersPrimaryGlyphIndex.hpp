@@ -110,6 +110,16 @@
 //  |                           | direction of writing.                        |
 //  +---------------------------+----------------------------------------------+
 
+enum {
+      SO_FLAG_DEFAULT_PLACEMENT = 0x01
+    , SO_HORIZONTAL             = 0x02
+    , SO_VERTICAL               = 0x04
+    , SO_REVERSED               = 0x08
+    , SO_ZERO_BEARINGS          = 0x10
+    , SO_CHAR_INC_EQUAL_BM_BASE = 0x20
+    , SO_MAXEXT_EQUAL_BM_SIDE   = 0x40
+};
+
 // ulCharInc (1 byte): An 8-bit, unsigned integer. Specifies whether or not
 //  the font is a fixed-pitch (monospace) font. If so, this member is equal
 //  to the advance width of the glyphs in pixels (see [YUAN] figures 14-17);
@@ -536,7 +546,10 @@ public:
                       );
         lg += snprintf(buffer + lg, sz - lg, "[");
         for (int i = 0; i < this->data_len; i++) {
-            lg += snprintf( buffer + lg, sz - lg, "0x%.2x "
+            if (i) {
+                lg += snprintf( buffer + lg, sz - lg, " ");
+            }
+            lg += snprintf( buffer + lg, sz - lg, "0x%.2x"
                           , (unsigned char)this->data[i]
                           );
         }

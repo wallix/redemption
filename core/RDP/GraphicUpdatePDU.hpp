@@ -394,6 +394,7 @@ public:
                      , const Inifile & ini
                      , const uint8_t bpp
                      , BmpCache & bmp_cache
+                     , GlyphCache & gly_cache
                      , PointerCache & pointer_cache
                      , const int bitmap_cache_version
                      , const int use_bitmap_comp
@@ -404,7 +405,7 @@ public:
                      , uint32_t verbose
                      )
         : RDPSerializer( trans, this->buffer_stream_orders
-                       , this->buffer_stream_bitmaps, bpp, bmp_cache, pointer_cache
+                       , this->buffer_stream_bitmaps, bpp, bmp_cache, gly_cache, pointer_cache
                        , bitmap_cache_version, use_bitmap_comp, op2, ini, verbose)
         , buffer_stream_orders(1024, 65536)
         , buffer_stream_bitmaps(1024, 65536)

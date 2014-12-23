@@ -49,6 +49,7 @@ public:
 
 private:
     BmpCache      * pnc_bmp_cache;
+    GlyphCache    * pnc_gly_cache;
     PointerCache  * pnc_ptr_cache;
     NativeCapture * pnc;
 
@@ -89,6 +90,7 @@ public:
     , psc(nullptr)
     , wrm_trans(nullptr)
     , pnc_bmp_cache(nullptr)
+    , pnc_gly_cache(nullptr)
     , pnc_ptr_cache(nullptr)
     , pnc(nullptr)
     , drawable(nullptr)
@@ -142,6 +144,7 @@ public:
                                               , BmpCache::CacheOption(300, 3072, false)
                                               , BmpCache::CacheOption(262, 12288, false)
                                               );
+            this->pnc_gly_cache = new GlyphCache();
             const int pointerCacheSize = 0x19;
             this->pnc_ptr_cache = new PointerCache(pointerCacheSize);
 
@@ -155,8 +158,9 @@ public:
                                                               , width, height, ini.video.capture_groupid, authentifier);
             }
             this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
-                                         , *this->pnc_bmp_cache, *this->pnc_ptr_cache, *this->drawable, ini
-                                         , externally_generated_breakpoint, NativeCapture::SendInput::YES);
+                                         , *this->pnc_bmp_cache, *this->pnc_gly_cache, *this->pnc_ptr_cache
+                                         , *this->drawable, ini, externally_generated_breakpoint
+                                         , NativeCapture::SendInput::YES);
         }
 
         if (this->capture_wrm) {
@@ -174,6 +178,7 @@ public:
         delete this->pnc;
         delete this->wrm_trans;
         delete this->pnc_bmp_cache;
+        delete this->pnc_gly_cache;
         delete this->pnc_ptr_cache;
         delete this->drawable;
 
@@ -431,12 +436,13 @@ public:
         }
     }
 
+/*
     void draw(const RDPGlyphCache & cmd) {
         if (this->gd) {
             this->gd->draw(cmd);
         }
     }
-
+*/
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
         if (this->gd) {
