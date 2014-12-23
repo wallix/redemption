@@ -208,8 +208,8 @@ public:
     }
 
     void receive(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header) {
-        this->cacheId              = stream.in_uint8();
-        this->cGlyphs              = stream.in_uint8();
+        this->cacheId    = stream.in_uint8();
+        this->cGlyphs    = stream.in_uint8();
         this->cacheIndex = stream.in_uint16_le();
         this->x          = stream.in_uint16_le();
         this->y          = stream.in_uint16_le();
@@ -218,7 +218,8 @@ public:
 
         uint16_t size = this->datasize();
 
-        this->aj = static_cast<uint8_t *>(malloc(size));
+        if (this->aj) { delete [] this->aj; }
+        this->aj = new uint8_t[size];
         memcpy(this->aj, stream.in_uint8p(size), size);
     }
 
