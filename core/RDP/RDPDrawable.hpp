@@ -415,11 +415,18 @@ public:
 */
 
 private:
-    void draw_glyph(Bitmap & bmp, FontChar const & fc, size_t offset_x, Color color) const
+    void draw_glyph(Bitmap & bmp, FontChar const & fc, size_t draw_pos, int16_t offset_y, Color color) const
     {
-        uint8_t * bmp_data    = const_cast<uint8_t*>(bmp.data()) + (offset_x + 1) * 3 + bmp.line_size() * (fc.height - 1);
-        uint8_t   fc_bit_mask = 128;
-        const uint8_t * fc_data     = fc.data.get();
+//LOG(LOG_INFO, "offset_y=%d", offset_y);
+//LOG(LOG_INFO, "Glyph.offset=%d Glyph.baseline=%d Glyph.width=%u Glyph.height=%u", fc.offset, fc.baseline, fc.width, fc.height);
+              uint8_t * bmp_data           = const_cast<uint8_t *>( bmp.data())
+                                                                  + (draw_pos/* + 1*/) * 3
+//                                                                  + bmp.line_size() * (fc.height - 1);
+                                                                  + bmp.line_size() * (offset_y - fc.baseline);
+//LOG(LOG_INFO, "old.y=%d new.y=%d", (fc.height - 1), (bmp.cy() - (offset_y + fc.baseline)));
+              uint8_t   fc_bit_mask        = 128;
+        const uint8_t * fc_data            = fc.data.get();
+        const bool      skip_padding_pixel = (fc.width % 8);
 
         for (int y = 0; y < fc.height; y++)
         {
@@ -445,20 +452,30 @@ private:
                 }
             }
 
+            if (skip_padding_pixel) {
+                fc_data++;
+                fc_bit_mask = 128;
+                //printf("_");
+            }
+
             bmp_data -= bmp.line_size();
             //printf("\n");
         }
+        //printf("\n");
     }
 
 public:
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
+//cmd.log(LOG_INFO, clip);
+//LOG(LOG_INFO, "bk.x=%d bk.y=%d, bk.cx=%u bk.cy=%u, x=%d, y=%d", cmd.bk.x, cmd.bk.y, cmd.bk.cx, cmd.bk.cy, cmd.glyph_x, cmd.glyph_y);
+
         Bitmap glyph_fragments(24, NULL, cmd.bk.cx, cmd.bk.cy);
 
         {
             const Color color = this->u32rgb_to_color(cmd.fore_color);
 
-            uint8_t * base = const_cast<uint8_t*>(glyph_fragments.data());
+            uint8_t * base = const_cast<uint8_t *>(glyph_fragments.data());
             uint8_t * p    = base;
 
             for (size_t x = 0; x < glyph_fragments.cx(); x++)
@@ -466,6 +483,9 @@ public:
                 p[0] = color.red();
                 p[1] = color.green();
                 p[2] = color.blue();
+// p[0] = 0xFF;
+// p[1] = 0;
+// p[2] = 0;
 
                 p += 3;
             }
@@ -482,6 +502,7 @@ public:
         {
             bool has_delta_byte = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
             const Color color = this->u32rgb_to_color(cmd.back_color);
+            const int16_t offset_y = glyph_fragments.cy() - (cmd.glyph_y - cmd.bk.y + 1);
 
             StaticStream aj(cmd.data, cmd.data_len);
 
@@ -514,10 +535,15 @@ public:
                             draw_pos += data;
                         }
                     }
+                    else
+                    {
+                        REDASSERT(cmd.ui_charinc);
+//                        draw_pos += cmd.ui_charinc;
+                    }
 
                     if (fc)
                     {
-                        this->draw_glyph(glyph_fragments, fc, draw_pos, color);
+                        this->draw_glyph(glyph_fragments, fc, draw_pos, offset_y, color);
                     }
                 }
                 else if (data == 0xFE)
@@ -533,7 +559,8 @@ public:
             }
         }
 
-        this->drawable.draw_bitmap(Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), glyph_fragments);
+//        this->drawable.draw_bitmap(Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), glyph_fragments);
+        this->drawable.draw_bitmap(Rect(cmd.bk.x, cmd.bk.y, cmd.bk.cx, cmd.bk.cy), glyph_fragments);
     }
 
     virtual void draw(const RDPBrushCache & cmd) {}

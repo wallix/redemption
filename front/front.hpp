@@ -4194,7 +4194,7 @@ public:
                     new_cmd.back_color = cmd.back_color;
                     new_cmd.fore_color = cmd.fore_color;
                 }
-LOG(LOG_INFO, "Front::draw(RDPGlyphIndex, ...): cacheId=%u", new_cmd.cache_id);
+//LOG(LOG_INFO, "Front::draw(RDPGlyphIndex, ...): cacheId=%u", new_cmd.cache_id);
                 this->capture->draw(new_cmd, clip, gly_cache);
             }
         }
