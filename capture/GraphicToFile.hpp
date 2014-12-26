@@ -513,6 +513,15 @@ public:
         }
     }
 
+    void save_glyph_caches()
+    {
+        for (uint8_t cacheId = 0; cacheId < NUMBER_OF_GLYPH_CACHES; ++cacheId) {
+            for (uint8_t cacheIndex = 0; cacheIndex < NUMBER_OF_GLYPH_CACHE_ENTRIES; ++cacheIndex) {
+                this->glyph_cache.set_cached(cacheId, cacheIndex, false);
+            }
+        }
+    }
+
     void save_ptr_cache() {
         for (int index = 0; index < MAX_POINTER_COUNT; ++index) {
             this->pointer_cache.set_cached(index, false);
@@ -522,11 +531,11 @@ public:
     void send_caches_chunk()
     {
         this->save_bmp_caches();
+        this->save_glyph_caches();
+        this->save_ptr_cache();
         if (this->order_count > 0) {
             this->send_orders_chunk();
         }
-
-        this->save_ptr_cache();
     }
 
     void breakpoint()

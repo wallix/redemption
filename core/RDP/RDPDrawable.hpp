@@ -573,9 +573,9 @@ public:
             Rect clipped_glyph_fragment_rect = cmd.bk.intersect(clip).offset(offset_x, 0);
 
             Bitmap clipped_glyph_fragment_bmp( glyph_fragments
-                                             , clipped_glyph_fragment_rect.offset( clipped_glyph_fragment_rect.x - cmd.bk.x
-                                                                                 , clipped_glyph_fragment_rect.y - cmd.bk.y
-                                                                                 ).wh()
+                                             , clipped_glyph_fragment_rect.wh().offset( clipped_glyph_fragment_rect.x - cmd.bk.x
+                                                                                      , clipped_glyph_fragment_rect.y - cmd.bk.y
+                                                                                      )
                                              );
 
             this->drawable.draw_bitmap(clipped_glyph_fragment_rect, clipped_glyph_fragment_bmp);

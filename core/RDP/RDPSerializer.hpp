@@ -486,6 +486,11 @@ public:
                     GlyphCache::GLYPH_ADDED_TO_CACHE) {
                     this->emit_glyph_cache(new_cmd.cache_id, cacheIndex);
                 }
+                else if ((this->bmp_cache.owner == BmpCache::Recorder) &&
+                         !this->glyph_cache.is_cached(new_cmd.cache_id, cacheIndex)) {
+                    this->emit_glyph_cache(new_cmd.cache_id, cacheIndex);
+                    this->glyph_cache.set_cached(new_cmd.cache_id, cacheIndex, true);
+                }
 
                 REDASSERT(cacheIndex >= 0);
                 new_cmd.data[i] = static_cast<uint8_t>(cacheIndex);

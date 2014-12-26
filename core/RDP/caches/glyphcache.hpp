@@ -32,6 +32,8 @@ class GlyphCache : noncopyable {
 
         int stamp = 0;
 
+        bool cached = false;
+
     public:
         FontChar font_item;
     };
@@ -107,6 +109,8 @@ private:
 
         cacheidx = ci;
 
+        this->glyphs[cacheid][ci].cached = true;
+
         return GLYPH_ADDED_TO_CACHE;
     }
 
@@ -127,6 +131,14 @@ public:
         }
 
         return -1;
+    }
+
+    bool is_cached(uint8_t cacheId, uint8_t cacheIndex) const {
+        return this->glyphs[cacheId][cacheIndex].cached;
+    }
+
+    void set_cached(uint8_t cacheId, uint8_t cacheIndex, bool cached) {
+        this->glyphs[cacheId][cacheIndex].cached = cached;
     }
 };  // class GlyphCache
 
