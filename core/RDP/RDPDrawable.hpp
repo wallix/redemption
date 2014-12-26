@@ -420,7 +420,7 @@ private:
 //LOG(LOG_INFO, "offset_y=%d", offset_y);
 //LOG(LOG_INFO, "Glyph.offset=%d Glyph.baseline=%d Glyph.width=%u Glyph.height=%u", fc.offset, fc.baseline, fc.width, fc.height);
               uint8_t * bmp_data           = const_cast<uint8_t *>( bmp.data())
-                                                                  + (draw_pos/* + 1*/) * 3
+                                                                  + (draw_pos/* + 1*/ + fc.offset) * 3
 //                                                                  + bmp.line_size() * (fc.height - 1);
                                                                   + bmp.line_size() * (offset_y - fc.baseline);
 //LOG(LOG_INFO, "old.y=%d new.y=%d", (fc.height - 1), (bmp.cy() - (offset_y + fc.baseline)));
@@ -469,6 +469,10 @@ public:
     {
 //cmd.log(LOG_INFO, clip);
 //LOG(LOG_INFO, "bk.x=%d bk.y=%d, bk.cx=%u bk.cy=%u, x=%d, y=%d", cmd.bk.x, cmd.bk.y, cmd.bk.cx, cmd.bk.cy, cmd.glyph_x, cmd.glyph_y);
+
+        if (!cmd.bk.has_intersection(clip)) {
+            return;
+        }
 
         Bitmap glyph_fragments(24, NULL, cmd.bk.cx, cmd.bk.cy);
 
@@ -559,8 +563,23 @@ public:
             }
         }
 
-//        this->drawable.draw_bitmap(Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), glyph_fragments);
-        this->drawable.draw_bitmap(Rect(cmd.bk.x, cmd.bk.y, cmd.bk.cx, cmd.bk.cy), glyph_fragments);
+        const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
+
+        if (clip.contains(cmd.bk)) {
+//            this->drawable.draw_bitmap(Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), glyph_fragments);
+            this->drawable.draw_bitmap(Rect(cmd.bk.x + offset_x, cmd.bk.y, cmd.bk.cx, cmd.bk.cy), glyph_fragments);
+        }
+        else {
+            Rect clipped_glyph_fragment_rect = cmd.bk.intersect(clip).offset(offset_x, 0);
+
+            Bitmap clipped_glyph_fragment_bmp( glyph_fragments
+                                             , clipped_glyph_fragment_rect.offset( clipped_glyph_fragment_rect.x - cmd.bk.x
+                                                                                 , clipped_glyph_fragment_rect.y - cmd.bk.y
+                                                                                 ).wh()
+                                             );
+
+            this->drawable.draw_bitmap(clipped_glyph_fragment_rect, clipped_glyph_fragment_bmp);
+        }
     }
 
     virtual void draw(const RDPBrushCache & cmd) {}

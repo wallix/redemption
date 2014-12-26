@@ -529,7 +529,7 @@ public:
                         "bk=(%d,%d,%d,%d) "
                         "op=(%d,%d,%d,%d) "
                         "brush.(org_x=%d, org_y=%d, style=%d hatch=%d extra=[%.2x,%.2x,%.2x,%.2x,%.2x,%.2x,%.2x]) "
-                        "glyph_x=%.2x glyph_y=%.2x data_len=%d "
+                        "glyph_x=%d glyph_y=%d data_len=%d "
                       , this->cache_id
                       , this->fl_accel
                       , this->ui_charinc
