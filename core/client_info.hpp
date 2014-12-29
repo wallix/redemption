@@ -83,7 +83,7 @@ struct ClientInfo {
                            2 = arbitrary dimensions */
     bool console_session = false;
 
-    decltype(GlyphCache::number_of_entries_in_cache) number_of_entries_in_glyph_cache = { {
+    GlyphCache::number_of_entries_t number_of_entries_in_glyph_cache = { {
           NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES

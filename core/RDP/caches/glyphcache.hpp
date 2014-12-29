@@ -41,7 +41,11 @@ class GlyphCache : noncopyable {
     /* font */
     int char_stamp = 0;
 
-    std::array<uint8_t, NUMBER_OF_GLYPH_CACHES> number_of_entries_in_cache = { {
+public:
+    using number_of_entries_t = std::array<uint8_t, NUMBER_OF_GLYPH_CACHES>;
+
+private:
+    number_of_entries_t number_of_entries_in_cache = { {
           NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
@@ -51,7 +55,7 @@ class GlyphCache : noncopyable {
 public:
     Glyph glyphs[NUMBER_OF_GLYPH_CACHES][NUMBER_OF_GLYPH_CACHE_ENTRIES];
 
-    int reset(std::array<uint8_t, NUMBER_OF_GLYPH_CACHES> & number_of_entries_in_glyph_cache) {
+    int reset(number_of_entries_t const & number_of_entries_in_glyph_cache) {
         /* free all the cached font items */
         this->~GlyphCache();
         new (this)GlyphCache();
