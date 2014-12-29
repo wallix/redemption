@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     char message[1024];
     if (!check_sig( front.gd.impl(), message
-                  , "\x7f\x88\xc9\xef\x98\xff\xaa\x53\x42\x53\x76\x1b\x11\x75\x9f\x5d\x86\x10\x61\xe9"
+                  , "\xf3\x80\xd8\x99\xf5\xc3\x12\x3a\x0d\xdd\xd7\xfe\xed\x05\xc9\xd7\x20\x6e\x18\x8d"
                   )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
