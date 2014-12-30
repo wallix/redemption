@@ -332,7 +332,6 @@ public:
 
     virtual void draw(const RDPBrushCache & cmd) { this->mod.draw(cmd); }
     virtual void draw(const RDPColCache   & cmd) { this->mod.draw(cmd); }
-//    virtual void draw(const RDPGlyphCache & cmd) { this->mod.draw(cmd); }
 
 private:
     void draw_bitmap_rect(Rect const & rect, Rect const & rectBmp, Bitmap const & bmp)

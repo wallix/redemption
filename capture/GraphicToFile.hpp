@@ -176,9 +176,6 @@ public:
         this->send_image_chunk();
     }
 
-//    ~GraphicToFile() {
-//    }
-
     void dump_png24(Transport & trans, bool bgr) const {
         this->drawable.dump_png24(trans, bgr);
     }
@@ -645,14 +642,6 @@ public:
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
-
-/*
-    virtual void draw(const RDPGlyphCache & cmd)
-    {
-        this->drawable.draw(cmd);
-        this->RDPSerializer::draw(cmd);
-    }
-*/
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {

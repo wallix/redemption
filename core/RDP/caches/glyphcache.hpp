@@ -39,7 +39,7 @@ class GlyphCache : noncopyable {
     };
 
     /* font */
-    int char_stamp = 0;
+    int glyph_stamp = 0;
 
 public:
     using number_of_entries_t = std::array<uint8_t, NUMBER_OF_GLYPH_CACHES>;
@@ -88,7 +88,7 @@ public:
 
 private:
     t_glyph_cache_result priv_add_glyph(FontChar & font_item, int cacheid, int & cacheidx) {
-        this->char_stamp++;
+        this->glyph_stamp++;
 
         /* look for match */
         int ci     = 0;
@@ -96,7 +96,7 @@ private:
         for (uint8_t cacheIndex = 0; cacheIndex < this->number_of_entries_in_cache[cacheid]; ++ cacheIndex) {
             Glyph & item = this->glyphs[cacheid][cacheIndex];
             if (item.font_item && item.font_item.item_compare(font_item)) {
-                item.stamp = this->char_stamp;
+                item.stamp = this->glyph_stamp;
                 cacheidx   = &item - std::begin(this->glyphs[cacheid]);
 
                 return GLYPH_FOUND_IN_CACHE;
@@ -109,7 +109,7 @@ private:
             }
         }
 
-        this->glyphs[cacheid][ci].stamp = this->char_stamp;
+        this->glyphs[cacheid][ci].stamp = this->glyph_stamp;
 
         cacheidx = ci;
 
@@ -120,13 +120,14 @@ private:
 
 public:
     void set_glyph(FontChar && fc, size_t cacheid, size_t cacheidx) {
-        this->char_stamp++;
+        this->glyph_stamp++;
         this->glyphs[cacheid][cacheidx].font_item = std::move(fc);
-        this->glyphs[cacheid][cacheidx].stamp     = this->char_stamp;
+        this->glyphs[cacheid][cacheidx].stamp     = this->glyph_stamp;
     }
 
+/*
     int find_glyph(FontChar & font_item, int cacheid) {
-        /* look for match */
+        // look for match
         for (uint8_t cacheIndex = 0; cacheIndex < this->number_of_entries_in_cache[cacheid]; ++cacheIndex) {
             Glyph & item = this->glyphs[cacheid][cacheIndex];
             if (item.font_item && item.font_item.item_compare(font_item)) {
@@ -136,6 +137,7 @@ public:
 
         return -1;
     }
+*/
 
     bool is_cached(uint8_t cacheId, uint8_t cacheIndex) const {
         return this->glyphs[cacheId][cacheIndex].cached;
