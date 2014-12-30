@@ -125,8 +125,9 @@ public:
         this->glyphs[cacheid][cacheidx].stamp     = this->glyph_stamp;
     }
 
+/*
     int find_glyph(FontChar & font_item, int cacheid) {
-        /* look for match */
+        // look for match
         for (uint8_t cacheIndex = 0; cacheIndex < this->number_of_entries_in_cache[cacheid]; ++cacheIndex) {
             Glyph & item = this->glyphs[cacheid][cacheIndex];
             if (item.font_item && item.font_item.item_compare(font_item)) {
@@ -136,6 +137,7 @@ public:
 
         return -1;
     }
+*/
 
     bool is_cached(uint8_t cacheId, uint8_t cacheIndex) const {
         return this->glyphs[cacheId][cacheIndex].cached;
