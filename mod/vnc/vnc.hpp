@@ -1882,14 +1882,14 @@ private:
         // drop remaining clipboard content if larger that about 8000 bytes
         if (clip_data_size > chunk_size) {
             size_t remaining = clip_data_size - chunk_size;
-            BStream drop(4096);
+            char drop[4096];
+            char * end = drop;
             while (remaining > 4096) {
-                drop.end = drop.get_data();
-                this->t.recv(&drop.end, 4096);
+                this->t.recv(&end, 4096);
                 remaining -= 4096;
+                end = drop;
             }
-            drop.end = drop.get_data();
-            this->t.recv(&drop.end, remaining);
+            this->t.recv(&end, remaining);
         }
 
         if (this->enable_clipboard_in && this->get_channel_by_name(channel_names::cliprdr)) {

@@ -237,20 +237,6 @@ void update_authorized_channels(std::string & allow,
 
     std::array<ref_string, 2> ret{{{allow}, {deny}}};
 
-    char const * opts_channel_name[] = {
-        "drdynvc,",
-        "pnpdr,",
-        "tsmf,",
-        "tsvctkt,",
-        "xpsrd,",
-        "wmsdl,",
-        "wmsaud,",
-        "rdpsnd,",
-        "urbdrc,",
-        "xpsrd,",
-        "tsvctk,"
-    };
-
     for (std::string & s : ret) {
         remove(s, "cliprdr,");
         remove(s, "rdpdr,");
@@ -258,9 +244,6 @@ void update_authorized_channels(std::string & allow,
             remove(s, str);
         }
         for (auto str : AuthorizationChannels::rdpdr_list) {
-            remove(s, str);
-        }
-        for (auto str : opts_channel_name) {
             remove(s, str);
         }
         if (!s.empty() && s.back() == ',') {
@@ -272,35 +255,22 @@ void update_authorized_channels(std::string & allow,
         const char * opt;
         const char * channel;
     } opts_channels[] {
-//         {"RDP_CLIPBOARD", ",cliprdr"},
         {"RDP_CLIPBOARD_UP", ",cliprdr_up"},
         {"RDP_CLIPBOARD_DOWN", ",cliprdr_down"},
-        {"RDP_CLIPBOARD_FILE", ",cliprdr_file"},
-//         {"RDP_DEVICE_REDIRECTION", ",rdpdr"},
-        {"RDP_DEVICE_REDIRECTION_GENERAL", ",rdpdr_general"},
-        {"RDP_DEVICE_REDIRECTION_PRINTER", ",rdpdr_printer"},
-        {"RDP_DEVICE_REDIRECTION_PORT", ",rdpdr_port"},
-        {"RDP_DEVICE_REDIRECTION_DRIVE", ",rdpdr_drive"},
-        {"RDP_DEVICE_REDIRECTION_SMARTCARD", ",rdpdr_smartcard"},
-        {"RDP_DRDYNVC", ",drdynvc"},
-        {"RDP_PNPDR", ",pnpdr"},
-        {"RDP_TSMF", ",tsmf"},
-        {"RDP_TSVCTKT", ",tsvctkt"},
-        {"RDP_XPSRD", ",xpsrd"},
-        {"RDP_WMSDL", ",wmsdl"},
-        {"RDP_WMSAUD", ",wmsaud"},
-        {"RDP_RDPSND", ",rdpsnd"},
-        {"RDP_URBDRC", ",urbdrc"},
-        {"RDP_XPSRD", ",xpsrd"},
-        {"RDP_TSVCTK", ",tsvctk"}
+//         {"RDP_CLIPBOARD_FILE", ",cliprdr_file"},
+//         {"RDP_GENERAL", ",rdpdr_general"},
+        {"RDP_PRINTER", ",rdpdr_printer"},
+        {"RDP_COM_PORT", ",rdpdr_port"},
+//         {"RDP_DRIVE", ",rdpdr_drive"},
+        {"RDP_DRIVE", ",rdpdr_general"},
+        {"RDP_SMARTCARD", ",rdpdr_smartcard"}
     };
 
     static_assert(
-        AuthorizationChannels::rdpdr_list.size()
-      + AuthorizationChannels::cliprde_list.size()
-      + std::extent<decltype(opts_channel_name)>::value
+        AuthorizationChannels::rdpdr_list.size() - 1
+      + AuthorizationChannels::cliprde_list.size() - 1
      == std::extent<decltype(opts_channels)>::value
-    , "RDP_OPTION.size() error");
+    , "opts_channels.size() error");
 
     for (auto & x : opts_channels) {
         ret[(proxy_opt.find(x.opt) != std::string::npos) ? 0 : 1].get() += x.channel;
