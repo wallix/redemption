@@ -5054,13 +5054,6 @@ public:
         this->front.end_update();
     }
 
-/*
-    virtual void draw(const RDPGlyphCache & cmd)
-    {
-        this->front.draw(cmd);
-    }
-*/
-
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->front.draw(cmd, clip);

@@ -436,14 +436,6 @@ public:
         }
     }
 
-/*
-    void draw(const RDPGlyphCache & cmd) {
-        if (this->gd) {
-            this->gd->draw(cmd);
-        }
-    }
-*/
-
     void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {

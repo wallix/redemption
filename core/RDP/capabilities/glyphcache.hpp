@@ -80,6 +80,14 @@ enum {
 //  allowed in the cache is 256, and the largest allowed maximum size of an
 //  element is 256 bytes.
 
+enum {
+      MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES = 256
+};
+
+enum {
+      MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE = 256
+};
+
 // GlyphSupportLevel (2 bytes): A 16-bit, unsigned integer. The level of
 //  glyph support.
 

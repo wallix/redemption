@@ -235,8 +235,6 @@ protected:
     virtual void send_pointer(int cache_idx, const Pointer & cursor) = 0;
     virtual void set_pointer(int cache_idx) = 0;
 
-//    virtual void send_glyph(uint8_t cacheId, uint8_t cache_idx, uint8_t cGlyphs, )
-
 public:
     /*****************************************************************************/
     // check if the next order will fit in available packet size
@@ -397,7 +395,6 @@ protected:
         FontChar & fc = this->glyph_cache.glyphs[cacheId][cacheIndex].font_item;
         RDPGlyphCache cmd(cacheId, /*1, */cacheIndex, fc.offset, fc.baseline, fc.width, fc.height, fc.data.get());
         this->reserve_order(cmd.total_order_size());
-//LOG(LOG_INFO, "RDPSerializer::emit_glyph_cache: pos = %u", this->stream_orders.p - this->stream_orders.get_data());
         cmd.emit(this->stream_orders);
 
         if (this->ini.debug.secondary_orders) {
@@ -517,7 +514,6 @@ public:
         }
 
         this->reserve_order(297);
-//LOG(LOG_INFO, "RDPSerializer::draw(RDPGlyphIndex): pos = %u", this->stream_orders.p - this->stream_orders.get_data());
         RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
         new_cmd.emit(this->stream_orders, newcommon, this->common, this->glyphindex);
         this->common = newcommon;
@@ -538,17 +534,6 @@ public:
         this->reserve_order(2000);
         cmd.emit(this->stream_orders);
     }
-
-//    virtual void draw(const RDPGlyphCache & cmd)
-//    {
-//        this->reserve_order(cmd.total_order_size() +
-//                            16 // majoration
-//                           );
-//        cmd.emit(this->stream_orders);
-//        if (this->ini.debug.secondary_orders) {
-//            cmd.log(LOG_INFO);
-//        }
-//    }
 
     virtual void draw(const RDPPolygonSC & cmd, const Rect & clip) {
         this->reserve_order(256);

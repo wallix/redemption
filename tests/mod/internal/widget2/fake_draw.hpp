@@ -115,13 +115,6 @@ struct TestDraw : DrawApi
         this->gd.draw(cmd);
     }
 
-/*
-    virtual void draw(const RDPGlyphCache & cmd)
-    {
-        this->gd.draw(cmd);
-    }
-*/
-
     virtual void draw(const RDPPolygonSC & cmd, const Rect & clip) {
         this->gd.draw(cmd, clip);
     }

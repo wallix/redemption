@@ -427,11 +427,6 @@ public:
                     FontChar fc(cmd.x, cmd.y, cmd.cx, cmd.cy, -1);
                     memcpy(fc.data.get(), cmd.aj, fc.datasize());
                     this->gly_cache.set_glyph(std::move(fc), cmd.cacheId, cmd.cacheIndex);
-/*
-                    for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->consumers[i].graphic_device->draw(cmd);
-                    }
-*/
                 }
                 break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:

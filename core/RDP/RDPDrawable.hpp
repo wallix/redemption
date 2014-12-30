@@ -63,7 +63,6 @@ class RDPDrawable : public RDPGraphicDevice, public RDPCaptureDevice
     using Color = Drawable::Color;
 
     Drawable drawable;
-//    GlyphCache gly_cache;
     int frame_start_count;
     int order_bpp;
     BGRPalette mod_palette_rgb;
@@ -401,29 +400,12 @@ private:
         }
     }
 
-/*
-public:
-    virtual void draw(const RDPGlyphCache & cmd)
-    {
-        //LOG( LOG_INFO
-        //   , "RDPDrawable::draw(RDPGlyphCache, ...): cacheId=%u cacheIndex=%u"
-        //   , cmd.cacheId, cmd.cacheIndex);
-        FontChar fc(cmd.x, cmd.y, cmd.cx, cmd.cy, -1);
-        memcpy(fc.data.get(), cmd.aj, fc.datasize());
-        this->gly_cache.set_glyph(std::move(fc), cmd.cacheId, cmd.cacheIndex);
-    }
-*/
-
 private:
     void draw_glyph(Bitmap & bmp, FontChar const & fc, size_t draw_pos, int16_t offset_y, Color color) const
     {
-//LOG(LOG_INFO, "offset_y=%d", offset_y);
-//LOG(LOG_INFO, "Glyph.offset=%d Glyph.baseline=%d Glyph.width=%u Glyph.height=%u", fc.offset, fc.baseline, fc.width, fc.height);
               uint8_t * bmp_data           = const_cast<uint8_t *>( bmp.data())
-                                                                  + (draw_pos/* + 1*/ + fc.offset) * 3
-//                                                                  + bmp.line_size() * (fc.height - 1);
+                                                                  + (draw_pos + fc.offset) * 3
                                                                   + bmp.line_size() * (offset_y - fc.baseline);
-//LOG(LOG_INFO, "old.y=%d new.y=%d", (fc.height - 1), (bmp.cy() - (offset_y + fc.baseline)));
               uint8_t   fc_bit_mask        = 128;
         const uint8_t * fc_data            = fc.data.get();
         const bool      skip_padding_pixel = (fc.width % 8);
@@ -467,9 +449,6 @@ private:
 public:
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
-//cmd.log(LOG_INFO, clip);
-//LOG(LOG_INFO, "bk.x=%d bk.y=%d, bk.cx=%u bk.cy=%u, x=%d, y=%d", cmd.bk.x, cmd.bk.y, cmd.bk.cx, cmd.bk.cy, cmd.glyph_x, cmd.glyph_y);
-
         if (!cmd.bk.has_intersection(clip)) {
             return;
         }
@@ -487,9 +466,6 @@ public:
                 p[0] = color.red();
                 p[1] = color.green();
                 p[2] = color.blue();
-// p[0] = 0xFF;
-// p[1] = 0;
-// p[2] = 0;
 
                 p += 3;
             }
@@ -517,7 +493,6 @@ public:
                 uint8_t  data     = aj.in_uint8();
                 if (data <= 0xFD)
                 {
-//                    FontChar const & fc = this->gly_cache.glyphs[cmd.cache_id][data].font_item;
                     FontChar const & fc = gly_cache->glyphs[cmd.cache_id][data].font_item;
                     if (!fc)
                     {
@@ -542,7 +517,6 @@ public:
                     else
                     {
                         REDASSERT(cmd.ui_charinc);
-//                        draw_pos += cmd.ui_charinc;
                     }
 
                     if (fc)
@@ -566,7 +540,6 @@ public:
         const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
 
         if (clip.contains(cmd.bk)) {
-//            this->drawable.draw_bitmap(Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), glyph_fragments);
             this->drawable.draw_bitmap(Rect(cmd.bk.x + offset_x, cmd.bk.y, cmd.bk.cx, cmd.bk.cy), glyph_fragments);
         }
         else {
@@ -628,7 +601,6 @@ public:
                 const FontChar & font_item = this->get_font(font, *unicode_iter);
                 int16_t cy = std::min<int16_t>(y + font_item.height, screen_rect.bottom()) - y;
                 int i = 0;
-                //x += font_item.offset;
                 for (int yy = 0 ; yy < cy; yy++) {
                     unsigned char oc = 1<<7;
                     for (int xx = 0; xx < font_item.width; xx++) {
@@ -642,7 +614,6 @@ public:
                         oc >>= 1;
                     }
                 }
-                //x += font_item.incby - font_item.offset;
                 x += font_item.incby;
             }
         }

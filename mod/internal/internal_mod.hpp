@@ -154,13 +154,6 @@ public:
         this->front.draw(order);
     }
 
-/*
-    virtual void draw(const RDPGlyphCache & cmd)
-    {
-        this->front.draw(cmd);
-    }
-*/
-
     virtual void draw(const RDPColCache & cmd)
     {
         this->front.draw(cmd);
