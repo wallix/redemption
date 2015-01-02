@@ -97,6 +97,8 @@ class mod_rdp : public mod_api {
 
     uint32_t max_clipboard_data = ~uint32_t{};
     uint32_t total_clipboard_data = 0;
+    uint32_t max_rdpdr_data = ~uint32_t{};
+    uint32_t total_rdpdr_data = 0;
 
     int  use_rdp5;
 
@@ -646,10 +648,22 @@ private:
 
         if (RDPECLIP::CB_FORMAT_DATA_RESPONSE == msgType || RDPECLIP::CB_FILECONTENTS_RESPONSE == msgType) {
             this->total_clipboard_data += len;
-            if (this->total_clipboard_data > this->max_clipboard_data && this->acl) {
+            if (this->total_clipboard_data >= this->max_clipboard_data && this->acl) {
                 this->acl->report("CLIPBOARD_LIMIT", "");
                 this->max_clipboard_data = ~uint32_t{};
             }
+        }
+    }
+
+    void update_total_rdpdr_data(uint32_t len) {
+        if (this->max_rdpdr_data == ~uint32_t{}) {
+            return ;
+        }
+
+        this->total_rdpdr_data += len;
+        if (this->total_rdpdr_data >= this->max_rdpdr_data && this->acl) {
+            this->acl->report("RDPDR_LIMIT", "");
+            this->max_rdpdr_data = ~uint32_t{};
         }
     }
 
@@ -705,6 +719,9 @@ public:
                         chunk.out_uint16_le(real_num_capabilities);
                     }
                 }
+            }
+            else {
+                this->update_total_rdpdr_data(length);
             }
 
             chunk.p = p;
@@ -1956,6 +1973,9 @@ public:
                                 }
                             }
                             else {
+                                if (!strcmp(mod_channel.name, channel_names::rdpdr)) {
+                                    this->update_total_rdpdr_data(length);
+                                }
                                 this->send_to_front_channel(
                                     mod_channel.name, sec.payload.p, length, chunk_size, flags
                                 );
