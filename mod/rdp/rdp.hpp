@@ -75,6 +75,7 @@
 #include "authorization_channels.hpp"
 #include "parser.hpp"
 #include "channel_names.hpp"
+#include "finally.hpp"
 
 class mod_rdp : public mod_api {
 
@@ -657,22 +658,15 @@ public:
                                     , Stream & chunk
                                     , size_t length
                                     , uint32_t flags) {
-        struct TraceLog {
-            const bool b;
-            TraceLog(bool verbose, const char * const front_channel_name)
-            : b(verbose & 16)
-            {
-                if (this->b) {
-                    LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
-                    LOG(LOG_INFO, "sending to channel %s", front_channel_name);
-                }
+        if (this->verbose & 16) {
+            LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
+            LOG(LOG_INFO, "sending to channel %s", front_channel_name);
+        }
+        auto finally_ = finally([this]{
+            if (this->verbose & 16) {
+                LOG(LOG_INFO, "mod_rdp::send_to_mod_channel done");
             }
-            ~TraceLog() {
-                if (this->b) {
-                    LOG(LOG_INFO, "mod_rdp::send_to_mod_channel done");
-                }
-            }
-        } trace(this->verbose, front_channel_name);
+        });
 
         // filtering device redirection (printer, smartcard, etc)
         if (!strcmp(front_channel_name, channel_names::rdpdr)) {
