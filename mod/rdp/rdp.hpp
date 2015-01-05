@@ -643,10 +643,11 @@ private:
     }
 
     void update_total_clipboard_data(uint16_t msgType, uint32_t len) {
-        if (this->max_clipboard_data
-         && (RDPECLIP::CB_FORMAT_DATA_RESPONSE == msgType
-          || RDPECLIP::CB_FILECONTENTS_RESPONSE == msgType
-        )) {
+        if (this->max_clipboard_data == 0) {
+            return ;
+        }
+
+        if (RDPECLIP::CB_FORMAT_DATA_RESPONSE == msgType || RDPECLIP::CB_FILECONTENTS_RESPONSE == msgType) {
             this->total_clipboard_data += len;
             if (this->total_clipboard_data >= this->max_clipboard_data && this->acl) {
                 this->acl->report("CLIPBOARD_LIMIT", "");
@@ -1976,9 +1977,8 @@ public:
                             }
                             else {
                                 if (!strcmp(mod_channel.name, channel_names::rdpdr)) {
-                                    this->update_total_rdpdr_data(
-                                        rdpdr::SharedHeader::read_packet_id(sec.payload), length
-                                    );
+                                    auto const packet_id = rdpdr::SharedHeader::read_packet_id(sec.payload);
+                                    this->update_total_rdpdr_data(packet_id, length);
                                     sec.payload.p -= sizeof(rdpdr::SharedHeader);
                                 }
                                 this->send_to_front_channel(

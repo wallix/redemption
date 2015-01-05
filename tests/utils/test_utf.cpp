@@ -680,3 +680,14 @@ BOOST_AUTO_TEST_CASE(TestUTF8ToUTF8LCopy)
 //     UTF16UpperW(uptargetw, target_length / 2);
 //     hexdump_c(uptargetw, target_length);
 // }
+
+BOOST_AUTO_TEST_CASE(TestUTF8toUnicodeIterator) {
+    const char * s = "Ëa\nŒo";
+    UTF8toUnicodeIterator u(s);
+    BOOST_CHECK(*u);            ++u;
+    BOOST_CHECK_EQUAL(*u, 'a'); ++u;
+    BOOST_CHECK_EQUAL(*u, '\n');++u;
+    BOOST_CHECK(*u);            ++u;
+    BOOST_CHECK_EQUAL(*u, 'o'); ++u;
+    BOOST_CHECK_EQUAL(*u, 0);
+}

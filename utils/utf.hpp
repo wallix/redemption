@@ -497,6 +497,7 @@ public:
         this->ucode = *source;
         ++source;
         switch (this->ucode >> 4 ){
+            case 0:
             case 1: case 2: case 3:
             case 4: case 5: case 6: case 7:
             break;
@@ -514,8 +515,6 @@ public:
                 this->ucode = ((this->ucode & 0x07) << 18)|((source[0] & 0x3F) << 12)|((source[1] & 0x3F) << 6)|(source[2] & 0x3F);
                 source += 3;
             break;
-            // should never happen, catched by test above
-            case 0:
             // these should never happen on valid UTF8
             case 8: case 9: case 0x0A: case 0x0B:
                 ucode = 0;
@@ -526,6 +525,12 @@ public:
 
     uint32_t operator*() const
     { return this->ucode; }
+
+    uint32_t code() const
+    { return this->ucode; }
+
+    uint8_t const * pos() const
+    { return this->source; }
 };
 
 // Return number of UTF8 bytes used to encode UTF16 input
