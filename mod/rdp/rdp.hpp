@@ -95,10 +95,11 @@ class mod_rdp : public mod_api {
     }
     const AuthorizationChannels authorization_channels;
 
-    uint32_t max_clipboard_data = ~uint32_t{};
-    uint32_t total_clipboard_data = 0;
-    uint32_t max_rdpdr_data = ~uint32_t{};
-    uint32_t total_rdpdr_data = 0;
+    typedef int_fast32_t data_size_type;
+    data_size_type max_clipboard_data = 0;
+    data_size_type total_clipboard_data = 0;
+    data_size_type max_rdpdr_data = 0;
+    data_size_type total_rdpdr_data = 0;
 
     int  use_rdp5;
 
@@ -642,28 +643,29 @@ private:
     }
 
     void update_total_clipboard_data(uint16_t msgType, uint32_t len) {
-        if (this->max_clipboard_data == ~uint32_t{}) {
-            return ;
-        }
-
-        if (RDPECLIP::CB_FORMAT_DATA_RESPONSE == msgType || RDPECLIP::CB_FILECONTENTS_RESPONSE == msgType) {
+        if (this->max_clipboard_data
+         && (RDPECLIP::CB_FORMAT_DATA_RESPONSE == msgType
+          || RDPECLIP::CB_FILECONTENTS_RESPONSE == msgType
+        )) {
             this->total_clipboard_data += len;
             if (this->total_clipboard_data >= this->max_clipboard_data && this->acl) {
                 this->acl->report("CLIPBOARD_LIMIT", "");
-                this->max_clipboard_data = ~uint32_t{};
+                this->max_clipboard_data = 0;
             }
         }
     }
 
-    void update_total_rdpdr_data(uint32_t len) {
-        if (this->max_rdpdr_data == ~uint32_t{}) {
+    void update_total_rdpdr_data(rdpdr::PacketId e, uint32_t len) {
+        if (this->max_rdpdr_data == 0) {
             return ;
         }
 
-        this->total_rdpdr_data += len;
-        if (this->total_rdpdr_data >= this->max_rdpdr_data && this->acl) {
-            this->acl->report("RDPDR_LIMIT", "");
-            this->max_rdpdr_data = ~uint32_t{};
+        if (rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION == e) {
+            this->total_rdpdr_data += len;
+            if (this->total_rdpdr_data >= this->max_rdpdr_data && this->acl) {
+                this->acl->report("RDPDR_LIMIT", "");
+                this->max_rdpdr_data = 0;
+            }
         }
     }
 
@@ -721,7 +723,7 @@ public:
                 }
             }
             else {
-                this->update_total_rdpdr_data(length);
+                this->update_total_rdpdr_data(packet_id, length);
             }
 
             chunk.p = p;
@@ -1974,7 +1976,10 @@ public:
                             }
                             else {
                                 if (!strcmp(mod_channel.name, channel_names::rdpdr)) {
-                                    this->update_total_rdpdr_data(length);
+                                    this->update_total_rdpdr_data(
+                                        rdpdr::SharedHeader::read_packet_id(sec.payload), length
+                                    );
+                                    sec.payload.p -= sizeof(rdpdr::SharedHeader);
                                 }
                                 this->send_to_front_channel(
                                     mod_channel.name, sec.payload.p, length, chunk_size, flags
