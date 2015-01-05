@@ -401,11 +401,12 @@ private:
     }
 
 private:
-    void draw_glyph(Bitmap & bmp, FontChar const & fc, size_t draw_pos, int16_t offset_y, Color color) const
+    void draw_glyph( FontChar const & fc, size_t draw_pos, int16_t offset_y, Color color
+                   , int16_t bmp_pos_x, int16_t bmp_pos_y, Rect const & clip)
     {
-              uint8_t * bmp_data           = const_cast<uint8_t *>( bmp.data())
-                                                                  + (draw_pos + fc.offset) * 3
-                                                                  + bmp.line_size() * (offset_y - fc.baseline);
+        const int16_t   local_offset_x     = draw_pos + fc.offset;
+        const int16_t   local_offset_y     = offset_y + fc.baseline;
+
               uint8_t   fc_bit_mask        = 128;
         const uint8_t * fc_data            = fc.data.get();
         const bool      skip_padding_pixel = (fc.width % 8);
@@ -416,9 +417,13 @@ private:
             {
                 if (fc_bit_mask & (*fc_data))
                 {
-                    bmp_data[x * 3    ] = color.red();
-                    bmp_data[x * 3 + 1] = color.green();
-                    bmp_data[x * 3 + 2] = color.blue();
+                    const int pt_x = bmp_pos_x + local_offset_x + x;
+                    const int pt_y = bmp_pos_y + local_offset_y + y;
+                    if (clip.contains_pt(pt_x, pt_y)) {
+                        this->drawable.draw_pixel( pt_x
+                                                 , pt_y
+                                                 , color);
+                    }
                     //printf("X");
                 }
                 //else
@@ -439,8 +444,6 @@ private:
                 fc_bit_mask = 128;
                 //printf("_");
             }
-
-            bmp_data -= bmp.line_size();
             //printf("\n");
         }
         //printf("\n");
@@ -453,40 +456,23 @@ public:
             return;
         }
 
-        Bitmap glyph_fragments(24, NULL, cmd.bk.cx, cmd.bk.cy);
-
-        {
-            const Color color = this->u32rgb_to_color(cmd.fore_color);
-
-            uint8_t * base = const_cast<uint8_t *>(glyph_fragments.data());
-            uint8_t * p    = base;
-
-            for (size_t x = 0; x < glyph_fragments.cx(); x++)
-            {
-                p[0] = color.red();
-                p[1] = color.green();
-                p[2] = color.blue();
-
-                p += 3;
-            }
-
-            uint8_t * target = base;
-
-            for (size_t y = 1; y < glyph_fragments.cy(); y++)
-            {
-                target += glyph_fragments.line_size();
-                memcpy(target, base, glyph_fragments.line_size());
-            }
+        if (!cmd.op.isempty() && cmd.op.cy) {
+            Rect ajusted = cmd.op;
+            ajusted.cy--;
+            this->drawable.opaquerect(ajusted, this->u32rgb_to_color(cmd.fore_color));
         }
 
         {
             bool has_delta_byte = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
             const Color color = this->u32rgb_to_color(cmd.back_color);
-            const int16_t offset_y = glyph_fragments.cy() - (cmd.glyph_y - cmd.bk.y + 1);
+            const int16_t offset_y = /*cmd.bk.cy - (*/cmd.glyph_y - cmd.bk.y/* + 1)*/;
+            const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
 
             StaticStream aj(cmd.data, cmd.data_len);
 
             uint16_t draw_pos = 0;
+
+            Rect clipped_glyph_fragment_rect = cmd.bk.intersect(clip);
 
             while (aj.in_remain())
             {
@@ -521,7 +507,8 @@ public:
 
                     if (fc)
                     {
-                        this->draw_glyph(glyph_fragments, fc, draw_pos, offset_y, color);
+                        this->draw_glyph( fc, draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y
+                                        , clipped_glyph_fragment_rect);
                     }
                 }
                 else if (data == 0xFE)
@@ -535,23 +522,6 @@ public:
                     REDASSERT(!aj.in_remain());
                 }
             }
-        }
-
-        const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
-
-        if (clip.contains(cmd.bk)) {
-            this->drawable.draw_bitmap(Rect(cmd.bk.x + offset_x, cmd.bk.y, cmd.bk.cx, cmd.bk.cy), glyph_fragments);
-        }
-        else {
-            Rect clipped_glyph_fragment_rect = cmd.bk.intersect(clip).offset(offset_x, 0);
-
-            Bitmap clipped_glyph_fragment_bmp( glyph_fragments
-                                             , clipped_glyph_fragment_rect.wh().offset( clipped_glyph_fragment_rect.x - cmd.bk.x
-                                                                                      , clipped_glyph_fragment_rect.y - cmd.bk.y
-                                                                                      )
-                                             );
-
-            this->drawable.draw_bitmap(clipped_glyph_fragment_rect, clipped_glyph_fragment_bmp);
         }
     }
 
