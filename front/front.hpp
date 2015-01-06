@@ -4071,7 +4071,7 @@ public:
                     capture_cmd.back_color = color_encode(back_color24, this->capture_bpp);
                     capture_cmd.pen.color = color_encode(pen_color24, this->capture_bpp);
 
-                    this->orders->draw(capture_cmd, clip);
+                    this->capture->draw(capture_cmd, clip);
                 }
                 else {
                     this->capture->draw(cmd, clip);
@@ -4202,7 +4202,7 @@ public:
                     capture_cmd.foreColor = color_encode(fore_pen_color24, this->capture_bpp);
                     capture_cmd.backColor = color_encode(back_pen_color24, this->capture_bpp);
 
-                    this->orders->draw(capture_cmd, clip);
+                    this->capture->draw(capture_cmd, clip);
                 }
                 else {
                     this->capture->draw(cmd, clip);
@@ -4250,7 +4250,7 @@ public:
                     const BGRColor pen_color24 = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb);
                     capture_cmd.PenColor = color_encode(pen_color24, this->capture_bpp);
 
-                    this->orders->draw(capture_cmd, clip);
+                    this->capture->draw(capture_cmd, clip);
                 }
                 else {
                     this->capture->draw(cmd, clip);
@@ -4282,7 +4282,7 @@ public:
                     const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
                     capture_cmd.color = color_encode(color24, this->capture_bpp);
 
-                    this->orders->draw(capture_cmd, clip);
+                    this->capture->draw(capture_cmd, clip);
                 }
                 else {
                     this->capture->draw(cmd, clip);
@@ -4321,7 +4321,7 @@ public:
                     capture_cmd.back_color = color_encode(back_color24, this->capture_bpp);
                     capture_cmd.fore_color = color_encode(fore_color24, this->capture_bpp);
 
-                    this->orders->draw(capture_cmd, clip);
+                    this->capture->draw(capture_cmd, clip);
                 }
                 else {
                     this->capture->draw(cmd, clip);
