@@ -496,13 +496,8 @@ class Engine(object):
         return self.pidhandler
 
     def start_session(self, auth, pid, effective_login):
-        try:
-            self.session_id = self.wabengine.start_session(auth, self.get_pidhandler(pid),
-                                                           effective_login=effective_login)
-        except Exception, e:
-            import traceback
-            Logger().info("Engine start_session failed: (((%s)))" % (traceback.format_exc(e)))
-
+        self.session_id = self.wabengine.start_session(auth, self.get_pidhandler(pid),
+                                                       effective_login=effective_login)
         return self.session_id
 
     def update_session(self, physical_target):
