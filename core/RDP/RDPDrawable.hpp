@@ -456,8 +456,8 @@ public:
             return;
         }
 
-        if (!cmd.op.isempty() && cmd.op.cy) {
-            Rect ajusted = cmd.op;
+        Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
+        if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
             ajusted.cy--;
             this->drawable.opaquerect(ajusted.intersect(clip), this->u32rgb_to_color(cmd.fore_color));
         }
