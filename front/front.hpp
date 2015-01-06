@@ -3908,7 +3908,7 @@ public:
         this->orders->draw(cmd2, clip, tiled_bmp);
         if (  this->capture
             && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->draw(cmd2, clip, tiled_bmp);
+            this->capture->draw(cmd2, clip, Bitmap(this->capture_bpp, tiled_bmp));
         }
     }
 

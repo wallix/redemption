@@ -459,7 +459,7 @@ public:
         if (!cmd.op.isempty() && cmd.op.cy) {
             Rect ajusted = cmd.op;
             ajusted.cy--;
-            this->drawable.opaquerect(ajusted, this->u32rgb_to_color(cmd.fore_color));
+            this->drawable.opaquerect(ajusted.intersect(clip), this->u32rgb_to_color(cmd.fore_color));
         }
 
         {
