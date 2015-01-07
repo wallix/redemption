@@ -99,7 +99,8 @@ private:
         {"end_connection", {"End of connection", "Fin de connexion"}},
         {"help_message", {
             "In login edit box, enter:<br>"
-            "- target device and login with the wab login separated by a semi colon as login@target:WABlogin<br>"
+            "- target device and login with the wab login separated<br>"
+            "  by a semi colon as login@target:service:WABlogin<br>"
             "- or a valid WAB authentication user.<br>"
             "<br>"
             "In password edit box enter your password<br>"
@@ -111,8 +112,8 @@ private:
             "experiencing problems.",
 
             "Dans la zone de saisie login, entrez:<br>"
-            "- le login sur la cible et le nom de la machine cible suivi du compte WAB<br>"
-            "  sous la forme login@serveur:WABlogin.<br>"
+            "- le login sur la cible et le nom de la machine cible suivi<br>"
+            "  du compte WAB sous la forme login@serveur:service:WABlogin<br>"
             "- ou un nom de compte WAB valide.<br>"
             "<br>"
             "Dans la zone de saisie mot de passe,<br>"

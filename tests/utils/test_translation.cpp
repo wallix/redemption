@@ -64,7 +64,8 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
     BOOST_CHECK_EQUAL(TR("help_message", ini),
                       std::string(
                                   "In login edit box, enter:<br>"
-                                  "- target device and login with the wab login separated by a semi colon as login@target:WABlogin<br>"
+                                  "- target device and login with the wab login separated<br>"
+                                  "  by a semi colon as login@target:service:WABlogin<br>"
                                   "- or a valid WAB authentication user.<br>"
                                   "<br>"
                                   "In password edit box enter your password<br>"
@@ -73,7 +74,8 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
                                   "Both fields are case sensitive.<br>"
                                   "<br>"
                                   "Contact your system administrator if you are<br>"
-                                  "experiencing problems."));
+                                  "experiencing problems."
+                                  ));
     BOOST_CHECK_EQUAL(TR("selector", ini),          std::string("Selector"));
     BOOST_CHECK_EQUAL(TR("session_out_time", ini),
                       std::string("Session is out of allowed timeframe"));
@@ -129,8 +131,8 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
     BOOST_CHECK_EQUAL(TR("help_message", ini),
                       std::string(
                                   "Dans la zone de saisie login, entrez:<br>"
-                                  "- le login sur la cible et le nom de la machine cible suivi du compte WAB<br>"
-                                  "  sous la forme login@serveur:WABlogin.<br>"
+                                  "- le login sur la cible et le nom de la machine cible suivi<br>"
+                                  "  du compte WAB sous la forme login@serveur:service:WABlogin<br>"
                                   "- ou un nom de compte WAB valide.<br>"
                                   "<br>"
                                   "Dans la zone de saisie mot de passe,<br>"
@@ -139,7 +141,8 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
                                   "Les deux champs sont sensibles à la casse.<br>"
                                   "<br>"
                                   "Contactez votre administrateur système en<br>"
-                                  "cas de problème pour vous connecter."));
+                                  "cas de problème pour vous connecter."
+                                  ));
     BOOST_CHECK_EQUAL(TR("selector", ini),          std::string("Sélecteur"));
     BOOST_CHECK_EQUAL(TR("session_out_time", ini),
                       std::string("L'autorisation de la session a expiré"));
