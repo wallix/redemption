@@ -390,20 +390,28 @@ class Engine(object):
         self.displaytargets = []
         for right in self.rights:
             if right.resource and right.account:
+                target_login = right.account.login
                 if right.resource.application:
                     target_name = right.resource.application.cn
                     service_name = u"APP"
                     protocol = u"APP"
                     host = None
+                    alias = None
                 else:
                     target_name = right.resource.device.cn
                     service_name = right.resource.service.cn
                     protocol = right.resource.service.protocol.cn
                     host = right.resource.device.host
-                tuple_index = (right.account.login, target_name)
+                    alias = right.resource.device.deviceAlias
+                tuple_index = (target_login, target_name)
                 if not self.targets.get(tuple_index):
                     self.targets[tuple_index] = {}
                 self.targets[tuple_index][service_name] = right
+                if alias:
+                    alias_index = (target_login, alias)
+                    if not self.targets.get(alias_index):
+                        self.targets[alias_index] = {}
+                    self.targets[alias_index][service_name] = right
                 self.displaytargets.append(DisplayInfo(right.account.login,
                                                        target_name,
                                                        service_name,
