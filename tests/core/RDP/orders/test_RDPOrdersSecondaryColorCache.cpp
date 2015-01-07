@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestColCache)
         BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
         RDPSecondaryOrderHeader header(stream);
         RDPColCache cmd(0, newcmd.palette);
-        cmd.receive(stream, control, header);
+        cmd.receive(stream, header);
 
         check<RDPColCache>(cmd, newcmd, "Color Cache 1");
     }

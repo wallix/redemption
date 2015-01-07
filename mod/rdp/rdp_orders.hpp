@@ -274,14 +274,13 @@ private:
         gd.draw(order);
     }
 
-    void process_bmpcache( uint8_t bpp, Stream & stream, const uint8_t control
-                         , const RDPSecondaryOrderHeader & header)
+    void process_bmpcache(Stream & stream, const RDPSecondaryOrderHeader & header, uint8_t bpp)
     {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders_process_bmpcache bpp=%u", bpp);
         }
         RDPBmpCache bmp(this->verbose);
-        bmp.receive(bpp, stream, control, header, this->global_palette);
+        bmp.receive(stream, header, this->global_palette, bpp);
 
         this->recv_bmp_cache_count++;
 
@@ -297,8 +296,7 @@ private:
 
     void server_add_char( int font, int character
                         , int offset, int baseline
-                        , int width, int height, const uint8_t * data
-                        , RDPGraphicDevice & gd)
+                        , int width, int height, const uint8_t * data)
     {
         FontChar fi(offset, baseline, width, height, 0);
         memcpy(fi.data.get(), data, fi.datasize());
@@ -306,7 +304,7 @@ private:
         this->gly_cache.set_glyph(std::move(fi), cmd.cacheId, cmd.cacheIndex);
     }
 
-    void process_glyphcache(Stream & stream, int flags, RDPGraphicDevice & gd) {
+    void process_glyphcache(Stream & stream, const RDPSecondaryOrderHeader &/* header*/) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders_process_glyphcache");
         }
@@ -322,20 +320,19 @@ private:
             int             datasize = (height * nbbytes(width) + 3) & ~3;
             const uint8_t * data     = stream.in_uint8p(datasize);
 
-            this->server_add_char(font, character, offset, baseline, width, height, data, gd);
+            this->server_add_char(font, character, offset, baseline, width, height, data);
         }
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders_process_glyphcache done");
         }
     }
 
-    void process_colormap( Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header
-                         , RDPGraphicDevice & gd) {
+    void process_colormap(Stream & stream, const RDPSecondaryOrderHeader & header, RDPGraphicDevice & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "process_colormap");
         }
         RDPColCache colormap;
-        colormap.receive(stream, control, header);
+        colormap.receive(stream, header);
         RDPColCache cmd(colormap.cacheIndex, colormap.palette);
         gd.draw(cmd);
 
@@ -384,13 +381,13 @@ public:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:
                 case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
-                    this->process_bmpcache(bpp, stream, drawing_order.control_flags, header);
+                    this->process_bmpcache(stream, header, bpp);
                     break;
                 case TS_CACHE_COLOR_TABLE:
-                    this->process_colormap(stream, drawing_order.control_flags, header, gd);
+                    this->process_colormap(stream, header, gd);
                     break;
                 case TS_CACHE_GLYPH:
-                    this->process_glyphcache(stream, header.flags, gd);
+                    this->process_glyphcache(stream, header);
                     break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV3:
                     LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)"

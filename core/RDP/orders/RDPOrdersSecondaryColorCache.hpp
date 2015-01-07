@@ -76,21 +76,17 @@
 #include "RDPOrdersCommon.hpp"
 
 class RDPColCache {
-
-    public:
+public:
     BGRPalette palette;
-    uint8_t cacheIndex;
+    uint8_t    cacheIndex;
 
     RDPColCache()
       : palette(BGRPalette::no_init())
-      , cacheIndex(0)
-    {
-    }
+      , cacheIndex(0) {}
 
     RDPColCache(uint8_t cacheIndex, const BGRPalette & palette)
         : palette(palette)
-        , cacheIndex(cacheIndex)
-    {}
+        , cacheIndex(cacheIndex) {}
 
     void emit(Stream & stream) const
     {
@@ -117,7 +113,7 @@ class RDPColCache {
         }
     }
 
-    void receive(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
+    void receive(Stream & stream, const RDPSecondaryOrderHeader &/* header*/)
     {
         using namespace RDP;
 
@@ -180,8 +176,6 @@ class RDPColCache {
         this->str(buffer, 1024);
         printf("%s", buffer);
     }
-
 };
-
 
 #endif
