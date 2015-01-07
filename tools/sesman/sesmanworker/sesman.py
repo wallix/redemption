@@ -422,7 +422,7 @@ class Sesman():
                        , u'trans_ok'       : u'OK'
                        , u'module'         : u'close'
                        # , u'proto_dest'     : u'INTERNAL'
-                       , u'target_device'  : u'close:%s' % target
+                       , u'target_device'  : target
                        , u'target_login'   : self.shared.get(u'target_login')
                        , u'target_password': u'Default'
                        }
