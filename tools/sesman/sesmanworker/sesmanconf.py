@@ -104,9 +104,9 @@ class SesmanConfig(object):
             , u'ACL_error %s'           : u"Erreur ACL inattendue %s"
             , u'help_message'           :
                   u"Dans la zone de saisie login, entrez:<br>"
-                 +u"- le nom de la machine cible et du compte<br>"
-                 +u"  sous la forme login@serveur.<br>"
-                 +u"- ou un nom de compte valide.<br>"
+                 +u"- le login sur la cible et le nom de la machine cible suivi du compte WAB<br>"
+                 +u"  sous la forme login@serveur:WABlogin.<br>"
+                 +u"- ou un nom de compte WAB valide.<br>"
                  +u"<br>"
                  +u"Dans la zone de saisie mot de passe,<br>"
                  +u"entrez le mot de passe du compte.<br>"
@@ -179,8 +179,8 @@ class SesmanConfig(object):
             , u'ACL_error %s'           : u"Unexpected ACL error for %s"
             , u'help_message'           :
                   u"In login edit box, enter:<br>"
-                 +u"- target device and login as login@target.<br>"
-                 +u"- or a valid authentication user.<br>"
+                 +u"- target device and login with the wab login separated by a semi colon as login@target:WABlogin<br>"
+                 +u"- or a valid WAB authentication user.<br>"
                  +u"<br>"
                  +u"In password edit box enter your password<br>"
                  +u"for user.<br>"

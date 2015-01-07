@@ -69,6 +69,11 @@ Note that this guide is not a C++ tutorial: we assume that the reader is familia
 
 \chapter{Build Environment}
 
+ReDemPtion is built using bjam, a make equivalent utility. It was chosen because of several reasons:
+- ready to use, no intermediate step like generating a makefile from a meta-makefile
+- very straigthforward and easy to read and change (not always so easy to write the first time)
+- high-level of abstraction, we apply rules not merely system dependant commands
+
 \chapter{Header Files}
 
 In general, every .cpp file should have an associated .hpp file. There are some common exceptions, such as unittests and small .cpp files containing just a main() function.
