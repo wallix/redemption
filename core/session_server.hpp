@@ -100,7 +100,10 @@ public:
 //                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
                 strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
-                LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
+                if (0 != strcmp(source_ip, "127.0.0.1")){ 
+                    // do not log early messages for localhost (to avoid tracing in watchdog)
+                    LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
+                }
 
                 char real_target_ip[256];
                 if (ini.globals.enable_ip_transparent) {
@@ -147,9 +150,12 @@ public:
                     close(fd);
 
                     // Launch session
-                    LOG(LOG_INFO,
-                        "New session on %u (pid=%u) from %s to %s",
-                        (unsigned)sck, (unsigned)child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
+                    if (0 != strcmp(source_ip, "127.0.0.1")){ 
+                        // do not log early messages for localhost (to avoid tracing in watchdog)
+                        LOG(LOG_INFO,
+                            "New session on %u (pid=%u) from %s to %s",
+                            (unsigned)sck, (unsigned)child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
+                    }
                     ini.context_set_value(AUTHID_HOST, source_ip);
 //                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
                     ini.context_set_value(AUTHID_TARGET, target_ip);
