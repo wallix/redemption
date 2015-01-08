@@ -527,7 +527,7 @@ public:
         unsigned authport               = 3350;
 
         // keepalive and no traffic auto deconnexion
-        unsigned max_tick               = 30;
+        unsigned session_timeout        = 900;
         unsigned keepalive_grace_delay  = 30;
         unsigned close_timeout          = 600; // timeout of close box in seconds (0 to desactivate)
 
@@ -1153,9 +1153,8 @@ public:
             else if (0 == strcmp(key, "authport")) {
                 this->globals.authport = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "max_tick") ||
-                     0 == strcmp(key, "inactivity_time")) {
-                this->globals.max_tick = ulong_from_cstr(value);
+            else if (0 == strcmp(key, "session_timeout")) {
+                this->globals.session_timeout = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "keepalive_grace_delay")) {
                 this->globals.keepalive_grace_delay = ulong_from_cstr(value);

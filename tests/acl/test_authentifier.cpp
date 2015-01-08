@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     Inifile ini;
 
     ini.globals.keepalive_grace_delay = 30;
-    ini.globals.max_tick = 30;
+    ini.globals.session_timeout = 900;
     ini.debug.auth = 255;
 
     MMIni mm(ini);
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     Inifile ini;
 
     ini.globals.keepalive_grace_delay = 30;
-    ini.globals.max_tick = 30;
+    ini.globals.session_timeout = 900;
     ini.debug.auth = 255;
 
     MMIni mm(ini);
@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     Inifile ini;
     ini.globals.keepalive_grace_delay = 30;
-    ini.globals.max_tick = 8; // => 8*30 = 240secs inactivity
+    ini.globals.session_timeout = 240; // => 8*30 = 240secs inactivity
     ini.debug.auth = 255;
     MMIni mm(ini);
 
