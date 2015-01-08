@@ -53,7 +53,6 @@
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/bmpcachepersister.hpp"
@@ -274,14 +273,13 @@ private:
         gd.draw(order);
     }
 
-    void process_bmpcache( uint8_t bpp, Stream & stream, const uint8_t control
-                         , const RDPSecondaryOrderHeader & header)
+    void process_bmpcache(Stream & stream, const RDPSecondaryOrderHeader & header, uint8_t bpp)
     {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders_process_bmpcache bpp=%u", bpp);
         }
         RDPBmpCache bmp(this->verbose);
-        bmp.receive(bpp, stream, control, header, this->global_palette);
+        bmp.receive(stream, header, this->global_palette, bpp);
 
         this->recv_bmp_cache_count++;
 
@@ -295,47 +293,45 @@ private:
         }
     }
 
-    void server_add_char( int font, int character
-                        , int offset, int baseline
-                        , int width, int height, const uint8_t * data
-                        , RDPGraphicDevice & gd)
+    void server_add_char( uint8_t cacheId, uint16_t cacheIndex
+                        , int16_t offset, int16_t baseline
+                        , uint16_t width, uint16_t height, const uint8_t * data)
     {
         FontChar fi(offset, baseline, width, height, 0);
         memcpy(fi.data.get(), data, fi.datasize());
-        RDPGlyphCache cmd(font, /*1, */character, fi.offset, fi.baseline, fi.width, fi.height, fi.data.get());
-        this->gly_cache.set_glyph(std::move(fi), cmd.cacheId, cmd.cacheIndex);
+
+        this->gly_cache.set_glyph(std::move(fi), cacheId, cacheIndex);
     }
 
-    void process_glyphcache(Stream & stream, int flags, RDPGraphicDevice & gd) {
+    void process_glyphcache(Stream & stream, const RDPSecondaryOrderHeader &/* header*/) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders_process_glyphcache");
         }
-        int font    = stream.in_uint8();
-        int nglyphs = stream.in_uint8();
-        for (int i = 0; i < nglyphs; i++) {
-            int character = stream.in_uint16_le();
-            int offset    = stream.in_sint16_le();
-            int baseline  = stream.in_sint16_le();
-            int width     = stream.in_uint16_le();
-            int height    = stream.in_uint16_le();
+        const uint8_t cacheId = stream.in_uint8();
+        const uint8_t nglyphs = stream.in_uint8();
+        for (uint8_t i = 0; i < nglyphs; i++) {
+            const uint16_t cacheIndex = stream.in_uint16_le();
+            const int16_t  offset     = stream.in_sint16_le();
+            const int16_t  baseline   = stream.in_sint16_le();
+            const uint16_t width      = stream.in_uint16_le();
+            const uint16_t height     = stream.in_uint16_le();
 
-            int             datasize = (height * nbbytes(width) + 3) & ~3;
-            const uint8_t * data     = stream.in_uint8p(datasize);
+            const unsigned int   datasize = (height * nbbytes(width) + 3) & ~3;
+            const uint8_t      * data     = stream.in_uint8p(datasize);
 
-            this->server_add_char(font, character, offset, baseline, width, height, data, gd);
+            this->server_add_char(cacheId, cacheIndex, offset, baseline, width, height, data);
         }
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders_process_glyphcache done");
         }
     }
 
-    void process_colormap( Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header
-                         , RDPGraphicDevice & gd) {
+    void process_colormap(Stream & stream, const RDPSecondaryOrderHeader & header, RDPGraphicDevice & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "process_colormap");
         }
         RDPColCache colormap;
-        colormap.receive(stream, control, header);
+        colormap.receive(stream, header);
         RDPColCache cmd(colormap.cacheIndex, colormap.palette);
         gd.draw(cmd);
 
@@ -376,6 +372,7 @@ public:
                 }
             }
             else if (class_ == (STANDARD | SECONDARY)) {
+                //uint8_t * order_start = stream.p;
                 RDPSecondaryOrderHeader header(stream);
                 //LOG(LOG_INFO, "secondary order=%d", header.type);
                 uint8_t * next_order = stream.p + header.order_data_length();
@@ -384,13 +381,14 @@ public:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:
                 case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
-                    this->process_bmpcache(bpp, stream, drawing_order.control_flags, header);
+                    this->process_bmpcache(stream, header, bpp);
                     break;
                 case TS_CACHE_COLOR_TABLE:
-                    this->process_colormap(stream, drawing_order.control_flags, header, gd);
+                    this->process_colormap(stream, header, gd);
                     break;
                 case TS_CACHE_GLYPH:
-                    this->process_glyphcache(stream, header.flags, gd);
+                    this->process_glyphcache(stream, header);
+                    //hexdump_d(order_start, stream.p - order_start);
                     break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV3:
                     LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)"

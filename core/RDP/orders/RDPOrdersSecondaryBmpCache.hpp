@@ -924,20 +924,20 @@ class RDPBmpCache {
         stream.set_out_uint16_le(stream.get_offset() - (offset_header + 12), offset_header);
     }
 
-    void receive(uint8_t session_color_depth, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
+    void receive(Stream & stream, const RDPSecondaryOrderHeader & header, const BGRPalette & palette, uint8_t session_color_depth)
     {
         switch (header.type){
         case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
-            this->receive_raw_v1(session_color_depth, stream, control, header, palette);
+            this->receive_raw_v1(stream, header, palette, session_color_depth);
         break;
         case RDP::TS_CACHE_BITMAP_COMPRESSED:
-            this->receive_compressed_v1(session_color_depth, stream, control, header, palette);
+            this->receive_compressed_v1(stream, header, palette, session_color_depth);
         break;
         case RDP::TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
-            this->receive_raw_v2(session_color_depth, stream, control, header, palette);
+            this->receive_raw_v2(stream, header, palette, session_color_depth);
         break;
         case RDP::TS_CACHE_BITMAP_COMPRESSED_REV2:
-            this->receive_compressed_v2(session_color_depth, stream, control, header, palette);
+            this->receive_compressed_v2(stream, header, palette, session_color_depth);
         break;
         default:
             // can't happen, ensured by caller
@@ -945,8 +945,8 @@ class RDPBmpCache {
         }
     }
 
-    void receive_raw_v2(uint8_t session_color_depth, Stream & stream, const uint8_t control,
-        const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
+    void receive_raw_v2( Stream & stream, const RDPSecondaryOrderHeader & header
+                       , const BGRPalette & palette, uint8_t session_color_depth)
     {
         using namespace RDP;
 
@@ -1017,8 +1017,8 @@ class RDPBmpCache {
         }
     }
 
-    void receive_raw_v1(uint8_t session_color_depth, Stream & stream, const uint8_t control,
-        const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
+    void receive_raw_v1(Stream & stream, const RDPSecondaryOrderHeader &/* header*/
+                       , const BGRPalette & palette, uint8_t session_color_depth)
     {
 //        LOG(LOG_INFO, "receive raw v1");
         using namespace RDP;
@@ -1098,8 +1098,8 @@ class RDPBmpCache {
         }
     }
 
-    void receive_compressed_v2(uint8_t session_color_depth, Stream & stream, const uint8_t control,
-        const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
+    void receive_compressed_v2( Stream & stream, const RDPSecondaryOrderHeader & header
+                              , const BGRPalette & palette, uint8_t session_color_depth)
     {
         using namespace RDP;
 
@@ -1198,8 +1198,8 @@ class RDPBmpCache {
         }
     }
 
-    void receive_compressed_v1(uint8_t session_color_depth, Stream & stream, const uint8_t control,
-        const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
+    void receive_compressed_v1( Stream & stream, const RDPSecondaryOrderHeader & header
+                              , const BGRPalette & palette, uint8_t session_color_depth)
     {
         int flags = header.flags;
         this->id = stream.in_uint8();

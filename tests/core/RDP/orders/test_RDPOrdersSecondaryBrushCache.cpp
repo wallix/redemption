@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TestBrushCache1BPP)
         RDPSecondaryOrderHeader header(stream);
 
         RDPBrushCache cmd(0, BMF_1BPP, 8, 8, 0, 8, pattern);
-        cmd.receive(stream, control, header);
+        cmd.receive(stream, header);
 
         check<RDPBrushCache>(cmd, newcmd, "Brush Cache 1BPP");
     }

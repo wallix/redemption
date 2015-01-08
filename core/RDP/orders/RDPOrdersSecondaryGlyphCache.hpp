@@ -64,8 +64,12 @@ using std::size_t;
 // | Value                    | Meaning                                        |
 // +--------------------------+------------------------------------------------+
 // | CG_GLYPH_UNICODE_PRESENT | Indicates that the unicodeCharacters field is  |
-// | 0x0100                   | present.                                       |
+// | 0x0010                   | present.                                       |
 // +--------------------------+------------------------------------------------+
+
+enum {
+      CG_GLYPH_UNICODE_PRESENT = 0x0010
+};
 
 // cacheId (1 byte): An 8-bit, unsigned integer. The ID of the glyph cache
 //  in which the glyph data MUST be stored. This value MUST be in the range 0
@@ -207,7 +211,7 @@ public:
         stream.out_copy_bytes(this->aj, size);
     }
 
-    void receive(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header) {
+    void receive(Stream & stream, const RDPSecondaryOrderHeader & header) {
         this->cacheId    = stream.in_uint8();
         this->cGlyphs    = stream.in_uint8();
         this->cacheIndex = stream.in_uint16_le();

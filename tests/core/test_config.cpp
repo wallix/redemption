@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
-    BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
+    BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.video.replay_path.c_str());
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
+    BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.video.replay_path.c_str());
@@ -634,7 +634,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
-    BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
+    BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.video.replay_path.c_str());
@@ -883,7 +883,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
-    BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
+    BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.video.replay_path.c_str());
@@ -1109,7 +1109,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
-    BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
+    BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.video.replay_path.c_str());
@@ -1321,7 +1321,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
 
-    BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
+    BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.video.replay_path.c_str());
@@ -1509,7 +1509,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
-    BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
+    BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.video.replay_path.c_str());
@@ -1689,7 +1689,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
-    BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
+    BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.video.replay_path.c_str());
@@ -1863,7 +1863,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
-    BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
+    BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.video.replay_path.c_str());
@@ -2037,7 +2037,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
-    BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
+    BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.video.replay_path.c_str());

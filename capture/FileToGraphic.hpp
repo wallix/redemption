@@ -405,7 +405,7 @@ public:
                 {
                     this->statistics.CacheBitmap++;
                     RDPBmpCache cmd;
-                    cmd.receive(this->info_bpp, this->stream, control, header, this->palette);
+                    cmd.receive(this->stream, header, this->palette, this->info_bpp);
                     if (this->verbose > 32){
                         cmd.log(LOG_INFO);
                     }
@@ -420,7 +420,7 @@ public:
                 {
                     this->statistics.CacheGlyph++;
                     RDPGlyphCache cmd;
-                    cmd.receive(this->stream, control, header);
+                    cmd.receive(this->stream, header);
                     if (this->verbose > 32){
                         cmd.log(LOG_INFO);
                     }

@@ -188,7 +188,7 @@ public:
         stream.out_copy_bytes(this->data, this->size);
     }
 
-    void receive(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
+    void receive(Stream & stream, const RDPSecondaryOrderHeader &/* header*/)
     {
         using namespace RDP;
 

@@ -128,8 +128,8 @@ class Inactivity {
     uint32_t verbose;
 
 public:
-    Inactivity(ActivityChecker & checker, uint32_t max_tick, time_t start, uint32_t verbose)
-    : inactivity_timeout(max_tick?30*max_tick:10)
+    Inactivity(ActivityChecker & checker, uint32_t timeout, time_t start, uint32_t verbose)
+    : inactivity_timeout((timeout>30)?timeout:30)
     , last_activity_time(start)
     , checker(checker)
     , verbose(verbose)
@@ -185,7 +185,8 @@ public:
         //, acl_start_time(acl_start_time)
         , verbose(ini.debug.auth)
         , keepalive(ini.globals.keepalive_grace_delay, ini.debug.auth)
-        , inactivity(activity_checker, ini.globals.max_tick, acl_start_time, ini.debug.auth)
+        , inactivity(activity_checker, ini.globals.session_timeout,
+                     acl_start_time, ini.debug.auth)
         , wait_for_capture(true)
     {
         if (this->verbose & 0x10) {
