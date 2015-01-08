@@ -420,7 +420,7 @@ public:
                 {
                     this->statistics.CacheGlyph++;
                     RDPGlyphCache cmd;
-                    cmd.receive(this->stream, control, header);
+                    cmd.receive(this->stream, header);
                     if (this->verbose > 32){
                         cmd.log(LOG_INFO);
                     }
