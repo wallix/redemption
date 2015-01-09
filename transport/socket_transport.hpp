@@ -1082,7 +1082,10 @@ public:
     }
 
     virtual bool disconnect(){
-        LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
+        if (0 == strcmp("127.0.0.1", this->ip_address)){
+            // silent trace in the case of watchdog
+            LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
+        }
         // Disconnect tls if needed
         if (this->tls) {
             if (this->allocated_ssl) {

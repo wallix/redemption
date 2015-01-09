@@ -969,7 +969,6 @@ public:
         {
             // Connection Initiation
             // ---------------------
-            LOG(LOG_INFO, "Front::incoming:CONNECTION_INITIATION");
 
             // The client initiates the connection by sending the server an X.224 Connection
             //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
@@ -981,6 +980,7 @@ public:
             //    | <----------X224 Connection Confirm PDU----------------- |
 
             if (this->verbose & 1) {
+                LOG(LOG_INFO, "Front::incoming:CONNECTION_INITIATION");
                 LOG(LOG_INFO, "Front::incoming::receiving x224 request PDU");
             }
 

@@ -170,7 +170,11 @@ struct Font
          // we start at space, no glyph for chars below 32
         int file_size;
 
-        LOG(LOG_INFO, "Reading font file %s", file_path);
+        TODO("Temporary disabling font to avoid useless messages in watchdog"
+             "a better change would be to add a font parameter in text_metrics and server_draw_text"
+             "in Front object. The font should be read before forking instead of after and be"
+             "available (through config obj ?) for all processes");
+//        LOG(LOG_INFO, "Reading font file %s", file_path);
         // RAZ of font chars table
 
         // Does font definition file exist and is it accessible ?
@@ -229,7 +233,8 @@ struct Font
             stream.in_skip_bytes(4);                       // >>> 4 bytes for FNT1 (dropped)
             stream.in_copy_bytes(this->name, 32);          // >>> 32 bytes for Font Name
             this->size = stream.in_uint16_le();            // >>> 2 bytes for Font Size
-            LOG(LOG_INFO, "font name <%s> size <%u>", this->name, this->size);
+            TODO("temporary disabled to avoid warning in watchdog, see other TODO above to reenable later");
+//            LOG(LOG_INFO, "font name <%s> size <%u>", this->name, this->size);
             this->style = stream.in_uint16_le();           // >>> 2 bytes for Font Style
             stream.in_skip_bytes(8);                       // >>> 8 bytes for PAD (dropped)
 
