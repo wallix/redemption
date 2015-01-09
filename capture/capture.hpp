@@ -175,7 +175,12 @@ public:
         delete this->psc;
         delete this->png_trans;
 
-        delete this->pnc;
+        if (this->pnc) {
+            timeval now = tvtime();
+            this->pnc->recorder.timestamp(now);
+            this->pnc->recorder.send_timestamp_chunk(false);
+            delete this->pnc;
+        }
         delete this->wrm_trans;
         delete this->pnc_bmp_cache;
         delete this->pnc_gly_cache;

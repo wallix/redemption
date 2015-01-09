@@ -117,10 +117,10 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         const SequenceGenerator * wrm_seq = capture.seqgen();
         filename = wrm_seq->get(0);
-        BOOST_CHECK_EQUAL(1625, ::filesize(filename));
+        BOOST_CHECK_EQUAL(1646, ::filesize(filename));
         ::unlink(filename);
         filename = wrm_seq->get(1);
-        BOOST_CHECK_EQUAL(3487, ::filesize(filename));
+        BOOST_CHECK_EQUAL(3508, ::filesize(filename));
         ::unlink(filename);
         filename = wrm_seq->get(2);
         BOOST_CHECK_EQUAL(3463, ::filesize(filename));

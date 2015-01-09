@@ -121,11 +121,11 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     ::unlink(filename);
 
     filename = out_wrm_trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(490470, ::filesize(filename));
+    BOOST_CHECK_EQUAL(490486, ::filesize(filename));
     ::unlink(filename);
     filename = out_wrm_trans.seqgen()->get(1);
 //    BOOST_CHECK_EQUAL(1247534, ::filesize(filename));
-    BOOST_CHECK_EQUAL(1008363, ::filesize(filename));
+    BOOST_CHECK_EQUAL(1008379, ::filesize(filename));
     ::unlink(filename);
     filename = out_wrm_trans.seqgen()->get(2);
 //    BOOST_CHECK_EQUAL(363538, ::filesize(filename));

@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     const char * filename;
 
     filename = trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(1544, ::filesize(filename));
+    BOOST_CHECK_EQUAL(1560, ::filesize(filename));
     ::unlink(filename);
     filename = trans.seqgen()->get(1);
     BOOST_CHECK_EQUAL(3365, ::filesize(filename));
