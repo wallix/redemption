@@ -341,7 +341,10 @@ public:
         catch(...) {
             LOG(LOG_INFO, "Session::Session other exception in Init\n");
         }
-        LOG(LOG_INFO, "Session::Client Session Disconnected\n");
+        // silent message for localhost for watchdog
+        if (0 == strcmp("127.0.0.1", this->ini.context_get_value(AUTHID_HOST))) {
+            LOG(LOG_INFO, "Session::Client Session Disconnected\n");
+        }
         this->front->stop_capture();
     }
 
