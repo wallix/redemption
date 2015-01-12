@@ -30,9 +30,10 @@
 #include <stdexcept>
 #include <string>
 
-#include "log.hpp"
-#include "fileutils.hpp"
 #include "defines.hpp"
+#include "fileutils.hpp"
+#include "font.hpp"
+#include "log.hpp"
 
 using namespace std;
 
@@ -852,8 +853,11 @@ public:
 
     IniAccounts account;
 
+    Font font;
+
 public:
-    Inifile()
+    Inifile(const char * default_font_name = SHARE_PATH "/" DEFAULT_FONT_NAME) :
+    font(default_font_name)
     {
         //init to_send_set of authid
         this->to_send_set.insert(AUTHID_DISPLAY_MESSAGE);
