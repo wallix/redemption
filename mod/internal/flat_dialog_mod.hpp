@@ -37,10 +37,10 @@ class FlatDialogMod : public InternalMod, public NotifyApi
     Timeout timeout;
 
 public:
-    FlatDialogMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
+    FlatDialogMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height,
                   const char * caption, const char * message, const char * cancel_text,
-                  time_t now,  ChallengeOpt has_challenge = NO_CHALLENGE)
-        : InternalMod(front, width, height, &ini)
+                  time_t now, ChallengeOpt has_challenge = NO_CHALLENGE)
+        : InternalMod(front, width, height, ini.font, &ini)
         , dialog_widget(*this, width, height, this->screen, this, caption, message,
                         0, ini.theme, TR("OK", ini), cancel_text,
                         has_challenge)

@@ -29,6 +29,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
+#include "config.hpp"
 #include "test_transport.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
@@ -73,11 +74,14 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
+    Inifile ini;
+
     ModRDPParams mod_rdp_params( "administrateur@qa"
                                , "S3cur3!1nux"
                                , "10.10.46.78"
                                , "192.168.1.100"
                                , 7
+                               , ini.font
                                , 511
                                );
     //mod_rdp_params.enable_tls                      = true;

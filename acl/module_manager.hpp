@@ -380,7 +380,7 @@ public:
     ModuleManager(Front & front, Inifile & ini)
         : MMIni(ini)
         , front(front)
-        , no_mod(this->front)
+        , no_mod(this->front, ini.font)
     {
         this->no_mod.get_event().reset();
         this->mod = &this->no_mod;
@@ -412,7 +412,8 @@ public:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2_mod'");
             this->mod = new Bouncer2Mod(this->front,
                                         this->front.client_info.width,
-                                        this->front.client_info.height
+                                        this->front.client_info.height,
+                                        this->ini.font
                                         );
             if (this->verbose){
                 LOG(LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
@@ -420,15 +421,14 @@ public:
             break;
         case MODULE_INTERNAL_TEST:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
-            this->mod = new ReplayMod(
-                                      this->front
-                                      , this->ini.video.replay_path
-                                      , this->ini.context.movie
-                                      , this->front.client_info.width
-                                      , this->front.client_info.height
-                                      , this->ini.context.auth_error_message
-                                      , this->ini
-                                      );
+            this->mod = new ReplayMod(  this->front
+                                     , this->ini.video.replay_path
+                                     , this->ini.context.movie
+                                     , this->front.client_info.width
+                                     , this->front.client_info.height
+                                     , this->ini.context.auth_error_message
+                                     , this->ini
+                                     );
             if (this->verbose){
                 LOG(LOG_INFO, "ModuleManager::internal module 'test' ready");
             }
@@ -447,6 +447,7 @@ public:
             this->mod = new TestCardMod(this->front,
                                         this->front.client_info.width,
                                         this->front.client_info.height,
+                                        this->ini.font,
                                         false
                                         );
             LOG(LOG_INFO, "ModuleManager::internal module 'test_card' ready");
@@ -650,6 +651,7 @@ public:
                                                       , this->ini.context.opt_width.get()
                                                       , this->ini.context.opt_height.get()
                                                       , this->ini.context.opt_bpp.get()
+                                                      , this->ini.font
                 );
 
                 this->ini.context.auth_error_message.clear();
@@ -713,6 +715,7 @@ public:
                                            , this->ini.context.target_host.get_cstr()
                                            , "0.0.0.0"   // client ip is silenced
                                            , this->front.keymap.key_flags
+                                           , this->ini.font
                                            , this->ini.debug.mod_rdp
                                            );
                 //mod_rdp_params.enable_tls                          = true;

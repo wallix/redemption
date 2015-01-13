@@ -33,9 +33,9 @@ public:
 
     WidgetScreen screen;
 
-    InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height,
+    InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height, Font const & font,
                 Inifile * ini = NULL)
-        : mod_api(front_width, front_height)
+        : mod_api(front_width, front_height, font)
         , front(front)
         , screen(*this, front_width, front_height, NULL, ini ? &(ini->theme): NULL)
     {

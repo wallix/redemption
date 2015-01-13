@@ -22,6 +22,7 @@
 #define _REDEMPTION_MOD_MOD_API_HPP_
 
 #include "draw_api.hpp"
+#include "font.hpp"
 #include "wait_obj.hpp"
 #include "callback.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -83,19 +84,22 @@ public:
 
 class mod_api : public Callback, public DrawApi {
 protected:
-    wait_obj event;
-    RDPPen   pen;
+    wait_obj           event;
+    RDPPen             pen;
     RDPGraphicDevice * gd;
 
     uint16_t front_width;
     uint16_t front_height;
 
 public:
-    mod_api(const uint16_t front_width, const uint16_t front_height)
+    Font const & font;
+
+public:
+    mod_api(const uint16_t front_width, const uint16_t front_height, Font const & font)
     : gd(this)
     , front_width(front_width)
     , front_height(front_height)
-    {
+    , font(font) {
         this->event.set(0);
     }
 

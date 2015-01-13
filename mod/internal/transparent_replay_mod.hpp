@@ -29,8 +29,8 @@ class TransparentReplayMod : public InternalMod {
 private:
     std::string * auth_error_message;
 
-    int fd;
-    InFileTransport ift;
+    int               fd;
+    InFileTransport   ift;
     TransparentPlayer player;
 
 public:
@@ -38,8 +38,9 @@ public:
                         , const char * replay_path
                         , uint16_t width
                         , uint16_t height
-                        , std::string * auth_error_message)
-    : InternalMod(front, width, height)
+                        , std::string * auth_error_message
+                        , Font const & font)
+    : InternalMod(front, width, height, font)
     , auth_error_message(auth_error_message)
     , fd([&]() {
         const int fd = ::open(replay_path, O_RDWR);

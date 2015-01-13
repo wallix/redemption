@@ -115,7 +115,7 @@ public:
         std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f,
         bool call_f = true
     )
-    : mod_api(mod.get_front_width(), mod.get_front_height())
+    : mod_api(mod.get_front_width(), mod.get_front_height(), mod.font)
     , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(rect))
     , mod(mod)
     , front(front)
@@ -139,7 +139,7 @@ private:
     };
 public:
     mod_osd(FrontAPI & front, mod_api & mod, const Bitmap& bmp, int x = 0, int y = 0)
-    : mod_api(mod.get_front_width(), mod.get_front_height())
+    : mod_api(mod.get_front_width(), mod.get_front_height(), mod.font)
     , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(Rect(x,y,bmp.cx(),bmp.cy())))
     , mod(mod)
     , front(front)

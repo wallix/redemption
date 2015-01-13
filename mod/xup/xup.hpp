@@ -81,8 +81,9 @@ enum {
            , int context_width
            , int context_height
            , int context_bpp
+           , Font const & font
            )
-    : mod_api(front_width, front_height)
+    : mod_api(front_width, front_height, font)
     , front(front)
     , width(context_width)
     , height(context_height)

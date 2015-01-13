@@ -29,6 +29,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
+#include "config.hpp"
 // #include "socket_transport.hpp"
 #include "test_transport.hpp"
 #include "client_info.hpp"
@@ -71,12 +72,15 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
+    Inifile ini;
+
     try {
         ModRDPParams mod_rdp_params( "xavier"
                                    , "SecureLinux"
                                    , "10.10.47.175"
                                    , "10.10.9.161"
                                    , 7
+                                   , ini.font
                                    , verbose
                                    );
         mod_rdp_params.enable_tls                      = false;
@@ -161,11 +165,14 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
+    Inifile ini;
+
     ModRDPParams mod_rdp_params( "administrateur@qa"
                                , "S3cur3!1nux"
                                , "10.10.46.78"
                                , "10.10.9.161"
                                , 2
+                               , ini.font
                                , 0
                                );
     mod_rdp_params.enable_tls                      = false;
@@ -241,12 +248,15 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
+    Inifile ini;
+
     ModRDPParams mod_rdp_params( "administrateur"
                                , "SecureLinux"
                                , "10.10.47.205"
                                , "0.0.0.0"
                                , 2
-                               , 511
+                               , ini.font
+                               , verbose
                                );
     mod_rdp_params.enable_tls                      = false;
     mod_rdp_params.enable_nla                      = false;
@@ -329,11 +339,14 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
+    Inifile ini;
+
     ModRDPParams mod_rdp_params( "administrateur"
                                , "SecureLinux"
                                , "10.10.47.39"
                                , "0.0.0.0"
                                , 2
+                               , ini.font
                                , 0
                                );
     mod_rdp_params.enable_tls                      = false;

@@ -137,7 +137,7 @@ public:
            , uint32_t verbose
            )
     //==============================================================================================================
-    : InternalMod(front, front_width, front_height, &ini)
+    : InternalMod(front, front_width, front_height, ini.font, &ini)
     , challenge(*this, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION,
                 0, 0, ini.theme,
