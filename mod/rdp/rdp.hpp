@@ -2551,7 +2551,7 @@ public:
             }
             confirm_active_pdu.emit_capability_set(bmpcache2_caps);
 
-            if (!this->enable_transparent_mode) {
+            if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
                 this->orders.create_cache_bitmap(this->bpp,
                     120,   nbbytes(this->bpp) * 16 * 16, false,
                     120,   nbbytes(this->bpp) * 32 * 32, false,
@@ -2565,7 +2565,7 @@ public:
             }
             confirm_active_pdu.emit_capability_set(bmpcache_caps);
 
-            if (!this->enable_transparent_mode) {
+            if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
                 this->orders.create_cache_bitmap(this->bpp,
                     0x258, nbbytes(this->bpp) * 0x100,   false,
                     0x12c, nbbytes(this->bpp) * 0x400,   false,

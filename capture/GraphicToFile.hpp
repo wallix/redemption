@@ -539,6 +539,7 @@ public:
     {
         this->flush_orders();
         this->flush_bitmaps();
+        this->send_timestamp_chunk();
         if (this->compression_wrapper.get_index_algorithm()) {
             this->send_reset_chunk();
         }
