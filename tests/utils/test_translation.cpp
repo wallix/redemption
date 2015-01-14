@@ -24,7 +24,11 @@
 #define BOOST_TEST_MODULE TestTranslation
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
+//#define LOGPRINT
 
 #include "translation.hpp"
 #include <string>

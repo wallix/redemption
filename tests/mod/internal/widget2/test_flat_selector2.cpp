@@ -24,7 +24,12 @@
 #define BOOST_TEST_MODULE TestWidgetSelectorFlat2
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
+//#define LOGPRINT
+
 #include "log.hpp"
 
 #include "internal/widget2/flat_selector2.hpp"

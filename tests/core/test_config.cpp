@@ -26,21 +26,20 @@
 #define BOOST_TEST_MODULE TestConfig
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 //#define LOGPRINT
 
 #include "config.hpp"
 #include <sstream>
 
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH ""
-#endif
-
 BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 {
     // test we can read from a file (and not only from a stream)
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini, FIXTURES_PATH "/rdpproxy.ini");
+    ConfigurationLoader cfg_loader(ini, "/rdpproxy.ini");
     char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);

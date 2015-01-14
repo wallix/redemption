@@ -24,7 +24,11 @@
 #define BOOST_TEST_MODULE TestBouncer2Mod
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
+//#define LOGPRINT
 
 #include "internal/bouncer2_mod.hpp"
 #include "../../front/fake_front.hpp"
