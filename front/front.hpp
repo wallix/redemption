@@ -4111,7 +4111,7 @@ public:
                     const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
                     const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
                     new_cmd.back_color = color_encode(back_color24, this->capture_bpp);
-                    new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
+                    new_cmd.fore_color = color_encode(fore_color24, this->capture_bpp);
                 }
                 else {
                     new_cmd.back_color = cmd.back_color;

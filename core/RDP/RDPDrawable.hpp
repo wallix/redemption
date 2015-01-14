@@ -459,7 +459,7 @@ public:
         Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
         if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
             ajusted.cy--;
-            this->drawable.opaquerect(ajusted.intersect(clip), this->u32rgb_to_color(cmd.fore_color));
+            this->drawable.opaquerect(ajusted.intersect(clip), this->u32rgb_to_color(RGBtoBGR(cmd.fore_color)));
         }
 
         {
