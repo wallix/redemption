@@ -407,16 +407,22 @@ public:
 
     virtual void text_metrics(const char * text, int & width, int & height)
     {
+        REDASSERT(false);
+    }
+/*
         ::text_metrics(this->font, text, width, height,
                        [](uint32_t charnum) {
                            LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
                        }
         );
     }
-
+*/
     TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
+        REDASSERT(false);
+    }
+/*
         static GlyphCache mod_glyph_cache;
 
         this->send_global_palette();
@@ -484,6 +490,7 @@ public:
             this->draw(glyphindex, clip, &mod_glyph_cache);
         }
     }
+*/
 
     // ===========================================================================
     void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)

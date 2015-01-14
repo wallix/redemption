@@ -137,11 +137,11 @@ public:
             RDPLineTo(1, 145, 200, 1198, 201, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(145, 200, 110, 1));
 
-        this->front.server_draw_text(30, 30, "White", WHITE, BLACK, clip);
-        this->front.server_draw_text(30, 50, "Red  ", RED, BLACK, clip);
-        this->front.server_draw_text(30, 70, "Green", GREEN, BLACK, clip);
-        this->front.server_draw_text(30, 90, "Blue ", BLUE, BLACK, clip);
-        this->front.server_draw_text(30, 110, "Black", BLACK, WHITE, clip);
+        this->server_draw_text(30, 30, "White", WHITE, BLACK, clip);
+        this->server_draw_text(30, 50, "Red  ", RED, BLACK, clip);
+        this->server_draw_text(30, 70, "Green", GREEN, BLACK, clip);
+        this->server_draw_text(30, 90, "Blue ", BLUE, BLACK, clip);
+        this->server_draw_text(30, 110, "Black", BLACK, WHITE, clip);
 
         Bitmap card(SHARE_PATH "/" REDEMPTION_LOGO24);
         this->front.draw(RDPMemBlt(0,

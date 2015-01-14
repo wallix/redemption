@@ -5172,6 +5172,7 @@ public:
         this->front.server_set_pointer(cursor);
     }
 
+/*
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         this->front.server_draw_text(x, y, text, fgcolor, bgcolor, clip);
@@ -5181,6 +5182,7 @@ public:
     {
         this->front.text_metrics(text, width, height);
     }
+*/
 
     virtual void draw(const RDPColCache & cmd)
     {
