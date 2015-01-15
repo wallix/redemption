@@ -164,8 +164,8 @@ private:
                                   "Informations Cible Requises"}},
         {"device", {"Device",
                     "Machine"}},
-        {"disable_osd", {"(hidden with ctrl+esc or left click)",
-                         "(cacher avec ctrl+esc ou clic gauche)"}},
+        {"disable_osd", {"(hidden with alt+esc or left click)",
+                         "(cacher avec alt+esc ou clic gauche)"}},
         }}
     {
         std::sort(this->trans.begin(), this->trans.end());
