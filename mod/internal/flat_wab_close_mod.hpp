@@ -40,8 +40,7 @@ private:
 
         temporary_text(Inifile & ini)
         {
-            if (ini.context.selector.get()
-                && !ini.context.selector.is_asked()) {
+            if (strcmp(ini.context.module.get_cstr(), "selector") == 0) {
                 snprintf(text, sizeof(text), "%s", TR("selector", ini));
             }
             else {
