@@ -199,25 +199,24 @@ enum {
             WidgetParent::notify(widget, event);
         }
     }
-
     void set_warning_buffer(const char * field, const char * format) {
         sprintf(this->warning_buffer, format, field);
         this->warning_msg.set_text(this->warning_buffer);
     }
 
-    long check_duration(const char * duration) {
-        long res = 0;
-        long hours = 0;
-        long minutes = 0;
+    unsigned long check_duration(const char * duration) {
+        unsigned long res = 0;
+        unsigned long hours = 0;
+        unsigned long minutes = 0;
         long d = 0;
         char * end_p = 0;
         try {
-            d = strtol(duration, &end_p, 10);
+            d = strtoul(duration, &end_p, 10);
             if (*end_p == 'h') {
                 res = (d > 0);
                 hours = d;
                 end_p++;
-                d = strtol(end_p, &end_p, 10);
+                d = strtoul(end_p, &end_p, 10);
                 if (*end_p == 'm') {
                     res |= (d > 0);
                     minutes = d;
@@ -240,7 +239,7 @@ enum {
             res = 0;
         }
         if (res > 0) {
-            res = hours + (minutes / 60) + 1;
+            res = hours * 60 + minutes;
         }
         return res;
     }
@@ -274,9 +273,9 @@ enum {
             (this->duration_edit.num_chars != 0)) {
             long res = this->check_duration(this->duration_edit.get_text());
             // res is duration in hours.
-            if ((res <= 0) || (res > 10000)) {
-                this->duration_edit.set_text("");
+            if ((res <= 0) || (res >= 600000)) {
                 if (res <= 0) {
+                    this->duration_edit.set_text("");
                     this->set_warning_buffer(this->field_duration, this->format_warning);
                 }
                 else {
