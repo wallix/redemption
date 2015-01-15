@@ -299,7 +299,7 @@ class ModuleManager : public MMIni
             if (keymap->nb_kevent_available() > 0){
                 if (!(param3 & SlowPath::KBDFLAGS_DOWN)
                  && keymap->top_kevent() == Keymap2::KEVENT_ESC
-                 && keymap->is_ctrl_pressed()) {
+                 && keymap->is_alt_pressed()) {
                     keymap->get_kevent();
                     this->delete_self();
                 }
@@ -351,7 +351,7 @@ public:
         int w, h;
         message += "  ";
         message += TR("disable_osd", this->ini);
-        this->front.text_metrics(message.c_str(), w, h);
+        this->mod->text_metrics(message.c_str(), w, h);
         w += padw * 2;
         h += padh * 2;
         uint32_t color = BLACK;
@@ -364,10 +364,10 @@ public:
             *this, Rect(this->front.client_info.width < w ? 0 : (this->front.client_info.width - w) / 2, 0, w, h),
             [this, message, color, background_color](mod_api & mod, const Rect & rect, const Rect & clip) {
                 const Rect r = rect.intersect(clip);
-                this->front.begin_update();
-                this->front.draw(RDPOpaqueRect(r, background_color), r);
-                this->front.server_draw_text(clip.x + padw, padh, message.c_str(), color, background_color, r);
-                this->front.end_update();
+                mod.begin_update();
+                mod.draw(RDPOpaqueRect(r, background_color), r);
+                mod.server_draw_text(clip.x + padw, padh, message.c_str(), color, background_color, r);
+                mod.end_update();
             }
         );
     }
