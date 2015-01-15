@@ -2028,4 +2028,19 @@ class StaticStream : public FixedSizeStream {
     }
 };
 
+template<std::size_t N>
+class StaticFixedSizeStream : public Stream {
+    uint8_t buf[N];
+
+public:
+    StaticFixedSizeStream(){
+        this->p = this->data = buf;
+        this->capacity = N;
+        this->end = this->buf + this->capacity;
+    }
+
+    // Not allowed on SubStreams
+    virtual void init(size_t) {}
+};
+
 #endif

@@ -51,11 +51,55 @@ struct mod_vnc : public InternalMod, private NotifyApi {
 
     /* mod data */
     char mod_name[256];
-    uint8_t mod_mouse_state;
     BGRPalette palette;
     int vnc_desktop;
     char username[256];
     char password[256];
+
+    struct Mouse {
+        void move(Transport & t, int x, int y) {
+            this->x = x;
+            this->y = y;
+            this->send(t);
+        }
+
+        void click(Transport & t, int x, int y, int mask, bool set) {
+            if (set) {
+                this->mod_mouse_state |= mask;
+            }
+            else {
+                this->mod_mouse_state &= ~mask;
+            }
+            this->x = x;
+            this->y = y;
+            this->send(t);
+        }
+
+        void scroll(Transport & t, int mask) const {
+            StaticFixedSizeStream<12> stream;
+            this->write(stream, this->mod_mouse_state | mask);
+            this->write(stream, this->mod_mouse_state);
+            t.send(stream.get_data(), 12);
+        }
+
+    private:
+        uint8_t mod_mouse_state = 0;
+        int x = 0;
+        int y = 0;
+
+        void write(Stream & stream, uint8_t state) const {
+            stream.out_uint8(5);
+            stream.out_uint8(state);
+            stream.out_uint16_be(this->x);
+            stream.out_uint16_be(this->y);
+        }
+
+        void send(Transport & t) const {
+            StaticFixedSizeStream<6> stream;
+            this->write(stream, this->mod_mouse_state);
+            t.send(stream.get_data(), 6);
+        }
+    } mouse;
 
 private:
     Transport & t;
@@ -144,7 +188,6 @@ public:
                 TR("Authentification required", ini),
                 TR("VNC password", ini))
     , mod_name{0}
-    , mod_mouse_state(0)
     , palette(nullptr)
     , vnc_desktop(0)
     , username{0}
@@ -291,7 +334,7 @@ public:
             if (verbose) {
                 LOG(LOG_INFO, "VNC Encoding type=0x%08X", encoding_type);
             }
-            stream.out_uint32_be(*(uint32_t *)((void *)&encoding_type));
+            stream.out_uint32_be(encoding_type);
             number_of_encodings++;
 
             tmp_encoding = strchr(tmp_encoding, ',');
@@ -305,62 +348,35 @@ public:
         }
     }
 
-    //==============================================================================================================
-    void change_mouse_state( uint16_t x
-                           , uint16_t y
-                           , uint8_t button
-                           , bool set
-                           ) {
-    //==============================================================================================================
-        if (this->state != UP_AND_RUNNING) {
-            return;
-        }
-
-        BStream stream(6);
-        this->mod_mouse_state = set?(this->mod_mouse_state|button):(this->mod_mouse_state&~button); // set or clear bit
-        stream.out_uint8(5);
-        stream.out_uint8(this->mod_mouse_state);
-        stream.out_uint16_be(x);
-        stream.out_uint16_be(y);
-        this->t.send(stream.get_data(), 6);
-    } // change_mouse_state
-
     TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?")
-    //==============================================================================================================
-    virtual void rdp_input_mouse( int device_flags
-                                , int x
-                                , int y
-                                , Keymap2 * keymap
-                                ) {
-    //==============================================================================================================
+    virtual void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * keymap )
+    {
         if (this->state == WAIT_PASSWORD) {
             this->screen.rdp_input_mouse(device_flags, x, y, keymap);
             return;
         }
 
-        if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
-            this->change_mouse_state(x, y, 0, true);
-        }
-        if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
-            this->change_mouse_state(x, y, 1, device_flags & MOUSE_FLAG_DOWN);
-        }
-        if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
-            this->change_mouse_state(x, y, 4, device_flags & MOUSE_FLAG_DOWN);
-        }
-        if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
-            this->change_mouse_state(x, y, 2, device_flags & MOUSE_FLAG_DOWN);
+        if (this->state != UP_AND_RUNNING) {
+            return;
         }
 
-        // Wheel buttons
-        if (device_flags == MOUSE_FLAG_BUTTON4 /* 0x0280 */
-        ||  device_flags == 0x0278) {
-            this->change_mouse_state(x, y, 8, true); // DOWN
-            this->change_mouse_state(x, y, 8, false); // UP
+        if (device_flags & MOUSE_FLAG_MOVE) {
+            this->mouse.move(this->t, x, y);
         }
-        if (device_flags == MOUSE_FLAG_BUTTON5 /* 0x0380 */
-        ||  device_flags == 0x0388) {
-            this->change_mouse_state(x, y, 16, true); // DOWN
-            this->change_mouse_state(x, y, 16, false); // UP
+        else if (device_flags & MOUSE_FLAG_BUTTON1) {
+            this->mouse.click(this->t, x, y, 1 << 0, device_flags & MOUSE_FLAG_DOWN);
+        }
+        else if (device_flags & MOUSE_FLAG_BUTTON2) {
+            this->mouse.click(this->t, x, y, 1 << 2, device_flags & MOUSE_FLAG_DOWN);
+        }
+        else if (device_flags & MOUSE_FLAG_BUTTON3) {
+            this->mouse.click(this->t, x, y, 1 << 1, device_flags & MOUSE_FLAG_DOWN);
+        }
+        else if (device_flags == MOUSE_FLAG_BUTTON4 || device_flags == 0x0278) {
+            this->mouse.scroll(this->t, 1 << 3);
+        }
+        else if (device_flags == MOUSE_FLAG_BUTTON5 || device_flags == 0x0388) {
+            this->mouse.scroll(this->t, 1 << 4);
         }
     } // rdp_input_mouse
 
