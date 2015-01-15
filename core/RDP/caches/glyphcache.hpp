@@ -70,7 +70,7 @@ public:
         , GLYPH_ADDED_TO_CACHE
     };
 
-    t_glyph_cache_result add_glyph(FontChar & font_item, int cacheid, int & cacheidx) {
+    t_glyph_cache_result add_glyph(FontChar const & font_item, int cacheid, int & cacheidx) {
         const t_glyph_cache_result ret = priv_add_glyph(font_item, cacheid, cacheidx);
         if (ret == GLYPH_ADDED_TO_CACHE) {
             this->glyphs[cacheid][cacheidx].font_item = FontChar(font_item);
@@ -87,7 +87,7 @@ public:
     }
 
 private:
-    t_glyph_cache_result priv_add_glyph(FontChar & font_item, int cacheid, int & cacheidx) {
+    t_glyph_cache_result priv_add_glyph(FontChar const & font_item, int cacheid, int & cacheidx) {
         this->glyph_stamp++;
 
         /* look for match */

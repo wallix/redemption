@@ -208,7 +208,7 @@ int main(int argc, char * argv[]) {
     const bool mem3blt_support  = true;
     Front front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini,
         fastpath_support, mem3blt_support, input_filename.c_str(), persistent_key_list_oft);
-    null_mod no_mod(front);
+    null_mod no_mod(front, ini.font);
 
     while (front.up_and_running == 0) {
         front.incoming(no_mod);
@@ -220,7 +220,7 @@ int main(int argc, char * argv[]) {
     try {
         if (target_device.empty()) {
             TransparentReplayMod mod(front, play_filename.c_str(),
-                front.client_info.width, front.client_info.height, NULL);
+                front.client_info.width, front.client_info.height, NULL, ini.font);
 
             run_mod(mod, front, front_event, nullptr, &front_trans);
         }
@@ -263,6 +263,7 @@ int main(int argc, char * argv[]) {
                                        , target_device.c_str()
                                        , "0.0.0.0"   // client ip is silenced
                                        , front.keymap.key_flags
+                                       , ini.font
                                        , ini.debug.mod_rdp
                                        );
             //mod_rdp_params.enable_tls                          = true;

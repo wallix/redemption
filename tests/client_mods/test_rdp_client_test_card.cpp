@@ -27,7 +27,11 @@
 #define BOOST_TEST_MODULE TestRdpClientTestCard
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
+//#define LOGPRINT
 
 #include "error.hpp"
 #include "internal/test_card_mod.hpp"
@@ -47,8 +51,10 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
 
     FakeFront front(info, 0);
 
+    Inifile ini;
+
     BOOST_CHECK(true);
-    TestCardMod mod(front, info.width, info.height);
+    TestCardMod mod(front, info.width, info.height, ini.font);
     BOOST_CHECK(true);
     try{
         mod.draw_event(time(NULL));

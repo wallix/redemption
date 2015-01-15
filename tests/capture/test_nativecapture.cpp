@@ -25,7 +25,11 @@
 #define BOOST_TEST_MODULE TestNativeCapture
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
+//#define LOGPRINT
 
 #include "out_filename_sequence_transport.hpp"
 #include "nativecapture.hpp"

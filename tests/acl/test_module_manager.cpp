@@ -23,7 +23,12 @@
 #define BOOST_TEST_MODULE TestModuleManager
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
+//#define LOGPRINT
+
 #include "module_manager.hpp"
 
 BOOST_AUTO_TEST_CASE(TestModuleManagerNextMod)

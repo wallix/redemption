@@ -77,6 +77,8 @@ struct ModRDPParams {
     const std::string * allow_channels;
     const std::string * deny_channels;
 
+    Font const & font;
+
     uint32_t verbose;
     uint32_t cache_verbose;
 
@@ -85,6 +87,7 @@ struct ModRDPParams {
                 , const char * target_host
                 , const char * client_address
                 , int key_flags
+                , Font const & font
                 , uint32_t verbose = 0
                 )
         : target_user(target_user)
@@ -134,6 +137,8 @@ struct ModRDPParams {
 
         , allow_channels(nullptr)
         , deny_channels(nullptr)
+
+        , font(font)
 
         , verbose(verbose)
         , cache_verbose(0)

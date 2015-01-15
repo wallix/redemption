@@ -26,7 +26,6 @@
 #include "front_api.hpp"
 #include "config.hpp"
 #include "widget2/flat_wait.hpp"
-// #include "widget2/flat_waitdisplay.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
 #include "copy_paste.hpp"
@@ -36,15 +35,15 @@ class FlatWaitMod : public InternalMod, public NotifyApi
     FlatWait wait_widget;
 
     Inifile & ini;
-    Timeout timeout;
+    Timeout   timeout;
 
     CopyPaste copy_paste;
 
 public:
-    FlatWaitMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
+    FlatWaitMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height,
                 const char * caption, const char * message, time_t now,
                 bool showform = false, uint32_t flag = 0)
-        : InternalMod(front, width, height, &ini)
+        : InternalMod(front, width, height, ini.font, &ini)
         , wait_widget(*this, width, height, this->screen, this, caption, message,
                       0, ini,  ini.theme, showform, flag)
         , ini(ini)
@@ -66,7 +65,7 @@ public:
         this->screen.clear();
     }
 
-    virtual void notify(Widget2* sender, notify_event_t event)
+    virtual void notify(Widget2 * sender, notify_event_t event)
     {
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
@@ -74,7 +73,7 @@ public:
             case NOTIFY_TEXT_CHANGED: this->confirm(); break;
             default:
                 if (this->copy_paste) {
-                    copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
+                    copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit *>(sender), event);
                 };
         }
     }
@@ -129,7 +128,6 @@ public:
             break;
         }
     }
-
 
     virtual void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags)
     {

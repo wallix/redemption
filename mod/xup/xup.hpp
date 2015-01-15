@@ -81,8 +81,9 @@ enum {
            , int context_width
            , int context_height
            , int context_bpp
+           , Font const & font
            )
-    : mod_api(front_width, front_height)
+    : mod_api(front_width, front_height, font)
     , front(front)
     , width(context_width)
     , height(context_height)
@@ -420,6 +421,7 @@ enum {
 
     using RDPGraphicDevice::draw;
 
+/*
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         this->front.server_draw_text(x, y, text, fgcolor, bgcolor, clip);
@@ -429,6 +431,7 @@ enum {
     {
         this->front.text_metrics(text, width, height);
     }
+*/
 
     virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
     {

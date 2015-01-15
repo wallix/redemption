@@ -25,7 +25,12 @@
 #define BOOST_TEST_MODULE TestModOSD
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
+//#define LOGPRINT
+
 #include "out_filename_sequence_transport.hpp"
 #include "staticcapture.hpp"
 #include "../front/fake_front.hpp"
@@ -35,8 +40,8 @@ struct FakeMod : mod_api
 {
     RDPDrawable gd;
 
-    FakeMod(const uint16_t front_width, const uint16_t front_height)
-    : mod_api(front_width, front_height)
+    FakeMod(const uint16_t front_width, const uint16_t front_height, Font const & font)
+    : mod_api(front_width, front_height, font)
     , gd(front_width, front_height, 24)
     {}
 
@@ -88,8 +93,10 @@ struct FakeMod : mod_api
 
 BOOST_AUTO_TEST_CASE(TestModOSD)
 {
+    Inifile ini;
+
     Rect screen_rect(0, 0, 800, 600);
-    FakeMod mod(screen_rect.cx, screen_rect.cy);
+    FakeMod mod(screen_rect.cx, screen_rect.cy, ini.font);
     RDPDrawable & drawable = mod.gd;
 
     const int groupid = 0;
@@ -99,7 +106,6 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     now.tv_sec = 1350998222;
     now.tv_usec = 0;
 
-    Inifile ini;
     ini.video.rt_display.set(1);
     ini.video.png_limit = -1;
     ini.video.png_interval = 0;

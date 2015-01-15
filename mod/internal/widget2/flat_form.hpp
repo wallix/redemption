@@ -49,6 +49,7 @@ enum {
 };
     const char * generic_warning;
     const char * format_warning;
+    const char * toohigh_warning;
     const char * field_comment;
     const char * field_ticket;
     const char * field_duration;
@@ -75,6 +76,7 @@ enum {
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
         , generic_warning(TR("%s field_required", ini))
         , format_warning(TR("%s invalid_format", ini))
+        , toohigh_warning(TR("%s toohigh_duration", ini))
         , field_comment(TR("comment", ini))
         , field_ticket(TR("ticket", ini))
         , field_duration(TR("duration", ini))
@@ -203,34 +205,42 @@ enum {
         this->warning_msg.set_text(this->warning_buffer);
     }
 
-    bool check_duration(const char * duration) {
-        bool res = false;
+    long check_duration(const char * duration) {
+        long res = 0;
+        long hours = 0;
+        long minutes = 0;
         long d = 0;
         char * end_p = 0;
         try {
             d = strtol(duration, &end_p, 10);
             if (*end_p == 'h') {
                 res = (d > 0);
+                hours = d;
                 end_p++;
                 d = strtol(end_p, &end_p, 10);
                 if (*end_p == 'm') {
                     res |= (d > 0);
+                    minutes = d;
                     end_p++;
                 }
                 else if (d > 0) {
-                    res = false;
+                    res = 0;
                 }
             }
             else if (*end_p == 'm') {
                 res = (d > 0);
+                minutes = d;
                 end_p++;
             }
         }
         catch (...) {
-            res = false;
+            res = 0;
         }
         if (res && *end_p != 0) {
-            res = false;
+            res = 0;
+        }
+        if (res > 0) {
+            res = hours + (minutes / 60) + 1;
         }
         return res;
     }
@@ -261,13 +271,21 @@ enum {
             return;
         }
         if (((this->flags & DURATION_DISPLAY) == DURATION_DISPLAY) &&
-            (this->duration_edit.num_chars != 0) &&
-            (this->check_duration(this->duration_edit.get_text()) == 0)) {
-            this->duration_edit.set_text("");
-            this->set_warning_buffer(this->field_duration, this->format_warning);
-            this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
-            this->draw(this->rect);
-            return;
+            (this->duration_edit.num_chars != 0)) {
+            long res = this->check_duration(this->duration_edit.get_text());
+            // res is duration in hours.
+            if ((res <= 0) || (res > 10000)) {
+                this->duration_edit.set_text("");
+                if (res <= 0) {
+                    this->set_warning_buffer(this->field_duration, this->format_warning);
+                }
+                else {
+                    this->set_warning_buffer(this->field_duration, this->toohigh_warning);
+                }
+                this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
+                this->draw(this->rect);
+                return;
+            }
         }
 
         if (this->notifier) {

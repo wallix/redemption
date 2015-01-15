@@ -26,10 +26,6 @@
 #define LOGNULL
 #include "vnc/vnc.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXX)
-{
-}
-
 BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
 {
     {

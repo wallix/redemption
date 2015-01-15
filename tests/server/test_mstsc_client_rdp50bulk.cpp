@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     const bool mem3blt_support  = false;
     Front front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini
                , fastpath_support, mem3blt_support);
-    null_mod no_mod(front);
+    null_mod no_mod(front, ini.font);
 
     while (front.up_and_running == 0) {
         front.incoming(no_mod);
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     BOOST_CHECK_EQUAL(1, front.up_and_running);
-    TestCardMod mod(front, front.client_info.width, front.client_info.height);
+    TestCardMod mod(front, front.client_info.width, front.client_info.height, ini.font);
     mod.draw_event(time(NULL));
 
     // Uncomment the code block below to generate testing data.

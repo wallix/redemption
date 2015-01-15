@@ -34,13 +34,14 @@ class InteractiveTargetMod : public InternalMod, public NotifyApi
     bool ask_device;
     bool ask_login;
     bool ask_password;
+
     FlatInteractiveTarget challenge;
 
     Inifile & ini;
 
 public:
-    InteractiveTargetMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
-        : InternalMod(front, width, height, &ini)
+    InteractiveTargetMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
+        : InternalMod(front, width, height, ini.font, &ini)
         , ask_device(ini.context_is_asked(AUTHID_TARGET_HOST))
         , ask_login(ini.context_is_asked(AUTHID_TARGET_USER))
         , ask_password((this->ask_login || ini.context_is_asked(AUTHID_TARGET_PASSWORD)))

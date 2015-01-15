@@ -21,13 +21,16 @@
 #ifndef _REDEMPTION_MOD_MOD_API_HPP_
 #define _REDEMPTION_MOD_MOD_API_HPP_
 
-#include "draw_api.hpp"
-#include "wait_obj.hpp"
-#include "callback.hpp"
-#include "RDP/orders/RDPOrdersCommon.hpp"
-
 #include <ctime>
 
+#include "callback.hpp"
+#include "draw_api.hpp"
+#include "font.hpp"
+#include "text_metrics.hpp"
+#include "wait_obj.hpp"
+#include "RDP/caches/glyphcache.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
+#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
 class RDPGraphicDevice;
 class Inifile;
@@ -83,19 +86,22 @@ public:
 
 class mod_api : public Callback, public DrawApi {
 protected:
-    wait_obj event;
-    RDPPen   pen;
+    wait_obj           event;
+    RDPPen             pen;
     RDPGraphicDevice * gd;
 
     uint16_t front_width;
     uint16_t front_height;
 
 public:
-    mod_api(const uint16_t front_width, const uint16_t front_height)
+    Font const & font;
+
+public:
+    mod_api(const uint16_t front_width, const uint16_t front_height, Font const & font)
     : gd(this)
     , front_width(front_width)
     , front_height(front_height)
-    {
+    , font(font) {
         this->event.set(0);
     }
 
@@ -106,6 +112,83 @@ public:
     uint16_t get_front_width() const { return this->front_width; }
     uint16_t get_front_height() const { return this->front_height; }
 
+    virtual void text_metrics(const char * text, int & width, int & height)
+    {
+        ::text_metrics(this->font, text, width, height,
+                       [](uint32_t charnum) {
+                           LOG(LOG_WARNING, "mod_api::text_metrics() - character not defined >0x%02x<", charnum);
+                       }
+        );
+    }
+
+    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    {
+        static GlyphCache mod_glyph_cache;
+
+        UTF8toUnicodeIterator unicode_iter(text);
+        while (*unicode_iter) {
+            int total_width = 0;
+            int total_height = 0;
+            uint8_t data[256];
+            auto data_begin = std::begin(data);
+            const auto data_end = std::end(data)-2;
+
+            const int cacheId = 7;
+            int distance_from_previous_fragment = 0;
+            while (data_begin != data_end) {
+                const uint32_t charnum = *unicode_iter;
+                if (!charnum) {
+                    break ;
+                }
+                ++unicode_iter;
+
+                int cacheIndex = 0;
+                FontChar const & font_item = this->font.glyph_defined(charnum) && this->font.font_items[charnum]
+                ? this->font.font_items[charnum]
+                : [&]() {
+                    LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
+                    return std::ref(this->font.font_items[static_cast<unsigned>('?')]);
+                }().get();
+                TODO(" avoid passing parameters by reference to get results")
+                const GlyphCache::t_glyph_cache_result cache_result =
+                    mod_glyph_cache.add_glyph(font_item, cacheId, cacheIndex);
+(void)cache_result;
+
+                *data_begin = cacheIndex;
+                ++data_begin;
+                *data_begin = distance_from_previous_fragment;
+                ++data_begin;
+                distance_from_previous_fragment = font_item.incby;
+                total_width += font_item.incby;
+                total_height = std::max(total_height, font_item.height);
+            }
+
+            const Rect bk(x, y, total_width + 1, total_height + 1);
+
+            RDPGlyphIndex glyphindex(
+                cacheId,            // cache_id
+                0x03,               // fl_accel
+                0x0,                // ui_charinc
+                1,                  // f_op_redundant,
+                fgcolor,            // BackColor (text color)
+                bgcolor,            // ForeColor (color of the opaque rectangle)
+                bk,                 // bk
+                bk,                 // op
+                // brush
+                RDPBrush(0, 0, 3, 0xaa,
+                    (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
+                x,                  // glyph_x
+                y + total_height,   // glyph_y
+                data_begin - data,  // data_len in bytes
+                data                // data
+            );
+
+            x += total_width;
+
+            this->gd->draw(glyphindex, clip, &mod_glyph_cache);
+        }
+    }
+
 protected:
     static RDPGraphicDevice * get_gd(mod_api const & mod)
     {
@@ -114,10 +197,8 @@ protected:
 
     static void set_gd(mod_api & mod, RDPGraphicDevice * gd)
     {
-        //mod.gd_changed(gd);
         mod.gd = gd;
     }
-    //virtual gd_changed(RDPGraphicDevice * /*gd*/) {}
 
 public:
     virtual void send_to_front_channel(const char * const mod_channel_name,

@@ -30,7 +30,7 @@ class FrontAPI;
 
 struct null_mod : public mod_api {
 
-    null_mod(FrontAPI & front) : mod_api(0, 0)
+    null_mod(FrontAPI & front, Font const & font) : mod_api(0, 0, font)
     {
     }
 

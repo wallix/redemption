@@ -40,7 +40,7 @@ class FlatSelector2Mod : public InternalMod, public NotifyApi
     struct temporary_login {
         char buffer[256];
 
-        temporary_login(Inifile& ini) {
+        temporary_login(Inifile & ini) {
             this->buffer[0] = 0;
             snprintf(this->buffer, sizeof(this->buffer),
                      "%s@%s", ini.globals.auth_user.get_cstr(), ini.globals.host.get_cstr());
@@ -48,8 +48,8 @@ class FlatSelector2Mod : public InternalMod, public NotifyApi
     };
 
 public:
-    FlatSelector2Mod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
-        : InternalMod(front, width, height, &ini)
+    FlatSelector2Mod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
+        : InternalMod(front, width, height, ini.font, &ini)
         , selector(*this, temporary_login(ini).buffer, width, height, this->screen, this,
                    ini.context.selector_current_page.get_value(),
                    ini.context.selector_number_of_pages.get_value(),

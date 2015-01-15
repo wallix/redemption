@@ -25,8 +25,12 @@
 #define BOOST_TEST_MODULE TestWrmCapture
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 //#define LOGPRINT
+
 #include "capture.hpp"
 #include "check_sig.hpp"
 #include "get_file_contents.hpp"

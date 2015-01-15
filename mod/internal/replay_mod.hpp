@@ -50,7 +50,7 @@ public:
              , uint16_t height
              , std::string & auth_error_message
              , Inifile & ini)
-    : InternalMod(front, width, height)
+    : InternalMod(front, width, height, ini.font)
     , auth_error_message(auth_error_message)
     , end_of_data(false)
     , ini(ini)

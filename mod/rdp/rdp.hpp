@@ -78,7 +78,6 @@
 #include "finally.hpp"
 
 class mod_rdp : public mod_api {
-
     FrontAPI & front;
 
     CHANNELS::ChannelDefArray mod_channel_list;
@@ -227,7 +226,7 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : mod_api(info.width - (info.width % 4), info.height)
+        : mod_api(info.width - (info.width % 4), info.height, mod_rdp_params.font)
         , front(front)
         , authorization_channels(make_authorization_channels_with_rdp_params(mod_rdp_params))
         , use_rdp5(1)
@@ -2551,7 +2550,7 @@ public:
             }
             confirm_active_pdu.emit_capability_set(bmpcache2_caps);
 
-            if (!this->enable_transparent_mode) {
+            if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
                 this->orders.create_cache_bitmap(this->bpp,
                     120,   nbbytes(this->bpp) * 16 * 16, false,
                     120,   nbbytes(this->bpp) * 32 * 32, false,
@@ -2565,7 +2564,7 @@ public:
             }
             confirm_active_pdu.emit_capability_set(bmpcache_caps);
 
-            if (!this->enable_transparent_mode) {
+            if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
                 this->orders.create_cache_bitmap(this->bpp,
                     0x258, nbbytes(this->bpp) * 0x100,   false,
                     0x12c, nbbytes(this->bpp) * 0x400,   false,
@@ -5173,6 +5172,7 @@ public:
         this->front.server_set_pointer(cursor);
     }
 
+/*
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         this->front.server_draw_text(x, y, text, fgcolor, bgcolor, clip);
@@ -5182,6 +5182,7 @@ public:
     {
         this->front.text_metrics(text, width, height);
     }
+*/
 
     virtual void draw(const RDPColCache & cmd)
     {

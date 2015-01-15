@@ -39,9 +39,10 @@ class WidgetTestMod : public InternalMod, public NotifyApi {
 
 public:
     WidgetTestMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
-    : InternalMod(front, width, height, &ini)
+    : InternalMod(front, width, height, ini.font, &ini)
     , drawing_policy(*this)
-    , tab(*this, drawing_policy, 30, 30, width - 60, height - 260, this->screen, this, 0, ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+    , tab(*this, drawing_policy, 30, 30, width - 60, height - 260, this->screen, this, 0,
+          ini.theme.global.fgcolor, ini.theme.global.bgcolor)
     , wedit_on_first_tab(NULL)
     , wbutton_on_first_tab(NULL) {
         this->screen.add_widget(&this->tab);
@@ -49,7 +50,6 @@ public:
         const size_t tab_0_index = this->tab.add_item("First tab");
         const size_t tab_1_index = this->tab.add_item("Second tab");
         (void)tab_1_index;
-
 
         NotifyApi * notifier = NULL;
         int         group_id = 0;
@@ -63,7 +63,7 @@ public:
 
         WidgetParent & parent_item = this->tab.get_item(tab_0_index);
 
-        notifier  = &parent_item;
+        notifier = &parent_item;
 
         this->wedit_on_first_tab = new WidgetEdit(*this, 11, 20, 30, parent_item,
             notifier, "", group_id, BLACK, WHITE, WHITE);
@@ -97,7 +97,7 @@ public:
         delete this->wedit_on_first_tab;
     }
 
-    virtual void notify(Widget2* sender, notify_event_t event) {}
+    virtual void notify(Widget2 * sender, notify_event_t event) {}
 
 public:
     virtual void draw_event(time_t now) {
