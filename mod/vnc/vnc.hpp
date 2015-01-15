@@ -124,7 +124,6 @@ private:
 
     uint32_t   verbose;
     KeymapSym  keymapSym;
-    int        incr;
 
     BStream to_rdp_clipboard_data;
     BStream to_vnc_large_clipboard_data;
@@ -156,9 +155,8 @@ private:
     bool allow_authentification_retries;
 
 private:
-    bool is_first_membelt;
-    bool is_first_incr;
-    bool left_ctrl_pressed;
+    bool is_first_membelt = true;
+    bool left_ctrl_pressed = false;
 
     const bool is_socket_transport;
 
@@ -195,7 +193,6 @@ public:
     , t(t)
     , verbose(verbose)
     , keymapSym(verbose)
-    , incr(0)
     , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
     , enable_clipboard_in(clipboard_in)
     , enable_clipboard_out(clipboard_out)
@@ -203,9 +200,6 @@ public:
     , state(WAIT_SECURITY_TYPES)
     , ini(ini)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
-    , is_first_membelt(true)
-    , is_first_incr(true)
-    , left_ctrl_pressed(false)
     , is_socket_transport(is_socket_transport)
     {
     //--------------------------------------------------------------------------------------------------------------
@@ -472,9 +466,24 @@ public:
         this->keymapSym.synchronize(param1);
     } // rdp_input_synchronize
 
-    //==============================================================================================================
+private:
+    void update_screen(const Rect & r, uint8_t incr = 1) {
+        uint8_t data[10];
+        FixedSizeStream stream(data, sizeof(data));
+        stream.end = stream.p;
+        /* FramebufferUpdateRequest */
+        stream.out_uint8(3);
+        stream.out_uint8(incr);
+        stream.out_uint16_be(r.x);
+        stream.out_uint16_be(r.y);
+        stream.out_uint16_be(r.cx);
+        stream.out_uint16_be(r.cy);
+        this->t.send(stream.get_data(), 10);
+    } // rdp_input_invalidate
+
+public:
     virtual void rdp_input_invalidate(const Rect & r) {
-    //==============================================================================================================
+
         if (this->state == WAIT_PASSWORD) {
             this->screen.rdp_input_invalidate(r);
             return;
@@ -485,21 +494,7 @@ public:
         }
 
         if (!r.isempty()) {
-            uint8_t data[10];
-            FixedSizeStream stream(data, sizeof(data));
-            stream.end = stream.p;
-            /* FramebufferUpdateRequest */
-            stream.out_uint8(3);
-            stream.out_uint8(this->incr);
-            if (this->is_first_incr) {
-                this->is_first_incr = false;
-                this->incr = 1;
-            }
-            stream.out_uint16_be(r.x);
-            stream.out_uint16_be(r.y);
-            stream.out_uint16_be(r.cx);
-            stream.out_uint16_be(r.cy);
-            this->t.send(stream.get_data(), 10);
+            this->update_screen(r, 0);
         }
     } // rdp_input_invalidate
 
@@ -553,7 +548,7 @@ public:
 
                 this->state = UP_AND_RUNNING;
 
-                this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
+                this->update_screen(Rect(0, 0, this->width, this->height));
 
                 this->lib_open_clip_channel();
 
@@ -618,7 +613,7 @@ public:
                 }
             }
             else {
-                this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
+                this->update_screen(Rect(0, 0, this->width, this->height));
             }
             break;
         case WAIT_PASSWORD:
@@ -1507,9 +1502,7 @@ private:
                     this->front.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
                 }
                 else {
-                    this->incr = 0;
                     this->gd->draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
-                    this->incr = 1;
                 }
             }
             break;
@@ -1766,7 +1759,7 @@ private:
             }
         }
 
-        this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
+        this->update_screen(Rect(0, 0, this->width, this->height));
     } // lib_framebuffer_update
 
     //==============================================================================================================
