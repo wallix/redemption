@@ -169,7 +169,9 @@ public:
             bool run_session = true;
 
             constexpr std::array<unsigned, 4> timers{{ 30*60, 10*60, 5*60, 1*60, }};
-            unsigned osd_state = timers.size();
+            const unsigned OSD_STATE_INVALID = timers.size();
+            const unsigned OSD_STATE_NOT_YET_COMPUTED = OSD_STATE_INVALID + 1;
+            unsigned osd_state = OSD_STATE_NOT_YET_COMPUTED;
             const bool enable_osd = this->ini.globals.enable_osd;
 
             while (run_session) {
@@ -265,16 +267,6 @@ public:
                                     }
 
                                     this->client = new Client(client_sck, ini, *this->front, start_time, now);
-
-                                    osd_state = [&](uint32_t enddata) -> unsigned {
-                                        if (!enddata || enddata <= now) {
-                                            return timers.size();
-                                        }
-                                        unsigned i = timers.rend() - std::lower_bound(
-                                            timers.rbegin(), timers.rend(), enddata - start_time
-                                        );
-                                        return i ? i-1 : 0;
-                                    }(this->ini.context.end_date_cnx.get());
                                     signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {
@@ -291,24 +283,36 @@ public:
 
                         if (enable_osd) {
                             const uint32_t enddate = this->ini.context.end_date_cnx.get();
-                            if (enddate
-                            && osd_state < timers.size()
-                            && enddate - now <= timers[osd_state]
-                            && mm.is_up_and_running()) {
-                                std::string mes;
-                                mes.reserve(128);
-                                const unsigned minutes = (enddate - now + 30) / 60;
-                                mes += std::to_string(minutes);
-                                mes += ' ';
-                                mes += TR("minute", this->ini);
-                                if (minutes > 1) {
-                                    mes += "s ";
-                                } else {
-                                    mes += ' ';
+                            if (enddate &&
+                                mm.is_up_and_running()) {
+                                if (osd_state == OSD_STATE_NOT_YET_COMPUTED) {
+                                    osd_state = [&](uint32_t enddata) -> unsigned {
+                                        if (!enddata || enddata <= now) {
+                                            return OSD_STATE_INVALID;
+                                        }
+                                        unsigned i = (std::lower_bound(
+                                              timers.rbegin(), timers.rend(), enddata - start_time)
+                                            - timers.rbegin()) * (-1);
+                                        return i ? i : 0;
+                                    }(this->ini.context.end_date_cnx.get());
                                 }
-                                mes += TR("before_closing", this->ini);
-                                mm.osd_message(std::move(mes));
-                                ++osd_state;
+                                else if (osd_state < OSD_STATE_INVALID &&
+                                         enddate - now <= timers[osd_state]) {
+                                    std::string mes;
+                                    mes.reserve(128);
+                                    const unsigned minutes = (enddate - now + 30) / 60;
+                                    mes += std::to_string(minutes);
+                                    mes += ' ';
+                                    mes += TR("minute", this->ini);
+                                    if (minutes > 1) {
+                                        mes += "s ";
+                                    } else {
+                                        mes += ' ';
+                                    }
+                                    mes += TR("before_closing", this->ini);
+                                    mm.osd_message(std::move(mes));
+                                    ++osd_state;
+                                }
                             }
                         }
 

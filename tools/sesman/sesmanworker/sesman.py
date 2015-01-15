@@ -945,11 +945,11 @@ class Sesman():
                 if hres:
                     duration += 60*60*int(hres.group(1))
                 if duration == 0:
-                    duration = None
-                if duration > 31000000: # slightly more than 1 year
-                    duration = 31000000
+                    duration = 3600
             except Exception, e:
-                duration = None
+                duration = 3600
+        else:
+            duration = 3600
         return duration
 
     def interactive_display_waitinfo(self, status, infos):
