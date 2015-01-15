@@ -980,12 +980,12 @@ BOOST_AUTO_TEST_CASE(TestMemblt2)
     // red square
     gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect, bmp);
 
-    //char message[1024];
-    //if (!check_sig(gd, message,
-    //"\x98\x6c\x40\x0b\x3a\xbc\x39\x38\x29\x11\x77\x37\x98\xe2\x27\xb2\xcb\x61\xec\x5d"
-    //)){
-    //    BOOST_CHECK_MESSAGE(false, message);
-    //}
+    char message[1024];
+    if (!check_sig(gd, message,
+    "\xd1\x63\x42\x01\x2f\xec\x9d\x81\x31\xfe\xa6\xdc\x01\xd5\xd1\x17\x99\x65\xe5\xda"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 
     // uncomment to see result in png file
     //dump_png("./test_memblt2_", gd.impl());
@@ -1102,12 +1102,12 @@ BOOST_AUTO_TEST_CASE(TestMemblt3)
     // red square
     gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect, bmp);
 
-    //char message[1024];
-    //if (!check_sig(gd, message,
-    //"\x98\x6c\x40\x0b\x3a\xbc\x39\x38\x29\x11\x77\x37\x98\xe2\x27\xb2\xcb\x61\xec\x5d"
-    //)){
-    //    BOOST_CHECK_MESSAGE(false, message);
-    //}
+    char message[1024];
+    if (!check_sig(gd, message,
+    "\x5c\xe2\x1b\x2e\xca\x65\xbc\xec\x34\xfd\x28\xe8\x06\x9d\x4d\x10\xbc\x7f\x22\x4a"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 
     // uncomment to see result in png file
     //dump_png("./test_memblt3_", gd.impl());
