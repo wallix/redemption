@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 // ========================================
 
 // Socket VNC Target (3) sending 10 bytes
- /* 0000 */ "\x03\x00\x00\x00\x00\x00\x04\x00\x03\x00"                         // ..........
+ /* 0000 */ "\x03\x01\x00\x00\x00\x00\x04\x00\x03\x00"                         // ..........
 // Dump done VNC Target (3) sending 10 bytes
 // Send done on VNC Target (3)
 // --------- FRONT ------------------------
