@@ -24,15 +24,16 @@
 #define BOOST_TEST_MODULE TestWidgetMultiLine
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 
+#include "config.hpp"
 #include "internal/widget2/multiline.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
 
@@ -42,8 +43,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetMultiLine is a multiline widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -63,7 +66,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color, xtext, ytext);
+                               auto_resize, id, fg_color, bg_color, ini.font, xtext, ytext);
 
     // ask to widget to redraw at it's current position
     wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
@@ -86,8 +89,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -102,7 +107,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color);
+                               auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
@@ -125,8 +130,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetMultiLine is a multiline widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -141,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color);
+                               auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
@@ -164,8 +171,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetMultiLine is a multiline widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -180,7 +189,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color);
+                               auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
@@ -203,8 +212,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetMultiLine is a multiline widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -219,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color);
+                               auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
@@ -242,8 +253,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -258,7 +271,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color);
+                               auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
@@ -281,8 +294,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -297,7 +312,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color);
+                               auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wmultiline.rdp_input_invalidate(Rect(20 + wmultiline.dx(),
@@ -320,8 +335,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -336,7 +353,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color);
+                               auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wmultiline.rdp_input_invalidate(Rect(20 + wmultiline.dx(),
@@ -359,8 +376,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -376,7 +395,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
                                "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                                "Nam lacinia purus luctus ante congue facilisis.<br>"
                                "Donec sodales mauris luctus ante ultrices blandit.",
-                               auto_resize, id, fg_color, bg_color);
+                               auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wmultiline.rdp_input_invalidate(wmultiline.rect);

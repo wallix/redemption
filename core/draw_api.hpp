@@ -21,6 +21,7 @@
 #if !defined(REDEMPTION_MOD_DRAW_API_HPP)
 #define REDEMPTION_MOD_DRAW_API_HPP
 
+#include "font.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 
 class DrawApi : public RDPGraphicDevice
@@ -29,9 +30,9 @@ public:
     virtual void begin_update() = 0;
     virtual void end_update() = 0;
 
-    virtual void text_metrics(const char * text, int & width, int & height) = 0;
+    virtual void text_metrics(Font const & font, const char * text, int & width, int & height) = 0;
 
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text,
+    virtual void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text,
                                   uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
 
     virtual void flush() {};

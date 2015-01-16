@@ -34,25 +34,20 @@ class TestCardMod : public InternalMod
 {
     BGRPalette const & palette332 = BGRPalette::classic_332();
 
+    Font const & font;
+
     bool unit_test;
 
 public:
     TestCardMod(FrontAPI & front, uint16_t width, uint16_t height, Font const & font, bool unit_test = true)
     : InternalMod(front, width, height, font)
+    , font(font)
     , unit_test(unit_test)
     {}
 
-    virtual ~TestCardMod()
-    {
-    }
+    virtual void rdp_input_invalidate(const Rect & /*rect*/) {}
 
-    virtual void rdp_input_invalidate(const Rect & /*rect*/)
-    {
-    }
-
-    virtual void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/)
-    {
-    }
+    virtual void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) {}
 
     virtual void rdp_input_scancode(long /*param1*/, long /*param2*/, long /*param3*/,
                                     long /*param4*/, Keymap2 * keymap)
@@ -65,9 +60,7 @@ public:
     }
 
     virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
-                                       int16_t /*param1*/, int16_t /*param2*/)
-    {
-    }
+                                       int16_t /*param1*/, int16_t /*param2*/) {}
 
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
@@ -137,11 +130,11 @@ public:
             RDPLineTo(1, 145, 200, 1198, 201, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(145, 200, 110, 1));
 
-        this->server_draw_text(30, 30, "White", WHITE, BLACK, clip);
-        this->server_draw_text(30, 50, "Red  ", RED, BLACK, clip);
-        this->server_draw_text(30, 70, "Green", GREEN, BLACK, clip);
-        this->server_draw_text(30, 90, "Blue ", BLUE, BLACK, clip);
-        this->server_draw_text(30, 110, "Black", BLACK, WHITE, clip);
+        this->server_draw_text(this->font, 30, 30, "White", WHITE, BLACK, clip);
+        this->server_draw_text(this->font, 30, 50, "Red  ", RED, BLACK, clip);
+        this->server_draw_text(this->font, 30, 70, "Green", GREEN, BLACK, clip);
+        this->server_draw_text(this->font, 30, 90, "Blue ", BLUE, BLACK, clip);
+        this->server_draw_text(this->font, 30, 110, "Black", BLACK, WHITE, clip);
 
         Bitmap card(SHARE_PATH "/" REDEMPTION_LOGO24);
         this->front.draw(RDPMemBlt(0,

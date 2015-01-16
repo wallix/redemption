@@ -24,13 +24,12 @@
 #define BOOST_TEST_MODULE TestFlatWait
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 
-#undef FIXTURES_PATH
-#define FIXTURES_PATH "./tests/fixtures"
-#undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
-
+#include "config.hpp"
 #include "internal/widget2/flat_wait.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
@@ -44,10 +43,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
-    Inifile ini;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;

@@ -41,7 +41,6 @@
 class WidgetSelectorFlat2 : public WidgetParent
 {
 public:
-
     int bg_color;
     const bool less_than_800;
     WidgetLabel device_label;
@@ -69,6 +68,8 @@ public:
     WidgetFlatButton connect;
 
     CompositeArray composite_array;
+
+    Font const & font;
 
 public:
     struct temporary_number_of_page {
@@ -107,16 +108,16 @@ public:
         , bg_color(ini.theme.global.bgcolor)
         , less_than_800(this->rect.cx < 800)
         , device_label(drawable, TEXT_MARGIN, VERTICAL_MARGIN, *this, NULL, device_name,
-                       true, -10, ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+                       true, -10, ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
         , target_group_label(drawable, 0, 0, *this, NULL, TR("target_group", ini), true,
                               -10, ini.theme.selector_label.fgcolor,
-                             ini.theme.selector_label.bgcolor, 5)
+                             ini.theme.selector_label.bgcolor, ini.font, 5)
         , target_label(drawable, 0, 0, *this, NULL, TR("target", ini), true, -10,
                        ini.theme.selector_label.fgcolor,
-                       ini.theme.selector_label.bgcolor, 5)
+                       ini.theme.selector_label.bgcolor, ini.font, 5)
         , protocol_label(drawable, 0, 0, *this, NULL, TR("protocol", ini), true, -10,
                          ini.theme.selector_label.fgcolor,
-                         ini.theme.selector_label.bgcolor, 5)
+                         ini.theme.selector_label.bgcolor, ini.font, 5)
         , selector_lines(drawable, Rect(0, 0, width - (this->less_than_800 ? 0 : 30), 1),
                          *this, this, 0, 3,
                          ini.theme.selector_line1.bgcolor,
@@ -127,49 +128,50 @@ public:
                          ini.theme.selector_focus.fgcolor,
                          ini.theme.selector_selected.bgcolor,
                          ini.theme.selector_selected.fgcolor,
-                         2, -11)
+                         ini.font, 2, -11)
         , filter_target_group(drawable, 0, 0, 120, *this, this,
                               filter_target_group?filter_target_group:0, -12,
                               ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
-                              ini.theme.edit.focus_color, -1, 1, 1)
+                              ini.theme.edit.focus_color, ini.font, -1, 1, 1)
         , filter_target(drawable, 0, 0, 340, *this, this, filter_target?filter_target:0,
                         -12, ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
-                        ini.theme.edit.focus_color, -1, 1, 1)
+                        ini.theme.edit.focus_color, ini.font, -1, 1, 1)
         , filter_protocol(drawable, 0, 0, 110, *this, this,
                           filter_protocol?filter_protocol:0, -12,
                           ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
-                          ini.theme.edit.focus_color, -1, 1, 1)
+                          ini.theme.edit.focus_color, ini.font, -1, 1, 1)
           //BEGIN WidgetPager
         , first_page(drawable, 0, 0, *this, notifier, "◀◂", true, -15,
                      ini.theme.global.fgcolor, ini.theme.global.bgcolor,
-                     ini.theme.global.focus_color, 6, 2, true)
+                     ini.theme.global.focus_color, ini.font, 6, 2, true)
         , prev_page(drawable, 0, 0, *this, notifier, "◀", true, -15,
                     ini.theme.global.fgcolor, ini.theme.global.bgcolor,
-                    ini.theme.global.focus_color, 6, 2, true)
+                    ini.theme.global.focus_color, ini.font, 6, 2, true)
         , current_page(drawable, 0, 0, this->first_page.cy(), *this, notifier,
                        current_page ? current_page : "XXXX", -15,
                        ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
-                       ini.theme.edit.focus_color, -1, 1, 1)
+                       ini.theme.edit.focus_color, ini.font, -1, 1, 1)
         , number_page(drawable, 0, 0, *this, NULL,
                       number_of_page ? temporary_number_of_page(number_of_page).buffer
                       : "/XXX", true, -100, ini.theme.global.fgcolor,
-                      ini.theme.global.bgcolor)
+                      ini.theme.global.bgcolor, ini.font)
         , next_page(drawable, 0, 0, *this, notifier, "▶", true, -15,
                     ini.theme.global.fgcolor, ini.theme.global.bgcolor,
-                    ini.theme.global.focus_color, 6, 2, true)
+                    ini.theme.global.focus_color, ini.font, 6, 2, true)
         , last_page(drawable, 0, 0, *this, notifier, "▸▶", true, -15,
                     ini.theme.global.fgcolor, ini.theme.global.bgcolor,
-                    ini.theme.global.focus_color, 6, 2, true)
+                    ini.theme.global.focus_color, ini.font, 6, 2, true)
           //END WidgetPager
         , logout(drawable, 0, 0, *this, this, TR("logout", ini), true, -16,
                  ini.theme.global.fgcolor, ini.theme.global.bgcolor,
-                 ini.theme.global.focus_color, 6, 2)
+                 ini.theme.global.focus_color, ini.font, 6, 2)
         , apply(drawable, 0, 0, *this, this, TR("filter", ini), true, -12,
                 ini.theme.global.fgcolor, ini.theme.global.bgcolor,
-                ini.theme.global.focus_color, 6, 2)
+                ini.theme.global.focus_color, ini.font, 6, 2)
         , connect(drawable, 0, 0, *this, this, TR("connect", ini), true, -18,
                   ini.theme.global.fgcolor, ini.theme.global.bgcolor,
-                  ini.theme.global.focus_color, 6, 2)
+                  ini.theme.global.focus_color, ini.font, 6, 2)
+        , font(ini.font)
     {
         this->impl = &composite_array;
 
@@ -209,9 +211,9 @@ public:
         int target_min_width = 0;
         int protocol_min_width = 0;
         int h = 0;
-        this->drawable.text_metrics(this->target_group_label.get_text(), target_group_min_width, h);
-        this->drawable.text_metrics(this->target_label.get_text(), target_min_width, h);
-        this->drawable.text_metrics(this->protocol_label.get_text(), protocol_min_width, h);
+        this->drawable.text_metrics(this->font, this->target_group_label.get_text(), target_group_min_width, h);
+        this->drawable.text_metrics(this->font, this->target_label.get_text(), target_min_width, h);
+        this->drawable.text_metrics(this->font, this->protocol_label.get_text(), protocol_min_width, h);
         target_group_min_width += 5;
         target_min_width += 5;
         protocol_min_width += 5;

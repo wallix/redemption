@@ -22,6 +22,7 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP
 
+#include "font.hpp"
 #include "composite.hpp"
 #include "tooltip.hpp"
 #include "theme.hpp"
@@ -40,7 +41,9 @@ public:
     Pointer normal_pointer;
     Pointer edit_pointer;
 
-    WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height,
+    Font const & font;
+
+    WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, Font const & font,
                  NotifyApi * notifier = NULL, Theme * theme = NULL)
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , theme(theme ? *theme : Theme())
@@ -48,6 +51,7 @@ public:
         , current_over(NULL)
         , normal_pointer(Pointer::POINTER_NORMAL)
         , edit_pointer(Pointer::POINTER_EDIT)
+        , font(font)
     {
         this->impl = &composite_array;
 
@@ -78,7 +82,8 @@ public:
                                               text,
                                               this->theme.tooltip.fgcolor,
                                               this->theme.tooltip.bgcolor,
-                                              this->theme.tooltip.border_color);
+                                              this->theme.tooltip.border_color,
+                                              this->font);
             int w = this->tooltip->get_tooltip_cx();
             int h = this->tooltip->get_tooltip_cy();
             int sw = this->rect.cx;

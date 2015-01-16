@@ -40,7 +40,7 @@ class WidgetTestMod : public InternalMod, public NotifyApi {
 public:
     WidgetTestMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height, ini.font, &ini)
-    , drawing_policy(*this)
+    , drawing_policy(*this, ini.font)
     , tab(*this, drawing_policy, 30, 30, width - 60, height - 260, this->screen, this, 0,
           ini.theme.global.fgcolor, ini.theme.global.bgcolor)
     , wedit_on_first_tab(NULL)
@@ -66,17 +66,17 @@ public:
         notifier = &parent_item;
 
         this->wedit_on_first_tab = new WidgetEdit(*this, 11, 20, 30, parent_item,
-            notifier, "", group_id, BLACK, WHITE, WHITE);
+            notifier, "", group_id, BLACK, WHITE, WHITE, ini.font);
         this->tab.add_widget(tab_0_index, wedit_on_first_tab);
 
         this->wbutton_on_first_tab = new WidgetFlatButton(*this, 10, 42, parent_item,
             notifier, "Button on First tab", auto_resize, group_id, fg_color, bg_color,
-            focuscolor, xtext, ytext);
+            focuscolor, ini.font, xtext, ytext);
         this->tab.add_widget(tab_0_index, wbutton_on_first_tab);
 
 
         this->wedit_on_screen = new WidgetEdit(*this, 11, 620, 30, this->screen,
-            this, "", group_id, BLACK, WHITE, WHITE);
+            this, "", group_id, BLACK, WHITE, WHITE, ini.font);
         this->screen.add_widget(this->wedit_on_screen);
 
         this->screen.set_widget_focus(&this->tab, Widget2::focus_reason_tabkey);

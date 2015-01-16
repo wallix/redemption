@@ -208,7 +208,7 @@ int main(int argc, char * argv[]) {
     const bool mem3blt_support  = true;
     Front front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini,
         fastpath_support, mem3blt_support, input_filename.c_str(), persistent_key_list_oft);
-    null_mod no_mod(front, ini.font);
+    null_mod no_mod(front);
 
     while (front.up_and_running == 0) {
         front.incoming(no_mod);
@@ -263,7 +263,6 @@ int main(int argc, char * argv[]) {
                                        , target_device.c_str()
                                        , "0.0.0.0"   // client ip is silenced
                                        , front.keymap.key_flags
-                                       , ini.font
                                        , ini.debug.mod_rdp
                                        );
             //mod_rdp_params.enable_tls                          = true;

@@ -24,16 +24,17 @@
 #define BOOST_TEST_MODULE TestWidgetTooltip
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 
+#include "config.hpp"
 #include "internal/widget2/tooltip.hpp"
 #include "internal/widget2/screen.hpp"
 #include "internal/widget2/label.hpp"
 #include "check_sig.hpp"
 
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
 
@@ -43,8 +44,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
 
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -54,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
     int16_t y = 10;
     const char * tooltiptext = "testémq";
 
-    WidgetTooltip wtooltip(drawable, x, y, parent, notifier, tooltiptext, fg_color, bg_color, border_color);
+    WidgetTooltip wtooltip(drawable, x, y, parent, notifier, tooltiptext, fg_color, bg_color, border_color, ini.font);
 
     // ask to widget to redraw
     wtooltip.rdp_input_invalidate(Rect(0, 0, 100, 100));
@@ -87,12 +90,16 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     TestDraw drawable(800, 600);
     int x = 50;
     int y = 20;
+
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
+
     WidgetLabel label(drawable, x, y, parent, &parent, "TOOLTIPTEST",
-                      true, 0, BLACK, WHITE);
+                      true, 0, BLACK, WHITE, ini.font);
     WidgetLabel label2(drawable, x + 50, y + 90, parent, &parent, "TOOLTIPTESTMULTI",
-                      true, 0, BLACK, WHITE);
+                      true, 0, BLACK, WHITE, ini.font);
 
     parent.add_widget(&label);
     parent.add_widget(&label2);

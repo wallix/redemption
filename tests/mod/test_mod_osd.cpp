@@ -41,7 +41,7 @@ struct FakeMod : mod_api
     RDPDrawable gd;
 
     FakeMod(const uint16_t front_width, const uint16_t front_height, Font const & font)
-    : mod_api(front_width, front_height, font)
+    : mod_api(front_width, front_height)
     , gd(front_width, front_height, 24)
     {}
 
@@ -53,9 +53,9 @@ struct FakeMod : mod_api
     virtual void end_update() {}
     virtual void send_to_front_channel(const char*const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags) {}
     virtual void begin_update() {}
-    virtual void text_metrics(const char * text, int & width, int & height) {}
+    virtual void text_metrics(Font const & font, const char * text, int & width, int & height) {}
 
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text,
+    virtual void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text,
                                   uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {}
 

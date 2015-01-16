@@ -24,15 +24,15 @@
 #define BOOST_TEST_MODULE TestScreen
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 
+#include "config.hpp"
 #include "internal/widget2/flat_button.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
@@ -59,7 +59,10 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 {
     TestDraw drawable(800, 600);
     Theme colors;
-    WidgetScreen wscreen(drawable, drawable.gd.width(), drawable.gd.height());
+
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    WidgetScreen wscreen(drawable, drawable.gd.width(), drawable.gd.height(), ini.font);
 
     wscreen.refresh(wscreen.rect);
     wscreen.tab_flag = Widget2::NORMAL_TAB;
@@ -69,13 +72,13 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     Notify notifier4;
 
     WidgetFlatButton wbutton1(drawable, 0, 0, wscreen, &notifier1, "button 1",
-                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE);
+                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, ini.font);
     WidgetFlatButton wbutton2(drawable, 0, 30, wscreen, &notifier2, "button 2",
-                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE);
+                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, ini.font);
     WidgetFlatButton wbutton3(drawable, 100, 0, wscreen, &notifier3, "button 3",
-                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE);
+                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, ini.font);
     WidgetFlatButton wbutton4(drawable, 100, 30, wscreen, &notifier4, "button 4",
-                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE);
+                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, ini.font);
 
     wscreen.add_widget(&wbutton1);
     wscreen.add_widget(&wbutton2);
@@ -308,6 +311,4 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
         BOOST_CHECK_MESSAGE(false, message);
     }
     wscreen.clear();
-
-
 }

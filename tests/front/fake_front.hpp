@@ -43,7 +43,6 @@ public:
     bool nomouse;
 
     RDPDrawable gd;
-    std::unique_ptr<Font> font;
 
     virtual void flush() {
         if (this->verbose > 10) {
@@ -322,7 +321,7 @@ public:
         this->gd.server_set_pointer(cursor);
     }
 
-    virtual void server_draw_text( int16_t x, int16_t y, const char * text, uint32_t fgcolor
+    virtual void server_draw_text( Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor
                                  , uint32_t bgcolor, const Rect & clip) {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -330,30 +329,22 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        if (!this->font) {
-            return;
-        }
         this->gd.server_draw_text(
-            x, y, text,
+            font, x, y, text,
             color_decode_opaquerect(fgcolor, this->mod_bpp, this->mod_palette),
             color_decode_opaquerect(bgcolor, this->mod_bpp, this->mod_palette),
-            clip, *this->font
+            clip
         );
     }
 
-    virtual void text_metrics(const char* text, int& width, int& height) {
+    virtual void text_metrics(Font const & font, const char* text, int& width, int& height) {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "text_metrics");
             LOG(LOG_INFO, "========================================\n");
         }
 
-        if (!this->font) {
-            height = 0;
-            width = 0;
-            return;
-        }
-        this->gd.text_metrics(text, width, height, *this->font);
+        this->gd.text_metrics(font, text, width, height);
     }
 
     virtual int server_resize(int width, int height, int bpp) {
@@ -384,7 +375,7 @@ public:
         fclose(file);
     }
 
-    FakeFront(ClientInfo & info, uint32_t verbose, const char * font_file = 0)
+    FakeFront(ClientInfo & info, uint32_t verbose)
     : FrontAPI(false, false)
     , verbose(verbose)
     , info(info)
@@ -394,8 +385,7 @@ public:
     , mouse_y(0)
     , notimestamp(true)
     , nomouse(true)
-    , gd(info.width, info.height, 24)
-    , font(font_file ? new Font(font_file) : nullptr) {
+    , gd(info.width, info.height, 24) {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }

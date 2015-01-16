@@ -369,10 +369,14 @@ private:
     uint16_t   text_height;
     uint16_t   item_index_height;
 
+    Font const & font;
+
 public:
-    WidgetTabDPDefault(DrawApi & drawable) : WidgetTab::DrawingPolicy(drawable), text_height(0), item_index_height(0) {
+    WidgetTabDPDefault(DrawApi & drawable, Font const & font)
+    : WidgetTab::DrawingPolicy(drawable), text_height(0), item_index_height(0)
+    , font(font) {
         int w, h;
-        this->drawable.text_metrics("bp", w, h);
+        this->drawable.text_metrics(this->font, "bp", w, h);
 
         this->text_height       = h;
         this->item_index_height =   border_width_height
@@ -397,7 +401,7 @@ public:
             WidgetTab::Item * item = items[item_index];
 
             int text_width, h;
-            this->drawable.text_metrics(item->get_text(), text_width, h);
+            this->drawable.text_metrics(this->font, item->get_text(), text_width, h);
 
             uint16_t item_index_width =   border_width_height
                                         + text_padding_x
@@ -451,7 +455,8 @@ public:
 
             // Text.
             this->drawable.server_draw_text(
-                  rect_tab.x + item_index_offset + border_width_height + text_padding_x
+                  this->font
+                , rect_tab.x + item_index_offset + border_width_height + text_padding_x
                 , rect_tab.y + border_width_height + selection_marker_height + border_width_height + text_padding_y
                 , item->get_text()
                 , this->get_fg_color()
@@ -548,7 +553,7 @@ public:
             WidgetTab::Item * item = items[item_index];
 
             int text_width, h;
-            this->drawable.text_metrics(item->get_text(), text_width, h);
+            this->drawable.text_metrics(this->font, item->get_text(), text_width, h);
 
             uint16_t item_index_width =   border_width_height
                                         + text_padding_x

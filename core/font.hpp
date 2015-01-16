@@ -173,10 +173,7 @@ struct Font
          // we start at space, no glyph for chars below 32
         int file_size;
 
-        TODO("Temporary disabling font to avoid useless messages in watchdog"
-             "a better change would be to add a font parameter in text_metrics and server_draw_text"
-             "in Front object. The font should be read before forking instead of after and be"
-             "available (through config obj ?) for all processes");
+        TODO("Temporary disabling font to avoid useless messages in watchdog");
 //        LOG(LOG_INFO, "Reading font file %s", file_path);
         // RAZ of font chars table
 

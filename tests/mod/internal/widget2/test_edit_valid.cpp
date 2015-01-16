@@ -24,16 +24,17 @@
 #define BOOST_TEST_MODULE TestWidgetEditValid
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 //#define LOGPRINT
 
+#include "config.hpp"
 #include "internal/widget2/edit_valid.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "./"
 
@@ -43,8 +44,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLACK;
     int bg_color = WHITE;
@@ -60,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     size_t edit_pos = 2;
 
     WidgetEditValid wedit(drawable, x, y, cx, parent, notifier, "test1", id,
-                          fg_color, bg_color, ANTHRACITE, edit_pos, xtext, ytext);
+                          fg_color, bg_color, ANTHRACITE, ini.font, edit_pos, xtext, ytext);
 
     parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);
     // ask to widget to redraw at it's current position
@@ -84,8 +87,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLACK;
     int bg_color = WHITE;
@@ -98,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     size_t edit_pos = -1;
 
     WidgetEditValid wedit(drawable, x, y, cx, parent, notifier, NULL, id,
-                          fg_color, bg_color, ANTHRACITE, edit_pos, xtext, ytext);
+                          fg_color, bg_color, ANTHRACITE, ini.font, edit_pos, xtext, ytext);
 
     parent.add_widget(&wedit);
     // ask to widget to redraw at it's current position
@@ -168,8 +173,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -178,9 +185,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     parent.tab_flag = Widget2::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, 0);
+    WidgetEditValid wedit1(drawable, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, ini.font, 0);
 
-    WidgetEditValid wedit2(drawable, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, 0);
+    WidgetEditValid wedit2(drawable, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, ini.font, 0);
 
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
@@ -254,8 +261,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -264,9 +273,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     parent.tab_flag = Widget2::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, 0, 0, 0, false, "edition1");
+    WidgetEditValid wedit1(drawable, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, ini.font, 0, 0, 0, false, "edition1");
 
-    WidgetEditValid wedit2(drawable, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, 0, 0, 0, false, "edition2");
+    WidgetEditValid wedit2(drawable, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, ini.font, 0, 0, 0, false, "edition2");
 
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
@@ -377,8 +386,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -387,9 +398,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     parent.tab_flag = Widget2::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, 0, 0, 0, true, "edition1");
+    WidgetEditValid wedit1(drawable, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, ini.font, 0, 0, 0, true, "edition1");
 
-    WidgetEditValid wedit2(drawable, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, 0, 0, 0, true, "edition2");
+    WidgetEditValid wedit2(drawable, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, ini.font, 0, 0, 0, true, "edition2");
 
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
@@ -534,13 +545,16 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
             this->event = event;
         }
     } notifier;
-    WidgetScreen parent(drawable, 800, 600);
+
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    WidgetScreen parent(drawable, 800, 600, ini.font);
 
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetEditValid wedit(drawable, x, y, cx, parent, &notifier, "abcdef", 0, BLACK, WHITE, DARK_BLUE);
+    WidgetEditValid wedit(drawable, x, y, cx, parent, &notifier, "abcdef", 0, BLACK, WHITE, DARK_BLUE, ini.font);
 
     parent.add_widget(&wedit);
     parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);

@@ -144,9 +144,9 @@ public:
     virtual void begin_update() { REDASSERT(false); }
     virtual void end_update() { REDASSERT(false); }
 
-    virtual void text_metrics(const char * text, int & width, int & height) { REDASSERT(false); }
+    virtual void text_metrics(Font const & font, const char * text, int & width, int & height) { REDASSERT(false); }
 
-    virtual void server_draw_text( int16_t x, int16_t y, const char * text
+    virtual void server_draw_text( Font const & font, int16_t x, int16_t y, const char * text
                                  , uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) { REDASSERT(false); }
 
     // FrontAPI

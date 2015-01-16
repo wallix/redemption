@@ -38,6 +38,7 @@
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
 
+#include "font.hpp"
 #include "null/null.hpp"
 #include "internal/test_card_mod.hpp"
 #include "test_transport.hpp"
@@ -109,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     const bool mem3blt_support  = false;
     Front front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini
                , fastpath_support, mem3blt_support);
-    null_mod no_mod(front, ini.font);
+    null_mod no_mod(front);
 
     while (front.up_and_running == 0) {
         front.incoming(no_mod);

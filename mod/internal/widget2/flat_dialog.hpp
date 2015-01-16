@@ -53,10 +53,12 @@ public:
 
     CompositeArray composite_array;
 
+    Font const & font;
+
     FlatDialog(DrawApi& drawable, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
                const char* caption, const char * text, int group_id,
-               Theme & theme, const char * ok_text = "Ok",
+               Theme & theme, Font const & font, const char * ok_text = "Ok",
                const char * cancel_text = "Cancel",
                ChallengeOpt has_challenge = NO_CHALLENGE)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
@@ -65,21 +67,22 @@ public:
               theme.global.logo ? theme.global.logo_path :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -8)
         , title(drawable, 0, 0, *this, NULL, caption, true, -9,
-                theme.global.fgcolor, theme.global.bgcolor, 5)
+                theme.global.fgcolor, theme.global.bgcolor, font, 5)
         , dialog(drawable, 0, 0, *this, NULL, text, true, -10,
-                 theme.global.fgcolor, theme.global.bgcolor, 10, 2)
+                 theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
         , challenge(NULL)
         , ok(drawable, 0, 0, *this, this, ok_text ? ok_text : "Ok", true, -12,
              theme.global.fgcolor, theme.global.bgcolor,
-             theme.global.focus_color, 6, 2)
+             theme.global.focus_color, font, 6, 2)
         , cancel(cancel_text ? new WidgetFlatButton(drawable, 0, 0, *this, this,
                                                     cancel_text, true, -11,
                                                     theme.global.fgcolor,
                                                     theme.global.bgcolor,
-                                                    theme.global.focus_color,
+                                                    theme.global.focus_color, font,
                                                     6, 2) : NULL)
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
                     theme.global.separator_color)
+        , font(font)
     {
         this->impl = &composite_array;
 
@@ -108,7 +111,7 @@ public:
                                                  total_width - 20, *this, this, 0, -13,
                                                  theme.edit.fgcolor,
                                                  theme.edit.bgcolor,
-                                                 theme.edit.focus_color, -1u, 1, 1);
+                                                 theme.edit.focus_color, font, -1u, 1, 1);
             } else {
                 this->challenge = new WidgetPassword(this->drawable,
                                                      this->separator.rect.x + 10,
@@ -116,7 +119,7 @@ public:
                                                      -13, theme.edit.fgcolor,
                                                      theme.edit.bgcolor,
                                                      theme.edit.focus_color,
-                                                     -1u, 1, 1);
+                                                     font, -1u, 1, 1);
             }
             this->add_widget(this->challenge);
             total_height += this->challenge->cy() + 10;

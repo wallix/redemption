@@ -39,20 +39,20 @@ public:
     WidgetEditValid(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
                     Widget2 & parent, NotifyApi* notifier, const char * text,
                     int group_id, int fgcolor, int bgcolor,
-                    int focus_color, std::size_t edit_position = -1,
+                    int focus_color, Font const & font, std::size_t edit_position = -1,
                     int xtext = 0, int ytext = 0, bool pass = false,
                     const char * title = NULL)
         : Widget2(drawable, Rect(0, 0, cx, 1), parent, notifier, group_id)
         , button(drawable, 0, 0, *this, this, "\xe2\x9e\x9c", true,
-                 group_id, bgcolor, focus_color, focus_color, 6, 2)
+                 group_id, bgcolor, focus_color, focus_color, font, 6, 2)
         , editbox(pass ? new WidgetPassword(drawable, 0, 0, cx - this->button.cx(), *this,
                                             this, text, group_id, fgcolor, bgcolor,
-                                            focus_color, edit_position, 1, 2)
+                                            focus_color, font, edit_position, 1, 2)
                   : new WidgetEdit(drawable, 0, 0, cx - this->button.cx(), *this, this,
-                                   text, group_id, fgcolor, bgcolor, focus_color,
+                                   text, group_id, fgcolor, bgcolor, focus_color, font,
                                    edit_position, 1, 2))
         , label(title ? new WidgetLabel(drawable, 0, 0, *this, 0, title, true,
-                                        group_id, MEDIUM_GREY, bgcolor, 1, 2)
+                                        group_id, MEDIUM_GREY, bgcolor, font, 1, 2)
                 : NULL)
     {
         this->button.set_button_x(this->editbox->lx() - 1);

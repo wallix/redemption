@@ -52,7 +52,7 @@ public:
                     ini.theme, TR("target_info_required", ini),
                     TR("device", ini), ini.context_get_value(AUTHID_TARGET_DEVICE),
                     TR("login", ini), ini.context_get_value(AUTHID_TARGET_USER),
-                    TR("password", ini))
+                    TR("password", ini), ini.font)
         , ini(ini)
     {
         this->screen.add_widget(&this->challenge);

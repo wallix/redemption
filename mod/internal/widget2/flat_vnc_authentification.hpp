@@ -49,15 +49,15 @@ public:
                             Widget2 & parent, NotifyApi* notifier, const char* caption,
                             int group_id, const char * password,
                             Theme & theme, const char * label_text_message,
-                            const char * label_text_password)
+                            const char * label_text_password, Font const & font)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , message_label(drawable, 0, 0, *this, NULL, label_text_message, true, -13,
-                        theme.global.fgcolor, theme.global.bgcolor)
+                        theme.global.fgcolor, theme.global.bgcolor, font)
         , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13,
-                         theme.global.fgcolor, theme.global.bgcolor)
+                         theme.global.fgcolor, theme.global.bgcolor, font)
         , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
                         theme.edit.fgcolor, theme.edit.bgcolor,
-                        theme.edit.focus_color, -1u, 1, 1, true)
+                        theme.edit.focus_color, font,  -1u, 1, 1, true)
         // , img(drawable, 0, 0, theme.global.logo_path, *this, NULL, -10)
         , img(drawable, 0, 0,
               theme.global.logo ? theme.global.logo_path :

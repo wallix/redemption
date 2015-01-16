@@ -24,8 +24,12 @@
 #define BOOST_TEST_MODULE TestWidgetImage
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 
+#include "config.hpp"
 #include "internal/widget2/image.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
@@ -38,8 +42,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini;
+
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
 
     NotifyApi * notifier = NULL;
 
@@ -65,8 +71,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini;
+
     // WidgetImage is a image widget of size 256x125 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
 
     NotifyApi * notifier = NULL;
 
@@ -92,8 +100,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini;
+
     // WidgetImage is a image widget of size 256x125 at position -100,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
 
     NotifyApi * notifier = NULL;
 
@@ -119,8 +129,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini;
+
     // WidgetImage is a image widget of size 256x125 at position 700,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
 
     NotifyApi * notifier = NULL;
 
@@ -146,8 +158,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini;
+
     // WidgetImage is a image widget of size 256x125 at position -100,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
 
     NotifyApi * notifier = NULL;
 
@@ -173,8 +187,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini;
+
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
 
     NotifyApi * notifier = NULL;
 
@@ -200,8 +216,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini;
+
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
 
     NotifyApi * notifier = NULL;
 
@@ -227,8 +245,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini;
+
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
 
     NotifyApi * notifier = NULL;
 
@@ -297,8 +317,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 // {
 //     TestDraw drawable(800, 600);
 
+//     Inifile ini;
+
 //     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-//     WidgetScreen parent(drawable, 800, 600, NULL);
+//     WidgetScreen parent(drawable, 800, 600, ini.font, NULL);
 
 //     NotifyApi * notifier = NULL;
 

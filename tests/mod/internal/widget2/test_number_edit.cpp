@@ -24,15 +24,15 @@
 #define BOOST_TEST_MODULE TestWidgetNumberEdit
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 
+#include "config.hpp"
 #include "internal/widget2/number_edit.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
@@ -56,13 +56,16 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
             this->event = event;
         }
     } notifier;
-    WidgetScreen parent(drawable, 800, 600);
+
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetNumberEdit wnumber_edit(drawable, x, y, cx, parent, &notifier, "123456", 0, GREEN, RED, RED);
+    WidgetNumberEdit wnumber_edit(drawable, x, y, cx, parent, &notifier, "123456", 0, GREEN, RED, RED, ini.font);
 
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
     //drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e1.png");

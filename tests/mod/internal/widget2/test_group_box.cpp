@@ -23,18 +23,18 @@
 #define BOOST_TEST_MODULE TestWidgetGroupBox
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 //#define LOGPRINT
 
+#include "config.hpp"
 #include "internal/widget2/flat_button.hpp"
 #include "internal/widget2/group_box.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
-
-#ifndef FIXTURES_PATH
-#define FIXTURES_PATH
-#endif
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "./"
@@ -43,8 +43,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
 
     NotifyApi * notifier = NULL;
     int         fg_color = RED;
@@ -59,14 +61,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
          "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
          "these possibilities (and others) are supported in RDPGlyphIndex")
     WidgetGroupBox wgroupbox( drawable, x, y, cx, cy, parent, notifier, "Group 1", group_id
-                            , fg_color, bg_color);
+                            , fg_color, bg_color, ini.font);
 
     bool auto_resize = true;
     int  focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;
     int  ytext       = 1;
     WidgetFlatButton wbutton(drawable, 10, 20, wgroupbox, notifier, "Button 1",
-                             auto_resize, group_id, fg_color, bg_color, focuscolor,
+                             auto_resize, group_id, fg_color, bg_color, focuscolor, ini.font,
                              xtext, ytext);
 
     wgroupbox.add_widget(&wbutton);

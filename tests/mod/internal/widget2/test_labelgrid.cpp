@@ -27,14 +27,11 @@
 #define LOGNULL
 //#define LOGPRINT
 
+#include "config.hpp"
 #include "internal/widget2/grid.hpp"
 #include "internal/widget2/labelgrid.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "./"
@@ -45,8 +42,10 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int id = 0;
     int16_t x = 10;
@@ -61,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     WidgetLabelGrid wgrid(drawable, Rect(x, y, 640, 480), parent, notifier,
                           line_number, column_number,
                           PALE_BLUE, BLACK, LIGHT_BLUE, BLACK,
-                          WINBLUE, WHITE, MEDIUM_BLUE, WHITE,
+                          WINBLUE, WHITE, MEDIUM_BLUE, WHITE, ini.font,
                           grid_border, id);
 
     const char * texts0[] = { "target_group", "target", "protocol", "timeframe" };
@@ -110,6 +109,4 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     //                "\x8e\x6d\x99\x64\x4e\x3c\x9c\x7b\xb6\xca")){
     //     BOOST_CHECK_MESSAGE(false, message);
     // }
-
-
 }

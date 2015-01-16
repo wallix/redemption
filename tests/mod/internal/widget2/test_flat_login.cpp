@@ -24,13 +24,12 @@
 #define BOOST_TEST_MODULE TestFlatLogin
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 
-#undef FIXTURES_PATH
-#define FIXTURES_PATH "./tests/fixtures"
-#undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
-
+#include "config.hpp"
 #include "internal/widget2/flat_login.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
@@ -43,15 +42,13 @@
 BOOST_AUTO_TEST_CASE(TraceFlatLogin)
 {
     TestDraw drawable(800, 600);
-    // TestDraw drawable(1280, 1024);
+
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
-    // WidgetScreen parent(drawable, 1280, 1024);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int id = 0;
-
-    Inifile ini;
 
     FlatLogin flat_login(drawable, parent.cx(), parent.cy(), parent, notifier, "test1",
                          false, id, "rec", "rec", "Login", "Password", ini);
@@ -67,18 +64,17 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
 {
     TestDraw drawable(800, 600);
 
-    // FlatLogin is a flat_login widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    Inifile ini;
+    // FlatLogin is a flat_login widget of size 100x20 at position 10,100 in it's parent context
+    WidgetScreen parent(drawable, 800, 600, ini.font);
+    NotifyApi * notifier = NULL;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test2",
                          false, 0, 0, 0, "Login", "Password", ini);
@@ -118,10 +114,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
         }
     } notifier;
 
-    // FlatLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    Inifile ini;
+    // FlatLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
+    WidgetScreen parent(drawable, 800, 600, ini.font);
+
     FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test3",
                          false, 0, 0, 0, "Login", "Password", ini);
 
@@ -165,13 +162,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // FlatLogin is a flat_login widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
 
-    Inifile ini;
     ini.translation.help_message.set_from_cstr("");
-
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test4",
                          false, 0, 0, 0, "Login", "Password", ini);
@@ -201,18 +198,17 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
 {
     TestDraw drawable(800, 600);
 
-    // FlatLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    Inifile ini;
+    // FlatLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
+    WidgetScreen parent(drawable, 800, 600, ini.font);
+    NotifyApi * notifier = NULL;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
                          false, 0, 0, 0, "Login", "Password", ini);
@@ -237,11 +233,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // FlatLogin is a flat_login widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
 
-    Inifile ini;
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
                          false, 0, 0, 0, "Login", "Password", ini);
 
@@ -266,7 +263,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
 {
     TestDraw drawable(800, 600);
 
-    WidgetScreen parent(drawable, 800, 600);
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     struct Notify : NotifyApi {
         Widget2* sender;
         notify_event_t event;
@@ -282,8 +281,6 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
             this->event = event;
         }
     } notifier;
-
-    Inifile ini;
 
     FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test6",
                          false, 0, 0, 0, "Login", "Password", ini);

@@ -24,15 +24,15 @@
 #define BOOST_TEST_MODULE TestWidgetFlatButton
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 
+#include "config.hpp"
 #include "internal/widget2/flat_button.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
@@ -43,8 +43,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -56,11 +58,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test1", auto_resize, id, fg_color, bg_color, fc_color, xtext, ytext);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test1", auto_resize, id,
+                             fg_color, bg_color, fc_color, ini.font, xtext, ytext);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0, 0, wbutton.cx(), wbutton.cy()));
-
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button.png");
 
@@ -77,8 +79,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetFlatButton is a button widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -88,7 +92,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color, fc_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test2", auto_resize, id,
+                             fg_color, bg_color, fc_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -112,8 +117,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton3)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetFlatButton is a button widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -123,7 +130,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color, fc_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test3", auto_resize, id,
+                             fg_color, bg_color, fc_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -147,8 +155,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton4)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetFlatButton is a button widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -158,7 +168,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color, fc_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test4", auto_resize, id,
+                             fg_color, bg_color, fc_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -182,8 +193,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton5)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetFlatButton is a button widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -193,7 +206,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color, fc_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test5", auto_resize, id,
+                             fg_color, bg_color, fc_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -217,8 +231,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton6)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetFlatButton is a button widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -228,7 +244,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, fc_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id,
+                             fg_color, bg_color, fc_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -252,8 +269,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetFlatButton is a button widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -263,7 +282,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, fc_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id,
+                             fg_color, bg_color, fc_color, ini.font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wbutton.rdp_input_invalidate(Rect(20 + wbutton.dx(),
@@ -287,8 +307,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetFlatButton is a button widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -298,7 +320,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, fc_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id,
+                             fg_color, bg_color, fc_color, ini.font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wbutton.rdp_input_invalidate(Rect(20 + wbutton.dx(),
@@ -321,7 +344,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 {
     TestDraw drawable(800, 600);
 
-    WidgetScreen parent(drawable, 800, 600);
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -333,7 +358,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, fc_color, xtext, ytext);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id,
+                             fg_color, bg_color, fc_color, ini.font, xtext, ytext);
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 
@@ -419,8 +445,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonEvent)
     int16_t x = 0;
     int16_t y = 0;
 
+    Inifile ini;
+
     WidgetFlatButton wbutton(drawable, x, y, parent, &notifier, "", auto_resize, 0, WHITE,
-                             DARK_BLUE_BIS, WINBLUE);
+                             DARK_BLUE_BIS, WINBLUE, ini.font);
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, 0);
     BOOST_CHECK(widget_for_receive_event.sender == 0);
@@ -480,24 +508,26 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetFlatButton is a button widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
 
     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 
     WidgetFlatButton wbutton1(drawable, 0,0, wcomposite, notifier,
-                              "abababab", true, 0, YELLOW, BLACK, WINBLUE);
+                              "abababab", true, 0, YELLOW, BLACK, WINBLUE, ini.font);
     WidgetFlatButton wbutton2(drawable, 0,100, wcomposite, notifier,
-                              "ggghdgh", true, 0, WHITE, RED, WINBLUE);
+                              "ggghdgh", true, 0, WHITE, RED, WINBLUE, ini.font);
     WidgetFlatButton wbutton3(drawable, 100,100, wcomposite, notifier,
-                              "lldlslql", true, 0, BLUE, RED, WINBLUE);
+                              "lldlslql", true, 0, BLUE, RED, WINBLUE, ini.font);
     WidgetFlatButton wbutton4(drawable, 300,300, wcomposite, notifier,
-                              "LLLLMLLM", true, 0, PINK, DARK_GREEN, WINBLUE);
+                              "LLLLMLLM", true, 0, PINK, DARK_GREEN, WINBLUE, ini.font);
     WidgetFlatButton wbutton5(drawable, 700,-10, wcomposite, notifier,
-                              "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE, WINBLUE);
+                              "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE, WINBLUE, ini.font);
     WidgetFlatButton wbutton6(drawable, -10,550, wcomposite, notifier,
-                              "xxwwp", true, 0, ANTHRACITE, PALE_GREEN, WINBLUE);
+                              "xxwwp", true, 0, ANTHRACITE, PALE_GREEN, WINBLUE, ini.font);
 
     wcomposite.add_widget(&wbutton1);
     wcomposite.add_widget(&wbutton2);
@@ -536,12 +566,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
     wcomposite.clear();
 }
 
-
 BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 {
     TestDraw drawable(70, 40);
 
-    WidgetScreen parent(drawable, 800, 600);
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -553,7 +584,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test7", auto_resize, id, fg_color, bg_color, fc_color, xtext, ytext);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test7", auto_resize, id,
+                             fg_color, bg_color, fc_color, ini.font, xtext, ytext);
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 
@@ -611,4 +643,3 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
-

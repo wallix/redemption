@@ -540,15 +540,15 @@ public:
     }
 
     // for testing purposes
-    void text_metrics(const char * text, int & width, int & height, const Font & font)
+    void text_metrics(Font const & font, const char * text, int & width, int & height)
     {
         ::text_metrics(font, text, width, height);
     }
 
     // for testing purposes
-    void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip, Font& font)
+    void server_draw_text(Font const & font, int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor,
+                          const Rect& clip)
     {
-        TODO("Merge common code with Front::server_draw_text()");
         if (text[0] != 0) {
             Rect screen_rect = clip.intersect(this->drawable.width(), this->drawable.height());
             if (screen_rect.isempty()){
