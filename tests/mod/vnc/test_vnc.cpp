@@ -27,6 +27,7 @@
 
 #include "font.hpp"
 #include "vnc/vnc.hpp"
+#include "test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
 {
@@ -55,4 +56,27 @@ BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
                             "\xFF\xFF\xFF\x11",
                             20));
     }
+}
+
+
+BOOST_AUTO_TEST_CASE(TestVncMouse)
+{
+    char data[] =
+        "\x05\x00\x00\x0a\x00\x0a"                          // move 10, 10
+        "\x05\x08\x00\x0a\x00\x0a\x05\x00\x00\x0a\x00\x0a"  // scrool up
+        "\x05\x01\x00\x0a\x00\x0a"                          // up left click
+        "\x05\x03\x00\x0a\x00\x0a"                          // up right click
+        "\x05\x02\x00\x0a\x00\x0a"                          // down left click
+        "\x05\x02\x00\x0f\x00\x11"                          // move 15, 17
+        "\x05\x00\x00\x0f\x00\x12"                          // down right click + move 15, 18
+    ;
+    CheckTransport t(data, sizeof(data)-1);
+    mod_vnc::Mouse mouse;
+    mouse.move(t, 10, 10);
+    mouse.scroll(t, 8);
+    mouse.click(t, 10, 10, 1, 1);
+    mouse.click(t, 10, 10, 2, 1);
+    mouse.click(t, 10, 10, 1, 0);
+    mouse.move(t, 15, 17);
+    mouse.click(t, 15, 18, 2, 0);
 }
