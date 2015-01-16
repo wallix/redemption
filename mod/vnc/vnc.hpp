@@ -433,7 +433,7 @@ public:
 
 
     //==============================================================================================================
-    virtual void rdp_input_clip_data(uint8_t * data, uint32_t length) {
+    void rdp_input_clip_data(uint8_t * data, uint32_t length) {
     //==============================================================================================================
         if (this->state != UP_AND_RUNNING) {
             return;
@@ -446,7 +446,7 @@ public:
         stream.out_uint32_be(length);             // length
         stream.out_copy_bytes(data, length);      // text
 
-        this->t.send(stream.get_data(), (length + 8)); // message-type(1) + padding(3) + length(4)
+        this->t.send(stream.get_data(), (length + 8));
 
         this->event.set(1000);
     } // rdp_input_clip_data
