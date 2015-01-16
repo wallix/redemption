@@ -115,7 +115,7 @@ public:
         std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f,
         bool call_f = true
     )
-    : mod_api(mod.get_front_width(), mod.get_front_height(), mod.font)
+    : mod_api(mod.get_front_width(), mod.get_front_height())
     , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(rect))
     , mod(mod)
     , front(front)
@@ -139,7 +139,7 @@ private:
     };
 public:
     mod_osd(FrontAPI & front, mod_api & mod, const Bitmap& bmp, int x = 0, int y = 0)
-    : mod_api(mod.get_front_width(), mod.get_front_height(), mod.font)
+    : mod_api(mod.get_front_width(), mod.get_front_height())
     , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(Rect(x,y,bmp.cx(),bmp.cy())))
     , mod(mod)
     , front(front)
@@ -419,24 +419,6 @@ public:
         this->mod.send_to_front_channel(mod_channel_name, data, length, chunk_size, flags);
     }
 
-/*
-    virtual void set_row(size_t rownum, const uint8_t * data)
-    {
-        this->mod.set_row(rownum, data);
-    }
-
-    virtual void input(const timeval & now, Stream & input_data_32)
-    {
-        this->mod.input(now, input_data_32);
-    }
-
-    virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
-                          bool ignore_frame_in_timeval)
-    {
-        this->mod.snapshot(now, mouse_x, mouse_y, ignore_frame_in_timeval);
-    }
-*/
-
     virtual void server_set_pointer(const Pointer & cursor)
     {
         this->mod.server_set_pointer(cursor);
@@ -446,19 +428,6 @@ public:
     {
         this->mod.flush();
     }
-
-/*
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text,
-                                  uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-    {
-        this->mod.server_draw_text(x, y, text, fgcolor, bgcolor, clip);
-    }
-
-    virtual void text_metrics(const char * text, int & width, int & height)
-    {
-        this->mod.text_metrics(text, width, height);
-    }
-*/
 
     virtual void send_to_mod_channel(const char * const front_channel_name, Stream & chunk, size_t length, uint32_t flags)
     {

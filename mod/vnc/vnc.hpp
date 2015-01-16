@@ -184,7 +184,8 @@ public:
                 "Redemption " VERSION,
                 0, 0, ini.theme,
                 TR("Authentification required", ini),
-                TR("VNC password", ini))
+                TR("VNC password", ini),
+                ini.font)
     , mod_name{0}
     , palette(nullptr)
     , vnc_desktop(0)

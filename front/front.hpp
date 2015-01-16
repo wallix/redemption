@@ -93,7 +93,6 @@
 
 #include "auth_api.hpp"
 
-#include "text_metrics.hpp"
 #include "keymap2.hpp"
 
 #include "RDP/mppc_40.hpp"
@@ -405,92 +404,16 @@ public:
         }
     }
 
-    virtual void text_metrics(const char * text, int & width, int & height)
+    virtual void text_metrics(Font const & font, const char * text, int & width, int & height)
     {
         REDASSERT(false);
     }
-/*
-        ::text_metrics(this->font, text, width, height,
-                       [](uint32_t charnum) {
-                           LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                       }
-        );
-    }
-*/
-    TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+
+    virtual void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor,
+                                  uint32_t bgcolor, const Rect & clip)
     {
         REDASSERT(false);
     }
-/*
-        static GlyphCache mod_glyph_cache;
-
-        this->send_global_palette();
-
-        UTF8toUnicodeIterator unicode_iter(text);
-        while (*unicode_iter) {
-            int total_width = 0;
-            int total_height = 0;
-            uint8_t data[256];
-            auto data_begin = std::begin(data);
-            const auto data_end = std::end(data)-2;
-
-            const int cacheId = 7;
-            int distance_from_previous_fragment = 0;
-            while (data_begin != data_end) {
-                const uint32_t charnum = *unicode_iter;
-                if (!charnum) {
-                    break ;
-                }
-                ++unicode_iter;
-
-                int cacheIndex = 0;
-                FontChar & font_item = this->font.glyph_defined(charnum) && this->font.font_items[charnum]
-                ? this->font.font_items[charnum]
-                : [&]() {
-                    LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                    return std::ref(this->font.font_items[static_cast<unsigned>('?')]);
-                }().get();
-                TODO(" avoid passing parameters by reference to get results")
-                const GlyphCache::t_glyph_cache_result cache_result =
-                    mod_glyph_cache.add_glyph(font_item, cacheId, cacheIndex);
-(void)cache_result;
-
-                *data_begin = cacheIndex;
-                ++data_begin;
-                *data_begin = distance_from_previous_fragment;
-                ++data_begin;
-                distance_from_previous_fragment = font_item.incby;
-                total_width += font_item.incby;
-                total_height = std::max(total_height, font_item.height);
-            }
-
-            const Rect bk(x, y, total_width + 1, total_height + 1);
-
-            RDPGlyphIndex glyphindex(
-                cacheId,            // cache_id
-                0x03,               // fl_accel
-                0x0,                // ui_charinc
-                1,                  // f_op_redundant,
-                fgcolor,            // BackColor (text color)
-                bgcolor,            // ForeColor (color of the opaque rectangle)
-                bk,                 // bk
-                bk,                 // op
-                // brush
-                RDPBrush(0, 0, 3, 0xaa,
-                    (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
-                x,                  // glyph_x
-                y + total_height,   // glyph_y
-                data_begin - data,  // data_len in bytes
-                data                // data
-            );
-
-            x += total_width;
-
-            this->draw(glyphindex, clip, &mod_glyph_cache);
-        }
-    }
-*/
 
     // ===========================================================================
     void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)

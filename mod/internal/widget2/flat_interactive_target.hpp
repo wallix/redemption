@@ -65,29 +65,30 @@ public:
                           const char * device_str,
                           const char * text_login,
                           const char * login_str,
-                          const char * text_password)
+                          const char * text_password,
+                          Font const & font)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , caption_label(drawable, 0, 0, *this, NULL, caption, true, -13,
-                        theme.global.fgcolor, theme.global.bgcolor)
+                        theme.global.fgcolor, theme.global.bgcolor, font)
         , device_label(drawable, 0, 0, *this, NULL, text_device, true, -13,
-                      theme.global.fgcolor, theme.global.bgcolor)
+                      theme.global.fgcolor, theme.global.bgcolor, font)
         , device(drawable, 0, 0, *this, NULL, device_str, true, -13,
-                 theme.global.fgcolor, theme.global.bgcolor)
+                 theme.global.fgcolor, theme.global.bgcolor, font)
         , device_edit(drawable, 0, 0, 400, *this, this, NULL, -14,
                       theme.edit.fgcolor, theme.edit.bgcolor,
-                      theme.edit.focus_color, -1u, 1, 1)
+                      theme.edit.focus_color, font, -1u, 1, 1)
         , login_label(drawable, 0, 0, *this, NULL, text_login, true, -13,
-                      theme.global.fgcolor, theme.global.bgcolor)
+                      theme.global.fgcolor, theme.global.bgcolor, font)
         , login(drawable, 0, 0, *this, NULL, login_str, true, -13,
-                theme.global.fgcolor, theme.global.bgcolor)
+                theme.global.fgcolor, theme.global.bgcolor, font)
         , login_edit(drawable, 0, 0, 400, *this, this, NULL, -14,
                      theme.edit.fgcolor, theme.edit.bgcolor,
-                     theme.edit.focus_color, -1u, 1, 1)
+                     theme.edit.focus_color, font, -1u, 1, 1)
         , password_label(drawable, 0, 0, *this, NULL, text_password, true, -13,
-                         theme.global.fgcolor, theme.global.bgcolor)
+                         theme.global.fgcolor, theme.global.bgcolor, font)
         , password_edit(drawable, 0, 0, 400, *this, this, NULL, -14,
                         theme.edit.fgcolor, theme.edit.bgcolor,
-                        theme.edit.focus_color, -1u, 1, 1, true)
+                        theme.edit.focus_color, font, -1u, 1, 1, true)
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
                     theme.global.separator_color)
         , last_interactive((ask_login || ask_password)?&this->password_edit:&this->device_edit)

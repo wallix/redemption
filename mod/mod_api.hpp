@@ -94,14 +94,10 @@ protected:
     uint16_t front_height;
 
 public:
-    Font const & font;
-
-public:
-    mod_api(const uint16_t front_width, const uint16_t front_height, Font const & font)
+    mod_api(const uint16_t front_width, const uint16_t front_height)
     : gd(this)
     , front_width(front_width)
-    , front_height(front_height)
-    , font(font) {
+    , front_height(front_height) {
         this->event.set(0);
     }
 
@@ -112,16 +108,18 @@ public:
     uint16_t get_front_width() const { return this->front_width; }
     uint16_t get_front_height() const { return this->front_height; }
 
-    virtual void text_metrics(const char * text, int & width, int & height)
+    virtual void text_metrics(Font const & font, const char * text, int & width, int & height)
     {
-        ::text_metrics(this->font, text, width, height,
-                       [](uint32_t charnum) {
-                           LOG(LOG_WARNING, "mod_api::text_metrics() - character not defined >0x%02x<", charnum);
-                       }
+        ::text_metrics(font, text, width, height,
+            [](uint32_t charnum) {
+                LOG(LOG_WARNING, "mod_api::text_metrics() - character not defined >0x%02x<", charnum);
+            }
         );
     }
 
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    TODO("implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
+    virtual void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text,
+                                  uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         static GlyphCache mod_glyph_cache;
 
@@ -143,11 +141,11 @@ public:
                 ++unicode_iter;
 
                 int cacheIndex = 0;
-                FontChar const & font_item = this->font.glyph_defined(charnum) && this->font.font_items[charnum]
-                ? this->font.font_items[charnum]
+                FontChar const & font_item = font.glyph_defined(charnum) && font.font_items[charnum]
+                ? font.font_items[charnum]
                 : [&]() {
-                    LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                    return std::ref(this->font.font_items[static_cast<unsigned>('?')]);
+                    LOG(LOG_WARNING, "mod_api::server_draw_text() - character not defined >0x%02x<", charnum);
+                    return std::ref(font.font_items[static_cast<unsigned>('?')]);
                 }().get();
                 TODO(" avoid passing parameters by reference to get results")
                 const GlyphCache::t_glyph_cache_result cache_result =

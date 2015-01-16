@@ -24,17 +24,15 @@
 #define BOOST_TEST_MODULE TestFlatWabClose
 #include <boost/test/auto_unit_test.hpp>
 
-#undef FIXTURES_PATH
-#define FIXTURES_PATH "./tests/fixtures"
 #undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
+#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 
+#include "config.hpp"
 #include "internal/widget2/flat_wab_close.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
@@ -43,20 +41,14 @@
 
 BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
 {
-    BOOST_CHECK(1);
-
     TestDraw drawable(800, 600);
 
-    BOOST_CHECK(1);
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int id = 0;
-
-    BOOST_CHECK(1);
-
-    Inifile ini;
 
     ini.translation.connection_closed.set_from_cstr("Connection closed");
     ini.translation.button_close.set_from_cstr("Close");
@@ -65,21 +57,17 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
     ini.translation.diagnostic.set_from_cstr("Diagnostic");
 
     try {
-
         FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def", id, "rec", "rec",
                                     false, ini);
 
-    // ask to widget to redraw at it's current position
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
+        // ask to widget to redraw at it's current position
+        flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close.png");
-
+        // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close.png");
     } catch (Error & e) {
         LOG(LOG_INFO, "e=%u", e.id);
     };
-
-    BOOST_CHECK(1);
 
     char message[1024];
 
@@ -88,18 +76,18 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
 
-    Inifile ini;
     ini.translation.connection_closed.set_from_cstr("Connection closed");
     ini.translation.button_close.set_from_cstr("Close");
     ini.translation.username.set_from_cstr("Username");
@@ -107,24 +95,24 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
     ini.translation.diagnostic.set_from_cstr("Diagnostic");
 
     try {
-    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
-        "Lorem ipsum dolor sit amet, consectetur<br>"
-        "adipiscing elit. Nam purus lacus, luctus sit<br>"
-        "amet suscipit vel, posuere quis turpis. Sed<br>"
-        "venenatis rutrum sem ac posuere. Phasellus<br>"
-        "feugiat dui eu mauris adipiscing sodales.<br>"
-        "Mauris rutrum molestie purus, in tempor lacus<br>"
-        "tincidunt et. Sed eu ligula mauris, a rutrum<br>"
-        "est. Vestibulum in nunc vel massa condimentum<br>"
-        "iaculis nec in arcu. Pellentesque accumsan,<br>"
-        "quam sit amet aliquam mattis, odio purus<br>"
-        "porttitor tortor, sit amet tincidunt odio<br>"
-        "erat ut ligula. Fusce sit amet mauris neque.<br>"
-        "Sed orci augue, luctus in ornare sed,<br>"
-        "adipiscing et arcu.",
-        0, 0, 0, false, ini);
+        FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
+            "Lorem ipsum dolor sit amet, consectetur<br>"
+            "adipiscing elit. Nam purus lacus, luctus sit<br>"
+            "amet suscipit vel, posuere quis turpis. Sed<br>"
+            "venenatis rutrum sem ac posuere. Phasellus<br>"
+            "feugiat dui eu mauris adipiscing sodales.<br>"
+            "Mauris rutrum molestie purus, in tempor lacus<br>"
+            "tincidunt et. Sed eu ligula mauris, a rutrum<br>"
+            "est. Vestibulum in nunc vel massa condimentum<br>"
+            "iaculis nec in arcu. Pellentesque accumsan,<br>"
+            "quam sit amet aliquam mattis, odio purus<br>"
+            "porttitor tortor, sit amet tincidunt odio<br>"
+            "erat ut ligula. Fusce sit amet mauris neque.<br>"
+            "Sed orci augue, luctus in ornare sed,<br>"
+            "adipiscing et arcu.",
+            0, 0, 0, false, ini);
 
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
+        flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
     }
     catch(Error & e) {
         LOG(LOG_INFO, "error.id=%d", e.id);
@@ -142,18 +130,18 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
 
-    Inifile ini;
     ini.translation.connection_closed.set_from_cstr("Connection closed");
     ini.translation.button_close.set_from_cstr("Close");
     ini.translation.username.set_from_cstr("Username");
@@ -178,16 +166,16 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
     }
 }
 
-
 BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
 
-    Inifile ini;
     ini.translation.connection_closed.set_from_cstr("Connection closed");
     ini.translation.button_close.set_from_cstr("Close");
     ini.translation.username.set_from_cstr("Username");
@@ -210,18 +198,17 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 {
     TestDraw drawable(800, 600);
 
-    // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    Inifile ini;
+    // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,7 in it's parent context
+    WidgetScreen parent(drawable, 800, 600, ini.font);
+    NotifyApi * notifier = NULL;
 
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def",
@@ -242,7 +229,6 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
@@ -265,16 +251,16 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
     TestDraw drawable(800, 600);
 
-    // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    Inifile ini;
+    // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
+    WidgetScreen parent(drawable, 800, 600, ini.font);
+
     ini.translation.connection_closed.set_from_cstr("Connection closed");
     ini.translation.button_close.set_from_cstr("Close");
     ini.translation.username.set_from_cstr("Username");
     ini.translation.target.set_from_cstr("Target");
     ini.translation.diagnostic.set_from_cstr("Diagnostic");
-
 
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, &notifier,
                                 "abc<br>def", 0, "tartempion", "caufield",
@@ -329,6 +315,4 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     flat_wab_close.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-
 }

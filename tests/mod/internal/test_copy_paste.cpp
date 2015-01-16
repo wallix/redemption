@@ -26,22 +26,22 @@
 
 #include <string>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 
+#include "config.hpp"
 #include "internal/copy_paste.hpp"
 #include "internal/widget2/edit.hpp"
 #include "internal/widget2/screen.hpp"
 #include "../../front/fake_front.hpp"
 #include "check_sig.hpp"
 
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
-
 struct CopyPasteFront : FakeFront
 {
     CopyPasteFront(ClientInfo & info, CopyPaste & copy_paste)
-    : FakeFront(info, 0, FIXTURES_PATH "/dejavu-sans-10.fv1")
+    : FakeFront(info, 0)
     , copy_paste(copy_paste)
     {
         CHANNELS::ChannelDef def;
@@ -129,8 +129,11 @@ BOOST_AUTO_TEST_CASE(TestPaste)
     keymap.init_layout(info.keylayout);
 
     CopyPasteProcess notifier(copy_paste);
-    WidgetScreen parent(front, info.width, info.height);
-    WidgetEdit edit(front, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED);
+
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    WidgetScreen parent(front, info.width, info.height, ini.font);
+    WidgetEdit edit(front, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, ini.font);
 
     BOOST_REQUIRE(copy_paste.ready(front));
 

@@ -226,7 +226,7 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : mod_api(info.width - (info.width % 4), info.height, mod_rdp_params.font)
+        : mod_api(info.width - (info.width % 4), info.height)
         , front(front)
         , authorization_channels(make_authorization_channels_with_rdp_params(mod_rdp_params))
         , use_rdp5(1)
@@ -5171,18 +5171,6 @@ public:
     virtual void server_set_pointer(const Pointer & cursor) {
         this->front.server_set_pointer(cursor);
     }
-
-/*
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-    {
-        this->front.server_draw_text(x, y, text, fgcolor, bgcolor, clip);
-    }
-
-    virtual void text_metrics(const char * text, int & width, int & height)
-    {
-        this->front.text_metrics(text, width, height);
-    }
-*/
 
     virtual void draw(const RDPColCache & cmd)
     {

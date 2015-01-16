@@ -82,28 +82,28 @@ enum {
         , field_duration(TR("duration", ini))
         , warning_buffer()
         , warning_msg(drawable, 10, 0, *this, NULL, "", true, group_id,
-                  theme.global.fgcolor, theme.global.bgcolor)
+                  theme.global.fgcolor, theme.global.bgcolor, ini.font)
         , comment_label(drawable, 0, 10, *this, NULL, TR("comment", ini), true,
-                        group_id, theme.global.fgcolor, theme.global.bgcolor)
+                        group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
         , comment_edit(drawable, this->comment_label.lx() + 20, 10, 300, *this, this,
                        0, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
-                       theme.edit.focus_color, -1, 1, 1)
+                       theme.edit.focus_color, ini.font, -1, 1, 1)
         , ticket_label(drawable, 0, 40, *this, NULL, TR("ticket", ini), true,
-                       group_id, theme.global.fgcolor, theme.global.bgcolor)
+                       group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
         , ticket_edit(drawable, this->ticket_label.lx() + 20, 40, 300, *this, this,
                       0, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
-                      theme.edit.focus_color, -1, 1, 1)
+                      theme.edit.focus_color, ini.font, -1, 1, 1)
         , duration_label(drawable, 0, 70, *this, NULL, TR("duration", ini), true,
-                         group_id, theme.global.fgcolor, theme.global.bgcolor)
+                         group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
         , duration_edit(drawable, this->duration_label.lx() + 20, 70, 300, *this, this,
                         0, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
-                        theme.edit.focus_color, -1, 1, 1)
+                        theme.edit.focus_color, ini.font, -1, 1, 1)
         , duration_format(drawable, 0, 100, *this, NULL, TR("note_duration_format", ini),
-                          true, group_id, theme.global.fgcolor, theme.global.bgcolor)
+                          true, group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
         , notes(drawable, 0, 120, *this, NULL, TR("note_required", ini), true,
-                group_id, theme.global.fgcolor, theme.global.bgcolor)
+                group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
         , confirm(drawable, 0, 0, *this, this, TR("confirm", ini), true, group_id,
-                  theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
+                  theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, ini.font,
                   6, 2)
         , flags(flags)
     {

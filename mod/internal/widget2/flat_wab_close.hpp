@@ -71,27 +71,27 @@ public:
           ini.theme.global.logo ? ini.theme.global.logo_path :
           SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
     , username_label(drawable, (width - 600) / 2, 0, *this, NULL, "Username:", true, -11,
-                     ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+                     ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
     , username_label_value(drawable, 0, 0, *this, NULL, username, true, -11,
-                           ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+                           ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
     , target_label(drawable, (width - 600) / 2, 0, *this, NULL, "Target:", true, -12,
-                   ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+                   ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
     , target_label_value(drawable, 0, 0, *this, NULL, target, true, -12,
-                         ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+                         ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
     , connection_closed_label(drawable, 0, 0, *this, NULL, TR("connection_closed", ini),
                               true, -13, ini.theme.global.fgcolor,
-                              ini.theme.global.bgcolor)
+                              ini.theme.global.bgcolor, ini.font)
     , cancel(drawable, 0, 0, *this, this, TR("close", ini), true, -14,
              ini.theme.global.fgcolor, ini.theme.global.bgcolor,
-             ini.theme.global.focus_color, 6, 2)
+             ini.theme.global.focus_color, ini.font, 6, 2)
     , diagnostic(drawable, (width - 600) / 2, 0, *this, NULL, "Diagnostic:", true, -15,
-                 ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+                 ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
     , diagnostic_lines(drawable, 0, 0, *this, NULL, diagnostic_text, true, -16,
-                       ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+                       ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
     , timeleft_label(drawable, (width - 600) / 2, 0, *this, NULL, "Time left:", true, -12,
-                     ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+                     ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
     , timeleft_value(drawable, 0, 0, *this, NULL, NULL, true, -12,
-                     ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+                     ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
     , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
                 ini.theme.global.separator_color)
     , prev_time(0)

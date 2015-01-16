@@ -89,7 +89,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                                , "10.10.47.86"
                                , "192.168.1.100"
                                , 7
-                               , ini.font
                                , 511
                                );
     mod_rdp_params.enable_tls                      = false;

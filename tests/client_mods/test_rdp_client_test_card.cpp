@@ -34,6 +34,7 @@
 //#define LOGPRINT
 
 #include "error.hpp"
+#include "font.hpp"
 #include "internal/test_card_mod.hpp"
 
 #include "../front/fake_front.hpp"

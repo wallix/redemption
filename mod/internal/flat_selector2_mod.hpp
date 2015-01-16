@@ -30,6 +30,7 @@
 class FlatSelector2Mod : public InternalMod, public NotifyApi
 {
     WidgetSelectorFlat2 selector;
+
     int current_page;
     int number_page;
 
@@ -67,7 +68,7 @@ public:
 
         uint16_t available_height = (this->selector.first_page.dy() - 10) - this->selector.selector_lines.dy();
         int w, h = 0;
-        this->text_metrics("Lp", w, h);
+        this->text_metrics(this->ini.font, "Lp", w, h);
         uint16_t line_height = h + 2 * this->selector.selector_lines.border;
 
         this->ini.context.selector_lines_per_page.set(available_height / line_height);

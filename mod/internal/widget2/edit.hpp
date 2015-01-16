@@ -41,13 +41,14 @@ public:
     int focus_color;
     bool drawall;
     bool draw_border_focus;
+    Font const & font;
 
     WidgetEdit(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
                Widget2 & parent, NotifyApi* notifier, const char * text,
-               int group_id, int fgcolor, int bgcolor, int focus_color,
+               int group_id, int fgcolor, int bgcolor, int focus_color, Font const & font,
                std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
     : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, group_id)
-    , label(drawable, 0, 0, *this, 0, text, false, 0, fgcolor, bgcolor, xtext, ytext)
+    , label(drawable, 0, 0, *this, 0, text, false, 0, fgcolor, bgcolor, font, xtext, ytext)
     , w_text(0)
     , h_text(0)
     , cursor_color(0x888888)
@@ -55,6 +56,7 @@ public:
     , focus_color(focus_color)
     , drawall(false)
     , draw_border_focus(true)
+    , font(font)
     {
         if (text) {
             this->buffer_size = strlen(text);
@@ -64,11 +66,11 @@ public:
             this->cursor_px_pos = 0;
             char c = this->label.buffer[this->edit_buffer_pos];
             this->label.buffer[this->edit_buffer_pos] = 0;
-            this->drawable.text_metrics(this->label.buffer, this->w_text, this->h_text);
+            this->drawable.text_metrics(this->font, this->label.buffer, this->w_text, this->h_text);
             this->cursor_px_pos = this->w_text;
             this->label.buffer[this->edit_buffer_pos] = c;
             int w, h;
-            this->drawable.text_metrics(&this->label.buffer[this->edit_buffer_pos], w, h);
+            this->drawable.text_metrics(this->font, &this->label.buffer[this->edit_buffer_pos], w, h);
             this->w_text += w;
         } else {
             this->buffer_size = 0;
@@ -79,7 +81,7 @@ public:
         }
 
         int w = 0;
-        this->drawable.text_metrics("Lp", w, this->h_text);
+        this->drawable.text_metrics(this->font, "Lp", w, this->h_text);
         this->rect.cy = this->h_text + this->label.y_text * 2;
         this->label.rect.cx = this->rect.cx;
         this->label.rect.cy = this->rect.cy;
@@ -104,7 +106,7 @@ public:
             this->buffer_size = std::min(WidgetLabel::buffer_size - 1, strlen(text));
             memcpy(this->label.buffer, text, this->buffer_size);
             this->label.buffer[this->buffer_size] = 0;
-            this->drawable.text_metrics(this->label.buffer, this->w_text, this->h_text);
+            this->drawable.text_metrics(this->font, this->label.buffer, this->w_text, this->h_text);
             if (this->label.auto_resize) {
                 this->rect.cx = this->label.x_text * 2 + this->w_text;
                 this->rect.cy = this->label.y_text * 2 + this->h_text;
@@ -137,7 +139,7 @@ public:
             }
             this->buffer_size = total_n;
             this->label.buffer[this->buffer_size] = 0;
-            this->drawable.text_metrics(this->label.buffer, this->w_text, this->h_text);
+            this->drawable.text_metrics(this->font, this->label.buffer, this->w_text, this->h_text);
             if (this->label.auto_resize) {
                 this->rect.cx = this->label.x_text * 2 + this->w_text;
                 this->rect.cy = this->label.y_text * 2 + this->h_text;
@@ -158,7 +160,7 @@ public:
                 const char c = this->label.buffer[pos];
                 this->label.buffer[pos] = 0;
                 int w, h;
-                this->drawable.text_metrics(this->label.buffer + this->edit_buffer_pos, w, h);
+                this->drawable.text_metrics(this->font, this->label.buffer + this->edit_buffer_pos, w, h);
                 this->label.buffer[pos] = c;
                 this->cursor_px_pos += w;
                 this->edit_buffer_pos += max_n;
@@ -264,7 +266,7 @@ public:
         char c = this->label.buffer[this->edit_buffer_pos + n];
         this->label.buffer[this->edit_buffer_pos + n] = 0;
         int w;
-        this->drawable.text_metrics(this->label.buffer + this->edit_buffer_pos, w, this->h_text);
+        this->drawable.text_metrics(this->font, this->label.buffer + this->edit_buffer_pos, w, this->h_text);
         this->cursor_px_pos += w;
         this->label.buffer[this->edit_buffer_pos + n] = c;
         this->edit_buffer_pos += n;
@@ -295,7 +297,7 @@ public:
         char c = this->label.buffer[this->edit_buffer_pos];
         this->label.buffer[this->edit_buffer_pos] = 0;
         int w;
-        this->drawable.text_metrics(this->label.buffer + this->edit_buffer_pos - len,
+        this->drawable.text_metrics(this->font, this->label.buffer + this->edit_buffer_pos - len,
                                     w, this->h_text);
         this->cursor_px_pos -= w;
         this->label.buffer[this->edit_buffer_pos] = c;
@@ -372,7 +374,7 @@ public:
                     char c = this->label.buffer[this->edit_buffer_pos + len];
                     this->label.buffer[this->edit_buffer_pos + len] = 0;
                     int w, h;
-                    this->drawable.text_metrics(this->label.buffer + this->edit_buffer_pos, w, h);
+                    this->drawable.text_metrics(this->font, this->label.buffer + this->edit_buffer_pos, w, h);
                     this->label.buffer[this->edit_buffer_pos + len] = c;
                     xx += w;
                     if (xx >= x) {
@@ -442,7 +444,7 @@ public:
                         char c = this->label.buffer[this->edit_buffer_pos + len];
                         this->label.buffer[this->edit_buffer_pos + len] = 0;
                         int w;
-                        this->drawable.text_metrics(this->label.buffer + this->edit_buffer_pos, w, this->h_text);
+                        this->drawable.text_metrics(this->font, this->label.buffer + this->edit_buffer_pos, w, this->h_text);
                         this->label.buffer[this->edit_buffer_pos + len] = c;
                         UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
                         this->buffer_size -= len;

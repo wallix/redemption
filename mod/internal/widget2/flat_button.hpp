@@ -37,19 +37,22 @@ public:
     int focus_color;
     bool logo;
 
+    Font const & font;
+
     WidgetFlatButton(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
                      NotifyApi* notifier, const char * text, bool auto_resize,
                      int group_id, int fgcolor, int bgcolor,
-                     int focuscolor, int xtext = 0, int ytext = 0,
+                     int focuscolor, Font const & font, int xtext = 0, int ytext = 0,
                      bool logo = false /*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
-    , label(drawable, 1, 1, *this, 0, text, auto_resize, 0, fgcolor, bgcolor, xtext, ytext)
+    , label(drawable, 1, 1, *this, 0, text, auto_resize, 0, fgcolor, bgcolor, font, xtext, ytext)
     , state(0)
     , event(NOTIFY_SUBMIT)
     , fg_color(fgcolor)
     , bg_color(bgcolor)
     , focus_color(focuscolor)
     , logo(logo)
+    , font(font)
     {
         this->rect.cx = this->label.cx() + 3;
         this->rect.cy = this->label.cy() + 3;
@@ -200,7 +203,7 @@ public:
 
     virtual Dimension get_optimal_dim() {
         int w, h;
-        this->drawable.text_metrics(this->label.buffer, w, h);
+        this->drawable.text_metrics(this->font, this->label.buffer, w, h);
         return Dimension(w + 2*this->label.x_text + 4, h + 2*this->label.y_text + 4);
     }
 };

@@ -24,15 +24,15 @@
 #define BOOST_TEST_MODULE TestWidgetLabel
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 
+#include "config.hpp"
 #include "internal/widget2/label.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
@@ -43,8 +43,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -58,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
          "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
          "these possibilities (and others) are supported in RDPGlyphIndex")
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test1", auto_resize, id, fg_color, bg_color, xtext, ytext);
+    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test1", auto_resize, id, fg_color, bg_color, ini.font, xtext, ytext);
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
@@ -80,8 +82,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -90,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
@@ -112,8 +116,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -122,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
@@ -144,8 +150,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -154,7 +162,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
@@ -176,8 +184,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -186,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
@@ -208,8 +218,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -218,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
@@ -240,8 +252,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -250,7 +264,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wlabel.rdp_input_invalidate(Rect(20 + wlabel.dx(),
@@ -272,8 +286,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -282,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, ini.font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wlabel.rdp_input_invalidate(Rect(20 + wlabel.dx(),
@@ -330,7 +346,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "", auto_resize, 0, BLACK, WHITE);
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    WidgetLabel wlabel(drawable, x, y, parent, notifier, "", auto_resize, 0, BLACK, WHITE, ini.font);
 
     wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, 0);
     BOOST_CHECK(widget_for_receive_event.sender == 0);
@@ -352,24 +370,26 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     //WidgetLabel is a label widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
 
     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 
     WidgetLabel wlabel1(drawable, 0,0, wcomposite, notifier,
-                        "abababab", true, 0, YELLOW, BLACK);
+                        "abababab", true, 0, YELLOW, BLACK, ini.font);
     WidgetLabel wlabel2(drawable, 0,100, wcomposite, notifier,
-                        "ggghdgh", true, 0, WHITE, BLUE);
+                        "ggghdgh", true, 0, WHITE, BLUE, ini.font);
     WidgetLabel wlabel3(drawable, 100,100, wcomposite, notifier,
-                        "lldlslql", true, 0, BLUE, RED);
+                        "lldlslql", true, 0, BLUE, RED, ini.font);
     WidgetLabel wlabel4(drawable, 300,300, wcomposite, notifier,
-                        "LLLLMLLM", true, 0, PINK, DARK_GREEN);
+                        "LLLLMLLM", true, 0, PINK, DARK_GREEN, ini.font);
     WidgetLabel wlabel5(drawable, 700,-10, wcomposite, notifier,
-                        "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE);
+                        "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE, ini.font);
     WidgetLabel wlabel6(drawable, -10,550, wcomposite, notifier,
-                        "xxwwp", true, 0, ANTHRACITE, PALE_GREEN);
+                        "xxwwp", true, 0, ANTHRACITE, PALE_GREEN, ini.font);
 
     wcomposite.add_widget(&wlabel1);
     wcomposite.add_widget(&wlabel2);

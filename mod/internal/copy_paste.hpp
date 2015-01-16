@@ -30,7 +30,6 @@
 #include <utility>
 #include <algorithm>
 
-
 class CopyPaste
 {
     FrontAPI * front_ = nullptr;

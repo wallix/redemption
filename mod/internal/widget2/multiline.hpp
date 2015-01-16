@@ -44,12 +44,13 @@ public:
     bool auto_resize;
     int bg_color;
     int fg_color;
+    Font const & font;
 
 public:
     WidgetMultiLine(DrawApi& drawable, int16_t x, int16_t y, Widget2& parent,
                     NotifyApi* notifier, const char * text,
                     bool auto_resize, int group_id,
-                    int fgcolor, int bgcolor,
+                    int fgcolor, int bgcolor, Font const & font,
                     int xtext = 0, int ytext = 0)
     : Widget2(drawable, Rect(x, y, 1, 1), parent, notifier, group_id)
     , x_text(xtext)
@@ -58,6 +59,7 @@ public:
     , auto_resize(auto_resize)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
+    , font(font)
     {
         this->tab_flag = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
@@ -91,7 +93,7 @@ public:
             *pbuf = '\0';
             ++pbuf;
             int h;
-            this->drawable.text_metrics(line->str, line->cx, h);
+            this->drawable.text_metrics(this->font, line->str, line->cx, h);
             if (h > this->cy_text)
                 this->cy_text = h;
             if (this->auto_resize) {
@@ -124,7 +126,7 @@ public:
         this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
         for (line_t * line = this->lines; line->str; ++line) {
             dy += this->y_text;
-            this->drawable.server_draw_text(this->x_text + this->dx(),
+            this->drawable.server_draw_text(this->font, this->x_text + this->dx(),
                                              dy,
                                              line->str,
                                              this->fg_color,

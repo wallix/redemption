@@ -24,18 +24,17 @@
 #define BOOST_TEST_MODULE TestWidgetPassword
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGNULL
 
+#include "config.hpp"
 #include "internal/widget2/password.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
-
 
 #include "fake_draw.hpp"
 
@@ -43,8 +42,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetPassword is a password widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -57,7 +58,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
     size_t password_pos = 2;
 
     WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test1", id,
-                     fg_color, bg_color, password_pos, xtext, ytext);
+                     fg_color, bg_color, 0x000000, ini.font, password_pos, xtext, ytext);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -69,8 +70,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x1a\xd7\x47\xe4\x8d\xd1\x84\x02\x6e\x6b"
-        "\xe8\x6a\x6e\xfe\xf2\xa0\x40\xd7\xab\x2a"
+        "\xc8\x1f\x45\x66\x3e\x34\x8b\x06\x3c\xb6"
+        "\xee\x82\x10\x46\x6a\x5a\x47\x18\x99\x87"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -80,8 +81,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetPassword is a password widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -90,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword2)
     int16_t y = 100;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0x000000, ini.font, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -113,8 +116,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword3)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetPassword is a password widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -123,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword3)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0x000000, ini.font, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -146,8 +151,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword4)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetPassword is a password widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -156,7 +163,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword4)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0x000000, ini.font, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -179,8 +186,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword5)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetPassword is a password widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -189,7 +198,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword5)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0x000000, ini.font, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -212,8 +221,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword6)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -222,7 +233,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword6)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0x000000, ini.font, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -245,8 +256,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -255,7 +268,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0x000000, ini.font, 0);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wpassword.rdp_input_invalidate(Rect(20 + wpassword.dx(),
@@ -278,8 +291,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetPassword is a password widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -288,7 +303,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
     int16_t y = 0;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0x000000, ini.font, 0);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wpassword.rdp_input_invalidate(Rect(20 + wpassword.dx(),
@@ -325,13 +340,15 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
         }
     } notifier;
 
-    WidgetScreen parent(drawable, 800, 600);
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "abcdef", 0, YELLOW, 0x0000FF, 0x0000FF);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "abcdef", 0, YELLOW, 0x0000FF, 0x0000FF, ini.font);
     wpassword.focus(Widget2::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e1.png");
@@ -535,24 +552,26 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
 {
     TestDraw drawable(800, 600);
 
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
     // WidgetPassword is a password widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
 
     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 
     WidgetPassword wpassword1(drawable, 0,0, 50, wcomposite, notifier,
-                        "abababab", 4, YELLOW, BLACK, BLACK);
+                        "abababab", 4, YELLOW, BLACK, BLACK, ini.font);
     WidgetPassword wpassword2(drawable, 0,100, 50, wcomposite, notifier,
-                        "ggghdgh", 2, WHITE, RED, RED);
+                        "ggghdgh", 2, WHITE, RED, RED, ini.font);
     WidgetPassword wpassword3(drawable, 100,100, 50, wcomposite, notifier,
-                        "lldlslql", 1, BLUE, RED, RED);
+                        "lldlslql", 1, BLUE, RED, RED, ini.font);
     WidgetPassword wpassword4(drawable, 300,300, 50, wcomposite, notifier,
-                        "LLLLMLLM", 20, PINK, DARK_GREEN, DARK_GREEN);
+                        "LLLLMLLM", 20, PINK, DARK_GREEN, DARK_GREEN, ini.font);
     WidgetPassword wpassword5(drawable, 700,-10, 50, wcomposite, notifier,
-                        "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, DARK_BLUE);
+                        "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, DARK_BLUE, ini.font);
     WidgetPassword wpassword6(drawable, -10,550, 50, wcomposite, notifier,
-                        "xxwwp", 2, ANTHRACITE, PALE_GREEN, PALE_GREEN);
+                        "xxwwp", 2, ANTHRACITE, PALE_GREEN, PALE_GREEN, ini.font);
 
     wcomposite.add_widget(&wpassword1);
     wcomposite.add_widget(&wpassword2);
@@ -606,13 +625,15 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
         }
     } notifier;
 
-    WidgetScreen parent(drawable, 800, 600);
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF, 0x0000FF);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF, 0x0000FF, ini.font);
     wpassword.focus(Widget2::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit2-e1.png");
@@ -708,13 +729,15 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
         }
     } notifier;
 
-    WidgetScreen parent(drawable, 800, 600);
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF, 0x0000FF);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF, 0x0000FF, ini.font);
     wpassword.focus(Widget2::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit3-e1.png");
@@ -823,13 +846,15 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
         }
     } notifier;
 
-    WidgetScreen parent(drawable, 800, 600);
+    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    WidgetScreen parent(drawable, 800, 600, ini.font);
     // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF, 0x0000FF);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF, 0x0000FF, ini.font);
     wpassword.focus(Widget2::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit4-e1.png");

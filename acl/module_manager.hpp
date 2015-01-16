@@ -350,7 +350,7 @@ public:
         int w, h;
         message += "  ";
         message += TR("disable_osd", this->ini);
-        this->mod->text_metrics(message.c_str(), w, h);
+        this->mod->text_metrics(this->ini.font, message.c_str(), w, h);
         w += padw * 2;
         h += padh * 2;
         uint32_t color = BLACK;
@@ -365,7 +365,7 @@ public:
                 const Rect r = rect.intersect(clip);
                 mod.begin_update();
                 mod.draw(RDPOpaqueRect(r, background_color), r);
-                mod.server_draw_text(clip.x + padw, padh, message.c_str(), color, background_color, r);
+                mod.server_draw_text(this->ini.font, clip.x + padw, padh, message.c_str(), color, background_color, r);
                 mod.end_update();
             }
         );
@@ -379,7 +379,7 @@ public:
     ModuleManager(Front & front, Inifile & ini)
         : MMIni(ini)
         , front(front)
-        , no_mod(this->front, ini.font)
+        , no_mod(this->front)
     {
         this->no_mod.get_event().reset();
         this->mod = &this->no_mod;
@@ -650,7 +650,6 @@ public:
                                                       , this->ini.context.opt_width.get()
                                                       , this->ini.context.opt_height.get()
                                                       , this->ini.context.opt_bpp.get()
-                                                      , this->ini.font
                 );
 
                 this->ini.context.auth_error_message.clear();
@@ -714,7 +713,6 @@ public:
                                            , this->ini.context.target_host.get_cstr()
                                            , "0.0.0.0"   // client ip is silenced
                                            , this->front.keymap.key_flags
-                                           , this->ini.font
                                            , this->ini.debug.mod_rdp
                                            );
                 //mod_rdp_params.enable_tls                          = true;

@@ -30,21 +30,25 @@
 class WidgetPassword : public WidgetEdit {
 public:
     WidgetLabel masked_text;
+
     int w_char;
     int h_char;
 
+    Font const & font;
+
     WidgetPassword(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
                    Widget2& parent, NotifyApi* notifier, const char * text,
-                   int group_id, int fgcolor, int bgcolor, int focus_color,
+                   int group_id, int fgcolor, int bgcolor, int focus_color, Font const & font,
                    std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
         : WidgetEdit(drawable, x, y, cx, parent, notifier, text,
-                     group_id, fgcolor, bgcolor, focus_color, edit_position, xtext, ytext)
-        , masked_text(drawable, 0, 0, *this, 0, text, false, 0 , fgcolor, bgcolor,
+                     group_id, fgcolor, bgcolor, focus_color, font, edit_position, xtext, ytext)
+        , masked_text(drawable, 0, 0, *this, 0, text, false, 0 , fgcolor, bgcolor, font,
                       xtext, ytext)
+        , font(font)
     {
         this->set_masked_text();
 
-        this->drawable.text_metrics("*", this->w_char, this->h_char);
+        this->drawable.text_metrics(font, "*", this->w_char, this->h_char);
         this->rect.cy = (this->masked_text.y_text) * 2 + this->h_char;
         this->masked_text.rect.cx = this->rect.cx;
         this->masked_text.rect.cy = this->rect.cy;

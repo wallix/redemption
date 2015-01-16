@@ -34,12 +34,8 @@
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
-    Font font;
 
-    TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, 24)
-    , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
-    {}
+    TestDraw(uint16_t w, uint16_t h) : gd(w, h, 24) {}
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
@@ -145,14 +141,15 @@ struct TestDraw : DrawApi
 
     virtual void end_update() {}
 
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    virtual void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text,
+                                  uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
-        this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
+        this->gd.server_draw_text(font, x, y, text, fgcolor, bgcolor, clip);
     }
 
-    virtual void text_metrics(const char * text, int & width, int & height)
+    virtual void text_metrics(Font const & font, const char * text, int & width, int & height)
     {
-        this->gd.text_metrics(text, width, height, this->font);
+        this->gd.text_metrics(font, text, width, height);
     }
 
     void save_to_png(const char * filename)

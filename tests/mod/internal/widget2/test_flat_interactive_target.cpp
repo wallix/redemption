@@ -24,14 +24,13 @@
 #define BOOST_TEST_MODULE TestFlatInteractiveTarget
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
-#include "log.hpp"
-
-#undef FIXTURES_PATH
-#define FIXTURES_PATH "./tests/fixtures"
 #undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
+#define SHARE_PATH FIXTURES_PATH
 
+#define LOGNULL
+
+#include "config.hpp"
+#include "log.hpp"
 #include "internal/widget2/flat_interactive_target.hpp"
 #include "internal/widget2/screen.hpp"
 #include "png.hpp"
@@ -50,8 +49,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ASK ALL (DEVICE + LOGIN + PASSWORD)
         TestDraw drawable(800, 600);
 
+        Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, 800, 600);
+        WidgetScreen parent(drawable, 800, 600, ini.font);
         NotifyApi * notifier = NULL;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -59,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
                                           0, true, true, true, colors, "Target Infos",
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
-                                          "user1", "Password");
+                                          "user1", "Password", ini.font);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.rect);
 
@@ -77,8 +78,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ASK DEVICE
         TestDraw drawable(800, 600);
 
+        Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, 800, 600);
+        WidgetScreen parent(drawable, 800, 600, ini.font);
         NotifyApi * notifier = NULL;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -86,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
                                           0, true, false, false, colors, "Target Infos",
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
-                                          "user1", "Password");
+                                          "user1", "Password", ini.font);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.rect);
 
@@ -104,8 +107,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ASK PASSWORD
         TestDraw drawable(800, 600);
 
+        Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, 800, 600);
+        WidgetScreen parent(drawable, 800, 600, ini.font);
         NotifyApi * notifier = NULL;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -113,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
                                           0, false, false, true, colors, "Target Infos",
                                           "Host", "machinetruc", "Login", "user1",
-                                          "Password");
+                                          "Password", ini.font);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.rect);
 
@@ -131,8 +136,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ASK LOGIN + PASSWORD
         TestDraw drawable(800, 600);
 
+        Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, 800, 600);
+        WidgetScreen parent(drawable, 800, 600, ini.font);
         NotifyApi * notifier = NULL;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -140,7 +147,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
                                           0, false, true, true, colors, "Target Infos",
                                           "Host", "machinetruc", "Login", "user1",
-                                          "Password");
+                                          "Password", ini.font);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.rect);
 
@@ -158,8 +165,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ASK DEVICE + PASSWORD
         TestDraw drawable(800, 600);
 
+        Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, 800, 600);
+        WidgetScreen parent(drawable, 800, 600, ini.font);
         NotifyApi * notifier = NULL;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -167,7 +176,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
                                           0, true, false, true, colors, "Target Infos",
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
-                                          "user1", "Password");
+                                          "user1", "Password", ini.font);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.rect);
 

@@ -35,9 +35,9 @@ public:
 
     InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height, Font const & font,
                 Inifile * ini = NULL)
-        : mod_api(front_width, front_height, font)
+        : mod_api(front_width, front_height)
         , front(front)
-        , screen(*this, front_width, front_height, NULL, ini ? &(ini->theme): NULL)
+        , screen(*this, front_width, front_height, font, NULL, ini ? &(ini->theme): NULL)
     {
         this->front.server_resize(front_width, front_height, 24);
     }
@@ -168,18 +168,6 @@ public:
     {
         this->front.draw(cmd);
     }
-
-/*
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-    {
-        this->front.server_draw_text(x, y, text, fgcolor, bgcolor, clip);
-    }
-
-    virtual void text_metrics(const char * text, int & width, int & height)
-    {
-        this->front.text_metrics(text, width, height);
-    }
-*/
 
     virtual void server_set_pointer(const Pointer & cursor) {
         this->front.server_set_pointer(cursor);

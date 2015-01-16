@@ -27,8 +27,9 @@
 #include "grid.hpp"
 
 struct WidgetLabelGrid : public WidgetGrid {
-
     bool toDelete[GRID_NB_COLUMNS_MAX][GRID_NB_ROWS_MAX];
+
+    Font const & font;
 
     WidgetLabelGrid(DrawApi & drawable, const Rect & rect, Widget2 & parent,
                NotifyApi * notifier, uint16_t nb_lines, uint16_t nb_columns,
@@ -36,12 +37,13 @@ struct WidgetLabelGrid : public WidgetGrid {
                uint32_t bg_color_2, uint32_t fg_color_2,
                uint32_t bg_color_focus, uint32_t fg_color_focus,
                uint32_t bg_color_selection, uint32_t fg_color_selection,
-               uint16_t border = 0, int group_id = 0)
+               Font const & font, uint16_t border = 0, int group_id = 0)
         : WidgetGrid(drawable, rect, parent, notifier, nb_lines, nb_columns,
                      bg_color_1, fg_color_1, bg_color_2, fg_color_2,
                      bg_color_focus, fg_color_focus,
                      bg_color_selection, fg_color_selection, border, group_id)
         , toDelete()
+        , font(font)
     {
     }
 
@@ -74,7 +76,7 @@ struct WidgetLabelGrid : public WidgetGrid {
                                               entries[i], true, this->group_id,
                                               odd ? this->fg_color_1 : this->fg_color_2,
                                               odd ? this->bg_color_1 : this->bg_color_2,
-                                              3, 1);
+                                              this->font, 3, 1);
             label->tool = true;
             this->set_widget(this->nb_rows, i, label);
             this->toDelete[i][this->nb_rows] = true;

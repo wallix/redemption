@@ -24,6 +24,8 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
+
+#include "font.hpp"
 #include "vnc/vnc.hpp"
 #include "test_transport.hpp"
 
