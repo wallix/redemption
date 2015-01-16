@@ -298,8 +298,7 @@ class ModuleManager : public MMIni
         {
             if (keymap->nb_kevent_available() > 0){
                 if (!(param3 & SlowPath::KBDFLAGS_DOWN)
-                 && keymap->top_kevent() == Keymap2::KEVENT_ESC
-                 && keymap->is_alt_pressed()) {
+                 && keymap->top_kevent() == Keymap2::KEVENT_INSERT) {
                     keymap->get_kevent();
                     this->delete_self();
                 }

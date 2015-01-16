@@ -131,6 +131,7 @@ struct Keymap2
         , KEVENT_CUT = 0x10
         , KEVENT_COPY = 0x11
         , KEVENT_PASTE = 0x12
+        , KEVENT_INSERT = 0x13
     };
 
     uint32_t ibuf; // first free position in char buffer
@@ -367,6 +368,7 @@ struct Keymap2
                         }
                         // if numlock is not activated OR shift is down, keys are NOT printable characters
                         else {
+                            //LOG(LOG_INFO, "extendedKeyCode=0x%02X", extendedKeyCode);
                             switch (extendedKeyCode){
                                /* kEYPAD LEFT ARROW */
                                 case 0x4b:
@@ -405,6 +407,10 @@ struct Keymap2
                                 case 0x4F:
                                     if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2198); }
                                     this->push_kevent(KEVENT_END);
+                                    break;
+                                /* kEYPAD INSERT */
+                                case 0x52:
+                                    this->push_kevent(KEVENT_INSERT);
                                     break;
                                 /* kEYPAD DELETE */
                                 case 0x53:
@@ -555,6 +561,7 @@ struct Keymap2
                             }
 
                             if (check_extendedkey) {
+                                //LOG(LOG_INFO, "extendedKeyCode=0x%02X", extendedKeyCode);
                                 switch (extendedKeyCode){
                                 // ESCAPE
                                 case 0x01:
@@ -620,10 +627,11 @@ struct Keymap2
                                         this->deadkey = DEADKEY_NONE;
                                     }
                                     break;
-                                case 0xD3: // delete
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x007F); }
-                                    this->push_kevent(KEVENT_DELETE);
+                                case 0xD2: // insert
+                                case 0x52: // numpad insert
+                                    this->push_kevent(KEVENT_INSERT);
                                     break;
+                                case 0xD3: // delete
                                 case 0x53: // numpad delete
                                     if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x007F); }
                                     this->push_kevent(KEVENT_DELETE);
