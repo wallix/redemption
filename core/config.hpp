@@ -643,6 +643,7 @@ public:
         bool     capture_flv    = false;
         bool     capture_ocr    = false;
 
+        std::string ocr_locale;
         unsigned ocr_interval               = 100; // 1 every second
         bool     ocr_on_title_bar_only      = false;
         unsigned ocr_max_unrecog_char_rate  = 40; // expressed in percentage,
@@ -1358,6 +1359,9 @@ public:
                 this->video.capture_wrm = 0 != (this->video.capture_flags & 2);
                 this->video.capture_flv = 0 != (this->video.capture_flags & 4);
                 this->video.capture_ocr = 0 != (this->video.capture_flags & 8);
+            }
+            else if (0 == strcmp(key, "ocr_locale")) {
+                this->video.ocr_locale = value;
             }
             else if (0 == strcmp(key, "ocr_interval")) {
                 this->video.ocr_interval                = ulong_from_cstr(value);
