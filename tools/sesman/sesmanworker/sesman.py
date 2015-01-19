@@ -1303,11 +1303,15 @@ class Sesman():
 
                                         try_next = True
                                         release_reason = u'Connexion failed'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
                                         break
 
                                     elif _reporting_reason == u'FINDPATTERN_KILL':
                                         Logger().info(u"RDP connection terminated. Reason: Kill pattern detected")
                                         release_reason = u'Kill pattern detected'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
                                         break
 
                                 if self.shared.get(u'auth_channel_target'):
@@ -1358,7 +1362,7 @@ class Sesman():
             Logger().info(u"Stop session ...")
 
             # Notify WabEngine to stop connection if it has been launched successfully
-            self.engine.stop_session(result=True, diag=u"success", title=u"End session")
+            self.engine.stop_session(title=u"End session")
 
             Logger().info(u"Stop session done.")
 
@@ -1413,6 +1417,7 @@ class Sesman():
 #            Logger().info(u"regexp=\"%s\" string=\"%s\" user_login=\"%s\" user=\"%s\" host=\"%s\"" %
 #                (regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device')))
             self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn, self.target_service_name)
+            self.engine.set_session_status(diag=u'Restriction pattern detected')
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))
