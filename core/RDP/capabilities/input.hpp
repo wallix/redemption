@@ -130,7 +130,7 @@ struct InputCaps : public Capability {
 
     void log(const char * msg){
         LOG(LOG_INFO, "%s Input caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "Input caps::inputFlags %u", this->inputFlags);
+        LOG(LOG_INFO, "Input caps::inputFlags 0x%X", this->inputFlags);
         LOG(LOG_INFO, "Input caps::pad2octetsA %u", this->pad2octetsA);
         LOG(LOG_INFO, "Input caps::keyboardLayout %u", this->keyboardLayout);
         LOG(LOG_INFO, "Input caps::keyboardType %u", this->keyboardType);

@@ -428,7 +428,7 @@ namespace FastPath {
         , keyCode(0) {
             uint8_t eventCode = (eventHeader & 0xE0) >> 5;
             if (eventCode != FASTPATH_INPUT_EVENT_SCANCODE) {
-                LOG(LOG_ERR, "FastPath::KeyboardEvent: unexpected event code, expected=0x%X got=0x%X",
+                LOG(LOG_ERR, "FastPath::KeyboardEvent_Recv: unexpected event code, expected=0x%X got=0x%X",
                     FASTPATH_INPUT_EVENT_SCANCODE, eventCode);
                 throw Error(ERR_RDP_FASTPATH);
             }
@@ -444,7 +444,7 @@ namespace FastPath {
             }
 
             if (!stream.in_check_rem(1)) {
-                LOG(LOG_ERR, "FastPath::KeyboardEvent: data truncated, expected=1 remains=%u",
+                LOG(LOG_ERR, "FastPath::KeyboardEvent_Recv: data truncated, expected=1 remains=%u",
                     stream.in_remain());
                 throw Error(ERR_RDP_FASTPATH);
             }
@@ -486,6 +486,43 @@ namespace FastPath {
             stream.mark_end();
         }
     };
+
+
+    struct UnicodeKeyboardEvent_Recv {
+        uint8_t  eventFlags;
+        uint16_t spKeyboardFlags; // Slow-path compatible flags
+        uint8_t  unicodeCode[2];
+
+        UnicodeKeyboardEvent_Recv(InStream & stream, uint8_t eventHeader)
+        : eventFlags(0)
+        , spKeyboardFlags(0)
+        , unicodeCode() {
+            uint8_t eventCode = (eventHeader & 0xE0) >> 5;
+            if (eventCode != FASTPATH_INPUT_EVENT_UNICODE) {
+                LOG(LOG_ERR, "FastPath::UnicodeKeyboardEvent_Recv: unexpected event code, expected=0x%X got=0x%X",
+                    FASTPATH_INPUT_EVENT_UNICODE, eventCode);
+                throw Error(ERR_RDP_FASTPATH);
+            }
+
+            this->eventFlags = eventHeader & 0x1F;
+
+            // if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE){
+            //     this->spKeyboardFlags |= SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE;
+            // }
+            this->spKeyboardFlags = (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE) ?
+                                    SlowPath::KBDFLAGS_RELEASE :
+                                    SlowPath::KBDFLAGS_DOWN;
+
+            if (!stream.in_check_rem(2)) {
+                LOG(LOG_ERR, "FastPath::UnicodeKeyboardEvent_Recv: data truncated, expected=2 remains=%u",
+                    stream.in_remain());
+                throw Error(ERR_RDP_FASTPATH);
+            }
+
+            stream.in_copy_bytes(this->unicodeCode, sizeof(this->unicodeCode));
+        }
+    };
+
 
 // 2.2.8.1.2.2.3 Fast-Path Mouse Event (TS_FP_POINTER_EVENT)
 // =========================================================
