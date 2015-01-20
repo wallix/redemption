@@ -84,6 +84,17 @@ class Engine(object):
         self.proxyrightsinput = None
         self.pidhandler = None
 
+        self.session_result = True
+        self.session_diag = u'Success'
+
+    def set_session_status(self, result=None, diag=None):
+        # Logger().info("Engine set session status : result='%s', diag='%s'" %
+        #               (result, diag))
+        if result is not None:
+            self.session_result = result
+        if diag is not None:
+            self.session_diag = diag
+
     def get_language(self):
         try:
             if self.wabuser:
@@ -519,10 +530,13 @@ class Engine(object):
             import traceback
             Logger().info("Engine update_session failed: (((%s)))" % (traceback.format_exc(e)))
 
-    def stop_session(self, result=True, diag=u"success", title=u"End session"):
+    def stop_session(self, title=u"End session"):
         try:
             if self.session_id:
-                self.wabengine.stop_session(self.session_id, result=result, diag=diag, title=title)
+                # Logger().info("Engine stop_session: result='%s', diag='%s', title='%s'" %
+                #               (self.session_result, self.session_diag, title))
+                self.wabengine.stop_session(self.session_id, result=self.session_result,
+                                            diag=self.session_diag, title=title)
         except Exception, e:
             import traceback
             Logger().info("Engine stop_session failed: (((%s)))" % (traceback.format_exc(e)))
