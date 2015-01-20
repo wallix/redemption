@@ -110,15 +110,15 @@ static inline size_t UTF8Len(const uint8_t * source)
 }
 
 // source_size is size of source in bytes
-// static inline void UTF8Upper(uint8_t * source, size_t source_size) {
-//     // size_t len = 0;
-//     uint8_t c = 0;
-//     for (size_t i = 0 ; ((0 != (c = source[i])) && (i < source_size)) ; i++){
-//         if (c >= 0x61 && c <= 0x7A) {
-//             source[i] -= 0x20;
-//         }
-//     }
-// }
+static inline void UTF8Upper(uint8_t * source, size_t source_size) {
+    // size_t len = 0;
+    uint8_t c = 0;
+    for (size_t i = 0 ; ((0 != (c = source[i])) && (i < source_size)) ; i++){
+        if (c >= 0x61 && c <= 0x7A) {
+            source[i] -= 0x20;
+        }
+    }
+}
 
 // static inline uint8_t findup(uint8_t c) {
 //     const uint8_t uppertable[] = { 0x38, 0x49, 0x78, 0x7F, 0x86 };
@@ -662,6 +662,26 @@ static inline size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size, const uin
     memcpy(dest, source, source_len);
     dest[source_len] = 0;
     return UTF8Len(dest); // number of char
+}
+
+static inline size_t get_utf8_char_size(uint8_t const * c) {
+    if ((*c >> 1) == 0x7E) {
+        return 6;
+    }
+    if ((*c >> 2) == 0x3E) {
+        return 5;
+    }
+    if ((*c >> 3) == 0x1E) {
+        return 4;
+    }
+    if ((*c >> 4) == 0x0E) {
+        return 3;
+    }
+    if ((*c >> 5) == 0x06) {
+        return 2;
+    }
+
+    return 1;
 }
 
 #endif
