@@ -39,25 +39,27 @@ struct AuthorizationChannels
     : allow_(std::move(allow))
     , deny_(std::move(deny))
     {
-        this->normalize(this->allow_);
-        this->normalize(this->deny_);
-    }
+        for (auto & r : get_split(this->allow_, ',')) {
+            if (r.size() == 1 && *r.begin() == '*') {
+                this->all_allow_ = true;
+                this->rdpdr_restriction_.fill(true);
+                this->cliprdr_restriction_.fill(true);
+                break;
+            }
+        }
 
-    AuthorizationChannels(std::string allow, bool deny = true)
-    : allow_(std::move(allow))
-    , all_deny_(deny)
-    {
-        this->rdpdr_restriction_.fill(!deny);
-        this->cliprdr_restriction_.fill(!deny);
-        this->normalize(this->allow_);
-    }
+        for (auto & r : get_split(this->deny_, ',')) {
+            if (r.size() == 1 && *r.begin() == '*') {
+                this->all_deny_ = true;
+                if (this->all_allow_) {
+                    this->rdpdr_restriction_.fill(false);
+                    this->cliprdr_restriction_.fill(false);
+                }
+                break;
+            }
+        }
 
-    AuthorizationChannels(bool allow, std::string deny)
-    : deny_(std::move(deny))
-    , all_allow_(allow)
-    {
-        this->rdpdr_restriction_.fill(allow);
-        this->cliprdr_restriction_.fill(allow);
+        this->normalize(this->allow_);
         this->normalize(this->deny_);
     }
 
@@ -136,16 +138,15 @@ private:
     }
 
     template<std::size_t N>
-    std::string normalize(
+    void normalize(
       std::string & s, bool set, std::array<bool, N> & values,
       const char * channel_name, std::array<char const *, N> restriction_names
     ) {
         auto pos = s.find(channel_name);
         if (pos != std::string::npos) {
             s.erase(pos, strlen(channel_name));
-            for (auto & x : values) {
-                x = set;
-            }
+            values.fill(set);
+            return;
         }
 
         auto first = values.begin();
@@ -157,8 +158,6 @@ private:
             }
             ++first;
         }
-
-        return s;
     }
 
     void normalize(std::string & s) {
@@ -171,11 +170,13 @@ private:
                 s.erase(0, 1);
             }
         }
-        if (set == contains_true(this->cliprdr_restriction_)) {
-            s += "cliprdr,";
-        }
-        if (set == contains_true(this->rdpdr_restriction_)) {
-            s += "rdpdr,";
+        if (set) {
+            if (contains_true(this->cliprdr_restriction_)) {
+                s += "cliprdr,";
+            }
+            if (contains_true(this->rdpdr_restriction_)) {
+                s += "rdpdr";
+            }
         }
         if (!s.empty() && s.back() == ',') {
             s.pop_back();
@@ -189,8 +190,6 @@ private:
             }
         }
         return false;
-        //auto pos = s.find(search);
-        //return (pos != std::string::npos && s[pos + len] == ',');
     }
 
     std::string allow_;
@@ -203,18 +202,6 @@ private:
 constexpr decltype(AuthorizationChannels::cliprde_list) AuthorizationChannels::cliprde_list;
 constexpr decltype(AuthorizationChannels::rdpdr_list) AuthorizationChannels::rdpdr_list;
 
-
-AuthorizationChannels make_authorization_channels(const std::string & allow, const std::string & deny) {
-    if (deny.length() == 1 && deny[0] == '*') {
-        return AuthorizationChannels(allow, true);
-    }
-    else if (allow.length() == 1 && allow[0] == '*') {
-        return AuthorizationChannels(true, deny);
-    }
-    else {
-        return AuthorizationChannels(allow, deny);
-    }
-}
 
 void update_authorized_channels(std::string & allow,
                                 std::string & deny,
