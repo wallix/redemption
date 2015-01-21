@@ -1349,6 +1349,10 @@ namespace re {
                                 && (stl.st->type != SEQUENCE
                                  || stl.st->data.sequence.len+1 == ifirst->real_count_consume))
                             || (stl.is_terminate && count_consume_is_one)) {
+                                if ((active_capture ? ifirst->idx : 0) != -1u) {
+                                    RE_SHOW(std::cout << "\033[36mincconsumer " << ifirst->consume << "\033[0m\n");
+                                    this->consumer.s += ifirst->consume;
+                                }
                                 return active_capture ? ifirst->idx : 0;
                             }
                         }
@@ -1367,6 +1371,10 @@ namespace re {
                             }
 
                             if (stl.next_is_finish || stl.is_terminate) {
+                                if ((active_capture ? ifirst->idx : 0) != -1u) {
+                                    RE_SHOW(std::cout << "\033[36mincconsumer " << ifirst->consume << "\033[0m\n");
+                                    this->consumer.s += ifirst->consume;
+                                }
                                 return active_capture ? ifirst->idx : 0;
                             }
 
@@ -1459,6 +1467,10 @@ namespace re {
                              || first->st->data.sequence.len+1 == count_consume))
                         || (first->is_terminate && count_consume_is_one && !consumer.valid())) {
                             //l2.pop_back();
+                            if ((active_capture ? ifirst->idx : 0) != -1u) {
+                                RE_SHOW(std::cout << "\033[36mincconsumer " << sr.consume << "\033[0m\n");
+                                this->consumer.s += sr.consume;
+                            }
                             return active_capture ? ifirst->idx : 0;
                         }
                     }
