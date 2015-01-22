@@ -32,13 +32,15 @@ class SessionServer : public Server
     // Used for enable transparent proxying on accepted socket (ini.globals.enable_ip_transparent = true).
     unsigned uid;
     unsigned gid;
+    bool debug_config;
 
     crypto_key_holder & cryptoKeyHldr;
 
 public:
-    SessionServer(unsigned uid, unsigned gid, crypto_key_holder & cryptoKeyHldr)
+    SessionServer(unsigned uid, unsigned gid, crypto_key_holder & cryptoKeyHldr, bool debug_config = true)
         : uid(uid)
         , gid(gid)
+        , debug_config(debug_config)
         , cryptoKeyHldr(cryptoKeyHldr) {
     }
 
@@ -71,6 +73,7 @@ public:
                 close(incoming_sck);
 
                 Inifile ini;
+                ini.debug.config = this->debug_config;
                 ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
                 ini.crypto.key0.setmem(this->cryptoKeyHldr.get_key_0());
@@ -100,7 +103,7 @@ public:
 //                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
                 strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
-                if (0 != strcmp(source_ip, "127.0.0.1")){ 
+                if (0 != strcmp(source_ip, "127.0.0.1")){
                     // do not log early messages for localhost (to avoid tracing in watchdog)
                     LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
                 }
@@ -150,7 +153,7 @@ public:
                     close(fd);
 
                     // Launch session
-                    if (0 != strcmp(source_ip, "127.0.0.1")){ 
+                    if (0 != strcmp(source_ip, "127.0.0.1")){
                         // do not log early messages for localhost (to avoid tracing in watchdog)
                         LOG(LOG_INFO,
                             "New session on %u (pid=%u) from %s to %s",

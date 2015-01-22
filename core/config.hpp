@@ -747,6 +747,8 @@ public:
 
         uint32_t pass_dialog_box    = 0;
 
+        bool config = true;
+
         Inifile_debug() = default;
     } debug;
 
@@ -1221,7 +1223,7 @@ public:
             else if (0 == strcmp(key, "disable_proxy_opt")) {
                 this->globals.disable_proxy_opt = bool_from_cstr(value);
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1278,7 +1280,7 @@ public:
             else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
                 this->client.persist_bitmap_cache_on_disk = bool_from_cstr(value);
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1323,7 +1325,7 @@ public:
             else if (0 == strcmp(key, "deny_channels")) {
                 this->mod_rdp.deny_channels = value;
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1331,7 +1333,7 @@ public:
             if (0 == strcmp(key, "clipboard_up")) {
                 this->mod_vnc.clipboard_up.set_from_cstr(value);
             }
-            if (0 == strcmp(key, "clipboard_down")) {
+            else if (0 == strcmp(key, "clipboard_down")) {
                 this->mod_vnc.clipboard_down.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "encodings")) {
@@ -1340,7 +1342,7 @@ public:
             else if (0 == strcmp(key, "allow_authentification_retries")) {
                 this->mod_vnc.allow_authentification_retries = bool_from_cstr(value);
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1348,7 +1350,7 @@ public:
             if (0 == strcmp(key, "on_end_of_data")) {
                 this->mod_replay.on_end_of_data = ulong_from_cstr(value);
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1462,7 +1464,7 @@ public:
             else if (0 == strcmp(key, "wrm_compression_algorithm")) {
                 this->video.wrm_compression_algorithm = ulong_from_cstr(value);
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1489,7 +1491,7 @@ public:
                     }
                 }
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1563,7 +1565,10 @@ public:
             else if (0 == strcmp(key, "performance")) {
                 this->debug.performance       = ulong_from_cstr(value);
             }
-            else {
+            else if (0 == strcmp(key, "config")) {
+                this->debug.config            = bool_from_cstr(value);
+            }
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1613,7 +1618,7 @@ public:
             else if (0 == strcmp(key, "manager_close_cnx")) {
                 this->translation.manager_close_cnx.set_from_cstr(value);
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1643,8 +1648,11 @@ public:
                     }
                 }
             }
+            else if (this->debug.config) {
+                LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            }
         }
-        else {
+        else if (this->debug.config) {
             LOG(LOG_ERR, "unknown section [%s]", context);
         }
     }   // void set_value(const char * context, const char * key, const char * value)
