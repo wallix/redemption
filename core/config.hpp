@@ -747,10 +747,13 @@ public:
 
         uint32_t pass_dialog_box    = 0;
 
-        bool config = true;
+        // 0 = disable, 1 = enable, 2 = enable but no specified
+        uint32_t config             = 2;
 
         Inifile_debug() = default;
     } debug;
+
+    static const uint32_t ENABLE_DEBUG_CONFIG = 1;
 
     // section "translation"
     struct Inifile_translation {
@@ -1566,7 +1569,7 @@ public:
                 this->debug.performance       = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "config")) {
-                this->debug.config            = bool_from_cstr(value);
+                this->debug.config            = bool_from_cstr(value) ? 1 : 0;
             }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
