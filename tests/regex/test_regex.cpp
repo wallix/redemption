@@ -845,3 +845,18 @@ BOOST_AUTO_TEST_CASE(TestRegexLimit)
     regex.step_limit = 40;
     BOOST_CHECK( ! regex.search("bbbbbbbbbbbbbbbbbbbbaaaaa"));
 }
+
+
+BOOST_AUTO_TEST_CASE(TestRegexLastPos)
+{
+    re::Regex regex("aaa|abcde|o*r");
+    BOOST_CHECK(regex.search("abaabaaabcd"));
+    BOOST_CHECK_EQUAL(regex.last_index(), 8);
+    BOOST_CHECK(regex.search("r"));
+    BOOST_CHECK_EQUAL(regex.last_index(), 1);
+    BOOST_CHECK(regex.search("ooor"));
+    BOOST_CHECK_EQUAL(regex.last_index(), 4);
+    BOOST_CHECK( ! regex.search("xxxxxx"));
+    BOOST_CHECK_EQUAL(regex.last_index(), 6);
+}
+

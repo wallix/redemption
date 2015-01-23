@@ -32,6 +32,7 @@
 #include <stdint.h>
 
 #include "regex_utils.hpp"
+#include "noncopyable.hpp"
 
 namespace re {
 #ifdef DISPLAY_TRACE
@@ -59,7 +60,7 @@ namespace re {
             } data;
         };
 
-        StateMachine2(const StateMachine2&) /*= delete*/;
+        REDEMPTION_NON_COPYABLE(StateMachine2);
 
         void initialize_memory_with_capture(size_t nb_st_list,
                                             size_t nb_st_range_list,
@@ -571,44 +572,6 @@ namespace re {
 
             this->sl_beginning.next = &this->st_range_beginning;
         }
-
-#if __cplusplus >= 201103L
-        StateMachine2(StateMachine2 && other) noexcept
-        : root(other.root)
-        , nums(other.nums)
-        , caps_type(other.caps_type)
-        , nb_states(other.nb_states)
-        , nb_capture(other.nb_capture)
-        , nodes(other.nodes)
-        , idx_trace(other.idx_trace)
-        , reindex_trace(other.reindex_trace)
-        , idx_trace_free(other.idx_trace_free)
-        , pidx_trace_free(other.pidx_trace_free)
-        , traces(other.traces)
-        , l1(other.l1)
-        , l2(other.l2)
-        , mini_sts(other.mini_sts)
-        , mini_sts_last(other.mini_sts_last)
-        , st_list(other.st_list)
-        , st_range_list(other.st_range_list)
-        , st_range_list_last(other.st_range_list_last)
-        , st_range_beginning(other.st_range_beginning)
-        , sl_beginning(other.sl_beginning)
-        , step_id(other.step_id)
-        , step_count(other.step_count)
-        , first_last(other.first_last)
-        , consumer(other.consumer)
-        , pal1(other.pal1)
-        , pal2(other.pal2)
-        , start_s(other.start_s)
-        , s(other.s)
-        {
-            other.st_list = nullptr;
-            other.nb_states = 0;
-            other.nb_capture = 0;
-            other.st_range_beginning.st_num = -1u;
-        }
-#endif
 
         ~StateMachine2()
         {
@@ -1349,11 +1312,12 @@ namespace re {
                                 && (stl.st->type != SEQUENCE
                                  || stl.st->data.sequence.len+1 == ifirst->real_count_consume))
                             || (stl.is_terminate && count_consume_is_one)) {
-                                if ((active_capture ? ifirst->idx : 0) != -1u) {
-                                    RE_SHOW(std::cout << "\033[36mincconsumer " << ifirst->consume << "\033[0m\n");
+                                const unsigned ret = (active_capture ? ifirst->idx : 0);
+                                if (ret != -1u) {
+                                    RE_SHOW(std::cout << "\033[36mconsumer += " << ifirst->consume << "\033[0m\n");
                                     this->consumer.s += ifirst->consume;
                                 }
-                                return active_capture ? ifirst->idx : 0;
+                                return ret;
                             }
                         }
                         else {
@@ -1371,11 +1335,12 @@ namespace re {
                             }
 
                             if (stl.next_is_finish || stl.is_terminate) {
-                                if ((active_capture ? ifirst->idx : 0) != -1u) {
-                                    RE_SHOW(std::cout << "\033[36mincconsumer " << ifirst->consume << "\033[0m\n");
+                                const unsigned ret = (active_capture ? ifirst->idx : 0);
+                                if (ret != -1u) {
+                                    RE_SHOW(std::cout << "\033[36mconsumer += " << ifirst->consume << "\033[0m\n");
                                     this->consumer.s += ifirst->consume;
                                 }
-                                return active_capture ? ifirst->idx : 0;
+                                return ret;
                             }
 
                             if(active_capture) {
@@ -1467,11 +1432,12 @@ namespace re {
                              || first->st->data.sequence.len+1 == count_consume))
                         || (first->is_terminate && count_consume_is_one && !consumer.valid())) {
                             //l2.pop_back();
-                            if ((active_capture ? ifirst->idx : 0) != -1u) {
-                                RE_SHOW(std::cout << "\033[36mincconsumer " << sr.consume << "\033[0m\n");
+                            const unsigned ret = (active_capture ? ifirst->idx : 0);
+                            if (ret != -1u) {
+                                RE_SHOW(std::cout << "\033[36mconsumer += " << sr.consume << "\033[0m\n");
                                 this->consumer.s += sr.consume;
                             }
-                            return active_capture ? ifirst->idx : 0;
+                            return ret;
                         }
                     }
                 }

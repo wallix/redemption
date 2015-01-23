@@ -192,13 +192,6 @@ public:
         }
     }
 
-    const SequenceGenerator * seqgen() const
-    {
-        return !this->wrm_trans ? 0 : this->enable_file_encryption
-        ? static_cast<const CryptoOutMetaSequenceTransport*>(this->wrm_trans)->seqgen()
-        : static_cast<const OutMetaSequenceTransport*>(this->wrm_trans)->seqgen();
-    }
-
     void request_full_cleaning()
     {
         this->wrm_trans->request_full_cleaning();
@@ -261,12 +254,6 @@ public:
         if (this->capture_wrm) {
             this->pnc->flush();
         }
-    }
-
-    void close()
-    {
-        this->flush();
-        this->wrm_trans->disconnect();
     }
 
     void input(const timeval & now, Stream & input_data_32) {

@@ -548,7 +548,7 @@ public:
         BoolField   movie;                    // AUTHID_OPT_MOVIE //
         StringField movie_path;               // AUTHID_OPT_MOVIE_PATH //
         StringField video_quality;            // AUTHID_VIDEO_QUALITY //
-        bool        enable_bitmap_update = false;
+        bool        enable_bitmap_update = true;
         bool        enable_close_box = true;
         bool        enable_osd = true;
         // END globals
@@ -566,16 +566,16 @@ public:
         bool ignore_logon_password = false; // if true, ignore password provided by RDP client, user need do login manually. default
 
         uint32_t performance_flags_default           = 0;   // PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
-        uint32_t performance_flags_force_present     = 0;
-        uint32_t performance_flags_force_not_present = 0;
+        uint32_t performance_flags_force_present     = 0x8; // Disable theme (0x8)
+        uint32_t performance_flags_force_not_present = 0x80;// Disable font smoothing (0x80)
 
-        bool tls_fallback_legacy = false;
+        bool tls_fallback_legacy = true;
         bool tls_support         = true;
         bool bogus_neg_request   = false; // needed to connect with jrdp, based on bogus X224 layer code
 
         BoolField disable_tsk_switch_shortcuts; // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS //
 
-        int rdp_compression = 0; // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
+        int rdp_compression = 4; // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
 
         uint32_t max_color_depth = 24; // 8-bit, 15-bit, 16-bit, 24-bit, 32-bit (not yet supported) Default (24-bit)
 
@@ -589,7 +589,7 @@ public:
     } client;
 
     struct Inifile_mod_rdp {
-        int rdp_compression = 0; // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
+        int rdp_compression = 4; // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
 
         bool disconnect_on_logon_user_change = false;
 
@@ -597,7 +597,20 @@ public:
 
         unsigned certificate_change_action   = 0; // 0 - Interrupt connection, 1 - Replace certificate then continue
 
-        std::string extra_orders;
+        // +----+-----------------+
+        // | Id | Meaning         |
+        // +----+-----------------+
+        // | 15 | MultiDstBlt     |
+        // +----+-----------------+
+        // | 16 | MultiPatBlt     |
+        // +----+-----------------+
+        // | 17 | MultiScrBlt     |
+        // +----+-----------------+
+        // | 18 | MultiOpaqueRect |
+        // +----+-----------------+
+        // | 22 | Polyline        |
+        // +----+-----------------+
+        std::string extra_orders = "15,16,17,18,22";
 
         bool enable_nla      = true;
         bool enable_kerberos = false;
@@ -636,7 +649,7 @@ public:
 
     // Section "video"
     struct Inifile_video {
-        unsigned capture_flags  = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
+        unsigned capture_flags  = 3; // 1 png, 2 wrm, 4 flv, 8 ocr
         // video opt from capture_flags
         bool     capture_png    = true;
         bool     capture_wrm    = true;
@@ -654,31 +667,31 @@ public:
         unsigned capture_groupid    = 33;
         unsigned frame_interval     = 40;   // time between 2 frame captures (in 1/100 seconds) (default: 2,5 frame per second)
         unsigned break_interval     = 600;  // time between 2 wrm movies (in seconds)
-        unsigned png_limit          = 3;    // number of png captures to keep
+        unsigned png_limit          = 5;    // number of png captures to keep
 
         uint64_t flv_break_interval = 0;  // time between 2 flv movies captures (in seconds)
 
         StaticString<1024> replay_path = "/tmp/";
 
-        unsigned l_bitrate   = 20000; // bitrate for low quality
+        unsigned l_bitrate   = 10000; // bitrate for low quality
         unsigned l_framerate = 5;     // framerate for low quality
         unsigned l_height    = 480;   // height for low quality
         unsigned l_width     = 640;   // width for low quality
-        unsigned l_qscale    = 25;    // qscale (parameter given to ffmpeg) for low quality
+        unsigned l_qscale    = 28;    // qscale (parameter given to ffmpeg) for low quality
 
         // Same for medium quality
-        unsigned m_bitrate   = 40000;
+        unsigned m_bitrate   = 20000;
         unsigned m_framerate = 5;
         unsigned m_height    = 768;
         unsigned m_width     = 1024;
-        unsigned m_qscale    = 15;
+        unsigned m_qscale    = 14;
 
         // Same for high quality
-        unsigned h_bitrate   = 200000;
+        unsigned h_bitrate   = 30000;
         unsigned h_framerate = 5;
-        unsigned h_height    = 1024;
-        unsigned h_width     = 1280;
-        unsigned h_qscale    = 15;
+        unsigned h_height    = 2048;
+        unsigned h_width     = 2048;
+        unsigned h_qscale    = 7;
 
         StaticPath<1024> hash_path       = HASH_PATH;
         StaticPath<1024> record_tmp_path = RECORD_TMP_PATH;
@@ -747,8 +760,13 @@ public:
 
         uint32_t pass_dialog_box    = 0;
 
+        // 0 = disable, 1 = enable, 2 = enable but no specified
+        uint32_t config             = 2;
+
         Inifile_debug() = default;
     } debug;
+
+    static const uint32_t ENABLE_DEBUG_CONFIG = 1;
 
     // section "translation"
     struct Inifile_translation {
@@ -1221,7 +1239,7 @@ public:
             else if (0 == strcmp(key, "disable_proxy_opt")) {
                 this->globals.disable_proxy_opt = bool_from_cstr(value);
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1278,7 +1296,7 @@ public:
             else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
                 this->client.persist_bitmap_cache_on_disk = bool_from_cstr(value);
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1323,7 +1341,7 @@ public:
             else if (0 == strcmp(key, "deny_channels")) {
                 this->mod_rdp.deny_channels = value;
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1331,7 +1349,7 @@ public:
             if (0 == strcmp(key, "clipboard_up")) {
                 this->mod_vnc.clipboard_up.set_from_cstr(value);
             }
-            if (0 == strcmp(key, "clipboard_down")) {
+            else if (0 == strcmp(key, "clipboard_down")) {
                 this->mod_vnc.clipboard_down.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "encodings")) {
@@ -1340,7 +1358,7 @@ public:
             else if (0 == strcmp(key, "allow_authentification_retries")) {
                 this->mod_vnc.allow_authentification_retries = bool_from_cstr(value);
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1348,7 +1366,7 @@ public:
             if (0 == strcmp(key, "on_end_of_data")) {
                 this->mod_replay.on_end_of_data = ulong_from_cstr(value);
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1462,7 +1480,7 @@ public:
             else if (0 == strcmp(key, "wrm_compression_algorithm")) {
                 this->video.wrm_compression_algorithm = ulong_from_cstr(value);
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1489,7 +1507,7 @@ public:
                     }
                 }
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1563,7 +1581,10 @@ public:
             else if (0 == strcmp(key, "performance")) {
                 this->debug.performance       = ulong_from_cstr(value);
             }
-            else {
+            else if (0 == strcmp(key, "config")) {
+                this->debug.config            = bool_from_cstr(value) ? 1 : 0;
+            }
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1613,7 +1634,7 @@ public:
             else if (0 == strcmp(key, "manager_close_cnx")) {
                 this->translation.manager_close_cnx.set_from_cstr(value);
             }
-            else {
+            else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
@@ -1643,8 +1664,11 @@ public:
                     }
                 }
             }
+            else if (this->debug.config) {
+                LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            }
         }
-        else {
+        else if (this->debug.config) {
             LOG(LOG_ERR, "unknown section [%s]", context);
         }
     }   // void set_value(const char * context, const char * key, const char * value)
