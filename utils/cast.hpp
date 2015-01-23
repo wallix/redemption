@@ -36,4 +36,14 @@ static inline const uint8_t * byte_ptr_cast(const char * data)
     return reinterpret_cast<const uint8_t *>(data);
 }
 
+static inline char * char_ptr_cast(uint8_t * data)
+{
+    return reinterpret_cast<char *>(data);
+}
+
+static inline const char * char_ptr_cast(const uint8_t * data)
+{
+    return reinterpret_cast<const char *>(data);
+}
+
 #endif

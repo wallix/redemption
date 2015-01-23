@@ -82,16 +82,6 @@ class mod_rdp : public mod_api {
 
     CHANNELS::ChannelDefArray mod_channel_list;
 
-    static AuthorizationChannels
-    make_authorization_channels_with_rdp_params(const ModRDPParams & mod_rdp_params) {
-        if (mod_rdp_params.allow_channels || mod_rdp_params.deny_channels) {
-            return make_authorization_channels(
-                mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : "",
-                mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : ""
-            );
-        }
-        return AuthorizationChannels();
-    }
     const AuthorizationChannels authorization_channels;
 
     typedef int_fast32_t data_size_type;
@@ -219,6 +209,9 @@ class mod_rdp : public mod_api {
 
     bool deactivation_reactivation_in_progress;
 
+    std::string const & unsafe_to_cref(std::string const & ret)
+    { return ret;}
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -228,7 +221,10 @@ public:
            )
         : mod_api(info.width - (info.width % 4), info.height)
         , front(front)
-        , authorization_channels(make_authorization_channels_with_rdp_params(mod_rdp_params))
+        , authorization_channels(
+            mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : unsafe_to_cref(std::string{}),
+            mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : unsafe_to_cref(std::string{})
+          )
         , use_rdp5(1)
         , keylayout(info.keylayout)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache

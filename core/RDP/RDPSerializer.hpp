@@ -475,7 +475,7 @@ public:
         for (uint8_t i = 0; i < new_cmd.data_len; ) {
             if (new_cmd.data[i] <= 0xFD) {
                 //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
-                FontChar & fc = const_cast<FontChar &>(gly_cache->glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item);
+                FontChar const & fc = gly_cache->glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item;
                 REDASSERT(fc);
 
                 int cacheIndex;

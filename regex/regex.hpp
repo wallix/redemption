@@ -23,6 +23,7 @@
 
 #include "regex_automate.hpp"
 #include "regex_parser.hpp"
+#include "noncopyable.hpp"
 
 struct Tracer;
 namespace re {
@@ -87,25 +88,6 @@ namespace re {
                 this->parser.st_parser.clear_and_shrink();
             }
         }
-
-#if __cplusplus >= 201103L && __cplusplus != 1 || defined(__GXX_EXPERIMENTAL_CXX0X__)
-        Regex(Regex&& other) noexcept
-        : parser()
-        , sm(std::move(other.sm))
-        , pos(0)
-        , step_limit(other.step_limit)
-        {
-            other.parser.err = nullptr;
-            other.parser.pos_err = 0;
-        }
-
-        Regex(StateMachine2 && other, unsigned step_limit = 10000) noexcept
-        : parser()
-        , sm(std::move(other))
-        , pos(0)
-        , step_limit(step_limit)
-        {}
-#endif
 
         void reset(const char * s, flag_t flags = DEFAULT_FLAG)
         {

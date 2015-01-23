@@ -39,4 +39,8 @@ namespace adl_barrier
 
 using movable_noncopyable = adl_barrier::movable_noncopyable;
 
+#define REDEMPTION_MOVABLE(class_name)  \
+    class_name(class_name&&) = default; \
+    class_name& operator=(class_name&&) = default
+
 #endif

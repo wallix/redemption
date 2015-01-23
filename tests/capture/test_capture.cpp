@@ -57,7 +57,10 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.video.capture_wrm = true;
         ini.video.capture_png = true;
         ini.globals.enable_file_encryption.set(false);
-        Capture capture(now, scr.cx, scr.cy, 24, 24, "./", "./", "/tmp/", "capture", false, false, NULL, ini);
+
+        Capture capture(
+            now, scr.cx, scr.cy, 24, 24, "./", "./", "/tmp/", "capture", false, false, NULL, ini
+        );
 
         bool ignore_frame_in_timeval = false;
 
@@ -93,55 +96,80 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.close(); // to close last wrm
-
-        const char * filename;
-
-        filename = capture.png_trans->seqgen()->get(0);
-        BOOST_CHECK_EQUAL(3098, ::filesize(filename));
-        ::unlink(filename);
-        filename = capture.png_trans->seqgen()->get(1);
-        BOOST_CHECK_EQUAL(3125, ::filesize(filename));
-        ::unlink(filename);
-        filename = capture.png_trans->seqgen()->get(2);
-        BOOST_CHECK_EQUAL(3140, ::filesize(filename));
-        ::unlink(filename);
-        filename = capture.png_trans->seqgen()->get(3);
-        BOOST_CHECK_EQUAL(3158, ::filesize(filename));
-        ::unlink(filename);
-        filename = capture.png_trans->seqgen()->get(4);
-        BOOST_CHECK_EQUAL(3172, ::filesize(filename));
-        ::unlink(filename);
-        filename = capture.png_trans->seqgen()->get(5);
-        BOOST_CHECK_EQUAL(3197, ::filesize(filename));
-        ::unlink(filename);
-        filename = capture.png_trans->seqgen()->get(6);
-        BOOST_CHECK_EQUAL(3223, ::filesize(filename));
-        ::unlink(filename);
-
-        const SequenceGenerator * wrm_seq = capture.seqgen();
-        filename = wrm_seq->get(0);
-        BOOST_CHECK_EQUAL(1646, ::filesize(filename));
-        ::unlink(filename);
-        filename = wrm_seq->get(1);
-        BOOST_CHECK_EQUAL(3508, ::filesize(filename));
-        ::unlink(filename);
-        filename = wrm_seq->get(2);
-        BOOST_CHECK_EQUAL(3463, ::filesize(filename));
-        ::unlink(filename);
         // The destruction of capture object will finalize the metafile content
     }
 
     {
-        FilenameGenerator wrm_seq(FilenameGenerator::PATH_FILE_PID_EXTENSION, "./", "capture", ".mwrm", groupid);
-        const char * filename = wrm_seq.get(0);
-        BOOST_CHECK_EQUAL(124, ::filesize(filename));
+        FilenameGenerator png_seq(
+            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+        , "./" , "capture", ".png", ini.video.capture_groupid
+        );
+
+        const char * filename;
+
+        filename = png_seq.get(0);
+        BOOST_CHECK_EQUAL(3098, ::filesize(filename));
+        ::unlink(filename);
+        filename = png_seq.get(1);
+        BOOST_CHECK_EQUAL(3125, ::filesize(filename));
+        ::unlink(filename);
+        filename = png_seq.get(2);
+        BOOST_CHECK_EQUAL(3140, ::filesize(filename));
+        ::unlink(filename);
+        filename = png_seq.get(3);
+        BOOST_CHECK_EQUAL(3158, ::filesize(filename));
+        ::unlink(filename);
+        filename = png_seq.get(4);
+        BOOST_CHECK_EQUAL(3172, ::filesize(filename));
+        ::unlink(filename);
+        filename = png_seq.get(5);
+        BOOST_CHECK_EQUAL(3197, ::filesize(filename));
+        ::unlink(filename);
+        filename = png_seq.get(6);
+        BOOST_CHECK_EQUAL(3223, ::filesize(filename));
+        ::unlink(filename);
+        filename = png_seq.get(7);
+        BOOST_CHECK_EQUAL(false, file_exist(filename));
+    }
+
+    {
+        FilenameGenerator wrm_seq(
+            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+        , "./" , "capture", ".wrm", ini.video.capture_groupid
+        );
+
+        const char * filename;
+
+        filename = wrm_seq.get(0);
+        BOOST_CHECK_EQUAL(1646, ::filesize(filename));
+        ::unlink(filename);
+        filename = wrm_seq.get(1);
+        BOOST_CHECK_EQUAL(3508, ::filesize(filename));
+        ::unlink(filename);
+        filename = wrm_seq.get(2);
+        BOOST_CHECK_EQUAL(3484, ::filesize(filename));
+        ::unlink(filename);
+        filename = wrm_seq.get(3);
+        BOOST_CHECK_EQUAL(false, file_exist(filename));
+    }
+
+    {
+        FilenameGenerator mwrm_seq(
+            FilenameGenerator::PATH_FILE_PID_EXTENSION
+          , "./", "capture", ".mwrm", groupid
+        );
+        const char * filename = mwrm_seq.get(0);
+        timeval now = tvtime();
+        BOOST_CHECK_EQUAL(120 + std::to_string(now.tv_sec).size(), ::filesize(filename));
         ::unlink(filename);
     }
 
     if (ini.globals.enable_file_encryption.get()) {
-        FilenameGenerator wrm_seq(FilenameGenerator::PATH_FILE_PID_EXTENSION, "/tmp/", "capture", ".mwrm", groupid);
-        const char * filename = wrm_seq.get(0);
+        FilenameGenerator mwrm_seq(
+            FilenameGenerator::PATH_FILE_PID_EXTENSION
+          , "/tmp/", "capture", ".mwrm", groupid
+        );
+        const char * filename = mwrm_seq.get(0);
         BOOST_CHECK_EQUAL(32, ::filesize(filename));
         ::unlink(filename);
     }
