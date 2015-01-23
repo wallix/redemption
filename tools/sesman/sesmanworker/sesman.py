@@ -831,10 +831,11 @@ class Sesman():
                         data_to_send[u'message'] = cut_message(message)
 
                         _status, _error = self.interactive_accept_message(data_to_send)
-                        if _status:
-                            Logger().info(u"User agreed to be recorded")
-                        else:
-                            Logger().info(u"User did not agree to be recorded")
+                        Logger().info(u"Recording agreement of %s to %s@%s : %s" %
+                                      (user,
+                                       self.shared.get(u'target_login'),
+                                       self.shared.get(u'target_device'),
+                                       ["NO", "YES"][_status]))
                     else:
                         self.send_data(data_to_send)
 
