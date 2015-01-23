@@ -105,7 +105,7 @@ public:
 (void)truncate_result;
             }
             else {
-                LOG(LOG_INFO, "Failed to write progress information file!");
+                LOG(LOG_ERR, "Failed to write progress information file!");
             }
 
             this->last_written_time_percentage = time_percentage;
@@ -131,7 +131,7 @@ public:
 (void)truncate_result;
         }
         else {
-            LOG(LOG_INFO, "Failed to write progress information file!");
+            LOG(LOG_ERR, "Failed to write progress information file!");
         }
 
         this->error_raised = true;

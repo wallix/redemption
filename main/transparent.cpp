@@ -90,41 +90,41 @@ int main(int argc, char * argv[]) {
         std::cout << copyright_notice;
         std::cout << "Usage: rdptproxy [options]\n\n";
         std::cout << desc << endl;
-        exit(-1);
+        exit(0);
     }
 
     if (options.count("version") > 0) {
         std::cout << copyright_notice;
-        exit(-1);
+        exit(0);
     }
 
     if (   target_device.empty()
         && play_filename.empty()) {
-        std::cout << "Missing target device or play file name: use -t target or -d filename\n\n";
+        std::cerr << "Missing target device or play file name: use -t target or -d filename\n\n";
         exit(-1);
     }
 
     if (   !target_device.empty()
         && !play_filename.empty()) {
-        std::cout << "Use -t target or -d filename\n\n";
+        std::cerr << "Use -t target or -d filename\n\n";
         exit(-1);
     }
 
     if (   !output_filename.empty()
         && !play_filename.empty()) {
-        std::cout << "Use -o filename or -d filename\n\n";
+        std::cerr << "Use -o filename or -d filename\n\n";
         exit(-1);
     }
 
     if (   !record_filename.empty()
         && !play_filename.empty()) {
-        std::cout << "Use -r filename or -d filename\n\n";
+        std::cerr << "Use -r filename or -d filename\n\n";
         exit(-1);
     }
 
     if (   !input_filename.empty()
         && !output_filename.empty()) {
-        std::cout << "Use -i filename or -o filename\n\n";
+        std::cerr << "Use -i filename or -o filename\n\n";
         exit(-1);
     }
 
@@ -136,7 +136,7 @@ int main(int argc, char * argv[]) {
         }
 
         if (username.c_str()[0] == 0) {
-            std::cout << "Missing username : use -u username\n\n";
+            std::cerr << "Missing username : use -u username\n\n";
             exit(-1);
         }
     }
@@ -180,7 +180,7 @@ int main(int argc, char * argv[]) {
     int nodelay = 1;
     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay
                         , sizeof(nodelay))) {
-        LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
+        LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
     }
     SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
                                , ini.debug.front, 0);
@@ -395,7 +395,7 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             else {
             }
         } catch (Error & e) {
-            LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
+            LOG(LOG_ERR, "Session::Session exception = %d!\n", e.id);
             run_session = false;
         };
     }   // while (run_session)

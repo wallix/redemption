@@ -71,7 +71,7 @@ static void show_metadata(FileToGraphic const & player);
 
 static void raise_error(std::string const & output_filename, int code, const char * message, uint32_t verbose);
 
-bool is_encrypted_file(const char * input_filename);
+int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted);
 
 
 static const unsigned USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF;
@@ -161,16 +161,16 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         cout << copyright_notice;
         cout << "\n\nUsage: redrec [options]\n\n";
         cout << desc << endl;
-        return -1;
+        return 0;
     }
 
     if (options.count("version") > 0) {
         cout << copyright_notice << std::endl;
-        return -1;
+        return 0;
     }
 
     if (input_filename.empty()) {
-        cout << "Missing input filename : use -i filename\n\n";
+        cerr << "Missing input filename : use -i filename\n\n";
         return -1;
     }
 
@@ -180,12 +180,12 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     remove_input_file  = (options.count("remove-input-file") > 0);
 
     if (!show_file_metadata && !show_statistics && !auto_output_file && output_filename.empty()) {
-        cout << "Missing output filename : use -o filename\n\n";
+        cerr << "Missing output filename : use -o filename\n\n";
         return -1;
     }
 
     if (!output_filename.empty() && auto_output_file) {
-        cout << "Conflicting options : --output-file and --auto-output-file\n\n";
+        cerr << "Conflicting options : --output-file and --auto-output-file\n\n";
         return -1;
     }
 
@@ -246,7 +246,11 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
     ini.video.rt_display.set(ini.video.capture_png ? 1 : 0);
 
-    const bool infile_is_encrypted = is_encrypted_file(input_filename.c_str());
+    bool infile_is_encrypted;
+    if (is_encrypted_file(input_filename.c_str(), infile_is_encrypted) == -1) {
+        std::cerr << "Input file is absent.\n";
+        return -1;
+    }
 
     if (options.count("encryption") > 0) {
                 if (0 == strcmp(wrm_encryption.c_str(), "enable")) {
@@ -259,7 +263,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
             ini.globals.enable_file_encryption.set(infile_is_encrypted);
         }
         else {
-            cout << "Unknown wrm encryption parameter" << endl << endl;
+            std::cerr << "Unknown wrm encryption parameter" << endl << endl;
             return -1;
         }
     }
@@ -286,9 +290,9 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
 
 inline
-bool is_encrypted_file(const char * input_filename)
+int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
 {
-    bool infile_is_encrypted = false;
+    infile_is_encrypted = false;
     const int fd_test = open(input_filename, O_RDONLY);
     if (fd_test != -1) {
         uint32_t magic_test;
@@ -300,8 +304,11 @@ bool is_encrypted_file(const char * input_filename)
             cout << "Input file is encrypted." << endl;
         }
         close(fd_test);
+
+        return 0;
     }
-    return infile_is_encrypted;
+
+    return -1;
 }
 
 
@@ -368,7 +375,7 @@ int recompress_or_record( std::string & output_filename, std::string & input_fil
     }
     catch (const Error & e) {
         if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
-            std::cout << "Asked time not found in mwrm file\n";
+            std::cerr << "Asked time not found in mwrm file\n";
         }
         else {
             std::cerr << "Exception code: " << e.id << std::endl;

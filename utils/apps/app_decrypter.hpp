@@ -62,7 +62,7 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypt
         std::cout << copyright_notice << "\n\n";
         std::cout << "Usage: redrec [options]\n\n";
         std::cout << desc << std::endl;
-        return -1;
+        return 0;
     }
 
     if (options.count("version") > 0) {
@@ -91,6 +91,10 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypt
             (magic_test == WABCRYPTOFILE_MAGIC)) {
             infile_is_encrypted = true;
         }
+    }
+    else {
+        std::cerr << "Input file is absent.\n";
+        return -1;
     }
 
     if (infile_is_encrypted == false) {

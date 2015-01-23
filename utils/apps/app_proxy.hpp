@@ -115,7 +115,7 @@ inline int shutdown(const char * pid_file)
     cout << "reading pid_file " << pid_file << "\n";
     memset(text, 0, 32);
     if (read(fd, text, 31) < 0){
-        cout << "failed to read pid file\n";
+        cerr << "failed to read pid file\n";
     }
     else{
         int pid = atoi(text);
@@ -137,7 +137,7 @@ inline int shutdown(const char * pid_file)
                 }
                 if ((errno != ESRCH) || (res == 0)){
                     // if errno != ESRCH, pid is still running
-                    cout << "Error stopping process id " << pid << "\n";
+                    cerr << "Error stopping process id " << pid << "\n";
                 }
             }
         }
@@ -162,13 +162,13 @@ inline int shutdown(const char * pid_file)
             strcpy(buffer + path_len, entryp->d_name);
             struct stat st;
             if (stat(buffer, &st) < 0){
-                LOG(LOG_INFO, "Failed to read pid directory %s [%u: %s]",
+                LOG(LOG_ERR, "Failed to read pid directory %s [%u: %s]",
                     buffer, errno, strerror(errno));
                 continue;
             }
             LOG(LOG_INFO, "removing old pid file %s", buffer);
             if (unlink(buffer) < 0){
-                LOG(LOG_INFO, "Failed to remove old session pid file %s [%u: %s]",
+                LOG(LOG_ERR, "Failed to remove old session pid file %s [%u: %s]",
                     buffer, errno, strerror(errno));
             }
         }
@@ -177,7 +177,7 @@ inline int shutdown(const char * pid_file)
         free(buffer);
     }
     else {
-        LOG(LOG_INFO, "Failed to open dynamic configuration directory %s [%u: %s]",
+        LOG(LOG_ERR, "Failed to open dynamic configuration directory %s [%u: %s]",
             "/var/run/redemption" , errno, strerror(errno));
     }
 
