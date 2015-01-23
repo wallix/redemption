@@ -66,14 +66,18 @@ namespace detail
         const ssize_t res = writer.write(header1, len);
         if (res < 0) {
             int err = errno;
+            LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
+
             if (err == ENOSPC) {
                 char message[1024];
                 snprintf(message, sizeof(message), "100|%s", path);
                 authentifier->report("FILESYSTEM_FULL", message);
-            }
 
-            LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+            }
         }
     }
 
