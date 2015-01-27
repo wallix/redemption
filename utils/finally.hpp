@@ -32,14 +32,53 @@ basic_finally<F> finally(F f) {
     return {static_cast<F&&>(f)};
 }
 
+/// \attention finnaly not must throw an exception
 template<class F, class Finally>
-auto try_finally(F f, Finally finally) -> decltype(f()) {
+auto try_except(F f, Finally finally) -> decltype(f()) {
     basic_finally<Finally&> d{finally};
     return f();
 }
 
+
+namespace detail {
+    template<class F, class R = decltype(std::declval<F>()())>
+    struct rethrow_try_except_result
+    { using no_void_type = R; };
+
+    template<class F>
+    struct rethrow_try_except_result<F, void>
+    { using void_type = void; };
+}
+
 template<class F, class Finally>
-auto except_try_finally(F f, Finally finally) -> decltype(f()) {
+typename detail::rethrow_try_except_result<F>::void_type
+rethrow_try_except(F f, Finally finally)
+{
+    if (noexcept(finally())) {
+        basic_finally<Finally&> d{finally};
+        f();
+        return ;
+    }
+
+    try {
+        f();
+    }
+    catch (...) {
+        finally();
+        throw;
+    }
+    finally();
+}
+
+template<class F, class Finally>
+typename detail::rethrow_try_except_result<F>::no_void_type
+rethrow_try_except(F f, Finally finally)
+{
+    if (noexcept(finally())) {
+        basic_finally<Finally&> d{finally};
+        return f();
+    }
+
     decltype(f()) ret;
     try {
         ret = f();
