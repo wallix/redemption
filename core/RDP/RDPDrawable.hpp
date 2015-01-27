@@ -413,16 +413,18 @@ private:
 
         for (int y = 0; y < fc.height; y++)
         {
+            const int pt_y = bmp_pos_y + local_offset_y + y;
+            if (!(clip.y <= pt_y && pt_y < clip.bottom())) {
+                break;
+            }
+
             for (int x = 0; x < fc.width; x++)
             {
                 if (fc_bit_mask & (*fc_data))
                 {
                     const int pt_x = bmp_pos_x + local_offset_x + x;
-                    const int pt_y = bmp_pos_y + local_offset_y + y;
-                    if (clip.contains_pt(pt_x, pt_y)) {
-                        this->drawable.draw_pixel( pt_x
-                                                 , pt_y
-                                                 , color);
+                    if (clip.x <= pt_x && pt_x < clip.right()) {
+                        this->drawable.draw_pixel(pt_x, pt_y, color);
                     }
                     //printf("X");
                 }
@@ -456,71 +458,72 @@ public:
             return;
         }
 
-        Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
-        if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
-            ajusted.cy--;
-            this->drawable.opaquerect(ajusted.intersect(clip), this->u32rgb_to_color(cmd.fore_color));
+        // set a background color
+        {
+            Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
+            if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
+                ajusted.cy--;
+                this->drawable.opaquerect(ajusted.intersect(clip), this->u32rgb_to_color(cmd.fore_color));
+            }
         }
 
+        bool has_delta_byte = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
+        const Color color = this->u32rgb_to_color(cmd.back_color);
+        const int16_t offset_y = /*cmd.bk.cy - (*/cmd.glyph_y - cmd.bk.y/* + 1)*/;
+        const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
+
+        StaticStream aj(cmd.data, cmd.data_len);
+
+        uint16_t draw_pos = 0;
+
+        Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(clip);
+
+        while (aj.in_remain())
         {
-            bool has_delta_byte = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
-            const Color color = this->u32rgb_to_color(cmd.back_color);
-            const int16_t offset_y = /*cmd.bk.cy - (*/cmd.glyph_y - cmd.bk.y/* + 1)*/;
-            const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
-
-            StaticStream aj(cmd.data, cmd.data_len);
-
-            uint16_t draw_pos = 0;
-
-            Rect clipped_glyph_fragment_rect = cmd.bk.intersect(clip);
-
-            while (aj.in_remain())
+            uint8_t data = aj.in_uint8();
+            if (data <= 0xFD)
             {
-                uint8_t  data     = aj.in_uint8();
-                if (data <= 0xFD)
+                FontChar const & fc = gly_cache->glyphs[cmd.cache_id][data].font_item;
+                if (!fc)
                 {
-                    FontChar const & fc = gly_cache->glyphs[cmd.cache_id][data].font_item;
-                    if (!fc)
-                    {
-                        LOG( LOG_INFO
-                           , "RDPDrawable::draw(RDPGlyphIndex, ...): Unknown glyph, cacheId=%u cacheIndex=%u"
-                           , cmd.cache_id, data);
-                        REDASSERT(fc);
-                    }
+                    LOG( LOG_INFO
+                        , "RDPDrawable::draw(RDPGlyphIndex, ...): Unknown glyph, cacheId=%u cacheIndex=%u"
+                        , cmd.cache_id, data);
+                    REDASSERT(fc);
+                }
 
-                    if (has_delta_byte)
+                if (has_delta_byte)
+                {
+                    data = aj.in_uint8();
+                    if (data == 0x80)
                     {
-                        data = aj.in_uint8();
-                        if (data == 0x80)
-                        {
-                            draw_pos += aj.in_uint16_le();
-                        }
-                        else
-                        {
-                            draw_pos += data;
-                        }
+                        draw_pos += aj.in_uint16_le();
                     }
                     else
                     {
-                        REDASSERT(cmd.ui_charinc);
+                        draw_pos += data;
                     }
+                }
+                else
+                {
+                    REDASSERT(cmd.ui_charinc);
+                }
 
-                    if (fc)
-                    {
-                        this->draw_glyph( fc, draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y
-                                        , clipped_glyph_fragment_rect);
-                    }
-                }
-                else if (data == 0xFE)
+                if (fc)
                 {
-                    LOG(LOG_INFO, "RDPDrawable::draw(RDPGlyphIndex, ...): Unsupported data");
-                    throw Error(ERR_RDP_UNSUPPORTED);
+                    this->draw_glyph( fc, draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y
+                                    , clipped_glyph_fragment_rect);
                 }
-                else if (data == 0xFF)
-                {
-                    aj.in_skip_bytes(2);
-                    REDASSERT(!aj.in_remain());
-                }
+            }
+            else if (data == 0xFE)
+            {
+                LOG(LOG_INFO, "RDPDrawable::draw(RDPGlyphIndex, ...): Unsupported data");
+                throw Error(ERR_RDP_UNSUPPORTED);
+            }
+            else if (data == 0xFF)
+            {
+                aj.in_skip_bytes(2);
+                REDASSERT(!aj.in_remain());
             }
         }
     }

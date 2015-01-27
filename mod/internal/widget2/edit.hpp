@@ -81,7 +81,7 @@ public:
         }
 
         int w = 0;
-        this->drawable.text_metrics(this->font, "Lp", w, this->h_text);
+        this->drawable.text_metrics(this->font, "Édp", w, this->h_text);
         this->rect.cy = this->h_text + this->label.y_text * 2;
         this->label.rect.cx = this->rect.cx;
         this->label.rect.cy = this->rect.cy;

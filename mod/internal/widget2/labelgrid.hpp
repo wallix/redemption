@@ -27,6 +27,9 @@
 #include "grid.hpp"
 
 struct WidgetLabelGrid : public WidgetGrid {
+    static const unsigned x_padding_label = 3;
+    static const unsigned y_padding_label = 1;
+
     bool toDelete[GRID_NB_COLUMNS_MAX][GRID_NB_ROWS_MAX];
 
     Font const & font;
@@ -76,7 +79,7 @@ struct WidgetLabelGrid : public WidgetGrid {
                                               entries[i], true, this->group_id,
                                               odd ? this->fg_color_1 : this->fg_color_2,
                                               odd ? this->bg_color_1 : this->bg_color_2,
-                                              this->font, 3, 1);
+                                              this->font, x_padding_label, y_padding_label);
             label->tool = true;
             this->set_widget(this->nb_rows, i, label);
             this->toDelete[i][this->nb_rows] = true;
