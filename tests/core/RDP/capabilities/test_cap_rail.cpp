@@ -27,7 +27,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/rail.hpp"
+#include "RDP/capabilities/cap_rail.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityRailEmit)
 {
