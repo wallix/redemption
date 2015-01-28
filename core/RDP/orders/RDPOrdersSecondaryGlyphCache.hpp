@@ -23,6 +23,8 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYGLYPHCACHE_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYGLYPHCACHE_HPP_
 
+#include <memory>
+
 #include "bitfu.hpp"
 #include "stream.hpp"
 #include "RDPOrdersCommon.hpp"
@@ -149,7 +151,7 @@ public:
     int16_t    y;
     uint16_t   cx;
     uint16_t   cy;
-    uint8_t  * aj = nullptr;
+    std::unique_ptr<uint8_t[]> aj;
 
     RDPGlyphCache() = default;
 
@@ -160,7 +162,7 @@ public:
                  , int16_t y
                  , uint16_t cx
                  , uint16_t cy
-                 , const uint8_t * aj
+                 , std::unique_ptr<uint8_t[]> aj
                  )
     : cacheId(cacheId)
     , cGlyphs(1)
@@ -168,14 +170,8 @@ public:
     , x(x)
     , y(y)
     , cx(cx)
-    , cy(cy) {
-        size_t size = this->datasize();
-        this->aj = new uint8_t[size];
-        memcpy(this->aj, aj, size);
-    }
-
-    ~RDPGlyphCache() {
-        delete [] this->aj;
+    , cy(cy)
+    , aj(std::move(aj)) {
     }
 
     inline uint16_t datasize() const {
@@ -208,7 +204,7 @@ public:
         stream.out_uint16_le(this->y);
         stream.out_uint16_le(this->cx);
         stream.out_uint16_le(this->cy);
-        stream.out_copy_bytes(this->aj, size);
+        stream.out_copy_bytes(this->aj.get(), size);
     }
 
     void receive(Stream & stream, const RDPSecondaryOrderHeader & header) {
@@ -222,9 +218,8 @@ public:
 
         uint16_t size = this->datasize();
 
-        if (this->aj) { delete [] this->aj; }
-        this->aj = new uint8_t[size];
-        memcpy(this->aj, stream.in_uint8p(size), size);
+        this->aj.reset(new uint8_t[size]);
+        memcpy(this->aj.get(), stream.in_uint8p(size), size);
     }
 
     size_t str(char * buffer, size_t sz) const {

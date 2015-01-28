@@ -237,10 +237,7 @@ static inline const char * TR(const char * key, Inifile & ini)
         res = ini.translation.manager_close_cnx.get_cstr();
     }
 
-    if ((res == NULL) ||
-        0 == strcmp(res, "") ||
-        0 == strcmp(res, "ASK")) {
-
+    if (!res || !*res || 0 == strcmp(res, "ASK")) {
         const char * lang = ini.translation.language.get_cstr();
         if (0 == strcmp("fr", lang)) {
             TRANSLATIONCONF.set_lang(Translation::FR);

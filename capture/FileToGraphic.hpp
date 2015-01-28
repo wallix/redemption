@@ -424,9 +424,10 @@ public:
                     if (this->verbose > 32){
                         cmd.log(LOG_INFO);
                     }
-                    FontChar fc(cmd.x, cmd.y, cmd.cx, cmd.cy, -1);
-                    memcpy(fc.data.get(), cmd.aj, fc.datasize());
-                    this->gly_cache.set_glyph(std::move(fc), cmd.cacheId, cmd.cacheIndex);
+                    this->gly_cache.set_glyph(
+                        FontChar(std::move(cmd.aj), cmd.x, cmd.y, cmd.cx, cmd.cy, -1),
+                        cmd.cacheId, cmd.cacheIndex
+                    );
                 }
                 break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:
