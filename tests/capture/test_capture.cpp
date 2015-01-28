@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         now.tv_usec = 0;
         now.tv_sec = 1000;
 
-        Rect scr(0, 0, 10, 10);
+        Rect scr(0, 0, 12, 10);
 
         ini.video.frame_interval = 100; // one timestamp every second
         ini.video.break_interval = 3;   // one WRM file every 5 seconds
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         auto s = get_file_contents<std::string>(filename);
         char message[1024];
         if (!check_sig(reinterpret_cast<const uint8_t*>(s.data()), s.size(), message,
-            "\x7e\xfc\x1c\x63\x17\x32\x78\x52\xed\x66\x33\xf4\x08\x06\x7c\x7d\x62\x2e\x8c\x69"
+            "\x39\xb2\x11\x9d\x25\x64\x8d\x7b\xce\x3e\xf1\xf0\xad\x29\x50\xea\xa3\x01\x5c\x27"
         )) {
             BOOST_CHECK_MESSAGE(false, message);
         }

@@ -2320,19 +2320,15 @@ public:
         this->save_mouse_x = this->mouse_cursor_pos_x;
         this->save_mouse_y = this->mouse_cursor_pos_y;
 
-        struct Trace {
-            int offset_;
-            void reset() noexcept { this->offset_ = 0; }
-            int set(int offset) noexcept { return this->offset_ = offset; }
-            void trace(uint8_t * psave, uint8_t * pixel_start, const uint8_t * data, size_t n) const noexcept {
-                memcpy(psave, pixel_start, n);
-                memcpy(pixel_start, data + this->offset_, n);
-            }
-        };
-
         const int x = this->mouse_cursor_pos_x - this->current_pointer->hotspot_x;
         const int y = this->mouse_cursor_pos_y - this->current_pointer->hotspot_y;
-        this->priv_trace_mouse(Trace(), x, y);
+        this->priv_trace_mouse(
+            [](uint8_t * psave, uint8_t * pixel_start, const uint8_t * data, size_t n) noexcept {
+                memcpy(psave, pixel_start, n);
+                memcpy(pixel_start, data, n);
+            },
+            x, y
+        );
     }
 
     void clear_mouse() {
@@ -2340,17 +2336,14 @@ public:
             return;
         }
 
-        struct Trace {
-            void reset() const noexcept { }
-            int set(int offset) const noexcept { return offset; }
-            void trace(uint8_t * psave, uint8_t * pixel_start, const uint8_t * /*data*/, size_t n) const noexcept {
-                ::memcpy(pixel_start, psave, n);
-            }
-        };
-
         const int x = this->save_mouse_x - this->current_pointer->hotspot_x;
         const int y = this->save_mouse_y - this->current_pointer->hotspot_y;
-        this->priv_trace_mouse(Trace(), x, y);
+        this->priv_trace_mouse(
+            [](uint8_t * psave, uint8_t * pixel_start, const uint8_t * /*data*/, size_t n) noexcept {
+                ::memcpy(pixel_start, psave, n);
+            },
+            x, y
+        );
     }
 
 private:
@@ -2366,18 +2359,20 @@ private:
             if (pixel_start + lg <= this->impl().first_pixel()) {
                 continue;
             }
-            tracer.reset();
+
+            int offset = 0;
             if (pixel_start < this->impl().first_pixel()) {
-                lg -= tracer.set(this->data() - pixel_start);
+                offset = this->data() - pixel_start;
+                lg -= offset;
                 pixel_start = this->impl().first_pixel();
             }
-            if (pixel_start > data_end) {
+            if (pixel_start >= data_end) {
                 break;
             }
             if (pixel_start + lg >= data_end) {
                 lg = data_end - pixel_start;
             }
-            tracer.trace(psave, pixel_start, contiguous_pixels.data, lg);
+            tracer(psave, pixel_start, contiguous_pixels.data + offset, lg);
             psave += lg;
         }
     }
