@@ -1280,8 +1280,8 @@ public:
                 if ((this->client.max_color_depth != 8) &&
                     (this->client.max_color_depth != 15) &&
                     (this->client.max_color_depth != 16) &&
-                    (this->client.max_color_depth != 24) &&
-                    (this->client.max_color_depth != 32))
+                    (this->client.max_color_depth != 24)/* &&
+                    (this->client.max_color_depth != 32)*/)
                     this->client.max_color_depth = 24;
             }
             else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
