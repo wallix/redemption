@@ -47,7 +47,7 @@
 #include "capabilities/bitmapcachehostsupport.hpp"
 #include "capabilities/order.hpp"
 #include "capabilities/pointer.hpp"
-// #include "capabilities/rail.hpp"
+// #include "capabilities/cap_rail.hpp"
 #include "capabilities/cap_share.hpp"
 #include "capabilities/cap_sound.hpp"
 // #include "capabilities/surfacecommands.hpp"
