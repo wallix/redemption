@@ -1453,9 +1453,9 @@ public:
             else if (0 == strcmp(key, "h_qscale")) {
                 this->video.h_qscale    = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "movie_path")) {
-                this->globals.movie_path.set_from_cstr(value);
-            }
+//            else if (0 == strcmp(key, "movie_path")) {
+//                this->globals.movie_path.set_from_cstr(value);
+//            }
             else if (0 == strcmp(key, "hash_path")) {
                 this->video.hash_path = value;
             }
