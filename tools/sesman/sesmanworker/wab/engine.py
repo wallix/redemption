@@ -58,7 +58,7 @@ def is_device_in_subnet(device, subnet):
             result = False
     else:
         result = device == subnet
-    Logger().info("checking if device %s is in subnet %s -> %s" % (device, subnet, ['No', 'Yes'][result]))
+    Logger().debug("checking if device %s is in subnet %s -> %s" % (device, subnet, ['No', 'Yes'][result]))
     return result
 
 class Engine(object):
