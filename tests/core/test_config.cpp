@@ -753,8 +753,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "certificate_password=redemption\n"
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
-                          "alternate_shell=C:\\\\WINDOWS\\\\NOTEPAD.EXE\n"
-                          "shell_working_directory=C:\\\\WINDOWS\\\\\n"
+                          "alternate_shell=C:\\WINDOWS\\NOTEPAD.EXE\n"
+                          "shell_working_directory=C:\\WINDOWS\\\n"
                           "enable_bitmap_update=true\n"
                           "persistent_path=/var/tmp/wab/persistent/rdp\n"
                           "\n"
@@ -1014,7 +1014,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "cache_waiting_list=yes\n"
                           "bitmap_compression=on\n"
                           "[translation]\n"
-                          "connection_closed=Connexion\\ fermée\n"
+                          "connection_closed=Connexion fermée\n"
                           "[mod_rdp]\n"
                           "rdp_compression=2\n"
                           "disconnect_on_logon_user_change=no\n"
@@ -1222,7 +1222,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "enable_ip_transparent=true\n"
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
-                          "alternate_shell=C:\\\\Program\\ Files\\\\Microsoft\\ Visual\\ Studio\\\\Common\\\\MSDev98\\\\Bin\\\\MSDEV.EXE\n"
+                          "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE\n"
                           "shell_working_directory=\n"
                           "[client]\n"
                           "tls_support=yes\n"
@@ -1329,6 +1329,211 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.listen_address.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL("rdpproxy",                       ini.globals.certificate_password.c_str());
+
+    BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp",      ini.globals.png_path.c_str());
+    BOOST_CHECK_EQUAL("/var/wab/recorded/rdp",          ini.globals.wrm_path.c_str());
+
+    BOOST_CHECK_EQUAL("C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE",
+                      ini.globals.alternate_shell.get_cstr());
+    BOOST_CHECK_EQUAL("",                               ini.globals.shell_working_directory.get_cstr());
+
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+
+    BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.password);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.compression);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.cache);
+
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
+    BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bitmap_compression);
+
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.mod_rdp.extra_orders.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+
+    BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
+
+    BOOST_CHECK_EQUAL("OK",                             ini.translation.button_ok.get_cstr());
+    BOOST_CHECK_EQUAL("Cancel",                         ini.translation.button_cancel.get_cstr());
+    BOOST_CHECK_EQUAL("Help",                           ini.translation.button_help.get_cstr());
+    BOOST_CHECK_EQUAL("Close",                          ini.translation.button_close.get_cstr());
+    BOOST_CHECK_EQUAL("Refused",                        ini.translation.button_refused.get_cstr());
+    BOOST_CHECK_EQUAL("Login",                          ini.translation.login.get_cstr());
+    BOOST_CHECK_EQUAL("Username",                       ini.translation.username.get_cstr());
+    BOOST_CHECK_EQUAL("Password",                       ini.translation.password.get_cstr());
+    BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
+    BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
+    BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
+
+    BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
+
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
+    BOOST_CHECK_EQUAL(800,                              ini.context.opt_width.get());
+    BOOST_CHECK_EQUAL(600,                              ini.context.opt_height.get());
+    BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp.get());
+}
+
+BOOST_AUTO_TEST_CASE(TestConfig3)
+{
+    // test we can read a config file with a global section, other values
+    std::stringstream oss(
+                          " [ globals ] \n"
+                          " bitmap_cache\t= no \n"
+                          " glyph_cache = no \n"
+                          "encryptionLevel=high\n"
+                          "enable_file_encryption=true\n"
+                          "listen_address=127.0.0.1\n"
+                          "certificate_password=rdpproxy RDP\n"
+                          "enable_ip_transparent=true\n"
+                          "png_path=/var/tmp/wab/recorded/rdp\n"
+                          "wrm_path=/var/wab/recorded/rdp\n"
+                          "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE   \n"
+                          "shell_working_directory=\n"
+                          "[client]\t\n"
+                          "tls_support=yes\n"
+                          "performance_flags_default=07\n"
+                          "performance_flags_force_present=1\n"
+                          "performance_flags_force_not_present=0x\n"
+                          "max_color_depth=24\n"
+                          "persistent_disk_bitmap_cache=yes\n"
+                          "cache_waiting_list=no\n"
+                          "persist_bitmap_cache_on_disk=no\n"
+                          "bitmap_compression=false\n"
+                          "\t[mod_rdp]\n"
+                          "rdp_compression=0\n"
+                          "[mod_replay]\n"
+                          "on_end_of_data=0\n"
+                          "[video]\n"
+                          "disable_keyboard_log=4\n"
+                          "wrm_color_depth_selection_strategy=1\n"
+                          "wrm_compression_algorithm=1\n"
+                          "\n"
+                          );
+
+    Inifile             ini;
+
+    ini.globals.shell_working_directory.set_from_cstr("C:\\");
+
+    ConfigurationLoader cfg_loader(ini, oss);
+    char                temp_path[1024];
+
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
+    BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
+    BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
+    BOOST_CHECK_EQUAL("medium",                         ini.globals.video_quality.get_cstr());
+    BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
+    BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
+    BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
+    BOOST_CHECK_EQUAL("",                               ini.globals.target_user.get_cstr());
+    BOOST_CHECK_EQUAL("",                               ini.globals.target_application.get_cstr());
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
+    BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
+    BOOST_CHECK_EQUAL(2,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
+    BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
+    BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
+                                                        ini.globals.persistent_path.c_str());
+
+    BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
+    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
+    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
+
+    BOOST_CHECK_EQUAL(5,                                ini.video.png_limit);
+
+    BOOST_CHECK_EQUAL(10000,                            ini.video.l_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
+    BOOST_CHECK_EQUAL(28,                               ini.video.l_qscale);
+
+    BOOST_CHECK_EQUAL(20000,                            ini.video.m_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
+    BOOST_CHECK_EQUAL(14,                               ini.video.m_qscale);
+
+    BOOST_CHECK_EQUAL(30000,                            ini.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
+    BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
+    BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
+    BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
+
+    BOOST_CHECK_EQUAL(pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)),
+                                                        ini.video.hash_path.c_str());
+    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)),
+                                                        ini.video.record_path.c_str());
+    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
+                                                        ini.video.record_tmp_path.c_str());
+
+    BOOST_CHECK_EQUAL(4,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_ocr);
+
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
+
+    BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
+    BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
+
+    BOOST_CHECK_EQUAL("/tmp/",                          ini.video.replay_path.c_str());
+
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption.get());
+    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.listen_address.c_str());
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
+    BOOST_CHECK_EQUAL("rdpproxy RDP",                   ini.globals.certificate_password.c_str());
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp",      ini.globals.png_path.c_str());
     BOOST_CHECK_EQUAL("/var/wab/recorded/rdp",          ini.globals.wrm_path.c_str());
@@ -1959,7 +2164,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
                            "# unknwon keys are also ignored\n"
                            "yyy=1\n"
                            "[client]\n"
-                           "bitmap_compression=no # here we have a comment to end of line\n"
+                           "bitmap_compression=no\n"
                            );
 
     cfg_loader.cparse(ini, ifs2);

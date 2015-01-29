@@ -71,12 +71,13 @@ struct ConfigurationLoader {
                 continue;
             }
             char * tmp_line = line;
-            while (((*tmp_line) == ' ') || ((*tmp_line) == '\t'))
-            {
-                tmp_line++;
-            }
-            if (*tmp_line == '#')
-                continue;
+            while (isspace(*tmp_line)) tmp_line++;
+            if (*tmp_line == '#') continue;
+            char * last_char_ptr = tmp_line + strlen(tmp_line) - 1;
+            while ((last_char_ptr >= tmp_line) && isspace(*last_char_ptr)) last_char_ptr--;
+            if (last_char_ptr < tmp_line) continue;
+            *(last_char_ptr + 1) = '\0';
+            //LOG(LOG_INFO, "Line='%s'", tmp_line);
             this->parseline(configuration_holder, tmp_line, context);
         };
     }
@@ -88,10 +89,14 @@ struct ConfigurationLoader {
             if (!isspace(*startkey)) {
                 if (*startkey == '[') {
                     const char * startcontext = startkey + 1;
+                    while (*startcontext && isspace(*startcontext)) startcontext++;
                     const char * endcontext = strchr(startcontext, ']');
-                    if (endcontext) {
-                        memcpy(context, startcontext, endcontext - startcontext);
-                        context[endcontext - startcontext] = 0;
+                    if (endcontext && !(*(endcontext + 1))) {
+                        while ((endcontext - 1 > startcontext) && isspace(*(endcontext - 1))) endcontext--;
+                        if (endcontext - 1 > startcontext) {
+                            memcpy(context, startcontext, endcontext - startcontext);
+                            context[endcontext - startcontext] = 0;
+                        }
                     }
                     return;
                 }
@@ -116,43 +121,14 @@ struct ConfigurationLoader {
                             break;
                         }
                     }
-                    const char * endvalue;
-                    /*
-                      for (endvalue = startvalue; *endvalue ; endvalue++) {
-                      TODO("RZ: Support space in value");
-                      if (isspace(*endvalue) || *endvalue == '#'){
-                      break;
-                      }
-                      }
-                      TODO("RZ: Possible buffer overflow if length of value is larger than 128 bytes");
-                      memcpy(value, startvalue, endvalue - startvalue + 1);
-                      value[endvalue - startvalue + 1] = 0;
-                    */
-                    char *curvalue = value;
-                    for (endvalue = startvalue; *endvalue ; endvalue++) {
-                        if (isspace(*endvalue) || *endvalue == '#') {
-                            break;
-                        }
-                        else if ((*endvalue == '\\') && *(endvalue + 1)) {
-                            if (endvalue > startvalue) {
-                                memcpy(curvalue, startvalue, endvalue - startvalue);
-                                curvalue += (endvalue - startvalue);
-                            }
-
-                            endvalue++;
-
-                            *curvalue++ = *endvalue;
-
-                            startvalue = endvalue + 1;
-                        }
+                    const char * endvalue = startvalue + strlen(startvalue);
+                    while ((endvalue > startvalue) && isspace(*(endvalue - 1))) endvalue--;
+                    if (endvalue >= startvalue) {
+                        memcpy(value, startvalue, endvalue - startvalue);
+                        value[endvalue - startvalue] = 0;
+                        //LOG(LOG_INFO, "context='%s' key='%s' value='%s'", context, key, value);
+                        configuration_holder.set_value(context, key, value);
                     }
-                    if (endvalue > startvalue) {
-                        memcpy(curvalue, startvalue, endvalue - startvalue);
-                        curvalue += (endvalue - startvalue);
-                    }
-                    *curvalue = 0;
-
-                    configuration_holder.set_value(context, key, value);
                     break;
                 }
             }

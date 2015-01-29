@@ -1280,8 +1280,8 @@ public:
                 if ((this->client.max_color_depth != 8) &&
                     (this->client.max_color_depth != 15) &&
                     (this->client.max_color_depth != 16) &&
-                    (this->client.max_color_depth != 24) &&
-                    (this->client.max_color_depth != 32))
+                    (this->client.max_color_depth != 24)/* &&
+                    (this->client.max_color_depth != 32)*/)
                     this->client.max_color_depth = 24;
             }
             else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
@@ -1453,9 +1453,9 @@ public:
             else if (0 == strcmp(key, "h_qscale")) {
                 this->video.h_qscale    = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "movie_path")) {
-                this->globals.movie_path.set_from_cstr(value);
-            }
+//            else if (0 == strcmp(key, "movie_path")) {
+//                this->globals.movie_path.set_from_cstr(value);
+//            }
             else if (0 == strcmp(key, "hash_path")) {
                 this->video.hash_path = value;
             }
