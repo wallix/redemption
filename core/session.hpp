@@ -310,7 +310,7 @@ public:
                                         mes += ' ';
                                     }
                                     mes += TR("before_closing", this->ini);
-                                    mm.osd_message(std::move(mes));
+                                    mm.osd_message(std::move(mes), false);
                                     ++osd_state;
                                 }
                             }

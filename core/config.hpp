@@ -551,6 +551,7 @@ public:
         bool        enable_bitmap_update = true;
         bool        enable_close_box = true;
         bool        enable_osd = true;
+        bool        enable_osd_display_remote_target = true;
         // END globals
 
         StaticPath<1024> persistent_path = PERSISTENT_PATH;
@@ -1232,6 +1233,9 @@ public:
             }
             else if (0 == strcmp(key, "enable_osd")) {
                 this->globals.enable_osd = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "enable_osd_display_remote_target")) {
+                this->globals.enable_osd_display_remote_target = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "persistent_path")) {
                 this->globals.persistent_path = value;

@@ -85,12 +85,14 @@ struct Keymap2
     };
 
     enum {
-           LEFT_SHIFT  = 0x36
-         , RIGHT_SHIFT = 0x2A
+           LEFT_SHIFT  = 0x2A
+         , RIGHT_SHIFT = 0x36
          , LEFT_CTRL   = 0x1D
          , RIGHT_CTRL  = 0x9D
          , LEFT_ALT    = 0x38
          , RIGHT_ALT   = 0xB8
+         , F11         = 0x57
+         , F12         = 0x58
     };
 
     TODO("we should be able to unify unicode support and events. Idea would be to attribute codes 0xFFFFxxxx on 32 bits for events."

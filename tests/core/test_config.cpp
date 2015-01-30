@@ -127,6 +127,9 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL("",                               ini.globals.shell_working_directory.get_cstr());
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_close_box);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd_display_remote_target);
 
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key0,
                                                                "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -380,6 +383,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL("",                               ini.globals.shell_working_directory.get_cstr());
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_close_box);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd_display_remote_target);
 
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key0,
                                                                "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -650,6 +656,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL("",                               ini.globals.shell_working_directory.get_cstr());
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_close_box);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd_display_remote_target);
 
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key0,
                                                                "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -757,6 +766,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "shell_working_directory=C:\\WINDOWS\\\n"
                           "enable_bitmap_update=true\n"
                           "persistent_path=/var/tmp/wab/persistent/rdp\n"
+                          "enable_close_box=false\n"
+                          "enable_osd=false\n"
+                          "enable_osd_display_remote_target=false\n"
                           "\n"
                           "[client]\n"
                           "ignore_logon_password=yes\n"
@@ -899,6 +911,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("C:\\WINDOWS\\",                  ini.globals.shell_working_directory.get_cstr());
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_close_box);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_osd);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_osd_display_remote_target);
 
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key0,
                                                                "\x00\x11\x22\x33\x44\x55\x66\x77"
@@ -1125,6 +1140,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL("",                               ini.globals.shell_working_directory.get_cstr());
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_close_box);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd_display_remote_target);
 
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key0,
                                                                "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -1338,6 +1356,9 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL("",                               ini.globals.shell_working_directory.get_cstr());
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_close_box);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd_display_remote_target);
 
     BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
@@ -1543,6 +1564,9 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL("",                               ini.globals.shell_working_directory.get_cstr());
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_close_box);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd_display_remote_target);
 
     BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
@@ -1729,6 +1753,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.globals.shell_working_directory.get_cstr());
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_close_box);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd_display_remote_target);
 
     BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
@@ -1909,6 +1936,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.globals.shell_working_directory.get_cstr());
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_close_box);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd_display_remote_target);
 
     BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
@@ -2083,6 +2113,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.globals.shell_working_directory.get_cstr());
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_close_box);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd_display_remote_target);
 
     BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
@@ -2257,6 +2290,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.globals.shell_working_directory.get_cstr());
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_close_box);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_osd_display_remote_target);
 
     BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);

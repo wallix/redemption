@@ -262,10 +262,15 @@ class ModuleManager : public MMIni
     struct module_osd
     : public mod_osd
     {
+    private:
+        bool external_deleting;
+    public:
         module_osd(
             ModuleManager & manager, const Rect & rect,
-            std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f)
+            std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f,
+            bool external_deleting)
         : mod_osd(manager.front, *manager.mod, rect, std::move(f))
+        , external_deleting(external_deleting)
         , manager(manager)
         , old_mod(manager.mod)
         {
@@ -284,7 +289,7 @@ class ModuleManager : public MMIni
 
         virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
         {
-            if (this->fg().contains_pt(x, y)) {
+            if (!this->external_deleting && this->fg().contains_pt(x, y)) {
                 if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
                     this->delete_self();
                 }
@@ -296,16 +301,17 @@ class ModuleManager : public MMIni
 
         virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
         {
-            if (keymap->nb_kevent_available() > 0){
-                if (!(param3 & SlowPath::KBDFLAGS_DOWN)
-                 && keymap->top_kevent() == Keymap2::KEVENT_INSERT) {
-                    keymap->get_kevent();
-                    this->delete_self();
-                }
-                else {
-                    mod_osd::rdp_input_scancode(param1, param2, param3, param4, keymap);
-                }
+            if (   !this->external_deleting
+                && keymap->nb_kevent_available() > 0
+                && !(param3 & SlowPath::KBDFLAGS_DOWN)
+                && keymap->top_kevent() == Keymap2::KEVENT_INSERT) {
+                keymap->get_kevent();
+                this->delete_self();
+
+                return;
             }
+
+            mod_osd::rdp_input_scancode(param1, param2, param3, param4, keymap);
         }
 
         void delete_self()
@@ -325,6 +331,9 @@ class ModuleManager : public MMIni
     template<class Mod>
     struct ModWithSocket : private SocketTransport, Mod
     {
+    private:
+        ModuleManager & mm;
+    public:
         template<class... Args>
         ModWithSocket( ModuleManager & mm, const char * name, int sck, uint32_t verbose
                      , std::string * error_message, sock_mod_barrier, Args && ... mod_args)
@@ -333,8 +342,30 @@ class ModuleManager : public MMIni
                          , mm.ini.context.target_port.get()
                          , verbose, error_message)
         , Mod(*this, std::forward<Args>(mod_args)...)
+        , mm(mm)
         {
             mm.mod_transport = this;
+        }
+
+        bool targer_info_is_shown = false;
+        virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
+        {
+            //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
+            Mod::rdp_input_scancode(param1, param2, param3, param4, keymap);
+
+            if (this->mm.ini.globals.enable_osd_display_remote_target && (param1 == Keymap2::F12)) {
+                bool f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
+                if (targer_info_is_shown && f12_released) {
+                    //LOG(LOG_INFO, "Hide info");
+                    this->mm.clear_osd_message();
+                    targer_info_is_shown = false;
+                }
+                else if (!f12_released) {
+                    //LOG(LOG_INFO, "Show info");
+                    this->mm.osd_message(this->mm.ini.globals.target_device.get_cstr(), true);
+                    targer_info_is_shown = true;
+                }
+            }
         }
     };
 
@@ -345,11 +376,13 @@ public:
         }
     }
 
-    void osd_message(std::string message) {
+    void osd_message(std::string message, bool external_deleting) {
         this->clear_osd_message();
         int w, h;
-        message += "  ";
-        message += TR("disable_osd", this->ini);
+        if (!external_deleting) {
+            message += "  ";
+            message += TR("disable_osd", this->ini);
+        }
         this->mod->text_metrics(this->ini.font, message.c_str(), w, h);
         w += padw * 2;
         h += padh * 2;
@@ -365,9 +398,34 @@ public:
                 const Rect r = rect.intersect(clip);
                 mod.begin_update();
                 mod.draw(RDPOpaqueRect(r, background_color), r);
+
+
+                BStream deltaPoints(256);
+
+                deltaPoints.out_sint16_le(r.cx - 1);
+                deltaPoints.out_sint16_le(0);
+
+                deltaPoints.out_sint16_le(0);
+                deltaPoints.out_sint16_le(r.cy - 1);
+
+                deltaPoints.out_sint16_le(-r.cx + 1);
+                deltaPoints.out_sint16_le(0);
+
+                deltaPoints.out_sint16_le(0);
+                deltaPoints.out_sint16_le(-r.cy + 1);
+
+                deltaPoints.mark_end();
+                deltaPoints.rewind();
+
+                RDPPolyline polyline_box( r.x, r.y
+                                        , 0x0D, 0, BLACK, 4, deltaPoints);
+                mod.draw(polyline_box, r);
+
+
                 mod.server_draw_text(this->ini.font, clip.x + padw, padh, message.c_str(), color, background_color, r);
                 mod.end_update();
-            }
+            },
+            external_deleting
         );
     }
 
