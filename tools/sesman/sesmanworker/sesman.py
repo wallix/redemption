@@ -557,19 +557,23 @@ class Sesman():
                 # target_device might be a hostname
                 try:
                     login_filter = None
+                    dnsname = None
                     if (target_login and target_login != MAGICASK
                         and not self.passthrough_mode):
                         login_filter = target_login
-                    dnsname, alias, ip_list = socket.gethostbyaddr(target_device)
+                    host_ip = socket.getaddrinfo(target_device, None)[0][4][0]
                     Logger().info("Resolve DNS Hostname %s -> %s" % (target_device,
-                                                                     ip_list))
-                    host_ip = ip_list[0] if ip_list else None
+                                                                     host_ip))
+                    try:
+                        socket.inet_pton(socket.AF_INET, target_device)
+                    except socket.error:
+                        dnsname = target_device
                     self.target_context = TargetContext(host=host_ip,
                                                         dnsname=dnsname,
                                                         login=login_filter,
                                                         show=target_device)
                     return None
-                except socket.error:
+                except Exception, e:
                     Logger().info("target_device is not a hostname")
         return target_device
 
@@ -1445,15 +1449,9 @@ class Sesman():
 
     def check_hostname_in_subnet(self, host, subnet):
         try:
-            dnsname, alias, ip_list = socket.gethostbyaddr(host)
+            host_ip = socket.getaddrinfo(host, None)[0][4][0]
             Logger().info("Resolve DNS Hostname %s -> %s" % (host,
-                                                             ip_list))
-            host_ip = ip_list[0] if ip_list else None
-        except socket.error:
-            try:
-                host_ip = socket.gethostbyname(host)
-            except Exception, e:
-                return False
+                                                             host_ip))
         except Exception, e:
             return False
         return engine.is_device_in_subnet(host_ip, subnet)
