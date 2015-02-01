@@ -174,6 +174,38 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     BOOST_CHECK(!gt.get_status());
 }
 
+
+BOOST_AUTO_TEST_CASE(TestTestTransport2)
+{
+    /*!
+        Please see Notes from above test case
+        The below is exactly the same except the class TestTransport is instantiated
+        differently such that it invokes a different constructor that takes the
+        input and output names (and not their sizes unlike the other constructor) into account
+     */
+    TestTransport gt("Test1", "OUTPUT","input");
+    /*
+    Everything that follows in this test case is same as in "BOOST_AUTO_TEST_CASE(TestTestTransport)" above
+    */
+    BOOST_CHECK_EQUAL(gt.get_status(), true);
+    char buf[128] = {};
+    char * p = buf;
+    uint32_t sz = 3;
+    gt.recv(&p, sz);
+    BOOST_CHECK(0 == memcmp(p - sz, "OUT", sz));
+    gt.send("in", 2);
+    BOOST_CHECK_EQUAL(gt.get_status(), true);
+    sz = 3;
+    gt.recv(&p, sz);
+    BOOST_CHECK(0 == memcmp(p - sz, "PUT", sz));
+    try {
+        gt.send("pot", 3);
+    } catch (const Error & e){
+        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_DIFFERS, (uint16_t)e.id);
+    };
+    BOOST_CHECK(!gt.get_status());
+}
+
 BOOST_AUTO_TEST_CASE(TestMemoryTransport)
 {
     MemoryTransport mt;
