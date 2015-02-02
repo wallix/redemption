@@ -27,13 +27,13 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
-#include "make_unique.hpp"
-#include <bits/posix1_lim.h>
 
+#include <cstring>
+#include <cerrno>
+
+#include "make_unique.hpp"
 #include "log.hpp"
 #include "stream.hpp"
 #include "bitfu.hpp"
@@ -59,21 +59,29 @@ struct FontChar
     {
     }
 
+    FontChar(std::unique_ptr<uint8_t[]> data, int offset, int baseline, int width, int height, int incby)
+        : offset(offset)
+        , baseline(baseline)
+        , width(width)
+        , height(height)
+        , incby(incby)
+        , data(std::move(data))
+    {
+    }
+
     FontChar() = default;
 
     FontChar(FontChar && other) = default;
+    FontChar(FontChar const & other) = delete;
     FontChar & operator=(FontChar &&) = default;
+    FontChar & operator=(FontChar const &) = delete;
+
     void * operator new (size_t) = delete;
 
-    FontChar(const FontChar & other)
-        : offset(other.offset)
-        , baseline(other.baseline)
-        , width(other.width)
-        , height(other.height)
-        , incby(other.incby)
-        , data(std::make_unique<uint8_t[]>(other.datasize()))
-    {
-        memcpy(this->data.get(), other.data.get(), other.datasize());
+    FontChar clone() const {
+        auto ptr = std::make_unique<uint8_t[]>(this->datasize());
+        memcpy(ptr.get(), this->data.get(), this->datasize());
+        return FontChar(std::move(ptr), this->offset, this->baseline, this->width, this->height, this->incby);
     }
 
     explicit operator bool () const noexcept {

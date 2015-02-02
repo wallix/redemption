@@ -221,14 +221,18 @@ public:
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip)
     {
         TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
-        if ((cmd.bRop == 0xF0) && (cmd.BrushStyle == 0x03)) {
+        if (cmd.brush.style == 0x03 && (cmd.bRop == 0xF0 || cmd.bRop == 0x5A)) {
             enum { BackColor, ForeColor };
             auto colors = this->u32rgb_to_color(cmd.BackColor, cmd.ForeColor);
             uint8_t brush_data[8];
             memcpy(brush_data, cmd.BrushExtra, 7);
             brush_data[7] = cmd.BrushHatch;
             this->draw_multi(cmd, clip, [&](const Rect & trect) {
-                this->drawable.patblt_ex(trect, cmd.bRop, std::get<BackColor>(colors), std::get<ForeColor>(colors), brush_data);
+                this->drawable.patblt_ex(
+                    trect, cmd.bRop,
+                    std::get<BackColor>(colors), std::get<ForeColor>(colors),
+                    brush_data, cmd.brush.org_x, cmd.brush.org_y
+                );
             });
         }
         else {
@@ -253,14 +257,18 @@ public:
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         TODO("PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
 
-        if ((cmd.rop == 0xF0) && (cmd.brush.style == 0x03)) {
+        if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) {
             enum { BackColor, ForeColor };
             auto colors = this->u32rgb_to_color(cmd.back_color, cmd.fore_color);
             uint8_t brush_data[8];
             memcpy(brush_data, cmd.brush.extra, 7);
             brush_data[7] = cmd.brush.hatch;
 
-            this->drawable.patblt_ex(trect, cmd.rop, std::get<BackColor>(colors), std::get<ForeColor>(colors), brush_data);
+            this->drawable.patblt_ex(
+                trect, cmd.rop,
+                std::get<BackColor>(colors), std::get<ForeColor>(colors),
+                brush_data, cmd.brush.org_x, cmd.brush.org_y
+            );
         }
         else {
             this->drawable.patblt(trect, cmd.rop, this->u32rgb_to_color(cmd.back_color));
@@ -413,16 +421,18 @@ private:
 
         for (int y = 0; y < fc.height; y++)
         {
+            const int pt_y = bmp_pos_y + local_offset_y + y;
+            if (!(clip.y <= pt_y && pt_y < clip.bottom())) {
+                break;
+            }
+
             for (int x = 0; x < fc.width; x++)
             {
                 if (fc_bit_mask & (*fc_data))
                 {
                     const int pt_x = bmp_pos_x + local_offset_x + x;
-                    const int pt_y = bmp_pos_y + local_offset_y + y;
-                    if (clip.contains_pt(pt_x, pt_y)) {
-                        this->drawable.draw_pixel( pt_x
-                                                 , pt_y
-                                                 , color);
+                    if (clip.x <= pt_x && pt_x < clip.right()) {
+                        this->drawable.draw_pixel(pt_x, pt_y, color);
                     }
                     //printf("X");
                 }
@@ -456,71 +466,72 @@ public:
             return;
         }
 
-        Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
-        if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
-            ajusted.cy--;
-            this->drawable.opaquerect(ajusted.intersect(clip), this->u32rgb_to_color(cmd.fore_color));
+        // set a background color
+        {
+            Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
+            if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
+                ajusted.cy--;
+                this->drawable.opaquerect(ajusted.intersect(clip), this->u32rgb_to_color(cmd.fore_color));
+            }
         }
 
+        bool has_delta_byte = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
+        const Color color = this->u32rgb_to_color(cmd.back_color);
+        const int16_t offset_y = /*cmd.bk.cy - (*/cmd.glyph_y - cmd.bk.y/* + 1)*/;
+        const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
+
+        StaticStream aj(cmd.data, cmd.data_len);
+
+        uint16_t draw_pos = 0;
+
+        Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(clip);
+
+        while (aj.in_remain())
         {
-            bool has_delta_byte = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
-            const Color color = this->u32rgb_to_color(cmd.back_color);
-            const int16_t offset_y = /*cmd.bk.cy - (*/cmd.glyph_y - cmd.bk.y/* + 1)*/;
-            const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
-
-            StaticStream aj(cmd.data, cmd.data_len);
-
-            uint16_t draw_pos = 0;
-
-            Rect clipped_glyph_fragment_rect = cmd.bk.intersect(clip);
-
-            while (aj.in_remain())
+            uint8_t data = aj.in_uint8();
+            if (data <= 0xFD)
             {
-                uint8_t  data     = aj.in_uint8();
-                if (data <= 0xFD)
+                FontChar const & fc = gly_cache->glyphs[cmd.cache_id][data].font_item;
+                if (!fc)
                 {
-                    FontChar const & fc = gly_cache->glyphs[cmd.cache_id][data].font_item;
-                    if (!fc)
-                    {
-                        LOG( LOG_INFO
-                           , "RDPDrawable::draw(RDPGlyphIndex, ...): Unknown glyph, cacheId=%u cacheIndex=%u"
-                           , cmd.cache_id, data);
-                        REDASSERT(fc);
-                    }
+                    LOG( LOG_INFO
+                        , "RDPDrawable::draw(RDPGlyphIndex, ...): Unknown glyph, cacheId=%u cacheIndex=%u"
+                        , cmd.cache_id, data);
+                    REDASSERT(fc);
+                }
 
-                    if (has_delta_byte)
+                if (has_delta_byte)
+                {
+                    data = aj.in_uint8();
+                    if (data == 0x80)
                     {
-                        data = aj.in_uint8();
-                        if (data == 0x80)
-                        {
-                            draw_pos += aj.in_uint16_le();
-                        }
-                        else
-                        {
-                            draw_pos += data;
-                        }
+                        draw_pos += aj.in_uint16_le();
                     }
                     else
                     {
-                        REDASSERT(cmd.ui_charinc);
+                        draw_pos += data;
                     }
+                }
+                else
+                {
+                    REDASSERT(cmd.ui_charinc);
+                }
 
-                    if (fc)
-                    {
-                        this->draw_glyph( fc, draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y
-                                        , clipped_glyph_fragment_rect);
-                    }
-                }
-                else if (data == 0xFE)
+                if (fc)
                 {
-                    LOG(LOG_INFO, "RDPDrawable::draw(RDPGlyphIndex, ...): Unsupported data");
-                    throw Error(ERR_RDP_UNSUPPORTED);
+                    this->draw_glyph( fc, draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y
+                                    , clipped_glyph_fragment_rect);
                 }
-                else if (data == 0xFF)
-                {
-                    aj.in_skip_bytes(2);
-                    REDASSERT(!aj.in_remain());
-                }
+            }
+            else if (data == 0xFE)
+            {
+                LOG(LOG_INFO, "RDPDrawable::draw(RDPGlyphIndex, ...): Unsupported data");
+                throw Error(ERR_RDP_UNSUPPORTED);
+            }
+            else if (data == 0xFF)
+            {
+                aj.in_skip_bytes(2);
+                REDASSERT(!aj.in_remain());
             }
         }
     }

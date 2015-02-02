@@ -107,7 +107,7 @@ public:
     virtual Dimension get_optimal_dim() {
         int w, h;
         this->drawable.text_metrics(this->font, this->buffer, w, h);
-        return Dimension(w, h);
+        return Dimension(w + this->x_text * 2, h + this->y_text * 2);
     }
 
     bool shift_text(int pos_x) {

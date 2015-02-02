@@ -124,6 +124,8 @@ public:
         static GlyphCache mod_glyph_cache;
 
         UTF8toUnicodeIterator unicode_iter(text);
+        bool is_first_char = true;
+        int offset_first_char = 0;
         while (*unicode_iter) {
             int total_width = 0;
             int total_height = 0;
@@ -147,10 +149,14 @@ public:
                     LOG(LOG_WARNING, "mod_api::server_draw_text() - character not defined >0x%02x<", charnum);
                     return std::ref(font.font_items[static_cast<unsigned>('?')]);
                 }().get();
+                if (is_first_char) {
+                    is_first_char = false;
+                    offset_first_char = font_item.offset;
+                }
                 TODO(" avoid passing parameters by reference to get results")
                 const GlyphCache::t_glyph_cache_result cache_result =
                     mod_glyph_cache.add_glyph(font_item, cacheId, cacheIndex);
-(void)cache_result;
+                (void)cache_result; // supress warning
 
                 *data_begin = cacheIndex;
                 ++data_begin;
@@ -175,7 +181,7 @@ public:
                 // brush
                 RDPBrush(0, 0, 3, 0xaa,
                     (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
-                x,                  // glyph_x
+                x - offset_first_char, // glyph_x
                 y + total_height,   // glyph_y
                 data_begin - data,  // data_len in bytes
                 data                // data
@@ -185,6 +191,7 @@ public:
 
             this->gd->draw(glyphindex, clip, &mod_glyph_cache);
         }
+        offset_first_char = 0;
     }
 
 protected:

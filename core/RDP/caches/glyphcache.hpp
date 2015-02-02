@@ -73,7 +73,7 @@ public:
     t_glyph_cache_result add_glyph(FontChar const & font_item, int cacheid, int & cacheidx) {
         const t_glyph_cache_result ret = priv_add_glyph(font_item, cacheid, cacheidx);
         if (ret == GLYPH_ADDED_TO_CACHE) {
-            this->glyphs[cacheid][cacheidx].font_item = FontChar(font_item);
+            this->glyphs[cacheid][cacheidx].font_item = font_item.clone();
         }
         return ret;
     }

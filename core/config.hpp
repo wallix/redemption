@@ -1644,8 +1644,7 @@ public:
         }
         else if (0 == strcmp(context, "internal_mod")) {
             if (0 == strcmp(key, "load_theme")) {
-                if (value &&
-                    (0 != strcmp(value, ""))) {
+                if (value && *value) {
                     LOG(LOG_INFO, "LOAD_THEME: %s", value);
                     char theme_path[1024] = {};
                     snprintf(theme_path, 1024, CFG_PATH "/themes/%s/" THEME_INI, value);

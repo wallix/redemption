@@ -132,8 +132,6 @@ public:
     }
 
     void draw_row(uint16_t row_index, const Rect & clip) {
-        bool odd = row_index & 1;
-
         uint32_t bg_color;
         uint32_t fg_color;
 
@@ -142,6 +140,7 @@ public:
             fg_color = (this->has_focus ? this->fg_color_focus : this->fg_color_selection);
         }
         else {
+            const bool odd = row_index & 1;
             bg_color = (odd ? this->bg_color_1 : this->bg_color_2);
             fg_color = (odd ? this->fg_color_1 : this->fg_color_2);
         }

@@ -119,6 +119,7 @@
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/pointercache.hpp"
 #include "stream.hpp"
+#include "finally.hpp"
 
 struct RDPSerializer : public RDPGraphicDevice
 {
@@ -393,7 +394,11 @@ protected:
 
     void emit_glyph_cache(uint8_t cacheId, uint8_t cacheIndex) {
         FontChar & fc = this->glyph_cache.glyphs[cacheId][cacheIndex].font_item;
-        RDPGlyphCache cmd(cacheId, /*1, */cacheIndex, fc.offset, fc.baseline, fc.width, fc.height, fc.data.get());
+        RDPGlyphCache cmd(
+            cacheId, /*1, */cacheIndex, fc.offset, fc.baseline, fc.width, fc.height, std::move(fc.data));
+        // always restored fc.data
+        auto finally_ = finally([&]{ fc.data = std::move(cmd.aj); });
+
         this->reserve_order(cmd.total_order_size());
         cmd.emit(this->stream_orders);
 

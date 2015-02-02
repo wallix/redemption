@@ -33,18 +33,36 @@ BOOST_AUTO_TEST_CASE(TestFinally)
 {
     int i = 0;
 
-    try_finally(
+    try_except(
         [&]{ ++i; },
         [&]{ ++i; }
     );
     BOOST_CHECK_EQUAL(i, 2);
 
     try {
-        try_finally(
+        try_except(
             [&]{ throw 0; },
             [&]{ ++i; }
         );
     } catch (...)
-    {}
-    BOOST_CHECK_EQUAL(i, 3);
+    { ++i; }
+    BOOST_CHECK_EQUAL(i, 4);
+
+    try {
+        rethrow_try_except(
+            [&]{ throw 0; },
+            [&]{ throw ""; }
+        );
+    } catch (char const *)
+    { ++i; }
+    BOOST_CHECK_EQUAL(i, 5);
+
+    try {
+        rethrow_try_except(
+            [&]{ throw 0; return 0; /*note: result isn't void*/},
+            [&]{ throw ""; }
+        );
+    } catch (char const *)
+    { ++i; }
+    BOOST_CHECK_EQUAL(i, 6);
 }

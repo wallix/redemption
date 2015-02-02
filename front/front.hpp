@@ -4323,7 +4323,7 @@ public:
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
         //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
-        this->orders->draw(bitmap_data, data, size, bmp);
+        ::compress_and_draw_bitmap_update(bitmap_data, Bitmap(this->client_info.bpp, bmp), this->client_info.bpp, *this->orders);
         //bitmap_data.log(LOG_INFO, "Front");
         //hexdump_d(data, size);
         if (  this->capture

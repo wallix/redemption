@@ -68,8 +68,8 @@ public:
 
         uint16_t available_height = (this->selector.first_page.dy() - 10) - this->selector.selector_lines.dy();
         int w, h = 0;
-        this->text_metrics(this->ini.font, "Lp", w, h);
-        uint16_t line_height = h + 2 * this->selector.selector_lines.border;
+        this->text_metrics(this->ini.font, "Édp", w, h);
+        uint16_t line_height = h + 2 * (this->selector.selector_lines.border + this->selector.selector_lines.y_padding_label);
 
         this->ini.context.selector_lines_per_page.set(available_height / line_height);
         this->ask_page();

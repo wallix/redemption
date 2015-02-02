@@ -208,7 +208,8 @@ lib dl : : <name>dl <link>shared ;
 # lib jpeg : : <name>jpeg <link>static ;
 # lib Xext : : <name>Xext <link>static ;
 
-lib png : : <name>png <link>static ;
+lib libpng : : <name>png <link>static ;
+alias png : libpng z ;
 
 # lib icuuc : : <name>icuuc ;
 
@@ -667,3 +668,4 @@ unit-test test_authorization_channels : tests/utils/test_authorization_channels.
 unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+

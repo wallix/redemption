@@ -28,6 +28,7 @@ core/RDP/capabilities/cap_bitmap 100 100
 core/RDP/capabilities/cap_bmpcache 100 100
 core/RDP/capabilities/cap_brushcache 100 100
 core/RDP/capabilities/cap_font 100 100
+core/RDP/capabilities/cap_rail 100 100
 core/RDP/capabilities/cap_share 100 100
 core/RDP/capabilities/cap_sound 100 100
 core/RDP/capabilities/colcache 100 100
@@ -45,7 +46,6 @@ core/RDP/capabilities/multifragmentupdate 100 100
 core/RDP/capabilities/offscreencache 100 100
 core/RDP/capabilities/order 100 100
 core/RDP/capabilities/pointer 100 100
-core/RDP/capabilities/rail 100 100
 core/RDP/capabilities/surfacecommands 100 100
 core/RDP/capabilities/virchan 100 100
 core/RDP/capabilities/window 100 100
@@ -172,6 +172,7 @@ utils/difftimeval 100 100
 utils/drawable 100 100
 utils/ellipse 100 100
 utils/fileutils 100 100
+utils/finally 100 100
 utils/genrandom 100 100
 utils/iter 100 100
 utils/log 100 100
