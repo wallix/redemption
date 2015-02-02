@@ -60,13 +60,13 @@ public:
             default:
             case POINTER_NULL:
                 {
-                    this->bpp    = 0;
-                    this->width  = 0;
-                    this->height = 0;
+                    this->bpp    = 24;
+                    this->width  = 32;
+                    this->height = 32;
                     this->x      = 0;
                     this->y      = 0;
                     ::memset(this->data, 0, DATA_SIZE);
-                    ::memset(this->mask, 0, MASK_SIZE);
+                    ::memset(this->mask, 0xFF, MASK_SIZE);
                 }
                 break;
 
