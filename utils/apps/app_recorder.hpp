@@ -246,6 +246,26 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
     ini.video.rt_display.set(ini.video.capture_png ? 1 : 0);
 
+    {
+        char temp_path[1024]     = {};
+        char temp_basename[1024] = {};
+        char temp_extension[256] = {};
+
+        canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension), verbose);
+
+        if (!temp_path[0]) {
+            input_filename  = ini.video.record_path;
+            const size_t path_length = input_filename.length();
+            if (path_length && (input_filename[path_length - 1] != '/')) {
+                input_filename += '/';
+            }
+            input_filename += temp_basename;
+            input_filename += temp_extension;
+        }
+    }
+
+    std::cout << "Input file is \"" << input_filename << "\".\n";
+
     bool infile_is_encrypted;
     if (is_encrypted_file(input_filename.c_str(), infile_is_encrypted) == -1) {
         std::cerr << "Input file is absent.\n";
