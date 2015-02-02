@@ -221,14 +221,18 @@ public:
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip)
     {
         TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
-        if ((cmd.bRop == 0xF0) && (cmd.BrushStyle == 0x03)) {
+        if (cmd.brush.style == 0x03 && (cmd.bRop == 0xF0 || cmd.bRop == 0x5A)) {
             enum { BackColor, ForeColor };
             auto colors = this->u32rgb_to_color(cmd.BackColor, cmd.ForeColor);
             uint8_t brush_data[8];
             memcpy(brush_data, cmd.BrushExtra, 7);
             brush_data[7] = cmd.BrushHatch;
             this->draw_multi(cmd, clip, [&](const Rect & trect) {
-                this->drawable.patblt_ex(trect, cmd.bRop, std::get<BackColor>(colors), std::get<ForeColor>(colors), brush_data);
+                this->drawable.patblt_ex(
+                    trect, cmd.bRop,
+                    std::get<BackColor>(colors), std::get<ForeColor>(colors),
+                    brush_data, cmd.brush.org_x, cmd.brush.org_y
+                );
             });
         }
         else {
@@ -253,14 +257,18 @@ public:
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         TODO("PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
 
-        if ((cmd.rop == 0xF0) && (cmd.brush.style == 0x03)) {
+        if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) {
             enum { BackColor, ForeColor };
             auto colors = this->u32rgb_to_color(cmd.back_color, cmd.fore_color);
             uint8_t brush_data[8];
             memcpy(brush_data, cmd.brush.extra, 7);
             brush_data[7] = cmd.brush.hatch;
 
-            this->drawable.patblt_ex(trect, cmd.rop, std::get<BackColor>(colors), std::get<ForeColor>(colors), brush_data);
+            this->drawable.patblt_ex(
+                trect, cmd.rop,
+                std::get<BackColor>(colors), std::get<ForeColor>(colors),
+                brush_data, cmd.brush.org_x, cmd.brush.org_y
+            );
         }
         else {
             this->drawable.patblt(trect, cmd.rop, this->u32rgb_to_color(cmd.back_color));

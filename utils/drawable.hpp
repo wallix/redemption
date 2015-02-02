@@ -678,17 +678,20 @@ private:
 public:
     template <typename Op>
     void patblt_op_ex(
-        const Rect & rect, const uint8_t * brush_data,
+        const Rect & rect, const uint8_t * brush_data, int8_t org_x, int8_t org_y,
         const color_t back_color, const color_t fore_color) noexcept
     {
         P const base = this->first_pixel(rect);
         P       p    = base;
 
-        for (size_t y = 0, cy = static_cast<size_t>(rect.cy); y < cy; ++y) {
+        int const origin_x = rect.x/* - org_x*/;
+        int const origin_y = rect.y/* - org_y*/;
+
+        for (size_t y = 0, cy = rect.cy; y < cy; ++y) {
             p = base + this->rowsize() * y;
-            const uint8_t brush = brush_data[(y + rect.y) % 8];
-            for (size_t x = 0, cx = static_cast<size_t>(rect.cx); x < cx; ++x) {
-                if (brush & (1 << ((x + rect.x) % 8))) {
+            const uint8_t brush = brush_data[(y + origin_y) % 8];
+            for (size_t x = 0, cx = rect.cx; x < cx; ++x) {
+                if (brush & ((1 << 7) >> ((x + origin_x) % 8))) {
                     p = traits::assign(p, back_color, Op());
                 }
                 else {
@@ -2064,26 +2067,23 @@ public:
         }
     }
 
+private:
     template <typename Op>
-    void patblt_op_ex(const Rect & rect, const uint8_t * brush_data,
+    void patblt_op_ex(const Rect & rect, const uint8_t * brush_data, int8_t org_x, int8_t org_y,
         const Color back_color, const Color fore_color)
     {
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
         }
 
-        this->impl().patblt_op_ex<Op>(rect, brush_data, back_color, fore_color);
+        this->impl().patblt_op_ex<Op>(rect, brush_data, org_x, org_y, back_color, fore_color);
     }
 
+public:
     void patblt_ex(const Rect & rect, const uint8_t rop,
-        const Color back_color, const Color fore_color, const uint8_t * brush_data)
+        const Color back_color, const Color fore_color,
+        const uint8_t * brush_data, int8_t org_x, int8_t org_y)
     {
-        if (rop != 0xF0)
-        {
-            LOG(LOG_INFO, "Unsupported parameters for PatBlt Primary Drawing Order!");
-            this->patblt(rect, rop, back_color);
-        }
-
         switch (rop)
         {
         // +------+-------------------------------+
@@ -2091,10 +2091,19 @@ public:
         // |      | RPN: P                        |
         // +------+-------------------------------+
         case 0xF0:
-            this->patblt_op_ex<Ops::Op_0xF0>(rect, brush_data, back_color, fore_color);
+            this->patblt_op_ex<Ops::Op_0xF0>(rect, brush_data, org_x, org_y, back_color, fore_color);
+            break;
+        // +------+-------------------------------+
+        // | 0x5A | ROP: 0x005A0049 (PATINVERT)   |
+        // |      | RPN: DPx                      |
+        // +------+-------------------------------+
+        case 0x5A:
+            this->patblt_op_ex<Ops::Op_0x5A>(rect, brush_data, org_x, org_y, back_color, fore_color);
             break;
         default:
-            // should not happen, do nothing
+            // should not happen
+            LOG(LOG_INFO, "Unsupported parameters for PatBlt Primary Drawing Order!");
+            this->patblt(rect, rop, back_color);
             break;
         }
     }
