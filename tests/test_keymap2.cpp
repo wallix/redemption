@@ -45,26 +45,26 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     BOOST_CHECK_EQUAL(false, keymap.is_shift_pressed());
 
     uint16_t keyboardFlags = 0 ; // key is not extended, key was up, key goes down
-    uint16_t keyCode = 54 ; // key is left shift
+    uint16_t keyCode = 54 ; // key is right shift
     keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_delete);
 
     BOOST_CHECK_EQUAL(true, keymap.is_shift_pressed());
-    BOOST_CHECK_EQUAL(true, keymap.is_left_shift_pressed());
-    BOOST_CHECK_EQUAL(false, keymap.is_right_shift_pressed());
+    BOOST_CHECK_EQUAL(false, keymap.is_left_shift_pressed());
+    BOOST_CHECK_EQUAL(true, keymap.is_right_shift_pressed());
 
     keyboardFlags = 0 ; // key is not extended, key was up, key goes down
     keyCode = 16 ; // key is 'A'
     keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_delete);
 
     BOOST_CHECK_EQUAL(true, keymap.is_shift_pressed());
-    BOOST_CHECK_EQUAL(true, keymap.is_left_shift_pressed());
-    BOOST_CHECK_EQUAL(false, keymap.is_right_shift_pressed());
+    BOOST_CHECK_EQUAL(false, keymap.is_left_shift_pressed());
+    BOOST_CHECK_EQUAL(true, keymap.is_right_shift_pressed());
 
     uint32_t key = keymap.get_char();
     BOOST_CHECK_EQUAL('A', key);
 
     keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
-    keyCode = 54 ; // key is left shift
+    keyCode = 54 ; // key is right shift
     keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_delete);
 
     BOOST_CHECK_EQUAL(false, keymap.is_shift_pressed());
