@@ -142,7 +142,8 @@ public:
                 , SendInput send_input = SendInput::NO
                 , uint32_t verbose = 0)
     : RDPSerializer( trans, this->buffer_stream_orders
-                   , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, gly_cache, ptr_cache, 0, 1, 1, ini)
+                   , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, gly_cache, ptr_cache,
+                   0, 1, 1, 32 * 1024, ini)
     , RDPCaptureDevice()
     , compression_wrapper(*trans, ini.video.wrm_compression_algorithm)
     , trans_target(*trans)

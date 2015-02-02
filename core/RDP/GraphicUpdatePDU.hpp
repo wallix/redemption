@@ -399,6 +399,7 @@ public:
                      , const int bitmap_cache_version
                      , const int use_bitmap_comp
                      , const int op2
+                     , size_t max_bitmap_size
                      , bool fastpath_support
                      , rdp_mppc_enc * mppc_enc
                      , bool compression
@@ -406,7 +407,7 @@ public:
                      )
         : RDPSerializer( trans, this->buffer_stream_orders
                        , this->buffer_stream_bitmaps, bpp, bmp_cache, gly_cache, pointer_cache
-                       , bitmap_cache_version, use_bitmap_comp, op2, ini, verbose)
+                       , bitmap_cache_version, use_bitmap_comp, op2, max_bitmap_size, ini, verbose)
         , buffer_stream_orders(1024, 65536)
         , buffer_stream_bitmaps(1024, 65536)
         , userid(userid)

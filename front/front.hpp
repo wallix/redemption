@@ -620,6 +620,8 @@ private:
             this->mppc_enc = NULL;
         }
 
+        size_t max_bitmap_size = 1024 * 64;
+
         switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini.client.rdp_compression - 1))
         {
         case PACKET_COMPR_TYPE_RDP61:
@@ -646,6 +648,7 @@ private:
                 LOG(LOG_INFO, "Front: Use RDP 4.0 Bulk compression");
             }
             this->mppc_enc = new rdp_mppc_40_enc(this->ini.debug.compression);
+            max_bitmap_size = 1024 * 8;
             break;
         }
 
@@ -720,6 +723,7 @@ private:
             , this->client_info.bitmap_cache_version
             , this->ini.client.bitmap_compression ? 1 : 0
             , this->client_info.use_compact_packets
+            , max_bitmap_size
             , this->server_fastpath_update_support
             , this->mppc_enc
             , this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0
