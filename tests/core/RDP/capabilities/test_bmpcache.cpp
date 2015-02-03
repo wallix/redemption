@@ -27,7 +27,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "RDP/capabilities/cap_bmpcache.hpp"
+#include "RDP/capabilities/bmpcache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityBmpCachepEmit)
 {

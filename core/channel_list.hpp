@@ -389,7 +389,7 @@ namespace CHANNELS {
             BStream sec_header(256);
 
             if (((this->verbose & 128) != 0) || ((this->verbose & 16) != 0)) {
-                LOG(LOG_INFO, "Sec clear payload to send:");
+                LOG(LOG_INFO, "Sec clear payload to send (channelId=%d):", channelId);
                 hexdump_d(stream.get_data(), stream.size());
             }
 

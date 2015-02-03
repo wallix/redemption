@@ -195,6 +195,7 @@ enum {
     CAPSETTYPE_FRAME_ACKNOWLEDGE        = 30
 };
 
+/*
 enum {
     OS_MAJOR_TYPE_UNIX             = 4,
     OS_MINOR_TYPE_XSERVER          = 7,
@@ -204,6 +205,7 @@ enum {
 
     BMPCACHE2_FLAG_PERSIST         = ((long)1<<31)
 };
+*/
 
 struct Capability {
     uint16_t capabilityType;

@@ -49,6 +49,47 @@ static inline bool file_exist(const char * filename) {
     return (stat (filename, &buffer) == 0);
 }
 
+static inline
+void ParsePath(const char * fullpath, std::string & directory,
+              std::string & filename, std::string & extension) {
+    const char * end_of_directory = strrchr(fullpath, '/');
+    if (end_of_directory > fullpath) {
+        directory.assign(fullpath, end_of_directory - fullpath + 1);
+    }
+
+    const char * begin_of_filename =
+        (end_of_directory ? end_of_directory + 1 : fullpath);
+    const char * end_of_filename   =
+        [begin_of_filename] () {
+            const char * dot = strrchr(begin_of_filename, '.');
+            if (!dot || (dot == begin_of_filename)) {
+                return begin_of_filename + strlen(begin_of_filename) - 1;
+            }
+            return dot - 1;
+        } ();
+
+    if (end_of_filename > begin_of_filename) {
+        filename.assign(begin_of_filename,
+            end_of_filename - begin_of_filename + 1);
+    }
+
+    if (*(end_of_filename + 1)) {
+        extension = end_of_filename + 1;
+    }
+}
+
+static inline
+void MakePath(std::string & fullpath, const char * directory,
+              const char * filename, const char * extension) {
+    fullpath = (directory ? directory : "");
+    if (fullpath.size() && (fullpath.back() != '/')) { fullpath += '/'; }
+    if (filename) { fullpath += filename; }
+    if (extension && *extension) {
+        if (*extension != '.') { fullpath += '.'; }
+        fullpath += extension;
+    }
+}
+
 static inline bool canonical_path( const char * fullpath, char * path, size_t path_len
                                  , char * basename, size_t basename_len, char * extension
                                  , size_t extension_len, uint32_t verbose = 255)

@@ -261,7 +261,146 @@ BOOST_AUTO_TEST_CASE(CanonicalPath)
   BOOST_CHECK_EQUAL("no path", path);
   BOOST_CHECK_EQUAL("no basename", basename);
   BOOST_CHECK_EQUAL("no extension", extension);
+}
 
+BOOST_AUTO_TEST_CASE(TestParsePath)
+{
+    {
+        std::string directory;
+        std::string filename ;
+        std::string extension;
+        ParsePath("/etc/rdpproxy/rdpproxy.ini", directory, filename, extension);
+        BOOST_CHECK_EQUAL("/etc/rdpproxy/", directory);
+        BOOST_CHECK_EQUAL("rdpproxy"      , filename );
+        BOOST_CHECK_EQUAL(".ini"          , extension);
+    }
+
+    {
+        std::string directory;
+        std::string filename ;
+        std::string extension;
+        ParsePath("/etc/rdpproxy/rdpproxy", directory, filename, extension);
+        BOOST_CHECK_EQUAL("/etc/rdpproxy/", directory);
+        BOOST_CHECK_EQUAL("rdpproxy"      , filename );
+        BOOST_CHECK_EQUAL(""              , extension);
+    }
+
+    {
+        std::string directory;
+        std::string filename ;
+        std::string extension;
+        ParsePath("/etc/rdpproxy/", directory, filename, extension);
+        BOOST_CHECK_EQUAL("/etc/rdpproxy/", directory);
+        BOOST_CHECK_EQUAL(""              , filename );
+        BOOST_CHECK_EQUAL(""              , extension);
+    }
+
+    {
+        std::string directory;
+        std::string filename ;
+        std::string extension;
+        ParsePath("rdpproxy.ini", directory, filename, extension);
+        BOOST_CHECK_EQUAL(""        , directory);
+        BOOST_CHECK_EQUAL("rdpproxy", filename );
+        BOOST_CHECK_EQUAL(".ini"    , extension);
+    }
+
+    {
+        std::string directory;
+        std::string filename ;
+        std::string extension;
+        ParsePath("rdpproxy.", directory, filename, extension);
+        BOOST_CHECK_EQUAL(""        , directory);
+        BOOST_CHECK_EQUAL("rdpproxy", filename );
+        BOOST_CHECK_EQUAL("."       , extension);
+    }
+
+    {
+        std::string directory;
+        std::string filename ;
+        std::string extension;
+        ParsePath("rdpproxy", directory, filename, extension);
+        BOOST_CHECK_EQUAL(""        , directory);
+        BOOST_CHECK_EQUAL("rdpproxy", filename );
+        BOOST_CHECK_EQUAL(""        , extension);
+    }
+
+    {
+        std::string directory;
+        std::string filename ;
+        std::string extension;
+        ParsePath(".rdpproxy", directory, filename, extension);
+        BOOST_CHECK_EQUAL(""         , directory);
+        BOOST_CHECK_EQUAL(".rdpproxy", filename );
+        BOOST_CHECK_EQUAL(""         , extension);
+    }
+
+    {
+        std::string directory = "./"    ;
+        std::string filename  = "sesman";
+        std::string extension = ".conf" ;
+        ParsePath("rdpproxy.ini", directory, filename, extension);
+        BOOST_CHECK_EQUAL("./"      , directory);
+        BOOST_CHECK_EQUAL("rdpproxy", filename );
+        BOOST_CHECK_EQUAL(".ini"    , extension);
+    }
+
+    {
+        std::string directory = "./"    ;
+        std::string filename  = "sesman";
+        std::string extension = ".conf" ;
+        ParsePath("rdpproxy", directory, filename, extension);
+        BOOST_CHECK_EQUAL("./"      , directory);
+        BOOST_CHECK_EQUAL("rdpproxy", filename );
+        BOOST_CHECK_EQUAL(".conf"   , extension);
+    }
+
+    {
+        std::string directory = "./"    ;
+        std::string filename  = "sesman";
+        std::string extension = ".conf" ;
+        ParsePath(".rdpproxy.ini", directory, filename, extension);
+        BOOST_CHECK_EQUAL("./"       , directory);
+        BOOST_CHECK_EQUAL(".rdpproxy", filename );
+        BOOST_CHECK_EQUAL(".ini"     , extension);
+    }
+
+    {
+        std::string directory = "./"    ;
+        std::string filename  = "sesman";
+        std::string extension = ".conf" ;
+        ParsePath("", directory, filename, extension);
+        BOOST_CHECK_EQUAL("./"    , directory);
+        BOOST_CHECK_EQUAL("sesman", filename );
+        BOOST_CHECK_EQUAL(".conf" , extension);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TestMakePath)
+{
+    {
+        std::string fullpath;
+        MakePath(fullpath, nullptr, nullptr, nullptr);
+        BOOST_CHECK_EQUAL("", fullpath);
+    }
+
+    {
+        std::string fullpath;
+        MakePath(fullpath, "", "", "");
+        BOOST_CHECK_EQUAL("", fullpath);
+    }
+
+    {
+        std::string fullpath;
+        MakePath(fullpath, "/etc/rdpproxy/", "rdpproxy", ".ini");
+        BOOST_CHECK_EQUAL("/etc/rdpproxy/rdpproxy.ini", fullpath);
+    }
+
+    {
+        std::string fullpath;
+        MakePath(fullpath, "/etc/rdpproxy", "rdpproxy", "ini");
+        BOOST_CHECK_EQUAL("/etc/rdpproxy/rdpproxy.ini", fullpath);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestPathNCopy)
