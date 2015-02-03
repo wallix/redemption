@@ -372,7 +372,7 @@ public:
         return (this->width * this->height) / 8;
     }
 
-    bool is_valid() {
+    bool is_valid() const {
         return (this->width && this->height && this->bpp);
     }
 };
