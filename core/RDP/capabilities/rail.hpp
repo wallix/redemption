@@ -17,7 +17,7 @@
     Copyright (C) Wallix 2013
     Author(s): Christophe Grosjean, Raphael Zhou
 
-   RDP Capabilities : Remote Programs Capability Set ([MS-RDPERP] section 2.2.1.1.1)
+    RDP Capabilities : Remote Programs Capability Set ([MS-RDPERP] section 2.2.1.1.1)
 */
 
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_RAIL_HPP_
@@ -26,8 +26,8 @@
 #include "common.hpp"
 #include "stream.hpp"
 
-// [MS-RDPERP]- 2.2.1.1.1 Remote Programs Capability Set
-// =====================================================
+// [MS-RDPERP] - 2.2.1.1.1 Remote Programs Capability Set
+// ======================================================
 
 // The Remote Programs Capability Set is sent by the server in the Demand
 //  Active PDU and by the client in the Confirm Active PDU, as specified in
