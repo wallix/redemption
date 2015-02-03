@@ -28,7 +28,7 @@
 #include "capabilities/activate.hpp"
 #include "capabilities/cap_bitmap.hpp"
 //#include "capabilities/bitmapcodecs.hpp"
-#include "capabilities/cap_bmpcache.hpp"
+#include "capabilities/bmpcache.hpp"
 #include "capabilities/bmpcache2.hpp"
 #include "capabilities/cap_brushcache.hpp"
 #include "capabilities/colcache.hpp"
