@@ -148,6 +148,7 @@ private:
     const int bitmap_cache_version;
     const int use_bitmap_comp;
     const int op2;
+    const size_t max_bitmap_size;
 
 protected:
     // Internal state of orders
@@ -191,6 +192,7 @@ public:
                  , const int bitmap_cache_version
                  , const int use_bitmap_comp
                  , const int op2
+                 , size_t max_bitmap_size
                  , const Inifile & ini
                  , uint32_t verbose = 0)
     : RDPGraphicDevice()
@@ -202,6 +204,7 @@ public:
     , bitmap_cache_version(bitmap_cache_version)
     , use_bitmap_comp(use_bitmap_comp)
     , op2(op2)
+    , max_bitmap_size(max_bitmap_size)
     // Internal state of orders
     , common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , destblt(Rect(), 0)
@@ -596,7 +599,7 @@ public:
     // check if the next bitmap will fit in available packet size
     // if not send previous bitmaps we got and init a new packet
     void reserve_bitmap(size_t asked_size) {
-        size_t max_packet_size = std::min(this->stream_bitmaps.get_capacity(), static_cast<size_t>(MAX_BITMAP_SIZE_8K + 300));
+        size_t max_packet_size = std::min(this->stream_bitmaps.get_capacity(), this->max_bitmap_size + 300u);
         TODO("QuickFix, should set a max packet size according to RDP compression version of client, proxy and server");
         size_t used_size       = this->stream_bitmaps.get_offset();
         if (this->ini.debug.primary_orders > 3) {

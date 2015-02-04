@@ -65,7 +65,7 @@ void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_s
     REDASSERT(!compression_support || mppc_enc);
 
     HStream data_compressed(1024, 65565);
-    std::reference_wrapper<HStream> data_ = std::ref(data);
+    std::reference_wrapper<HStream> data_(data);
 
     uint8_t compressionFlags = 0;
 
@@ -90,22 +90,22 @@ void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_s
     share_data.emit_begin( pduType2, shareId, RDP::STREAM_MED
                          , data.size() + 18 /* TS_SHAREDATAHEADER(18) */
                          , compressionFlags
-                         , (compressionFlags ? ((HStream &)data_).size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
+                         , (compressionFlags ? data_.get().size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
                          );
     share_data.emit_end();
-    ((HStream &)data_).copy_to_head(share_data_header.get_data(), share_data_header.size());
+    data_.get().copy_to_head(share_data_header.get_data(), share_data_header.size());
 
     BStream share_ctrl_header(256);
     ShareControl_Send( share_ctrl_header, PDUTYPE_DATAPDU, initiator + GCC::MCS_USERCHANNEL_BASE
-                     , ((HStream &)data_).size());
-    ((HStream &)data_).copy_to_head(share_ctrl_header.get_data(), share_ctrl_header.size());
+                     , data_.get().size());
+    data_.get().copy_to_head(share_ctrl_header.get_data(), share_ctrl_header.size());
 
     if (verbose & log_condition) {
         LOG(LOG_INFO, "Sec clear payload to send:");
-        hexdump_d(((HStream &)data_).get_data(), ((HStream &)data_).size());
+        hexdump_d(data_.get().get_data(), data_.get().size());
     }
 
-    ::send_data_indication_ex(trans, encryptionLevel, encrypt, initiator, ((HStream &)data_));
+    ::send_data_indication_ex(trans, encryptionLevel, encrypt, initiator, data_.get());
 }
 
 enum ServerUpdateType {
@@ -134,7 +134,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 
     if (fastpath_support) {
         HStream data_common_compressed(1024, 65565);
-        std::reference_wrapper<HStream> data_common_ = std::ref(data_common);
+        std::reference_wrapper<HStream> data_common_(data_common);
 
         uint8_t compressionFlags = 0;
         uint8_t updateCode       = 0;
@@ -200,23 +200,23 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
         BStream update_header(256);
         // Fast-Path Update (TS_FP_UPDATE)
         FastPath::Update_Send Upd( update_header
-                                 , ((HStream &)data_common_).size()
+                                 , data_common_.get().size()
                                  , updateCode
                                  , FastPath::FASTPATH_FRAGMENT_SINGLE
                                  , compression
                                  , compressionFlags
                                  );
-        ((HStream &)data_common_).copy_to_head(update_header.get_data(), update_header.size());
+        data_common_.get().copy_to_head(update_header.get_data(), update_header.size());
 
         BStream server_update_header(256);
          // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
         FastPath::ServerUpdatePDU_Send SvrUpdPDU( server_update_header
-                                                , ((HStream &)data_common_)
+                                                , data_common_.get()
                                                 , ((encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                                                 , encrypt
                                                 );
 
-        trans.send(server_update_header, (HStream &)data_common_);
+        trans.send(server_update_header, data_common_.get());
     }
     else {
         uint8_t pduType2 = 0;
@@ -399,6 +399,7 @@ public:
                      , const int bitmap_cache_version
                      , const int use_bitmap_comp
                      , const int op2
+                     , size_t max_bitmap_size
                      , bool fastpath_support
                      , rdp_mppc_enc * mppc_enc
                      , bool compression
@@ -406,7 +407,7 @@ public:
                      )
         : RDPSerializer( trans, this->buffer_stream_orders
                        , this->buffer_stream_bitmaps, bpp, bmp_cache, gly_cache, pointer_cache
-                       , bitmap_cache_version, use_bitmap_comp, op2, ini, verbose)
+                       , bitmap_cache_version, use_bitmap_comp, op2, max_bitmap_size, ini, verbose)
         , buffer_stream_orders(1024, 65536)
         , buffer_stream_bitmaps(1024, 65536)
         , userid(userid)

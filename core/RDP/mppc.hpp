@@ -491,8 +491,6 @@ static inline void encode_literal_40_50(char c, uint8_t * outputBuffer, uint8_t 
 }
 
 struct rdp_mppc_enc {
-    static const size_t HASH_BUF_LEN = (1024 * 64); /* 16 bit hash table size */
-
 protected:
     /**
      * Initialize rdp_mppc_enc structure
