@@ -66,7 +66,7 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypt
     }
 
     if (options.count("version") > 0) {
-        std::cout << copyright_notice << std::endl;
+        std::cout << copyright_notice << std::endl << std::endl;
         return 0;
     }
 
@@ -93,12 +93,12 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypt
         }
     }
     else {
-        std::cerr << "Input file is absent.\n";
+        std::cerr << "Input file is absent.\n\n";
         return -1;
     }
 
     if (infile_is_encrypted == false) {
-        std::cout << "Input file is unencrypted.\n";
+        std::cout << "Input file is unencrypted.\n\n";
         return 0;
     }
 
@@ -130,14 +130,17 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypt
         }
         catch (Error const & e) {
             if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-                throw;
+                std::cerr << "Exception code: " << e.id << std::endl << std::endl;
             }
-
-            out_t.send(mem, buf - mem);
+            else {
+                out_t.send(mem, buf - mem);
+            }
         }
+
+        close(fd);
     }
     else {
-        std::cerr << strerror(errno) << std::endl;
+        std::cerr << strerror(errno) << std::endl << std::endl;
     }
 
     return 0;

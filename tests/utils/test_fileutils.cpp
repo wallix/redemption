@@ -339,6 +339,36 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string directory = "./"    ;
         std::string filename  = "sesman";
         std::string extension = ".conf" ;
+        ParsePath("/etc/rdpproxy/rdpproxy.ini", directory, filename, extension);
+        BOOST_CHECK_EQUAL("/etc/rdpproxy/", directory);
+        BOOST_CHECK_EQUAL("rdpproxy"      , filename );
+        BOOST_CHECK_EQUAL(".ini"          , extension);
+    }
+
+    {
+        std::string directory = "./"    ;
+        std::string filename  = "sesman";
+        std::string extension = ".conf" ;
+        ParsePath("/etc/rdpproxy/rdpproxy", directory, filename, extension);
+        BOOST_CHECK_EQUAL("/etc/rdpproxy/", directory);
+        BOOST_CHECK_EQUAL("rdpproxy"      , filename );
+        BOOST_CHECK_EQUAL(".conf"         , extension);
+    }
+
+    {
+        std::string directory           ;
+        std::string filename            ;
+        std::string extension = ".conf" ;
+        ParsePath("/etc/rdpproxy/rdpproxy", directory, filename, extension);
+        BOOST_CHECK_EQUAL("/etc/rdpproxy/", directory);
+        BOOST_CHECK_EQUAL("rdpproxy"      , filename );
+        BOOST_CHECK_EQUAL(".conf"         , extension);
+    }
+
+    {
+        std::string directory = "./"    ;
+        std::string filename  = "sesman";
+        std::string extension = ".conf" ;
         ParsePath("rdpproxy.ini", directory, filename, extension);
         BOOST_CHECK_EQUAL("./"      , directory);
         BOOST_CHECK_EQUAL("rdpproxy", filename );

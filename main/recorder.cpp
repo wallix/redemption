@@ -56,7 +56,7 @@ int main(int argc, char** argv)
             if (   output_filename.length()
                 && !(  ini.video.capture_png | ini.video.capture_flv | ini.video.capture_ocr | ini.video.capture_wrm
                     | ini.globals.capture_chunk.get())) {
-                std::cerr << "Missing target format : need --png or --wrm" << endl;
+                std::cerr << "Missing target format : need --png or --wrm" << endl << endl;
                 return -1;
             }
             return 0;

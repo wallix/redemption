@@ -38,7 +38,7 @@
 #include <boost/program_options/parsers.hpp>
 
 template<class CaptureMaker, class... ExtraArguments>
-int recompress_or_record( std::string & output_filename, std::string & input_filename
+int recompress_or_record( std::string const & input_filename, std::string & output_filename
                         , Inifile & ini, bool remove_input_file, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
@@ -105,6 +105,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     bool        show_statistics    = false;
     bool        auto_output_file   = false;
     bool        remove_input_file  = false;
+
     std::string wrm_compression_algorithm;  // output compression algorithm.
     std::string wrm_color_depth;
     std::string wrm_encryption;
@@ -160,12 +161,12 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     if (options.count("help") > 0) {
         cout << copyright_notice;
         cout << "\n\nUsage: redrec [options]\n\n";
-        cout << desc << endl;
+        cout << desc << endl << endl;
         return 0;
     }
 
     if (options.count("version") > 0) {
-        cout << copyright_notice << std::endl;
+        cout << copyright_notice << std::endl << std::endl;
         return 0;
     }
 
@@ -246,6 +247,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
     ini.video.rt_display.set(ini.video.capture_png ? 1 : 0);
 
+/*
     {
         char temp_path[1024]     = {};
         char temp_basename[1024] = {};
@@ -263,7 +265,23 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
             input_filename += temp_extension;
         }
     }
+*/
+    [&input_filename] (const char * record_path) {
+        std::string directory          ;
+        std::string filename           ;
+        std::string extension = ".mwrm";
 
+        ParsePath(input_filename.c_str(), directory, filename, extension);
+        if (!directory.size()) {
+            if (file_exist(input_filename.c_str())) {
+                directory = "./";
+            }
+            else {
+                directory = record_path;
+            }
+        }
+        MakePath(input_filename, directory.c_str(), filename.c_str(), extension.c_str());
+    } (ini.video.record_path.c_str());
     std::cout << "Input file is \"" << input_filename << "\".\n";
 
     bool infile_is_encrypted;
@@ -273,13 +291,13 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
 
     if (options.count("encryption") > 0) {
-                if (0 == strcmp(wrm_encryption.c_str(), "enable")) {
+             if (0 == strcmp(wrm_encryption.c_str(), "enable")) {
             ini.globals.enable_file_encryption.set(true);
         }
         else if (0 == strcmp(wrm_encryption.c_str(), "disable")) {
             ini.globals.enable_file_encryption.set(false);
         }
-        else  if (0 == strcmp(wrm_encryption.c_str(), "original")) {
+        else if (0 == strcmp(wrm_encryption.c_str(), "original")) {
             ini.globals.enable_file_encryption.set(infile_is_encrypted);
         }
         else {
@@ -299,7 +317,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
 
     return recompress_or_record<CaptureMaker>(
-        output_filename, input_filename, ini
+        input_filename, output_filename, ini
       , remove_input_file, infile_is_encrypted, auto_output_file
       , begin_cap, end_cap, order_count, clear, zoom
       , show_file_metadata, show_statistics
@@ -333,7 +351,7 @@ int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
 
 
 template<class CaptureMaker, class... ExtraArguments>
-int recompress_or_record( std::string & output_filename, std::string & input_filename
+int recompress_or_record( std::string const & input_filename, std::string & output_filename
                         , Inifile & ini, bool remove_input_file, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
@@ -341,6 +359,7 @@ int recompress_or_record( std::string & output_filename, std::string & input_fil
                         , bool force_record, uint32_t verbose
                         , ExtraArguments&&... extra_argument)
 {
+/*
     char infile_path     [1024] = "./"          ;   // default value, actual one should come from output_filename
     char infile_basename [1024] = "redrec_input";   // default value, actual one should come from output_filename
     char infile_extension[ 128] = ".mwrm"       ;
@@ -357,9 +376,14 @@ int recompress_or_record( std::string & output_filename, std::string & input_fil
     if (verbose) {
         std::cout << "\nInput file path: " << infile_path << infile_basename << infile_extension << std::endl;
     }
+*/
+    std::string infile_path;
+    std::string infile_basename;
+    std::string infile_extension;
+    ParsePath(input_filename.c_str(), infile_path, infile_basename, infile_extension);
 
     char infile_prefix[4096];
-    snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path, infile_basename);
+    snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), infile_basename.c_str());
 
     if (auto_output_file) {
         output_filename =  infile_path;
@@ -367,7 +391,18 @@ int recompress_or_record( std::string & output_filename, std::string & input_fil
         output_filename += "-redrec";
         output_filename += infile_extension;
 
-        std::cout << "\nOutput file path (autogenerated): " << output_filename << std::endl;
+        std::cout << "\nOutput file is \"" << output_filename << "\" (autogenerated)." << std::endl;
+    }
+    else if (output_filename.size()) {
+        [&output_filename] () {
+            std::string directory = PNG_PATH "/"; // default value, actual one should come from output_filename
+            std::string filename                ;
+            std::string extension = ".mwrm"     ;
+
+            ParsePath(output_filename.c_str(), directory, filename, extension);
+            MakePath(output_filename, directory.c_str(), filename.c_str(), extension.c_str());
+        } ();
+        std::cout << "Output file is \"" << output_filename << "\".\n";
     }
 
     TODO("before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases")
@@ -385,11 +420,11 @@ int recompress_or_record( std::string & output_filename, std::string & input_fil
     unsigned file_count   = 0;
     try {
         if (infile_is_encrypted == false) {
-            InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
+            InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension.c_str());
             file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
         }
         else {
-            CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension);
+            CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension.c_str());
             file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
         }
     }
@@ -439,13 +474,15 @@ int recompress_or_record( std::string & output_filename, std::string & input_fil
 
         if (!result && remove_input_file) {
             if (infile_is_encrypted == false) {
-                InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
-                remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path, infile_basename, infile_extension
+                InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension.c_str());
+                remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path.c_str()
+                           , infile_basename.c_str(), infile_extension.c_str()
                            , infile_is_encrypted);
             }
             else {
-                CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension);
-                remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path, infile_basename, infile_extension
+                CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension.c_str());
+                remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path.c_str()
+                           , infile_basename.c_str(), infile_extension.c_str()
                            , infile_is_encrypted);
             }
         }
@@ -456,9 +493,9 @@ int recompress_or_record( std::string & output_filename, std::string & input_fil
     };
 
     return infile_is_encrypted
-        ? run( CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension)
+        ? run( CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension.c_str())
              , std::forward<ExtraArguments>(extra_argument)...)
-        : run( InMetaSequenceTransport(infile_prefix, infile_extension)
+        : run( InMetaSequenceTransport(infile_prefix, infile_extension.c_str())
              , std::forward<ExtraArguments>(extra_argument)...);
 }
 
@@ -535,6 +572,7 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
                         , std::string const & output_filename, Inifile & ini, uint32_t verbose) {
     FileToChunk player(&in_wrm_trans, 0);
 
+/*
     char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
     char outfile_basename [1024] = "redrec_output"; // default value, actual one should come from output_filename
     char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
@@ -548,12 +586,17 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
                   , sizeof(outfile_extension)
                   , verbose
                   );
+*/
+    std::string outfile_path;
+    std::string outfile_basename;
+    std::string outfile_extension;
+    ParsePath(output_filename.c_str(), outfile_path, outfile_basename, outfile_extension);
 
     if (verbose) {
         std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension << '\n' << std::endl;
     }
 
-    if (recursive_create_directory(outfile_path, S_IRWXU|S_IRGRP|S_IXGRP, ini.video.capture_groupid) != 0) {
+    if (recursive_create_directory(outfile_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, ini.video.capture_groupid) != 0) {
         std::cerr << "Failed to create directory: \"" << outfile_path << "\"" << std::endl;
     }
 
@@ -598,12 +641,12 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
         };
 
         if (ini.globals.enable_file_encryption.get()) {
-            run(CryptoOutMetaSequenceTransport( &cctx, outfile_path, ini.video.hash_path, outfile_basename
+            run(CryptoOutMetaSequenceTransport( &cctx, outfile_path.c_str(), ini.video.hash_path, outfile_basename.c_str()
                                               , begin_record, player.info_width, player.info_height
                                               , ini.video.capture_groupid));
         }
         else {
-            run(OutMetaSequenceTransport( outfile_path, outfile_basename, begin_record
+            run(OutMetaSequenceTransport( outfile_path.c_str(), outfile_basename.c_str(), begin_record
                                         , player.info_width, player.info_height, ini.video.capture_groupid));
         }
     }
@@ -682,9 +725,9 @@ static void raise_error(std::string const & output_filename, int code, const cha
     char outfile_pid[32];
     snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
 
-    char outfile_path     [1024] = "./"           ; // default value, actual one should come from output_filename
-    char outfile_basename [1024] = "redrec_output"; // default value actual one should come from output_filename
-    char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
+    char outfile_path     [1024] = {};
+    char outfile_basename [1024] = {};
+    char outfile_extension[1024] = {};
 
     canonical_path( output_filename.c_str()
                   , outfile_path
@@ -733,9 +776,9 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
         char outfile_pid[32];
         snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
 
-        char outfile_path     [1024] = "./"           ; // default value, actual one should come from output_filename
-        char outfile_basename [1024] = "redrec_output"; // default value actual one should come from output_filename
-        char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
+        char outfile_path     [1024] = {};
+        char outfile_basename [1024] = {};
+        char outfile_extension[1024] = {};
 
         canonical_path( output_filename.c_str()
                       , outfile_path
