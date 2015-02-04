@@ -86,6 +86,7 @@
 #include "RDP/capabilities/compdesk.hpp"
 #include "RDP/capabilities/cap_font.hpp"
 #include "RDP/capabilities/glyphcache.hpp"
+#include "RDP/capabilities/rail.hpp"
 
 #include "front_api.hpp"
 #include "activity_checker.hpp"
@@ -785,8 +786,8 @@ public:
                                 , int flags) {
         if (this->verbose & 16) {
             LOG( LOG_INFO
-               , "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)"
-               , chunk, length, chunk_size, flags);
+               , "Front::send_to_channel(channel='%s'(%d), data=%p, length=%u, chunk_size=%u, flags=%x)"
+               , channel.name, channel.chanid, chunk, length, chunk_size, flags);
         }
 
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -2809,9 +2810,12 @@ public:
                     LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWGDIPLUS");
                 }
                 break;
-            case CAPSTYPE_RAIL: /* 23 */
-                if (this->verbose) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_RAIL");
+            case CAPSTYPE_RAIL: { /* 23 */
+                    RailCaps cap;
+                    cap.recv(stream, capset_length);
+                    if (this->verbose) {
+                        cap.log("Receiving from client");
+                    }
                 }
                 break;
             case CAPSTYPE_WINDOW: /* 24 */

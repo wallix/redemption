@@ -2636,14 +2636,6 @@ public:
         }
         confirm_active_pdu.emit_capability_set(glyphcache_caps);
 
-//        BrushCacheCaps brushcache_caps;
-//        brushcache_caps.log("Sending brushcache caps to server");
-//        confirm_active_pdu.emit_capability_set(BrushCacheCaps);
-
-//        CompDeskCaps compdesk_caps;
-//        compdesk_caps.log("Sending compdesk caps to server");
-//        confirm_active_pdu.emit_capability_set(CompDeskCaps);
-
         confirm_active_pdu.emit_end();
 
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
