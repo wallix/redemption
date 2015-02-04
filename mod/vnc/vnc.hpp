@@ -468,7 +468,7 @@ public:
         }
     } // rdp_input_invalidate
 
-private:
+protected:
     static void fill_encoding_types_buffer(const char * encodings, Stream & stream, uint16_t & number_of_encodings, uint32_t verbose)
     {
         number_of_encodings = 0;

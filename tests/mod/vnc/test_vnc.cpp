@@ -31,12 +31,23 @@
 
 BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
 {
+    class testable_mod_vnc : public mod_vnc {
+    public:
+        static void testable_fill_encoding_types_buffer(
+                const char * encodings, Stream & stream,
+                uint16_t & number_of_encodings, uint32_t verbose) {
+            fill_encoding_types_buffer(encodings, stream, number_of_encodings,
+                verbose);
+        }
+    };
+
     {
         BStream  stream(512);
         uint16_t number_of_encodings;
 
         number_of_encodings = 0;
-        mod_vnc::fill_encoding_types_buffer("16,2,0,1,-239", stream, number_of_encodings, 1);
+        testable_mod_vnc::testable_fill_encoding_types_buffer("16,2,0,1,-239",
+            stream, number_of_encodings, 1);
         BOOST_CHECK(!memcmp(stream.get_data(),
                             "\x00\x00\x00\x10\x00\x00\x00\x02"
                             "\x00\x00\x00\x00\x00\x00\x00\x01"
@@ -49,7 +60,8 @@ BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
         uint16_t number_of_encodings;
 
         number_of_encodings = 0;
-        mod_vnc::fill_encoding_types_buffer("\t16 , 2 , 0 , 1 , -239 ", stream, number_of_encodings, 1);
+        testable_mod_vnc::testable_fill_encoding_types_buffer(
+            "\t16 , 2 , 0 , 1 , -239 ", stream, number_of_encodings, 1);
         BOOST_CHECK(!memcmp(stream.get_data(),
                             "\x00\x00\x00\x10\x00\x00\x00\x02"
                             "\x00\x00\x00\x00\x00\x00\x00\x01"
