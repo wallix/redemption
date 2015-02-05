@@ -21,6 +21,7 @@
 #ifndef _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_
 #define _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_
 
+#include "cast.hpp"
 #include "stream.hpp"
 
 // [MS-RDPERP] - 2.2.2.1 Common Header (TS_RAIL_PDU_HEADER)
@@ -131,9 +132,18 @@ class RAILPDUHeader_Recv {
     uint16_t orderLength_;
 
 public:
-    RAILPDUHeader_Recv(Stream & stream)
-    : orderType_(stream.in_uint16_le())
-    , orderLength_(stream.in_uint16_le()) {}
+    RAILPDUHeader_Recv(Stream & stream) {
+        const unsigned expected = 4;    // orderType(2) + orderLength(2)
+
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR, "Truncated RAIL PDU header: expected=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_RAIL_PDU_TRUNCATED);
+        }
+
+        this->orderType_   = stream.in_uint16_le();
+        this->orderLength_ = stream.in_uint16_le();
+    }
 
     uint16_t orderType() const { return this->orderType_; }
 
@@ -232,6 +242,13 @@ public:
 //   |                                           | be expanded on the server.  |
 //   +-------------------------------------------+-----------------------------+
 
+enum {
+      TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY = 0x0001
+    , TS_RAIL_EXEC_FLAG_TRANSLATE_FILES         = 0x0002
+    , TS_RAIL_EXEC_FLAG_FILE                    = 0x0004
+    , TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS        = 0x0008
+};
+
 // ExeOrFileLength (2 bytes): An unsigned 16-bit integer. Specifies the
 //  length of the ExeOrFile field in bytes. The length MUST be nonzero. The
 //  maximum length is 520 bytes.
@@ -264,5 +281,128 @@ public:
 //  otherwise, it MUST be present. The maximum length of this field,
 //  including expanded environment variables (see
 //  TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS mask of Flags field), is 16,000 bytes.
+
+class ClientExecutePDU_Recv {
+    uint16_t Flags_;
+    uint16_t ExeOrFileLength;
+    uint16_t WorkingDirLength;
+    uint16_t ArgumentsLen;
+
+    std::string exe_or_file_;
+    std::string working_dir_;
+    std::string arguments_;
+
+public:
+    ClientExecutePDU_Recv(Stream & stream) {
+        {
+            const unsigned expected =
+                8;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Client Execute PDU: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->Flags_            = stream.in_uint16_le();
+        this->ExeOrFileLength   = stream.in_uint16_le();
+        this->WorkingDirLength  = stream.in_uint16_le();
+        this->ArgumentsLen      = stream.in_uint16_le();
+
+        auto get_non_null_terminated_utf16_string =
+            [&stream] (std::string & out,
+                       size_t length_of_utf16_data_in_bytes) {
+                if (!stream.in_check_rem(length_of_utf16_data_in_bytes)) {
+                    LOG(LOG_ERR,
+                        "Truncated Client Execute PDU: expected=%u remains=%u",
+                        length_of_utf16_data_in_bytes, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+                uint8_t * utf16_data = static_cast<uint8_t *>(
+                    ::alloca(length_of_utf16_data_in_bytes));
+                stream.in_copy_bytes(utf16_data,
+                    length_of_utf16_data_in_bytes);
+
+                const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+                const size_t size_of_utf8_string =
+                    length_of_utf16_data_in_bytes / 2 *
+                    maximum_length_of_utf8_character_in_bytes + 1;
+                uint8_t * utf8_string = static_cast<uint8_t *>(
+                    ::alloca(size_of_utf8_string));
+                const size_t length_of_utf8_string = ::UTF16toUTF8(
+                    utf16_data, length_of_utf16_data_in_bytes / 2,
+                    utf8_string, size_of_utf8_string);
+                out.assign(::char_ptr_cast(utf8_string),
+                    length_of_utf8_string);
+            };
+
+        get_non_null_terminated_utf16_string(this->exe_or_file_,
+            this->ExeOrFileLength);
+        get_non_null_terminated_utf16_string(this->working_dir_,
+            this->WorkingDirLength);
+        get_non_null_terminated_utf16_string(this->arguments_,
+            this->ArgumentsLen);
+    }
+
+    uint16_t Flags() const { return this->Flags_; }
+
+    const char * exe_or_file() const { return this->exe_or_file_.c_str(); }
+
+    const char * working_dir() const { return this->working_dir_.c_str(); }
+
+    const char * arguments() const { return this->arguments_.c_str(); }
+};  // class ClientExecutePDU_Recv
+
+class ClientExecutePDU_Send {
+public:
+    ClientExecutePDU_Send(Stream & stream, uint16_t Flags,
+                          const char * exe_or_file, const char * working_dir,
+                          const char * arguments) {
+        stream.out_uint16_le(Flags);
+
+        const uint32_t offset_of_ExeOrFile  = stream.get_offset();
+        stream.out_clear_bytes(2);
+        const uint32_t offset_of_WorkingDir = stream.get_offset();
+        stream.out_clear_bytes(2);
+        const uint32_t offset_of_Arguments  = stream.get_offset();
+        stream.out_clear_bytes(2);
+
+        auto put_non_null_terminate_utf16_string =
+            [&stream] (const char * in,
+                       size_t maximum_length_of_utf16_data_in_bytes,
+                       uint32_t offset_of_data_length) {
+                uint8_t * utf16_data = static_cast<uint8_t *>(::alloca(
+                    maximum_length_of_utf16_data_in_bytes));
+                size_t size_of_utf16_data = ::UTF8toUTF16(
+                    reinterpret_cast<const uint8_t *>(in), utf16_data,
+                    maximum_length_of_utf16_data_in_bytes);
+
+                stream.out_copy_bytes(utf16_data, size_of_utf16_data);
+
+                stream.set_out_uint16_le(size_of_utf16_data,
+                    offset_of_data_length);
+            };
+
+        const size_t maximum_length_of_ExeOrFile_in_bytes = 520;
+        put_non_null_terminate_utf16_string(
+            exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
+            offset_of_ExeOrFile);
+
+        const size_t maximum_length_of_WorkingDir_in_bytes = 520;
+        put_non_null_terminate_utf16_string(
+            working_dir, maximum_length_of_WorkingDir_in_bytes,
+            offset_of_WorkingDir);
+
+        const size_t maximum_length_of_Arguments_in_bytes = 16000;
+        put_non_null_terminate_utf16_string(
+            arguments, maximum_length_of_Arguments_in_bytes,
+            offset_of_Arguments);
+
+        stream.mark_end();
+    }
+};
 
 #endif  // #ifndef _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_

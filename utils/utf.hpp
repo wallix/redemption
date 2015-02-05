@@ -665,12 +665,6 @@ static inline size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size, const uin
 }
 
 static inline size_t get_utf8_char_size(uint8_t const * c) {
-    if ((*c >> 1) == 0x7E) {
-        return 6;
-    }
-    if ((*c >> 2) == 0x3E) {
-        return 5;
-    }
     if ((*c >> 3) == 0x1E) {
         return 4;
     }

@@ -24,6 +24,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
+//#define LOGPRINT
 
 #include "log.hpp"
 #include "RDP/remote_programs.hpp"
@@ -41,4 +42,27 @@ BOOST_AUTO_TEST_CASE(TestRAILPDUHeader)
 
     BOOST_CHECK_EQUAL(header_r.orderType(),   TS_RAIL_ORDER_EXEC);
     BOOST_CHECK_EQUAL(header_r.orderLength(), 24                );
+}
+
+BOOST_AUTO_TEST_CASE(ClientExecutePDU)
+{
+    BStream stream(2048);
+
+    ClientExecutePDU_Send client_execute_pdu_s(stream,
+        TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY,
+        "%%SystemRoot%%\\system32\\notepad.exe", "%%HOMEDRIVE%%%%HOMEPATH%%",
+        "");
+
+    stream.rewind();
+
+    ClientExecutePDU_Recv client_execute_pdu_r(stream);
+
+    BOOST_CHECK_EQUAL(client_execute_pdu_r.Flags(),
+        TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY);
+    BOOST_CHECK_EQUAL(client_execute_pdu_r.exe_or_file(),
+        "%%SystemRoot%%\\system32\\notepad.exe");
+    BOOST_CHECK_EQUAL(client_execute_pdu_r.working_dir(),
+        "%%HOMEDRIVE%%%%HOMEPATH%%");
+    BOOST_CHECK_EQUAL(client_execute_pdu_r.arguments(),
+        "");
 }
