@@ -44,6 +44,19 @@ BOOST_AUTO_TEST_CASE(TestRAILPDUHeader)
     BOOST_CHECK_EQUAL(header_r.orderLength(), 24                );
 }
 
+BOOST_AUTO_TEST_CASE(TestHandshakePDU)
+{
+    BStream stream(128);
+
+    HandshakePDU_Send handshake_pdu_s(stream, 0x01020304);
+
+    stream.rewind();
+
+    HandshakePDU_Recv handshake_pdu_r(stream);
+
+    BOOST_CHECK_EQUAL(handshake_pdu_r.buildNumber(), 0x01020304);
+}
+
 BOOST_AUTO_TEST_CASE(ClientExecutePDU)
 {
     BStream stream(2048);

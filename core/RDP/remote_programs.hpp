@@ -171,6 +171,56 @@ public:
     }
 };
 
+// [MS-RDPERP] - 2.2.2.2.1 Handshake PDU (TS_RAIL_ORDER_HANDSHAKE)
+// ===============================================================
+
+// The Handshake PDU is exchanged between the server and the client to
+//  establish that both endpoints are ready to begin RAIL mode. The server
+//  sends the Handshake PDU and the client responds with the Handshake PDU.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             header                            |
+// +---------------------------------------------------------------+
+// |                          buildNumber                          |
+// +---------------------------------------------------------------+
+
+// header (4 bytes): A TS_RAIL_PDU_HEADER structure. The orderType field of
+//  the header MUST be set to 0x0005 (TS_RAIL_ORDER_HANDSHAKE).
+
+// buildNumber (4 bytes): An unsigned 32-bit integer. The build or version of
+//  the sending party.
+
+class HandshakePDU_Recv {
+    uint32_t buildNumber_;
+
+public:
+    HandshakePDU_Recv(Stream & stream) {
+        const unsigned expected = 4;    // buildNumber(4)
+
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR, "Handshake PDU: expected=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_RAIL_PDU_TRUNCATED);
+        }
+
+        this->buildNumber_ = stream.in_uint32_le();
+    }
+
+    uint32_t buildNumber() const { return this->buildNumber_; }
+};
+
+class HandshakePDU_Send {
+public:
+    HandshakePDU_Send(Stream & stream, uint32_t buildNumber) {
+        stream.out_uint32_le(buildNumber);
+
+        stream.mark_end();
+    }
+};
+
 // [MS-RDPERP] - 2.2.2.3.1 Client Execute PDU (TS_RAIL_ORDER_EXEC)
 // ===============================================================
 
