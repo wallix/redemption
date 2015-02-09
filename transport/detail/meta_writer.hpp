@@ -46,9 +46,9 @@ namespace detail
         MetaFilename(const char * path, const char * basename,
                      FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
         {
-            int res = format == (
-               FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
-            || format == FilenameGenerator::PATH_FILE_PID_EXTENSION)
+            int res =
+            (   format == FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+             || format == FilenameGenerator::PATH_FILE_PID_EXTENSION)
             ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, getpid())
             : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
             if (res > int(sizeof(this->filename) - 6) || res < 0) {
