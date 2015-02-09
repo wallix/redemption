@@ -48,7 +48,7 @@ RequestCleaningTransport<
         const int groupid,
         auth_api * authentifier = NULL,
         unsigned verbose = 0,
-        FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
+        FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
     : OutMetaSequenceTransport::TransportType(
         detail::out_meta_sequence_filename_buf_param<>(now.tv_sec, format, path, basename, ".wrm", groupid))
     {

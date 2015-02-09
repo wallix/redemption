@@ -43,18 +43,21 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         wrm_trans.send("CCCCX", 5);
     } // brackets necessary to force closing sequence
 
-    char meta_path[1024];
-    snprintf(meta_path, 1024, "./xxx-%06u.mwrm", getpid());
-    BOOST_CHECK_EQUAL(102, filesize(meta_path));
+//    char meta_path[1024];
+//    snprintf(meta_path, 1024, "./xxx-%06u.mwrm", getpid());
+    const char * meta_path = "./xxx.mwrm";
+    BOOST_CHECK_EQUAL(88, filesize(meta_path));
     BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
 
-    char file1[1024];
-    snprintf(file1, 1024, "./xxx-%06u-%06u.wrm", getpid(), 0);
+//    char file1[1024];
+//    snprintf(file1, 1024, "./xxx-%06u-%06u.wrm", getpid(), 0);
+    const char * file1 = "./xxx-000000.wrm";
     BOOST_CHECK_EQUAL(10, filesize(file1));
     BOOST_CHECK_EQUAL(0, ::unlink(file1));
 
-    char file2[1024];
-    snprintf(file2, 1024, "./xxx-%06u-%06u.wrm", getpid(), 1);
+//    char file2[1024];
+//    snprintf(file2, 1024, "./xxx-%06u-%06u.wrm", getpid(), 1);
+    const char * file2 = "./xxx-000001.wrm";
     BOOST_CHECK_EQUAL(5, filesize(file2));
     BOOST_CHECK_EQUAL(0, ::unlink(file2));
 }

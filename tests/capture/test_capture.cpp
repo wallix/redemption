@@ -101,7 +101,8 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
     {
         FilenameGenerator png_seq(
-            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+//            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+            FilenameGenerator::PATH_FILE_COUNT_EXTENSION
         , "./" , "capture", ".png", ini.video.capture_groupid
         );
 
@@ -134,7 +135,8 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
     {
         FilenameGenerator wrm_seq(
-            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+//            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+            FilenameGenerator::PATH_FILE_COUNT_EXTENSION
         , "./" , "capture", ".wrm", ini.video.capture_groupid
         );
 
@@ -155,18 +157,20 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
     {
         FilenameGenerator mwrm_seq(
-            FilenameGenerator::PATH_FILE_PID_EXTENSION
+//            FilenameGenerator::PATH_FILE_PID_EXTENSION
+            FilenameGenerator::PATH_FILE_EXTENSION
           , "./", "capture", ".mwrm", groupid
         );
         const char * filename = mwrm_seq.get(0);
         timeval now = tvtime();
-        BOOST_CHECK_EQUAL(120 + std::to_string(now.tv_sec).size(), ::filesize(filename));
+        BOOST_CHECK_EQUAL(99 + std::to_string(now.tv_sec).size(), ::filesize(filename));
         ::unlink(filename);
     }
 
     if (ini.globals.enable_file_encryption.get()) {
         FilenameGenerator mwrm_seq(
-            FilenameGenerator::PATH_FILE_PID_EXTENSION
+//            FilenameGenerator::PATH_FILE_PID_EXTENSION
+            FilenameGenerator::PATH_FILE_EXTENSION
           , "/tmp/", "capture", ".mwrm", groupid
         );
         const char * filename = mwrm_seq.get(0);

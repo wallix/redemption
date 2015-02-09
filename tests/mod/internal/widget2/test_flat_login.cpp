@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
                                       flat_login.cx(),
                                       flat_login.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help1.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
                                flat_login.helpicon.centerx(), flat_login.helpicon.centery(), NULL);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
     if (!check_sig(drawable.gd.impl(), message,
         "\x83\x5d\x86\x4b\xb8\x85\x30\x12\xa8\xa2\x9c\x07\xd9\x11\xab\xf9\xf8\x27\x60\xc3"
