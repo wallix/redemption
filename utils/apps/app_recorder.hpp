@@ -773,8 +773,8 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
     int return_code = 0;
 
     if (output_filename.length()) {
-        char outfile_pid[32];
-        snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
+//        char outfile_pid[32];
+//        snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
 
         char outfile_path     [1024] = {};
         char outfile_basename [1024] = {};
@@ -791,7 +791,8 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                       );
 
         if (verbose) {
-            std::cout << "Output file path: " << outfile_path << outfile_basename << '-' << outfile_pid << outfile_extension <<
+//            std::cout << "Output file path: " << outfile_path << outfile_basename << '-' << outfile_pid << outfile_extension <<
+            std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension <<
                 '\n' << endl;
         }
 
@@ -819,8 +820,8 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
         player.add_consumer(&capture, &capture);
 
         char progress_filename[4096];
-        snprintf( progress_filename, sizeof(progress_filename), "%s%s-%s.pgs"
-                , outfile_path, outfile_basename, outfile_pid);
+        snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
+                , outfile_path, outfile_basename);
 
         UpdateProgressData update_progress_data(
             progress_filename, begin_record.tv_sec, end_record.tv_sec, begin_capture.tv_sec, end_capture.tv_sec
