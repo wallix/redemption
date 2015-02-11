@@ -634,37 +634,43 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
     int return_code = 0;
     try {
         auto run = [&](Transport && trans) {
-            ChunkToFile recorder( &trans
+            {
+                ChunkToFile recorder( &trans
 
-                                , player.info_width
-                                , player.info_height
-                                , player.info_bpp
-                                , player.info_cache_0_entries
-                                , player.info_cache_0_size
-                                , player.info_cache_1_entries
-                                , player.info_cache_1_size
-                                , player.info_cache_2_entries
-                                , player.info_cache_2_size
+                                    , player.info_width
+                                    , player.info_height
+                                    , player.info_bpp
+                                    , player.info_cache_0_entries
+                                    , player.info_cache_0_size
+                                    , player.info_cache_1_entries
+                                    , player.info_cache_1_size
+                                    , player.info_cache_2_entries
+                                    , player.info_cache_2_size
 
-                                , player.info_number_of_cache
-                                , player.info_use_waiting_list
+                                    , player.info_number_of_cache
+                                    , player.info_use_waiting_list
 
-                                , player.info_cache_0_persistent
-                                , player.info_cache_1_persistent
-                                , player.info_cache_2_persistent
+                                    , player.info_cache_0_persistent
+                                    , player.info_cache_1_persistent
+                                    , player.info_cache_2_persistent
 
-                                , player.info_cache_3_entries
-                                , player.info_cache_3_size
-                                , player.info_cache_3_persistent
-                                , player.info_cache_4_entries
-                                , player.info_cache_4_size
-                                , player.info_cache_4_persistent
+                                    , player.info_cache_3_entries
+                                    , player.info_cache_3_size
+                                    , player.info_cache_3_persistent
+                                    , player.info_cache_4_entries
+                                    , player.info_cache_4_size
+                                    , player.info_cache_4_persistent
 
-                                , ini);
+                                    , ini);
 
-            player.add_consumer(&recorder);
+                player.add_consumer(&recorder);
 
-            player.play(program_requested_to_shutdown);
+                player.play(program_requested_to_shutdown);
+            }
+
+            if (program_requested_to_shutdown) {
+                trans.request_full_cleaning();
+            }
         };
 
         if (ini.globals.enable_file_encryption.get()) {
@@ -857,6 +863,11 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
         if (update_progress_data.is_valid()) {
             try {
                 player.play(std::ref(update_progress_data), program_requested_to_shutdown);
+
+                if (program_requested_to_shutdown) {
+                    update_progress_data.raise_error(65537, "Program requested to shutdown");
+                    clear_files_flv_meta_png(outfile_path, outfile_basename);
+                }
             }
             catch (Error const & e) {
                 const bool msg_with_error_id = false;
