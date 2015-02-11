@@ -31,7 +31,7 @@ struct RDPCaptureDevice : noncopyable {
     virtual void input(const timeval & now, Stream & input_data_32) {}
 
     virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
-        bool ignore_frame_in_timeval) {}
+        bool ignore_frame_in_timeval, bool const & requested_to_stop) {}
 
     virtual void set_pointer_display() {}
 

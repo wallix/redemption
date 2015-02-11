@@ -57,23 +57,24 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     drawable.impl().dont_show_mouse_cursor = true;
 
     bool ignore_frame_in_timeval = false;
+    bool requested_to_stop       = false;
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec++;
 
     RDPOpaqueRect cmd1(Rect(100, 100, 200, 200), BLUE);
     drawable.draw(cmd1, screen_rect);
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec++;
 
     BOOST_CHECK_EQUAL(3065, ::filesize(trans.seqgen()->get(0)));
@@ -102,6 +103,7 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     drawable.show_mouse_cursor(false);
 
     bool ignore_frame_in_timeval = false;
+    bool requested_to_stop       = false;
 
     RDP::FrameMarker order;
     order.action = RDP::FrameMarker::FrameStart;
@@ -110,12 +112,12 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
 
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec++;
 
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec++;
 
     RDPOpaqueRect cmd1(Rect(50, 50, 80, 60), GREEN);
@@ -125,16 +127,16 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     drawable.draw(order);
 
     // -> PNG
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec++;
 
     RDPOpaqueRect cmd2(Rect(100, 100, 200, 200), BLUE);
     drawable.draw(cmd2, screen_rect);
 
     // -> PNG
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec++;
 
     BOOST_CHECK_EQUAL(3075, ::filesize(trans.seqgen()->get(0)));
