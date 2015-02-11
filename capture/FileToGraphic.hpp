@@ -1169,25 +1169,25 @@ public:
         }
     }
 
-    void play() {
-        this->privplay([](time_t){});
+    void play(bool const & requested_to_stop) {
+        this->privplay([](time_t){}, requested_to_stop);
     }
 
     template<class CbUpdateProgress>
-    void play(CbUpdateProgress update_progess) {
+    void play(CbUpdateProgress update_progess, bool const & requested_to_stop) {
         time_t last_sent_record_now = 0;
         this->privplay([&](time_t record_now) {
-            if (last_sent_record_now != this->record_now.tv_sec) {
-                update_progess(this->record_now.tv_sec);
-                last_sent_record_now = this->record_now.tv_sec;
-            }
-        });
+                if (last_sent_record_now != this->record_now.tv_sec) {
+                    update_progess(this->record_now.tv_sec);
+                    last_sent_record_now = this->record_now.tv_sec;
+                }
+            }, requested_to_stop);
     }
 
 private:
     template<class CbUpdateProgress>
-    void privplay(CbUpdateProgress update_progess) {
-        while (this->next_order()) {
+    void privplay(CbUpdateProgress update_progess, bool const & requested_to_stop) {
+        while (!requested_to_stop && this->next_order()) {
             if (this->verbose > 8) {
                 LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
                    , (unsigned)this->record_now.tv_sec, (unsigned)this->total_orders_count);

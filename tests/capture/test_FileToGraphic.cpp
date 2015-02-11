@@ -107,8 +107,10 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     wrm_recorder.update_config(ini);
     player.add_consumer(&wrm_recorder, &wrm_recorder);
 
+    bool requested_to_stop = false;
+
     BOOST_CHECK_EQUAL((unsigned)1352304810, (unsigned)player.record_now.tv_sec);
-    player.play();
+    player.play(requested_to_stop);
 
     png_recorder.flush();
     BOOST_CHECK_EQUAL((unsigned)1352304870, (unsigned)player.record_now.tv_sec);
@@ -206,8 +208,10 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //    wrm_recorder.update_config(ini);
 //    player.add_consumer((RDPGraphicDevice *)&wrm_recorder, (RDPCaptureDevice *)&wrm_recorder);
 
+//    bool requested_to_stop = false;
+
 //    BOOST_CHECK_EQUAL((unsigned)1352304870, (unsigned)player.record_now.tv_sec);
-//    player.play();
+//    player.play(requested_to_stop);
 //    BOOST_CHECK_EQUAL((unsigned)1352304928, (unsigned)player.record_now.tv_sec);
 
 //    png_recorder.flush();

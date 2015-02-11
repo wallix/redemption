@@ -222,8 +222,8 @@ public:
         }
     }   // void interpret_chunk()
 
-    void play() {
-        while (this->next_chunk()) {
+    void play(bool const & requested_to_stop) {
+        while (!requested_to_stop && this->next_chunk()) {
             this->interpret_chunk();
         }
     }

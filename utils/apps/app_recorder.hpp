@@ -21,6 +21,8 @@
 #ifndef REDEMPTION_UTILS_APPS_APP_RECORDER_HPP
 #define REDEMPTION_UTILS_APPS_APP_RECORDER_HPP
 
+#include <signal.h>
+
 #include "FileToChunk.hpp"
 #include "ChunkToFile.hpp"
 #include "out_meta_sequence_transport.hpp"
@@ -78,6 +80,29 @@ static const unsigned USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF;
 static const unsigned USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF;
 
 
+bool program_requested_to_shutdown = false;
+
+void shutdown(int sig)
+{
+    LOG(LOG_INFO, "shutting down : signal %d pid=%d\n", sig, getpid());
+
+    program_requested_to_shutdown = true;
+}
+
+void init_signals(void)
+{
+    struct sigaction sa;
+
+    sa.sa_flags = 0;
+
+    sigemptyset(&sa.sa_mask);
+    sigaddset(&sa.sa_mask, SIGTERM);
+
+    sa.sa_handler = shutdown;
+    sigaction(SIGTERM, &sa, NULL);
+}
+
+
 template<
     class CaptureMaker, class AddProgramOtion, class ParseFormat
   , class InitCryptoIni, class HasExtraCapture, class... ExtraArguments>
@@ -87,6 +112,8 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
                 , ExtraArguments&&... extra_argument)
 {
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
+
+    init_signals();
 
     std::string input_filename;
     std::string output_filename;
@@ -637,7 +664,7 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
 
             player.add_consumer(&recorder);
 
-            player.play();
+            player.play(program_requested_to_shutdown);
         };
 
         if (ini.globals.enable_file_encryption.get()) {
@@ -829,7 +856,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
 
         if (update_progress_data.is_valid()) {
             try {
-                player.play(std::ref(update_progress_data));
+                player.play(std::ref(update_progress_data), program_requested_to_shutdown);
             }
             catch (Error const & e) {
                 const bool msg_with_error_id = false;
@@ -849,7 +876,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
     }
     else {
         try {
-            player.play();
+            player.play(program_requested_to_shutdown);
         }
         catch (Error const &) {
             return_code = -1;
