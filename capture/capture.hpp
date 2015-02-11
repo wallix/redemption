@@ -230,7 +230,7 @@ public:
         }
     }
 
-    void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
+    virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) override {
         this->capture_event.reset();
 
         if (this->capture_drawable) {
