@@ -841,48 +841,53 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             ini.video.wrm_color_depth_selection_strategy = player.info_bpp;
         }
 
-        CaptureMaker capmake( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
-                            , player.screen_rect.cx, player.screen_rect.cy
-                            , player.info_bpp, outfile_path, outfile_basename, outfile_extension
-                            , ini, clear, verbose, std::forward<ExtraArguments>(extra_argument)...);
-        auto & capture = capmake.capture;
+        {
+            CaptureMaker capmake( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
+                                , player.screen_rect.cx, player.screen_rect.cy
+                                , player.info_bpp, outfile_path, outfile_basename, outfile_extension
+                                , ini, clear, verbose, std::forward<ExtraArguments>(extra_argument)...);
+            auto & capture = capmake.capture;
 
-        if (capture.capture_png) {
-            capture.psc->zoom(zoom);
-        }
-        player.add_consumer(&capture, &capture);
+            if (capture.capture_png) {
+                capture.psc->zoom(zoom);
+            }
+            player.add_consumer(&capture, &capture);
 
-        char progress_filename[4096];
-        snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
-                , outfile_path, outfile_basename);
+            char progress_filename[4096];
+            snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
+                    , outfile_path, outfile_basename);
 
-        UpdateProgressData update_progress_data(
-            progress_filename, begin_record.tv_sec, end_record.tv_sec, begin_capture.tv_sec, end_capture.tv_sec
-        );
+            UpdateProgressData update_progress_data(
+                progress_filename, begin_record.tv_sec, end_record.tv_sec, begin_capture.tv_sec, end_capture.tv_sec
+            );
 
-        if (update_progress_data.is_valid()) {
-            try {
-                player.play(std::ref(update_progress_data), program_requested_to_shutdown);
+            if (update_progress_data.is_valid()) {
+                try {
+                    player.play(std::ref(update_progress_data), program_requested_to_shutdown);
 
-                if (program_requested_to_shutdown) {
-                    update_progress_data.raise_error(65537, "Program requested to shutdown");
-                    clear_files_flv_meta_png(outfile_path, outfile_basename);
+                    if (program_requested_to_shutdown) {
+                        update_progress_data.raise_error(65537, "Program requested to shutdown");
+                    }
+                }
+                catch (Error const & e) {
+                    const bool msg_with_error_id = false;
+                    update_progress_data.raise_error(e.id, e.errmsg(msg_with_error_id));
+
+                    return_code = -1;
+                }
+                catch (...) {
+                    update_progress_data.raise_error(65536, "Unknown error");
+
+                    return_code = -1;
                 }
             }
-            catch (Error const & e) {
-                const bool msg_with_error_id = false;
-                update_progress_data.raise_error(e.id, e.errmsg(msg_with_error_id));
-
-                return_code = -1;
-            }
-            catch (...) {
-                update_progress_data.raise_error(65536, "Unknown error");
-
+            else {
                 return_code = -1;
             }
         }
-        else {
-            return_code = -1;
+
+        if (!return_code && program_requested_to_shutdown) {
+            clear_files_flv_meta_png(outfile_path, outfile_basename, verbose);
         }
     }
     else {
