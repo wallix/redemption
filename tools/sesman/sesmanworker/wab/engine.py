@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+DEFAULT_CONF_DIR = "/var/wab/etc/"
+DEFAULT_SPEC_DIR = "/opt/wab/share/conf/"
 from logger import Logger
 try:
     from wabengine.common.exception import AuthenticationFailed
@@ -35,7 +36,7 @@ except Exception, e:
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
     except Exception, e:
-        Logger.info(">>>>>> %s" % tracelog)
+        Logger().info(">>>>>> %s" % tracelog)
 
 import time
 
@@ -60,6 +61,11 @@ def is_device_in_subnet(device, subnet):
         result = device == subnet
     Logger().debug("checking if device %s is in subnet %s -> %s" % (device, subnet, ['No', 'Yes'][result]))
     return result
+
+def read_config_file(modulename="sesman",
+                     confdir=DEFAULT_CONF_DIR,
+                     specdir=DEFAULT_SPEC_DIR):
+    return Config(modulename=modulename, confdir=confdir, specdir=specdir)
 
 class Engine(object):
     def __init__(self):

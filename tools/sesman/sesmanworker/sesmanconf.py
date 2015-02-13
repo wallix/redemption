@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from fileconf import parse_conf_file
+# from fileconf import parse_conf_file
 
 def TR(key):
     from logger import Logger
@@ -51,24 +51,10 @@ class SesmanConfig(object):
     #===============================================================================
         self.language = 'en'
         self.conf = {
-          u'RDP':
-            { u'clipboard'         : u'True'
-            , u'device_redirection': u'True'
-            , u'codec_id'          : u'flv'
-            }
-        , u'VNC':
-            { u'clipboard'         : u'False'
-            , u'device_redirection': u'False'
-            , u'codec_id'          : u'flv'
-            }
-        , u'sesman' :
-            { u'licence'               : u'localhost'
-            , u'sql'                   : u'localhost'
-            , u'x509_authenticated'    : u'localhost'
-            , u'record_warning'        : u'True'
-            , u'DEBUG'                 : u'False'
-            , u'auth_mode_passthrough' : u'False'
-            , u'use_default_login'     : u'0'
+          u'sesman' :
+            { u'record_warning'        : True
+            , u'debug'                 : False
+            , u'auth_mode_passthrough' : False
             , u'default_login'         : u''
             }
         , u'fr':
@@ -227,7 +213,7 @@ class SesmanConfig(object):
             }
         }
 
-        parse_conf_file(self.conf, "/opt/wab/share/sesman/config/sesman.conf")
+        # parse_conf_file(self.conf, "/opt/wab/share/sesman/config/sesman.conf")
 
 
     def __getitem__(self, para):
