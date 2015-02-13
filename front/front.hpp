@@ -530,8 +530,10 @@ public:
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
+            bool requested_to_stop = false;
             this->capture->snapshot( now, this->mouse_x, this->mouse_y
                                    , false  // ignore frame in time interval
+                                   , requested_to_stop
                                    );
         }
     }

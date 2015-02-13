@@ -230,7 +230,8 @@ public:
         }
     }
 
-    void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
+    virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
+                          bool const & requested_to_stop) override {
         this->capture_event.reset();
 
         if (this->capture_drawable) {
@@ -242,11 +243,11 @@ public:
         this->last_y   = y;
 
         if (this->capture_png) {
-            this->psc->snapshot(now, x, y, ignore_frame_in_timeval);
+            this->psc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
             this->capture_event.update(this->psc->time_to_wait);
         }
         if (this->capture_wrm) {
-            this->pnc->snapshot(now, x, y, ignore_frame_in_timeval);
+            this->pnc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
             this->capture_event.update(this->pnc->time_to_wait);
         }
     }
@@ -480,7 +481,8 @@ public:
 
         if (order.action == RDP::FrameMarker::FrameEnd) {
             if (this->capture_png) {
-                this->psc->snapshot(this->last_now, this->last_x, this->last_y, false);
+                bool requested_to_stop = false;
+                this->psc->snapshot(this->last_now, this->last_x, this->last_y, false, requested_to_stop);
             }
         }
     }

@@ -1197,7 +1197,8 @@ private:
                 for (size_t i = 0; i < this->nbconsumers; i++) {
                     if (this->consumers[i].capture_device) {
                         this->consumers[i].capture_device->snapshot( this->record_now, this->mouse_x, this->mouse_y
-                                                                   , this->ignore_frame_in_timeval);
+                                                                   , this->ignore_frame_in_timeval
+                                                                   , requested_to_stop);
                     }
                 }
 

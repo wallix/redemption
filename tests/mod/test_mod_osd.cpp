@@ -114,10 +114,11 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     drawable.show_mouse_cursor(false);
 
     bool ignore_frame_in_timeval = false;
+    bool requested_to_stop       = false;
 
     drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), RED), screen_rect);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
 
     {
 #ifndef FIXTURES_PATH
@@ -130,21 +131,21 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
         mod_osd osd(front, mod, Bitmap(FIXTURES_PATH "/ad8b.bmp"), 200, 200);
 
         now.tv_sec++;
-        consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+        consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
 
         RDPOpaqueRect cmd1(Rect(100, 100, 200, 200), GREEN);
         osd.draw(cmd1, screen_rect);
         now.tv_sec++;
-        consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+        consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     }
 
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
 
     RDPOpaqueRect cmd1(Rect(100, 100, 200, 200), BLUE);
     drawable.draw(cmd1, screen_rect);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
 
     trans.disconnect();
 

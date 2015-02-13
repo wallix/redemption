@@ -87,7 +87,8 @@ public:
         }
     }
 
-    void snapshot( const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
+    virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
+                          bool const & requested_to_stop) override {
         if (difftimeval(now, this->start_native_capture)
                 >= this->inter_frame_interval_native_capture) {
             this->recorder.timestamp(now);

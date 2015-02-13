@@ -64,11 +64,12 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     consumer.update_config(ini);
 
     bool ignore_frame_in_timeval = false;
+    bool requested_to_stop       = false;
 
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec += 6;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     trans.disconnect();
 
     const char * filename;
