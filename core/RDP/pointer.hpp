@@ -29,7 +29,8 @@ struct Pointer {
         POINTER_NULL,
         POINTER_NORMAL,
         POINTER_EDIT,
-        POINTER_DRAWABLE_DEFAULT
+        POINTER_DRAWABLE_DEFAULT,
+        POINTER_SYSTEM_DEFAULT
     };
 
 public:
@@ -326,6 +327,92 @@ public:
                     ::memcpy(this->mask, mask_cursor2, this->width * this->height / 8);
                 }
                 break;  // case POINTER_DRAWABLE_DEFAULT:
+
+            case POINTER_SYSTEM_DEFAULT:
+                {
+                    this->bpp    = 24;
+                    this->width  = 32;
+                    this->height = 32;
+                    this->x      = 10; /* hotspot */
+                    this->y      = 10;
+                    const char * data_cursor2 =
+                        /* 0000 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 0060 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 00c0 */ "XXXXXXXXXXXXXXXXXX..XXXXXXXXXXXX"
+                        /* 0120 */ "XXXXXXXXXXXXXXXXXX..XXXXXXXXXXXX"
+                        /* 0180 */ "XXXXXXXXXXXXXXXXX..XXXXXXXXXXXXX"
+                        /* 01e0 */ "XXXXXXXXXXXXXXXXX..XXXXXXXXXXXXX"
+                        /* 0240 */ "XXXXXXXXXXXXXXXX..XXXXXXXXXXXXXX"
+                        /* 02a0 */ "XXXXXXXXXXX.XXXX..XXXXXXXXXXXXXX"
+                        /* 0300 */ "XXXXXXXXXXX..XX..XXXXXXXXXXXXXXX"
+                        /* 0360 */ "XXXXXXXXXXX...X..XXXXXXXXXXXXXXX"
+                        /* 03c0 */ "XXXXXXXXXXX......XXXXXXXXXXXXXXX"
+                        /* 0420 */ "XXXXXXXXXXX.........XXXXXXXXXXXX"
+                        /* 0480 */ "XXXXXXXXXXX........XXXXXXXXXXXXX"
+                        /* 04e0 */ "XXXXXXXXXXX.......XXXXXXXXXXXXXX"
+                        /* 0540 */ "XXXXXXXXXXX......XXXXXXXXXXXXXXX"
+                        /* 05a0 */ "XXXXXXXXXXX.....XXXXXXXXXXXXXXXX"
+                        /* 0600 */ "XXXXXXXXXXX....XXXXXXXXXXXXXXXXX"
+                        /* 0660 */ "XXXXXXXXXXX...XXXXXXXXXXXXXXXXXX"
+                        /* 06c0 */ "XXXXXXXXXXX..XXXXXXXXXXXXXXXXXXX"
+                        /* 0720 */ "XXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXX"
+                        /* 0780 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 07e0 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 0840 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 08a0 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 0900 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 0960 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 09c0 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 0a20 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 0a80 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 0ae0 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 0b40 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        /* 0ba0 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                        ;
+                    uint8_t * tmp = this->data;
+                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                        uint8_t v = (data_cursor2[i] == 'X') ? 0 : 0xFF;
+                        tmp[0] = tmp[1] = tmp[2] = v;
+                        tmp += 3;
+                    }
+
+                    const char * mask_cursor2 =
+                        /* 0000 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xcf\xff"
+                        /* 0008 */ "\xff\xff\x87\xff"
+                                   "\xff\xff\x87\xff"
+                        /* 0010 */ "\xff\xff\x0f\xff"
+                                   "\xff\xdf\x0f\xff"
+                        /* 0018 */ "\xff\xce\x1f\xff"
+                                   "\xff\xc6\x1f\xff"
+                        /* 0020 */ "\xff\xc0\x3f\xff"
+                                   "\xff\xc0\x3f\xff"
+                        /* 0028 */ "\xff\xc0\x03\xff"
+                                   "\xff\xc0\x07\xff"
+                        /* 0030 */ "\xff\xc0\x0f\xff"
+                                   "\xff\xc0\x1f\xff"
+                        /* 0038 */ "\xff\xc0\x3f\xff"
+                                   "\xff\xc0\x7f\xff"
+                        /* 0040 */ "\xff\xc0\xff\xff"
+                                   "\xff\xc1\xff\xff"
+                        /* 0048 */ "\xff\xc3\xff\xff"
+                                   "\xff\xc7\xff\xff"
+                        /* 0050 */ "\xff\xcf\xff\xff"
+                                   "\xff\xdf\xff\xff"
+                        /* 0058 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0060 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0068 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0070 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0078 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        ;
+                    ::memcpy(this->mask, mask_cursor2, this->width * this->height / 8);
+                }
+                break;  // case POINTER_SYSTEM_DEFAULT:
         }   // switch (pointer_type)
     }   // Pointer(uint8_t pointer_type)
 

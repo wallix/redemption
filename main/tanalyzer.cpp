@@ -31,7 +31,8 @@
 #include "channel_list.hpp"
 #include "front_api.hpp"
 #include "in_file_transport.hpp"
-#include "RDP/protocol.hpp"
+#include "RDP/autoreconnect.hpp"
+#include "RDP/mppc_unified_dec.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
@@ -44,9 +45,11 @@
 #include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "RDP/protocol.hpp"
+#include "RDP/SaveSessionInfoPDU.hpp"
 #include "transparentplayer.hpp"
 #include "version.hpp"
-#include "RDP/mppc_unified_dec.hpp"
 
 class Analyzer : public FrontAPI {
 private:
@@ -155,8 +158,8 @@ public:
     }
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data
                                 , size_t length, size_t chunk_size, int flags) {
-        LOG(LOG_INFO, "send_to_channel: channel_name=\"%s\" data_length=%u chunk_size=%u flags=0x%X",
-            channel.name, length, chunk_size, flags);
+        LOG(LOG_INFO, "send_to_channel: channel_name=\"%s\"(%d) data_length=%u chunk_size=%u flags=0x%X",
+            channel.name, channel.chanid, length, chunk_size, flags);
     }
 
     virtual void send_global_palette() throw(Error) { REDASSERT(false); }
@@ -179,7 +182,7 @@ public:
             {
                 LOG(LOG_INFO, "send_data_indication_ex: Received PDUTYPE_DATAPDU(0x%X)", sctrl.pduType);
 
-                ShareData_Recv sdata(stream, &this->mppc_dec);
+                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                 switch (sdata.pdutype2) {
                     case PDUTYPE2_UPDATE:
                     {
@@ -207,7 +210,50 @@ public:
                     }
                     break;
                     case PDUTYPE2_SAVE_SESSION_INFO:
+                    {
                         LOG(LOG_INFO, "send_data_indication_ex: Received PDUTYPE2_SAVE_SESSION_INFO(0x%X)", sdata.pdutype2);
+                        RDP::SaveSessionInfoPDUData_Recv ssipdudata(sdata.payload);
+
+                        switch (ssipdudata.infoType) {
+                        case RDP::INFOTYPE_LOGON:
+                        {
+                            LOG(LOG_INFO, "send_data_indication_ex: Received INFOTYPE_LOGON(0x%X)", ssipdudata.infoType);
+                            RDP::LogonInfoVersion1_Recv liv1(ssipdudata.payload);
+                        }
+                        break;
+                        case RDP::INFOTYPE_LOGON_LONG:
+                        {
+                            LOG(LOG_INFO, "send_data_indication_ex: Received INFOTYPE_LOGON_LONG(0x%X)", ssipdudata.infoType);
+                            RDP::LogonInfoVersion2_Recv liv2(ssipdudata.payload);
+                        }
+                        break;
+                        case RDP::INFOTYPE_LOGON_PLAINNOTIFY:
+                        {
+                            LOG(LOG_INFO, "send_data_indication_ex: Received INFOTYPE_LOGON_PLAINNOTIFY(0x%X)", ssipdudata.infoType);
+                            RDP::PlainNotify_Recv pn(ssipdudata.payload);
+                        }
+                        break;
+                        case RDP::INFOTYPE_LOGON_EXTENDED_INFO:
+                        {
+                            LOG(LOG_INFO, "send_data_indication_ex: Received INFOTYPE_LOGON_EXTENDED_INFO(0x%X)", ssipdudata.infoType);
+                            RDP::LogonInfoExtended_Recv lie(ssipdudata.payload);
+
+                            RDP::LogonInfoField_Recv lif(lie.payload);
+
+                            if (lie.FieldsPresent & RDP::LOGON_EX_AUTORECONNECTCOOKIE) {
+                                LOG(LOG_INFO, "send_data_indication_ex : Auto-reconnect cookie");
+
+                                RDP::ServerAutoReconnectPacket_Recv sarp(lif.payload);
+                            }
+                            if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
+                                LOG(LOG_INFO, "send_data_indication_ex : Logon Errors Info");
+
+                                RDP::LogonErrorsInfo_Recv lei(lif.payload);
+                            }
+                        }
+                        break;
+                        }
+                    }
                     break;
                     case PDUTYPE2_SET_ERROR_INFO_PDU:
                         LOG(LOG_INFO, "send_data_indication_ex: Received PDUTYPE2_SET_ERROR_INFO_PDU(0x%X)", sdata.pdutype2);
@@ -277,11 +323,7 @@ public:
         while (processed < odrs_upd_r.number_orders) {
             RDP::DrawingOrder_RecvFactory drawodr_rf(stream);
 
-            if (!(drawodr_rf.control_flags & RDP::STANDARD)) {
-                LOG(LOG_ERR, "process_orders: Non standard order detected, protocol error");
-                throw Error(ERR_RDP_PROTOCOL);
-            }
-            if (drawodr_rf.control_flags & RDP::SECONDARY) {
+            if ((drawodr_rf.control_flags & (RDP::STANDARD | RDP::SECONDARY)) == (RDP::STANDARD | RDP::SECONDARY)) {
                 RDPSecondaryOrderHeader sec_odr_h(stream);
                 uint8_t * next_order = stream.p + sec_odr_h.order_data_length();
                 switch (sec_odr_h.type) {
@@ -317,7 +359,7 @@ public:
                 }
                 stream.p = next_order;
             }
-            else {
+            else if ((drawodr_rf.control_flags & (RDP::STANDARD | RDP::SECONDARY)) == RDP::STANDARD) {
                 RDPPrimaryOrderHeader pri_ord_h = this->common.receive(stream, drawodr_rf.control_flags);
                 switch (this->common.order) {
                     case RDP::DESTBLT:
@@ -384,6 +426,27 @@ public:
                         LOG(LOG_INFO, "process_orders: ***** Received unexpected Primary Drawing Order, type=0x%X *****", this->common.order);
                     break;
                 }
+            }
+            else if ((drawodr_rf.control_flags & (RDP::STANDARD | RDP::SECONDARY)) == RDP::SECONDARY) {
+                RDP::AltsecDrawingOrderHeader header(drawodr_rf.control_flags);
+                switch (header.orderType) {
+                    case RDP::AltsecDrawingOrderHeader::FrameMarker:
+                    {
+                        LOG(LOG_INFO, "process_orders: Received TS_ALTSEC_FRAME_MARKER(0x%X)", header.orderType);
+                        RDP::FrameMarker order;
+
+                        order.receive(stream, header);
+                    }
+                    break;
+                    default:
+                        LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
+                        /* error, unknown order */
+                    break;
+                }
+            }
+            else {
+                LOG(LOG_ERR, "process_orders: Non standard order detected, protocol error");
+                throw Error(ERR_RDP_PROTOCOL);
             }
             processed++;
         }
