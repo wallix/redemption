@@ -50,12 +50,6 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
     NotifyApi * notifier = NULL;
     int id = 0;
 
-    ini.translation.connection_closed.set_from_cstr("Connection closed");
-    ini.translation.button_close.set_from_cstr("Close");
-    ini.translation.username.set_from_cstr("Username");
-    ini.translation.target.set_from_cstr("Target");
-    ini.translation.diagnostic.set_from_cstr("Diagnostic");
-
     try {
         FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def", id, "rec", "rec",
@@ -87,12 +81,6 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
-
-    ini.translation.connection_closed.set_from_cstr("Connection closed");
-    ini.translation.button_close.set_from_cstr("Close");
-    ini.translation.username.set_from_cstr("Username");
-    ini.translation.target.set_from_cstr("Target");
-    ini.translation.diagnostic.set_from_cstr("Diagnostic");
 
     try {
         FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
@@ -142,12 +130,6 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
     WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
 
-    ini.translation.connection_closed.set_from_cstr("Connection closed");
-    ini.translation.button_close.set_from_cstr("Close");
-    ini.translation.username.set_from_cstr("Username");
-    ini.translation.target.set_from_cstr("Target");
-    ini.translation.diagnostic.set_from_cstr("Diagnostic");
-
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def",
                                     0, 0, 0, false, ini);
@@ -175,12 +157,6 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
-
-    ini.translation.connection_closed.set_from_cstr("Connection closed");
-    ini.translation.button_close.set_from_cstr("Close");
-    ini.translation.username.set_from_cstr("Username");
-    ini.translation.target.set_from_cstr("Target");
-    ini.translation.diagnostic.set_from_cstr("Diagnostic");
 
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def",
@@ -255,12 +231,6 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-
-    ini.translation.connection_closed.set_from_cstr("Connection closed");
-    ini.translation.button_close.set_from_cstr("Close");
-    ini.translation.username.set_from_cstr("Username");
-    ini.translation.target.set_from_cstr("Target");
-    ini.translation.diagnostic.set_from_cstr("Diagnostic");
 
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, &notifier,
                                 "abc<br>def", 0, "tartempion", "caufield",

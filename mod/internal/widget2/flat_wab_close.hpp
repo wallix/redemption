@@ -140,7 +140,8 @@ public:
             this->add_widget(&this->target_label);
             this->add_widget(&this->target_label_value);
 
-            px = std::max(this->username_label.cx(), this->diagnostic.cx()) + 10;
+            px = std::max(this->username_label.cx(), this->diagnostic.cx());
+            px = std::max(px, this->timeleft_label.cx()) + 10;
             this->username_label_value.rect.x = this->username_label.dx() + px;
             this->target_label_value.rect.x = this->username_label.dx() + px;
 

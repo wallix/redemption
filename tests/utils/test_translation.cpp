@@ -37,7 +37,6 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
 {
     Inifile ini;
     ini.translation.language.set_from_cstr("en");
-    ini.translation.help_message.set_from_cstr("");
 
     BOOST_CHECK_EQUAL(TR("login", ini),             std::string("Login"));
     BOOST_CHECK_EQUAL(TR("password", ini),          std::string("Password"));
@@ -94,19 +93,8 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
 
     Translation::getInstance().set_lang(Translation::FR);
     ini.translation.language.set_from_cstr("fr");
-    ini.translation.login.set_from_cstr("");
-    ini.translation.password.set_from_cstr("");
-    ini.translation.button_cancel.set_from_cstr("");
-    ini.translation.connection_closed.set_from_cstr("");
-    ini.translation.button_help.set_from_cstr("");
-    ini.translation.button_close.set_from_cstr("");
-    ini.translation.button_refused.set_from_cstr("");
-    ini.translation.help_message.set_from_cstr("");
-    ini.translation.username.set_from_cstr("");
-    ini.translation.target.set_from_cstr("");
-    ini.translation.manager_close_cnx.set_from_cstr("");
 
-    BOOST_CHECK_EQUAL(TR("login", ini),              std::string("Identifiant"));
+    BOOST_CHECK_EQUAL(TR("login", ini),              std::string("Login"));
     BOOST_CHECK_EQUAL(TR("password", ini),           std::string("Mot de passe"));
     BOOST_CHECK_EQUAL(TR("diagnostic", ini),         std::string("Diagnostic"));
     BOOST_CHECK_EQUAL(TR("connection_closed", ini),  std::string("Connexion fermée"));
@@ -115,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
     BOOST_CHECK_EQUAL(TR("help", ini),               std::string("Aide"));
     BOOST_CHECK_EQUAL(TR("close", ini),              std::string("Fermer"));
     BOOST_CHECK_EQUAL(TR("refused", ini),            std::string("Refuser"));
-    BOOST_CHECK_EQUAL(TR("username", ini),           std::string("Utilisateur"));
+    BOOST_CHECK_EQUAL(TR("username", ini),           std::string("Nom d'utilisateur"));
     BOOST_CHECK_EQUAL(TR("password_expire", ini),    std::string("Votre mot de passe va bientôt expirer. Veuillez le changer"));
     BOOST_CHECK_EQUAL(TR("protocol", ini),           std::string("Protocole"));
     BOOST_CHECK_EQUAL(TR("target_group", ini),       std::string("Groupe"));

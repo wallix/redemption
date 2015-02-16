@@ -555,7 +555,7 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Accept Message'");
                 const char * message = this->ini.context.message.get_cstr();
-                const char * button = this->ini.translation.button_refused.get_cstr();
+                const char * button = TR("refused", this->ini);
                 const char * caption = "Information";
                 this->mod = new FlatDialogMod(
                             // new DialogMod(

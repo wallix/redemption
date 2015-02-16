@@ -38,7 +38,7 @@ from socket     import gethostname
 #TODO : remove these hardcoded strings
 RECORD_PATH = u'/var/wab/recorded/rdp/'
 
-from sesmanconf import TR, SESMANCONF, translations
+from sesmanconf import TR, SESMANCONF
 import engine
 
 from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
@@ -87,7 +87,16 @@ class Sesman():
     #===============================================================================
     def __init__(self, conn, addr):
     #===============================================================================
-        if SESMANCONF[u'sesman'][u'DEBUG'].lower() == u'true':
+        try:
+            confwab = engine.read_config_file(modulename='sesman',
+                                                   confdir='/opt/wab/share/sesman/config')
+            seswabconfig = confwab.get(u'sesman', {})
+            SESMANCONF.conf[u'sesman'].update(seswabconfig)
+            # Logger().info(" WABCONFIG SESMANCONF = '%s'" % seswabconfig)
+        except Exception, e:
+            Logger().info("Failed to load Sesman WabConfig")
+        # Logger().info(" SESMANCONF = '%s'" % SESMANCONF[u'sesman'])
+        if SESMANCONF[u'sesman'].get(u'debug', False):
             global DEBUG
             DEBUG = True
         self.cn = u'Unknown'
@@ -138,10 +147,9 @@ class Sesman():
         self.check_session_parameters = False
 
         # Passthrough context
-        self.passthrough_mode = (SESMANCONF[u'sesman'][u'auth_mode_passthrough'].lower()
-                                 == u'true')
-        self.default_login = SESMANCONF[u'sesman'][u'default_login'].strip() if (
-            SESMANCONF[u'sesman'][u'use_default_login'].strip() == u'2') else None
+        self.passthrough_mode = SESMANCONF[u'sesman'].get('auth_mode_passthrough', False)
+        self.default_login = (SESMANCONF[u'sesman'].get('default_login', '').strip()
+                              or None)
         self.passthrough_target_login = None
 
     def reset_session_var(self):
@@ -185,8 +193,6 @@ class Sesman():
             data[u'language'] = SESMANCONF.language
             # if self.shared.get(u'password') == MAGICASK:
             #     data[u'password'] = u''
-
-            data.update(translations())
 
         # replace MAGICASK with ASK and send data on the wire
         _list = []
@@ -824,8 +830,8 @@ class Sesman():
                     #TODO remove .flv extention and adapt ReDemPtion proxy code
                     data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
 
-                    record_warning = SESMANCONF[u'sesman'][u'record_warning'].lower()
-                    if record_warning != 'false':
+                    record_warning = SESMANCONF[u'sesman'].get('record_warning', True)
+                    if record_warning:
                         message =  u"Warning! Your remote session may be recorded and kept in electronic format."
                         try:
                             with open('/opt/wab/share/proxys/messages/motd.%s' % self.language) as f:
