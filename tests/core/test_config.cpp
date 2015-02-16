@@ -195,17 +195,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
-    BOOST_CHECK_EQUAL("OK",                             ini.translation.button_ok.get_cstr());
-    BOOST_CHECK_EQUAL("Cancel",                         ini.translation.button_cancel.get_cstr());
-    BOOST_CHECK_EQUAL("Help",                           ini.translation.button_help.get_cstr());
-    BOOST_CHECK_EQUAL("Close",                          ini.translation.button_close.get_cstr());
-    BOOST_CHECK_EQUAL("Refused",                        ini.translation.button_refused.get_cstr());
-    BOOST_CHECK_EQUAL("Login",                          ini.translation.login.get_cstr());
-    BOOST_CHECK_EQUAL("Username",                       ini.translation.username.get_cstr());
-    BOOST_CHECK_EQUAL("Password",                       ini.translation.password.get_cstr());
-    BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
-    BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
-    BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL("",                               ini.context.movie.c_str());
@@ -450,18 +439,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
-
-    BOOST_CHECK_EQUAL("OK",                             ini.context_get_value(AUTHID_TRANS_BUTTON_OK));
-    BOOST_CHECK_EQUAL("Cancel",                         ini.context_get_value(AUTHID_TRANS_BUTTON_CANCEL));
-    BOOST_CHECK_EQUAL("Help",                           ini.context_get_value(AUTHID_TRANS_BUTTON_HELP));
-    BOOST_CHECK_EQUAL("Close",                          ini.context_get_value(AUTHID_TRANS_BUTTON_CLOSE));
-    BOOST_CHECK_EQUAL("Refused",                        ini.context_get_value(AUTHID_TRANS_BUTTON_REFUSED));
-    BOOST_CHECK_EQUAL("Login",                          ini.context_get_value(AUTHID_TRANS_LOGIN));
-    BOOST_CHECK_EQUAL("Username",                       ini.context_get_value(AUTHID_TRANS_USERNAME));
-    BOOST_CHECK_EQUAL("Password",                       ini.context_get_value(AUTHID_TRANS_PASSWORD));
-    BOOST_CHECK_EQUAL("Target",                         ini.context_get_value(AUTHID_TRANS_TARGET));
-    BOOST_CHECK_EQUAL("Diagnostic",                     ini.context_get_value(AUTHID_TRANS_DIAGNOSTIC));
-    BOOST_CHECK_EQUAL("Connection closed",              ini.context_get_value(AUTHID_TRANS_CONNECTION_CLOSED));
 
     BOOST_CHECK_EQUAL("",                               ini.context.movie.c_str());
 
@@ -724,18 +701,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
-    BOOST_CHECK_EQUAL("OK",                             ini.translation.button_ok.get_cstr());
-    BOOST_CHECK_EQUAL("Cancel",                         ini.translation.button_cancel.get_cstr());
-    BOOST_CHECK_EQUAL("Help",                           ini.translation.button_help.get_cstr());
-    BOOST_CHECK_EQUAL("Close",                          ini.translation.button_close.get_cstr());
-    BOOST_CHECK_EQUAL("Refused",                        ini.translation.button_refused.get_cstr());
-    BOOST_CHECK_EQUAL("Login",                          ini.translation.login.get_cstr());
-    BOOST_CHECK_EQUAL("Username",                       ini.translation.username.get_cstr());
-    BOOST_CHECK_EQUAL("Password",                       ini.translation.password.get_cstr());
-    BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
-    BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
-    BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
-
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
@@ -979,18 +944,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("16,2,0,1,-239",                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.allow_authentification_retries);
 
-    BOOST_CHECK_EQUAL("OK",                             ini.translation.button_ok.get_cstr());
-    BOOST_CHECK_EQUAL("Annuler",                        ini.translation.button_cancel.get_cstr());
-    BOOST_CHECK_EQUAL("Help",                           ini.translation.button_help.get_cstr());
-    BOOST_CHECK_EQUAL("Close",                          ini.translation.button_close.get_cstr());
-    BOOST_CHECK_EQUAL("Refused",                        ini.translation.button_refused.get_cstr());
-    BOOST_CHECK_EQUAL("Login",                          ini.translation.login.get_cstr());
-    BOOST_CHECK_EQUAL("Username",                       ini.translation.username.get_cstr());
-    BOOST_CHECK_EQUAL("Password",                       ini.translation.password.get_cstr());
-    BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
-    BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
-    BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
-
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
@@ -1204,18 +1157,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
-    BOOST_CHECK_EQUAL("OK",                             ini.translation.button_ok.get_cstr());
-    BOOST_CHECK_EQUAL("Cancel",                         ini.translation.button_cancel.get_cstr());
-    BOOST_CHECK_EQUAL("Help",                           ini.translation.button_help.get_cstr());
-    BOOST_CHECK_EQUAL("Close",                          ini.translation.button_close.get_cstr());
-    BOOST_CHECK_EQUAL("Refused",                        ini.translation.button_refused.get_cstr());
-    BOOST_CHECK_EQUAL("Login",                          ini.translation.login.get_cstr());
-    BOOST_CHECK_EQUAL("Username",                       ini.translation.username.get_cstr());
-    BOOST_CHECK_EQUAL("Password",                       ini.translation.password.get_cstr());
-    BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
-    BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
-    BOOST_CHECK_EQUAL("Connexion fermée",               ini.translation.connection_closed.get_cstr());
-
     BOOST_CHECK_EQUAL(1,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
@@ -1408,18 +1349,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-
-    BOOST_CHECK_EQUAL("OK",                             ini.translation.button_ok.get_cstr());
-    BOOST_CHECK_EQUAL("Cancel",                         ini.translation.button_cancel.get_cstr());
-    BOOST_CHECK_EQUAL("Help",                           ini.translation.button_help.get_cstr());
-    BOOST_CHECK_EQUAL("Close",                          ini.translation.button_close.get_cstr());
-    BOOST_CHECK_EQUAL("Refused",                        ini.translation.button_refused.get_cstr());
-    BOOST_CHECK_EQUAL("Login",                          ini.translation.login.get_cstr());
-    BOOST_CHECK_EQUAL("Username",                       ini.translation.username.get_cstr());
-    BOOST_CHECK_EQUAL("Password",                       ini.translation.password.get_cstr());
-    BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
-    BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
-    BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
@@ -1617,18 +1546,6 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
-    BOOST_CHECK_EQUAL("OK",                             ini.translation.button_ok.get_cstr());
-    BOOST_CHECK_EQUAL("Cancel",                         ini.translation.button_cancel.get_cstr());
-    BOOST_CHECK_EQUAL("Help",                           ini.translation.button_help.get_cstr());
-    BOOST_CHECK_EQUAL("Close",                          ini.translation.button_close.get_cstr());
-    BOOST_CHECK_EQUAL("Refused",                        ini.translation.button_refused.get_cstr());
-    BOOST_CHECK_EQUAL("Login",                          ini.translation.login.get_cstr());
-    BOOST_CHECK_EQUAL("Username",                       ini.translation.username.get_cstr());
-    BOOST_CHECK_EQUAL("Password",                       ini.translation.password.get_cstr());
-    BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
-    BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
-    BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
-
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
@@ -1806,18 +1723,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
-    BOOST_CHECK_EQUAL("OK",                             ini.translation.button_ok.get_cstr());
-    BOOST_CHECK_EQUAL("Cancel",                         ini.translation.button_cancel.get_cstr());
-    BOOST_CHECK_EQUAL("Help",                           ini.translation.button_help.get_cstr());
-    BOOST_CHECK_EQUAL("Close",                          ini.translation.button_close.get_cstr());
-    BOOST_CHECK_EQUAL("Refused",                        ini.translation.button_refused.get_cstr());
-    BOOST_CHECK_EQUAL("Login",                          ini.translation.login.get_cstr());
-    BOOST_CHECK_EQUAL("Username",                       ini.translation.username.get_cstr());
-    BOOST_CHECK_EQUAL("Password",                       ini.translation.password.get_cstr());
-    BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
-    BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
-    BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
-
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
@@ -1989,18 +1894,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
-    BOOST_CHECK_EQUAL("OK",                             ini.translation.button_ok.get_cstr());
-    BOOST_CHECK_EQUAL("Cancel",                         ini.translation.button_cancel.get_cstr());
-    BOOST_CHECK_EQUAL("Help",                           ini.translation.button_help.get_cstr());
-    BOOST_CHECK_EQUAL("Close",                          ini.translation.button_close.get_cstr());
-    BOOST_CHECK_EQUAL("Refused",                        ini.translation.button_refused.get_cstr());
-    BOOST_CHECK_EQUAL("Login",                          ini.translation.login.get_cstr());
-    BOOST_CHECK_EQUAL("Username",                       ini.translation.username.get_cstr());
-    BOOST_CHECK_EQUAL("Password",                       ini.translation.password.get_cstr());
-    BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
-    BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
-    BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
-
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
@@ -2165,18 +2058,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-
-    BOOST_CHECK_EQUAL("OK",                             ini.translation.button_ok.get_cstr());
-    BOOST_CHECK_EQUAL("Cancel",                         ini.translation.button_cancel.get_cstr());
-    BOOST_CHECK_EQUAL("Help",                           ini.translation.button_help.get_cstr());
-    BOOST_CHECK_EQUAL("Close",                          ini.translation.button_close.get_cstr());
-    BOOST_CHECK_EQUAL("Refused",                        ini.translation.button_refused.get_cstr());
-    BOOST_CHECK_EQUAL("Login",                          ini.translation.login.get_cstr());
-    BOOST_CHECK_EQUAL("Username",                       ini.translation.username.get_cstr());
-    BOOST_CHECK_EQUAL("Password",                       ini.translation.password.get_cstr());
-    BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
-    BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
-    BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
@@ -2343,18 +2224,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
 
-    BOOST_CHECK_EQUAL("OK",                             ini.translation.button_ok.get_cstr());
-    BOOST_CHECK_EQUAL("Cancel",                         ini.translation.button_cancel.get_cstr());
-    BOOST_CHECK_EQUAL("Help",                           ini.translation.button_help.get_cstr());
-    BOOST_CHECK_EQUAL("Close",                          ini.translation.button_close.get_cstr());
-    BOOST_CHECK_EQUAL("Refused",                        ini.translation.button_refused.get_cstr());
-    BOOST_CHECK_EQUAL("Login",                          ini.translation.login.get_cstr());
-    BOOST_CHECK_EQUAL("Username",                       ini.translation.username.get_cstr());
-    BOOST_CHECK_EQUAL("Password",                       ini.translation.password.get_cstr());
-    BOOST_CHECK_EQUAL("Target",                         ini.translation.target.get_cstr());
-    BOOST_CHECK_EQUAL("Diagnostic",                     ini.translation.diagnostic.get_cstr());
-    BOOST_CHECK_EQUAL("Connection closed",              ini.translation.connection_closed.get_cstr());
-
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
@@ -2400,35 +2269,6 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 {
     Inifile             ini;
     ConfigurationLoader cfg_loader(ini);
-
-    // Translation
-    ini.context_set_value(AUTHID_TRANS_BUTTON_OK,       "Ok");
-    ini.context_set_value(AUTHID_TRANS_BUTTON_CANCEL,   "Annuler");
-    ini.context_set_value(AUTHID_TRANS_BUTTON_HELP,     "Aide");
-    ini.context_set_value(AUTHID_TRANS_BUTTON_CLOSE,    "Fermer");
-    ini.context_set_value(AUTHID_TRANS_BUTTON_REFUSED,  "Refusé");
-    ini.context_set_value(AUTHID_TRANS_LOGIN,           "Compte");
-    ini.context_set_value(AUTHID_TRANS_USERNAME,        "Nom de l'utilisateur");
-    ini.context_set_value(AUTHID_TRANS_PASSWORD,        "Mot de passe");
-    ini.context_set_value(AUTHID_TRANS_TARGET,          "Cible");
-    ini.context_set_value(AUTHID_TRANS_DIAGNOSTIC,      "Diagnostic");
-    ini.context_set_value(AUTHID_TRANS_CONNECTION_CLOSED, "Connexion fermée");
-    ini.context_set_value(AUTHID_TRANS_HELP_MESSAGE,    "Message d'aide");
-
-    BOOST_CHECK_EQUAL("Ok",                ini.context_get_value(AUTHID_TRANS_BUTTON_OK));
-    BOOST_CHECK_EQUAL("Annuler",           ini.context_get_value(AUTHID_TRANS_BUTTON_CANCEL));
-    BOOST_CHECK_EQUAL("Aide",              ini.context_get_value(AUTHID_TRANS_BUTTON_HELP));
-    BOOST_CHECK_EQUAL("Fermer",            ini.context_get_value(AUTHID_TRANS_BUTTON_CLOSE));
-    BOOST_CHECK_EQUAL("Refusé",            ini.context_get_value(AUTHID_TRANS_BUTTON_REFUSED));
-    BOOST_CHECK_EQUAL("Compte",            ini.context_get_value(AUTHID_TRANS_LOGIN));
-    BOOST_CHECK_EQUAL("Nom de l'utilisateur",
-                      ini.context_get_value(AUTHID_TRANS_USERNAME));
-    BOOST_CHECK_EQUAL("Mot de passe",      ini.context_get_value(AUTHID_TRANS_PASSWORD));
-    BOOST_CHECK_EQUAL("Cible",             ini.context_get_value(AUTHID_TRANS_TARGET));
-    BOOST_CHECK_EQUAL("Diagnostic",        ini.context_get_value(AUTHID_TRANS_DIAGNOSTIC));
-    BOOST_CHECK_EQUAL("Connexion fermée",  ini.context_get_value(AUTHID_TRANS_CONNECTION_CLOSED));
-    BOOST_CHECK_EQUAL("Message d'aide",    ini.context_get_value(AUTHID_TRANS_HELP_MESSAGE));
-
 
     // bitrate, framerate, qscale
     ini.context_set_value(AUTHID_OPT_BITRATE,           "80000");

@@ -38,7 +38,7 @@ from socket     import gethostname
 #TODO : remove these hardcoded strings
 RECORD_PATH = u'/var/wab/recorded/rdp/'
 
-from sesmanconf import TR, SESMANCONF, translations
+from sesmanconf import TR, SESMANCONF
 import engine
 
 from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
@@ -193,8 +193,6 @@ class Sesman():
             data[u'language'] = SESMANCONF.language
             # if self.shared.get(u'password') == MAGICASK:
             #     data[u'password'] = u''
-
-            data.update(translations())
 
         # replace MAGICASK with ASK and send data on the wire
         _list = []

@@ -68,7 +68,7 @@ private:
     Translation()
     : lang(EN)
     , trans{{
-        {"login", {"Login", "Identifiant"}},
+        {"login", {"Login", "Login"}},
         {"password", {"Password", "Mot de passe"}},
         {"diagnostic", {"Diagnostic", "Diagnostic"}},
         {"connection_closed", {"Connection closed", "Connexion fermée"}},
@@ -77,7 +77,7 @@ private:
         {"help", {"Help", "Aide"}},
         {"close", {"Close", "Fermer"}},
         {"refused", {"Refused", "Refuser"}},
-        {"username", {"Username", "Utilisateur"}},
+        {"username", {"Username", "Nom d'utilisateur"}},
         {"password_expire", {
             "Your password will expire soon. Please change it.",
             "Votre mot de passe va bientôt expirer. Veuillez le changer"
@@ -196,46 +196,6 @@ public:
 static inline const char * TR(const char * key, Inifile & ini)
 {
     const char * res = NULL;
-
-    if (0 == strcmp(key, "OK")) {
-        res = ini.translation.button_ok.get_cstr();
-    }
-    else if (0 == strcmp(key, "cancel")) {
-        res = ini.translation.button_cancel.get_cstr();
-    }
-    else if (0 == strcmp(key, "help")) {
-        res = ini.translation.button_help.get_cstr();
-    }
-    else if (0 == strcmp(key, "close")) {
-        res = ini.translation.button_close.get_cstr();
-    }
-    else if (0 == strcmp(key, "refused")) {
-        res = ini.translation.button_refused.get_cstr();
-    }
-    else if (0 == strcmp(key, "login")) {
-        res = ini.translation.login.get_cstr();
-    }
-    else if (0 == strcmp(key, "username")) {
-        res = ini.translation.username.get_cstr();
-    }
-    else if (0 == strcmp(key, "password")) {
-        res = ini.translation.password.get_cstr();
-    }
-    else if (0 == strcmp(key, "target")) {
-        res = ini.translation.target.get_cstr();
-    }
-    else if (0 == strcmp(key, "diagnostic")) {
-        res = ini.translation.diagnostic.get_cstr();
-    }
-    else if (0 == strcmp(key, "connection_closed")) {
-        res = ini.translation.connection_closed.get_cstr();
-    }
-    else if (0 == strcmp(key, "help_message")) {
-        res = ini.translation.help_message.get_cstr();
-    }
-    else if (0 == strcmp(key, "manager_close_cnx")) {
-        res = ini.translation.manager_close_cnx.get_cstr();
-    }
 
     if (!res || !*res || 0 == strcmp(res, "ASK")) {
         const char * lang = ini.translation.language.get_cstr();

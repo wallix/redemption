@@ -45,21 +45,6 @@ struct IniAccounts {
 enum authid_t {
     AUTHID_UNKNOWN = 0,
 
-    // Translation text
-    AUTHID_TRANS_BUTTON_OK,
-    AUTHID_TRANS_BUTTON_CANCEL,
-    AUTHID_TRANS_BUTTON_HELP,
-    AUTHID_TRANS_BUTTON_CLOSE,
-    AUTHID_TRANS_BUTTON_REFUSED,
-    AUTHID_TRANS_LOGIN,
-    AUTHID_TRANS_USERNAME,
-    AUTHID_TRANS_PASSWORD,
-    AUTHID_TRANS_TARGET,
-    AUTHID_TRANS_DIAGNOSTIC,
-    AUTHID_TRANS_CONNECTION_CLOSED,
-    AUTHID_TRANS_HELP_MESSAGE,
-    AUTHID_TRANS_MANAGER_CLOSE_CNX,
-
     AUTHID_LANGUAGE,
 
     // Options
@@ -161,20 +146,6 @@ enum authid_t {
     MAX_AUTHID
 };
 
-// Translation text
-#define STRAUTHID_TRANS_BUTTON_OK               "trans_ok"
-#define STRAUTHID_TRANS_BUTTON_CANCEL           "trans_cancel"
-#define STRAUTHID_TRANS_BUTTON_HELP             "trans_help"
-#define STRAUTHID_TRANS_BUTTON_CLOSE            "trans_close"
-#define STRAUTHID_TRANS_BUTTON_REFUSED          "trans_refused"
-#define STRAUTHID_TRANS_LOGIN                   "trans_login"
-#define STRAUTHID_TRANS_USERNAME                "trans_username"
-#define STRAUTHID_TRANS_PASSWORD                "trans_password"
-#define STRAUTHID_TRANS_TARGET                  "trans_target"
-#define STRAUTHID_TRANS_DIAGNOSTIC              "trans_diagnostic"
-#define STRAUTHID_TRANS_CONNECTION_CLOSED       "trans_connection_closed"
-#define STRAUTHID_TRANS_HELP_MESSAGE            "trans_help_message"
-#define STRAUTHID_TRANS_MANAGER_CLOSE_CNX       "trans_manager_close_cnx"
 #define STRAUTHID_LANGUAGE                      "language"
 // Options
 #define STRAUTHID_KEYBOARD_LAYOUT               "keyboard_layout"
@@ -267,20 +238,6 @@ enum authid_t {
 #define STRAUTHID_RT_DISPLAY                    "rt_display"
 
 static const char * const authstr[MAX_AUTHID - 1] = {
-    // Translation text
-    STRAUTHID_TRANS_BUTTON_OK,
-    STRAUTHID_TRANS_BUTTON_CANCEL,
-    STRAUTHID_TRANS_BUTTON_HELP,
-    STRAUTHID_TRANS_BUTTON_CLOSE,
-    STRAUTHID_TRANS_BUTTON_REFUSED,
-    STRAUTHID_TRANS_LOGIN,
-    STRAUTHID_TRANS_USERNAME,
-    STRAUTHID_TRANS_PASSWORD,
-    STRAUTHID_TRANS_TARGET,
-    STRAUTHID_TRANS_DIAGNOSTIC,
-    STRAUTHID_TRANS_CONNECTION_CLOSED,
-    STRAUTHID_TRANS_HELP_MESSAGE,
-    STRAUTHID_TRANS_MANAGER_CLOSE_CNX,
 
     STRAUTHID_LANGUAGE,
 
@@ -771,20 +728,6 @@ public:
 
     // section "translation"
     struct Inifile_translation {
-        StringField button_ok;              // AUTHID_TRANS_BUTTON_OK
-        StringField button_cancel;          // AUTHID_TRANS_BUTTON_CANCEL
-        StringField button_help;            // AUTHID_TRANS_BUTTON_HELP
-        StringField button_close;           // AUTHID_TRANS_BUTTON_CLOSE
-        StringField button_refused;         // AUTHID_TRANS_BUTTON_REFUSED
-        StringField login;                  // AUTHID_TRANS_LOGIN
-        StringField username;               // AUTHID_TRANS_USERNAME
-        StringField password;               // AUTHID_TRANS_PASSWORD
-        StringField target;                 // AUTHID_TRANS_TARGET
-        StringField diagnostic;             // AUTHID_TRANS_DIAGNOSTIC
-        StringField connection_closed;      // AUTHID_TRANS_CONNECTION_CLOSED
-        StringField help_message;           // AUTHID_TRANS_HELP_MESSAGE
-        StringField manager_close_cnx;      // AUTHID_TRANS_MANAGER_CLOSE_CNX
-
         StringField language;
 
         Inifile_translation() = default;
@@ -969,45 +912,6 @@ public:
         // End section "video"
 
         // Begin Section "translation"
-        this->translation.button_ok.set_from_cstr("OK");
-        this->translation.button_ok.attach_ini(this, AUTHID_TRANS_BUTTON_OK);
-
-        this->translation.button_cancel.set_from_cstr("Cancel");
-        this->translation.button_cancel.attach_ini(this, AUTHID_TRANS_BUTTON_CANCEL);
-
-        this->translation.button_help.set_from_cstr("Help");
-        this->translation.button_help.attach_ini(this, AUTHID_TRANS_BUTTON_HELP);
-
-        this->translation.button_close.set_from_cstr("Close");
-        this->translation.button_close.attach_ini(this, AUTHID_TRANS_BUTTON_CLOSE);
-
-        this->translation.button_refused.set_from_cstr("Refused");
-        this->translation.button_refused.attach_ini(this, AUTHID_TRANS_BUTTON_REFUSED);
-
-        this->translation.login.set_from_cstr("Login");
-        this->translation.login.attach_ini(this, AUTHID_TRANS_LOGIN);
-
-        this->translation.username.set_from_cstr("Username");
-        this->translation.username.attach_ini(this, AUTHID_TRANS_USERNAME);
-
-        this->translation.password.set_from_cstr("Password");
-        this->translation.password.attach_ini(this, AUTHID_TRANS_PASSWORD);
-
-        this->translation.target.set_from_cstr("Target");
-        this->translation.target.attach_ini(this, AUTHID_TRANS_TARGET);
-
-        this->translation.diagnostic.set_from_cstr("Diagnostic");
-        this->translation.diagnostic.attach_ini(this, AUTHID_TRANS_DIAGNOSTIC);
-
-        this->translation.connection_closed.set_from_cstr("Connection closed");
-        this->translation.connection_closed.attach_ini(this, AUTHID_TRANS_CONNECTION_CLOSED);
-
-        this->translation.help_message.set_from_cstr("");
-        this->translation.help_message.attach_ini(this, AUTHID_TRANS_HELP_MESSAGE);
-
-        this->translation.manager_close_cnx.set_from_cstr("Connection closed by manager");
-        this->translation.manager_close_cnx.attach_ini(this, AUTHID_TRANS_MANAGER_CLOSE_CNX);
-
         this->translation.language.set_from_cstr("en");
         this->translation.language.attach_ini(this,AUTHID_LANGUAGE);
         // End Section "translation"
@@ -1598,45 +1502,6 @@ public:
                     (0 == strcmp(value, "fr"))) {
                     this->translation.language.set_from_cstr(value);
                 }
-            }
-            else if (0 == strcmp(key, "button_ok")) {
-                this->translation.button_ok.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "button_cancel")) {
-                this->translation.button_cancel.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "button_help")) {
-                this->translation.button_help.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "button_close")) {
-                this->translation.button_close.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "button_refused")) {
-                this->translation.button_refused.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "login")) {
-                this->translation.login.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "username")) {
-                this->translation.username.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "password")) {
-                this->translation.password.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "target")) {
-                this->translation.target.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "diagnostic")) {
-                this->translation.diagnostic.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "connection_closed")) {
-                this->translation.connection_closed.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "help_message")) {
-                this->translation.help_message.set_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "manager_close_cnx")) {
-                this->translation.manager_close_cnx.set_from_cstr(value);
             }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

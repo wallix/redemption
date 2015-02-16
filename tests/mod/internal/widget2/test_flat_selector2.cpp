@@ -54,8 +54,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    ini.translation.target.set_from_cstr("Target");
-
     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
@@ -110,8 +108,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
     NotifyApi * notifier = NULL;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
-
-    ini.translation.target.set_from_cstr("Target");
 
     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier,
                                 "1", "1", 0, 0, 0, ini);
@@ -169,8 +165,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    ini.translation.target.set_from_cstr("Cible");
-
     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
 
     // ask to widget to redraw at it's current position
@@ -180,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xee\xaa\xb9\x18\x3c\x31\x0c\xbc\xbc\x5d\x19\x42\x7a\x61\xa5\x16\x4e\xf7\xdd\x74"
+        "\x79\x57\x15\x0e\xb1\xa6\x08\x1e\x55\xd1\x49\xf2\x70\xf7\xd4\xbd\xf5\x94\xbe\xc8"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -197,8 +191,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
     NotifyApi * notifier = NULL;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
-
-    ini.translation.target.set_from_cstr("Target");
 
     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
 
@@ -231,8 +223,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    ini.translation.target.set_from_cstr("Target");
-
     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
@@ -262,8 +252,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     NotifyApi * notifier = NULL;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
-
-    ini.translation.target.set_from_cstr("Target");
 
     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
 
@@ -400,8 +388,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     NotifyApi * notifier = NULL;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
-
-//    ini.translation.target.set_from_cstr("Target");
 
     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
 

@@ -168,7 +168,6 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     WidgetScreen parent(drawable, 800, 600, ini.font);
     NotifyApi * notifier = NULL;
 
-    ini.translation.help_message.set_from_cstr("");
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test4",
                          false, 0, 0, 0, "Login", "Password", ini);
