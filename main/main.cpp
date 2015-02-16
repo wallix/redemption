@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     return app_proxy<crypto_key_holder>(
         argc, argv
       , "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
-        "Copyright (C) Wallix 2010-2014.\n"
+        "Copyright (C) Wallix 2010-2015.\n"
         "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
         "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou\n"
         "and Meng Tan."

@@ -16,7 +16,7 @@ int main(int argc, char ** argv) {
     return app_decrypter(
         argc, argv
       , "ReDemPtion DECrypter " VERSION ".\n"
-        "Copyright (C) Wallix 2010-2014.\n"
+        "Copyright (C) Wallix 2010-2015.\n"
         "Christophe Grosjean, Raphael Zhou."
       , [](CryptoContext & cctx) {
             Inifile::Inifile_crypto ini_crypto;
