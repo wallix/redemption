@@ -1790,7 +1790,7 @@ public:
                                     break;
 
                                 case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
-                                    LOG(LOG_ERR, "FASTPATH_UPDATETYPE_SYNCHRONIZE, not yet supported");
+                                    if (this->verbose & 8) { LOG(LOG_ERR, "FASTPATH_UPDATETYPE_SYNCHRONIZE"); }
                                     break;
 
                                 case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
@@ -1812,6 +1812,9 @@ public:
 
                                 case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
                                     LOG(LOG_ERR, "FASTPATH_UPDATETYPE_PTR_POSITION, not yet supported");
+                                    TODO("CGR: implement RDP_POINTER_MOVE");
+                                    /* int x = */ upd.payload.in_uint16_le();
+                                    /* int y = */ upd.payload.in_uint16_le();
                                     break;
 
                                 case FastPath::FASTPATH_UPDATETYPE_COLOR:

@@ -1,25 +1,23 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+    This program is free software; you can redistribute it and/or modify it
+     under the terms of the GNU General Public License as published by the
+     Free Software Foundation; either version 2 of the License, or (at your
+     option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+     Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+    You should have received a copy of the GNU General Public License along
+     with this program; if not, write to the Free Software Foundation, Inc.,
+     675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+    Product name: redemption, a FLOSS RDP proxy
+    Copyright (C) Wallix 2014
+    Author(s): Christophe Grosjean, Raphael Zhou
 
-   common fastpath layer at core module
-
+    common fastpath layer at core module
 */
 
 #ifndef _REDEMPTION_CORE_RDP_FASTPATH_HPP_
@@ -32,8 +30,9 @@
 
 namespace FastPath {
 
-// 2.2.8.1.2 Client Fast-Path Input Event PDU (TS_FP_INPUT_PDU)
-// ============================================================
+// [MS-RDPBCGR] - 2.2.8.1.2 Client Fast-Path Input Event PDU (TS_FP_INPUT_PDU)
+// ===========================================================================
+
 // The Fast-Path Input Event PDU is used to transmit input events from client to
 //  server.<18> Fast-path revises client input packets from the first byte with
 //  the goal of improving bandwidth. The TPKT Header ([T123] section 8), X.224
@@ -301,8 +300,8 @@ namespace FastPath {
         } // ClientInputEventPDU_Send(Stream & stream, ...
     }; // struct ClientInputEventPDU_Send
 
-// 2.2.8.1.2.2 Fast-Path Input Event (TS_FP_INPUT_EVENT)
-// =====================================================
+// [MS-RDPBCGR] - 2.2.8.1.2.2 Fast-Path Input Event (TS_FP_INPUT_EVENT)
+// ====================================================================
 
 // The TS_FP_INPUT_EVENT structure is used to describe the type and encapsulate
 //  the data for a fast-path input event sent from client to server. All
@@ -368,8 +367,9 @@ namespace FastPath {
         , FASTPATH_INPUT_EVENT_UNICODE  = 0x4
     };
 
-// 2.2.8.1.2.2.1 Fast-Path Keyboard Event (TS_FP_KEYBOARD_EVENT)
-// =============================================================
+// [MS-RDPBCGR] - 2.2.8.1.2.2.1 Fast-Path Keyboard
+//  Event (TS_FP_KEYBOARD_EVENT)
+// ===============================================
 
 // The TS_FP_KEYBOARD_EVENT structure is the fast-path variant of the
 //  TS_KEYBOARD_EVENT (section 2.2.8.1.1.3.1.1.1).
@@ -524,8 +524,8 @@ namespace FastPath {
     };
 
 
-// 2.2.8.1.2.2.3 Fast-Path Mouse Event (TS_FP_POINTER_EVENT)
-// =========================================================
+// [MS-RDPBCGR] - 2.2.8.1.2.2.3 Fast-Path Mouse Event (TS_FP_POINTER_EVENT)
+// ========================================================================
 
 // The TS_FP_POINTER_EVENT structure is the fast-path variant of the
 //  TS_POINTER_EVENT (section 2.2.8.1.1.3.1.1.3) structure.
@@ -598,8 +598,9 @@ namespace FastPath {
         }
     };
 
-// 2.2.8.1.2.2.5 Fast-Path Synchronize Event (TS_FP_SYNC_EVENT)
-// ============================================================
+// [MS-RDPBCGR] - 2.2.8.1.2.2.5 Fast-Path Synchronize Event
+//  (TS_FP_SYNC_EVENT)
+// ========================================================
 
 // The TS_FP_SYNC_EVENT structure is the fast-path variant of the TS_SYNC_EVENT
 //  (section 2.2.8.1.1.3.1.1.5) structure.
@@ -660,8 +661,8 @@ namespace FastPath {
         }
     };
 
-// 2.2.9.1.2 Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-// ========================================================
+// [MS-RDPBCGR] - 2.2.9.1.2 Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+// =======================================================================
 
 // Fast-path revises server output packets from the first byte with the goal of
 //  improving bandwidth. The TPKT Header ([T123] section 8), X.224 Class 0 Data
@@ -895,8 +896,8 @@ namespace FastPath {
         }
     };
 
-// 2.2.9.1.2.1 Fast-Path Update (TS_FP_UPDATE)
-// ===========================================
+// [MS-RDPBCGR] - 2.2.9.1.2.1 Fast-Path Update (TS_FP_UPDATE)
+// ==========================================================
 
 // The TS_FP_UPDATE structure is used to describe and encapsulate the data for a
 //  fast-path update sent from server to client. All fast-path updates conform
@@ -1202,8 +1203,9 @@ namespace FastPath {
         }
     };
 
-// 2.2.9.1.2.1.1 Fast-Path Palette Update (TS_FP_UPDATE_PALETTE)
-// =============================================================
+// [MS-RDPBCGR] - 2.2.9.1.2.1.1 Fast-Path Palette Update
+//  (TS_FP_UPDATE_PALETTE)
+// =====================================================
 
 // The TS_FP_UPDATE_PALETTE structure is the fast-path variant of the
 //  TS_UPDATE_PALETTE (section 2.2.9.1.1.3.1.1) structure.
