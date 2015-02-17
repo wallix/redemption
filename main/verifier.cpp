@@ -15,7 +15,7 @@ int main(int argc, char ** argv) {
     return app_verifier(
         argc, argv
       , "ReDemPtion VERifier " VERSION ".\n"
-        "Copyright (C) Wallix 2010-2014.\n"
+        "Copyright (C) Wallix 2010-2015.\n"
         "Christophe Grosjean, Raphael Zhou."
       , [](CryptoContext & cctx) {
             Inifile::Inifile_crypto ini_crypto;

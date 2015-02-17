@@ -45,7 +45,7 @@ int main(int argc, char * argv[]) {
     const char * copyright_notice =
         "\n"
         "ReDemPtion Transparent Proxy " VERSION ".\n"
-        "Copyright (C) Wallix 2010-2014.\n"
+        "Copyright (C) Wallix 2010-2015.\n"
         "Christophe Grosjean, Raphael Zhou.\n"
         "\n"
         ;

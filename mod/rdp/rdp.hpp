@@ -1790,19 +1790,28 @@ public:
                                     break;
 
                                 case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_SYNCHRONIZE, not yet supported"); }
+                                    LOG(LOG_ERR, "FASTPATH_UPDATETYPE_SYNCHRONIZE, not yet supported");
                                     break;
 
                                 case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_NULL, not yet supported"); }
+                                    {
+                                        if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_NULL"); }
+                                        struct Pointer cursor;
+                                        memset(cursor.mask, 0xff, sizeof(cursor.mask));
+                                        this->front.server_set_pointer(cursor);
+                                    }
                                     break;
 
                                 case FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT:
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_DEFAULT, not yet supported"); }
+                                    {
+                                        if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_DEFAULT"); }
+                                        Pointer cursor(Pointer::POINTER_SYSTEM_DEFAULT);
+                                        this->front.server_set_pointer(cursor);
+                                    }
                                     break;
 
                                 case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_POSITION, not yet supported"); }
+                                    LOG(LOG_ERR, "FASTPATH_UPDATETYPE_PTR_POSITION, not yet supported");
                                     break;
 
                                 case FastPath::FASTPATH_UPDATETYPE_COLOR:
@@ -4782,7 +4791,7 @@ public:
         }
 
         if (data_bpp == 1) {
-            uint8_t data_data[32*32*4];
+            uint8_t data_data[32*32/8];
             uint8_t mask_data[32*32/8];
             stream.in_copy_bytes(data_data, dlen);
             stream.in_copy_bytes(mask_data, mlen);

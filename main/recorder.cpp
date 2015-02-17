@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     app_recorder<CaptureMaker>(
         argc, argv
       , "ReDemPtion RECorder " VERSION ": An RDP movie converter.\n"
-        "Copyright (C) Wallix 2010-2014.\n"
+        "Copyright (C) Wallix 2010-2015.\n"
         "Christophe Grosjean, Jonathan Poelen and Raphael Zhou."
       , [](boost::program_options::options_description_easy_init const &){}
       , [](Inifile const & ini, boost::program_options::variables_map const &, std::string const & output_filename) -> int {
