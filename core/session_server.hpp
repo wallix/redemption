@@ -109,7 +109,8 @@ public:
                 }
 
                 char real_target_ip[256];
-                if (ini.globals.enable_ip_transparent) {
+                if (ini.globals.enable_ip_transparent &&
+                    (0 != strcmp(source_ip, "127.0.0.1"))) {
                     int fd = open("/proc/net/ip_conntrack", O_RDONLY);
                     // source and dest are inverted because we get the information we want from reply path rule
                     int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip), 1);
