@@ -512,30 +512,29 @@ struct ShareData_Recv : private CheckShareData_Recv
     , compressedType(stream.in_uint8())
     , compressedLen(stream.in_uint16_le())
     , payload([&stream, dec, this]() {
-        if (this->compressedType & PACKET_COMPRESSED) {
-            if (!dec) {
-                LOG(LOG_INFO, "ShareData_Recv: got unexpected compressed share data");
-                throw Error(ERR_SEC);
-            }
+          if (this->compressedType & PACKET_COMPRESSED) {
+              if (!dec) {
+                  LOG(LOG_INFO, "ShareData_Recv: got unexpected compressed share data");
+                  throw Error(ERR_SEC);
+              }
 
-            const uint8_t * rdata;
-            uint32_t        rlen;
+              const uint8_t * rdata;
+              uint32_t        rlen;
 
-            dec->decompress(stream.get_data()+stream.get_offset(), stream.in_remain(),
-                this->compressedType, rdata, rlen);
+              dec->decompress(stream.get_data()+stream.get_offset(), stream.in_remain(),
+                  this->compressedType, rdata, rlen);
 
-            return SubStream(StaticStream(rdata, rlen), 0, rlen);
-        }
-        else {
-                return SubStream(stream, stream.get_offset(), stream.in_remain());
-
-        }
-    }())
+              return SubStream(StaticStream(rdata, rlen), 0, rlen);
+          }
+          else {
+              return SubStream(stream, stream.get_offset(), stream.in_remain());
+          }
+      }())
     // BEGIN CONSTRUCTOR
     {
         //LOG( LOG_INFO, "ShareData_Recv: pdutype2=%u len=%u compressedLen=%u payload_size=%u"
         //   , this->pdutype2, this->len, this->compressedLen, this->payload.size());
-        stream.in_skip_bytes(this->payload.size());
+        stream.in_skip_bytes(stream.in_remain());
     } // END CONSTRUCTOR
 
     ~ShareData_Recv() noexcept(false) {
