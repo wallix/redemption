@@ -389,14 +389,14 @@ class Engine(object):
     def valid_device_name(self, protocols, target_device):
         # Logger().info("VALID DEVICE NAME target_device = '%s'" % target_device)
         prights = self.wabengine.get_proxy_rights(protocols, target_device,
-                                                 check_timeframes=False)
+                                                  check_timeframes=False)
         rights = prights.rights
         # Logger().info("VALID DEVICE NAME Rights = '%s', len = %s" % (rights, len(rights)))
         if rights:
             return True
         return False
 
-    def get_proxy_rights(self, protocols, target_device=None, check_timeframes=True):
+    def get_proxy_rights(self, protocols, target_device=None, check_timeframes=False):
         if self.proxy_rights is not None:
             return
         self.proxy_rights = self.wabengine.get_proxy_rights(protocols, target_device,
@@ -443,7 +443,7 @@ class Engine(object):
             target_service = None
         right = None
         self.get_proxy_rights([u'RDP', u'VNC'], target_device,
-                              check_timeframes=True if target_device else False)
+                              check_timeframes=False)
         result = self.targets.get((target_login, target_device))
         if result:
             if (not target_service) and (len(result) == 1):
