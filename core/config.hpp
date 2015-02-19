@@ -543,6 +543,8 @@ public:
 
         bool bitmap_compression = true;
 
+        bool fast_path = true;
+
         Inifile_client() = default;
     } client;
 
@@ -584,6 +586,8 @@ public:
         std::string allow_channels = "*";
         std::string deny_channels;
         // @}
+
+        bool fast_path = true;
 
         Inifile_mod_rdp() = default;
     } mod_rdp;
@@ -1204,6 +1208,9 @@ public:
             else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
                 this->client.persist_bitmap_cache_on_disk = bool_from_cstr(value);
             }
+            else if (0 == strcmp(key, "fast_path")) {
+                this->client.fast_path = bool_from_cstr(value);
+            }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1248,6 +1255,9 @@ public:
             }
             else if (0 == strcmp(key, "deny_channels")) {
                 this->mod_rdp.deny_channels = value;
+            }
+            else if (0 == strcmp(key, "fast_path")) {
+                this->mod_rdp.fast_path = bool_from_cstr(value);
             }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

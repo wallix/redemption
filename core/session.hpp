@@ -143,11 +143,10 @@ public:
 
             this->internal_state = SESSION_STATE_ENTRY;
 
-            const bool enable_fastpath = true;
             const bool mem3blt_support = true;
 
             this->front = new Front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, this->gen
-                                   , this->ini, enable_fastpath, mem3blt_support);
+                                   , this->ini, this->ini.client.fast_path, mem3blt_support);
 
             ModuleManager mm(*this->front, this->ini);
             BackEvent_t signal = BACK_EVENT_NONE;

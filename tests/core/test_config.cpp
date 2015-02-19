@@ -177,6 +177,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
 
     BOOST_CHECK_EQUAL(4,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -189,6 +190,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
@@ -422,6 +424,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
 
     BOOST_CHECK_EQUAL(4,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -434,6 +437,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -683,6 +687,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
 
     BOOST_CHECK_EQUAL(4,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -695,6 +700,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
@@ -749,6 +755,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "cache_waiting_list=no\n"
                           "persist_bitmap_cache_on_disk=yes\n"
                           "bitmap_compression=true\n"
+                          "fast_path=true\n"
                           "\n"
                           "[mod_rdp]\n"
                           "disconnect_on_logon_user_change=yes\n"
@@ -761,6 +768,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "persist_bitmap_cache_on_disk=true\n"
                           "allow_channels=audin\n"
                           "deny_channels=*\n"
+                          "fast_path=no\n"
                           "\n"
                           "[mod_vnc]\n"
                           "clipboard_up=yes\n"
@@ -926,6 +934,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(true,                             ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
 
     BOOST_CHECK_EQUAL(4,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.disconnect_on_logon_user_change);
@@ -938,6 +947,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL("audin",                          ini.mod_rdp.allow_channels);
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.deny_channels);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.fast_path);
 
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
@@ -981,6 +991,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "persistent_disk_bitmap_cache=no\n"
                           "cache_waiting_list=yes\n"
                           "bitmap_compression=on\n"
+                          "fast_path=yes\n"
                           "[translation]\n"
                           "connection_closed=Connexion fermée\n"
                           "[mod_rdp]\n"
@@ -992,6 +1003,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "persistent_disk_bitmap_cache=yes\n"
                           "cache_waiting_list=no\n"
                           "persist_bitmap_cache_on_disk=no\n"
+                          "fast_path=yes\n"
                           "[mod_replay]\n"
                           "on_end_of_data=1\n"
                           "[video]\n"
@@ -1143,6 +1155,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
 
     BOOST_CHECK_EQUAL(2,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1153,6 +1166,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1336,6 +1350,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(false,                            ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1532,6 +1547,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(false,                            ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1709,6 +1725,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
 
     BOOST_CHECK_EQUAL(4,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1880,6 +1897,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(true,                             ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(false,                            ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
 
     BOOST_CHECK_EQUAL(4,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -2045,6 +2063,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
 
     BOOST_CHECK_EQUAL(4,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -2210,6 +2229,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(false,                            ini.client.bitmap_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
 
     BOOST_CHECK_EQUAL(4,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);

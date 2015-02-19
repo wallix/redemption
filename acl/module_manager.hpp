@@ -781,7 +781,7 @@ public:
                     mod_rdp_params.enable_nla                      = this->ini.mod_rdp.enable_nla;
                 }
                 mod_rdp_params.enable_krb                          = this->ini.mod_rdp.enable_kerberos;
-                //mod_rdp_params.enable_fastpath                     = true;
+                mod_rdp_params.enable_fastpath                     = this->ini.mod_rdp.fast_path;
                 //mod_rdp_params.enable_mem3blt                      = true;
                 mod_rdp_params.enable_bitmap_update                = this->ini.globals.enable_bitmap_update;
                 //mod_rdp_params.enable_new_pointer                  = true;
