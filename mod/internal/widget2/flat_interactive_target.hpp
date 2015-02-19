@@ -118,6 +118,10 @@ public:
         this->add_widget(device_show);
         if (ask_device) {
             this->add_widget(&this->device);
+            if ((0 == strncmp(device_str, "Error:", 6)) ||
+                (0 == strncmp(device_str, "Erreur:", 7))) {
+                this->device.fg_color = theme.global.error_color;
+            }
         }
         this->add_widget(&this->login_label);
         this->add_widget(login_show);

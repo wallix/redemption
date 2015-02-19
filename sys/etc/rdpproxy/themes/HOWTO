@@ -25,6 +25,7 @@ bgcolor=0xDD8015
 fgcolor=WHITE
 separator_color=BROWN
 focus_color=DARK_RED
+error_color=RED
 logo=yes
 
 [edit]
