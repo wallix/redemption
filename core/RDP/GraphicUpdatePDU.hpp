@@ -114,7 +114,8 @@ enum ServerUpdateType {
     SERVER_UPDATE_GRAPHICS_PALETTE,
     SERVER_UPDATE_GRAPHICS_SYNCHRONIZE,
     SERVER_UPDATE_POINTER_COLOR,
-    SERVER_UPDATE_POINTER_CACHED
+    SERVER_UPDATE_POINTER_CACHED,
+    SERVER_UPDATE_POINTER_POSITION
 };
 
 void send_server_update( Transport & trans, bool fastpath_support, bool compression_support
@@ -171,6 +172,10 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 
             case SERVER_UPDATE_POINTER_CACHED:
                 updateCode = FastPath::FASTPATH_UPDATETYPE_CACHED;
+                break;
+
+            case SERVER_UPDATE_POINTER_POSITION:
+                updateCode = FastPath::FASTPATH_UPDATETYPE_PTR_POSITION;
                 break;
 
             default:
@@ -259,6 +264,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 
             case SERVER_UPDATE_POINTER_COLOR:
             case SERVER_UPDATE_POINTER_CACHED:
+            case SERVER_UPDATE_POINTER_POSITION:
                 {
                     pduType2 = PDUTYPE2_POINTER;
 
@@ -270,6 +276,10 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 
                         case SERVER_UPDATE_POINTER_CACHED:
                             updateType = RDP_POINTER_CACHED;
+                            break;
+
+                        case SERVER_UPDATE_POINTER_POSITION:
+                            updateType = RDP_POINTER_MOVE;
                             break;
 
                         default:
@@ -738,6 +748,27 @@ protected:
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer done");
         }
     }   // void set_pointer(int cache_idx)
+
+public:
+    virtual void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
+        }
+
+        HStream stream(1024, 4096);
+        stream.out_uint16_le(xPos);
+        stream.out_uint16_le(yPos);
+        stream.mark_end();
+
+        ::send_server_update( *this->trans, this->fastpath_support, this->compression
+                            , this->mppc_enc, this->shareid, this->encryptionLevel
+                            , this->encrypt, this->userid, SERVER_UPDATE_POINTER_POSITION
+                            , 0, stream, this->verbose);
+
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position done");
+        }
+    }
 };
 
 #endif

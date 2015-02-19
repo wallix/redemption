@@ -725,6 +725,7 @@ public:
         this->RDPSerializer::server_set_pointer(cursor);
     }
 
+protected:
     virtual void send_pointer(int cache_idx, const Pointer & cursor) {
         BStream header(8);
         size_t size =   2           // mouse x

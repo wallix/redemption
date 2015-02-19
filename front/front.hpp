@@ -405,6 +405,15 @@ public:
         }
     }
 
+    virtual void update_pointer_position(uint16_t xPos, uint16_t yPos) override
+    {
+        this->orders->update_pointer_position(xPos, yPos);
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->update_pointer_position(xPos, yPos);
+        }
+    }
+
     virtual void text_metrics(Font const & font, const char * text, int & width, int & height)
     {
         REDASSERT(false);

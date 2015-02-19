@@ -1790,7 +1790,7 @@ public:
                                     break;
 
                                 case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
-                                    if (this->verbose & 8) { LOG(LOG_ERR, "FASTPATH_UPDATETYPE_SYNCHRONIZE"); }
+                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_SYNCHRONIZE"); }
                                     break;
 
                                 case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
@@ -1811,10 +1811,12 @@ public:
                                     break;
 
                                 case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
-                                    LOG(LOG_ERR, "FASTPATH_UPDATETYPE_PTR_POSITION, not yet supported");
-                                    TODO("CGR: implement RDP_POINTER_MOVE");
-                                    /* int x = */ upd.payload.in_uint16_le();
-                                    /* int y = */ upd.payload.in_uint16_le();
+                                    {
+                                        if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_POSITION"); }
+                                        uint16_t xPos = upd.payload.in_uint16_le();
+                                        uint16_t yPos = upd.payload.in_uint16_le();
+                                        this->front.update_pointer_position(xPos, yPos);
+                                    }
                                     break;
 
                                 case FastPath::FASTPATH_UPDATETYPE_COLOR:
@@ -2714,10 +2716,12 @@ public:
             }
         case RDP_POINTER_MOVE:
             {
-                LOG(LOG_WARNING, "mod::rdp::RDP Pointer move not yet supported");
-                TODO("CGR: implement RDP_POINTER_MOVE");
-                /* int x = */ stream.in_uint16_le();
-                /* int y = */ stream.in_uint16_le();
+                if (this->verbose & 4) {
+                    LOG(LOG_INFO, "Process pointer move");
+                }
+                uint16_t xPos = stream.in_uint16_le();
+                uint16_t yPos = stream.in_uint16_le();
+                this->front.update_pointer_position(xPos, yPos);
             }
             break;
         default:
