@@ -82,7 +82,7 @@ enum {
         , field_duration(TR("duration", ini))
         , warning_buffer()
         , warning_msg(drawable, 10, 0, *this, NULL, "", true, group_id,
-                  theme.global.fgcolor, theme.global.bgcolor, ini.font)
+                      theme.global.error_color, theme.global.bgcolor, ini.font)
         , comment_label(drawable, 0, 10, *this, NULL, TR("comment", ini), true,
                         group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
         , comment_edit(drawable, this->comment_label.lx() + 20, 10, 300, *this, this,
@@ -165,7 +165,7 @@ enum {
             this->duration_edit.set_edit_y(y);
             y += 30;
             this->duration_format.set_xy(this->duration_format.dx(), y);
-            y += 20;
+            y += 25;
         }
         if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
             this->notes.set_xy(this->notes.dx(), y);
@@ -250,7 +250,7 @@ enum {
             (this->comment_edit.num_chars == 0)) {
             this->set_warning_buffer(this->field_comment, this->generic_warning);
             this->set_widget_focus(&this->comment_edit, focus_reason_mousebutton1);
-            this->draw(this->warning_msg.rect);
+            this->draw(this->rect);
             return;
         }
         if (((this->flags & TICKET_DISPLAY) == TICKET_DISPLAY) &&
