@@ -665,6 +665,11 @@ private:
         }
     }
 
+    BStream  clipboard_format_list_data;
+    size_t   clipboard_format_list_length       = 0;
+    uint32_t clipboard_format_list_flags        = 0;
+    bool     clipboard_first_client_format_list = true;
+
 public:
     virtual void send_to_mod_channel( const char * const front_channel_name
                                     , Stream & chunk
@@ -726,6 +731,7 @@ public:
         }
         // Clipboard is a Clipboard PDU
         else if (!strcmp(front_channel_name, channel_names::cliprdr)) {
+/*
             const uint16_t msgType = chunk.in_uint16_le();
 
             // Clipboard is unavailable
@@ -767,6 +773,62 @@ public:
             else {
                 this->update_total_clipboard_data(msgType, length);
             }
+
+            chunk.p -= 2;
+*/
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "mod_rdp client clipboard PDU");
+            }
+
+            if (!chunk.in_check_rem(2)) {
+                LOG(LOG_INFO, "mod_rdp::send_to_mod_channel truncated msgType, need=2 remains=%u",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+            const uint16_t msgType = chunk.in_uint16_le();
+            //LOG(LOG_INFO, "mod_rdp client clipboard PDU: msgType=%d", msgType);
+
+            // Clipboard is unavailable
+            if ((msgType == RDPECLIP::CB_FORMAT_LIST)) {
+                if (!this->authorization_channels.cliprdr_up_is_authorized()) {
+                    if (!clipboard_first_client_format_list) {
+                        if (this->verbose & 1) {
+                            LOG(LOG_INFO, "mod_rdp clipboard_up is unavailable");
+                        }
+                        const bool response_ok = true;
+                        // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
+                        // 03 00 02 00 00 00 00 00
+                        this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(response_ok);
+                        clipboard_first_client_format_list = false;
+                        return;
+                    }
+                    clipboard_first_client_format_list = false;
+                }
+                else {
+                    //LOG(LOG_INFO,
+                    //    "clipboard_format_list_length=%u clipboard_format_list_flags=0x%X",
+                    //    length, flags);
+                    //hexdump_c(chunk.get_data(), chunk.size());
+
+                    this->clipboard_format_list_data.reset();
+                    this->clipboard_format_list_data.out_copy_bytes(chunk);
+                    this->clipboard_format_list_data.mark_end();
+
+                    this->clipboard_format_list_length = length;
+                    this->clipboard_format_list_flags  = flags;
+                }
+            }
+            else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
+                if (!this->authorization_channels.cliprdr_file_is_authorized()) {
+                    if (this->verbose & 1) {
+                        LOG(LOG_INFO, "mod_rdp requesting the contents of server file is denied");
+                    }
+                    this->send_clipboard_pdu_to_front_channel<RDPECLIP::FileContentsResponse>(false);
+                    return ;
+                }
+            }
+
+            this->update_total_clipboard_data(msgType, length);
 
             chunk.p -= 2;
         }
@@ -1914,6 +1976,7 @@ public:
                             }
                             // Clipboard is a Clipboard PDU
                             if (!strcmp(mod_channel.name, channel_names::cliprdr)) {
+/*
                                 const uint16_t msgType = sec.payload.in_uint16_le();
 
                                 // Clipboard is unavailable and is a Clipboard PDU
@@ -1977,6 +2040,75 @@ public:
                                     }
                                 }
                                 else {
+                                    this->update_total_clipboard_data(msgType, length);
+                                    sec.payload.p -= 2;
+                                    this->send_to_front_channel(
+                                        mod_channel.name, sec.payload.p, length, chunk_size, flags
+                                    );
+                                }
+*/
+                                if (this->verbose & 1) {
+                                    LOG(LOG_INFO, "mod_rdp server clipboard PDU");
+                                }
+
+                                const uint16_t msgType = sec.payload.in_uint16_le();
+                                //LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%d", msgType);
+
+                                bool cencel_pdu = false;
+
+                                if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+                                    if (!this->authorization_channels.cliprdr_down_is_authorized()) {
+                                        if (this->verbose & 1) {
+                                            LOG(LOG_INFO, "mod_rdp clipboard down is unavailable");
+                                        }
+
+                                        // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
+                                        // 03 00 02 00 00 00 00 00
+                                        BStream out_s(256);
+                                        const bool response_ok = true;
+                                        RDPECLIP::FormatListResponsePDU(response_ok).emit(out_s);
+
+                                        this->send_to_channel(
+                                            mod_channel, out_s, out_s.size(),
+                                            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                                        );
+
+                                        //LOG(LOG_INFO, "SAVED FORMAT LIST");
+
+                                        //LOG(LOG_INFO,
+                                        //    "clipboard_format_list_length=%u clipboard_format_list_flags=0x%X",
+                                        //    this->clipboard_format_list_length, this->clipboard_format_list_flags);
+                                        //hexdump_c(this->clipboard_format_list_data.get_data(),
+                                        //    this->clipboard_format_list_data.size());
+
+                                        this->send_to_channel(
+                                            mod_channel, this->clipboard_format_list_data, this->clipboard_format_list_length,
+                                            this->clipboard_format_list_flags
+                                        );
+
+                                        cencel_pdu = true;
+                                    }
+                                }
+                                else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
+                                    if (!this->authorization_channels.cliprdr_file_is_authorized()) {
+                                        if (this->verbose & 1) {
+                                            LOG(LOG_INFO, "mod_rdp requesting the contents of client file is denied");
+                                        }
+
+                                        BStream out_s(256);
+                                        const bool response_ok = false;
+                                        RDPECLIP::FileContentsResponse(response_ok).emit(out_s);
+
+                                        this->send_to_channel(
+                                            mod_channel, out_s, out_s.size(),
+                                            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                                        );
+
+                                        cencel_pdu = true;
+                                    }
+                                }
+
+                                if (!cencel_pdu) {
                                     this->update_total_clipboard_data(msgType, length);
                                     sec.payload.p -= 2;
                                     this->send_to_front_channel(
