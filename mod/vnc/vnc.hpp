@@ -130,8 +130,8 @@ private:
     BStream to_vnc_large_clipboard_data;
 
 private:
-    bool enable_clipboard_in;  // true clipboard available, false clipboard unavailable
-    bool enable_clipboard_out;  // true clipboard available, false clipboard unavailable
+    bool enable_clipboard_up;   // true clipboard available, false clipboard unavailable
+    bool enable_clipboard_down; // true clipboard available, false clipboard unavailable
 
     z_stream zstrm;
 
@@ -172,8 +172,8 @@ public:
            , uint16_t front_height
            , int keylayout
            , int key_flags
-           , bool clipboard_in
-           , bool clipboard_out
+           , bool clipboard_up
+           , bool clipboard_down
            , const char * encodings
            , bool allow_authentification_retries
            , bool is_socket_transport
@@ -196,8 +196,8 @@ public:
     , verbose(verbose)
     , keymapSym(verbose)
     , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
-    , enable_clipboard_in(clipboard_in)
-    , enable_clipboard_out(clipboard_out)
+    , enable_clipboard_up(clipboard_up)
+    , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
     , state(WAIT_SECURITY_TYPES)
     , ini(ini)
@@ -1853,7 +1853,7 @@ private:
 
         size_t chunk_size = 0;
 
-        if (this->enable_clipboard_out || this->enable_clipboard_in) {
+        if (this->enable_clipboard_down || this->enable_clipboard_up) {
             chunk_size = std::min<size_t>(clip_data_size, MAX_VNC_2_RDP_CLIP_DATA_SIZE);
             if (this->verbose) {
                 LOG(LOG_INFO, "clip_data_size=%u chunk_size=%u", clip_data_size, chunk_size);
@@ -1874,7 +1874,7 @@ private:
 
             format_data_response_pdu.emit(
                 this->to_rdp_clipboard_data
-              , this->enable_clipboard_out ? reinterpret_cast<const char *>(stream.p) : "\0"
+              , this->enable_clipboard_down ? reinterpret_cast<const char *>(stream.p) : "\0"
             );
         }
 
@@ -1891,7 +1891,7 @@ private:
             this->t.recv(&end, remaining);
         }
 
-        if (this->enable_clipboard_in && this->get_channel_by_name(channel_names::cliprdr)) {
+        if (this->enable_clipboard_up && this->get_channel_by_name(channel_names::cliprdr)) {
             LOG(LOG_INFO, "Clipboard Channel Redirection available");
 
             RDPECLIP::FormatListPDU format_list_pdu;
@@ -1998,7 +1998,7 @@ private:
 
                 format_list_pdu.recv(stream, recv_factory);
 
-                if (this->enable_clipboard_in && format_list_pdu.contians_data_in_text_format) {
+                if (this->enable_clipboard_up && format_list_pdu.contians_data_in_text_format) {
                     //--------------------------- Beginning of clipboard PDU Header ----------------------------
 
                     TODO("Create a unit tested class for clipboard messages");
@@ -2172,7 +2172,7 @@ private:
                             throw Error(ERR_VNC);
                         }
 
-                        if (this->enable_clipboard_in) {
+                        if (this->enable_clipboard_up) {
                             Array dataU8(
                                 format_data_response_pdu.dataLen()
                                 + format_data_response_pdu.dataLen() / 2
@@ -2202,7 +2202,7 @@ private:
                                , format_data_response_pdu.dataLen());
                         }
 
-                        if (this->enable_clipboard_in) {
+                        if (this->enable_clipboard_up) {
                             this->to_vnc_large_clipboard_data.init(2 * (MAX_VNC_2_RDP_CLIP_DATA_SIZE + 1));
 
                             size_t dataLenU16 = std::min<size_t>( stream.in_remain()
