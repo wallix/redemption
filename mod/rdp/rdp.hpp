@@ -786,7 +786,9 @@ public:
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
             const uint16_t msgType = chunk.in_uint16_le();
-            //LOG(LOG_INFO, "mod_rdp client clipboard PDU: msgType=%d", msgType);
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "mod_rdp client clipboard PDU: msgType=%d", msgType);
+            }
 
             // Clipboard is unavailable
             if ((msgType == RDPECLIP::CB_FORMAT_LIST)) {
@@ -818,13 +820,25 @@ public:
                     this->clipboard_format_list_flags  = flags;
                 }
             }
+
+            else if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
+                if (!this->authorization_channels.cliprdr_down_is_authorized()) {
+                    if (this->verbose & 1) {
+                        LOG(LOG_INFO, "mod_rdp clipboard down is unavailable");
+                    }
+
+                    this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(false, "\0");
+                    return;
+                }
+            }
+
             else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
                 if (!this->authorization_channels.cliprdr_file_is_authorized()) {
                     if (this->verbose & 1) {
                         LOG(LOG_INFO, "mod_rdp requesting the contents of server file is denied");
                     }
                     this->send_clipboard_pdu_to_front_channel<RDPECLIP::FileContentsResponse>(false);
-                    return ;
+                    return;
                 }
             }
 
@@ -2052,7 +2066,9 @@ public:
                                 }
 
                                 const uint16_t msgType = sec.payload.in_uint16_le();
-                                //LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%d", msgType);
+                                if (this->verbose & 1) {
+                                    LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%d", msgType);
+                                }
 
                                 bool cencel_pdu = false;
 
@@ -2089,6 +2105,25 @@ public:
                                         cencel_pdu = true;
                                     }
                                 }
+
+                                else if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
+                                    if (!this->authorization_channels.cliprdr_up_is_authorized()) {
+                                        if (this->verbose & 1) {
+                                            LOG(LOG_INFO, "mod_rdp clipboard up is unavailable");
+                                        }
+
+                                        BStream out_s(256);
+                                        RDPECLIP::FormatDataResponsePDU(false).emit(out_s, "\0");
+
+                                        this->send_to_channel(
+                                            mod_channel, out_s, out_s.size(),
+                                            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                                        );
+
+                                        cencel_pdu = true;
+                                    }
+                                }
+
                                 else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
                                     if (!this->authorization_channels.cliprdr_file_is_authorized()) {
                                         if (this->verbose & 1) {
