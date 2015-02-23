@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\x57\x41\x85\x8d\x7e\x06\x51\x48\x43\x27"
-                   "\xa3\xeb\x02\x5e\x6d\x94\x3a\xba\x39\xb7"
+                   "\xb0\x1f\x3a\x5f\x5c\x98\xae\xa8\x1a\x49"
+                   "\x85\x55\x0f\x79\xcb\xcb\xdd\xf6\x50\x84"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }

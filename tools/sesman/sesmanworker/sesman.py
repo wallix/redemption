@@ -914,7 +914,8 @@ class Sesman():
             r = []
             try:
                 Logger().info(u"Start Select ...")
-                r, w, x = select([self.proxy_conx], [], [], 10)
+                timeout = None if status == APPROVAL_REJECTED else 10
+                r, w, x = select([self.proxy_conx], [], [], timeout)
             except Exception as e:
                 if DEBUG:
                     Logger().info("exception: '%s'" % e)
@@ -967,8 +968,12 @@ class Sesman():
         return duration
 
     def interactive_display_waitinfo(self, status, infos):
+        show_message = infos.get('message') or ''
+        target = infos.get('target')
+        if target:
+            show_message = target + '\n' + show_message
         tosend = { u'module' : u'waitinfo',
-                   u'message' : cut_message(infos.get('message')),
+                   u'message' : cut_message(show_message),
                    u'display_message' : MAGICASK,
                    u'waitinforeturn' : MAGICASK
                    }
@@ -977,19 +982,19 @@ class Sesman():
         if ticketfields:
             field = ticketfields.get("description")
             if field is not None:
-                flag += 1
+                flag += 0x01
                 if field == APPREQ_REQUIRED:
-                    flag += 2
+                    flag += 0x02
             field = ticketfields.get("ticket")
             if field is not None:
-                flag += 4
+                flag += 0x04
                 if field == APPREQ_REQUIRED:
-                    flag += 8
+                    flag += 0x08
             field = ticketfields.get("duration")
             if field is not None:
-                flag += 16
+                flag += 0x10
                 if field == APPREQ_REQUIRED:
-                    flag += 32
+                    flag += 0x20
         if status == APPROVAL_NONE:
             tosend["showform"] = True
             tosend["formflag"] = flag

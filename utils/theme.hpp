@@ -32,6 +32,7 @@ struct Theme : public ConfigurationHolder {
         int fgcolor;
         int separator_color;
         int focus_color;
+        int error_color;
         bool logo;
         char logo_path[1024];
     } global;
@@ -80,6 +81,7 @@ struct Theme : public ConfigurationHolder {
         this->global.fgcolor = WHITE;
         this->global.separator_color = LIGHT_BLUE;
         this->global.focus_color = WINBLUE;
+        this->global.error_color = YELLOW;
 
         this->edit.bgcolor = WHITE;
         this->edit.fgcolor = BLACK;
@@ -117,6 +119,9 @@ struct Theme : public ConfigurationHolder {
             }
             else if (0 == strcmp(key, "focus_color")){
                 this->global.focus_color = color_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "error_color")){
+                this->global.error_color = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "logo")){
                 this->global.logo = bool_from_cstr(value);
