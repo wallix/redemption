@@ -850,7 +850,18 @@ public:
                 }
             }
 
-            else*/ if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
+            else*/
+            if ((msgType == RDPECLIP::CB_FORMAT_LIST)) {
+                if (!this->authorization_channels.cliprdr_up_is_authorized() &&
+                    !this->authorization_channels.cliprdr_down_is_authorized()) {
+                    if (this->verbose & 1) {
+                        LOG(LOG_INFO, "mod_rdp clipboard is fully disabled (c)");
+                    }
+                    this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(true);
+                    return;
+                }
+            }
+            else if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
                 if (!this->authorization_channels.cliprdr_down_is_authorized()) {
                     if (this->verbose & 1) {
                         LOG(LOG_INFO, "mod_rdp clipboard down is unavailable");
@@ -2137,7 +2148,26 @@ public:
                                     }
                                 }
 
-                                else*/ if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
+                                else*/
+                                if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+                                    if (!this->authorization_channels.cliprdr_down_is_authorized()) {
+                                        if (this->verbose & 1) {
+                                            LOG(LOG_INFO, "mod_rdp clipboard is fully disabled (s)");
+                                        }
+
+                                        // Build and send the CB_FORMAT_LIST_RESPONSE (with status = OK)
+                                        // 03 00 01 00 00 00 00 00
+                                        BStream out_s(256);
+                                        const bool response_ok = true;
+                                        RDPECLIP::FormatListResponsePDU(response_ok).emit(out_s);
+
+                                        this->send_to_channel(
+                                            mod_channel, out_s, out_s.size(),
+                                            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                                        );
+                                    }
+                                }
+                                else if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
                                     if (!this->authorization_channels.cliprdr_up_is_authorized()) {
                                         if (this->verbose & 1) {
                                             LOG(LOG_INFO, "mod_rdp clipboard up is unavailable");
