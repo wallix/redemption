@@ -130,8 +130,8 @@ private:
     BStream to_vnc_large_clipboard_data;
 
 private:
-    bool enable_clipboard_up;   // true clipboard available, false clipboard unavailable
-    bool enable_clipboard_down; // true clipboard available, false clipboard unavailable
+    const bool enable_clipboard_up;   // true clipboard available, false clipboard unavailable
+    const bool enable_clipboard_down; // true clipboard available, false clipboard unavailable
 
     z_stream zstrm;
 
@@ -1892,7 +1892,7 @@ private:
         }
 
         if (this->enable_clipboard_down && this->get_channel_by_name(channel_names::cliprdr)) {
-            LOG(LOG_INFO, "Clipboard Channel Redirection available");
+            LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%d", RDPECLIP::CB_FORMAT_LIST);
 
             RDPECLIP::FormatListPDU format_list_pdu;
             BStream                 out_s(256);
@@ -1988,19 +1988,20 @@ private:
 
         RDPECLIP::RecvFactory recv_factory(stream);
 
+        LOG(LOG_INFO, "mod_vnc client clipboard PDU: msgType=%d", recv_factory.msgType);
+
         switch (recv_factory.msgType) {
             // Client notify that a copy operation have occured. Two operations should be done :
             //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
             //  - Only if clipboard content formats list include "UNICODETEXT: send a request for it in that format
             case RDPECLIP::CB_FORMAT_LIST: {
-                // Always coming from front
-                LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc - receiving CB_FORMAT_LIST");
-
                 RDPECLIP::FormatListPDU format_list_pdu;
 
                 format_list_pdu.recv(stream, recv_factory);
 
                 //--------------------------- Beginning of clipboard PDU Header ----------------------------
+
+                LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%d", RDPECLIP::CB_FORMAT_LIST_RESPONSE);
 
                 bool response_ok = true;
 
@@ -2024,6 +2025,8 @@ private:
 
 
                 if (this->enable_clipboard_up && format_list_pdu.contians_data_in_text_format) {
+                    LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%d", RDPECLIP::CB_FORMAT_DATA_REQUEST);
+
                     // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_UNICODETEXT)
                     // 04 00 00 00 04 00 00 00 0d 00 00 00
                     // 00 00 00 00
@@ -2046,16 +2049,7 @@ private:
                 break;
             }
 
-            case RDPECLIP::CB_FORMAT_LIST_RESPONSE: {
-                // Always coming from front ; do nothing, should not happen
-                LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc - receiving CB_FORMAT_LIST_RESPONSE");
-                break;
-            }
-
             case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
-                // Always coming from front ; Send back the clipboard buffer content
-                LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_REQUEST");
-
                 const unsigned expected = 10; /* msgFlags(2) + datalen(4) + requestedFormatId(4) */
                 if (!stream.in_check_rem(expected)) {
                     LOG( LOG_ERR
@@ -2102,6 +2096,8 @@ private:
                                         : CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                       );
 
+                        LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%d", RDPECLIP::CB_FORMAT_DATA_RESPONSE);
+
                         this->send_to_front_channel( channel_names::cliprdr
                                                    , chunk_data
                                                    , length
@@ -2132,8 +2128,6 @@ private:
             }
 
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-                LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc - receiving CB_FORMAT_DATA_RESPONSE");
-
                 RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
 
                 format_data_response_pdu.recv(stream, recv_factory);
