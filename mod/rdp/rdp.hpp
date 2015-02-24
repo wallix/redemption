@@ -650,10 +650,12 @@ private:
         }
     }
 
+/*
     BStream  clipboard_format_list_data;
     size_t   clipboard_format_list_length       = 0;
     uint32_t clipboard_format_list_flags        = 0;
     bool     clipboard_first_client_format_list = true;
+*/
 
 public:
     virtual void send_to_mod_channel( const char * const front_channel_name
@@ -771,25 +773,54 @@ public:
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
             const uint16_t msgType = chunk.in_uint16_le();
-            //LOG(LOG_INFO, "mod_rdp client clipboard PDU: msgType=%d", msgType);
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "mod_rdp client clipboard PDU: msgType=%d", msgType);
+            }
 
             // Clipboard is unavailable
-            if ((msgType == RDPECLIP::CB_FORMAT_LIST)) {
+            /*if ((msgType == RDPECLIP::CB_FORMAT_LIST)) {
                 if (!this->authorization_channels.cliprdr_up_is_authorized()) {
-                    if (!clipboard_first_client_format_list) {
+                    if (!this->clipboard_first_client_format_list) {
                         if (this->verbose & 1) {
                             LOG(LOG_INFO, "mod_rdp clipboard_up is unavailable");
                         }
-                        const bool response_ok = true;
+                        const bool response_ok = false;
                         // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
                         // 03 00 02 00 00 00 00 00
                         this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(response_ok);
-                        clipboard_first_client_format_list = false;
                         return;
                     }
-                    clipboard_first_client_format_list = false;
+                    else {
+                        this->clipboard_first_client_format_list = false;
+
+                        if (this->verbose & 1) {
+                            LOG(LOG_INFO, "mod_rdp send empty clipboard format list to server");
+                        }
+
+                        RDPECLIP::FormatListPDU flpdu;
+
+                        BStream stream(128);
+
+                        flpdu.emit_empty(stream);
+
+                        const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
+                        // send it if module has a matching channel, if no matching channel is found just forget it
+                        if (mod_channel) {
+                            if (this->verbose & 16) {
+                                mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
+                            }
+                            this->send_to_channel(*mod_channel, stream, stream.size(),
+                                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
+                        }
+
+                        return;
+                    }
                 }
                 else {
+                    if (this->verbose & 1) {
+                        LOG(LOG_INFO, "mod_rdp save client clipboard format list");
+                    }
+
                     //LOG(LOG_INFO,
                     //    "clipboard_format_list_length=%u clipboard_format_list_flags=0x%X",
                     //    length, flags);
@@ -803,13 +834,36 @@ public:
                     this->clipboard_format_list_flags  = flags;
                 }
             }
+
+            else*/
+            if ((msgType == RDPECLIP::CB_FORMAT_LIST)) {
+                if (!this->authorization_channels.cliprdr_up_is_authorized() &&
+                    !this->authorization_channels.cliprdr_down_is_authorized()) {
+                    if (this->verbose & 1) {
+                        LOG(LOG_INFO, "mod_rdp clipboard is fully disabled (c)");
+                    }
+                    this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(true);
+                    return;
+                }
+            }
+            else if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
+                if (!this->authorization_channels.cliprdr_down_is_authorized()) {
+                    if (this->verbose & 1) {
+                        LOG(LOG_INFO, "mod_rdp clipboard down is unavailable");
+                    }
+
+                    this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(false, "\0");
+                    return;
+                }
+            }
+
             else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
                 if (!this->authorization_channels.cliprdr_file_is_authorized()) {
                     if (this->verbose & 1) {
                         LOG(LOG_INFO, "mod_rdp requesting the contents of server file is denied");
                     }
                     this->send_clipboard_pdu_to_front_channel<RDPECLIP::FileContentsResponse>(false);
-                    return ;
+                    return;
                 }
             }
 
@@ -2037,11 +2091,13 @@ public:
                                 }
 
                                 const uint16_t msgType = sec.payload.in_uint16_le();
-                                //LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%d", msgType);
+                                if (this->verbose & 1) {
+                                    LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%d", msgType);
+                                }
 
                                 bool cencel_pdu = false;
 
-                                if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+                                /*if (msgType == RDPECLIP::CB_FORMAT_LIST) {
                                     if (!this->authorization_channels.cliprdr_down_is_authorized()) {
                                         if (this->verbose & 1) {
                                             LOG(LOG_INFO, "mod_rdp clipboard down is unavailable");
@@ -2049,6 +2105,44 @@ public:
 
                                         // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
                                         // 03 00 02 00 00 00 00 00
+                                        BStream out_s(256);
+                                        const bool response_ok = false;
+                                        RDPECLIP::FormatListResponsePDU(response_ok).emit(out_s);
+
+                                        this->send_to_channel(
+                                            mod_channel, out_s, out_s.size(),
+                                            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                                        );
+
+                                        if (this->verbose & 1) {
+                                            LOG(LOG_INFO, "mod_rdp send saved client clipboard format list to server");
+                                        }
+
+                                        //LOG(LOG_INFO,
+                                        //    "clipboard_format_list_length=%u clipboard_format_list_flags=0x%X",
+                                        //    this->clipboard_format_list_length, this->clipboard_format_list_flags);
+                                        //hexdump_c(this->clipboard_format_list_data.get_data(),
+                                        //    this->clipboard_format_list_data.size());
+
+                                        // this->send_to_channel(
+                                        //     mod_channel, this->clipboard_format_list_data, this->clipboard_format_list_length,
+                                        //     this->clipboard_format_list_flags
+                                        // );
+
+                                        cencel_pdu = true;
+                                    }
+                                }
+
+                                else*/
+                                if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+                                    if (!this->authorization_channels.cliprdr_up_is_authorized() &&
+                                        !this->authorization_channels.cliprdr_down_is_authorized()) {
+                                        if (this->verbose & 1) {
+                                            LOG(LOG_INFO, "mod_rdp clipboard is fully disabled (s)");
+                                        }
+
+                                        // Build and send the CB_FORMAT_LIST_RESPONSE (with status = OK)
+                                        // 03 00 01 00 00 00 00 00
                                         BStream out_s(256);
                                         const bool response_ok = true;
                                         RDPECLIP::FormatListResponsePDU(response_ok).emit(out_s);
@@ -2058,22 +2152,27 @@ public:
                                             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                                         );
 
-                                        //LOG(LOG_INFO, "SAVED FORMAT LIST");
+                                        cencel_pdu = true;
+                                    }
+                                }
+                                else if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
+                                    if (!this->authorization_channels.cliprdr_up_is_authorized()) {
+                                        if (this->verbose & 1) {
+                                            LOG(LOG_INFO, "mod_rdp clipboard up is unavailable");
+                                        }
 
-                                        //LOG(LOG_INFO,
-                                        //    "clipboard_format_list_length=%u clipboard_format_list_flags=0x%X",
-                                        //    this->clipboard_format_list_length, this->clipboard_format_list_flags);
-                                        //hexdump_c(this->clipboard_format_list_data.get_data(),
-                                        //    this->clipboard_format_list_data.size());
+                                        BStream out_s(256);
+                                        RDPECLIP::FormatDataResponsePDU(false).emit(out_s, "\0");
 
                                         this->send_to_channel(
-                                            mod_channel, this->clipboard_format_list_data, this->clipboard_format_list_length,
-                                            this->clipboard_format_list_flags
+                                            mod_channel, out_s, out_s.size(),
+                                            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                                         );
 
                                         cencel_pdu = true;
                                     }
                                 }
+
                                 else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
                                     if (!this->authorization_channels.cliprdr_file_is_authorized()) {
                                         if (this->verbose & 1) {
