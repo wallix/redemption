@@ -2165,6 +2165,8 @@ public:
                                             mod_channel, out_s, out_s.size(),
                                             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                                         );
+
+                                        cencel_pdu = true;
                                     }
                                 }
                                 else if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
