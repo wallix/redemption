@@ -2006,6 +2006,7 @@ public:
                             if ( this->auth_channel[0] /*&& this->acl */
                              && !strcmp(mod_channel.name, this->auth_channel)
                             ) {
+/*
                                 std::string auth_channel_message((const char *)sec.payload.p, sec.payload.in_remain());
                                 LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message.c_str());
                                 //if (this->auth_channel_state == 0) {
@@ -2027,9 +2028,11 @@ public:
                                 //    }
                                 //    this->auth_channel_state = 0;
                                 //}
+*/
+                                this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
                             }
                             // Clipboard is a Clipboard PDU
-                            if (!strcmp(mod_channel.name, channel_names::cliprdr)) {
+                            else if (!strcmp(mod_channel.name, channel_names::cliprdr)) {
 /*
                                 const uint16_t msgType = sec.payload.in_uint16_le();
 
@@ -2101,6 +2104,7 @@ public:
                                     );
                                 }
 */
+/*
                                 if (this->verbose & 1) {
                                     LOG(LOG_INFO, "mod_rdp server clipboard PDU");
                                 }
@@ -2111,7 +2115,7 @@ public:
                                 }
 
                                 bool cencel_pdu = false;
-
+*/
                                 /*if (msgType == RDPECLIP::CB_FORMAT_LIST) {
                                     if (!this->authorization_channels.cliprdr_down_is_authorized()) {
                                         if (this->verbose & 1) {
@@ -2149,6 +2153,7 @@ public:
                                 }
 
                                 else*/
+/*
                                 if (msgType == RDPECLIP::CB_FORMAT_LIST) {
                                     if (!this->authorization_channels.cliprdr_up_is_authorized() &&
                                         !this->authorization_channels.cliprdr_down_is_authorized()) {
@@ -2214,6 +2219,8 @@ public:
                                         mod_channel.name, sec.payload.p, length, chunk_size, flags
                                     );
                                 }
+*/
+                                this->process_clipboard_event(mod_channel, sec.payload, length, flags, chunk_size);
                             }
                             else {
                                 if (!strcmp(mod_channel.name, channel_names::rdpdr)) {
@@ -5480,6 +5487,15 @@ public:
         target_stream.mark_end();
         this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     }
+
+    void process_auth_event(const CHANNELS::ChannelDef & mod_channel,
+        Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size);
+
+    void process_clipboard_event(const CHANNELS::ChannelDef & mod_channel,
+        Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size);
 };
+
+#include "rdp_channel_auth.hpp"
+#include "rdp_channel_clipboard.hpp"
 
 #endif
