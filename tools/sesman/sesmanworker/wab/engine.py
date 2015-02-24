@@ -39,6 +39,7 @@ except Exception, e:
         Logger().info(">>>>>> %s" % tracelog)
 
 import time
+import socket
 
 def _binary_ip(network, bits):
     # TODO need Ipv6 support
@@ -48,6 +49,8 @@ def _binary_ip(network, bits):
     return ((a << 24) + (b << 16) + (c << 8) + d) & mask
 
 def is_device_in_subnet(device, subnet):
+    if subnet is None:
+        return False
     if '/' in subnet:
         try:
             network, bits = subnet.rsplit('/')
@@ -226,6 +229,57 @@ class Engine(object):
             Logger().info("Engine passthrough_authenticate failed: (((%s)))" % traceback.format_exc(e))
         return False
 
+    def resolve_target_host(self, target_device, target_login, target_service,
+                            real_target_device, target_context,
+                            passthrough_mode, protocols):
+        """ Resolve the right target host to use
+        target_context.host will contains the target host.
+        target_context.showname() will contains the target_device to show
+        target_context.login will contains the target_login if not in
+            passthrough mode.
+
+        Returns None if target_device is a hostname,
+                target_device in other cases
+        """
+        if real_target_device:
+            # Transparent proxy
+            if not target_context:
+                target_context = TargetContext(host=real_target_device)
+        elif target_device:
+            # This allow proxy to check if target_device is a device_name
+            # or a hostname.
+            # In case it is a hostname, we keep the target_login as a filter.
+            valid = self.valid_device_name(protocols, target_device)
+            Logger().info("Check Valid device '%s' : res = %s" %
+                          (target_device, valid))
+            if not valid:
+                # target_device might be a hostname
+                try:
+                    login_filter, service_filter = None, None
+                    dnsname = None
+                    if (target_login and not passthrough_mode):
+                        login_filter = target_login
+                    if (target_service and not passthrough_mode):
+                        service_filter = target_service
+                    host_ip = socket.getaddrinfo(target_device, None)[0][4][0]
+                    Logger().info("Resolve DNS Hostname %s -> %s" % (target_device,
+                                                                     host_ip))
+                    try:
+                        socket.inet_pton(socket.AF_INET, target_device)
+                    except socket.error:
+                        dnsname = target_device
+                    target_context = TargetContext(host=host_ip,
+                                                   dnsname=dnsname,
+                                                   login=login_filter,
+                                                   service=service_filter,
+                                                   show=target_device)
+                    target_device = None
+                except Exception, e:
+                    # import traceback
+                    # Logger().info(">>>%s" %traceback.format_exc(e))
+                    Logger().info("target_device is not a hostname")
+        return target_device, target_context
+
     def get_license_status(self):
         u""" Three checks : expiration, primary limits, secondary limit
         If at least one fails, user can't connect at all to any device,
@@ -334,9 +388,7 @@ class Engine(object):
             import traceback
             Logger().info("Engine NotifyFindPatternInRDPFlow failed: (((%s)))" % (traceback.format_exc(e)))
 
-    def get_targets_list(self, group_filter, device_filter, protocol_filter,
-                         target_context=None):
-# real_target_device, target_login=None):
+    def get_targets_list(self, group_filter, device_filter, protocol_filter):
         targets = []
         item_filtered = False
         for target_info in self.displaytargets:
@@ -357,21 +409,6 @@ class Engine(object):
                 or (temp_resource_service_protocol_cn.find(protocol_filter) == -1)):
                 item_filtered = True
                 continue
-
-            if target_context:
-                if target_context.host:
-                    if target_info.protocol == u"APP":
-                        continue
-                    if (target_info.host
-                        and (not is_device_in_subnet(target_context.host,
-                                                     target_info.host))
-                        and target_context.dnsname != target_info.host):
-                        continue
-                if target_context.login:
-                    Logger().info("info='%s' login='%s'" % (target_info.target_login, target_context.login))
-                    if target_info.target_login != target_context.login:
-                        Logger().info("result => SKIP")
-                        continue
 
             targets.append((target_info.group # ( = concatenated list)
                             , temp_service_login
@@ -396,7 +433,8 @@ class Engine(object):
             return True
         return False
 
-    def get_proxy_rights(self, protocols, target_device=None, check_timeframes=False):
+    def get_proxy_rights(self, protocols, target_device=None, check_timeframes=False,
+                         target_context=None):
         if self.proxy_rights is not None:
             return
         self.proxy_rights = self.wabengine.get_proxy_rights(protocols, target_device,
@@ -420,6 +458,19 @@ class Engine(object):
                     protocol = right.resource.service.protocol.cn
                     host = right.resource.device.host
                     alias = right.resource.device.deviceAlias
+                if target_context is not None:
+                    if host is None:
+                        continue
+                    if (target_context.host and
+                        not is_device_in_subnet(target_context.host, host) and
+                        host != target_context.dnsname):
+                        continue
+                    if (target_context.login and
+                        target_login != target_context.login):
+                        continue
+                    if (target_context.service and
+                        service_name != target_context.service):
+                        continue
                 tuple_index = (target_login, target_name)
                 if not self.targets.get(tuple_index):
                     self.targets[tuple_index] = {}
@@ -675,6 +726,15 @@ class Engine(object):
                          autologon=autologon)
 
 # Information Structs
+class TargetContext(object):
+    def __init__(self, host=None, dnsname=None, login=None, service=None, show=None):
+        self.host = host
+        self.dnsname = dnsname
+        self.login = login
+        self.service = service
+        self.show = show
+    def showname(self):
+        return self.show or self.dnsname or self.host
 
 class DisplayInfo(object):
     def __init__(self, target_login, target_name, service_name,
