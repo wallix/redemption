@@ -665,10 +665,12 @@ private:
         }
     }
 
+/*
     BStream  clipboard_format_list_data;
     size_t   clipboard_format_list_length       = 0;
     uint32_t clipboard_format_list_flags        = 0;
     bool     clipboard_first_client_format_list = true;
+*/
 
 public:
     virtual void send_to_mod_channel( const char * const front_channel_name
