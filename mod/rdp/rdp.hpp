@@ -76,6 +76,7 @@
 #include "parser.hpp"
 #include "channel_names.hpp"
 #include "finally.hpp"
+#include "apply_for_delim.hpp"
 
 class mod_rdp : public mod_api {
     FrontAPI & front;
@@ -495,16 +496,12 @@ public:
     }
 
     void configure_extra_orders(const char * extra_orders) {
-        const char * tmp_extra_orders  = extra_orders;
-        uint8_t      order_number;
-
         if (verbose) {
             LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);
         }
 
-        while (*tmp_extra_orders)
-        {
-            order_number = long_from_cstr(tmp_extra_orders);
+        apply_for_delim(extra_orders, ',', [this](const char *order) {
+            int const order_number = long_from_cstr(order);
             if (verbose) {
                 LOG(LOG_INFO, "RDP Extra orders number=%d", order_number);
             }
@@ -569,16 +566,7 @@ public:
                 }
                 break;
             }
-
-            tmp_extra_orders = strchr(tmp_extra_orders, ',');
-            if (!tmp_extra_orders)
-            {
-                break;
-            }
-
-            while ((*tmp_extra_orders == ',') || (*tmp_extra_orders == ' ') || (*tmp_extra_orders == '\t'))
-                tmp_extra_orders++;
-        }
+        }, [](char c) { return c == ' ' || c == '\t' || c == ','; });
     }
 
     virtual void rdp_input_scancode( long param1, long param2, long device_flags, long time
