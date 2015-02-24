@@ -2150,7 +2150,8 @@ public:
 
                                 else*/
                                 if (msgType == RDPECLIP::CB_FORMAT_LIST) {
-                                    if (!this->authorization_channels.cliprdr_down_is_authorized()) {
+                                    if (!this->authorization_channels.cliprdr_up_is_authorized() &&
+                                        !this->authorization_channels.cliprdr_down_is_authorized()) {
                                         if (this->verbose & 1) {
                                             LOG(LOG_INFO, "mod_rdp clipboard is fully disabled (s)");
                                         }
