@@ -922,7 +922,7 @@ class Sesman():
         show_message = infos.get('message') or ''
         target = infos.get('target')
         if target:
-            show_message = "%s\n%s" % (target, show_message)
+            show_message = "%s: %s\n%s" % (TR(u"selected_target"), target, show_message)
         tosend = { u'module' : u'waitinfo',
                    u'message' : cut_message(show_message),
                    u'display_message' : MAGICASK,
