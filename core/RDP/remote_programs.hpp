@@ -169,6 +169,8 @@ public:
         this->stream.set_out_uint16_le(orderLength,
             this->offset_of_orderLength);
     }
+
+    static size_t header_length() { return 4; /* orderType(4) */ }
 };
 
 // [MS-RDPERP] - 2.2.2.2.1 Handshake PDU (TS_RAIL_ORDER_HANDSHAKE)

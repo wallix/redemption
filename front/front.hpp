@@ -57,6 +57,7 @@
 #include "RDP/caches/glyphcache.hpp"
 #include "RDP/caches/pointercache.hpp"
 #include "RDP/caches/brushcache.hpp"
+#include "channel_names.hpp"
 #include "client_info.hpp"
 #include "config.hpp"
 #include "error.hpp"
@@ -70,6 +71,7 @@
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
+#include "RDP/remote_programs.hpp"
 
 #include "RDP/compress_and_draw_bitmap_update.hpp"
 
@@ -87,6 +89,7 @@
 #include "RDP/capabilities/cap_font.hpp"
 #include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/capabilities/rail.hpp"
+#include "RDP/capabilities/window.hpp"
 
 #include "front_api.hpp"
 #include "activity_checker.hpp"
@@ -801,7 +804,8 @@ public:
                , channel.name, channel.chanid, chunk, length, chunk_size, flags);
         }
 
-        if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
+        if ((channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) &&
+            strcmp(channel.name, channel_names::rail)) {
             flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
 
@@ -2518,6 +2522,26 @@ public:
         input_caps.emit(stream);
         caps_count++;
 
+        if (this->client_info.remote_program) {
+            RailCaps rail_caps;
+            rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED;
+            if (this->verbose) {
+                rail_caps.log("Sending to client");
+            }
+            rail_caps.emit(stream);
+            caps_count++;
+
+            WindowListCaps window_list_caps;
+            window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
+            window_list_caps.NumIconCaches = 3;
+            window_list_caps.NumIconCacheEntries = 12;
+            if (this->verbose) {
+                window_list_caps.log("Sending to client");
+            }
+            window_list_caps.emit(stream);
+            caps_count++;
+        }
+
         size_t caps_size = stream.get_offset() - caps_count_offset;
         stream.set_out_uint16_le(caps_size, caps_size_offset);
         stream.set_out_uint32_le(caps_count, caps_count_offset);
@@ -2829,9 +2853,12 @@ public:
                     }
                 }
                 break;
-            case CAPSTYPE_WINDOW: /* 24 */
-                if (this->verbose) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_WINDOW");
+            case CAPSTYPE_WINDOW: { /* 24 */
+                    WindowListCaps cap;
+                    cap.recv(stream, capset_length);
+                    if (this->verbose) {
+                        cap.log("Receiving from client");
+                    }
                 }
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
@@ -3485,6 +3512,26 @@ public:
                     }
 
                     this->auth_info_sent = true;
+                }
+
+                if (this->client_info.remote_program) {
+                    // the remote connection being established is for the purpose of launching remote programs.
+                    const CHANNELS::ChannelDef * rail_channel = this->get_channel_list().get_by_name(channel_names::rail);
+                    if (rail_channel) {
+                        uint8_t buffer[128];
+                        FixedSizeStream stream(buffer, sizeof(buffer));
+                        uint32_t buildNumber = 7600;
+
+                        RAILPDUHeader_Send railpduhs(stream, TS_RAIL_ORDER_HANDSHAKE);
+                        size_t data_offset = stream.get_offset();
+
+                        HandshakePDU_Send hpdus(stream, buildNumber);
+
+                        railpduhs.set_orderLength(RAILPDUHeader_Send::header_length() + stream.get_offset() - data_offset);
+
+                        this->send_to_channel(*rail_channel, stream.get_data(),
+                            stream.size(), stream.size(), CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
+                    }
                 }
             }
         }

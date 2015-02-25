@@ -29,25 +29,25 @@
 
 #include "RDP/capabilities/window.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityWindowsListEmit)
+BOOST_AUTO_TEST_CASE(TestCapabilityWindowListEmit)
 {
-    WindowsListCaps windowslist_caps;
-    windowslist_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED_EX;
-    windowslist_caps.NumIconCaches = 255;
-    windowslist_caps.NumIconCacheEntries = 65535;
+    WindowListCaps windowlist_caps;
+    windowlist_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED_EX;
+    windowlist_caps.NumIconCaches = 255;
+    windowlist_caps.NumIconCacheEntries = 65535;
 
-    BOOST_CHECK_EQUAL(windowslist_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_WINDOW));
-    BOOST_CHECK_EQUAL(windowslist_caps.len, static_cast<uint16_t>(CAPLEN_WINDOW));
-    BOOST_CHECK_EQUAL(windowslist_caps.WndSupportLevel, static_cast<uint32_t>(2));
-    BOOST_CHECK_EQUAL(windowslist_caps.NumIconCaches, static_cast<uint8_t>(255));
-    BOOST_CHECK_EQUAL(windowslist_caps.NumIconCacheEntries, static_cast<uint16_t>(65535));
+    BOOST_CHECK_EQUAL(windowlist_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_WINDOW));
+    BOOST_CHECK_EQUAL(windowlist_caps.len, static_cast<uint16_t>(CAPLEN_WINDOW));
+    BOOST_CHECK_EQUAL(windowlist_caps.WndSupportLevel, static_cast<uint32_t>(2));
+    BOOST_CHECK_EQUAL(windowlist_caps.NumIconCaches, static_cast<uint8_t>(255));
+    BOOST_CHECK_EQUAL(windowlist_caps.NumIconCacheEntries, static_cast<uint16_t>(65535));
 
     BStream stream(1024);
-    windowslist_caps.emit(stream);
+    windowlist_caps.emit(stream);
     stream.mark_end();
     stream.p = stream.get_data();
 
-    WindowsListCaps windowslist_caps2;
+    WindowListCaps windowslist_caps2;
 
     BOOST_CHECK_EQUAL(windowslist_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_WINDOW));
     BOOST_CHECK_EQUAL(windowslist_caps2.len, static_cast<uint16_t>(CAPLEN_WINDOW));
