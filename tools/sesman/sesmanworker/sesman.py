@@ -44,6 +44,7 @@ import engine
 from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
     APPROVAL_PENDING, APPROVAL_NONE
 from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
+from engine import TargetContext
 
 
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
@@ -68,16 +69,6 @@ def truncat_string(item, maxsize=20):
 
 class AuthentifierSocketClosed(Exception):
     pass
-
-class TargetContext(object):
-    def __init__(self, host=None, dnsname=None, login=None, show=None):
-        self.host = host
-        self.dnsname = dnsname
-        self.login = login
-        self.show = show
-    def showname(self):
-        return self.show or self.dnsname or self.host
-
 
 ################################################################################
 class Sesman():
@@ -538,50 +529,6 @@ class Sesman():
 
         return _status, _error
 
-    def resolve_target_host(self, target_device, target_login):
-        """ Resolve the right target host to use
-        self.target_context.host will contains the target host.
-        self.target_context.showname() will contains the target_device to show
-        self.target_context.login will contains the target_login if not in
-            passthrough mode.
-
-        Returns None if target_device is a hostname,
-                target_device in other cases
-        """
-        if self.shared.get(u'real_target_device'):
-            # Transparent proxy
-            if not self.target_context:
-                self.target_context = TargetContext(host=self.shared.get(u'real_target_device'))
-        elif target_device and target_device != MAGICASK:
-            # This allow proxy to check if target_device is a device_name
-            # or a hostname.
-            # In case it is a hostname, we keep the target_login as a filter.
-            valid = self.engine.valid_device_name([u'RDP', u'VNC'], target_device)
-            Logger().info("Check Valid device '%s' : res = %s" %
-                          (target_device, valid))
-            if not valid:
-                # target_device might be a hostname
-                try:
-                    login_filter = None
-                    dnsname = None
-                    if (target_login and target_login != MAGICASK
-                        and not self.passthrough_mode):
-                        login_filter = target_login
-                    host_ip = socket.getaddrinfo(target_device, None)[0][4][0]
-                    Logger().info("Resolve DNS Hostname %s -> %s" % (target_device,
-                                                                     host_ip))
-                    try:
-                        socket.inet_pton(socket.AF_INET, target_device)
-                    except socket.error:
-                        dnsname = target_device
-                    self.target_context = TargetContext(host=host_ip,
-                                                        dnsname=dnsname,
-                                                        login=login_filter,
-                                                        show=target_device)
-                    return None
-                except Exception, e:
-                    Logger().info("target_device is not a hostname")
-        return target_device
 
 
     # GET SERVICE
@@ -607,7 +554,11 @@ class Sesman():
             return None, TR(u"Invalid user, try again")
         _status, _error = None, TR(u"No error")
 
-        target_device = self.resolve_target_host(target_device, target_login)
+        (target_device,
+         self.target_context) = self.engine.resolve_target_host(
+            target_device, target_login, self.target_service_name,
+            self.shared.get(u'real_target_device'), self.target_context,
+            self.passthrough_mode, [u'RDP', u'VNC'])
 
         while _status is None:
             if (target_device and target_device != MAGICASK
@@ -630,12 +581,12 @@ class Sesman():
             elif self.shared.get(u'selector') == MAGICASK:
                 # filters ("Group" and "Account/Device") entered by user in selector are applied to raw services list
                 self.engine.get_proxy_rights([u'RDP', u'VNC'],
-                                             check_timeframes=False)
+                                             check_timeframes=False,
+                                             target_context=self.target_context)
                 services, item_filtered = self.engine.get_targets_list(
                     group_filter = self.shared.get(u'selector_group_filter'),
                     device_filter = self.shared.get(u'selector_device_filter'),
-                    protocol_filter = self.shared.get(u'selector_proto_filter'),
-                    target_context = self.target_context)
+                    protocol_filter = self.shared.get(u'selector_proto_filter'))
                 if (len(services) > 1) or item_filtered:
                     try:
                         _current_page = int(self.shared.get(u'selector_current_page')) - 1
@@ -971,7 +922,7 @@ class Sesman():
         show_message = infos.get('message') or ''
         target = infos.get('target')
         if target:
-            show_message = target + '\n' + show_message
+            show_message = "%s: %s\n%s" % (TR(u"selected_target"), target, show_message)
         tosend = { u'module' : u'waitinfo',
                    u'message' : cut_message(show_message),
                    u'display_message' : MAGICASK,
