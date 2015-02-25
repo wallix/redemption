@@ -207,6 +207,8 @@ private:
     auth_api * authentifier;
     bool       auth_info_sent;
 
+    uint16_t rail_channel_id = 0;
+
 public:
     Front ( Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -1111,6 +1113,11 @@ public:
                             channel_item.flags = channel_def.options;
                             channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
                             this->channel_list.push_back(channel_item);
+
+                            if (!this->rail_channel_id &&
+                                !strcmp(channel_item.name, channel_names::rail)) {
+                                this->rail_channel_id = channel_item.chanid;
+                            }
                         }
                         if (this->verbose & 1) {
                             cs_net.log("Received from Client");
@@ -2138,9 +2145,15 @@ public:
                         if (this->verbose & 16) {
                             LOG(LOG_INFO, "Front::send_to_mod_channel");
                         }
-                        SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
+                        if (channel.chanid == this->rail_channel_id) {
+                            this->process_rail_event(cb,
+                                sec.payload.get_data() + sec.payload.get_offset(), chunk_size, length, flags);
+                        }
+                        else {
+                            SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
 
-                        cb.send_to_mod_channel(channel.name, chunk, length, flags);
+                            cb.send_to_mod_channel(channel.name, chunk, length, flags);
+                        }
                     }
                     else {
                         if (this->verbose & 16) {
@@ -4416,6 +4429,10 @@ public:
         this->has_activity = false;
         return res;
     }
+
+    void process_rail_event(Callback & cb, uint8_t const * chunk, size_t chunk_size, uint16_t length, uint16_t flags);
 };
+
+#include "front_channel_rail.hpp"
 
 #endif
