@@ -2096,16 +2096,16 @@ public:
                 }
 
                 if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
+                    if (this->verbose & 16) {
+                        LOG(LOG_INFO, "Front::incoming::channel_data channelId=%u", mcs.channelId);
+                    }
+
                     size_t num_channel_src = this->channel_list.size();
                     for (size_t index = 0; index < this->channel_list.size(); index++) {
                         if (this->channel_list[index].chanid == mcs.channelId) {
                             num_channel_src = index;
                             break;
                         }
-                    }
-
-                    if (this->verbose & 16) {
-                        LOG(LOG_INFO, "Front::incoming::channel_data channelId=%u", mcs.channelId);
                     }
 
                     if (num_channel_src >= this->channel_list.size()) {

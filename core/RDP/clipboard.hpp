@@ -281,6 +281,14 @@ struct FormatListPDU : public CliprdrHeader {
         : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
         , contians_data_in_text_format(false) {}
 
+/*
+    void emit_empty(Stream & stream) {
+        CliprdrHeader::emit(stream);
+
+        stream.mark_end();
+    }
+*/
+
     void emit(Stream & stream) {
         this->dataLen_ = 144;    /* (formatId(4) + formatName(32)) * 4 */
         CliprdrHeader::emit(stream);
