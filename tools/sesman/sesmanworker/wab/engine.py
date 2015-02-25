@@ -296,11 +296,11 @@ class Engine(object):
                 license_ok = False
             if lic_status.is_primary_limit_reached():
                 Logger().info("PRIMARY LICENCE LIMIT")
-                Notify(self.wabengine, LICENCE_PRIMARY_CX_ERROR, {u'nbPrimaryConnection': lic_status.primary()[0]})
+                Notify(self.wabengine, LICENCE_PRIMARY_CX_ERROR, {u'nbPrimaryConnection': lic_status.primary[0]})
                 license_ok = False
             if lic_status.is_secondary_limit_reached():
                 Logger().info("SECONDARY LICENCE LIMIT")
-                Notify(self.wabengine, LICENCE_SECONDARY_CX_ERROR, {u'nbSecondaryConnection': lic_status.secondary()[0]})
+                Notify(self.wabengine, LICENCE_SECONDARY_CX_ERROR, {u'nbSecondaryConnection': lic_status.secondary[0]})
                 license_ok = False
         except Exception, e:
             """If calling get_license_status raise some error, user will be rejected as per invalid license"""
