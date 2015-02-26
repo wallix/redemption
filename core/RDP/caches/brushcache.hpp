@@ -72,9 +72,6 @@ struct BrushCache {
         int oldest;
         int index;
 
-        if (this == 0) {
-            return 0;
-        }
         this->brush_stamp++;
         /* look for match */
         for (i = 0; i < 64; i++) {
