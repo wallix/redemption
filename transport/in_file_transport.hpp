@@ -30,7 +30,7 @@
 struct InFileTransport
 : SeekableTransport<InputTransport</*transbuf::ibuffering_buf<*/io::posix::fdbuf/*>*/ > >
 {
-    InFileTransport(int fd) /*noexcept*/
+    InFileTransport(int fd) noexcept
     : InFileTransport::TransportType(fd)
     {}
 };

@@ -30,7 +30,7 @@ namespace detail {
 }
 
 template<class Fn, class IgnoreFn = detail::ignore_blank_fn>
-inline void apply_for_delim(const char * cstr, char delim, Fn fn, IgnoreFn ignore = IgnoreFn())
+void apply_for_delim(const char * cstr, char delim, Fn fn, IgnoreFn ignore = IgnoreFn())
 {
   while (*cstr) {
     while (ignore(*cstr)) {

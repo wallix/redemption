@@ -27,17 +27,17 @@
 #include <stdint.h>
 #include <assert.h>
 
-static inline uint16_t align4(int value)
+static inline uint16_t align4(int value) noexcept
 {
     return (value+3) & ~3;
 }
 
-static inline uint8_t nbbytes(unsigned value)
+static inline uint8_t nbbytes(unsigned value) noexcept
 {
     return static_cast<uint8_t>((value+7) / 8);
 }
 
-static inline uint32_t nbbytes_large(unsigned value)
+static inline uint32_t nbbytes_large(unsigned value) noexcept
 {
     return ((value+7) / 8);
 }

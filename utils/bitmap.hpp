@@ -200,7 +200,7 @@ class Bitmap
         mutable uint8_t sha1_[20];
         mutable bool sha1_is_init_;
 
-        DataBitmapBase(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr)
+        DataBitmapBase(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
         : cx_(align4(cx))
         , cy_(cy)
         , bpp_(bpp)
@@ -213,7 +213,7 @@ class Bitmap
         , sha1_is_init_(false)
         {}
 
-        DataBitmapBase(uint16_t cx, uint16_t cy, uint8_t * ptr)
+        DataBitmapBase(uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
         : cx_(cx)
         , cy_(cy)
         , bpp_(24)
@@ -229,11 +229,11 @@ class Bitmap
 
     class DataBitmap : DataBitmapBase
     {
-        DataBitmap(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr)
+        DataBitmap(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
         : DataBitmapBase(bpp, cx, cy, ptr)
         {}
 
-        DataBitmap(uint16_t cx, uint16_t cy, uint8_t * ptr)
+        DataBitmap(uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
         : DataBitmapBase(cx, cy, ptr)
         {}
 
@@ -248,7 +248,7 @@ class Bitmap
         static const size_t palette_index = sizeof(typename std::aligned_storage<sizeof(DataBitmapBase), alignof(BGRColor)>::type);
 
     public:
-        static size_t compute_bmp_size(uint8_t bpp, uint16_t cx, uint16_t cy)
+        static size_t compute_bmp_size(uint8_t bpp, uint16_t cx, uint16_t cy) noexcept
         {
             return align4(cx) * nbbytes(bpp) * cy;
         }
@@ -294,44 +294,44 @@ class Bitmap
             memcpy(sig, this->sha1_, sizeof(this->sha1_));
         }
 
-        uint8_t * get() const {
+        uint8_t * get() const noexcept {
             return this->ptr_;
         }
 
     private:
-        uint8_t const * data_palette() const {
+        uint8_t const * data_palette() const noexcept {
             //REDASSERT(this->bpp() == 8);
             return reinterpret_cast<uint8_t const*>(this) + palette_index;
         }
 
     public:
-        BGRPalette & palette() {
+        BGRPalette & palette() noexcept {
             //REDASSERT(this->bpp() == 8);
             return reinterpret_cast<BGRPalette &>(reinterpret_cast<uint8_t*>(this)[palette_index]);
         }
 
-        const BGRPalette & palette() const {
+        const BGRPalette & palette() const noexcept {
             //REDASSERT(this->bpp() == 8);
             return reinterpret_cast<const BGRPalette &>(reinterpret_cast<const uint8_t*>(this)[palette_index]);
         }
 
-        uint16_t cx() const {
+        uint16_t cx() const noexcept {
             return this->cx_;
         }
 
-        uint16_t cy() const {
+        uint16_t cy() const noexcept {
             return this->cy_;
         }
 
-        size_t line_size() const {
+        size_t line_size() const noexcept {
             return this->line_size_;
         }
 
-        uint8_t bpp() const {
+        uint8_t bpp() const noexcept {
             return this->bpp_;
         }
 
-        size_t bmp_size() const {
+        size_t bmp_size() const noexcept {
             return this->bmp_size_;
         }
 
@@ -342,23 +342,23 @@ class Bitmap
             this->size_compressed_ = n;
         }
 
-        const uint8_t * compressed_data() const {
+        const uint8_t * compressed_data() const noexcept {
             return this->data_compressed_;
         }
 
-        size_t compressed_size() const {
+        size_t compressed_size() const noexcept {
             return this->size_compressed_;
         }
 
-        void inc() {
+        void inc() noexcept {
             ++this->counter_;
         }
 
-        void dec() {
+        void dec() noexcept {
             --this->counter_;
         }
 
-        uint_fast8_t count() const {
+        uint_fast8_t count() const noexcept {
             return this->counter_;
         }
     };
@@ -368,20 +368,14 @@ class Bitmap
     void * operator new(size_t n) = delete;
 
 public:
-    Bitmap()
-    : data_bitmap(0)
+    Bitmap() noexcept
+    : data_bitmap(nullptr)
     {}
 
-    Bitmap & operator=(const Bitmap & other)
+    Bitmap(Bitmap&& bmp) noexcept
+    : data_bitmap(bmp.data_bitmap)
     {
-        other.data_bitmap->inc();
-        this->reset();
-        this->data_bitmap = other.data_bitmap;
-        return *this;
-    }
-
-    bool is_valid() const {
-        return this->data_bitmap;
+        bmp.data_bitmap = nullptr;
     }
 
     Bitmap(const Bitmap & other)
@@ -396,6 +390,26 @@ public:
         this->reset();
     }
 
+    Bitmap & operator=(const Bitmap & other)
+    {
+        other.data_bitmap->inc();
+        this->reset();
+        this->data_bitmap = other.data_bitmap;
+        return *this;
+    }
+
+    Bitmap & operator=(Bitmap && other) noexcept
+    {
+        auto other_data = other.data_bitmap;
+        other.data_bitmap = nullptr;
+        this->data_bitmap = other_data;
+        return *this;
+    }
+
+    bool is_valid() const noexcept {
+        return this->data_bitmap;
+    }
+
     void reset() {
         if (this->data_bitmap) {
             this->data_bitmap->dec();
@@ -406,7 +420,7 @@ public:
         }
     }
 
-    void swap(Bitmap & other) /*noexcept*/ {
+    void swap(Bitmap & other) noexcept {
         using std::swap;
         swap(this->data_bitmap, other.data_bitmap);
     }
@@ -795,31 +809,31 @@ public:
         return res;
     }
 
-    const uint8_t* data() const {
+    const uint8_t* data() const noexcept {
         return this->data_bitmap->get();
     }
 
-    const BGRPalette & palette() const {
+    const BGRPalette & palette() const noexcept {
         return this->data_bitmap->palette();
     }
 
-    uint16_t cx() const {
+    uint16_t cx() const noexcept {
         return this->data_bitmap->cx();
     }
 
-    uint16_t cy() const {
+    uint16_t cy() const noexcept {
         return this->data_bitmap->cy();
     }
 
-    size_t line_size() const {
+    size_t line_size() const noexcept {
         return this->data_bitmap->line_size();
     }
 
-    uint8_t bpp() const {
+    uint8_t bpp() const noexcept {
         return this->data_bitmap->bpp();
     }
 
-    size_t bmp_size() const {
+    size_t bmp_size() const noexcept {
         return this->data_bitmap->bmp_size();
     }
 

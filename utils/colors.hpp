@@ -41,7 +41,7 @@ struct BGRPalette
     BGRPalette() = delete;
 
     struct no_init {};
-    explicit BGRPalette(no_init)
+    explicit BGRPalette(no_init) noexcept
     {}
 
     explicit BGRPalette(std::nullptr_t) noexcept
@@ -69,7 +69,7 @@ struct BGRPalette
     void set_color(std::size_t i, BGRColor c) noexcept
     { this->palette[i] = c; }
 
-    void set_data(uint8_t const * palette_data) noexcept
+    void set_data(uint8_t const * palette_data)
     { memcpy(this->palette, palette_data, sizeof(this->palette)); }
 
     const char * data() const noexcept

@@ -38,13 +38,13 @@ struct CryptoInMetaSequenceTransport
         detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(filename, 0, crypto_ctx, crypto_ctx))
     {}
 
-    unsigned begin_chunk_time() const /*noexcept*/
+    unsigned begin_chunk_time() const noexcept
     { return this->buffer().get_begin_chunk_time(); }
 
-    unsigned end_chunk_time() const /*noexcept*/
+    unsigned end_chunk_time() const noexcept
     { return this->buffer().get_end_chunk_time(); }
 
-    const char * path() const /*noexcept*/
+    const char * path() const noexcept
     { return this->buffer().current_path(); }
 };
 

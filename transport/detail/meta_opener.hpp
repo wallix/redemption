@@ -40,7 +40,7 @@ namespace detail
         char * cur;
         Reader reader;
 
-        int read(int err) /*noexcept*/
+        int read(int err)
         {
             ssize_t ret = this->reader(this->buf, sizeof(this->buf));
             if (ret < 0 && errno != EINTR) {
@@ -55,13 +55,13 @@ namespace detail
         }
 
     public:
-        ReaderLine(Reader reader) /*noexcept*/
+        ReaderLine(Reader reader) noexcept
         : eof(buf)
         , cur(buf)
         , reader(reader)
         {}
 
-        ssize_t read_line(char * dest, size_t len, int err) /*noexcept*/
+        ssize_t read_line(char * dest, size_t len, int err)
         {
             ssize_t total_read = 0;
             while (1) {
@@ -86,7 +86,7 @@ namespace detail
             return total_read;
         }
 
-        int next_line() /*noexcept*/
+        int next_line()
         {
             char * pos;
             while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
@@ -184,7 +184,7 @@ namespace detail
                           , sizeof(extension), this->verbose);
         }
 
-        ssize_t read(void * data, size_t len) /*noexcept*/
+        ssize_t read(void * data, size_t len)
         {
             if (!this->is_open()) {
                 if (const int e = this->open_next()) {
@@ -295,13 +295,13 @@ namespace detail
         }
 
     public:
-        const char * current_path() const /*noexcept*/
+        const char * current_path() const noexcept
         { return this->path; }
 
-        unsigned get_begin_chunk_time() const /*noexcept*/
+        unsigned get_begin_chunk_time() const noexcept
         { return this->begin_chunk_time; }
 
-        unsigned get_end_chunk_time() const /*noexcept*/
+        unsigned get_end_chunk_time() const noexcept
         { return this->end_chunk_time; }
 
     private:
@@ -334,7 +334,7 @@ namespace detail
             }
         }
 
-        const char * c_str() const /*noexcept*/
+        const char * c_str() const noexcept
         { return this->str; }
     };
 }

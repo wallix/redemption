@@ -34,12 +34,12 @@ namespace transbuf {
         std::size_t current;
 
     public:
-        check_base() /*noexcept*/
+        check_base() noexcept
         : len(0)
         , current(0)
         {}
 
-        int open(const char * data, size_t len) /*noexcept*/
+        int open(const char * data, size_t len)
         {
             this->data.reset(new(std::nothrow) uint8_t[len]);
             memcpy(this->data.get(), data, len);
@@ -48,7 +48,7 @@ namespace transbuf {
             return 0;
         }
 
-        int close() /*noexcept*/
+        int close() noexcept
         {
             this->data.reset();
             this->current = 0;
@@ -56,7 +56,7 @@ namespace transbuf {
             return 0;
         }
 
-        int write(const void * buffer, size_t len) /*noexcept*/
+        int write(const void * buffer, size_t len)
         {
             const size_t rlen = std::min<size_t>(this->len - this->current, len);
             const uint8_t * databuf = static_cast<const uint8_t *>(buffer);
@@ -65,10 +65,10 @@ namespace transbuf {
             return p - (databuf + rlen);
         }
 
-        bool is_open() const /*noexcept*/
+        bool is_open() const noexcept
         { return this->data.get(); }
 
-        int flush() const /*noexcept*/
+        int flush() const noexcept
         { return 0; }
     };
 

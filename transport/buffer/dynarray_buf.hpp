@@ -33,12 +33,12 @@ namespace transbuf {
         std::size_t current;
 
     public:
-        dynarray_base() /*noexcept*/
+        dynarray_base() noexcept
         : len(0)
         , current(0)
         {}
 
-        int open(size_t len, const char * data = 0) /*noexcept*/
+        int open(size_t len, const char * data = 0)
         {
             this->data.reset(new(std::nothrow) uint8_t[len]);
             if (!this->data) {
@@ -52,7 +52,7 @@ namespace transbuf {
             return 0;
         }
 
-        int close() /*noexcept*/
+        int close() noexcept
         {
             this->data.reset();
             this->current = 0;
@@ -60,20 +60,20 @@ namespace transbuf {
             return 0;
         }
 
-        long int read(void * buffer, size_t len) /*noexcept*/
+        long int read(void * buffer, size_t len)
         { return this->copy(buffer, this->data.get() + this->current, len); }
 
-        long int write(const void * buffer, size_t len) /*noexcept*/
+        long int write(const void * buffer, size_t len)
         { return this->copy(this->data.get() + this->current, buffer, len); }
 
-        bool is_open() const /*noexcept*/
+        bool is_open() const noexcept
         { return this->data.get(); }
 
-        int flush() const /*noexcept*/
+        int flush() const noexcept
         { return 0; }
 
     private:
-        long int copy(void * dest, const void * src, size_t len)  /*noexcept*/
+        long int copy(void * dest, const void * src, size_t len)
         {
             const size_t rlen = std::min<size_t>(this->len - this->current, len);
             memcpy(dest, src, rlen);
