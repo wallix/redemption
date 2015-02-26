@@ -169,6 +169,8 @@ public:
         this->stream.set_out_uint16_le(orderLength,
             this->offset_of_orderLength);
     }
+
+    static size_t header_length() { return 4; /* orderType(4) */ }
 };
 
 // [MS-RDPERP] - 2.2.2.2.1 Handshake PDU (TS_RAIL_ORDER_HANDSHAKE)
@@ -216,6 +218,74 @@ class HandshakePDU_Send {
 public:
     HandshakePDU_Send(Stream & stream, uint32_t buildNumber) {
         stream.out_uint32_le(buildNumber);
+
+        stream.mark_end();
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.2.2 Client Information PDU
+//  (TS_RAIL_ORDER_CLIENTSTATUS)
+// ==============================================
+
+// The Client Information PDU is sent from client to server and contains
+//  information about RAIL client state and features supported by the client.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             header                            |
+// +---------------------------------------------------------------+
+// |                             Flags                             |
+// +---------------------------------------------------------------+
+
+// header (4 bytes): A TS_RAIL_PDU_HEADER structure. The orderType field of
+//  header MUST be set to 0x000b (TS_RAIL_ORDER_CLIENTSTATUS).
+
+// Flags (4 bytes): An unsigned 32-bit integer. RAIL features that are
+//  supported by the client; MUST be set to one of the following.
+
+//   +-----------------------------------------+-------------------------------+
+//   | Value                                   |   Meaning                     |
+//   +-----------------------------------------+-------------------------------+
+//   | TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE | Indicates that the client     |
+//   | 0x00000001                              | supports the local move/size  |
+//   |                                         | RAIL feature.                 |
+//   +-----------------------------------------+-------------------------------+
+//   | TS_RAIL_CLIENTSTATUS_AUTORECONNECT      | Indicates that the client is  |
+//   | 0x00000002                              | auto-reconnecting to the      |
+//   |                                         | server after an unexpected    |
+//   |                                         | disconnect of the session.    |
+//   +-----------------------------------------+-------------------------------+
+
+enum {
+      TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE = 0x00000001
+    , TS_RAIL_CLIENTSTATUS_AUTORECONNECT      = 0x00000002
+};
+
+class ClientInformationPDU_Recv {
+    uint32_t Flags_;
+
+public:
+    ClientInformationPDU_Recv(Stream & stream) {
+        const unsigned expected = 4;    // Flags(4)
+
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR, "Client Information PDU: expected=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_RAIL_PDU_TRUNCATED);
+        }
+
+        this->Flags_ = stream.in_uint32_le();
+    }
+
+    uint32_t Flags() const { return this->Flags_; }
+};
+
+class ClientInformationPDU_Send {
+public:
+    ClientInformationPDU_Send(Stream & stream, uint32_t Flags) {
+        stream.out_uint32_le(Flags);
 
         stream.mark_end();
     }
