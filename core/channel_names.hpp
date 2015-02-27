@@ -28,6 +28,7 @@ namespace CHANNELS {
         DEF_NAME(rdpdr);
         DEF_NAME(rdpsnd);
         DEF_NAME(drdynvc);
+        DEF_NAME(rail);
     };
 #undef DEF_NAME
 }

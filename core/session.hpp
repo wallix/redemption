@@ -219,7 +219,12 @@ public:
                 if (is_set(front_event, &front_trans, rfds) || (front_trans.tls && SSL_pending(front_trans.allocated_ssl))) {
                     try {
                         this->front->incoming(*mm.mod);
+                    } catch (Error & e) {
+                        LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
+                        run_session = false;
+                        continue;
                     } catch (...) {
+                        LOG(LOG_ERR, "Proxy data processing raised unknown error");
                         run_session = false;
                         continue;
                     };

@@ -83,6 +83,8 @@ struct ClientInfo {
                            2 = arbitrary dimensions */
     bool console_session = false;
 
+    bool remote_program = false;
+
     GlyphCache::number_of_entries_t number_of_entries_in_glyph_cache = { {
           NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
@@ -155,6 +157,8 @@ struct ClientInfo {
             this->rdp_compression      = 1;
             this->rdp_compression_type = ((infoPacket.flags & CompressionTypeMask) >> 9);
         }
+
+        this->remote_program = (infoPacket.flags & INFO_RAIL);
     }
 };
 
