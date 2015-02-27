@@ -220,7 +220,10 @@ public:
                     try {
                         this->front->incoming(*mm.mod);
                     } catch (Error & e) {
-                        LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
+                        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
+                            // Can be caused by wabwatchdog.
+                            LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
+                        }
                         run_session = false;
                         continue;
                     } catch (...) {
