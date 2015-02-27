@@ -525,4 +525,267 @@ public:
     }
 };
 
+// [MS-RDPERP] - 2.2.2.4.1 Client System Parameters Update PDU
+//  (TS_RAIL_ORDER_SYSPARAM)
+// ===========================================================
+
+// The Client System Parameters Update PDU is sent from the client to the
+//  server to synchronize system parameters on the server with those on the
+//  client.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             header                            |
+// +---------------------------------------------------------------+
+// |                          SystemParam                          |
+// +---------------------------------------------------------------+
+// |                        Body (variable)                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// header (4 bytes): A TS_RAIL_PDU_HEADER structure. The orderType field of
+//  header MUST be set to TS_RAIL_ORDER_SYSPARAM(0x0003).
+
+// SystemParam (4 bytes): An unsigned 32-bit integer. The type of system
+//  parameter being transmitted. The field MUST be set to one of the
+//  following values.
+
+//   +------------------------+------------------------------------------------+
+//   | Value                  | Meaning                                        |
+//   +------------------------+------------------------------------------------+
+//   | SPI_SETDRAGFULLWINDOWS | The system parameter for full-window drag.     |
+//   | 0x00000025             |                                                |
+//   +------------------------+------------------------------------------------+
+//   | SPI_SETKEYBOARDCUES    | The system parameter to determine whether menu |
+//   | 0x0000100B             | access keys are always underlined.             |
+//   +------------------------+------------------------------------------------+
+//   | SPI_SETKEYBOARDPREF    | The system parameter specifying a preference   |
+//   | 0x00000045             | for the keyboard instead of the mouse.         |
+//   +------------------------+------------------------------------------------+
+//   | SPI_SETWORKAREA        | The system parameter to set the size of the    |
+//   | 0x0000002F             | work area. The work area is the portion of the |
+//   |                        | screen not obscured by the system taskbar or   |
+//   |                        | by application desktop toolbars.               |
+//   +------------------------+------------------------------------------------+
+//   | RAIL_SPI_DISPLAYCHANGE | The system parameter for display resolution.   |
+//   | 0x0000F001             |                                                |
+//   +------------------------+------------------------------------------------+
+//   | SPI_SETMOUSEBUTTONSWAP | The system parameter to swap or restore the    |
+//   | 0x00000021             | meaning of the left and right mouse buttons.   |
+//   +------------------------+------------------------------------------------+
+//   | RAIL_SPI_TASKBARPOS    | The system parameter to indicate the size of   |
+//   | 0x0000F000             | the client taskbar.                            |
+//   +------------------------+------------------------------------------------+
+//   | SPI_SETHIGHCONTRAST    | The system parameter to set the parameters of  |
+//   | 0x00000043             | the HighContrast accessibility feature.        |
+//   +------------------------+------------------------------------------------+
+
+enum {
+      SPI_SETDRAGFULLWINDOWS = 0x00000025
+    , SPI_SETKEYBOARDCUES    = 0x0000100B
+    , SPI_SETKEYBOARDPREF    = 0x00000045
+    , SPI_SETWORKAREA        = 0x0000002F
+    , RAIL_SPI_DISPLAYCHANGE = 0x0000F001
+    , SPI_SETMOUSEBUTTONSWAP = 0x00000021
+    , RAIL_SPI_TASKBARPOS    = 0x0000F000
+    , SPI_SETHIGHCONTRAST    = 0x00000043
+};
+
+// Body (variable): The contents of this field depend on the SystemParameter
+//  field. The following table outlines the valid values of the
+//  SystemParameter field (Value column) and corresponding values of the Body
+//  field (Meaning column).
+
+//   +------------------------+------------------------------------------------+
+//   | Value                  | Meaning                                        |
+//   +------------------------+------------------------------------------------+
+//   | SPI_SETDRAGFULLWINDOWS | Size of Body field: 1 byte.                    |
+//   | 0x0025                 | 0 (FALSE): Full Window Drag is disabled.       |
+//   |                        | Nonzero (TRUE): Full Window Drag is enabled.   |
+//   +------------------------+------------------------------------------------+
+//   | SPI_SETKEYBOARDCUES    | Size of Body field: 1 byte.                    |
+//   | 0x100B                 | 0 (FALSE): Menu Access Keys are underlined     |
+//   |                        | only when the menu is activated by the         |
+//   |                        | keyboard. Nonzero (TRUE): Menu Access Keys are |
+//   |                        | always underlined.                             |
+//   +------------------------+------------------------------------------------+
+//   | SPI_SETKEYBOARDPREF    | Size of Body field: 1 byte.                    |
+//   | 0x0045                 | 0 (FALSE): The user does not prefer the        |
+//   |                        | keyboard over mouse. Nonzero (TRUE): The user  |
+//   |                        | prefers the keyboard over mouse. This causes   |
+//   |                        | applications to display keyboard interfaces    |
+//   |                        | that would otherwise be hidden.                |
+//   +------------------------+------------------------------------------------+
+//   | SPI_SETMOUSEBUTTONSWAP | Size of Body field: 1 byte.                    |
+//   | 0x0021                 | 0 (FALSE): Restores the meaning of the left    |
+//   |                        | and right mouse buttons to their original      |
+//   |                        | meanings. Nonzero (TRUE): Swaps the meaning of |
+//   |                        | the left and right mouse buttons.              |
+//   +------------------------+------------------------------------------------+
+//   | SPI_SETWORKAREA        | Size of Body field: 8 bytes.                   |
+//   | 0x002F                 | The body is a TS_RECTANGLE_16 structure that   |
+//   |                        | defines the work area in virtual screen        |
+//   |                        | coordinates. In a system with multiple display |
+//   |                        | monitors, the work area is that of the monitor |
+//   |                        | that contains the specified rectangle. For     |
+//   |                        | more information about virtual screen          |
+//   |                        | coordinates, see [MSDN-VIRTUALSCR].            |
+//   +------------------------+------------------------------------------------+
+//   | RAIL_SPI_DISPLAYCHANGE | Size of Body field: 8 bytes.                   |
+//   | 0xF001                 | The body is a TS_RECTANGLE_16 structure that   |
+//   |                        | indicates the new display resolution in        |
+//   |                        | virtual screen coordinates. For more           |
+//   |                        | information about virtual screen coordinates,  |
+//   |                        | see [MSDN-VIRTUALSCR].                         |
+//   +------------------------+------------------------------------------------+
+//   | RAIL_SPI_TASKBARPOS    | Size of Body field: 8 bytes.                   |
+//   | 0xF000                 | The body is a TS_RECTANGLE_16 structure that   |
+//   |                        | indicates the size of the client taskbar.      |
+//   +------------------------+------------------------------------------------+
+//   | SPI_SETHIGHCONTRAST    | Size of Body field: Variable number of bytes.  |
+//   | 0x0043                 | The body is a TS_HIGHCONTRAST structure.       |
+//   +------------------------+------------------------------------------------+
+
+class ClientSystemParametersUpdatePDU_Recv {
+    uint32_t SystemParam_;
+
+public:
+    ClientSystemParametersUpdatePDU_Recv(Stream & stream) {
+        const unsigned expected = 4;    // SystemParam(4)
+
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR, "Client System Parameters Update PDU: expected=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_RAIL_PDU_TRUNCATED);
+        }
+
+        this->SystemParam_ = stream.in_uint32_le();
+    }
+
+    uint32_t SystemParam() const { return this->SystemParam_; }
+};
+
+class ClientSystemParametersUpdatePDU_Send {
+public:
+    ClientSystemParametersUpdatePDU_Send(Stream & stream, uint32_t SystemParam) {
+        stream.out_uint32_le(SystemParam);
+
+        stream.mark_end();
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.4.2 High Contrast System Information Structure
+//  (TS_HIGHCONTRAST)
+// ==================================================================
+
+// The TS_HIGHCONTRAST packet defines parameters for the high-contrast
+//  accessibility feature.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Flags                             |
+// +---------------------------------------------------------------+
+// |                       ColorSchemeLength                       |
+// +---------------------------------------------------------------+
+// |                     ColorScheme (variable)                    |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Flags (4 bytes): An unsigned 32-bit integer. This field is opaque to RAIL.
+//  It is transmitted from the client to the server and used by the server to
+//  set the High Contrast parameters.<12>
+
+// ColorSchemeLength (4 bytes): An unsigned 32-bit integer. The length, in
+//  bytes, of the ColorScheme field.
+
+// ColorScheme (variable): UNICODE_STRING. Variable length. The
+//  Windows-specific name of the High Contrast Color Scheme, specified as a
+//  null-terminated UNICODE_STRING.<13>
+
+
+class HighContrastSystemInformationStructure_Recv {
+    uint32_t Flags_;
+    uint32_t ColorSchemeLength;
+
+    std::string ColorScheme_;
+
+public:
+    HighContrastSystemInformationStructure_Recv(Stream & stream) {
+        const unsigned expected = 8;    // Flags(4) + ColorSchemeLength(4)
+
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR, "High Contrast System Information Structure: expected=%u remains=%u (0)",
+                expected, stream.in_remain());
+            throw Error(ERR_RAIL_PDU_TRUNCATED);
+        }
+
+        this->Flags_            = stream.in_uint32_le();
+        this->ColorSchemeLength = stream.in_uint32_le();
+
+        if (!stream.in_check_rem(this->ColorSchemeLength)) {
+            LOG(LOG_ERR, "High Contrast System Information Structure: expected=%u remains=%u (1)",
+                this->ColorSchemeLength, stream.in_remain());
+            throw Error(ERR_RAIL_PDU_TRUNCATED);
+        }
+
+        REDASSERT(this->ColorSchemeLength >= 2 /* CbString(2) */);
+
+        uint16_t CbString = stream.in_uint16_le();
+
+        if (!stream.in_check_rem(CbString)) {
+            LOG(LOG_ERR, "High Contrast System Information Structure: expected=%u remains=%u (2)",
+                this->ColorSchemeLength, stream.in_remain());
+            throw Error(ERR_RAIL_PDU_TRUNCATED);
+        }
+
+        uint8_t * unicode_data = static_cast<uint8_t *>(::alloca(CbString));
+
+        stream.in_copy_bytes(unicode_data, CbString);
+
+        const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+        const size_t size_of_utf8_string =
+                    CbString / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+        uint8_t * utf8_string = static_cast<uint8_t *>(
+            ::alloca(size_of_utf8_string));
+        const size_t length_of_utf8_string = ::UTF16toUTF8(
+            unicode_data, CbString / 2, utf8_string, size_of_utf8_string);
+        this->ColorScheme_.assign(::char_ptr_cast(utf8_string),
+            length_of_utf8_string);
+    }
+
+    uint32_t Flags() const { return this->Flags_; }
+
+    const char * ColorScheme() const { return this->ColorScheme_.c_str(); }
+};
+
+class HighContrastSystemInformationStructure_Send {
+public:
+    HighContrastSystemInformationStructure_Send(Stream & stream, uint32_t Flags, const char * color_scheme) {
+        stream.out_uint32_le(Flags);
+
+        const size_t maximum_length_of_ColorScheme_in_bytes = strlen(color_scheme) * 2;
+
+        uint8_t * unicode_data = static_cast<uint8_t *>(::alloca(
+                    maximum_length_of_ColorScheme_in_bytes));
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(color_scheme), unicode_data,
+            maximum_length_of_ColorScheme_in_bytes);
+
+        stream.out_uint32_le(2 /* CbString(2) */ + size_of_unicode_data);
+
+        stream.out_uint16_le(size_of_unicode_data);
+
+        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+
+        stream.mark_end();
+    }
+};
+
 #endif  // #ifndef _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_

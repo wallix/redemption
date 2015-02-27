@@ -79,3 +79,34 @@ BOOST_AUTO_TEST_CASE(ClientExecutePDU)
     BOOST_CHECK_EQUAL(client_execute_pdu_r.arguments(),
         "");
 }
+
+BOOST_AUTO_TEST_CASE(ClientSystemParametersUpdatePDU)
+{
+    BStream stream(128);
+
+    ClientSystemParametersUpdatePDU_Send client_system_parameters_update_pdu_s(stream, SPI_SETHIGHCONTRAST);
+
+    stream.rewind();
+
+    ClientSystemParametersUpdatePDU_Recv client_system_parameters_update_pdu_r(stream);
+
+    BOOST_CHECK_EQUAL(client_system_parameters_update_pdu_r.SystemParam(), SPI_SETHIGHCONTRAST);
+}
+
+BOOST_AUTO_TEST_CASE(HighContrastSystemInformationStructure)
+{
+    BStream stream(2048);
+
+    HighContrastSystemInformationStructure_Send high_contrast_system_information_structure_s(
+        stream, 0x10101010, "ColorScheme");
+
+    stream.rewind();
+
+    HighContrastSystemInformationStructure_Recv high_contrast_system_information_structure_r(
+        stream);
+
+    BOOST_CHECK_EQUAL(high_contrast_system_information_structure_r.Flags(),
+        0x10101010);
+    BOOST_CHECK_EQUAL(high_contrast_system_information_structure_r.ColorScheme(),
+        "ColorScheme");
+}
