@@ -62,12 +62,12 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
     form.move_xy(70, 70);
     form.rdp_input_invalidate(form.rect);
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "ticket_form.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "ticket_form.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-                   "\xb0\x1f\x3a\x5f\x5c\x98\xae\xa8\x1a\x49"
-                   "\x85\x55\x0f\x79\xcb\xcb\xdd\xf6\x50\x84"
+                   "\xef\x9b\x22\xa0\x67\x83\x78\xe2\x3b\xe8"
+                   "\xbb\xab\x5e\xae\x43\x73\xf4\xbf\xb9\x03"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
