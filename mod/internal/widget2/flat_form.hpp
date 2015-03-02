@@ -143,7 +143,7 @@ enum {
         this->comment_edit.set_edit_cx(width - labelmaxwidth - 20);
         this->ticket_edit.set_edit_cx(width - labelmaxwidth - 20);
         this->duration_edit.set_edit_cx((width - labelmaxwidth - 20) -
-                                        (this->duration_format.cx() - 20));
+                                        this->duration_format.cx() - 20);
         this->duration_format.rect.x = labelmaxwidth + 20;
         if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
             this->add_widget(&this->notes);
