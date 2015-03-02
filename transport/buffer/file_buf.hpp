@@ -30,22 +30,22 @@ namespace transbuf {
         io::posix::fdbuf fdbuf;
 
     public:
-        int open(const char * filename) /*noexcept*/
+        int open(const char * filename)
         { return this->fdbuf.open(filename, O_RDONLY); }
 
-        int open(const char * filename, mode_t mode) /*noexcept*/
+        int open(const char * filename, mode_t mode)
         { return this->fdbuf.open(filename, O_RDONLY, mode); }
 
-        int close() /*noexcept*/
+        int close()
         { return this->fdbuf.close(); }
 
-        bool is_open() const /*noexcept*/
+        bool is_open() const noexcept
         { return this->fdbuf.is_open(); }
 
-        ssize_t read(void * data, size_t len) /*noexcept*/
+        ssize_t read(void * data, size_t len)
         { return this->fdbuf.read(data, len); }
 
-        off_t seek(off_t offset, int whence) const /*noexcept*/
+        off_t seek(off_t offset, int whence) const
         { return this->fdbuf.seek(offset, whence); }
     };
 
@@ -54,25 +54,25 @@ namespace transbuf {
         io::posix::fdbuf fdbuf;
 
     public:
-        int open(const char * filename) /*noexcept*/
+        int open(const char * filename)
         { return this->fdbuf.open(filename, O_WRONLY | O_CREAT); }
 
-        int open(const char * filename, mode_t mode) /*noexcept*/
+        int open(const char * filename, mode_t mode)
         { return this->fdbuf.open(filename, O_WRONLY | O_CREAT, mode); }
 
-        int close() /*noexcept*/
+        int close()
         { return this->fdbuf.close(); }
 
-        bool is_open() const /*noexcept*/
+        bool is_open() const noexcept
         { return this->fdbuf.is_open(); }
 
-        ssize_t write(const void * data, size_t len) /*noexcept*/
+        ssize_t write(const void * data, size_t len)
         { return this->fdbuf.write(data, len); }
 
-        off_t seek(off_t offset, int whence) const /*noexcept*/
+        off_t seek(off_t offset, int whence) const
         { return this->fdbuf.seek(offset, whence); }
 
-        int flush() const /*noexcept*/
+        int flush() const
         { return 0; }
     };
 }

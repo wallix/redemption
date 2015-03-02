@@ -40,19 +40,19 @@ struct InMetaSequenceTransport
         this->verbose = verbose;
     }
 
-    InMetaSequenceTransport(const char * filename, uint32_t verbose = 0) /*noexcept*/
+    InMetaSequenceTransport(const char * filename, uint32_t verbose = 0)
     : InMetaSequenceTransport::TransportType(detail::in_meta_sequence_buf_param<>(filename, verbose))
     {
         this->verbose = verbose;
     }
 
-    unsigned begin_chunk_time() const /*noexcept*/
+    unsigned begin_chunk_time() const noexcept
     { return this->buffer().get_begin_chunk_time(); }
 
-    unsigned end_chunk_time() const /*noexcept*/
+    unsigned end_chunk_time() const noexcept
     { return this->buffer().get_end_chunk_time(); }
 
-    const char * path() const /*noexcept*/
+    const char * path() const noexcept
     { return this->buffer().current_path(); }
 };
 

@@ -60,7 +60,7 @@ public:
         return *this;
     }
 
-    ~fdbuf() noexcept
+    ~fdbuf()
     {
         this->close();
     }
@@ -70,28 +70,28 @@ public:
     //   return this->fd;
     //}
 
-    int open(const char *pathname, int flags) noexcept
+    int open(const char *pathname, int flags)
     {
         this->close();
         this->fd = ::open(pathname, flags);
         return fd;
     }
 
-    int open(const char *pathname, int flags, mode_t mode) noexcept
+    int open(const char *pathname, int flags, mode_t mode)
     {
         this->close();
         this->fd = ::open(pathname, flags, mode);
         return fd;
     }
 
-    int open(int fd) noexcept
+    int open(int fd)
     {
         this->close();
         this->fd = fd;
         return fd;
     }
 
-    int close() noexcept
+    int close()
     {
         if (this->is_open()) {
             const int ret = ::close(this->fd);
@@ -111,24 +111,24 @@ public:
         return this->is_open();
     }
 
-    ssize_t read(void * data, size_t len) const noexcept
+    ssize_t read(void * data, size_t len) const
     {
         return read_all(this->fd, data, len);
     }
 
-    ssize_t write(const void * data, size_t len) const noexcept
+    ssize_t write(const void * data, size_t len) const
     {
         return write_all(this->fd, data, len);
     }
 
-    off_t seek(off_t offset, int whence) const noexcept
+    off_t seek(off_t offset, int whence) const
     { return lseek(this->fd, offset, whence); }
 
     void swap(fdbuf & other) noexcept
     {
-        this->close();
+        int const fd = this->fd;
         this->fd = other.fd;
-        other.fd = -1;
+        other.fd = fd;
     }
 };
 

@@ -131,10 +131,10 @@ namespace detail
             this->close();
         }
 
-        int close() /*noexcept*/
+        int close()
         { return this->next(); }
 
-        ssize_t write(const void * data, size_t len) /*noexcept*/
+        ssize_t write(const void * data, size_t len)
         {
             if (!this->buf_.is_open()) {
                 const int res = this->open_filename(this->filegen_.get(this->num_file_));
@@ -146,7 +146,7 @@ namespace detail
         }
 
         /// \return 0 if success
-        int next() /*noexcept*/
+        int next()
         {
             if (this->buf_.is_open()) {
                 this->buf_.close();
@@ -166,7 +166,7 @@ namespace detail
             }
         }
 
-        int flush() /*noexcept*/
+        int flush()
         {
             if (this->buf_.is_open()) {
                 return this->buf_.flush();
@@ -174,13 +174,13 @@ namespace detail
             return 0;
         }
 
-        off_t seek(int64_t offset, int whence) /*noexcept*/
+        off_t seek(int64_t offset, int whence)
         { return this->buf_.seek(offset, whence); }
 
-        const FilenameGenerator & seqgen() const /*noexcept*/
+        const FilenameGenerator & seqgen() const noexcept
         { return this->filegen_; }
 
-        Buf & buf()
+        Buf & buf() noexcept
         { return this->buf_; }
 
         const char * current_path() const
@@ -192,7 +192,7 @@ namespace detail
         }
 
     protected:
-        ssize_t open_filename(const char * filename) /*noexcept*/
+        ssize_t open_filename(const char * filename)
         {
             snprintf(this->current_filename_, sizeof(this->current_filename_),
                         "%sred-XXXXXX.tmp", filename);
@@ -289,7 +289,7 @@ namespace detail
             this->close();
         }
 
-        int close() /*noexcept*/
+        int close()
         {
             const int res1 = this->next();
             const int res2 = (this->meta_buf().is_open() ? this->meta_buf_.close() : 0);
@@ -297,7 +297,7 @@ namespace detail
         }
 
         /// \return 0 if success
-        int next() /*noexcept*/
+        int next()
         {
             if (this->buf().is_open()) {
                 this->buf().close();
@@ -328,17 +328,17 @@ namespace detail
             ::unlink(this->mf_.filename);
         }
 
-        int flush() /*noexcept*/
+        int flush()
         {
             const int res1 = this->sequence_base_type::flush();
             const int res2 = this->meta_buf_.flush();
             return res1 == 0 ? res2 : res1;
         }
 
-        BufMeta & meta_buf()
+        BufMeta & meta_buf() noexcept
         { return this->meta_buf_; }
 
-        void update_sec(time_t sec) /*noexcept*/
+        void update_sec(time_t sec)
         { this->stop_sec_ = sec; }
     };
 }

@@ -76,7 +76,7 @@ namespace detail {
             this->close();
         }
 
-        ssize_t write(const void * data, size_t len) /*noexcept*/
+        ssize_t write(const void * data, size_t len)
         {
             if (!this->buf().is_open()) {
                 const char * filename = this->get_filename_generate();
@@ -103,7 +103,7 @@ namespace detail {
             return this->encrypt_wrm.write(this->buf(), data, len);
         }
 
-        int close() /*noexcept*/
+        int close()
         {
             if (this->buf().is_open()) {
                 if (this->next()) {
@@ -155,7 +155,7 @@ namespace detail {
             return 0;
         }
 
-        int next() /*noexcept*/
+        int next()
         {
             if (this->buf().is_open()) {
                 unsigned char hash[HASH_LEN];
@@ -241,12 +241,12 @@ RequestCleaningTransport<
         detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier);
     }
 
-    virtual void timestamp(timeval now) /*noexcept*/
+    virtual void timestamp(timeval now)
     {
         this->buffer().update_sec(now.tv_sec);
     }
 
-    const FilenameGenerator * seqgen() const /*noexcept*/
+    const FilenameGenerator * seqgen() const noexcept
     {
         return &(this->buffer().seqgen());
     }

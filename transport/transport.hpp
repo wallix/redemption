@@ -68,38 +68,38 @@ public:
     virtual ~Transport()
     {}
 
-    //virtual const SequenceGenerator * seqgen() const
+    //virtual const SequenceGenerator * seqgen() const noexcept
     //{ return this->pseq; }
 
-    uint32_t get_seqno() const /*noexcept*/
+    uint32_t get_seqno() const
     { return this->seqno; }
 
-    uint64_t get_total_received() const /*noexcept*/
+    uint64_t get_total_received() const
     { return this->total_received + this->last_quantum_received; }
 
-    uint64_t get_last_quantum_received() const /*noexcept*/
+    uint64_t get_last_quantum_received() const
     { return this->last_quantum_received; }
 
-    uint64_t get_total_sent() const /*noexcept*/
+    uint64_t get_total_sent() const
     { return this->total_sent + this->last_quantum_sent; }
 
-    uint64_t get_last_quantum_sent() const /*noexcept*/
+    uint64_t get_last_quantum_sent() const
     { return this->last_quantum_sent; }
 
-    bool get_status() const /*noexcept*/
+    bool get_status() const
     { return this->status; }
 
-    void set_authentifier(auth_api * authentifier) /*noexcept*/
+    void set_authentifier(auth_api * authentifier)
     {
         this->authentifier = authentifier;
     }
 
-    //void reset_quantum_sent() /*noexcept*/
+    //void reset_quantum_sent() noexcept
     //{
     //    this->last_quantum_sent = 0;
     //}
 
-    void tick() /*noexcept*/
+    void tick()
     {
         this->total_received += this->last_quantum_received;
         this->total_sent += this->last_quantum_sent;
@@ -210,7 +210,7 @@ public:
         return true;
     }
 
-    virtual void timestamp(timeval now) /*noexcept*/
+    virtual void timestamp(timeval now)
     {}
 
     virtual bool next()
@@ -227,8 +227,8 @@ public:
     {}
 
 private:
-    Transport(const Transport &);
-    Transport& operator=(const Transport &);
+    Transport(const Transport &) = delete;
+    Transport& operator=(const Transport &) = delete;
 };
 
 #endif

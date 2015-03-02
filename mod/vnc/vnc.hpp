@@ -41,6 +41,7 @@
 #include "update_lock.hpp"
 #include "socket_transport.hpp"
 #include "channel_names.hpp"
+#include "apply_for_delim.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -471,33 +472,18 @@ public:
 protected:
     static void fill_encoding_types_buffer(const char * encodings, Stream & stream, uint16_t & number_of_encodings, uint32_t verbose)
     {
-        number_of_encodings = 0;
-
-        const char * tmp_encoding  = encodings;
-        int32_t      encoding_type;
-
         if (verbose) {
             LOG(LOG_INFO, "VNC Encodings=\"%s\"", encodings);
         }
-
-        while (*tmp_encoding)
-        {
-            encoding_type = long_from_cstr(tmp_encoding);
+        number_of_encodings = 0;
+        apply_for_delim(encodings, ',', [verbose, &number_of_encodings, &stream](const char * s) {
+            const int32_t encoding_type = long_from_cstr(s);
             if (verbose) {
                 LOG(LOG_INFO, "VNC Encoding type=0x%08X", encoding_type);
             }
             stream.out_uint32_be(encoding_type);
-            number_of_encodings++;
-
-            tmp_encoding = strchr(tmp_encoding, ',');
-            if (!tmp_encoding)
-            {
-                break;
-            }
-
-            while ((*tmp_encoding == ',') || (*tmp_encoding == ' ') || (*tmp_encoding == '\t'))
-                tmp_encoding++;
-        }
+            ++number_of_encodings;
+        });
     }
 
 public:

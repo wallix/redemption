@@ -37,26 +37,26 @@ namespace transbuf {
         unsigned char * e;
 
     public:
-        ibuffering_buf() /*noexcept*/
+        ibuffering_buf() noexcept
         : p(this->buffer)
         , e(this->buffer)
         {}
 
         template<class T>
-        ibuffering_buf(const T & params) /*noexcept*/
+        ibuffering_buf(const T & params)
         : Buf(params)
         , p(this->buffer)
         , e(this->buffer)
         {}
 
-        int close() /*noexcept*/
+        int close()
         {
             this->p = this->buffer;
             this->e = this->buffer;
             return Buf::close();
         }
 
-        long int read(void * buffer, size_t len) /*noexcept*/
+        long int read(void * buffer, size_t len)
         {
             const std::size_t sz = this->e - this->p;
             if (len > sz) {
@@ -110,12 +110,12 @@ namespace transbuf {
         typedef long int long_int;
 
     public:
-        obuffering_buf() /*noexcept*/
+        obuffering_buf() noexcept
         : p(this->buffer)
         {}
 
         template<class T>
-        obuffering_buf(const T & params) /*noexcept*/
+        obuffering_buf(const T & params)
         : Buf(params)
         , p(this->buffer)
         {}
@@ -128,7 +128,7 @@ namespace transbuf {
             }
         }
 
-        int close() /*noexcept*/
+        int close()
         {
             const std::size_t sz = this->p - this->buffer;
             long int res = sz ? Buf::write(this->buffer, sz) : 0;
@@ -137,7 +137,7 @@ namespace transbuf {
             return rclose ? rclose : (res < 0 ? res : (res != long_int(sz) ? -1 : 0));
         }
 
-        long int write(const void * buffer, size_t len) /*noexcept*/
+        long int write(const void * buffer, size_t len)
         {
             const std::size_t sz = this->p - this->buffer;
             if (sz + len > Size || len >= buffering_max_len) {
@@ -163,7 +163,7 @@ namespace transbuf {
             return len;
         }
 
-        int flush() /*noexcept*/
+        int flush()
         {
             const long int sz = this->p - this->buffer;
             if (sz) {

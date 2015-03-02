@@ -24,29 +24,29 @@
 #include <sys/time.h>
 #include <stdint.h>
 
-inline bool operator<(const timeval & a, const timeval & b) /*noexcept*/ {
+inline bool operator<(const timeval & a, const timeval & b) noexcept {
     return a.tv_sec < b.tv_sec
        || (a.tv_sec == b.tv_sec
         && a.tv_usec < b.tv_usec);
 }
 
-inline bool operator==(const timeval & a, const timeval & b) /*noexcept*/ {
+inline bool operator==(const timeval & a, const timeval & b) noexcept {
     return a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec;
 }
 
-inline bool operator!=(const timeval & a, const timeval & b) /*noexcept*/ {
+inline bool operator!=(const timeval & a, const timeval & b) noexcept {
     return !(a == b);
 }
 
-inline bool operator>(const timeval & a, const timeval & b) /*noexcept*/ {
+inline bool operator>(const timeval & a, const timeval & b) noexcept {
     return b < a;
 }
 
-inline bool operator<=(const timeval & a, const timeval & b) /*noexcept*/ {
+inline bool operator<=(const timeval & a, const timeval & b) noexcept {
     return !(b < a);
 }
 
-inline bool operator>=(const timeval & a, const timeval & b) /*noexcept*/ {
+inline bool operator>=(const timeval & a, const timeval & b) noexcept {
     return !(a < b);
 }
 

@@ -76,6 +76,7 @@
 #include "parser.hpp"
 #include "channel_names.hpp"
 #include "finally.hpp"
+#include "apply_for_delim.hpp"
 
 class mod_rdp : public mod_api {
     FrontAPI & front;
@@ -209,9 +210,6 @@ class mod_rdp : public mod_api {
 
     bool deactivation_reactivation_in_progress;
 
-    std::string const & unsafe_to_cref(std::string const & ret)
-    { return ret;}
-
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -222,8 +220,8 @@ public:
         : mod_api(info.width - (info.width % 4), info.height)
         , front(front)
         , authorization_channels(
-            mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : unsafe_to_cref(std::string{}),
-            mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : unsafe_to_cref(std::string{})
+            mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
+            mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
           )
         , use_rdp5(1)
         , keylayout(info.keylayout)
@@ -498,16 +496,12 @@ public:
     }
 
     void configure_extra_orders(const char * extra_orders) {
-        const char * tmp_extra_orders  = extra_orders;
-        uint8_t      order_number;
-
         if (verbose) {
             LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);
         }
 
-        while (*tmp_extra_orders)
-        {
-            order_number = long_from_cstr(tmp_extra_orders);
+        apply_for_delim(extra_orders, ',', [this](const char *order) {
+            int const order_number = long_from_cstr(order);
             if (verbose) {
                 LOG(LOG_INFO, "RDP Extra orders number=%d", order_number);
             }
@@ -572,16 +566,7 @@ public:
                 }
                 break;
             }
-
-            tmp_extra_orders = strchr(tmp_extra_orders, ',');
-            if (!tmp_extra_orders)
-            {
-                break;
-            }
-
-            while ((*tmp_extra_orders == ',') || (*tmp_extra_orders == ' ') || (*tmp_extra_orders == '\t'))
-                tmp_extra_orders++;
-        }
+        }, [](char c) { return c == ' ' || c == '\t' || c == ','; });
     }
 
     virtual void rdp_input_scancode( long param1, long param2, long device_flags, long time
@@ -2012,6 +1997,9 @@ public:
                             else if (!strcmp(mod_channel.name, channel_names::cliprdr)) {
                                 this->process_clipboard_event(mod_channel, sec.payload, length, flags, chunk_size);
                             }
+                            else if (!strcmp(mod_channel.name, channel_names::rail)) {
+                                this->process_rail_event(mod_channel, sec.payload, length, flags, chunk_size);
+                            }
                             else {
                                 if (!strcmp(mod_channel.name, channel_names::rdpdr)) {
                                     auto const packet_id = rdpdr::SharedHeader::read_packet_id(sec.payload);
@@ -2677,6 +2665,24 @@ public:
             glyphcache_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(glyphcache_caps);
+
+
+RailCaps rail_caps;
+rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED;
+if (this->verbose & 1) {
+    rail_caps.log("Sending to server");
+}
+confirm_active_pdu.emit_capability_set(rail_caps);
+
+WindowListCaps window_list_caps;
+window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
+window_list_caps.NumIconCaches = 3;
+window_list_caps.NumIconCacheEntries = 12;
+if (this->verbose & 1) {
+    window_list_caps.log("Sending to server");
+}
+confirm_active_pdu.emit_capability_set(window_list_caps);
+
 
         confirm_active_pdu.emit_end();
 
@@ -5081,9 +5087,12 @@ public:
             infoPacket.flags |= ((this->rdp_compression - 1) << 9);
         }
 
+//infoPacket.flags |= INFO_RAIL;
+
         if (this->verbose & 1) {
             infoPacket.log("Sending to server: ", this->password_printing_mode);
         }
+
         infoPacket.emit(stream);
         stream.mark_end();
 
@@ -5278,14 +5287,131 @@ public:
         this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     }
 
+
     void process_auth_event(const CHANNELS::ChannelDef & mod_channel,
-        Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size);
+            Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+        std::string auth_channel_message(char_ptr_cast(stream.p), stream.in_remain());
 
-    void process_clipboard_event(const CHANNELS::ChannelDef & mod_channel,
-        Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size);
+        LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message.c_str());
+
+        this->auth_channel_flags  = flags;
+        this->auth_channel_chanid = mod_channel.chanid;
+
+        if (this->acl) {
+            this->acl->set_auth_channel_target(auth_channel_message.c_str());
+        }
+    }
+
+    void process_clipboard_event(
+            const CHANNELS::ChannelDef & mod_channel, Stream & stream,
+            uint32_t length, uint32_t flags, size_t chunk_size) {
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp server clipboard PDU");
+        }
+
+        const uint16_t msgType = stream.in_uint16_le();
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%d", msgType);
+        }
+
+        bool cencel_pdu = false;
+
+        if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+            if (!this->authorization_channels.cliprdr_up_is_authorized() &&
+                !this->authorization_channels.cliprdr_down_is_authorized()) {
+                if (this->verbose & 1) {
+                    LOG(LOG_INFO, "mod_rdp clipboard is fully disabled (s)");
+                }
+
+                // Build and send the CB_FORMAT_LIST_RESPONSE (with status = OK)
+                // 03 00 01 00 00 00 00 00
+                BStream out_s(256);
+                const bool response_ok = true;
+                RDPECLIP::FormatListResponsePDU(response_ok).emit(out_s);
+
+                this->send_to_channel(
+                    mod_channel, out_s, out_s.size(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                );
+
+                cencel_pdu = true;
+            }
+        }
+        else if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
+            if (!this->authorization_channels.cliprdr_up_is_authorized()) {
+                if (this->verbose & 1) {
+                    LOG(LOG_INFO, "mod_rdp clipboard up is unavailable");
+                }
+
+                BStream out_s(256);
+                RDPECLIP::FormatDataResponsePDU(false).emit(out_s, "\0");
+
+                this->send_to_channel(
+                    mod_channel, out_s, out_s.size(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                );
+
+                cencel_pdu = true;
+            }
+        }
+        else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
+            if (!this->authorization_channels.cliprdr_file_is_authorized()) {
+                if (this->verbose & 1) {
+                    LOG(LOG_INFO, "mod_rdp requesting the contents of client file is denied");
+                }
+
+                BStream out_s(256);
+                const bool response_ok = false;
+                RDPECLIP::FileContentsResponse(response_ok).emit(out_s);
+
+                this->send_to_channel(
+                    mod_channel, out_s, out_s.size(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                );
+
+                cencel_pdu = true;
+            }
+        }
+
+        if (!cencel_pdu) {
+            this->update_total_clipboard_data(msgType, length);
+            stream.p -= 2;  // msgType(2)
+            this->send_to_front_channel(
+                mod_channel.name, stream.p, length, chunk_size, flags
+            );
+        }
+    }
+
+    void process_rail_event(const CHANNELS::ChannelDef & mod_channel,
+        Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size)
+    {
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp server rail PDU");
+        }
+
+        uint16_t orderType   = stream.in_uint16_le();
+        uint16_t orderLength = stream.in_uint16_le();
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp server rail PDU: orderType=%u orderLength=%u",
+                orderType, orderLength);
+        }
+
+        stream.p -= 4;  // orderType(2) + orderLength(2)
+        this->send_to_front_channel(
+            mod_channel.name, stream.p, length, chunk_size, flags
+        );
+    }
+
+    void send_rail_event(Stream & chunk, size_t length, uint32_t flags) {
+        const CHANNELS::ChannelDef * rail_channel = this->mod_channel_list.get_by_name(channel_names::rail);
+        if (rail_channel) {
+            if (this->verbose & 16) {
+                rail_channel->log(unsigned(rail_channel - &this->mod_channel_list[0]));
+            }
+            this->send_to_channel(*rail_channel, chunk, length, flags);
+        }
+    }
 };
-
-#include "rdp_channel_auth.hpp"
-#include "rdp_channel_clipboard.hpp"
 
 #endif

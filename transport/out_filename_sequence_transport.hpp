@@ -58,7 +58,7 @@ RequestCleaningTransport<
         }
     }
 
-    const FilenameGenerator * seqgen() const /*noexcept*/
+    const FilenameGenerator * seqgen() const noexcept
     { return &(this->buffer().seqgen()); }
 };
 

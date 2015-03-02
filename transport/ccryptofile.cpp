@@ -79,7 +79,7 @@ struct Priv_crypto_file_encrypt
 };
 
 
-crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoContext * cctx) /*noexcept*/
+crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoContext * cctx)
 {
     (void)cctx;
     Priv_crypto_file_decrypt * cf_struct = new (std::nothrow) Priv_crypto_file_decrypt(systemfd);
@@ -97,7 +97,6 @@ crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoC
 }
 
 crypto_file * crypto_open_write(int systemfd, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
-/*noexcept*/
 {
     Priv_crypto_file_encrypt * cf_struct = new (std::nothrow) Priv_crypto_file_encrypt(systemfd);
 

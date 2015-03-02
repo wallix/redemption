@@ -28,13 +28,13 @@ namespace detail
 {
     struct NoCurrentPath {
         template<class Buf>
-        /*constexpr*/ static const char * current_path(Buf &) /*noexcept*/
+        static const char * current_path(Buf &)
         { return 0; }
     };
 
     struct GetCurrentPath {
         template<class Buf>
-        static const char * current_path(Buf & buf) /*noexcept*/
+        static const char * current_path(Buf & buf)
         { return buf.current_path(); }
     };
 }
@@ -47,8 +47,7 @@ class OutputTransport
     Buf buf;
 
 public:
-    OutputTransport()
-    {}
+    OutputTransport() = default;
 
     template<class T>
     OutputTransport(const T & buf_params)
@@ -82,10 +81,10 @@ private:
     }
 
 protected:
-    Buf & buffer()
+    Buf & buffer() noexcept
     { return this->buf; }
 
-    const Buf & buffer() const
+    const Buf & buffer() const noexcept
     { return this->buf; }
 
     typedef OutputTransport TransportType;
@@ -98,8 +97,7 @@ class InputTransport
     Buf buf;
 
 public:
-    InputTransport()
-    {}
+    InputTransport() = default;
 
     template<class T>
     InputTransport(const T & buf_params)
@@ -127,10 +125,10 @@ private:
     }
 
 protected:
-    Buf & buffer()
+    Buf & buffer() noexcept
     { return this->buf; }
 
-    const Buf & buffer() const
+    const Buf & buffer() const noexcept
     { return this->buf; }
 
     typedef InputTransport TransportType;
@@ -141,8 +139,7 @@ template<class Buf>
 struct InputNextTransport
 : InputTransport<Buf>
 {
-    InputNextTransport()
-    {}
+    InputNextTransport() = default;
 
     template<class T>
     InputNextTransport(const T & buf_params)
@@ -174,8 +171,7 @@ template<class Buf, class PathTraits = detail::NoCurrentPath>
 struct OutputNextTransport
 : OutputTransport<Buf, PathTraits>
 {
-    OutputNextTransport()
-    {}
+    OutputNextTransport() = default;
 
     template<class T>
     OutputNextTransport(const T & buf_params)
@@ -209,8 +205,7 @@ template<class TTransport>
 struct SeekableTransport
 : TTransport
 {
-    SeekableTransport()
-    {}
+    SeekableTransport() = default;
 
     template<class T>
     SeekableTransport(const T & params)
@@ -233,8 +228,7 @@ template<class TTransport>
 struct RequestCleaningTransport
 : TTransport
 {
-    RequestCleaningTransport()
-    {}
+    RequestCleaningTransport() = default;
 
     template<class T>
     RequestCleaningTransport(const T & params)
@@ -255,8 +249,7 @@ template<class TTransport>
 struct FlushingTransport
 : TTransport
 {
-    FlushingTransport()
-    {}
+    FlushingTransport() = default;
 
     template<class T>
     FlushingTransport(const T & params)

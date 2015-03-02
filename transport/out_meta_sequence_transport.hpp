@@ -61,12 +61,12 @@ RequestCleaningTransport<
         detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier);
     }
 
-    virtual void timestamp(timeval now) /*noexcept*/
+    virtual void timestamp(timeval now)
     {
         this->buffer().update_sec(now.tv_sec);
     }
 
-    const FilenameGenerator * seqgen() const /*noexcept*/
+    const FilenameGenerator * seqgen() const noexcept
     {
         return &(this->buffer().seqgen());
     }

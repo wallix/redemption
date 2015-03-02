@@ -84,7 +84,7 @@ namespace transfil {
         //{}
 
         template<class Source>
-        int open(Source & src, unsigned char * trace_key) /*noexcept*/
+        int open(Source & src, unsigned char * trace_key)
         {
             ::memset(this->buf, 0, sizeof(this->buf));
             ::memset(&this->ectx, 0, sizeof(this->ectx));
@@ -120,7 +120,7 @@ namespace transfil {
         }
 
         template<class Source>
-        ssize_t read(Source & src, void * data, size_t len) /*noexcept*/
+        ssize_t read(Source & src, void * data, size_t len)
         {
             if (this->state & CF_EOF) {
                 //printf("cf EOF\n");
@@ -224,7 +224,7 @@ namespace transfil {
     private:
         ///\return 0 if success, otherwise a negatif number
         template<class Source>
-        ssize_t raw_read(Source & src, void * data, size_t len) /*noexcept*/
+        ssize_t raw_read(Source & src, void * data, size_t len)
         {
             ssize_t err = src.read(data, len);
             return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
@@ -272,7 +272,7 @@ namespace transfil {
         //{}
 
         template<class Sink>
-        int open(Sink & snk, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv) /*noexcept*/
+        int open(Sink & snk, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
         {
             ::memset(this->buf, 0, sizeof(this->buf));
             ::memset(&this->ectx, 0, sizeof(this->ectx));
@@ -362,7 +362,7 @@ namespace transfil {
         }
 
         template<class Sink>
-        ssize_t write(Sink & snk, const void * data, size_t len) /*noexcept*/
+        ssize_t write(Sink & snk, const void * data, size_t len)
         {
             unsigned int remaining_size = len;
             while (remaining_size > 0) {
@@ -388,7 +388,7 @@ namespace transfil {
          * Return 0 on success, negatif on error
          */
         template<class Sink>
-        int flush(Sink & snk) /*noexcept*/
+        int flush(Sink & snk)
         {
             // No data to flush
             if (!this->pos) {
@@ -566,7 +566,7 @@ namespace transfil {
     private:
         ///\return 0 if success, otherwise a negatif number
         template<class Sink>
-        ssize_t raw_write(Sink & snk, void * data, size_t len) /*noexcept*/
+        ssize_t raw_write(Sink & snk, void * data, size_t len)
         {
             ssize_t err = snk.write(data, len);
             return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;

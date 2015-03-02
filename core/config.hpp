@@ -367,7 +367,7 @@ class Inifile : public FieldObserver
 
     struct StringCopier
     {
-        static void copy(char * dest, char const * src, std::size_t n) noexcept {
+        static void copy(char * dest, char const * src, std::size_t n) {
             const char * e = dest + n - 1;
             for (; dest != e && *src; ++src, ++dest) {
                 *dest = *src;
@@ -435,11 +435,11 @@ public:
             this->setmem(s);
         }
 
-        void setmem(const char * s, std::size_t n) noexcept {
+        void setmem(const char * s, std::size_t n) {
             memcpy(this->str, s, n);
         }
 
-        void setmem(const char * s) noexcept {
+        void setmem(const char * s) {
             this->setmem(s, N);
         }
 

@@ -37,7 +37,7 @@ namespace Ops {
 
     struct CopySrc
     {
-       u8 operator()(u8 /*target*/, u8 source) const
+       constexpr u8 operator()(u8 /*target*/, u8 source) const noexcept
        {
            return source;
        }
@@ -45,7 +45,7 @@ namespace Ops {
 
     struct InvertSrc
     {
-       u8 operator()(u8 /*target*/, u8 source) const
+       constexpr u8 operator()(u8 /*target*/, u8 source) const noexcept
        {
            return ~source;
        }
@@ -53,7 +53,7 @@ namespace Ops {
 
     struct InvertTarget
     {
-       u8 operator()(u8 target, u8 /*source*/) const
+       constexpr u8 operator()(u8 target, u8 /*source*/) const noexcept
        {
            return ~target;
        }
@@ -62,7 +62,7 @@ namespace Ops {
 
     struct Op_0xB8 // PSDPxax
     {
-        u8 operator()(u8 target, u8 source, u8 pattern) const
+        constexpr u8 operator()(u8 target, u8 source, u8 pattern) const noexcept
         {
             return ((target ^ pattern) & source) ^ pattern;
         }
@@ -78,7 +78,7 @@ namespace Ops {
 
     struct Op2_0x01 // R2_BLACK 0
     {
-       u8 operator()(u8 /*target*/, u8 /*source*/) const
+       constexpr u8 operator()(u8 /*target*/, u8 /*source*/) const noexcept
        {
            return 0x00;
        }
@@ -86,7 +86,7 @@ namespace Ops {
 
     struct Op2_0x02 // R2_NOTMERGEPEN DPon
     {
-        u8 operator()(u8 target, u8 source) const
+        constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
             return ~(target | source);
         }
@@ -94,7 +94,7 @@ namespace Ops {
 
     struct Op2_0x03 // R2_MASKNOTPEN DPna
     {
-        u8 operator()(u8 target, u8 source) const
+        constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
             return (target & ~source);
         }
@@ -104,7 +104,7 @@ namespace Ops {
 
     struct Op2_0x05 // R2_MASKPENNOT PDna
     {
-        u8 operator()(u8 target, u8 source) const
+        constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
             return (source & ~target);
         }
@@ -114,7 +114,7 @@ namespace Ops {
 
     struct Op2_0x07 // R2_XORPEN DPx
     {
-        u8 operator()(u8 target, u8 source) const
+        constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
             return (target ^ source);
         }
@@ -122,7 +122,7 @@ namespace Ops {
 
     struct Op2_0x08 // R2_NOTMASKPEN DPan
     {
-        u8 operator()(u8 target, u8 source) const
+        constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
             return ~(target & source);
         }
@@ -130,7 +130,7 @@ namespace Ops {
 
     struct Op2_0x09 // R2_MASKPEN DPa
     {
-        u8 operator()(u8 target, u8 source) const
+        constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
             return (target & source);
         }
@@ -138,7 +138,7 @@ namespace Ops {
 
     struct Op2_0x0A // R2_NOTXORPEN DPxn
     {
-        u8 operator()(u8 target, u8 source) const
+        constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
             return ~(target ^ source);
         }
@@ -146,7 +146,7 @@ namespace Ops {
 
     // struct Op2_0x0B // R2_NOP D
     // {
-    //     u8 operator()(u8 target, u8 source) const
+    //     constexpr u8 operator()(u8 target, u8 source) const noexcept
     //     {
     //         return target;
     //     }
@@ -154,7 +154,7 @@ namespace Ops {
 
     struct Op2_0x0C // R2_MERGENOTPEN DPno
     {
-        u8 operator()(u8 target, u8 source) const
+        constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
             return (target | ~source);
         }
@@ -164,7 +164,7 @@ namespace Ops {
 
     struct Op2_0x0E // R2_MERGEPENNOT PDno
     {
-        u8 operator()(u8 target, u8 source) const
+        constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
             return (source | ~target);
         }
@@ -172,7 +172,7 @@ namespace Ops {
 
     struct Op2_0x0F // R2_MERGEPEN PDo
     {
-        u8 operator()(u8 target, u8 source) const
+        constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
             return (target | source);
         }
@@ -180,7 +180,7 @@ namespace Ops {
 
     struct Op2_0x10 // R2_WHITE 1
     {
-       u8 operator()(u8 /*target*/, u8 /*source*/) const
+       constexpr u8 operator()(u8 /*target*/, u8 /*source*/) const noexcept
        {
            return 0xFF;
        }
@@ -201,7 +201,7 @@ namespace Ops {
 
     struct Op_0x11
     {
-        u8 operator()(u8 target, u8 source) const
+        constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
             return ~(target | ~source);
         }
@@ -254,7 +254,7 @@ struct DrawableTraitColor24
         { return {uint8_t(~r), uint8_t(~g), uint8_t(~b)}; }
     };
 
-    static uint8_t * assign(uint8_t * dest, color_t color) noexcept
+    static uint8_t * assign(uint8_t * dest, color_t color)
     {
         *dest++ = color.red();
         *dest++ = color.green();
@@ -263,7 +263,7 @@ struct DrawableTraitColor24
     }
 
     template<class BinaryOp>
-    static uint8_t * assign(uint8_t * dest, color_t color, BinaryOp op) noexcept
+    static uint8_t * assign(uint8_t * dest, color_t color, BinaryOp op)
     {
         *dest = op(*dest, color.red());   ++dest;
         *dest = op(*dest, color.green()); ++dest;
@@ -272,7 +272,7 @@ struct DrawableTraitColor24
     }
 
     template<class BinaryOp>
-    static uint8_t * assign(uint8_t * dest, color_t color, color_t color2, BinaryOp op) noexcept
+    static uint8_t * assign(uint8_t * dest, color_t color, color_t color2, BinaryOp op)
     {
         *dest = op(*dest, color.red(),   color2.red());   ++dest;
         *dest = op(*dest, color.green(), color2.green()); ++dest;
@@ -293,7 +293,7 @@ struct DrawableTraitColor24
 
     struct toColor1
     {
-        color_t operator()(uint8_t * p) const noexcept
+        color_t operator()(uint8_t * p) const
         {
             if (*p) {
                 return {uint8_t(0xff), uint8_t(0xff), uint8_t(0xff)};
@@ -306,7 +306,7 @@ struct DrawableTraitColor24
     {
         const BGRPalette & palette;
 
-        color_t operator()(const uint8_t * p) const noexcept
+        color_t operator()(const uint8_t * p) const
         {
             return u32_to_color(this->palette[*p] & 0xFFFFFF);
         }
@@ -314,7 +314,7 @@ struct DrawableTraitColor24
 
     struct toColor15
     {
-        color_t operator()(const uint8_t * p) const noexcept
+        color_t operator()(const uint8_t * p) const
         {
             const BGRColor c = (p[1] << 8) + p[0];
             // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
@@ -327,7 +327,7 @@ struct DrawableTraitColor24
 
     struct toColor16
     {
-        color_t operator()(const uint8_t * p) const noexcept
+        color_t operator()(const uint8_t * p) const
         {
             const BGRColor c = (p[1] << 8) + p[0];
             // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
@@ -340,7 +340,7 @@ struct DrawableTraitColor24
 
     struct toColor24
     {
-        color_t operator()(const uint8_t * p) const noexcept
+        color_t operator()(const uint8_t * p) const
         {
             return {p[0], p[1], p[2]};
         }
@@ -449,7 +449,7 @@ public:
         return this->data_ + (y * this->width_ + x) * Bpp;
     }
 
-    uint8_t * first_pixel(const Rect & rect) const {
+    uint8_t * first_pixel(const Rect & rect) const noexcept {
         return this->first_pixel(rect.x, rect.y);
     }
 
@@ -468,7 +468,7 @@ private:
     struct Invert;
 
 public:
-    void opaque_rect(const Rect & rect, const color_t color) noexcept
+    void opaque_rect(const Rect & rect, const color_t color)
     {
         P const base = this->first_pixel(rect);
 
@@ -482,13 +482,13 @@ public:
         }
     }
 
-    void draw_pixel(int16_t x, int16_t y, const color_t color) noexcept
+    void draw_pixel(int16_t x, int16_t y, const color_t color)
     {
         traits::assign(this->first_pixel(x, y), color);
     }
 
     template<class Op, class... Col>
-    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c) noexcept
+    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
     {
         P dest = this->first_pixel(rect);
         const size_t bmp_Bpp = ::nbbytes(bmp.bpp());
@@ -521,7 +521,7 @@ public:
 private:
     template<class Op, class ToColor, class... Col>
     void spe_mem_blt(
-        P dest, cP src, u16 cx, u16 cy, size_t bmp_Bpp, size_t bmp_line_size, Op op, ToColor to_color, Col... c) noexcept
+        P dest, cP src, u16 cx, u16 cy, size_t bmp_Bpp, size_t bmp_line_size, Op op, ToColor to_color, Col... c)
     {
         const size_t line_size = this->rowsize();
         const size_t destn = cx * Bpp;
@@ -539,12 +539,12 @@ private:
     }
 
 public:
-    void draw_bitmap(const Rect & rect, const Bitmap & bmp) noexcept
+    void draw_bitmap(const Rect & rect, const Bitmap & bmp)
     {
         this->mem_blt(rect, bmp, 0, 0, Ops::CopySrc{});
     }
 
-    void component_rect(const Rect & rect, uint8_t c) noexcept
+    void component_rect(const Rect & rect, uint8_t c)
     {
         P p = this->first_pixel(rect);
         const size_t step = this->rowsize();
@@ -555,7 +555,7 @@ public:
     }
 
     template<typename Op2>
-    void draw_ellipse(const Ellipse & el, const uint8_t fill, const color_t color) noexcept
+    void draw_ellipse(const Ellipse & el, const uint8_t fill, const color_t color)
     {
         Op2 op;
         const int cX = el.center_x();
@@ -645,7 +645,7 @@ public:
 
 private:
     template <typename Op2>
-    void colordot(int x, int y, color_t color, Op2 op2) noexcept
+    void colordot(int x, int y, color_t color, Op2 op2)
     {
         if (!(x >= 0 &&
               y >= 0 &&
@@ -658,7 +658,7 @@ private:
     }
 
     template <typename Op2>
-    void colorline(int x, int y, int l, color_t color, Op2) noexcept
+    void colorline(int x, int y, int l, color_t color, Op2)
     {
         if (!(y >= 0 &&
               y < this->height())) {
@@ -679,7 +679,7 @@ public:
     template <typename Op>
     void patblt_op_ex(
         const Rect & rect, const uint8_t * brush_data, int8_t org_x, int8_t org_y,
-        const color_t back_color, const color_t fore_color) noexcept
+        const color_t back_color, const color_t fore_color)
     {
         P const base = this->first_pixel(rect);
         P       p    = base;
@@ -702,7 +702,7 @@ public:
     }
 
     template <typename Op>
-    void scr_blt_op(const Rect & rect, uint16_t srcx, uint16_t srcy) noexcept
+    void scr_blt_op(const Rect & rect, uint16_t srcx, uint16_t srcy)
     {
         const int16_t deltax = static_cast<int16_t>(srcx - rect.x);
         const int16_t deltay = static_cast<int16_t>(srcy - rect.y);
@@ -743,7 +743,7 @@ public:
     }
 
 private:
-    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Ops::CopySrc op) noexcept
+    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Ops::CopySrc op)
     {
         this->scr_blt_impl(rect_dest, srcx, srcy, [](P dest, cP src, size_t n) {
             memmove(dest, src, n);
@@ -751,7 +751,7 @@ private:
     }
 
     template <typename Op>
-    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op) noexcept
+    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op)
     {
         P dest = this->first_pixel(rect_dest);
         cP src = this->first_pixel(srcx, srcy);
@@ -783,7 +783,7 @@ private:
     }
 
     template <typename Op>
-    void scr_blt_op_nooverlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op) noexcept
+    void scr_blt_op_nooverlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op)
     {
         this->scr_blt_impl(rect_dest, srcx, srcy, [this, op](P dest, cP src, size_t n) {
             this->copy(dest, src, n, op);
@@ -791,13 +791,13 @@ private:
     }
 
     template <typename F>
-    void scr_blt_impl(Rect const & rect_dest, size_t srcx, size_t srcy, F f) noexcept
+    void scr_blt_impl(Rect const & rect_dest, size_t srcx, size_t srcy, F f)
     {
         this->scr_blt_impl(this->first_pixel(rect_dest), this->first_pixel(srcx, srcy), rect_dest.cx * Bpp, rect_dest.cy, f);
     }
 
     template <typename F>
-    void scr_blt_impl(P dest, cP src, size_t n, size_t cy, F f) noexcept
+    void scr_blt_impl(P dest, cP src, size_t n, size_t cy, F f)
     {
         for (P e = dest + this->rowsize() * cy; e != dest; ) {
             f(dest, src, n);
@@ -809,7 +809,7 @@ private:
 public:
     // nor horizontal nor vertical, use Bresenham
     template<class Op>
-    void line(int x, int y, int endx, int endy, const color_t color, Op op) noexcept
+    void line(int x, int y, int endx, int endy, const color_t color, Op op)
     {
         // Prep
         const int dx = endx - x;
@@ -838,7 +838,7 @@ public:
     }
 
     template<class Op>
-    void vertical_line(uint16_t x, uint16_t y, uint16_t endy, color_t color, Op op) noexcept
+    void vertical_line(uint16_t x, uint16_t y, uint16_t endy, color_t color, Op op)
     {
         P p = this->first_pixel(x, y);
         P pe = p + (endy - y + 1) * this->rowsize();
@@ -848,28 +848,28 @@ public:
     }
 
     template<class Op>
-    void horizontal_line(uint16_t startx, uint16_t y, uint16_t endx, color_t color, Op) noexcept
+    void horizontal_line(uint16_t startx, uint16_t y, uint16_t endx, color_t color, Op)
     {
         this->apply_for_line(this->first_pixel(startx, y), endx - startx + 1, AssignOp<Op>{color});
     }
 
     template <typename Op>
-    void patblt_op(const Rect & rect, color_t color, Op) noexcept
+    void patblt_op(const Rect & rect, color_t color, Op)
     {
         this->apply_for_rect(rect, AssignOp<Op>{color});
     }
 
-    void patblt_op(const Rect & rect, color_t color, Ops::InvertSrc) noexcept
+    void patblt_op(const Rect & rect, color_t color, Ops::InvertSrc)
     {
         this->apply_for_rect(rect, Assign{~color});
     }
 
-    void patblt_op(const Rect & rect, color_t color, Ops::CopySrc) noexcept
+    void patblt_op(const Rect & rect, color_t color, Ops::CopySrc)
     {
         this->apply_for_rect(rect, Assign{color});
     }
 
-    void invert_color(const Rect & rect) noexcept
+    void invert_color(const Rect & rect)
     {
         this->apply_for_rect(rect, Invert{});
     }
@@ -878,7 +878,7 @@ private:
     struct Assign {
         color_t color;
 
-        P operator()(P dest) const noexcept
+        P operator()(P dest) const
         { return traits::assign(dest, color); }
     };
 
@@ -886,17 +886,17 @@ private:
     struct AssignOp {
         color_t color;
 
-        P operator()(P dest) const noexcept
+        P operator()(P dest) const
         { return traits::assign(dest, color, Op()); }
     };
 
     struct Invert {
-        P operator()(P dest) const noexcept
+        P operator()(P dest) const
         { *dest ^= 0xff; return ++dest; }
     };
 
     template<class Op>
-    void copy(uint8_t * dest, const uint8_t * src, size_t n, Op op) noexcept
+    void copy(uint8_t * dest, const uint8_t * src, size_t n, Op op)
     {
         const uint8_t * e = dest + n;
         for (; dest != e; ++dest, ++src) {
@@ -904,13 +904,13 @@ private:
         }
     }
 
-    void copy(uint8_t * dest, const uint8_t * src, size_t n, Ops::CopySrc) noexcept
+    void copy(uint8_t * dest, const uint8_t * src, size_t n, Ops::CopySrc)
     {
        memcpy(dest, src, n);
     }
 
     template<class Op>
-    void copy(uint8_t * dest, const uint8_t * src, size_t n, Op op, color_t c) noexcept
+    void copy(uint8_t * dest, const uint8_t * src, size_t n, Op op, color_t c)
     {
         const uint8_t * e = dest + n;
         while (dest != e) {
@@ -921,7 +921,7 @@ private:
     }
 
     template<class F>
-    P apply_for_line(P p, size_t n, F f) noexcept
+    P apply_for_line(P p, size_t n, F f)
     {
         for (cP pe = p + n * Bpp; p != pe; ) {
             p = f(p);
@@ -930,7 +930,7 @@ private:
     }
 
     template<class F>
-    void apply_for_rect(const Rect & rect, F f) noexcept
+    void apply_for_rect(const Rect & rect, F f)
     {
         P p = this->first_pixel(rect);
         const size_t line_size = this->rowsize();
@@ -2332,7 +2332,7 @@ public:
         const int x = this->mouse_cursor_pos_x - this->current_pointer->hotspot_x;
         const int y = this->mouse_cursor_pos_y - this->current_pointer->hotspot_y;
         this->priv_trace_mouse(
-            [](uint8_t * psave, uint8_t * pixel_start, const uint8_t * data, size_t n) noexcept {
+            [](uint8_t * psave, uint8_t * pixel_start, const uint8_t * data, size_t n) {
                 memcpy(psave, pixel_start, n);
                 memcpy(pixel_start, data, n);
             },
@@ -2348,7 +2348,7 @@ public:
         const int x = this->save_mouse_x - this->current_pointer->hotspot_x;
         const int y = this->save_mouse_y - this->current_pointer->hotspot_y;
         this->priv_trace_mouse(
-            [](uint8_t * psave, uint8_t * pixel_start, const uint8_t * /*data*/, size_t n) noexcept {
+            [](uint8_t * psave, uint8_t * pixel_start, const uint8_t * /*data*/, size_t n) {
                 ::memcpy(pixel_start, psave, n);
             },
             x, y

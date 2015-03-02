@@ -36,7 +36,7 @@ SeekableTransport<
 >
 // >
 {
-    OutFileTransport(int fd) /*noexcept*/
+    OutFileTransport(int fd) noexcept
     : OutFileTransport::TransportType(fd)
     {}
 };
