@@ -6,6 +6,7 @@ from logger import Logger
 try:
     from wabengine.common.exception import AuthenticationFailed
     from wabengine.common.exception import AuthenticationChallenged
+    from wabengine.common.exception import LicenseLimitReached
     from wabengine.common.exception import MustChangePassword
     from wallixgenericnotifier import Notify, CX_EQUIPMENT, PATTERN_FOUND, \
         PRIMARY_CX_FAILED, SECONDARY_CX_FAILED, NEW_FINGERPRINT, WRONG_FINGERPRINT, \
@@ -186,6 +187,8 @@ class Engine(object):
                 return True
         except AuthenticationFailed, e:
             pass
+        except LicenseLimitReached, e:
+            self.challenge = None
         except Exception, e:
             import traceback
             Logger().info("Engine x509_authenticate failed: (((%s)))" % traceback.format_exc(e))
@@ -206,7 +209,8 @@ class Engine(object):
             self.challenge = e.challenge
         except AuthenticationFailed, e:
             self.challenge = None
-            pass
+        except LicenseLimitReached, e:
+            self.challenge = None
         except Exception, e:
             self.challenge = None
             import traceback
@@ -223,7 +227,9 @@ class Engine(object):
                 self.wabuser = self.wabengine.who_am_i()
                 return True
         except AuthenticationFailed, e:
-            pass
+            self.challenge = None
+        except LicenseLimitReached, e:
+            self.challenge = None
         except Exception, e:
             import traceback
             Logger().info("Engine passthrough_authenticate failed: (((%s)))" % traceback.format_exc(e))
@@ -293,10 +299,6 @@ class Engine(object):
             if lic_status.is_expired():
                 Logger().info("LICENCE_EXPIRED")
                 Notify(self.wabengine, LICENCE_EXPIRED, u"")
-                license_ok = False
-            if lic_status.is_primary_limit_reached():
-                Logger().info("PRIMARY LICENCE LIMIT")
-                Notify(self.wabengine, LICENCE_PRIMARY_CX_ERROR, {u'nbPrimaryConnection': lic_status.primary[0]})
                 license_ok = False
             if lic_status.is_secondary_limit_reached():
                 Logger().info("SECONDARY LICENCE LIMIT")
