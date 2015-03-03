@@ -162,6 +162,8 @@ private:
 
     const bool is_socket_transport;
 
+    uint64_t last_client_clipboard_data_timestamp = 0;
+
 public:
     //==============================================================================================================
     mod_vnc( Transport & t
@@ -1038,6 +1040,44 @@ public:
             LOG(LOG_ERR, "Unknown state=%d", this->state);
             throw Error(ERR_VNC);
         }
+
+        if (this->event.waked_up_by_time) {
+            this->event.reset();
+
+            if (this->last_client_clipboard_data_timestamp) {
+                //const uint64_t usnow = ustime();
+                //const uint64_t timeval_diff = usnow - this->last_client_clipboard_data_timestamp;
+                //LOG(LOG_INFO,
+                //    "usnow=%llu last_client_clipboard_data_timestamp=%llu timeval_diff=%llu",
+                //    usnow, this->last_client_clipboard_data_timestamp, timeval_diff);
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%d) (time)",
+                        RDPECLIP::CB_FORMAT_DATA_REQUEST);
+                }
+
+                // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_UNICODETEXT)
+                // 04 00 00 00 04 00 00 00 0d 00 00 00
+                // 00 00 00 00
+                RDPECLIP::FormatDataRequestPDU format_data_request_pdu(RDPECLIP::CF_UNICODETEXT);
+                BStream                        out_s(256);
+
+                format_data_request_pdu.emit(out_s);
+
+                size_t length     = out_s.size();
+                size_t chunk_size = length;
+
+                this->last_client_clipboard_data_timestamp = 0;
+
+                this->send_to_front_channel( channel_names::cliprdr
+                                           , out_s.get_data()
+                                           , length
+                                           , chunk_size
+                                           , CHANNELS::CHANNEL_FLAG_FIRST
+                                           | CHANNELS::CHANNEL_FLAG_LAST
+                                           );
+            }
+        }
     } // draw_event
 
 private:
@@ -1878,7 +1918,9 @@ private:
         }
 
         if (this->enable_clipboard_down && this->get_channel_by_name(channel_names::cliprdr)) {
-            LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%d", RDPECLIP::CB_FORMAT_LIST);
+            if (this->verbose) {
+                LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=CB_FORMAT_LIST(%d)", RDPECLIP::CB_FORMAT_LIST);
+            }
 
             RDPECLIP::FormatListPDU format_list_pdu;
             BStream                 out_s(256);
@@ -1974,7 +2016,9 @@ private:
 
         RDPECLIP::RecvFactory recv_factory(stream);
 
-        LOG(LOG_INFO, "mod_vnc client clipboard PDU: msgType=%d", recv_factory.msgType);
+        if (this->verbose) {
+            LOG(LOG_INFO, "mod_vnc client clipboard PDU: msgType=(%d)", recv_factory.msgType);
+        }
 
         switch (recv_factory.msgType) {
             // Client notify that a copy operation have occured. Two operations should be done :
@@ -1987,7 +2031,10 @@ private:
 
                 //--------------------------- Beginning of clipboard PDU Header ----------------------------
 
-                LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%d", RDPECLIP::CB_FORMAT_LIST_RESPONSE);
+                if (this->verbose) {
+                    LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=CB_FORMAT_LIST_RESPONSE(%u)",
+                        RDPECLIP::CB_FORMAT_LIST_RESPONSE);
+                }
 
                 bool response_ok = true;
 
@@ -2009,28 +2056,51 @@ private:
                                              | CHANNELS::CHANNEL_FLAG_LAST
                                            );
 
+                const uint64_t MINIMUM_TIMEVAL = 250000LL;
 
                 if (this->enable_clipboard_up && format_list_pdu.contians_data_in_text_format) {
-                    LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%d", RDPECLIP::CB_FORMAT_DATA_REQUEST);
+                    const uint64_t usnow = ustime();
+                    const uint64_t timeval_diff = usnow - this->last_client_clipboard_data_timestamp;
+                    //LOG(LOG_INFO,
+                    //    "usnow=%llu last_client_clipboard_data_timestamp=%llu timeval_diff=%llu",
+                    //    usnow, this->last_client_clipboard_data_timestamp, timeval_diff);
+                    if (timeval_diff > MINIMUM_TIMEVAL) {
+                        if (this->verbose) {
+                            LOG(LOG_INFO,
+                                "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%d)",
+                                RDPECLIP::CB_FORMAT_DATA_REQUEST);
+                        }
 
-                    // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_UNICODETEXT)
-                    // 04 00 00 00 04 00 00 00 0d 00 00 00
-                    // 00 00 00 00
-                    RDPECLIP::FormatDataRequestPDU format_data_request_pdu(RDPECLIP::CF_UNICODETEXT);
-                    out_s.init(256);
+                        // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_UNICODETEXT)
+                        // 04 00 00 00 04 00 00 00 0d 00 00 00
+                        // 00 00 00 00
+                        RDPECLIP::FormatDataRequestPDU format_data_request_pdu(RDPECLIP::CF_UNICODETEXT);
+                        out_s.init(256);
 
-                    format_data_request_pdu.emit(out_s);
+                        format_data_request_pdu.emit(out_s);
 
-                    length     = out_s.size();
-                    chunk_size = length;
+                        length     = out_s.size();
+                        chunk_size = length;
 
-                    this->send_to_front_channel( channel_names::cliprdr
-                                               , out_s.get_data()
-                                               , length
-                                               , chunk_size
-                                               , CHANNELS::CHANNEL_FLAG_FIRST
-                                               | CHANNELS::CHANNEL_FLAG_LAST
-                                               );
+                        this->last_client_clipboard_data_timestamp = 0;
+
+                        this->send_to_front_channel( channel_names::cliprdr
+                                                   , out_s.get_data()
+                                                   , length
+                                                   , chunk_size
+                                                   , CHANNELS::CHANNEL_FLAG_FIRST
+                                                   | CHANNELS::CHANNEL_FLAG_LAST
+                                                   );
+                    }
+                    else {
+                        if (this->verbose) {
+                            LOG(LOG_INFO,
+                                "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%d) (delayed)",
+                                RDPECLIP::CB_FORMAT_DATA_REQUEST);
+                        }
+                        this->event.object_and_time = true;
+                        this->event.set(MINIMUM_TIMEVAL - timeval_diff);
+                    }
                 }
                 break;
             }
@@ -2039,8 +2109,8 @@ private:
                 const unsigned expected = 10; /* msgFlags(2) + datalen(4) + requestedFormatId(4) */
                 if (!stream.in_check_rem(expected)) {
                     LOG( LOG_ERR
-                       , "mod_vnc::clipboard_send_to_vnc truncated CB_FORMAT_DATA_REQUEST data, need=%u remains=%u"
-                       , expected, stream.in_remain());
+                       , "mod_vnc::clipboard_send_to_vnc truncated CB_FORMAT_DATA_REQUEST(%d) data, need=%u remains=%u"
+                       , RDPECLIP::CB_FORMAT_DATA_REQUEST, expected, stream.in_remain());
                     throw Error(ERR_VNC);
                 }
 
@@ -2055,7 +2125,8 @@ private:
 
                 if (this->verbose) {
                     LOG( LOG_INFO
-                       , "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_REQUEST msgFlags=0x%02x datalen=%u requestedFormatId=0x%02x"
+                       , "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_REQUEST(%d) msgFlags=0x%02x datalen=%u requestedFormatId=0x%02x"
+                       , RDPECLIP::CB_FORMAT_DATA_REQUEST
                        , format_data_request_pdu.msgFlags()
                        , format_data_request_pdu.dataLen()
                        , format_data_request_pdu.requestedFormatId
@@ -2082,7 +2153,11 @@ private:
                                         : CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                       );
 
-                        LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%d", RDPECLIP::CB_FORMAT_DATA_RESPONSE);
+                        if (this->verbose) {
+                            LOG(LOG_INFO,
+                                "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_RESPONSE(%d)",
+                                RDPECLIP::CB_FORMAT_DATA_RESPONSE);
+                        }
 
                         this->send_to_front_channel( channel_names::cliprdr
                                                    , chunk_data
@@ -2123,7 +2198,8 @@ private:
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
                         if (!stream.in_check_rem(format_data_response_pdu.dataLen())) {
                             LOG( LOG_ERR
-                               , "mod_vnc::clipboard_send_to_vnc truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
+                               , "mod_vnc::clipboard_send_to_vnc truncated CB_FORMAT_DATA_RESPONSE(%d) dataU16, need=%u remains=%u"
+                               , RDPECLIP::CB_FORMAT_DATA_RESPONSE
                                , format_data_response_pdu.dataLen(), stream.in_remain());
                             throw Error(ERR_VNC);
                         }
@@ -2141,6 +2217,8 @@ private:
                         dataU8.get_data()[len_utf8] = 0;
 
                         this->rdp_input_clip_data(dataU8.get_data(), len_utf8 + 1);
+
+                        this->last_client_clipboard_data_timestamp = ustime();
                     }
                     else {
                         // Virtual channel data span in multiple Virtual Channel PDUs.
@@ -2208,6 +2286,8 @@ private:
 
                         dataU8.get_data()[len_utf8] = 0;
                         this->rdp_input_clip_data(dataU8.get_data(), len_utf8 + 1);
+
+                        this->last_client_clipboard_data_timestamp = ustime();
                     }
                 }
                 else {

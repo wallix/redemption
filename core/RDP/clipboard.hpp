@@ -366,7 +366,7 @@ struct FormatListPDU : public CliprdrHeader {
             if (   (formatId == CF_TEXT)
                 || (formatId == CF_UNICODETEXT)
                 ) {
-                LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
+                //LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
                 this->contians_data_in_text_format = true;
 
                 break;
