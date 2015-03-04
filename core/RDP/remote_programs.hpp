@@ -159,17 +159,18 @@ public:
     : stream(stream), offset_of_orderLength(0) {}
 
     void emit_begin(uint16_t orderType) {
-        stream.out_uint16_le(orderType);
+        this->stream.out_uint16_le(orderType);
 
-        this->offset_of_orderLength = stream.get_offset();
-        stream.out_clear_bytes(2);
+        this->offset_of_orderLength = this->stream.get_offset();
+        this->stream.out_clear_bytes(2);
 
-        stream.mark_end();
+        this->stream.mark_end();
     }
 
     void emit_end() {
         this->stream.set_out_uint16_le(
-            stream.get_offset() - this->offset_of_orderLength + 2 /* orderType */,
+            this->stream.get_offset() - this->offset_of_orderLength +
+                2 /* orderType(2) */,
             this->offset_of_orderLength);
     }
 
