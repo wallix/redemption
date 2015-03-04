@@ -77,6 +77,8 @@ struct ModRDPParams {
     const std::string * allow_channels;
     const std::string * deny_channels;
 
+    bool remote_program;
+
     uint32_t verbose;
     uint32_t cache_verbose;
 
@@ -134,6 +136,8 @@ struct ModRDPParams {
 
         , allow_channels(nullptr)
         , deny_channels(nullptr)
+
+        , remote_program(false)
 
         , verbose(verbose)
         , cache_verbose(0)
@@ -222,6 +226,9 @@ struct ModRDPParams {
             "ModRDPParams allow_channels=<%p>",                    this->allow_channels);
         LOG(LOG_INFO,
             "ModRDPParams deny_channels=<%p>",                     this->deny_channels);
+
+        LOG(LOG_INFO,
+            "ModRDPParams remote_program=%s",                      (this->remote_program ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams verbose=0x%08X",                         this->verbose);

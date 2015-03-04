@@ -807,7 +807,7 @@ public:
         }
 
         if ((channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) &&
-            strcmp(channel.name, channel_names::rail)) {
+            (channel.chanid != this->rail_channel_id)) {
             flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
 
@@ -2145,15 +2145,10 @@ public:
                         if (this->verbose & 16) {
                             LOG(LOG_INFO, "Front::send_to_mod_channel");
                         }
-                        if (channel.chanid == this->rail_channel_id) {
-                            this->process_rail_event(cb,
-                                sec.payload.get_data() + sec.payload.get_offset(), chunk_size, length, flags);
-                        }
-                        else {
-                            SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
 
-                            cb.send_to_mod_channel(channel.name, chunk, length, flags);
-                        }
+                        SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
+
+                        cb.send_to_mod_channel(channel.name, chunk, length, flags);
                     }
                     else {
                         if (this->verbose & 16) {
@@ -3526,26 +3521,6 @@ public:
 
                     this->auth_info_sent = true;
                 }
-
-                if (this->client_info.remote_program) {
-                    // the remote connection being established is for the purpose of launching remote programs.
-                    const CHANNELS::ChannelDef * rail_channel = this->get_channel_list().get_by_name(channel_names::rail);
-                    if (rail_channel) {
-                        uint8_t buffer[128];
-                        FixedSizeStream stream(buffer, sizeof(buffer));
-                        uint32_t buildNumber = 7600;
-
-                        RAILPDUHeader_Send railpduhs(stream, TS_RAIL_ORDER_HANDSHAKE);
-                        size_t data_offset = stream.get_offset();
-
-                        HandshakePDU_Send hpdus(stream, buildNumber);
-
-                        railpduhs.set_orderLength(RAILPDUHeader_Send::header_length() + stream.get_offset() - data_offset);
-
-                        this->send_to_channel(*rail_channel, stream.get_data(),
-                            stream.size(), stream.size(), CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
-                    }
-                }
             }
         }
         break;
@@ -4428,253 +4403,6 @@ public:
         const bool res = this->has_activity;
         this->has_activity = false;
         return res;
-    }
-
-
-    void process_rail_event(Callback & cb, uint8_t const * chunk, size_t chunk_size, uint16_t length, uint16_t flags) {
-        StaticStream stream(chunk, chunk_size);
-
-        uint16_t orderType   = stream.in_uint16_le();
-        uint16_t orderLength = stream.in_uint16_le();
-
-        //LOG(LOG_INFO, "Front::process_rail_event: orderType=%u orderLength=%u", orderType, orderLength);
-        //hexdump_d(stream.get_data(), stream.size());
-
-        switch (orderType) {
-            case TS_RAIL_ORDER_EXEC:
-            {
-                ClientExecutePDU_Recv cepdur(stream);
-
-                LOG(LOG_INFO,
-                    "Front::process_rail_event: Client Execute PDU - "
-                        "exe_or_file=\"%s\" working_dir=\"%s\" arguments=\"%s\"",
-                    cepdur.exe_or_file(), cepdur.working_dir(), cepdur.arguments());
-            }
-            break;
-
-            case TS_RAIL_ORDER_SYSPARAM:
-            {
-                ClientSystemParametersUpdatePDU_Recv cspupdur(stream);
-
-                switch(cspupdur.SystemParam()) {
-                    case SPI_SETDRAGFULLWINDOWS:
-                    {
-                        const unsigned expected = 1 /* Body(1) */;
-                        if (!stream.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
-                                expected, stream.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint8_t Body = stream.in_uint8();
-
-                        LOG(LOG_INFO,
-                            "Front::process_rail_event: Client System Parameters Update PDU - "
-                                "Full Window Drag is %s.",
-                            (!Body ? "disabled" : "enabled"));
-                    }
-                    break;
-
-                    case SPI_SETKEYBOARDCUES:
-                    {
-                        const unsigned expected = 1 /* Body(1) */;
-                        if (!stream.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
-                                expected, stream.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint8_t Body = stream.in_uint8();
-
-                        if (Body) {
-                            LOG(LOG_INFO,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "Menu Access Keys are always underlined.");
-                        }
-                        else {
-                            LOG(LOG_INFO,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "Menu Access Keys are underlined only when the menu is activated by the keyboard.");
-                        }
-                    }
-                    break;
-
-                    case SPI_SETKEYBOARDPREF:
-                    {
-                        const unsigned expected = 1 /* Body(1) */;
-                        if (!stream.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
-                                expected, stream.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint8_t Body = stream.in_uint8();
-
-                        if (Body) {
-                            LOG(LOG_INFO,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "The user prefers the keyboard over mouse.");
-                        }
-                        else {
-                            LOG(LOG_INFO,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "The user does not prefer the keyboard over mouse.");
-                        }
-                    }
-                    break;
-
-                    case SPI_SETMOUSEBUTTONSWAP:
-                    {
-                        const unsigned expected = 1 /* Body(1) */;
-                        if (!stream.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
-                                expected, stream.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint8_t Body = stream.in_uint8();
-
-                        if (Body) {
-                            LOG(LOG_INFO,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "Swaps the meaning of the left and right mouse buttons.");
-                        }
-                        else {
-                            LOG(LOG_INFO,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "Restores the meaning of the left and right mouse buttons to their original meanings.");
-                        }
-                    }
-                    break;
-
-                    case SPI_SETWORKAREA:
-                    {
-                        const unsigned expected = 8 /* Body(8) */;
-                        if (!stream.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
-                                expected, stream.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint16_t Left   = stream.in_uint16_le();
-                        uint16_t Top    = stream.in_uint16_le();
-                        uint16_t Right  = stream.in_uint16_le();
-                        uint16_t Bottom = stream.in_uint16_le();
-
-                        LOG(LOG_INFO,
-                            "Front::process_rail_event: Client System Parameters Update PDU - "
-                                "work area in virtual screen coordinates is (left=%u left=%u left=%u left=%u).",
-                            Left, Top, Right, Bottom);
-                    }
-                    break;
-
-                    case RAIL_SPI_DISPLAYCHANGE:
-                    {
-                        const unsigned expected = 8 /* Body(8) */;
-                        if (!stream.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
-                                expected, stream.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint16_t Left   = stream.in_uint16_le();
-                        uint16_t Top    = stream.in_uint16_le();
-                        uint16_t Right  = stream.in_uint16_le();
-                        uint16_t Bottom = stream.in_uint16_le();
-
-                        LOG(LOG_INFO,
-                            "Front::process_rail_event: Client System Parameters Update PDU - "
-                                "New display resolution in virtual screen coordinates is (left=%u left=%u left=%u left=%u).",
-                            Left, Top, Right, Bottom);
-                    }
-                    break;
-
-                    case RAIL_SPI_TASKBARPOS:
-                    {
-                        const unsigned expected = 8 /* Body(8) */;
-                        if (!stream.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "Front::process_rail_event: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
-                                expected, stream.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint16_t Left   = stream.in_uint16_le();
-                        uint16_t Top    = stream.in_uint16_le();
-                        uint16_t Right  = stream.in_uint16_le();
-                        uint16_t Bottom = stream.in_uint16_le();
-
-                        LOG(LOG_INFO,
-                            "Front::process_rail_event: Client System Parameters Update PDU - "
-                                "New display resolution in virtual screen coordinates is (left=%u left=%u left=%u left=%u).",
-                            Left, Top, Right, Bottom);
-                    }
-                    break;
-
-                    case SPI_SETHIGHCONTRAST:
-                    {
-                        HighContrastSystemInformationStructure_Recv hcsisr(stream);
-
-                        LOG(LOG_INFO,
-                            "Front::process_rail_event: Client System Parameters Update PDU - "
-                                "parameters for the high-contrast accessibility feature, Flags=0x%X, ColorScheme=\"%s\".",
-                            hcsisr.Flags(), hcsisr.ColorScheme());
-                    }
-                    break;
-                }
-            }
-            break;
-
-            case TS_RAIL_ORDER_CLIENTSTATUS:
-            {
-                ClientInformationPDU_Recv cipdur(stream);
-
-                LOG(LOG_INFO,
-                    "Front::process_rail_event: Client Information PDU - Flags=0x%08X",
-                    cipdur.Flags());
-            }
-            break;
-
-            case TS_RAIL_ORDER_HANDSHAKE:
-            {
-                HandshakePDU_Recv hpdur(stream);
-
-                LOG(LOG_INFO,
-                    "Front::process_rail_event: Handshake PDU - buildNumber=%u",
-                    hpdur.buildNumber());
-            }
-            break;
-
-            default:
-                LOG(LOG_INFO,
-                    "Front::process_rail_event: undecoded PDU - orderType=%u orderLength=%u",
-                    orderType, orderLength);
-
-                stream.rewind();
-
-                cb.send_to_mod_channel(channel_names::rail, stream, length, flags);
-            break;
-        }
     }
 };
 

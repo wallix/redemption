@@ -808,6 +808,8 @@ public:
                 mod_rdp_params.allow_channels                      = &(this->ini.mod_rdp.allow_channels);
                 mod_rdp_params.deny_channels                       = &(this->ini.mod_rdp.deny_channels);
 
+                mod_rdp_params.remote_program                      = this->front.client_info.remote_program;
+
                 UdevRandom gen;
 
                 TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")

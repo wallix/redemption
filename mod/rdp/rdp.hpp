@@ -68,7 +68,8 @@
 #include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/capabilities/rail.hpp"
 #include "RDP/capabilities/window.hpp"
-#include <RDP/channels/rdpdr.hpp>
+#include "RDP/channels/rdpdr.hpp"
+#include "RDP/remote_programs.hpp"
 #include "rdp_params.hpp"
 #include "transparentrecorder.hpp"
 
@@ -204,6 +205,8 @@ class mod_rdp : public mod_api {
     bool enable_multipatblt;
     bool enable_multiscrblt;
 
+    const bool remote_program;
+
     TransparentRecorder * transparent_recorder;
     Transport           * persistent_key_list_transport;
 
@@ -279,6 +282,7 @@ public:
         , enable_multiopaquerect(false)
         , enable_multipatblt(false)
         , enable_multiscrblt(false)
+        , remote_program(mod_rdp_params.remote_program)
         , transparent_recorder(NULL)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
@@ -472,10 +476,9 @@ public:
 
         // this->end_session_reason.copy_c_str("OPEN_SESSION_FAILED");
         // this->end_session_message.copy_c_str("Open RDP session cancelled.");
-    }
+    }   // mod_rdp
 
-    virtual ~mod_rdp()
-    {
+    virtual ~mod_rdp() {
         delete this->transparent_recorder;
 
         if (this->acl && !this->end_session_reason.empty() &&
@@ -570,13 +573,11 @@ public:
                 break;
             }
         }, [](char c) { return c == ' ' || c == '\t' || c == ','; });
-    }
+    }   // configure_extra_orders
 
     virtual void rdp_input_scancode( long param1, long param2, long device_flags, long time
                                      , Keymap2 * keymap) {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-//            LOG(LOG_INFO, "Direct parameter transmission");
-
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
     }
@@ -659,35 +660,38 @@ public:
                                     , size_t length
                                     , uint32_t flags) {
         if (this->verbose & 16) {
-            LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
-            LOG(LOG_INFO, "sending to channel %s", front_channel_name);
+            LOG(LOG_INFO,
+                "mod_rdp::send_to_mod_channel: front_channel_channel=\"%s\"",
+                front_channel_name);
+        }
+
+        const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
+        if (!mod_channel) {
+            return;
+        }
+        if (this->verbose & 16) {
+            mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
         }
 
         if (!strcmp(front_channel_name, channel_names::rdpdr)) {
-            this->send_to_mod_rdpdr_channel(chunk, length, flags);
+            this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
         }
         else if (!strcmp(front_channel_name, channel_names::cliprdr)) {
-            this->send_to_mod_cliprdr_channel(chunk, length, flags);
+            this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
         }
         else if (!strcmp(front_channel_name, channel_names::rail)) {
-            this->send_to_mod_rail_channel(chunk, length, flags);
+            this->send_to_mod_rail_channel(mod_channel, chunk, length, flags);
         }
         else {
-            const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
-            // send it if module has a matching channel, if no matching channel is found just forget it
-            if (mod_channel) {
-                if (this->verbose & 16) {
-                    mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
-                }
-                this->send_to_channel(*mod_channel, chunk, length, flags);
-            }
+            this->send_to_channel(*mod_channel, chunk, length, flags);
         }
     }
 
-    void send_to_mod_rdpdr_channel(Stream & chunk, size_t length, uint32_t flags) {
+    void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
+                                   Stream & chunk, size_t length, uint32_t flags) {
         // filtering device redirection (printer, smartcard, etc)
 
-        auto p = chunk.p;
+        const auto saved_chunk_p = chunk.p;
 
         const rdpdr::PacketId packet_id = rdpdr::SharedHeader::read_packet_id(chunk);
 
@@ -727,37 +731,32 @@ public:
             this->update_total_rdpdr_data(packet_id, length);
         }
 
-        chunk.p = p;
+        chunk.p = saved_chunk_p;
 
-        const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(channel_names::rdpdr);
-        if (mod_channel) {
-            if (this->verbose & 16) {
-                mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
-            }
-            this->send_to_channel(*mod_channel, chunk, length, flags);
-        }
+        this->send_to_channel(*rdpdr_channel, chunk, length, flags);
     }
 
-    void send_to_mod_cliprdr_channel(Stream & chunk, size_t length, uint32_t flags) {
+    void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * cliprdr_channel,
+                                     Stream & chunk, size_t length, uint32_t flags) {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp client clipboard PDU");
         }
 
         if (!chunk.in_check_rem(2)) {
-            LOG(LOG_INFO, "mod_rdp::send_to_mod_channel truncated msgType, need=2 remains=%u",
+            LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: truncated msgType, need=2 remains=%u",
                 chunk.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
         const uint16_t msgType = chunk.in_uint16_le();
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "mod_rdp client clipboard PDU: msgType=%d", msgType);
+            LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: client clipboard PDU: msgType=%d", msgType);
         }
 
         if ((msgType == RDPECLIP::CB_FORMAT_LIST)) {
             if (!this->authorization_channels.cliprdr_up_is_authorized() &&
                 !this->authorization_channels.cliprdr_down_is_authorized()) {
                 if (this->verbose & 1) {
-                    LOG(LOG_INFO, "mod_rdp clipboard is fully disabled (c)");
+                    LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: clipboard is fully disabled (c)");
                 }
                 this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(true);
                 return;
@@ -766,18 +765,17 @@ public:
         else if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
             if (!this->authorization_channels.cliprdr_down_is_authorized()) {
                 if (this->verbose & 1) {
-                    LOG(LOG_INFO, "mod_rdp clipboard down is unavailable");
+                    LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: clipboard down is unavailable");
                 }
 
                 this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(false, "\0");
                 return;
             }
         }
-
         else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
             if (!this->authorization_channels.cliprdr_file_is_authorized()) {
                 if (this->verbose & 1) {
-                    LOG(LOG_INFO, "mod_rdp requesting the contents of server file is denied");
+                    LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: requesting the contents of server file is denied");
                 }
                 this->send_clipboard_pdu_to_front_channel<RDPECLIP::FileContentsResponse>(false);
                 return;
@@ -788,23 +786,258 @@ public:
 
         chunk.p -= 2;
 
-        const CHANNELS::ChannelDef * rail_channel = this->mod_channel_list.get_by_name(channel_names::cliprdr);
-        if (rail_channel) {
-            if (this->verbose & 16) {
-                rail_channel->log(unsigned(rail_channel - &this->mod_channel_list[0]));
-            }
-            this->send_to_channel(*rail_channel, chunk, length, flags);
-        }
+        this->send_to_channel(*cliprdr_channel, chunk, length, flags);
     }
 
-    void send_to_mod_rail_channel(Stream & chunk, size_t length, uint32_t flags) {
-        const CHANNELS::ChannelDef * rail_channel = this->mod_channel_list.get_by_name(channel_names::rail);
-        if (rail_channel) {
-            if (this->verbose & 16) {
-                rail_channel->log(unsigned(rail_channel - &this->mod_channel_list[0]));
+    void send_to_mod_rail_channel(const CHANNELS::ChannelDef * rail_channel,
+                                  Stream & chunk, size_t length, uint32_t flags) {
+        //LOG(LOG_INFO, "mod_rdp::send_to_mod_rail_channel: chunk.size=%u length=%u",
+        //    chunk.size(), length);
+        //hexdump_d(chunk.get_data(), chunk.size());
+
+        const auto saved_chunk_p = chunk.p;
+
+        const uint16_t orderType   = chunk.in_uint16_le();
+        const uint16_t orderLength = chunk.in_uint16_le();
+
+        //LOG(LOG_INFO, "mod_rdp::send_to_mod_rail_channel: orderType=%u orderLength=%u",
+        //    orderType, orderLength);
+
+        switch (orderType) {
+            case TS_RAIL_ORDER_EXEC:
+            {
+                ClientExecutePDU_Recv cepdur(chunk);
+
+                LOG(LOG_INFO,
+                    "mod_rdp::send_to_mod_rail_channel: Client Execute PDU - "
+                        "flags=0x%X exe_or_file=\"%s\" working_dir=\"%s\" arguments=\"%s\"",
+                    cepdur.Flags(), cepdur.exe_or_file(), cepdur.working_dir(), cepdur.arguments());
             }
-            this->send_to_channel(*rail_channel, chunk, length, flags);
+            break;
+
+            case TS_RAIL_ORDER_SYSPARAM:
+            {
+                ClientSystemParametersUpdatePDU_Recv cspupdur(chunk);
+
+                switch(cspupdur.SystemParam()) {
+                    case SPI_SETDRAGFULLWINDOWS:
+                    {
+                        const unsigned expected = 1 /* Body(1) */;
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "expected=%u remains=%u (0x%04X)",
+                                expected, chunk.in_remain(),
+                                cspupdur.SystemParam());
+                            throw Error(ERR_RAIL_PDU_TRUNCATED);
+                        }
+
+                        uint8_t Body = chunk.in_uint8();
+
+                        LOG(LOG_INFO,
+                            "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                "Full Window Drag is %s.",
+                            (!Body ? "disabled" : "enabled"));
+                    }
+                    break;
+
+                    case SPI_SETKEYBOARDCUES:
+                    {
+                        const unsigned expected = 1 /* Body(1) */;
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "expected=%u remains=%u (0x%04X)",
+                                expected, chunk.in_remain(),
+                                cspupdur.SystemParam());
+                            throw Error(ERR_RAIL_PDU_TRUNCATED);
+                        }
+
+                        uint8_t Body = chunk.in_uint8();
+
+                        if (Body) {
+                            LOG(LOG_INFO,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "Menu Access Keys are always underlined.");
+                        }
+                        else {
+                            LOG(LOG_INFO,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "Menu Access Keys are underlined only when the menu is activated by the keyboard.");
+                        }
+                    }
+                    break;
+
+                    case SPI_SETKEYBOARDPREF:
+                    {
+                        const unsigned expected = 1 /* Body(1) */;
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "expected=%u remains=%u (0x%04X)",
+                                expected, chunk.in_remain(),
+                                cspupdur.SystemParam());
+                            throw Error(ERR_RAIL_PDU_TRUNCATED);
+                        }
+
+                        uint8_t Body = chunk.in_uint8();
+
+                        if (Body) {
+                            LOG(LOG_INFO,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "The user prefers the keyboard over mouse.");
+                        }
+                        else {
+                            LOG(LOG_INFO,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "The user does not prefer the keyboard over mouse.");
+                        }
+                    }
+                    break;
+
+                    case SPI_SETMOUSEBUTTONSWAP:
+                    {
+                        const unsigned expected = 1 /* Body(1) */;
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "expected=%u remains=%u (0x%04X)",
+                                expected, chunk.in_remain(),
+                                cspupdur.SystemParam());
+                            throw Error(ERR_RAIL_PDU_TRUNCATED);
+                        }
+
+                        uint8_t Body = chunk.in_uint8();
+
+                        if (Body) {
+                            LOG(LOG_INFO,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "Swaps the meaning of the left and right mouse buttons.");
+                        }
+                        else {
+                            LOG(LOG_INFO,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "Restores the meaning of the left and right mouse buttons to their original meanings.");
+                        }
+                    }
+                    break;
+
+                    case SPI_SETWORKAREA:
+                    {
+                        const unsigned expected = 8 /* Body(8) */;
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "expected=%u remains=%u (0x%04X)",
+                                expected, chunk.in_remain(),
+                                cspupdur.SystemParam());
+                            throw Error(ERR_RAIL_PDU_TRUNCATED);
+                        }
+
+                        uint16_t Left   = chunk.in_uint16_le();
+                        uint16_t Top    = chunk.in_uint16_le();
+                        uint16_t Right  = chunk.in_uint16_le();
+                        uint16_t Bottom = chunk.in_uint16_le();
+
+                        LOG(LOG_INFO,
+                            "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                "work area in virtual screen coordinates is (left=%u top=%u right=%u bottom=%u).",
+                            Left, Top, Right, Bottom);
+                    }
+                    break;
+
+                    case RAIL_SPI_DISPLAYCHANGE:
+                    {
+                        const unsigned expected = 8 /* Body(8) */;
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "expected=%u remains=%u (0x%04X)",
+                                expected, chunk.in_remain(),
+                                cspupdur.SystemParam());
+                            throw Error(ERR_RAIL_PDU_TRUNCATED);
+                        }
+
+                        uint16_t Left   = chunk.in_uint16_le();
+                        uint16_t Top    = chunk.in_uint16_le();
+                        uint16_t Right  = chunk.in_uint16_le();
+                        uint16_t Bottom = chunk.in_uint16_le();
+
+                        LOG(LOG_INFO,
+                            "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                "New display resolution in virtual screen coordinates is (left=%u top=%u right=%u bottom=%u).",
+                            Left, Top, Right, Bottom);
+                    }
+                    break;
+
+                    case RAIL_SPI_TASKBARPOS:
+                    {
+                        const unsigned expected = 8 /* Body(8) */;
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                    "expected=%u remains=%u (0x%04X)",
+                                expected, chunk.in_remain(),
+                                cspupdur.SystemParam());
+                            throw Error(ERR_RAIL_PDU_TRUNCATED);
+                        }
+
+                        uint16_t Left   = chunk.in_uint16_le();
+                        uint16_t Top    = chunk.in_uint16_le();
+                        uint16_t Right  = chunk.in_uint16_le();
+                        uint16_t Bottom = chunk.in_uint16_le();
+
+                        LOG(LOG_INFO,
+                            "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                "Size of the client taskbar is (left=%u top=%u right=%u bottom=%u).",
+                            Left, Top, Right, Bottom);
+                    }
+                    break;
+
+                    case SPI_SETHIGHCONTRAST:
+                    {
+                        HighContrastSystemInformationStructure_Recv hcsisr(chunk);
+
+                        LOG(LOG_INFO,
+                            "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
+                                "parameters for the high-contrast accessibility feature, Flags=0x%X, ColorScheme=\"%s\".",
+                            hcsisr.Flags(), hcsisr.ColorScheme());
+                    }
+                    break;
+                }
+            }
+            break;
+
+            case TS_RAIL_ORDER_CLIENTSTATUS:
+            {
+                ClientInformationPDU_Recv cipdur(chunk);
+
+                LOG(LOG_INFO,
+                    "mod_rdp::send_to_mod_rail_channel: Client Information PDU - Flags=0x%08X",
+                    cipdur.Flags());
+            }
+            break;
+
+            case TS_RAIL_ORDER_HANDSHAKE:
+            {
+                HandshakePDU_Recv hpdur(chunk);
+
+                LOG(LOG_INFO,
+                    "mod_rdp::send_to_mod_rail_channel: Handshake PDU - buildNumber=%u",
+                    hpdur.buildNumber());
+            }
+            break;
+
+            default:
+                LOG(LOG_INFO,
+                    "mod_rdp::send_to_mod_rail_channel: undecoded PDU - orderType=%u orderLength=%u",
+                    orderType, orderLength);
+            break;
         }
+
+        chunk.p = saved_chunk_p;
+
+        this->send_to_channel(*rail_channel, chunk, length, flags);
     }
 
     // Method used by session to transmit sesman answer for auth_channel
@@ -850,8 +1083,7 @@ public:
         }
     }
 
-    void send_data_request(uint16_t channelId, HStream & stream)
-    {
+    void send_data_request(uint16_t channelId, HStream & stream) {
         if (this->verbose & 16) {
             LOG(LOG_INFO, "send data request");
         }
@@ -871,8 +1103,7 @@ public:
         }
     }
 
-    void send_data_request_ex(uint16_t channelId, HStream & stream)
-    {
+    void send_data_request_ex(uint16_t channelId, HStream & stream) {
         BStream x224_header(256);
         OutPerBStream mcs_header(256);
         BStream sec_header(256);
@@ -888,8 +1119,7 @@ public:
         this->nego.trans.send(x224_header, mcs_header, stream);
     }
 
-    virtual void draw_event(time_t now)
-    {
+    virtual void draw_event(time_t now) {
         if (!this->event.waked_up_by_time) {
             try{
                 char * hostname = this->hostname;
@@ -2303,7 +2533,6 @@ public:
         }
     }   // draw_event
 
-
     // 1.3.1.3 Deactivation-Reactivation Sequence
     // ==========================================
 
@@ -2340,9 +2569,7 @@ public:
 
     // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
 
-
-    void send_confirm_active(mod_api * mod) throw(Error)
-    {
+    void send_confirm_active(mod_api * mod) throw(Error) {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         }
@@ -2591,24 +2818,23 @@ public:
         }
         confirm_active_pdu.emit_capability_set(glyphcache_caps);
 
-/*
-RailCaps rail_caps;
-rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED;
-if (this->verbose & 1) {
-    rail_caps.log("Sending to server");
-}
-confirm_active_pdu.emit_capability_set(rail_caps);
+        if (this->remote_program) {
+            RailCaps rail_caps;
+            rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED;
+            if (this->verbose & 1) {
+                rail_caps.log("Sending to server");
+            }
+            confirm_active_pdu.emit_capability_set(rail_caps);
 
-WindowListCaps window_list_caps;
-window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
-window_list_caps.NumIconCaches = 3;
-window_list_caps.NumIconCacheEntries = 12;
-if (this->verbose & 1) {
-    window_list_caps.log("Sending to server");
-}
-confirm_active_pdu.emit_capability_set(window_list_caps);
-*/
-
+            WindowListCaps window_list_caps;
+            window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
+            window_list_caps.NumIconCaches = 3;
+            window_list_caps.NumIconCacheEntries = 12;
+            if (this->verbose & 1) {
+                window_list_caps.log("Sending to server");
+            }
+            confirm_active_pdu.emit_capability_set(window_list_caps);
+        }
         confirm_active_pdu.emit_end();
 
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
@@ -2629,7 +2855,7 @@ confirm_active_pdu.emit_capability_set(window_list_caps);
             LOG(LOG_INFO, "mod_rdp::send_confirm_active done");
             LOG(LOG_INFO, "Waiting for answer to confirm active");
         }
-    }
+    }   // send_confirm_active
 
     void process_pointer_pdu(Stream & stream, mod_api * mod) throw(Error)
     {
@@ -3463,8 +3689,7 @@ confirm_active_pdu.emit_capability_set(window_list_caps);
         ERRINFO_DECRYPTFAILED2                    = 0x00001195
     };
 
-    void process_disconnect_pdu(Stream & stream)
-    {
+    void process_disconnect_pdu(Stream & stream) {
         uint32_t errorInfo = stream.in_uint32_le();
         switch (errorInfo){
         case ERRINFO_RPC_INITIATED_DISCONNECT:
@@ -3792,7 +4017,7 @@ confirm_active_pdu.emit_capability_set(window_list_caps);
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "?");
             break;
         }
-    }
+    }   // process_disconnect_pdu
 
     void process_logon_info(const char * domain, const char * username) {
         char domain_username_format_0[2048];
@@ -3897,8 +4122,7 @@ confirm_active_pdu.emit_capability_set(window_list_caps);
     }
 
     TODO("CGR: this can probably be unified with process_confirm_active in front")
-    void process_server_caps(Stream & stream, uint16_t len)
-    {
+    void process_server_caps(Stream & stream, uint16_t len) {
         if (this->verbose & 32){
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
@@ -4009,7 +4233,7 @@ confirm_active_pdu.emit_capability_set(window_list_caps);
         if (this->verbose & 32){
             LOG(LOG_INFO, "mod_rdp::process_server_caps done");
         }
-    }
+    }   // process_server_caps
 
     void send_control(int action) throw(Error) {
         if (this->verbose & 1) {
@@ -4149,7 +4373,7 @@ confirm_active_pdu.emit_capability_set(window_list_caps);
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_regular done");
         }
-    }
+    }   // send_persistent_key_list_regular
 
     void send_persistent_key_list_transparent() throw(Error) {
         if (!this->persistent_key_list_transport) {
@@ -4212,8 +4436,7 @@ confirm_active_pdu.emit_capability_set(window_list_caps);
     }
 
     TODO("CGR: duplicated code in front")
-    void send_synchronise() throw(Error)
-    {
+    void send_synchronise() throw(Error) {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_synchronise");
         }
@@ -4244,8 +4467,7 @@ confirm_active_pdu.emit_capability_set(window_list_caps);
         }
     }
 
-    void send_fonts(int seq) throw(Error)
-    {
+    void send_fonts(int seq) throw(Error) {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_fonts");
         }
@@ -4280,8 +4502,7 @@ confirm_active_pdu.emit_capability_set(window_list_caps);
 
 public:
 
-    void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) throw(Error)
-    {
+    void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
         }
@@ -4361,8 +4582,7 @@ public:
         }
     }
 
-    virtual void rdp_input_invalidate(const Rect & r)
-    {
+    virtual void rdp_input_invalidate(const Rect & r) {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
         }
@@ -4382,6 +4602,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
         }
     }
+
     virtual void rdp_input_invalidate2(const DArray<Rect> & vr) {
         LOG(LOG_INFO, " ===================> mod_rdp::rdp_input_invalidate 2 <=====================");
         if (this->verbose & 4){
@@ -4785,10 +5006,9 @@ public:
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
         }
-    }
+    }   // process_new_pointer_pdu
 
-    void process_bitmap_updates(Stream & stream, bool fast_path)
-    {
+    void process_bitmap_updates(Stream & stream, bool fast_path) {
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }
@@ -4987,10 +5207,9 @@ public:
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");
         }
-    }
+    }   // process_bitmap_updates
 
-    void send_client_info_pdu(int userid, const char * password)
-    {
+    void send_client_info_pdu(int userid, const char * password) {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
@@ -5012,7 +5231,9 @@ public:
             infoPacket.flags |= ((this->rdp_compression - 1) << 9);
         }
 
-//infoPacket.flags |= INFO_RAIL;
+        if (this->remote_program) {
+            infoPacket.flags |= INFO_RAIL;
+        }
 
         if (this->verbose & 1) {
             infoPacket.log("Sending to server: ", this->password_printing_mode);
@@ -5045,28 +5266,23 @@ public:
         }
     }
 
-    virtual void begin_update()
-    {
+    virtual void begin_update() {
         this->front.begin_update();
     }
 
-    virtual void end_update()
-    {
+    virtual void end_update() {
         this->front.end_update();
     }
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
-    {
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
-    {
+    virtual void draw(const RDPScrBlt & cmd, const Rect & clip) {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
-    {
+    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) {
         this->front.draw(cmd, clip);
     }
 
@@ -5086,28 +5302,26 @@ public:
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
-    {
+    virtual void draw(const RDPPatBlt & cmd, const Rect &clip) {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
-    {
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip,
+                      const Bitmap & bmp) {
         this->front.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
-    {
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip,
+                      const Bitmap & bmp) {
         this->front.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPLineTo& cmd, const Rect & clip)
-    {
+    virtual void draw(const RDPLineTo& cmd, const Rect & clip) {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
-    {
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
+                      const GlyphCache * gly_cache) {
         this->front.draw(cmd, clip, gly_cache);
     }
 
@@ -5124,13 +5338,11 @@ public:
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseSC& cmd, const Rect & clip)
-    {
+    virtual void draw(const RDPEllipseSC& cmd, const Rect & clip) {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseCB& cmd, const Rect & clip)
-    {
+    virtual void draw(const RDPEllipseCB& cmd, const Rect & clip) {
         this->front.draw(cmd, clip);
     }
 
@@ -5138,8 +5350,7 @@ public:
         this->front.server_set_pointer(cursor);
     }
 
-    virtual void draw(const RDPColCache & cmd)
-    {
+    virtual void draw(const RDPColCache & cmd) {
         this->front.draw(cmd);
     }
 
@@ -5148,19 +5359,18 @@ public:
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-                      size_t size, const Bitmap & bmp)
-    {
+                      size_t size, const Bitmap & bmp) {
         this->front.draw(bitmap_data, data, size, bmp);
     }
 
-    virtual void draw(const RDPBrushCache& cmd)
-    {
+    virtual void draw(const RDPBrushCache & cmd) {
         this->front.draw(cmd);
     }
 
     virtual bool is_up_and_running() {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
+
     virtual void disconnect() {
         if (this->is_up_and_running()) {
             if (this->verbose & 1){
@@ -5171,6 +5381,7 @@ public:
             this->send_disconnect_ultimatum();
         }
     }
+
     void send_shutdown_request() {
         LOG(LOG_INFO, "SEND SHUTDOWN REQUEST PDU");
 
@@ -5190,6 +5401,7 @@ public:
 
         this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     }
+
     void send_disconnect_ultimatum() {
         if (this->verbose & 1){
             LOG(LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
@@ -5211,7 +5423,6 @@ public:
         target_stream.mark_end();
         this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     }
-
 
     void process_auth_event(const CHANNELS::ChannelDef & mod_channel,
             Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
@@ -5305,27 +5516,34 @@ public:
                 mod_channel.name, stream.p, length, chunk_size, flags
             );
         }
-    }
+    }   // process_clipboard_event
 
-    void process_rail_event(const CHANNELS::ChannelDef & mod_channel,
+    void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
         Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size)
     {
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "mod_rdp server rail PDU");
+            LOG(LOG_INFO, "mod_rdp::process_rail_event: Server RAIL PDU.");
         }
 
-        uint16_t orderType   = stream.in_uint16_le();
-        uint16_t orderLength = stream.in_uint16_le();
+        const auto saved_stream_p = stream.p;
+
+        const uint16_t orderType   = stream.in_uint16_le();
+        const uint16_t orderLength = stream.in_uint16_le();
 
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "mod_rdp server rail PDU: orderType=%u orderLength=%u",
+            LOG(LOG_INFO, "mod_rdp::process_rail_event: orderType=%u orderLength=%u.",
                 orderType, orderLength);
         }
 
-        stream.p -= 4;  // orderType(2) + orderLength(2)
-        this->send_to_front_channel(
-            mod_channel.name, stream.p, length, chunk_size, flags
-        );
+        stream.p = saved_stream_p;
+
+        bool dont_transmit_to_front = false;
+
+        if (!dont_transmit_to_front) {
+            this->send_to_front_channel(
+                rail_channel.name, stream.p, length, chunk_size, flags
+            );
+        }
     }
 };
 
