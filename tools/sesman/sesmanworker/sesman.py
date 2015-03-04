@@ -886,7 +886,7 @@ class Sesman():
                 if self.shared.get(u'waitinforeturn') == "exit":
                     # received exit
                     self.send_data({u'module' : u'close'})
-                    False, ""
+                    return False, ""
                 if self.shared.get(u'waitinforeturn') == "confirm":
                     # should parse the ticket info
                     desc = self.shared.get(u'comment')

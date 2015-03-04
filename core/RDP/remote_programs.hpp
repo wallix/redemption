@@ -155,8 +155,10 @@ class RAILPDUHeader_Send {
     uint32_t   offset_of_orderLength;
 
 public:
-    RAILPDUHeader_Send(Stream & stream, uint16_t orderType)
-    : stream(stream) {
+    RAILPDUHeader_Send(Stream & stream)
+    : stream(stream), offset_of_orderLength(0) {}
+
+    void emit_begin(uint16_t orderType) {
         stream.out_uint16_le(orderType);
 
         this->offset_of_orderLength = stream.get_offset();
@@ -165,8 +167,9 @@ public:
         stream.mark_end();
     }
 
-    void set_orderLength(uint16_t orderLength) {
-        this->stream.set_out_uint16_le(orderLength,
+    void emit_end() {
+        this->stream.set_out_uint16_le(
+            stream.get_offset() - this->offset_of_orderLength + 2 /* orderType */,
             this->offset_of_orderLength);
     }
 

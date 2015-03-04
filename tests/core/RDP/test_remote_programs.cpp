@@ -33,15 +33,23 @@ BOOST_AUTO_TEST_CASE(TestRAILPDUHeader)
 {
     BStream stream(128);
 
-    RAILPDUHeader_Send header_s(stream, TS_RAIL_ORDER_EXEC);
-    header_s.set_orderLength(24);
+    const uint8_t order_data[] = "0123456789";
+
+    RAILPDUHeader_Send header_s(stream);
+    header_s.emit_begin(TS_RAIL_ORDER_EXEC);
+
+    stream.out_copy_bytes(order_data, sizeof(order_data));
+    stream.mark_end();
+
+    header_s.emit_end();
 
     stream.rewind();
 
     RAILPDUHeader_Recv header_r(stream);
 
-    BOOST_CHECK_EQUAL(header_r.orderType(),   TS_RAIL_ORDER_EXEC);
-    BOOST_CHECK_EQUAL(header_r.orderLength(), 24                );
+    BOOST_CHECK_EQUAL(header_r.orderType(), TS_RAIL_ORDER_EXEC);
+    BOOST_CHECK_EQUAL(header_r.orderLength(),
+        sizeof(order_data) + 4 /* orderType(2) + orderLength(2) */);
 }
 
 BOOST_AUTO_TEST_CASE(TestHandshakePDU)
