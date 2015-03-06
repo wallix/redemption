@@ -63,6 +63,13 @@ namespace RDP {
     class RDPMultiPatBlt;
     class RDPMultiScrBlt;
     class FrameMarker;
+
+    namespace RAIL {
+        class NewOrExistingWindow;
+        class WindowIcon;
+        class CachedIcon;
+        class DeletedWindow;
+    }
 }
 
 struct RDPGraphicDevice : noncopyable {
@@ -89,6 +96,11 @@ struct RDPGraphicDevice : noncopyable {
     virtual void draw(const RDPBrushCache & cmd) {}
 
     virtual void draw(const RDP::FrameMarker & order) = 0;
+
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) = 0;
+    virtual void draw(const RDP::RAIL::WindowIcon          & order) = 0;
+    virtual void draw(const RDP::RAIL::CachedIcon          & order) = 0;
+    virtual void draw(const RDP::RAIL::DeletedWindow       & order) = 0;
 
     virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data, std::size_t size
                      , const Bitmap & bmp) = 0;

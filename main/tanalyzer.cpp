@@ -46,6 +46,7 @@
 #include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "RDP/protocol.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
 #include "transparentplayer.hpp"
@@ -138,6 +139,11 @@ public:
     virtual void draw(const RDPBitmapData &, const uint8_t *, size_t, const Bitmap &) { REDASSERT(false); }
     virtual void draw(const RDPBrushCache &) { REDASSERT(false); }
     virtual void draw(const RDPColCache &) { REDASSERT(false); }
+
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) { REDASSERT(false); }
+    virtual void draw(const RDP::RAIL::WindowIcon          & order) { REDASSERT(false); }
+    virtual void draw(const RDP::RAIL::CachedIcon          & order) { REDASSERT(false); }
+    virtual void draw(const RDP::RAIL::DeletedWindow       & order) { REDASSERT(false); }
 
     virtual void server_set_pointer(const Pointer & cursor) { REDASSERT(false); }
 

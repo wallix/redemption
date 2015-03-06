@@ -370,6 +370,22 @@ public:
         this->mod.draw(order);
     }
 
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+        this->mod.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+        this->mod.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+        this->mod.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+        this->mod.draw(order);
+    }
+
     virtual void begin_update()
     {
         this->mod.begin_update();

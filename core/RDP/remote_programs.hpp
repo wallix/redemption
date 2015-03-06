@@ -249,18 +249,18 @@ public:
 // Flags (4 bytes): An unsigned 32-bit integer. RAIL features that are
 //  supported by the client; MUST be set to one of the following.
 
-//   +-----------------------------------------+-------------------------------+
-//   | Value                                   |   Meaning                     |
-//   +-----------------------------------------+-------------------------------+
-//   | TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE | Indicates that the client     |
-//   | 0x00000001                              | supports the local move/size  |
-//   |                                         | RAIL feature.                 |
-//   +-----------------------------------------+-------------------------------+
-//   | TS_RAIL_CLIENTSTATUS_AUTORECONNECT      | Indicates that the client is  |
-//   | 0x00000002                              | auto-reconnecting to the      |
-//   |                                         | server after an unexpected    |
-//   |                                         | disconnect of the session.    |
-//   +-----------------------------------------+-------------------------------+
+//  +-----------------------------------------+------------------------------+
+//  | Value                                   |   Meaning                    |
+//  +-----------------------------------------+------------------------------+
+//  | TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE | Indicates that the client    |
+//  | 0x00000001                              | supports the local move/size |
+//  |                                         | RAIL feature.                |
+//  +-----------------------------------------+------------------------------+
+//  | TS_RAIL_CLIENTSTATUS_AUTORECONNECT      | Indicates that the client is |
+//  | 0x00000002                              | auto-reconnecting to the     |
+//  |                                         | server after an unexpected   |
+//  |                                         | disconnect of the session.   |
+//  +-----------------------------------------+------------------------------+
 
 enum {
       TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE = 0x00000001
@@ -272,12 +272,15 @@ class ClientInformationPDU_Recv {
 
 public:
     ClientInformationPDU_Recv(Stream & stream) {
-        const unsigned expected = 4;    // Flags(4)
+        {
+            const unsigned expected = 4;    // Flags(4)
 
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Client Information PDU: expected=%u remains=%u",
-                expected, stream.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Client Information PDU: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
         }
 
         this->Flags_ = stream.in_uint32_le();
@@ -339,32 +342,31 @@ public:
 
 //  Where the bits are defined as:
 
-//   +-------------------------------------------+-----------------------------+
-//   | Value                                     | Description                 |
-//   +-------------------------------------------+-----------------------------+
-//   | A                                         | The environment variables   |
-//   | TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY | in the WorkingDir field     |
-//   |                                           | MUST be expanded on the     |
-//   |                                           | server.                     |
-//   +-------------------------------------------+-----------------------------+
-//   | B                                         | The drive letters in the    |
-//   | TS_RAIL_EXEC_FLAG_TRANSLATE_FILES         | file path MUST be converted |
-//   |                                           | to corresponding mapped     |
-//   |                                           | drives on the server. This  |
-//   |                                           | flag MUST NOT be set if the |
-//   |                                           | TS_RAIL_EXEC_FLAG_FILE      |
-//   |                                           | (0x0004) flag is not set.   |
-//   +-------------------------------------------+-----------------------------+
-//   | C                                         | If this flag is set, the    |
-//   | TS_RAIL_EXEC_FLAG_FILE                    | ExeOrFile field refers to a |
-//   |                                           | file path. If it is not     |
-//   |                                           | set, the ExeOrFile field    |
-//   |                                           | refers to an executable.    |
-//   +-------------------------------------------+-----------------------------+
-//   | D                                         | The environment variables   |
-//   | TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS        | in the Arguments field MUST |
-//   |                                           | be expanded on the server.  |
-//   +-------------------------------------------+-----------------------------+
+//  +-------------------------------------------+------------------------------+
+//  | Value                                     | Description                  |
+//  +-------------------------------------------+------------------------------+
+//  | A                                         | The environment variables in |
+//  | TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY | the WorkingDir field MUST be |
+//  |                                           | expanded on the server.      |
+//  +-------------------------------------------+------------------------------+
+//  | B                                         | The drive letters in the     |
+//  | TS_RAIL_EXEC_FLAG_TRANSLATE_FILES         | file path MUST be converted  |
+//  |                                           | to corresponding mapped      |
+//  |                                           | drives on the server. This   |
+//  |                                           | flag MUST NOT be set if the  |
+//  |                                           | TS_RAIL_EXEC_FLAG_FILE       |
+//  |                                           | (0x0004) flag is not set.    |
+//  +-------------------------------------------+------------------------------+
+//  | C                                         | If this flag is set, the     |
+//  | TS_RAIL_EXEC_FLAG_FILE                    | ExeOrFile field refers to a  |
+//  |                                           | file path. If it is not set, |
+//  |                                           | the ExeOrFile field refers   |
+//  |                                           | to an executable.            |
+//  +-------------------------------------------+------------------------------+
+//  | D                                         | The environment variables in |
+//  | TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS        | the Arguments field MUST be  |
+//  |                                           | expanded on the server.      |
+//  +-------------------------------------------+------------------------------+
 
 enum {
       TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY = 0x0001
@@ -444,7 +446,7 @@ public:
                         length_of_utf16_data_in_bytes, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
-                uint8_t * utf16_data = static_cast<uint8_t *>(
+                uint8_t * const utf16_data = static_cast<uint8_t *>(
                     ::alloca(length_of_utf16_data_in_bytes));
                 stream.in_copy_bytes(utf16_data,
                     length_of_utf16_data_in_bytes);
@@ -454,7 +456,7 @@ public:
                 const size_t size_of_utf8_string =
                     length_of_utf16_data_in_bytes / 2 *
                     maximum_length_of_utf8_character_in_bytes + 1;
-                uint8_t * utf8_string = static_cast<uint8_t *>(
+                uint8_t * const utf8_string = static_cast<uint8_t *>(
                     ::alloca(size_of_utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
                     utf16_data, length_of_utf16_data_in_bytes / 2,
@@ -498,9 +500,9 @@ public:
             [&stream] (const char * in,
                        size_t maximum_length_of_utf16_data_in_bytes,
                        uint32_t offset_of_data_length) {
-                uint8_t * utf16_data = static_cast<uint8_t *>(::alloca(
+                uint8_t * const utf16_data = static_cast<uint8_t *>(::alloca(
                     maximum_length_of_utf16_data_in_bytes));
-                size_t size_of_utf16_data = ::UTF8toUTF16(
+                const size_t size_of_utf16_data = ::UTF8toUTF16(
                     reinterpret_cast<const uint8_t *>(in), utf16_data,
                     maximum_length_of_utf16_data_in_bytes);
 
@@ -557,35 +559,35 @@ public:
 //  parameter being transmitted. The field MUST be set to one of the
 //  following values.
 
-//   +------------------------+------------------------------------------------+
-//   | Value                  | Meaning                                        |
-//   +------------------------+------------------------------------------------+
-//   | SPI_SETDRAGFULLWINDOWS | The system parameter for full-window drag.     |
-//   | 0x00000025             |                                                |
-//   +------------------------+------------------------------------------------+
-//   | SPI_SETKEYBOARDCUES    | The system parameter to determine whether menu |
-//   | 0x0000100B             | access keys are always underlined.             |
-//   +------------------------+------------------------------------------------+
-//   | SPI_SETKEYBOARDPREF    | The system parameter specifying a preference   |
-//   | 0x00000045             | for the keyboard instead of the mouse.         |
-//   +------------------------+------------------------------------------------+
-//   | SPI_SETWORKAREA        | The system parameter to set the size of the    |
-//   | 0x0000002F             | work area. The work area is the portion of the |
-//   |                        | screen not obscured by the system taskbar or   |
-//   |                        | by application desktop toolbars.               |
-//   +------------------------+------------------------------------------------+
-//   | RAIL_SPI_DISPLAYCHANGE | The system parameter for display resolution.   |
-//   | 0x0000F001             |                                                |
-//   +------------------------+------------------------------------------------+
-//   | SPI_SETMOUSEBUTTONSWAP | The system parameter to swap or restore the    |
-//   | 0x00000021             | meaning of the left and right mouse buttons.   |
-//   +------------------------+------------------------------------------------+
-//   | RAIL_SPI_TASKBARPOS    | The system parameter to indicate the size of   |
-//   | 0x0000F000             | the client taskbar.                            |
-//   +------------------------+------------------------------------------------+
-//   | SPI_SETHIGHCONTRAST    | The system parameter to set the parameters of  |
-//   | 0x00000043             | the HighContrast accessibility feature.        |
-//   +------------------------+------------------------------------------------+
+//  +------------------------+-------------------------------------------------+
+//  | Value                  | Meaning                                         |
+//  +------------------------+-------------------------------------------------+
+//  | SPI_SETDRAGFULLWINDOWS | The system parameter for full-window drag.      |
+//  | 0x00000025             |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | SPI_SETKEYBOARDCUES    | The system parameter to determine whether menu  |
+//  | 0x0000100B             | access keys are always underlined.              |
+//  +------------------------+-------------------------------------------------+
+//  | SPI_SETKEYBOARDPREF    | The system parameter specifying a preference    |
+//  | 0x00000045             | for the keyboard instead of the mouse.          |
+//  +------------------------+-------------------------------------------------+
+//  | SPI_SETWORKAREA        | The system parameter to set the size of the     |
+//  | 0x0000002F             | work area. The work area is the portion of the  |
+//  |                        | screen not obscured by the system taskbar or by |
+//  |                        | application desktop toolbars.                   |
+//  +------------------------+-------------------------------------------------+
+//  | RAIL_SPI_DISPLAYCHANGE | The system parameter for display resolution.    |
+//  | 0x0000F001             |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | SPI_SETMOUSEBUTTONSWAP | The system parameter to swap or restore the     |
+//  | 0x00000021             | meaning of the left and right mouse buttons.    |
+//  +------------------------+-------------------------------------------------+
+//  | RAIL_SPI_TASKBARPOS    | The system parameter to indicate the size of    |
+//  | 0x0000F000             | the client taskbar.                             |
+//  +------------------------+-------------------------------------------------+
+//  | SPI_SETHIGHCONTRAST    | The system parameter to set the parameters of   |
+//  | 0x00000043             | the HighContrast accessibility feature.         |
+//  +------------------------+-------------------------------------------------+
 
 enum {
       SPI_SETDRAGFULLWINDOWS = 0x00000025
@@ -603,67 +605,70 @@ enum {
 //  SystemParameter field (Value column) and corresponding values of the Body
 //  field (Meaning column).
 
-//   +------------------------+------------------------------------------------+
-//   | Value                  | Meaning                                        |
-//   +------------------------+------------------------------------------------+
-//   | SPI_SETDRAGFULLWINDOWS | Size of Body field: 1 byte.                    |
-//   | 0x0025                 | 0 (FALSE): Full Window Drag is disabled.       |
-//   |                        | Nonzero (TRUE): Full Window Drag is enabled.   |
-//   +------------------------+------------------------------------------------+
-//   | SPI_SETKEYBOARDCUES    | Size of Body field: 1 byte.                    |
-//   | 0x100B                 | 0 (FALSE): Menu Access Keys are underlined     |
-//   |                        | only when the menu is activated by the         |
-//   |                        | keyboard. Nonzero (TRUE): Menu Access Keys are |
-//   |                        | always underlined.                             |
-//   +------------------------+------------------------------------------------+
-//   | SPI_SETKEYBOARDPREF    | Size of Body field: 1 byte.                    |
-//   | 0x0045                 | 0 (FALSE): The user does not prefer the        |
-//   |                        | keyboard over mouse. Nonzero (TRUE): The user  |
-//   |                        | prefers the keyboard over mouse. This causes   |
-//   |                        | applications to display keyboard interfaces    |
-//   |                        | that would otherwise be hidden.                |
-//   +------------------------+------------------------------------------------+
-//   | SPI_SETMOUSEBUTTONSWAP | Size of Body field: 1 byte.                    |
-//   | 0x0021                 | 0 (FALSE): Restores the meaning of the left    |
-//   |                        | and right mouse buttons to their original      |
-//   |                        | meanings. Nonzero (TRUE): Swaps the meaning of |
-//   |                        | the left and right mouse buttons.              |
-//   +------------------------+------------------------------------------------+
-//   | SPI_SETWORKAREA        | Size of Body field: 8 bytes.                   |
-//   | 0x002F                 | The body is a TS_RECTANGLE_16 structure that   |
-//   |                        | defines the work area in virtual screen        |
-//   |                        | coordinates. In a system with multiple display |
-//   |                        | monitors, the work area is that of the monitor |
-//   |                        | that contains the specified rectangle. For     |
-//   |                        | more information about virtual screen          |
-//   |                        | coordinates, see [MSDN-VIRTUALSCR].            |
-//   +------------------------+------------------------------------------------+
-//   | RAIL_SPI_DISPLAYCHANGE | Size of Body field: 8 bytes.                   |
-//   | 0xF001                 | The body is a TS_RECTANGLE_16 structure that   |
-//   |                        | indicates the new display resolution in        |
-//   |                        | virtual screen coordinates. For more           |
-//   |                        | information about virtual screen coordinates,  |
-//   |                        | see [MSDN-VIRTUALSCR].                         |
-//   +------------------------+------------------------------------------------+
-//   | RAIL_SPI_TASKBARPOS    | Size of Body field: 8 bytes.                   |
-//   | 0xF000                 | The body is a TS_RECTANGLE_16 structure that   |
-//   |                        | indicates the size of the client taskbar.      |
-//   +------------------------+------------------------------------------------+
-//   | SPI_SETHIGHCONTRAST    | Size of Body field: Variable number of bytes.  |
-//   | 0x0043                 | The body is a TS_HIGHCONTRAST structure.       |
-//   +------------------------+------------------------------------------------+
+//  +------------------------+------------------------------------------------+
+//  | Value                  | Meaning                                        |
+//  +------------------------+------------------------------------------------+
+//  | SPI_SETDRAGFULLWINDOWS | Size of Body field: 1 byte.                    |
+//  | 0x0025                 | 0 (FALSE): Full Window Drag is disabled.       |
+//  |                        | Nonzero (TRUE): Full Window Drag is enabled.   |
+//  +------------------------+------------------------------------------------+
+//  | SPI_SETKEYBOARDCUES    | Size of Body field: 1 byte.                    |
+//  | 0x100B                 | 0 (FALSE): Menu Access Keys are underlined     |
+//  |                        | only when the menu is activated by the         |
+//  |                        | keyboard. Nonzero (TRUE): Menu Access Keys are |
+//  |                        | always underlined.                             |
+//  +------------------------+------------------------------------------------+
+//  | SPI_SETKEYBOARDPREF    | Size of Body field: 1 byte.                    |
+//  | 0x0045                 | 0 (FALSE): The user does not prefer the        |
+//  |                        | keyboard over mouse. Nonzero (TRUE): The user  |
+//  |                        | prefers the keyboard over mouse. This causes   |
+//  |                        | applications to display keyboard interfaces    |
+//  |                        | that would otherwise be hidden.                |
+//  +------------------------+------------------------------------------------+
+//  | SPI_SETMOUSEBUTTONSWAP | Size of Body field: 1 byte.                    |
+//  | 0x0021                 | 0 (FALSE): Restores the meaning of the left    |
+//  |                        | and right mouse buttons to their original      |
+//  |                        | meanings. Nonzero (TRUE): Swaps the meaning of |
+//  |                        | the left and right mouse buttons.              |
+//  +------------------------+------------------------------------------------+
+//  | SPI_SETWORKAREA        | Size of Body field: 8 bytes.                   |
+//  | 0x002F                 | The body is a TS_RECTANGLE_16 structure that   |
+//  |                        | defines the work area in virtual screen        |
+//  |                        | coordinates. In a system with multiple display |
+//  |                        | monitors, the work area is that of the monitor |
+//  |                        | that contains the specified rectangle. For     |
+//  |                        | more information about virtual screen          |
+//  |                        | coordinates, see [MSDN-VIRTUALSCR].            |
+//  +------------------------+------------------------------------------------+
+//  | RAIL_SPI_DISPLAYCHANGE | Size of Body field: 8 bytes.                   |
+//  | 0xF001                 | The body is a TS_RECTANGLE_16 structure that   |
+//  |                        | indicates the new display resolution in        |
+//  |                        | virtual screen coordinates. For more           |
+//  |                        | information about virtual screen coordinates,  |
+//  |                        | see [MSDN-VIRTUALSCR].                         |
+//  +------------------------+------------------------------------------------+
+//  | RAIL_SPI_TASKBARPOS    | Size of Body field: 8 bytes.                   |
+//  | 0xF000                 | The body is a TS_RECTANGLE_16 structure that   |
+//  |                        | indicates the size of the client taskbar.      |
+//  +------------------------+------------------------------------------------+
+//  | SPI_SETHIGHCONTRAST    | Size of Body field: Variable number of bytes.  |
+//  | 0x0043                 | The body is a TS_HIGHCONTRAST structure.       |
+//  +------------------------+------------------------------------------------+
 
 class ClientSystemParametersUpdatePDU_Recv {
     uint32_t SystemParam_;
 
 public:
     ClientSystemParametersUpdatePDU_Recv(Stream & stream) {
-        const unsigned expected = 4;    // SystemParam(4)
+        {
+            const unsigned expected = 4;    // SystemParam(4)
 
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Client System Parameters Update PDU: expected=%u remains=%u",
-                expected, stream.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Client System Parameters Update PDU: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
         }
 
         this->SystemParam_ = stream.in_uint32_le();
@@ -721,34 +726,39 @@ class HighContrastSystemInformationStructure_Recv {
 
 public:
     HighContrastSystemInformationStructure_Recv(Stream & stream) {
-        const unsigned expected = 8;    // Flags(4) + ColorSchemeLength(4)
+        {
+            const unsigned expected = 8;    // Flags(4) + ColorSchemeLength(4)
 
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "High Contrast System Information Structure: expected=%u remains=%u (0)",
-                expected, stream.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated High Contrast System Information Structure: expected=%u remains=%u (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
         }
 
         this->Flags_            = stream.in_uint32_le();
         this->ColorSchemeLength = stream.in_uint32_le();
 
         if (!stream.in_check_rem(this->ColorSchemeLength)) {
-            LOG(LOG_ERR, "High Contrast System Information Structure: expected=%u remains=%u (1)",
+            LOG(LOG_ERR,
+                "Truncated High Contrast System Information Structure: expected=%u remains=%u (1)",
                 this->ColorSchemeLength, stream.in_remain());
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }
 
         REDASSERT(this->ColorSchemeLength >= 2 /* CbString(2) */);
 
-        uint16_t CbString = stream.in_uint16_le();
+        const uint16_t CbString = stream.in_uint16_le();
 
         if (!stream.in_check_rem(CbString)) {
-            LOG(LOG_ERR, "High Contrast System Information Structure: expected=%u remains=%u (2)",
+            LOG(LOG_ERR,
+                "Truncated High Contrast System Information Structure: expected=%u remains=%u (2)",
                 this->ColorSchemeLength, stream.in_remain());
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }
 
-        uint8_t * unicode_data = static_cast<uint8_t *>(::alloca(CbString));
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(CbString));
 
         stream.in_copy_bytes(unicode_data, CbString);
 
@@ -756,7 +766,7 @@ public:
 
         const size_t size_of_utf8_string =
                     CbString / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * utf8_string = static_cast<uint8_t *>(
+        uint8_t * const utf8_string = static_cast<uint8_t *>(
             ::alloca(size_of_utf8_string));
         const size_t length_of_utf8_string = ::UTF16toUTF8(
             unicode_data, CbString / 2, utf8_string, size_of_utf8_string);
@@ -771,14 +781,15 @@ public:
 
 class HighContrastSystemInformationStructure_Send {
 public:
-    HighContrastSystemInformationStructure_Send(Stream & stream, uint32_t Flags, const char * color_scheme) {
+    HighContrastSystemInformationStructure_Send(Stream & stream, uint32_t Flags,
+                                                const char * color_scheme) {
         stream.out_uint32_le(Flags);
 
         const size_t maximum_length_of_ColorScheme_in_bytes = strlen(color_scheme) * 2;
 
-        uint8_t * unicode_data = static_cast<uint8_t *>(::alloca(
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
                     maximum_length_of_ColorScheme_in_bytes));
-        size_t size_of_unicode_data = ::UTF8toUTF16(
+        const size_t size_of_unicode_data = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(color_scheme), unicode_data,
             maximum_length_of_ColorScheme_in_bytes);
 

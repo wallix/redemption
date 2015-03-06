@@ -4366,6 +4366,42 @@ public:
         }
     }
 
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+        this->orders->draw(order);
+
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->draw(order);
+        }
+    }
+
+    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+        this->orders->draw(order);
+
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->draw(order);
+        }
+    }
+
+    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+        this->orders->draw(order);
+
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->draw(order);
+        }
+    }
+
+    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+        this->orders->draw(order);
+
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->draw(order);
+        }
+    }
+
     virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {
         proxy_order_caps[idx] &= this->client_order_caps.orderSupport[idx];
     }

@@ -681,6 +681,11 @@ public:
         this->RDPSerializer::draw(cmd, clip);
     }
 
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {}
+    virtual void draw(const RDP::RAIL::WindowIcon          & order) {}
+    virtual void draw(const RDP::RAIL::CachedIcon          & order) {}
+    virtual void draw(const RDP::RAIL::DeletedWindow       & order) {}
+
 protected:
     virtual void flush_bitmaps() {
         if (this->bitmap_count > 0) {

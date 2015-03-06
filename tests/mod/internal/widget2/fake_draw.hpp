@@ -133,6 +133,22 @@ struct TestDraw : DrawApi
         this->gd.draw(bitmap_data, data, size, bmp);
     }
 
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+        this->gd.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+        this->gd.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+        this->gd.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+        this->gd.draw(order);
+    }
+
     virtual void server_set_pointer(const Pointer & cursor) {
         this->gd.server_set_pointer(cursor);
     }

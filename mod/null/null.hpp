@@ -67,6 +67,11 @@ struct null_mod : public mod_api {
 
     virtual void draw(const RDP::FrameMarker & order) {}
 
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {}
+    virtual void draw(const RDP::RAIL::WindowIcon          & order) {}
+    virtual void draw(const RDP::RAIL::CachedIcon          & order) {}
+    virtual void draw(const RDP::RAIL::DeletedWindow       & order) {}
+
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
         size_t size, const Bitmap & bmp) {}
 

@@ -53,6 +53,7 @@
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "RDP/orders/AlternateSecondaryWindowing.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/bmpcachepersister.hpp"
@@ -263,7 +264,7 @@ private:
     void process_framemarker( Stream & stream, const RDP::AltsecDrawingOrderHeader & header
                             , RDPGraphicDevice & gd) {
         if (this->verbose & 64) {
-            LOG(LOG_INFO, "rdp_orders_process_framemarker");
+            LOG(LOG_INFO, "rdp_orders::process_framemarker");
         }
 
         RDP::FrameMarker order;
@@ -271,6 +272,52 @@ private:
         order.receive(stream, header);
 
         gd.draw(order);
+    }
+
+    void process_window_information( Stream & stream, const RDP::AltsecDrawingOrderHeader & header
+                                   , RDPGraphicDevice & gd) {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "rdp_orders::process_window_information");
+        }
+
+        const auto savec_stream_p = stream.p;
+
+        stream.in_skip_bytes(2);    // OrderSize(2)
+        const uint32_t FieldsPresentFlags = stream.in_uint32_le();
+
+        stream.p = savec_stream_p;
+
+        if (FieldsPresentFlags & (RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW | RDP::RAIL::WINDOW_ORDER_STATE_NEW)) {
+            RDP::RAIL::NewOrExistingWindow order;
+            order.receive(stream);
+            order.log(LOG_INFO);
+            gd.draw(order);
+        }
+        else if (FieldsPresentFlags & (RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW | RDP::RAIL::WINDOW_ORDER_STATE_NEW | RDP::RAIL::WINDOW_ORDER_ICON)) {
+            RDP::RAIL::WindowIcon order;
+            order.receive(stream);
+            order.log(LOG_INFO);
+            gd.draw(order);
+        }
+        else if (FieldsPresentFlags & (RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW | RDP::RAIL::WINDOW_ORDER_STATE_NEW | RDP::RAIL::WINDOW_ORDER_CACHEDICON)) {
+            RDP::RAIL::CachedIcon order;
+            order.receive(stream);
+            order.log(LOG_INFO);
+            gd.draw(order);
+        }
+        else if (FieldsPresentFlags & (RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW | RDP::RAIL::WINDOW_ORDER_STATE_DELETED)) {
+            RDP::RAIL::DeletedWindow order;
+            order.receive(stream);
+            order.log(LOG_INFO);
+            gd.draw(order);
+        }
+        else {
+            LOG(LOG_INFO,
+                "rdp_orders::process_window_information: "
+                    "Unsupported Windowing Alternate Secondary Drawing Orders. "
+                    "FieldsPresentFlags=0x%08X",
+                FieldsPresentFlags);
+        }
     }
 
     void process_bmpcache(Stream & stream, const RDPSecondaryOrderHeader & header, uint8_t bpp)
@@ -364,6 +411,9 @@ public:
                 switch (header.orderType) {
                     case RDP::AltsecDrawingOrderHeader::FrameMarker:
                         this->process_framemarker(stream, header, gd);
+                    break;
+                    case RDP::AltsecDrawingOrderHeader::Window:
+                        this->process_window_information(stream, header, gd);
                     break;
                     default:
                         LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
@@ -516,7 +566,7 @@ public:
             }
             else {
                 /* error, this should always be set */
-                LOG(LOG_ERR, "Unsupported drawing order detected : protocol error");
+                LOG(LOG_ERR, "Unsupported drawing order detected : protocol error. class=0x%02X", class_);
                 REDASSERT(false);
                 break;
             }

@@ -210,6 +210,22 @@ public:
         this->recorder.draw(cmd, clip);
     }
 
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+        this->recorder.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+        this->recorder.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+        this->recorder.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+        this->recorder.draw(order);
+    }
+
     using RDPGraphicDevice::draw;
 
     virtual void server_set_pointer(const Pointer & cursor) {

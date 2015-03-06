@@ -5367,6 +5367,22 @@ public:
         this->front.draw(cmd);
     }
 
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+        this->front.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+        this->front.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+        this->front.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+        this->front.draw(order);
+    }
+
     virtual bool is_up_and_running() {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }

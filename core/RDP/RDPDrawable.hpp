@@ -47,6 +47,7 @@
 #include "orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "orders/AlternateSecondaryWindowing.hpp"
 
 #include "pointer.hpp"
 #include "bitmapupdate.hpp"
@@ -688,6 +689,11 @@ public:
         REDASSERT(this->frame_start_count >= 0);
         this->drawable.logical_frame_ended = (this->frame_start_count == 0);
     }
+
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {}
+    virtual void draw(const RDP::RAIL::WindowIcon          & order) {}
+    virtual void draw(const RDP::RAIL::CachedIcon          & order) {}
+    virtual void draw(const RDP::RAIL::DeletedWindow       & order) {}
 
     virtual void server_set_pointer(const Pointer & cursor) {
         this->drawable.use_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);

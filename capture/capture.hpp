@@ -585,6 +585,30 @@ public:
         }
     }
 
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+        if (this->gd) {
+            this->gd->draw(order);
+        }
+    }
+
+    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+        if (this->gd) {
+            this->gd->draw(order);
+        }
+    }
+
+    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+        if (this->gd) {
+            this->gd->draw(order);
+        }
+    }
+
+    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+        if (this->gd) {
+            this->gd->draw(order);
+        }
+    }
+
     virtual void server_set_pointer(const Pointer & cursor)
     {
         if (this->gd) {

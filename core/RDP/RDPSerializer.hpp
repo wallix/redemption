@@ -113,6 +113,7 @@
 #include "orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "orders/AlternateSecondaryWindowing.hpp"
 #include "bitmapupdate.hpp"
 
 #include "config.hpp"
@@ -590,6 +591,38 @@ public:
 
     virtual void draw(const RDP::FrameMarker & order) {
         this->reserve_order(5);
+        order.emit(this->stream_orders);
+        if (this->ini.debug.secondary_orders) {
+            order.log(LOG_INFO);
+        }
+    }
+
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+        this->reserve_order(order.size());
+        order.emit(this->stream_orders);
+        if (this->ini.debug.secondary_orders) {
+            order.log(LOG_INFO);
+        }
+    }
+
+    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+        this->reserve_order(order.size());
+        order.emit(this->stream_orders);
+        if (this->ini.debug.secondary_orders) {
+            order.log(LOG_INFO);
+        }
+    }
+
+    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+        this->reserve_order(order.size());
+        order.emit(this->stream_orders);
+        if (this->ini.debug.secondary_orders) {
+            order.log(LOG_INFO);
+        }
+    }
+
+    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+        this->reserve_order(order.size());
         order.emit(this->stream_orders);
         if (this->ini.debug.secondary_orders) {
             order.log(LOG_INFO);

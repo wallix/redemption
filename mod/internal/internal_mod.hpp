@@ -169,6 +169,22 @@ public:
         this->front.draw(cmd);
     }
 
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+        this->front.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+        this->front.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+        this->front.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+        this->front.draw(order);
+    }
+
     virtual void server_set_pointer(const Pointer & cursor) {
         this->front.server_set_pointer(cursor);
     }

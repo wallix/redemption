@@ -30,23 +30,25 @@
 
 BOOST_AUTO_TEST_CASE(TestWindowingCommon)
 {
-    uint8_t data[256];
+/*
+    const uint32_t WindowId = 1000;
+    WindowInformationCommonHeader wch_s(WINDOW_ORDER_TYPE_WINDOW, WindowId);
 
+    uint8_t data[256];
     FixedSizeStream stream(data, sizeof(data));
 
-    WindowInformationCommonHeader_Send wch_s(stream);
-
-    const uint32_t WindowId = 1000;
-    wch_s.emit_begin(WINDOW_ORDER_TYPE_WINDOW, WindowId);
-
+    wch_s.emit_begin(stream);
     stream.mark_end();
-
     wch_s.emit_end();
 
     stream.rewind();
 
-    WindowInformationCommonHeader_Recv wch_r(stream);
+    WindowInformationCommonHeader wch_r;
+    wch_r.receive(stream);
 
-    BOOST_CHECK_EQUAL(wch_r.OrderSize(), 10 /* OrderSize(2) + FieldsPresentFlags(4) + WindowId(4)*/);
-    BOOST_CHECK_EQUAL(wch_r.WindowId(), WindowId);
+    BOOST_CHECK_EQUAL(wch_r.FieldsPresentFlags(), WINDOW_ORDER_TYPE_WINDOW);
+    BOOST_CHECK_EQUAL(wch_r.WindowId(),           WindowId);
+*/
+
+    RDP::RAIL::NewOrExistingWindow new_or_existing_window;
 }

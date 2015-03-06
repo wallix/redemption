@@ -83,6 +83,11 @@ struct FakeMod : mod_api
     virtual void draw(const RDPEllipseCB       & cmd, const Rect & clip) { this->gd.draw(cmd, clip); }
     virtual void draw(const RDP::FrameMarker   & order)                  { this->gd.draw(order);     }
 
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) { this->gd.draw(order); }
+    virtual void draw(const RDP::RAIL::WindowIcon          & order) { this->gd.draw(order); }
+    virtual void draw(const RDP::RAIL::CachedIcon          & order) { this->gd.draw(order); }
+    virtual void draw(const RDP::RAIL::DeletedWindow       & order) { this->gd.draw(order); }
+
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
         size_t size, const Bitmap & bmp) {
         this->gd.draw(bitmap_data, data, size, bmp);
