@@ -673,67 +673,18 @@ public:
             mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
         }
 
-        if (!strcmp(front_channel_name, channel_names::rdpdr)) {
-            this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
-        }
-        else if (!strcmp(front_channel_name, channel_names::cliprdr)) {
+             if (!strcmp(front_channel_name, channel_names::cliprdr)) {
             this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
         }
         else if (!strcmp(front_channel_name, channel_names::rail)) {
             this->send_to_mod_rail_channel(mod_channel, chunk, length, flags);
         }
+        else if (!strcmp(front_channel_name, channel_names::rdpdr)) {
+            this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
+        }
         else {
             this->send_to_channel(*mod_channel, chunk, length, flags);
         }
-    }
-
-    void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
-                                   Stream & chunk, size_t length, uint32_t flags) {
-        // filtering device redirection (printer, smartcard, etc)
-
-        const auto saved_chunk_p = chunk.p;
-
-        const rdpdr::PacketId packet_id = rdpdr::SharedHeader::read_packet_id(chunk);
-
-        if (packet_id == rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY) {
-            const auto p_num = chunk.p;
-
-            const uint16_t num_capabilities = rdpdr::read_num_capability(chunk);
-            uint16_t i = 0;
-
-            while (i < num_capabilities) {
-                const uint16_t captype = chunk.in_uint16_le();
-                const uint16_t caplen = chunk.in_uint16_le();
-                chunk.p += caplen - 4;
-
-                ++i;
-                if (!this->authorization_channels.rdpdr_type_is_authorized(captype)) {
-                    uint8_t * p = chunk.p - caplen;
-                    uint16_t real_num_capabilities = i - 1;
-                    for (; i < num_capabilities; ++i) {
-                        const uint16_t captype = chunk.in_uint16_le();
-                        const uint16_t caplen = chunk.in_uint16_le();
-                        chunk.p += caplen - 4;
-                        if (this->authorization_channels.rdpdr_type_is_authorized(captype)) {
-                            p = std::copy(chunk.p - caplen, chunk.p, p);
-                            ++real_num_capabilities;
-                        }
-                    }
-
-                    length -= chunk.p - p;
-                    chunk.end -= chunk.p - p;
-                    chunk.p = p_num;
-                    chunk.out_uint16_le(real_num_capabilities);
-                }
-            }
-        }
-        else {
-            this->update_total_rdpdr_data(packet_id, length);
-        }
-
-        chunk.p = saved_chunk_p;
-
-        this->send_to_channel(*rdpdr_channel, chunk, length, flags);
     }
 
     void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * cliprdr_channel,
@@ -1038,7 +989,116 @@ public:
         chunk.p = saved_chunk_p;
 
         this->send_to_channel(*rail_channel, chunk, length, flags);
-    }
+    }   // send_to_mod_rail_channel
+
+    void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
+                                   Stream & chunk, size_t length, uint32_t flags) {
+        // filtering device redirection (printer, smartcard, etc)
+
+        const auto saved_chunk_p = chunk.p;
+
+        rdpdr::SharedHeader sh_r;
+
+        sh_r.receive(chunk);
+
+        const rdpdr::PacketId packet_id = sh_r.packet_id;
+
+        switch (packet_id) {
+            case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::send_to_mod_rdpdr_channel: Client Announce Reply");
+                }
+            break;
+
+            case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::send_to_mod_rdpdr_channel: Client Name Request");
+                }
+            break;
+
+            case rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE:
+            {
+                uint32_t DeviceCount = chunk.in_uint32_le();
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::send_to_mod_rdpdr_channel: "
+                            "Client Device List Announce Request - DeviceCount=%u",
+                        DeviceCount);
+                }
+            }
+            break;
+
+            case rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::send_to_mod_rdpdr_channel: Device I/O Response");
+                }
+            break;
+
+            case rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY:
+            {
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::send_to_mod_rdpdr_channel: Client Core Capability Response");
+                }
+
+                const auto p_num = chunk.p;
+
+                const uint16_t num_capabilities = rdpdr::read_num_capability(chunk);
+                uint16_t i = 0;
+
+                while (i < num_capabilities) {
+                    const uint16_t captype = chunk.in_uint16_le();
+                    const uint16_t caplen = chunk.in_uint16_le();
+                    chunk.p += caplen - 4;
+
+                    ++i;
+                    if (!this->authorization_channels.rdpdr_type_is_authorized(captype)) {
+                        uint8_t * p = chunk.p - caplen;
+                        uint16_t real_num_capabilities = i - 1;
+                        for (; i < num_capabilities; ++i) {
+                            const uint16_t captype = chunk.in_uint16_le();
+                            const uint16_t caplen = chunk.in_uint16_le();
+                            chunk.p += caplen - 4;
+                            if (this->authorization_channels.rdpdr_type_is_authorized(captype)) {
+                                p = std::copy(chunk.p - caplen, chunk.p, p);
+                                ++real_num_capabilities;
+                            }
+                        }
+
+                        length -= chunk.p - p;
+                        chunk.end -= chunk.p - p;
+                        chunk.p = p_num;
+                        chunk.out_uint16_le(real_num_capabilities);
+                    }
+                }
+            }
+            break;
+
+            case rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::send_to_mod_rdpdr_channel: Client Drive Device List Remove");
+                }
+            break;
+
+            default:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::send_to_mod_rail_channel: undecoded PDU - Component=0x%X PacketId=0x%X",
+                        static_cast<uint16_t>(sh_r.component), static_cast<uint16_t>(sh_r.packet_id));
+                }
+
+                this->update_total_rdpdr_data(packet_id, length);
+            break;
+        }
+
+        chunk.p = saved_chunk_p;
+
+        this->send_to_channel(*rdpdr_channel, chunk, length, flags);
+    }   // send_to_mod_rdpdr_channel
 
     // Method used by session to transmit sesman answer for auth_channel
     virtual void send_auth_channel_data(const char * string_data) {
@@ -2150,17 +2210,15 @@ public:
                             }
                             // Clipboard is a Clipboard PDU
                             else if (!strcmp(mod_channel.name, channel_names::cliprdr)) {
-                                this->process_clipboard_event(mod_channel, sec.payload, length, flags, chunk_size);
+                                this->process_cliprdr_event(mod_channel, sec.payload, length, flags, chunk_size);
                             }
                             else if (!strcmp(mod_channel.name, channel_names::rail)) {
                                 this->process_rail_event(mod_channel, sec.payload, length, flags, chunk_size);
                             }
+                            else if (!strcmp(mod_channel.name, channel_names::rdpdr)) {
+                                this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
+                            }
                             else {
-                                if (!strcmp(mod_channel.name, channel_names::rdpdr)) {
-                                    auto const packet_id = rdpdr::SharedHeader::read_packet_id(sec.payload);
-                                    this->update_total_rdpdr_data(packet_id, length);
-                                    sec.payload.p -= sizeof(rdpdr::SharedHeader);
-                                }
                                 this->send_to_front_channel(
                                     mod_channel.name, sec.payload.p, length, chunk_size, flags
                                 );
@@ -5454,7 +5512,7 @@ public:
         }
     }
 
-    void process_clipboard_event(
+    void process_cliprdr_event(
             const CHANNELS::ChannelDef & mod_channel, Stream & stream,
             uint32_t length, uint32_t flags, size_t chunk_size) {
         if (this->verbose & 1) {
@@ -5532,11 +5590,10 @@ public:
                 mod_channel.name, stream.p, length, chunk_size, flags
             );
         }
-    }   // process_clipboard_event
+    }   // process_cliprdr_event
 
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
-        Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size)
-    {
+            Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::process_rail_event: Server RAIL PDU.");
         }
@@ -5553,13 +5610,82 @@ public:
 
         stream.p = saved_stream_p;
 
-        bool dont_transmit_to_front = false;
+        this->send_to_front_channel(
+            rail_channel.name, stream.p, length, chunk_size, flags
+        );
+    }
 
-        if (!dont_transmit_to_front) {
-            this->send_to_front_channel(
-                rail_channel.name, stream.p, length, chunk_size, flags
-            );
+    void process_rdpdr_event(const CHANNELS::ChannelDef & rd_channel,
+            Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp::process_rdpdr_event: Server DR PDU.");
         }
+
+        const auto saved_stream_p = stream.p;
+
+        rdpdr::SharedHeader sh_r;
+
+        sh_r.receive(stream);
+
+        this->update_total_rdpdr_data(sh_r.packet_id, length);
+
+        switch (sh_r.packet_id) {
+            case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::process_rdpdr_event: Server Announce Request");
+                }
+            break;
+
+            case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::process_rdpdr_event: Server Client ID Confirm");
+                }
+            break;
+
+            case rdpdr::PacketId::PAKID_CORE_DEVICE_REPLY:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::process_rdpdr_event: Server Device Announce Response");
+                }
+            break;
+
+            case rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::process_rdpdr_event: Device I/O Request");
+                }
+            break;
+
+            case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::process_rdpdr_event: Server Core Capability Request");
+                }
+            break;
+
+            case rdpdr::PacketId::PAKID_CORE_USER_LOGGEDON:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::process_rdpdr_event: Server User Logged On");
+                }
+            break;
+
+            default:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::process_rdpdr_event: undecoded PDU - Component=0x%X PacketId=0x%X",
+                        static_cast<uint16_t>(sh_r.component), static_cast<uint16_t>(sh_r.packet_id));
+                }
+            break;
+        }
+
+        stream.p = saved_stream_p;
+
+        this->send_to_front_channel(
+            rd_channel.name, stream.p, length, chunk_size, flags
+        );
     }
 };
 

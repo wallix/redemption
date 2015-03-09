@@ -95,6 +95,16 @@ struct SharedHeader {
         stream.p += sizeof(component);
         return static_cast<PacketId>(stream.in_uint16_le());
     }
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint16_le(static_cast<uint16_t>(this->component));
+        stream.out_uint16_le(static_cast<uint16_t>(this->packet_id));
+    }
+
+    inline void receive(Stream & stream) {
+        this->component = static_cast<Component>(stream.in_uint16_le());
+        this->packet_id = static_cast<PacketId>(stream.in_uint16_le());
+    }
 };
 
 inline uint16_t read_num_capability(Stream & stream) {
