@@ -27,35 +27,36 @@
 #include "stream.hpp"
 
 namespace RDP {
+
+//class Buffer {
+//    REDEMPTION_NON_COPYABLE(Buffer);
+//
+//    uint8_t * p_;
+//    size_t    size_;
+//
+//public:
+//    Buffer(size_t size = 0) : size_(size) {
+//        this->p_ = (size ? new uint8_t[size] : nullptr);
+//    }
+//
+//    ~Buffer() {
+//        delete [] this->p_;
+//    }
+//
+//    inline uint8_t * p() const { return this->p_; }
+//
+//    inline size_t size() const { return this->size_; }
+//
+//    void emit(Stream & stream) const {
+//        stream.out_copy_bytes(this->p_, this->size_);
+//    }
+//
+//    void receive(Stream & stream) {
+//        stream.in_copy_bytes(this->p_, this->size_);
+//    }
+//};
+
 namespace RAIL {
-
-class Buffer {
-    REDEMPTION_NON_COPYABLE(Buffer);
-
-    uint8_t * p_;
-    size_t    size_;
-
-public:
-    Buffer(size_t size = 0) : size_(size) {
-        this->p_ = (size ? new uint8_t[size] : nullptr);
-    }
-
-    ~Buffer() {
-        delete [] this->p_;
-    }
-
-    inline uint8_t * p() const { return this->p_; }
-
-    inline size_t size() const { return this->size_; }
-
-    void emit(Stream & stream) const {
-        stream.out_copy_bytes(this->p_, this->size_);
-    }
-
-    void receive(Stream & stream) {
-        stream.in_copy_bytes(this->p_, this->size_);
-    }
-};
 
 // [MS-RDPERP] - 2.2.1.2.2 Rectangle (TS_RECTANGLE_16)
 // ===================================================
@@ -208,9 +209,12 @@ class IconInfo {
     uint16_t Width      = 0;
     uint16_t Height     = 0;
 
-    Buffer bits_mask;
-    Buffer color_table;
-    Buffer bits_color;
+//    Buffer bits_mask;
+    StaticStream bits_mask;
+//    Buffer color_table;
+    StaticStream color_table;
+//    Buffer bits_color;
+    StaticStream bits_color;
 
 public:
     void emit(Stream & stream) const {
@@ -222,13 +226,19 @@ public:
         stream.out_uint16_le(this->Width);
         stream.out_uint16_le(this->Height);
 
-        stream.out_uint16_le(this->bits_mask.size());
-        stream.out_uint16_le(this->color_table.size());
-        stream.out_uint16_le(this->bits_color.size());
+//        stream.out_uint16_le(this->bits_mask.size());
+        stream.out_uint16_le(this->bits_mask.get_capacity());
+//        stream.out_uint16_le(this->color_table.size());
+        stream.out_uint16_le(this->color_table.get_capacity());
+//        stream.out_uint16_le(this->bits_color.size());
+        stream.out_uint16_le(this->bits_color.get_capacity());
 
-        this->bits_mask.emit(stream);
-        this->color_table.emit(stream);
-        this->bits_color.emit(stream);
+//        this->bits_mask.emit(stream);
+        stream.out_copy_bytes(this->bits_mask.get_data(), this->bits_mask.get_capacity());
+//        this->color_table.emit(stream);
+        stream.out_copy_bytes(this->color_table.get_data(), this->color_table.get_capacity());
+//        this->bits_color.emit(stream);
+        stream.out_copy_bytes(this->bits_color.get_data(), this->bits_color.get_capacity());
     }
 
     void receive(Stream & stream) {
@@ -246,23 +256,32 @@ public:
         const uint16_t CbBitsMask   = stream.in_uint16_le();
         const uint16_t CbBitsColor  = stream.in_uint16_le();
 
-        this->bits_mask.~Buffer(); new (&this->bits_mask) Buffer(CbBitsMask);
-        if (CbBitsMask) this->bits_mask.receive(stream);
+//        this->bits_mask.~Buffer(); new (&this->bits_mask) Buffer(CbBitsMask);
+//        if (CbBitsMask) this->bits_mask.receive(stream);
+        this->bits_mask.resize(stream.p, CbBitsMask);
+        stream.in_skip_bytes(CbBitsMask);
 
-        this->color_table.~Buffer(); new (&this->color_table) Buffer(CbColorTable);
-        if (CbColorTable) this->color_table.receive(stream);
+//        this->color_table.~Buffer(); new (&this->color_table) Buffer(CbColorTable);
+//        if (CbColorTable) this->color_table.receive(stream);
+        this->color_table.resize(stream.p, CbColorTable);
+        stream.in_skip_bytes(CbColorTable);
 
-        this->bits_color.~Buffer(); new (&this->bits_color) Buffer(CbBitsColor);
-        if (CbBitsColor) this->bits_color.receive(stream);
+//        this->bits_color.~Buffer(); new (&this->bits_color) Buffer(CbBitsColor);
+//        if (CbBitsColor) this->bits_color.receive(stream);
+        this->bits_color.resize(stream.p, CbBitsColor);
+        stream.in_skip_bytes(CbBitsColor);
     }
 
     inline size_t size() const {
         return 9 +  // CacheEntry(2) + CacheId(2) + Bpp(1) + Width(2) + Height(2)
             (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? 2 /* CbColorTable(2) */ : 0) +
             4 + // CbBitsMask(2) + CbBitsColor(2)
-            this->bits_mask.size() +
-            (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? this->color_table.size() : 0) +
-            this->bits_color.size();
+//            this->bits_mask.size() +
+            this->bits_mask.get_capacity() +
+//            (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? this->color_table.size() : 0) +
+            (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? this->color_table.get_capacity() : 0) +
+//            this->bits_color.size();
+            this->bits_color.get_capacity();
     }
 
     inline size_t str(char * buffer, size_t size) const {
@@ -279,11 +298,23 @@ public:
                    ((size - length) - 1)
                   );
 
-        auto str_optional = [&length, buffer, size] (Buffer const & optional, const char * label) {
-                if (optional.size()) {
+//        auto str_optional = [&length, buffer, size] (Buffer const & optional, const char * label) {
+//                if (optional.size()) {
+//                    const size_t result = ::snprintf(
+//                        buffer + length, size - length,
+//                        " %s=%lu", label, optional.size());
+//                    length += (
+//                               (result < (size - length)) ?
+//                               result :
+//                               ((size - length) - 1)
+//                              );
+//                }
+//            };
+        auto str_optional = [&length, buffer, size] (Stream const & optional, const char * label) {
+                if (optional.get_capacity()) {
                     const size_t result = ::snprintf(
                         buffer + length, size - length,
-                        " %s=%lu", label, optional.size());
+                        " %s=%lu", label, optional.get_capacity());
                     length += (
                                (result < (size - length)) ?
                                result :
