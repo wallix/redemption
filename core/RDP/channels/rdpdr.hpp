@@ -127,6 +127,253 @@ struct CapabilityHeader {
     uint32_t version;
 };
 
+// [MS-RDPEFS] - 2.2.1.3 Device Announce Header (DEVICE_ANNOUNCE)
+// ==============================================================
+
+// This header is embedded in the Client Device List Announce message. Its
+//  purpose is to describe different types of devices.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           DeviceType                          |
+// +---------------------------------------------------------------+
+// |                            DeviceId                           |
+// +---------------------------------------------------------------+
+// |                        PreferredDosName                       |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                        DeviceDataLength                       |
+// +---------------------------------------------------------------+
+// |                     DeviceData (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceType (4 bytes): A 32-bit unsigned integer that identifies the device
+//  type. This field MUST be set to one of the following values.
+
+//  +-----------------------+----------------------+
+//  | Value                 | Meaning              |
+//  +-----------------------+----------------------+
+//  | RDPDR_DTYP_SERIAL     | Serial port device   |
+//  | 0x00000001            |                      |
+//  +-----------------------+----------------------+
+//  | RDPDR_DTYP_PARALLEL   | Parallel port device |
+//  | 0x00000002            |                      |
+//  +-----------------------+----------------------+
+//  | RDPDR_DTYP_PRINT      | Printer device       |
+//  | 0x00000004            |                      |
+//  +-----------------------+----------------------+
+//  | RDPDR_DTYP_FILESYSTEM | File system device   |
+//  | 0x00000008<3>         |                      |
+//  +-----------------------+----------------------+
+//  | RDPDR_DTYP_SMARTCARD  | Smart card device    |
+//  | 0x00000020<4>         |                      |
+//  +-----------------------+----------------------+
+
+enum {
+      RDPDR_DTYP_SERIAL     = 0x00000001
+    , RDPDR_DTYP_PARALLEL   = 0x00000002
+    , RDPDR_DTYP_PRINT      = 0x00000004
+    , RDPDR_DTYP_FILESYSTEM = 0x00000008
+    , RDPDR_DTYP_SMARTCARD  = 0x00000020
+};
+
+// DeviceId (4 bytes): A 32-bit unsigned integer that specifies a unique ID
+//  that identifies the announced device. This ID MUST be reused if the
+//  device is removed by means of the Client Drive Device List Remove packet
+//  specified in section 2.2.3.2.
+
+// PreferredDosName (8 bytes): A string of ASCII characters with a maximum
+//  length of eight characters that represent the name of the device as it
+//  appears on the client. This field MUST not be null-terminated if the
+//  device name is 8 characters long. The following characters are considered
+//  invalid for the PreferredDosName field:
+
+//  <, >, ", /, \, |
+
+//  If any of these characters are present, the DR_CORE_DEVICE_ANNOUNC_RSP
+//  packet for this device (section 2.2.2.1) will be sent with
+//  STATUS_ACCESS_DENIED set in the ResultCode field.
+
+//  If DeviceType is set to RDPDR_DTYP_SMARTCARD, the PreferredDosName MUST
+//  be set to "SCARD".
+
+//  Note A column character, ":", is valid only when present at the end of
+//  the PreferredDosName field, otherwise it is also considered invalid.
+
+// DeviceDataLength (4 bytes): A 32-bit unsigned integer that specifies the
+//  number of bytes in the DeviceData field.
+
+// DeviceData (variable): A variable-length byte array whose size is
+//  specified by the DeviceDataLength field. The content depends on the
+//  DeviceType field. See [MS-RDPEPC] section 2.2.2.1 for the printer device
+//  type. See [MS-RDPESP] section 2.2.2.1 for the serial and parallel port
+//  device types. See section 2.2.3.1 of this protocol for the file system
+//  device type. For a smart card device, the DeviceDataLength field MUST be
+//  set to zero. See [MS-RDPESC] for details about the smart card device
+//  type.
+
+class DeviceAnnounceHeader {
+    uint32_t DeviceType_ = RDPDR_DTYP_SERIAL;
+    uint32_t DeviceId_   = 0;
+
+    uint8_t  PreferredDosName[8 /* PreferredDosName(8) */ + 1] = { 0 };
+
+    StaticStream device_data;
+
+public:
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->DeviceType_);
+        stream.out_uint32_le(this->DeviceId_);
+
+        stream.out_copy_bytes(this->PreferredDosName, 8 /* PreferredDosName(8) */);
+
+        stream.out_uint32_le(this->device_data.get_capacity());
+
+        stream.out_copy_bytes(this->device_data.get_data(), this->device_data.get_capacity());
+    }
+
+    inline void receive(Stream & stream) {
+        this->DeviceType_ = stream.in_uint32_le();
+        this->DeviceId_   = stream.in_uint32_le();
+
+        stream.in_copy_bytes(this->PreferredDosName, 8 /* PreferredDosName(8) */);
+        this->PreferredDosName[8 /* PreferredDosName(8) */ ] = '\0';
+
+        const uint32_t DeviceDataLength = stream.in_uint32_le();
+
+        this->device_data.resize(stream.p, DeviceDataLength);
+        stream.in_skip_bytes(DeviceDataLength);
+    }
+
+    inline uint32_t DeviceType() const { return this->DeviceType_; }
+
+    inline uint32_t DeviceId() const { return this->DeviceId_; }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "DeviceAnnounceHeader: DeviceType=%u DeviceId=%u PreferredDosName=\"%s\"",
+            this->DeviceType_, this->DeviceId_, this->PreferredDosName);
+        return length;
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+        if (level == LOG_INFO) {
+            hexdump(this->device_data.get_data(), this->device_data.get_capacity());
+        }
+    }
+};
+
+// [MS-RDPEFS] - 2.2.2.1 Server Device Announce Response
+//  (DR_CORE_DEVICE_ANNOUNCE_RSP)
+// =====================================================
+
+// The server responds to a Client Device List Announce Request with this
+//  message.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +---------------------------------------------------------------+
+// |                            DeviceId                           |
+// +---------------------------------------------------------------+
+// |                           ResultCode                          |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set
+//  to RDPDR_CTYP_CORE, and the PacketId field MUST be set to
+//  PAKID_CORE_DEVICE_REPLY.
+
+// DeviceId (4 bytes): A 32-bit unsigned integer. This ID MUST be the same as
+//  one of the IDs specified in the Client Device List Announce Request
+//  message. The server sends a separate Server Device Announce Response
+//  message for each announced device.
+
+// ResultCode (4 bytes): A 32-bit unsigned integer that specifies the
+//  NTSTATUS code that indicates the success or failure of device
+//  initialization. NTSTATUS codes are specified in [MS-ERREF] section 2.3.
+
+class ServerDeviceAnnounceResponse {
+    uint32_t DeviceId   = 0;
+    uint32_t ResultCode = 0;
+
+public:
+    ServerDeviceAnnounceResponse() = default;
+
+    ServerDeviceAnnounceResponse(uint32_t device_id, uint32_t result_code) :
+        DeviceId(device_id), ResultCode(result_code) {}
+
+    inline void emit(Stream & stream) {
+        stream.out_uint32_le(this->DeviceId);
+        stream.out_uint32_le(this->ResultCode);
+    }
+
+    inline void receive(Stream & stream) {
+        this->DeviceId   = stream.in_uint32_le();
+        this->ResultCode = stream.in_uint32_le();
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "ServerDeviceAnnounceResponse: DeviceId=%u ResultCode=%u",
+            this->DeviceId, this->ResultCode);
+        return length;
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
+// [MS-RDPEFS] - 2.2.2.9 Client Device List Announce Request
+//  (DR_CORE_DEVICELIST_ANNOUNCE_REQ)
+// =========================================================
+
+// The client announces the list of devices to redirect on the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +---------------------------------------------------------------+
+// |                          DeviceCount                          |
+// +---------------------------------------------------------------+
+// |                     DeviceList (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set
+//  to RDPDR_CTYP_CORE, and the PacketId field MUST be set to
+//  PAKID_CORE_DEVICELIST_ANNOUNCE.
+
+// DeviceCount (4 bytes): A 32-bit unsigned integer that specifies the number
+//  of items in the DeviceList array.
+
+// DeviceList (variable): A variable-length array of DEVICE_ANNOUNCE (section
+//  2.2.1.3) headers. This field specifies a list of devices that are being
+//  announced. The number of entries is specified by the DeviceCount field.
+//  There is no alignment padding between individual DEVICE_ANNOUNCE
+//  structures. They are ordered sequentially within this packet.
+
 }
 
 #endif

@@ -1149,91 +1149,112 @@ public:
         return count;
     }
 
-protected:
+private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
-        length += ::snprintf(buffer + length, size - length, "NewOrExistingWindow ");
+
+        size_t result = ::snprintf(buffer + length, size - length, "NewOrExistingWindow ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
         length += WindowInformationCommonHeader::str(buffer + length, size - length);
-        length += ::snprintf(buffer + length, size - length, ":");
+
+        result = ::snprintf(buffer + length, size - length, ":");
+        length += ((result < size - length) ? result : (size - length - 1));
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
-            length += ::snprintf(buffer + length, size - length, " OwnerWindowId=%u",
+            result = ::snprintf(buffer + length, size - length, " OwnerWindowId=%u",
                 this->OwnerWindowId);
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
-            length += ::snprintf(buffer + length, size - length, " Style=%u ExtendedStyle=%u",
+            result = ::snprintf(buffer + length, size - length, " Style=%u ExtendedStyle=%u",
                 this->Style, this->ExtendedStyle);
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
-            length += ::snprintf(buffer + length, size - length, " ShowState=%u",
+            result = ::snprintf(buffer + length, size - length, " ShowState=%u",
                 this->ShowState);
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
-            length += ::snprintf(buffer + length, size - length, " TitleInfo=\"%s\"",
+            result = ::snprintf(buffer + length, size - length, " TitleInfo=\"%s\"",
                 this->title_info.c_str());
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
-            length += ::snprintf(buffer + length, size - length, " ClientOffsetX=%u ClientOffsetY=%u",
+            result = ::snprintf(buffer + length, size - length, " ClientOffsetX=%u ClientOffsetY=%u",
                 this->ClientOffsetX, this->ClientOffsetY);
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
-            length += ::snprintf(buffer + length, size - length, " ClientAreaWidth=%u ClientAreaHeight=%u",
+            result = ::snprintf(buffer + length, size - length, " ClientAreaWidth=%u ClientAreaHeight=%u",
                 this->ClientAreaWidth, this->ClientAreaHeight);
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
-            length += ::snprintf(buffer + length, size - length, " RPContent=%u",
+            result = ::snprintf(buffer + length, size - length, " RPContent=%u",
                 this->RPContent);
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
-            length += ::snprintf(buffer + length, size - length, " RootParentHandle=%u",
+            result = ::snprintf(buffer + length, size - length, " RootParentHandle=%u",
                 this->RootParentHandle);
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
-            length += ::snprintf(buffer + length, size - length, " WindowOffsetX=%d WindowOffsetY=%d",
+            result = ::snprintf(buffer + length, size - length, " WindowOffsetX=%d WindowOffsetY=%d",
                 this->WindowOffsetX, this->WindowOffsetY);
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
-            length += ::snprintf(buffer + length, size - length, " WindowClientDeltaX=%d WindowClientDeltaY=%d",
+            result = ::snprintf(buffer + length, size - length, " WindowClientDeltaX=%d WindowClientDeltaY=%d",
                 this->WindowClientDeltaX, this->WindowClientDeltaY);
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
-            length += ::snprintf(buffer + length, size - length, " WindowWidth=%u WindowHeight=%u",
+            result = ::snprintf(buffer + length, size - length, " WindowWidth=%u WindowHeight=%u",
                 this->WindowWidth, this->WindowHeight);
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
-            length += ::snprintf(buffer + length, size - length, " WindowRects=(");
+            result = ::snprintf(buffer + length, size - length, " WindowRects=(");
+            length += ((result < size - length) ? result : (size - length - 1));
 
             for (Rectangle rectangle : this->window_rects) {
-                rectangle.str(buffer + length, size - length);
+                length += rectangle.str(buffer + length, size - length);
             }
 
-            length += ::snprintf(buffer + length, size - length, ")");
+            result = ::snprintf(buffer + length, size - length, ")");
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
-            length += ::snprintf(buffer + length, size - length, " VisibleOffsetX=%d VisibleOffsetY=%d",
+            result = ::snprintf(buffer + length, size - length, " VisibleOffsetX=%d VisibleOffsetY=%d",
                 this->VisibleOffsetX, this->VisibleOffsetY);
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
-            length += ::snprintf(buffer + length, size - length, " VisibilityRects=(");
+            result = ::snprintf(buffer + length, size - length, " VisibilityRects=(");
+            length += ((result < size - length) ? result : (size - length - 1));
 
             for (Rectangle rectangle : this->visibility_rects) {
-                rectangle.str(buffer + length, size - length);
+                length += rectangle.str(buffer + length, size - length);
             }
 
-            length += ::snprintf(buffer + length, size - length, ")");
+            result = ::snprintf(buffer + length, size - length, ")");
+            length += ((result < size - length) ? result : (size - length - 1));
         }
 
         return length;
@@ -1331,12 +1352,17 @@ public:
             this->icon_info.size();
     }
 
-protected:
+private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = 0;
-        length += ::snprintf(buffer + length, size - length, "WindowIcon ");
+
+        size_t result = ::snprintf(buffer + length, size - length, "WindowIcon ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
         length += WindowInformationCommonHeader::str(buffer + length, size - length);
-        length += ::snprintf(buffer + length, size - length, ":");
+
+        result = ::snprintf(buffer + length, size - length, ":");
+        length += ((result < size - length) ? result : (size - length - 1));
 
         length += this->icon_info.str(buffer + length, size - length);
 
@@ -1435,12 +1461,17 @@ public:
             CachedIconInfo::size();
     }
 
-protected:
+private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = 0;
-        length += ::snprintf(buffer + length, size - length, "CachedIcon ");
+
+        size_t result = ::snprintf(buffer + length, size - length, "CachedIcon ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
         length += WindowInformationCommonHeader::str(buffer + length, size - length);
-        length += ::snprintf(buffer + length, size - length, ":");
+
+        result = ::snprintf(buffer + length, size - length, ":");
+        length += ((result < size - length) ? result : (size - length - 1));
 
         length += this->cached_icon_info.str(buffer + length, size - length);
 
@@ -1511,10 +1542,13 @@ public:
         return WindowInformationCommonHeader::size();
     }
 
-protected:
+private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = 0;
-        length += ::snprintf(buffer + length, size - length, "DeletedWindow ");
+
+        size_t result = ::snprintf(buffer + length, size - length, "DeletedWindow ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
         length += WindowInformationCommonHeader::str(buffer + length, size - length);
 
         return length;
