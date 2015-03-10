@@ -328,7 +328,7 @@ public:
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "ServerDeviceAnnounceResponse: DeviceId=%u ResultCode=%u",
+            "ServerDeviceAnnounceResponse: DeviceId=%u ResultCode=0x%08X",
             this->DeviceId, this->ResultCode);
         return length;
     }

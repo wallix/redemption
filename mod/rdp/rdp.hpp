@@ -993,7 +993,7 @@ public:
 
     static uint32_t filter_unsupported_device(AuthorizationChannels const & authorization_channels,
             Stream & chunk, uint32_t device_count, Stream & result, uint32_t verbose = 0) {
-        LOG(LOG_INFO, "filter_unsupported_device: device_count=%u", device_count);
+        //LOG(LOG_INFO, "filter_unsupported_device: device_count=%u", device_count);
         result.out_uint16_le(static_cast<uint16_t>(rdpdr::Component::RDPDR_CTYP_CORE));
         result.out_uint16_le(static_cast<uint16_t>(rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE));
 
@@ -1010,9 +1010,8 @@ public:
                 device_announce_header.log(LOG_INFO);
             }
 
-            if (authorization_channels.rdpdr_type_is_authorized(
-                    AuthorizationChannels::DeviceTypeToCapabilityType(device_announce_header.DeviceType()))) {
-                LOG(LOG_INFO, "DeviceType=%u", device_announce_header.DeviceType());
+            if (authorization_channels.rdpdr_type_is_authorized(device_announce_header.DeviceType())) {
+                //LOG(LOG_INFO, "DeviceType=%u", device_announce_header.DeviceType());
                 device_announce_header.emit(result);
 
                 real_device_count++;
@@ -1029,9 +1028,6 @@ public:
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
                                    Stream & chunk, size_t length, uint32_t flags) {
         // filtering device redirection (printer, smartcard, etc)
-LOG(LOG_INFO, "PAKID_CORE_DEVICELIST_ANNOUNCE Data");
-hexdump_d(chunk.get_data(), chunk.size());
-
         const auto saved_chunk_p = chunk.p;
 
         rdpdr::SharedHeader sh_r;
@@ -1075,13 +1071,24 @@ hexdump_d(chunk.get_data(), chunk.size());
                     uint32_t DeviceDataLength = chunk.in_uint32_le();
                     chunk.in_skip_bytes(DeviceDataLength);    /* DeviceData(variable) */
 
-                    if (!this->authorization_channels.rdpdr_type_is_authorized(
-                            AuthorizationChannels::DeviceTypeToCapabilityType(DeviceType))) {
+                    if (!this->authorization_channels.rdpdr_type_is_authorized(DeviceType)) {
                         rdpdr::ServerDeviceAnnounceResponse server_device_announce_response(
-                            DeviceId, 0xC0000001 /* STATUS_UNSUCCESSFUL */);
+                                DeviceId,
+                                //0x00000000  // STATUS_SUCCESS
+                                0xC0000001  // STATUS_UNSUCCESSFUL
+                            );
+
+                        if (this->verbose) {
+                            LOG(LOG_INFO,
+                                "mod_rdp::send_to_mod_rdpdr_channel: Server Device Announce Response");
+                            server_device_announce_response.log(LOG_INFO);
+                        }
 
                         uint8_t data[128];
                         FixedSizeStream stream(data, sizeof(data));
+
+                        stream.out_uint16_le(static_cast<uint16_t>(rdpdr::Component::RDPDR_CTYP_CORE));
+                        stream.out_uint16_le(static_cast<uint16_t>(rdpdr::PacketId::PAKID_CORE_DEVICE_REPLY));
 
                         server_device_announce_response.emit(stream);
                         stream.mark_end();
@@ -1102,7 +1109,6 @@ hexdump_d(chunk.get_data(), chunk.size());
 
                 if (this->filter_unsupported_device(this->authorization_channels, chunk, DeviceCount,
                                                     result, this->verbose)) {
-                    hexdump_d(result.get_data(), result.size());
                     this->send_to_channel(*rdpdr_channel, result, result.size(), flags);
                 }
 
@@ -1123,39 +1129,6 @@ hexdump_d(chunk.get_data(), chunk.size());
                     LOG(LOG_INFO,
                         "mod_rdp::send_to_mod_rdpdr_channel: Client Core Capability Response");
                 }
-
-/*
-                const auto p_num = chunk.p;
-
-                const uint16_t num_capabilities = rdpdr::read_num_capability(chunk);
-                uint16_t i = 0;
-
-                while (i < num_capabilities) {
-                    const uint16_t captype = chunk.in_uint16_le();
-                    const uint16_t caplen = chunk.in_uint16_le();
-                    chunk.p += caplen - 4;
-
-                    ++i;
-                    if (!this->authorization_channels.rdpdr_type_is_authorized(captype)) {
-                        uint8_t * p = chunk.p - caplen;
-                        uint16_t real_num_capabilities = i - 1;
-                        for (; i < num_capabilities; ++i) {
-                            const uint16_t captype = chunk.in_uint16_le();
-                            const uint16_t caplen = chunk.in_uint16_le();
-                            chunk.p += caplen - 4;
-                            if (this->authorization_channels.rdpdr_type_is_authorized(captype)) {
-                                p = std::copy(chunk.p - caplen, chunk.p, p);
-                                ++real_num_capabilities;
-                            }
-                        }
-
-                        length -= chunk.p - p;
-                        chunk.end -= chunk.p - p;
-                        chunk.p = p_num;
-                        chunk.out_uint16_le(real_num_capabilities);
-                    }
-                }
-*/
             }
             break;
 
@@ -5730,11 +5703,6 @@ public:
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::process_rdpdr_event: Server Device Announce Response");
-
-                    rdpdr::ServerDeviceAnnounceResponse server_device_announce_response;
-
-                    server_device_announce_response.receive(stream);
-                    server_device_announce_response.log(LOG_INFO);
                 }
             break;
 

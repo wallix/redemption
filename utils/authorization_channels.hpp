@@ -40,7 +40,7 @@ struct AuthorizationChannels
     : allow_(std::move(allow))
     , deny_(std::move(deny))
     {
-        LOG(LOG_INFO, "allow=%s deny=%s", allow_.c_str(), deny_.c_str());
+        //LOG(LOG_INFO, "allow=%s deny=%s", allow_.c_str(), deny_.c_str());
         for (auto & r : get_split(this->allow_, ',')) {
             if (r.size() == 1 && *r.begin() == '*') {
                 this->all_allow_ = true;
@@ -77,9 +77,39 @@ struct AuthorizationChannels
             &&  contains(this->allow_, s, len);
     }
 
+/*
     bool rdpdr_type_is_authorized(unsigned type) const noexcept {
-        LOG(LOG_INFO, "rdpdr_type_is_authorized: return=%s",
-            ((type - 1u < this->rdpdr_restriction_.size() && this->rdpdr_restriction_[type - 1] ? "true" : "false")));
+        return type - 1u < this->rdpdr_restriction_.size() && this->rdpdr_restriction_[type - 1];
+    }
+*/
+    bool rdpdr_type_is_authorized(uint32_t DeviceType) const noexcept {
+        //LOG(LOG_INFO, "rdpdr_type_is_authorized: DeviceType=%u", DeviceType);
+
+        unsigned type;
+
+        switch (DeviceType) {
+            case rdpdr::RDPDR_DTYP_SERIAL:
+            case rdpdr::RDPDR_DTYP_PARALLEL:
+                type = static_cast<unsigned>(rdpdr::CapabilityType::port);
+                break;
+
+            case rdpdr::RDPDR_DTYP_PRINT:
+                type = static_cast<unsigned>(rdpdr::CapabilityType::printer);
+                break;
+
+            case rdpdr::RDPDR_DTYP_FILESYSTEM:
+                type = static_cast<unsigned>(rdpdr::CapabilityType::drive);
+                break;
+
+            case rdpdr::RDPDR_DTYP_SMARTCARD:
+                type = static_cast<unsigned>(rdpdr::CapabilityType::smartcard);
+                break;
+
+            default:
+                LOG(LOG_ERR, "Unknown DeviceType(%d)", DeviceType);
+                throw Error(ERR_RDP_PROTOCOL);
+        }
+
         return type - 1u < this->rdpdr_restriction_.size() && this->rdpdr_restriction_[type - 1];
     }
 
@@ -129,27 +159,6 @@ struct AuthorizationChannels
     static constexpr const std::array<const char *, 5> rdpdr_list {{
         "rdpdr_general,", "rdpdr_printer,", "rdpdr_port,", "rdpdr_drive,", "rdpdr_smartcard,"
     }};
-
-    static unsigned DeviceTypeToCapabilityType(uint32_t DeviceType) {
-        LOG(LOG_INFO, "DeviceTypeToCapabilityType: DeviceType=%u", DeviceType);
-        switch (DeviceType) {
-            case rdpdr::RDPDR_DTYP_SERIAL:
-            case rdpdr::RDPDR_DTYP_PARALLEL:
-                return static_cast<unsigned>(rdpdr::CapabilityType::port);
-
-            case rdpdr::RDPDR_DTYP_PRINT:
-                return static_cast<unsigned>(rdpdr::CapabilityType::printer);
-
-            case rdpdr::RDPDR_DTYP_FILESYSTEM:
-                return static_cast<unsigned>(rdpdr::CapabilityType::drive);
-
-            case rdpdr::RDPDR_DTYP_SMARTCARD:
-                return static_cast<unsigned>(rdpdr::CapabilityType::smartcard);
-        }
-
-        LOG(LOG_ERR, "Unknown DeviceType(%d)", DeviceType);
-        throw Error(ERR_RDP_PROTOCOL);
-    }
 
 private:
     template<class Cont>
@@ -231,8 +240,6 @@ constexpr decltype(AuthorizationChannels::rdpdr_list) AuthorizationChannels::rdp
 void update_authorized_channels(std::string & allow,
                                 std::string & deny,
                                 const std::string & proxy_opt) {
-    LOG(LOG_INFO, "update_authorized_channels: allow=%s deny=%s proxy_opt=%s", allow.c_str(), deny.c_str(), proxy_opt.c_str());
-
     auto remove=[](std::string & str, const char * pattern) {
         size_t pos = 0;
         while ((pos = str.find(pattern, pos)) != std::string::npos) {
@@ -272,10 +279,8 @@ void update_authorized_channels(std::string & allow,
         {"RDP_CLIPBOARD_UP", ",cliprdr_up"},
         {"RDP_CLIPBOARD_DOWN", ",cliprdr_down"},
 //         {"RDP_CLIPBOARD_FILE", ",cliprdr_file"},
-//         {"RDP_GENERAL", ",rdpdr_general"},
         {"RDP_PRINTER", ",rdpdr_printer"},
         {"RDP_COM_PORT", ",rdpdr_port"},
-//        {"RDP_DRIVE", ",rdpdr_general"},
         {"RDP_DRIVE", ",rdpdr_drive"},
         {"RDP_SMARTCARD", ",rdpdr_smartcard"}
     };
@@ -295,8 +300,6 @@ void update_authorized_channels(std::string & allow,
             s.erase(0,1);
         }
     }
-
-    LOG(LOG_INFO, "update_authorized_channels: allow=%s deny=%s", allow.c_str(), deny.c_str(), proxy_opt.c_str());
 }
 
 #endif
