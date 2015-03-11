@@ -209,6 +209,8 @@ private:
 
     uint16_t rail_channel_id = 0;
 
+    BStream chunked_virtual_channel_data;
+
 public:
     Front ( Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -252,7 +254,8 @@ public:
     , persistent_key_list_transport(persistent_key_list_transport)
     , mppc_enc(NULL)
     , authentifier(NULL)
-    , auth_info_sent(false) {
+    , auth_info_sent(false)
+    , chunked_virtual_channel_data(65536) {
         // init TLS
         // --------------------------------------------------------
 
@@ -2146,9 +2149,34 @@ public:
                             LOG(LOG_INFO, "Front::send_to_mod_channel");
                         }
 
-                        SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
+                        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
+                            (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) {
+                            SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
 
-                        cb.send_to_mod_channel(channel.name, chunk, length, flags);
+                            cb.send_to_mod_channel(channel.name, chunk, length, flags);
+                        }
+                        else {
+                            if (this->verbose & 16) {
+                                LOG(LOG_INFO, "Chunked Virtual Channel Data: length=%u flags=0x%X",
+                                    length, flags);
+                            }
+                            this->chunked_virtual_channel_data.out_copy_bytes(sec.payload.p, chunk_size);
+
+                            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                                this->chunked_virtual_channel_data.mark_end();
+                                this->chunked_virtual_channel_data.rewind();
+
+                                REDASSERT(this->chunked_virtual_channel_data.size() ==
+                                    static_cast<size_t>(length));
+
+                                flags |= CHANNELS::CHANNEL_FLAG_FIRST;
+
+                                cb.send_to_mod_channel(channel.name, this->chunked_virtual_channel_data,
+                                                       length, flags);
+
+                                this->chunked_virtual_channel_data.reset();
+                            }
+                        }
                     }
                     else {
                         if (this->verbose & 16) {

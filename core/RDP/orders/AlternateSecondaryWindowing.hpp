@@ -28,34 +28,6 @@
 
 namespace RDP {
 
-//class Buffer {
-//    REDEMPTION_NON_COPYABLE(Buffer);
-//
-//    uint8_t * p_;
-//    size_t    size_;
-//
-//public:
-//    Buffer(size_t size = 0) : size_(size) {
-//        this->p_ = (size ? new uint8_t[size] : nullptr);
-//    }
-//
-//    ~Buffer() {
-//        delete [] this->p_;
-//    }
-//
-//    inline uint8_t * p() const { return this->p_; }
-//
-//    inline size_t size() const { return this->size_; }
-//
-//    void emit(Stream & stream) const {
-//        stream.out_copy_bytes(this->p_, this->size_);
-//    }
-//
-//    void receive(Stream & stream) {
-//        stream.in_copy_bytes(this->p_, this->size_);
-//    }
-//};
-
 namespace RAIL {
 
 // [MS-RDPERP] - 2.2.1.2.2 Rectangle (TS_RECTANGLE_16)
@@ -101,6 +73,18 @@ public:
     }
 
     void receive(Stream & stream) {
+        {
+            const unsigned expected =
+                8;  // Left(2) + Top(2) + Right(2) + Bottom(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Rectangle: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
         this->Left   = stream.in_uint16_le();
         this->Top    = stream.in_uint16_le();
         this->Right  = stream.in_uint16_le();
@@ -209,11 +193,8 @@ class IconInfo {
     uint16_t Width      = 0;
     uint16_t Height     = 0;
 
-//    Buffer bits_mask;
     StaticStream bits_mask;
-//    Buffer color_table;
     StaticStream color_table;
-//    Buffer bits_color;
     StaticStream bits_color;
 
 public:
@@ -226,22 +207,31 @@ public:
         stream.out_uint16_le(this->Width);
         stream.out_uint16_le(this->Height);
 
-//        stream.out_uint16_le(this->bits_mask.size());
+        if ((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) {
+            stream.out_uint16_le(this->color_table.get_capacity());
+        }
+
         stream.out_uint16_le(this->bits_mask.get_capacity());
-//        stream.out_uint16_le(this->color_table.size());
-        stream.out_uint16_le(this->color_table.get_capacity());
-//        stream.out_uint16_le(this->bits_color.size());
         stream.out_uint16_le(this->bits_color.get_capacity());
 
-//        this->bits_mask.emit(stream);
         stream.out_copy_bytes(this->bits_mask.get_data(), this->bits_mask.get_capacity());
-//        this->color_table.emit(stream);
         stream.out_copy_bytes(this->color_table.get_data(), this->color_table.get_capacity());
-//        this->bits_color.emit(stream);
         stream.out_copy_bytes(this->bits_color.get_data(), this->bits_color.get_capacity());
     }
 
     void receive(Stream & stream) {
+        {
+            const unsigned expected =
+                9;  // CacheEntry(2) + CacheId(2) + Bpp(1) + Width(2) + Height(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated IconInfo (0): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
         this->CacheEntry = stream.in_uint16_le();
         this->CacheId    = stream.in_uint16_le();
 
@@ -250,24 +240,54 @@ public:
         this->Width  = stream.in_uint16_le();
         this->Height = stream.in_uint16_le();
 
+        if ((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) {
+            const unsigned expected = 2;  // CbColorTable(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated IconInfo (1): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
         const uint16_t CbColorTable =
             (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ?
              stream.in_uint16_le() : 0);
+
+        {
+            const unsigned expected = 4;  // CbBitsMask(2) + CbBitsColor(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated IconInfo (2): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
         const uint16_t CbBitsMask   = stream.in_uint16_le();
         const uint16_t CbBitsColor  = stream.in_uint16_le();
 
-//        this->bits_mask.~Buffer(); new (&this->bits_mask) Buffer(CbBitsMask);
-//        if (CbBitsMask) this->bits_mask.receive(stream);
+        {
+            const unsigned expected = CbColorTable +    // BitsMask(variable)
+                                      CbBitsMask +      // ColorTable(variable)
+                                      CbBitsColor;      // BitsColor(variable)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated IconInfo (3): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
         this->bits_mask.resize(stream.p, CbBitsMask);
         stream.in_skip_bytes(CbBitsMask);
 
-//        this->color_table.~Buffer(); new (&this->color_table) Buffer(CbColorTable);
-//        if (CbColorTable) this->color_table.receive(stream);
         this->color_table.resize(stream.p, CbColorTable);
         stream.in_skip_bytes(CbColorTable);
 
-//        this->bits_color.~Buffer(); new (&this->bits_color) Buffer(CbBitsColor);
-//        if (CbBitsColor) this->bits_color.receive(stream);
         this->bits_color.resize(stream.p, CbBitsColor);
         stream.in_skip_bytes(CbBitsColor);
     }
@@ -276,11 +296,8 @@ public:
         return 9 +  // CacheEntry(2) + CacheId(2) + Bpp(1) + Width(2) + Height(2)
             (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? 2 /* CbColorTable(2) */ : 0) +
             4 + // CbBitsMask(2) + CbBitsColor(2)
-//            this->bits_mask.size() +
             this->bits_mask.get_capacity() +
-//            (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? this->color_table.size() : 0) +
             (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? this->color_table.get_capacity() : 0) +
-//            this->bits_color.size();
             this->bits_color.get_capacity();
     }
 
@@ -298,18 +315,6 @@ public:
                    ((size - length) - 1)
                   );
 
-//        auto str_optional = [&length, buffer, size] (Buffer const & optional, const char * label) {
-//                if (optional.size()) {
-//                    const size_t result = ::snprintf(
-//                        buffer + length, size - length,
-//                        " %s=%lu", label, optional.size());
-//                    length += (
-//                               (result < (size - length)) ?
-//                               result :
-//                               ((size - length) - 1)
-//                              );
-//                }
-//            };
         auto str_optional = [&length, buffer, size] (Stream const & optional, const char * label) {
                 if (optional.get_capacity()) {
                     const size_t result = ::snprintf(
@@ -367,6 +372,17 @@ public:
     }
 
     inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 4;  // CacheEntry(2) + CacheId(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated CachedIconInfo: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
         this->CacheEntry = stream.in_uint16_le();
         this->CacheId    = stream.in_uint16_le();
     }
@@ -911,7 +927,7 @@ public:
             uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
                         maximum_length_of_TitleInfo_in_bytes));
             const size_t size_of_unicode_data = ::UTF8toUTF16(
-                reinterpret_cast<const uint8_t *>(title_info.c_str()), unicode_data,
+                reinterpret_cast<const uint8_t *>(this->title_info.c_str()), unicode_data,
                 maximum_length_of_TitleInfo_in_bytes);
 
             stream.out_uint16_le(size_of_unicode_data);
@@ -982,29 +998,84 @@ public:
         WindowInformationCommonHeader::receive(stream);
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
+            {
+                const unsigned expected = 4;  // OwnerWindowId(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (0): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->OwnerWindowId = stream.in_uint32_le();
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
+            {
+                const unsigned expected = 8;  // Style(4) + ExtendedStyle(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (1): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->Style         = stream.in_uint32_le();
             this->ExtendedStyle = stream.in_uint32_le();
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
+            {
+                const unsigned expected = 1;  // ShowState(1)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (2): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->ShowState = stream.in_uint8();
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
+            {
+                const unsigned expected = 2;  // CbString(2)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (3): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             const uint16_t CbString = stream.in_uint16_le();
 
             if (!stream.in_check_rem(CbString)) {
                 LOG(LOG_ERR,
-                    "Truncated New or Existing Window (Order): expected=%u remains=%u (0)",
+                    "Truncated NewOrExistingWindow (4): expected=%u remains=%u",
                     CbString, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
 
             uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(CbString));
+
+            {
+                const unsigned expected = CbString;  // String(variable)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (5): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
 
             stream.in_copy_bytes(unicode_data, CbString);
 
@@ -1021,39 +1092,127 @@ public:
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
+            {
+                const unsigned expected = 8;  // ClientOffsetX(4) + ClientOffsetY(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (6): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->ClientOffsetX = stream.in_uint32_le();
             this->ClientOffsetY = stream.in_uint32_le();
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
+            {
+                const unsigned expected = 8;  // ClientAreaWidth(4) + ClientAreaHeight(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (7): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->ClientAreaWidth  = stream.in_uint32_le();
             this->ClientAreaHeight = stream.in_uint32_le();
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
+            {
+                const unsigned expected = 1;  // RPContent(1)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (8): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->RPContent = stream.in_uint8();
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
+            {
+                const unsigned expected = 4;  // RootParentHandle(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (9): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->RootParentHandle = stream.in_uint32_le();
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
+            {
+                const unsigned expected = 8;  // WindowOffsetX(4) + WindowOffsetY(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (10): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->WindowOffsetX = stream.in_sint32_le();
             this->WindowOffsetY = stream.in_sint32_le();
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+            {
+                const unsigned expected = 8;  // WindowClientDeltaX(4) + WindowClientDeltaY(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (11): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->WindowClientDeltaX = stream.in_sint32_le();
             this->WindowClientDeltaY = stream.in_sint32_le();
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
+            {
+                const unsigned expected = 8;  // WindowWidth(4) + WindowHeight(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (12): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->WindowWidth  = stream.in_uint32_le();
             this->WindowHeight = stream.in_uint32_le();
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
+            {
+                const unsigned expected = 2;  // NumWindowRects(2)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (13): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->NumWindowRects = stream.in_uint16_le();
 
             for (uint16_t i = 0; i < this->NumWindowRects; ++i) {
@@ -1065,11 +1224,33 @@ public:
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
+            {
+                const unsigned expected = 8;  // VisibleOffsetX(4) + VisibleOffsetY(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (15): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->VisibleOffsetX = stream.in_sint32_le();
             this->VisibleOffsetY = stream.in_sint32_le();
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
+            {
+                const unsigned expected = 2;  // NumVisibilityRects(2)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (13): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
             this->NumVisibilityRects = stream.in_uint16_le();
 
             for (uint16_t i = 0; i < this->NumVisibilityRects; ++i) {

@@ -1027,12 +1027,18 @@ public:
 
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
                                    Stream & chunk, size_t length, uint32_t flags) {
+        //LOG(LOG_INFO, "chunk.size=%u, length=%u flags=0x%X", chunk.size(), length, flags);
+        REDASSERT(chunk.size() == length);
+
         // filtering device redirection (printer, smartcard, etc)
         const auto saved_chunk_p = chunk.p;
 
         rdpdr::SharedHeader sh_r;
 
         sh_r.receive(chunk);
+        if (this->verbose) {
+            sh_r.log(LOG_INFO);
+        }
 
         const rdpdr::PacketId packet_id = sh_r.packet_id;
 
@@ -1053,9 +1059,7 @@ public:
 
             case rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE:
             {
-                uint32_t DeviceCount = chunk.in_uint32_le();
-
-                uint8_t * DeviceList = chunk.p;
+                const uint32_t DeviceCount = chunk.in_uint32_le();
 
                 if (this->verbose) {
                     LOG(LOG_INFO,
@@ -1064,11 +1068,26 @@ public:
                         DeviceCount);
                 }
 
+                uint8_t * const DeviceList = chunk.p;
+
+                {
+                    BStream result(65535);
+
+                    if (this->filter_unsupported_device(this->authorization_channels,
+                                                        chunk, DeviceCount,
+                                                        result, this->verbose)) {
+                        this->send_to_channel(*rdpdr_channel, result, result.size(),
+                                              flags);
+                    }
+                }
+
+                chunk.p = DeviceList;
+
                 for (uint32_t device_index = 0; device_index < DeviceCount; ++device_index) {
-                    uint32_t DeviceType       = chunk.in_uint32_le();
-                    uint32_t DeviceId         = chunk.in_uint32_le();
+                    const uint32_t DeviceType       = chunk.in_uint32_le();
+                    const uint32_t DeviceId         = chunk.in_uint32_le();
                     chunk.in_skip_bytes(8);    /* PreferredDosName(8) */
-                    uint32_t DeviceDataLength = chunk.in_uint32_le();
+                    const uint32_t DeviceDataLength = chunk.in_uint32_le();
                     chunk.in_skip_bytes(DeviceDataLength);    /* DeviceData(variable) */
 
                     if (!this->authorization_channels.rdpdr_type_is_authorized(DeviceType)) {
@@ -1103,15 +1122,6 @@ public:
                     }
                 }
 
-                chunk.p = DeviceList;
-
-                BStream result(65535);
-
-                if (this->filter_unsupported_device(this->authorization_channels, chunk, DeviceCount,
-                                                    result, this->verbose)) {
-                    this->send_to_channel(*rdpdr_channel, result, result.size(), flags);
-                }
-
                 return;
             }
             break;
@@ -1124,12 +1134,10 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY:
-            {
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::send_to_mod_rdpdr_channel: Client Core Capability Response");
                 }
-            }
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE:
@@ -1188,10 +1196,45 @@ public:
             flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
 
-        CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+        if (chunk.size() <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
+            CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
-        virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
-                                            , this->userid, channel.chanid, length, flags, chunk.get_data(), chunk.size());
+            virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
+                                              , this->userid, channel.chanid, length, flags, chunk.get_data(), chunk.size());
+        }
+        else {
+            uint8_t const * virtual_channel_data = chunk.get_data();
+            size_t          remaining_data_length = length;
+
+            auto get_channel_control_flags = [] (uint32_t flags, size_t data_length,
+                                                 size_t remaining_data_length,
+                                                 size_t virtual_channel_data_length) -> uint32_t {
+                if (remaining_data_length == data_length) {
+                    return (flags & (~CHANNELS::CHANNEL_FLAG_LAST));
+                }
+                else if (remaining_data_length == virtual_channel_data_length) {
+                    return (flags & (~CHANNELS::CHANNEL_FLAG_FIRST));
+                }
+
+                return (flags & (~(CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)));
+            };
+
+            do {
+                const uint16_t virtual_channel_data_length =
+                    std::min<uint16_t>(remaining_data_length, CHANNELS::CHANNEL_CHUNK_LENGTH);
+
+                CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+
+                virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
+                                                  , this->userid, channel.chanid, length
+                                                  , get_channel_control_flags(flags, length, remaining_data_length, virtual_channel_data_length)
+                                                  , virtual_channel_data, virtual_channel_data_length);
+
+                remaining_data_length -= virtual_channel_data_length;
+                virtual_channel_data  += virtual_channel_data_length;
+            }
+            while (remaining_data_length);
+        }
 
         if (this->verbose & 16) {
             LOG(LOG_INFO, "mod_rdp::send_to_channel done");
@@ -5703,6 +5746,11 @@ public:
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::process_rdpdr_event: Server Device Announce Response");
+
+                    rdpdr::ServerDeviceAnnounceResponse server_device_announce_response;
+
+                    server_device_announce_response.receive(stream);
+                    server_device_announce_response.log(LOG_INFO);
                 }
             break;
 
@@ -5710,6 +5758,33 @@ public:
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::process_rdpdr_event: Device I/O Request");
+
+                    rdpdr::DeviceIORequest device_io_request;
+
+                    device_io_request.receive(stream);
+                    device_io_request.log(LOG_INFO);
+
+                    switch (device_io_request.MajorFunction()) {
+                        case rdpdr::IRP_MJ_CREATE:
+                        {
+                            LOG(LOG_INFO,
+                                "mod_rdp::process_rdpdr_event: Device Create Request");
+
+                            rdpdr::DeviceCreateRequest device_create_request;
+
+                            device_create_request.receive(stream);
+                            device_create_request.log(LOG_INFO);
+                        }
+                        break;
+
+                        default:
+                            if (this->verbose) {
+                                LOG(LOG_INFO,
+                                    "mod_rdp::process_rdpdr_event: undecoded Device I/O Request - MajorFunction=0x%X",
+                                    device_io_request.MajorFunction());
+                            }
+                        break;
+                    }
                 }
             break;
 
@@ -5724,6 +5799,13 @@ public:
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::process_rdpdr_event: Server User Logged On");
+                }
+            break;
+
+            case rdpdr::PacketId::PAKID_PRN_USING_XPS:
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::process_rdpdr_event: Server Printer Set XPS Mode");
                 }
             break;
 
