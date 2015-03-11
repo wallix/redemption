@@ -274,6 +274,10 @@ class DeviceAnnounceHeader {
     StaticStream device_data;
 
 public:
+    DeviceAnnounceHeader() = default;
+
+    REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader);
+
     inline void emit(Stream & stream) const {
         stream.out_uint32_le(this->DeviceType_);
         stream.out_uint32_le(this->DeviceId_);
@@ -342,7 +346,7 @@ public:
             hexdump(this->device_data.get_data(), this->device_data.get_capacity());
         }
     }
-};
+};  // DeviceAnnounceHeader
 
 // [MS-RDPEFS] - 2.2.1.4 Device I/O Request (DR_DEVICE_IOREQUEST)
 // ==============================================================
@@ -458,17 +462,17 @@ enum {
 };
 
 class DeviceIORequest {
-    uint32_t DeviceId       = 0;
+    uint32_t DeviceId_      = 0;
     uint32_t FileId         = 0;
-    uint32_t CompletionId   = 0;
+    uint32_t CompletionId_   = 0;
     uint32_t MajorFunction_ = 0;
     uint32_t MinorFunction  = 0;
 
 public:
     inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->DeviceId);
+        stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->FileId);
-        stream.out_uint32_le(this->CompletionId);
+        stream.out_uint32_le(this->CompletionId_);
         stream.out_uint32_le(this->MajorFunction_);
         stream.out_uint32_le(this->MinorFunction);
     }
@@ -486,12 +490,16 @@ public:
             }
         }
 
-        this->DeviceId       = stream.in_uint32_le();
+        this->DeviceId_      = stream.in_uint32_le();
         this->FileId         = stream.in_uint32_le();
-        this->CompletionId   = stream.in_uint32_le();
+        this->CompletionId_  = stream.in_uint32_le();
         this->MajorFunction_ = stream.in_uint32_le();
         this->MinorFunction  = stream.in_uint32_le();
     }
+
+    uint32_t DeviceId() const { return this->DeviceId_; }
+
+    uint32_t CompletionId() const { return this->CompletionId_; }
 
     uint32_t MajorFunction() const { return this->MajorFunction_; }
 
@@ -499,7 +507,7 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceIORequest: DeviceId=%u FileId=%u CompletionId=%u MajorFunction=0x%X MinorFunction=0x%X",
-            this->DeviceId, this->FileId, this->CompletionId, this->MajorFunction_, this->MinorFunction);
+            this->DeviceId_, this->FileId, this->CompletionId_, this->MajorFunction_, this->MinorFunction);
         return ((length < size) ? length : size - 1);
     }
 
@@ -691,7 +699,175 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, buffer);
     }
+};  // DeviceCreateRequest
 
+// [MS-RDPEFS] - 2.2.1.4.2 Device Close Request (DR_CLOSE_REQ)
+// ===========================================================
+
+// This header initiates a close request. This message can have different
+//  purposes depending on the device for which it is issued. The device type
+//  is determined by the DeviceId field in the DR_DEVICE_IOREQUEST header.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        DeviceIoRequest                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST header. The
+//  MajorFunction field in this header MUST be set to IRP_MJ_CLOSE.
+
+// Padding (32 bytes): An array of 32 bytes. Reserved. This field can be set
+//  to any value, and MUST be ignored on receipt.
+
+class DeviceCloseRequest {
+    inline void emit(Stream & stream) const {
+        stream.out_clear_bytes(32); // Padding(32)
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 32;  // Padding(32)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceCloseRequest: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        stream.in_skip_bytes(32);   // Padding(32)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size, "DeviceCloseRequest:");
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
+// [MS-RDPEFS] - 2.2.1.5 Device I/O Response (DR_DEVICE_IOCOMPLETION)
+// ==================================================================
+
+// A message with this header indicates that the I/O request is complete. In
+//  a Device I/O Response message, a request message is matched to the Device
+//  I/O Request (section 2.2.1.4) header based on the CompletionId field
+//  value. There is only one response per request.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +---------------------------------------------------------------+
+// |                            DeviceId                           |
+// +---------------------------------------------------------------+
+// |                          CompletionId                         |
+// +---------------------------------------------------------------+
+// |                            IoStatus                           |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set
+//  to RDPDR_CTYP_CORE, and the PacketId field MUST be set to
+//  PAKID_CORE_DEVICE_IOCOMPLETION.
+
+// DeviceId (4 bytes): A 32-bit unsigned integer. This field MUST match the
+//  DeviceId field in the DR_DEVICE_IOREQUEST header for the corresponding
+//  request.
+
+// CompletionId (4 bytes): A 32-bit unsigned integer. This field MUST match
+//  the CompletionId field in the DR_DEVICE_IOREQUEST header for the
+//  corresponding request. After processing a response packet with this ID,
+//  the same ID MUST be reused in another request.
+
+// IoStatus (4 bytes): A 32-bit unsigned integer that specifies the NTSTATUS
+//  code that indicates success or failure for the request. NTSTATUS codes
+//  are specified in [MS-ERREF] section 2.3.
+
+class DeviceIOResponse {
+    uint32_t DeviceId_     = 0;
+    uint32_t CompletionId_ = 0;
+    uint32_t IoStatus      = 0;
+
+public:
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->DeviceId_);
+        stream.out_uint32_le(this->CompletionId_);
+        stream.out_uint32_le(this->IoStatus);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 12;   // DeviceId(4) + CompletionId(4) + IoStatus(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceIOResponse: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->DeviceId_     = stream.in_uint32_le();
+        this->CompletionId_ = stream.in_uint32_le();
+        this->IoStatus      = stream.in_uint32_le();
+    }
+
+    uint32_t DeviceId() const { return this->DeviceId_; }
+
+    uint32_t CompletionId() const { return this->CompletionId_; }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "ServerDeviceAnnounceResponse: DeviceId=%u CompletionId=%u IoStatus=0x%08X",
+            this->DeviceId_, this->CompletionId_, this->IoStatus);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
 };
 
 // [MS-RDPEFS] - 2.2.2.1 Server Device Announce Response
@@ -805,6 +981,183 @@ public:
 //  There is no alignment padding between individual DEVICE_ANNOUNCE
 //  structures. They are ordered sequentially within this packet.
 
-}
+
+// [MS-RDPEFS] - 2.2.3.3.1 Server Create Drive Request (DR_DRIVE_CREATE_REQ)
+// =========================================================================
+
+// The server opens or creates a file on a redirected file system device.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                 DeviceCreateRequest (variable)                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceCreateRequest (variable): A DR_CREATE_REQ header. The PathLength and
+//  Path fields contain the file name of the file to be created. The file
+//  name does not contain a drive letter, which means that the drive is
+//  specified by the DeviceId field of the request. The DeviceId is
+//  associated with a drive letter when the device is announced in the
+//  DR_DEVICELIST_ANNOUNCE (section 2.2.3.1) message. The drive letter is
+//  contained in the PreferredDosName field.
+
+// [MS-RDPEFS] - 2.2.3.3.8 Server Drive Query Information Request
+//  (DR_DRIVE_QUERY_INFORMATION_REQ)
+// ==============================================================
+
+// The server issues a query information request on a redirected file system
+//  device.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        DeviceIoRequest                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                       FsInformationClass                      |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                     QueryBuffer (variable)                    |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST (section 2.2.1.4)
+//  header. The MajorFunction field in the DR_DEVICE_IOREQUEST header MUST
+//  be set to IRP_MJ_QUERY_INFORMATION.
+
+// FsInformationClass (4 bytes): A 32-bit unsigned integer. The possible
+//  values for this field are defined in [MS-FSCC] section 2.4. This field
+//  MUST contain one of the following values.
+
+//  +-----------------------------+-------------------------------------------+
+//  | Value                       | Meaning                                   |
+//  +-----------------------------+-------------------------------------------+
+//  | FileBasicInformation        | This information class is used to query a |
+//  | 0x00000004                  | file for the times of creation, last      |
+//  |                             | access, last write, and change, in        |
+//  |                             | addition to file attribute information.   |
+//  +-----------------------------+-------------------------------------------+
+//  | FileStandardInformation     | This information class is used to query   |
+//  | 0x00000005                  | for file information such as  allocation  |
+//  |                             | size, end-of-file position, and number of |
+//  |                             | links.                                    |
+//  +-----------------------------+-------------------------------------------+
+//  | FileAttributeTagInformation | This information class is used to query   |
+//  | 0x00000023                  | for file attribute and reparse tag        |
+//  |                             | information.                              |
+//  +-----------------------------+-------------------------------------------+
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of
+//  bytes in the QueryBuffer field.
+
+// Padding (24 bytes): An array of 24 bytes. This field is unused and can be
+//  set to any value. This field MUST be ignored on receipt.
+
+// QueryBuffer (variable): A variable-length array of bytes. The size of the
+//  array is specified by the Length field. The content of this field is
+//  based on the value of the FsInformationClass field, which determines the
+//  different structures that MUST be contained in the QueryBuffer field. For
+//  a complete list of these structures, see [MS-FSCC] section 2.4. The "File
+//  information class" table defines all the possible values for the
+//  FsInformationClass field.
+
+class ServerDriveQueryInformationRequest {
+    uint32_t FsInformationClass = 0;
+
+    StaticStream query_buffer;
+
+public:
+    ServerDriveQueryInformationRequest() = default;
+
+    REDEMPTION_NON_COPYABLE(ServerDriveQueryInformationRequest);
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->FsInformationClass);
+
+        stream.out_uint32_le(this->query_buffer.get_capacity());
+
+        stream.out_clear_bytes(24); // Padding(24)
+
+        stream.out_copy_bytes(this->query_buffer.get_data(), this->query_buffer.get_capacity());
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 32;  // FsInformationClass(4) + Length(4) + Padding(24)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ServerDriveQueryInformationRequest (0): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->FsInformationClass = stream.in_uint32_le();
+
+        const uint32_t Length = stream.in_uint32_le();
+
+        stream.in_skip_bytes(24);   // Padding(24)
+
+        {
+            const unsigned expected = Length;  // QueryBuffer(variable)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ServerDriveQueryInformationRequest (1): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->query_buffer.resize(stream.p, Length);
+        stream.in_skip_bytes(Length);
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "ServerDriveQueryInformationRequest: FsInformationClass=%u",
+            this->FsInformationClass);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
+}   // namespace rdpdr
 
 #endif

@@ -216,6 +216,9 @@ class mod_rdp : public mod_api {
 
     bool deactivation_reactivation_in_progress;
 
+    typedef std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> device_io_request_type;
+    device_io_request_type device_io_requests;   // DeviceId, CompletionId, MajorFunction.
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -1130,6 +1133,33 @@ public:
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::send_to_mod_rdpdr_channel: Device I/O Response");
+
+                    rdpdr::DeviceIOResponse device_io_response;
+
+                    device_io_response.receive(chunk);
+                    device_io_response.log(LOG_INFO);
+
+                    bool corresponding_device_io_request_is_not_found = true;
+                    device_io_request_type::iterator iter;
+                    for (iter = this->device_io_requests.begin();
+                         iter !=  this->device_io_requests.end(); ++iter) {
+                        if ((std::get<0>(*iter) == device_io_response.DeviceId()) &&
+                            (std::get<1>(*iter) == device_io_response.CompletionId())) {
+
+                            LOG(LOG_INFO, "mod_rdp::send_to_mod_rdpdr_channel: MajorFunction is 0x%X",
+                                std::get<2>(*iter));
+
+                            this->device_io_requests.erase(iter);
+
+                            corresponding_device_io_request_is_not_found = false;
+                            break;
+                        }
+                    }
+                    if (corresponding_device_io_request_is_not_found) {
+                        LOG(LOG_ERR,
+                            "mod_rdp::send_to_mod_rdpdr_channel: The corresponding Device I/O Request is not found!");
+                        REDASSERT(false);
+                    }
                 }
             break;
 
@@ -5764,6 +5794,12 @@ public:
                     device_io_request.receive(stream);
                     device_io_request.log(LOG_INFO);
 
+                    this->device_io_requests.push_back(std::make_tuple(
+                        device_io_request.DeviceId(),
+                        device_io_request.CompletionId(),
+                        device_io_request.MajorFunction()
+                        ));
+
                     switch (device_io_request.MajorFunction()) {
                         case rdpdr::IRP_MJ_CREATE:
                         {
@@ -5774,6 +5810,23 @@ public:
 
                             device_create_request.receive(stream);
                             device_create_request.log(LOG_INFO);
+                        }
+                        break;
+
+                        case rdpdr::IRP_MJ_CLOSE:
+                            LOG(LOG_INFO,
+                                "mod_rdp::process_rdpdr_event: Device Close Request");
+                        break;
+
+                        case rdpdr::IRP_MJ_QUERY_INFORMATION:
+                        {
+                            LOG(LOG_INFO,
+                                "mod_rdp::process_rdpdr_event: Server Drive Query Information Request");
+
+                            rdpdr::ServerDriveQueryInformationRequest server_drive_query_information_request;
+
+                            server_drive_query_information_request.receive(stream);
+                            server_drive_query_information_request.log(LOG_INFO);
                         }
                         break;
 
