@@ -469,10 +469,12 @@ BOOST_AUTO_TEST_CASE(TestRemoveRdpdrFileSystem)
 
     const uint32_t device_count = 4;
 
-    AuthorizationChannels authorization_channels(std::string("*"), std::string("rdpdr_drive"));
+    AuthorizationChannels authorization_channels("*", "rdpdr_drive");
+
+    FileSystemDriveManager file_system_driver_manager;
 
     uint32_t real_device_count = mod_rdp::filter_unsupported_device(authorization_channels,
-        source_stream, device_count, result);
+        source_stream, device_count, result, file_system_driver_manager, 0);
 
     hexdump_c(result.get_data(), result.size());
 

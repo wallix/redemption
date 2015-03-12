@@ -126,8 +126,14 @@ enum class PacketId : uint16_t {
 };
 
 struct SharedHeader {
-    Component component;
-    PacketId  packet_id;
+    Component component = Component::RDPDR_CTYP_CORE;
+    PacketId  packet_id = PacketId::PAKID_CORE_SERVER_ANNOUNCE;
+
+    SharedHeader() = default;
+
+    SharedHeader(Component component, PacketId  packet_id)
+    : component(component)
+    , packet_id(packet_id) {}
 
     inline void emit(Stream & stream) const {
         stream.out_uint16_le(static_cast<uint16_t>(this->component));
@@ -275,6 +281,16 @@ class DeviceAnnounceHeader {
 
 public:
     DeviceAnnounceHeader() = default;
+
+    DeviceAnnounceHeader(uint32_t DeviceType, uint32_t DeviceId,
+                         const char * preferred_dos_name,
+                         uint8_t * device_data_p, size_t device_data_size)
+    : DeviceType_(DeviceType)
+    , DeviceId_(DeviceId)
+    , device_data(device_data_p, device_data_size) {
+        ::memcpy(this->PreferredDosName, preferred_dos_name,
+            std::min<size_t>(::strlen(preferred_dos_name), 8 /*PreferredDosName(8)*/));
+    }
 
     REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader);
 
@@ -826,6 +842,13 @@ class DeviceIOResponse {
     uint32_t IoStatus      = 0;
 
 public:
+    DeviceIOResponse() = default;
+
+    DeviceIOResponse(uint32_t DeviceId, uint32_t CompletionId, uint32_t IoStatus)
+    : DeviceId_(DeviceId)
+    , CompletionId_(CompletionId)
+    , IoStatus(IoStatus) {}
+
     inline void emit(Stream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->CompletionId_);
@@ -952,6 +975,12 @@ class DeviceCreateResponse {
     uint8_t  Information;
 
 public:
+    DeviceCreateResponse() = default;
+
+    DeviceCreateResponse(uint32_t FileId, uint8_t Information)
+    : FileId(FileId)
+    , Information(Information) {}
+
     inline void emit(Stream & stream) const {
         stream.out_uint32_le(this->FileId);
         stream.out_uint8(this->Information);
@@ -1224,6 +1253,12 @@ public:
 //  |                             | information.                              |
 //  +-----------------------------+-------------------------------------------+
 
+enum {
+      FileBasicInformation        = 0x00000004
+    , FileStandardInformation     = 0x00000005
+    , FileAttributeTagInformation = 0x00000023
+};
+
 // Length (4 bytes): A 32-bit unsigned integer that specifies the number of
 //  bytes in the QueryBuffer field.
 
@@ -1239,7 +1274,7 @@ public:
 //  FsInformationClass field.
 
 class ServerDriveQueryInformationRequest {
-    uint32_t FsInformationClass = 0;
+    uint32_t FsInformationClass_ = 0;
 
     StaticStream query_buffer;
 
@@ -1249,7 +1284,7 @@ public:
     REDEMPTION_NON_COPYABLE(ServerDriveQueryInformationRequest);
 
     inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->FsInformationClass);
+        stream.out_uint32_le(this->FsInformationClass_);
 
         stream.out_uint32_le(this->query_buffer.get_capacity());
 
@@ -1270,7 +1305,7 @@ public:
             }
         }
 
-        this->FsInformationClass = stream.in_uint32_le();
+        this->FsInformationClass_ = stream.in_uint32_le();
 
         const uint32_t Length = stream.in_uint32_le();
 
@@ -1291,11 +1326,13 @@ public:
         stream.in_skip_bytes(Length);
     }
 
+    uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "ServerDriveQueryInformationRequest: FsInformationClass=%u",
-            this->FsInformationClass);
+            "ServerDriveQueryInformationRequest: FsInformationClass=%u Length=%lu",
+            this->FsInformationClass_, this->query_buffer.get_capacity());
         return ((length < size) ? length : size - 1);
     }
 

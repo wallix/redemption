@@ -69,9 +69,11 @@
 #include "RDP/capabilities/rail.hpp"
 #include "RDP/capabilities/window.hpp"
 #include "RDP/channels/rdpdr.hpp"
+#include "RDP/channels/rdpdr_file_system_drive_manager.hpp"
 #include "RDP/remote_programs.hpp"
 #include "rdp_params.hpp"
 #include "transparentrecorder.hpp"
+#include "FSCC/FileInformation.hpp"
 
 #include "cast.hpp"
 #include "client_info.hpp"
@@ -216,8 +218,11 @@ class mod_rdp : public mod_api {
 
     bool deactivation_reactivation_in_progress;
 
-    typedef std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> device_io_request_type;
-    device_io_request_type device_io_requests;   // DeviceId, CompletionId, MajorFunction.
+    typedef std::vector<std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>>
+        device_io_request_collection_type; // DeviceId, CompletionId, MajorFunction, (extra data).
+    device_io_request_collection_type device_io_requests;
+
+    FileSystemDriveManager file_system_drive_manager;
 
 public:
     mod_rdp( Transport & trans
@@ -995,7 +1000,8 @@ public:
     }   // send_to_mod_rail_channel
 
     static uint32_t filter_unsupported_device(AuthorizationChannels const & authorization_channels,
-            Stream & chunk, uint32_t device_count, Stream & result, uint32_t verbose = 0) {
+            Stream & chunk, uint32_t device_count, Stream & result,
+            FileSystemDriveManager & file_system_drive_manager, uint32_t verbose = 0) {
         //LOG(LOG_INFO, "filter_unsupported_device: device_count=%u", device_count);
         result.out_uint16_le(static_cast<uint16_t>(rdpdr::Component::RDPDR_CTYP_CORE));
         result.out_uint16_le(static_cast<uint16_t>(rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE));
@@ -1020,6 +1026,9 @@ public:
                 real_device_count++;
             }
         }
+
+        // Add proxy managed File System Drives.
+        real_device_count += file_system_drive_manager.AnnounceDrivePartially(result);
 
         result.set_out_uint32_le(real_device_count, device_count_offset);
 
@@ -1078,7 +1087,9 @@ public:
 
                     if (this->filter_unsupported_device(this->authorization_channels,
                                                         chunk, DeviceCount,
-                                                        result, this->verbose)) {
+                                                        result,
+                                                        this->file_system_drive_manager,
+                                                        this->verbose)) {
                         this->send_to_channel(*rdpdr_channel, result, result.size(),
                                               flags);
                     }
@@ -1141,16 +1152,19 @@ public:
 
                     bool     corresponding_device_io_request_is_not_found = true;
                     uint32_t major_function = 0;
-                    device_io_request_type::iterator iter;
+                    uint32_t extra_data     = 0;
+                    device_io_request_collection_type::iterator iter;
                     for (iter = this->device_io_requests.begin();
                          iter !=  this->device_io_requests.end(); ++iter) {
                         if ((std::get<0>(*iter) == device_io_response.DeviceId()) &&
                             (std::get<1>(*iter) == device_io_response.CompletionId())) {
 
                             major_function = std::get<2>(*iter);
+                            extra_data     = std::get<3>(*iter);
 
-                            LOG(LOG_INFO, "mod_rdp::send_to_mod_rdpdr_channel: MajorFunction is 0x%X",
-                                major_function);
+                            LOG(LOG_INFO,
+                                "mod_rdp::send_to_mod_rdpdr_channel: MajorFunction=0x%X extra_data=0x%X",
+                                major_function, extra_data);
 
                             this->device_io_requests.erase(iter);
 
@@ -1160,7 +1174,8 @@ public:
                     }
                     if (corresponding_device_io_request_is_not_found) {
                         LOG(LOG_ERR,
-                            "mod_rdp::send_to_mod_rdpdr_channel: The corresponding Device I/O Request is not found!");
+                            "mod_rdp::send_to_mod_rdpdr_channel: "
+                                "The corresponding Device I/O Request is not found!");
                         REDASSERT(false);
                     }
                     else {
@@ -1175,6 +1190,29 @@ public:
                             break;
 
                             case rdpdr::IRP_MJ_CLOSE:
+                            break;
+
+                            case rdpdr::IRP_MJ_QUERY_INFORMATION:
+                            {
+                                const uint32_t FsInformationClass = extra_data;
+
+                                switch (extra_data) {
+                                    case rdpdr::FileBasicInformation:
+                                    {
+                                        fscc::FileBasicInformation file_basic_information;
+
+                                        file_basic_information.receive(chunk);
+                                        file_basic_information.log(LOG_INFO);
+                                    }
+                                    break;
+
+                                    default:
+                                        LOG(LOG_INFO,
+                                            "mod_rdp::send_to_mod_rail_channel: undecoded FsInformationClass(0x%X)",
+                                            FsInformationClass);
+                                    break;
+                                }
+                            }
                             break;
 
                             default:
@@ -5767,7 +5805,7 @@ public:
         );
     }
 
-    void process_rdpdr_event(const CHANNELS::ChannelDef & rd_channel,
+    void process_rdpdr_event(const CHANNELS::ChannelDef & dr_channel,
             Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::process_rdpdr_event: Server DR PDU.");
@@ -5809,60 +5847,92 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST:
+            {
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::process_rdpdr_event: Device I/O Request");
+                }
 
-                    rdpdr::DeviceIORequest device_io_request;
+                rdpdr::DeviceIORequest device_io_request;
 
-                    device_io_request.receive(stream);
+                device_io_request.receive(stream);
+                if (this->verbose) {
                     device_io_request.log(LOG_INFO);
+                }
 
-                    this->device_io_requests.push_back(std::make_tuple(
-                        device_io_request.DeviceId(),
-                        device_io_request.CompletionId(),
-                        device_io_request.MajorFunction()
-                        ));
+                if (!this->file_system_drive_manager.IsManagedDrive(
+                        device_io_request.DeviceId())) {
+                    if (this->verbose) {
+                        uint32_t extra_data = 0;
 
-                    switch (device_io_request.MajorFunction()) {
-                        case rdpdr::IRP_MJ_CREATE:
-                        {
-                            LOG(LOG_INFO,
-                                "mod_rdp::process_rdpdr_event: Device Create Request");
-
-                            rdpdr::DeviceCreateRequest device_create_request;
-
-                            device_create_request.receive(stream);
-                            device_create_request.log(LOG_INFO);
-                        }
-                        break;
-
-                        case rdpdr::IRP_MJ_CLOSE:
-                            LOG(LOG_INFO,
-                                "mod_rdp::process_rdpdr_event: Device Close Request");
-                        break;
-
-                        case rdpdr::IRP_MJ_QUERY_INFORMATION:
-                        {
-                            LOG(LOG_INFO,
-                                "mod_rdp::process_rdpdr_event: Server Drive Query Information Request");
-
-                            rdpdr::ServerDriveQueryInformationRequest server_drive_query_information_request;
-
-                            server_drive_query_information_request.receive(stream);
-                            server_drive_query_information_request.log(LOG_INFO);
-                        }
-                        break;
-
-                        default:
-                            if (this->verbose) {
+                        switch (device_io_request.MajorFunction()) {
+                            case rdpdr::IRP_MJ_CREATE:
+                            {
                                 LOG(LOG_INFO,
-                                    "mod_rdp::process_rdpdr_event: undecoded Device I/O Request - MajorFunction=0x%X",
-                                    device_io_request.MajorFunction());
+                                    "mod_rdp::process_rdpdr_event: Device Create Request");
+
+                                rdpdr::DeviceCreateRequest device_create_request;
+
+                                device_create_request.receive(stream);
+                                device_create_request.log(LOG_INFO);
                             }
-                        break;
+                            break;
+
+                            case rdpdr::IRP_MJ_CLOSE:
+                                LOG(LOG_INFO,
+                                    "mod_rdp::process_rdpdr_event: Device Close Request");
+                            break;
+
+                            case rdpdr::IRP_MJ_QUERY_INFORMATION:
+                            {
+                                LOG(LOG_INFO,
+                                    "mod_rdp::process_rdpdr_event: "
+                                        "Server Drive Query Information Request");
+
+                                rdpdr::ServerDriveQueryInformationRequest
+                                    server_drive_query_information_request;
+
+                                server_drive_query_information_request.receive(stream);
+                                server_drive_query_information_request.log(LOG_INFO);
+
+                                extra_data =
+                                    server_drive_query_information_request.FsInformationClass();
+                            }
+                            break;
+
+                            default:
+                                if (this->verbose) {
+                                    LOG(LOG_INFO,
+                                        "mod_rdp::process_rdpdr_event: "
+                                            "undecoded Device I/O Request - MajorFunction=0x%X",
+                                        device_io_request.MajorFunction());
+                                }
+                            break;
+                        }
+
+                        this->device_io_requests.push_back(std::make_tuple(
+                            device_io_request.DeviceId(),
+                            device_io_request.CompletionId(),
+                            device_io_request.MajorFunction(),
+                            extra_data
+                            ));
                     }
                 }
+                else {
+                    BStream out_stream(65536);
+
+                    uint32_t out_flags = 0;
+
+                    this->file_system_drive_manager.ProcessDeviceIORequest(
+                        device_io_request, stream, out_stream, out_flags, this->verbose);
+                    if (out_stream.size()) {
+                        this->send_to_channel(dr_channel, out_stream, out_stream.size(),
+                            out_flags);
+                    }
+
+                    return;
+                }
+            }
             break;
 
             case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
@@ -5898,7 +5968,7 @@ public:
         stream.p = saved_stream_p;
 
         this->send_to_front_channel(
-            rd_channel.name, stream.p, length, chunk_size, flags
+            dr_channel.name, stream.p, length, chunk_size, flags
         );
     }
 };
