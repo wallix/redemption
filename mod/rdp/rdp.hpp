@@ -1139,15 +1139,18 @@ public:
                     device_io_response.receive(chunk);
                     device_io_response.log(LOG_INFO);
 
-                    bool corresponding_device_io_request_is_not_found = true;
+                    bool     corresponding_device_io_request_is_not_found = true;
+                    uint32_t major_function = 0;
                     device_io_request_type::iterator iter;
                     for (iter = this->device_io_requests.begin();
                          iter !=  this->device_io_requests.end(); ++iter) {
                         if ((std::get<0>(*iter) == device_io_response.DeviceId()) &&
                             (std::get<1>(*iter) == device_io_response.CompletionId())) {
 
+                            major_function = std::get<2>(*iter);
+
                             LOG(LOG_INFO, "mod_rdp::send_to_mod_rdpdr_channel: MajorFunction is 0x%X",
-                                std::get<2>(*iter));
+                                major_function);
 
                             this->device_io_requests.erase(iter);
 
@@ -1159,6 +1162,27 @@ public:
                         LOG(LOG_ERR,
                             "mod_rdp::send_to_mod_rdpdr_channel: The corresponding Device I/O Request is not found!");
                         REDASSERT(false);
+                    }
+                    else {
+                        switch (major_function) {
+                            case rdpdr::IRP_MJ_CREATE:
+                            {
+                                rdpdr::DeviceCreateResponse device_create_response;
+
+                                device_create_response.receive(chunk);
+                                device_create_response.log(LOG_INFO);
+                            }
+                            break;
+
+                            case rdpdr::IRP_MJ_CLOSE:
+                            break;
+
+                            default:
+                                LOG(LOG_INFO,
+                                    "mod_rdp::send_to_mod_rail_channel: undecoded MajorFunction(0x%X)",
+                                    major_function);
+                            break;
+                        }
                     }
                 }
             break;

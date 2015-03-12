@@ -22,8 +22,8 @@
 #define REDEMPTION_CORE_RDP_CHANNELS_RDPDR_HPP
 
 #include "cast.hpp"
+#include "noncopyable.hpp"
 #include "stream.hpp"
-
 
 namespace rdpdr {
 
@@ -856,7 +856,7 @@ public:
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "ServerDeviceAnnounceResponse: DeviceId=%u CompletionId=%u IoStatus=0x%08X",
+            "DeviceIOResponse: DeviceId=%u CompletionId=%u IoStatus=0x%08X",
             this->DeviceId_, this->CompletionId_, this->IoStatus);
         return ((length < size) ? length : size - 1);
     }
@@ -869,6 +869,156 @@ public:
         LOG(level, buffer);
     }
 };
+
+// [MS-RDPEFS] - 2.2.1.5.1 Device Create Response (DR_CREATE_RSP)
+// ==============================================================
+
+// A message with this header describes a response to a Device Create Request
+//  (section 2.2.1.4.1).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         DeviceIoReply                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             FileId                            |
+// +---------------+-----------------------------------------------+
+// |  Information  |
+// |   (optional)  |
+// +---------------+
+
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION header. The
+//  CompletionId field of this header MUST match a Device I/O Request
+//  (section 2.2.1.4) message that had the MajorFunction field set to
+//  IRP_MJ_CREATE.
+
+// FileId (4 bytes): A 32-bit unsigned integer that specifies a unique ID for
+//  the created file object. The ID MUST be reused after sending a Device
+//  Close Response (section 2.2.1.5.2).
+
+// Information (1 byte): An unsigned 8-bit integer. This field indicates the
+//  success of the Device Create Request (section 2.2.1.4.1). The value of
+//  the Information field depends on the value of CreateDisposition field in
+//  the Device Create Request (section 2.2.1.4.1). If the IoStatus field is
+//  set to 0x00000000, this field MAY be skipped,<6> in which case the server
+//  MUST assume that the Information field is set to 0x00. The possible
+//  values of the Information field are:
+
+//  +------------------+-----------------------------------+
+//  | Value            | Meaning                           |
+//  +------------------+-----------------------------------+
+//  | FILE_SUPERSEDED  | A new file was created.           |
+//  | 0x00000000       |                                   |
+//  +------------------+-----------------------------------+
+//  | FILE_OPENED      | An existing file was opened.      |
+//  | 0x00000001       |                                   |
+//  +------------------+-----------------------------------+
+//  | FILE_OVERWRITTEN | An existing file was overwritten. |
+//  | 0x00000003       |                                   |
+//  +------------------+-----------------------------------+
+
+enum {
+      FILE_SUPERSEDED  = 0x00000000
+    , FILE_OPENED      = 0x00000001
+    , FILE_OVERWRITTEN = 0x00000003
+};
+
+//  The values of the CreateDisposition field in the Device Create Request
+//  (section 2.2.1.4.1) that determine the value of the Information field
+//  are associated as follows:
+
+//  +-------------------------+-------------------------------+
+//  | Information field value | CreateDisposition field value |
+//  +-------------------------+-------------------------------+
+//  | FILE_SUPERSEDED         | FILE_SUPERSEDE                |
+//  |                         | FILE_OPEN                     |
+//  |                         | FILE_CREATE                   |
+//  |                         | FILE_OVERWRITE                |
+//  +-------------------------+-------------------------------+
+//  | FILE_OPENED             | FILE_OPEN_IF                  |
+//  +-------------------------+-------------------------------+
+//  | FILE_OVERWRITTEN        | FILE_OVERWRITE_IF             |
+//  +-------------------------+-------------------------------+
+
+class DeviceCreateResponse {
+    uint32_t FileId;
+    uint8_t  Information;
+
+public:
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->FileId);
+        stream.out_uint8(this->Information);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 5;   // FileId(4) + Information(1)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceCreateResponse: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->FileId      = stream.in_uint32_le();
+        this->Information = stream.in_uint8();
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "DeviceCreateResponse: FileId=%u Information=0x%X",
+            this->FileId, this->Information);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
+// [MS-RDPEFS] - 2.2.1.5.2 Device Close Response (DR_CLOSE_RSP)
+// ============================================================
+
+// This message is a reply to a Device Close Request (section 2.2.1.4.2).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         DeviceIoReply                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------+-----------------------------------------------+
+// |      ...      |
+// +---------------+
+
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION header. The
+//  CompletionId field of this header MUST match a Device I/O Request
+//  (section 2.2.1.4) message that had the MajorFunction field set to
+//  IRP_MJ_CLOSE.
+
+// Padding (5 bytes): An array of 5 bytes. Reserved. This field can be set to
+//  any value, and MUST be ignored on receipt.
 
 // [MS-RDPEFS] - 2.2.2.1 Server Device Announce Response
 //  (DR_CORE_DEVICE_ANNOUNCE_RSP)
@@ -1157,6 +1307,49 @@ public:
         LOG(level, buffer);
     }
 };
+
+// [MS-RDPEFS] - 2.2.3.4.8 Client Drive Query Information Response
+//  (DR_DRIVE_QUERY_INFORMATION_RSP)
+// ===============================================================
+
+// This message is sent by the client as a response to the Server Drive Query
+//  Information Request (section 2.2.3.3.8).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         DeviceIoReply                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                       Buffer (variable)                       |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION (section 2.2.1.5)
+//  header. The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST
+//  match a Device I/O Request (section 2.2.1.4) that has the MajorFunction
+//  field set to IRP_MJ_QUERY_INFORMATION.
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of
+//  bytes in the Buffer field.
+
+// Buffer (variable): A variable-length array of bytes, in which the number
+//  of bytes is specified in the Length field. The content of this field is
+//  based on the value of the FsInformationClass field in the Server Drive
+//  Query Information Request message, which determines the different
+//  structures that MUST be contained in the Buffer field. For a complete
+//  list of these structures, refer to [MS-FSCC] section 2.4. The "File
+//  information class" table defines all the possible values for the
+//  FsInformationClass field.
 
 }   // namespace rdpdr
 
