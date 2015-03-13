@@ -169,7 +169,8 @@ public:
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "FileBasicInformation: CreationTime=%lu LastAccessTime=%lu LastWriteTime=%lu ChangeTime=%lu FileAttributes=0x%X",
+            "FileBasicInformation: CreationTime=%" PRIu64 " LastAccessTime=%" PRIu64
+                " LastWriteTime=%" PRIu64 " ChangeTime=%" PRIu64 " FileAttributes=0x%X",
             this->CreationTime, this->LastAccessTime, this->LastWriteTime, this->ChangeTime, this->FileAttributes);
         return ((length < size) ? length : size - 1);
     }

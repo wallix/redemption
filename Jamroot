@@ -149,6 +149,8 @@ project redemption
     <define>_FILE_OFFSET_BITS=64
     <define>_LARGEFILE64_SOURCE
 
+    <define>__STDC_FORMAT_MACROS
+
     <define>PUBLIC
    : default-build release
 

@@ -294,7 +294,7 @@ public:
                                 mm.is_up_and_running()) {
                                 if (osd_state == OSD_STATE_NOT_YET_COMPUTED) {
                                     osd_state = [&](uint32_t enddata) -> unsigned {
-                                        if (!enddata || enddata <= now) {
+                                        if (!enddata || enddata <= (uint32_t)now) {
                                             return OSD_STATE_INVALID;
                                         }
                                         unsigned i = (std::lower_bound(

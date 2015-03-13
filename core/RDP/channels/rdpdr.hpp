@@ -21,6 +21,8 @@
 #ifndef REDEMPTION_CORE_RDP_CHANNELS_RDPDR_HPP
 #define REDEMPTION_CORE_RDP_CHANNELS_RDPDR_HPP
 
+#include <cinttypes>
+
 #include "cast.hpp"
 #include "noncopyable.hpp"
 #include "stream.hpp"
@@ -699,7 +701,7 @@ public:
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "DeviceCreateRequest: DesiredAccess=0x%X AllocationSize=%lu "
+            "DeviceCreateRequest: DesiredAccess=0x%X AllocationSize=%" PRIu64 " "
                 "FileAttributes=0x%X SharedAccess=0x%X CreateDisposition=0x%X "
                 "CreateOptions=0x%X path=\"%s\"",
             this->DesiredAccess, this->AllocationSize, this->FileAttributes,
@@ -1331,7 +1333,7 @@ public:
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "ServerDriveQueryInformationRequest: FsInformationClass=%u Length=%lu",
+            "ServerDriveQueryInformationRequest: FsInformationClass=%u Length=%zu",
             this->FsInformationClass_, this->query_buffer.get_capacity());
         return ((length < size) ? length : size - 1);
     }
