@@ -449,6 +449,7 @@ unit-test test_brushcache : tests/core/RDP/caches/test_brushcache.cpp libboost_u
 unit-test test_glyphcache : tests/core/RDP/caches/test_glyphcache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_bmpcache_put_get : tests/core/RDP/caches/test_bmpcache_put_get.cpp png z crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_redirection_info : tests/utils/test_redirection_info.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 ## Capabilities tests
 ## @{
@@ -485,6 +486,7 @@ unit-test test_common : tests/core/RDP/capabilities/test_common.cpp libboost_uni
 unit-test test_virchan : tests/core/RDP/capabilities/test_virchan.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 ## @}
 
+unit-test test_ServerRedirection : tests/core/RDP/test_ServerRedirection.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_GraphicUpdatePDU : tests/core/RDP/test_GraphicUpdatePDU.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_logon : tests/core/RDP/test_logon.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

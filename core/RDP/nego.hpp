@@ -81,6 +81,7 @@ struct RdpNego
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static")
     bool test;
     const uint32_t verbose;
+    char * lb_info;
 
     RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
             const char * target_host, const char krb, const uint32_t verbose = 0)
@@ -96,6 +97,7 @@ struct RdpNego
     , target_host(target_host)
     , test(false)
     , verbose(verbose)
+    , lb_info(NULL)
     {
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP
@@ -125,6 +127,12 @@ struct RdpNego
             snprintf(reinterpret_cast<char*>(this->domain), sizeof(this->domain), "%s", domain);
             snprintf(reinterpret_cast<char*>(this->password), sizeof(this->password), "%s", pass);
             snprintf(reinterpret_cast<char*>(this->hostname), sizeof(this->hostname), "%s", hostname);
+        }
+    }
+
+    void set_lb_info(uint8_t * lb_info, size_t lb_info_length) {
+        if (lb_info_length > 0) {
+            this->lb_info = (char *)lb_info;
         }
     }
 
@@ -429,6 +437,11 @@ struct RdpNego
         BStream stream;
         char cookie[256];
         snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
+        char * cookie_or_token = this->lb_info?this->lb_info:cookie;
+        if (this->verbose & 128) {
+            LOG(LOG_INFO, "Send %s:", this->lb_info?"load_balance_info":"cookie");
+            hexdump_c(cookie_or_token, strlen(cookie_or_token));
+        }
 
         uint32_t rdp_neg_requestedProtocols = X224::PROTOCOL_RDP;
         if (this->tls) {
@@ -438,7 +451,7 @@ struct RdpNego
             rdp_neg_requestedProtocols |= X224::PROTOCOL_HYBRID;
         }
 
-        X224::CR_TPDU_Send(stream, cookie,
+        X224::CR_TPDU_Send(stream, cookie_or_token,
                            this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE),
                            // X224::RESTRICTED_ADMIN_MODE_REQUIRED,
                            0,

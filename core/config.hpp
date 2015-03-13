@@ -34,6 +34,7 @@
 #include "fileutils.hpp"
 #include "font.hpp"
 #include "log.hpp"
+#include "redirection_info.hpp"
 
 using namespace std;
 
@@ -588,6 +589,10 @@ public:
         // @}
 
         bool fast_path = true;
+
+        bool server_redirection_support = false;
+
+        RedirectionInfo redir_info;
 
         Inifile_mod_rdp() = default;
     } mod_rdp;
@@ -1258,6 +1263,9 @@ public:
             }
             else if (0 == strcmp(key, "fast_path")) {
                 this->mod_rdp.fast_path = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "server_redirection_support")) {
+                this->mod_rdp.server_redirection_support = bool_from_cstr(value);
             }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
