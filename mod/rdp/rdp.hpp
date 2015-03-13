@@ -44,6 +44,7 @@
 #include "RDP/sec.hpp"
 #include "colors.hpp"
 #include "RDP/autoreconnect.hpp"
+#include "RDP/ServerRedirection.hpp"
 #include "RDP/bitmapupdate.hpp"
 #include "RDP/clipboard.hpp"
 #include "RDP/fastpath.hpp"
@@ -207,6 +208,8 @@ class mod_rdp : public mod_api {
 
     const bool remote_program;
 
+    bool server_redirection_support;
+
     TransparentRecorder * transparent_recorder;
     Transport           * persistent_key_list_transport;
 
@@ -215,11 +218,12 @@ class mod_rdp : public mod_api {
     const uint32_t password_printing_mode;
 
     bool deactivation_reactivation_in_progress;
-
+    RedirectionInfo & redir_info;
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
            , const ClientInfo & info
+           , RedirectionInfo & redir_info
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
@@ -283,11 +287,13 @@ public:
         , enable_multipatblt(false)
         , enable_multiscrblt(false)
         , remote_program(mod_rdp_params.remote_program)
+        , server_redirection_support(mod_rdp_params.server_redirection_support)
         , transparent_recorder(NULL)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
         , password_printing_mode(mod_rdp_params.password_printing_mode)
         , deactivation_reactivation_in_progress(false)
+        , redir_info(redir_info)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -438,6 +444,18 @@ public:
                                 this->domain,
                                 this->password,
                                 this->hostname);
+
+        if (this->verbose & 128){
+            this->redir_info.log(LOG_INFO, "Init with Redir_info");
+            LOG(LOG_INFO, "ServerRedirectionSupport=%s",
+                this->server_redirection_support?"true":"false");
+        }
+        if (this->server_redirection_support) {
+            if (this->redir_info.valid && (this->redir_info.lb_info_length > 0)) {
+                this->nego.set_lb_info(this->redir_info.lb_info,
+                                       this->redir_info.lb_info_length);
+            }
+        }
 
         while (UP_AND_RUNNING != this->connection_finalization_state){
             this->draw_event(time(NULL));
@@ -1190,20 +1208,37 @@ public:
                             GCC::UserData::CSCluster cs_cluster;
                             TODO("CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?");
 
-                            if (!this->nego.tls){
-                                if (this->console_session){
-                                    cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
+                            if (this->server_redirection_support) {
+                                LOG(LOG_INFO, "CS_Cluster: Server Redirection Supported");
+                                if (!this->nego.tls){
+                                    cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTION_SUPPORTED;
+                                    cs_cluster.flags |= (2 << 2); // REDIRECTION V3
+                                } else {
+                                    cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTION_SUPPORTED;
+                                    cs_cluster.flags |= (3 << 2);  // REDIRECTION V4
                                 }
-                                else {
-                                    cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
-                                }
-                                }
-                            else {
-                                cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
-                                if (this->console_session){
-                                    cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
+                                if (this->redir_info.valid) {
+                                    cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
+                                    cs_cluster.redirectedSessionID = this->redir_info.session_id;
+                                    LOG(LOG_INFO, "Effective Redirection SessionId=%u",
+                                        cs_cluster.redirectedSessionID);
+
                                 }
                             }
+                            // if (!this->nego.tls){
+                            //     if (this->console_session){
+                            //         cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
+                            //     }
+                            //     else {
+                            //         cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
+                            //     }
+                            //     }
+                            // else {
+                            //     cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
+                            //     if (this->console_session){
+                            //         cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
+                            //     }
+                            // }
                             if (this->verbose & 1) {
                                 cs_cluster.log("Sending to server");
                             }
@@ -2463,7 +2498,24 @@ public:
                                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
                                         break;
                                     case PDUTYPE_SERVER_REDIR_PKT:
-                                        if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_SERVER_REDIR_PKT"); }
+                                        {
+                                            if (this->verbose & 128){
+                                                LOG(LOG_INFO, "PDUTYPE_SERVER_REDIR_PKT");
+                                            }
+                                            sctrl.payload.in_skip_bytes(2);
+                                            ServerRedirectionPDU server_redirect;
+                                            server_redirect.receive(sctrl.payload);
+                                            sctrl.payload.in_skip_bytes(1);
+                                            server_redirect.export_to_redirection_info(this->redir_info);
+                                            if (this->verbose & 128){
+                                                server_redirect.log(LOG_INFO, "Got Packet");
+                                                this->redir_info.log(LOG_INFO, "RInfo Ini");
+                                            }
+                                            if (!server_redirect.Noredirect()) {
+                                                LOG(LOG_INFO, "Server Redirection thrown");
+                                                throw Error(ERR_RDP_SERVER_REDIR);
+                                            }
+                                        }
                                         break;
                                     default:
                                         LOG(LOG_INFO, "unknown PDU %u", sctrl.pduType);
@@ -2477,6 +2529,9 @@ public:
                 }
             }
             catch(Error const & e){
+                if (e.id == ERR_RDP_SERVER_REDIR) {
+                    throw;
+                }
                 if (this->acl)
                 {
                     char message[128];

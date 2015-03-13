@@ -809,6 +809,7 @@ public:
                 mod_rdp_params.deny_channels                       = &(this->ini.mod_rdp.deny_channels);
 
                 mod_rdp_params.remote_program                      = this->front.client_info.remote_program;
+                mod_rdp_params.server_redirection_support          = this->ini.mod_rdp.server_redirection_support;
 
                 UdevRandom gen;
 
@@ -821,6 +822,7 @@ public:
                                                       , sock_mod_barrier()
                                                       , this->front
                                                       , client_info
+                                                      , ini.mod_rdp.redir_info
                                                       , gen
                                                       , mod_rdp_params
                                                       );
