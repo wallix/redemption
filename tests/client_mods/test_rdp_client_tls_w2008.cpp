@@ -100,10 +100,11 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     //mod_rdp_params.open_session_timeout            = 0;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
+    mod_rdp_params.server_redirection_support        = true;
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp mod_(t, front, info, gen, mod_rdp_params);
+    mod_rdp mod_(t, front, info, ini.mod_rdp.redir_info, gen, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {

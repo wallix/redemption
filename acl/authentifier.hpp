@@ -305,6 +305,34 @@ public:
                             "Failed to connect to remote TCP host.");
                         return true;
                     }
+                    else if (e.id == ERR_RDP_SERVER_REDIR) {
+                        // SET new target in ini
+                        const char * host = char_ptr_cast(
+                            this->ini.mod_rdp.redir_info.host);
+                        const char * password = char_ptr_cast(
+                            this->ini.mod_rdp.redir_info.password);
+                        const char * username = char_ptr_cast(
+                            this->ini.mod_rdp.redir_info.username);
+                        const char * change_user = "";
+                        if (this->ini.mod_rdp.redir_info.dont_store_username &&
+                            (username[0] != 0)) {
+                            LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
+                            this->ini.globals.target_user.set_from_cstr(username);
+                            change_user = username;
+                        }
+                        if (password[0] != 0) {
+                            LOG(LOG_INFO, "SrvRedir: Change target password");
+                            this->ini.context.target_password.set_from_cstr(password);
+                        }
+                        LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
+                        this->ini.context.target_host.set_from_cstr(host);
+                        char message[768] = {};
+                        sprintf(message, "%s@%s", change_user, host);
+                        this->report("SERVER_REDIRECTION", message);
+                        this->remote_answer = true;
+                        signal = BACK_EVENT_NEXT;
+                        return true;
+                    }
                     else {
                         throw;
                     }

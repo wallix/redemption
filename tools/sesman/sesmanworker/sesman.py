@@ -1254,17 +1254,21 @@ class Sesman():
 
                                 if self.shared.get(u'reporting'):
                                     _reporting      = self.shared.get(u'reporting')
-                                    _reporting_data = _reporting[_reporting.index(':') + 1:]
-
-                                    _reporting_reason  = _reporting[:_reporting.index(':')]
-                                    _reporting_target  = _reporting_data[:_reporting_data.index(':')]
-                                    _reporting_message = _reporting_data[_reporting_data.index(':') + 1:]
-
+                                    _reporting_reason, _, _remains = \
+                                        _reporting.partition(':')
+                                    _reporting_target, _, _reporting_message = \
+                                        _remains.partition(':')
                                     self.shared[u'reporting'] = u''
 
-                                    Logger().info(u"Reporting: reason=\"%s\" target=\"%s\" message=\"%s\"" % (_reporting_reason, _reporting_target, _reporting_message))
+                                    Logger().info(u"Reporting: reason=\"%s\" "
+                                                  "target=\"%s\" message=\"%s\"" %
+                                                  (_reporting_reason,
+                                                   _reporting_target,
+                                                   _reporting_message))
 
-                                    self.process_report(_reporting_reason, _reporting_target, _reporting_message)
+                                    self.process_report(_reporting_reason,
+                                                        _reporting_target,
+                                                        _reporting_message)
 
                                     if _reporting_reason == u'CONNECTION_FAILED':
                                         self.reporting_reason  = _reporting_reason
@@ -1276,7 +1280,6 @@ class Sesman():
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         break
-
                                     elif _reporting_reason == u'FINDPATTERN_KILL':
                                         Logger().info(u"RDP connection terminated. Reason: Kill pattern detected")
                                         release_reason = u'Kill pattern detected'
@@ -1380,6 +1383,9 @@ class Sesman():
             self.engine.NotifyFilesystemIsFullOrUsedAtXPercent(filesystem, used)
         elif reason == u'SESSION_EXCEPTION':
             pass
+        elif reason == u'SERVER_REDIRECTION':
+            (nlogin, _, nhost) = message.rpartition('@')
+            Logger().info("Server Redirection: login='%s', host='%s'" % (nlogin, nhost))
         elif (reason == u'FINDPATTERN_KILL') or (reason == u'FINDPATTERN_NOTIFY'):
             pattern = message.split(u'|')
             regexp = pattern[0]
