@@ -215,7 +215,7 @@ struct SeekableTransport
     virtual void seek(int64_t offset, int whence)
     {
         if ((off_t)-1 == this->buffer().seek(offset, whence)){
-            throw Error(ERR_TRANSPORT_SEEK_FAILED);
+            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }
 

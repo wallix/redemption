@@ -319,7 +319,7 @@ public:
                 if (optional.get_capacity()) {
                     const size_t result = ::snprintf(
                         buffer + length, size - length,
-                        " %s=%lu", label, optional.get_capacity());
+                        " %s=%llu", label, optional.get_capacity());
                     length += (
                                (result < (size - length)) ?
                                result :

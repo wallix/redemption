@@ -146,6 +146,9 @@ project redemption
 #     <toolset>clang:<cxxflags>-Wno-unused-private-field
     <toolset>clang:<cxxflags>-Wno-dynamic-class-memaccess #memcpy (class 'Capability'; vtable pointer will be overwritten)
 
+    <define>_FILE_OFFSET_BITS=64
+    <define>_LARGEFILE64_SOURCE
+
     <define>PUBLIC
    : default-build release
 
