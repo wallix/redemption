@@ -121,8 +121,8 @@ public:
         return write_all(this->fd, data, len);
     }
 
-    off_t seek(off_t offset, int whence) const
-    { return lseek(this->fd, offset, whence); }
+    off64_t seek(off64_t offset, int whence) const
+    { return lseek64(this->fd, offset, whence); }
 
     void swap(fdbuf & other) noexcept
     {

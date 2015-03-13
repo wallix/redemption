@@ -45,7 +45,7 @@ namespace transbuf {
         ssize_t read(void * data, size_t len)
         { return this->fdbuf.read(data, len); }
 
-        off_t seek(off_t offset, int whence) const
+        off64_t seek(off64_t offset, int whence) const
         { return this->fdbuf.seek(offset, whence); }
     };
 
@@ -69,7 +69,7 @@ namespace transbuf {
         ssize_t write(const void * data, size_t len)
         { return this->fdbuf.write(data, len); }
 
-        off_t seek(off_t offset, int whence) const
+        off64_t seek(off64_t offset, int whence) const
         { return this->fdbuf.seek(offset, whence); }
 
         int flush() const

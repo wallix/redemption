@@ -174,7 +174,7 @@ namespace detail
             return 0;
         }
 
-        off_t seek(int64_t offset, int whence)
+        off64_t seek(int64_t offset, int whence)
         { return this->buf_.seek(offset, whence); }
 
         const FilenameGenerator & seqgen() const noexcept

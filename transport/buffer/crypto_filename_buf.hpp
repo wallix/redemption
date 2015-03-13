@@ -71,7 +71,7 @@ namespace transbuf {
         bool is_open() const noexcept
         { return this->file.is_open(); }
 
-        off_t seek(off_t offset, int whence) const
+        off64_t seek(off64_t offset, int whence) const
         { return this->file.seek(offset, whence); }
 
     protected:
@@ -136,7 +136,7 @@ namespace transbuf {
         bool is_open() const noexcept
         { return this->file.is_open(); }
 
-        off_t seek(off_t offset, int whence) const
+        off64_t seek(off64_t offset, int whence) const
         { return this->file.seek(offset, whence); }
 
         int flush() const
