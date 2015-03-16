@@ -84,6 +84,7 @@
 #include "channel_names.hpp"
 #include "finally.hpp"
 #include "apply_for_delim.hpp"
+#include "timeout.hpp"
 
 class mod_rdp : public mod_api {
     FrontAPI & front;
@@ -189,7 +190,11 @@ class mod_rdp : public mod_api {
     const bool     disconnect_on_logon_user_change;
     const uint32_t open_session_timeout;
 
-    Timeout  open_session_timeout_checker;
+    TimeoutT<time_t> open_session_timeout_checker;
+
+    const uint64_t          client_device_list_announce_timeout         = 1000000;  // Timeout in microseconds.
+          bool              client_device_list_announce_timer_enabled   = false;
+          TimeoutT<TimeVal> client_device_list_announce_timeout_checker;
 
     std::string output_filename;
 
@@ -228,6 +233,7 @@ class mod_rdp : public mod_api {
     FileSystemDriveManager file_system_drive_manager;
 
     RedirectionInfo & redir_info;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -284,6 +290,7 @@ public:
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , open_session_timeout(mod_rdp_params.open_session_timeout)
         , open_session_timeout_checker(0)
+        , client_device_list_announce_timeout_checker(0)
         , output_filename(mod_rdp_params.output_filename)
         , certificate_change_action(mod_rdp_params.certificate_change_action)
         , enable_polygonsc(false)
@@ -1090,6 +1097,14 @@ public:
 
             case rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE:
             {
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::send_to_mod_rdpdr_channel: "
+                            "Client Device List Announce timer is disabled.");
+                }
+                this->client_device_list_announce_timer_enabled = false;
+                this->client_device_list_announce_timeout_checker.cancel_timeout();
+
                 const uint32_t DeviceCount = chunk.in_uint32_le();
 
                 if (this->verbose) {
@@ -2040,7 +2055,7 @@ public:
                         InStream stream(array, 0, 0, end - array.get_data());
                         X224::DT_TPDU_Recv x224(stream);
                         TODO("Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here")
-//                        int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+                        //int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
                         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
                         SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
@@ -2222,7 +2237,7 @@ public:
                         else {
                             LOG(LOG_ERR, "Failed to get expected license negotiation PDU");
                             hexdump(x224.payload.get_data(), x224.payload.size());
-                            //                throw Error(ERR_SEC);
+                            //throw Error(ERR_SEC);
                             this->state = MOD_RDP_CONNECTED;
                             sec.payload.p = sec.payload.end;
                             hexdump(sec.payload.get_data(), sec.payload.size());
@@ -2293,7 +2308,6 @@ public:
                             if (this->enable_transparent_mode) {
                                 //total_data_received += su.payload.size();
                                 //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
-//                                SubStream su_payload(su.payload, 0, su.payload.size());
                                 if (this->transparent_recorder) {
                                     this->transparent_recorder->send_fastpath_data(su.payload);
                                 }
@@ -2696,7 +2710,7 @@ public:
         // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
 
                                             uint32_t sessionId = sctrl.payload.in_uint32_le();
-    (void)sessionId;
+                                            (void)sessionId;
 
                                             this->send_confirm_active(this);
                                             this->send_synchronise();
@@ -2807,13 +2821,12 @@ public:
                 {
                     throw;
                 }
-
             }
         }
 
         if (this->open_session_timeout) {
             switch(this->open_session_timeout_checker.check(now)) {
-            case Timeout::TIMEOUT_REACHED:
+            case TimeoutT<time_t>::TIMEOUT_REACHED:
                 if (this->error_message) {
                     *this->error_message = "Logon timer expired!";
                 }
@@ -2828,11 +2841,55 @@ public:
                 this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();
             break;
-            case Timeout::TIMEOUT_NOT_REACHED:
+            case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
                 this->event.set(1000000);
             break;
-            case Timeout::TIMEOUT_INACTIVE:
+            case TimeoutT<time_t>::TIMEOUT_INACTIVE:
             break;
+            }
+        }
+
+        if (this->client_device_list_announce_timer_enabled) {
+            TimeVal tv_now;
+            switch (this->client_device_list_announce_timeout_checker.check(tv_now)) {
+                case TimeoutT<TimeVal>::TIMEOUT_REACHED:
+                {
+                    LOG(LOG_INFO,
+                        "mod_rdp::draw_event: Client Device List announce timer expired.");
+                    this->event.reset();
+                    this->client_device_list_announce_timer_enabled = false;
+
+
+                    {
+                        const CHANNELS::ChannelDef * rdpdr_channel =
+                            this->mod_channel_list.get_by_name(channel_names::rdpdr);
+                        if (rdpdr_channel) {
+                            BStream result(65535);
+
+                            if (this->filter_unsupported_device(this->authorization_channels,
+                                                                result, // Fake data.
+                                                                0,
+                                                                result,
+                                                                this->file_system_drive_manager,
+                                                                this->verbose)) {
+                                this->send_to_channel(*rdpdr_channel, result, result.size(),
+                                                      CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
+                            }
+                        }
+                    }
+                }
+                break;
+
+                case TimeoutT<TimeVal>::TIMEOUT_NOT_REACHED:
+                {
+                    TimeVal timeleft = this->client_device_list_announce_timeout_checker.timeleft(tv_now);
+
+                    this->event.set(timeleft.tv_sec * 1000000LL + timeleft.tv_usec);
+                }
+                break;
+
+                case TimeoutT<TimeVal>::TIMEOUT_INACTIVE:
+                break;
             }
         }
     }   // draw_event
@@ -6002,6 +6059,16 @@ public:
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::process_rdpdr_event: Server User Logged On");
+                }
+
+                this->client_device_list_announce_timeout_checker.restart_timeout(
+                    TimeVal(), this->client_device_list_announce_timeout);
+                REDASSERT(!this->client_device_list_announce_timer_enabled);
+                this->client_device_list_announce_timer_enabled = true;
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::send_to_mod_rdpdr_channel: "
+                            "Client Device List Announce timer is enabled.");
                 }
             break;
 

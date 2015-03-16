@@ -42,48 +42,6 @@ enum {
     BUTTON_STATE_DOWN = 1
 };
 
-class Timeout {
-    time_t timeout;
-
-public:
-    typedef enum {
-        TIMEOUT_REACHED,
-        TIMEOUT_NOT_REACHED,
-        TIMEOUT_INACTIVE
-    } timeout_result_t;
-
-    Timeout(time_t now, time_t length = 0)
-        : timeout(length ? (now + length) : 0) {}
-
-    timeout_result_t check(time_t now) const {
-        if (this->timeout) {
-            if (now > this->timeout) {
-                return TIMEOUT_REACHED;
-            }
-            else {
-                return TIMEOUT_NOT_REACHED;
-            }
-        }
-        return TIMEOUT_INACTIVE;
-    }
-
-    bool is_cancelled() const {
-        return (this->timeout == 0);
-    }
-
-    long timeleft_sec(time_t now) const {
-        return (this->timeout - now);
-    }
-
-    void cancel_timeout() {
-        this->timeout = 0;
-    }
-
-    void restart_timeout(time_t now, time_t length) {
-        this->timeout = now + length;
-    }
-};
-
 class mod_api : public Callback, public DrawApi {
 protected:
     wait_obj           event;

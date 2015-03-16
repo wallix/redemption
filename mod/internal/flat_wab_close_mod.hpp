@@ -27,11 +27,12 @@
 #include "widget2/flat_wab_close.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
+#include "timeout.hpp"
 
 class FlatWabCloseMod : public InternalMod, public NotifyApi
 {
-    FlatWabClose close_widget;
-    Timeout timeout;
+    FlatWabClose     close_widget;
+    TimeoutT<time_t> timeout;
 
 private:
     bool showtimer;
@@ -70,7 +71,7 @@ public:
                         || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
                        NULL : temporary_text(ini).text,
                        showtimer, ini)
-        , timeout(Timeout(now, ini.globals.close_timeout))
+        , timeout(now, ini.globals.close_timeout)
         , showtimer(showtimer)
     {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
@@ -99,13 +100,13 @@ public:
     virtual void draw_event(time_t now)
     {
         switch(this->timeout.check(now)) {
-        case Timeout::TIMEOUT_REACHED:
+        case TimeoutT<time_t>::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;
             this->event.set();
             break;
-        case Timeout::TIMEOUT_NOT_REACHED:
+        case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
             if (this->showtimer) {
-                this->close_widget.refresh_timeleft(this->timeout.timeleft_sec(now));
+                this->close_widget.refresh_timeleft(this->timeout.timeleft(now));
             }
             this->event.set(200000);
             break;
