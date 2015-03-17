@@ -1233,6 +1233,8 @@ public:
                                 switch (extra_data) {
                                     case rdpdr::FileBasicInformation:
                                     {
+                                        uint32_t Length = chunk.in_uint32_le(); // Length(4)
+
                                         fscc::FileBasicInformation file_basic_information;
 
                                         file_basic_information.receive(chunk);

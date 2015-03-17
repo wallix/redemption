@@ -481,7 +481,7 @@ enum {
 
 class DeviceIORequest {
     uint32_t DeviceId_      = 0;
-    uint32_t FileId         = 0;
+    uint32_t FileId_        = 0;
     uint32_t CompletionId_   = 0;
     uint32_t MajorFunction_ = 0;
     uint32_t MinorFunction  = 0;
@@ -489,7 +489,7 @@ class DeviceIORequest {
 public:
     inline void emit(Stream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
-        stream.out_uint32_le(this->FileId);
+        stream.out_uint32_le(this->FileId_);
         stream.out_uint32_le(this->CompletionId_);
         stream.out_uint32_le(this->MajorFunction_);
         stream.out_uint32_le(this->MinorFunction);
@@ -509,13 +509,15 @@ public:
         }
 
         this->DeviceId_      = stream.in_uint32_le();
-        this->FileId         = stream.in_uint32_le();
+        this->FileId_        = stream.in_uint32_le();
         this->CompletionId_  = stream.in_uint32_le();
         this->MajorFunction_ = stream.in_uint32_le();
         this->MinorFunction  = stream.in_uint32_le();
     }
 
     uint32_t DeviceId() const { return this->DeviceId_; }
+
+    uint32_t FileId() const { return this->FileId_; }
 
     uint32_t CompletionId() const { return this->CompletionId_; }
 
@@ -524,8 +526,10 @@ public:
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "DeviceIORequest: DeviceId=%u FileId=%u CompletionId=%u MajorFunction=0x%X MinorFunction=0x%X",
-            this->DeviceId_, this->FileId, this->CompletionId_, this->MajorFunction_, this->MinorFunction);
+            "DeviceIORequest: "
+                "DeviceId=%u FileId=%u CompletionId=%u MajorFunction=0x%X MinorFunction=0x%X",
+            this->DeviceId_, this->FileId_, this->CompletionId_, this->MajorFunction_,
+            this->MinorFunction);
         return ((length < size) ? length : size - 1);
     }
 
@@ -620,8 +624,8 @@ class DeviceCreateRequest {
     uint64_t AllocationSize;
     uint32_t FileAttributes;
     uint32_t SharedAccess;
-    uint32_t CreateDisposition;
-    uint32_t CreateOptions;
+    uint32_t CreateDisposition_;
+    uint32_t CreateOptions_;
 
     std::string path;
 
@@ -631,8 +635,8 @@ public:
         stream.out_uint64_le(this->AllocationSize);
         stream.out_uint32_le(this->FileAttributes);
         stream.out_uint32_le(this->SharedAccess);
-        stream.out_uint32_le(this->CreateDisposition);
-        stream.out_uint32_le(this->CreateOptions);
+        stream.out_uint32_le(this->CreateDisposition_);
+        stream.out_uint32_le(this->CreateOptions_);
 
         const size_t maximum_length_of_Path_in_bytes = this->path.length() * 2;
 
@@ -662,12 +666,12 @@ public:
             }
         }
 
-        this->DesiredAccess     = stream.in_uint32_le();
-        this->AllocationSize    = stream.in_uint64_le();
-        this->FileAttributes    = stream.in_uint32_le();
-        this->SharedAccess      = stream.in_uint32_le();
-        this->CreateDisposition = stream.in_uint32_le();
-        this->CreateOptions     = stream.in_uint32_le();
+        this->DesiredAccess      = stream.in_uint32_le();
+        this->AllocationSize     = stream.in_uint64_le();
+        this->FileAttributes     = stream.in_uint32_le();
+        this->SharedAccess       = stream.in_uint32_le();
+        this->CreateDisposition_ = stream.in_uint32_le();
+        this->CreateOptions_     = stream.in_uint32_le();
 
         const uint16_t PathLength = stream.in_uint32_le();
 
@@ -698,6 +702,12 @@ public:
             length_of_utf8_string);
     }
 
+    const char * Path() const { return this->path.c_str(); }
+
+    uint32_t CreateDisposition() const { return this->CreateDisposition_; }
+
+    uint32_t CreateOptions() const { return this->CreateOptions_; }
+
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
@@ -705,7 +715,7 @@ private:
                 "FileAttributes=0x%X SharedAccess=0x%X CreateDisposition=0x%X "
                 "CreateOptions=0x%X path=\"%s\"",
             this->DesiredAccess, this->AllocationSize, this->FileAttributes,
-            this->SharedAccess, this->CreateDisposition, this->CreateOptions,
+            this->SharedAccess, this->CreateDisposition_, this->CreateOptions_,
             this->path.c_str());
         return ((length < size) ? length : size - 1);
     }

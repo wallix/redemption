@@ -139,14 +139,14 @@ public:
 
         stream.out_uint32_le(this->FileAttributes);
 
-        stream.out_clear_bytes(4); // Reserved(4)
+        // Reserved(4), MUST NOT be transmitted.
     }
 
     inline void receive(Stream & stream) {
         {
-            const unsigned expected = 40;   // CreationTime(8) + LastAccessTime(8) +
+            const unsigned expected = 36;   // CreationTime(8) + LastAccessTime(8) +
                                             //     LastWriteTime(8) + ChangeTime(8) +
-                                            //     FileAttributes(4) + Reserved(4) +
+                                            //     FileAttributes(4)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
@@ -163,7 +163,11 @@ public:
 
         this->FileAttributes = stream.in_uint32_le();
 
-        stream.in_skip_bytes(4);   // Reserved(4)
+        // Reserved(4), MUST NOT be transmitted.
+    }
+
+    inline static size_t size() {
+        return 36;  /* CreationTime(8) + LastAccessTime(8) + LastWriteTime(8) + ChangeTime(8) + FileAttributes(4) */
     }
 
 private:
@@ -171,7 +175,8 @@ private:
         size_t length = ::snprintf(buffer, size,
             "FileBasicInformation: CreationTime=%" PRIu64 " LastAccessTime=%" PRIu64
                 " LastWriteTime=%" PRIu64 " ChangeTime=%" PRIu64 " FileAttributes=0x%X",
-            this->CreationTime, this->LastAccessTime, this->LastWriteTime, this->ChangeTime, this->FileAttributes);
+            this->CreationTime, this->LastAccessTime, this->LastWriteTime,
+            this->ChangeTime, this->FileAttributes);
         return ((length < size) ? length : size - 1);
     }
 
@@ -182,6 +187,132 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, buffer);
     }
+};
+
+// [MS-FSCC] - 2.6 File Attributes
+// ===============================
+
+// The following attributes are defined for files and directories. They can
+//  be used in any combination unless noted in the description of the
+//  attribute's meaning. There is no file attribute with the value 0x00000000
+//  because a value of 0x00000000 in the FileAttributes field means that the
+//  file attributes for this file MUST NOT be changed when setting basic
+//  information for the file.
+
+//  +------------------------------------+-------------------------------------+
+//  | Value                              | Meaning                             |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_ARCHIVE             | A file or directory that requires   |
+//  | 0x00000020                         | to be archived. Applications use    |
+//  |                                    | this attribute to mark files for    |
+//  |                                    | backup or removal.                  |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_COMPRESSED          | A file or directory that is         |
+//  | 0x00000800                         | compressed. For a file, all of the  |
+//  |                                    | data in the file is compressed. For |
+//  |                                    | a directory, compression is the     |
+//  |                                    | default for newly created files and |
+//  |                                    | subdirectories.                     |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_DIRECTORY           | This item is a directory.           |
+//  | 0x00000010                         |                                     |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_ENCRYPTED           | A file or directory that is         |
+//  | 0x00004000                         | encrypted. For a file, all data     |
+//  |                                    | streams in the file are encrypted.  |
+//  |                                    | For a directory, encryption is the  |
+//  |                                    | default for newly created files and |
+//  |                                    | subdirectories.                     |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_HIDDEN              | A file or directory that is hidden. |
+//  | 0x00000002                         | Files and directories marked with   |
+//  |                                    | this attribute do not appear in an  |
+//  |                                    | ordinary directory listing.         |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_NORMAL              | A file that does not have other     |
+//  | 0x00000080                         | attributes set. This flag is used   |
+//  |                                    | to clear all other flags by         |
+//  |                                    | specifying it with no other flags   |
+//  |                                    | set.                                |
+//  |                                    | This flag MUST be ignored if other  |
+//  |                                    | flags are set.<157>                 |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | A file or directory that is not     |
+//  | 0x00002000                         | indexed by the content indexing     |
+//  |                                    | service.                            |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_OFFLINE             | The data in this file is not        |
+//  | 0x00001000                         | available immediately. This         |
+//  |                                    | attribute indicates that the file   |
+//  |                                    | data is physically moved to offline |
+//  |                                    | storage. This attribute is used by  |
+//  |                                    | Remote Storage, which is            |
+//  |                                    | hierarchical storage management     |
+//  |                                    | software.                           |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_READONLY            | A file or directory that is read-   |
+//  | 0x00000001                         |only. For a file, applications can   |
+//  |                                    | read the file but cannot write to   |
+//  |                                    | it or delete it. For a directory,   |
+//  |                                    | applications cannot delete it, but  |
+//  |                                    | applications can create and delete  |
+//  |                                    | files from that directory.          |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_REPARSE_POINT       | A file or directory that has an     |
+//  | 0x00000400                         | associated reparse point.           |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_SPARSE_FILE         | A file that is a sparse file.       |
+//  | 0x00000200                         |                                     |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_SYSTEM              | A file or directory that the        |
+//  | 0x00000004                         | operating system uses a part of or  |
+//  |                                    | uses exclusively.                   |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_TEMPORARY           | A file that is being used for       |
+//  | 0x00000100                         | temporary storage. The operating    |
+//  |                                    | system may choose to store this     |
+//  |                                    | file's data in memory rather than   |
+//  |                                    | on mass storage, writing the data   |
+//  |                                    | to mass storage only if data        |
+//  |                                    | remains in the file when the file   |
+//  |                                    | is closed.                          |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_INTEGRITY_STREAM    | A file or directory that is         |
+//  | 0x00008000                         | configured with integrity support.  |
+//  |                                    | For a file, all data streams in the |
+//  |                                    | file have integrity support. For a  |
+//  |                                    | directory, integrity support is the |
+//  |                                    | default for newly created files and |
+//  |                                    | subdirectories, unless the caller   |
+//  |                                    | specifies otherwise.<158>           |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_NO_SCRUB_DATA       | A file or directory that is         |
+//  | 0x00020000                         | configured to be excluded from the  |
+//  |                                    | data integrity scan. For a          |
+//  |                                    | directory configured with           |
+//  |                                    | FILE_ATTRIBUTE_NO_SCRUB_DATA, the   |
+//  |                                    | default for newly created files and |
+//  |                                    | subdirectories is to inherit the    |
+//  |                                    | FILE_ATTRIBUTE_NO_SCRUB_DATA        |
+//  |                                    | attribute.<159>                     |
+//  +------------------------------------+-------------------------------------+
+
+enum {
+      FILE_ATTRIBUTE_ARCHIVE             = 0x00000020
+    , FILE_ATTRIBUTE_COMPRESSED          = 0x00000800
+    , FILE_ATTRIBUTE_DIRECTORY           = 0x00000010
+    , FILE_ATTRIBUTE_ENCRYPTED           = 0x00004000
+    , FILE_ATTRIBUTE_HIDDEN              = 0x00000002
+    , FILE_ATTRIBUTE_NORMAL              = 0x00000080
+    , FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x00002000
+    , FILE_ATTRIBUTE_OFFLINE             = 0x00001000
+    , FILE_ATTRIBUTE_READONLY            = 0x00000001
+    , FILE_ATTRIBUTE_REPARSE_POINT       = 0x00000400
+    , FILE_ATTRIBUTE_SPARSE_FILE         = 0x00000200
+    , FILE_ATTRIBUTE_SYSTEM              = 0x00000004
+    , FILE_ATTRIBUTE_TEMPORARY           = 0x00000100
+    , FILE_ATTRIBUTE_INTEGRITY_STREAM    = 0x00008000
+    , FILE_ATTRIBUTE_NO_SCRUB_DATA       = 0x00020000
 };
 
 }   // namespace fscc
