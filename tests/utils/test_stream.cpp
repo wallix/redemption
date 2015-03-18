@@ -533,3 +533,72 @@ BOOST_AUTO_TEST_CASE(TestStream_sint32)
 
     BOOST_CHECK_EQUAL(const_positive_val, positive_val);
 }
+
+BOOST_AUTO_TEST_CASE(TestOutSInt64Le)
+{
+    {
+        const int64_t int64_test = -5000000000LLU;
+
+        const unsigned char data_test[] = { 0x00, 0x0e, 0xfa, 0xd5, 0xfe, 0xff, 0xff, 0xff };
+
+        BStream stream(8);
+        stream.out_sint64_le(int64_test);
+
+        BOOST_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
+    }
+
+    {
+        const int64_t int64_test = 0LLU;
+
+        const unsigned char data_test[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+        BStream stream(8);
+        stream.out_sint64_le(int64_test);
+
+        BOOST_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
+    }
+
+    {
+        const int64_t int64_test = 10000000000LLU;
+
+        const unsigned char data_test[] = { 0x00, 0xe4, 0x0b, 0x54, 0x02, 0x00, 0x00, 0x00 };
+
+        BStream stream(8);
+        stream.out_sint64_le(int64_test);
+
+        BOOST_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TestInSInt64Le)
+{
+    {
+        int64_t i64_original = -6000000000LLU;
+
+        uint8_t data_test[] = { 0x00, 0x44, 0x5f, 0x9a, 0xfe, 0xff, 0xff, 0xff };
+
+        FixedSizeStream stream(data_test, sizeof(data_test));
+
+        BOOST_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
+    }
+
+    {
+        int64_t i64_original = 0LLU;
+
+        uint8_t data_test[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+        FixedSizeStream stream(data_test, sizeof(data_test));
+
+        BOOST_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
+    }
+
+    {
+        int64_t i64_original = 12000000000LLU;
+
+        uint8_t data_test[] = { 0x00, 0x78, 0x41, 0xcb, 0x02, 0x00, 0x00, 0x00 };
+
+        FixedSizeStream stream(data_test, sizeof(data_test));
+
+        BOOST_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
+    }
+}
