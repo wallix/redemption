@@ -67,6 +67,8 @@ public:
 class ManagedDirectory : public ManagedFileSystemObject {
     DIR * dir = nullptr;
 
+    std::string full_path;
+
     std::string pattern;
 
 public:
@@ -94,15 +96,15 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
             uint32_t & out_flags, uint32_t verbose) override {
         REDASSERT(!this->dir);
 
-        std::string fullpath = path;
-        fullpath += device_create_request.Path();
+        this->full_path = path;
+        this->full_path += device_create_request.Path();
 
         if (verbose) {
             LOG(LOG_INFO,
                 "ManagedDirectory::ProcessServerCreateDriveRequest: <%p> full_path=\"%s\"",
-                this, fullpath.c_str());
+                this, this->full_path.c_str());
         }
-        this->dir = ::opendir(fullpath.c_str());
+        this->dir = ::opendir(this->full_path.c_str());
         if (verbose) {
             LOG(LOG_INFO,
                 "ManagedDirectory::ProcessServerCreateDriveRequest: <%p> dir=<%p> FileId=%d",
@@ -253,19 +255,19 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
             out_stream.out_clear_bytes(1);  // Padding(1)
         }
         else {
-            std::string fullpath = path;
-            fullpath += '/';
-            fullpath += ent->d_name;
+            std::string file_full_path = this->full_path;
+            file_full_path += '/';
+            file_full_path += ent->d_name;
             if (verbose) {
                 LOG(LOG_INFO,
                     "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest: "
                         "<%p> full_path=\"%s\"",
-                    this, fullpath.c_str());
+                    this, file_full_path.c_str());
             }
 
             struct stat64 sb;
 
-            ::stat64(fullpath.c_str(), &sb);
+            ::stat64(file_full_path.c_str(), &sb);
 
             const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
                 device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
