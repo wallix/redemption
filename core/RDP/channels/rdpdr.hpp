@@ -484,7 +484,7 @@ class DeviceIORequest {
     uint32_t FileId_        = 0;
     uint32_t CompletionId_   = 0;
     uint32_t MajorFunction_ = 0;
-    uint32_t MinorFunction  = 0;
+    uint32_t MinorFunction_  = 0;
 
 public:
     inline void emit(Stream & stream) const {
@@ -492,7 +492,7 @@ public:
         stream.out_uint32_le(this->FileId_);
         stream.out_uint32_le(this->CompletionId_);
         stream.out_uint32_le(this->MajorFunction_);
-        stream.out_uint32_le(this->MinorFunction);
+        stream.out_uint32_le(this->MinorFunction_);
     }
 
     inline void receive(Stream & stream) {
@@ -512,7 +512,7 @@ public:
         this->FileId_        = stream.in_uint32_le();
         this->CompletionId_  = stream.in_uint32_le();
         this->MajorFunction_ = stream.in_uint32_le();
-        this->MinorFunction  = stream.in_uint32_le();
+        this->MinorFunction_ = stream.in_uint32_le();
     }
 
     uint32_t DeviceId() const { return this->DeviceId_; }
@@ -523,13 +523,15 @@ public:
 
     uint32_t MajorFunction() const { return this->MajorFunction_; }
 
+    uint32_t MinorFunction() const { return this->MinorFunction_; }
+
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceIORequest: "
                 "DeviceId=%u FileId=%u CompletionId=%u MajorFunction=0x%X MinorFunction=0x%X",
             this->DeviceId_, this->FileId_, this->CompletionId_, this->MajorFunction_,
-            this->MinorFunction);
+            this->MinorFunction_);
         return ((length < size) ? length : size - 1);
     }
 
@@ -638,13 +640,18 @@ public:
         stream.out_uint32_le(this->CreateDisposition_);
         stream.out_uint32_le(this->CreateOptions_);
 
-        const size_t maximum_length_of_Path_in_bytes = this->path.length() * 2;
+        // The null-terminator is included.
+        const size_t maximum_length_of_Path_in_bytes = (this->path.length() + 1) * 2;
 
         uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
                     maximum_length_of_Path_in_bytes));
-        const size_t size_of_unicode_data = ::UTF8toUTF16(
+        size_t size_of_unicode_data = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(this->path.c_str()), unicode_data,
             maximum_length_of_Path_in_bytes);
+        // Writes null terminator.
+        unicode_data[size_of_unicode_data    ] =
+        unicode_data[size_of_unicode_data + 1] = 0;
+        size_of_unicode_data += 2;
 
         stream.out_uint32_le(size_of_unicode_data);
 
@@ -682,7 +689,7 @@ public:
                 LOG(LOG_ERR,
                     "Truncated DeviceCreateRequest (1): expected=%u remains=%u",
                     expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
 
@@ -693,13 +700,14 @@ public:
         const size_t maximum_length_of_utf8_character_in_bytes = 4;
 
         const size_t size_of_utf8_string =
-                    PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+            PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
         uint8_t * const utf8_string = static_cast<uint8_t *>(
             ::alloca(size_of_utf8_string));
         const size_t length_of_utf8_string = ::UTF16toUTF8(
             unicode_data, PathLength / 2, utf8_string, size_of_utf8_string);
         this->path.assign(::char_ptr_cast(utf8_string),
             length_of_utf8_string);
+        std::replace(this->path.begin(), this->path.end(), '\\', '/');
     }
 
     const char * Path() const { return this->path.c_str(); }
@@ -875,7 +883,7 @@ public:
                 LOG(LOG_ERR,
                     "Truncated DeviceIOResponse: expected=%u remains=%u",
                     expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
 
@@ -1006,7 +1014,7 @@ public:
                 LOG(LOG_ERR,
                     "Truncated DeviceCreateResponse: expected=%u remains=%u",
                     expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
 
@@ -1115,7 +1123,7 @@ public:
                 LOG(LOG_ERR,
                     "Truncated ServerDeviceAnnounceResponse: expected=%u remains=%u",
                     expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
 
@@ -1345,6 +1353,207 @@ private:
         size_t length = ::snprintf(buffer, size,
             "ServerDriveQueryInformationRequest: FsInformationClass=%u Length=%zu",
             this->FsInformationClass_, this->query_buffer.get_capacity());
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
+// [MS-RDPEFS] - 2.2.3.3.10 Server Drive Query Directory Request
+//  (DR_DRIVE_QUERY_DIRECTORY_REQ)
+// =============================================================
+
+// The server issues a query directory request on a redirected file system
+//  device. This request is used to obtain a directory enumeration.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        DeviceIoRequest                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                       FsInformationClass                      |
+// +---------------+-----------------------------------------------+
+// |  InitialQuery |                   PathLength                  |
+// +---------------+-----------------------------------------------+
+// |      ...      |                    Padding                    |
+// +---------------+-----------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                        Path (variable)                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST (section 2.2.1.4)
+//  header. The MajorFunction field in the DR_DEVICE_IOREQUEST header MUST be
+//  set to IRP_MJ_DIRECTORY_CONTROL, and the MinorFunction field MUST be set
+//  to IRP_MN_QUERY_DIRECTORY.
+
+// FsInformationClass (4 bytes): A 32-bit unsigned integer. The possible
+//  values are specified in [MS-FSCC] section 2.4. This field MUST contain
+//  one of the following values.
+
+//  +------------------------------+-------------------------------------------+
+//  | Value                        | Meaning                                   |
+//  +------------------------------+-------------------------------------------+
+//  | FileDirectoryInformation     | Basic information about a file or         |
+//  | 0x00000001                   | directory. Basic information is defined   |
+//  |                              | as the file's name, time stamp, and size, |
+//  |                              | or its attributes.                        |
+//  +------------------------------+-------------------------------------------+
+//  | FileFullDirectoryInformation | Full information about a file or          |
+//  | 0x00000002                   | directory. Full information is defined as |
+//  |                              | all the basic information, plus extended  |
+//  |                              | attribute size.                           |
+//  +------------------------------+-------------------------------------------+
+//  | FileBothDirectoryInformation | Basic information plus extended attribute |
+//  | 0x00000003                   | size and short name about a file or       |
+//  |                              | directory.                                |
+//  +------------------------------+-------------------------------------------+
+//  | FileNamesInformation         | Detailed information on the names of      |
+//  | 0x0000000C                   | files in a directory.                     |
+//  +------------------------------+-------------------------------------------+
+
+enum {
+      FileDirectoryInformation     = 0x00000001
+    , FileFullDirectoryInformation = 0x00000002
+    , FileBothDirectoryInformation = 0x00000003
+    , FileNamesInformation         = 0x0000000C
+};
+
+// InitialQuery (1 byte): An 8-bit unsigned integer. If the value is zero,
+//  the Path field is not included regardless of the PathLength value. If the
+//  value is set to zero, the request is for the next file in the directory
+//  specified in a previous Server Drive Query Directory Request. If such a
+//  file does not exist, the client MUST complete this request with
+//  STATUS_NO_MORE_FILES in the IoStatus field of the Client Drive I/O
+//  Response packet.
+
+// PathLength (4 bytes): A 32-bit unsigned integer that specifies the number
+//  of bytes in the Path field, including the null-terminator.
+
+// Padding (23 bytes): An array of 23 bytes. This field is unused and can be
+//  set to any value. This field MUST be ignored on receipt.
+
+// Path (variable): A variable-length array of Unicode characters that
+//  specifies the directory on which this operation will be performed. The
+//  Path field MUST be null-terminated.
+
+class ServerDriveQueryDirectoryRequest {
+    uint32_t FsInformationClass_ = 0;
+    uint8_t  InitialQuery_       = 0;
+
+    std::string path;
+
+public:
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->FsInformationClass_);
+        stream.out_uint8(this->InitialQuery_);
+
+        // The null-terminator is included.
+        const size_t maximum_length_of_Path_in_bytes = (this->path.length() + 1) * 2;
+
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
+                    maximum_length_of_Path_in_bytes));
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->path.c_str()), unicode_data,
+            maximum_length_of_Path_in_bytes);
+        // Writes null terminator.
+        unicode_data[size_of_unicode_data    ] =
+        unicode_data[size_of_unicode_data + 1] = 0;
+        size_of_unicode_data += 2;
+
+        stream.out_uint32_le(size_of_unicode_data);
+
+        stream.out_clear_bytes(23); // Padding(23)
+
+        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 32;  // FsInformationClass(4) + InitialQuery(1) +
+                                           //     PathLength(4) + Padding(23)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ServerDriveQueryDirectoryRequest (0): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->FsInformationClass_ = stream.in_uint32_le();
+        this->InitialQuery_       = stream.in_uint8();
+
+        const uint32_t PathLength = stream.in_uint32_le();
+
+        stream.in_skip_bytes(23);   // Padding(23)
+
+        {
+            const unsigned expected = PathLength;   // Path(variable)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ServerDriveQueryDirectoryRequest (1): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
+
+        stream.in_copy_bytes(unicode_data, PathLength);
+
+        const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+        const size_t size_of_utf8_string =
+                    PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+        uint8_t * const utf8_string = static_cast<uint8_t *>(
+            ::alloca(size_of_utf8_string));
+        ::UTF16toUTF8(unicode_data, PathLength / 2, utf8_string, size_of_utf8_string);
+        // The null-terminator is included.
+        this->path = ::char_ptr_cast(utf8_string);
+        std::replace(this->path.begin(), this->path.end(), '\\', '/');
+    }
+
+    uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+
+    uint8_t  InitialQuery() const { return this->InitialQuery_; }
+
+    const char * Path() const { return this->path.c_str(); }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "ServerDriveQueryDirectoryRequest: FsInformationClass=0x%X InitialQuery=%u "
+                "path=\"%s\"",
+            this->FsInformationClass_, this->InitialQuery_, this->path.c_str());
         return ((length < size) ? length : size - 1);
     }
 
