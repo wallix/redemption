@@ -1236,6 +1236,26 @@ public:
         this->p+=8;
     }
 
+    void out_sint64_le(int64_t v) {
+        REDASSERT(this->has_room(8));
+        this->p[0] = v & 0xFF;
+        this->p[1] = (v >> 8) & 0xFF;
+        this->p[2] = (v >> 16) & 0xFF;
+        this->p[3] = (v >> 24) & 0xFF;
+        this->p[4] = (v >> 32) & 0xFF;
+        this->p[5] = (v >> 40) & 0xFF;
+        this->p[6] = (v >> 48) & 0xFF;
+        this->p[7] = (v >> 56) & 0xFF;
+        this->p+=8;
+    }
+
+    int64_t in_sint64_le(void) {
+        int64_t res;
+        *(reinterpret_cast<uint64_t *>(&res)) = this->in_uint64_le();
+        return res;
+    }
+
+
     uint64_t incheck_uint64_be(int id, const char * message) {
         if (!this->in_check_rem(8)){
             LOG(LOG_ERR, "%s , need=8 remains=%u", message, this->in_remain());

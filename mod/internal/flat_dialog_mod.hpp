@@ -28,13 +28,14 @@
 #include "widget2/flat_dialog.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
+#include "timeout.hpp"
 
 class FlatDialogMod : public InternalMod, public NotifyApi
 {
     FlatDialog dialog_widget;
 
-    Inifile & ini;
-    Timeout timeout;
+    Inifile          & ini;
+    TimeoutT<time_t>   timeout;
 
 public:
     FlatDialogMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height,
@@ -45,7 +46,7 @@ public:
                         0, ini.theme, ini.font, TR("OK", ini), cancel_text,
                         has_challenge)
         , ini(ini)
-        , timeout(Timeout(now, ini.debug.pass_dialog_box))
+        , timeout(now, ini.debug.pass_dialog_box)
     {
         this->screen.add_widget(&this->dialog_widget);
         this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget2::focus_reason_tabkey);
@@ -107,10 +108,10 @@ public:
     virtual void draw_event(time_t now)
     {
         switch(this->timeout.check(now)) {
-        case Timeout::TIMEOUT_REACHED:
+        case TimeoutT<time_t>::TIMEOUT_REACHED:
             this->accepted();
             break;
-        case Timeout::TIMEOUT_NOT_REACHED:
+        case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
             this->event.set(1000000);
             break;
         default:

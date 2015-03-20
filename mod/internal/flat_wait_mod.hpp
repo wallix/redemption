@@ -29,13 +29,14 @@
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
 #include "copy_paste.hpp"
+#include "timeout.hpp"
 
 class FlatWaitMod : public InternalMod, public NotifyApi
 {
     FlatWait wait_widget;
 
-    Inifile & ini;
-    Timeout   timeout;
+    Inifile          & ini;
+    TimeoutT<time_t>   timeout;
 
     CopyPaste copy_paste;
 
@@ -47,7 +48,7 @@ public:
         , wait_widget(*this, width, height, this->screen, this, caption, message,
                       0, ini,  ini.theme, showform, flag)
         , ini(ini)
-        , timeout(Timeout(now, 600))
+        , timeout(now, 600)
     {
         this->screen.add_widget(&this->wait_widget);
         if (this->wait_widget.hasform) {
@@ -114,10 +115,10 @@ public:
     virtual void draw_event(time_t now)
     {
         switch(this->timeout.check(now)) {
-        case Timeout::TIMEOUT_REACHED:
+        case TimeoutT<time_t>::TIMEOUT_REACHED:
             this->refused();
             break;
-        case Timeout::TIMEOUT_NOT_REACHED:
+        case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
             this->event.set(1000000);
             break;
         default:
