@@ -42,6 +42,8 @@ except Exception, e:
 import time
 import socket
 
+MAGIC_AM = u"__WAB_AM__"
+
 def _binary_ip(network, bits):
     # TODO need Ipv6 support
     # This is a bit too resilient, add check for obviously bad values
@@ -96,6 +98,7 @@ class Engine(object):
 
         self.session_result = True
         self.session_diag = u'Success'
+        self.primary_password = None
 
     def set_session_status(self, result=None, diag=None):
         # Logger().info("Engine set session status : result='%s', diag='%s'" %
@@ -184,6 +187,7 @@ class Engine(object):
             self.wabengine = self.auth_x509.get_proxy()
             if self.wabengine is not None:
                 self.wabuser = self.wabengine.who_am_i()
+                self.primary_password = None
                 return True
         except AuthenticationFailed, e:
             pass
@@ -204,6 +208,7 @@ class Engine(object):
             self.challenge = None
             if self.wabengine is not None:
                 self.wabuser = self.wabengine.who_am_i()
+                self.primary_password = password
                 return True
         except AuthenticationChallenged, e:
             self.challenge = e.challenge
@@ -225,6 +230,7 @@ class Engine(object):
                                                              server_ip = server_ip)
             if self.wabengine is not None:
                 self.wabuser = self.wabengine.who_am_i()
+                self.primary_password = password
                 return True
         except AuthenticationFailed, e:
             self.challenge = None
@@ -447,7 +453,7 @@ class Engine(object):
         self.displaytargets = []
         for right in self.rights:
             if right.resource and right.account:
-                target_login = right.account.login
+                target_login = self.get_account_login(right)
                 if right.resource.application:
                     target_name = right.resource.application.cn
                     service_name = u"APP"
@@ -482,7 +488,7 @@ class Engine(object):
                     if not self.targets.get(alias_index):
                         self.targets[alias_index] = {}
                     self.targets[alias_index][service_name] = right
-                self.displaytargets.append(DisplayInfo(right.account.login,
+                self.displaytargets.append(DisplayInfo(target_login,
                                                        target_name,
                                                        service_name,
                                                        protocol,
@@ -539,6 +545,9 @@ class Engine(object):
     def get_target_password(self, target_device):
 #         Logger().info("Engine get_target_password: target_device=%s" % target_device)
         Logger().debug("Engine get_target_password ...")
+        if target_device.account.login == MAGIC_AM and self.primary_password:
+            Logger().info("Account mapping: get primary password ...")
+            return self.primary_password
         try:
             target_password = self.wabengine.get_target_password(target_device)
             self.erpm_password_checked_out = True
@@ -548,7 +557,7 @@ class Engine(object):
             return target_password
         except Exception, e:
             import traceback
-            Logger().debug("Engine get_target_password failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine get_target_password failed: (((%s)))" % (traceback.format_exc(e)))
         return u''
 
     def release_target_password(self, target_device, reason, target_application = None):
@@ -574,12 +583,14 @@ class Engine(object):
         return self.pidhandler
 
     def start_session(self, auth, pid, effective_login):
+        if auth.account.login == MAGIC_AM:
+            effective_login = self.get_username()
         self.session_id = self.wabengine.start_session(auth, self.get_pidhandler(pid),
                                                        effective_login=effective_login)
         return self.session_id
 
     def update_session(self, physical_target):
-        hosttarget = u"%s@%s:%s" % ( physical_target.account.login
+        hosttarget = u"%s@%s:%s" % ( self.get_account_login(physical_target)
                                    , physical_target.resource.device.cn
                                    , physical_target.resource.service.protocol.cn)
         try:
@@ -701,7 +712,7 @@ class Engine(object):
 
     def get_physical_target_info(self, physical_target):
         return PhysicalTarget(device_host=physical_target.resource.device.host,
-                              account_login=physical_target.account.login,
+                              account_login=self.get_account_login(physical_target),
                               service_port=int(physical_target.resource.service.port))
 
     def get_target_login_info(self, selected_target=None):
@@ -714,18 +725,24 @@ class Engine(object):
         else:
             target_name = target.resource.device.cn
             device_host = target.resource.device.host
-        account_login = target.account.login,
+        account_login = self.get_account_login(target)
         service_port = target.resource.service.port
         service_name = target.resource.service.cn
         conn_cmd = target.resource.service.authmechanism.data
         autologon = target.account.password or target.account.isAgentForwardable
-        return LoginInfo(account_login=target.account.login,
+        return LoginInfo(account_login=account_login,
                          target_name=target_name,
                          service_name=service_name,
                          device_host=device_host,
                          service_port=service_port,
                          conn_cmd=conn_cmd,
                          autologon=autologon)
+
+    def get_account_login(self, right):
+        account_login = right.account.login
+        if account_login == MAGIC_AM:
+            account_login = self.get_username()
+        return account_login
 
 # Information Structs
 class TargetContext(object):
