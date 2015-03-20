@@ -388,7 +388,8 @@ public:
 */
     }
 
-    uint32_t AnnounceDrivePartially(Stream & client_device_list_announce) {
+    uint32_t AnnounceDrivePartially(Stream & client_device_list_announce,
+            bool device_capability_version_02_supported, uint32_t verbose) {
         uint32_t announced_drive_count = 0;
 
         for (managed_drive_collection_type::iterator iter = this->managed_drives.begin();
@@ -397,7 +398,15 @@ public:
             rdpdr::DeviceAnnounceHeader device_announce_header(rdpdr::RDPDR_DTYP_FILESYSTEM,
                                                                std::get<0>(*iter),
                                                                std::get<1>(*iter).c_str(),
-                                                               nullptr, 0);
+                                                               reinterpret_cast<uint8_t const *>(
+                                                                   std::get<1>(*iter).c_str()),
+                                                               std::get<1>(*iter).length() + 1
+                                                              );
+
+            if (verbose) {
+                LOG(LOG_INFO, "FileSystemDriveManager::AnnounceDrivePartially");
+                device_announce_header.log(LOG_INFO);
+            }
 
             device_announce_header.emit(client_device_list_announce);
 
@@ -420,9 +429,13 @@ private:
     }
 
 public:
-    bool IsManagedDrive(uint32_t DeviceId) {
+    bool HasManagedDrive() const {
+        return (this->managed_drives.size() > 0);
+    }
+
+    bool IsManagedDrive(uint32_t DeviceId) const {
         if (DeviceId >= FIRST_MANAGED_DRIVE_ID) {
-            for (managed_drive_collection_type::iterator iter = this->managed_drives.begin();
+            for (managed_drive_collection_type::const_iterator iter = this->managed_drives.begin();
                  iter != this->managed_drives.end(); ++iter) {
                 if (DeviceId == std::get<0>(*iter)) {
                     return true;

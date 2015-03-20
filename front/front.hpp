@@ -1065,6 +1065,7 @@ public:
                         for (size_t i = 0; i < 16 ; i++) {
                             this->client_info.hostname[i] = cs_core.clientName[i];
                         }
+                        //LOG(LOG_INFO, "hostname=\"%s\"", this->client_info.hostname);
                         this->client_info.bpp = 8;
                         switch (cs_core.postBeta2ColorDepth) {
                         case 0xca01:

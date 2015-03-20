@@ -183,6 +183,118 @@ enum class CapabilityType : uint16_t {
     smartcard   = 5
 };
 
+// [MS-RDPEFS] - 2.2.1.2 Capability Header (CAPABILITY_HEADER)
+// ===========================================================
+
+// This is a header that is embedded in the Server Core Capability Request
+//  and Client Core Capability Response. The purpose of this header is to
+//  describe capabilities for different device types.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |         CapabilityType        |        CapabilityLength       |
+// +-------------------------------+-------------------------------+
+// |                            Version                            |
+// +---------------------------------------------------------------+
+
+// CapabilityType (2 bytes): A 16-bit unsigned integer that identifies the
+//  type of capability being described. It MUST be set to one of the
+//  following values.
+
+//  +--------------------+---------------------------------------------------+
+//  | Value              | Meaning                                           |
+//  +--------------------+---------------------------------------------------+
+//  | CAP_GENERAL_TYPE   | General capability set (GENERAL_CAPS_SET)         |
+//  | 0x0001             |                                                   |
+//  +--------------------+---------------------------------------------------+
+//  | CAP_PRINTER_TYPE   | Print capability set (PRINTER_CAPS_SET)           |
+//  | 0x0002             |                                                   |
+//  +--------------------+---------------------------------------------------+
+//  | CAP_PORT_TYPE      | Port capability set (PORT_CAPS_SET)               |
+//  | 0x0003             |                                                   |
+//  +--------------------+---------------------------------------------------+
+//  | CAP_DRIVE_TYPE     | Drive capability set (DRIVE_CAPS_SET)             |
+//  | 0x0004             |                                                   |
+//  +--------------------+---------------------------------------------------+
+//  | CAP_SMARTCARD_TYPE | Smart card capability set (SMARTCARD_CAPS_SET)<2> |
+//  | 0x0005             |                                                   |
+//  +--------------------+---------------------------------------------------+
+
+enum {
+      CAP_GENERAL_TYPE   = 0x0001
+    , CAP_PRINTER_TYPE   = 0x0002
+    , CAP_PORT_TYPE      = 0x0003
+    , CAP_DRIVE_TYPE     = 0x0004
+    , CAP_SMARTCARD_TYPE = 0x0005
+};
+
+// CapabilityLength (2 bytes): A 16-bit unsigned integer that specifies that
+//  size, in bytes, of the capability message, this header included.
+
+// Version (4 bytes): A 32-bit unsigned integer that specifies the
+//  capability-specific version for the specific value of CapabilityType, as
+//  described in the table that follows.
+
+//  +-----------------+-----------------------+------------------------------+
+//  | CapabilityType  | Version Value(s)      | Meaning                      |
+//  | Value           |                       |                              |
+//  +-----------------+-----------------------+------------------------------+
+//  | CAP_GENERAL_    | GENERAL_CAPABILITY_   | See section 2.2.2.7.1.       |
+//  | TYPE            | VERSION_01            |                              |
+//  |                 | 0x00000001            |                              |
+//  |                 | GENERAL_CAPABILITY_   |                              |
+//  |                 | VERSION_02            |                              |
+//  |                 | 0x00000002            |                              |
+//  +-----------------+-----------------------+------------------------------+
+//  | CAP_PRINTER_    | PRINT_CAPABILITY_     | Version 1 of printing        |
+//  | TYPE            | VERSION_01            | capabilities.                |
+//  |                 | 0x00000001            |                              |
+//  +-----------------+-----------------------+------------------------------+
+//  | CAP_PORT_       | PORT_CAPABILITY_      | Version 1 of port            |
+//  | TYPE            | VERSION_01            | capabilities.                |
+//  |                 | 0x00000001            |                              |
+//  +-----------------+-----------------------+------------------------------+
+//  | CAP_DRIVE_      | DRIVE_CAPABILITY_     | If the client supports       |
+//  | TYPE            | VERSION_01            | DRIVE_CAPABILITY_VERSION_02, |
+//  |                 | 0x00000001            | then the drive name of the   |
+//  |                 | DRIVE_CAPABILITY_     | redirected device can be     |
+//  |                 | VERSION_02            | specified by the DeviceData  |
+//  |                 | 0x00000002            | field of a DEVICE ANNOUNCE   |
+//  |                 |                       | header, as specified in the  |
+//  |                 |                       | DeviceAnnounce field         |
+//  |                 |                       | description of the Client    |
+//  |                 |                       | Device List Announce message |
+//  |                 |                       | (section 2.2.3.1).           |
+//  +-----------------+-----------------------+------------------------------+
+//  | CAP_SMARTCARD_  | SMARTCARD_CAPABILITY_ | Version 1 of smart card      |
+//  | TYPE            | VERSION_01            | capabilities.                |
+//  |                 | 0x00000001            |                              |
+//  +-----------------+-----------------------+------------------------------+
+
+enum {
+      GENERAL_CAPABILITY_VERSION_01 = 0x00000001
+    , GENERAL_CAPABILITY_VERSION_02 = 0x00000002
+};
+
+enum {
+      PRINT_CAPABILITY_VERSION_01 = 0x00000001
+};
+
+enum {
+      PORT_CAPABILITY_VERSION_01 = 0x00000001
+};
+
+enum {
+      DRIVE_CAPABILITY_VERSION_01 = 0x00000001
+    , DRIVE_CAPABILITY_VERSION_02 = 0x00000002
+};
+
+enum {
+      SMARTCARD_CAPABILITY_VERSION_0 = 0x00000001
+};
+
 // [MS-RDPEFS] - 2.2.1.3 Device Announce Header (DEVICE_ANNOUNCE)
 // ==============================================================
 
@@ -286,7 +398,7 @@ public:
 
     DeviceAnnounceHeader(uint32_t DeviceType, uint32_t DeviceId,
                          const char * preferred_dos_name,
-                         uint8_t * device_data_p, size_t device_data_size)
+                         uint8_t const * device_data_p, size_t device_data_size)
     : DeviceType_(DeviceType)
     , DeviceId_(DeviceId)
     , device_data(device_data_p, device_data_size) {
@@ -644,7 +756,7 @@ public:
         const size_t maximum_length_of_Path_in_bytes = (this->path.length() + 1) * 2;
 
         uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_Path_in_bytes));
+            maximum_length_of_Path_in_bytes));
         size_t size_of_unicode_data = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(this->path.c_str()), unicode_data,
             maximum_length_of_Path_in_bytes);
@@ -1148,6 +1260,606 @@ public:
     }
 };
 
+// [MS-RDPEFS] - 2.2.2.2 Server Announce Request
+//  (DR_CORE_SERVER_ANNOUNCE_REQ)
+// =============================================
+
+// The server initiates the protocol with this message.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +-------------------------------+-------------------------------+
+// |          VersionMajor         |          VersionMinor         |
+// +-------------------------------+-------------------------------+
+// |                            ClientId                           |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set
+//  to RDPDR_CTYP_CORE, and the PacketId field MUST be set to
+//  PAKID_CORE_SERVER_ANNOUNCE.
+
+// VersionMajor (2 bytes): A 16-bit unsigned integer that specifies the
+//  server major version number. This field MUST be set to 0x0001.
+
+// VersionMinor (2 bytes): A 16-bit unsigned integer that specifies the
+//  server minor version number. This field MUST be set to one of several
+//  values<7>.
+
+// ClientId (4 bytes): A 32-bit unsigned integer that specifies the unique ID
+//  generated by the server as specified in section 3.3.5.1.2.
+
+class ServerAnnounceRequest {
+    uint16_t VersionMajor  = 0;
+    uint16_t VersionMinor_ = 0;
+    uint16_t ClientId_     = 0;
+
+public:
+    inline void emit(Stream & stream) const {
+        stream.out_uint16_le(this->VersionMajor);
+        stream.out_uint16_le(this->VersionMinor_);
+        stream.out_uint16_le(this->ClientId_);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 8;   // VersionMajor(2) + VersionMajor(2) + ClientId(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ServerAnnounceRequest: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->VersionMajor  = stream.in_uint16_le();
+        this->VersionMinor_ = stream.in_uint16_le();
+        this->ClientId_     = stream.in_uint32_le();
+    }
+
+    uint16_t VersionMinor() const { return this->VersionMinor_; }
+
+    uint16_t ClientId() const { return this->ClientId_; }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "ServerAnnounceRequest: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
+            this->VersionMajor, this->VersionMinor_, this->ClientId_);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
+// [MS-RDPEFS] - 2.2.2.3 Client Announce Reply (DR_CORE_CLIENT_ANNOUNCE_RSP)
+// =========================================================================
+
+// The client replies to the Server Announce Request message.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +-------------------------------+-------------------------------+
+// |          VersionMajor         |          VersionMinor         |
+// +-------------------------------+-------------------------------+
+// |                            ClientId                           |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set
+//  to RDPDR_CTYP_CORE, and the PacketId field MUST be set to
+//  PAKID_CORE_CLIENTID_CONFIRM.
+
+// VersionMajor (2 bytes): A 16-bit unsigned integer that specifies the
+//  client major version number. This field MUST be set to 0x0001.
+
+// VersionMinor (2 bytes): A 16-bit unsigned integer that specifies the
+//  client minor version number. This field MUST be set to one of the
+//  following values.
+
+//  +--------+------------------------+
+//  | Value  | Meaning                |
+//  +--------+------------------------+
+//  | 0x000C | RDP Client 6.0 and 6.1 |
+//  +--------+------------------------+
+//  | 0x000A | RDP Client 5.2         |
+//  +--------+------------------------+
+//  | 0x0005 | RDP Client 5.1         |
+//  +--------+------------------------+
+//  | 0x0002 | RDP Client 5.0         |
+//  +--------+------------------------+
+
+// ClientId (4 bytes): A 32-bit unsigned integer that the client MUST set to
+//  either the ClientID field, which is supplied by the server in the Server
+//  Announce Request message, or a unique ID as specified in section
+//  3.2.5.1.3.
+
+class ClientAnnounceReply {
+    uint16_t VersionMajor = 0;
+    uint16_t VersionMinor = 0;
+    uint16_t ClientId     = 0;
+
+public:
+    ClientAnnounceReply() = default;
+
+    ClientAnnounceReply(uint16_t VersionMajor, uint16_t VersionMinor, uint16_t ClientId)
+    : VersionMajor(VersionMajor)
+    , VersionMinor(VersionMinor)
+    , ClientId(ClientId) {}
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint16_le(this->VersionMajor);
+        stream.out_uint16_le(this->VersionMinor);
+        stream.out_uint32_le(this->ClientId);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 8;   // VersionMajor(2) + VersionMajor(2) + ClientId(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientAnnounceReply: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->VersionMajor = stream.in_uint16_le();
+        this->VersionMinor = stream.in_uint16_le();
+        this->ClientId     = stream.in_uint32_le();
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "ClientAnnounceReply: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
+            this->VersionMajor, this->VersionMinor, this->ClientId);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
+// [MS-RDPEFS] - 2.2.2.4 Client Name Request (DR_CORE_CLIENT_NAME_REQ)
+// ===================================================================
+
+// The client announces its machine name.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +---------------------------------------------------------------+
+// |                          UnicodeFlag                          |
+// +---------------------------------------------------------------+
+// |                            CodePage                           |
+// +---------------------------------------------------------------+
+// |                        ComputerNameLen                        |
+// +---------------------------------------------------------------+
+// |                    ComputerName (variable)                    |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set
+//  to RDPDR_CTYP_CORE, and the PacketId field MUST be set to
+//  PAKID_CORE_CLIENT_NAME.
+
+// UnicodeFlag (4 bytes): A 32-bit unsigned integer that indicates the format
+//  of the ComputerName field. This field MUST be set to one of the following
+//  values.
+
+//  +------------+----------------------------------------+
+//  | Value      | Meaning                                |
+//  +------------+----------------------------------------+
+//  | 0x00000001 | ComputerName is in Unicode characters. |
+//  +------------+----------------------------------------+
+//  | 0x00000000 | ComputerName is in ASCII characters.   |
+//  +------------+----------------------------------------+
+
+// CodePage (4 bytes): A 32-bit unsigned integer that specifies the code page
+//  of the ComputerName field; it MUST be set to 0.
+
+// ComputerNameLen (4 bytes): A 32-bit unsigned integer that specifies the
+//  number of bytes in the ComputerName field, including null terminator.
+
+// ComputerName (variable): A variable-length array of ASCII or Unicode
+//  characters, the format of which is determined by the UnicodeFlag field.
+//  This is a string that identifies the client computer name. The string
+//  MUST be null-terminated. The protocol imposes no limitations on the
+//  characters used in this field.
+
+class ClientNameRequest {
+    uint32_t UnicodeFlag = 0x00000001 /* ComputerName is in Unicode characters. */;
+    uint32_t CodePage    = 0;
+
+    std::string computer_name;
+
+public:
+    ClientNameRequest() = default;
+
+    ClientNameRequest(const char * computer_name)
+    : computer_name(computer_name) {}
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(0x00000001 /* ComputerName is in Unicode characters. */);
+        stream.out_uint32_le(this->CodePage);
+
+        // The null-terminator is included.
+        const size_t maximum_length_of_ComputerName_in_bytes =
+            (this->computer_name.length() + 1) * 2;
+
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
+            maximum_length_of_ComputerName_in_bytes));
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->computer_name.c_str()),
+            unicode_data, maximum_length_of_ComputerName_in_bytes);
+        // Writes null terminator.
+        unicode_data[size_of_unicode_data    ] =
+        unicode_data[size_of_unicode_data + 1] = 0;
+        size_of_unicode_data += 2;
+
+        stream.out_uint32_le(size_of_unicode_data);
+
+        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 12;  // UnicodeFlag(4) + CodePage(4) +
+                                           //     ComputerNameLen(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientNameRequest (0): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->UnicodeFlag = stream.in_uint32_le();
+        this->CodePage    = stream.in_uint32_le();
+
+        const uint32_t ComputerNameLen = stream.in_uint32_le();
+
+        {
+            const unsigned expected = ComputerNameLen;  // ComputerName(variable)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientNameRequest (1): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        // Remote Desktop Connection of Windows XP (Shell Version 6.1.7600,
+        //  Control Version 6.1.7600) has a bug. The field UnicodeFlag
+        //  contains inconsistent data.
+        if (this->UnicodeFlag != 0x00000000 /* ComputerName is in ASCII characters. */) {
+            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
+
+            stream.in_copy_bytes(unicode_data, ComputerNameLen);
+
+            const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+            const size_t size_of_utf8_string =
+                        ComputerNameLen / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+            uint8_t * const utf8_string = static_cast<uint8_t *>(
+                ::alloca(size_of_utf8_string));
+            ::UTF16toUTF8(unicode_data, ComputerNameLen / 2, utf8_string, size_of_utf8_string);
+            // The null-terminator is included.
+            this->computer_name = ::char_ptr_cast(utf8_string);
+        } else {
+            uint8_t * const ascii_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
+
+            stream.in_copy_bytes(ascii_data, ComputerNameLen);
+
+            this->computer_name = ::char_ptr_cast(ascii_data);
+        }
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "ClientNameRequest: UnicodeFlag=0x%X CodePage=%u path=\"%s\"",
+            this->UnicodeFlag, this->CodePage, this->computer_name.c_str());
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};  // ClientNameRequest
+
+// [MS-RDPEFS] - 2.2.2.7.1 General Capability Set (GENERAL_CAPS_SET)
+// =================================================================
+
+// This packet is embedded into Server Core Capability Request and Client
+//  Core Capability Response messages. It describes non–device-specific
+//  capabilities.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             osType                            |
+// +---------------------------------------------------------------+
+// |                           osVersion                           |
+// +-------------------------------+-------------------------------+
+// |      protocolMajorVersion     |      protocolMinorVersion     |
+// +-------------------------------+-------------------------------+
+// |                            ioCode1                            |
+// +---------------------------------------------------------------+
+// |                            ioCode2                            |
+// +---------------------------------------------------------------+
+// |                          extendedPDU                          |
+// +---------------------------------------------------------------+
+// |                          extraFlags1                          |
+// +---------------------------------------------------------------+
+// |                          extraFlags2                          |
+// +---------------------------------------------------------------+
+// |                      SpecialTypeDeviceCap                     |
+// +---------------------------------------------------------------+
+
+// Header (8 bytes): A CAPABILITY_HEADER header. The CapabilityType field of
+//  this header MUST be set to CAP_GENERAL_TYPE. The Version field of this
+//  header MUST have one of the following values.
+
+//  +-------------------------------+---------------------------------------+
+//  | Value                         | Meaning                               |
+//  +-------------------------------+---------------------------------------+
+//  | GENERAL_CAPABILITY_VERSION_01 | Version 1. The SpecialTypeDeviceCap   |
+//  | 0x00000001                    | field of GENERAL_CAPS_SET is not      |
+//  |                               | present.                              |
+//  +-------------------------------+---------------------------------------+
+//  | GENERAL_CAPABILITY_VERSION_02 | Version 2. The SpecialTypeDeviceCap   |
+//  | 0x00000002                    | field of GENERAL_CAPS_SET is present. |
+//  +-------------------------------+---------------------------------------+
+
+// osType (4 bytes): A 32-bit unsigned integer that is the identifier for the
+//  operating system that the capabilities are describing. The value of this
+//  field MUST be ignored on receipt.
+
+// osVersion (4 bytes): A 32-bit unsigned integer. This field is unused, and
+//  MUST be set to 0.
+
+// protocolMajorVersion (2 bytes): A 16-bit unsigned integer. This field MUST
+//  be set to 1.
+
+// protocolMinorVersion (2 bytes): A 16-bit unsigned integer. This field MUST
+//  be set to one of the values described by the VersionMinor field of the
+//  Server Client ID Confirm (section 2.2.2.6) packet.
+
+// ioCode1 (4 bytes): A 32-bit unsigned integer that identifies a bitmask of
+//  the supported I/O requests for the given device. If the bit is set, the
+//  I/O request is allowed. The requests are identified by the MajorFunction
+//  field in the Device I/O Request (section 2.2.1.4) header. This field MUST
+//  be set to a valid combination of the following values.
+
+//  +---------------------------------------+--------------------------------+
+//  | Value                                 | Meaning                        |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_CREATE                   | Unused, always set.            |
+//  | 0x00000001                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_CLEANUP                  | Unused, always set.            |
+//  | 0x00000002                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_CLOSE                    | Unused, always set.            |
+//  | 0x00000004                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_READ                     | Unused, always set.            |
+//  | 0x00000008                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_WRITE                    | Unused, always set.            |
+//  | 0x00000010                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_FLUSH_BUFFERS            | Unused, always set.            |
+//  | 0x00000020                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_SHUTDOWN                 | Unused, always set.            |
+//  | 0x00000040                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_DEVICE_CONTROL           | Unused, always set.            |
+//  | 0x00000080                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_QUERY_VOLUME_INFORMATION | Unused, always set.            |
+//  | 0x00000100                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_SET_VOLUME_INFORMATION   | Unused, always set.            |
+//  | 0x00000200                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_QUERY_INFORMATION        | Unused, always set.            |
+//  | 0x00000400                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_SET_INFORMATION          | Unused, always set.            |
+//  | 0x00000800                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_DIRECTORY_CONTROL        | Unused, always set.            |
+//  | 0x00001000                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_LOCK_CONTROL             | Unused, always set.            |
+//  | 0x00002000                            |                                |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_QUERY_SECURITY           | Enable Query Security requests |
+//  | 0x00004000                            | (IRP_MJ_QUERY_SECURITY).       |
+//  +---------------------------------------+--------------------------------+
+//  | RDPDR_IRP_MJ_SET_SECURITY             | Enable Set Security requests   |
+//  | 0x00008000                            | (IRP_MJ_SET_SECURITY).         |
+//  +---------------------------------------+--------------------------------+
+
+// ioCode2 (4 bytes): A 32-bit unsigned integer that is currently reserved
+//  for future use, and MUST be set to 0.
+
+// extendedPDU (4 bytes): A 32-bit unsigned integer that specifies extended
+//  PDU flags. This field MUST be set as a bitmask of the following values.
+
+//  +-------------------------------+----------------------------------------+
+//  | Value                         | Meaning                                |
+//  +-------------------------------+----------------------------------------+
+//  | RDPDR_DEVICE_REMOVE_PDUS      | Allow the client to send Client Drive  |
+//  | 0x00000001                    | Device List Remove packets.            |
+//  +-------------------------------+----------------------------------------+
+//  | RDPDR_CLIENT_DISPLAY_NAME_PDU | Unused, always set.                    |
+//  | 0x00000002                    |                                        |
+//  +-------------------------------+----------------------------------------+
+//  | RDPDR_USER_LOGGEDON_PDU       | Allow the server to send a Server User |
+//  | 0x00000004                    | Logged On packet.                      |
+//  +-------------------------------+----------------------------------------+
+
+// extraFlags1 (4 bytes): A 32-bit unsigned integer that specifies extended
+//  flags. The extraFlags1 field MUST be set as a bitmask of the following
+//  value.
+
+//  +----------------+-------------------------------------------------------+
+//  | Value          | Meaning                                               |
+//  +----------------+-------------------------------------------------------+
+//  | ENABLE_ASYNCIO | Optionally present only in the Client Core Capability |
+//  | 0x00000001     | Response. Allows the server to send multiple          |
+//  |                | simultaneous read or write requests on the same file  |
+//  |                | from a redirected file system.<8>                     |
+//  +----------------+-------------------------------------------------------+
+
+// extraFlags2 (4 bytes): A 32-bit unsigned integer that is currently
+//  reserved for future use, and MUST be set to 0.
+
+// SpecialTypeDeviceCap (4 bytes): A 32-bit unsigned integer that specifies
+//  the number of special devices to be redirected before the user is logged
+//  on. Special devices are those that are safe and/or required to be
+//  redirected before a user logs on (such as smart cards and serial ports).
+
+class GeneralCapabilitySet {
+    uint32_t osType               = 0;
+    uint32_t osVersion            = 0;
+    uint16_t protocolMajorVersion = 0;
+    uint16_t protocolMinorVersion = 0;
+    uint32_t ioCode1              = 0;
+    uint32_t ioCode2              = 0;
+    uint32_t extendedPDU          = 0;
+    uint32_t extraFlags1          = 0;
+    uint32_t extraFlags2          = 0;
+    uint32_t SpecialTypeDeviceCap = 0;
+
+public:
+    GeneralCapabilitySet() = default;
+
+    GeneralCapabilitySet(uint32_t osType, uint32_t osVersion,
+        uint16_t protocolMajorVersion, uint16_t protocolMinorVersion,
+        uint32_t ioCode1, uint32_t ioCode2, uint32_t extendedPDU,
+        uint32_t extraFlags1, uint32_t extraFlags2, uint32_t SpecialTypeDeviceCap)
+    : osType(osType)
+    , osVersion(osVersion)
+    , protocolMajorVersion(protocolMajorVersion)
+    , protocolMinorVersion(protocolMinorVersion)
+    , ioCode1(ioCode1)
+    , ioCode2(ioCode2)
+    , extendedPDU(extendedPDU)
+    , extraFlags1(extraFlags1)
+    , extraFlags2(extraFlags2)
+    , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
+
+    inline void emit(Stream & stream, uint32_t version) const {
+        stream.out_uint32_le(this->osType);
+        stream.out_uint32_le(this->osVersion);
+        stream.out_uint16_le(this->protocolMajorVersion);
+        stream.out_uint16_le(this->protocolMinorVersion);
+        stream.out_uint32_le(this->ioCode1);
+        stream.out_uint32_le(this->ioCode2);
+        stream.out_uint32_le(this->extendedPDU);
+        stream.out_uint32_le(this->extraFlags1);
+        stream.out_uint32_le(this->extraFlags2);
+        if (version == GENERAL_CAPABILITY_VERSION_02) {
+            stream.out_uint32_le(this->SpecialTypeDeviceCap);
+        }
+    }
+
+    inline void receive(Stream & stream, uint32_t version) {
+        {
+            const unsigned expected = 32 +  // osType(4) + osVersion(4) + protocolMajorVersion(2) +
+                                            // protocolMinorVersion(2) + ioCode1(4) + ioCode2(4) +
+                                            // extendedPDU(4) + extraFlags1(4) + extraFlags2(4)
+                ((version == GENERAL_CAPABILITY_VERSION_02) ? 4 /* SpecialTypeDeviceCap(4) */ : 0);
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated GeneralCapabilitySet: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->osType               = stream.in_uint32_le();
+        this->osVersion            = stream.in_uint32_le();
+        this->protocolMajorVersion = stream.in_uint16_le();
+        this->protocolMinorVersion = stream.in_uint16_le();
+        this->ioCode1              = stream.in_uint32_le();
+        this->ioCode2              = stream.in_uint32_le();
+        this->extendedPDU          = stream.in_uint32_le();
+        this->extraFlags1          = stream.in_uint32_le();
+        this->extraFlags2          = stream.in_uint32_le();
+        if (version == GENERAL_CAPABILITY_VERSION_02) {
+            this->SpecialTypeDeviceCap = stream.in_uint32_le();
+        }
+    }
+
+    inline static size_t size(uint32_t version) {
+        return 32 + // osType(4) + osVersion(4) + protocolMajorVersion(2) +
+                    // protocolMinorVersion(2) + ioCode1(4) + ioCode2(4) +
+                    // extendedPDU(4) + extraFlags1(4) + extraFlags2(4)
+            ((version == GENERAL_CAPABILITY_VERSION_02) ? 4 /* SpecialTypeDeviceCap(4) */ : 0);
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "GeneralCapabilitySet: osType=0x%X osVersion=0x%X "
+                "protocolMajorVersion=0x%X protocolMinorVersion=0x%X "
+                "ioCode1=0x%X ioCode2=0x%X extendedPDU=0x%X extraFlags1=0x%X "
+                "extraFlags2=0x%X SpecialTypeDeviceCap=%u",
+            this->osType, this->osVersion, this->protocolMajorVersion,
+            this->protocolMinorVersion, this->ioCode1, this->ioCode2,
+            this->extendedPDU, this->extraFlags1, this->extraFlags2,
+            this->SpecialTypeDeviceCap);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};  // GeneralCapabilitySet
+
 // [MS-RDPEFS] - 2.2.2.9 Client Device List Announce Request
 //  (DR_CORE_DEVICELIST_ANNOUNCE_REQ)
 // =========================================================
@@ -1479,7 +2191,7 @@ public:
         const size_t maximum_length_of_Path_in_bytes = (this->path.length() + 1) * 2;
 
         uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_Path_in_bytes));
+            maximum_length_of_Path_in_bytes));
         size_t size_of_unicode_data = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(this->path.c_str()), unicode_data,
             maximum_length_of_Path_in_bytes);
@@ -1564,7 +2276,7 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, buffer);
     }
-};
+};  // ServerDriveQueryDirectoryRequest
 
 // [MS-RDPEFS] - 2.2.3.4.8 Client Drive Query Information Response
 //  (DR_DRIVE_QUERY_INFORMATION_RSP)

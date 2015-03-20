@@ -34,6 +34,8 @@ struct ModRDPParams {
     const char * target_host;
     const char * client_address;
 
+    const char * client_name;
+
     bool enable_tls;
     bool enable_nla;
     bool enable_krb;
@@ -153,6 +155,9 @@ struct ModRDPParams {
             "ModRDPParams target_host=\"%s\"",                     this->target_host);
         LOG(LOG_INFO,
             "ModRDPParams client_address=\"%s\"",                  this->client_address);
+
+        LOG(LOG_INFO,
+            "ModRDPParams client_name=\"%s\"",                     (this->client_name ? this->client_name : "<null>"));
 
         LOG(LOG_INFO,
             "ModRDPParams enable_tls=%s",                          (this->enable_tls ? "yes" : "no"));
