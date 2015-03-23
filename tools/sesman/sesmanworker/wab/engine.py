@@ -230,7 +230,7 @@ class Engine(object):
                                                              server_ip = server_ip)
             if self.wabengine is not None:
                 self.wabuser = self.wabengine.who_am_i()
-                self.primary_password = password
+                self.primary_password = None
                 return True
         except AuthenticationFailed, e:
             self.challenge = None
@@ -582,11 +582,12 @@ class Engine(object):
                 self.pidhandler = None
         return self.pidhandler
 
-    def start_session(self, auth, pid, effective_login):
+    def start_session(self, auth, pid, effective_login=None, target_ip=None):
         if auth.account.login == MAGIC_AM:
             effective_login = self.get_username()
         self.session_id = self.wabengine.start_session(auth, self.get_pidhandler(pid),
-                                                       effective_login=effective_login)
+                                                       effective_login=effective_login,
+                                                       target_ip=target_ip)
         return self.session_id
 
     def update_session(self, physical_target):
