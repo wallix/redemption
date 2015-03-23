@@ -583,7 +583,7 @@ class Engine(object):
         return self.pidhandler
 
     def start_session(self, auth, pid, effective_login=None, target_ip=None):
-        if auth.account.login == MAGIC_AM:
+        if auth.account.login == MAGIC_AM and not effective_login:
             effective_login = self.get_username()
         self.session_id = self.wabengine.start_session(auth, self.get_pidhandler(pid),
                                                        effective_login=effective_login,
