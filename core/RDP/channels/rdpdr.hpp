@@ -932,6 +932,105 @@ public:
     }
 };
 
+// [MS-RDPEFS] - 2.2.1.4.3 Device Read Request (DR_READ_REQ)
+// =========================================================
+
+// This header initiates a read request. This message can have different
+//  purposes depending on the device for which it is issued. The device type
+//  is determined by the DeviceId field in the DR_DEVICE_IOREQUEST header.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        DeviceIoRequest                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                             Offset                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST header. The
+//  MajorFunction field in this header MUST be set to IRP_MJ_READ.
+
+// Length (4 bytes): A 32-bit unsigned integer. This field specifies the
+//  maximum number of bytes to be read from the device.
+
+// Offset (8 bytes): A 64-bit unsigned integer. This field specifies the file
+//  offset where the read operation is performed.
+
+// Padding (20 bytes): An array of 20 bytes. Reserved. This field can be set
+//  to any value and MUST be ignored on receipt.
+
+class DeviceReadRequest {
+    uint32_t Length_;
+    uint64_t Offset_;
+
+public:
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->Length_);
+        stream.out_uint64_le(this->Offset_);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 12;  // Length(4) + Offset(8)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceReadRequest: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->Length_ = stream.in_uint32_le();
+        this->Offset_ = stream.in_uint64_le();
+    }
+
+    inline uint32_t Length() const { return this->Length_; }
+
+    inline uint32_t Offset() const { return this->Offset_; }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "DeviceReadRequest: Length=%u Offset=%" PRIu64,
+            this->Length_, this->Offset_);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
 // [MS-RDPEFS] - 2.2.1.5 Device I/O Response (DR_DEVICE_IOCOMPLETION)
 // ==================================================================
 
@@ -1182,6 +1281,43 @@ public:
 
 // Padding (5 bytes): An array of 5 bytes. Reserved. This field can be set to
 //  any value, and MUST be ignored on receipt.
+
+// [MS-RDPEFS] - 2.2.1.5.3 Device Read Response (DR_READ_RSP)
+// ==========================================================
+
+// A message with this header describes a response to a Device Read Request
+//  (section 2.2.1.4.3).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         DeviceIoReply                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                      ReadData (variable)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION header. The
+//  CompletionId field of this header MUST match a Device I/O Request
+//  (section 2.2.1.4) message that had the MajorFunction field set to
+//  IRP_MJ_READ.
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of
+//  bytes in the ReadData field.
+
+// ReadData (variable): A variable-length array of bytes that specifies the
+//  output data from the read request. The length of ReadData is specified by
+//  the Length field in this packet.
 
 // [MS-RDPEFS] - 2.2.2.1 Server Device Announce Response
 //  (DR_CORE_DEVICE_ANNOUNCE_RSP)

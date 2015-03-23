@@ -53,6 +53,12 @@ public:
         Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
         uint32_t verbose) = 0;
 
+    virtual void ProcessServerDriveReadRequest(
+        rdpdr::DeviceIORequest const & device_io_request,
+        rdpdr::DeviceReadRequest const & device_read_request,
+        const char * path, Stream & in_stream, Stream & out_stream,
+        uint32_t & out_flags, uint32_t verbose) = 0;
+
     virtual void ProcessServerDriveQueryVolumeInformationRequest(
         rdpdr::DeviceIORequest const & device_io_request,
         rdpdr::ServerDriveQueryVolumeInformationRequest const & server_drive_query_volume_information_request,
@@ -184,6 +190,15 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
         out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         REDASSERT(!this->dir);
+    }
+
+    virtual void ProcessServerDriveReadRequest(
+        rdpdr::DeviceIORequest const & device_io_request,
+        rdpdr::DeviceReadRequest const & device_read_request,
+        const char * path, Stream & in_stream, Stream & out_stream,
+        uint32_t & out_flags, uint32_t verbose) {
+        // Unsupported.
+        REDASSERT(false);
     }
 
     virtual void ProcessServerDriveQueryVolumeInformationRequest(
@@ -430,39 +445,46 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
 
         this->fd = ::open(full_path.c_str(), open_flags,
             S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        const int last_error = errno;
         if (verbose) {
             LOG(LOG_INFO,
-                "ManagedFile::ProcessServerCreateDriveRequest: <%p> FileId=%d",
-                this, this->fd);
+                "ManagedFile::ProcessServerCreateDriveRequest: <%p> FileId=%d errno=%d",
+                this, this->fd, ((this->fd == -1) ? last_error : 0));
         }
+
+        const uint32_t IoStatus = [last_error] (int fd) -> uint32_t {
+            if (fd > -1) { return 0x00000000 /* STATUS_SUCCESS */; }
+
+            if (last_error == ENOENT) {
+                return 0xC000000F;  // STATUS_NO_SUCH_FILE
+            }
+
+            return 0xC0000001;  // STATUS_UNSUCCESSFUL
+        } (this->fd);
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
         sh_s.emit(out_stream);
 
         const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
-                device_io_request.CompletionId(),
-                (
-                 (this->fd != -1)  ?
-                 0x00000000 :   // STATUS_SUCCESS
-                 0xC0000001     // STATUS_UNSUCCESSFUL
-                )
-            );
+            device_io_request.CompletionId(), IoStatus);
         if (verbose) {
             LOG(LOG_INFO, "ManagedFile::ProcessServerCreateDriveRequest");
             device_io_response.log(LOG_INFO);
         }
         device_io_response.emit(out_stream);
 
-        const rdpdr::DeviceCreateResponse device_create_response(
-                static_cast<uint32_t>(this->fd),
-                0x0
-            );
-        if (verbose) {
-            LOG(LOG_INFO, "ManagedFile::ProcessServerCreateDriveRequest");
-            device_create_response.log(LOG_INFO);
+        if (this->fd >= -1) {
+            const rdpdr::DeviceCreateResponse device_create_response(
+                    static_cast<uint32_t>(this->fd),
+                    0x0
+                );
+            if (verbose) {
+                LOG(LOG_INFO, "ManagedFile::ProcessServerCreateDriveRequest");
+                device_create_response.log(LOG_INFO);
+            }
+            device_create_response.emit(out_stream);
         }
-        device_create_response.emit(out_stream);
 
         out_stream.mark_end();
 
@@ -501,6 +523,58 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
         out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         REDASSERT(this->fd == -1);
+    }
+
+    virtual void ProcessServerDriveReadRequest(
+        rdpdr::DeviceIORequest const & device_io_request,
+        rdpdr::DeviceReadRequest const & device_read_request,
+        const char * path, Stream & in_stream, Stream & out_stream,
+        uint32_t & out_flags, uint32_t verbose) {
+        REDASSERT(this->fd > -1);
+
+        const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
+                                       rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+        sh_s.emit(out_stream);
+
+        ssize_t number_of_bytes_read = -1;
+
+        const uint32_t max_number_of_bytes_to_read = 32 * 1024;
+        const uint32_t Length                      =
+            std::min<uint32_t>(device_read_request.Length(), max_number_of_bytes_to_read);
+
+        uint8_t * const read_data = static_cast<uint8_t *>(::alloca(Length));
+
+        const uint64_t Offset = device_read_request.Offset();
+
+        if (::lseek64(this->fd, Offset, SEEK_SET) == static_cast<off64_t>(Offset)) {
+            number_of_bytes_read = ::read(this->fd, read_data, Length);
+        }
+
+        const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+                device_io_request.CompletionId(),
+                ((number_of_bytes_read > -1) ?
+                  0x00000000 /* STATUS_SUCCESS */ :
+                  0xC0000001) /* STATUS_UNSUCCESSFUL*/
+            );
+        if (verbose) {
+            LOG(LOG_INFO, "ManagedFile::ProcessServerDriveReadRequest");
+            device_io_response.log(LOG_INFO);
+        }
+        device_io_response.emit(out_stream);
+
+        if (number_of_bytes_read > -1) {
+            out_stream.out_uint32_le(static_cast<uint32_t>(number_of_bytes_read));
+            if (verbose) {
+                LOG(LOG_INFO, "ManagedFile::ProcessServerDriveReadRequest: %u byte(s) read.",
+                    static_cast<uint32_t>(number_of_bytes_read));
+            }
+
+            out_stream.out_copy_bytes(read_data, static_cast<size_t>(number_of_bytes_read));
+        }
+
+        out_stream.mark_end();
+
+        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
     }
 
     virtual void ProcessServerDriveQueryVolumeInformationRequest(
@@ -822,6 +896,28 @@ private:
         }
     }
 
+    void ProcessServerDriveReadRequest(
+            rdpdr::DeviceIORequest const & device_io_request, const char * path,
+            Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
+            uint32_t verbose) {
+        rdpdr::DeviceReadRequest device_read_request;
+
+        device_read_request.receive(in_stream);
+        if (verbose) {
+            device_read_request.log(LOG_INFO);
+        }
+
+        for (managed_file_system_object_collection_type::iterator iter = this->managed_file_system_objects.begin();
+             iter != this->managed_file_system_objects.end(); ++iter) {
+            if (device_io_request.FileId() == std::get<0>(*iter)) {
+                std::get<1>(*iter)->ProcessServerDriveReadRequest(
+                    device_io_request, device_read_request, path, in_stream, out_stream, out_flags,
+                    verbose);
+                break;
+            }
+        }
+    }
+
     void ProcessServerDriveQueryVolumeInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
             Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
@@ -930,6 +1026,17 @@ public:
                 }
 
                 this->ProcessServerCloseDriveRequest(device_io_request,
+                    path.c_str(), in_stream, out_stream, out_flags, verbose);
+            break;
+
+            case rdpdr::IRP_MJ_READ:
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "FileSystemDriveManager::ProcessDeviceIORequest: "
+                            "Server Drive Read Request");
+                }
+
+                this->ProcessServerDriveReadRequest(device_io_request,
                     path.c_str(), in_stream, out_stream, out_flags, verbose);
             break;
 
