@@ -1177,9 +1177,12 @@ class Sesman():
                     kv.update(extra_kv)
 
                     if self.target_context:
-                        self._physical_target_device = self.target_context.host
+                        self._physical_target_host = self.target_context.host
+                    elif ('/' in physical_info.device_host and
+                          extra_kv.get(u'target_host') != MAGICASK):
+                        self._physical_target_host = extra_kv.get(u'target_host')
                     else:
-                        self._physical_target_device = physical_info.device_host
+                        self._physical_target_host = physical_info.device_host
 
                     Logger().info(u"Send critic notification (every attempt to connect to some physical node)")
                     if extra_info.is_critical:
@@ -1192,13 +1195,14 @@ class Sesman():
                             self.shared.get(u'ip_client'),
                             self.shared.get(u'target_login'),
                             self.shared.get(u'target_host'),
-                            self._physical_target_device,
+                            self._physical_target_host,
                             ctime(),
                             None
                             )
 
 
-                    self.engine.update_session(physical_target)
+                    self.engine.update_session(physical_target,
+                                               target_host=self._physical_target_host)
 
                     if not _status:
                         Logger().info( u"(%s):%s:REJECTED : User message: \"%s\""
@@ -1286,6 +1290,16 @@ class Sesman():
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         break
+                                    elif _reporting_reason == u'SERVER_REDIRECTION':
+                                        (redir_login, _, redir_host) = \
+                                            _reporting_message.rpartition('@')
+                                        update_args = {}
+                                        if redir_host:
+                                            update_args["target_host"] = redir_host
+                                        if redir_login:
+                                            update_args["target_account"] = redir_login
+                                        self.engine.update_session(physical_target,
+                                                                   **update_args)
 
                                 if self.shared.get(u'auth_channel_target'):
                                     Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
@@ -1364,7 +1378,7 @@ class Sesman():
                 self.shared.get(u'login'),
                 self.shared.get(u'ip_client'),
                 self.shared.get(u'target_login'),
-                self._physical_target_device)
+                self._physical_target_host)
         elif reason == u'CONNECTION_SUCCESSFUL':
             pass
         elif reason == u'OPEN_SESSION_FAILED':
@@ -1372,7 +1386,7 @@ class Sesman():
                 self.shared.get(u'login'),
                 self.shared.get(u'ip_client'),
                 self.shared.get(u'target_login'),
-                self._physical_target_device)
+                self._physical_target_host)
         elif reason == u'OPEN_SESSION_SUCCESSFUL':
             pass
         elif reason == u'FILESYSTEM_FULL':
