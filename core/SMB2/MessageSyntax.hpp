@@ -216,6 +216,15 @@ enum {
 //  |                   | printer object.<32>                                  |
 //  +-------------------+------------------------------------------------------+
 
+enum {
+      FILE_SUPERSEDE    = 0x00000000
+    , FILE_OPEN         = 0x00000001
+    , FILE_CREATE       = 0x00000002
+    , FILE_OPEN_IF      = 0x00000003
+    , FILE_OVERWRITE    = 0x00000004
+    , FILE_OVERWRITE_IF = 0x00000005
+};
+
 // CreateOptions (4 bytes): Specifies the options to be applied when creating
 //  or opening the file. Combinations of the bit positions listed below are
 //  valid, unless otherwise noted. This field MUST be constructed using the
@@ -427,6 +436,142 @@ enum {
 //  Buffer field MUST be at least one byte in length. The file name (after
 //  DFS normalization if needed) MUST conform to the specification of a
 //  relative pathname in [MS-FSCC] section 2.1.5.
+
+// [MS-SMB2] - 2.2.13.1 SMB2 Access Mask Encoding
+// ==============================================
+
+// The SMB2 Access Mask Encoding in SMB2 is a 4-byte bit field value that
+//  contains an array of flags. An access mask can specify access for one of
+//  two basic groups: either for a file, pipe, or printer (specified in
+//  section 2.2.13.1.1) or for a directory (specified in section 2.2.13.1.2).
+//  Each access mask MUST be a combination of zero or more of the bit
+//  positions that are shown below.
+
+// [MS-SMB2] - 2.2.13.1.1 File_Pipe_Printer_Access_Mask
+// ====================================================
+
+// The following SMB2 Access Mask flag values can be used when accessing a
+//  file, pipe or printer.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                 File_Pipe_Printer_Access_Mask                 |
+// +---------------------------------------------------------------+
+
+// File_Pipe_Printer_Access_Mask (4 bytes): For a file, pipe, or printer, the
+//  value MUST be constructed using the following values (for a printer, the
+//  value MUST have at least one of the following: FILE_WRITE_DATA,
+//  FILE_APPEND_DATA, or GENERIC_WRITE).
+
+//  +------------------------+-------------------------------------------------+
+//  | Value                  | Meaning                                         |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_READ_DATA         | This value indicates the right to read data     |
+//  | 0x00000001             | from the file or named pipe.                    |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_WRITE_DATA        | This value indicates the right to write data    |
+//  | 0x00000002             | into the file or named pipe beyond the end of   |
+//  |                        | the file.                                       |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_APPEND_DATA       | This value indicates the right to append data   |
+//  | 0x00000004             | into the file or named pipe.                    |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_READ_EA           | This value indicates the right to read the      |
+//  | 0x00000008             | extended attributes of the file or named pipe.  |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_WRITE_EA          | This value indicates the right to write or      |
+//  | 0x00000010             | change the extended attributes to the file or   |
+//  |                        | named pipe.                                     |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_DELETE_CHILD      | This value indicates the right to delete        |
+//  | 0x00000040             | entries within a directory.                     |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_EXECUTE           | This value indicates the right to execute the   |
+//  | 0x00000020             | file.                                           |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_READ_ATTRIBUTES   | This value indicates the right to read the      |
+//  | 0x00000080             | attributes of the file.                         |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_WRITE_ATTRIBUTES  | This value indicates the right to change the    |
+//  | 0x00000100             | attributes of the file.                         |
+//  +------------------------+-------------------------------------------------+
+//  | DELETE                 | This value indicates the right to delete the    |
+//  | 0x00010000             | file.                                           |
+//  +------------------------+-------------------------------------------------+
+//  | READ_CONTROL           | This value indicates the right to read the      |
+//  | 0x00020000             | security descriptor for the file or named pipe. |
+//  +------------------------+-------------------------------------------------+
+//  | WRITE_DAC              | This value indicates the right to change the    |
+//  | 0x00040000             | discretionary access control list (DACL) in the |
+//  |                        | security descriptor for the file or named pipe. |
+//  |                        | For the DACL data structure, see ACL in         |
+//  |                        | [MS-DTYP].                                      |
+//  +------------------------+-------------------------------------------------+
+//  | WRITE_OWNER            | This value indicates the right to change the    |
+//  | 0x00080000             | owner in the security descriptor for the file   |
+//  |                        | or named pipe.                                  |
+//  +------------------------+-------------------------------------------------+
+//  | SYNCHRONIZE            | SMB2 clients set this flag to any value.<40>    |
+//  | 0x00100000             | SMB2 servers SHOULD<41> ignore this flag.       |
+//  +------------------------+-------------------------------------------------+
+//  | ACCESS_SYSTEM_SECURITY | This value indicates the right to read or       |
+//  | 0x01000000             | change the system access control list (SACL) in |
+//  |                        | the security descriptor for the file or named   |
+//  |                        | pipe. For the SACL data structure, see ACL in   |
+//  |                        | [MS-DTYP].<42>                                  |
+//  +------------------------+-------------------------------------------------+
+//  | MAXIMUM_ALLOWED        | This value indicates that the client is         |
+//  | 0x02000000             | requesting an open to the file with the highest |
+//  |                        | level of access the client has on this file. If |
+//  |                        | no access is granted for the client on this     |
+//  |                        | file, the server MUST fail the open with        |
+//  |                        | STATUS_ACCESS_DENIED.                           |
+//  +------------------------+-------------------------------------------------+
+//  | GENERIC_ALL            | This value indicates a request for all the      |
+//  | 0x10000000             | access flags that are previously listed except  |
+//  |                        | MAXIMUM_ALLOWED and ACCESS_SYSTEM_SECURITY.     |
+//  +------------------------+-------------------------------------------------+
+//  | GENERIC_EXECUTE        | This value indicates a request for the          |
+//  | 0x20000000             | following combination of access flags listed    |
+//  |                        | above: FILE_READ_ATTRIBUTES| FILE_EXECUTE|      |
+//  |                        | SYNCHRONIZE| READ_CONTROL.                      |
+//  +------------------------+-------------------------------------------------+
+//  | GENERIC_WRITE          | This value indicates a request for the          |
+//  | 0x40000000             | following combination of access flags listed    |
+//  |                        | above: FILE_WRITE_DATA| FILE_APPEND_DATA|       |
+//  |                        | FILE_WRITE_ATTRIBUTES| FILE_WRITE_EA|           |
+//  |                        | SYNCHRONIZE| READ_CONTROL.                      |
+//  +------------------------+-------------------------------------------------+
+//  | GENERIC_READ           | This value indicates a request for the          |
+//  | 0x80000000             | following combination of access flags listed    |
+//  |                        | above: FILE_READ_DATA| FILE_READ_ATTRIBUTES|    |
+//  |                        | FILE_READ_EA| SYNCHRONIZE| READ_CONTROL.        |
+//  +------------------------+-------------------------------------------------+
+
+enum {
+      FILE_READ_DATA         = 0x00000001
+    , FILE_WRITE_DATA        = 0x00000002
+    , FILE_APPEND_DATA       = 0x00000004
+    , FILE_READ_EA           = 0x00000008
+    , FILE_WRITE_EA          = 0x00000010
+    , FILE_DELETE_CHILD      = 0x00000040
+    , FILE_EXECUTE           = 0x00000020
+    , FILE_READ_ATTRIBUTES   = 0x00000080
+    , FILE_WRITE_ATTRIBUTES  = 0x00000100
+    , DELETE                 = 0x00010000
+    , READ_CONTROL           = 0x00020000
+    , WRITE_DAC              = 0x00040000
+    , WRITE_OWNER            = 0x00080000
+    , SYNCHRONIZE            = 0x00100000
+    , ACCESS_SYSTEM_SECURITY = 0x01000000
+    , MAXIMUM_ALLOWED        = 0x02000000
+    , GENERIC_ALL            = 0x10000000
+    , GENERIC_EXECUTE        = 0x20000000
+    , GENERIC_WRITE          = 0x40000000
+    , GENERIC_READ           = 0x80000000
+};
 
 }   // namespace smb2
 

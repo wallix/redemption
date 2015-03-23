@@ -159,7 +159,7 @@ struct SharedHeader {
     }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "SharedHeader: Component=0x%X PacketId=0x%X",
             static_cast<uint16_t>(this->component), static_cast<uint16_t>(this->packet_id));
@@ -459,7 +459,7 @@ public:
     inline uint32_t DeviceId() const { return this->DeviceId_; }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceAnnounceHeader: DeviceType=%u DeviceId=%u PreferredDosName=\"%s\"",
             this->DeviceType_, this->DeviceId_, this->PreferredDosName);
@@ -627,18 +627,18 @@ public:
         this->MinorFunction_ = stream.in_uint32_le();
     }
 
-    uint32_t DeviceId() const { return this->DeviceId_; }
+    inline uint32_t DeviceId() const { return this->DeviceId_; }
 
-    uint32_t FileId() const { return this->FileId_; }
+    inline uint32_t FileId() const { return this->FileId_; }
 
-    uint32_t CompletionId() const { return this->CompletionId_; }
+    inline uint32_t CompletionId() const { return this->CompletionId_; }
 
-    uint32_t MajorFunction() const { return this->MajorFunction_; }
+    inline uint32_t MajorFunction() const { return this->MajorFunction_; }
 
-    uint32_t MinorFunction() const { return this->MinorFunction_; }
+    inline uint32_t MinorFunction() const { return this->MinorFunction_; }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceIORequest: "
                 "DeviceId=%u FileId=%u CompletionId=%u MajorFunction=0x%X MinorFunction=0x%X",
@@ -734,7 +734,7 @@ public:
 //  protocol imposes no limitations on the characters used in this field.
 
 class DeviceCreateRequest {
-    uint32_t DesiredAccess;
+    uint32_t DesiredAccess_;
     uint64_t AllocationSize;
     uint32_t FileAttributes;
     uint32_t SharedAccess;
@@ -745,7 +745,7 @@ class DeviceCreateRequest {
 
 public:
     inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->DesiredAccess);
+        stream.out_uint32_le(this->DesiredAccess_);
         stream.out_uint64_le(this->AllocationSize);
         stream.out_uint32_le(this->FileAttributes);
         stream.out_uint32_le(this->SharedAccess);
@@ -785,7 +785,7 @@ public:
             }
         }
 
-        this->DesiredAccess      = stream.in_uint32_le();
+        this->DesiredAccess_     = stream.in_uint32_le();
         this->AllocationSize     = stream.in_uint64_le();
         this->FileAttributes     = stream.in_uint32_le();
         this->SharedAccess       = stream.in_uint32_le();
@@ -822,19 +822,21 @@ public:
         std::replace(this->path.begin(), this->path.end(), '\\', '/');
     }
 
-    const char * Path() const { return this->path.c_str(); }
+    inline uint32_t DesiredAccess() const { return this->DesiredAccess_; }
 
-    uint32_t CreateDisposition() const { return this->CreateDisposition_; }
+    inline uint32_t CreateDisposition() const { return this->CreateDisposition_; }
 
-    uint32_t CreateOptions() const { return this->CreateOptions_; }
+    inline uint32_t CreateOptions() const { return this->CreateOptions_; }
+
+    inline const char * Path() const { return this->path.c_str(); }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceCreateRequest: DesiredAccess=0x%X AllocationSize=%" PRIu64 " "
                 "FileAttributes=0x%X SharedAccess=0x%X CreateDisposition=0x%X "
                 "CreateOptions=0x%X path=\"%s\"",
-            this->DesiredAccess, this->AllocationSize, this->FileAttributes,
+            this->DesiredAccess_, this->AllocationSize, this->FileAttributes,
             this->SharedAccess, this->CreateDisposition_, this->CreateOptions_,
             this->path.c_str());
         return ((length < size) ? length : size - 1);
@@ -916,7 +918,7 @@ class DeviceCloseRequest {
     }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size, "DeviceCloseRequest:");
         return ((length < size) ? length : size - 1);
     }
@@ -1004,12 +1006,12 @@ public:
         this->IoStatus      = stream.in_uint32_le();
     }
 
-    uint32_t DeviceId() const { return this->DeviceId_; }
+    inline uint32_t DeviceId() const { return this->DeviceId_; }
 
-    uint32_t CompletionId() const { return this->CompletionId_; }
+    inline uint32_t CompletionId() const { return this->CompletionId_; }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceIOResponse: DeviceId=%u CompletionId=%u IoStatus=0x%08X",
             this->DeviceId_, this->CompletionId_, this->IoStatus);
@@ -1135,7 +1137,7 @@ public:
     }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceCreateResponse: FileId=%u Information=0x%X",
             this->FileId, this->Information);
@@ -1244,7 +1246,7 @@ public:
     }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDeviceAnnounceResponse: DeviceId=%u ResultCode=0x%08X",
             this->DeviceId, this->ResultCode);
@@ -1320,12 +1322,12 @@ public:
         this->ClientId_     = stream.in_uint32_le();
     }
 
-    uint16_t VersionMinor() const { return this->VersionMinor_; }
+    inline uint16_t VersionMinor() const { return this->VersionMinor_; }
 
-    uint16_t ClientId() const { return this->ClientId_; }
+    inline uint16_t ClientId() const { return this->ClientId_; }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerAnnounceRequest: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
             this->VersionMajor, this->VersionMinor_, this->ClientId_);
@@ -1422,7 +1424,7 @@ public:
     }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ClientAnnounceReply: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
             this->VersionMajor, this->VersionMinor, this->ClientId);
@@ -1523,7 +1525,7 @@ public:
         stream.out_copy_bytes(unicode_data, size_of_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    void receive(Stream & stream) {
         {
             const unsigned expected = 12;  // UnicodeFlag(4) + CodePage(4) +
                                            //     ComputerNameLen(4)
@@ -1579,7 +1581,7 @@ public:
     }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ClientNameRequest: UnicodeFlag=0x%X CodePage=%u path=\"%s\"",
             this->UnicodeFlag, this->CodePage, this->computer_name.c_str());
@@ -1838,7 +1840,7 @@ public:
     }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "GeneralCapabilitySet: osType=0x%X osVersion=0x%X "
                 "protocolMajorVersion=0x%X protocolMinorVersion=0x%X "
@@ -2058,10 +2060,10 @@ public:
         stream.in_skip_bytes(Length);
     }
 
-    uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+    inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDriveQueryInformationRequest: FsInformationClass=%u Length=%zu",
             this->FsInformationClass_, this->query_buffer.get_capacity());
@@ -2254,14 +2256,14 @@ public:
         std::replace(this->path.begin(), this->path.end(), '\\', '/');
     }
 
-    uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+    inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-    uint8_t  InitialQuery() const { return this->InitialQuery_; }
+    inline uint8_t  InitialQuery() const { return this->InitialQuery_; }
 
-    const char * Path() const { return this->path.c_str(); }
+    inline const char * Path() const { return this->path.c_str(); }
 
 private:
-    size_t str(char * buffer, size_t size) const {
+    inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDriveQueryDirectoryRequest: FsInformationClass=0x%X InitialQuery=%u "
                 "path=\"%s\"",

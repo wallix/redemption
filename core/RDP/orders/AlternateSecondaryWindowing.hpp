@@ -72,7 +72,7 @@ public:
         stream.out_uint16_le(this->Bottom);
     }
 
-    void receive(Stream & stream) {
+    inline void receive(Stream & stream) {
         {
             const unsigned expected =
                 8;  // Left(2) + Top(2) + Right(2) + Bottom(2)
@@ -301,7 +301,7 @@ public:
             this->bits_color.get_capacity();
     }
 
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
         const size_t result = ::snprintf(
