@@ -120,6 +120,8 @@ class mod_rdp : public mod_api {
     char program[512];
     char directory[512];
 
+    char client_name[128];
+
     uint8_t bpp;
 
     int encryptionLevel;
@@ -231,6 +233,8 @@ class mod_rdp : public mod_api {
     device_io_request_collection_type device_io_requests;
 
     FileSystemDriveManager file_system_drive_manager;
+    bool                   device_capability_version_02_supported    = false;
+    bool                   proxy_managed_file_system_virtual_channel = false;   // Otherwise, the channel is managed by client.
 
     RedirectionInfo & redir_info;
 
@@ -432,6 +436,8 @@ public:
 
         strncpy(this->password, mod_rdp_params.target_password, sizeof(this->password) - 1);
         this->password[sizeof(this->password) - 1] = 0;
+
+        snprintf(this->client_name, sizeof(this->client_name), "%s", mod_rdp_params.client_name);
 
         std::string alternate_shell(mod_rdp_params.alternate_shell);
         if (mod_rdp_params.target_application_account && *mod_rdp_params.target_application_account) {
@@ -721,6 +727,7 @@ public:
         }
     }
 
+private:
     void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * cliprdr_channel,
                                      Stream & chunk, size_t length, uint32_t flags) {
         if (this->verbose & 1) {
@@ -1025,9 +1032,11 @@ public:
         this->send_to_channel(*rail_channel, chunk, length, flags);
     }   // send_to_mod_rail_channel
 
+public:
     static uint32_t filter_unsupported_device(AuthorizationChannels const & authorization_channels,
             Stream & chunk, uint32_t device_count, Stream & result,
-            FileSystemDriveManager & file_system_drive_manager, uint32_t verbose = 0) {
+            FileSystemDriveManager & file_system_drive_manager,
+            bool device_capability_version_02_supported, uint32_t verbose = 0) {
         //LOG(LOG_INFO, "filter_unsupported_device: device_count=%u", device_count);
         result.out_uint16_le(static_cast<uint16_t>(rdpdr::Component::RDPDR_CTYP_CORE));
         result.out_uint16_le(static_cast<uint16_t>(rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE));
@@ -1042,6 +1051,7 @@ public:
 
             device_announce_header.receive(chunk);
             if (verbose) {
+                LOG(LOG_INFO, "rdp::filter_unsupported_device");
                 device_announce_header.log(LOG_INFO);
             }
 
@@ -1054,15 +1064,20 @@ public:
         }
 
         // Add proxy managed File System Drives.
-        real_device_count += file_system_drive_manager.AnnounceDrivePartially(result);
+        real_device_count += file_system_drive_manager.AnnounceDrivePartially(result,
+            device_capability_version_02_supported, verbose);
 
         result.set_out_uint32_le(real_device_count, device_count_offset);
 
         result.mark_end();
 
+        if (verbose) {
+            LOG(LOG_INFO, "rdp::filter_unsupported_device: real_device_count=%u", real_device_count);
+        }
         return real_device_count;
     }
 
+private:
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
                                    Stream & chunk, size_t length, uint32_t flags) {
         //LOG(LOG_INFO, "chunk.size=%u, length=%u flags=0x%X", chunk.size(), length, flags);
@@ -1082,16 +1097,28 @@ public:
 
         switch (packet_id) {
             case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
+            {
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::send_to_mod_rdpdr_channel: Client Announce Reply");
+
+                    rdpdr::ClientAnnounceReply client_announce_reply;
+
+                    client_announce_reply.receive(chunk);
+                    client_announce_reply.log(LOG_INFO);
                 }
+            }
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::send_to_mod_rdpdr_channel: Client Name Request");
+
+                    rdpdr::ClientNameRequest client_name_request;
+
+                    client_name_request.receive(chunk);
+                    client_name_request.log(LOG_INFO);
                 }
             break;
 
@@ -1123,7 +1150,12 @@ public:
                                                         chunk, DeviceCount,
                                                         result,
                                                         this->file_system_drive_manager,
+                                                        this->device_capability_version_02_supported,
                                                         this->verbose)) {
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "mod_rdp::send_to_mod_rdpdr_channel");
+                            hexdump_d(result.get_data(), result.size());
+                        }
                         this->send_to_channel(*rdpdr_channel, result, result.size(),
                                               flags);
                     }
@@ -1262,10 +1294,63 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY:
+            {
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::send_to_mod_rdpdr_channel: Client Core Capability Response");
                 }
+
+                const uint16_t numCapabilities = chunk.in_uint16_le();
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::send_to_mod_rdpdr_channel: numCapabilities=%u", numCapabilities);
+                }
+
+                chunk.in_skip_bytes(2); // Padding(2)
+
+                for (uint16_t idx_capabilities = 0; idx_capabilities < numCapabilities;
+                     ++idx_capabilities) {
+                    const uint16_t CapabilityType   = chunk.in_uint16_le();
+                    const uint16_t CapabilityLength = chunk.in_uint16_le();
+                    const uint32_t Version          = chunk.in_uint32_le();
+
+                    if (this->verbose) {
+                        LOG(LOG_INFO,
+                            "mod_rdp::send_to_mod_rdpdr_channel: "
+                                "CapabilityType=0x%04X CapabilityLength=%u Version=0x%X",
+                            CapabilityType, CapabilityLength, Version);
+                    }
+
+                    switch (CapabilityType) {
+                        case rdpdr::CAP_GENERAL_TYPE:
+                        {
+                            rdpdr::GeneralCapabilitySet general_capability_set;
+
+                            general_capability_set.receive(chunk, Version);
+
+                            if (this->verbose) {
+                                general_capability_set.log(LOG_INFO);
+                            }
+                        }
+                        break;
+
+                        default:
+                            chunk.in_skip_bytes(CapabilityLength -
+                                8 /* CapabilityType(2) + CapabilityLength(2) + Version(4) */);
+                        break;
+                    }
+
+                    if ((CapabilityType == rdpdr::CAP_DRIVE_TYPE) &&
+                        (Version == rdpdr::DRIVE_CAPABILITY_VERSION_02)) {
+                        this->device_capability_version_02_supported = true;
+                        if (this->verbose) {
+                            LOG(LOG_INFO,
+                                "mod_rdp::send_to_mod_rdpdr_channel: "
+                                    "Client supports DRIVE_CAPABILITY_VERSION_02.");
+                        }
+                    }
+                }
+            }
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE:
@@ -1291,6 +1376,7 @@ public:
         this->send_to_channel(*rdpdr_channel, chunk, length, flags);
     }   // send_to_mod_rdpdr_channel
 
+public:
     // Method used by session to transmit sesman answer for auth_channel
     virtual void send_auth_channel_data(const char * string_data) {
         //if (strncmp("Error", string_data, 5)) {
@@ -1521,39 +1607,68 @@ public:
 
                             const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
                             size_t num_channels = channel_list.size();
-                            if ((num_channels > 0) || this->auth_channel[0]) {
+                            if ((num_channels > 0) || this->auth_channel[0] ||
+                                this->file_system_drive_manager.HasManagedDrive()) {
                                 /* Here we need to put channel information in order
                                    to redirect channel data
                                    from client to server passing through the "proxy" */
                                 GCC::UserData::CSNet cs_net;
                                 cs_net.channelCount = num_channels;
+                                bool has_rdpdr_channel = false;
                                 for (size_t index = 0; index < num_channels; index++) {
                                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
-                                    if (this->authorization_channels.is_authorized(channel_list[index].name)) {
-                                        memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
+                                    if (this->authorization_channels.is_authorized(channel_item.name) ||
+                                        (!strcmp(channel_item.name, channel_names::rdpdr) &&
+                                         this->file_system_drive_manager.HasManagedDrive())
+                                       ) {
+                                        if (!strcmp(channel_item.name, channel_names::rdpdr)) {
+                                            has_rdpdr_channel = true;
+                                        }
+                                        memcpy(cs_net.channelDefArray[index].name, channel_item.name, 8);
                                     }
                                     else {
                                         memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
-                                        //memset(cs_net.channelDefArray[i].name, 0, 8);
                                     }
                                     cs_net.channelDefArray[index].options = channel_item.flags;
                                     CHANNELS::ChannelDef def;
                                     memcpy(def.name, cs_net.channelDefArray[index].name, 8);
                                     def.flags = channel_item.flags;
-                                    if (this->verbose & 16){
+                                    if (this->verbose & 16) {
                                         def.log(index);
                                     }
                                     this->mod_channel_list.push_back(def);
+                                }
+
+                                // Inject a new channel for file system virtual channel (rdpdr)
+                                if (!has_rdpdr_channel && this->file_system_drive_manager.HasManagedDrive()) {
+                                    ::snprintf(cs_net.channelDefArray[num_channels].name,
+                                             sizeof(cs_net.channelDefArray[num_channels].name),
+                                             "%s", channel_names::rdpdr);
+                                    cs_net.channelDefArray[num_channels].options =
+                                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                        | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
+                                    cs_net.channelCount++;
+                                    CHANNELS::ChannelDef def;
+                                    ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpdr);
+                                    def.flags = cs_net.channelDefArray[num_channels].options;
+                                    if (this->verbose & 16){
+                                        def.log(num_channels);
+                                    }
+                                    this->mod_channel_list.push_back(def);
+
+                                    this->proxy_managed_file_system_virtual_channel = true;
+                                }
+                                else {
+                                    this->proxy_managed_file_system_virtual_channel =
+                                        (has_rdpdr_channel &&
+                                         !this->authorization_channels.is_authorized(channel_names::rdpdr));
                                 }
 
                                 // Inject a new channel for auth_channel virtual channel (wablauncher)
                                 if (this->auth_channel[0]) {
                                     memcpy(cs_net.channelDefArray[num_channels].name, this->auth_channel, 8);
                                     cs_net.channelDefArray[num_channels].options =
-                                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED/*
-                                        | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP
-                                        | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
-                                        | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL*/;
+                                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
                                     cs_net.channelCount++;
                                     CHANNELS::ChannelDef def;
                                     memcpy(def.name, this->auth_channel, 8);
@@ -2425,7 +2540,7 @@ public:
                         SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
                         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
-                            if (this->verbose & 16){
+                            if (this->verbose & 16) {
                                 LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
                             }
 
@@ -2436,7 +2551,7 @@ public:
                             }
 
                             const CHANNELS::ChannelDef & mod_channel = this->mod_channel_list[num_channel_src];
-                            if (this->verbose & 16){
+                            if (this->verbose & 16) {
                                 mod_channel.log(num_channel_src);
                             }
 
@@ -2445,9 +2560,8 @@ public:
                             size_t chunk_size = sec.payload.in_remain();
 
                             // If channel name is our virtual channel, then don't send data to front
-                            if ( this->auth_channel[0] /*&& this->acl */
-                             && !strcmp(mod_channel.name, this->auth_channel)
-                            ) {
+                                 if (  this->auth_channel[0] /*&& this->acl */
+                                    && !strcmp(mod_channel.name, this->auth_channel)) {
                                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
                             }
                             // Clipboard is a Clipboard PDU
@@ -2873,6 +2987,7 @@ public:
                                                                 0,
                                                                 result,
                                                                 this->file_system_drive_manager,
+                                                                this->device_capability_version_02_supported,
                                                                 this->verbose)) {
                                 this->send_to_channel(*rdpdr_channel, result, result.size(),
                                                       CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
@@ -5803,14 +5918,14 @@ public:
         this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     }
 
-    void process_auth_event(const CHANNELS::ChannelDef & mod_channel,
+    void process_auth_event(const CHANNELS::ChannelDef & auth_channel,
             Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         std::string auth_channel_message(char_ptr_cast(stream.p), stream.in_remain());
 
         LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message.c_str());
 
         this->auth_channel_flags  = flags;
-        this->auth_channel_chanid = mod_channel.chanid;
+        this->auth_channel_chanid = auth_channel.chanid;
 
         if (this->acl) {
             this->acl->set_auth_channel_target(auth_channel_message.c_str());
@@ -5818,7 +5933,7 @@ public:
     }
 
     void process_cliprdr_event(
-            const CHANNELS::ChannelDef & mod_channel, Stream & stream,
+            const CHANNELS::ChannelDef & cliprdr_channel, Stream & stream,
             uint32_t length, uint32_t flags, size_t chunk_size) {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp server clipboard PDU");
@@ -5845,7 +5960,7 @@ public:
                 RDPECLIP::FormatListResponsePDU(response_ok).emit(out_s);
 
                 this->send_to_channel(
-                    mod_channel, out_s, out_s.size(),
+                    cliprdr_channel, out_s, out_s.size(),
                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                 );
 
@@ -5862,7 +5977,7 @@ public:
                 RDPECLIP::FormatDataResponsePDU(false).emit(out_s, "\0");
 
                 this->send_to_channel(
-                    mod_channel, out_s, out_s.size(),
+                    cliprdr_channel, out_s, out_s.size(),
                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                 );
 
@@ -5880,7 +5995,7 @@ public:
                 RDPECLIP::FileContentsResponse(response_ok).emit(out_s);
 
                 this->send_to_channel(
-                    mod_channel, out_s, out_s.size(),
+                    cliprdr_channel, out_s, out_s.size(),
                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                 );
 
@@ -5892,7 +6007,7 @@ public:
             this->update_total_clipboard_data(msgType, length);
             stream.p -= 2;  // msgType(2)
             this->send_to_front_channel(
-                mod_channel.name, stream.p, length, chunk_size, flags
+                cliprdr_channel.name, stream.p, length, chunk_size, flags
             );
         }
     }   // process_cliprdr_event
@@ -5920,7 +6035,7 @@ public:
         );
     }
 
-    void process_rdpdr_event(const CHANNELS::ChannelDef & dr_channel,
+    void process_rdpdr_event(const CHANNELS::ChannelDef & rdpdr_channel,
             Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::process_rdpdr_event: Server DR PDU.");
@@ -5936,16 +6051,163 @@ public:
 
         switch (sh_r.packet_id) {
             case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
+            {
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::process_rdpdr_event: Server Announce Request");
                 }
+
+                rdpdr::ServerAnnounceRequest server_announce_request;
+
+                server_announce_request.receive(stream);
+
+                if (this->verbose) {
+                    server_announce_request.log(LOG_INFO);
+                }
+
+                if (this->proxy_managed_file_system_virtual_channel) {
+                    REDASSERT(this->file_system_drive_manager.HasManagedDrive());
+
+                    {
+                        BStream out_stream(65535);
+
+                        rdpdr::SharedHeader sr_e(rdpdr::Component::RDPDR_CTYP_CORE,
+                            rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
+                        sr_e.emit(out_stream);
+
+                        rdpdr::ClientAnnounceReply client_announce_reply(
+                                0x0001, // VersionMajor, MUST be set to 0x0001.
+                                0x0006, // Windows XP SP3.
+                                // [MS-RDPEFS] - 3.2.5.1.3 Sending a Client Announce Reply Message.
+                                ((server_announce_request.VersionMinor() >= 12) ?
+                                 ::getpid() :
+                                 server_announce_request.ClientId())
+                            );
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "mod_rdp::process_rdpdr_event");
+                            client_announce_reply.log(LOG_INFO);
+                        }
+                        client_announce_reply.emit(out_stream);
+
+                        out_stream.mark_end();
+
+                        this->send_to_channel(rdpdr_channel, out_stream, out_stream.size(),
+                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                              | CHANNELS::CHANNEL_FLAG_LAST
+                                             );
+                    }
+
+                    {
+                        BStream out_stream(65535);
+
+                        rdpdr::SharedHeader sr_e(rdpdr::Component::RDPDR_CTYP_CORE,
+                            rdpdr::PacketId::PAKID_CORE_CLIENT_NAME);
+                        sr_e.emit(out_stream);
+
+                        rdpdr::ClientNameRequest client_name_nequest(
+                            this->client_name);
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "mod_rdp::process_rdpdr_event");
+                            client_name_nequest.log(LOG_INFO);
+                        }
+                        client_name_nequest.emit(out_stream);
+
+                        out_stream.mark_end();
+
+                        this->send_to_channel(rdpdr_channel, out_stream, out_stream.size(),
+                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                              | CHANNELS::CHANNEL_FLAG_LAST
+                                             );
+                    }
+                }
+            }
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_rdp::process_rdpdr_event: Server Client ID Confirm");
+                }
+
+                if (this->proxy_managed_file_system_virtual_channel) {
+                    REDASSERT(this->file_system_drive_manager.HasManagedDrive());
+
+                    {
+                        BStream out_stream(65535);
+
+                        const rdpdr::SharedHeader sr_e(rdpdr::Component::RDPDR_CTYP_CORE,
+                            rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY);
+                        sr_e.emit(out_stream);
+
+                        out_stream.out_uint16_le(5);    // 5 capabilities.
+                        out_stream.out_clear_bytes(2);  // Padding(2)
+
+                        // General capability set
+                        const uint32_t general_capability_version =
+                            rdpdr::GENERAL_CAPABILITY_VERSION_02;
+                        out_stream.out_uint16_le(rdpdr::CAP_GENERAL_TYPE);
+                        out_stream.out_uint16_le(
+                                rdpdr::GeneralCapabilitySet::size(general_capability_version) +
+                                8   // CapabilityType(2) + CapabilityLength(2) + Version(4)
+                            );
+                        out_stream.out_uint32_le(general_capability_version);
+
+                        rdpdr::GeneralCapabilitySet general_capability_set(
+                                0x2,        // osType
+                                0x50001,    // osVersion
+                                0x1,        // protocolMajorVersion
+                                0xC,        // protocolMinorVersion - RDP Client 6.0 and 6.1
+                                0xFFFF,     // ioCode1
+                                0x0,        // ioCode2
+                                0x7,        // extendedPDU -
+                                            //     RDPDR_DEVICE_REMOVE_PDUS(1) |
+                                            //     RDPDR_CLIENT_DISPLAY_NAME_PDU(2) |
+                                            //     RDPDR_USER_LOGGEDON_PDU(4)
+                                0x0,        // extraFlags1
+                                0x0,        // extraFlags2
+                                0           // SpecialTypeDeviceCap
+                            );
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "mod_rdp::process_rdpdr_event");
+                            general_capability_set.log(LOG_INFO);
+                        }
+                        general_capability_set.emit(out_stream, general_capability_version);
+
+                        // Print capability set
+                        out_stream.out_uint16_le(rdpdr::CAP_PRINTER_TYPE);
+                        out_stream.out_uint16_le(
+                                8   // CapabilityType(2) + CapabilityLength(2) + Version(4)
+                            );
+                        out_stream.out_uint32_le(rdpdr::PRINT_CAPABILITY_VERSION_01);
+
+                        // Port capability set
+                        out_stream.out_uint16_le(rdpdr::CAP_PORT_TYPE);
+                        out_stream.out_uint16_le(
+                                8   // CapabilityType(2) + CapabilityLength(2) + Version(4)
+                            );
+                        out_stream.out_uint32_le(rdpdr::PORT_CAPABILITY_VERSION_01);
+
+                        // Drive capability set
+                        out_stream.out_uint16_le(rdpdr::CAP_DRIVE_TYPE);
+                        out_stream.out_uint16_le(
+                                8   // CapabilityType(2) + CapabilityLength(2) + Version(4)
+                            );
+                        out_stream.out_uint32_le(rdpdr::DRIVE_CAPABILITY_VERSION_01);
+
+                        // Smart card capability set
+                        out_stream.out_uint16_le(rdpdr::CAP_SMARTCARD_TYPE);
+                        out_stream.out_uint16_le(
+                                8   // CapabilityType(2) + CapabilityLength(2) + Version(4)
+                            );
+                        out_stream.out_uint32_le(rdpdr::DRIVE_CAPABILITY_VERSION_01);
+
+                        out_stream.mark_end();
+
+                        this->send_to_channel(rdpdr_channel, out_stream, out_stream.size(),
+                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                              | CHANNELS::CHANNEL_FLAG_LAST
+                                             );
+                    }
                 }
             break;
 
@@ -6041,7 +6303,7 @@ public:
                     this->file_system_drive_manager.ProcessDeviceIORequest(
                         device_io_request, stream, out_stream, out_flags, this->verbose);
                     if (out_stream.size()) {
-                        this->send_to_channel(dr_channel, out_stream, out_stream.size(),
+                        this->send_to_channel(rdpdr_channel, out_stream, out_stream.size(),
                             out_flags);
                     }
 
@@ -6069,8 +6331,7 @@ public:
                 this->client_device_list_announce_timer_enabled = true;
                 if (this->verbose) {
                     LOG(LOG_INFO,
-                        "mod_rdp::send_to_mod_rdpdr_channel: "
-                            "Client Device List Announce timer is enabled.");
+                        "mod_rdp::process_rdpdr_event: Client Device List Announce timer is enabled.");
                 }
             break;
 
@@ -6090,11 +6351,13 @@ public:
             break;
         }
 
-        stream.p = saved_stream_p;
+        if (!this->proxy_managed_file_system_virtual_channel) {
+            stream.p = saved_stream_p;
 
-        this->send_to_front_channel(
-            dr_channel.name, stream.p, length, chunk_size, flags
-        );
+            this->send_to_front_channel(
+                rdpdr_channel.name, stream.p, length, chunk_size, flags
+            );
+        }
     }
 };
 

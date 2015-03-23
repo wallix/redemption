@@ -38,7 +38,7 @@ class ManagedFileSystemObject {
 public:
     virtual ~ManagedFileSystemObject() = default;
 
-    virtual uint32_t FileId() = 0;
+    virtual uint32_t FileId() const = 0;
 
     virtual bool ProcessServerCreateDriveRequest(
         rdpdr::DeviceIORequest const & device_io_request,
@@ -84,7 +84,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
         }
     }
 
-    virtual uint32_t FileId() override {
+    virtual uint32_t FileId() const override {
         REDASSERT(this->dir);
         return static_cast<uint32_t>(::dirfd(this->dir));
     }
@@ -227,6 +227,13 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
             this->pattern = (++separator);
         }
 
+        if (verbose) {
+            LOG(LOG_INFO,
+                "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest: "
+                    "full_path=\"%s\" pattern=\"%s\"",
+                this->full_path.c_str(), this->pattern.c_str());
+        }
+
         struct dirent * ent = NULL;
 
         do {
@@ -256,7 +263,9 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
         }
         else {
             std::string file_full_path = this->full_path;
-            file_full_path += '/';
+            if ((file_full_path.back() != '/') && (ent->d_name[0] != '/')) {
+                file_full_path += '/';
+            }
             file_full_path += ent->d_name;
             if (verbose) {
                 LOG(LOG_INFO,
@@ -313,13 +322,19 @@ class ManagedFile : public ManagedFileSystemObject {
     int fd = -1;
 
 public:
+    ManagedFile() {
+LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ManagedFile(): <%p>", this);
+    }
+
     virtual ~ManagedFile() {
+LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
+
         if (this->fd != -1) {
             ::close(this->fd);
         }
     }
 
-    virtual uint32_t FileId() override {
+    virtual uint32_t FileId() const override {
         REDASSERT(this->fd > -1);
         return static_cast<uint32_t>(this->fd);
     }
@@ -331,7 +346,91 @@ public:
             uint32_t & out_flags, uint32_t verbose) override {
         REDASSERT(this->fd == -1);
 
-        return false;
+        std::string full_path = path;
+        full_path += device_create_request.Path();
+
+        if (verbose) {
+            LOG(LOG_INFO,
+                "ManagedFile::ProcessServerCreateDriveRequest: <%p> full_path=\"%s\"",
+                this, full_path.c_str());
+        }
+
+        int open_flags = O_LARGEFILE;
+
+        const uint32_t DesiredAccess = device_create_request.DesiredAccess();
+
+        if (((DesiredAccess & (smb2::FILE_READ_DATA | smb2::GENERIC_READ)) &&
+             (DesiredAccess & (smb2::FILE_WRITE_DATA | smb2::GENERIC_WRITE))) ||
+            (DesiredAccess & smb2::GENERIC_ALL)) {
+            open_flags |= O_RDWR;
+        }
+        else if (DesiredAccess & (smb2::FILE_WRITE_DATA | smb2::GENERIC_WRITE)) {
+            open_flags |= O_WRONLY;
+        }
+        else/* if (DesiredAccess & (smb2::FILE_READ_DATA | smb2::GENERIC_READ))*/ {
+            open_flags |= O_RDONLY;
+        }
+
+        if (DesiredAccess & smb2::FILE_APPEND_DATA) {
+            open_flags |= O_APPEND;
+        }
+
+        const uint32_t CreateDisposition = device_create_request.CreateDisposition();
+        if (CreateDisposition == smb2::FILE_SUPERSEDE) {
+            open_flags |= (O_TRUNC | O_CREAT);
+        }
+        else if (CreateDisposition == smb2::FILE_CREATE) {
+            open_flags |= (O_CREAT | O_EXCL);
+        }
+        else if (CreateDisposition == smb2::FILE_OPEN_IF) {
+            open_flags |= O_CREAT;
+        }
+        else if (CreateDisposition == smb2::FILE_OVERWRITE) {
+            open_flags |= O_TRUNC;
+        }
+        else if (CreateDisposition == smb2::FILE_OVERWRITE_IF) {
+            open_flags |= (O_TRUNC | O_CREAT);
+        }
+
+        this->fd = ::open(full_path.c_str(), open_flags,
+            S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        if (verbose) {
+            LOG(LOG_INFO,
+                "ManagedFile::ProcessServerCreateDriveRequest: <%p> FileId=%d",
+                this, this->fd);
+        }
+
+        const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
+                                       rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+        sh_s.emit(out_stream);
+
+        const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+                device_io_request.CompletionId(),
+                (
+                 (this->fd != -1)  ?
+                 0x00000000 :   // STATUS_SUCCESS
+                 0xC0000001     // STATUS_UNSUCCESSFUL
+                )
+            );
+        if (verbose) {
+            LOG(LOG_INFO, "ManagedFile::ProcessServerCreateDriveRequest");
+            device_io_response.log(LOG_INFO);
+        }
+        device_io_response.emit(out_stream);
+
+        const rdpdr::DeviceCreateResponse device_create_response(
+                static_cast<uint32_t>(this->fd),
+                0x0
+            );
+        if (verbose) {
+            LOG(LOG_INFO, "ManagedFile::ProcessServerCreateDriveRequest");
+            device_create_response.log(LOG_INFO);
+        }
+        device_create_response.emit(out_stream);
+
+        out_stream.mark_end();
+
+        return (this->fd != -1);
     }
 
     virtual void ProcessServerCloseDriveRequest(
@@ -339,6 +438,27 @@ public:
             Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
             uint32_t verbose) {
         REDASSERT(this->fd != -1);
+
+        ::close(this->fd);
+
+        this->fd = -1;
+
+        const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
+                                       rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+        sh_s.emit(out_stream);
+
+        const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+            device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
+        if (verbose) {
+            LOG(LOG_INFO, "ManagedFile::ProcessServerCloseDriveRequest");
+            device_io_response.log(LOG_INFO);
+        }
+        device_io_response.emit(out_stream);
+
+        // Device Close Response (DR_CLOSE_RSP)
+        out_stream.out_clear_bytes(5);  // Padding(5);
+
+        out_stream.mark_end();
 
         REDASSERT(this->fd == -1);
     }
@@ -359,7 +479,7 @@ public:
         // Unsupported.
         REDASSERT(false);
     }
-};
+};  // ManagedFile
 
 class FileSystemDriveManager {
     const uint32_t FIRST_MANAGED_DRIVE_ID = 32767;
@@ -388,7 +508,8 @@ public:
 */
     }
 
-    uint32_t AnnounceDrivePartially(Stream & client_device_list_announce) {
+    uint32_t AnnounceDrivePartially(Stream & client_device_list_announce,
+            bool device_capability_version_02_supported, uint32_t verbose) {
         uint32_t announced_drive_count = 0;
 
         for (managed_drive_collection_type::iterator iter = this->managed_drives.begin();
@@ -397,7 +518,15 @@ public:
             rdpdr::DeviceAnnounceHeader device_announce_header(rdpdr::RDPDR_DTYP_FILESYSTEM,
                                                                std::get<0>(*iter),
                                                                std::get<1>(*iter).c_str(),
-                                                               nullptr, 0);
+                                                               reinterpret_cast<uint8_t const *>(
+                                                                   std::get<1>(*iter).c_str()),
+                                                               std::get<1>(*iter).length() + 1
+                                                              );
+
+            if (verbose) {
+                LOG(LOG_INFO, "FileSystemDriveManager::AnnounceDrivePartially");
+                device_announce_header.log(LOG_INFO);
+            }
 
             device_announce_header.emit(client_device_list_announce);
 
@@ -420,9 +549,13 @@ private:
     }
 
 public:
-    bool IsManagedDrive(uint32_t DeviceId) {
+    bool HasManagedDrive() const {
+        return (this->managed_drives.size() > 0);
+    }
+
+    bool IsManagedDrive(uint32_t DeviceId) const {
         if (DeviceId >= FIRST_MANAGED_DRIVE_ID) {
-            for (managed_drive_collection_type::iterator iter = this->managed_drives.begin();
+            for (managed_drive_collection_type::const_iterator iter = this->managed_drives.begin();
                  iter != this->managed_drives.end(); ++iter) {
                 if (DeviceId == std::get<0>(*iter)) {
                     return true;
@@ -445,14 +578,22 @@ private:
             device_create_request.log(LOG_INFO);
         }
 
-        std::string fullpath = path;
-        fullpath += '/';
-        fullpath += device_create_request.Path();
+        std::string full_path    = path;
+        std::string request_path = device_create_request.Path();
+        if ((full_path.back() != '/') && (request_path.front() != '/')) {
+            full_path += '/';
+        }
+        full_path += request_path;
+        if (verbose) {
+            LOG(LOG_INFO,
+                "FileSystemDriveManager::ProcessServerCreateDriveRequest: full_path=\"%s\"",
+                full_path.c_str());
+        }
 
         bool is_directory = false;
 
         struct stat sb;
-        if (::stat(fullpath.c_str(), &sb) == 0) {
+        if (::stat(full_path.c_str(), &sb) == 0) {
             is_directory = ((sb.st_mode & S_IFMT) == S_IFDIR);
         }
         else {
@@ -473,7 +614,17 @@ private:
             }
         }
         else {
-            REDASSERT(false);
+            std::unique_ptr<ManagedFileSystemObject> managed_file_system_object =
+                std::make_unique<ManagedFile>();
+
+            if (managed_file_system_object->ProcessServerCreateDriveRequest(
+                    device_io_request, device_create_request, path, in_stream,
+                    out_stream, out_flags, verbose)) {
+                this->managed_file_system_objects.push_back(std::make_tuple(
+                    managed_file_system_object->FileId(),
+                    std::move(managed_file_system_object)
+                    ));
+            }
         }
     }
 

@@ -773,6 +773,8 @@ public:
                                            , this->front.keymap.key_flags
                                            , this->ini.debug.mod_rdp
                                            );
+                mod_rdp_params.client_name                         = this->front.client_info.hostname;
+
                 //mod_rdp_params.enable_tls                          = true;
                 if (!mod_rdp_params.target_password[0]) {
                     mod_rdp_params.enable_nla                      = false;
