@@ -2079,6 +2079,173 @@ public:
     }
 };
 
+// [MS-RDPEFS] - 2.2.3.3.6 Server Drive Query Volume Information Request
+//  (DR_DRIVE_QUERY_VOLUME_INFORMATION_REQ)
+// =====================================================================
+
+// The server issues a query volume information request on a redirected file
+//  system device.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        DeviceIoRequest                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                       FsInformationClass                      |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                  QueryVolumeBuffer (variable)                 |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST (section 2.2.1.4)
+//  header. The MajorFunction field in the DR_DEVICE_IOREQUEST header MUST be
+//  set to IRP_MJ_QUERY_VOLUME_INFORMATION.
+
+// FsInformationClass (4 bytes): A 32-bit unsigned integer. The possible
+//  values for this field are specified in [MS-FSCC] section 2.5. This field
+//  MUST contain one of the following values.
+
+//  +----------------------------+---------------------------------------------+
+//  | Value                      | Meaning                                     |
+//  +----------------------------+---------------------------------------------+
+//  | FileFsVolumeInformation    | Used to query information for a volume on   |
+//  | 0x00000001                 | which a file system is mounted.             |
+//  +----------------------------+---------------------------------------------+
+//  | FileFsSizeInformation      | Used to query sector size information for a |
+//  | 0x00000003                 | file system volume.                         |
+//  +----------------------------+---------------------------------------------+
+//  | FileFsAttributeInformation | Used to query attribute information for a   |
+//  | 0x00000005                 | file system.                                |
+//  +----------------------------+---------------------------------------------+
+//  | FileFsFullSizeInformation  | Used to query sector size information for a |
+//  | 0x00000007                 | file system volume.                         |
+//  +----------------------------+---------------------------------------------+
+//  | FileFsDeviceInformation    | Used to query device information for a file |
+//  | 0x00000004                 | system volume.                              |
+//  +----------------------------+---------------------------------------------+
+
+enum {
+      FileFsVolumeInformation    = 0x00000001
+    , FileFsSizeInformation      = 0x00000003
+    , FileFsAttributeInformation = 0x00000005
+    , FileFsFullSizeInformation  = 0x00000007
+    , FileFsDeviceInformation    = 0x00000004
+};
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of
+//  bytes in the QueryVolumeBuffer field.
+
+// Padding (24 bytes): An array of 24 bytes. This field is unused and can be
+//  set to any value. This field MUST be ignored on receipt.
+
+// QueryVolumeBuffer (variable): A variable-length array of bytes. The size
+//  of the array is specified by the Length field. The content of this field
+//  is based on the value of the FsInformationClass field, which determines
+//  the different structures that MUST be contained in the QueryVolumeBuffer
+//  field. For a complete list of these structures, refer to [MS-FSCC]
+//  section 2.5. The "File system information class" table defines all the
+//  possible values for the FsInformationClass field.
+
+class ServerDriveQueryVolumeInformationRequest {
+    uint32_t FsInformationClass_ = 0;
+
+    StaticStream query_volume_buffer;
+
+public:
+    ServerDriveQueryVolumeInformationRequest() = default;
+
+    REDEMPTION_NON_COPYABLE(ServerDriveQueryVolumeInformationRequest);
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->FsInformationClass_);
+
+        stream.out_uint32_le(this->query_volume_buffer.get_capacity());
+
+        stream.out_clear_bytes(24); // Padding(24)
+
+        stream.out_copy_bytes(this->query_volume_buffer.get_data(),
+            this->query_volume_buffer.get_capacity());
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 32;  // FsInformationClass(4) + Length(4) + Padding(24)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ServerDriveQueryVolumeInformationRequest (0): "
+                        "expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->FsInformationClass_ = stream.in_uint32_le();
+
+        const uint32_t Length = stream.in_uint32_le();
+
+        stream.in_skip_bytes(24);   // Padding(24)
+
+        {
+            const unsigned expected = Length;  // QueryVolumeBuffer(variable)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ServerDriveQueryVolumeInformationRequest (1): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->query_volume_buffer.resize(stream.p, Length);
+        stream.in_skip_bytes(Length);
+    }
+
+    inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "ServerDriveQueryVolumeInformationRequest: FsInformationClass=%u Length=%zu",
+            this->FsInformationClass_, this->query_volume_buffer.get_capacity());
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
 // [MS-RDPEFS] - 2.2.3.3.10 Server Drive Query Directory Request
 //  (DR_DRIVE_QUERY_DIRECTORY_REQ)
 // =============================================================
