@@ -456,7 +456,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
                 this, this->fd, ((this->fd == -1) ? last_error : 0));
         }
 
-        const uint32_t IoStatus = [last_error] (int fd) -> uint32_t {
+        const uint32_t IoStatus = [] (int fd, int last_error) -> uint32_t {
             if (fd > -1) { return 0x00000000 /* STATUS_SUCCESS */; }
 
             if (last_error == ENOENT) {
@@ -464,7 +464,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
             }
 
             return 0xC0000001;  // STATUS_UNSUCCESSFUL
-        } (this->fd);
+        } (this->fd, last_error);
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
