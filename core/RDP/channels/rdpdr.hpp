@@ -2178,6 +2178,7 @@ public:
         this->FsInformationClass_ = stream.in_uint32_le();
 
         const uint32_t Length = stream.in_uint32_le();
+        REDASSERT(!Length);
 
         stream.in_skip_bytes(24);   // Padding(24)
 
@@ -2345,6 +2346,7 @@ public:
         this->FsInformationClass_ = stream.in_uint32_le();
 
         const uint32_t Length = stream.in_uint32_le();
+        REDASSERT(!Length);
 
         stream.in_skip_bytes(24);   // Padding(24)
 

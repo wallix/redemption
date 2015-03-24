@@ -826,6 +826,286 @@ public:
     }
 };  // FileStandardInformation
 
+// [MS-FSCC] - 2.5.1 FileFsAttributeInformation
+// ============================================
+
+// This information class is used to query attribute information for a file
+//  system.
+
+// A FILE_FS_ATTRIBUTE_INFORMATION data element, defined as follows, is
+//  returned by the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                      FileSystemAttributes                     |
+// +---------------------------------------------------------------+
+// |                   MaximumComponentNameLength                  |
+// +---------------------------------------------------------------+
+// |                      FileSystemNameLength                     |
+// +---------------------------------------------------------------+
+// |                   FileSystemName (variable)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// FileSystemAttributes (4 bytes): A 32-bit unsigned integer that contains a
+//  bitmask of flags that specify attributes of the specified file system as
+//  a combination of the following flags. The value of this field MUST be a
+//  bitwise OR of zero or more of the following with the exception that
+//  FILE_FILE_COMPRESSION and FILE_VOLUME_IS_COMPRESSED cannot both be set.
+//  Any flag values not explicitly mentioned here can be set to any value,
+//  and MUST be ignored.
+
+//  +-----------------------------------+--------------------------------------+
+//  | Value                             | Meaning                              |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_SUPPORTS_USN_JOURNAL         | The file system implements a USN     |
+//  | 0x02000000                        | change journal.<126>                 |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_SUPPORTS_OPEN_BY_FILE_ID     | The file system supports opening a   |
+//  | 0x01000000                        | file by FileID or ObjectID.<127>     |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_SUPPORTS_EXTENDED_ATTRIBUTES | The file system persistently stores  |
+//  | 0x00800000                        | Extended Attribute information per   |
+//  |                                   | file.<128>                           |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_SUPPORTS_HARD_LINKS          | The file system supports hard        |
+//  | 0x00400000                        | linking files.<129>                  |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_SUPPORTS_TRANSACTIONS        | The volume supports                  |
+//  | 0x00200000                        | transactions.<130>                   |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_SEQUENTIAL_WRITE_ONCE        | The underlying volume is write once. |
+//  | 0x00100000                        |                                      |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_READ_ONLY_VOLUME             | If set, the volume has been mounted  |
+//  | 0x00080000                        | in read-only mode.<131>              |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_NAMED_STREAMS                | The file system supports named       |
+//  | 0x00040000                        | streams.                             |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_SUPPORTS_ENCRYPTION          | The file system supports the         |
+//  | 0x00020000                        | Encrypted File System (EFS).<132>    |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_SUPPORTS_OBJECT_IDS          | The file system supports object      |
+//  | 0x00010000                        | identifiers.                         |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_VOLUME_IS_COMPRESSED         | The specified volume is a compressed |
+//  | 0x00008000                        | volume. This flag is incompatible    |
+//  |                                   | with the FILE_FILE_COMPRESSION flag. |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_SUPPORTS_REMOTE_STORAGE      | The file system supports remote      |
+//  | 0x00000100                        | storage.<133>                        |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_SUPPORTS_REPARSE_POINTS      | The file system supports reparse     |
+//  | 0x00000080                        | points.                              |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_SUPPORTS_SPARSE_FILES        | The file system supports sparse      |
+//  | 0x00000040                        | files.                               |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_VOLUME_QUOTAS                | The file system supports per-user    |
+//  | 0x00000020                        | quotas.                              |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_FILE_COMPRESSION             | The file volume supports file-based  |
+//  | 0x00000010                        | compression. This flag is            |
+//  |                                   | incompatible with the                |
+//  |                                   | FILE_VOLUME_IS_COMPRESSED flag.      |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_PERSISTENT_ACLS              | The file system preserves and        |
+//  | 0x00000008                        | enforces access control lists        |
+//  |                                   | (ACLs).                              |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_UNICODE_ON_DISK              | The file system supports Unicode in  |
+//  | 0x00000004                        | file and directory names. This flag  |
+//  |                                   | applies only to file and directory   |
+//  |                                   | names; the file system neither       |
+//  |                                   | restricts nor interprets the bytes   |
+//  |                                   | of data within a file.               |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_CASE_PRESERVED_NAMES         | The file system preserves the case   |
+//  | 0x00000002                        | of file names when it places a name  |
+//  |                                   | on disk.                             |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_CASE_SENSITIVE_SEARCH        | The file system supports             |
+//  | 0x00000001                        | case-sensitive file names when       |
+//  |                                   | looking up (searching for) file      |
+//  |                                   | names in a directory.                |
+//  +-----------------------------------+--------------------------------------+
+//  | FILE_SUPPORT_INTEGRITY_STREAMS    | The file system supports integrity   |
+//  | 0x04000000                        | streams.<134>                        |
+//  +-----------------------------------+--------------------------------------+
+
+enum {
+      FILE_SUPPORTS_USN_JOURNAL         = 0x02000000
+    , FILE_SUPPORTS_OPEN_BY_FILE_ID     = 0x01000000
+    , FILE_SUPPORTS_EXTENDED_ATTRIBUTES = 0x00800000
+    , FILE_SUPPORTS_HARD_LINKS          = 0x00400000
+    , FILE_SUPPORTS_TRANSACTIONS        = 0x00200000
+    , FILE_SEQUENTIAL_WRITE_ONCE        = 0x00100000
+    , FILE_READ_ONLY_VOLUME             = 0x00080000
+    , FILE_NAMED_STREAMS                = 0x00040000
+    , FILE_SUPPORTS_ENCRYPTION          = 0x00020000
+    , FILE_SUPPORTS_OBJECT_IDS          = 0x00010000
+    , FILE_VOLUME_IS_COMPRESSED         = 0x00008000
+    , FILE_SUPPORTS_REMOTE_STORAGE      = 0x00000100
+    , FILE_SUPPORTS_REPARSE_POINTS      = 0x00000080
+    , FILE_SUPPORTS_SPARSE_FILES        = 0x00000040
+    , FILE_VOLUME_QUOTAS                = 0x00000020
+    , FILE_FILE_COMPRESSION             = 0x00000010
+    , FILE_PERSISTENT_ACLS              = 0x00000008
+    , FILE_UNICODE_ON_DISK              = 0x00000004
+    , FILE_CASE_PRESERVED_NAMES         = 0x00000002
+    , FILE_CASE_SENSITIVE_SEARCH        = 0x00000001
+    , FILE_SUPPORT_INTEGRITY_STREAMS    = 0x04000000
+};
+
+// MaximumComponentNameLength (4 bytes): A 32-bit signed integer that
+//  contains the maximum file name component length, in bytes, supported by
+//  the specified file system. The value of this field MUST be greater than
+//  zero and MUST be no more than 510.<135>
+
+// FileSystemNameLength (4 bytes): A 32-bit unsigned integer that contains
+//  the length, in bytes, of the file system name in the FileSystemName
+//  field. The value of this field MUST be greater than 0.
+
+// FileSystemName (variable): A variable-length Unicode field containing the
+//  name of the file system. This field is not null-terminated and MUST be
+//  handled as a sequence of FileSystemNameLength bytes. This field is
+//  intended to be informative only. A client SHOULD NOT infer file system
+//  type specific behavior from this field.<136>
+
+// This operation returns a status code, as specified in [MS-ERREF] section
+//  2.3. The status code returned directly by the function that processes
+//  this file information class MUST be STATUS_SUCCESS or one of the
+//  following.
+
+//  +-----------------------------+--------------------------------------------+
+//  | Error code                  | Meaning                                    |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
+//  | 0xC0000004                  | does not match the length that is required |
+//  |                             | for the specified information class.       |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_BUFFER_OVERFLOW      | The output buffer was filled before all of |
+//  | 0x80000005                  | the file system information could be       |
+//  |                             | returned; only a portion of the            |
+//  |                             | FileSystemName field is returned.          |
+//  +-----------------------------+--------------------------------------------+
+
+class FileFsAttributeInformation {
+    uint32_t FileSystemAttributes;
+    uint32_t MaximumComponentNameLength;
+
+    std::string file_system_name;
+
+public:
+    FileFsAttributeInformation() = default;
+
+    FileFsAttributeInformation(uint32_t FileSystemAttributes,
+                               uint32_t MaximumComponentNameLength,
+                               const char * file_system_name)
+    : FileSystemAttributes(FileSystemAttributes)
+    , MaximumComponentNameLength(MaximumComponentNameLength)
+    , file_system_name(file_system_name) {}
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->FileSystemAttributes);
+        stream.out_sint32_le(this->MaximumComponentNameLength);
+
+        const size_t maximum_length_of_FileSystemName_in_bytes = this->file_system_name.length() * 2;
+
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
+                    maximum_length_of_FileSystemName_in_bytes));
+        const size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_system_name.c_str()), unicode_data,
+            maximum_length_of_FileSystemName_in_bytes);
+
+        stream.out_uint32_le(size_of_unicode_data); // FileSystemNameLength(4)
+
+        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 12;   // FileSystemAttributes(4) + MaximumComponentNameLength(4) +
+                                            //     FileSystemNameLength(4)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileFsAttributeInformation (0): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+
+        this->FileSystemAttributes       = stream.in_uint32_le();
+        this->MaximumComponentNameLength = stream.in_sint32_le();
+
+        const uint32_t FileSystemNameLength = stream.in_uint32_le();
+
+        {
+            const unsigned expected = FileSystemNameLength; // FileSystemName(variable)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileFsAttributeInformation (1): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(FileSystemNameLength));
+
+        stream.in_copy_bytes(unicode_data, FileSystemNameLength);
+
+        const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+        const size_t size_of_utf8_string =
+            FileSystemNameLength / 2 * maximum_length_of_utf8_character_in_bytes;
+        uint8_t * const utf8_string = static_cast<uint8_t *>(
+            ::alloca(size_of_utf8_string));
+        const size_t length_of_utf8_string = ::UTF16toUTF8(
+            unicode_data, FileSystemNameLength / 2, utf8_string, size_of_utf8_string);
+        this->file_system_name.assign(::char_ptr_cast(utf8_string),
+            length_of_utf8_string);
+    }
+
+    inline size_t size() const {
+        const size_t size = 12; // FileSystemAttributes(4) + MaximumComponentNameLength(4) +
+                                //     FileSystemNameLength(4)
+
+        const size_t maximum_length_of_FileSystemName_in_bytes =
+            this->file_system_name.length() * 2;
+
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
+                    maximum_length_of_FileSystemName_in_bytes));
+        const size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_system_name.c_str()),
+            unicode_data, maximum_length_of_FileSystemName_in_bytes);
+
+        return size + size_of_unicode_data;
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "FileFsAttributeInformation: FileSystemAttributes=0x%X "
+                " MaximumComponentNameLength=%u FileSystemName=\"%s\"",
+            this->FileSystemAttributes, this->MaximumComponentNameLength,
+            this->file_system_name.c_str());
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};  // FileFsAttributeInformation
+
 // [MS-FSCC] - 2.5.9 FileFsVolumeInformation
 // =========================================
 
@@ -897,9 +1177,9 @@ public:
 //  +-----------------------------+--------------------------------------------+
 
 class FileFsVolumeInformation {
-    uint64_t VolumeCreationTime;
-    uint32_t VolumeSerialNumber;
-    uint8_t  SupportsObjects;
+    uint64_t VolumeCreationTime = 0;
+    uint32_t VolumeSerialNumber = 0;
+    uint8_t  SupportsObjects    = 0;
 
     std::string volume_label;
 
@@ -993,8 +1273,8 @@ public:
     }
 
     inline size_t size() const {
-        size_t size = 17;   // VolumeCreationTime(8) + VolumeSerialNumber(4) +
-                            //     VolumeLabelLength(4) + SupportsObjects(1)
+        const size_t size = 17; // VolumeCreationTime(8) + VolumeSerialNumber(4) +
+                                //     VolumeLabelLength(4) + SupportsObjects(1)
 
         // Reserved(1), MUST NOT be transmitted.
 
