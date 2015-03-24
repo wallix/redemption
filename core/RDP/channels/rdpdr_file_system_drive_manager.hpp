@@ -42,11 +42,11 @@ public:
 
     virtual uint32_t FileId() const = 0;
 
-    virtual bool ProcessServerCreateDriveRequest(
+    virtual void ProcessServerCreateDriveRequest(
         rdpdr::DeviceIORequest const & device_io_request,
         rdpdr::DeviceCreateRequest const & device_create_request,
         const char * path, Stream & in_stream, Stream & out_stream,
-        uint32_t & out_flags, uint32_t verbose) = 0;
+        uint32_t & out_flags, bool & out_drive_created, uint32_t verbose) = 0;
 
     virtual void ProcessServerCloseDriveRequest(
         rdpdr::DeviceIORequest const & device_io_request, const char * path,
@@ -103,12 +103,14 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
         return static_cast<uint32_t>(::dirfd(this->dir));
     }
 
-    virtual bool ProcessServerCreateDriveRequest(
+    virtual void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceCreateRequest const & device_create_request,
             const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) override {
+            uint32_t & out_flags, bool & out_drive_created, uint32_t verbose) override {
         REDASSERT(!this->dir);
+
+        out_drive_created = false;
 
         this->full_path = path;
         this->full_path += device_create_request.Path();
@@ -157,7 +159,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
 
         out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
-        return (this->dir != nullptr);
+        out_drive_created = (this->dir != nullptr);
     }
 
     virtual void ProcessServerCloseDriveRequest(
@@ -390,12 +392,14 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
         return static_cast<uint32_t>(this->fd);
     }
 
-    virtual bool ProcessServerCreateDriveRequest(
+    virtual void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceCreateRequest const & device_create_request,
             const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) override {
+            uint32_t & out_flags, bool & out_drive_created, uint32_t verbose) override {
         REDASSERT(this->fd == -1);
+
+        out_drive_created = false;
 
         std::string full_path = path;
         full_path += device_create_request.Path();
@@ -490,8 +494,8 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
 
         out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
-        return (this->fd != -1);
-    }
+        out_drive_created = (this->fd != -1);
+    }   // ProcessServerCreateDriveRequest
 
     virtual void ProcessServerCloseDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
@@ -856,9 +860,11 @@ private:
             std::unique_ptr<ManagedFileSystemObject> managed_file_system_object =
                 std::make_unique<ManagedDirectory>();
 
-            if (managed_file_system_object->ProcessServerCreateDriveRequest(
+            bool drive_created;
+            managed_file_system_object->ProcessServerCreateDriveRequest(
                     device_io_request, device_create_request, path, in_stream,
-                    out_stream, out_flags, verbose)) {
+                    out_stream, out_flags, drive_created, verbose);
+            if (drive_created) {
                 this->managed_file_system_objects.push_back(std::make_tuple(
                     managed_file_system_object->FileId(),
                     std::move(managed_file_system_object)
@@ -869,9 +875,11 @@ private:
             std::unique_ptr<ManagedFileSystemObject> managed_file_system_object =
                 std::make_unique<ManagedFile>();
 
-            if (managed_file_system_object->ProcessServerCreateDriveRequest(
+            bool drive_created;
+            managed_file_system_object->ProcessServerCreateDriveRequest(
                     device_io_request, device_create_request, path, in_stream,
-                    out_stream, out_flags, verbose)) {
+                    out_stream, out_flags, drive_created, verbose);
+            if (drive_created) {
                 this->managed_file_system_objects.push_back(std::make_tuple(
                     managed_file_system_object->FileId(),
                     std::move(managed_file_system_object)
