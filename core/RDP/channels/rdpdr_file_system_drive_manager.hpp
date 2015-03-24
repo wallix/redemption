@@ -76,6 +76,30 @@ public:
         rdpdr::ServerDriveQueryDirectoryRequest const & server_drive_query_directory_request,
         const char * path, Stream & in_stream, Stream & out_stream,
         uint32_t & out_flags, uint32_t verbose) = 0;
+
+    static void MakeClientDriveIoUnsuccessfulResponse(
+            rdpdr::DeviceIORequest const & device_io_request,
+            Stream & out_stream, uint32_t & out_flags, const char * message,
+            uint32_t verbose) {
+        const rdpdr::SharedHeader shared_header(rdpdr::Component::RDPDR_CTYP_CORE,
+                                                rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION
+                                               );
+        shared_header.emit(out_stream);
+
+        const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+                                                         device_io_request.CompletionId(),
+                                                         0xC0000001 // STATUS_UNSUCCESSFUL
+                                                        );
+        if (verbose) {
+            LOG(LOG_INFO, message);
+            device_io_response.log(LOG_INFO);
+        }
+        device_io_response.emit(out_stream);
+
+        out_stream.mark_end();
+
+        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+    }
 };
 
 class ManagedDirectory : public ManagedFileSystemObject {
@@ -195,21 +219,34 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
     }
 
     virtual void ProcessServerDriveReadRequest(
-        rdpdr::DeviceIORequest const & device_io_request,
-        rdpdr::DeviceReadRequest const & device_read_request,
-        const char * path, Stream & in_stream, Stream & out_stream,
-        uint32_t & out_flags, uint32_t verbose) {
+            rdpdr::DeviceIORequest const & device_io_request,
+            rdpdr::DeviceReadRequest const & device_read_request,
+            const char * path, Stream & in_stream, Stream & out_stream,
+            uint32_t & out_flags, uint32_t verbose) {
         // Unsupported.
         REDASSERT(false);
+
+        MakeClientDriveIoUnsuccessfulResponse(device_io_request,
+                                              out_stream,
+                                              out_flags,
+                                              "ManagedDirectory::ProcessServerDriveReadRequest",
+                                              verbose);
     }
 
     virtual void ProcessServerDriveQueryVolumeInformationRequest(
-        rdpdr::DeviceIORequest const & device_io_request,
-        rdpdr::ServerDriveQueryVolumeInformationRequest const & server_drive_query_volume_information_request,
-        const char * path, Stream & in_stream, Stream & out_stream,
-        uint32_t & out_flags, uint32_t verbose) override {
+            rdpdr::DeviceIORequest const & device_io_request,
+            rdpdr::ServerDriveQueryVolumeInformationRequest const &
+                server_drive_query_volume_information_request,
+            const char * path, Stream & in_stream, Stream & out_stream,
+            uint32_t & out_flags, uint32_t verbose) override {
         // Unsupported.
         REDASSERT(false);
+
+        MakeClientDriveIoUnsuccessfulResponse(device_io_request,
+                                              out_stream,
+                                              out_flags,
+                                              "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest",
+                                              verbose);
     }
 
     virtual void ProcessServerDriveQueryInformationRequest(
@@ -345,7 +382,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_atime),
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),
-                        sb.st_size, sb.st_blocks * 512,
+                        sb.st_size, sb.st_blocks * 512 /* Block size */,
                         (S_ISDIR(sb.st_mode) ? fscc::FILE_ATTRIBUTE_DIRECTORY : 0) |
                             ((sb.st_mode & S_IWUSR) ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
                         ent->d_name
@@ -554,11 +591,13 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
             number_of_bytes_read = ::read(this->fd, read_data, Length);
         }
 
-        const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+        const rdpdr::DeviceIOResponse device_io_response(
+                device_io_request.DeviceId(),
                 device_io_request.CompletionId(),
                 ((number_of_bytes_read > -1) ?
-                  0x00000000 /* STATUS_SUCCESS */ :
-                  0xC0000001) /* STATUS_UNSUCCESSFUL*/
+                 0x00000000 /* STATUS_SUCCESS */ :
+                 0xC0000001 /* STATUS_UNSUCCESSFUL */
+                )
             );
         if (verbose) {
             LOG(LOG_INFO, "ManagedFile::ProcessServerDriveReadRequest");
@@ -694,11 +733,11 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
                 out_stream.out_uint32_le(fscc::FileStandardInformation::size());    // Length(4)
 
                 fscc::FileStandardInformation file_standard_information(
-                        sb.st_blocks * 512, // AllocationSize
-                        sb.st_size,         // EndOfFile
-                        sb.st_nlink,        // NumberOfLinks
-                        0,                  // DeletePending
-                        0                   // Directory
+                        sb.st_blocks * 512 /* Block size */,    // AllocationSize
+                        sb.st_size,                             // EndOfFile
+                        sb.st_nlink,                            // NumberOfLinks
+                        0,                                      // DeletePending
+                        0                                       // Directory
                     );
 
                 if (verbose) {
@@ -734,6 +773,12 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
             uint32_t & out_flags, uint32_t verbose) override {
         // Unsupported.
         REDASSERT(false);
+
+        MakeClientDriveIoUnsuccessfulResponse(device_io_request,
+                                              out_stream,
+                                              out_flags,
+                                              "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest",
+                                              verbose);
     }
 };  // ManagedFile
 
@@ -1010,7 +1055,7 @@ public:
                 break;
             }
         }
-        if (iter == this->managed_drives.end()) return;
+        if (iter == this->managed_drives.end()) { return; }
 
         std::string path = std::get<2>(*iter);
 
@@ -1083,11 +1128,21 @@ public:
                             path.c_str(), in_stream, out_stream, out_flags, verbose);
                     break;
 
+                    case rdpdr::IRP_MN_NOTIFY_CHANGE_DIRECTORY:
+                        if (verbose) {
+                            LOG(LOG_INFO,
+                                "FileSystemDriveManager::ProcessDeviceIORequest: "
+                                    "Directory control request - Notify change directory request");
+                        }
+
+                        // Not yet supported!
+                    break;
+
                     default:
                         if (verbose) {
                             LOG(LOG_INFO,
                                 "FileSystemDriveManager::ProcessDeviceIORequest: "
-                                    "undecoded Directory control request - MinorFunction=0x%X",
+                                    "Unknown Directory control request - MinorFunction=0x%X",
                                 device_io_request.MinorFunction());
                         }
                     break;
@@ -1095,32 +1150,19 @@ public:
             break;
 
             default:
-            {
                 if (verbose) {
                     LOG(LOG_INFO,
                         "FileSystemDriveManager::ProcessDeviceIORequest: "
-                            "undecoded Device I/O Request - MajorFunction=0x%X",
+                            "Undecoded Device I/O Request - MajorFunction=0x%X",
                         device_io_request.MajorFunction());
                 }
 
-                const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
-                                               rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
-                sh_s.emit(out_stream);
-
-                const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
-                        device_io_request.CompletionId(),
-                        0xC0000001     // STATUS_UNSUCCESSFUL
-                    );
-                if (verbose) {
-                    LOG(LOG_INFO, "ManagedDirectory::ProcessDeviceIORequest");
-                    device_io_response.log(LOG_INFO);
-                }
-                device_io_response.emit(out_stream);
-
-                out_stream.mark_end();
-
-                out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-            }
+                ManagedFileSystemObject::MakeClientDriveIoUnsuccessfulResponse(
+                    device_io_request,
+                    out_stream,
+                    out_flags,
+                    "FileSystemDriveManager::ProcessDeviceIORequest",
+                    verbose);
             break;
         }
     }
