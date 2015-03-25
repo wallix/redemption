@@ -122,7 +122,8 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ManagedDirectory() : <%p>", this);
     }
 
     virtual ~ManagedDirectory() {
-LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
+LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p> fd=%d",
+    this, (this->dir ? ::dirfd(this->dir) : -1));
 
         if (this->dir) {
             ::closedir(this->dir);
@@ -190,6 +191,10 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
 
         out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
+if (this->dir) {
+    LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCreateDriveRequest(): <%p> fd=%d",
+        this, ::dirfd(this->dir));
+}
         out_drive_created = (this->dir != nullptr);
     }
 
@@ -198,6 +203,8 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
             Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
             uint32_t verbose) override {
         REDASSERT(this->dir);
+LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%p> fd=%d",
+    this, ::dirfd(this->dir));
 
         ::closedir(this->dir);
 
@@ -230,14 +237,28 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p>", this);
             rdpdr::DeviceReadRequest const & device_read_request,
             const char * path, Stream & in_stream, Stream & out_stream,
             uint32_t & out_flags, uint32_t verbose) {
-        MakeClientDriveIoUnsuccessfulResponse(device_io_request,
-                                              out_stream,
-                                              out_flags,
-                                              "ManagedDirectory::ProcessServerDriveReadRequest",
-                                              verbose);
+        REDASSERT(this->dir);
 
-        // Unsupported.
-        REDASSERT(false);
+        const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
+                                       rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+        sh_s.emit(out_stream);
+
+        const rdpdr::DeviceIOResponse device_io_response(
+                device_io_request.DeviceId(),
+                device_io_request.CompletionId(),
+                0x00000000  // STATUS_SUCCESS
+            );
+        if (verbose) {
+            LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveReadRequest");
+            device_io_response.log(LOG_INFO);
+        }
+        device_io_response.emit(out_stream);
+
+        out_stream.out_uint32_le(0);    // Length(4)
+
+        out_stream.mark_end();
+
+        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
     }
 
     virtual void ProcessServerDriveQueryVolumeInformationRequest(
@@ -626,7 +647,8 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ManagedFile(): <%p>", this);
     }
 
     virtual ~ManagedFile() {
-LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
+LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p> fd=%d",
+    this, this->fd);
 
         if (this->fd != -1) {
             ::close(this->fd);
@@ -693,11 +715,6 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
             open_flags |= (O_TRUNC | O_CREAT);
         }
 
-/*
-        this->fd = ::open(full_path.c_str(), open_flags,
-            S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-        const int last_error = errno;
-*/
         const int last_error = [] (const char * path, int open_flags, int & out_fd) -> int {
             if ((open_flags & O_RDWR) || (open_flags & O_WRONLY)) {
                 out_fd = -1;
@@ -756,6 +773,11 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
 
         out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
+
+if (this->fd > -1) {
+    LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCreateDriveRequest(): <%p> fd=%d",
+        this, this->fd);
+}
         out_drive_created = (this->fd != -1);
     }   // ProcessServerCreateDriveRequest
 
@@ -764,6 +786,8 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
             Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
             uint32_t verbose) {
         REDASSERT(this->fd > -1);
+LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd=%d",
+    this, this->fd);
 
         ::close(this->fd);
 
@@ -792,10 +816,10 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
     }
 
     virtual void ProcessServerDriveReadRequest(
-        rdpdr::DeviceIORequest const & device_io_request,
-        rdpdr::DeviceReadRequest const & device_read_request,
-        const char * path, Stream & in_stream, Stream & out_stream,
-        uint32_t & out_flags, uint32_t verbose) {
+            rdpdr::DeviceIORequest const & device_io_request,
+            rdpdr::DeviceReadRequest const & device_read_request,
+            const char * path, Stream & in_stream, Stream & out_stream,
+            uint32_t & out_flags, uint32_t verbose) {
         REDASSERT(this->fd > -1);
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
@@ -831,7 +855,8 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p>", this);
         device_io_response.emit(out_stream);
 
         if (number_of_bytes_read > -1) {
-            out_stream.out_uint32_le(static_cast<uint32_t>(number_of_bytes_read));
+            out_stream.out_uint32_le(
+                static_cast<uint32_t>(number_of_bytes_read));  // Length(4)
             if (verbose) {
                 LOG(LOG_INFO, "ManagedFile::ProcessServerDriveReadRequest: %u byte(s) read.",
                     static_cast<uint32_t>(number_of_bytes_read));
