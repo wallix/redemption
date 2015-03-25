@@ -25,6 +25,247 @@
 
 namespace fscc {
 
+// [MS-FSCC] - 2.3 FSCTL Structures
+// ================================
+
+// A process invokes an FSCTL on a handle to perform an action against the
+//  file or directory associated with the handle. When a server receives an
+//  FSCTL request, it SHOULD use the information in the request, which
+//  includes a handle and, optionally, an input data buffer, to perform the
+//  requested action. How a server performs the action requested by an FSCTL
+//  is implementation-dependent.<12>
+
+// The following table specifies the system-defined generic FSCTLs that are
+//  permitted to be invoked across the network. Generic FSCTLs are used by
+//  the local file systems or by multiple components within the system. Any
+//  application, service, or driver may define private FSCTLs. Most private
+//  FSCTLs are used locally in the internal driver stacks and do not flow
+//  over the wire. However, if a component allows its private FSCTLs to flow
+//  over the wire, that component is responsible for ensuring the FSCTLs and
+//  associated data structures are documented. Examples of such private
+//  FSCTLs can be found in [MS-SMB2] and [MS-DFSC].
+
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL name                              | FSCTL function number |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_CREATE_OR_GET_OBJECT_ID           | 0x900c0               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_DELETE_OBJECT_ID                  | 0x900a0               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_DELETE_REPARSE_POINT              | 0x900ac               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_FILE_LEVEL_TRIM                   | 0x98208               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_FILESYSTEM_GET_STATISTICS         | 0x90060               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_FIND_FILES_BY_SID                 | 0x9008f               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_GET_COMPRESSION                   | 0x9003c               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_GET_INTEGRITY_INFORMATION         | 0x9027c               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_GET_NTFS_VOLUME_DATA              | 0x90064               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_GET_REFS_VOLUME_DATA              | 0x902D8               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_GET_OBJECT_ID                     | 0x9009c               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_GET_REPARSE_POINT                 | 0x900a8               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_GET_RETRIEVAL_POINTERS            | 0x90073               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_IS_PATHNAME_VALID                 | 0x9002c               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_LMR_SET_LINK_TRACKING_INFORMATION | 0x1400ec              |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_OFFLOAD_READ                      | 0x94264               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_OFFLOAD_WRITE                     | 0x98268               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_PIPE_PEEK                         | 0x11400c              |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_PIPE_TRANSCEIVE                   | 0x11c017              |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_PIPE_WAIT                         | 0x110018              |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_QUERY_ALLOCATED_RANGES            | 0x940cf               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_QUERY_FAT_BPB                     | 0x90058               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_QUERY_FILE_REGIONS                | 0x90284               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_QUERY_ON_DISK_VOLUME_INFO         | 0x9013c               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_QUERY_SPARING_INFO                | 0x90138               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_READ_FILE_USN_DATA                | 0x900eb               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_RECALL_FILE                       | 0x90117               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_SET_COMPRESSION                   | 0x9c040               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_SET_DEFECT_MANAGEMENT             | 0x98134               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_SET_ENCRYPTION                    | 0x900D7               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_SET_INTEGRITY_INFORMATION         | 0x9C280               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_SET_OBJECT_ID                     | 0x90098               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_SET_OBJECT_ID_EXTENDED            | 0x900bc               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_SET_REPARSE_POINT                 | 0x900a4               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_SET_SPARSE                        | 0x900c4               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_SET_ZERO_DATA                     | 0x980c8               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_SET_ZERO_ON_DEALLOCATION          | 0x90194               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_SIS_COPYFILE                      | 0x90100               |
+//  +-----------------------------------------+-----------------------+
+//  | FSCTL_WRITE_USN_CLOSE_RECORD            | 0x900ef               |
+//  +-----------------------------------------+-----------------------+
+
+enum {
+      FSCTL_CREATE_OR_GET_OBJECT_ID           = 0x900c0
+    , FSCTL_DELETE_OBJECT_ID                  = 0x900a0
+    , FSCTL_DELETE_REPARSE_POINT              = 0x900ac
+    , FSCTL_FILE_LEVEL_TRIM                   = 0x98208
+    , FSCTL_FILESYSTEM_GET_STATISTICS         = 0x90060
+    , FSCTL_FIND_FILES_BY_SID                 = 0x9008f
+    , FSCTL_GET_COMPRESSION                   = 0x9003c
+    , FSCTL_GET_INTEGRITY_INFORMATION         = 0x9027c
+    , FSCTL_GET_NTFS_VOLUME_DATA              = 0x90064
+    , FSCTL_GET_REFS_VOLUME_DATA              = 0x902D8
+    , FSCTL_GET_OBJECT_ID                     = 0x9009c
+    , FSCTL_GET_REPARSE_POINT                 = 0x900a8
+    , FSCTL_GET_RETRIEVAL_POINTERS            = 0x90073
+    , FSCTL_IS_PATHNAME_VALID                 = 0x9002c
+    , FSCTL_LMR_SET_LINK_TRACKING_INFORMATION = 0x1400ec
+    , FSCTL_OFFLOAD_READ                      = 0x94264
+    , FSCTL_OFFLOAD_WRITE                     = 0x98268
+    , FSCTL_PIPE_PEEK                         = 0x11400c
+    , FSCTL_PIPE_TRANSCEIVE                   = 0x11c017
+    , FSCTL_PIPE_WAIT                         = 0x110018
+    , FSCTL_QUERY_ALLOCATED_RANGES            = 0x940cf
+    , FSCTL_QUERY_FAT_BPB                     = 0x90058
+    , FSCTL_QUERY_FILE_REGIONS                = 0x90284
+    , FSCTL_QUERY_ON_DISK_VOLUME_INFO         = 0x9013c
+    , FSCTL_QUERY_SPARING_INFO                = 0x90138
+    , FSCTL_READ_FILE_USN_DATA                = 0x900eb
+    , FSCTL_RECALL_FILE                       = 0x90117
+    , FSCTL_SET_COMPRESSION                   = 0x9c040
+    , FSCTL_SET_DEFECT_MANAGEMENT             = 0x98134
+    , FSCTL_SET_ENCRYPTION                    = 0x900D7
+    , FSCTL_SET_INTEGRITY_INFORMATION         = 0x9C280
+    , FSCTL_SET_OBJECT_ID                     = 0x90098
+    , FSCTL_SET_OBJECT_ID_EXTENDED            = 0x900bc
+    , FSCTL_SET_REPARSE_POINT                 = 0x900a4
+    , FSCTL_SET_SPARSE                        = 0x900c4
+    , FSCTL_SET_ZERO_DATA                     = 0x980c8
+    , FSCTL_SET_ZERO_ON_DEALLOCATION          = 0x90194
+    , FSCTL_SIS_COPYFILE                      = 0x90100
+    , FSCTL_WRITE_USN_CLOSE_RECORD            = 0x900ef
+};
+
+// [MS-FSCC] - 2.4.6 FileAttributeTagInformation
+// =============================================
+
+// This information class is used to query for attribute and reparse tag
+//  information for a file.
+
+// A FILE_ATTRIBUTE_TAG_INFORMATION data element, defined as follows, is
+//  returned by the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         FileAttributes                        |
+// +---------------------------------------------------------------+
+// |                           ReparseTag                          |
+// +---------------------------------------------------------------+
+
+// FileAttributes (4 bytes): A 32-bit unsigned integer that contains the file
+//  attributes. Valid file attributes are as specified in section 2.6.
+
+// ReparseTag (4 bytes): A 32-bit unsigned integer that specifies the reparse
+//  point tag. If the FileAttributes member includes the
+//  FILE_ATTRIBUTE_REPARSE_POINT attribute flag, this member specifies the
+//  reparse tag. Otherwise, this member SHOULD be set to 0, and MUST be
+//  ignored. Section 2.1.2.1 contains more details on reparse tags.
+
+// This operation returns a status code, as specified in [MS-ERREF] section
+//  2.3. The status code returned directly by the function that processes
+//  this file information class MUST be STATUS_SUCCESS or one of the
+//  following.
+
+//  +-----------------------------+--------------------------------------------+
+//  | Error code                  | Meaning                                    |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
+//  | 0xC0000004                  | does not match the length that is required |
+//  |                             | for the specified information class.       |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_ACCESS_DENIED        | The handle was not opened to read file     |
+//  | 0xC0000022                  | data or file attributes.                   |
+//  +-----------------------------+--------------------------------------------+
+
+class FileAttributeTagInformation {
+    uint32_t FileAttributes = 0;
+    uint32_t ReparseTag     = 0;
+
+public:
+    FileAttributeTagInformation() = default;
+
+    FileAttributeTagInformation(uint32_t FileAttributes, uint32_t ReparseTag)
+    : FileAttributes(FileAttributes)
+    , ReparseTag(ReparseTag) {}
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->FileAttributes);
+        stream.out_uint32_le(this->ReparseTag);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 8;    // FileAttributes(4) + ReparseTag(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileAttributeTagInformation: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+
+        this->FileAttributes = stream.in_uint32_le();
+        this->ReparseTag     = stream.in_uint32_le();
+    }
+
+    inline static size_t size() {
+        return 8;   /* FileAttributes(4) + ReparseTag(4) */
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "FileAttributeTagInformation: FileAttributes=0x%X ReparseTag=%u",
+            this->FileAttributes, this->ReparseTag);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
+
 // [MS-FSCC] - 2.4.7 FileBasicInformation
 // ======================================
 
@@ -188,132 +429,6 @@ public:
         LOG(level, buffer);
     }
 };  // FileBasicInformation
-
-// [MS-FSCC] - 2.6 File Attributes
-// ===============================
-
-// The following attributes are defined for files and directories. They can
-//  be used in any combination unless noted in the description of the
-//  attribute's meaning. There is no file attribute with the value 0x00000000
-//  because a value of 0x00000000 in the FileAttributes field means that the
-//  file attributes for this file MUST NOT be changed when setting basic
-//  information for the file.
-
-//  +------------------------------------+-------------------------------------+
-//  | Value                              | Meaning                             |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_ARCHIVE             | A file or directory that requires   |
-//  | 0x00000020                         | to be archived. Applications use    |
-//  |                                    | this attribute to mark files for    |
-//  |                                    | backup or removal.                  |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_COMPRESSED          | A file or directory that is         |
-//  | 0x00000800                         | compressed. For a file, all of the  |
-//  |                                    | data in the file is compressed. For |
-//  |                                    | a directory, compression is the     |
-//  |                                    | default for newly created files and |
-//  |                                    | subdirectories.                     |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_DIRECTORY           | This item is a directory.           |
-//  | 0x00000010                         |                                     |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_ENCRYPTED           | A file or directory that is         |
-//  | 0x00004000                         | encrypted. For a file, all data     |
-//  |                                    | streams in the file are encrypted.  |
-//  |                                    | For a directory, encryption is the  |
-//  |                                    | default for newly created files and |
-//  |                                    | subdirectories.                     |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_HIDDEN              | A file or directory that is hidden. |
-//  | 0x00000002                         | Files and directories marked with   |
-//  |                                    | this attribute do not appear in an  |
-//  |                                    | ordinary directory listing.         |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_NORMAL              | A file that does not have other     |
-//  | 0x00000080                         | attributes set. This flag is used   |
-//  |                                    | to clear all other flags by         |
-//  |                                    | specifying it with no other flags   |
-//  |                                    | set.                                |
-//  |                                    | This flag MUST be ignored if other  |
-//  |                                    | flags are set.<157>                 |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | A file or directory that is not     |
-//  | 0x00002000                         | indexed by the content indexing     |
-//  |                                    | service.                            |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_OFFLINE             | The data in this file is not        |
-//  | 0x00001000                         | available immediately. This         |
-//  |                                    | attribute indicates that the file   |
-//  |                                    | data is physically moved to offline |
-//  |                                    | storage. This attribute is used by  |
-//  |                                    | Remote Storage, which is            |
-//  |                                    | hierarchical storage management     |
-//  |                                    | software.                           |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_READONLY            | A file or directory that is read-   |
-//  | 0x00000001                         |only. For a file, applications can   |
-//  |                                    | read the file but cannot write to   |
-//  |                                    | it or delete it. For a directory,   |
-//  |                                    | applications cannot delete it, but  |
-//  |                                    | applications can create and delete  |
-//  |                                    | files from that directory.          |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_REPARSE_POINT       | A file or directory that has an     |
-//  | 0x00000400                         | associated reparse point.           |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_SPARSE_FILE         | A file that is a sparse file.       |
-//  | 0x00000200                         |                                     |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_SYSTEM              | A file or directory that the        |
-//  | 0x00000004                         | operating system uses a part of or  |
-//  |                                    | uses exclusively.                   |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_TEMPORARY           | A file that is being used for       |
-//  | 0x00000100                         | temporary storage. The operating    |
-//  |                                    | system may choose to store this     |
-//  |                                    | file's data in memory rather than   |
-//  |                                    | on mass storage, writing the data   |
-//  |                                    | to mass storage only if data        |
-//  |                                    | remains in the file when the file   |
-//  |                                    | is closed.                          |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_INTEGRITY_STREAM    | A file or directory that is         |
-//  | 0x00008000                         | configured with integrity support.  |
-//  |                                    | For a file, all data streams in the |
-//  |                                    | file have integrity support. For a  |
-//  |                                    | directory, integrity support is the |
-//  |                                    | default for newly created files and |
-//  |                                    | subdirectories, unless the caller   |
-//  |                                    | specifies otherwise.<158>           |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_NO_SCRUB_DATA       | A file or directory that is         |
-//  | 0x00020000                         | configured to be excluded from the  |
-//  |                                    | data integrity scan. For a          |
-//  |                                    | directory configured with           |
-//  |                                    | FILE_ATTRIBUTE_NO_SCRUB_DATA, the   |
-//  |                                    | default for newly created files and |
-//  |                                    | subdirectories is to inherit the    |
-//  |                                    | FILE_ATTRIBUTE_NO_SCRUB_DATA        |
-//  |                                    | attribute.<159>                     |
-//  +------------------------------------+-------------------------------------+
-
-enum {
-      FILE_ATTRIBUTE_ARCHIVE             = 0x00000020
-    , FILE_ATTRIBUTE_COMPRESSED          = 0x00000800
-    , FILE_ATTRIBUTE_DIRECTORY           = 0x00000010
-    , FILE_ATTRIBUTE_ENCRYPTED           = 0x00004000
-    , FILE_ATTRIBUTE_HIDDEN              = 0x00000002
-    , FILE_ATTRIBUTE_NORMAL              = 0x00000080
-    , FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x00002000
-    , FILE_ATTRIBUTE_OFFLINE             = 0x00001000
-    , FILE_ATTRIBUTE_READONLY            = 0x00000001
-    , FILE_ATTRIBUTE_REPARSE_POINT       = 0x00000400
-    , FILE_ATTRIBUTE_SPARSE_FILE         = 0x00000200
-    , FILE_ATTRIBUTE_SYSTEM              = 0x00000004
-    , FILE_ATTRIBUTE_TEMPORARY           = 0x00000100
-    , FILE_ATTRIBUTE_INTEGRITY_STREAM    = 0x00008000
-    , FILE_ATTRIBUTE_NO_SCRUB_DATA       = 0x00020000
-};
 
 // [MS-FSCC] - 2.4.8 FileBothDirectoryInformation
 // ==============================================
@@ -1106,6 +1221,131 @@ public:
     }
 };  // FileFsAttributeInformation
 
+// [MS-FSCC] - 2.5.8 FileFsSizeInformation
+// =======================================
+
+// This information class is used to query sector size information for a file
+//  system volume.
+
+// A FILE_FS_SIZE_INFORMATION data element, defined as follows, is returned
+//  by the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                      TotalAllocationUnits                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                    AvailableAllocationUnits                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                    SectorsPerAllocationUnit                   |
+// +---------------------------------------------------------------+
+// |                         BytesPerSector                        |
+// +---------------------------------------------------------------+
+
+// TotalAllocationUnits (8 bytes): A 64-bit signed integer that contains the
+//  total number of allocation units on the volume that are available to the
+//  user associated with the calling thread. This value MUST be greater than
+//  or equal to 0.<152>
+
+// AvailableAllocationUnits (8 bytes): A 64-bit signed integer that contains
+//  the total number of free allocation units on the volume that are
+//  available to the user associated with the calling thread. This value MUST
+//  be greater than or equal to 0.<153>
+
+// SectorsPerAllocationUnit (4 bytes): A 32-bit unsigned integer that
+//  contains the number of sectors in each allocation unit.
+
+// BytesPerSector (4 bytes): A 32-bit unsigned integer that contains the
+//  number of bytes in each sector.
+
+// This operation returns a status code, as specified in [MS-ERREF] section
+//  2.3. The status code returned directly by the function that processes
+//  this file information class MUST be STATUS_SUCCESS or one of the
+//  following.
+
+//  +-----------------------------+--------------------------------------------+
+//  | Error code                  | Meaning                                    |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
+//  | 0xC0000004                  | does not match the length that is required |
+//  |                             | for the specified information class.       |
+//  +-----------------------------+--------------------------------------------+
+
+class FileFsSizeInformation {
+    int64_t  TotalAllocationUnits     = 0;
+    int64_t  AvailableAllocationUnits = 0;
+    uint32_t SectorsPerAllocationUnit = 0;
+    uint32_t BytesPerSector           = 0;
+
+public:
+    FileFsSizeInformation() = default;
+
+    FileFsSizeInformation(int64_t TotalAllocationUnits,
+                          int64_t AvailableAllocationUnits,
+                          uint32_t SectorsPerAllocationUnit,
+                          uint32_t BytesPerSector)
+    : TotalAllocationUnits(TotalAllocationUnits)
+    , AvailableAllocationUnits(AvailableAllocationUnits)
+    , SectorsPerAllocationUnit(SectorsPerAllocationUnit)
+    , BytesPerSector(BytesPerSector) {}
+
+    inline void emit(Stream & stream) const {
+        stream.out_sint64_le(this->TotalAllocationUnits);
+        stream.out_sint64_le(this->AvailableAllocationUnits);
+        stream.out_uint32_le(this->SectorsPerAllocationUnit);
+        stream.out_uint32_le(this->BytesPerSector);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 24;   // TotalAllocationUnits(8) +
+                                            //     AvailableAllocationUnits(8) +
+                                            //     SectorsPerAllocationUnit(4) +
+                                            //     BytesPerSector(4)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileFsSizeInformation: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+
+        this->TotalAllocationUnits     = stream.in_sint64_le();
+        this->AvailableAllocationUnits = stream.in_sint64_le();
+        this->SectorsPerAllocationUnit = stream.in_uint32_le();
+        this->BytesPerSector           = stream.in_uint32_le();
+    }
+
+    inline size_t size() const {
+        return 24;  // TotalAllocationUnits(8) + AvailableAllocationUnits(8) +
+                    //     SectorsPerAllocationUnit(4) + BytesPerSector(4)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "FileFsSizeInformation: TotalAllocationUnits=%" PRId64
+                " AvailableAllocationUnits=%" PRId64
+                " SectorsPerAllocationUnit=%u BytesPerSector=%u",
+            this->TotalAllocationUnits, this->AvailableAllocationUnits,
+            this->SectorsPerAllocationUnit, this->BytesPerSector);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
 // [MS-FSCC] - 2.5.9 FileFsVolumeInformation
 // =========================================
 
@@ -1312,6 +1552,132 @@ public:
         LOG(level, buffer);
     }
 };  // FileFsVolumeInformation
+
+// [MS-FSCC] - 2.6 File Attributes
+// ===============================
+
+// The following attributes are defined for files and directories. They can
+//  be used in any combination unless noted in the description of the
+//  attribute's meaning. There is no file attribute with the value 0x00000000
+//  because a value of 0x00000000 in the FileAttributes field means that the
+//  file attributes for this file MUST NOT be changed when setting basic
+//  information for the file.
+
+//  +------------------------------------+-------------------------------------+
+//  | Value                              | Meaning                             |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_ARCHIVE             | A file or directory that requires   |
+//  | 0x00000020                         | to be archived. Applications use    |
+//  |                                    | this attribute to mark files for    |
+//  |                                    | backup or removal.                  |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_COMPRESSED          | A file or directory that is         |
+//  | 0x00000800                         | compressed. For a file, all of the  |
+//  |                                    | data in the file is compressed. For |
+//  |                                    | a directory, compression is the     |
+//  |                                    | default for newly created files and |
+//  |                                    | subdirectories.                     |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_DIRECTORY           | This item is a directory.           |
+//  | 0x00000010                         |                                     |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_ENCRYPTED           | A file or directory that is         |
+//  | 0x00004000                         | encrypted. For a file, all data     |
+//  |                                    | streams in the file are encrypted.  |
+//  |                                    | For a directory, encryption is the  |
+//  |                                    | default for newly created files and |
+//  |                                    | subdirectories.                     |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_HIDDEN              | A file or directory that is hidden. |
+//  | 0x00000002                         | Files and directories marked with   |
+//  |                                    | this attribute do not appear in an  |
+//  |                                    | ordinary directory listing.         |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_NORMAL              | A file that does not have other     |
+//  | 0x00000080                         | attributes set. This flag is used   |
+//  |                                    | to clear all other flags by         |
+//  |                                    | specifying it with no other flags   |
+//  |                                    | set.                                |
+//  |                                    | This flag MUST be ignored if other  |
+//  |                                    | flags are set.<157>                 |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | A file or directory that is not     |
+//  | 0x00002000                         | indexed by the content indexing     |
+//  |                                    | service.                            |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_OFFLINE             | The data in this file is not        |
+//  | 0x00001000                         | available immediately. This         |
+//  |                                    | attribute indicates that the file   |
+//  |                                    | data is physically moved to offline |
+//  |                                    | storage. This attribute is used by  |
+//  |                                    | Remote Storage, which is            |
+//  |                                    | hierarchical storage management     |
+//  |                                    | software.                           |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_READONLY            | A file or directory that is read-   |
+//  | 0x00000001                         |only. For a file, applications can   |
+//  |                                    | read the file but cannot write to   |
+//  |                                    | it or delete it. For a directory,   |
+//  |                                    | applications cannot delete it, but  |
+//  |                                    | applications can create and delete  |
+//  |                                    | files from that directory.          |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_REPARSE_POINT       | A file or directory that has an     |
+//  | 0x00000400                         | associated reparse point.           |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_SPARSE_FILE         | A file that is a sparse file.       |
+//  | 0x00000200                         |                                     |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_SYSTEM              | A file or directory that the        |
+//  | 0x00000004                         | operating system uses a part of or  |
+//  |                                    | uses exclusively.                   |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_TEMPORARY           | A file that is being used for       |
+//  | 0x00000100                         | temporary storage. The operating    |
+//  |                                    | system may choose to store this     |
+//  |                                    | file's data in memory rather than   |
+//  |                                    | on mass storage, writing the data   |
+//  |                                    | to mass storage only if data        |
+//  |                                    | remains in the file when the file   |
+//  |                                    | is closed.                          |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_INTEGRITY_STREAM    | A file or directory that is         |
+//  | 0x00008000                         | configured with integrity support.  |
+//  |                                    | For a file, all data streams in the |
+//  |                                    | file have integrity support. For a  |
+//  |                                    | directory, integrity support is the |
+//  |                                    | default for newly created files and |
+//  |                                    | subdirectories, unless the caller   |
+//  |                                    | specifies otherwise.<158>           |
+//  +------------------------------------+-------------------------------------+
+//  | FILE_ATTRIBUTE_NO_SCRUB_DATA       | A file or directory that is         |
+//  | 0x00020000                         | configured to be excluded from the  |
+//  |                                    | data integrity scan. For a          |
+//  |                                    | directory configured with           |
+//  |                                    | FILE_ATTRIBUTE_NO_SCRUB_DATA, the   |
+//  |                                    | default for newly created files and |
+//  |                                    | subdirectories is to inherit the    |
+//  |                                    | FILE_ATTRIBUTE_NO_SCRUB_DATA        |
+//  |                                    | attribute.<159>                     |
+//  +------------------------------------+-------------------------------------+
+
+enum {
+      FILE_ATTRIBUTE_ARCHIVE             = 0x00000020
+    , FILE_ATTRIBUTE_COMPRESSED          = 0x00000800
+    , FILE_ATTRIBUTE_DIRECTORY           = 0x00000010
+    , FILE_ATTRIBUTE_ENCRYPTED           = 0x00004000
+    , FILE_ATTRIBUTE_HIDDEN              = 0x00000002
+    , FILE_ATTRIBUTE_NORMAL              = 0x00000080
+    , FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x00002000
+    , FILE_ATTRIBUTE_OFFLINE             = 0x00001000
+    , FILE_ATTRIBUTE_READONLY            = 0x00000001
+    , FILE_ATTRIBUTE_REPARSE_POINT       = 0x00000400
+    , FILE_ATTRIBUTE_SPARSE_FILE         = 0x00000200
+    , FILE_ATTRIBUTE_SYSTEM              = 0x00000004
+    , FILE_ATTRIBUTE_TEMPORARY           = 0x00000100
+    , FILE_ATTRIBUTE_INTEGRITY_STREAM    = 0x00008000
+    , FILE_ATTRIBUTE_NO_SCRUB_DATA       = 0x00020000
+};
 
 }   // namespace fscc
 

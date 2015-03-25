@@ -414,7 +414,7 @@ public:
 
         stream.out_copy_bytes(this->PreferredDosName, 8 /* PreferredDosName(8) */);
 
-        stream.out_uint32_le(this->device_data.get_capacity());
+        stream.out_uint32_le(this->device_data.get_capacity()); // DeviceDataLength(4)
 
         stream.out_copy_bytes(this->device_data.get_data(), this->device_data.get_capacity());
     }
@@ -594,9 +594,9 @@ enum {
 class DeviceIORequest {
     uint32_t DeviceId_      = 0;
     uint32_t FileId_        = 0;
-    uint32_t CompletionId_   = 0;
+    uint32_t CompletionId_  = 0;
     uint32_t MajorFunction_ = 0;
-    uint32_t MinorFunction_  = 0;
+    uint32_t MinorFunction_ = 0;
 
 public:
     inline void emit(Stream & stream) const {
@@ -734,12 +734,12 @@ public:
 //  protocol imposes no limitations on the characters used in this field.
 
 class DeviceCreateRequest {
-    uint32_t DesiredAccess_;
-    uint64_t AllocationSize;
-    uint32_t FileAttributes;
-    uint32_t SharedAccess;
-    uint32_t CreateDisposition_;
-    uint32_t CreateOptions_;
+    uint32_t DesiredAccess_     = 0;
+    uint64_t AllocationSize     = 0LLU;
+    uint32_t FileAttributes     = 0;
+    uint32_t SharedAccess       = 0;
+    uint32_t CreateDisposition_ = 0;
+    uint32_t CreateOptions_     = 0;
 
     std::string path;
 
@@ -985,8 +985,8 @@ public:
 //  to any value and MUST be ignored on receipt.
 
 class DeviceReadRequest {
-    uint32_t Length_;
-    uint64_t Offset_;
+    uint32_t Length_ = 0;
+    uint64_t Offset_ = 0LLU;
 
 public:
     inline void emit(Stream & stream) const {
@@ -1030,6 +1030,153 @@ public:
         LOG(level, buffer);
     }
 };
+
+// [MS-RDPEFS] - 2.2.1.4.5 Device Control Request (DR_CONTROL_REQ)
+// ===============================================================
+
+// This header initiates a device control request. This message can have
+//  different purposes depending on the device for which it is issued. The
+//  device type is determined by the DeviceId field in the
+//  DR_DEVICE_IOREQUEST header.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        DeviceIoRequest                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                       OutputBufferLength                      |
+// +---------------------------------------------------------------+
+// |                       InputBufferLength                       |
+// +---------------------------------------------------------------+
+// |                         IoControlCode                         |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                     InputBuffer (variable)                    |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST header. The
+//  MajorFunction field in this header MUST be set to IRP_MJ_DEVICE_CONTROL.
+
+// OutputBufferLength (4 bytes): A 32-bit unsigned integer that specifies the
+//  maximum number of bytes expected in the OutputBuffer field of the Device
+//  Control Response (section 2.2.1.5.5).
+
+// InputBufferLength (4 bytes): A 32-bit unsigned integer that specifies the
+//  number of bytes in the InputBuffer field.
+
+// IoControlCode (4 bytes): A 32-bit unsigned integer. This field is specific
+//  to the redirected device.
+
+// Padding (20 bytes): An array of 20 bytes. Reserved. This field can be set
+//  to any value, and MUST be ignored on receipt.
+
+// InputBuffer (variable): A variable-size byte array whose size is specified
+//  by the InputBufferLength field.
+
+class DeviceControlRequest {
+    uint32_t OutputBufferLength = 0;
+    uint32_t IoControlCode_     = 0;
+
+    StaticStream input_buffer;
+
+public:
+    DeviceControlRequest() = default;
+
+    REDEMPTION_NON_COPYABLE(DeviceControlRequest);
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->OutputBufferLength);
+
+        stream.out_uint32_le(this->input_buffer.get_capacity());    // InputBufferLength(4)
+
+        stream.out_uint32_le(this->IoControlCode_);
+
+        stream.out_clear_bytes(20); // Padding(20)
+
+        stream.out_copy_bytes(this->input_buffer.get_data(),
+            this->input_buffer.get_capacity());
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 32;  // OutputBufferLength(4) + InputBufferLength(4) +
+                                           //     IoControlCode(4) + Padding(20)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceControlRequest (0): "
+                        "expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->OutputBufferLength = stream.in_uint32_le();
+
+        const uint32_t InputBufferLength = stream.in_uint32_le();
+        REDASSERT(!InputBufferLength);
+
+        this->IoControlCode_ = stream.in_uint32_le();
+
+        stream.in_skip_bytes(20);   // Padding(20)
+
+        {
+            const unsigned expected = InputBufferLength;  // InputBuffer(variable)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceControlRequest (1): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->input_buffer.resize(stream.p, InputBufferLength);
+        stream.in_skip_bytes(InputBufferLength);
+    }
+
+    uint32_t IoControlCode() const { return this->IoControlCode_; }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "DeviceControlRequest: OutputBufferLength=%u InputBufferLength=%zu "
+                "IoControlCode=0x%X",
+            this->OutputBufferLength, this->input_buffer.get_capacity(),
+            this->IoControlCode_);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};  // DeviceControlRequest
 
 // [MS-RDPEFS] - 2.2.1.5 Device I/O Response (DR_DEVICE_IOCOMPLETION)
 // ==================================================================
@@ -1204,8 +1351,8 @@ enum {
 //  +-------------------------+-------------------------------+
 
 class DeviceCreateResponse {
-    uint32_t FileId;
-    uint8_t  Information;
+    uint32_t FileId      = 0;
+    uint8_t  Information = 0;
 
 public:
     DeviceCreateResponse() = default;
@@ -2156,7 +2303,7 @@ public:
     inline void emit(Stream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
 
-        stream.out_uint32_le(this->query_buffer.get_capacity());
+        stream.out_uint32_le(this->query_buffer.get_capacity());    // Length(4)
 
         stream.out_clear_bytes(24); // Padding(24)
 
@@ -2214,7 +2361,62 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, buffer);
     }
-};
+};  // ServerDriveQueryInformationRequest
+
+// [MS-RDPEFS] - 2.2.3.3.5 Server Drive Control Request
+//  (DR_DRIVE_CONTROL_REQ)
+// ====================================================
+
+// The server issues a device control request on a redirected file system
+//  device.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                DeviceControlRequest (variable)                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceControlRequest (variable): A DR_CONTROL_REQ header. The packet has a
+//  structure as defined in Device Control Request (section 2.2.1.4.5). The
+//  possible values for the IoControlCode field are a subset of the file
+//  system control (FSCTL) commands specified in [MS-FSCC] section 2.3. The
+//  content of the InputBuffer field is defined in the request type messages
+//  that are specified in the same section of [MS-FSCC].
+
+// The following list indicates the FSCTL commands supported by this protocol.
+
+// * FSCTL_CREATE_OR_GET_OBJECT_ID
+// * FSCTL_DELETE_OBJECT_ID
+// * FSCTL_DELETE_REPARSE_POINT
+// * FSCTL_FILESYSTEM_GET_STATISTICS
+// * FSCTL_FIND_FILES_BY_SID
+// * FSCTL_GET_COMPRESSION
+// * FSCTL_GET_NTFS_VOLUME_DATA
+// * FSCTL_GET_OBJECT_ID
+// * FSCTL_GET_REPARSE_POINT
+// * FSCTL_GET_RETRIEVAL_POINTERS
+// * FSCTL_IS_PATHNAME_VALID
+// * FSCTL_LMR_GET_LINK_TRACKING_INFORMATION
+// * FSCTL_LMR_SET_LINK_TRACKING_INFORMATION
+// * FSCTL_PIPE_TRANSCEIVE
+// * FSCTL_PIPE_WAIT
+// * FSCTL_QUERY_ALLOCATED_RANGES
+// * FSCTL_READ_FILE_USN_DATA
+// * FSCTL_RECALL_FILE
+// * FSCTL_SET_COMPRESSION
+// * FSCTL_SET_ENCRYPTION
+// * FSCTL_SET_OBJECT_ID
+// * FSCTL_SET_OBJECT_ID_EXTENDED
+// * FSCTL_SET_REPARSE_POINT
+// * FSCTL_SET_SHORT_NAME_BEHAVIOR
+// * FSCTL_SET_SPARSE
+// * FSCTL_SET_ZERO_DATA
+// * FSCTL_SET_ZERO_ON_DEALLOCATION
+// * FSCTL_SIS_COPYFILE
+// * FSCTL_WRITE_USN_CLOSE_RECORD
 
 // [MS-RDPEFS] - 2.2.3.3.6 Server Drive Query Volume Information Request
 //  (DR_DRIVE_QUERY_VOLUME_INFORMATION_REQ)
@@ -2322,7 +2524,7 @@ public:
     inline void emit(Stream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
 
-        stream.out_uint32_le(this->query_volume_buffer.get_capacity());
+        stream.out_uint32_le(this->query_volume_buffer.get_capacity()); // Length(4)
 
         stream.out_clear_bytes(24); // Padding(24)
 
@@ -2382,7 +2584,7 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, buffer);
     }
-};
+};  // ServerDriveQueryVolumeInformationRequest
 
 // [MS-RDPEFS] - 2.2.3.3.10 Server Drive Query Directory Request
 //  (DR_DRIVE_QUERY_DIRECTORY_REQ)

@@ -6260,6 +6260,18 @@ public:
                                     "mod_rdp::process_rdpdr_event: Device Close Request");
                             break;
 
+                            case rdpdr::IRP_MJ_DEVICE_CONTROL:
+                            {
+                                LOG(LOG_INFO,
+                                    "mod_rdp::process_rdpdr_event: Device control request");
+
+                                rdpdr::DeviceControlRequest device_control_request;
+
+                                device_control_request.receive(stream);
+                                device_control_request.log(LOG_INFO);
+                            }
+                            break;
+
                             case rdpdr::IRP_MJ_QUERY_INFORMATION:
                             {
                                 LOG(LOG_INFO,
@@ -6333,6 +6345,9 @@ public:
                     LOG(LOG_INFO,
                         "mod_rdp::process_rdpdr_event: Client Device List Announce timer is enabled.");
                 }
+
+                this->event.object_and_time = true;
+                this->event.set(this->client_device_list_announce_timeout);
             break;
 
             case rdpdr::PacketId::PAKID_PRN_USING_XPS:
