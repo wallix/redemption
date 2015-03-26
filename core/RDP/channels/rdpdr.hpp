@@ -414,7 +414,7 @@ public:
 
         stream.out_copy_bytes(this->PreferredDosName, 8 /* PreferredDosName(8) */);
 
-        stream.out_uint32_le(this->device_data.get_capacity());
+        stream.out_uint32_le(this->device_data.get_capacity()); // DeviceDataLength(4)
 
         stream.out_copy_bytes(this->device_data.get_data(), this->device_data.get_capacity());
     }
@@ -594,9 +594,9 @@ enum {
 class DeviceIORequest {
     uint32_t DeviceId_      = 0;
     uint32_t FileId_        = 0;
-    uint32_t CompletionId_   = 0;
+    uint32_t CompletionId_  = 0;
     uint32_t MajorFunction_ = 0;
-    uint32_t MinorFunction_  = 0;
+    uint32_t MinorFunction_ = 0;
 
 public:
     inline void emit(Stream & stream) const {
@@ -734,12 +734,12 @@ public:
 //  protocol imposes no limitations on the characters used in this field.
 
 class DeviceCreateRequest {
-    uint32_t DesiredAccess_;
-    uint64_t AllocationSize;
-    uint32_t FileAttributes;
-    uint32_t SharedAccess;
-    uint32_t CreateDisposition_;
-    uint32_t CreateOptions_;
+    uint32_t DesiredAccess_     = 0;
+    uint64_t AllocationSize     = 0LLU;
+    uint32_t FileAttributes     = 0;
+    uint32_t SharedAccess       = 0;
+    uint32_t CreateDisposition_ = 0;
+    uint32_t CreateOptions_     = 0;
 
     std::string path;
 
@@ -932,6 +932,252 @@ public:
     }
 };
 
+// [MS-RDPEFS] - 2.2.1.4.3 Device Read Request (DR_READ_REQ)
+// =========================================================
+
+// This header initiates a read request. This message can have different
+//  purposes depending on the device for which it is issued. The device type
+//  is determined by the DeviceId field in the DR_DEVICE_IOREQUEST header.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        DeviceIoRequest                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                             Offset                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST header. The
+//  MajorFunction field in this header MUST be set to IRP_MJ_READ.
+
+// Length (4 bytes): A 32-bit unsigned integer. This field specifies the
+//  maximum number of bytes to be read from the device.
+
+// Offset (8 bytes): A 64-bit unsigned integer. This field specifies the file
+//  offset where the read operation is performed.
+
+// Padding (20 bytes): An array of 20 bytes. Reserved. This field can be set
+//  to any value and MUST be ignored on receipt.
+
+class DeviceReadRequest {
+    uint32_t Length_ = 0;
+    uint64_t Offset_ = 0LLU;
+
+public:
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->Length_);
+        stream.out_uint64_le(this->Offset_);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 12;  // Length(4) + Offset(8)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceReadRequest: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->Length_ = stream.in_uint32_le();
+        this->Offset_ = stream.in_uint64_le();
+    }
+
+    inline uint32_t Length() const { return this->Length_; }
+
+    inline uint32_t Offset() const { return this->Offset_; }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "DeviceReadRequest: Length=%u Offset=%" PRIu64,
+            this->Length_, this->Offset_);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
+// [MS-RDPEFS] - 2.2.1.4.5 Device Control Request (DR_CONTROL_REQ)
+// ===============================================================
+
+// This header initiates a device control request. This message can have
+//  different purposes depending on the device for which it is issued. The
+//  device type is determined by the DeviceId field in the
+//  DR_DEVICE_IOREQUEST header.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        DeviceIoRequest                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                       OutputBufferLength                      |
+// +---------------------------------------------------------------+
+// |                       InputBufferLength                       |
+// +---------------------------------------------------------------+
+// |                         IoControlCode                         |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                     InputBuffer (variable)                    |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST header. The
+//  MajorFunction field in this header MUST be set to IRP_MJ_DEVICE_CONTROL.
+
+// OutputBufferLength (4 bytes): A 32-bit unsigned integer that specifies the
+//  maximum number of bytes expected in the OutputBuffer field of the Device
+//  Control Response (section 2.2.1.5.5).
+
+// InputBufferLength (4 bytes): A 32-bit unsigned integer that specifies the
+//  number of bytes in the InputBuffer field.
+
+// IoControlCode (4 bytes): A 32-bit unsigned integer. This field is specific
+//  to the redirected device.
+
+// Padding (20 bytes): An array of 20 bytes. Reserved. This field can be set
+//  to any value, and MUST be ignored on receipt.
+
+// InputBuffer (variable): A variable-size byte array whose size is specified
+//  by the InputBufferLength field.
+
+class DeviceControlRequest {
+    uint32_t OutputBufferLength = 0;
+    uint32_t IoControlCode_     = 0;
+
+    StaticStream input_buffer;
+
+public:
+    DeviceControlRequest() = default;
+
+    REDEMPTION_NON_COPYABLE(DeviceControlRequest);
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->OutputBufferLength);
+
+        stream.out_uint32_le(this->input_buffer.get_capacity());    // InputBufferLength(4)
+
+        stream.out_uint32_le(this->IoControlCode_);
+
+        stream.out_clear_bytes(20); // Padding(20)
+
+        stream.out_copy_bytes(this->input_buffer.get_data(),
+            this->input_buffer.get_capacity());
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 32;  // OutputBufferLength(4) + InputBufferLength(4) +
+                                           //     IoControlCode(4) + Padding(20)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceControlRequest (0): "
+                        "expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->OutputBufferLength = stream.in_uint32_le();
+
+        const uint32_t InputBufferLength = stream.in_uint32_le();
+        REDASSERT(!InputBufferLength);
+
+        this->IoControlCode_ = stream.in_uint32_le();
+
+        stream.in_skip_bytes(20);   // Padding(20)
+
+        {
+            const unsigned expected = InputBufferLength;  // InputBuffer(variable)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceControlRequest (1): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->input_buffer.resize(stream.p, InputBufferLength);
+        stream.in_skip_bytes(InputBufferLength);
+    }
+
+    uint32_t IoControlCode() const { return this->IoControlCode_; }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "DeviceControlRequest: OutputBufferLength=%u InputBufferLength=%zu "
+                "IoControlCode=0x%X",
+            this->OutputBufferLength, this->input_buffer.get_capacity(),
+            this->IoControlCode_);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};  // DeviceControlRequest
+
 // [MS-RDPEFS] - 2.2.1.5 Device I/O Response (DR_DEVICE_IOCOMPLETION)
 // ==================================================================
 
@@ -1105,8 +1351,8 @@ enum {
 //  +-------------------------+-------------------------------+
 
 class DeviceCreateResponse {
-    uint32_t FileId;
-    uint8_t  Information;
+    uint32_t FileId      = 0;
+    uint8_t  Information = 0;
 
 public:
     DeviceCreateResponse() = default;
@@ -1182,6 +1428,43 @@ public:
 
 // Padding (5 bytes): An array of 5 bytes. Reserved. This field can be set to
 //  any value, and MUST be ignored on receipt.
+
+// [MS-RDPEFS] - 2.2.1.5.3 Device Read Response (DR_READ_RSP)
+// ==========================================================
+
+// A message with this header describes a response to a Device Read Request
+//  (section 2.2.1.4.3).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         DeviceIoReply                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                      ReadData (variable)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION header. The
+//  CompletionId field of this header MUST match a Device I/O Request
+//  (section 2.2.1.4) message that had the MajorFunction field set to
+//  IRP_MJ_READ.
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of
+//  bytes in the ReadData field.
+
+// ReadData (variable): A variable-length array of bytes that specifies the
+//  output data from the read request. The length of ReadData is specified by
+//  the Length field in this packet.
 
 // [MS-RDPEFS] - 2.2.2.1 Server Device Announce Response
 //  (DR_CORE_DEVICE_ANNOUNCE_RSP)
@@ -2020,7 +2303,7 @@ public:
     inline void emit(Stream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
 
-        stream.out_uint32_le(this->query_buffer.get_capacity());
+        stream.out_uint32_le(this->query_buffer.get_capacity());    // Length(4)
 
         stream.out_clear_bytes(24); // Padding(24)
 
@@ -2042,6 +2325,7 @@ public:
         this->FsInformationClass_ = stream.in_uint32_le();
 
         const uint32_t Length = stream.in_uint32_le();
+        REDASSERT(!Length);
 
         stream.in_skip_bytes(24);   // Padding(24)
 
@@ -2077,7 +2361,230 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, buffer);
     }
+};  // ServerDriveQueryInformationRequest
+
+// [MS-RDPEFS] - 2.2.3.3.5 Server Drive Control Request
+//  (DR_DRIVE_CONTROL_REQ)
+// ====================================================
+
+// The server issues a device control request on a redirected file system
+//  device.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                DeviceControlRequest (variable)                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceControlRequest (variable): A DR_CONTROL_REQ header. The packet has a
+//  structure as defined in Device Control Request (section 2.2.1.4.5). The
+//  possible values for the IoControlCode field are a subset of the file
+//  system control (FSCTL) commands specified in [MS-FSCC] section 2.3. The
+//  content of the InputBuffer field is defined in the request type messages
+//  that are specified in the same section of [MS-FSCC].
+
+// The following list indicates the FSCTL commands supported by this protocol.
+
+// * FSCTL_CREATE_OR_GET_OBJECT_ID
+// * FSCTL_DELETE_OBJECT_ID
+// * FSCTL_DELETE_REPARSE_POINT
+// * FSCTL_FILESYSTEM_GET_STATISTICS
+// * FSCTL_FIND_FILES_BY_SID
+// * FSCTL_GET_COMPRESSION
+// * FSCTL_GET_NTFS_VOLUME_DATA
+// * FSCTL_GET_OBJECT_ID
+// * FSCTL_GET_REPARSE_POINT
+// * FSCTL_GET_RETRIEVAL_POINTERS
+// * FSCTL_IS_PATHNAME_VALID
+// * FSCTL_LMR_GET_LINK_TRACKING_INFORMATION
+// * FSCTL_LMR_SET_LINK_TRACKING_INFORMATION
+// * FSCTL_PIPE_TRANSCEIVE
+// * FSCTL_PIPE_WAIT
+// * FSCTL_QUERY_ALLOCATED_RANGES
+// * FSCTL_READ_FILE_USN_DATA
+// * FSCTL_RECALL_FILE
+// * FSCTL_SET_COMPRESSION
+// * FSCTL_SET_ENCRYPTION
+// * FSCTL_SET_OBJECT_ID
+// * FSCTL_SET_OBJECT_ID_EXTENDED
+// * FSCTL_SET_REPARSE_POINT
+// * FSCTL_SET_SHORT_NAME_BEHAVIOR
+// * FSCTL_SET_SPARSE
+// * FSCTL_SET_ZERO_DATA
+// * FSCTL_SET_ZERO_ON_DEALLOCATION
+// * FSCTL_SIS_COPYFILE
+// * FSCTL_WRITE_USN_CLOSE_RECORD
+
+// [MS-RDPEFS] - 2.2.3.3.6 Server Drive Query Volume Information Request
+//  (DR_DRIVE_QUERY_VOLUME_INFORMATION_REQ)
+// =====================================================================
+
+// The server issues a query volume information request on a redirected file
+//  system device.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        DeviceIoRequest                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                       FsInformationClass                      |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                  QueryVolumeBuffer (variable)                 |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST (section 2.2.1.4)
+//  header. The MajorFunction field in the DR_DEVICE_IOREQUEST header MUST be
+//  set to IRP_MJ_QUERY_VOLUME_INFORMATION.
+
+// FsInformationClass (4 bytes): A 32-bit unsigned integer. The possible
+//  values for this field are specified in [MS-FSCC] section 2.5. This field
+//  MUST contain one of the following values.
+
+//  +----------------------------+---------------------------------------------+
+//  | Value                      | Meaning                                     |
+//  +----------------------------+---------------------------------------------+
+//  | FileFsVolumeInformation    | Used to query information for a volume on   |
+//  | 0x00000001                 | which a file system is mounted.             |
+//  +----------------------------+---------------------------------------------+
+//  | FileFsSizeInformation      | Used to query sector size information for a |
+//  | 0x00000003                 | file system volume.                         |
+//  +----------------------------+---------------------------------------------+
+//  | FileFsAttributeInformation | Used to query attribute information for a   |
+//  | 0x00000005                 | file system.                                |
+//  +----------------------------+---------------------------------------------+
+//  | FileFsFullSizeInformation  | Used to query sector size information for a |
+//  | 0x00000007                 | file system volume.                         |
+//  +----------------------------+---------------------------------------------+
+//  | FileFsDeviceInformation    | Used to query device information for a file |
+//  | 0x00000004                 | system volume.                              |
+//  +----------------------------+---------------------------------------------+
+
+enum {
+      FileFsVolumeInformation    = 0x00000001
+    , FileFsSizeInformation      = 0x00000003
+    , FileFsAttributeInformation = 0x00000005
+    , FileFsFullSizeInformation  = 0x00000007
+    , FileFsDeviceInformation    = 0x00000004
 };
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of
+//  bytes in the QueryVolumeBuffer field.
+
+// Padding (24 bytes): An array of 24 bytes. This field is unused and can be
+//  set to any value. This field MUST be ignored on receipt.
+
+// QueryVolumeBuffer (variable): A variable-length array of bytes. The size
+//  of the array is specified by the Length field. The content of this field
+//  is based on the value of the FsInformationClass field, which determines
+//  the different structures that MUST be contained in the QueryVolumeBuffer
+//  field. For a complete list of these structures, refer to [MS-FSCC]
+//  section 2.5. The "File system information class" table defines all the
+//  possible values for the FsInformationClass field.
+
+class ServerDriveQueryVolumeInformationRequest {
+    uint32_t FsInformationClass_ = 0;
+
+    StaticStream query_volume_buffer;
+
+public:
+    ServerDriveQueryVolumeInformationRequest() = default;
+
+    REDEMPTION_NON_COPYABLE(ServerDriveQueryVolumeInformationRequest);
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->FsInformationClass_);
+
+        stream.out_uint32_le(this->query_volume_buffer.get_capacity()); // Length(4)
+
+        stream.out_clear_bytes(24); // Padding(24)
+
+        stream.out_copy_bytes(this->query_volume_buffer.get_data(),
+            this->query_volume_buffer.get_capacity());
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 32;  // FsInformationClass(4) + Length(4) + Padding(24)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ServerDriveQueryVolumeInformationRequest (0): "
+                        "expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->FsInformationClass_ = stream.in_uint32_le();
+
+        const uint32_t Length = stream.in_uint32_le();
+        REDASSERT(!Length);
+
+        stream.in_skip_bytes(24);   // Padding(24)
+
+        {
+            const unsigned expected = Length;  // QueryVolumeBuffer(variable)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ServerDriveQueryVolumeInformationRequest (1): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->query_volume_buffer.resize(stream.p, Length);
+        stream.in_skip_bytes(Length);
+    }
+
+    inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "ServerDriveQueryVolumeInformationRequest: FsInformationClass=%u Length=%zu",
+            this->FsInformationClass_, this->query_volume_buffer.get_capacity());
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};  // ServerDriveQueryVolumeInformationRequest
 
 // [MS-RDPEFS] - 2.2.3.3.10 Server Drive Query Directory Request
 //  (DR_DRIVE_QUERY_DIRECTORY_REQ)
