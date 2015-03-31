@@ -6239,29 +6239,35 @@ public:
 
                 if (!this->file_system_drive_manager.IsManagedDrive(
                         device_io_request.DeviceId())) {
-                    if (this->verbose) {
-                        uint32_t extra_data = 0;
+                    uint32_t extra_data = 0;
 
-                        switch (device_io_request.MajorFunction()) {
-                            case rdpdr::IRP_MJ_CREATE:
-                            {
+                    switch (device_io_request.MajorFunction()) {
+                        case rdpdr::IRP_MJ_CREATE:
+                        {
+                            if (this->verbose) {
                                 LOG(LOG_INFO,
                                     "mod_rdp::process_rdpdr_event: Device Create Request");
+                            }
 
-                                rdpdr::DeviceCreateRequest device_create_request;
+                            rdpdr::DeviceCreateRequest device_create_request;
 
-                                device_create_request.receive(stream);
+                            device_create_request.receive(stream);
+
+                            if (this->verbose) {
                                 device_create_request.log(LOG_INFO);
                             }
-                            break;
+                        }
+                        break;
 
-                            case rdpdr::IRP_MJ_CLOSE:
+                        case rdpdr::IRP_MJ_CLOSE:
+                            if (this->verbose) {
                                 LOG(LOG_INFO,
                                     "mod_rdp::process_rdpdr_event: Device Close Request");
-                            break;
+                            }
+                        break;
 
-                            case rdpdr::IRP_MJ_DEVICE_CONTROL:
-                            {
+                        case rdpdr::IRP_MJ_DEVICE_CONTROL:
+                            if (this->verbose) {
                                 LOG(LOG_INFO,
                                     "mod_rdp::process_rdpdr_event: Device control request");
 
@@ -6270,10 +6276,10 @@ public:
                                 device_control_request.receive(stream);
                                 device_control_request.log(LOG_INFO);
                             }
-                            break;
+                        break;
 
-                            case rdpdr::IRP_MJ_QUERY_INFORMATION:
-                            {
+                        case rdpdr::IRP_MJ_QUERY_INFORMATION:
+                            if (this->verbose) {
                                 LOG(LOG_INFO,
                                     "mod_rdp::process_rdpdr_event: "
                                         "Server Drive Query Information Request");
@@ -6287,18 +6293,20 @@ public:
                                 extra_data =
                                     server_drive_query_information_request.FsInformationClass();
                             }
-                            break;
+                        break;
 
-                            default:
-                                if (this->verbose) {
-                                    LOG(LOG_INFO,
-                                        "mod_rdp::process_rdpdr_event: "
-                                            "undecoded Device I/O Request - MajorFunction=0x%X",
-                                        device_io_request.MajorFunction());
-                                }
-                            break;
-                        }
+                        default:
+                            if (this->verbose) {
+                                LOG(LOG_INFO,
+                                    "mod_rdp::process_rdpdr_event: "
+                                        "undecoded Device I/O Request - MajorFunction=0x%X MinorFunction=0x%X",
+                                    device_io_request.MajorFunction(),
+                                    device_io_request.MinorFunction());
+                            }
+                        break;
+                    }
 
+                    if (this->verbose) {
                         this->device_io_requests.push_back(std::make_tuple(
                             device_io_request.DeviceId(),
                             device_io_request.CompletionId(),
