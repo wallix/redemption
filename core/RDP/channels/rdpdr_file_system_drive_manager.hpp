@@ -766,17 +766,15 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p> fd=%d",
         }
         device_io_response.emit(out_stream);
 
-        if (this->fd >= -1) {
-            const rdpdr::DeviceCreateResponse device_create_response(
-                    static_cast<uint32_t>(this->fd),
-                    0x0
-                );
-            if (verbose) {
-                LOG(LOG_INFO, "ManagedFile::ProcessServerCreateDriveRequest");
-                device_create_response.log(LOG_INFO);
-            }
-            device_create_response.emit(out_stream);
+        const rdpdr::DeviceCreateResponse device_create_response(
+                static_cast<uint32_t>(this->fd),
+                0x0
+            );
+        if (verbose) {
+            LOG(LOG_INFO, "ManagedFile::ProcessServerCreateDriveRequest");
+            device_create_response.log(LOG_INFO);
         }
+        device_create_response.emit(out_stream);
 
         out_stream.mark_end();
 
