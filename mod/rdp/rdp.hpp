@@ -651,11 +651,11 @@ public:
 private:
     template<class PDU, class... Args>
     void send_clipboard_pdu_to_front_channel(bool response_ok, Args&&... args) {
-        PDU             format_data_response_pdu(response_ok);
+        PDU             pdu(response_ok);
         uint8_t         data[256];
         FixedSizeStream out_s(data, sizeof(data));
 
-        format_data_response_pdu.emit(out_s, args...);
+        pdu.emit(out_s, args...);
 
         this->send_to_front_channel( channel_names::cliprdr
                                    , out_s.get_data()
@@ -750,7 +750,8 @@ private:
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: clipboard is fully disabled (c)");
                 }
-                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(true);
+                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(
+                    true);
                 return;
             }
         }
@@ -760,7 +761,8 @@ private:
                     LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: clipboard down is unavailable");
                 }
 
-                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(false, "\0");
+                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(
+                    false, static_cast<uint8_t *>(NULL), 0);
                 return;
             }
         }
@@ -769,7 +771,8 @@ private:
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: requesting the contents of server file is denied");
                 }
-                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FileContentsResponse>(false);
+                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FileContentsResponse>(
+                    false);
                 return;
             }
         }
@@ -5974,7 +5977,7 @@ public:
                 }
 
                 BStream out_s(256);
-                RDPECLIP::FormatDataResponsePDU(false).emit(out_s, "\0");
+                RDPECLIP::FormatDataResponsePDU(false).emit(out_s, static_cast<uint8_t *>(NULL), 0);
 
                 this->send_to_channel(
                     cliprdr_channel, out_s, out_s.size(),

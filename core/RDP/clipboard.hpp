@@ -281,29 +281,12 @@ struct FormatListPDU : public CliprdrHeader {
         : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
         , contians_data_in_text_format(false) {}
 
-/*
-    void emit_empty(Stream & stream) {
-        CliprdrHeader::emit(stream);
-
-        stream.mark_end();
-    }
-*/
-
     void emit(Stream & stream) {
-        this->dataLen_ = 144;    /* (formatId(4) + formatName(32)) * 4 */
+        this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
         CliprdrHeader::emit(stream);
 
-        // 4 CLIPRDR_SHORT_FORMAT_NAMES structures.
+        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(CF_TEXT);
-        stream.out_clear_bytes(32); // formatName(32)
-
-        stream.out_uint32_le(CF_OEMTEXT);
-        stream.out_clear_bytes(32); // formatName(32)
-
-        stream.out_uint32_le(CF_UNICODETEXT);
-        stream.out_clear_bytes(32); // formatName(32)
-
-        stream.out_uint32_le(CF_LOCALE);
         stream.out_clear_bytes(32); // formatName(32)
 
         stream.mark_end();
@@ -363,9 +346,7 @@ struct FormatListPDU : public CliprdrHeader {
 
             uint32_t formatId = stream.in_uint32_le();
 
-            if (   (formatId == CF_TEXT)
-                || (formatId == CF_UNICODETEXT)
-                ) {
+            if (formatId == CF_TEXT) {
                 //LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
                 this->contians_data_in_text_format = true;
 
@@ -504,21 +485,19 @@ struct FormatDataResponsePDU : public CliprdrHeader {
                        , 0) {
     }
 
-    void emit(Stream & stream, const char * utf8_string) {
+    void emit(Stream & stream, const uint8_t * data, size_t data_length) {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
 
-        const uint32_t offset_dataLen_ = stream.get_offset();
-        stream.out_uint32_le(0);
-
         if (this->msgFlags_ == CB_RESPONSE_OK) {
+            stream.out_uint32_le(data_length);  // dataLen(4)
 
-            stream.out_unistr_crlf(utf8_string);
-
-            stream.set_out_uint32_le(   stream.get_offset()
-                                      - offset_dataLen_
-                                      - 4                   /* dataLen_(4) */
-                                    , offset_dataLen_);
+            if (data_length) {
+                stream.out_copy_bytes(data, data_length);
+            }
+        }
+        else {
+            stream.out_uint32_le(0);    // dataLen(4)
         }
 
         stream.mark_end();

@@ -65,17 +65,25 @@ struct CopyPasteFront : FakeFront
         switch (recv_factory.msgType) {
             case RDPECLIP::CB_MONITOR_READY:
                 this->send_to_server(RDPECLIP::FormatListPDU());
-                break;
+            break;
             //case RDPECLIP::CB_FORMAT_LIST:
             //    break;
             //case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
             //    break;
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
+            {
                 RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
-                this->send_to_server(RDPECLIP::FormatDataResponsePDU(true), this->str.c_str());
-                break;
+                BStream stream(65535);
+                size_t unicode_data_length = ::UTF8toUTF16(byte_ptr_cast(this->str.c_str()),
+                    stream.p, stream.get_capacity());
+                stream.p[unicode_data_length    ] = 0;
+                stream.p[unicode_data_length + 1] = 0;
+                unicode_data_length += 2;
+                this->send_to_server(RDPECLIP::FormatDataResponsePDU(true), stream.p, unicode_data_length);
+            }
+            break;
             default:
-                break;
+            break;
         }
     }
 

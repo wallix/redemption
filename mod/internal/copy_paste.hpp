@@ -160,13 +160,13 @@ public:
                 break;
             //case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
             //    break;
-            case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
-                this->send_to_front_channel_and_set_buf_size(
-                    this->clipboard_str_.size() * 2 /*utf8 to utf16*/ + sizeof(RDPECLIP::CliprdrHeader) + 4 /*data_len*/,
-                    RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.c_str()
-                );
-                break;
+            //case RDPECLIP::CB_FORMAT_DATA_REQUEST:
+            //    RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
+            //    this->send_to_front_channel_and_set_buf_size(
+            //        this->clipboard_str_.size() * 2 /*utf8 to utf16*/ + sizeof(RDPECLIP::CliprdrHeader) + 4 /*data_len*/,
+            //        RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.c_str()
+            //    );
+            //    break;
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
                 RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
                 format_data_response_pdu.recv(stream, recv_factory);
