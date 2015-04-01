@@ -693,6 +693,7 @@ unit-test test_flat_form : tests/mod/internal/widget2/test_flat_form.cpp png z c
 ## @}
 
 unit-test test_authorization_channels : tests/utils/test_authorization_channels.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_strutils : tests/utils/test_strutils.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
