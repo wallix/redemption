@@ -238,6 +238,8 @@ class mod_rdp : public mod_api {
 
     RedirectionInfo & redir_info;
 
+    BStream chunked_virtual_channel_data;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -314,6 +316,7 @@ public:
         , password_printing_mode(mod_rdp_params.password_printing_mode)
         , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
+        , chunked_virtual_channel_data(65536)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -1083,6 +1086,50 @@ public:
 private:
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
                                    Stream & chunk, size_t length, uint32_t flags) {
+        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
+            (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) {
+            this->send_unchunked_data_to_mod_rdpdr_channel(rdpdr_channel,
+                chunk, length, flags);
+        }
+        else {
+            if (length > this->chunked_virtual_channel_data.get_capacity()) {
+                LOG(LOG_WARNING,
+                    "mod_rdp::send_to_mod_rdpdr_channel: "
+                        "Too much data for Chunked Virtual Channel Data buffer! "
+                        "The PDU is ignored. length=%u limite=%u flags=0x%X",
+                    length, this->chunked_virtual_channel_data.get_capacity(), flags);
+                return;
+            }
+
+            if (this->verbose) {
+                LOG(LOG_INFO, "Chunked Virtual Channel Data: length=%u flags=0x%X",
+                    length, flags);
+            }
+
+            REDASSERT(((flags & CHANNELS::CHANNEL_FLAG_FIRST) == 0) ||
+                !this->chunked_virtual_channel_data.size());
+
+            this->chunked_virtual_channel_data.out_copy_bytes(chunk.get_data(), chunk.size());
+
+            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                this->chunked_virtual_channel_data.mark_end();
+                this->chunked_virtual_channel_data.rewind();
+
+                REDASSERT(this->chunked_virtual_channel_data.size() ==
+                    static_cast<size_t>(length));
+
+                flags |= CHANNELS::CHANNEL_FLAG_FIRST;
+
+                this->send_unchunked_data_to_mod_rdpdr_channel(rdpdr_channel,
+                    this->chunked_virtual_channel_data, length, flags);
+
+                this->chunked_virtual_channel_data.reset();
+            }
+        }
+    }
+
+    void send_unchunked_data_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
+                                                  Stream & chunk, size_t length, uint32_t flags) {
         //LOG(LOG_INFO, "chunk.size=%u, length=%u flags=0x%X", chunk.size(), length, flags);
         REDASSERT(chunk.size() == length);
 
