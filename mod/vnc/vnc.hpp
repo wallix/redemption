@@ -49,7 +49,7 @@
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
 struct mod_vnc : public InternalMod, private NotifyApi {
-    static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 128;
+    static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
 
     FlatVNCAuthentification challenge;
 
@@ -134,6 +134,7 @@ private:
 
     BStream  to_vnc_clipboard_data;
     uint32_t to_vnc_clipboard_data_size;
+    uint32_t to_vnc_clipboard_data_remaining;
 
 private:
     const bool enable_clipboard_up;   // true clipboard available, false clipboard unavailable
@@ -2187,6 +2188,12 @@ private:
                                                     chunk_size,
                                                     send_flags
                                                    );
+                        if (this->verbose) {
+                            LOG(LOG_INFO,
+                                "mod_vnc::clipboard_send_to_vnc: "
+                                    "Sending Format Data Response PDU - chunk_size=%u",
+                                static_cast<uint32_t>(chunk_size));
+                        }
 
                         send_flags &= ~CHANNELS::CHANNEL_FLAG_FIRST;
 
@@ -2309,7 +2316,8 @@ private:
                             throw Error(ERR_VNC);
                         }
 
-                        this->to_vnc_clipboard_data_size = format_data_response_pdu.dataLen();
+                        this->to_vnc_clipboard_data_size      =
+                        this->to_vnc_clipboard_data_remaining = format_data_response_pdu.dataLen();
 
                         if (this->verbose) {
                             LOG( LOG_INFO
@@ -2320,7 +2328,13 @@ private:
                         this->to_vnc_clipboard_data.reset();
 
                         if (this->to_vnc_clipboard_data.get_capacity() >= this->to_vnc_clipboard_data_size) {
-                            this->to_vnc_clipboard_data.out_copy_bytes(stream.p, stream.in_remain());
+                            uint32_t number_of_bytes_to_read = std::min<uint32_t>(
+                                    this->to_vnc_clipboard_data_remaining,
+                                    stream.in_remain()
+                                );
+                            this->to_vnc_clipboard_data.out_copy_bytes(stream.p, number_of_bytes_to_read);
+
+                            this->to_vnc_clipboard_data_remaining -= number_of_bytes_to_read;
                         }
                         else {
                             char buffer_Overflow_message[512];
@@ -2368,10 +2382,22 @@ private:
                     // }
 
                     if (this->to_vnc_clipboard_data.get_capacity() >= this->to_vnc_clipboard_data_size) {
-                        this->to_vnc_clipboard_data.out_copy_bytes(stream.p, stream.in_remain());
+                        uint32_t number_of_bytes_to_read = std::min<uint32_t>(
+                                this->to_vnc_clipboard_data_remaining,
+                                stream.in_remain()
+                            );
+
+                        this->to_vnc_clipboard_data.out_copy_bytes(stream.p, number_of_bytes_to_read);
+
+                        this->to_vnc_clipboard_data_remaining -= number_of_bytes_to_read;
                     }
 
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
+                        REDASSERT((this->to_vnc_clipboard_data.get_capacity() < this->to_vnc_clipboard_data_size) ||
+                            !this->to_vnc_clipboard_data_remaining);
+
+                        this->to_vnc_clipboard_data.mark_end();
+
                         ::in_place_windows_to_linux_newline_convert(
                             ::char_ptr_cast(this->to_vnc_clipboard_data.get_data()));
 
