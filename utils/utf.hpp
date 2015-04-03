@@ -678,4 +678,47 @@ static inline size_t get_utf8_char_size(uint8_t const * c) {
     return 1;
 }
 
+static inline bool is_utf8_string(uint8_t const * s, int length = -1) {
+    enum Stat : uint8_t {
+        ASCII,
+        FIRST_UTF8_CHAR,
+        SECOND_UTF8_CHAR,
+        THIRD_UTF8_CHAR,
+        FOURTH_UTF8_CHAR
+    };
+
+    Stat stat = ASCII;
+
+    for (uint8_t const * const s_end = ((length >= 0) ? s + length : nullptr);
+         *s && (!s_end || (s < s_end)); s++) {
+        switch (stat) {
+            case ASCII:
+                if (*s <= 0x7F) continue;
+                if ((*s >> 6) == 0x3) { stat = FIRST_UTF8_CHAR; continue; }
+                return false;
+            break;
+            case FIRST_UTF8_CHAR:
+                if ((*s >> 6) == 0x2) { stat = SECOND_UTF8_CHAR; continue; }
+                return false;
+            break;
+            case SECOND_UTF8_CHAR:
+                if (*s <= 0x7F) { stat = ASCII; continue; }
+                if ((*s >> 6) == 0x2) { stat = THIRD_UTF8_CHAR; continue; }
+                return false;
+            break;
+            case THIRD_UTF8_CHAR:
+                if (*s <= 0x7F) { stat = ASCII; continue; }
+                if ((*s >> 6) == 0x2) { stat = FOURTH_UTF8_CHAR; continue; }
+                return false;
+            break;
+            case FOURTH_UTF8_CHAR:
+                if (*s <= 0x7F) { stat = ASCII; continue; }
+                return false;
+            break;
+        }
+    }
+
+    return (stat == ASCII);
+}
+
 #endif
