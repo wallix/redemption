@@ -265,14 +265,14 @@ struct ServerMonitorReadyPDU : public CliprdrHeader {
 //  on the type of data present in the formatListData field.
 
 // formatListData (variable): An array consisting solely of either Short
-//  Format Names or Long Format Names. The type of structure used in the array
-//  is determined by the presence of the CB_USE_LONG_FORMAT_NAMES (0x00000002)
-//  flag in the generalFlags field of the General Capability Set (section
-//  2.2.2.1.1.1). Each array holds a list of the Clipboard Format ID and name
-//  pairs available on the local system clipboard of the sender. If Short
-//  Format Names are being used, and the embedded Clipboard Format names are
-//  in ASCII 8 format, then the msgFlags field of the clipHeader must contain
-//  the CB_ASCII_NAMES (0x0004) flag.
+//  Format Names or Long Format Names. The type of structure used in the
+//  array is determined by the presence of the CB_USE_LONG_FORMAT_NAMES
+//  (0x00000002) flag in the generalFlags field of the General Capability Set
+//  (section 2.2.2.1.1.1). Each array holds a list of the Clipboard Format ID
+//  and name pairs available on the local system clipboard of the sender. If
+//  Short Format Names are being used, and the embedded Clipboard Format
+//  names are in ASCII 8 format, then the msgFlags field of the clipHeader
+//  must contain the CB_ASCII_NAMES (0x0004) flag.
 
 struct FormatListPDU : public CliprdrHeader {
     bool contians_data_in_text_format;
@@ -287,6 +287,17 @@ struct FormatListPDU : public CliprdrHeader {
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(CF_TEXT);
+        stream.out_clear_bytes(32); // formatName(32)
+
+        stream.mark_end();
+    }
+
+    void emit_ex(Stream & stream, bool unicode) {
+        this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
+        CliprdrHeader::emit(stream);
+
+        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
+        stream.out_uint32_le(unicode ? CF_UNICODETEXT : CF_TEXT);
         stream.out_clear_bytes(32); // formatName(32)
 
         stream.mark_end();
@@ -485,7 +496,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
                        , 0) {
     }
 
-    void emit(Stream & stream, const uint8_t * data, size_t data_length) {
+    void emit(Stream & stream, const uint8_t * data, size_t data_length) const {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
 
@@ -499,6 +510,19 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         else {
             stream.out_uint32_le(0);    // dataLen(4)
         }
+
+        stream.mark_end();
+    }
+
+    void emit_ex(Stream & stream, size_t data_length) const {
+        stream.out_uint16_le(this->msgType_);
+        stream.out_uint16_le(this->msgFlags_);
+
+        stream.out_uint32_le(                           // dataLen(4)
+                (this->msgFlags_ == CB_RESPONSE_OK) ?
+                data_length :
+                0
+            );
 
         stream.mark_end();
     }
