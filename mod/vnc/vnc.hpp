@@ -168,7 +168,8 @@ private:
 
     const bool is_socket_transport;
 
-    uint64_t last_client_clipboard_data_timestamp = 0;
+    bool     requesting_for_clipboard_data_is_delayed = false;
+    uint64_t last_client_clipboard_data_timestamp     = 0;
 
 public:
     //==============================================================================================================
@@ -1048,7 +1049,7 @@ public:
         if (this->event.waked_up_by_time) {
             this->event.reset();
 
-            if (this->last_client_clipboard_data_timestamp) {
+            if (this->requesting_for_clipboard_data_is_delayed) {
                 //const uint64_t usnow = ustime();
                 //const uint64_t timeval_diff = usnow - this->last_client_clipboard_data_timestamp;
                 //LOG(LOG_INFO,
@@ -1060,12 +1061,6 @@ public:
                         RDPECLIP::CB_FORMAT_DATA_REQUEST);
                 }
 
-/*
-                // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_UNICODETEXT)
-                // 04 00 00 00 04 00 00 00 0d 00 00 00
-                // 00 00 00 00
-                RDPECLIP::FormatDataRequestPDU format_data_request_pdu(RDPECLIP::CF_UNICODETEXT);
-*/
                 // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_TEXT)
                 // 04 00 00 00 04 00 00 00 01 00 00 00
                 // 00 00 00 00
@@ -1077,7 +1072,7 @@ public:
                 size_t length     = out_s.size();
                 size_t chunk_size = length;
 
-                this->last_client_clipboard_data_timestamp = 0;
+                this->requesting_for_clipboard_data_is_delayed = false;
 
                 this->send_to_front_channel( channel_names::cliprdr
                                            , out_s.get_data()
@@ -1960,7 +1955,7 @@ private:
                                        );
 
             // Can stop RDP to VNC clipboard infinite loop.
-            this->last_client_clipboard_data_timestamp = 0;
+            this->requesting_for_clipboard_data_is_delayed = false;
         }
         else {
             LOG(LOG_INFO, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
@@ -2106,7 +2101,7 @@ private:
                         length     = out_s.size();
                         chunk_size = length;
 
-                        this->last_client_clipboard_data_timestamp = 0;
+                        this->requesting_for_clipboard_data_is_delayed = false;
 
                         this->send_to_front_channel( channel_names::cliprdr
                                                    , out_s.get_data()
@@ -2124,6 +2119,8 @@ private:
                         }
                         this->event.object_and_time = true;
                         this->event.set(MINIMUM_TIMEVAL - timeval_diff);
+
+                        this->requesting_for_clipboard_data_is_delayed = true;
                     }
                 }
             }
