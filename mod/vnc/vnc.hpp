@@ -2128,7 +2128,7 @@ private:
 
             case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
                 if (this->verbose) {
-                    LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=CB_FORMAT_LIST_RESPONSE(%u)",
+                    LOG(LOG_INFO, "mod_vnc client clipboard PDU: msgType=CB_FORMAT_LIST_RESPONSE(%u)",
                         RDPECLIP::CB_FORMAT_LIST_RESPONSE);
                 }
             break;
