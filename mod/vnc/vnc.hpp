@@ -153,6 +153,11 @@ private:
     };
 
 public:
+    enum class ClipboardEncodingType : uint8_t {
+        UTF8   = 0,
+        Latin1 = 1
+    };
+
     std::string encodings;
 
 private:
@@ -171,6 +176,8 @@ private:
     bool     requesting_for_clipboard_data_is_delayed = false;
     uint64_t last_client_clipboard_data_timestamp     = 0;
 
+    ClipboardEncodingType server_clipboard_encoding_type = ClipboardEncodingType::UTF8;
+
 public:
     //==============================================================================================================
     mod_vnc( Transport & t
@@ -187,6 +194,7 @@ public:
            , const char * encodings
            , bool allow_authentification_retries
            , bool is_socket_transport
+           , const char * server_clipboard_encoding_type
            , uint32_t verbose
            )
     //==============================================================================================================
@@ -216,6 +224,11 @@ public:
     , ini(ini)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
     , is_socket_transport(is_socket_transport)
+    , server_clipboard_encoding_type([] (const char * server_clipboard_encoding_type) -> ClipboardEncodingType {
+                                         return (strcasecmp(server_clipboard_encoding_type, "latin1") ?
+                                                 mod_vnc::ClipboardEncodingType::UTF8 :
+                                                 mod_vnc::ClipboardEncodingType::Latin1);
+                                     } (server_clipboard_encoding_type))
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -2077,7 +2090,9 @@ private:
 
                 const uint64_t MINIMUM_TIMEVAL = 250000LL;
 
-                if (this->enable_clipboard_up && format_list_pdu.contians_data_in_text_format) {
+                if (this->enable_clipboard_up &&
+                    ((format_list_pdu.contians_data_in_text_format && (this->server_clipboard_encoding_type == ClipboardEncodingType::Latin1)) ||
+                     (format_list_pdu.contians_data_in_unicodetext_format && (this->server_clipboard_encoding_type == ClipboardEncodingType::UTF8)))) {
                     const uint64_t usnow = ustime();
                     const uint64_t timeval_diff = usnow - this->last_client_clipboard_data_timestamp;
                     //LOG(LOG_INFO,
@@ -2090,10 +2105,14 @@ private:
                                 RDPECLIP::CB_FORMAT_DATA_REQUEST);
                         }
 
-                        // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_TEXT)
-                        // 04 00 00 00 04 00 00 00 01 00 00 00
+                        // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_TEXT or CF_UNICODETEXT)
+                        // 04 00 00 00 04 00 00 00 0? 00 00 00
                         // 00 00 00 00
-                        RDPECLIP::FormatDataRequestPDU format_data_request_pdu(RDPECLIP::CF_TEXT);
+                        RDPECLIP::FormatDataRequestPDU format_data_request_pdu(
+                                (this->server_clipboard_encoding_type == ClipboardEncodingType::Latin1) ?
+                                RDPECLIP::CF_TEXT :
+                                RDPECLIP::CF_UNICODETEXT
+                            );
                         out_s.init(256);
 
                         format_data_request_pdu.emit(out_s);
@@ -2294,17 +2313,39 @@ private:
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
                         if (!stream.in_check_rem(format_data_response_pdu.dataLen())) {
                             LOG( LOG_ERR
-                               , "mod_vnc::clipboard_send_to_vnc truncated CB_FORMAT_DATA_RESPONSE(%d) dataU16, need=%u remains=%u"
+                               , "mod_vnc::clipboard_send_to_vnc truncated CB_FORMAT_DATA_RESPONSE(%d), need=%u remains=%u"
                                , RDPECLIP::CB_FORMAT_DATA_RESPONSE
                                , format_data_response_pdu.dataLen(), stream.in_remain());
                             throw Error(ERR_VNC);
                         }
 
-                        ::in_place_windows_to_linux_newline_convert(::char_ptr_cast(stream.p));
-                        LOG(LOG_INFO,
-                            "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_RESPONSE - size=%u",
-                            ::strlen(::char_ptr_cast(stream.p)) + 1);
-                        this->rdp_input_clip_data(stream.p, ::strlen(reinterpret_cast<char *>(stream.p)) + 1);
+                        if (this->server_clipboard_encoding_type == ClipboardEncodingType::Latin1) {
+                            ::in_place_windows_to_linux_newline_convert(::char_ptr_cast(stream.p));
+                            const uint32_t clipboard_data_length =
+                                ::strlen(::char_ptr_cast(stream.p)) + 1;
+                            LOG(LOG_INFO,
+                                "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_RESPONSE (latin1) - size=%u",
+                                clipboard_data_length);
+
+                            this->rdp_input_clip_data(stream.p, clipboard_data_length);
+                        }
+                        else {
+                            BStream conv_stream(format_data_response_pdu.dataLen()         /
+                                                2 /* Length of UTF-16 character.        */ *
+                                                4 /* Maximum length of UTF-8 character. */
+                                               );
+                            ::UTF16toUTF8(stream.p, format_data_response_pdu.dataLen(),
+                                conv_stream.get_data(), conv_stream.get_capacity());
+
+                            ::in_place_windows_to_linux_newline_convert(::char_ptr_cast(conv_stream.get_data()));
+                            const uint32_t clipboard_data_length =
+                                ::strlen(::char_ptr_cast(conv_stream.get_data())) + 1;
+                            LOG(LOG_INFO,
+                                "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_RESPONSE (utf-8) - size=%u",
+                                clipboard_data_length);
+
+                            this->rdp_input_clip_data(conv_stream.get_data(), clipboard_data_length);
+                        }
 
                         this->last_client_clipboard_data_timestamp = ustime();
                     }
@@ -2344,8 +2385,18 @@ private:
                                     "The length of data is %u bytes.",
                                 static_cast<uint32_t>(this->to_vnc_clipboard_data.get_capacity()),
                                 this->to_vnc_clipboard_data_size);
-                            this->to_vnc_clipboard_data.out_copy_bytes(buffer_Overflow_message,
-                                ::strlen(buffer_Overflow_message) + 1 /* Null character. */);
+                            if (this->server_clipboard_encoding_type == ClipboardEncodingType::Latin1) {
+                                this->to_vnc_clipboard_data.out_copy_bytes(buffer_Overflow_message,
+                                    ::strlen(buffer_Overflow_message) + 1 /* Null character. */);
+                            }
+                            else {
+                                uint32_t clipboard_data_length =
+                                    ::UTF8toUTF16(::byte_ptr_cast(buffer_Overflow_message),
+                                        this->to_vnc_clipboard_data.get_data(),
+                                        this->to_vnc_clipboard_data.get_capacity());
+                                this->to_vnc_clipboard_data.out_skip_bytes(clipboard_data_length);
+                                this->to_vnc_clipboard_data.out_clear_bytes(2); // Null character.
+                            }
                         }
                     }
                 }
@@ -2398,11 +2449,36 @@ private:
 
                         this->to_vnc_clipboard_data.mark_end();
 
-                        ::in_place_windows_to_linux_newline_convert(
-                            ::char_ptr_cast(this->to_vnc_clipboard_data.get_data()));
+                        if (this->server_clipboard_encoding_type == ClipboardEncodingType::Latin1) {
+                            ::in_place_windows_to_linux_newline_convert(
+                                ::char_ptr_cast(this->to_vnc_clipboard_data.get_data()));
+                            const uint32_t clipboard_data_length =
+                                ::strlen(::char_ptr_cast(this->to_vnc_clipboard_data.get_data())) + 1;
+                            LOG(LOG_INFO,
+                                "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_RESPONSE (latin1) - size=%u",
+                                clipboard_data_length);
 
-                        this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_data(),
-                            this->to_vnc_clipboard_data.size());
+                            this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_data(),
+                                clipboard_data_length);
+                        }
+                        else {
+                            BStream conv_stream(this->to_vnc_clipboard_data.size()         /
+                                                2 /* Length of UTF-16 character.        */ *
+                                                4 /* Maximum length of UTF-8 character. */
+                                               );
+                            ::UTF16toUTF8(this->to_vnc_clipboard_data.get_data(),
+                                this->to_vnc_clipboard_data.size(),
+                                conv_stream.get_data(), conv_stream.get_capacity());
+
+                            ::in_place_windows_to_linux_newline_convert(::char_ptr_cast(conv_stream.get_data()));
+                            const uint32_t clipboard_data_length =
+                                ::strlen(::char_ptr_cast(conv_stream.get_data())) + 1;
+                            LOG(LOG_INFO,
+                                "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_RESPONSE (utf-8) - size=%u",
+                                clipboard_data_length);
+
+                            this->rdp_input_clip_data(conv_stream.get_data(), clipboard_data_length);
+                        }
 
                         this->last_client_clipboard_data_timestamp = ustime();
                     }

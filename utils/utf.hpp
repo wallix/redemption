@@ -679,7 +679,7 @@ static inline size_t get_utf8_char_size(uint8_t const * c) {
 }
 
 static inline bool is_utf8_string(uint8_t const * s, int length = -1) {
-    enum Stat : uint8_t {
+    enum class Stat : uint8_t {
         ASCII,
         FIRST_UTF8_CHAR,
         SECOND_UTF8_CHAR,
@@ -687,38 +687,38 @@ static inline bool is_utf8_string(uint8_t const * s, int length = -1) {
         FOURTH_UTF8_CHAR
     };
 
-    Stat stat = ASCII;
+    Stat stat = Stat::ASCII;
 
     for (uint8_t const * const s_end = ((length >= 0) ? s + length : nullptr);
          *s && (!s_end || (s < s_end)); s++) {
         switch (stat) {
-            case ASCII:
+            case Stat::ASCII:
                 if (*s <= 0x7F) continue;
-                if ((*s >> 6) == 0x3) { stat = FIRST_UTF8_CHAR; continue; }
+                if ((*s >> 6) == 0x3) { stat = Stat::FIRST_UTF8_CHAR; continue; }
                 return false;
             break;
-            case FIRST_UTF8_CHAR:
-                if ((*s >> 6) == 0x2) { stat = SECOND_UTF8_CHAR; continue; }
+            case Stat::FIRST_UTF8_CHAR:
+                if ((*s >> 6) == 0x2) { stat = Stat::SECOND_UTF8_CHAR; continue; }
                 return false;
             break;
-            case SECOND_UTF8_CHAR:
-                if (*s <= 0x7F) { stat = ASCII; continue; }
-                if ((*s >> 6) == 0x2) { stat = THIRD_UTF8_CHAR; continue; }
+            case Stat::SECOND_UTF8_CHAR:
+                if (*s <= 0x7F) { stat = Stat::ASCII; continue; }
+                if ((*s >> 6) == 0x2) { stat = Stat::THIRD_UTF8_CHAR; continue; }
                 return false;
             break;
-            case THIRD_UTF8_CHAR:
-                if (*s <= 0x7F) { stat = ASCII; continue; }
-                if ((*s >> 6) == 0x2) { stat = FOURTH_UTF8_CHAR; continue; }
+            case Stat::THIRD_UTF8_CHAR:
+                if (*s <= 0x7F) { stat = Stat::ASCII; continue; }
+                if ((*s >> 6) == 0x2) { stat = Stat::FOURTH_UTF8_CHAR; continue; }
                 return false;
             break;
-            case FOURTH_UTF8_CHAR:
-                if (*s <= 0x7F) { stat = ASCII; continue; }
+            case Stat::FOURTH_UTF8_CHAR:
+                if (*s <= 0x7F) { stat = Stat::ASCII; continue; }
                 return false;
             break;
         }
     }
 
-    return (stat == ASCII);
+    return (stat == Stat::ASCII);
 }
 
 #endif

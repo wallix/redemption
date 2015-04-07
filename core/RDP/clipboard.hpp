@@ -275,11 +275,13 @@ struct ServerMonitorReadyPDU : public CliprdrHeader {
 //  must contain the CB_ASCII_NAMES (0x0004) flag.
 
 struct FormatListPDU : public CliprdrHeader {
-    bool contians_data_in_text_format;
+    bool contians_data_in_text_format        = false;
+    bool contians_data_in_unicodetext_format = false;
 
     FormatListPDU()
         : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
-        , contians_data_in_text_format(false) {}
+        , contians_data_in_text_format(false)
+        , contians_data_in_unicodetext_format(false) {}
 
     void emit(Stream & stream) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
@@ -292,12 +294,12 @@ struct FormatListPDU : public CliprdrHeader {
         stream.mark_end();
     }
 
-    void emit_ex(Stream & stream, bool unicode) {
+    void emit_ex(Stream & stream, bool unicodetext) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
         CliprdrHeader::emit(stream);
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
-        stream.out_uint32_le(unicode ? CF_UNICODETEXT : CF_TEXT);
+        stream.out_uint32_le(unicodetext ? CF_UNICODETEXT : CF_TEXT);
         stream.out_clear_bytes(32); // formatName(32)
 
         stream.mark_end();
@@ -356,12 +358,13 @@ struct FormatListPDU : public CliprdrHeader {
             }
 
             uint32_t formatId = stream.in_uint32_le();
+            //LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
 
             if (formatId == CF_TEXT) {
-                //LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
                 this->contians_data_in_text_format = true;
-
-                break;
+            }
+            else if (formatId == CF_UNICODETEXT) {
+                this->contians_data_in_unicodetext_format = true;
             }
 
             stream.in_skip_bytes(32);   // formatName(32)
