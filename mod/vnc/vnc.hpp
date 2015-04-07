@@ -1958,6 +1958,9 @@ private:
                                           CHANNELS::CHANNEL_FLAG_FIRST
                                         | CHANNELS::CHANNEL_FLAG_LAST
                                        );
+
+            // Can stop RDP to VNC clipboard infinite loop.
+            this->last_client_clipboard_data_timestamp = 0;
         }
         else {
             LOG(LOG_INFO, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
