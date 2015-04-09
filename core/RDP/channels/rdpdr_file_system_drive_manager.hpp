@@ -1129,7 +1129,6 @@ public:
 
         for (managed_drive_collection_type::iterator iter = this->managed_drives.begin();
              iter != this->managed_drives.end(); ++iter) {
-
             rdpdr::DeviceAnnounceHeader device_announce_header(rdpdr::RDPDR_DTYP_FILESYSTEM,
                                                                std::get<0>(*iter),
                                                                std::get<1>(*iter).c_str(),
@@ -1143,9 +1142,20 @@ public:
                 device_announce_header.log(LOG_INFO);
             }
 
-            device_announce_header.emit(client_device_list_announce);
+            if (client_device_list_announce.has_room(device_announce_header.size())) {
+                device_announce_header.emit(client_device_list_announce);
 
-            announced_drive_count++;
+                announced_drive_count++;
+            }
+            else {
+                LOG(LOG_ERR,
+                    "FileSystemDriveManager::AnnounceDrivePartially: "
+                        "Too much data for Announce Driver buffer! "
+                        "length=%u limite=%u",
+                    client_device_list_announce.get_offset() + device_announce_header.size(),
+                    client_device_list_announce.get_capacity());
+                throw Error(ERR_RDP_PROTOCOL);
+            }
         }
 
         return announced_drive_count;
@@ -1160,6 +1170,9 @@ private:
             }
         }
 
+        LOG(LOG_INFO,
+            "FileSystemDriveManager::get_drive_access_mode_by_id: "
+                "Drive is not found. DeviceId=%u", DeviceId);
         throw Error(ERR_RDP_PROTOCOL);
     }
 
