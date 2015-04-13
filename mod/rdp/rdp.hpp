@@ -245,6 +245,8 @@ class mod_rdp : public mod_api {
 
     static const uint32_t default_chunked_virtual_channel_data_length = 1024 * 4;
 
+    const bool bogus_sc_net_size;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -325,6 +327,7 @@ public:
             CHANNELS::PROXY_CHUNKED_VIRTUAL_CHANNEL_DATA_LENGTH_LIMIT))
         , chunked_virtual_channel_data_byte(std::make_unique<uint8_t[]>(mod_rdp::default_chunked_virtual_channel_data_length))
         , chunked_virtual_channel_data_stream(chunked_virtual_channel_data_byte.get(), mod_rdp::default_chunked_virtual_channel_data_length)
+        , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -1949,7 +1952,7 @@ public:
                             case SC_NET:
                                 {
                                     GCC::UserData::SCNet sc_net;
-                                    sc_net.recv(f.payload);
+                                    sc_net.recv(f.payload, this->bogus_sc_net_size);
 
                                     /* We assume that the channel_id array is confirmed in the same order
                                        that it has been sent. If there are any channels not confirmed, they're

@@ -816,6 +816,8 @@ public:
                 mod_rdp_params.max_chunked_virtual_channel_data_length =
                                                                      this->ini.globals.max_chunked_virtual_channel_data_length;
 
+                mod_rdp_params.bogus_sc_net_size                   = this->ini.mod_rdp.bogus_sc_net_size.get();
+
                 UdevRandom gen;
 
                 TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")

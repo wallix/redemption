@@ -191,6 +191,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
@@ -439,6 +440,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -703,6 +705,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
@@ -952,6 +955,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("audin",                          ini.mod_rdp.allow_channels);
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.fast_path);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
 
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
@@ -1009,6 +1013,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "cache_waiting_list=no\n"
                           "persist_bitmap_cache_on_disk=no\n"
                           "fast_path=yes\n"
+                          "bogus_sc_net_size=no\n"
                           "[mod_replay]\n"
                           "on_end_of_data=1\n"
                           "[video]\n"
@@ -1174,6 +1179,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.bogus_sc_net_size.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1217,6 +1223,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "bitmap_compression=false\n"
                           "[mod_rdp]\n"
                           "rdp_compression=0\n"
+                          "bogus_sc_net_size=yes\n"
                           "[mod_replay]\n"
                           "on_end_of_data=0\n"
                           "[video]\n"
@@ -1369,6 +1376,10 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1412,6 +1423,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
                           "bitmap_compression=false\n"
                           "\t[mod_rdp]\n"
                           "rdp_compression=0\n"
+                          "bogus_sc_net_size=no\n"
                           "[mod_replay]\n"
                           "on_end_of_data=0\n"
                           "[video]\n"
@@ -1567,6 +1579,10 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.bogus_sc_net_size.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1746,6 +1762,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1919,6 +1939,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -2086,6 +2110,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -2253,6 +2281,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
+    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -2511,13 +2543,13 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL("result",                         ini.context_get_value(AUTHID_AUTHCHANNEL_RESULT));
 
     // regex
-    ini.context_set_value(AUTHID_PATTERN_KILL,         "Explorer");
-    BOOST_CHECK_EQUAL("Explorer",                      ini.context.pattern_kill.get_cstr());
-    BOOST_CHECK_EQUAL("Explorer",                      ini.context_get_value(AUTHID_PATTERN_KILL));
+    ini.context_set_value(AUTHID_PATTERN_KILL,          "Explorer");
+    BOOST_CHECK_EQUAL("Explorer",                       ini.context.pattern_kill.get_cstr());
+    BOOST_CHECK_EQUAL("Explorer",                       ini.context_get_value(AUTHID_PATTERN_KILL));
 
-    ini.context_set_value(AUTHID_PATTERN_NOTIFY,       "Word");
-    BOOST_CHECK_EQUAL("Word",                      ini.context.pattern_notify.get_cstr());
-    BOOST_CHECK_EQUAL("Word",                      ini.context_get_value(AUTHID_PATTERN_NOTIFY));
+    ini.context_set_value(AUTHID_PATTERN_NOTIFY,        "Word");
+    BOOST_CHECK_EQUAL("Word",                           ini.context.pattern_notify.get_cstr());
+    BOOST_CHECK_EQUAL("Word",                           ini.context_get_value(AUTHID_PATTERN_NOTIFY));
 
 
     // message

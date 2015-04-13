@@ -146,6 +146,8 @@ enum authid_t {
 
     AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE,
 
+    AUTHID_RDP_BOGUS_SC_NET_SIZE,
+
     MAX_AUTHID
 };
 
@@ -241,6 +243,8 @@ enum authid_t {
 #define STRAUTHID_RT_DISPLAY                    "rt_display"
 
 #define STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE   "vnc_server_clipboard_encoding_type"
+
+#define STRAUTHID_RDP_BOGUS_SC_NET_SIZE         "rdp_bogus_sc_net_size"
 
 static const char * const authstr[MAX_AUTHID - 1] = {
 
@@ -342,7 +346,9 @@ static const char * const authstr[MAX_AUTHID - 1] = {
     STRAUTHID_DISABLE_KEYBOARD_LOG,
     STRAUTHID_RT_DISPLAY,
 
-    STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE
+    STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE,
+
+    STRAUTHID_RDP_BOGUS_SC_NET_SIZE
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
@@ -603,12 +609,15 @@ public:
 
         RedirectionInfo redir_info;
 
+        // needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block
+        BoolField bogus_sc_net_size;    // AUTHID_RDP_BOGUS_SC_NET_SIZE //
+
         Inifile_mod_rdp() = default;
     } mod_rdp;
 
     struct Inifile_mod_vnc {
-        BoolField clipboard_up;           // AUTHID_VNC_CLIPBOARD_UP //
-        BoolField clipboard_down;         // AUTHID_VNC_CLIPBOARD_DOWN //
+        BoolField clipboard_up;     // AUTHID_VNC_CLIPBOARD_UP //
+        BoolField clipboard_down;   // AUTHID_VNC_CLIPBOARD_DOWN //
 
         std::string encodings;
 
@@ -918,12 +927,17 @@ public:
         this->client.disable_tsk_switch_shortcuts.set(false);
         // End Section "client"
 
+        // Begin section "mod_rdp"
+        this->mod_rdp.bogus_sc_net_size.attach_ini(this, AUTHID_RDP_BOGUS_SC_NET_SIZE);
+        this->mod_rdp.bogus_sc_net_size.set(true);
+        // End Section "mod_rdp"
+
         // Begin section "mod_vnc"
         this->mod_vnc.clipboard_up.attach_ini(this,AUTHID_VNC_CLIPBOARD_UP);
         this->mod_vnc.clipboard_down.attach_ini(this,AUTHID_VNC_CLIPBOARD_DOWN);
 
-        this->mod_vnc.server_clipboard_encoding_type.set_from_cstr("latin1");
         this->mod_vnc.server_clipboard_encoding_type.attach_ini(this, AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE);
+        this->mod_vnc.server_clipboard_encoding_type.set_from_cstr("latin1");
         // End Section "mod_vnc"
 
         // Begin section video
@@ -1283,6 +1297,9 @@ public:
             }
             else if (0 == strcmp(key, "server_redirection_support")) {
                 this->mod_rdp.server_redirection_support = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "bogus_sc_net_size")) {
+                this->mod_rdp.bogus_sc_net_size.set_from_cstr(value);
             }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

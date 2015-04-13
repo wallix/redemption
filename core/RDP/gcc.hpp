@@ -1941,7 +1941,7 @@ namespace GCC
                 stream.mark_end();
             }
 
-            void recv(Stream & stream)
+            void recv(Stream & stream, bool bogus_sc_net_size)
             {
                 if (!stream.in_check_rem(8)){
                     LOG(LOG_ERR, "SCNet::recv short header");
@@ -1959,7 +1959,10 @@ namespace GCC
                 this->MCSChannelId = stream.in_uint16_le();
                 this->channelCount = stream.in_uint16_le();
 
-                if (this->length != (((this->channelCount + (this->channelCount & 1))<<1) + 8)){
+                if (!this->channelCount && (this->length == 10) && bogus_sc_net_size) {
+                    LOG(LOG_WARNING, "SCNet::recv accepts VirtualBox bogus TS_UD_SC_NET data block.");
+                }
+                else if (this->length != (((this->channelCount + (this->channelCount & 1)) << 1) + 8)) {
                     LOG(LOG_ERR, "SCNet::recv bad header length=%d", this->length);
                     throw Error(ERR_GCC);
                 }
