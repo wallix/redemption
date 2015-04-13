@@ -526,11 +526,16 @@ public:
             }
             else if (data == 0xFE)
             {
-                LOG(LOG_INFO, "RDPDrawable::draw(RDPGlyphIndex, ...): Unsupported data");
+                LOG(LOG_ERR,
+                    "RDPDrawable::draw(RDPGlyphIndex, ...): "
+                        "USE (0xFE) operation byte in not yet supported!");
                 throw Error(ERR_RDP_UNSUPPORTED);
             }
             else if (data == 0xFF)
             {
+                LOG(LOG_WARNING,
+                    "RDPDrawable::draw(RDPGlyphIndex, ...): "
+                        "ADD (0xFF) operation byte in not yet supported!");
                 aj.in_skip_bytes(2);
                 REDASSERT(!aj.in_remain());
             }

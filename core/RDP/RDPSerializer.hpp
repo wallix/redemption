@@ -513,10 +513,15 @@ public:
                 }
             }
             else if (new_cmd.data[i] == 0xFE) {
-                LOG(LOG_INFO, "RDPSerializer::draw(RDPGlyphIndex, ...): Unsupported data");
+                LOG(LOG_ERR,
+                    "RDPSerializer::draw(RDPGlyphIndex, ...): "
+                        "USE (0xFE) operation byte in not yet supported!");
                 throw Error(ERR_RDP_UNSUPPORTED);
             }
             else if (new_cmd.data[i] == 0xFF) {
+                LOG(LOG_WARNING,
+                    "RDPSerializer::draw(RDPGlyphIndex, ...): "
+                        "ADD (0xFF) operation byte in not yet supported!");
                 i += 3;
                 REDASSERT(i == new_cmd.data_len);
             }
