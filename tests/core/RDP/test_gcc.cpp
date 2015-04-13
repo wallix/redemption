@@ -169,7 +169,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
     try {
         GCC::UserData::SCNet sc_net2;
 
-        sc_net2.recv(stream);
+        const bool bogus_sc_net_size = false;
+        sc_net2.recv(stream, bogus_sc_net_size);
         BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
         BOOST_CHECK_EQUAL(16, sc_net2.length);
         BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
