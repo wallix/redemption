@@ -45,7 +45,7 @@ struct CopyPasteFront : FakeFront
     , copy_paste(copy_paste)
     {
         CHANNELS::ChannelDef def;
-        memcpy(def.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME, sizeof(CLIPBOARD_VIRTUAL_CHANNEL_NAME));
+        memcpy(def.name, channel_names::cliprdr, strlen(channel_names::cliprdr) + 1);
         this->channel_def_array.push_back(def);
     }
 
@@ -57,7 +57,7 @@ struct CopyPasteFront : FakeFront
     virtual void send_to_channel(
         const CHANNELS::ChannelDef& channel, uint8_t* data, size_t length, size_t chunk_size, int flags)
     {
-        BOOST_REQUIRE(!strcmp(channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME));
+        BOOST_REQUIRE(!strcmp(channel.name, channel_names::cliprdr));
 
         FixedSizeStream stream(data, length);
         RDPECLIP::RecvFactory recv_factory(stream);

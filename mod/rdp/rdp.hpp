@@ -238,7 +238,12 @@ class mod_rdp : public mod_api {
 
     RedirectionInfo & redir_info;
 
-    BStream chunked_virtual_channel_data;
+    const uint32_t max_chunked_virtual_channel_data_length;
+
+    std::unique_ptr<uint8_t[]> chunked_virtual_channel_data_byte;
+    FixedSizeStream            chunked_virtual_channel_data_stream;
+
+    static const uint32_t default_chunked_virtual_channel_data_length = 1024 * 4;
 
 public:
     mod_rdp( Transport & trans
@@ -316,7 +321,10 @@ public:
         , password_printing_mode(mod_rdp_params.password_printing_mode)
         , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
-        , chunked_virtual_channel_data(1024 * 128)
+        , max_chunked_virtual_channel_data_length(std::min(mod_rdp_params.max_chunked_virtual_channel_data_length,
+            CHANNELS::PROXY_CHUNKED_VIRTUAL_CHANNEL_DATA_LENGTH_LIMIT))
+        , chunked_virtual_channel_data_byte(std::make_unique<uint8_t[]>(mod_rdp::default_chunked_virtual_channel_data_length))
+        , chunked_virtual_channel_data_stream(chunked_virtual_channel_data_byte.get(), mod_rdp::default_chunked_virtual_channel_data_length)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -335,6 +343,8 @@ public:
 
             mod_rdp_params.log();
         }
+
+        this->chunked_virtual_channel_data_stream.reset();
 
         if (mod_rdp_params.transparent_recorder_transport) {
             this->transparent_recorder = new TransparentRecorder(mod_rdp_params.transparent_recorder_transport);
@@ -1113,35 +1123,50 @@ private:
             return;
         }
 
-        if (length > this->chunked_virtual_channel_data.get_capacity()) {
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (this->chunked_virtual_channel_data_stream.get_capacity() < length) {
+                size_t rounded_length = this->chunked_virtual_channel_data_stream.get_capacity();
+                for (; rounded_length < length; rounded_length *= 2);
+                if (rounded_length > this->max_chunked_virtual_channel_data_length) {
+                    rounded_length = this->max_chunked_virtual_channel_data_length;
+                }
+                this->chunked_virtual_channel_data_byte = std::make_unique<uint8_t[]>(rounded_length);
+                this->chunked_virtual_channel_data_stream.~FixedSizeStream();
+                new (&this->chunked_virtual_channel_data_stream) FixedSizeStream(
+                    this->chunked_virtual_channel_data_byte.get(), rounded_length);
+                this->chunked_virtual_channel_data_stream.reset();
+            }
+        }
+
+        if (length > this->chunked_virtual_channel_data_stream.get_capacity()) {
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                 LOG(LOG_WARNING,
                     "mod_rdp::send_to_mod_rdpdr_channel: "
                         "Too much data for Chunked Virtual Channel Data buffer! "
                         "The PDU is ignored. length=%u limite=%u flags=0x%X",
-                    length, this->chunked_virtual_channel_data.get_capacity(), flags);
+                    length, this->chunked_virtual_channel_data_stream.get_capacity(), flags);
                 return;
             }
         }
         else {
             REDASSERT(((flags & CHANNELS::CHANNEL_FLAG_FIRST) == 0) ||
-                !this->chunked_virtual_channel_data.size());
+                !this->chunked_virtual_channel_data_stream.size());
 
-            this->chunked_virtual_channel_data.out_copy_bytes(chunk.get_data(), chunk.size());
+            this->chunked_virtual_channel_data_stream.out_copy_bytes(chunk.get_data(), chunk.size());
 
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                this->chunked_virtual_channel_data.mark_end();
-                this->chunked_virtual_channel_data.rewind();
+                this->chunked_virtual_channel_data_stream.mark_end();
+                this->chunked_virtual_channel_data_stream.rewind();
 
-                REDASSERT(this->chunked_virtual_channel_data.size() ==
+                REDASSERT(this->chunked_virtual_channel_data_stream.size() ==
                     static_cast<size_t>(length));
 
                 flags |= CHANNELS::CHANNEL_FLAG_FIRST;
 
                 this->send_unchunked_data_to_mod_rdpdr_channel(rdpdr_channel,
-                    this->chunked_virtual_channel_data, length, flags);
+                    this->chunked_virtual_channel_data_stream, length, flags);
 
-                this->chunked_virtual_channel_data.reset();
+                this->chunked_virtual_channel_data_stream.reset();
             }
         }
     }
@@ -1212,7 +1237,7 @@ private:
                 uint8_t * const DeviceList = chunk.p;
 
                 {
-                    BStream result(this->chunked_virtual_channel_data.get_capacity());
+                    BStream result(this->chunked_virtual_channel_data_stream.get_capacity());
 
                     if (this->filter_unsupported_device(this->authorization_channels,
                                                         chunk, DeviceCount,
@@ -1234,14 +1259,13 @@ private:
                 for (uint32_t device_index = 0; device_index < DeviceCount; ++device_index) {
                     const uint32_t DeviceType       = chunk.in_uint32_le();
                     const uint32_t DeviceId         = chunk.in_uint32_le();
-                    chunk.in_skip_bytes(8);    /* PreferredDosName(8) */
+                    chunk.in_skip_bytes(8);                   /* PreferredDosName(8) */
                     const uint32_t DeviceDataLength = chunk.in_uint32_le();
                     chunk.in_skip_bytes(DeviceDataLength);    /* DeviceData(variable) */
 
                     if (!this->authorization_channels.rdpdr_type_is_authorized(DeviceType)) {
                         rdpdr::ServerDeviceAnnounceResponse server_device_announce_response(
                                 DeviceId,
-                                //0x00000000  // STATUS_SUCCESS
                                 0xC0000001  // STATUS_UNSUCCESSFUL
                             );
 
@@ -3048,7 +3072,7 @@ public:
                         const CHANNELS::ChannelDef * rdpdr_channel =
                             this->mod_channel_list.get_by_name(channel_names::rdpdr);
                         if (rdpdr_channel) {
-                            BStream result(this->chunked_virtual_channel_data.get_capacity());
+                            BStream result(this->chunked_virtual_channel_data_stream.get_capacity());
 
                             if (this->filter_unsupported_device(this->authorization_channels,
                                                                 result, // Fake data.

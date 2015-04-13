@@ -26,6 +26,7 @@
 #include "front_api.hpp"
 #include "stream.hpp"
 #include "widget2/edit.hpp"
+#include "channel_names.hpp"
 
 #include <utility>
 #include <algorithm>
@@ -87,7 +88,7 @@ public:
 
     bool ready(FrontAPI & front) {
         this->front_ = &front;
-        this->channel_ = front.get_channel_list().get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+        this->channel_ = front.get_channel_list().get_by_name(channel_names::cliprdr);
 
         if (this->channel_) {
             this->send_to_front_channel(RDPECLIP::ServerMonitorReadyPDU());

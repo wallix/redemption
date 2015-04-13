@@ -813,6 +813,9 @@ public:
                 mod_rdp_params.remote_program                      = this->front.client_info.remote_program;
                 mod_rdp_params.server_redirection_support          = this->ini.mod_rdp.server_redirection_support;
 
+                mod_rdp_params.max_chunked_virtual_channel_data_length =
+                                                                     this->ini.globals.max_chunked_virtual_channel_data_length;
+
                 UdevRandom gen;
 
                 TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
