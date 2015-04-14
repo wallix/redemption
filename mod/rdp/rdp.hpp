@@ -5767,15 +5767,7 @@ public:
                      );
             }
 
-            TODO("this is to protect rdesktop different color depth works with mstsc and xfreerdp");
-            if (!this->enable_bitmap_update
-               || (bmpdata.bits_per_pixel != this->front_bpp)
-               || ((bmpdata.bits_per_pixel == 8) && (this->front_bpp != 8))) {
-                this->gd->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
-            }
-            else {
-                this->gd->draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
-            }
+            this->gd->draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
         }
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");

@@ -209,6 +209,8 @@ private:
 
     uint16_t rail_channel_id = 0;
 
+    size_t max_bitmap_size = 1024 * 64;
+
 public:
     Front ( Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -637,7 +639,7 @@ private:
             this->mppc_enc = NULL;
         }
 
-        size_t max_bitmap_size = 1024 * 64;
+        this->max_bitmap_size = 1024 * 64;
 
         switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini.client.rdp_compression - 1))
         {
@@ -665,7 +667,7 @@ private:
                 LOG(LOG_INFO, "Front: Use RDP 4.0 Bulk compression");
             }
             this->mppc_enc = new rdp_mppc_40_enc(this->ini.debug.compression);
-            max_bitmap_size = 1024 * 8;
+            this->max_bitmap_size = 1024 * 8;
             break;
         }
 
@@ -740,7 +742,7 @@ private:
             , this->client_info.bitmap_cache_version
             , this->ini.client.bitmap_compression ? 1 : 0
             , this->client_info.use_compact_packets
-            , max_bitmap_size
+            , this->max_bitmap_size
             , this->server_fastpath_update_support
             , this->mppc_enc
             , this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0
@@ -4414,6 +4416,22 @@ public:
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
         //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
+
+        if (   !this->ini.globals.enable_bitmap_update
+            // This is to protect rdesktop different color depth works with mstsc and xfreerdp.
+            || (bitmap_data.bits_per_pixel != this->client_info.bpp)
+            || (bitmap_data.bitmap_size() > this->max_bitmap_size)
+           ) {
+            Rect boundary(bitmap_data.dest_left,
+                          bitmap_data.dest_top,
+                          bitmap_data.dest_right - bitmap_data.dest_left + 1,
+                          bitmap_data.dest_bottom - bitmap_data.dest_top + 1
+                         );
+
+            this->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
+            return;
+        }
+
         ::compress_and_draw_bitmap_update(bitmap_data, Bitmap(this->client_info.bpp, bmp), this->client_info.bpp, *this->orders);
         //bitmap_data.log(LOG_INFO, "Front");
         //hexdump_d(data, size);
