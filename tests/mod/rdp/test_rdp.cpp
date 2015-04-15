@@ -29,8 +29,8 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 
 #include "config.hpp"
 // #include "socket_transport.hpp"
