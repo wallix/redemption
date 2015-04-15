@@ -429,16 +429,17 @@ private:
         for (int y = 0; y < fc.height; y++)
         {
             const int pt_y = bmp_pos_y + local_offset_y + y;
-            if (!(clip.y <= pt_y && pt_y < clip.bottom())) {
-                break;
-            }
+//            if (!(clip.y <= pt_y && pt_y < clip.bottom())) {
+//                break;
+//            }
 
             for (int x = 0; x < fc.width; x++)
             {
                 if (fc_bit_mask & (*fc_data))
                 {
                     const int pt_x = bmp_pos_x + local_offset_x + x;
-                    if (clip.x <= pt_x && pt_x < clip.right()) {
+                    if (clip.x <= pt_x && pt_x < clip.right() &&
+                        clip.y <= pt_y && pt_y < clip.bottom()) {
                         this->drawable.draw_pixel(pt_x, pt_y, color);
                     }
                     //printf("X");
@@ -476,6 +477,7 @@ public:
         uint8_t * fragment_begin_position = variable_bytes.p;
 
         uint16_t fragment_draw_pos = draw_pos_ref;
+(void)fragment_draw_pos;
 
         while (variable_bytes.in_remain())
         {
@@ -523,6 +525,7 @@ public:
                         delta = variable_bytes.in_uint16_le();
                     }
                 }
+                REDASSERT(!delta);  // Fragment's position delta is not yet supported.
 
                 LOG(LOG_WARNING,
                     "RDPDrawable::draw_VariableBytes: "
