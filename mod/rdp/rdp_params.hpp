@@ -101,6 +101,8 @@ struct ModRDPParams {
         , target_host(target_host)
         , client_address(client_address)
 
+        , client_name(NULL)
+
         , enable_tls(true)
         , enable_nla(true)
         , enable_krb(false)

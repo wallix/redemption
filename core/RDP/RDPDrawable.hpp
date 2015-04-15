@@ -24,10 +24,18 @@
 
 #include <utility>
 
-#include "drawable.hpp"
 #include "font.hpp"
 
+#include "CaptureDevice.hpp"
+
+#include "bitmapupdate.hpp"
+#include "pointer.hpp"
 #include "RDPGraphicDevice.hpp"
+
+#include "caches/glyphcache.hpp"
+
+#include "capabilities/glyphcache.hpp"
+
 #include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "orders/RDPOrdersPrimaryEllipseCB.hpp"
 #include "orders/RDPOrdersPrimaryScrBlt.hpp"
@@ -49,13 +57,9 @@
 #include "orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "orders/AlternateSecondaryWindowing.hpp"
 
-#include "pointer.hpp"
-#include "bitmapupdate.hpp"
-#include "caches/glyphcache.hpp"
+#include "drawable.hpp"
 #include "png.hpp"
 #include "text_metrics.hpp"
-
-#include "CaptureDevice.hpp"
 
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
@@ -67,6 +71,8 @@ class RDPDrawable : public RDPGraphicDevice, public RDPCaptureDevice
     int frame_start_count;
     int order_bpp;
     BGRPalette mod_palette_rgb;
+
+    uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
 
 public:
     RDPDrawable(const uint16_t width, const uint16_t height, int order_bpp)
@@ -461,6 +467,108 @@ private:
     }
 
 public:
+    void draw_VariableBytes(uint8_t const * data, uint16_t size, bool has_delta_bytes,
+            uint16_t & draw_pos_ref, int16_t offset_y, Color color,
+            int16_t bmp_pos_x, int16_t bmp_pos_y, Rect const & clip,
+            uint8_t cache_id, const GlyphCache * gly_cache) {
+        StaticStream variable_bytes(data, size);
+
+        uint8_t * fragment_begin_position = variable_bytes.p;
+
+        uint16_t fragment_draw_pos = draw_pos_ref;
+
+        while (variable_bytes.in_remain())
+        {
+            uint8_t data = variable_bytes.in_uint8();
+            if (data <= 0xFD)
+            {
+                FontChar const & fc = gly_cache->glyphs[cache_id][data].font_item;
+                if (!fc)
+                {
+                    LOG( LOG_INFO
+                       , "RDPDrawable::draw_VariableBytes: Unknown glyph, cacheId=%u cacheIndex=%u"
+                       , cache_id, data);
+                    REDASSERT(fc);
+                }
+
+                if (has_delta_bytes)
+                {
+                    data = variable_bytes.in_uint8();
+                    if (data == 0x80)
+                    {
+                        draw_pos_ref += variable_bytes.in_uint16_le();
+                    }
+                    else
+                    {
+                        draw_pos_ref += data;
+                    }
+                }
+
+                if (fc)
+                {
+                    this->draw_glyph( fc, draw_pos_ref, offset_y, color, bmp_pos_x, bmp_pos_y
+                                    , clip);
+                }
+            }
+            else if (data == 0xFE)
+            {
+                const uint8_t fragment_index = variable_bytes.in_uint8();
+
+                uint16_t delta = 0;
+                if (has_delta_bytes)
+                {
+                    delta = variable_bytes.in_uint8();
+                    if (delta == 0x80)
+                    {
+                        delta = variable_bytes.in_uint16_le();
+                    }
+                }
+
+                LOG(LOG_WARNING,
+                    "RDPDrawable::draw_VariableBytes: "
+                        "Experimental support of USE (0xFE) operation byte in "
+                        "GlyphIndex Primary Drawing Order. "
+                        "fragment_index=%u fragment_size=%u delta=%u",
+                    fragment_index, this->fragment_cache[fragment_index][0], delta);
+
+                fragment_begin_position = variable_bytes.p;
+
+                fragment_draw_pos = draw_pos_ref;
+
+                this->draw_VariableBytes(&this->fragment_cache[fragment_index][1],
+                    this->fragment_cache[fragment_index][0], has_delta_bytes,
+                    draw_pos_ref, offset_y, color, bmp_pos_x, bmp_pos_y, clip,
+                    cache_id, gly_cache);
+            }
+            else if (data == 0xFF)
+            {
+                const uint8_t fragment_index = variable_bytes.in_uint8();
+                const uint8_t fragment_size  = variable_bytes.in_uint8();
+
+                LOG(LOG_WARNING,
+                    "RDPDrawable::draw_VariableBytes: "
+                        "Experimental support of ADD (0xFF) operation byte in "
+                        "GlyphIndex Primary Drawing Order. "
+                        "fragment_index=%u fragment_size=%u",
+                    fragment_index, fragment_size);
+
+                REDASSERT(!variable_bytes.in_remain());
+
+                REDASSERT(fragment_begin_position + fragment_size + 3 == variable_bytes.p);
+
+                this->fragment_cache[fragment_index][0] = fragment_size;
+                ::memcpy(&this->fragment_cache[fragment_index][1],
+                         fragment_begin_position,
+                         fragment_size
+                        );
+
+                fragment_begin_position = variable_bytes.p;
+
+                fragment_draw_pos = draw_pos_ref;
+            }
+        }
+    }
+
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
         if (!cmd.bk.has_intersection(clip)) {
@@ -476,16 +584,23 @@ public:
             }
         }
 
-        bool has_delta_byte = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
+        bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
         const Color color = this->u32rgb_to_color(cmd.back_color);
         const int16_t offset_y = /*cmd.bk.cy - (*/cmd.glyph_y - cmd.bk.y/* + 1)*/;
         const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
 
-        StaticStream aj(cmd.data, cmd.data_len);
+//        StaticStream aj(cmd.data, cmd.data_len);
 
-        uint16_t draw_pos = 0;
+        uint16_t draw_pos          = 0;
+//        uint16_t fragment_draw_pos = draw_pos;
 
         Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(clip);
+
+        this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes,
+            draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y,
+            clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
+/*
+        uint8_t * fragment_begin_position = aj.p;
 
         while (aj.in_remain())
         {
@@ -501,7 +616,7 @@ public:
                     REDASSERT(fc);
                 }
 
-                if (has_delta_byte)
+                if (has_delta_bytes)
                 {
                     data = aj.in_uint8();
                     if (data == 0x80)
@@ -526,20 +641,61 @@ public:
             }
             else if (data == 0xFE)
             {
-                LOG(LOG_ERR,
+                const uint8_t fragment_index = aj.in_uint8();
+
+                uint16_t delta = 0;
+                if (has_delta_bytes)
+                {
+                    delta = aj.in_uint8();
+                    if (delta == 0x80)
+                    {
+                        delta = aj.in_uint16_le();
+                    }
+                }
+                else
+                {
+                    REDASSERT(cmd.ui_charinc);
+                }
+
+                LOG(LOG_WARNING,
                     "RDPDrawable::draw(RDPGlyphIndex, ...): "
-                        "USE (0xFE) operation byte in not yet supported!");
-                throw Error(ERR_RDP_UNSUPPORTED);
+                        "Experimental support of USE (0xFE) operation byte in "
+                        "GlyphIndex Primary Drawing Order. "
+                        "fragment_index=%u fragment_size=%u delta=%u",
+                    fragment_index, this->fragment_cache[fragment_index][0], delta);
+
+                fragment_begin_position = aj.p;
+
+                fragment_draw_pos = draw_pos;
             }
             else if (data == 0xFF)
             {
+                const uint8_t fragment_index = aj.in_uint8();
+                const uint8_t fragment_size  = aj.in_uint8();
+
                 LOG(LOG_WARNING,
                     "RDPDrawable::draw(RDPGlyphIndex, ...): "
-                        "ADD (0xFF) operation byte in not yet supported!");
-                aj.in_skip_bytes(2);
+                        "Experimental support of ADD (0xFF) operation byte in "
+                        "GlyphIndex Primary Drawing Order. "
+                        "fragment_index=%u fragment_size=%u",
+                    fragment_index, fragment_size);
+
                 REDASSERT(!aj.in_remain());
+
+                REDASSERT(fragment_begin_position + fragment_size + 3 == aj.p);
+
+                this->fragment_cache[fragment_index][0] = fragment_size;
+                ::memcpy(&this->fragment_cache[fragment_index][1],
+                         fragment_begin_position,
+                         fragment_size
+                        );
+
+                fragment_begin_position = aj.p;
+
+                fragment_draw_pos = draw_pos;
             }
         }
+*/
     }
 
     virtual void draw(const RDPBrushCache & cmd) {}

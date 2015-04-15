@@ -23,14 +23,14 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdpClientTLSW2008
+#define BOOST_TEST_MODULE TestRdp
 #include <boost/test/auto_unit_test.hpp>
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-#define LOGNULL
-// #define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #include "config.hpp"
 // #include "socket_transport.hpp"
