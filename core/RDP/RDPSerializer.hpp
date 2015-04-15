@@ -88,9 +88,13 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-#include "transport.hpp"
+#include "config.hpp"
 
-#include "RDP/RDPGraphicDevice.hpp"
+#include "RDPGraphicDevice.hpp"
+#include "bitmapupdate.hpp"
+
+#include "RDP/caches/bmpcache.hpp"
+#include "RDP/caches/pointercache.hpp"
 
 #include "orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "orders/RDPOrdersPrimaryMultiDstBlt.hpp"
@@ -114,13 +118,11 @@
 #include "orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "orders/AlternateSecondaryWindowing.hpp"
-#include "bitmapupdate.hpp"
 
-#include "config.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include "RDP/caches/pointercache.hpp"
-#include "stream.hpp"
+#include "transport.hpp"
+
 #include "finally.hpp"
+#include "stream.hpp"
 
 struct RDPSerializer : public RDPGraphicDevice
 {
@@ -176,9 +178,9 @@ protected:
     size_t order_count;
     size_t bitmap_count;
 
-    BmpCache     & bmp_cache;
-    GlyphCache   & glyph_cache;
-    PointerCache & pointer_cache;
+    BmpCache      & bmp_cache;
+    GlyphCache    & glyph_cache;
+    PointerCache  & pointer_cache;
 
     const uint32_t verbose;
 
@@ -479,6 +481,17 @@ public:
         const GlyphCache * gly_cache) {
         REDASSERT(gly_cache);
 
+        auto get_delta = [] (RDPGlyphIndex & cmd, uint8_t & i) -> uint16_t {
+            uint16_t delta = cmd.data[i++];
+            if (delta == 0x80) {
+                StaticStream stream(cmd.data + i, sizeof(uint16_t));
+                i += stream.get_capacity();
+
+                delta = stream.in_uint16_le();
+            }
+            return delta;
+        };
+
         RDPGlyphIndex new_cmd = cmd;
         bool has_delta_byte = (!new_cmd.ui_charinc && !(new_cmd.fl_accel & SO_CHAR_INC_EQUAL_BM_BASE));
         for (uint8_t i = 0; i < new_cmd.data_len; ) {
@@ -499,30 +512,66 @@ public:
                 }
 
                 REDASSERT(cacheIndex >= 0);
-                new_cmd.data[i] = static_cast<uint8_t>(cacheIndex);
+                new_cmd.data[i++] = static_cast<uint8_t>(cacheIndex);
                 if (has_delta_byte) {
-                    if (new_cmd.data[++i] == 0x80) {
-                        i += 3;
+                    const uint16_t delta = get_delta(new_cmd, i);
+
+                    if (this->ini.debug.primary_orders & 0x80) {
+                        LOG(LOG_INFO,
+                            "RDPSerializer::draw(RDPGlyphIndex, ...): "
+                                "Experimental support of "
+                                "the distance between two consecutive glyphs "
+                                "indicated by delta bytes in "
+                                "GlyphIndex Primary Drawing Order. "
+                                "delta=%u",
+                            delta);
                     }
-                    else {
-                        i++;
-                    }
-                }
-                else {
-                    i++;
                 }
             }
             else if (new_cmd.data[i] == 0xFE) {
-                LOG(LOG_ERR,
-                    "RDPSerializer::draw(RDPGlyphIndex, ...): "
-                        "USE (0xFE) operation byte in not yet supported!");
-                throw Error(ERR_RDP_UNSUPPORTED);
+                i++;
+
+                const uint8_t fragment_index = new_cmd.data[i++];
+
+                if (has_delta_byte) {
+                    const uint16_t delta = get_delta(new_cmd, i);
+
+                    if (this->ini.debug.primary_orders & 0x80) {
+                        LOG(LOG_INFO,
+                            "RDPSerializer::draw(RDPGlyphIndex, ...): "
+                                "Experimental support of "
+                                "the distance between two consecutive fragments "
+                                "indicated by delta bytes in "
+                                "GlyphIndex Primary Drawing Order. "
+                                "delta=%u",
+                            delta);
+                    }
+                }
+
+                if (this->ini.debug.primary_orders & 0x80) {
+                    LOG(LOG_INFO,
+                        "RDPSerializer::draw(RDPGlyphIndex, ...): "
+                            "Experimental support of USE (0xFE) operation byte in "
+                            "GlyphIndex Primary Drawing Order. "
+                            "fragment_index=%u",
+                        fragment_index);
+                }
             }
             else if (new_cmd.data[i] == 0xFF) {
-                LOG(LOG_WARNING,
-                    "RDPSerializer::draw(RDPGlyphIndex, ...): "
-                        "ADD (0xFF) operation byte in not yet supported!");
-                i += 3;
+                i++;
+
+                const uint8_t fragment_index = new_cmd.data[i++];
+                const uint8_t fragment_size  = new_cmd.data[i++];
+
+                if (this->ini.debug.primary_orders & 0x80) {
+                    LOG(LOG_INFO,
+                        "RDPSerializer::draw(RDPGlyphIndex, ...): "
+                            "Experimental support of ADD (0xFF) operation byte in "
+                            "GlyphIndex Primary Drawing Order. "
+                            "fragment_index=%u fragment_size=%u",
+                        fragment_index, fragment_size);
+                }
+
                 REDASSERT(i == new_cmd.data_len);
             }
         }
