@@ -190,7 +190,6 @@ install install-etc-themes
     ;
 
 lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
-lib libboost_program_options : : <name>boost_program_options <link>shared ;
 lib openssl : : <name>ssl <link>shared ;
 # lib X11 : : <name>X11 <link>shared ;
 # lib Xfixes : : <name>Xfixes <link>static ;
@@ -231,6 +230,7 @@ obj ccryptofile : transport/ccryptofile.cpp ;
 exe rdpproxy
     :
         main/main.cpp
+        utils/program_options.cpp
 
         cryptofile
 
@@ -246,7 +246,6 @@ exe rdpproxy
 
         snappy
 #        lzma
-        libboost_program_options
 
         krb5
         gssglue
@@ -259,6 +258,7 @@ exe rdpproxy
 exe redrec
     :
         main/recorder.cpp
+        utils/program_options.cpp
 
         cryptofile
 
@@ -270,7 +270,6 @@ exe redrec
 
         snappy
 #        lzma
-        libboost_program_options
     :
         <link>static
         <variant>coverage:<library>gcov
@@ -280,14 +279,14 @@ exe redrec
 exe reddec
     :
         main/decrypter.cpp
+        utils/program_options.cpp
+
         cryptofile
 
         openssl
         crypto
         z
         dl
-
-        libboost_program_options
 
         snappy
     :
@@ -297,6 +296,8 @@ exe reddec
 exe redver
     :
         main/verifier.cpp
+        utils/program_options.cpp
+
         cryptofile
         ccryptofile
 
@@ -304,8 +305,6 @@ exe redver
         crypto
         z
         dl
-
-        libboost_program_options
 
         snappy
     :
@@ -315,6 +314,7 @@ exe redver
 exe rdptproxy
     :
         main/transparent.cpp
+        utils/program_options.cpp
 
         cryptofile
 
@@ -326,7 +326,6 @@ exe rdptproxy
 
         snappy
 #        lzma
-        libboost_program_options
 
         krb5
         gssglue
@@ -339,6 +338,7 @@ exe rdptproxy
 exe rdptanalyzer
     :
         main/tanalyzer.cpp
+        utils/program_options.cpp
 
         cryptofile
 
@@ -349,7 +349,6 @@ exe rdptanalyzer
         dl
 
         snappy
-        libboost_program_options
 
         krb5
         gssglue
@@ -699,4 +698,6 @@ unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_
 
 unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_program_options : tests/utils/test_program_options.cpp utils/program_options.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 

@@ -31,13 +31,11 @@
 #include "recording_progress.hpp"
 #include "iter.hpp"
 #include "crypto_in_meta_sequence_transport.hpp"
+#include "program_options.hpp"
 
 #include <iostream>
 #include <vector>
 #include <string>
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/variables_map.hpp>
-#include <boost/program_options/parsers.hpp>
 
 template<class CaptureMaker, class... ExtraArguments>
 int recompress_or_record( std::string const & input_filename, std::string & output_filename
@@ -137,53 +135,45 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     std::string wrm_color_depth;
     std::string wrm_encryption;
 
-    boost::program_options::options_description desc("Options");
-    desc.add_options()
-    ("help,h", "produce help message")
-    ("version,v", "show software version")
-    ("output-file,o", boost::program_options::value(&output_filename), "output base filename")
-    ("input-file,i", boost::program_options::value(&input_filename), "input base filename")
+    program_options::options_description desc({
+        {'h', "help", "produce help message"},
+        {'v', "version", "show software version"},
+        {'o', "output-file", &output_filename, "output base filename"},
+        {'i', "input-file", &input_filename, "input base filename"},
 
-    ("begin,b", boost::program_options::value<uint32_t>(&begin_cap), "begin capture time (in seconds), default=none")
-    ("end,e", boost::program_options::value<uint32_t>(&end_cap), "end capture time (in seconds), default=none")
-    ("count", boost::program_options::value<uint32_t>(&order_count), "Number of orders to execute before stopping, default=0 execute all orders")
+        {'b', "begin", &begin_cap, "begin capture time (in seconds), default=none"},
+        {'e', "end", &end_cap, "end capture time (in seconds), default=none"},
+        {"count", &order_count, "Number of orders to execute before stopping, default=0 execute all orders"},
 
-    ("png_limit,l", boost::program_options::value<uint32_t>(&png_limit), "maximum number of png files to create (remove older), default=10, 0 will disable png capture")
-    ("png_interval,n", boost::program_options::value<uint32_t>(&png_interval), "time interval between png captures, default=60 seconds")
+        {'l', "png_limit", &png_limit, "maximum number of png files to create (remove older), default=10, 0 will disable png capture"},
+        {'n', "png_interval", &png_interval, "time interval between png captures, default=60 seconds"},
 
-    ("frameinterval,r", boost::program_options::value<uint32_t>(&wrm_frame_interval), "time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second")
+        {'r', "frameinterval", &wrm_frame_interval, "time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second"},
 
-    ("breakinterval,k", boost::program_options::value<uint32_t>(&wrm_break_interval), "number of seconds between splitting wrm files in seconds(default, one wrm every day)")
+        {'k', "breakinterval", &wrm_break_interval, "number of seconds between splitting wrm files in seconds(default, one wrm every day)"},
 
-    ("png,p", "enable png capture")
-    ("wrm,w", "enable wrm capture")
-    ;
+        {'p', "png", "enable png capture"},
+        {'w', "wrm", "enable wrm capture"},
 
-    add_prog_option(desc.add_options());
+        {"clear", &clear, "clear old capture files with same prefix (default on)"},
+        {"verbose", &verbose, "more logs"},
+        {"zoom", &zoom, "scaling factor for png capture (default 100%)"},
+        {'m', "meta", "show file metadata"},
+        {'s', "statistics", "show statistics"},
 
-    desc.add_options()
-    ("clear", boost::program_options::value<uint32_t>(&clear), "clear old capture files with same prefix (default on)")
-    ("verbose", boost::program_options::value<uint32_t>(&verbose), "more logs")
-    ("zoom", boost::program_options::value<uint32_t>(&zoom), "scaling factor for png capture (default 100%)")
-    ("meta,m", "show file metadata")
-    ("statistics,s", "show statistics")
+        //{"compression,z", &wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy, lzma)"},
+        {'z', "compression", &wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy)"},
+        {'d', "color-depth", &wrm_color_depth,           "wrm color depth (default=original, 16, 24)"},
+        {'y', "encryption",  &wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
 
-    //("compression,z", boost::program_options::value(&wrm_compression_algorithm), "wrm compression algorithm (default=original, none, gzip, snappy, lzma)")
-    ("compression,z", boost::program_options::value(&wrm_compression_algorithm), "wrm compression algorithm (default=original, none, gzip, snappy)")
-    ("color-depth,d", boost::program_options::value(&wrm_color_depth),           "wrm color depth (default=original, 16, 24)"                      )
-    ("encryption,y",  boost::program_options::value(&wrm_encryption),            "wrm encryption (default=original, enable, disable)"              )
+        {"auto-output-file",  "append suffix to input base filename to generate output base filename automatically"},
+        {"remove-input-file", "remove input file"}
+    });
 
-    ("auto-output-file",  "append suffix to input base filename to generate output base filename automatically")
-    ("remove-input-file", "remove input file"                                                                  )
-    ;
+    add_prog_option(desc);
 
 
-    boost::program_options::variables_map options;
-    boost::program_options::store(
-        boost::program_options::command_line_parser(argc, argv).options(desc).run(),
-        options
-    );
-    boost::program_options::notify(options);
+    auto options = program_options::parse_command_line(argc, argv, desc);
 
     if (options.count("help") > 0) {
         cout << copyright_notice;

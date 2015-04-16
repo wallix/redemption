@@ -9,11 +9,6 @@
 #ifndef REDEMPTION_UTILS_APPS_APP_DECRYPTER_HPP
 #define REDEMPTION_UTILS_APPS_APP_DECRYPTER_HPP
 
-
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/variables_map.hpp>
-#include <boost/program_options/parsers.hpp>
-
 #include <type_traits>
 #include <iostream>
 #include <cstring>
@@ -23,6 +18,7 @@
 #include "crypto_in_filename_transport.hpp"
 #include "out_file_transport.hpp"
 #include "fdbuf.hpp"
+#include "program_options.hpp"
 
 
 template<class F>
@@ -41,22 +37,16 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypt
 
     uint32_t verbose = 0;
 
-    boost::program_options::options_description desc("Options");
-    desc.add_options()
-    ("help,h",    "produce help message")
-    ("version,v", "show software version")
+    program_options::options_description desc({
+        {'h', "help",    "produce help message"},
+        {'v', "version", "show software version"},
 
-    ("output-file,o", boost::program_options::value(&output_filename),   "output base filename")
-    ("input-file,i",  boost::program_options::value(&input_filename),    "input base filename" )
-    ("verbose",       boost::program_options::value<uint32_t>(&verbose), "more logs"           )
-    ;
+        {'o', "output-file", &output_filename, "output base filename"},
+        {'i', "input-file",  &input_filename,  "input base filename"},
+        {"verbose",          &verbose,         "more logs"}
+    });
 
-    boost::program_options::variables_map options;
-    boost::program_options::store(
-        boost::program_options::command_line_parser(argc, argv).options(desc).run(),
-        options
-    );
-    boost::program_options::notify(options);
+    auto options = program_options::parse_command_line(argc, argv, desc);
 
     if (options.count("help") > 0) {
         std::cout << copyright_notice << "\n\n";

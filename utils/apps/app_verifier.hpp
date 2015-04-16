@@ -8,9 +8,6 @@
 
 #include <iostream>
 
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/variables_map.hpp>
-#include <boost/program_options/parsers.hpp>
 #include <utility>
 #include <string>
 
@@ -21,6 +18,7 @@
 #include "config.hpp"
 //#include "crypto_impl.hpp"
 #include "ccryptofile.h"
+#include "program_options.hpp"
 
 #ifndef HASH_LEN
 #define HASH_LEN 64
@@ -432,25 +430,18 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
     bool        quick_check    = false                        ;
     uint32_t    verbose        = 0                            ;
 
-    boost::program_options::options_description desc("Options");
-    desc.add_options()
-    ("help,h",    "produce help message")
-    ("version,v", "show software version")
-
-    ("quick,q", "quick check only")
-
-    ("hash-path,s",  boost::program_options::value(&hash_path),         "hash file path"       )
-    ("mwrm-path,m",  boost::program_options::value(&mwrm_path),         "mwrm file path"       )
-    ("input-file,i", boost::program_options::value(&input_filename),    "input mwrm file name")
-    ("verbose",      boost::program_options::value<uint32_t>(&verbose), "more logs"            )
+    program_options::options_description desc({
+        {'h', "help",    "produce help message"},
+        {'v', "version", "show software version"},
+        {'q', "quick",   "quick check only"},
+        {'s', "hash-path",  &hash_path,         "hash file path"       },
+        {'m', "mwrm-path",  &mwrm_path,         "mwrm file path"       },
+        {'i', "input-file", &input_filename,    "input mwrm file name" },
+        {"verbose",         &verbose,           "more logs"            },
+    })
     ;
 
-    boost::program_options::variables_map options;
-    boost::program_options::store(
-        boost::program_options::command_line_parser(argc, argv).options(desc).run(),
-        options
-    );
-    boost::program_options::notify(options);
+    auto options = program_options::parse_command_line(argc, argv, desc);
 
     if (options.count("help") > 0) {
         std::cout << copyright_notice;

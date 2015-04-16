@@ -20,8 +20,6 @@
     rdp transparent analyzer module main header file
 */
 
-#include <boost/program_options.hpp>
-#include <boost/program_options/options_description.hpp>
 #include <iostream>
 #include <string>
 
@@ -50,6 +48,7 @@
 #include "RDP/protocol.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
 #include "transparentplayer.hpp"
+#include "program_options.hpp"
 #include "version.hpp"
 
 class Analyzer : public FrontAPI {
@@ -538,20 +537,14 @@ int main(int argc, char * argv[]) {
 
     std::string input_filename;
 
-    boost::program_options::options_description desc("Options");
-    desc.add_options()
-    ("help,h",    "produce help message")
-    ("version,v", "show software version")
+    program_options::options_description desc({
+        {'h', "help",    "produce help message"},
+        {'v', "version", "show software version"},
 
-    ("input-file,i", boost::program_options::value(&input_filename), "input ini file name")
-    ;
+        {'i', "input-file", &input_filename, "input ini file name"},
+    });
 
-    boost::program_options::variables_map options;
-    boost::program_options::store(
-        boost::program_options::command_line_parser(argc, argv).options(desc).run(),
-        options
-    );
-    boost::program_options::notify(options);
+    auto options = program_options::parse_command_line(argc, argv, desc);
 
     if (options.count("help") > 0) {
         std::cout << copyright_notice;

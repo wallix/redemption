@@ -42,6 +42,7 @@
 #include "mainloop.hpp"
 #include "log.hpp"
 #include "fdbuf.hpp"
+#include "program_options.hpp"
 
 #include "version.hpp"
 
@@ -185,12 +186,8 @@ inline int shutdown(const char * pid_file)
 }
 
 
-#include <boost/program_options.hpp>
-
-namespace po = boost::program_options;
-
 struct extra_option {
-    const char * option;
+    const char * option_long;
     const char * description;
 };
 using extra_option_list = std::initializer_list<extra_option>;
@@ -211,42 +208,34 @@ int app_proxy(
     unsigned euid = uid;
     unsigned egid = gid;
 
-    po::options_description desc("Options");
-    desc.add_options()
-    // -help, --help, -h
-    ("help,h", "produce help message")
-    // -version, --version, -v
-    ("version,v", "show software version")
-    // -kill, --kill, -k
-    ("kill,k", "shut down rdpproxy")
-    // -nodaemon" -n
-    ("nodaemon,n", "don't fork into background")
+    program_options::options_description desc({
+        {'h', "help", "produce help message"},
+        {'v', "version", "show software version"},
+        {'k', "kill", "shut down rdpproxy"},
+        {'n', "nodaemon", "don't fork into background"},
 
-    ("uid,u", po::value<unsigned>(&euid), "run with given uid")
+        {'u', "uid", &euid, "run with given uid"},
 
-    ("gid,g", po::value<unsigned>(&egid), "run with given gid")
+        {'g', "gid", &egid, "run with given gid"},
 
-//    ("trace,t", "trace behaviour")
+        //{'t', "trace", "trace behaviour"},
 
-    ("check,c", "check installation files")
+        {'c', "check", "check installation files"},
 
-    ("force,f", "remove application lock file")
+        {'f', "force", "remove application lock file"},
 
-    // -inetd, --inetd, -i
-    ("inetd,i", "launch redemption with inetd like launcher")
+        {'i', "inetd", "launch redemption with inetd like launcher"},
 
-//    ("test", "check Inifile syntax")
-    ;
+        //{"test", "check Inifile syntax"}
+    });
 
     for (extra_option const & extra : extrax_options) {
-        desc.add_options()(extra.option, extra.description);
+        desc.add({extra.option_long, extra.description});
     }
 
     using namespace std;
 
-    po::variables_map options;
-    po::store(po::parse_command_line(argc, argv, desc), options);
-    po::notify(options);
+    auto options = program_options::parse_command_line(argc, argv, desc);
 
     if (options.count("kill")) {
         int status = shutdown(PID_PATH "/redemption/" LOCKFILE);

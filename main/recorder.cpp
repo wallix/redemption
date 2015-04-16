@@ -22,15 +22,15 @@
  *
  */
 
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/variables_map.hpp>
-
 //#define LOGPRINT
 #include "version.hpp"
 
 #include "capture.hpp"
 
 #include "apps/app_recorder.hpp"
+#include "program_options.hpp"
+
+namespace po = program_options;
 
 int main(int argc, char** argv)
 {
@@ -51,8 +51,8 @@ int main(int argc, char** argv)
       , "ReDemPtion RECorder " VERSION ": An RDP movie converter.\n"
         "Copyright (C) Wallix 2010-2015.\n"
         "Christophe Grosjean, Jonathan Poelen and Raphael Zhou."
-      , [](boost::program_options::options_description_easy_init const &){}
-      , [](Inifile const & ini, boost::program_options::variables_map const &, std::string const & output_filename) -> int {
+      , [](po::options_description const &){}
+      , [](Inifile const & ini, po::variables_map const &, std::string const & output_filename) -> int {
             if (   output_filename.length()
                 && !(  ini.video.capture_png | ini.video.capture_flv | ini.video.capture_ocr | ini.video.capture_wrm
                     | ini.globals.capture_chunk.get())) {
