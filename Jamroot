@@ -499,7 +499,7 @@ unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp 
 unit-test test_RDPOrdersNames : tests/core/RDP/orders/test_RDPOrdersNames.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryMem3Blt : tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersSecondaryGlyphCache : tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp crypto png libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPGraphicDevice : tests/core/RDP/test_RDPGraphicDevice.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPSerializer : tests/core/RDP/test_RDPSerializer.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_remote_programs : tests/core/RDP/test_remote_programs.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
