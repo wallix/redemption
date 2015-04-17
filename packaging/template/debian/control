@@ -3,7 +3,7 @@ Section: net
 # Priority: extra
 Priority: optional
 Maintainer: WAB Dev Team <wab@wallix.com>
-Build-Depends: debhelper (>=7), git, dpkg-dev, build-essential, g++, libboost-program-options-dev, libssl-dev, libpng12-dev, libboost-dev
+Build-Depends: debhelper (>=7), git, dpkg-dev, build-essential, g++, libssl-dev, libpng12-dev, libboost-dev
 Standards-Version: %REDEMPTION_VERSION%
 Vcs-Git: https://github.com/wallix/redemption.git
 Vcs-browser: https://github.com/wallix/redemption
@@ -12,7 +12,7 @@ Homepage: https://github.com/wallix/redemption
 Package: redemption
 Architecture: %ARCHI%
 Homepage: https://github.com/wallix/redemption
-Depends: libboost-program-options (>=1.42.0), libpng12-0, libssl (>=0.9.8), libkrb5-3, libgssglue1
+Depends: libpng12-0, libssl (>=0.9.8), libkrb5-3, libgssglue1
 Description: A new generation RDP proxy for WAB
     A new generation RDP proxy for WAB
     wwww: https://github.com/wallix/redemption
