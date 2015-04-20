@@ -118,7 +118,10 @@ class Engine(object):
 
     def get_username(self):
         try:
-            return self.wabuser.cn
+            if self.wabuser.is_ldap:
+                return "%s@%s" % (self.wabuser.cn, self.wabuser.ldap_map.ldapDomain)
+            else:
+                return self.wabuser.cn
         except Exception, e:
             return ""
 

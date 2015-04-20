@@ -209,7 +209,7 @@ private:
 
     uint16_t rail_channel_id = 0;
 
-    BStream chunked_virtual_channel_data;
+    size_t max_bitmap_size = 1024 * 64;
 
 public:
     Front ( Transport & trans
@@ -254,8 +254,7 @@ public:
     , persistent_key_list_transport(persistent_key_list_transport)
     , mppc_enc(NULL)
     , authentifier(NULL)
-    , auth_info_sent(false)
-    , chunked_virtual_channel_data(65536) {
+    , auth_info_sent(false) {
         // init TLS
         // --------------------------------------------------------
 
@@ -640,7 +639,7 @@ private:
             this->mppc_enc = NULL;
         }
 
-        size_t max_bitmap_size = 1024 * 64;
+        this->max_bitmap_size = 1024 * 64;
 
         switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini.client.rdp_compression - 1))
         {
@@ -668,7 +667,7 @@ private:
                 LOG(LOG_INFO, "Front: Use RDP 4.0 Bulk compression");
             }
             this->mppc_enc = new rdp_mppc_40_enc(this->ini.debug.compression);
-            max_bitmap_size = 1024 * 8;
+            this->max_bitmap_size = 1024 * 8;
             break;
         }
 
@@ -743,7 +742,7 @@ private:
             , this->client_info.bitmap_cache_version
             , this->ini.client.bitmap_compression ? 1 : 0
             , this->client_info.use_compact_packets
-            , max_bitmap_size
+            , this->max_bitmap_size
             , this->server_fastpath_update_support
             , this->mppc_enc
             , this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0
@@ -2140,8 +2139,8 @@ public:
                         throw Error(ERR_MCS);
                     }
 
-                    int length = sec.payload.in_uint32_le();
-                    int flags  = sec.payload.in_uint32_le();
+                    uint32_t length = sec.payload.in_uint32_le();
+                    uint32_t flags  = sec.payload.in_uint32_le();
 
                     size_t chunk_size = sec.payload.in_remain();
 
@@ -2150,34 +2149,9 @@ public:
                             LOG(LOG_INFO, "Front::send_to_mod_channel");
                         }
 
-                        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
-                            (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) {
-                            SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
+                        SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
 
-                            cb.send_to_mod_channel(channel.name, chunk, length, flags);
-                        }
-                        else {
-                            if (this->verbose & 16) {
-                                LOG(LOG_INFO, "Chunked Virtual Channel Data: length=%u flags=0x%X",
-                                    length, flags);
-                            }
-                            this->chunked_virtual_channel_data.out_copy_bytes(sec.payload.p, chunk_size);
-
-                            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                                this->chunked_virtual_channel_data.mark_end();
-                                this->chunked_virtual_channel_data.rewind();
-
-                                REDASSERT(this->chunked_virtual_channel_data.size() ==
-                                    static_cast<size_t>(length));
-
-                                flags |= CHANNELS::CHANNEL_FLAG_FIRST;
-
-                                cb.send_to_mod_channel(channel.name, this->chunked_virtual_channel_data,
-                                                       length, flags);
-
-                                this->chunked_virtual_channel_data.reset();
-                            }
-                        }
+                        cb.send_to_mod_channel(channel.name, chunk, length, flags);
                     }
                     else {
                         if (this->verbose & 16) {
@@ -4442,6 +4416,22 @@ public:
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
         //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
+
+        if (   !this->ini.globals.enable_bitmap_update
+            // This is to protect rdesktop different color depth works with mstsc and xfreerdp.
+            || (bitmap_data.bits_per_pixel != this->client_info.bpp)
+            || (bitmap_data.bitmap_size() > this->max_bitmap_size)
+           ) {
+            Rect boundary(bitmap_data.dest_left,
+                          bitmap_data.dest_top,
+                          bitmap_data.dest_right - bitmap_data.dest_left + 1,
+                          bitmap_data.dest_bottom - bitmap_data.dest_top + 1
+                         );
+
+            this->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
+            return;
+        }
+
         ::compress_and_draw_bitmap_update(bitmap_data, Bitmap(this->client_info.bpp, bmp), this->client_info.bpp, *this->orders);
         //bitmap_data.log(LOG_INFO, "Front");
         //hexdump_d(data, size);

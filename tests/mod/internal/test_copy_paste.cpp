@@ -45,7 +45,7 @@ struct CopyPasteFront : FakeFront
     , copy_paste(copy_paste)
     {
         CHANNELS::ChannelDef def;
-        memcpy(def.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME, sizeof(CLIPBOARD_VIRTUAL_CHANNEL_NAME));
+        memcpy(def.name, channel_names::cliprdr, strlen(channel_names::cliprdr) + 1);
         this->channel_def_array.push_back(def);
     }
 
@@ -57,7 +57,7 @@ struct CopyPasteFront : FakeFront
     virtual void send_to_channel(
         const CHANNELS::ChannelDef& channel, uint8_t* data, size_t length, size_t chunk_size, int flags)
     {
-        BOOST_REQUIRE(!strcmp(channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME));
+        BOOST_REQUIRE(!strcmp(channel.name, channel_names::cliprdr));
 
         FixedSizeStream stream(data, length);
         RDPECLIP::RecvFactory recv_factory(stream);
@@ -65,17 +65,25 @@ struct CopyPasteFront : FakeFront
         switch (recv_factory.msgType) {
             case RDPECLIP::CB_MONITOR_READY:
                 this->send_to_server(RDPECLIP::FormatListPDU());
-                break;
+            break;
             //case RDPECLIP::CB_FORMAT_LIST:
             //    break;
             //case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
             //    break;
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
+            {
                 RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
-                this->send_to_server(RDPECLIP::FormatDataResponsePDU(true), this->str.c_str());
-                break;
+                BStream stream(65535);
+                size_t unicode_data_length = ::UTF8toUTF16(byte_ptr_cast(this->str.c_str()),
+                    stream.p, stream.get_capacity());
+                stream.p[unicode_data_length    ] = 0;
+                stream.p[unicode_data_length + 1] = 0;
+                unicode_data_length += 2;
+                this->send_to_server(RDPECLIP::FormatDataResponsePDU(true), stream.p, unicode_data_length);
+            }
+            break;
             default:
-                break;
+            break;
         }
     }
 

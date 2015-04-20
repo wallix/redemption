@@ -265,45 +265,41 @@ struct ServerMonitorReadyPDU : public CliprdrHeader {
 //  on the type of data present in the formatListData field.
 
 // formatListData (variable): An array consisting solely of either Short
-//  Format Names or Long Format Names. The type of structure used in the array
-//  is determined by the presence of the CB_USE_LONG_FORMAT_NAMES (0x00000002)
-//  flag in the generalFlags field of the General Capability Set (section
-//  2.2.2.1.1.1). Each array holds a list of the Clipboard Format ID and name
-//  pairs available on the local system clipboard of the sender. If Short
-//  Format Names are being used, and the embedded Clipboard Format names are
-//  in ASCII 8 format, then the msgFlags field of the clipHeader must contain
-//  the CB_ASCII_NAMES (0x0004) flag.
+//  Format Names or Long Format Names. The type of structure used in the
+//  array is determined by the presence of the CB_USE_LONG_FORMAT_NAMES
+//  (0x00000002) flag in the generalFlags field of the General Capability Set
+//  (section 2.2.2.1.1.1). Each array holds a list of the Clipboard Format ID
+//  and name pairs available on the local system clipboard of the sender. If
+//  Short Format Names are being used, and the embedded Clipboard Format
+//  names are in ASCII 8 format, then the msgFlags field of the clipHeader
+//  must contain the CB_ASCII_NAMES (0x0004) flag.
 
 struct FormatListPDU : public CliprdrHeader {
-    bool contians_data_in_text_format;
+    bool contians_data_in_text_format        = false;
+    bool contians_data_in_unicodetext_format = false;
 
     FormatListPDU()
         : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
-        , contians_data_in_text_format(false) {}
-
-/*
-    void emit_empty(Stream & stream) {
-        CliprdrHeader::emit(stream);
-
-        stream.mark_end();
-    }
-*/
+        , contians_data_in_text_format(false)
+        , contians_data_in_unicodetext_format(false) {}
 
     void emit(Stream & stream) {
-        this->dataLen_ = 144;    /* (formatId(4) + formatName(32)) * 4 */
+        this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
         CliprdrHeader::emit(stream);
 
-        // 4 CLIPRDR_SHORT_FORMAT_NAMES structures.
+        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(CF_TEXT);
         stream.out_clear_bytes(32); // formatName(32)
 
-        stream.out_uint32_le(CF_OEMTEXT);
-        stream.out_clear_bytes(32); // formatName(32)
+        stream.mark_end();
+    }
 
-        stream.out_uint32_le(CF_UNICODETEXT);
-        stream.out_clear_bytes(32); // formatName(32)
+    void emit_ex(Stream & stream, bool unicodetext) {
+        this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
+        CliprdrHeader::emit(stream);
 
-        stream.out_uint32_le(CF_LOCALE);
+        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
+        stream.out_uint32_le(unicodetext ? CF_UNICODETEXT : CF_TEXT);
         stream.out_clear_bytes(32); // formatName(32)
 
         stream.mark_end();
@@ -362,14 +358,13 @@ struct FormatListPDU : public CliprdrHeader {
             }
 
             uint32_t formatId = stream.in_uint32_le();
+            //LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
 
-            if (   (formatId == CF_TEXT)
-                || (formatId == CF_UNICODETEXT)
-                ) {
-                //LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
+            if (formatId == CF_TEXT) {
                 this->contians_data_in_text_format = true;
-
-                break;
+            }
+            else if (formatId == CF_UNICODETEXT) {
+                this->contians_data_in_unicodetext_format = true;
             }
 
             stream.in_skip_bytes(32);   // formatName(32)
@@ -504,22 +499,33 @@ struct FormatDataResponsePDU : public CliprdrHeader {
                        , 0) {
     }
 
-    void emit(Stream & stream, const char * utf8_string) {
+    void emit(Stream & stream, const uint8_t * data, size_t data_length) const {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
 
-        const uint32_t offset_dataLen_ = stream.get_offset();
-        stream.out_uint32_le(0);
-
         if (this->msgFlags_ == CB_RESPONSE_OK) {
+            stream.out_uint32_le(data_length);  // dataLen(4)
 
-            stream.out_unistr_crlf(utf8_string);
-
-            stream.set_out_uint32_le(   stream.get_offset()
-                                      - offset_dataLen_
-                                      - 4                   /* dataLen_(4) */
-                                    , offset_dataLen_);
+            if (data_length) {
+                stream.out_copy_bytes(data, data_length);
+            }
         }
+        else {
+            stream.out_uint32_le(0);    // dataLen(4)
+        }
+
+        stream.mark_end();
+    }
+
+    void emit_ex(Stream & stream, size_t data_length) const {
+        stream.out_uint16_le(this->msgType_);
+        stream.out_uint16_le(this->msgFlags_);
+
+        stream.out_uint32_le(                           // dataLen(4)
+                (this->msgFlags_ == CB_RESPONSE_OK) ?
+                data_length :
+                0
+            );
 
         stream.mark_end();
     }

@@ -32,9 +32,6 @@
 #include "RDP/x224.hpp"
 
 namespace CHANNELS {
-
-#define CLIPBOARD_VIRTUAL_CHANNEL_NAME "cliprdr"
-
     enum {
         MAX_STATIC_VIRTUAL_CHANNELS = 30 // 30 static virtual channels
     };
@@ -345,6 +342,8 @@ namespace CHANNELS {
     // Instructions detailing how to compress a data stream are listed in section
     //  3.1.8.2, while decompression of a data stream is described in section
     //  3.1.8.3.
+
+    static const uint32_t PROXY_CHUNKED_VIRTUAL_CHANNEL_DATA_LENGTH_LIMIT = 1024 * 1024 * 10;   // 10 Mb
 
     struct VirtualChannelPDU {
         uint32_t verbose;

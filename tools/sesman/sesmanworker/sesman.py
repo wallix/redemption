@@ -1194,7 +1194,8 @@ class Sesman():
                             socket.getfqdn(self.shared.get(u'ip_client')),
                             self.shared.get(u'ip_client'),
                             self.shared.get(u'target_login'),
-                            self.shared.get(u'target_host'),
+#                            self.shared.get(u'target_host'),
+                            self.shared.get(u'target_device'),
                             self._physical_target_host,
                             ctime(),
                             None

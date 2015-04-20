@@ -263,6 +263,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
         , false         /* allow authentification retries */
         , is_socket_transport
+        , "utf-8"
         , verbose);
     mod.get_event().set();
 

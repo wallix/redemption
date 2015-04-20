@@ -77,11 +77,14 @@ struct AuthorizationChannels
             &&  contains(this->allow_, s, len);
     }
 
-/*
-    bool rdpdr_type_is_authorized(unsigned type) const noexcept {
-        return type - 1u < this->rdpdr_restriction_.size() && this->rdpdr_restriction_[type - 1];
+    bool rdpdr_type_all_is_authorized() const noexcept {
+        return (this->rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL) &&
+                this->rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT) &&
+                this->rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM) &&
+                this->rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD)
+               );
     }
-*/
+
     bool rdpdr_type_is_authorized(uint32_t DeviceType) const noexcept {
         //LOG(LOG_INFO, "rdpdr_type_is_authorized: DeviceType=%u", DeviceType);
 

@@ -190,7 +190,6 @@ install install-etc-themes
     ;
 
 lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
-lib libboost_program_options : : <name>boost_program_options <link>shared ;
 lib openssl : : <name>ssl <link>shared ;
 # lib X11 : : <name>X11 <link>shared ;
 # lib Xfixes : : <name>Xfixes <link>static ;
@@ -231,6 +230,7 @@ obj ccryptofile : transport/ccryptofile.cpp ;
 exe rdpproxy
     :
         main/main.cpp
+        utils/program_options.cpp
 
         cryptofile
 
@@ -246,7 +246,6 @@ exe rdpproxy
 
         snappy
 #        lzma
-        libboost_program_options
 
         krb5
         gssglue
@@ -259,6 +258,7 @@ exe rdpproxy
 exe redrec
     :
         main/recorder.cpp
+        utils/program_options.cpp
 
         cryptofile
 
@@ -270,7 +270,6 @@ exe redrec
 
         snappy
 #        lzma
-        libboost_program_options
     :
         <link>static
         <variant>coverage:<library>gcov
@@ -280,14 +279,14 @@ exe redrec
 exe reddec
     :
         main/decrypter.cpp
+        utils/program_options.cpp
+
         cryptofile
 
         openssl
         crypto
         z
         dl
-
-        libboost_program_options
 
         snappy
     :
@@ -297,6 +296,8 @@ exe reddec
 exe redver
     :
         main/verifier.cpp
+        utils/program_options.cpp
+
         cryptofile
         ccryptofile
 
@@ -304,8 +305,6 @@ exe redver
         crypto
         z
         dl
-
-        libboost_program_options
 
         snappy
     :
@@ -315,6 +314,7 @@ exe redver
 exe rdptproxy
     :
         main/transparent.cpp
+        utils/program_options.cpp
 
         cryptofile
 
@@ -326,7 +326,6 @@ exe rdptproxy
 
         snappy
 #        lzma
-        libboost_program_options
 
         krb5
         gssglue
@@ -339,6 +338,7 @@ exe rdptproxy
 exe rdptanalyzer
     :
         main/tanalyzer.cpp
+        utils/program_options.cpp
 
         cryptofile
 
@@ -349,7 +349,6 @@ exe rdptanalyzer
         dl
 
         snappy
-        libboost_program_options
 
         krb5
         gssglue
@@ -500,7 +499,7 @@ unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp 
 unit-test test_RDPOrdersNames : tests/core/RDP/orders/test_RDPOrdersNames.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersPrimaryMem3Blt : tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPOrdersSecondaryGlyphCache : tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp crypto png libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPGraphicDevice : tests/core/RDP/test_RDPGraphicDevice.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_RDPSerializer : tests/core/RDP/test_RDPSerializer.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_remote_programs : tests/core/RDP/test_remote_programs.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
@@ -693,9 +692,12 @@ unit-test test_flat_form : tests/mod/internal/widget2/test_flat_form.cpp png z c
 ## @}
 
 unit-test test_authorization_channels : tests/utils/test_authorization_channels.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_strutils : tests/utils/test_strutils.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+
+unit-test test_program_options : tests/utils/test_program_options.cpp utils/program_options.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 

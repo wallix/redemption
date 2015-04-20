@@ -29,9 +29,10 @@
 
 #define LOGNULL
 
-#include "utf.hpp"
 #include <stdio.h>
 
+#include "cast.hpp"
+#include "utf.hpp"
 
 // BOOST_AUTO_TEST_CASE(TestUTF32isValid)
 // {
@@ -48,7 +49,6 @@
 //     BOOST_CHECK_EQUAL(true, UTF32isValid(0x10FFFF));
 //     BOOST_CHECK_EQUAL(true, UTF32isValid(0x11000));
 // }
-
 
 BOOST_AUTO_TEST_CASE(TestUTF8Len_2)
 {
@@ -70,7 +70,6 @@ BOOST_AUTO_TEST_CASE(TestUTF8LenChar)
 
     BOOST_CHECK_EQUAL(2, UTF8Len(source));
 }
-
 
 // BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos)
 // {
@@ -216,7 +215,6 @@ BOOST_AUTO_TEST_CASE(TestUTF8InsertAtPos_beyond_end)
                                   0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0
     };
 
-
     BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
 
     BOOST_CHECK_EQUAL(17, UTF8Len(source));
@@ -249,7 +247,6 @@ BOOST_AUTO_TEST_CASE(TestUTF8InsertAtPos_at_1)
                                  'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0
     };
 
-
     BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
     BOOST_CHECK_EQUAL(17, UTF8Len(source));
 }
@@ -266,11 +263,9 @@ BOOST_AUTO_TEST_CASE(TestUTF8InsertAtPos_at_8)
                                  0xC3, 0xA7, 0xC3, 0xA0, '@', 0
     };
 
-
     BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
     BOOST_CHECK_EQUAL(17, UTF8Len(source));
 }
-
 
 BOOST_AUTO_TEST_CASE(TestUTF8InsertOneAtPos_at_8)
 {
@@ -282,11 +277,9 @@ BOOST_AUTO_TEST_CASE(TestUTF8InsertOneAtPos_at_8)
                                  0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0
     };
 
-
     BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
     BOOST_CHECK_EQUAL(12, UTF8Len(source));
 }
-
 
 BOOST_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos0)
 {
@@ -522,7 +515,6 @@ BOOST_AUTO_TEST_CASE(TestUTF8Check_continuation_at_start)
     BOOST_CHECK_EQUAL(0, UTF8Check(source, source_length));
 }
 
-
 BOOST_AUTO_TEST_CASE(TestUTF8Check_tilde)
 {
     uint8_t source[] = {126};
@@ -571,7 +563,6 @@ BOOST_AUTO_TEST_CASE(TestUTF8Check_valid_utf8_trailing_zero)
     // Check result
     BOOST_CHECK_EQUAL(5, UTF8Check(source, source_length));
 }
-
 
 
 // BOOST_AUTO_TEST_CASE(TestUTF8GetFirstCharLen)
@@ -658,7 +649,6 @@ BOOST_AUTO_TEST_CASE(TestUTF8ToUTF8LCopy)
         BOOST_CHECK_EQUAL(0, res);
         BOOST_CHECK_EQUAL(0, strlen(reinterpret_cast<char *>(dest)));
     }
-
 }
 
 // BOOST_AUTO_TEST_CASE(TestUpperFunctions)
@@ -690,4 +680,20 @@ BOOST_AUTO_TEST_CASE(TestUTF8toUnicodeIterator) {
     BOOST_CHECK(*u);            ++u;
     BOOST_CHECK_EQUAL(*u, 'o'); ++u;
     BOOST_CHECK_EQUAL(*u, 0);
+}
+
+BOOST_AUTO_TEST_CASE(TestIsUtf8String) {
+    BOOST_CHECK(is_utf8_string(byte_ptr_cast("abcd"), -1));
+
+    BOOST_CHECK(is_utf8_string(byte_ptr_cast("Téléphone"), -1));
+
+    BOOST_CHECK(is_utf8_string(byte_ptr_cast("T\xc3\x9al\xc3\x9aphone"), -1));
+
+    BOOST_CHECK(!is_utf8_string(byte_ptr_cast("T\xc3\x9al\xc3""aphone"), -1));
+
+    BOOST_CHECK(is_utf8_string(byte_ptr_cast("T\xc3\x9al\xc3""aphone"), 4));
+
+    BOOST_CHECK(!is_utf8_string(byte_ptr_cast("T\xe9l\xe9phone"), -1));
+
+    BOOST_CHECK(is_utf8_string(byte_ptr_cast("Téléphone"), 10));
 }

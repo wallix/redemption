@@ -1110,7 +1110,7 @@ enum {
 //  +-----------------------------+--------------------------------------------+
 
 class FileFsAttributeInformation {
-    uint32_t FileSystemAttributes;
+    uint32_t FileSystemAttributes_;
     uint32_t MaximumComponentNameLength;
 
     std::string file_system_name;
@@ -1121,12 +1121,12 @@ public:
     FileFsAttributeInformation(uint32_t FileSystemAttributes,
                                uint32_t MaximumComponentNameLength,
                                const char * file_system_name)
-    : FileSystemAttributes(FileSystemAttributes)
+    : FileSystemAttributes_(FileSystemAttributes)
     , MaximumComponentNameLength(MaximumComponentNameLength)
     , file_system_name(file_system_name) {}
 
     inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->FileSystemAttributes);
+        stream.out_uint32_le(this->FileSystemAttributes_);
         stream.out_sint32_le(this->MaximumComponentNameLength);
 
         const size_t maximum_length_of_FileSystemName_in_bytes = this->file_system_name.length() * 2;
@@ -1154,7 +1154,7 @@ public:
             }
         }
 
-        this->FileSystemAttributes       = stream.in_uint32_le();
+        this->FileSystemAttributes_      = stream.in_uint32_le();
         this->MaximumComponentNameLength = stream.in_sint32_le();
 
         const uint32_t FileSystemNameLength = stream.in_uint32_le();
@@ -1202,12 +1202,18 @@ public:
         return size + size_of_unicode_data;
     }
 
+    uint32_t FileSystemAttributes() const { return this->FileSystemAttributes_; }
+
+    inline void set_FileSystemAttributes(uint32_t FileSystemAttributes) {
+        this->FileSystemAttributes_ = FileSystemAttributes;
+    }
+
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "FileFsAttributeInformation: FileSystemAttributes=0x%X "
                 " MaximumComponentNameLength=%u FileSystemName=\"%s\"",
-            this->FileSystemAttributes, this->MaximumComponentNameLength,
+            this->FileSystemAttributes_, this->MaximumComponentNameLength,
             this->file_system_name.c_str());
         return ((length < size) ? length : size - 1);
     }

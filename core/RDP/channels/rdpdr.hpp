@@ -458,6 +458,13 @@ public:
 
     inline uint32_t DeviceId() const { return this->DeviceId_; }
 
+    inline size_t size() const {
+        return 20 + // DeviceType(4) + DeviceId(4) + PreferredDosName(8) +
+                    // DeviceDataLength(4)
+            this->device_data.get_capacity() /* DeviceData(variable) */
+            ;
+    }
+
 private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,

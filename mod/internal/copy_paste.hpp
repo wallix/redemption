@@ -26,6 +26,7 @@
 #include "front_api.hpp"
 #include "stream.hpp"
 #include "widget2/edit.hpp"
+#include "channel_names.hpp"
 
 #include <utility>
 #include <algorithm>
@@ -87,7 +88,7 @@ public:
 
     bool ready(FrontAPI & front) {
         this->front_ = &front;
-        this->channel_ = front.get_channel_list().get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+        this->channel_ = front.get_channel_list().get_by_name(channel_names::cliprdr);
 
         if (this->channel_) {
             this->send_to_front_channel(RDPECLIP::ServerMonitorReadyPDU());
@@ -160,13 +161,13 @@ public:
                 break;
             //case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
             //    break;
-            case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
-                this->send_to_front_channel_and_set_buf_size(
-                    this->clipboard_str_.size() * 2 /*utf8 to utf16*/ + sizeof(RDPECLIP::CliprdrHeader) + 4 /*data_len*/,
-                    RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.c_str()
-                );
-                break;
+            //case RDPECLIP::CB_FORMAT_DATA_REQUEST:
+            //    RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
+            //    this->send_to_front_channel_and_set_buf_size(
+            //        this->clipboard_str_.size() * 2 /*utf8 to utf16*/ + sizeof(RDPECLIP::CliprdrHeader) + 4 /*data_len*/,
+            //        RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.c_str()
+            //    );
+            //    break;
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
                 RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
                 format_data_response_pdu.recv(stream, recv_factory);

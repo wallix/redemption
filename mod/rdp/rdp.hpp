@@ -238,6 +238,15 @@ class mod_rdp : public mod_api {
 
     RedirectionInfo & redir_info;
 
+    const uint32_t max_chunked_virtual_channel_data_length;
+
+    std::unique_ptr<uint8_t[]> chunked_virtual_channel_data_byte;
+    FixedSizeStream            chunked_virtual_channel_data_stream;
+
+    static const uint32_t default_chunked_virtual_channel_data_length = 1024 * 4;
+
+    const bool bogus_sc_net_size;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -314,6 +323,11 @@ public:
         , password_printing_mode(mod_rdp_params.password_printing_mode)
         , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
+        , max_chunked_virtual_channel_data_length(std::min(mod_rdp_params.max_chunked_virtual_channel_data_length,
+            CHANNELS::PROXY_CHUNKED_VIRTUAL_CHANNEL_DATA_LENGTH_LIMIT))
+        , chunked_virtual_channel_data_byte(std::make_unique<uint8_t[]>(mod_rdp::default_chunked_virtual_channel_data_length))
+        , chunked_virtual_channel_data_stream(chunked_virtual_channel_data_byte.get(), mod_rdp::default_chunked_virtual_channel_data_length)
+        , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -332,6 +346,8 @@ public:
 
             mod_rdp_params.log();
         }
+
+        this->chunked_virtual_channel_data_stream.reset();
 
         if (mod_rdp_params.transparent_recorder_transport) {
             this->transparent_recorder = new TransparentRecorder(mod_rdp_params.transparent_recorder_transport);
@@ -651,11 +667,11 @@ public:
 private:
     template<class PDU, class... Args>
     void send_clipboard_pdu_to_front_channel(bool response_ok, Args&&... args) {
-        PDU             format_data_response_pdu(response_ok);
+        PDU             pdu(response_ok);
         uint8_t         data[256];
         FixedSizeStream out_s(data, sizeof(data));
 
-        format_data_response_pdu.emit(out_s, args...);
+        pdu.emit(out_s, args...);
 
         this->send_to_front_channel( channel_names::cliprdr
                                    , out_s.get_data()
@@ -750,7 +766,8 @@ private:
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: clipboard is fully disabled (c)");
                 }
-                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(true);
+                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatListResponsePDU>(
+                    true);
                 return;
             }
         }
@@ -760,7 +777,8 @@ private:
                     LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: clipboard down is unavailable");
                 }
 
-                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(false, "\0");
+                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(
+                    false, static_cast<uint8_t *>(NULL), 0);
                 return;
             }
         }
@@ -769,7 +787,8 @@ private:
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: requesting the contents of server file is denied");
                 }
-                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FileContentsResponse>(false);
+                this->send_clipboard_pdu_to_front_channel<RDPECLIP::FileContentsResponse>(
+                    false);
                 return;
             }
         }
@@ -1057,9 +1076,19 @@ public:
 
             if (authorization_channels.rdpdr_type_is_authorized(device_announce_header.DeviceType())) {
                 //LOG(LOG_INFO, "DeviceType=%u", device_announce_header.DeviceType());
-                device_announce_header.emit(result);
+                if (result.has_room(device_announce_header.size())) {
+                    device_announce_header.emit(result);
 
-                real_device_count++;
+                    real_device_count++;
+                }
+                else {
+                    LOG(LOG_WARNING,
+                        "rdp::filter_unsupported_device: "
+                            "Too much data for Announce Driver buffer! "
+                            "The device is ignored. length=%u limite=%u",
+                        result.get_offset() + device_announce_header.size(),
+                        result.get_capacity());
+                }
             }
         }
 
@@ -1074,12 +1103,79 @@ public:
         if (verbose) {
             LOG(LOG_INFO, "rdp::filter_unsupported_device: real_device_count=%u", real_device_count);
         }
+
         return real_device_count;
     }
 
 private:
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
                                    Stream & chunk, size_t length, uint32_t flags) {
+        if (this->verbose) {
+            LOG(LOG_INFO, "mod_rdp::send_to_mod_rdpdr_channel: length=%u chunk_size=%u flags=0x%X",
+                length, chunk.size(), flags);
+        }
+
+        if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
+            !this->file_system_drive_manager.HasManagedDrive()) {
+            if (this->verbose && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+                LOG(LOG_INFO,
+                    "mod_rdp::send_to_mod_rdpdr_channel: send Chunked Virtual Channel Data transparently.");
+            }
+
+            this->send_to_channel(*rdpdr_channel, chunk, length, flags);
+            return;
+        }
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (this->chunked_virtual_channel_data_stream.get_capacity() < length) {
+                size_t rounded_length = this->chunked_virtual_channel_data_stream.get_capacity();
+                for (; rounded_length < length; rounded_length *= 2);
+                if (rounded_length > this->max_chunked_virtual_channel_data_length) {
+                    rounded_length = this->max_chunked_virtual_channel_data_length;
+                }
+                this->chunked_virtual_channel_data_byte = std::make_unique<uint8_t[]>(rounded_length);
+                this->chunked_virtual_channel_data_stream.~FixedSizeStream();
+                new (&this->chunked_virtual_channel_data_stream) FixedSizeStream(
+                    this->chunked_virtual_channel_data_byte.get(), rounded_length);
+                this->chunked_virtual_channel_data_stream.reset();
+            }
+        }
+
+        if (length > this->chunked_virtual_channel_data_stream.get_capacity()) {
+            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                LOG(LOG_WARNING,
+                    "mod_rdp::send_to_mod_rdpdr_channel: "
+                        "Too much data for Chunked Virtual Channel Data buffer! "
+                        "The PDU is ignored. length=%u limite=%u flags=0x%X",
+                    length, this->chunked_virtual_channel_data_stream.get_capacity(), flags);
+                return;
+            }
+        }
+        else {
+            REDASSERT(((flags & CHANNELS::CHANNEL_FLAG_FIRST) == 0) ||
+                !this->chunked_virtual_channel_data_stream.size());
+
+            this->chunked_virtual_channel_data_stream.out_copy_bytes(chunk.get_data(), chunk.size());
+
+            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                this->chunked_virtual_channel_data_stream.mark_end();
+                this->chunked_virtual_channel_data_stream.rewind();
+
+                REDASSERT(this->chunked_virtual_channel_data_stream.size() ==
+                    static_cast<size_t>(length));
+
+                flags |= CHANNELS::CHANNEL_FLAG_FIRST;
+
+                this->send_unchunked_data_to_mod_rdpdr_channel(rdpdr_channel,
+                    this->chunked_virtual_channel_data_stream, length, flags);
+
+                this->chunked_virtual_channel_data_stream.reset();
+            }
+        }
+    }
+
+    void send_unchunked_data_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
+                                                  Stream & chunk, size_t length, uint32_t flags) {
         //LOG(LOG_INFO, "chunk.size=%u, length=%u flags=0x%X", chunk.size(), length, flags);
         REDASSERT(chunk.size() == length);
 
@@ -1100,7 +1196,7 @@ private:
             {
                 if (this->verbose) {
                     LOG(LOG_INFO,
-                        "mod_rdp::send_to_mod_rdpdr_channel: Client Announce Reply");
+                        "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: Client Announce Reply");
 
                     rdpdr::ClientAnnounceReply client_announce_reply;
 
@@ -1113,7 +1209,7 @@ private:
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
                 if (this->verbose) {
                     LOG(LOG_INFO,
-                        "mod_rdp::send_to_mod_rdpdr_channel: Client Name Request");
+                        "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: Client Name Request");
 
                     rdpdr::ClientNameRequest client_name_request;
 
@@ -1126,7 +1222,7 @@ private:
             {
                 if (this->verbose) {
                     LOG(LOG_INFO,
-                        "mod_rdp::send_to_mod_rdpdr_channel: "
+                        "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
                             "Client Device List Announce timer is disabled.");
                 }
                 this->client_device_list_announce_timer_enabled = false;
@@ -1136,7 +1232,7 @@ private:
 
                 if (this->verbose) {
                     LOG(LOG_INFO,
-                        "mod_rdp::send_to_mod_rdpdr_channel: "
+                        "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
                             "Client Device List Announce Request - DeviceCount=%u",
                         DeviceCount);
                 }
@@ -1144,7 +1240,7 @@ private:
                 uint8_t * const DeviceList = chunk.p;
 
                 {
-                    BStream result(65535);
+                    BStream result(this->chunked_virtual_channel_data_stream.get_capacity());
 
                     if (this->filter_unsupported_device(this->authorization_channels,
                                                         chunk, DeviceCount,
@@ -1153,7 +1249,7 @@ private:
                                                         this->device_capability_version_02_supported,
                                                         this->verbose)) {
                         if (this->verbose) {
-                            LOG(LOG_INFO, "mod_rdp::send_to_mod_rdpdr_channel");
+                            LOG(LOG_INFO, "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel");
                             hexdump_d(result.get_data(), result.size());
                         }
                         this->send_to_channel(*rdpdr_channel, result, result.size(),
@@ -1166,20 +1262,19 @@ private:
                 for (uint32_t device_index = 0; device_index < DeviceCount; ++device_index) {
                     const uint32_t DeviceType       = chunk.in_uint32_le();
                     const uint32_t DeviceId         = chunk.in_uint32_le();
-                    chunk.in_skip_bytes(8);    /* PreferredDosName(8) */
+                    chunk.in_skip_bytes(8);                   /* PreferredDosName(8) */
                     const uint32_t DeviceDataLength = chunk.in_uint32_le();
                     chunk.in_skip_bytes(DeviceDataLength);    /* DeviceData(variable) */
 
                     if (!this->authorization_channels.rdpdr_type_is_authorized(DeviceType)) {
                         rdpdr::ServerDeviceAnnounceResponse server_device_announce_response(
                                 DeviceId,
-                                //0x00000000  // STATUS_SUCCESS
                                 0xC0000001  // STATUS_UNSUCCESSFUL
                             );
 
                         if (this->verbose) {
                             LOG(LOG_INFO,
-                                "mod_rdp::send_to_mod_rdpdr_channel: Server Device Announce Response");
+                                "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: Server Device Announce Response");
                             server_device_announce_response.log(LOG_INFO);
                         }
 
@@ -1209,7 +1304,7 @@ private:
             case rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION:
                 if (this->verbose) {
                     LOG(LOG_INFO,
-                        "mod_rdp::send_to_mod_rdpdr_channel: Device I/O Response");
+                        "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: Device I/O Response");
 
                     rdpdr::DeviceIOResponse device_io_response;
 
@@ -1229,7 +1324,7 @@ private:
                             extra_data     = std::get<3>(*iter);
 
                             LOG(LOG_INFO,
-                                "mod_rdp::send_to_mod_rdpdr_channel: MajorFunction=0x%X extra_data=0x%X",
+                                "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: MajorFunction=0x%X extra_data=0x%X",
                                 major_function, extra_data);
 
                             this->device_io_requests.erase(iter);
@@ -1240,7 +1335,7 @@ private:
                     }
                     if (corresponding_device_io_request_is_not_found) {
                         LOG(LOG_ERR,
-                            "mod_rdp::send_to_mod_rdpdr_channel: "
+                            "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
                                 "The corresponding Device I/O Request is not found!");
                         REDASSERT(false);
                     }
@@ -1276,7 +1371,7 @@ private:
 
                                     default:
                                         LOG(LOG_INFO,
-                                            "mod_rdp::send_to_mod_rail_channel: undecoded FsInformationClass(0x%X)",
+                                            "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: undecoded FsInformationClass(0x%X)",
                                             FsInformationClass);
                                     break;
                                 }
@@ -1285,7 +1380,7 @@ private:
 
                             default:
                                 LOG(LOG_INFO,
-                                    "mod_rdp::send_to_mod_rail_channel: undecoded MajorFunction(0x%X)",
+                                    "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: undecoded MajorFunction(0x%X)",
                                     major_function);
                             break;
                         }
@@ -1297,13 +1392,13 @@ private:
             {
                 if (this->verbose) {
                     LOG(LOG_INFO,
-                        "mod_rdp::send_to_mod_rdpdr_channel: Client Core Capability Response");
+                        "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: Client Core Capability Response");
                 }
 
                 const uint16_t numCapabilities = chunk.in_uint16_le();
                 if (this->verbose) {
                     LOG(LOG_INFO,
-                        "mod_rdp::send_to_mod_rdpdr_channel: numCapabilities=%u", numCapabilities);
+                        "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: numCapabilities=%u", numCapabilities);
                 }
 
                 chunk.in_skip_bytes(2); // Padding(2)
@@ -1316,7 +1411,7 @@ private:
 
                     if (this->verbose) {
                         LOG(LOG_INFO,
-                            "mod_rdp::send_to_mod_rdpdr_channel: "
+                            "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
                                 "CapabilityType=0x%04X CapabilityLength=%u Version=0x%X",
                             CapabilityType, CapabilityLength, Version);
                     }
@@ -1345,7 +1440,7 @@ private:
                         this->device_capability_version_02_supported = true;
                         if (this->verbose) {
                             LOG(LOG_INFO,
-                                "mod_rdp::send_to_mod_rdpdr_channel: "
+                                "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
                                     "Client supports DRIVE_CAPABILITY_VERSION_02.");
                         }
                     }
@@ -1356,14 +1451,14 @@ private:
             case rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE:
                 if (this->verbose) {
                     LOG(LOG_INFO,
-                        "mod_rdp::send_to_mod_rdpdr_channel: Client Drive Device List Remove");
+                        "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: Client Drive Device List Remove");
                 }
             break;
 
             default:
                 if (this->verbose) {
                     LOG(LOG_INFO,
-                        "mod_rdp::send_to_mod_rail_channel: undecoded PDU - Component=0x%X PacketId=0x%X",
+                        "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: undecoded PDU - Component=0x%X PacketId=0x%X",
                         static_cast<uint16_t>(sh_r.component), static_cast<uint16_t>(sh_r.packet_id));
                 }
 
@@ -1434,8 +1529,8 @@ public:
             };
 
             do {
-                const uint16_t virtual_channel_data_length =
-                    std::min<uint16_t>(remaining_data_length, CHANNELS::CHANNEL_CHUNK_LENGTH);
+                const size_t virtual_channel_data_length =
+                    std::min<size_t>(remaining_data_length, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
                 CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
@@ -1857,7 +1952,7 @@ public:
                             case SC_NET:
                                 {
                                     GCC::UserData::SCNet sc_net;
-                                    sc_net.recv(f.payload);
+                                    sc_net.recv(f.payload, this->bogus_sc_net_size);
 
                                     /* We assume that the channel_id array is confirmed in the same order
                                        that it has been sent. If there are any channels not confirmed, they're
@@ -2980,7 +3075,7 @@ public:
                         const CHANNELS::ChannelDef * rdpdr_channel =
                             this->mod_channel_list.get_by_name(channel_names::rdpdr);
                         if (rdpdr_channel) {
-                            BStream result(65535);
+                            BStream result(this->chunked_virtual_channel_data_stream.get_capacity());
 
                             if (this->filter_unsupported_device(this->authorization_channels,
                                                                 result, // Fake data.
@@ -5672,15 +5767,7 @@ public:
                      );
             }
 
-            TODO("this is to protect rdesktop different color depth works with mstsc and xfreerdp");
-            if (!this->enable_bitmap_update
-               || (bmpdata.bits_per_pixel != this->front_bpp)
-               || ((bmpdata.bits_per_pixel == 8) && (this->front_bpp != 8))) {
-                this->gd->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
-            }
-            else {
-                this->gd->draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
-            }
+            this->gd->draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
         }
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");
@@ -5974,7 +6061,7 @@ public:
                 }
 
                 BStream out_s(256);
-                RDPECLIP::FormatDataResponsePDU(false).emit(out_s, "\0");
+                RDPECLIP::FormatDataResponsePDU(false).emit(out_s, static_cast<uint8_t *>(NULL), 0);
 
                 this->send_to_channel(
                     cliprdr_channel, out_s, out_s.size(),
@@ -6239,29 +6326,35 @@ public:
 
                 if (!this->file_system_drive_manager.IsManagedDrive(
                         device_io_request.DeviceId())) {
-                    if (this->verbose) {
-                        uint32_t extra_data = 0;
+                    uint32_t extra_data = 0;
 
-                        switch (device_io_request.MajorFunction()) {
-                            case rdpdr::IRP_MJ_CREATE:
-                            {
+                    switch (device_io_request.MajorFunction()) {
+                        case rdpdr::IRP_MJ_CREATE:
+                        {
+                            if (this->verbose) {
                                 LOG(LOG_INFO,
                                     "mod_rdp::process_rdpdr_event: Device Create Request");
+                            }
 
-                                rdpdr::DeviceCreateRequest device_create_request;
+                            rdpdr::DeviceCreateRequest device_create_request;
 
-                                device_create_request.receive(stream);
+                            device_create_request.receive(stream);
+
+                            if (this->verbose) {
                                 device_create_request.log(LOG_INFO);
                             }
-                            break;
+                        }
+                        break;
 
-                            case rdpdr::IRP_MJ_CLOSE:
+                        case rdpdr::IRP_MJ_CLOSE:
+                            if (this->verbose) {
                                 LOG(LOG_INFO,
                                     "mod_rdp::process_rdpdr_event: Device Close Request");
-                            break;
+                            }
+                        break;
 
-                            case rdpdr::IRP_MJ_DEVICE_CONTROL:
-                            {
+                        case rdpdr::IRP_MJ_DEVICE_CONTROL:
+                            if (this->verbose) {
                                 LOG(LOG_INFO,
                                     "mod_rdp::process_rdpdr_event: Device control request");
 
@@ -6270,10 +6363,10 @@ public:
                                 device_control_request.receive(stream);
                                 device_control_request.log(LOG_INFO);
                             }
-                            break;
+                        break;
 
-                            case rdpdr::IRP_MJ_QUERY_INFORMATION:
-                            {
+                        case rdpdr::IRP_MJ_QUERY_INFORMATION:
+                            if (this->verbose) {
                                 LOG(LOG_INFO,
                                     "mod_rdp::process_rdpdr_event: "
                                         "Server Drive Query Information Request");
@@ -6287,18 +6380,20 @@ public:
                                 extra_data =
                                     server_drive_query_information_request.FsInformationClass();
                             }
-                            break;
+                        break;
 
-                            default:
-                                if (this->verbose) {
-                                    LOG(LOG_INFO,
-                                        "mod_rdp::process_rdpdr_event: "
-                                            "undecoded Device I/O Request - MajorFunction=0x%X",
-                                        device_io_request.MajorFunction());
-                                }
-                            break;
-                        }
+                        default:
+                            if (this->verbose) {
+                                LOG(LOG_INFO,
+                                    "mod_rdp::process_rdpdr_event: "
+                                        "undecoded Device I/O Request - MajorFunction=0x%X MinorFunction=0x%X",
+                                    device_io_request.MajorFunction(),
+                                    device_io_request.MinorFunction());
+                            }
+                        break;
+                    }
 
+                    if (this->verbose) {
                         this->device_io_requests.push_back(std::make_tuple(
                             device_io_request.DeviceId(),
                             device_io_request.CompletionId(),

@@ -20,10 +20,6 @@
     rdp transparent module main header file
 */
 
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/variables_map.hpp>
-#include <boost/program_options/parsers.hpp>
-
 #include <iostream>
 #include <string>
 
@@ -36,6 +32,7 @@
 #include "out_file_transport.hpp"
 #include "socket_transport_utility.hpp"
 #include "internal/transparent_replay_mod.hpp"
+#include "program_options.hpp"
 
 void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front);
 
@@ -63,28 +60,22 @@ int main(int argc, char * argv[]) {
     persistent_key_list_filename = "./PersistentKeyList.bin";
     target_port                  = 3389;
 
-    boost::program_options::options_description desc("Options");
-    desc.add_options()
-    ("help,h",    "produce help message")
-    ("version,v", "show software version")
+    program_options::options_description desc({
+        {'h', "help",    "produce help message"},
+        {'v', "version", "show software version"},
 
-    ("input-file,i",    boost::program_options::value(&input_filename),               "input ini file name")
-    ("output-file,o",   boost::program_options::value(&output_filename),              "output int file name")
-    ("target-device,t", boost::program_options::value(&target_device),                "target device[:port]")
-    ("username,u",      boost::program_options::value(&username),                     "username")
-    ("password,p",      boost::program_options::value(&password),                     "password")
-    ("key-list-file,k", boost::program_options::value(&persistent_key_list_filename), "persistent key list file name")
+        {'i', "input-file",    &input_filename,               "input ini file name"},
+        {'o', "output-file",   &output_filename,              "output int file name"},
+        {'t', "target-device", &target_device,                "target device[:port]"},
+        {'u', "username",      &username,                     "username"},
+        {'p', "password",      &password,                     "password"},
+        {'k', "key-list-file", &persistent_key_list_filename, "persistent key list file name"},
 
-    ("record-file,r",   boost::program_options::value(&record_filename),              "record file name")
-    ("play-file,d",     boost::program_options::value(&play_filename),                "play file name")
-    ;
+        {'r', "record-file",   &record_filename,              "record file name"},
+        {'d', "play-file",     &play_filename,                "play file name"},
+    });
 
-    boost::program_options::variables_map options;
-    boost::program_options::store(
-        boost::program_options::command_line_parser(argc, argv).options(desc).run(),
-        options
-    );
-    boost::program_options::notify(options);
+    auto options = program_options::parse_command_line(argc, argv, desc);
 
     if (options.count("help") > 0) {
         std::cout << copyright_notice;

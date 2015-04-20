@@ -82,6 +82,10 @@ struct ModRDPParams {
     bool remote_program;
     bool server_redirection_support;
 
+    uint32_t max_chunked_virtual_channel_data_length;
+
+    bool bogus_sc_net_size;
+
     uint32_t verbose;
     uint32_t cache_verbose;
 
@@ -96,6 +100,8 @@ struct ModRDPParams {
         , target_password(target_password)
         , target_host(target_host)
         , client_address(client_address)
+
+        , client_name(NULL)
 
         , enable_tls(true)
         , enable_nla(true)
@@ -142,6 +148,11 @@ struct ModRDPParams {
 
         , remote_program(false)
         , server_redirection_support(false)
+
+        , max_chunked_virtual_channel_data_length(0)
+
+        , bogus_sc_net_size(true)
+
         , verbose(verbose)
         , cache_verbose(0)
     {}
@@ -237,7 +248,14 @@ struct ModRDPParams {
             "ModRDPParams remote_program=%s",                      (this->remote_program ? "yes" : "no"));
 
         LOG(LOG_INFO,
-            "ModRDPParams server_redirection_support=%s",                      (this->server_redirection_support ? "yes" : "no"));
+            "ModRDPParams server_redirection_support=%s",          (this->server_redirection_support ? "yes" : "no"));
+
+        LOG(LOG_INFO,
+            "ModRDPParams max_chunked_virtual_channel_data_length=%u",
+                                                                   this->max_chunked_virtual_channel_data_length);
+
+        LOG(LOG_INFO,
+            "ModRDPParams bogus_sc_net_size=%s",                   (this->bogus_sc_net_size ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams verbose=0x%08X",                         this->verbose);
