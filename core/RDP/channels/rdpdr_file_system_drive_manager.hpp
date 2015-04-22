@@ -382,6 +382,42 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
             }
             break;
 
+            case rdpdr::FileFsFullSizeInformation:
+            {
+                struct statvfs svfsb;
+                ::statvfs(path, &svfsb);
+
+                const rdpdr::DeviceIOResponse device_io_response(
+                        device_io_request.DeviceId(),
+                        device_io_request.CompletionId(),
+                        0x00000000                          // STATUS_SUCCESS
+                    );
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest");
+                    device_io_response.log(LOG_INFO);
+                }
+                device_io_response.emit(out_stream);
+
+                const fscc::FileFsFullSizeInformation file_fs_full_size_information(
+                        svfsb.f_blocks, // TotalAllocationUnits(8)
+                        svfsb.f_bavail, // CallerAvailableAllocationUnits(8)
+                        svfsb.f_bfree,  // ActualAvailableAllocationUnits(8)
+                        1,              // SectorsPerAllocationUnit(4)
+                        svfsb.f_bsize   // BytesPerSector(4)
+                    );
+
+                out_stream.out_uint32_le(file_fs_full_size_information.size()); // Length(4)
+
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest");
+                    file_fs_full_size_information.log(LOG_INFO);
+                }
+                file_fs_full_size_information.emit(out_stream);
+            }
+            break;
+
             default:
             {
                 LOG(LOG_ERR,
@@ -1083,13 +1119,12 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
                 out_stream.out_uint32_le(fscc::FileBasicInformation::size());   // Length(4)
 
                 fscc::FileBasicInformation file_basic_information(
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                           // CreationTime
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_atime),                           // LastAccessTime
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                           // LastWriteTime
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),                           // ChangeTime
-                        fscc::FILE_ATTRIBUTE_DIRECTORY |                                // FileAttributes
-                            (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY))
-                    ;
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                       // CreationTime
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_atime),                       // LastAccessTime
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                       // LastWriteTime
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),                       // ChangeTime
+                        (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY)  // FileAttributes
+                    );
 
                 if (verbose) {
                     LOG(LOG_INFO, "ManagedFile::ProcessServerDriveQueryInformationRequest");

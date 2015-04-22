@@ -1712,6 +1712,148 @@ public:
     }
 };  // FileFsAttributeInformation
 
+// [MS-FSCC] - 2.5.4 FileFsFullSizeInformation
+// ===========================================
+
+// This information class is used to query sector size information for a file
+//  system volume.
+
+// A FILE_FS_FULL_SIZE_INFORMATION data element, defined as follows, is
+//  returned by the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                      TotalAllocationUnits                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                 CallerAvailableAllocationUnits                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                 ActualAvailableAllocationUnits                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                    SectorsPerAllocationUnit                   |
+// +---------------------------------------------------------------+
+// |                         BytesPerSector                        |
+// +---------------------------------------------------------------+
+
+// TotalAllocationUnits (8 bytes): A 64-bit signed integer that contains the
+//  total number of allocation units on the volume that are available to the
+//  user associated with the calling thread. The value of this field MUST be
+//  greater than or equal to 0.<142>
+
+// CallerAvailableAllocationUnits (8 bytes): A 64-bit signed integer that
+//  contains the total number of free allocation units on the volume that are
+//  available to the user associated with the calling thread. The value of
+//  this field MUST be greater than or equal to 0.<143>
+
+// ActualAvailableAllocationUnits (8 bytes): A 64-bit signed integer that
+//  contains the total number of free allocation units on the volume. The
+//  value of this field MUST be greater than or equal to 0.
+
+// SectorsPerAllocationUnit (4 bytes): A 32-bit unsigned integer that
+//  contains the number of sectors in each allocation unit.
+
+// BytesPerSector (4 bytes): A 32-bit unsigned integer that contains the
+//  number of bytes in each sector.
+
+// This operation returns a status code, as specified in [MS-ERREF] section
+//  2.3. The status code returned directly by the function that processes
+//  this file information class MUST be STATUS_SUCCESS or one of the
+//  following.
+
+//  +-----------------------------+--------------------------------------------+
+//  | Error code                  | Meaning                                    |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
+//  | 0xC0000004                  | does not match the length that is required |
+//  |                             | for the specified information class.       |
+//  +-----------------------------+--------------------------------------------+
+
+class FileFsFullSizeInformation {
+    int64_t  TotalAllocationUnits           = 0;
+    int64_t  CallerAvailableAllocationUnits = 0;
+    int64_t  ActualAvailableAllocationUnits = 0;
+    uint32_t SectorsPerAllocationUnit       = 0;
+    uint32_t BytesPerSector                 = 0;
+
+public:
+    FileFsFullSizeInformation() = default;
+
+    FileFsFullSizeInformation(int64_t TotalAllocationUnits,
+                              int64_t CallerAvailableAllocationUnits,
+                              int64_t ActualAvailableAllocationUnits,
+                              uint32_t SectorsPerAllocationUnit,
+                              uint32_t BytesPerSector)
+    : TotalAllocationUnits(TotalAllocationUnits)
+    , CallerAvailableAllocationUnits(CallerAvailableAllocationUnits)
+    , ActualAvailableAllocationUnits(ActualAvailableAllocationUnits)
+    , SectorsPerAllocationUnit(SectorsPerAllocationUnit)
+    , BytesPerSector(BytesPerSector) {}
+
+    inline void emit(Stream & stream) const {
+        stream.out_sint64_le(this->TotalAllocationUnits);
+        stream.out_sint64_le(this->CallerAvailableAllocationUnits);
+        stream.out_sint64_le(this->ActualAvailableAllocationUnits);
+        stream.out_uint32_le(this->SectorsPerAllocationUnit);
+        stream.out_uint32_le(this->BytesPerSector);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 32;   // TotalAllocationUnits(8) +
+                                            //     CallerAvailableAllocationUnits(8)
+                                            //     ActualAvailableAllocationUnits(8) +
+                                            //     SectorsPerAllocationUnit(4) +
+                                            //     BytesPerSector(4)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileFsFullSizeInformation: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+
+        this->TotalAllocationUnits           = stream.in_sint64_le();
+        this->CallerAvailableAllocationUnits = stream.in_sint64_le();
+        this->ActualAvailableAllocationUnits = stream.in_sint64_le();
+        this->SectorsPerAllocationUnit       = stream.in_uint32_le();
+        this->BytesPerSector                 = stream.in_uint32_le();
+    }
+
+    inline size_t size() const {
+        return 32;  // TotalAllocationUnits(8) + CallerAvailableAllocationUnits(8) +
+                    //     ActualAvailableAllocationUnits(8) + SectorsPerAllocationUnit(4) +
+                    //     BytesPerSector(4)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "FileFsFullSizeInformation: TotalAllocationUnits=%" PRId64
+                " CallerAvailableAllocationUnits=%" PRId64
+                " ActualAvailableAllocationUnits=%" PRId64
+                " SectorsPerAllocationUnit=%u BytesPerSector=%u",
+            this->TotalAllocationUnits, this->CallerAvailableAllocationUnits,
+            this->ActualAvailableAllocationUnits, this->SectorsPerAllocationUnit,
+            this->BytesPerSector);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
 // [MS-FSCC] - 2.5.8 FileFsSizeInformation
 // =======================================
 

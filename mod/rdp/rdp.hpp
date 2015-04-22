@@ -1736,20 +1736,20 @@ public:
 
                                 // Inject a new channel for file system virtual channel (rdpdr)
                                 if (!has_rdpdr_channel && this->file_system_drive_manager.HasManagedDrive()) {
-                                    ::snprintf(cs_net.channelDefArray[num_channels].name,
-                                             sizeof(cs_net.channelDefArray[num_channels].name),
+                                    ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
+                                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                                              "%s", channel_names::rdpdr);
-                                    cs_net.channelDefArray[num_channels].options =
+                                    cs_net.channelDefArray[cs_net.channelCount].options =
                                           GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                                         | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
-                                    cs_net.channelCount++;
                                     CHANNELS::ChannelDef def;
                                     ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpdr);
-                                    def.flags = cs_net.channelDefArray[num_channels].options;
+                                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                                     if (this->verbose & 16){
-                                        def.log(num_channels);
+                                        def.log(cs_net.channelCount);
                                     }
                                     this->mod_channel_list.push_back(def);
+                                    cs_net.channelCount++;
 
                                     this->proxy_managed_file_system_virtual_channel = true;
                                 }
@@ -1773,6 +1773,23 @@ public:
                                     }
                                     this->mod_channel_list.push_back(def);
                                 }
+
+/*
+{
+    const char * wab_agent_channel_name = "wabagt\0\0";
+    memcpy(cs_net.channelDefArray[cs_net.channelCount].name, wab_agent_channel_name, 8);
+    cs_net.channelDefArray[cs_net.channelCount].options =
+          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
+    CHANNELS::ChannelDef def;
+    memcpy(def.name, wab_agent_channel_name, 8);
+    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+    if (this->verbose & 16){
+        def.log(cs_net.channelCount);
+    }
+    this->mod_channel_list.push_back(def);
+    cs_net.channelCount++;
+}
+*/
 
                                 if (this->verbose & 1) {
                                     cs_net.log("Sending to server");
@@ -2658,6 +2675,9 @@ public:
                                  if (  this->auth_channel[0] /*&& this->acl */
                                     && !strcmp(mod_channel.name, this->auth_channel)) {
                                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
+                            }
+                            else if (!strcmp(mod_channel.name, "wabagt")) {
+                                this->process_wab_agent_event(mod_channel, sec.payload, length, flags, chunk_size);
                             }
                             // Clipboard is a Clipboard PDU
                             else if (!strcmp(mod_channel.name, channel_names::cliprdr)) {
@@ -6017,6 +6037,16 @@ public:
         if (this->acl) {
             this->acl->set_auth_channel_target(auth_channel_message.c_str());
         }
+    }
+
+    void process_wab_agent_event(const CHANNELS::ChannelDef & auth_channel,
+            Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+        uint16_t message_length = stream.in_uint16_le();
+
+        REDASSERT(message_length == stream.in_remain());
+        std::string wab_agent_channel_message(char_ptr_cast(stream.p), stream.in_remain());
+
+        LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
     }
 
     void process_cliprdr_event(
