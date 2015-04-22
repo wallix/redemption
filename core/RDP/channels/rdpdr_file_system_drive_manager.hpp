@@ -384,6 +384,11 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
             default:
             {
+                LOG(LOG_ERR,
+                    "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest: "
+                        "Unknown FsInformationClass(0x%X)",
+                    server_drive_query_volume_information_request.FsInformationClass());
+
                 const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
                     device_io_request.CompletionId(), 0xC0000001 /* STATUS_UNSUCCESSFUL*/);
                 if (verbose) {
@@ -514,6 +519,12 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
             default:
             {
+                LOG(LOG_ERR,
+                    "ManagedDirectory::ProcessServerDriveQueryInformationRequest: "
+                        "Unknown FsInformationClass(0x%X)",
+                    server_drive_query_information_request.FsInformationClass());
+                REDASSERT(false);
+
                 const rdpdr::DeviceIOResponse device_io_response(
                         device_io_request.DeviceId(),
                         device_io_request.CompletionId(),
@@ -598,17 +609,49 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
             ::stat64(file_full_path.c_str(), &sb);
 
-            const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
-                device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
-            if (verbose) {
-                LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest");
-                device_io_response.log(LOG_INFO);
-            }
-            device_io_response.emit(out_stream);
-
             switch (server_drive_query_directory_request.FsInformationClass()) {
+                case rdpdr::FileFullDirectoryInformation:
+                {
+                    const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+                        device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
+                    if (verbose) {
+                        LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest");
+                        device_io_response.log(LOG_INFO);
+                    }
+                    device_io_response.emit(out_stream);
+
+                    const fscc::FileFullDirectoryInformation file_full_directory_information(
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_atime),
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),
+                        sb.st_size, sb.st_blocks * 512 /* Block size */,
+                        (S_ISDIR(sb.st_mode) ? fscc::FILE_ATTRIBUTE_DIRECTORY : 0) |
+                            ((sb.st_mode & S_IWUSR) ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
+                        ent->d_name
+                        );
+                    if (verbose) {
+                        LOG(LOG_INFO,
+                            "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest");
+                        file_full_directory_information.log(LOG_INFO);
+                    }
+
+                    out_stream.out_uint32_le(file_full_directory_information.size());   // Length(4)
+
+                    file_full_directory_information.emit(out_stream);
+                }
+                break;
+
                 case rdpdr::FileBothDirectoryInformation:
                 {
+                    const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+                        device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
+                    if (verbose) {
+                        LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest");
+                        device_io_response.log(LOG_INFO);
+                    }
+                    device_io_response.emit(out_stream);
+
                     const fscc::FileBothDirectoryInformation file_both_directory_information(
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_atime),
@@ -628,6 +671,51 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
                     out_stream.out_uint32_le(file_both_directory_information.size());   // Length(4)
 
                     file_both_directory_information.emit(out_stream);
+                }
+                break;
+
+                case rdpdr::FileNamesInformation:
+                {
+                    const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+                        device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
+                    if (verbose) {
+                        LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest");
+                        device_io_response.log(LOG_INFO);
+                    }
+                    device_io_response.emit(out_stream);
+
+                    const fscc::FileNamesInformation file_name_information(ent->d_name);
+                    if (verbose) {
+                        LOG(LOG_INFO,
+                            "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest");
+                        file_name_information.log(LOG_INFO);
+                    }
+
+                    out_stream.out_uint32_le(file_name_information.size()); // Length(4)
+
+                    file_name_information.emit(out_stream);
+                }
+                break;
+
+                default:
+                {
+                    LOG(LOG_ERR,
+                        "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest: "
+                            "Unknown FsInformationClass(0x%X)",
+                        server_drive_query_directory_request.FsInformationClass());
+                    REDASSERT(false);
+
+                    const rdpdr::DeviceIOResponse device_io_response(
+                            device_io_request.DeviceId(),
+                            device_io_request.CompletionId(),
+                            0xC0000001  // STATUS_UNSUCCESSFUL
+                        );
+                    if (verbose) {
+                        LOG(LOG_INFO,
+                            "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest");
+                        device_io_response.log(LOG_INFO);
+                    }
+                    device_io_response.emit(out_stream);
                 }
                 break;
             }
@@ -1121,6 +1209,14 @@ public:
                             O_RDONLY
                             ));
 */
+/*
+        managed_drives.push_back(
+            std::make_tuple(this->next_managed_drive_id++,
+                            "WABAGT",
+                            DRIVE_REDIRECTION_PATH "/wabagt",
+                            O_RDONLY
+                            ));
+*/
     }
 
     uint32_t AnnounceDrivePartially(Stream & client_device_list_announce,
@@ -1524,12 +1620,11 @@ public:
             break;
 
             default:
-                if (verbose) {
-                    LOG(LOG_INFO,
-                        "FileSystemDriveManager::ProcessDeviceIORequest: "
-                            "Undecoded Device I/O Request - MajorFunction=0x%X",
-                        device_io_request.MajorFunction());
-                }
+                LOG(LOG_ERR,
+                    "FileSystemDriveManager::ProcessDeviceIORequest: "
+                        "Undecoded Device I/O Request - MajorFunction=0x%X",
+                    device_io_request.MajorFunction());
+                REDASSERT(false);
 
                 ManagedFileSystemObject::MakeClientDriveIoUnsuccessfulResponse(
                     device_io_request,

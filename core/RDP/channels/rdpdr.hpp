@@ -159,10 +159,42 @@ struct SharedHeader {
     }
 
 private:
+    inline static const char * get_Component_name(Component component) {
+        switch (component) {
+            case Component::RDPDR_CTYP_CORE: return "RDPDR_CTYP_CORE";
+            case Component::RDPDR_CTYP_PRT:  return "RDPDR_CTYP_PRT";
+        }
+
+        return "<unknown>";
+    }
+
+    inline static const char * get_PacketId_name(PacketId packet_id) {
+        switch (packet_id) {
+            case PacketId::PAKID_CORE_SERVER_ANNOUNCE:     return "PAKID_CORE_SERVER_ANNOUNCE";
+            case PacketId::PAKID_CORE_CLIENTID_CONFIRM:    return "PAKID_CORE_CLIENTID_CONFIRM";
+            case PacketId::PAKID_CORE_CLIENT_NAME:         return "PAKID_CORE_CLIENT_NAME";
+            case PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE: return "PAKID_CORE_DEVICELIST_ANNOUNCE";
+            case PacketId::PAKID_CORE_DEVICE_REPLY:        return "PAKID_CORE_DEVICE_REPLY";
+            case PacketId::PAKID_CORE_DEVICE_IOREQUEST:    return "PAKID_CORE_DEVICE_IOREQUEST";
+            case PacketId::PAKID_CORE_DEVICE_IOCOMPLETION: return "PAKID_CORE_DEVICE_IOCOMPLETION";
+            case PacketId::PAKID_CORE_SERVER_CAPABILITY:   return "PAKID_CORE_SERVER_CAPABILITY";
+            case PacketId::PAKID_CORE_CLIENT_CAPABILITY:   return "PAKID_CORE_CLIENT_CAPABILITY";
+            case PacketId::PAKID_CORE_DEVICELIST_REMOVE:   return "PAKID_CORE_DEVICELIST_REMOVE";
+            case PacketId::PAKID_PRN_CACHE_DATA:           return "PAKID_PRN_CACHE_DATA";
+            case PacketId::PAKID_CORE_USER_LOGGEDON:       return "PAKID_CORE_USER_LOGGEDON";
+            case PacketId::PAKID_PRN_USING_XPS:            return "PAKID_PRN_USING_XPS";
+        }
+
+        return "<unknown>";
+    }
+
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "SharedHeader: Component=0x%X PacketId=0x%X",
-            static_cast<uint16_t>(this->component), static_cast<uint16_t>(this->packet_id));
+            "SharedHeader: Component=%s(0x%X) PacketId=%s(0x%X)",
+            this->get_Component_name(this->component),
+            static_cast<uint16_t>(this->component),
+            this->get_PacketId_name(this->packet_id),
+            static_cast<uint16_t>(this->packet_id));
         return ((length < size) ? length : size - 1);
     }
 
@@ -466,9 +498,22 @@ public:
     }
 
 private:
+    inline static const char * get_DeviceType_name(uint32_t DeviceType) {
+        switch (DeviceType) {
+            case RDPDR_DTYP_SERIAL:     return "RDPDR_DTYP_SERIAL";
+            case RDPDR_DTYP_PARALLEL:   return "RDPDR_DTYP_PARALLEL";
+            case RDPDR_DTYP_PRINT:      return "RDPDR_DTYP_PRINT";
+            case RDPDR_DTYP_FILESYSTEM: return "RDPDR_DTYP_FILESYSTEM";
+            case RDPDR_DTYP_SMARTCARD:  return "RDPDR_DTYP_SMARTCARD";
+        }
+
+        return "<unknown>";
+    }
+
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "DeviceAnnounceHeader: DeviceType=%u DeviceId=%u PreferredDosName=\"%s\"",
+            "DeviceAnnounceHeader: DeviceType=%s(%u) DeviceId=%u PreferredDosName=\"%s\"",
+            this->get_DeviceType_name(this->DeviceType_),
             this->DeviceType_, this->DeviceId_, this->PreferredDosName);
         return ((length < size) ? length : size - 1);
     }
@@ -645,12 +690,42 @@ public:
     inline uint32_t MinorFunction() const { return this->MinorFunction_; }
 
 private:
+    inline static const char * get_MajorFunction_name(uint32_t MajorFunction) {
+        switch (MajorFunction)
+        {
+            case IRP_MJ_CREATE:                   return "IRP_MJ_CREATE";
+            case IRP_MJ_CLOSE:                    return "IRP_MJ_CLOSE";
+            case IRP_MJ_READ:                     return "IRP_MJ_READ";
+            case IRP_MJ_WRITE:                    return "IRP_MJ_WRITE";
+            case IRP_MJ_DEVICE_CONTROL:           return "IRP_MJ_DEVICE_CONTROL";
+            case IRP_MJ_QUERY_VOLUME_INFORMATION: return "IRP_MJ_QUERY_VOLUME_INFORMATION";
+            case IRP_MJ_SET_VOLUME_INFORMATION:   return "IRP_MJ_SET_VOLUME_INFORMATION";
+            case IRP_MJ_QUERY_INFORMATION:        return "IRP_MJ_QUERY_INFORMATION";
+            case IRP_MJ_SET_INFORMATION:          return "IRP_MJ_SET_INFORMATION";
+            case IRP_MJ_DIRECTORY_CONTROL:        return "IRP_MJ_DIRECTORY_CONTROL";
+            case IRP_MJ_LOCK_CONTROL:             return "IRP_MJ_LOCK_CONTROL";
+        }
+
+        return "<unknown>";
+    }
+
+    inline static const char * get_MinorFunction_name(uint32_t MinorFunction) {
+        switch (MinorFunction)
+        {
+            case IRP_MN_QUERY_DIRECTORY:         return "IRP_MN_QUERY_DIRECTORY";
+            case IRP_MN_NOTIFY_CHANGE_DIRECTORY: return "IRP_MN_NOTIFY_CHANGE_DIRECTORY";
+        }
+
+        return "<unknown>";
+    }
+
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceIORequest: "
-                "DeviceId=%u FileId=%u CompletionId=%u MajorFunction=0x%X MinorFunction=0x%X",
-            this->DeviceId_, this->FileId_, this->CompletionId_, this->MajorFunction_,
-            this->MinorFunction_);
+                "DeviceId=%u FileId=%u CompletionId=%u MajorFunction=%s(0x%X) MinorFunction=%s(0x%X)",
+            this->DeviceId_, this->FileId_, this->CompletionId_,
+            this->get_MajorFunction_name(this->MajorFunction_), this->MajorFunction_,
+            this->get_MinorFunction_name(this->MinorFunction_), this->MinorFunction_);
         return ((length < size) ? length : size - 1);
     }
 
@@ -1390,10 +1465,21 @@ public:
     }
 
 private:
+    inline static const char * get_Information_name(uint8_t Information) {
+        switch (Information) {
+            case FILE_SUPERSEDED:  return "FILE_SUPERSEDED";
+            case FILE_OPENED:      return "FILE_OPENED";
+            case FILE_OVERWRITTEN: return "FILE_OVERWRITTEN";
+        }
+
+        return "<unknown>";
+    }
+
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "DeviceCreateResponse: FileId=%u Information=0x%X",
-            this->FileId, this->Information);
+            "DeviceCreateResponse: FileId=%u Information=%s(0x%X)",
+            this->FileId, this->get_Information_name(this->Information),
+            this->Information);
         return ((length < size) ? length : size - 1);
     }
 
@@ -2354,9 +2440,20 @@ public:
     inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
 private:
+    inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
+        switch (FsInformationClass) {
+            case FileBasicInformation:        return "FileBasicInformation";
+            case FileStandardInformation:     return "FileStandardInformation";
+            case FileAttributeTagInformation: return "FileAttributeTagInformation";
+        }
+
+        return "<unknown>";
+    }
+
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "ServerDriveQueryInformationRequest: FsInformationClass=%u Length=%zu",
+            "ServerDriveQueryInformationRequest: FsInformationClass=%s(%u) Length=%zu",
+            this->get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, this->query_buffer.get_capacity());
         return ((length < size) ? length : size - 1);
     }
@@ -2577,9 +2674,22 @@ public:
     inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
 private:
+    inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
+        switch (FsInformationClass) {
+            case FileFsVolumeInformation:    return "FileFsVolumeInformation";
+            case FileFsSizeInformation:      return "FileFsSizeInformation";
+            case FileFsAttributeInformation: return "FileFsAttributeInformation";
+            case FileFsFullSizeInformation:  return "FileFsFullSizeInformation";
+            case FileFsDeviceInformation:    return "FileFsDeviceInformation";
+        }
+
+        return "<unknown>";
+    }
+
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "ServerDriveQueryVolumeInformationRequest: FsInformationClass=%u Length=%zu",
+            "ServerDriveQueryVolumeInformationRequest: FsInformationClass=%s(%u) Length=%zu",
+            this->get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, this->query_volume_buffer.get_capacity());
         return ((length < size) ? length : size - 1);
     }
@@ -2777,10 +2887,22 @@ public:
     inline const char * Path() const { return this->path.c_str(); }
 
 private:
+    inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
+        switch (FsInformationClass) {
+            case FileDirectoryInformation:     return "FileDirectoryInformation";
+            case FileFullDirectoryInformation: return "FileFullDirectoryInformation";
+            case FileBothDirectoryInformation: return "FileBothDirectoryInformation";
+            case FileNamesInformation:         return "FileNamesInformation";
+        }
+
+        return "<unknown>";
+    }
+
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "ServerDriveQueryDirectoryRequest: FsInformationClass=0x%X InitialQuery=%u "
-                "path=\"%s\"",
+            "ServerDriveQueryDirectoryRequest: FsInformationClass=%s(0x%X) "
+                "InitialQuery=%u path=\"%s\"",
+            this->get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, this->InitialQuery_, this->path.c_str());
         return ((length < size) ? length : size - 1);
     }

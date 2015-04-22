@@ -604,10 +604,12 @@ class FileBothDirectoryInformation {
 public:
     FileBothDirectoryInformation() = default;
 
-    FileBothDirectoryInformation(uint64_t CreationTime, uint64_t LastAccessTime,
-                         uint64_t LastWriteTime, uint64_t ChangeTime,
-                         int64_t EndOfFile, int64_t AllocationSize,
-                         uint32_t FileAttributes, const char * file_name)
+    FileBothDirectoryInformation(uint64_t CreationTime,
+                                 uint64_t LastAccessTime,
+                                 uint64_t LastWriteTime, uint64_t ChangeTime,
+                                 int64_t EndOfFile, int64_t AllocationSize,
+                                 uint32_t FileAttributes,
+                                 const char * file_name)
     : CreationTime(CreationTime)
     , LastAccessTime(LastAccessTime)
     , LastWriteTime(LastWriteTime)
@@ -644,7 +646,7 @@ public:
         FileName_unicode_data[size_of_FileName_unicode_data + 1] = 0;
         size_of_FileName_unicode_data += 2;
 
-        stream.out_uint32_le(size_of_FileName_unicode_data);
+        stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
 
         stream.out_uint32_le(this->EaSize);
 
@@ -664,9 +666,9 @@ public:
             REDASSERT(size_of_ShortName_unicode_data <= 24 /* ShortName(24) */);
         }
 
-        stream.out_sint8(size_of_ShortName_unicode_data);
+        stream.out_sint8(size_of_ShortName_unicode_data);   // ShortNameLength(1)
 
-        // Reserved(4), MUST NOT be transmitted.
+        // Reserved(1), MUST NOT be transmitted.
 
         stream.out_copy_bytes(ShortName_unicode_data, size_of_ShortName_unicode_data);
         if (size_of_ShortName_unicode_data < 24  /* ShortName(24) */) {
@@ -800,6 +802,489 @@ public:
         LOG(level, buffer);
     }
 };  // FileBothDirectoryInformation
+
+// [MS-FSCC] - 2.4.14 FileFullDirectoryInformation
+// ===============================================
+
+// This information class is used in directory enumeration to return detailed
+//  information about the contents of a directory.
+
+// This information class returns a list that contains a
+//  FILE_FULL_DIR_INFORMATION data element for each file or directory within
+//  the target directory. This list MUST reflect the presence of a
+//  subdirectory named "." (synonymous with the target directory itself)
+//  within the target directory and one named ".." (synonymous with the
+//  parent directory of the target directory). For more details, see section
+//  2.1.5.1.
+
+// When multiple FILE_FULL_DIR_INFORMATION data elements are present in the
+//  buffer, each MUST be aligned on an 8-byte boundary; any bytes inserted
+//  for alignment SHOULD be set to zero, and the receiver MUST ignore them.
+//  No padding is required following the last data element.
+
+// A FILE_FULL_DIR_INFORMATION data element is as follows.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        NextEntryOffset                        |
+// +---------------------------------------------------------------+
+// |                           FileIndex                           |
+// +---------------------------------------------------------------+
+// |                          CreationTime                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         LastAccessTime                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         LastWriteTime                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                           ChangeTime                          |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                           EndOfFile                           |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         AllocationSize                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         FileAttributes                        |
+// +---------------------------------------------------------------+
+// |                         FileNameLength                        |
+// +---------------------------------------------------------------+
+// |                             EaSize                            |
+// +---------------------------------------------------------------+
+// |                      FileName (variable)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// NextEntryOffset (4 bytes): A 32-bit unsigned integer that contains the
+//  byte offset from the beginning of this entry, at which the next
+//  FILE_FULL_DIR_INFORMATION entry is located, if multiple entries are
+//  present in a buffer. This member is zero if no other entries follow this
+//  one. An implementation MUST use this value to determine the location of
+//  the next entry (if multiple entries are present in a buffer).
+
+// FileIndex (4 bytes): A 32-bit unsigned integer that contains the byte
+//  offset of the file within the parent directory. For file systems such as
+//  NTFS, in which the position of a file within the parent directory is not
+//  fixed and can be changed at any time to maintain sort order, this field
+//  SHOULD be set to 0, and MUST be ignored.<99>
+
+// CreationTime (8 bytes): The time when the file was created; see section
+//  2.1.1. This value MUST be greater than or equal to 0.
+
+// LastAccessTime (8 bytes): The last time the file was accessed; see section
+//  2.1.1. This value MUST be greater than or equal to 0.
+
+// LastWriteTime (8 bytes): The last time information was written to the
+//  file; see section 2.1.1. This value MUST be greater than or equal to 0.
+
+// ChangeTime (8 bytes): The last time the file was changed; see section
+//  2.1.1. This value MUST be greater than or equal to 0.
+
+// EndOfFile (8 bytes): A 64-bit signed integer that contains the absolute
+//  new end-of-file position as a byte offset from the start of the file.
+//  EndOfFile specifies the offset to the byte immediately following the last
+//  valid byte in the file. Because this value is zero-based, it actually
+//  refers to the first free byte in the file. That is, it is the offset from
+//  the beginning of the file at which new bytes appended to the file will be
+//  written. The value of this field MUST be greater than or equal to 0.
+
+// AllocationSize (8 bytes): A 64-bit signed integer that contains the file
+//  allocation size, in bytes. The value of this field MUST be an integer
+//  multiple of the cluster size.
+
+// FileAttributes (4 bytes): A 32-bit unsigned integer that contains the file
+//  attributes. For a list of valid file attributes, see section 2.6.
+
+// FileNameLength (4 bytes): A 32-bit unsigned integer that specifies the
+//  length, in bytes, of the file name contained within the FileName member.
+
+// EaSize (4 bytes): A 32-bit unsigned integer that contains the combined
+//  length, in bytes, of the extended attributes (EA) for the file.
+
+// FileName (variable): A sequence of Unicode characters containing the file
+//  name. When working with this field, use FileNameLength to determine the
+//  length of the file name rather than assuming the presence of a trailing
+//  null delimiter. Dot directory names are valid for this field. For more
+//  details, see section 2.1.5.1.
+
+// This operation returns a status code, as specified in [MS-ERREF] section
+//  2.3. The status code returned directly by the function that processes
+//  this file information class MUST be STATUS_SUCCESS or one of the
+//  following.
+
+//  +-----------------------------+-----------------------------------------+
+//  | Error code                  | Meaning                                 |
+//  +-----------------------------+-----------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length |
+//  | 0xC0000004                  | does not match the length that is       |
+//  |                             | required for the specified information  |
+//  |                             | class.                                  |
+//  +-----------------------------+-----------------------------------------+
+
+class FileFullDirectoryInformation {
+    uint32_t NextEntryOffset = 0;
+    uint32_t FileIndex       = 0;
+    uint64_t CreationTime    = 0;
+    uint64_t LastAccessTime  = 0;
+    uint64_t LastWriteTime   = 0;
+    uint64_t ChangeTime      = 0;
+    int64_t  EndOfFile       = 0;
+    int64_t  AllocationSize  = 0;
+    uint32_t FileAttributes  = 0;
+    uint32_t EaSize          = 0;
+
+    std::string file_name;
+
+public:
+    FileFullDirectoryInformation() = default;
+
+    FileFullDirectoryInformation(uint64_t CreationTime,
+                                 uint64_t LastAccessTime,
+                                 uint64_t LastWriteTime, uint64_t ChangeTime,
+                                 int64_t EndOfFile, int64_t AllocationSize,
+                                 uint32_t FileAttributes,
+                                 const char * file_name)
+    : CreationTime(CreationTime)
+    , LastAccessTime(LastAccessTime)
+    , LastWriteTime(LastWriteTime)
+    , ChangeTime(ChangeTime)
+    , EndOfFile(EndOfFile)
+    , AllocationSize(AllocationSize)
+    , FileAttributes(FileAttributes)
+    , file_name(file_name) {}
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->NextEntryOffset);
+        stream.out_uint32_le(this->FileIndex);
+
+        stream.out_uint64_le(this->CreationTime);
+        stream.out_uint64_le(this->LastAccessTime);
+        stream.out_uint64_le(this->LastWriteTime);
+        stream.out_uint64_le(this->ChangeTime);
+
+        stream.out_sint64_le(this->EndOfFile);
+        stream.out_sint64_le(this->AllocationSize);
+
+        stream.out_uint32_le(this->FileAttributes);
+
+        // The null-terminator is included.
+        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
+
+        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(
+                    maximum_length_of_FileName_in_bytes));
+        size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), FileName_unicode_data,
+            maximum_length_of_FileName_in_bytes);
+        // Writes null terminator.
+        FileName_unicode_data[size_of_FileName_unicode_data    ] =
+        FileName_unicode_data[size_of_FileName_unicode_data + 1] = 0;
+        size_of_FileName_unicode_data += 2;
+
+        stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
+
+        stream.out_uint32_le(this->EaSize);
+
+        stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 68;   // NextEntryOffset(4) + FileIndex(4) +
+                                            //     CreationTime(8) + LastAccessTime(8) +
+                                            //     LastWriteTime(8) + ChangeTime(8) +
+                                            //     EndOfFile(8) + AllocationSize(8) +
+                                            //     FileAttributes(4) + FileNameLength(4) +
+                                            //     EaSize(4)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileFullDirectoryInformation (0): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+
+        this->NextEntryOffset = stream.in_uint32_le();
+        this->FileIndex       = stream.in_uint32_le();
+        this->CreationTime    = stream.in_uint64_le();
+        this->LastAccessTime  = stream.in_uint64_le();
+        this->LastWriteTime   = stream.in_uint64_le();
+        this->ChangeTime      = stream.in_uint64_le();
+        this->EndOfFile       = stream.in_sint64_le();
+        this->AllocationSize  = stream.in_sint64_le();
+        this->FileAttributes  = stream.in_uint32_le();
+
+        const uint32_t FileNameLength = stream.in_uint32_le();
+
+        this->EaSize = stream.in_uint32_le();
+
+        {
+            const unsigned expected = FileNameLength;   // FileName(variable)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileFullDirectoryInformation (1): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
+
+        stream.in_copy_bytes(FileName_unicode_data, FileNameLength);
+
+        const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+        const size_t size_of_FileName_utf8_string =
+            FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+        uint8_t * const FileName_utf8_string = static_cast<uint8_t *>(
+            ::alloca(size_of_FileName_utf8_string));
+        const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
+            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string, size_of_FileName_utf8_string);
+        this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
+            length_of_FileName_utf8_string);
+    }
+
+    inline size_t size() const {
+        size_t size = 68;   // NextEntryOffset(4) + FileIndex(4) +
+                            //     CreationTime(8) + LastAccessTime(8) +
+                            //     LastWriteTime(8) + ChangeTime(8) +
+                            //     EndOfFile(8) + AllocationSize(8) +
+                            //     FileAttributes(4) + FileNameLength(4) +
+                            //     EaSize(4)
+
+        // The null-terminator is included.
+        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
+
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
+                    maximum_length_of_FileName_in_bytes));
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), unicode_data,
+            maximum_length_of_FileName_in_bytes);
+        // Writes null terminator.
+        unicode_data[size_of_unicode_data    ] =
+        unicode_data[size_of_unicode_data + 1] = 0;
+        size_of_unicode_data += 2;
+
+        return size + size_of_unicode_data;
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "FileBothDirectoryInformation: NextEntryOffset=%u FileIndex=%u CreationTime=%" PRIu64
+                " LastAccessTime=%" PRIu64 " LastWriteTime=%" PRIu64 " ChangeTime=%" PRIu64
+                " EndOfFile=%" PRId64 " AllocationSize=%" PRId64 " FileAttributes=0x%X "
+                "EaSize=%u FileName=\"%s\"",
+            this->NextEntryOffset, this->FileIndex,
+            this->CreationTime, this->LastAccessTime, this->LastWriteTime,
+            this->ChangeTime, this->EndOfFile, this->AllocationSize, this->FileAttributes,
+            this->EaSize, this->file_name.c_str());
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};  // FileFullDirectoryInformation
+
+// [MS-FSCC] - 2.4.26 FileNamesInformation
+// =======================================
+
+// This information class is used in directory enumeration to return detailed
+//  information about the contents of a directory.
+
+// This information class returns a list that contains a
+//  FILE_NAMES_INFORMATION data element for each file or directory within the
+//  target directory. This list MUST reflect the presence of a subdirectory
+//  named "." (synonymous with the target directory itself) within the target
+//  directory and one named ".." (synonymous with the parent directory of the
+//  target directory). For more details, see section 2.1.5.1.
+
+// When multiple FILE_NAMES_INFORMATION data elements are present in the
+//  buffer, each MUST be aligned on an 8-byte boundary. Any bytes inserted
+//  for alignment SHOULD be set to zero, and the receiver MUST ignore them.
+//  No padding is required following the last data element.
+
+// A FILE_NAMES_INFORMATION data element is as follows.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        NextEntryOffset                        |
+// +---------------------------------------------------------------+
+// |                           FileIndex                           |
+// +---------------------------------------------------------------+
+// |                         FileNameLength                        |
+// +---------------------------------------------------------------+
+// |                      FileName (variable)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// NextEntryOffset (4 bytes): A 32-bit unsigned integer that contains the
+//  byte offset from the beginning of this entry, at which the next
+//  FILE_NAMES_INFORMATION entry is located, if multiple entries are present
+//  in a buffer. This member MUST be zero if no other entries follow this
+//  one. An implementation MUST use this value to determine the location of
+//  the next entry (if multiple entries are present in a buffer).
+
+// FileIndex (4 bytes): A 32-bit unsigned integer that contains the byte
+//  offset of the file within the parent directory. For file systems in which
+//  the position of a file within the parent directory is not fixed and can
+//  be changed at any time to maintain sort order, this field SHOULD be set
+//  to 0, and MUST be ignored.<111>
+
+// FileNameLength (4 bytes): A 32-bit unsigned integer that specifies the
+//  length, in bytes, of the file name contained within the FileName member.
+
+// FileName (variable): A sequence of Unicode characters containing the file
+//  name. When working with this field, use FileNameLength to determine the
+//  length of the file name rather than assuming the presence of a trailing
+//  null delimiter.
+
+// This operation returns a status code, as specified in [MS-ERREF] section
+//  2.3. The status code returned directly by the function that processes
+//  this file information class MUST be STATUS_SUCCESS or one of the
+//  following.
+
+//  +-----------------------------+--------------------------------------------+
+//  | Error code                  | Meaning                                    |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
+//  | 0xC0000004                  | does not match the length that is required |
+//  |                             | for the specified information class.       |
+//  +-----------------------------+--------------------------------------------+
+
+class FileNamesInformation {
+    uint32_t NextEntryOffset = 0;
+    uint32_t FileIndex       = 0;
+
+    std::string file_name;
+
+public:
+    FileNamesInformation() = default;
+
+    FileNamesInformation(const char * file_name)
+    : file_name(file_name) {}
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->NextEntryOffset);
+        stream.out_uint32_le(this->FileIndex);
+
+        // The null-terminator is included.
+        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
+
+        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(
+                    maximum_length_of_FileName_in_bytes));
+        size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), FileName_unicode_data,
+            maximum_length_of_FileName_in_bytes);
+        // Writes null terminator.
+        FileName_unicode_data[size_of_FileName_unicode_data    ] =
+        FileName_unicode_data[size_of_FileName_unicode_data + 1] = 0;
+        size_of_FileName_unicode_data += 2;
+
+        stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
+
+        stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 8;    // NextEntryOffset(4) + FileIndex(4)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileNamesInformation (0): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+
+        this->NextEntryOffset = stream.in_uint32_le();
+        this->FileIndex       = stream.in_uint32_le();
+
+        const uint32_t FileNameLength = stream.in_uint32_le();
+
+        {
+            const unsigned expected = FileNameLength;   // FileName(variable)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileNamesInformation (1): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
+
+        stream.in_copy_bytes(FileName_unicode_data, FileNameLength);
+
+        const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+        const size_t size_of_FileName_utf8_string =
+            FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+        uint8_t * const FileName_utf8_string = static_cast<uint8_t *>(
+            ::alloca(size_of_FileName_utf8_string));
+        const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
+            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
+            size_of_FileName_utf8_string);
+        this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
+            length_of_FileName_utf8_string);
+    }
+
+    inline size_t size() const {
+        size_t size = 12;    // NextEntryOffset(4) + FileIndex(4) + FileNameLength(4)
+
+        // The null-terminator is included.
+        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
+
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
+                    maximum_length_of_FileName_in_bytes));
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), unicode_data,
+            maximum_length_of_FileName_in_bytes);
+        // Writes null terminator.
+        unicode_data[size_of_unicode_data    ] =
+        unicode_data[size_of_unicode_data + 1] = 0;
+        size_of_unicode_data += 2;
+
+        return size + size_of_unicode_data;
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "FileNamesInformation: NextEntryOffset=%u FileIndex=%u FileName=\"%s\"",
+            this->NextEntryOffset, this->FileIndex, this->file_name.c_str());
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
 
 // [MS-FSCC] - 2.4.38 FileStandardInformation
 // ==========================================
@@ -1110,8 +1595,8 @@ enum {
 //  +-----------------------------+--------------------------------------------+
 
 class FileFsAttributeInformation {
-    uint32_t FileSystemAttributes_;
-    uint32_t MaximumComponentNameLength;
+    uint32_t FileSystemAttributes_      = 0;
+    uint32_t MaximumComponentNameLength = 0;
 
     std::string file_system_name;
 
