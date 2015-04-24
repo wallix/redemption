@@ -585,21 +585,21 @@ class Engine(object):
                 self.pidhandler = None
         return self.pidhandler
 
-    def start_session(self, auth, pid, effective_login=None, target_ip=None):
+    def start_session(self, auth, pid, effective_login=None, **kwargs):
         if auth.account.login == MAGIC_AM and not effective_login:
             effective_login = self.get_username()
         self.session_id = self.wabengine.start_session(auth, self.get_pidhandler(pid),
                                                        effective_login=effective_login,
-                                                       target_ip=target_ip)
+                                                       **kwargs)
         return self.session_id
 
-    def update_session(self, physical_target):
+    def update_session(self, physical_target, **kwargs):
         hosttarget = u"%s@%s:%s" % ( self.get_account_login(physical_target)
                                    , physical_target.resource.device.cn
                                    , physical_target.resource.service.protocol.cn)
         try:
             if self.session_id:
-                self.wabengine.update_session(self.session_id, hosttarget)
+                self.wabengine.update_session(self.session_id, hosttarget, **kwargs)
         except Exception, e:
             import traceback
             Logger().info("Engine update_session failed: (((%s)))" % (traceback.format_exc(e)))

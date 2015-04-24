@@ -78,7 +78,7 @@ TODO("move CERTIF_PATH to configuration (still used in sockettransport)")
 #endif
 
 #if !defined(DRIVE_REDIRECTION_PATH)
-#define DRIVE_REDIRECTION_PATH "/var/lib/redemption/drive_redirection"
+#define DRIVE_REDIRECTION_PATH "/var/rdpproxy/drive_redirection"
 #endif
 
 #if !defined(RECORD_TMP_PATH)
