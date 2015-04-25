@@ -115,6 +115,13 @@ public:
     , public_key_length(0)
     {}
 
+    // Introducing a new constructor with only the input and outout filenames
+    TestTransport(const char * name, const std::string& outdata, const std::string& indata, uint32_t verbose = 0)
+    : check(indata.c_str(), indata.length(), verbose)
+    , gen(outdata.c_str(), outdata.length(), verbose)
+    , public_key_length(0)
+    {}
+
     void set_public_key(const uint8_t * data, size_t data_size) {
         this->public_key.reset(new uint8_t[data_size]);
         this->public_key_length = data_size;
