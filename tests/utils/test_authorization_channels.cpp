@@ -38,6 +38,16 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannels)
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("e"), false);
 }
 
+BOOST_AUTO_TEST_CASE(TestAuthorizationChannels2)
+{
+    AuthorizationChannels authorization_channels("a, b   , c", "   b,d  ");
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("a"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("b"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("c"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("d"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.is_authorized("e"), false);
+}
+
 BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllDeny)
 {
     AuthorizationChannels authorization_channels("a,b,c", "*");

@@ -168,7 +168,7 @@ public:
 
     TODO("All these functions should be changed after Stream refactoring to remove dependency between transport and Stream")
 
-    void send(Stream & header1, Stream & header2, Stream & header3, HStream & stream)
+    void send(Stream const & header1, Stream const & header2, Stream const & header3, HStream & stream)
     {
         stream.copy_to_head(header3.get_data(), header3.size());
         stream.copy_to_head(header2.get_data(), header2.size());
@@ -176,25 +176,25 @@ public:
         this->send(stream);
     }
 
-    void send(Stream & header1, Stream & header2, HStream & stream)
+    void send(Stream const & header1, Stream const & header2, HStream & stream)
     {
         stream.copy_to_head(header2.get_data(), header2.size());
         stream.copy_to_head(header1.get_data(), header1.size());
-        this->send(stream);
+        this->send(stream.get_data(), stream.size());
     }
 
-    void send(Stream & header, HStream & stream)
+    void send(Stream const & header, HStream & stream)
     {
         stream.copy_to_head(header.get_data(), header.size());
-        this->send(stream);
+        this->send(stream.get_data(), stream.size());
     }
 
-    void send(Stream & stream)
+    void send(Stream const & stream)
     {
         this->send(stream.get_data(), stream.size());
     }
 
-    void send(InStream & stream)
+    void send(InStream const & stream)
     {
         this->send(stream.get_data(), stream.size());
     }

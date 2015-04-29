@@ -21,31 +21,36 @@
 #ifndef REDEMPTION_UTILS_APPLY_FOR_DELIM_HPP
 #define REDEMPTION_UTILS_APPLY_FOR_DELIM_HPP
 
-namespace detail {
-  struct ignore_blank_fn
-  {
+struct is_blanck_fn
+{
     bool operator()(char c) const noexcept
     { return c == ' ' || c == '\t'; }
-  };
-}
+};
 
-template<class Fn, class IgnoreFn = detail::ignore_blank_fn>
+template<class Fn, class IgnoreFn = is_blanck_fn>
 void apply_for_delim(const char * cstr, char delim, Fn fn, IgnoreFn ignore = IgnoreFn())
 {
-  while (*cstr) {
     while (ignore(*cstr)) {
-      ++cstr;
+        ++cstr;
     }
 
-    fn(cstr);
-
-    while (*cstr && *cstr != delim) {
-      ++cstr;
-    }
     if (*cstr) {
-      ++cstr;
+        fn(cstr);
+
+        while (*cstr) {
+            while (*cstr && *cstr != delim) {
+                ++cstr;
+            }
+            if (*cstr) {
+                ++cstr;
+                while (ignore(*cstr)) {
+                    ++cstr;
+                }
+
+                fn(cstr);
+            }
+        }
     }
-  }
 }
 
 #endif

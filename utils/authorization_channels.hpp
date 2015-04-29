@@ -22,8 +22,9 @@
 #define REDEMPTION_UTILS_AUTHORIZATION_CHANNELS_HPP
 
 #include "movable_noncopyable.hpp"
-#include "splitter.hpp"
+#include "apply_for_delim.hpp"
 
+#include <algorithm>
 #include <cstring>
 #include <string>
 #include <array>
@@ -40,41 +41,39 @@ struct AuthorizationChannels
     : allow_(std::move(allow))
     , deny_(std::move(deny))
     {
-        //LOG(LOG_INFO, "allow=%s deny=%s", allow_.c_str(), deny_.c_str());
-        for (auto & r : get_split(this->allow_, ',')) {
-            if (r.size() == 1 && *r.begin() == '*') {
+        apply_for_delim(this->allow_.c_str(), ',', [this](char const * & s) {
+            if (this->read_star(s)) {
                 this->all_allow_ = true;
                 this->rdpdr_restriction_.fill(true);
                 this->cliprdr_restriction_.fill(true);
-                break;
+                s = "";
             }
-        }
+        });
 
-        for (auto & r : get_split(this->deny_, ',')) {
-            if (r.size() == 1 && *r.begin() == '*') {
+        apply_for_delim(this->deny_.c_str(), ',', [this](char const * & s) {
+            if (this->read_star(s)) {
                 this->all_deny_ = true;
                 if (this->all_allow_) {
                     this->rdpdr_restriction_.fill(false);
                     this->cliprdr_restriction_.fill(false);
                 }
-                break;
+                s = "";
             }
-        }
+        });
 
         this->normalize(this->allow_);
         this->normalize(this->deny_);
     }
 
     bool is_authorized(const char * s) const noexcept {
-        const std::size_t len = strlen(s);
         if (this->all_deny_) {
-            return contains(this->allow_, s, len);
+            return contains(this->allow_, s);
         }
         if (this->all_allow_) {
-            return !contains(this->deny_, s, len);
+            return !contains(this->deny_, s);
         }
-        return !contains(this->deny_, s, len)
-            &&  contains(this->allow_, s, len);
+        return !contains(this->deny_, s)
+            &&  contains(this->allow_, s);
     }
 
     bool rdpdr_type_all_is_authorized() const noexcept {
@@ -164,6 +163,19 @@ struct AuthorizationChannels
     }};
 
 private:
+    static bool read_star(char const * & s)
+    {
+        if (*s != '*') {
+            return false;
+        }
+
+        while (is_blanck_fn()(*s)) {
+            ++s;
+        }
+
+        return (*s == ',' || *s == '*' || !*s);
+    }
+
     template<class Cont>
     static bool contains_true(Cont const & cont) {
         for (bool x : cont) {
@@ -220,13 +232,20 @@ private:
         }
     }
 
-    static bool contains(std::string const & s, const char * search, std::size_t len) noexcept {
-        for (auto & r : get_split(s, ',')) {
-            if (r.size() == len && std::equal(r.begin(), r.end(), search)) {
-                return true;
+    static bool contains(std::string const & s, const char * search) noexcept {
+        bool ret = false;
+        apply_for_delim(s.c_str(), ',', [&ret, search](const char * & s) {
+            char const * s2 = search;
+            while (*s2 == *s && *s2) {
+                ++s;
+                ++s2;
             }
-        }
-        return false;
+            if (!*s2 && (!*s || *s == ',' || is_blanck_fn()(*s))) {
+                ret = true;
+                s = "";
+            }
+        });
+        return ret;
     }
 
     std::string allow_;
