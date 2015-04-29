@@ -876,32 +876,37 @@ public:
 
         const uint16_t PathLength = stream.in_uint32_le();
 
-        {
-            const unsigned expected = PathLength;   // Path(variable)
+        if (PathLength) {
+            {
+                const unsigned expected = PathLength;   // Path(variable)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceCreateRequest (1): expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated DeviceCreateRequest (1): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RDPDR_PDU_TRUNCATED);
+                }
             }
+
+            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
+
+            stream.in_copy_bytes(unicode_data, PathLength);
+
+            const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+            const size_t size_of_utf8_string =
+                PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+            uint8_t * const utf8_string = static_cast<uint8_t *>(
+                ::alloca(size_of_utf8_string));
+            const size_t length_of_utf8_string = ::UTF16toUTF8(
+                unicode_data, PathLength / 2, utf8_string, size_of_utf8_string);
+            this->path.assign(::char_ptr_cast(utf8_string),
+                length_of_utf8_string);
+            std::replace(this->path.begin(), this->path.end(), '\\', '/');
         }
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
-
-        stream.in_copy_bytes(unicode_data, PathLength);
-
-        const size_t maximum_length_of_utf8_character_in_bytes = 4;
-
-        const size_t size_of_utf8_string =
-            PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_utf8_string));
-        const size_t length_of_utf8_string = ::UTF16toUTF8(
-            unicode_data, PathLength / 2, utf8_string, size_of_utf8_string);
-        this->path.assign(::char_ptr_cast(utf8_string),
-            length_of_utf8_string);
-        std::replace(this->path.begin(), this->path.end(), '\\', '/');
+        else {
+            this->path.clear();
+        }
     }
 
     inline uint32_t DesiredAccess() const { return this->DesiredAccess_; }
@@ -2853,31 +2858,37 @@ public:
 
         stream.in_skip_bytes(23);   // Padding(23)
 
-        {
-            const unsigned expected = PathLength;   // Path(variable)
+        if (PathLength) {
+            {
+                const unsigned expected = PathLength;   // Path(variable)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryDirectoryRequest (1): expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated ServerDriveQueryDirectoryRequest (1): "
+                            "expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RDPDR_PDU_TRUNCATED);
+                }
             }
+
+            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
+
+            stream.in_copy_bytes(unicode_data, PathLength);
+
+            const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+            const size_t size_of_utf8_string =
+                        PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+            uint8_t * const utf8_string = static_cast<uint8_t *>(
+                ::alloca(size_of_utf8_string));
+            ::UTF16toUTF8(unicode_data, PathLength / 2, utf8_string, size_of_utf8_string);
+            // The null-terminator is included.
+            this->path = ::char_ptr_cast(utf8_string);
+            std::replace(this->path.begin(), this->path.end(), '\\', '/');
         }
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
-
-        stream.in_copy_bytes(unicode_data, PathLength);
-
-        const size_t maximum_length_of_utf8_character_in_bytes = 4;
-
-        const size_t size_of_utf8_string =
-                    PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_utf8_string));
-        ::UTF16toUTF8(unicode_data, PathLength / 2, utf8_string, size_of_utf8_string);
-        // The null-terminator is included.
-        this->path = ::char_ptr_cast(utf8_string);
-        std::replace(this->path.begin(), this->path.end(), '\\', '/');
+        else {
+            this->path.clear();
+        }
     }
 
     inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
