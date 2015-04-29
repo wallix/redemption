@@ -4929,7 +4929,7 @@ public:
                     pklpdu.entries[pdu_number_of_entries].Key1 = cache[cache_index].sig.sig_32[0];
                     pklpdu.entries[pdu_number_of_entries].Key2 = cache[cache_index].sig.sig_32[1];
 
-                    pklpdu.number_entries_cache[cache_id]++;
+                    pklpdu.numEntriesCache[cache_id]++;
                     number_of_entries++;
                     pdu_number_of_entries++;
 
@@ -4939,11 +4939,12 @@ public:
                         if (number_of_entries == total_number_of_entries) {
                             pklpdu.bBitMask |= RDP::PERSIST_LAST_PDU;
                         }
-                        pklpdu.totalEntriesCache0 = totalEntriesCache[0];
-                        pklpdu.totalEntriesCache1 = totalEntriesCache[1];
-                        pklpdu.totalEntriesCache2 = totalEntriesCache[2];
-                        pklpdu.totalEntriesCache3 = totalEntriesCache[3];
-                        pklpdu.totalEntriesCache4 = totalEntriesCache[4];
+
+                        pklpdu.totalEntriesCache[0] = totalEntriesCache[0];
+                        pklpdu.totalEntriesCache[1] = totalEntriesCache[1];
+                        pklpdu.totalEntriesCache[2] = totalEntriesCache[2];
+                        pklpdu.totalEntriesCache[3] = totalEntriesCache[3];
+                        pklpdu.totalEntriesCache[4] = totalEntriesCache[4];
 
                         //pklpdu.log(LOG_INFO, "Send to server");
 

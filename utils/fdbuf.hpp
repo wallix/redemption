@@ -54,9 +54,8 @@ public:
 
     fdbuf& operator=(fdbuf && other) noexcept
     {
-        const int tmp = fd;
-        fd = other.fd;
-        other.fd = tmp;
+        fdbuf tmp(static_cast<fdbuf&&>(other));
+        this->swap(tmp);
         return *this;
     }
 

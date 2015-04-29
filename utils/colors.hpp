@@ -253,8 +253,6 @@ static inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, cons
     default:
         LOG(LOG_ERR, "in_bpp = %d", in_bpp);
         exit(0);
-        assert(false);
-        break;
     }
     return 0;
 }
@@ -287,8 +285,6 @@ static inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t i
     default:
         LOG(LOG_ERR, "in_bpp = %d", in_bpp);
         exit(0);
-        assert(false);
-        break;
     }
     return 0;
 }
@@ -306,8 +302,6 @@ static inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){
 //        (((c      ) & 0xFF)       & 0xC0)
 //       |((((c >> 8) & 0xFF) >> 2) & 0x38)
 //       |(((c >> 16  & 0xFF) >> 5) & 0x03);
-
-    break;
     case 15:
     // --> 0 b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         return
@@ -317,7 +311,6 @@ static inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){
        |((((c >>  8) & 0xFF) << 2) & 0x03E0)
         // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
        | (((c >> 16) & 0xFF) >> 3);
-    break;
     case 16:
     // --> b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         return

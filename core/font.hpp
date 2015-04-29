@@ -360,7 +360,6 @@ struct Font
 ErrorReadingFontFile:
         LOG(LOG_ERR, "Error reading font definition file %s, exiting proxy",  file_path);
         exit(-1);
-        return;
     }
 
     bool glyph_defined(uint32_t charnum) const

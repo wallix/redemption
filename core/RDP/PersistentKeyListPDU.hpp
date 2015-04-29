@@ -22,9 +22,12 @@
 #define _REDEMPTION_CORE_RDP_PERSISTENTKEYLISTPDU_HPP_
 
 #include "log.hpp"
-#include <utility>
+#include "stream.hpp"
+#include <algorithm>
 
 namespace RDP {
+
+using std::size_t;
 
 // [MS-RDPBCGR] - 2.2.1.17 Client Persistent Key List PDU
 // ======================================================
@@ -256,41 +259,15 @@ struct BitmapCachePersistentListEntry {
 };
 
 struct PersistentKeyListPDUData {
-    static const size_t MAXIMUM_ENCAPSULATED_BITMAP_KEYS = 169;
+    static constexpr size_t MAXIMUM_ENCAPSULATED_BITMAP_KEYS = 169;
 
-    uint16_t number_entries_cache[5];
-
-    uint16_t & numEntriesCache0;
-    uint16_t & numEntriesCache1;
-    uint16_t & numEntriesCache2;
-    uint16_t & numEntriesCache3;
-    uint16_t & numEntriesCache4;
-    uint16_t   totalEntriesCache0;
-    uint16_t   totalEntriesCache1;
-    uint16_t   totalEntriesCache2;
-    uint16_t   totalEntriesCache3;
-    uint16_t   totalEntriesCache4;
-    uint8_t    bBitMask;
+    uint16_t numEntriesCache[5]{};
+    uint16_t totalEntriesCache[5]{};
+    uint8_t  bBitMask = 0;
 
     BitmapCachePersistentListEntry entries[MAXIMUM_ENCAPSULATED_BITMAP_KEYS];
 
-    PersistentKeyListPDUData()
-    : number_entries_cache()
-    , numEntriesCache0(number_entries_cache[0])
-    , numEntriesCache1(number_entries_cache[1])
-    , numEntriesCache2(number_entries_cache[2])
-    , numEntriesCache3(number_entries_cache[3])
-    , numEntriesCache4(number_entries_cache[4])
-    , totalEntriesCache0(0)
-    , totalEntriesCache1(0)
-    , totalEntriesCache2(0)
-    , totalEntriesCache3(0)
-    , totalEntriesCache4(0)
-    , bBitMask(0)
-    {
-        ::memset(number_entries_cache, 0, sizeof(number_entries_cache));
-        ::memset(entries, 0, sizeof(entries));
-    }
+    PersistentKeyListPDUData() = default;
 
     void receive(Stream & stream) {
         unsigned expected = 24; /* numEntriesCache0(2) + numEntriesCache1(2) + numEntriesCache2(2) +
@@ -304,26 +281,21 @@ struct PersistentKeyListPDUData {
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        this->numEntriesCache0   = stream.in_uint16_le();
-        this->numEntriesCache1   = stream.in_uint16_le();
-        this->numEntriesCache2   = stream.in_uint16_le();
-        this->numEntriesCache3   = stream.in_uint16_le();
-        this->numEntriesCache4   = stream.in_uint16_le();
-        this->totalEntriesCache0 = stream.in_uint16_le();
-        this->totalEntriesCache1 = stream.in_uint16_le();
-        this->totalEntriesCache2 = stream.in_uint16_le();
-        this->totalEntriesCache3 = stream.in_uint16_le();
-        this->totalEntriesCache4 = stream.in_uint16_le();
+        this->numEntriesCache[0] = stream.in_uint16_le();
+        this->numEntriesCache[1] = stream.in_uint16_le();
+        this->numEntriesCache[2] = stream.in_uint16_le();
+        this->numEntriesCache[3] = stream.in_uint16_le();
+        this->numEntriesCache[4] = stream.in_uint16_le();
+        this->totalEntriesCache[0] = stream.in_uint16_le();
+        this->totalEntriesCache[1] = stream.in_uint16_le();
+        this->totalEntriesCache[2] = stream.in_uint16_le();
+        this->totalEntriesCache[3] = stream.in_uint16_le();
+        this->totalEntriesCache[4] = stream.in_uint16_le();
         this->bBitMask           = stream.in_uint8();
 
         stream.in_skip_bytes(3);    // Pad2(1) + Pad3(2)
 
-        unsigned int count = std::min<uint32_t>( this->numEntriesCache0 +
-                                                 this->numEntriesCache1 +
-                                                 this->numEntriesCache2 +
-                                                 this->numEntriesCache3 +
-                                                 this->numEntriesCache4
-                                               , MAXIMUM_ENCAPSULATED_BITMAP_KEYS);
+        unsigned int count = this->maximum_entries();
 
         expected = count * 8; /* count * (Key1(4) + Key2(4)) */
         if (!stream.in_check_rem(expected)) {
@@ -340,45 +312,32 @@ struct PersistentKeyListPDUData {
     }
 
     void emit(Stream & stream) {
-        stream.out_uint16_le(this->numEntriesCache0);
-        stream.out_uint16_le(this->numEntriesCache1);
-        stream.out_uint16_le(this->numEntriesCache2);
-        stream.out_uint16_le(this->numEntriesCache3);
-        stream.out_uint16_le(this->numEntriesCache4);
-        stream.out_uint16_le(this->totalEntriesCache0);
-        stream.out_uint16_le(this->totalEntriesCache1);
-        stream.out_uint16_le(this->totalEntriesCache2);
-        stream.out_uint16_le(this->totalEntriesCache3);
-        stream.out_uint16_le(this->totalEntriesCache4);
+        stream.out_uint16_le(this->numEntriesCache[0]);
+        stream.out_uint16_le(this->numEntriesCache[1]);
+        stream.out_uint16_le(this->numEntriesCache[2]);
+        stream.out_uint16_le(this->numEntriesCache[3]);
+        stream.out_uint16_le(this->numEntriesCache[4]);
+        stream.out_uint16_le(this->totalEntriesCache[0]);
+        stream.out_uint16_le(this->totalEntriesCache[1]);
+        stream.out_uint16_le(this->totalEntriesCache[2]);
+        stream.out_uint16_le(this->totalEntriesCache[3]);
+        stream.out_uint16_le(this->totalEntriesCache[4]);
         stream.out_uint8(this->bBitMask);
 
         stream.out_clear_bytes(3);  // Pad2(1) + Pad3(2)
 
-        for (uint32_t i = 0,
-                      c = std::min<uint32_t>(this->numEntriesCache0 +
-                                             this->numEntriesCache1 +
-                                             this->numEntriesCache2 +
-                                             this->numEntriesCache3 +
-                                             this->numEntriesCache4,
-                                             MAXIMUM_ENCAPSULATED_BITMAP_KEYS);
-             i < c; i++) {
+        for (uint32_t i = 0, c = this->maximum_entries(); i < c; i++) {
             stream.out_uint32_le(this->entries[i].Key1);
             stream.out_uint32_le(this->entries[i].Key2);
         }
     }
 
     void reset() {
-        this->numEntriesCache0   = 0;
-        this->numEntriesCache1   = 0;
-        this->numEntriesCache2   = 0;
-        this->numEntriesCache3   = 0;
-        this->numEntriesCache4   = 0;
-        this->totalEntriesCache0 = 0;
-        this->totalEntriesCache1 = 0;
-        this->totalEntriesCache2 = 0;
-        this->totalEntriesCache3 = 0;
-        this->totalEntriesCache4 = 0;
-        this->bBitMask           = 0;
+        using std::begin;
+        using std::end;
+        std::fill(begin(numEntriesCache), end(numEntriesCache), 0);
+        std::fill(begin(totalEntriesCache), end(totalEntriesCache), 0);
+        this->bBitMask = 0;
         ::memset(entries, 0, sizeof(entries));
     }
 
@@ -391,17 +350,12 @@ struct PersistentKeyListPDUData {
                 "numEntriesCache4=%u totalEntriesCache0=%u totalEntriesCache1=%u totalEntriesCache2=%u"
                 " totalEntriesCache3=%u totalEntriesCache4=%u bBitMask=%u entries(",
             message,
-            this->numEntriesCache0, this->numEntriesCache1, this->numEntriesCache2, this->numEntriesCache3,
-            this->numEntriesCache4, this->totalEntriesCache0, this->totalEntriesCache1, this->totalEntriesCache2,
-            this->totalEntriesCache3, this->totalEntriesCache4, this->bBitMask);
-        for (uint32_t i = 0,
-                      c = std::min<uint32_t>(this->numEntriesCache0 +
-                                             this->numEntriesCache1 +
-                                             this->numEntriesCache2 +
-                                             this->numEntriesCache3 +
-                                             this->numEntriesCache4,
-                                             MAXIMUM_ENCAPSULATED_BITMAP_KEYS);
-             i < c; i++) {
+            this->numEntriesCache[0], this->numEntriesCache[1],
+            this->numEntriesCache[2], this->numEntriesCache[3],
+            this->numEntriesCache[4], this->totalEntriesCache[0],
+            this->totalEntriesCache[1], this->totalEntriesCache[2],
+            this->totalEntriesCache[3], this->totalEntriesCache[4], this->bBitMask);
+        for (uint32_t i = 0, c = this->maximum_entries(); i < c; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");
             }
@@ -420,6 +374,19 @@ struct PersistentKeyListPDUData {
         /*lg +=*/ snprintf(buffer + lg, sz - lg, "))");
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, buffer);
+    }
+
+private:
+    uint32_t maximum_entries() const
+    {
+        return std::min<uint32_t>(
+            this->numEntriesCache[0] +
+            this->numEntriesCache[1] +
+            this->numEntriesCache[2] +
+            this->numEntriesCache[3] +
+            this->numEntriesCache[4],
+            MAXIMUM_ENCAPSULATED_BITMAP_KEYS
+        );
     }
 };  // PersistentKeyListPDUData
 
