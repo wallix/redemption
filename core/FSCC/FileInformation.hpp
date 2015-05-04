@@ -2186,6 +2186,199 @@ public:
     }
 };  // FileFsVolumeInformation
 
+// [MS-FSCC] - 2.5.10 FileFsDeviceInformation
+// ==========================================
+
+// This information class is used to query device information associated with
+//  a file system volume.
+
+// A FILE_FS_DEVICE_INFORMATION data element, defined as follows, is returned
+//  by the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           DeviceType                          |
+// +---------------------------------------------------------------+
+// |                        Characteristics                        |
+// +---------------------------------------------------------------+
+
+// DeviceType (4 bytes): This identifies the type of given volume. It MUST be
+//  one of the following.
+
+//  +--------------------+-----------------------------+
+//  | Value              | Meaning                     |
+//  +--------------------+-----------------------------+
+//  | FILE_DEVICE_CD_ROM | Volume resides on a CD ROM. |
+//  | 0x00000002         |                             |
+//  +--------------------+-----------------------------+
+//  | FILE_DEVICE_DISK   | Volume resides on a disk.   |
+//  | 0x00000007         |                             |
+//  +--------------------+-----------------------------+
+
+enum {
+      FILE_DEVICE_CD_ROM = 0x00000002
+    , FILE_DEVICE_DISK   = 0x00000007
+};
+
+// Characteristics (4 bytes): A bit field which identifies various
+//  characteristics about a given volume. The following are valid bit values.
+
+//  +------------------------------------------+-------------------------------+
+//  | Value                                    | Meaning                       |
+//  +------------------------------------------+-------------------------------+
+//  | FILE_REMOVABLE_MEDIA                     | Indicates that the storage    |
+//  | 0x00000001                               | device supports removable     |
+//  |                                          | media. Notice that this       |
+//  |                                          | characteristic indicates      |
+//  |                                          | removable media, not a        |
+//  |                                          | removable device. For         |
+//  |                                          | example, drivers for JAZ      |
+//  |                                          | drive devices specify this    |
+//  |                                          | characteristic, but drivers   |
+//  |                                          | for PCMCIA flash disks do     |
+//  |                                          | not.                          |
+//  +------------------------------------------+-------------------------------+
+//  | FILE_READ_ONLY_DEVICE                    | Indicates that the device     |
+//  | 0x00000002                               | cannot be written to.         |
+//  +------------------------------------------+-------------------------------+
+//  | FILE_FLOPPY_DISKETTE                     | Indicates that the device is  |
+//  | 0x00000004                               | a floppy disk device.         |
+//  +------------------------------------------+-------------------------------+
+//  | FILE_WRITE_ONCE_MEDIA                    | Indicates that the device     |
+//  | 0x00000008                               | supports write-once media.    |
+//  +------------------------------------------+-------------------------------+
+//  | FILE_REMOTE_DEVICE                       | Indicates that the volume is  |
+//  | 0x00000010                               | for a remote file system like |
+//  |                                          | SMB or CIFS.                  |
+//  +------------------------------------------+-------------------------------+
+//  | FILE_DEVICE_IS_MOUNTED                   | Indicates that a file system  |
+//  | 0x00000020                               | is mounted on the device.     |
+//  +------------------------------------------+-------------------------------+
+//  | FILE_VIRTUAL_VOLUME                      | Indicates that the volume     |
+//  | 0x00000040                               | does not directly reside on   |
+//  |                                          | storage media, but resides on |
+//  |                                          | some other type of media      |
+//  |                                          | (memory for example).         |
+//  +------------------------------------------+-------------------------------+
+//  | FILE_DEVICE_SECURE_OPEN                  | By default, volumes do not    |
+//  | 0x00000100                               | check the ACL associated with |
+//  |                                          | the volume, but instead use   |
+//  |                                          | the ACLs associated with      |
+//  |                                          | individual files on the       |
+//  |                                          | volume. When this flag is set |
+//  |                                          | the volume ACL is also        |
+//  |                                          | checked.                      |
+//  +------------------------------------------+-------------------------------+
+//  | FILE_CHARACTERISTIC_TS_DEVICE            | Indicates that the device     |
+//  | 0x00001000                               | object is part of a Terminal  |
+//  |                                          | Services device stack. See    |
+//  |                                          | [MS-RDPBCGR] for more         |
+//  |                                          | information.                  |
+//  +------------------------------------------+-------------------------------+
+//  | FILE_CHARACTERISTIC_WEBDAV_DEVICE        | Indicates that a web-based    |
+//  | 0x00002000                               | Distributed Authoring and     |
+//  |                                          | Versioning (WebDAV) file      |
+//  |                                          | system is mounted on the      |
+//  |                                          | device. See [MS- WDVME] for   |
+//  |                                          | more information.             |
+//  +------------------------------------------+-------------------------------+
+//  | FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL | The IO Manager performs a     |
+//  | 0x00020000                               | full security check for       |
+//  |                                          | traverse access if the client |
+//  |                                          | is an appcontainer.<156>      |
+//  +------------------------------------------+-------------------------------+
+
+enum {
+      FILE_REMOVABLE_MEDIA                      = 0x00000001
+    , FILE_READ_ONLY_DEVICE                     = 0x00000002
+    , FILE_FLOPPY_DISKETTE                      = 0x00000004
+    , FILE_WRITE_ONCE_MEDIA                     = 0x00000008
+    , FILE_REMOTE_DEVICE                        = 0x00000010
+    , FILE_DEVICE_IS_MOUNTED                    = 0x00000020
+    , FILE_VIRTUAL_VOLUME                       = 0x00000040
+    , FILE_DEVICE_SECURE_OPEN                   = 0x00000100
+    , FILE_CHARACTERISTIC_TS_DEVICE             = 0x00001000
+    , FILE_CHARACTERISTIC_WEBDAV_DEVICE         = 0x00002000
+    , FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL  = 0x00020000
+};
+
+// This operation returns a status code, as specified in [MS-ERREF] section
+//  2.3. The status code returned directly by the function that processes
+//  this file information class MUST be STATUS_SUCCESS or one of the
+//  following.
+
+//  +-----------------------------+--------------------------------------------+
+//  | Error code                  | Meaning                                    |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
+//  | 0xC0000004                  | does not match the length that is required |
+//  |                             | for the specified information class.       |
+//  +-----------------------------+--------------------------------------------+
+
+class FileFsDeviceInformation {
+    uint32_t DeviceType      = 0;
+    uint32_t Characteristics = 0;
+
+public:
+    FileFsDeviceInformation() = default;
+
+    FileFsDeviceInformation(uint32_t DeviceType, uint32_t Characteristics)
+    : DeviceType(DeviceType)
+    , Characteristics(Characteristics) {}
+
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->DeviceType);
+        stream.out_uint32_le(this->Characteristics);
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 8;    // DeviceType(4) + Characteristics(4)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileFsDeviceInformation (0): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+
+        this->DeviceType      = stream.in_uint32_le();
+        this->Characteristics = stream.in_uint32_le();
+    }
+
+    inline static size_t size() {
+        return 8;   // DeviceType(4) + Characteristics(4)
+    }
+
+private:
+    inline static const char * get_DeviceType_name(uint32_t DeviceType) {
+        switch (DeviceType) {
+            case FILE_DEVICE_CD_ROM: return "FILE_DEVICE_CD_ROM";
+            case FILE_DEVICE_DISK:   return "FILE_DEVICE_DISK";
+        }
+
+        return "<unknown>";
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "FileFsDeviceInformation: DeviceType=%s(0x%X) Characteristics=0x%X",
+            this->get_DeviceType_name(this->DeviceType), this->DeviceType,
+            this->Characteristics);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
 // [MS-FSCC] - 2.6 File Attributes
 // ===============================
 
