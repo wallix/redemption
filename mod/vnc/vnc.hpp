@@ -2043,6 +2043,10 @@ private:
             LOG(LOG_INFO, "mod_vnc client clipboard PDU: msgType=(%d)", recv_factory.msgType);
         }
 
+        if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) == 0) {
+            recv_factory.msgType = CB_CHUNKED_FORMAT_DATA_RESPONSE;
+        }
+
         switch (recv_factory.msgType) {
             // Client notify that a copy operation have occured. Two operations should be done :
             //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
