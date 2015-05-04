@@ -1884,26 +1884,37 @@ public:
     : computer_name(computer_name) {}
 
     inline void emit(Stream & stream) const {
-        stream.out_uint32_le(0x00000001 /* ComputerName is in Unicode characters. */);
+        stream.out_uint32_le(this->UnicodeFlag);
         stream.out_uint32_le(this->CodePage);
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_ComputerName_in_bytes =
-            (this->computer_name.length() + 1) * 2;
+        if (this->UnicodeFlag !=
+            0x00000000 /* ComputerName is in ASCII characters. */) {
+            // The null-terminator is included.
+            const size_t maximum_length_of_ComputerName_in_bytes =
+                (this->computer_name.length() + 1) * 2;
 
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-            maximum_length_of_ComputerName_in_bytes));
-        size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->computer_name.c_str()),
-            unicode_data, maximum_length_of_ComputerName_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
+                maximum_length_of_ComputerName_in_bytes));
+            size_t size_of_unicode_data = ::UTF8toUTF16(
+                reinterpret_cast<const uint8_t *>(this->computer_name.c_str()),
+                unicode_data, maximum_length_of_ComputerName_in_bytes);
+            // Writes null terminator.
+            unicode_data[size_of_unicode_data    ] =
+            unicode_data[size_of_unicode_data + 1] = 0;
+            size_of_unicode_data += 2;
 
-        stream.out_uint32_le(size_of_unicode_data);
+            stream.out_uint32_le(size_of_unicode_data);
 
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+            stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+        }
+        else {
+            // The null-terminator is included.
+            const uint32_t ComputerNameLen = this->computer_name.length() + 1;
+
+            stream.out_uint32_le(ComputerNameLen);
+
+            stream.out_copy_bytes(this->computer_name.c_str(), ComputerNameLen);
+        }
     }
 
     void receive(Stream & stream) {
@@ -1924,40 +1935,46 @@ public:
 
         const uint32_t ComputerNameLen = stream.in_uint32_le();
 
-        {
-            const unsigned expected = ComputerNameLen;  // ComputerName(variable)
+        if (ComputerNameLen) {
+            {
+                const unsigned expected = ComputerNameLen;  // ComputerName(variable)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientNameRequest (1): expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated ClientNameRequest (1): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RDPDR_PDU_TRUNCATED);
+                }
+            }
+
+            // Remote Desktop Connection of Windows XP (Shell Version 6.1.7600,
+            //  Control Version 6.1.7600) has a bug. The field UnicodeFlag
+            //  contains inconsistent data.
+            if (this->UnicodeFlag !=
+                0x00000000 /* ComputerName is in ASCII characters. */) {
+                uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
+
+                stream.in_copy_bytes(unicode_data, ComputerNameLen);
+
+                const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+                const size_t size_of_utf8_string =
+                            ComputerNameLen / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+                uint8_t * const utf8_string = static_cast<uint8_t *>(
+                    ::alloca(size_of_utf8_string));
+                ::UTF16toUTF8(unicode_data, ComputerNameLen / 2, utf8_string, size_of_utf8_string);
+                // The null-terminator is included.
+                this->computer_name = ::char_ptr_cast(utf8_string);
+            } else {
+                uint8_t * const ascii_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
+
+                stream.in_copy_bytes(ascii_data, ComputerNameLen);
+
+                this->computer_name = ::char_ptr_cast(ascii_data);
             }
         }
-
-        // Remote Desktop Connection of Windows XP (Shell Version 6.1.7600,
-        //  Control Version 6.1.7600) has a bug. The field UnicodeFlag
-        //  contains inconsistent data.
-        if (this->UnicodeFlag != 0x00000000 /* ComputerName is in ASCII characters. */) {
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
-
-            stream.in_copy_bytes(unicode_data, ComputerNameLen);
-
-            const size_t maximum_length_of_utf8_character_in_bytes = 4;
-
-            const size_t size_of_utf8_string =
-                        ComputerNameLen / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-            uint8_t * const utf8_string = static_cast<uint8_t *>(
-                ::alloca(size_of_utf8_string));
-            ::UTF16toUTF8(unicode_data, ComputerNameLen / 2, utf8_string, size_of_utf8_string);
-            // The null-terminator is included.
-            this->computer_name = ::char_ptr_cast(utf8_string);
-        } else {
-            uint8_t * const ascii_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
-
-            stream.in_copy_bytes(ascii_data, ComputerNameLen);
-
-            this->computer_name = ::char_ptr_cast(ascii_data);
+        else {
+            this->computer_name.clear();
         }
     }
 
