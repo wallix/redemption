@@ -476,9 +476,6 @@ public:
 
         uint8_t * fragment_begin_position = variable_bytes.p;
 
-        uint16_t fragment_draw_pos = draw_pos_ref;
-(void)fragment_draw_pos;
-
         while (variable_bytes.in_remain())
         {
             uint8_t data = variable_bytes.in_uint8();
@@ -536,8 +533,6 @@ public:
 
                 fragment_begin_position = variable_bytes.p;
 
-                fragment_draw_pos = draw_pos_ref;
-
                 this->draw_VariableBytes(&this->fragment_cache[fragment_index][1],
                     this->fragment_cache[fragment_index][0], has_delta_bytes,
                     draw_pos_ref, offset_y, color, bmp_pos_x, bmp_pos_y, clip,
@@ -566,8 +561,6 @@ public:
                         );
 
                 fragment_begin_position = variable_bytes.p;
-
-                fragment_draw_pos = draw_pos_ref;
             }
         }
     }

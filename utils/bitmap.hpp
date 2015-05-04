@@ -51,6 +51,7 @@
 #include "stream.hpp"
 #include "ssl_calls.hpp"
 #include "rect.hpp"
+#include "fdbuf.hpp"
 
 using std::size_t;
 
@@ -782,19 +783,19 @@ public:
     static openfile_t check_file_type(const char * filename) {
         openfile_t res = OPEN_FILE_UNKNOWN;
         char type1[8];
-        int fd = open(filename, O_RDONLY);
-        if (fd == -1) {
+        io::posix::fdbuf fd(open(filename, O_RDONLY));
+        if (!fd) {
             LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n", filename, strerror(errno), errno);
             return res;
         }
-        else if (read(fd, type1, 2) != 2) {
+        else if (fd.read(type1, 2) != 2) {
             LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
         }
         else if ((type1[0] == 'B') && (type1[1] == 'M')) {
             LOG(LOG_INFO, "Widget_load: image file [%s] is BMP file\n", filename);
             res = OPEN_FILE_BMP;
         }
-        else if (read(fd, &type1[2], 6) != 6) {
+        else if (fd.read(&type1[2], 6) != 6) {
             LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
         }
         else if (png_check_sig(reinterpret_cast<png_bytep>(type1), 8)) {
@@ -804,7 +805,6 @@ public:
         else {
             LOG(LOG_ERR, "Widget_load: error bitmap file [%s] not BMP or PNG file\n", filename);
         }
-        close(fd);
 
         return res;
     }
@@ -983,7 +983,6 @@ private:
         unsigned color1 = 0;
         unsigned color2 = 0;
         unsigned mix = 0xFFFFFFFF;
-        uint8_t code;
         unsigned mask = 0;
         unsigned fom_mask = 0;
         unsigned count = 0;
@@ -1010,7 +1009,7 @@ private:
         while (input < end) {
 
             // Read RLE operators, handle short and long forms
-            code = input[0]; input++;
+            uint8_t code = input[0]; input++;
 
             switch (code >> 4) {
             case 0xf:

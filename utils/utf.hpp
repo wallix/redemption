@@ -113,7 +113,7 @@ static inline size_t UTF8Len(const uint8_t * source)
 static inline void UTF8Upper(uint8_t * source, size_t source_size) {
     // size_t len = 0;
     uint8_t c = 0;
-    for (size_t i = 0 ; ((0 != (c = source[i])) && (i < source_size)) ; i++){
+    for (size_t i = 0 ; i < source_size && 0 != (c = source[i]) ; i++){
         if (c >= 0x61 && c <= 0x7A) {
             source[i] -= 0x20;
         }

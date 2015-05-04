@@ -43,6 +43,7 @@
 #include "log.hpp"
 #include "fdbuf.hpp"
 #include "program_options.hpp"
+#include "fdbuf.hpp"
 
 #include "version.hpp"
 
@@ -93,34 +94,29 @@ inline void daemonize(const char * pid_file)
 /*****************************************************************************/
 inline int shutdown(const char * pid_file)
 {
-    int fd;
-    char text[256];
-
-    using namespace std;
-
-    text[0] = 0;
-    cout << "stopping rdpproxy\n";
+    std::cout << "stopping rdpproxy\n";
     /* read the rdpproxy.pid file */
-    fd = -1;
+    io::posix::fdbuf fd;
     cout << "looking if pid_file " << pid_file <<  " exists\n";
     if ((0 == access(pid_file, F_OK))) {
-        fd =  open(pid_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-        if (fd == -1) {
+        fd.open(pid_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+        if (!fd) {
             /* can't open read / write, try to open read only */
-            fd =  open(pid_file, O_RDONLY);
+            fd.open(open(pid_file, O_RDONLY));
         }
     }
-    if (fd == -1) {
+    if (!fd) {
         return 1; // file does not exist.
     }
-    cout << "reading pid_file " << pid_file << "\n";
+    std::cout << "reading pid_file " << pid_file << "\n";
+    char text[256];
     memset(text, 0, 32);
-    if (read(fd, text, 31) < 0){
-        cerr << "failed to read pid file\n";
+    if (fd.read(text, 31) < 0){
+        std::cerr << "failed to read pid file\n";
     }
     else{
         int pid = atoi(text);
-        cout << "stopping process id " << pid << "\n";
+        std::cout << "stopping process id " << pid << "\n";
         if (pid > 0) {
             int res = kill(pid, SIGTERM);
             if (res != -1){
@@ -129,7 +125,7 @@ inline int shutdown(const char * pid_file)
             }
             if ((errno != ESRCH) || (res == 0)){
                 // errno != ESRCH, pid is still running
-                cout << "process " << pid << " is still running, "
+                std::cout << "process " << pid << " is still running, "
                 "let's send a KILL signal" << "\n";
                 res = kill(pid, SIGKILL);
                 if (res != -1){
@@ -143,7 +139,7 @@ inline int shutdown(const char * pid_file)
             }
         }
     }
-    close(fd);
+    fd.close();
     unlink(pid_file);
 
     // remove all other pid files

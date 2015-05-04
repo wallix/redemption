@@ -3559,35 +3559,14 @@ public:
 
                 RDP::BitmapCachePersistentListEntry * entries = pklpdud.entries;
 
-                if (pklpdud.numEntriesCache0) {
-                    this->bmp_cache_persister->process_key_list( 0, entries, pklpdud.numEntriesCache0
-                                                               , cache_entry_index[0]);
-                    entries              += pklpdud.numEntriesCache0;
-                    cache_entry_index[0] += pklpdud.numEntriesCache0;
-                }
-                if (pklpdud.numEntriesCache1) {
-                    this->bmp_cache_persister->process_key_list( 1, entries, pklpdud.numEntriesCache1
-                                                               , cache_entry_index[1]);
-                    entries              += pklpdud.numEntriesCache1;
-                    cache_entry_index[1] += pklpdud.numEntriesCache1;
-                }
-                if (pklpdud.numEntriesCache2) {
-                    this->bmp_cache_persister->process_key_list( 2, entries, pklpdud.numEntriesCache2
-                                                               , cache_entry_index[2]);
-                    entries              += pklpdud.numEntriesCache2;
-                    cache_entry_index[2] += pklpdud.numEntriesCache2;
-                }
-                if (pklpdud.numEntriesCache3) {
-                    this->bmp_cache_persister->process_key_list( 3, entries, pklpdud.numEntriesCache3
-                                                               , cache_entry_index[3]);
-                    entries              += pklpdud.numEntriesCache3;
-                    cache_entry_index[3] += pklpdud.numEntriesCache3;
-                }
-                if (pklpdud.numEntriesCache4) {
-                    this->bmp_cache_persister->process_key_list( 4, entries, pklpdud.numEntriesCache4
-                                                               , cache_entry_index[4]);
-                    entries              += pklpdud.numEntriesCache4;
-                    cache_entry_index[4] += pklpdud.numEntriesCache4;
+                for (unsigned i = 0; i < BmpCache::MAXIMUM_NUMBER_OF_CACHES; ++i) {
+                    if (pklpdud.numEntriesCache[i]) {
+                        this->bmp_cache_persister->process_key_list(
+                            i, entries, pklpdud.numEntriesCache[i] , cache_entry_index[i]
+                        );
+                        entries              += pklpdud.numEntriesCache[i];
+                        cache_entry_index[i] += pklpdud.numEntriesCache[i];
+                    }
                 }
 
                 if (this->persistent_key_list_transport) {

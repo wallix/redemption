@@ -149,7 +149,6 @@ public:
 
             this->gd->draw(glyphindex, clip, &mod_glyph_cache);
         }
-        offset_first_char = 0;
     }
 
 protected:

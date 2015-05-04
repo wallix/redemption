@@ -359,6 +359,8 @@ public:
         this->front->stop_capture();
     }
 
+    Session(Session const &) = delete;
+
     ~Session() {
         if (this->ini.debug.performance & 0x8000) {
             this->write_performance_log(this->perf_last_info_collect_time + 3);

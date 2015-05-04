@@ -44,8 +44,6 @@ class GZipCompressionInTransport : public Transport {
 
     bool inflate_pending;
 
-    uint32_t verbose;
-
 public:
     GZipCompressionInTransport(Transport & st, uint32_t verbose = 0)
     : Transport()
@@ -55,8 +53,8 @@ public:
     , uncompressed_data(NULL)
     , uncompressed_data_length(0)
     , uncompressed_data_buffer()
-    , inflate_pending(false)
-    , verbose(verbose) {
+    , inflate_pending(false) {
+        this->verbose = verbose;
         int ret = ::inflateInit(&this->compression_stream);
 (void)ret;
     }

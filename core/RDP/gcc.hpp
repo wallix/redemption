@@ -1683,7 +1683,7 @@ namespace GCC
                         this->monitorDefArray[i].bottom, ((this->monitorDefArray[i].flags & TS_MONITOR_PRIMARY) ? "yes" : "no"),
                         this->monitorDefArray[i].flags);
                 }
-                lg += snprintf(buffer + lg, sizeof(buffer) - lg, ")");
+                snprintf(buffer + lg, sizeof(buffer) - lg, ")");
 
                 buffer[sizeof(buffer) - 1] = 0;
                 LOG(LOG_INFO, buffer);

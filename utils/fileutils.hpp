@@ -200,7 +200,13 @@ static inline char * pathncpy(char * dest, const char * src, const size_t n) {
 
 static inline void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t verbose = 255)
 {
-    DIR * d = opendir(path);
+    struct D {
+        DIR * d;
+
+        ~D() { closedir(d); }
+        operator DIR * () const { return d; }
+    } d{opendir(path)};
+
     if (d){
 //        char static_buffer[8192];
         char buffer[8192];
@@ -243,7 +249,13 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
 
         TODO("size_t len = offsetof(struct dirent, d_name) + NAME_MAX + 1 ?")
         const size_t len = offsetof(struct dirent, d_name) + file_len;
-        struct dirent * entryp = static_cast<struct dirent *>(malloc(len));
+        struct E {
+            dirent * entryp;
+
+            ~E() { free(entryp); }
+            operator dirent * () const { return entryp; }
+            dirent * operator -> () const { return entryp; }
+        } entryp{static_cast<struct dirent *>(malloc(len))};
         if (!entryp){
             LOG(LOG_WARNING, "Memory allocation failed for entryp, exiting file cleanup code");
             return;
@@ -281,13 +293,6 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
                 LOG(LOG_WARNING, "Failed to remove file %s", buffer, errno, strerror(errno));
             }
         }
-        closedir(d);
-        free(entryp);
-/*
-        if (buffer != static_buffer){
-            free(buffer);
-        }
-*/
     }
     else {
         LOG(LOG_WARNING, "Failed to open directory %s [%u: %s]", path, errno, strerror(errno));

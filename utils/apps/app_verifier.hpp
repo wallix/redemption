@@ -35,7 +35,7 @@ static inline bool check_file_hash( const char * file_path
     SslHMAC hmac(crypto_key, md);
 
     int fd = open(file_path, O_RDONLY);
-    if (fd != -1) {
+    if (fd == -1) {
         char buf[4096];
         int  number_of_bytes_read;
 
@@ -124,7 +124,7 @@ static inline int extract_file_info( const char * space_separated_values
     full_hash.mark_end();
 
     // first 4 kb hash
-    for (point_end = point_start, point_start--;
+    for (/*point_end = point_start, */point_start--;
          (*point_start != ' ') && (point_start > space_separated_values);
          point_start--);
     if ((*point_start != ' ') || (point_end - (point_start + 1) != HASH_LEN)) {
@@ -139,7 +139,7 @@ static inline int extract_file_info( const char * space_separated_values
     _4kb_hash.mark_end();
 
     // end timestamp
-    for (point_end = point_start, point_start--;
+    for (/*point_end = point_start, */point_start--;
          (*point_start != ' ') && (point_start > space_separated_values);
          point_start--);
     if (*point_start != ' ') {
@@ -182,8 +182,6 @@ int read_line(  FileDescriptor fd
     char    * internal_line_buf = line_buf;
     size_t    internal_line_len = line_len;
     uint8_t * psz                         ;
-    size_t    len                         ;
-    int       number_of_bytes_read        ;
 
     if (line_len == 0) {
         return -1;
@@ -204,7 +202,7 @@ int read_line(  FileDescriptor fd
         }
 
         if (psz > opaque_stream.get_data()) {
-            len = psz - opaque_stream.get_data();
+            size_t len = psz - opaque_stream.get_data();
 
             memcpy(internal_line_buf, opaque_stream.get_data(), len);
 
@@ -233,7 +231,7 @@ int read_line(  FileDescriptor fd
             return opaque_data;
         }
 
-        number_of_bytes_read = fp_read(fd, reinterpret_cast<char *>(opaque_stream.p), opaque_stream.tailroom());
+        int number_of_bytes_read = fp_read(fd, reinterpret_cast<char *>(opaque_stream.p), opaque_stream.tailroom());
 
         if (number_of_bytes_read > 0) {
             opaque_stream.p += number_of_bytes_read;

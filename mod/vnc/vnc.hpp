@@ -1136,26 +1136,21 @@ private:
             update_context.data_remain.reset();
         }
 
-        uint16_t   tile_cx;
-        uint16_t   tile_cy;
         uint8_t    tile_data[16384];    // max size with 16 bpp
-        uint16_t   tile_data_length;
-        uint16_t   tile_data_length_remain;
 
         uint8_t  * remaining_data        = NULL;
         uint16_t   remaining_data_length = 0;
-        uint8_t    subencoding           = 127;     // Unauthorized value
 
         try
         {
             while (uncompressed_data_buffer.in_remain())
             {
-                tile_cx = std::min<uint16_t>(update_context.cx_remain, 64);
-                tile_cy = std::min<uint16_t>(update_context.cy_remain, 64);
+                uint16_t tile_cx = std::min<uint16_t>(update_context.cx_remain, 64);
+                uint16_t tile_cy = std::min<uint16_t>(update_context.cy_remain, 64);
 
                 const uint8_t * tile_data_p = tile_data;
 
-                tile_data_length = tile_cx * tile_cy * update_context.Bpp;
+                uint16_t tile_data_length = tile_cx * tile_cy * update_context.Bpp;
                 if (tile_data_length > sizeof(tile_data))
                 {
                     LOG(LOG_ERR,
@@ -1167,7 +1162,7 @@ private:
                 remaining_data        = uncompressed_data_buffer.p;
                 remaining_data_length = uncompressed_data_buffer.in_remain();
 
-                subencoding = uncompressed_data_buffer.in_uint8();
+                uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
 
                 if (this->verbose) {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, subencoding = %d",
@@ -1255,7 +1250,7 @@ private:
 
                     uint8_t * tmp_tile_data = tile_data;
 
-                    tile_data_length_remain = tile_data_length;
+                    uint16_t  tile_data_length_remain = tile_data_length;
 
                     uint8_t         pixel_remain         = tile_cx;
                     const uint8_t * packed_pixels_remain = packed_pixels;
@@ -1332,7 +1327,7 @@ private:
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
                     }
 
-                    tile_data_length_remain = tile_data_length;
+                    uint16_t   tile_data_length_remain = tile_data_length;
 
                     uint16_t   run_length    = 0;
                     uint8_t  * tmp_tile_data = tile_data;
@@ -1403,7 +1398,7 @@ private:
 
                     palette = uncompressed_data_buffer.in_uint8p(palette_size);
 
-                    tile_data_length_remain = tile_data_length;
+                    uint16_t   tile_data_length_remain = tile_data_length;
 
                     uint16_t   run_length    = 0;
                     uint8_t  * tmp_tile_data = tile_data;
@@ -1571,14 +1566,10 @@ private:
                 number_of_subrectangles_remain =
                 number_of_subrectangles        = stream_rre.in_uint32_be();
 
-                uint8_t * bytes_per_pixel;
-                uint8_t * point_cur;
-                uint8_t * point_end;
-
-                bytes_per_pixel = stream_rre.p;
+                uint8_t * bytes_per_pixel = stream_rre.p;
                 stream_rre.in_skip_bytes(Bpp);
 
-                for (point_cur = raw.get(), point_end = point_cur + cx * cy * Bpp;
+                for (uint8_t * point_cur = raw.get(), * point_end = point_cur + cx * cy * Bpp;
                      point_cur < point_end; point_cur += Bpp) {
                     memcpy(point_cur, bytes_per_pixel, Bpp);
                 }
@@ -1611,8 +1602,8 @@ private:
                         point_line_cur = raw.get() + subrec_y * ling_boundary;
                         point_line_end = point_line_cur + subrec_height * ling_boundary;
                         for (; point_line_cur < point_line_end; point_line_cur += ling_boundary) {
-                            for (point_cur = point_line_cur + subrec_x * Bpp,
-                                 point_end = point_cur + subrec_width * Bpp;
+                            for (uint8_t * point_cur = point_line_cur + subrec_x * Bpp,
+                                 * point_end = point_cur + subrec_width * Bpp;
                                  point_cur < point_end; point_cur += Bpp) {
                                 memcpy(point_cur, bytes_per_pixel, Bpp);
                             }

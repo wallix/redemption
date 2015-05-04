@@ -152,7 +152,7 @@ class mod_rdp : public mod_api {
 
     int state;
     Pointer cursors[32];
-    const bool console_session;
+    //const bool console_session;
     const uint8_t front_bpp;
     const uint32_t performanceFlags;
     Random & gen;
@@ -170,7 +170,6 @@ class mod_rdp : public mod_api {
 
     char clientAddr[512];
 
-    const bool enable_bitmap_update;
     const bool enable_fastpath;                    // choice of programmer
           bool enable_fastpath_client_input_event; // choice of programmer + capability of server
     const bool enable_fastpath_server_update;      // = choice of programmer
@@ -273,7 +272,7 @@ public:
         , server_public_key_len(0)
         , connection_finalization_state(EARLY)
         , state(MOD_RDP_NEGO)
-        , console_session(info.console_session)
+        //, console_session(info.console_session)
         , front_bpp(info.bpp)
         , performanceFlags(info.rdp5_performanceflags)
         , gen(gen)
@@ -286,7 +285,6 @@ public:
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
               , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
-        , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
@@ -4931,7 +4929,7 @@ public:
                     pklpdu.entries[pdu_number_of_entries].Key1 = cache[cache_index].sig.sig_32[0];
                     pklpdu.entries[pdu_number_of_entries].Key2 = cache[cache_index].sig.sig_32[1];
 
-                    pklpdu.number_entries_cache[cache_id]++;
+                    pklpdu.numEntriesCache[cache_id]++;
                     number_of_entries++;
                     pdu_number_of_entries++;
 
@@ -4941,11 +4939,12 @@ public:
                         if (number_of_entries == total_number_of_entries) {
                             pklpdu.bBitMask |= RDP::PERSIST_LAST_PDU;
                         }
-                        pklpdu.totalEntriesCache0 = totalEntriesCache[0];
-                        pklpdu.totalEntriesCache1 = totalEntriesCache[1];
-                        pklpdu.totalEntriesCache2 = totalEntriesCache[2];
-                        pklpdu.totalEntriesCache3 = totalEntriesCache[3];
-                        pklpdu.totalEntriesCache4 = totalEntriesCache[4];
+
+                        pklpdu.totalEntriesCache[0] = totalEntriesCache[0];
+                        pklpdu.totalEntriesCache[1] = totalEntriesCache[1];
+                        pklpdu.totalEntriesCache[2] = totalEntriesCache[2];
+                        pklpdu.totalEntriesCache[3] = totalEntriesCache[3];
+                        pklpdu.totalEntriesCache[4] = totalEntriesCache[4];
 
                         //pklpdu.log(LOG_INFO, "Send to server");
 
@@ -6042,8 +6041,8 @@ public:
     void process_wab_agent_event(const CHANNELS::ChannelDef & auth_channel,
             Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         uint16_t message_length = stream.in_uint16_le();
-
         REDASSERT(message_length == stream.in_remain());
+        (void)message_length; // disable -Wunused-variable if REDASSERT is disable
         std::string wab_agent_channel_message(char_ptr_cast(stream.p), stream.in_remain());
 
         LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());

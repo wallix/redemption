@@ -334,8 +334,8 @@ struct Keymap2
                     if (this->verbose){
                         LOG(LOG_INFO, "Event is Make for key: Ox%#02x", extendedKeyCode);
                     }
-                        const Keylayout::KeyLayout_t * layout = &this->keylayout_WORK->noMod;
-                        //this->last_char_key = extendedKeyCode;
+
+                    //this->last_char_key = extendedKeyCode;
 
                     //-------------------------------------------------------------------------
                     // KEYPAD : Keypad keys whose meanings depends on Numlock are handled apart
@@ -352,15 +352,12 @@ struct Keymap2
                         if (  (this->key_flags & NUMLOCK)
                            && ( ! this->is_shift_pressed())
                            ) {
-                            if (this->is_ctrl_pressed()) {
-                                layout = &this->keylayout_WORK->ctrl;
-                            }
-                            else if(this->is_ctrl_pressed() && this->is_alt_pressed()) {
-                                layout = &this->keylayout_WORK->altGr;
-                            }
-                            else {
-                                layout = &this->keylayout_WORK->noMod;
-                            }
+                            const Keylayout::KeyLayout_t * layout
+                              = (this->is_ctrl_pressed())
+                               ? &this->keylayout_WORK->ctrl
+                               : (this->is_ctrl_pressed() && this->is_alt_pressed())
+                                ? &this->keylayout_WORK->altGr
+                                : &this->keylayout_WORK->noMod;
                             // Translate the incoming RDP scancode to a X11 scancode
                             uint8_t sym = map[extendedKeyCode];
                             // Translate the X11 scancode to an unicode code point
@@ -433,6 +430,7 @@ struct Keymap2
                         }
 
                         // Set the layout block to be used, depending on active modifier keys and capslock status
+                        const Keylayout::KeyLayout_t * layout;
                         if (this->is_caps_locked()) {
                             if (this->is_ctrl_alt_pressed() && this->is_shift_pressed()){
                                 layout = &this->keylayout_WORK->capslock_shiftAltGr;
