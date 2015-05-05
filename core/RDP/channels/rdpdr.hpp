@@ -2474,7 +2474,7 @@ private:
 
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "ServerDriveQueryInformationRequest: FsInformationClass=%s(%u) Length=%zu",
+            "ServerDriveQueryInformationRequest: FsInformationClass=%s(0x%X) Length=%zu",
             this->get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, this->query_buffer.get_capacity());
         return ((length < size) ? length : size - 1);
@@ -2710,7 +2710,7 @@ private:
 
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "ServerDriveQueryVolumeInformationRequest: FsInformationClass=%s(%u) Length=%zu",
+            "ServerDriveQueryVolumeInformationRequest: FsInformationClass=%s(0x%X) Length=%zu",
             this->get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, this->query_volume_buffer.get_capacity());
         return ((length < size) ? length : size - 1);
@@ -2724,6 +2724,183 @@ public:
         LOG(level, buffer);
     }
 };  // ServerDriveQueryVolumeInformationRequest
+
+// [MS-RDPEFS] - 2.2.3.3.9 Server Drive Set Information Request
+//  (DR_DRIVE_SET_INFORMATION_REQ)
+// ============================================================
+
+// The server issues a set information request on a redirected file system
+//  device.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        DeviceIoRequest                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                       FsInformationClass                      |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                      SetBuffer (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST (section 2.2.1.4)
+//  header. The MajorFunction field in the DR_DEVICE_IOREQUEST header MUST be
+//  set to IRP_MJ_SET_INFORMATION.
+
+// FsInformationClass (4 bytes): A 32-bit unsigned integer. The possible
+//  values for this field are defined in [MS-FSCC] section 2.4. The
+//  FsInformationClass field is a 32-bit value, even though the values
+//  described in [MS-FSCC] are single byte only. For the purposes of
+//  conversion, the highest 24 bits are always set to zero. This field MUST
+//  contain one of the following values.
+
+//  +----------------------------+--------------------------------------------+
+//  | Value                      | Meaning                                    |
+//  +----------------------------+--------------------------------------------+
+//  | FileBasicInformation       | This information class is used to set file |
+//  | 0x00000004                 | information such as the times of creation, |
+//  |                            | last access, last write, and change, in    |
+//  |                            | addition to file attributes.               |
+//  +----------------------------+--------------------------------------------+
+//  | FileEndOfFileInformation   | This information class is used to set end- |
+//  | 0x00000014                 | of-file information for a file.            |
+//  +----------------------------+--------------------------------------------+
+//  | FileDispositionInformation | This information class is used to mark a   |
+//  | 0x0000000D                 | file for deletion.                         |
+//  +----------------------------+--------------------------------------------+
+//  | FileRenameInformation      | This information class is used to rename a |
+//  | 0x0000000A                 | file.                                      |
+//  +----------------------------+--------------------------------------------+
+//  | FileAllocationInformation  | This information class is used to set the  |
+//  | 0x00000013                 | allocation size for a file.                |
+//  +----------------------------+--------------------------------------------+
+
+enum {
+      /*FileBasicInformation       = 0x00000004
+    , */FileEndOfFileInformation   = 0x00000014
+    , FileDispositionInformation = 0x0000000D
+    , FileRenameInformation      = 0x0000000A
+    , FileAllocationInformation  = 0x00000013
+};
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of
+//  bytes in the SetBuffer field.
+
+// Padding (24 bytes): An array of 24 bytes. This field is unused and can be
+//  set to any value. This field MUST be ignored on receipt.
+
+// SetBuffer (variable): A variable-length array of bytes. The size of the
+//  array is specified by the Length field. The content of this field is
+//  based on the value of the FsInformationClass field, which determines the
+//  different structures that MUST be contained in the SetBuffer field. For a
+//  complete list of these structures, refer to [MS-FSCC] section 2.4. The
+//  "File information class" table defines all the possible values for the
+//  FsInformationClass field with the exception of the following values.
+
+//  +----------------------------+--------------------------------------------+
+//  | Value of                   |                                            |
+//  | FsInformationClass         | Meaning of content of SetBuffer field      |
+//  +----------------------------+--------------------------------------------+
+//  | FileDispositionInformation | The buffer is empty. The Length field is   |
+//  |                            | set to zero. It is implied that the        |
+//  |                            | DeletePending field of the                 |
+//  |                            | FILE_DISPOSITION_INFORMATION structure, as |
+//  |                            | described in [MS-FSCC], is set to 1.       |
+//  +----------------------------+--------------------------------------------+
+//  | FileRenameInformation      | See RDP_FILE_RENAME_INFORMATION.           |
+//  +----------------------------+--------------------------------------------+
+
+class ServerDriveSetInformationRequest {
+    uint32_t FsInformationClass_ = 0;
+    uint32_t Length_             = 0;
+
+public:
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->FsInformationClass_);
+        stream.out_uint32_le(this->Length_);
+
+        stream.out_clear_bytes(24); // Padding(24)
+    }
+
+    inline void receive(Stream & stream) {
+        {
+            const unsigned expected = 32;  // FsInformationClass(4) + Length(4) +
+                                           //     Padding(24)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ServerDriveSetInformationRequest (0): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->FsInformationClass_ = stream.in_uint32_le();
+        this->Length_             = stream.in_uint32_le();
+
+        stream.in_skip_bytes(24);   // Padding(24)
+    }
+
+    inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+
+    inline uint8_t  Length() const { return this->Length_; }
+
+private:
+    inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
+        switch (FsInformationClass) {
+            case FileBasicInformation:       return "FileBasicInformation";
+            case FileEndOfFileInformation:   return "FileEndOfFileInformation";
+            case FileDispositionInformation: return "FileDispositionInformation";
+            case FileRenameInformation:      return "FileRenameInformation";
+            case FileAllocationInformation:  return "FileAllocationInformation";
+        }
+
+        return "<unknown>";
+    }
+
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "ServerDriveSetInformationRequest: FsInformationClass=%s(0x%X) "
+                "Length=%u",
+            this->get_FsInformationClass_name(this->FsInformationClass_),
+            this->FsInformationClass_, this->Length_);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
 
 // [MS-RDPEFS] - 2.2.3.3.10 Server Drive Query Directory Request
 //  (DR_DRIVE_QUERY_DIRECTORY_REQ)
