@@ -114,6 +114,8 @@ enum {
     , CB_UNLOCK_CLIPDATA       = 0x000B
 };
 
+#define CB_CHUNKED_FORMAT_DATA_RESPONSE 0xFFFF
+
 // msgFlags (2 bytes): An unsigned, 16-bit integer that indicates message
 //  flags.
 

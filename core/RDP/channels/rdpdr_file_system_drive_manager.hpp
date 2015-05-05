@@ -418,6 +418,35 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
             }
             break;
 
+            case rdpdr::FileFsDeviceInformation:
+            {
+                const rdpdr::DeviceIOResponse device_io_response(
+                        device_io_request.DeviceId(),
+                        device_io_request.CompletionId(),
+                        0x00000000                          // STATUS_SUCCESS
+                    );
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest");
+                    device_io_response.log(LOG_INFO);
+                }
+                device_io_response.emit(out_stream);
+
+                const fscc::FileFsDeviceInformation file_fs_device_information(
+                        fscc::FILE_DEVICE_DISK, 0
+                    );
+
+                out_stream.out_uint32_le(file_fs_device_information.size()); // Length(4)
+
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest");
+                    file_fs_device_information.log(LOG_INFO);
+                }
+                file_fs_device_information.emit(out_stream);
+            }
+            break;
+
             default:
             {
                 LOG(LOG_ERR,
