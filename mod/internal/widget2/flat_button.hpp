@@ -111,9 +111,7 @@ public:
             }
         }
         // background
-        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy(), this->cx(), this->cy()
-            )), this->label.bg_color), this->rect);
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(this->rect), this->label.bg_color), this->rect);
 
         if (this->state & 1)  {
             ++this->label.rect.x;

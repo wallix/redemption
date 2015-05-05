@@ -104,6 +104,8 @@
 #include "RDP/mppc_60.hpp"
 #include "RDP/mppc_61.hpp"
 
+#include <memory>
+
 
 class Front : public FrontAPI, public ActivityChecker{
     using FrontAPI::draw;
@@ -120,10 +122,179 @@ public:
     Capture * capture;
 
 private:
-    BmpCache          * bmp_cache;
-    BmpCachePersister * bmp_cache_persister;
+    struct Graphics
+    {
+        BmpCache bmp_cache;
+        BmpCachePersister * bmp_cache_persister;
+        BrushCache brush_cache;
+        PointerCache pointer_cache;
+        GlyphCache glyph_cache;
+        GraphicsUpdatePDU graphics_update_pdu;
 
-    GraphicsUpdatePDU * orders;
+        Graphics(
+            ClientInfo const & client_info
+          , Transport * trans
+          , uint16_t & userid
+          , int & shareid
+          , int & encryptionLevel
+          , CryptContext & encrypt
+          , const Inifile & ini
+          , size_t max_bitmap_size
+          , bool fastpath_support
+          , rdp_mppc_enc * mppc_enc
+          , uint32_t verbose
+        )
+        : bmp_cache(
+            BmpCache::Front
+          , client_info.bpp
+          , client_info.number_of_cache
+          , ((client_info.cache_flags & ALLOW_CACHE_WAITING_LIST_FLAG) && ini.client.cache_waiting_list),
+            BmpCache::CacheOption(
+                client_info.cache1_entries
+              , client_info.cache1_size
+              , client_info.cache1_persistent),
+            BmpCache::CacheOption(
+                client_info.cache2_entries
+              , client_info.cache2_size
+              , client_info.cache2_persistent),
+            BmpCache::CacheOption(
+                client_info.cache3_entries
+              , client_info.cache3_size
+              , client_info.cache3_persistent),
+            BmpCache::CacheOption(
+                client_info.cache4_entries
+              , client_info.cache4_size
+              , client_info.cache4_persistent),
+            BmpCache::CacheOption(
+                client_info.cache5_entries
+              , client_info.cache5_size
+              , client_info.cache5_persistent),
+            ini.debug.cache
+          )
+        , bmp_cache_persister([&ini, verbose, this]() {
+            BmpCachePersister * bmp_cache_persister = nullptr;
+
+            if (ini.client.persistent_disk_bitmap_cache &&
+                ini.client.persist_bitmap_cache_on_disk &&
+                bmp_cache.has_cache_persistent()) {
+                // Generates the name of file.
+                char cache_filename[2048];
+                ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
+                    PERSISTENT_PATH "/client", ini.globals.host.get_cstr(), this->bmp_cache.bpp);
+                cache_filename[sizeof(cache_filename) - 1] = '\0';
+
+                int fd = ::open(cache_filename, O_RDONLY);
+                if (fd != -1) {
+                    try {
+                        InFileTransport ift(fd);
+
+                        bmp_cache_persister = new BmpCachePersister(
+                            this->bmp_cache, ift, cache_filename, verbose
+                        );
+                    }
+                    catch (const Error & e) {
+                        ::close(fd);
+                        if (e.id != ERR_PDBC_LOAD) {
+                            throw;
+                        }
+                    }
+                }
+            }
+
+            return bmp_cache_persister;
+        }())
+        , pointer_cache(client_info.pointer_cache_entries)
+        , glyph_cache(client_info.number_of_entries_in_glyph_cache)
+        , graphics_update_pdu(
+            trans
+          , userid
+          , shareid
+          , encryptionLevel
+          , encrypt
+          , ini
+          , client_info.bpp
+          , this->bmp_cache
+          , this->glyph_cache
+          , this->pointer_cache
+          , client_info.bitmap_cache_version
+          , ini.client.bitmap_compression
+          , client_info.use_compact_packets
+          , max_bitmap_size
+          , fastpath_support
+          , mppc_enc
+          , ini.client.rdp_compression ? client_info.rdp_compression : 0
+          , verbose
+          )
+        {}
+
+        ~Graphics() = default;
+    };
+
+    struct GraphicsPointer
+    {
+        Graphics * p = nullptr;
+        bool is_initialized = false;
+
+        ~GraphicsPointer() {
+            if (this->is_initialized) {
+                this->p->~Graphics();
+            }
+            ::operator delete(this->p);
+        }
+
+        void initialize(
+            ClientInfo const & client_info
+          , Transport * trans
+          , uint16_t & userid
+          , int & shareid
+          , int & encryptionLevel
+          , CryptContext & encrypt
+          , const Inifile & ini
+          , size_t max_bitmap_size
+          , bool fastpath_support
+          , rdp_mppc_enc * mppc_enc
+          , uint32_t verbose
+        ) {
+            if (this->p) {
+                this->is_initialized = false;
+                this->p->~Graphics();
+            }
+            else {
+                this->p = static_cast<decltype(this->p)>(::operator new(sizeof(decltype(*this->p))));
+            }
+
+            new (this->p) Graphics(
+                client_info, trans, userid, shareid, encryptionLevel, encrypt,
+                ini, max_bitmap_size, fastpath_support, mppc_enc, verbose
+            );
+            this->is_initialized = true;
+        }
+
+        void clear_bmp_cache_persister() {
+            delete this->p->bmp_cache_persister;
+            this->p->bmp_cache_persister = nullptr;
+        }
+
+        bool has_bmp_cache_persister() const {
+            return this->p && this->p->bmp_cache_persister;
+        }
+
+        BmpCachePersister * bmp_cache_persister() const
+        { return this->p->bmp_cache_persister; }
+
+        uint8_t bpp() const { return this->p->bmp_cache.bpp; }
+
+        int add_brush(uint8_t* brush_item_data, int& cache_idx)
+        { return this->p->brush_cache.add_brush(brush_item_data, cache_idx); }
+
+        brush_item const & brush_at(int cache_idx) const
+        { return this->p->brush_cache.brush_items[cache_idx]; }
+
+        GraphicsUpdatePDU & graphics_update_pdu()
+        { return this->p->graphics_update_pdu; }
+
+        GraphicsUpdatePDU * operator->() const { return &this->p->graphics_update_pdu; }
+    } orders;
 
 public:
     Keymap2 keymap;
@@ -157,9 +328,6 @@ private:
     uint32_t verbose;
 
     Font font;
-    BrushCache brush_cache;
-    PointerCache pointer_cache;
-    GlyphCache glyph_cache;
 
     bool palette_sent;
     bool palette_memblt_sent[6];
@@ -219,14 +387,11 @@ public:
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
           , const char * server_capabilities_filename = ""
-          , Transport * persistent_key_list_transport = NULL
+          , Transport * persistent_key_list_transport = nullptr
           )
     : FrontAPI(ini.globals.notimestamp, ini.globals.nomouse)
     , capture_state(CAPTURE_STATE_UNKNOWN)
-    , capture(NULL)
-    , bmp_cache(NULL)
-    , bmp_cache_persister(NULL)
-    , orders(NULL)
+    , capture(nullptr)
     , up_and_running(0)
     , share_id(65538)
     , encryptionLevel(ini.globals.encryptionLevel + 1)
@@ -236,9 +401,6 @@ public:
     , ini(ini)
     , verbose(this->ini.debug.front)
     , font(default_font_name)
-    , brush_cache()
-    , pointer_cache()
-    , glyph_cache()
     , mod_bpp(0)
     , capture_bpp(0)
     , state(CONNECTION_INITIATION)
@@ -252,8 +414,8 @@ public:
     , use_bitmapcache_rev2(false)
     , server_capabilities_filename(server_capabilities_filename)
     , persistent_key_list_transport(persistent_key_list_transport)
-    , mppc_enc(NULL)
-    , authentifier(NULL)
+    , mppc_enc(nullptr)
+    , authentifier(nullptr)
     , auth_info_sent(false) {
         // init TLS
         // --------------------------------------------------------
@@ -322,14 +484,10 @@ public:
         ERR_free_strings();
         delete this->mppc_enc;
 
-        delete this->bmp_cache_persister;
-
-        if (this->bmp_cache) {
+        if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
-            delete this->bmp_cache;
         }
 
-        delete this->orders;
         delete this->capture;
     }
 
@@ -526,7 +684,7 @@ public:
     {
         if (this->capture) {
             LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
-            this->authentifier = NULL;
+            this->authentifier = nullptr;
             delete this->capture;
             this->capture = 0;
 
@@ -588,12 +746,12 @@ public:
         // Generates the name of file.
         char filename[2048];
         ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            persistent_path, this->ini.globals.host.get_cstr(), this->bmp_cache->bpp);
+            persistent_path, this->ini.globals.host.get_cstr(), this->orders.bpp());
         filename[sizeof(filename) - 1] = '\0';
 
         char filename_temporary[2048];
         ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
-            persistent_path, this->ini.globals.host.get_cstr(), this->bmp_cache->bpp);
+            persistent_path, this->ini.globals.host.get_cstr(), this->orders.bpp());
         filename_temporary[sizeof(filename_temporary) - 1] = '\0';
 
         int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
@@ -608,7 +766,7 @@ public:
         try {
             OutFileTransport oft(fd);
 
-            BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, this->verbose);
+            BmpCachePersister::save_all_to_disk(this->orders.p->bmp_cache, oft, this->verbose);
 
             ::close(fd);
 
@@ -636,7 +794,7 @@ private:
 
         if (this->mppc_enc) {
             delete this->mppc_enc;
-            this->mppc_enc = NULL;
+            this->mppc_enc = nullptr;
         }
 
         this->max_bitmap_size = 1024 * 64;
@@ -671,87 +829,22 @@ private:
             break;
         }
 
-        // reset outgoing orders and reset caches
-        delete this->bmp_cache_persister;
-        this->bmp_cache_persister = NULL;
-        if (this->bmp_cache) {
+        if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
-            delete this->bmp_cache;
         }
-        this->bmp_cache = new BmpCache(
-                        BmpCache::Front,
-                        this->client_info.bpp,
-                        this->client_info.number_of_cache,
-                        ((this->client_info.cache_flags & ALLOW_CACHE_WAITING_LIST_FLAG) &&
-                             this->ini.client.cache_waiting_list),
-                        BmpCache::CacheOption(this->client_info.cache1_entries,
-                                              this->client_info.cache1_size,
-                                              this->client_info.cache1_persistent),
-                        BmpCache::CacheOption(this->client_info.cache2_entries,
-                                              this->client_info.cache2_size,
-                                              this->client_info.cache2_persistent),
-                        BmpCache::CacheOption(this->client_info.cache3_entries,
-                                              this->client_info.cache3_size,
-                                              this->client_info.cache3_persistent),
-                        BmpCache::CacheOption(this->client_info.cache4_entries,
-                                              this->client_info.cache4_size,
-                                              this->client_info.cache4_persistent),
-                        BmpCache::CacheOption(this->client_info.cache5_entries,
-                                              this->client_info.cache5_size,
-                                              this->client_info.cache5_persistent),
-                        this->ini.debug.cache);
-
-        if (this->ini.client.persistent_disk_bitmap_cache &&
-            this->ini.client.persist_bitmap_cache_on_disk &&
-            this->bmp_cache->has_cache_persistent()) {
-            // Generates the name of file.
-            char cache_filename[2048];
-            ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
-                PERSISTENT_PATH "/client", this->ini.globals.host.get_cstr(), this->bmp_cache->bpp);
-            cache_filename[sizeof(cache_filename) - 1] = '\0';
-
-            int fd = ::open(cache_filename, O_RDONLY);
-            if (fd != -1) {
-                try {
-                    InFileTransport ift(fd);
-
-                    this->bmp_cache_persister = new BmpCachePersister( *this->bmp_cache, ift, cache_filename
-                                                                     , this->verbose);
-                }
-                catch (const Error & e) {
-                    ::close(fd);
-                    if (e.id != ERR_PDBC_LOAD) {
-                        throw;
-                    }
-                }
-            }
-        }
-
-        delete this->orders;
-        this->orders = new GraphicsUpdatePDU(
-              &this->trans
-            , this->userid
-            , this->share_id
-            , this->encryptionLevel
-            , this->encrypt
-            , this->ini
-            , this->client_info.bpp
-            , *this->bmp_cache
-            , this->glyph_cache
-            , this->pointer_cache
-            , this->client_info.bitmap_cache_version
-            , this->ini.client.bitmap_compression ? 1 : 0
-            , this->client_info.use_compact_packets
-            , this->max_bitmap_size
-            , this->server_fastpath_update_support
-            , this->mppc_enc
-            , this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0
-            , this->verbose
-            );
-
-        this->pointer_cache.reset(this->client_info);
-        this->brush_cache.reset(this->client_info);
-        this->glyph_cache.reset(this->client_info.number_of_entries_in_glyph_cache);
+        this->orders.initialize(
+            this->client_info
+          , &this->trans
+          , this->userid
+          , this->share_id
+          , this->encryptionLevel
+          , this->encrypt
+          , this->ini
+          , this->max_bitmap_size
+          , this->server_fastpath_update_support
+          , this->mppc_enc
+          , this->verbose
+        );
     }
 
 public:
@@ -3547,7 +3640,7 @@ public:
             }
 
             if (this->ini.client.persistent_disk_bitmap_cache &&
-                this->bmp_cache_persister) {
+                this->orders.bmp_cache_persister()) {
                 RDP::PersistentKeyListPDUData pklpdud;
 
                 pklpdud.receive(sdata_in.payload);
@@ -3561,7 +3654,7 @@ public:
 
                 for (unsigned i = 0; i < BmpCache::MAXIMUM_NUMBER_OF_CACHES; ++i) {
                     if (pklpdud.numEntriesCache[i]) {
-                        this->bmp_cache_persister->process_key_list(
+                        this->orders.bmp_cache_persister()->process_key_list(
                             i, entries, pklpdud.numEntriesCache[i] , cache_entry_index[i]
                         );
                         entries              += pklpdud.numEntriesCache[i];
@@ -3586,8 +3679,7 @@ public:
                 }
 
                 if (pklpdud.bBitMask & RDP::PERSIST_LAST_PDU) {
-                    delete this->bmp_cache_persister;
-                    this->bmp_cache_persister = NULL;
+                    this->orders.clear_bmp_cache_persister();
                 }
             }
 
@@ -4311,10 +4403,10 @@ public:
             pattern[0] = brush.hatch;
             memcpy(pattern+1, brush.extra, 7);
             int cache_idx = 0;
-            if (BRUSH_TO_SEND == this->brush_cache.add_brush(pattern, cache_idx)) {
+            if (BRUSH_TO_SEND == this->orders.add_brush(pattern, cache_idx)) {
                 RDPBrushCache cmd(cache_idx, 1, 8, 8, 0x81,
-                    sizeof(this->brush_cache.brush_items[cache_idx].pattern),
-                    this->brush_cache.brush_items[cache_idx].pattern);
+                    sizeof(this->orders.brush_at(cache_idx).pattern),
+                    this->orders.brush_at(cache_idx).pattern);
                 this->orders->draw(cmd);
             }
             brush.hatch = cache_idx;
@@ -4411,7 +4503,7 @@ public:
             return;
         }
 
-        ::compress_and_draw_bitmap_update(bitmap_data, Bitmap(this->client_info.bpp, bmp), this->client_info.bpp, *this->orders);
+        ::compress_and_draw_bitmap_update(bitmap_data, Bitmap(this->client_info.bpp, bmp), this->client_info.bpp, this->orders.p->graphics_update_pdu);
         //bitmap_data.log(LOG_INFO, "Front");
         //hexdump_d(data, size);
         if (  this->capture

@@ -134,48 +134,48 @@ namespace BER {
     // ==========================
     //   APPLICATION TAG
     // ==========================
-    bool read_application_tag(Stream & s, uint8_t tag, int & length) {
-        uint8_t byte;
-        if (tag > 30) {
-            if (!s.in_check_rem(1))
-                return false;
-            byte = s.in_uint8();
+    //bool read_application_tag(Stream & s, uint8_t tag, int & length) {
+    //    uint8_t byte;
+    //    if (tag > 30) {
+    //        if (!s.in_check_rem(1))
+    //            return false;
+    //        byte = s.in_uint8();
+    //
+    //        if (byte != (CLASS_APPL | PC_CONSTRUCT | TAG_MASK))
+    //            return false;
+    //
+    //        if (!s.in_check_rem(1))
+    //            return false;
+    //        byte = s.in_uint8();
+    //
+    //        if (byte != tag)
+    //            return false;
+    //
+    //        return read_length(s, length);
+    //    }
+    //    else {
+    //        if (!s.in_check_rem(1))
+    //            return false;
+    //        byte = s.in_uint8();
+    //
+    //        if (byte != (CLASS_APPL | PC_CONSTRUCT | (TAG_MASK & tag)))
+    //            return false;
+    //        return read_length(s, length);
+    //    }
+    //    return true;
+    //}
 
-            if (byte != (CLASS_APPL | PC_CONSTRUCT | TAG_MASK))
-                return false;
-
-            if (!s.in_check_rem(1))
-                return false;
-            byte = s.in_uint8();
-
-            if (byte != tag)
-                return false;
-
-            return read_length(s, length);
-        }
-        else {
-            if (!s.in_check_rem(1))
-                return false;
-            byte = s.in_uint8();
-
-            if (byte != (CLASS_APPL | PC_CONSTRUCT | (TAG_MASK & tag)))
-                return false;
-            return read_length(s, length);
-        }
-        return true;
-    }
-
-    void write_application_tag(Stream & s, uint8_t tag, int length) {
-        if (tag > 30) {
-            s.out_uint8(CLASS_APPL | PC_CONSTRUCT | TAG_MASK);
-            s.out_uint8(tag);
-            write_length(s, length);
-        }
-        else {
-            s.out_uint8(CLASS_APPL | PC_CONSTRUCT | (TAG_MASK & tag));
-            write_length(s, length);
-        }
-    }
+    //void write_application_tag(Stream & s, uint8_t tag, int length) {
+    //    if (tag > 30) {
+    //        s.out_uint8(CLASS_APPL | PC_CONSTRUCT | TAG_MASK);
+    //        s.out_uint8(tag);
+    //        write_length(s, length);
+    //    }
+    //    else {
+    //        s.out_uint8(CLASS_APPL | PC_CONSTRUCT | (TAG_MASK & tag));
+    //        write_length(s, length);
+    //    }
+    //}
 
     // ==========================
     //   CONTEXTUAL TAG
@@ -234,28 +234,28 @@ namespace BER {
     // ==========================
     //   ENUMERATED
     // ==========================
-    bool read_enumerated(Stream & s, uint8_t & enumerated, uint8_t count) {
-        int length;
-        if (!read_universal_tag(s, TAG_ENUMERATED, false) ||
-            !read_length(s, length)) {
-            return false;
-        }
-        if (length != 1 || !s.in_check_rem(1)) {
-            return false;
-        }
-        enumerated = s.in_uint8();
+    //bool read_enumerated(Stream & s, uint8_t & enumerated, uint8_t count) {
+    //    int length;
+    //    if (!read_universal_tag(s, TAG_ENUMERATED, false) ||
+    //        !read_length(s, length)) {
+    //        return false;
+    //    }
+    //    if (length != 1 || !s.in_check_rem(1)) {
+    //        return false;
+    //    }
+    //    enumerated = s.in_uint8();
+    //
+    //    if (enumerated + 1 > count) {
+    //        return false;
+    //    }
+    //    return true;
+    //}
 
-        if (enumerated + 1 > count) {
-            return false;
-        }
-        return true;
-    }
-
-    void write_enumerated(Stream & s, uint8_t enumerated, uint8_t count) {
-        write_universal_tag(s, TAG_ENUMERATED, false);
-        write_length(s, 1);
-        s.out_uint8(enumerated);
-    }
+    //void write_enumerated(Stream & s, uint8_t enumerated, uint8_t count) {
+    //    write_universal_tag(s, TAG_ENUMERATED, false);
+    //    write_length(s, 1);
+    //    s.out_uint8(enumerated);
+    //}
 
     // ==========================
     //   BIT STRING
@@ -313,49 +313,49 @@ namespace BER {
     // ==========================
     //   GENERAL STRING
     // ==========================
-    int write_general_string(Stream & s, const uint8_t * oct_str, int length) {
-        int size = 0;
-        size += write_universal_tag(s, TAG_GENERAL_STRING, false);
-        size += write_length(s, length);
-        s.out_copy_bytes(oct_str, length);
-        size += length;
-        return size;
-    }
-    bool read_general_string_tag(Stream & s, int & length) {
-        return read_universal_tag(s, TAG_GENERAL_STRING, false)
-            && read_length(s, length);
-    }
-    int write_general_string_tag(Stream & s, int length) {
-        write_universal_tag(s, TAG_GENERAL_STRING, false);
-        write_length(s, length);
-        return 1 + _ber_sizeof_length(length);
-    }
-    int sizeof_general_string(int length) {
-        return 1 + _ber_sizeof_length(length) + length;
-    }
+    //int write_general_string(Stream & s, const uint8_t * oct_str, int length) {
+    //    int size = 0;
+    //    size += write_universal_tag(s, TAG_GENERAL_STRING, false);
+    //    size += write_length(s, length);
+    //    s.out_copy_bytes(oct_str, length);
+    //    size += length;
+    //    return size;
+    //}
+    //bool read_general_string_tag(Stream & s, int & length) {
+    //    return read_universal_tag(s, TAG_GENERAL_STRING, false)
+    //        && read_length(s, length);
+    //}
+    //int write_general_string_tag(Stream & s, int length) {
+    //    write_universal_tag(s, TAG_GENERAL_STRING, false);
+    //    write_length(s, length);
+    //    return 1 + _ber_sizeof_length(length);
+    //}
+    //int sizeof_general_string(int length) {
+    //    return 1 + _ber_sizeof_length(length) + length;
+    //}
     // ==========================
     //   BOOL
     // ==========================
-    bool read_bool(Stream & s, bool & value) {
-        int length;
-        if (!read_universal_tag(s, TAG_BOOLEAN, false) ||
-            !read_length(s, length)) {
-            return false;
-        }
+    //bool read_bool(Stream & s, bool & value) {
+    //    int length;
+    //    if (!read_universal_tag(s, TAG_BOOLEAN, false) ||
+    //        !read_length(s, length)) {
+    //        return false;
+    //    }
+    //
+    //    if (length != 1 || !s.in_check_rem(1)) {
+    //        return false;
+    //    }
+    //    uint8_t v = s.in_uint8();
+    //    value = (v ? true : false);
+    //    return true;
+    //}
 
-        if (length != 1 || !s.in_check_rem(1)) {
-            return false;
-        }
-        uint8_t v = s.in_uint8();
-        value = (v ? true : false);
-        return true;
-    }
-
-    void write_bool(Stream & s, bool value) {
-        write_universal_tag(s, TAG_BOOLEAN, false);
-        write_length(s, 1);
-        s.out_uint8(value ? 0xFF : 0);
-    }
+    //void write_bool(Stream & s, bool value) {
+    //    write_universal_tag(s, TAG_BOOLEAN, false);
+    //    write_length(s, 1);
+    //    s.out_uint8(value ? 0xFF : 0);
+    //}
 
     // ==========================
     //   INTEGER
@@ -392,57 +392,56 @@ namespace BER {
 
     int write_integer(Stream & s, uint32_t value)
     {
-	if (value <  0x80) {
+        if (value <  0x80) {
             write_universal_tag(s, TAG_INTEGER, false);
             write_length(s, 1);
             s.out_uint8(value);
             return 3;
         }
-	else if (value <  0x8000) {
+        else if (value <  0x8000) {
             write_universal_tag(s, TAG_INTEGER, false);
             write_length(s, 2);
             s.out_uint16_be(value);
             return 4;
         }
-	else if (value <  0x800000) {
+        else if (value <  0x800000) {
             write_universal_tag(s, TAG_INTEGER, false);
             write_length(s, 3);
             s.out_uint8(value >> 16);
             s.out_uint16_be(value & 0xFFFF);
             return 5;
         }
-	else if (value <  0x80000000) {
+        else if (value <  0x80000000) {
             write_universal_tag(s, TAG_INTEGER, false);
             write_length(s, 4);
             s.out_uint32_be(value);
             return 6;
         }
 
-	return 0;
+        return 0;
     }
 
     int sizeof_integer(uint32_t value) {
-	if (value < 0x80) {
-            return 3;
-	}
-	else if (value < 0x8000) {
-            return 4;
-	}
-	else if (value < 0x800000) {
-            return 5;
-	}
-	else if (value < 0x80000000) {
-            return 6;
-	}
-	return 0;
+        if (value < 0x80) {
+                return 3;
+        }
+        else if (value < 0x8000) {
+                return 4;
+        }
+        else if (value < 0x800000) {
+                return 5;
+        }
+        else if (value < 0x80000000) {
+                return 6;
+        }
+        return 0;
     }
 
-    bool read_integer_length(Stream & s, int & length)
-    {
-	return read_universal_tag(s, TAG_INTEGER, false)
-            && read_length(s, length);
-    }
-
+    //bool read_integer_length(Stream & s, int & length)
+    //{
+    //    return read_universal_tag(s, TAG_INTEGER, false)
+    //        && read_length(s, length);
+    //}
 }
 
 #endif

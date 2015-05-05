@@ -45,24 +45,11 @@ enum {
 /* difference caches */
 struct BrushCache {
     /* brush */
-    int brush_stamp;
+    int brush_stamp = 0;
     struct brush_item brush_items[64];
 
-    BrushCache() {
-        this->brush_stamp = 0;
-    }
-
-    ~BrushCache()
-    {
-    }
-
-    TODO(" much duplicated code with constructor and destructor  create some intermediate functions or object")
-    int reset(struct ClientInfo & client_info)
-    {
-        /* set whole struct to zero */
-        memset(this, 0, sizeof(struct BrushCache));
-        return 0;
-    }
+    BrushCache() = default;
+    ~BrushCache() = default;
 
     /*****************************************************************************/
     /* this does not take owership of brush_item_data, it makes a copy */

@@ -649,7 +649,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
     notifier.event = 0;
     notifier.sender = 0;
 
-    BOOST_CHECK_EQUAL(std::string("aurélie"), std::string(wpassword.get_text()));
+    BOOST_CHECK_EQUAL(std::string("aurélie"), wpassword.get_text());
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -707,8 +707,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    BOOST_CHECK_EQUAL(std::string("aurlie"), std::string(wpassword.get_text()));
-    BOOST_CHECK_EQUAL(std::string("******"), std::string(wpassword.show_text()));
+    BOOST_CHECK_EQUAL(std::string("aurlie"), wpassword.get_text());
 }
 
 BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
@@ -753,7 +752,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
     notifier.event = 0;
     notifier.sender = 0;
 
-    BOOST_CHECK_EQUAL(std::string("aurélie"), std::string(wpassword.get_text()));
+    BOOST_CHECK_EQUAL(std::string("aurélie"), wpassword.get_text());
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -824,8 +823,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    BOOST_CHECK_EQUAL(std::string("aurlie"), std::string(wpassword.get_text()));
-    BOOST_CHECK_EQUAL(std::string("******"), std::string(wpassword.show_text()));
+    BOOST_CHECK_EQUAL(std::string("aurlie"), wpassword.get_text());
 }
 
 BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
@@ -870,7 +868,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     notifier.event = 0;
     notifier.sender = 0;
 
-    BOOST_CHECK_EQUAL(std::string("aurélie"), std::string(wpassword.get_text()));
+    BOOST_CHECK_EQUAL(std::string("aurélie"), wpassword.get_text());
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -962,6 +960,5 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     notifier.event = 0;
     notifier.sender = 0;
 
-    BOOST_CHECK_EQUAL(std::string("aurézlie"), std::string(wpassword.get_text()));
-    BOOST_CHECK_EQUAL(std::string("********"), std::string(wpassword.show_text()));
+    BOOST_CHECK_EQUAL(std::string("aurézlie"), wpassword.get_text());
 }

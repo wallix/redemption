@@ -46,9 +46,9 @@ public:
                                   BackEvent_t & signal, time_t now) {
         this->last_module = true;
     };
-    virtual bool is_last_module() {
-        return this->last_module;
-    }
+    //virtual bool is_last_module() {
+    //    return this->last_module;
+    //}
     virtual bool is_connected() {
         return this->connected;
     }

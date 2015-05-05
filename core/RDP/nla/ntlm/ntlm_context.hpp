@@ -280,13 +280,14 @@ struct NTLMContext {
      * @param NTLM context
      */
     // client method
-    void ntlm_generate_random_session_key()
-    {
-        if (this->verbose & 0x400) {
-            LOG(LOG_INFO, "NTLMContext Generate Random Session Key");
-        }
-        this->rand->random(this->RandomSessionKey, 16);
-    }
+    //void ntlm_generate_random_session_key()
+    //{
+    //    if (this->verbose & 0x400) {
+    //        LOG(LOG_INFO, "NTLMContext Generate Random Session Key");
+    //    }
+    //    this->rand->random(this->RandomSessionKey, 16);
+    //}
+
     // client method ??
     void ntlm_generate_exported_session_key() {
         if (this->verbose & 0x400) {
@@ -296,11 +297,11 @@ struct NTLMContext {
     }
 
     // client method
-    void ntlm_generate_key_exchange_key()
-    {
-        // /* In NTLMv2, KeyExchangeKey is the 128-bit SessionBaseKey */
-        memcpy(this->KeyExchangeKey, this->SessionBaseKey, 16);
-    }
+    //void ntlm_generate_key_exchange_key()
+    //{
+    //    // /* In NTLMv2, KeyExchangeKey is the 128-bit SessionBaseKey */
+    //    memcpy(this->KeyExchangeKey, this->SessionBaseKey, 16);
+    //}
 
     // all strings are in unicode utf16
     void NTOWFv2_FromHash(const uint8_t * hash,   size_t hash_size,
@@ -617,30 +618,30 @@ struct NTLMContext {
 
 
     // all strings are in unicode utf16
-    void ntlm_compute_lm_v2_response(const uint8_t * pass,   size_t pass_size,
-                                     const uint8_t * user,   size_t user_size,
-                                     const uint8_t * domain, size_t domain_size)
-    {
-
-        uint8_t ResponseKeyLM[16] = {};
-        this->LMOWFv2(pass, pass_size, user, user_size, domain, domain_size,
-                ResponseKeyLM, sizeof(ResponseKeyLM));
-        // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
-        //                                         Concat(ServerChallenge, ClientChallenge))
-        // LmChallengeResponse.ChallengeFromClient = ClientChallenge
-        BStream & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.Buffer;
-        // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
-        SslHMAC_Md5 hmac_md5lmresp(ResponseKeyLM, sizeof(ResponseKeyLM));
-        LmChallengeResponse.reset();
-        hmac_md5lmresp.update(this->ServerChallenge, 8);
-        hmac_md5lmresp.update(this->ClientChallenge, 8);
-        uint8_t LCResponse[16] = {};
-        hmac_md5lmresp.final(LCResponse, 16);
-        LmChallengeResponse.out_copy_bytes(LCResponse, 16);
-        LmChallengeResponse.out_copy_bytes(this->ClientChallenge, 8);
-        LmChallengeResponse.mark_end();
-
-    }
+    //void ntlm_compute_lm_v2_response(const uint8_t * pass,   size_t pass_size,
+    //                                 const uint8_t * user,   size_t user_size,
+    //                                 const uint8_t * domain, size_t domain_size)
+    //{
+    //
+    //    uint8_t ResponseKeyLM[16] = {};
+    //    this->LMOWFv2(pass, pass_size, user, user_size, domain, domain_size,
+    //            ResponseKeyLM, sizeof(ResponseKeyLM));
+    //    // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
+    //    //                                         Concat(ServerChallenge, ClientChallenge))
+    //    // LmChallengeResponse.ChallengeFromClient = ClientChallenge
+    //    BStream & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.Buffer;
+    //    // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
+    //    SslHMAC_Md5 hmac_md5lmresp(ResponseKeyLM, sizeof(ResponseKeyLM));
+    //    LmChallengeResponse.reset();
+    //    hmac_md5lmresp.update(this->ServerChallenge, 8);
+    //    hmac_md5lmresp.update(this->ClientChallenge, 8);
+    //    uint8_t LCResponse[16] = {};
+    //    hmac_md5lmresp.final(LCResponse, 16);
+    //    LmChallengeResponse.out_copy_bytes(LCResponse, 16);
+    //    LmChallengeResponse.out_copy_bytes(this->ClientChallenge, 8);
+    //    LmChallengeResponse.mark_end();
+    //
+    //}
 
 
 

@@ -416,7 +416,7 @@ public:
         }   // switch (pointer_type)
     }   // Pointer(uint8_t pointer_type)
 
-    ~Pointer() {}
+    ~Pointer() = default;
 
     void initialize(unsigned bpp, unsigned width, unsigned height, int x, int y, uint8_t * data, size_t data_size,
         uint8_t * mask, size_t mask_size) {

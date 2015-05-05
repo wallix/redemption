@@ -169,11 +169,11 @@ BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
 {
     SecurityFunctionTable table;
     SEC_STATUS status;
-    status = table.EnumerateSecurityPackages(NULL, NULL);
-    BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.EnumerateSecurityPackages(NULL, NULL);
+    //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.QueryCredentialsAttributes(NULL, 0, NULL);
-    BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.QueryCredentialsAttributes(NULL, 0, NULL);
+    //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.AcquireCredentialsHandle(NULL, NULL, 0, NULL,
                                             NULL, NULL, NULL, NULL, NULL);
@@ -192,11 +192,11 @@ BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
     status = table.CompleteAuthToken(NULL, NULL);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.DeleteSecurityContext(NULL);
-    BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.DeleteSecurityContext(NULL);
+    //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.ApplyControlToken(NULL, NULL);
-    BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.ApplyControlToken(NULL, NULL);
+    //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.QueryContextAttributes(NULL, 0, NULL);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
@@ -207,26 +207,26 @@ BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
     status = table.RevertSecurityContext(NULL);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.MakeSignature(NULL, 0, NULL, 0);
-    BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.MakeSignature(NULL, 0, NULL, 0);
+    //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.VerifySignature(NULL, NULL, 0, NULL);
-    BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.VerifySignature(NULL, NULL, 0, NULL);
+    //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.FreeContextBuffer(NULL);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.ExportSecurityContext(NULL, 0, NULL, NULL);
-    BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.ExportSecurityContext(NULL, 0, NULL, NULL);
+    //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.ImportSecurityContext(NULL, NULL, NULL, NULL);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.AddCredentials(NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL);
-    BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.AddCredentials(NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL);
+    //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.QuerySecurityContextToken(NULL, NULL);
-    BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.QuerySecurityContextToken(NULL, NULL);
+    //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.EncryptMessage(NULL, 0, NULL, 0);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
@@ -234,8 +234,8 @@ BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
     status = table.DecryptMessage(NULL, NULL, 0, NULL);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.SetContextAttributes(NULL, 0, NULL, 0);
-    BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.SetContextAttributes(NULL, 0, NULL, 0);
+    //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     SecPkgInfo packageInfo;
     status = table.QuerySecurityPackageInfo(NTLMSP_NAME, &packageInfo);

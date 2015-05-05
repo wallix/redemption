@@ -87,31 +87,31 @@ BOOST_AUTO_TEST_CASE(TestBERInteger)
 
 }
 
-BOOST_AUTO_TEST_CASE(TestBERBool)
-{
-    BStream s(2048);
-    int res;
-    bool value;
-
-    BER::write_bool(s, true);
-    s.mark_end();
-    s.rewind();
-    res = BER::read_bool(s, value);
-    BOOST_CHECK_EQUAL(res, true);
-    BOOST_CHECK_EQUAL(value, true);
-
-    s.reset();
-
-    BER::write_bool(s, false);
-    s.mark_end();
-    s.rewind();
-    res = BER::read_bool(s, value);
-    BOOST_CHECK_EQUAL(res, true);
-    BOOST_CHECK_EQUAL(value, false);
-
-    s.reset();
-
-}
+//BOOST_AUTO_TEST_CASE(TestBERBool)
+//{
+//    BStream s(2048);
+//    int res;
+//    bool value;
+//
+//    BER::write_bool(s, true);
+//    s.mark_end();
+//    s.rewind();
+//    res = BER::read_bool(s, value);
+//    BOOST_CHECK_EQUAL(res, true);
+//    BOOST_CHECK_EQUAL(value, true);
+//
+//    s.reset();
+//
+//    BER::write_bool(s, false);
+//    s.mark_end();
+//    s.rewind();
+//    res = BER::read_bool(s, value);
+//    BOOST_CHECK_EQUAL(res, true);
+//    BOOST_CHECK_EQUAL(value, false);
+//
+//    s.reset();
+//
+//}
 
 BOOST_AUTO_TEST_CASE(TestBEROctetString)
 {

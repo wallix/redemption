@@ -95,6 +95,7 @@
 
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/pointercache.hpp"
+#include "caches/glyphcache.hpp"
 
 #include "orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "orders/RDPOrdersPrimaryMultiDstBlt.hpp"

@@ -25,7 +25,6 @@
 #include "noncopyable.hpp"
 
 #include "RDP/pointer.hpp"
-#include "client_info.hpp"
 
 
 enum {
@@ -38,7 +37,7 @@ enum {
 };
 
 /* difference caches */
-class PointerCache : noncopyable {
+class PointerCache {
     int pointer_cache_entries;
 
     /* pointer */
@@ -51,17 +50,13 @@ public:
     Pointer Pointers[MAX_POINTER_COUNT];
 
 public:
+    REDEMPTION_NON_COPYABLE(PointerCache);
+
     PointerCache(int pointer_cache_entries = 0)
-    : pointer_cache_entries(pointer_cache_entries) {}
+    : pointer_cache_entries(pointer_cache_entries)
+    {}
 
     ~PointerCache() = default;
-
-    TODO(" much duplicated code with constructor and destructor  create some intermediate functions or object")
-    int reset(const ClientInfo & client_info) {
-        this->~PointerCache();
-        new (this)PointerCache(client_info.pointer_cache_entries);
-        return 0;
-    }
 
     void add_pointer_static(const Pointer & cursor, int index) {
         REDASSERT((index >= 0) && (index < MAX_POINTER_COUNT));

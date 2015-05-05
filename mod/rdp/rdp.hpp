@@ -5982,25 +5982,25 @@ public:
         }
     }
 
-    void send_shutdown_request() {
-        LOG(LOG_INFO, "SEND SHUTDOWN REQUEST PDU");
-
-        BStream stream(65536);
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_SHUTDOWN_REQUEST, this->share_id,
-                         RDP::STREAM_MED);
-        sdata.emit_end();
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
-                          this->userid + GCC::MCS_USERCHANNEL_BASE,
-                          stream.size());
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
-    }
+    //void send_shutdown_request() {
+    //    LOG(LOG_INFO, "SEND SHUTDOWN REQUEST PDU");
+    //
+    //    BStream stream(65536);
+    //    ShareData sdata(stream);
+    //    sdata.emit_begin(PDUTYPE2_SHUTDOWN_REQUEST, this->share_id,
+    //                     RDP::STREAM_MED);
+    //    sdata.emit_end();
+    //    BStream sctrl_header(256);
+    //    ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+    //                      this->userid + GCC::MCS_USERCHANNEL_BASE,
+    //                      stream.size());
+    //    HStream target_stream(1024, 65536);
+    //    target_stream.out_copy_bytes(sctrl_header);
+    //    target_stream.out_copy_bytes(stream);
+    //    target_stream.mark_end();
+    //
+    //    this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+    //}
 
     void send_disconnect_ultimatum() {
         if (this->verbose & 1){
@@ -6013,16 +6013,16 @@ public:
         this->nego.trans.send(x224_header, mcs_data);
     }
 
-    void send_flow_response_pdu(uint8_t flow_id, uint8_t flow_number) {
-        LOG(LOG_INFO, "SEND FLOW RESPONSE PDU n° %u", flow_number);
-        BStream flowpdu(256);
-        FlowPDU_Send(flowpdu, FLOW_RESPONSE_PDU, flow_id, flow_number,
-                     this->userid + GCC::MCS_USERCHANNEL_BASE);
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(flowpdu);
-        target_stream.mark_end();
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
-    }
+    //void send_flow_response_pdu(uint8_t flow_id, uint8_t flow_number) {
+    //    LOG(LOG_INFO, "SEND FLOW RESPONSE PDU n° %u", flow_number);
+    //    BStream flowpdu(256);
+    //    FlowPDU_Send(flowpdu, FLOW_RESPONSE_PDU, flow_id, flow_number,
+    //                 this->userid + GCC::MCS_USERCHANNEL_BASE);
+    //    HStream target_stream(1024, 65536);
+    //    target_stream.out_copy_bytes(flowpdu);
+    //    target_stream.mark_end();
+    //    this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+    //}
 
     void process_auth_event(const CHANNELS::ChannelDef & auth_channel,
             Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {

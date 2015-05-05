@@ -250,10 +250,10 @@ struct NTLMChallengeMessage : public NTLMMessage {
         this->AvPairList.recv(this->TargetInfo.Buffer);
     }
 
-    void avpair_decode() {
-        this->TargetInfo.Buffer.reset();
-        this->AvPairList.emit(this->TargetInfo.Buffer);
-    }
+    //void avpair_decode() {
+    //    this->TargetInfo.Buffer.reset();
+    //    this->AvPairList.emit(this->TargetInfo.Buffer);
+    //}
 
 };
 

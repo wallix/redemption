@@ -63,7 +63,7 @@ struct ClientInfo {
     /* pointer info */
     int pointer_cache_entries = 0;
     /* other */
-    uint32_t desktop_cache = 0;
+    //uint32_t desktop_cache = 0;
     bool use_compact_packets = false; /* rdp5 smaller packets */
     char hostname[16] = {0};
     int build = 0;

@@ -205,16 +205,16 @@ struct NTLMNegotiateMessage : public NTLMMessage {
     }
 
 
-    bool check_negotiate_flag_received() {
-        uint32_t flags = this->negoFlags.flags;
-        if (!((flags & NTLMSSP_REQUEST_TARGET) &&
-              (flags & NTLMSSP_NEGOTIATE_NTLM) &&
-              (flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN) &&
-              (flags & NTLMSSP_NEGOTIATE_UNICODE))) {
-            return false;
-        }
-        return true;
-    }
+    //bool check_negotiate_flag_received() {
+    //    uint32_t flags = this->negoFlags.flags;
+    //    if (!((flags & NTLMSSP_REQUEST_TARGET) &&
+    //          (flags & NTLMSSP_NEGOTIATE_NTLM) &&
+    //          (flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN) &&
+    //          (flags & NTLMSSP_NEGOTIATE_UNICODE))) {
+    //        return false;
+    //    }
+    //    return true;
+    //}
 
 };
 

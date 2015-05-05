@@ -476,93 +476,93 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestUTF8toUnicode)
-{
-    uint8_t source[16] = "Red";
-    uint32_t uni[16];
+//BOOST_AUTO_TEST_CASE(TestUTF8toUnicode)
+//{
+//    uint8_t source[16] = "Red";
+//    uint32_t uni[16];
+//
+//    // Check result
+//    BOOST_CHECK_EQUAL(3, UTF8toUnicode(source, uni, sizeof(uni)/sizeof(uni[0])));
+//}
 
-    // Check result
-    BOOST_CHECK_EQUAL(3, UTF8toUnicode(source, uni, sizeof(uni)/sizeof(uni[0])));
-}
+//BOOST_AUTO_TEST_CASE(TestUTF8Check_zero)
+//{
+//    uint8_t source[] = {0x00};
+//    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
+//    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+//
+//    // Check result
+//    BOOST_CHECK_EQUAL(1, UTF8Check(source, source_length));
+//}
 
-BOOST_AUTO_TEST_CASE(TestUTF8Check_zero)
-{
-    uint8_t source[] = {0x00};
-    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
-    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+//BOOST_AUTO_TEST_CASE(TestUTF8Check_control_characters)
+//{
+//    uint8_t source[] = {0x20, 0x00};
+//    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
+//    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+//
+//    // Check result
+//    BOOST_CHECK_EQUAL(2, UTF8Check(source, source_length));
+//}
 
-    // Check result
-    BOOST_CHECK_EQUAL(1, UTF8Check(source, source_length));
-}
+//BOOST_AUTO_TEST_CASE(TestUTF8Check_continuation_at_start)
+//{
+//    uint8_t source[] = {0x82, 0x00};
+//    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
+//    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+//
+//   // Check result
+//    BOOST_CHECK_EQUAL(0, UTF8Check(source, source_length));
+// }
 
-BOOST_AUTO_TEST_CASE(TestUTF8Check_control_characters)
-{
-    uint8_t source[] = {0x20, 0x00};
-    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
-    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+// BOOST_AUTO_TEST_CASE(TestUTF8Check_tilde)
+// {
+//     uint8_t source[] = {126};
+//     size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
+//     // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+//
+//     // Check result
+//     BOOST_CHECK_EQUAL(1, UTF8Check(source, source_length));
+// }
 
-    // Check result
-    BOOST_CHECK_EQUAL(2, UTF8Check(source, source_length));
-}
+// BOOST_AUTO_TEST_CASE(TestUTF8Check_invalid_utf8)
+// {
+//     uint8_t source[] = {0xC3, 0xA9 /* é */, 0xC3 };
+//     size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
+//     // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+//
+//     // Check result
+//     BOOST_CHECK_EQUAL(2, UTF8Check(source, source_length));
+// }
 
-BOOST_AUTO_TEST_CASE(TestUTF8Check_continuation_at_start)
-{
-    uint8_t source[] = {0x82, 0x00};
-    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
-    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+// BOOST_AUTO_TEST_CASE(TestUTF8Check_witch_control_character)
+// {
+//     uint8_t source[] = {0xC3, 0xA9 /* é */, 0x09, 0xC3, 0xA9 };
+//     size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
+//     // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+//
+//     // Check result
+//     BOOST_CHECK_EQUAL(5, UTF8Check(source, source_length));
+// }
 
-   // Check result
-    BOOST_CHECK_EQUAL(0, UTF8Check(source, source_length));
-}
+// BOOST_AUTO_TEST_CASE(TestUTF8Check_valid_utf8_no_trailing_zero)
+// {
+//     uint8_t source[] = {0xC3, 0xA9 /* é */, 0xC3, 0xA9 };
+//     size_t source_length = sizeof(source);
+//
+//     // Check result
+//     BOOST_CHECK_EQUAL(4, UTF8Check(source, source_length));
+//
+// }
 
-BOOST_AUTO_TEST_CASE(TestUTF8Check_tilde)
-{
-    uint8_t source[] = {126};
-    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
-    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
-
-    // Check result
-    BOOST_CHECK_EQUAL(1, UTF8Check(source, source_length));
-}
-
-BOOST_AUTO_TEST_CASE(TestUTF8Check_invalid_utf8)
-{
-    uint8_t source[] = {0xC3, 0xA9 /* é */, 0xC3 };
-    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
-    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
-
-    // Check result
-    BOOST_CHECK_EQUAL(2, UTF8Check(source, source_length));
-}
-
-BOOST_AUTO_TEST_CASE(TestUTF8Check_witch_control_character)
-{
-    uint8_t source[] = {0xC3, 0xA9 /* é */, 0x09, 0xC3, 0xA9 };
-    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
-    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
-
-    // Check result
-    BOOST_CHECK_EQUAL(5, UTF8Check(source, source_length));
-}
-
-BOOST_AUTO_TEST_CASE(TestUTF8Check_valid_utf8_no_trailing_zero)
-{
-    uint8_t source[] = {0xC3, 0xA9 /* é */, 0xC3, 0xA9 };
-    size_t source_length = sizeof(source);
-
-    // Check result
-    BOOST_CHECK_EQUAL(4, UTF8Check(source, source_length));
-
-}
-
-BOOST_AUTO_TEST_CASE(TestUTF8Check_valid_utf8_trailing_zero)
-{
-    uint8_t source[] = {0xC3, 0xA9 /* é */, 0xC3, 0xA9, 0, 'a' };
-    size_t source_length = sizeof(source);
-
-    // Check result
-    BOOST_CHECK_EQUAL(5, UTF8Check(source, source_length));
-}
+// BOOST_AUTO_TEST_CASE(TestUTF8Check_valid_utf8_trailing_zero)
+// {
+//     uint8_t source[] = {0xC3, 0xA9 /* é */, 0xC3, 0xA9, 0, 'a' };
+//     size_t source_length = sizeof(source);
+//
+//     // Check result
+//     BOOST_CHECK_EQUAL(5, UTF8Check(source, source_length));
+// }
 
 
 // BOOST_AUTO_TEST_CASE(TestUTF8GetFirstCharLen)

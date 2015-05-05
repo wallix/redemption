@@ -175,13 +175,13 @@ class SslAES
     }
 
     void crypt_cbc(size_t data_size, uint8_t * ivec,
-                   const uint8_t * const indata, uint8_t * const outdata) {
-        AES_cbc_encrypt(indata, outdata, data_size, &(this->e_key), ivec, AES_ENCRYPT);
+                  const uint8_t * const indata, uint8_t * const outdata) {
+       AES_cbc_encrypt(indata, outdata, data_size, &(this->e_key), ivec, AES_ENCRYPT);
     }
 
     void decrypt_cbc(size_t data_size, uint8_t * ivec,
-                     const uint8_t * const indata, uint8_t * const outdata) {
-        AES_cbc_encrypt(indata, outdata, data_size, &(this->d_key), ivec, AES_DECRYPT);
+                    const uint8_t * const indata, uint8_t * const outdata) {
+       AES_cbc_encrypt(indata, outdata, data_size, &(this->d_key), ivec, AES_DECRYPT);
     }
 };
 

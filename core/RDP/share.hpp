@@ -116,21 +116,33 @@ inline bool peekFlowPDU(const Stream & stream) {
 struct ShareFlow_Recv
 //##############################################################################
 {
-    public:
     uint16_t flowMarker;
     uint8_t pad;
     uint8_t pduTypeFlow;
     uint8_t flowIdentifier;
-    uint16_t flowNumber;
+    uint8_t flowNumber;
     uint16_t mcs_channel;
 
     ShareFlow_Recv(Stream & stream)
-    : flowMarker(stream.incheck_uint16_le( ERR_SEC, "Truncated ShareFlow PDU packet"))
-    , pad(stream.incheck_uint8(            ERR_SEC, "Truncated ShareFlow pad"))
-    , pduTypeFlow(stream.incheck_uint8(    ERR_SEC, "Truncated ShareFlow PDU type"))
-    , flowIdentifier(stream.incheck_uint8( ERR_SEC, "Truncated flow Identifier"))
-    , flowNumber(stream.incheck_uint8(     ERR_SEC, "Truncated flow number"))
-    , mcs_channel(stream.incheck_uint16_le(ERR_SEC, "Truncated ShareFlow PDU packet"))
+    : flowMarker([&stream]{
+        if (!stream.in_check_rem(2+1+1+1+1+2)){
+            LOG(LOG_ERR,
+                "Truncated "
+                "[2: ShareFlow PDU packet]"
+                "[1: ShareFlow pad]"
+                "[1: ShareFlow PDU type]"
+                "[1: flow Identifier]"
+                "[1: flow number]"
+                "[2: ShareFlow PDU packet] , remains=%u", stream.in_remain());
+            throw Error(ERR_SEC);
+        }
+        return stream.in_uint16_le();
+    }())
+    , pad(stream.in_uint8())
+    , pduTypeFlow(stream.in_uint8())
+    , flowIdentifier(stream.in_uint8())
+    , flowNumber(stream.in_uint8())
+    , mcs_channel(stream.in_uint16_le())
     {
         LOG(LOG_INFO, "Flow control packet %0.4x (offset=%u)", this->flowMarker, stream.get_offset());
         if (this->flowMarker != 0x8000) {
@@ -221,8 +233,15 @@ struct ShareControl_Recv
     SubStream payload;
 
     ShareControl_Recv(Stream & stream)
-    : totalLength(stream.incheck_uint16_le(ERR_SEC, "Truncated ShareControl packet"))
-    , pduType(stream.incheck_uint16_le(ERR_SEC, "Truncated ShareControl packet") & 0xF)
+    : totalLength([&stream]() {
+        if (!stream.in_check_rem(2+2)){
+            LOG(LOG_ERR,
+                "Truncated [4: ShareControl packet] , remains=%u", stream.in_remain());
+            throw Error(ERR_SEC);
+        }
+        return stream.in_uint16_le();
+    }())
+    , pduType(stream.in_uint16_le() & 0xF)
     , PDUSource([&stream, this]() {
         if (this->pduType == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4) {
             // should not happen

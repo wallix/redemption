@@ -123,9 +123,9 @@ public:
         this->copy(s, strlen(s));
     }
 
-    bool has_text() const noexcept {
-        return this->has_clipboard_;
-    }
+    //bool has_text() const noexcept {
+    //    return this->has_clipboard_;
+    //}
 
     void send_to_mod_channel(Stream & chunk, uint32_t flags)
     {

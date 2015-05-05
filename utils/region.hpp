@@ -38,8 +38,8 @@ struct Region {
     void subtract_rect(const Rect & rect) {
         std::vector<Rect> new_rects;
 
-        int count = this->rects.size();
-        for (int i = 0; i < count; i++) {
+        std::size_t count = this->rects.size();
+        for (std::size_t i = 0; i < count; i++) {
             Rect rect1 = this->rects[i];
             if (!rect.contains(rect1)) {
                 const Rect & sect = rect.intersect(rect1);

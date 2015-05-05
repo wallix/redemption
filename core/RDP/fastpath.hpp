@@ -1195,11 +1195,11 @@ namespace FastPath {
         }
 
         static size_t GetSize(bool compression) {
-            if (compression) {
-                return 4;
-            }
+           if (compression) {
+               return 4;
+           }
 
-            return 3;
+           return 3;
         }
     };
 

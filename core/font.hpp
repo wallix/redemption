@@ -127,39 +127,39 @@ struct FontChar
         return result;
     }
 
-    void show() {
-              uint8_t   fc_bit_mask        = 128;
-        const uint8_t * fc_data            = this->data.get();
-        const bool      skip_padding_pixel = (this->width % 8);
-
-        for (int y = 0; y < this->height; y++)
-        {
-            for (int x = 0; x < this->width; x++)
-            {
-                if (fc_bit_mask & (*fc_data)) {
-                    printf("X");
-                }
-                else {
-                    printf(".");
-                }
-
-                fc_bit_mask >>= 1;
-                if (!fc_bit_mask)
-                {
-                    fc_data++;
-                    fc_bit_mask = 128;
-                }
-            }
-
-            if (skip_padding_pixel) {
-                fc_data++;
-                fc_bit_mask = 128;
-                printf("_");
-            }
-            printf("\n");
-        }
-        printf("\n");
-    }
+    //void show() {
+    //          uint8_t   fc_bit_mask        = 128;
+    //    const uint8_t * fc_data            = this->data.get();
+    //    const bool      skip_padding_pixel = (this->width % 8);
+    //
+    //    for (int y = 0; y < this->height; y++)
+    //    {
+    //        for (int x = 0; x < this->width; x++)
+    //        {
+    //            if (fc_bit_mask & (*fc_data)) {
+    //                printf("X");
+    //            }
+    //            else {
+    //                printf(".");
+    //            }
+    //
+    //            fc_bit_mask >>= 1;
+    //            if (!fc_bit_mask)
+    //            {
+    //                fc_data++;
+    //                fc_bit_mask = 128;
+    //            }
+    //        }
+    //
+    //        if (skip_padding_pixel) {
+    //            fc_data++;
+    //            fc_bit_mask = 128;
+    //            printf("_");
+    //        }
+    //        printf("\n");
+    //    }
+    //    printf("\n");
+    //}
 }; // END STRUCT - FontChar
 
 

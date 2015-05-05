@@ -138,23 +138,9 @@ public:
     }
 
     void wipe(Rect oldrect, Rect newrect, int color, const Rect & clip) {
-        // new RectIterator
-        struct RectIt : public Rect::RectIterator {
-            int color;
-            Bouncer2Mod & b;
-            const Rect & clip;
-
-            RectIt(int color, Bouncer2Mod & b, const Rect & clip)
-            : color(color), b(b), clip(clip)
-            {}
-
-            void callback(const Rect & a) {
-                b.front.draw(RDPOpaqueRect(a, color), this->clip);
-            }
-        } it(color, *this, clip);
-
-        // Use my iterator
-        oldrect.difference(newrect, it);
+        oldrect.difference(newrect, [&](const Rect & a) {
+            this->front.draw(RDPOpaqueRect(a, color), clip);
+        });
     }
 };
 

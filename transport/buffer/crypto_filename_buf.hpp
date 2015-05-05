@@ -73,13 +73,6 @@ namespace transbuf {
 
         off64_t seek(off64_t offset, int whence) const
         { return this->file.seek(offset, whence); }
-
-    protected:
-        CryptoContext * crypto_context() const noexcept
-        { return this->ctx; }
-
-        void crypto_context(CryptoContext * ctx) noexcept
-        { this->ctx = ctx; }
     };
 
     class ocrypto_filename_base
@@ -141,13 +134,6 @@ namespace transbuf {
 
         int flush() const
         { return this->file.flush(); }
-
-    protected:
-        CryptoContext * crypto_context() const noexcept
-        { return this->ctx; }
-
-        void crypto_context(CryptoContext * ctx) noexcept
-        { this->ctx = ctx; }
     };
 }
 
