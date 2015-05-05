@@ -156,14 +156,14 @@ namespace MCS
         return *stream.get_data() >> 2;
     }
 
-    int peekBerEncodedMCSType(const Stream & stream) {
-        if (!stream.in_check_rem(2)){
-            throw Error(ERR_MCS);
-        }
-       TODO("getting to the type this way should works in our restricted use case,"
-            " but it would be nicer to perform actual BER TAG value decoding")
-        return (stream.get_data())[1];
-    }
+    //int peekBerEncodedMCSType(const Stream & stream) {
+    //    if (!stream.in_check_rem(2)){
+    //        throw Error(ERR_MCS);
+    //    }
+    //   TODO("getting to the type this way should works in our restricted use case,"
+    //        " but it would be nicer to perform actual BER TAG value decoding")
+    //    return (stream.get_data())[1];
+    //}
 
     struct InBerStream
     {
@@ -278,18 +278,18 @@ namespace MCS
         }
 
 
-        unsigned int in_ber_len(void) {
-            uint8_t l = this->stream.in_uint8();
-            if (l & 0x80) {
-                const uint8_t nbbytes = (uint8_t)(l & 0x7F);
-                unsigned int len = 0;
-                for (uint8_t i = 0 ; i < nbbytes ; i++) {
-                    len = (len << 8) | this->stream.in_uint8();
-                }
-                return len;
-            }
-            return l;
-        }
+        //unsigned int in_ber_len() {
+        //    uint8_t l = this->stream.in_uint8();
+        //    if (l & 0x80) {
+        //        const uint8_t nbbytes = (uint8_t)(l & 0x7F);
+        //        unsigned int len = 0;
+        //        for (uint8_t i = 0 ; i < nbbytes ; i++) {
+        //            len = (len << 8) | this->stream.in_uint8();
+        //        }
+        //        return len;
+        //    }
+        //    return l;
+        //}
 
         unsigned int in_ber_len_with_check(bool & result) {
             uint8_t l = 0;

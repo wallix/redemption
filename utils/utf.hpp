@@ -44,58 +44,58 @@
 
 // Check if some string is valid utf8, zero terminated"
 // Returns number of valid bytes
-static inline size_t UTF8Check(const uint8_t * source, size_t len)
-{
-    size_t i = 0;
-    for (; i < len ; i++){
-        uint8_t c = source[i];
-        switch (c >> 4){
-            case 0:
-                // allows control characters
-                if (c == 0){
-                    i++;
-                    goto UTF8Check_exit;
-                }
-            break;
-            case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-            break;
-            case 8: case 9: case 0xA: case 0xB:
-                // either continuation bytes without start byte or 5 or 6 bytes sequence after 0xFX
-                // both cases are errors.
-                goto UTF8Check_exit;
-            /* handle U+0080..U+07FF inline : 2 bytes sequences */
-            case 0xC: case 0xD:
-                if ((i+1 >= len)
-                   ||((source[i]&0xFE) == 0xC0)
-                   ||((source[i+1] >> 6) != 2)){
-                    goto UTF8Check_exit;
-                }
-                i+=1;
-            break;
-             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
-            case 0xE:
-                if ((i+2 >= len)
-                   ||((source[i+1] >> 6) != 2)
-                   ||((source[i+2] >> 6) != 2)){
-                    goto UTF8Check_exit;
-                }
-                i+=2;
-            break;
-            case 0xF:
-                if ((i+3 >= len)
-                   ||(c > 244)
-                   ||((source[i+1] >> 6) != 2)
-                   ||((source[i+2] >> 6) != 2)
-                   ||((source[i+3] >> 6) != 2)){
-                    goto UTF8Check_exit;
-                }
-                i+=3;
-            break;
-        }
-    }
-UTF8Check_exit:
-    return i;
-}
+//static inline size_t UTF8Check(const uint8_t * source, size_t len)
+//{
+//    size_t i = 0;
+//    for (; i < len ; i++){
+//        uint8_t c = source[i];
+//        switch (c >> 4){
+//            case 0:
+//                // allows control characters
+//                if (c == 0){
+//                    i++;
+//                    goto UTF8Check_exit;
+//                }
+//            break;
+//            case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+//            break;
+//            case 8: case 9: case 0xA: case 0xB:
+//                // either continuation bytes without start byte or 5 or 6 bytes sequence after 0xFX
+//                // both cases are errors.
+//                goto UTF8Check_exit;
+//            /* handle U+0080..U+07FF inline : 2 bytes sequences */
+//            case 0xC: case 0xD:
+//                if ((i+1 >= len)
+//                   ||((source[i]&0xFE) == 0xC0)
+//                   ||((source[i+1] >> 6) != 2)){
+//                    goto UTF8Check_exit;
+//                }
+//                i+=1;
+//            break;
+//             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
+//            case 0xE:
+//                if ((i+2 >= len)
+//                   ||((source[i+1] >> 6) != 2)
+//                   ||((source[i+2] >> 6) != 2)){
+//                    goto UTF8Check_exit;
+//                }
+//                i+=2;
+//            break;
+//            case 0xF:
+//                if ((i+3 >= len)
+//                   ||(c > 244)
+//                   ||((source[i+1] >> 6) != 2)
+//                   ||((source[i+2] >> 6) != 2)
+//                   ||((source[i+3] >> 6) != 2)){
+//                    goto UTF8Check_exit;
+//                }
+//                i+=3;
+//            break;
+//        }
+//    }
+//UTF8Check_exit:
+//    return i;
+//}
 
 
 REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
@@ -110,15 +110,15 @@ static inline size_t UTF8Len(const uint8_t * source)
 }
 
 // source_size is size of source in bytes
-static inline void UTF8Upper(uint8_t * source, size_t source_size) {
-    // size_t len = 0;
-    uint8_t c = 0;
-    for (size_t i = 0 ; i < source_size && 0 != (c = source[i]) ; i++){
-        if (c >= 0x61 && c <= 0x7A) {
-            source[i] -= 0x20;
-        }
-    }
-}
+//static inline void UTF8Upper(uint8_t * source, size_t source_size) {
+//    // size_t len = 0;
+//    uint8_t c = 0;
+//    for (size_t i = 0 ; i < source_size && 0 != (c = source[i]) ; i++){
+//        if (c >= 0x61 && c <= 0x7A) {
+//            source[i] -= 0x20;
+//        }
+//    }
+//}
 
 // static inline uint8_t findup(uint8_t c) {
 //     const uint8_t uppertable[] = { 0x38, 0x49, 0x78, 0x7F, 0x86 };
@@ -435,47 +435,47 @@ UTF8toUTF16_exit:
 }
 
 // UTF8toUnicode never writes the trailing zero
-static inline size_t UTF8toUnicode(const uint8_t * source, uint32_t * target, size_t t_len)
-{
-    size_t i_t = 0;
-    uint32_t ucode = 0;
-    size_t i = 0;
-    for (; (ucode = source[i]) != 0 ; i++){
-        switch (ucode >> 4){
-            case 0:
-                // should never happen, catched by test above
-                goto UTF8toUnicode_exit;
-            break;
-            case 1: case 2: case 3:
-            case 4: case 5: case 6: case 7:
-            break;
-            /* handle U+0080..U+07FF inline : 2 bytes sequences */
-            case 0xC: case 0xD:
-                ucode = ((ucode & 0x1F) << 6)|(source[i+1] & 0x3F);
-                i+=1;
-            break;
-             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
-            case 0xE:
-                ucode = ((ucode & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
-                i+=2;
-            break;
-            case 0xF:
-                ucode = ((ucode & 0x07) << 18)|((source[i+1] & 0x3F) << 12)|((source[i+2] & 0x3F) << 6)|(source[i+3] & 0x3F);
-                i+=3;
-            break;
-            case 8: case 9: case 0x0A: case 0x0B:
-                // these should never happen on valid UTF8
-                goto UTF8toUnicode_exit;
-            break;
-        }
-        if (i_t + 1 > t_len) { goto UTF8toUnicode_exit; }
-        target[i_t] = ucode;
-        i_t += 1;
-    }
-    // write final 0
-UTF8toUnicode_exit:
-    return i_t;
-}
+//static inline size_t UTF8toUnicode(const uint8_t * source, uint32_t * target, size_t t_len)
+//{
+//    size_t i_t = 0;
+//    uint32_t ucode = 0;
+//    size_t i = 0;
+//    for (; (ucode = source[i]) != 0 ; i++){
+//        switch (ucode >> 4){
+//            case 0:
+//                // should never happen, catched by test above
+//                goto UTF8toUnicode_exit;
+//            break;
+//            case 1: case 2: case 3:
+//            case 4: case 5: case 6: case 7:
+//            break;
+//            /* handle U+0080..U+07FF inline : 2 bytes sequences */
+//            case 0xC: case 0xD:
+//                ucode = ((ucode & 0x1F) << 6)|(source[i+1] & 0x3F);
+//                i+=1;
+//            break;
+//             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
+//            case 0xE:
+//                ucode = ((ucode & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+//                i+=2;
+//            break;
+//            case 0xF:
+//                ucode = ((ucode & 0x07) << 18)|((source[i+1] & 0x3F) << 12)|((source[i+2] & 0x3F) << 6)|(source[i+3] & 0x3F);
+//                i+=3;
+//            break;
+//            case 8: case 9: case 0x0A: case 0x0B:
+//                // these should never happen on valid UTF8
+//                goto UTF8toUnicode_exit;
+//            break;
+//        }
+//        if (i_t + 1 > t_len) { goto UTF8toUnicode_exit; }
+//        target[i_t] = ucode;
+//        i_t += 1;
+//    }
+//    // write final 0
+//UTF8toUnicode_exit:
+//    return i_t;
+//}
 
 class UTF8toUnicodeIterator
 {

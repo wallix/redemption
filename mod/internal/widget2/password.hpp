@@ -111,9 +111,9 @@ public:
         this->refresh(this->rect);
     }
 
-    const char * show_text() {
-        return this->masked_text.buffer;
-    }
+    //const char * show_text() {
+    //    return this->masked_text.buffer;
+    //}
 
     virtual void draw(const Rect& clip) {
         this->masked_text.draw(clip);

@@ -150,15 +150,15 @@ BOOST_AUTO_TEST_CASE(TestRect)
         BOOST_CHECK_EQUAL(220, res.bottom());
     }
 
-    {
-        /* from a rect we can get subrects of 1 pixel for each sides */
-        Rect r(10, 110, 10, 10);
-        const Rect & inner = r.upper_side();
-        BOOST_CHECK_EQUAL(10, inner.x);
-        BOOST_CHECK_EQUAL(110, inner.y);
-        BOOST_CHECK_EQUAL(20, inner.right());
-        BOOST_CHECK_EQUAL(111, inner.bottom());
-    }
+//     {
+//         /* from a rect we can get subrects of 1 pixel for each sides */
+//         Rect r(10, 110, 10, 10);
+//         const Rect & inner = r.upper_side();
+//         BOOST_CHECK_EQUAL(10, inner.x);
+//         BOOST_CHECK_EQUAL(110, inner.y);
+//         BOOST_CHECK_EQUAL(20, inner.right());
+//         BOOST_CHECK_EQUAL(111, inner.bottom());
+//     }
 
     {
         /* check if a rectangle contains another */
@@ -274,48 +274,35 @@ BOOST_AUTO_TEST_CASE(TestRect)
         Rect a(10, 10, 10, 10);
         Rect b(21, 21, 11, 11);
 
-        struct RectI1 : public Rect::RectIterator {
-            void callback(const Rect & b) {
-                BOOST_CHECK_EQUAL(b, Rect(10, 10, 10, 10));
-            }
-        };
-
-        RectI1 it;
-        a.difference(b, it);
+        a.difference(b, [](const Rect & b) {
+            BOOST_CHECK_EQUAL(b, Rect(10, 10, 10, 10));
+        });
     }
 
     {
         Rect a(10, 10, 50, 50);
         Rect b(20, 20, 10, 5);
 
-        struct RectI1 : public Rect::RectIterator {
-            int counter;
-
-            RectI1() : counter(0) {}
-
-            void callback(const Rect & b) {
-                switch(counter) {
-                    case 0:
-                        BOOST_CHECK(b == Rect(10, 10, 50, 10));
-                    break;
-                    case 1:
-                        BOOST_CHECK(b == Rect(10, 20, 10, 5));
-                    break;
-                    case 2:
-                        BOOST_CHECK(b == Rect(30, 20, 30, 5));
-                    break;
-                    case 3:
-                        BOOST_CHECK(b == Rect(10, 25, 50, 35));
-                    break;
-                    default:
-                        BOOST_CHECK(false);
-                }
-                this->counter++;
+        int counter = 0;
+        a.difference(b, [&counter](const Rect & b) {
+            switch(counter) {
+                case 0:
+                    BOOST_CHECK(b == Rect(10, 10, 50, 10));
+                break;
+                case 1:
+                    BOOST_CHECK(b == Rect(10, 20, 10, 5));
+                break;
+                case 2:
+                    BOOST_CHECK(b == Rect(30, 20, 30, 5));
+                break;
+                case 3:
+                    BOOST_CHECK(b == Rect(10, 25, 50, 35));
+                break;
+                default:
+                    BOOST_CHECK(false);
             }
-        };
-
-        RectI1 it;
-        a.difference(b, it);
+            ++counter;
+        });
     }
 
     BOOST_CHECK_EQUAL(Rect(10, 10, 1, 1), Rect().enlarge_to(10, 10));
@@ -335,10 +322,10 @@ BOOST_AUTO_TEST_CASE(TestRect)
 
     {
         Rect r(10, 110, 10, 10);
-        BOOST_CHECK_EQUAL(r.upper_side(), Rect(10, 110, 10, 1));
-        BOOST_CHECK_EQUAL(r.left_side(), Rect(10, 110, 1, 10));
-        BOOST_CHECK_EQUAL(r.lower_side(), Rect(10, 119, 10, 1));
-        BOOST_CHECK_EQUAL(r.right_side(), Rect(19, 110, 1, 10));
+//         BOOST_CHECK_EQUAL(r.upper_side(), Rect(10, 110, 10, 1));
+//         BOOST_CHECK_EQUAL(r.left_side(), Rect(10, 110, 1, 10));
+//         BOOST_CHECK_EQUAL(r.lower_side(), Rect(10, 119, 10, 1));
+//         BOOST_CHECK_EQUAL(r.right_side(), Rect(19, 110, 1, 10));
 
         BOOST_CHECK_EQUAL(r.intersect(15,115), Rect(10, 110, 5, 5));
     }

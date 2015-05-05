@@ -35,11 +35,6 @@ struct Rect {
     uint16_t cx;
     uint16_t cy;
 
-    struct RectIterator {
-        virtual ~RectIterator() {}
-        virtual void callback(const Rect & rect) = 0;
-    };
-
     int16_t right() const {
         return static_cast<int16_t>(this->x + this->cx);
     }
@@ -135,21 +130,21 @@ struct Rect {
                     static_cast<uint16_t>(this->cy - margin * 2));
     }
 
-    Rect upper_side() const {
-        return Rect(this->x, this->y, this->cx, 1);
-    }
+    //Rect upper_side() const {
+    //    return Rect(this->x, this->y, this->cx, 1);
+    //}
 
-    Rect left_side() const {
-        return Rect(this->x, this->y, 1, this->cy);
-    }
+    //Rect left_side() const {
+    //    return Rect(this->x, this->y, 1, this->cy);
+    //}
 
-    Rect lower_side() const {
-        return Rect(this->x, this->y + this->cy - 1, this->cx, 1);
-    }
+    //Rect lower_side() const {
+    //    return Rect(this->x, this->y + this->cy - 1, this->cx, 1);
+    //}
 
-    Rect right_side() const {
-        return Rect(this->x + this->cx - 1, this->y, 1, this->cy);
-    }
+    //Rect right_side() const {
+    //    return Rect(this->x + this->cx - 1, this->y, 1, this->cy);
+    //}
 
     Rect intersect(uint16_t width, uint16_t height) const
     {
@@ -182,30 +177,31 @@ struct Rect {
     }
 
     // Ensemblist difference
-    void difference(const Rect & a, RectIterator & it) const
+    template<class Fn>
+    void difference(const Rect & a, Fn fn) const
     {
         const Rect & intersect = this->intersect(a);
 
         if (!intersect.isempty()) {
-            if (intersect.y  > this->y) {
-                it.callback(Rect(this->x, this->y,
-                                this->cx, static_cast<uint16_t>(intersect.y - this->y)));
+            if (intersect.y > this->y) {
+                fn(Rect(this->x, this->y,
+                        this->cx, static_cast<uint16_t>(intersect.y - this->y)));
             }
             if (intersect.x > this->x) {
-                it.callback(Rect(this->x, intersect.y,
-                                 static_cast<uint16_t>(intersect.x - this->x), intersect.cy));
+                fn(Rect(this->x, intersect.y,
+                        static_cast<uint16_t>(intersect.x - this->x), intersect.cy));
             }
             if (this->right() > intersect.right()) {
-                it.callback(Rect(intersect.right(), intersect.y,
-                                 static_cast<uint16_t>(this->right() - (intersect.right())), intersect.cy));
+                fn(Rect(intersect.right(), intersect.y,
+                        static_cast<uint16_t>(this->right() - intersect.right()), intersect.cy));
             }
             if (this->y + this->cy > intersect.bottom()) {
-                it.callback(Rect(this->x, intersect.bottom(),
-                                this->cx, static_cast<uint16_t>(this->bottom() - (intersect.bottom()))));
+                fn(Rect(this->x, intersect.bottom(),
+                        this->cx, static_cast<uint16_t>(this->bottom() - intersect.bottom())));
             }
         }
         else {
-            it.callback(*this);
+            fn(*this);
         }
     }
 

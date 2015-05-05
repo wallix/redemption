@@ -174,7 +174,7 @@ public:
             this->offset_of_orderLength);
     }
 
-    static size_t header_length() { return 4; /* orderType(4) */ }
+    //static size_t header_length() { return 4; /* orderType(4) */ }
 };
 
 // [MS-RDPERP] - 2.2.2.2.1 Handshake PDU (TS_RAIL_ORDER_HANDSHAKE)

@@ -46,9 +46,9 @@ public:
         return TIMEOUT_INACTIVE;
     }
 
-    bool is_cancelled() const {
-        return (this->timeout == 0);
-    }
+    //bool is_cancelled() const {
+    //    return (this->timeout == 0);
+    //}
 
     T timeleft(T now) const {
         return (this->timeout - now);

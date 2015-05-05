@@ -97,13 +97,6 @@ public:
     // =========================================================================
     // Generic binary Data access methods
     // =========================================================================
-    unsigned char incheck_sint8(int id, const char * message) {
-        if (!this->in_check_rem(1)){
-            LOG(LOG_ERR, "%s , need=1 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return this->p.in_sint8();
-    }
 
     signed char in_sint8(void) {
         REDASSERT(this->in_check_rem(1));
@@ -111,14 +104,6 @@ public:
     }
 
     // ---------------------------------------------------------------------------
-
-    unsigned char incheck_uint8(int id, const char * message) {
-        if (!this->in_check_rem(1)){
-            LOG(LOG_ERR, "%s , need=1 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return this->p.in_uint8();
-    }
 
     unsigned char in_uint8(void) {
         REDASSERT(this->in_check_rem(1));
@@ -131,29 +116,9 @@ public:
         return *((unsigned char*)(this->p.p));
     }
 
-    // ---------------------------------------------------------------------------
-
-    int16_t incheck_sint16_be(int id, const char * message) {
-        if (!this->in_check_rem(2)){
-            LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return this->p.in_sint16_be();
-    }
-
     int16_t in_sint16_be(void) {
         REDASSERT(this->in_check_rem(2));
         return this->p.in_sint16_be();
-    }
-
-    // ---------------------------------------------------------------------------
-
-    int16_t incheck_sint16_le(int id, const char * message) {
-        if (!this->in_check_rem(2)){
-            LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return this->p.in_sint16_le();
     }
 
     int16_t in_sint16_le(void) {
@@ -161,29 +126,9 @@ public:
         return this->p.in_sint16_le();
     }
 
-    // ---------------------------------------------------------------------------
-
-    uint16_t incheck_uint16_le(int id, const char * message) {
-        if (!this->in_check_rem(2)){
-            LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return this->p.in_uint16_le();
-    }
-
     uint16_t in_uint16_le(void) {
         REDASSERT(this->in_check_rem(2));
         return this->p.in_uint16_le();
-    }
-
-    // ---------------------------------------------------------------------------
-
-    uint16_t incheck_uint16_be(int id, const char * message) {
-        if (!this->in_check_rem(2)){
-            LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return this->p.in_uint16_be();
     }
 
     uint16_t in_uint16_be(void) {
@@ -191,29 +136,9 @@ public:
         return this->p.in_uint16_be();
     }
 
-    // ---------------------------------------------------------------------------
-
-    unsigned int incheck_uint32_le(int id, const char * message) {
-        if (!this->in_check_rem(4)){
-            LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return this->p.in_uint32_le();
-    }
-
     unsigned int in_uint32_le(void) {
         REDASSERT(this->in_check_rem(4));
         return this->p.in_uint32_le();
-    }
-
-    // ---------------------------------------------------------------------------
-
-    unsigned int incheck_uint32_be(int id, const char * message) {
-        if (!this->in_check_rem(4)){
-            LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return this->p.in_uint32_be();
     }
 
     unsigned int in_uint32_be(void) {
@@ -221,28 +146,8 @@ public:
         return this->p.in_uint32_be();
     }
 
-    // ---------------------------------------------------------------------------
-
-    int32_t incheck_sint32_le(int id, const char * message) {
-        if (!this->in_check_rem(4)){
-            LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return this->p.in_sint32_le();
-    }
-
     int32_t in_sint32_le(void) {
         return this->p.in_sint32_le();
-    }
-
-    // ---------------------------------------------------------------------------
-
-    int32_t incheck_sint32_be(int id, const char * message) {
-        if (!this->in_check_rem(4)){
-            LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return this->p.in_sint32_be();
     }
 
     int32_t in_sint32_be(void) {
@@ -260,26 +165,9 @@ public:
         tv.tv_sec = static_cast<uint32_t>(movie_usec / 1000000LL);
     }
 
-    // ---------------------------------------------------------------------------
-    uint64_t incheck_uint64_le(int id, const char * message) {
-        if (!this->in_check_rem(8)){
-            LOG(LOG_ERR, "%s , need=8 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return this->p.in_uint64_le();
-    }
-
     uint64_t in_uint64_le(void) {
         REDASSERT(this->in_check_rem(8));
         return this->p.in_uint64_le();
-    }
-
-    uint64_t incheck_uint64_be(int id, const char * message) {
-        if (!this->in_check_rem(8)){
-            LOG(LOG_ERR, "%s , need=8 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return this->p.in_uint64_be();
     }
 
     uint64_t in_uint64_be(void) {
@@ -548,15 +436,6 @@ public:
         }
     }
 
-    void set_out_2BUE(uint16_t v, size_t offset){
-        if (v <= 127){
-            this->set_out_uint8(static_cast<uint8_t>(v), offset);
-        }
-        else {
-            this->set_out_uint16_be(v|0x8000, offset);
-        }
-    }
-
 // [MS-RDPEGDI] - 2.2.2.2.1.2.1.4 Four-Byte Unsigned Encoding
 // (FOUR_BYTE_UNSIGNED_ENCODING)
 // ==========================================================
@@ -688,10 +567,6 @@ public:
         *(this->p++) = v;
     }
 
-    void set_out_sint8(char v, size_t offset) {
-        (this->get_data())[offset] = v;
-    }
-
     void out_uint16_le(unsigned int v) {
         REDASSERT(this->has_room(2));
         this->p[0] = v & 0xFF;
@@ -709,11 +584,6 @@ public:
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p+=2;
-    }
-
-    void set_out_sint16_le(signed int v, size_t offset) {
-        (this->get_data())[offset] = v & 0xFF;
-        (this->get_data())[offset+1] = (v >> 8) & 0xFF;
     }
 
     void out_uint16_be(unsigned int v) {
@@ -777,13 +647,6 @@ public:
         this->out_clear_bytes(2);
     }
 
-    void out_unistr_crlf(const char* text)
-    {
-        const size_t len = UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t*>(text), this->p, this->tailroom());
-        this->p += len;
-        this->out_clear_bytes(2);
-    }
-
     void out_date_name(const char* text, const size_t buflen)
     {
         size_t i = 0;
@@ -816,19 +679,6 @@ public:
         return this->end - this->begin;
     }
 
-    // Output zero terminated string, including trailing 0
-    void out_sz(const char * v) {
-        size_t len = strlen(v);
-        this->out_copy_bytes((uint8_t const*)v, len+1);
-    }
-
-    // Output zero terminated string, non including trailing 0
-    void out_string(const char * v) {
-        size_t len = strlen(v);
-        this->out_copy_bytes((uint8_t const*)v, len);
-    }
-
-
     void out_copy_bytes(const uint8_t * v, size_t n) {
         REDASSERT(this->has_room(n));
         memcpy(this->p, v, n);
@@ -847,33 +697,16 @@ public:
         this->set_out_copy_bytes((uint8_t const*)v, n, offset);
     }
 
-    void out_concat(const char * v) {
-        this->out_copy_bytes(v, strlen(v));
-    }
-
-    void set_out_concat(const char * v, size_t offset) {
-        this->set_out_copy_bytes((uint8_t const*)v, strlen(v), offset);
-    }
-
-
     void out_clear_bytes(size_t n) {
         REDASSERT(this->has_room(n));
         memset(this->p, 0, n);
         this->p += n;
     }
 
-    void set_out_clear_bytes(size_t n, size_t offset) {
-        memset(this->get_data()+offset, 0, n);
-    }
-
     void out_bytes_le(const uint8_t nb, const unsigned value){
         REDASSERT(this->has_room(nb));
         ::out_bytes_le(this->p, nb, value);
         this->p += nb;
-    }
-
-    void set_out_bytes_le(const uint8_t nb, const unsigned value, size_t offset){
-        ::out_bytes_le(this->get_data()+offset, nb, value);
     }
 
     // =========================================================================
@@ -907,37 +740,6 @@ public:
         ER_CLASS_CTXT           = 0x80, // 1 0
         ER_CLASS_PRIV           = 0xC0  // 1 1
     };
-
-    // =========================================================================
-    // DER encoding rules support methods
-    // =========================================================================
-
-    // return the number of bytes of der length
-    uint8_t out_der_length(uint16_t length){
-        if (length < 0x80){
-            this->out_uint8(length);
-            return 1;
-        }
-        else if (length < 0x100){
-            this->out_uint8(0x81);
-            this->out_uint8(length);
-            return 2;
-        }
-        else {
-            this->out_uint8(0x82);
-            this->out_uint8(length);
-            return 3;
-        }
-    }
-
-    void out_der_general_string(const char* str)
-    {
-        uint16_t length = strlen(str);
-        this->out_uint8(ER_CLASS_UNIV | ER_PRIMITIVE | ER_TAG_GENERAL_STRING);
-        this->out_der_length(length);
-        this->out_copy_bytes(str, length);
-    }
-
 };
 
 
@@ -983,10 +785,6 @@ public:
         return this->data;
     }
 
-    uint8_t * _get_buffer() const {
-        return this->data;
-    }
-
     uint32_t get_offset() const {
         return this->p - this->get_data();
     }
@@ -1007,27 +805,10 @@ public:
     // =========================================================================
     // Generic binary Data access methods
     // =========================================================================
-    unsigned char incheck_sint8(int id, const char * message) {
-        if (!this->in_check_rem(1)){
-            LOG(LOG_ERR, "%s , need=1 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return in_sint8();
-    }
 
     signed char in_sint8(void) {
         REDASSERT(this->in_check_rem(1));
         return *((signed char*)(this->p++));
-    }
-
-    // ---------------------------------------------------------------------------
-
-    unsigned char incheck_uint8(int id, const char * message) {
-        if (!this->in_check_rem(1)){
-            LOG(LOG_ERR, "%s , need=1 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return in_uint8();
     }
 
     unsigned char in_uint8(void) {
@@ -1041,46 +822,17 @@ public:
         return *((unsigned char*)(this->p));
     }
 
-    // ---------------------------------------------------------------------------
-
-    int16_t incheck_sint16_be(int id, const char * message) {
-        if (!this->in_check_rem(2)){
-            LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return in_sint16_be();
-    }
-
     int16_t in_sint16_be(void) {
         REDASSERT(this->in_check_rem(2));
         unsigned int v = this->in_uint16_be();
         return (int16_t)((v > 32767)?v - 65536:v);
     }
 
-    // ---------------------------------------------------------------------------
-
-    int16_t incheck_sint16_le(int id, const char * message) {
-        if (!this->in_check_rem(2)){
-            LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return in_sint16_le();
-    }
 
     int16_t in_sint16_le(void) {
         REDASSERT(this->in_check_rem(2));
         unsigned int v = this->in_uint16_le();
         return (int16_t)((v > 32767)?v - 65536:v);
-    }
-
-    // ---------------------------------------------------------------------------
-
-    uint16_t incheck_uint16_le(int id, const char * message) {
-        if (!this->in_check_rem(2)){
-            LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return in_uint16_le();
     }
 
     uint16_t in_uint16_le(void) {
@@ -1089,30 +841,10 @@ public:
         return (uint16_t)(this->p[-2] | (this->p[-1] << 8));
     }
 
-    // ---------------------------------------------------------------------------
-
-    uint16_t incheck_uint16_be(int id, const char * message) {
-        if (!this->in_check_rem(2)){
-            LOG(LOG_ERR, "%s , need=2 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return in_uint16_be();
-    }
-
     uint16_t in_uint16_be(void) {
         REDASSERT(this->in_check_rem(2));
         this->p += 2;
         return (uint16_t)(this->p[-1] | (this->p[-2] << 8)) ;
-    }
-
-    // ---------------------------------------------------------------------------
-
-    unsigned int incheck_uint32_le(int id, const char * message) {
-        if (!this->in_check_rem(4)){
-            LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return in_uint32_le();
     }
 
     unsigned int in_uint32_le(void) {
@@ -1125,16 +857,6 @@ public:
              ;
     }
 
-    // ---------------------------------------------------------------------------
-
-    unsigned int incheck_uint32_be(int id, const char * message) {
-        if (!this->in_check_rem(4)){
-            LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return in_uint32_be();
-    }
-
     unsigned int in_uint32_be(void) {
         REDASSERT(this->in_check_rem(4));
         this->p += 4;
@@ -1145,29 +867,9 @@ public:
              ;
     }
 
-    // ---------------------------------------------------------------------------
-
-    int32_t incheck_sint32_le(int id, const char * message) {
-        if (!this->in_check_rem(4)){
-            LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return in_sint32_le();
-    }
-
     int32_t in_sint32_le(void) {
         uint64_t v = this->in_uint32_le();
         return (int32_t)((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
-    }
-
-    // ---------------------------------------------------------------------------
-
-    int32_t incheck_sint32_be(int id, const char * message) {
-        if (!this->in_check_rem(4)){
-            LOG(LOG_ERR, "%s , need=4 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return in_sint32_be();
     }
 
     int32_t in_sint32_be(void) {
@@ -1206,14 +908,6 @@ public:
         this->p[6] = (v >> 48) & 0xFF;
         this->p[7] = (uint8_t)(v >> 56) & 0xFF;
         this->p+=8;
-    }
-
-    uint64_t incheck_uint64_le(int id, const char * message) {
-        if (!this->in_check_rem(8)){
-            LOG(LOG_ERR, "%s , need=8 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return in_uint64_le();
     }
 
     uint64_t in_uint64_le(void) {
@@ -1255,14 +949,6 @@ public:
         return res;
     }
 
-
-    uint64_t incheck_uint64_be(int id, const char * message) {
-        if (!this->in_check_rem(8)){
-            LOG(LOG_ERR, "%s , need=8 remains=%u", message, this->in_remain());
-            throw Error(id);
-        }
-        return in_uint64_be();
-    }
 
     uint64_t in_uint64_be(void) {
         REDASSERT(this->in_check_rem(8));
@@ -1544,10 +1230,6 @@ public:
         *(this->p++) = v;
     }
 
-    void set_out_sint8(char v, size_t offset) {
-        (this->get_data())[offset] = v;
-    }
-
     void out_uint16_le(unsigned int v) {
         REDASSERT(this->has_room(2));
         this->p[0] = v & 0xFF;
@@ -1565,11 +1247,6 @@ public:
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p+=2;
-    }
-
-    void set_out_sint16_le(signed int v, size_t offset) {
-        (this->get_data())[offset] = v & 0xFF;
-        (this->get_data())[offset+1] = (v >> 8) & 0xFF;
     }
 
     void out_uint16_be(unsigned int v) {
@@ -1633,13 +1310,6 @@ public:
         this->out_clear_bytes(2);
     }
 
-    void out_unistr_crlf(const char* text)
-    {
-        const size_t len = UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t*>(text), this->p, this->tailroom());
-        this->p += len;
-        this->out_clear_bytes(2);
-    }
-
     void out_date_name(const char* text, const size_t buflen)
     {
         size_t i = 0;
@@ -1690,10 +1360,10 @@ public:
     }
 
     // Output zero terminated string, including trailing 0
-    void out_sz(const char * v) {
-        size_t len = strlen(v);
-        this->out_copy_bytes((uint8_t const*)v, len+1);
-    }
+    //void out_sz(const char * v) {
+    //    size_t len = strlen(v);
+    //    this->out_copy_bytes((uint8_t const*)v, len+1);
+    //}
 
     // Output zero terminated string, non including trailing 0
     void out_string(const char * v) {
@@ -1724,23 +1394,10 @@ public:
         this->set_out_copy_bytes((uint8_t const*)v, n, offset);
     }
 
-    void out_concat(const char * v) {
-        this->out_copy_bytes(v, strlen(v));
-    }
-
-    void set_out_concat(const char * v, size_t offset) {
-        this->set_out_copy_bytes((uint8_t const*)v, strlen(v), offset);
-    }
-
-
     void out_clear_bytes(size_t n) {
         REDASSERT(this->has_room(n));
         memset(this->p, 0, n);
         this->p += n;
-    }
-
-    void set_out_clear_bytes(size_t n, size_t offset) {
-        memset(this->get_data()+offset, 0, n);
     }
 
     void out_bytes_le(const uint8_t nb, const unsigned value){
@@ -1784,37 +1441,6 @@ public:
         ER_CLASS_CTXT           = 0x80, // 1 0
         ER_CLASS_PRIV           = 0xC0  // 1 1
     };
-
-    // =========================================================================
-    // DER encoding rules support methods
-    // =========================================================================
-
-    // return the number of bytes of der length
-    uint8_t out_der_length(uint16_t length){
-        if (length < 0x80){
-            this->out_uint8(length);
-            return 1;
-        }
-        else if (length < 0x100){
-            this->out_uint8(0x81);
-            this->out_uint8(length);
-            return 2;
-        }
-        else {
-            this->out_uint8(0x82);
-            this->out_uint8(length);
-            return 3;
-        }
-    }
-
-    void out_der_general_string(const char* str)
-    {
-        uint16_t length = strlen(str);
-        this->out_uint8(ER_CLASS_UNIV | ER_PRIMITIVE | ER_TAG_GENERAL_STRING);
-        this->out_der_length(length);
-        this->out_copy_bytes(str, length);
-    }
-
 
     void print() {
         const char * data = reinterpret_cast<const char *>(this->get_data());

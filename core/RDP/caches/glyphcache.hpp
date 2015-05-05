@@ -55,15 +55,11 @@ private:
 public:
     Glyph glyphs[NUMBER_OF_GLYPH_CACHES][NUMBER_OF_GLYPH_CACHE_ENTRIES];
 
-    int reset(number_of_entries_t const & number_of_entries_in_glyph_cache) {
-        /* free all the cached font items */
-        this->~GlyphCache();
-        new (this)GlyphCache();
+    GlyphCache() = default;
 
-        this->number_of_entries_in_cache = number_of_entries_in_glyph_cache;
-
-        return 0;
-    }
+    GlyphCache(number_of_entries_t const & number_of_entries_in_glyph_cache)
+    : number_of_entries_in_cache(number_of_entries_in_glyph_cache)
+    {}
 
     enum t_glyph_cache_result {
           GLYPH_FOUND_IN_CACHE

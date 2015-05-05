@@ -78,9 +78,9 @@ struct FieldObserver : public ConfigurationHolder {
             if (this->ini)
                 this->ini->use_notify(this);
         }
-        inline void unask() {
-            this->asked = false;
-        }
+        //inline void unask() {
+        //    this->asked = false;
+        //}
 
     public:
         /*******************************
@@ -451,7 +451,7 @@ public:
         return res;
     }
 
-    bool check() {
+    bool check() const {
         return this->something_changed;
     }
 

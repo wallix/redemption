@@ -65,9 +65,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     BStream payload(65536);
     t.recv(&payload.end, payload_length);
 
-    uint8_t fac_mcs_type = MCS::peekBerEncodedMCSType(payload);
-    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_CONNECT_INITIAL, fac_mcs_type);
-
     MCS::CONNECT_INITIAL_PDU_Recv mcs(payload, MCS::BER_ENCODING);
 
     BOOST_CHECK_EQUAL(101, mcs.tag);
@@ -149,9 +146,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
 
     BStream payload(65536);
     t.recv(&payload.end, payload_length);
-
-    uint8_t fac_mcs_type = MCS::peekBerEncodedMCSType(payload);
-    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_CONNECT_RESPONSE, fac_mcs_type);
 
     MCS::CONNECT_RESPONSE_PDU_Recv mcs(payload, MCS::BER_ENCODING);
 

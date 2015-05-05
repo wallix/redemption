@@ -27,7 +27,6 @@
 #include <cstdint>
 
 class DiffieHellman {
-private:
     UdevRandom randgen;
     Random * rand;
     uint64_t max;
@@ -36,11 +35,14 @@ private:
     uint64_t pub;
     uint64_t priv;
     uint64_t key;
+
 public:
     enum {
         DH_MAX_BITS = 31
     };
+
     bool error;
+
     DiffieHellman(uint64_t generator, uint64_t modulus)
         : randgen()
         , rand(&this->randgen)
@@ -54,19 +56,19 @@ public:
     {
     }
 
-    ~DiffieHellman() {}
+    ~DiffieHellman() = default;
 
-    void set_random(Random * newrand) {
-        this->rand = newrand;
-    }
-    void unset_random() {
-        this->rand = &this->randgen;
-    }
+    //void set_random(Random * newrand) {
+    //    this->rand = newrand;
+    //}
+    //void unset_random() {
+    //    this->rand = &this->randgen;
+    //}
 
     uint64_t createInterKey() {
         uint8_t privgen[8] = {};
         this->rand->random(privgen, 8);
-        this->priv = this->uint8p_to_uint64(privgen) % max;
+        this->priv = this->uint8p_to_uint64(privgen) % this->max;
         this->pub = this->xpowymodn(this->gen, this->priv, this->mod);
         return this->pub;
     }
@@ -77,7 +79,8 @@ public:
         this->key = this->xpowymodn(interKey, this->priv, this->mod);
         return this->key;
     }
-    uint64_t xpowymodn(uint64_t x, uint64_t y, uint64_t n) {
+
+    static uint64_t xpowymodn(uint64_t x, uint64_t y, uint64_t n) {
         uint64_t res = 1;
         const uint64_t oneshift63 = uint64_t(1) << 63;
         for (int i = 0; i < 64; i++) {

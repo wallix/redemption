@@ -183,7 +183,7 @@ struct TSRequest {
                                                        this->negoTokens.get_data(),
                                                        this->negoTokens.size());
 
-            // assert length == 0
+            assert(length == 0);
         }
 
         /* [2] authInfo (OCTET STRING) */
@@ -193,7 +193,7 @@ struct TSRequest {
             length -= BER::write_sequence_octet_string(stream, 2,
                                                        this->authInfo.get_data(),
                                                        this->authInfo.size());
-            // assert length == 0
+            assert(length == 0);
         }
 
         /* [3] pubKeyAuth (OCTET STRING) */
@@ -203,7 +203,7 @@ struct TSRequest {
             length -= BER::write_sequence_octet_string(stream, 3,
                                                        this->pubKeyAuth.get_data(),
                                                        this->pubKeyAuth.size());
-            // assert length == 0
+            assert(length == 0);
         }
 
         stream.mark_end();

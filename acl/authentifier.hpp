@@ -389,10 +389,10 @@ public:
         this->ini.context.authchannel_target.set_from_cstr(target);
     }
 
-    virtual void set_auth_channel_result(const char * result)
-    {
-        this->ini.context.authchannel_result.set_from_cstr(result);
-    }
+    //virtual void set_auth_channel_result(const char * result)
+    //{
+    //    this->ini.context.authchannel_result.set_from_cstr(result);
+    //}
 
     virtual void report(const char * reason, const char * message)
     {

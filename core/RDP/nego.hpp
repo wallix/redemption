@@ -461,8 +461,8 @@ struct RdpNego
     }
 
 
-    void send_negotiation_response()
-    {
+//     void send_negotiation_response()
+//     {
 //        STREAM* s;
 //        rdpSettings* settings;
 //        int length;
@@ -547,7 +547,7 @@ struct RdpNego
 //        }
 
 //        return ret;
-    }
+//     }
 
 
 //     void recv_resquest(const char * certificate_password, ClientInfo & client_info,

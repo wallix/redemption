@@ -1244,7 +1244,7 @@ public:
         stream.in_skip_bytes(InputBufferLength);
     }
 
-    uint32_t IoControlCode() const { return this->IoControlCode_; }
+    //uint32_t IoControlCode() const { return this->IoControlCode_; }
 
 private:
     inline size_t str(char * buffer, size_t size) const {

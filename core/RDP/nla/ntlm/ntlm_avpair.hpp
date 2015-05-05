@@ -184,16 +184,16 @@ struct NtlmAvPairList {
         this->list[avId] = new NtlmAvPair(avId, value, length);
     }
 
-    bool rm(NTLM_AV_ID avId) {
-        // ASSUME avID != MsvAvEOL
-        bool res = false;
-        if (this->list[avId]) {
-            delete this->list[avId];
-            this->list[avId] = NULL;
-            res = true;
-        }
-        return res;
-    }
+    //bool rm(NTLM_AV_ID avId) {
+    //    // ASSUME avID != MsvAvEOL
+    //    bool res = false;
+    //    if (this->list[avId]) {
+    //        delete this->list[avId];
+    //        this->list[avId] = NULL;
+    //        res = true;
+    //    }
+    //    return res;
+    //}
 
     size_t length() {
         size_t res = 0;
@@ -206,16 +206,16 @@ struct NtlmAvPairList {
     }
 
     size_t packet_length() {
-        size_t res = 0;
-        for (int i = 0; i < AV_ID_MAX; i++) {
-            if (this->list[i]) {
-                res += sizeof(this->list[i]->AvId);
-                res += sizeof(this->list[i]->AvLen);
-                // res += 4;
-                res += this->list[i]->AvLen;
-            }
-        }
-        return res;
+       size_t res = 0;
+       for (int i = 0; i < AV_ID_MAX; i++) {
+           if (this->list[i]) {
+               res += sizeof(this->list[i]->AvId);
+               res += sizeof(this->list[i]->AvLen);
+               // res += 4;
+               res += this->list[i]->AvLen;
+           }
+       }
+       return res;
     }
 
     void emit(Stream & stream) {

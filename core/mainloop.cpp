@@ -120,36 +120,36 @@ void init_signals(void)
     sigaction(SIGUSR2, &sa, NULL);
 }
 
-void reset_signals(void)
-{
-    struct sigaction sa;
-
-    sa.sa_flags = 0;
-    sa.sa_handler = SIG_DFL;
-
-    sigemptyset(&sa.sa_mask);
-    sigaddset(&sa.sa_mask, SIGSEGV);
-    sigaddset(&sa.sa_mask, SIGBUS);
-    sigaddset(&sa.sa_mask, SIGTERM);
-    sigaddset(&sa.sa_mask, SIGHUP);
-    sigaddset(&sa.sa_mask, SIGINT);
-    sigaddset(&sa.sa_mask, SIGPIPE);
-    sigaddset(&sa.sa_mask, SIGCHLD);
-    sigaddset(&sa.sa_mask, SIGALRM);
-    sigaddset(&sa.sa_mask, SIGUSR1);
-    sigaddset(&sa.sa_mask, SIGUSR2);
-
-    sigaction(SIGSEGV, &sa, NULL);
-    sigaction(SIGBUS, &sa, NULL);
-    sigaction(SIGTERM, &sa, NULL);
-    sigaction(SIGHUP, &sa, NULL);
-    sigaction(SIGINT, &sa, NULL);
-    sigaction(SIGPIPE, &sa, NULL);
-    sigaction(SIGCHLD, &sa, NULL);
-    sigaction(SIGALRM, &sa, NULL);
-    sigaction(SIGUSR1, &sa, NULL);
-    sigaction(SIGUSR2, &sa, NULL);
-}
+//void reset_signals(void)
+//{
+//    struct sigaction sa;
+//
+//    sa.sa_flags = 0;
+//    sa.sa_handler = SIG_DFL;
+//
+//    sigemptyset(&sa.sa_mask);
+//    sigaddset(&sa.sa_mask, SIGSEGV);
+//    sigaddset(&sa.sa_mask, SIGBUS);
+//    sigaddset(&sa.sa_mask, SIGTERM);
+//    sigaddset(&sa.sa_mask, SIGHUP);
+//    sigaddset(&sa.sa_mask, SIGINT);
+//    sigaddset(&sa.sa_mask, SIGPIPE);
+//    sigaddset(&sa.sa_mask, SIGCHLD);
+//    sigaddset(&sa.sa_mask, SIGALRM);
+//    sigaddset(&sa.sa_mask, SIGUSR1);
+//    sigaddset(&sa.sa_mask, SIGUSR2);
+//
+//    sigaction(SIGSEGV, &sa, NULL);
+//    sigaction(SIGBUS, &sa, NULL);
+//    sigaction(SIGTERM, &sa, NULL);
+//    sigaction(SIGHUP, &sa, NULL);
+//    sigaction(SIGINT, &sa, NULL);
+//    sigaction(SIGPIPE, &sa, NULL);
+//    sigaction(SIGCHLD, &sa, NULL);
+//    sigaction(SIGALRM, &sa, NULL);
+//    sigaction(SIGUSR1, &sa, NULL);
+//    sigaction(SIGUSR2, &sa, NULL);
+//}
 
 void redemption_new_session()
 {

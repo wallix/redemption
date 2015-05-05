@@ -38,40 +38,6 @@
 // - Send given fields from config
 // - Recover fields from network and update Config
 
-BOOST_AUTO_TEST_CASE(TestAclSerializerOutItem)
-{
-
-    Inifile ini;
-    LogTransport trans;
-    AclSerializer acl(&ini, trans, 0);
-
-    // test out_item
-    // out_item(Stream stream,authid_t authid) should add in the Stream a string
-    // composed of authid key string and its value if known in Inifile,
-    // or "ASK" if the value is asked.
-    BStream stream(1024);
-    ini.context_ask(AUTHID_TARGET_PROTOCOL);
-    acl.out_item(stream, AUTHID_TARGET_PROTOCOL);
-    BOOST_CHECK_EQUAL(0,
-                      strncmp((char*)stream.get_data(),
-                              STRAUTHID_TARGET_PROTOCOL "\nASK\n",
-                              strlen(STRAUTHID_TARGET_PROTOCOL "\nASK\n")));
-    stream.reset();
-
-    acl.out_item(stream, AUTHID_PASSWORD);
-    BOOST_CHECK_EQUAL(0,
-                      strncmp((char*)stream.get_data(),
-                              STRAUTHID_PASSWORD "\nASK\n",
-                              strlen(STRAUTHID_PASSWORD "\nASK\n")));
-    ini.context_set_value(AUTHID_PASSWORD,"SecureLinux");
-    acl.out_item(stream, AUTHID_PASSWORD);
-    BOOST_CHECK_EQUAL(0,
-                      strncmp((char*)stream.get_data()+13,
-                              STRAUTHID_PASSWORD "\n!SecureLinux\n",
-                              strlen(STRAUTHID_PASSWORD "\n!SecureLinux\n")));
-    stream.reset();
-}
-
 BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 {
     Inifile ini;
@@ -99,11 +65,10 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     BStream stream(1024);
     // NORMAL CASE WITH SESSION ID CHANGE
     stream.out_uint32_be(0);
-    TODO("rename out_concat out_stringz")
-    stream.out_concat(STRAUTHID_AUTH_USER "\nASK\n");
-    stream.out_concat(STRAUTHID_PASSWORD "\nASK\n");
+    stream.out_string(STRAUTHID_AUTH_USER "\nASK\n");
+    stream.out_string(STRAUTHID_PASSWORD "\nASK\n");
 
-    stream.out_concat(STRAUTHID_SESSION_ID "\n!6455\n");
+    stream.out_string(STRAUTHID_SESSION_ID "\n!6455\n");
     stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
 
     GeneratorTransport trans((char *)stream.get_data(),stream.get_offset());
@@ -125,8 +90,8 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     // try exception
     stream.reset();
     stream.out_uint32_be(0xFFFFFFFF);
-    stream.out_concat(STRAUTHID_AUTH_USER "\nASK\n");
-    stream.out_concat(STRAUTHID_PASSWORD "\nASK\n");
+    stream.out_string(STRAUTHID_AUTH_USER "\nASK\n");
+    stream.out_string(STRAUTHID_PASSWORD "\nASK\n");
 
     GeneratorTransport transexcpt((char *)stream.p,stream.get_offset());
     AclSerializer aclexcpt(&ini, transexcpt, 0);
@@ -141,8 +106,8 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
 inline void execute_test_initem(Stream & stream, AclSerializer & acl, const authid_t authid, const char * value)
 {
     // create stream with key , ask
-    stream.out_concat(string_from_authid(authid));
-    stream.out_concat(value);
+    stream.out_string(string_from_authid(authid));
+    stream.out_string(value);
     stream.mark_end();
     stream.rewind();
 

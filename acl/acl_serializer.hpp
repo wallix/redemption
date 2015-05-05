@@ -157,32 +157,6 @@ public:
         }
     }
 
-    TODO("move that function to Inifile create specialized stream object InifileStream "
-         "maybe out_item should be in config , not here")
-    void out_item(Stream & stream, authid_t authid)
-    {
-        const char * key = string_from_authid(authid);
-        if (this->ini->context_is_asked(authid)){
-            LOG(LOG_INFO, "sending (from authid) %s=ASK", key);
-            stream.out_copy_bytes(key, strlen(key));
-            stream.out_copy_bytes("\nASK\n",5);
-        }
-        else {
-            const char * val         = this->ini->context_get_value(authid);
-            const char * display_val = val;
-
-            if ((strncasecmp("password", static_cast<const char*>(key), 8) == 0)
-                ||(strncasecmp("target_password", static_cast<const char*>(key), 15) == 0)){
-                display_val = ::get_printable_password(val, this->ini->debug.password);
-            }
-            LOG(LOG_INFO, "sending (from authid) %s=%s", key, display_val);
-            stream.out_copy_bytes(key, strlen(key));
-            stream.out_uint8('\n');
-            stream.out_uint8('!');
-            stream.out_copy_bytes(val, strlen(val));
-            stream.out_uint8('\n');
-        }
-    }
     void out_item_new(Stream & stream, Inifile::BaseField * bfield)
     {
         char tmp[65536];

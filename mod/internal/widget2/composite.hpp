@@ -361,26 +361,27 @@ public:
 
         ::fill_region(this->drawable, region, bg_color);
     }
-    virtual void hide_child(const Rect & clip, int bg_color) {
-        Region region;
 
-        CompositeContainer::iterator iter_w_current = this->impl->get_first();
-        while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-            Widget2 * w = this->impl->get(iter_w_current);
-            REDASSERT(w);
-
-            Rect rect_widget = clip.intersect(w->rect);
-            if (!rect_widget.isempty()) {
-                region.add_rect(rect_widget);
-            }
-
-            iter_w_current = this->impl->get_next(iter_w_current);
-        }
-
-        if (!region.rects.empty()) {
-            ::fill_region(this->drawable, region, bg_color);
-        }
-    }
+    //virtual void hide_child(const Rect & clip, int bg_color) {
+    //    Region region;
+    //
+    //    CompositeContainer::iterator iter_w_current = this->impl->get_first();
+    //    while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
+    //        Widget2 * w = this->impl->get(iter_w_current);
+    //        REDASSERT(w);
+    //
+    //        Rect rect_widget = clip.intersect(w->rect);
+    //        if (!rect_widget.isempty()) {
+    //            region.add_rect(rect_widget);
+    //        }
+    //
+    //        iter_w_current = this->impl->get_next(iter_w_current);
+    //    }
+    //
+    //    if (!region.rects.empty()) {
+    //        ::fill_region(this->drawable, region, bg_color);
+    //    }
+    //}
 
     virtual int get_bg_color() const {
         return this->bg_color;
