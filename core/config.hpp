@@ -529,7 +529,7 @@ public:
         bool disable_proxy_opt = false;
 
         // The maximum length of the chunked virtual channel data.
-        uint32_t max_chunked_virtual_channel_data_length = 1024 * 128;
+        uint32_t max_chunked_virtual_channel_data_length = 2 * 1024 * 1024;
 
         Inifile_globals() = default;
     } globals;
