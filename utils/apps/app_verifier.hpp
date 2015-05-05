@@ -12,13 +12,13 @@
 #include <string>
 
 #include "version.hpp"
-#include "FileToGraphic.hpp"
 #include "crypto_in_filename_transport.hpp"
 #include "ssl_calls.hpp"
 #include "config.hpp"
 //#include "crypto_impl.hpp"
 #include "ccryptofile.h"
 #include "program_options.hpp"
+#include "fdbuf.hpp"
 
 #ifndef HASH_LEN
 #define HASH_LEN 64
@@ -34,12 +34,13 @@ static inline bool check_file_hash( const char * file_path
 
     SslHMAC hmac(crypto_key, md);
 
-    int fd = open(file_path, O_RDONLY);
-    if (fd == -1) {
+    io::posix::fdbuf file;
+    file.open(file_path, O_RDONLY);
+    if (file.is_open()) {
         char buf[4096];
         int  number_of_bytes_read;
 
-        while ((number_of_bytes_read = read(fd, buf, sizeof(buf))) > 0) {
+        while ((number_of_bytes_read = file.read(buf, sizeof(buf))) > 0) {
             StaticStream ss(buf, number_of_bytes_read);
 
             hmac.update(ss);
@@ -49,7 +50,7 @@ static inline bool check_file_hash( const char * file_path
             }
         }
 
-        close(fd);
+        file.close();
 
         uint8_t         hash[4096];
         FixedSizeStream res(hash, sizeof(hash));
@@ -124,7 +125,8 @@ static inline int extract_file_info( const char * space_separated_values
     full_hash.mark_end();
 
     // first 4 kb hash
-    for (/*point_end = point_start, */point_start--;
+    point_end = point_start;
+    for (point_start--;
          (*point_start != ' ') && (point_start > space_separated_values);
          point_start--);
     if ((*point_start != ' ') || (point_end - (point_start + 1) != HASH_LEN)) {
