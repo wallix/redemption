@@ -232,8 +232,8 @@ class mod_rdp : public mod_api {
     device_io_request_collection_type device_io_requests;
 
     FileSystemDriveManager file_system_drive_manager;
-    bool                   device_capability_version_02_supported    = false;
-    bool                   proxy_managed_file_system_virtual_channel = false;   // Otherwise, the channel is managed by client.
+    bool                   device_capability_version_02_supported = false;
+    bool                   proxy_managed_rdpdr_channel            = false;  // Otherwise, the channel is managed by client.
 
     RedirectionInfo & redir_info;
 
@@ -1711,7 +1711,8 @@ public:
                                    from client to server passing through the "proxy" */
                                 GCC::UserData::CSNet cs_net;
                                 cs_net.channelCount = num_channels;
-                                bool has_rdpdr_channel = false;
+                                bool has_rdpdr_channel  = false;
+                                bool has_rdpsnd_channel = false;
                                 for (size_t index = 0; index < num_channels; index++) {
                                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
                                     if (this->authorization_channels.is_authorized(channel_item.name) ||
@@ -1753,12 +1754,32 @@ public:
                                     this->mod_channel_list.push_back(def);
                                     cs_net.channelCount++;
 
-                                    this->proxy_managed_file_system_virtual_channel = true;
+                                    this->proxy_managed_rdpdr_channel = true;
                                 }
                                 else {
-                                    this->proxy_managed_file_system_virtual_channel =
+                                    this->proxy_managed_rdpdr_channel =
                                         (has_rdpdr_channel &&
                                          !this->authorization_channels.is_authorized(channel_names::rdpdr));
+                                }
+
+                                // The RDPDR channel advertised by the client is ONLY accepted by the RDP
+                                //  server 2012 if the RDPSND channel is also advertised.
+                                if (this->file_system_drive_manager.HasManagedDrive() &&
+                                    !has_rdpsnd_channel) {
+                                    ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
+                                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
+                                             "%s", channel_names::rdpsnd);
+                                    cs_net.channelDefArray[cs_net.channelCount].options =
+                                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                        | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
+                                    CHANNELS::ChannelDef def;
+                                    ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpsnd);
+                                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                                    if (this->verbose & 16){
+                                        def.log(cs_net.channelCount);
+                                    }
+                                    this->mod_channel_list.push_back(def);
+                                    cs_net.channelCount++;
                                 }
 
                                 // Inject a new channel for auth_channel virtual channel (wablauncher)
@@ -1791,7 +1812,7 @@ public:
     this->mod_channel_list.push_back(def);
     cs_net.channelCount++;
 }
-*/
+/*
 
                                 if (this->verbose & 1) {
                                     cs_net.log("Sending to server");
@@ -6185,7 +6206,7 @@ public:
                     server_announce_request.log(LOG_INFO);
                 }
 
-                if (this->proxy_managed_file_system_virtual_channel) {
+                if (this->proxy_managed_rdpdr_channel) {
                     REDASSERT(this->file_system_drive_manager.HasManagedDrive());
 
                     {
@@ -6249,7 +6270,7 @@ public:
                         "mod_rdp::process_rdpdr_event: Server Client ID Confirm");
                 }
 
-                if (this->proxy_managed_file_system_virtual_channel) {
+                if (this->proxy_managed_rdpdr_channel) {
                     REDASSERT(this->file_system_drive_manager.HasManagedDrive());
 
                     {
@@ -6513,7 +6534,7 @@ public:
             break;
         }
 
-        if (!this->proxy_managed_file_system_virtual_channel) {
+        if (!this->proxy_managed_rdpdr_channel) {
             stream.p = saved_stream_p;
 
             this->send_to_front_channel(
