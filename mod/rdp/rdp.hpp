@@ -1812,7 +1812,7 @@ public:
     this->mod_channel_list.push_back(def);
     cs_net.channelCount++;
 }
-/*
+*/
 
                                 if (this->verbose & 1) {
                                     cs_net.log("Sending to server");
