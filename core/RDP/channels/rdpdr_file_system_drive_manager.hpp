@@ -166,18 +166,20 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p> fd=%d",
         const uint32_t DesiredAccess = device_create_request.DesiredAccess();
 
         const int last_error = [] (const char * path,
-                                   bool right_to_delete_is_required,
+                                   uint32_t DesiredAccess,
                                    int drive_access_mode,
                                    DIR *& out_dir) -> int {
-            if ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY) &&
-                 right_to_delete_is_required) {
+            if (((drive_access_mode != O_RDWR) && (drive_access_mode != O_RDONLY) &&
+                 smb2::read_access_is_required(DesiredAccess, /*strict_check = */false)) ||
+                ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY) &&
+                 smb2::write_access_is_required(DesiredAccess))) {
                 out_dir = nullptr;
                 return EACCES;
             }
 
             out_dir = ::opendir(path);
             return ((out_dir != nullptr) ? 0 : errno);
-        } (full_path.c_str(), (DesiredAccess & smb2::DELETE), drive_access_mode, this->dir);
+        } (full_path.c_str(), DesiredAccess, drive_access_mode, this->dir);
 
         if (verbose) {
             LOG(LOG_INFO,
@@ -887,15 +889,16 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p> fd=%d",
 
         const uint32_t DesiredAccess = device_create_request.DesiredAccess();
 
-        if (((DesiredAccess & (smb2::FILE_READ_DATA | smb2::GENERIC_READ)) &&
-             (DesiredAccess & (smb2::FILE_WRITE_DATA | smb2::GENERIC_WRITE))) ||
-            (DesiredAccess & smb2::GENERIC_ALL)) {
+        const bool strict_check = true;
+
+        if (smb2::read_access_is_required(DesiredAccess, strict_check) &&
+            smb2::write_access_is_required(DesiredAccess)) {
             open_flags |= O_RDWR;
         }
-        else if (DesiredAccess & (smb2::FILE_WRITE_DATA | smb2::GENERIC_WRITE)) {
+        else if (smb2::write_access_is_required(DesiredAccess)) {
             open_flags |= O_WRONLY;
         }
-        else/* if (DesiredAccess & (smb2::FILE_READ_DATA | smb2::GENERIC_READ))*/ {
+        else/* if (smb2::read_access_is_required(DesiredAccess, strict_check))*/ {
             open_flags |= O_RDONLY;
         }
 
@@ -922,23 +925,20 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p> fd=%d",
 
         const int last_error = [] (const char * path,
                                    int open_flags,
-                                   bool right_to_delete_is_required,
-                                   bool right_to_change_attributes_is_required,
+                                   uint32_t DesiredAccess,
                                    int drive_access_mode,
                                    int & out_fd) -> int {
-            if (((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY) &&
-                 ((open_flags & O_RDWR) || (open_flags & O_WRONLY) ||
-                  right_to_delete_is_required || right_to_change_attributes_is_required)) ||
-                ((drive_access_mode != O_RDWR) && (drive_access_mode != O_RDONLY) &&
-                 ((open_flags & O_RDWR) || (open_flags & O_RDONLY)))) {
+            if (((drive_access_mode != O_RDWR) && (drive_access_mode != O_RDONLY) &&
+                 smb2::read_access_is_required(DesiredAccess, /*strict_check = */false)) ||
+                ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY) &&
+                 smb2::write_access_is_required(DesiredAccess))) {
                 out_fd = -1;
                 return EACCES;
             }
 
             out_fd = ::open(path, open_flags, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             return ((out_fd > -1) ? 0 : errno);
-        } (full_path.c_str(), open_flags, (DesiredAccess & smb2::DELETE),
-           (DesiredAccess & smb2::FILE_WRITE_ATTRIBUTES), drive_access_mode, this->fd);
+        } (full_path.c_str(), open_flags, DesiredAccess, drive_access_mode, this->fd);
 
         if (verbose) {
             LOG(LOG_INFO,

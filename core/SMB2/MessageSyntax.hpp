@@ -573,6 +573,43 @@ enum {
     , GENERIC_READ           = 0x80000000
 };
 
+bool read_access_is_required(uint32_t DesiredAccess, bool strict_check) {
+    uint32_t values_of_strict_checking = (FILE_READ_EA |
+                                          FILE_READ_ATTRIBUTES |
+                                          READ_CONTROL |
+                                          ACCESS_SYSTEM_SECURITY |
+                                          MAXIMUM_ALLOWED
+                                         );
+
+    return (DesiredAccess &
+            (FILE_READ_DATA |
+             FILE_EXECUTE |
+             GENERIC_ALL |
+             GENERIC_EXECUTE |
+             GENERIC_READ |
+             (strict_check ? values_of_strict_checking : 0)
+            )
+           );
+}
+
+bool write_access_is_required(uint32_t DesiredAccess) {
+    return (DesiredAccess &
+            (FILE_WRITE_DATA |
+             FILE_APPEND_DATA |
+             FILE_WRITE_EA |
+             FILE_DELETE_CHILD |
+             FILE_WRITE_ATTRIBUTES |
+             DELETE |
+             WRITE_DAC |
+             WRITE_OWNER |
+             ACCESS_SYSTEM_SECURITY |
+             MAXIMUM_ALLOWED |
+             GENERIC_ALL |
+             GENERIC_WRITE
+            )
+           );
+}
+
 }   // namespace smb2
 
 #endif  // #ifndef _REDEMPTION_CORE_SMB2_MESSAGESYNTAX_HPP_
