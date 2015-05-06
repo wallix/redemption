@@ -1479,7 +1479,14 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
 class FileSystemDriveManager {
     const uint32_t FIRST_MANAGED_DRIVE_ID = 32767;
 
+#ifdef __clang__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunused-private-field"
+# endif
     uint32_t next_managed_drive_id = FIRST_MANAGED_DRIVE_ID;
+#ifdef __clang__
+    #pragma GCC diagnostic pop
+# endif
 
     typedef std::tuple<uint32_t, std::string, std::string, int>
         managed_drive_type; // DeviceId, name, path, access mode.

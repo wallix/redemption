@@ -201,8 +201,10 @@ enum {
         }
     }
     void set_warning_buffer(const char * field, const char * format) {
+        #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wformat-nonliteral"
         sprintf(this->warning_buffer, format, field);
+        #pragma GCC diagnostic pop
         this->warning_msg.set_text(this->warning_buffer);
     }
 
