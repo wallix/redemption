@@ -20,8 +20,7 @@
 #include <string.h>
 #include "socket_transport.hpp"
 
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+#include "openssl_tls.hpp"
 
 static void rdp_request(SocketTransport & sockettransport)
 {

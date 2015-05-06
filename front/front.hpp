@@ -30,8 +30,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+#include "openssl_tls.hpp"
 #include "stream.hpp"
 #include "transport.hpp"
 #include "RDP/x224.hpp"
