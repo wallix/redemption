@@ -102,7 +102,14 @@ static inline void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, const char *for
     char message[8192];
     va_list vl;
     va_start (vl, format);
+#ifdef __clang__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+# endif
     vsnprintf(message, 8191, format, vl);
+#ifdef __clang__
+    #pragma GCC diagnostic pop
+# endif
     va_end(vl);
     syslog(priority, "%s (%d/%d) -- %s", prioritynames[priority].c_name, getpid(), getpid(), message);
 }
@@ -124,7 +131,14 @@ static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *form
     char message[8192];
     va_list vl;
     va_start (vl, format);
+#ifdef __clang__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+# endif
     vsnprintf(message, 8191, format, vl);
+#ifdef __clang__
+    #pragma GCC diagnostic pop
+# endif
     va_end(vl);
     printf("%s (%d/%d) -- %s\n", prioritynames[priority].c_name, getpid(), getpid(), message);
 }

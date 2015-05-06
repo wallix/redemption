@@ -2419,6 +2419,10 @@ public:
     }
 
     virtual bool retrieve_client_capability_set(Capability & caps) {
+#ifdef __clang__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+# endif
         switch (caps.capabilityType) {
             case CAPSTYPE_GENERAL:
                 ::memcpy(&caps, &this->client_general_caps, sizeof(this->client_general_caps));
@@ -2454,6 +2458,9 @@ public:
                 ::memcpy(&caps, &this->client_glyphcache_caps, sizeof(this->client_glyphcache_caps));
             break;
         }
+#ifdef __clang__
+    #pragma GCC diagnostic pop
+# endif
         return true;
     }
 

@@ -160,7 +160,6 @@ project redemption
     <toolset>clang:<cxxflags>-Wno-char-subscripts
     <toolset>clang:<cxxflags>-Wno-unused-variable
 #     <toolset>clang:<cxxflags>-Wno-unused-private-field
-    <toolset>clang:<cxxflags>-Wno-dynamic-class-memaccess #memcpy (class 'Capability'; vtable pointer will be overwritten)
 
 #     <toolset>gcc:<cxxflags>-Warray-bounds=2 # gcc5
 #     <toolset>gcc:<cxxflags>-Wbool-compare # gcc5
