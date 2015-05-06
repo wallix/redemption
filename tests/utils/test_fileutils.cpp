@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
     {
         char tmpdirname[128];
         sprintf(tmpdirname, "/tmp/test_dir_XXXXXX");
-        BOOST_CHECK(NULL != mkdtemp(tmpdirname));
+        BOOST_CHECK(nullptr != mkdtemp(tmpdirname));
 
 //        int fd = ::mkostemp(tmpdirname, O_WRONLY|O_CREAT);
 
@@ -455,7 +455,7 @@ BOOST_AUTO_TEST_CASE(TestPathNCopy)
         BOOST_CHECK(false);
     }
     catch (Error & e) {
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_PATH_TOO_LONG));
+        BOOST_CHECK_EQUAL(e.id, ERR_PATH_TOO_LONG);
     };
 
     BOOST_CHECK(true);
@@ -471,6 +471,6 @@ BOOST_AUTO_TEST_CASE(TestPathNCopy)
         BOOST_CHECK(false);
     }
     catch (Error & e) {
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_PATH_TOO_LONG));
+        BOOST_CHECK_EQUAL(e.id, ERR_PATH_TOO_LONG);
     };
 }

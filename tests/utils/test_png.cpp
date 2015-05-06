@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
     // ------------------------------- Write png file -----------------------
     {
         FILE * fp = fopen("/tmp/fflag.png", "wb");
-        png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+        png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
         png_info * pinfo = png_create_info_struct(ppng);
 
         // prepare png header
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
 
         BOOST_CHECK_EQUAL(0, png_sig_cmp(buf, 0, PNG_BYTES_TO_CHECK));
 
-        png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+        png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
         png_info * pinfo = png_create_info_struct(ppng);
         // using standard C Stream io
         png_init_io(ppng, fp);
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
             png_free(ppng, row_pointers[row]);
         }
         png_read_end(ppng, pinfo);
-        png_destroy_read_struct(&ppng, &pinfo, NULL);
+        png_destroy_read_struct(&ppng, &pinfo, nullptr);
         fclose(fp);
 
         unlink("/tmp/fflag.png");

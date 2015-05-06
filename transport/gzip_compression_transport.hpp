@@ -50,7 +50,7 @@ public:
     , source_transport(st)
     , compression_stream()
     , compressed_data(GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH)
-    , uncompressed_data(NULL)
+    , uncompressed_data(nullptr)
     , uncompressed_data_length(0)
     , uncompressed_data_buffer()
     , inflate_pending(false) {

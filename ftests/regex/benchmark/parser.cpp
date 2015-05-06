@@ -29,9 +29,9 @@ struct test_parser
 {
     bool check_pre_condition(const char * s) const
     {
-        const char * msg_err = 0;
+        const char * msg_err = nullptr;
         re::StateParser().compile(s, &msg_err);
-        return msg_err == 0;
+        return msg_err == nullptr;
     }
 
     void exec(const char * s) const

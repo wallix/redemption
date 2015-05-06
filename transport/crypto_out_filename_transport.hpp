@@ -27,7 +27,7 @@
 struct CryptoOutFilenameTransport
 : OutputTransport<transbuf::ocrypto_filename_base>
 {
-    CryptoOutFilenameTransport(CryptoContext * crypto_ctx, const char * filename, auth_api * authentifier = NULL)
+    CryptoOutFilenameTransport(CryptoContext * crypto_ctx, const char * filename, auth_api * authentifier = nullptr)
     : CryptoOutFilenameTransport::TransportType(crypto_ctx)
     {
         if (this->buffer().open(filename, 0600) < 0) {

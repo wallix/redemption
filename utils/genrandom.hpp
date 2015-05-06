@@ -60,7 +60,7 @@ class LCGRandom : public Random
 
     uint32_t rand32()
     {
-        return this->seed = (uint64_t)999331UL * (uint64_t)this->seed + 200560490131ULL;
+        return this->seed = 999331UL * this->seed + 200560490131ULL;
     }
 };
 
@@ -84,7 +84,7 @@ class LCGRand : public Random
 
     uint32_t rand32()
     {
-        return this->seed = (uint64_t)999331UL * (uint64_t)this->seed + 7913UL;
+        return this->seed = 999331UL * this->seed + 7913UL;
     }
 };
 

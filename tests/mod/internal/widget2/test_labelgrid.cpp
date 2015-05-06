@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0;
     int16_t x = 10;
     int16_t y = 10;

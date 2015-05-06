@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = BLACK;
     int bg_color = WHITE;
     int id = 0;
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = BLACK;
     int bg_color = WHITE;
     int id = 0;
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     int ytext = 1;
     size_t edit_pos = -1;
 
-    WidgetEditValid wedit(drawable, x, y, cx, parent, notifier, NULL, id,
+    WidgetEditValid wedit(drawable, x, y, cx, parent, notifier, nullptr, id,
                           fg_color, bg_color, ANTHRACITE, ini.font, edit_pos, xtext, ytext);
 
     parent.add_widget(&wedit);
@@ -119,9 +119,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     }
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.centerx(), wedit.centery(), NULL);
+                          wedit.centerx(), wedit.centery(), nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit.centerx(), wedit.centery(), NULL);
+                          wedit.centerx(), wedit.centery(), nullptr);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int bbg_color = GREEN;
@@ -204,9 +204,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     }
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit1.centerx(), wedit1.centery(), NULL);
+                          wedit1.centerx(), wedit1.centery(), nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit1.centerx(), wedit1.centery(), NULL);
+                          wedit1.centerx(), wedit1.centery(), nullptr);
 
     parent.rdp_input_invalidate(parent.rect);
 
@@ -265,7 +265,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int bbg_color = GREEN;
@@ -292,9 +292,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     }
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit1.centerx(), wedit1.centery(), NULL);
+                          wedit1.centerx(), wedit1.centery(), nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit1.centerx(), wedit1.centery(), NULL);
+                          wedit1.centerx(), wedit1.centery(), nullptr);
 
     parent.rdp_input_invalidate(parent.rect);
 
@@ -390,7 +390,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int bbg_color = GREEN;
@@ -417,9 +417,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     }
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit1.centerx(), wedit1.centery(), NULL);
+                          wedit1.centerx(), wedit1.centery(), nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit1.centerx(), wedit1.centery(), NULL);
+                          wedit1.centerx(), wedit1.centery(), nullptr);
 
     parent.rdp_input_invalidate(parent.rect);
 
@@ -513,13 +513,11 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     TestDraw drawable(800, 600);
 
     struct WidgetReceiveEvent : public Widget2 {
-        Widget2* sender;
-        NotifyApi::notify_event_t event;
+        Widget2* sender = nullptr;
+        NotifyApi::notify_event_t event = 0;
 
         WidgetReceiveEvent(TestDraw& drawable)
-        : Widget2(drawable, Rect(), *this, NULL)
-        , sender(0)
-        , event(0)
+        : Widget2(drawable, Rect(), *this, nullptr)
         {}
 
         virtual void draw(const Rect&)
@@ -533,12 +531,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     } widget_for_receive_event(drawable);
 
     struct Notify : public NotifyApi {
-        Widget2* sender;
-        notify_event_t event;
-        Notify()
-        : sender(0)
-        , event(0)
-        {}
+        Widget2* sender = nullptr;
+        notify_event_t event = 0;
+        Notify() = default;
         virtual void notify(Widget2* sender, notify_event_t event)
         {
             this->sender = sender;
@@ -560,7 +555,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.lx() - 5, wedit.centery(), NULL);
+                          wedit.lx() - 5, wedit.centery(), nullptr);
     parent.rdp_input_invalidate(parent.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush1.png");
@@ -575,7 +570,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
 
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit.lx() - 5, wedit.centery(), NULL);
+                          wedit.lx() - 5, wedit.centery(), nullptr);
     parent.rdp_input_invalidate(parent.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush2.png");
@@ -589,10 +584,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     BOOST_CHECK(notifier.sender == &wedit);
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
     notifier.event = 0;
-    notifier.sender = 0;
+    notifier.sender = nullptr;
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.lx() - 5, wedit.centery(), NULL);
+                          wedit.lx() - 5, wedit.centery(), nullptr);
     parent.rdp_input_invalidate(parent.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush3.png");
@@ -605,7 +600,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
 
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit.centerx(), wedit.centery(), NULL);
+                          wedit.centerx(), wedit.centery(), nullptr);
     parent.rdp_input_invalidate(parent.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush4.png");
@@ -617,13 +612,13 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     }
 
 
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
     notifier.event = 0;
-    notifier.sender = 0;
+    notifier.sender = nullptr;
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.lx() - 5, wedit.centery(), NULL);
+                          wedit.lx() - 5, wedit.centery(), nullptr);
     parent.rdp_input_invalidate(parent.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush5.png");
@@ -635,7 +630,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     }
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          0, 0, NULL);
+                          0, 0, nullptr);
     parent.rdp_input_invalidate(parent.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush6.png");
@@ -646,10 +641,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
     notifier.event = 0;
-    notifier.sender = 0;
+    notifier.sender = nullptr;
 
 
     Keymap2 keymap;
@@ -671,5 +666,5 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     BOOST_CHECK(notifier.sender == &wedit);
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
     notifier.event = 0;
-    notifier.sender = 0;
+    notifier.sender = nullptr;
 }

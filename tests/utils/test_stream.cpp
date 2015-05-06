@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint16)
     BOOST_CHECK(!s->in_check_rem(13));
 
     BOOST_CHECK_EQUAL(s->in_uint16_le(), 1);
-    BOOST_CHECK_EQUAL(reinterpret_cast<uint8_t*>(oldp+2), reinterpret_cast<uint8_t*>(s->p));
+    BOOST_CHECK_EQUAL(oldp+2, s->p);
 
     BOOST_CHECK_EQUAL(s->in_sint16_le(), -2); // FFFE == -2
     BOOST_CHECK_EQUAL(s->in_sint16_be(), -3); // FFFD == -3
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint32)
     uint8_t * oldp = s->p;
 
     BOOST_CHECK_EQUAL(s->in_uint32_le(), 1);
-    BOOST_CHECK_EQUAL(reinterpret_cast<uint8_t*>(oldp+4), reinterpret_cast<uint8_t*>(s->p));
+    BOOST_CHECK_EQUAL(oldp+4, s->p);
 
     BOOST_CHECK_EQUAL(s->in_uint32_be(), 0xFFFFFFFE);
     BOOST_CHECK_EQUAL(s->in_uint32_be(), 1);
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint64)
     uint8_t * oldp = s->p;
 
     BOOST_CHECK_EQUAL(s->in_uint64_le(), 1LL);
-    BOOST_CHECK_EQUAL(reinterpret_cast<uint8_t*>(oldp+8), reinterpret_cast<uint8_t*>(s->p));
+    BOOST_CHECK_EQUAL(oldp+8, s->p);
 
     BOOST_CHECK_EQUAL(s->in_uint64_be(), 0xFFFFFFFFFFFFFFFELL);
     BOOST_CHECK_EQUAL(s->in_uint64_be(), 1LL);

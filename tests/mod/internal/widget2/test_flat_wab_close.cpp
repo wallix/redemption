@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
 
     // FlatWabClose is a flat_wab_close widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0;
 
     try {
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     try {
         FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
             "erat ut ligula. Fusce sit amet mauris neque.<br>"
             "Sed orci augue, luctus in ornare sed,<br>"
             "adipiscing et arcu.",
-            0, 0, 0, false, ini);
+            0, nullptr, nullptr, false, ini);
 
         flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
     }
@@ -128,11 +128,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    0, 0, 0, false, ini);
+                                    0, nullptr, nullptr, false, ini);
 
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
@@ -156,11 +156,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    0, 0, 0, false, ini);
+                                    0, nullptr, nullptr, false, ini);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_wab_close.rdp_input_invalidate(flat_wab_close.rect.offset(20,0));
@@ -184,11 +184,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    0, 0, 0, false, ini);
+                                    0, nullptr, nullptr, false, ini);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_wab_close.rdp_input_invalidate(Rect(20 + flat_wab_close.dx(),
@@ -210,13 +210,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 {
     struct Notify : NotifyApi {
-        Widget2* sender;
-        notify_event_t event;
-
-        Notify()
-        : sender(0)
-        , event(0)
-        {}
+        Widget2* sender = nullptr;
+        notify_event_t event = 0;
 
         virtual void notify(Widget2* sender, notify_event_t event)
         {
@@ -263,10 +258,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
     flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                                    flat_wab_close.cancel.centerx(),
-                                   flat_wab_close.cancel.centery(), NULL);
+                                   flat_wab_close.cancel.centery(), nullptr);
     flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                                    flat_wab_close.cancel.centerx(),
-                                   flat_wab_close.cancel.centery(), NULL);
+                                   flat_wab_close.cancel.centery(), nullptr);
 
     BOOST_CHECK(notifier.sender == &flat_wab_close);
     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
@@ -278,7 +273,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    notifier.sender = 0;
+    notifier.sender = nullptr;
     notifier.event = 0;
 
     Keymap2 keymap;

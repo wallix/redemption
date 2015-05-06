@@ -106,7 +106,7 @@ public:
                     if ((strncasecmp("password", keyword, 9 ) == 0) ||
                         (strncasecmp("target_application_password", keyword, 27) == 0) ||
                         (strncasecmp("target_password", keyword, 16) == 0) ||
-                        ((strncasecmp("auth_channel_answer", keyword, 19) == 0) && (strcasestr(val, "password") != 0))) {
+                        ((strncasecmp("auth_channel_answer", keyword, 19) == 0) && (strcasestr(val, "password") != nullptr))) {
                         display_val = ::get_printable_password(val, this->ini->debug.password);
                     }
                     LOG(LOG_INFO, "receiving '%s'='%s'", keyword, display_val);

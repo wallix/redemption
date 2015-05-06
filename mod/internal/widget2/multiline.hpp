@@ -80,7 +80,7 @@ public:
             this->rect.cy = 0;
         }
 
-        const char * str = 0;
+        const char * str = nullptr;
         char * pbuf = this->buffer;
         line_t * line = this->lines;
         do {
@@ -105,7 +105,7 @@ public:
             ++line;
         } while (str && pbuf < &this->buffer[this->buffer_size] && line != &this->lines[this->max_line-1]);
 
-        line->str = 0;
+        line->str = nullptr;
 
         if (this->auto_resize) {
             this->rect.cx += this->x_text * 2;
@@ -116,7 +116,7 @@ public:
     const char * get_line(size_t num) const
     {
         if (num >= this->max_line)
-            return 0;
+            return nullptr;
         return this->lines[num].str;
     }
 

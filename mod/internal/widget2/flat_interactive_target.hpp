@@ -68,25 +68,25 @@ public:
                           const char * text_password,
                           Font const & font)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , caption_label(drawable, 0, 0, *this, NULL, caption, true, -13,
+        , caption_label(drawable, 0, 0, *this, nullptr, caption, true, -13,
                         theme.global.fgcolor, theme.global.bgcolor, font)
-        , device_label(drawable, 0, 0, *this, NULL, text_device, true, -13,
+        , device_label(drawable, 0, 0, *this, nullptr, text_device, true, -13,
                       theme.global.fgcolor, theme.global.bgcolor, font)
-        , device(drawable, 0, 0, *this, NULL, device_str, true, -13,
+        , device(drawable, 0, 0, *this, nullptr, device_str, true, -13,
                  theme.global.fgcolor, theme.global.bgcolor, font)
-        , device_edit(drawable, 0, 0, 400, *this, this, NULL, -14,
+        , device_edit(drawable, 0, 0, 400, *this, this, nullptr, -14,
                       theme.edit.fgcolor, theme.edit.bgcolor,
                       theme.edit.focus_color, font, -1u, 1, 1)
-        , login_label(drawable, 0, 0, *this, NULL, text_login, true, -13,
+        , login_label(drawable, 0, 0, *this, nullptr, text_login, true, -13,
                       theme.global.fgcolor, theme.global.bgcolor, font)
-        , login(drawable, 0, 0, *this, NULL, login_str, true, -13,
+        , login(drawable, 0, 0, *this, nullptr, login_str, true, -13,
                 theme.global.fgcolor, theme.global.bgcolor, font)
-        , login_edit(drawable, 0, 0, 400, *this, this, NULL, -14,
+        , login_edit(drawable, 0, 0, 400, *this, this, nullptr, -14,
                      theme.edit.fgcolor, theme.edit.bgcolor,
                      theme.edit.focus_color, font, -1u, 1, 1)
-        , password_label(drawable, 0, 0, *this, NULL, text_password, true, -13,
+        , password_label(drawable, 0, 0, *this, nullptr, text_password, true, -13,
                          theme.global.fgcolor, theme.global.bgcolor, font)
-        , password_edit(drawable, 0, 0, 400, *this, this, NULL, -14,
+        , password_edit(drawable, 0, 0, 400, *this, this, nullptr, -14,
                         theme.edit.fgcolor, theme.edit.bgcolor,
                         theme.edit.focus_color, font, -1u, 1, 1, true)
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
@@ -107,7 +107,7 @@ public:
         if (ask_login) {
             login_show = &this->login_edit;
         }
-        Widget2 * password_show = NULL;
+        Widget2 * password_show = nullptr;
         if (ask_password) {
             password_show = &this->password_edit;
         }

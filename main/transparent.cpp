@@ -174,7 +174,7 @@ int main(int argc, char * argv[]) {
         LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
     }
     SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
-                               , ini.debug.front, 0);
+                               , ini.debug.front, nullptr);
     wait_obj front_event;
 
     LCGRandom gen(0);
@@ -182,7 +182,7 @@ int main(int argc, char * argv[]) {
     // Remove existing Persistent Key List file.
     unlink(persistent_key_list_filename.c_str());
 
-    OutFileTransport * persistent_key_list_oft = NULL;
+    OutFileTransport * persistent_key_list_oft = nullptr;
     int                persistent_key_list_ofd;
 
     persistent_key_list_ofd = open(persistent_key_list_filename.c_str(),
@@ -211,12 +211,12 @@ int main(int argc, char * argv[]) {
     try {
         if (target_device.empty()) {
             TransparentReplayMod mod(front, play_filename.c_str(),
-                front.client_info.width, front.client_info.height, NULL, ini.font);
+                front.client_info.width, front.client_info.height, nullptr, ini.font);
 
             run_mod(mod, front, front_event, nullptr, &front_trans);
         }
         else {
-            OutFileTransport * record_oft = NULL;
+            OutFileTransport * record_oft = nullptr;
             int                record_fd  = -1;
 
             if (!record_filename.empty()) {
@@ -231,7 +231,7 @@ int main(int argc, char * argv[]) {
                 }
             }
 
-            InFileTransport * persistent_key_list_ift = NULL;
+            InFileTransport * persistent_key_list_ift = nullptr;
             int               persistent_key_list_ifd;
 
             persistent_key_list_ifd = open(persistent_key_list_filename.c_str(), O_RDONLY);
@@ -350,7 +350,7 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
                 timeout.tv_usec = 0;
             }
 
-            int num = select(max + 1, &rfds, &wfds, 0, &timeout);
+            int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
 
             if (num < 0) {
                 if (errno == EINTR) {
@@ -374,7 +374,7 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             if (front.up_and_running) {
                 if (is_set(mod.get_event(), st_mod, rfds)) {
                     mod.get_event().reset();
-                    mod.draw_event(time(NULL));
+                    mod.draw_event(time(nullptr));
                     if (mod.get_event().signal != BACK_EVENT_NONE) {
                         mod_event_signal = mod.get_event().signal;
                     }

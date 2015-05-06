@@ -91,7 +91,7 @@ struct WidgetLayout : public Widget2 {
             if (!found) {
                 if (w == this->items[i]) {
                     found = true;
-                    this->items[i] = NULL;
+                    this->items[i] = nullptr;
                     removed = i;
                 }
             }
@@ -100,7 +100,7 @@ struct WidgetLayout : public Widget2 {
             }
         }
         if (found) {
-            this->items[this->nb_items] = NULL;
+            this->items[this->nb_items] = nullptr;
             this->nb_items--;
             this->rearrange(removed);
         }

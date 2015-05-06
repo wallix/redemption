@@ -272,20 +272,20 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
 //    BOOST_CHECK(t.status);
 
-    mod.draw_event(time(NULL));
+    mod.draw_event(time(nullptr));
     mod.rdp_input_up_and_running();
-    mod.draw_event(time(NULL));
+    mod.draw_event(time(nullptr));
 
     BOOST_CHECK_EQUAL(mod.get_front_width(), 1024);
     BOOST_CHECK_EQUAL(mod.get_front_height(), 768);
 
-//    mod.draw_event(time(NULL));
+//    mod.draw_event(time(nullptr));
 ////    BOOST_CHECK(t.status);
 
-//    mod.draw_event(time(NULL));
+//    mod.draw_event(time(nullptr));
 ////    BOOST_CHECK(t.status);
 
-//    mod.draw_event(time(NULL));
+//    mod.draw_event(time(nullptr));
 ////    BOOST_CHECK(t.status);
 
 }

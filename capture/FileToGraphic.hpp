@@ -221,7 +221,7 @@ public:
         , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (const uint8_t *)"")
         , polyline()
         , ellipseSC()
-        , bmp_cache(NULL)
+        , bmp_cache(nullptr)
         // variables used to read batch of orders "chunks"
         , chunk_size(0)
         , chunk_type(0)
@@ -1022,7 +1022,7 @@ public:
                 if (this->nbconsumers){
                     InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
 
-                    png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+                    png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
                     png_set_read_fn(ppng, &chunk_trans, &png_read_data_fn);
                     png_info * pinfo = png_create_info_struct(ppng);
                     png_read_info(ppng, pinfo);
@@ -1033,7 +1033,7 @@ public:
 
                     uint32_t tmp[8192];
                     for (size_t k = 0; k < height; ++k) {
-                        png_read_row(ppng, reinterpret_cast<uint8_t*>(tmp), NULL);
+                        png_read_row(ppng, reinterpret_cast<uint8_t*>(tmp), nullptr);
 
                         uint32_t bgrtmp[8192];
                         const uint32_t * s = reinterpret_cast<const uint32_t*>(tmp);
@@ -1064,7 +1064,7 @@ public:
                     }
                     png_read_end(ppng, pinfo);
                     TODO("is there a memory leak ? is info structure destroyed of not ?");
-                    png_destroy_read_struct(&ppng, &pinfo, NULL);
+                    png_destroy_read_struct(&ppng, &pinfo, nullptr);
                 }
                 else {
                     REDOC("If no drawable is available ignore images chunks");

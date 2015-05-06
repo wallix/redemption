@@ -47,7 +47,7 @@ static CheckFileList user_check_file_list[] =
     { RDPPROXY_INI, CFG_PATH, true,  false, false, false },
 
     // End of list.
-    { NULL,         NULL,     false, false, false, false }
+    { nullptr,         nullptr,     false, false, false, false }
 };
 
 static CheckFileList euser_check_file_list[] =
@@ -75,7 +75,7 @@ static CheckFileList euser_check_file_list[] =
     { DH1024_PEM,               CFG_PATH,        true,  false, false, false },
 
     // End of list.
-    { NULL,              NULL,            false, false, false, false }
+    { nullptr,              nullptr,            false, false, false, false }
 };
 
 struct CheckFile {
@@ -141,7 +141,7 @@ struct CheckFile {
         for (CheckFileList * tmp_check_list = check_file_list;
              tmp_check_list->filename; tmp_check_list++)
         {
-            const char * accessibility = NULL;
+            const char * accessibility = nullptr;
 
             if (tmp_check_list->need_be_readable && !tmp_check_list->is_readable &&
                 tmp_check_list->need_be_writeable && !tmp_check_list->is_writeable)
@@ -182,7 +182,7 @@ struct CheckFile {
         for (CheckFileList * tmp_check_list = check_file_list;
              tmp_check_list->filename; tmp_check_list++)
         {
-            const char * accessibility = NULL;
+            const char * accessibility = nullptr;
 
             if (!tmp_check_list->need_be_readable && !tmp_check_list->need_be_writeable)
             {

@@ -97,7 +97,7 @@ void init_signals(void)
     sigaddset(&sa.sa_mask, SIGTERM);
 
     sa.sa_handler = shutdown;
-    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGTERM, &sa, nullptr);
 }
 
 

@@ -29,7 +29,7 @@
 class Parse {
 public:
     uint8_t * p;
-    
+
 public:
     Parse(uint8_t * p) : p(p) {}
 
@@ -38,7 +38,7 @@ public:
     }
 
     uint8_t in_uint8(void) {
-        return *(static_cast<uint8_t*>(this->p++));
+        return *this->p++;
     }
 
     int16_t in_sint16_be(void) {

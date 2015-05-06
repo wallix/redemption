@@ -98,7 +98,7 @@ struct rdpCredssp
             this->table->FreeContextBuffer(&this->context);
             this->table->FreeCredentialsHandle(&this->credentials);
             delete this->table;
-            this->table = NULL;
+            this->table = nullptr;
         }
     }
 
@@ -143,7 +143,7 @@ public:
             this->table->FreeContextBuffer(&this->context);
             this->table->FreeCredentialsHandle(&this->credentials);
             delete this->table;
-            this->table = NULL;
+            this->table = nullptr;
         }
         if (secInter == NTLM_Interface) {
             LOG(LOG_INFO, "Credssp: NTLM Authentication");
@@ -153,7 +153,7 @@ public:
             LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
             this->table = new Kerberos_SecurityFunctionTable;
         }
-        else if (this->table == NULL) {
+        else if (this->table == nullptr) {
             this->table = new SecurityFunctionTable;
         }
     }
@@ -277,8 +277,8 @@ public:
     SEC_STATUS credssp_decrypt_public_key_echo() {
         int length = 0;
         unsigned long pfQOP = 0;
-        uint8_t* public_key1 = NULL;
-        uint8_t* public_key2 = NULL;
+        uint8_t* public_key1 = nullptr;
+        uint8_t* public_key2 = nullptr;
         unsigned int public_key_length = 0;
         SecBuffer Buffers[2];
         SecBufferDesc Message;
@@ -348,9 +348,9 @@ public:
     void credssp_encode_ts_credentials() {
         if (this->RestrictedAdminMode) {
             LOG(LOG_INFO, "Restricted Admin Mode");
-            this->ts_credentials.set_credentials(NULL, 0,
-                                                 NULL, 0,
-                                                 NULL, 0);
+            this->ts_credentials.set_credentials(nullptr, 0,
+                                                 nullptr, 0,
+                                                 nullptr, 0);
         }
         else {
             this->ts_credentials.set_credentials(this->identity.Domain.get_data(),
@@ -528,7 +528,7 @@ public:
             interface_changed = false;
             this->InitSecurityInterface(this->sec_interface);
 
-            if (this->table == NULL) {
+            if (this->table == nullptr) {
                 LOG(LOG_ERR, "Could not Initiate %s Security Interface!", this->sec_interface);
                 return 0;
             }
@@ -544,7 +544,7 @@ public:
                                                            NLA_PKG_NAME,
                                                            SECPKG_CRED_OUTBOUND,
                                                            &this->ServicePrincipalName,
-                                                           &this->identity, NULL, NULL,
+                                                           &this->identity, nullptr, nullptr,
                                                            &this->credentials, &expiration);
             if (status == SEC_E_NO_CREDENTIALS) {
                 if (this->sec_interface != NTLM_Interface) {
@@ -564,7 +564,7 @@ public:
 
         SecBuffer input_buffer;
         SecBuffer output_buffer;
-        SecBufferDesc input_buffer_desc = {0,0,0};
+        SecBufferDesc input_buffer_desc = {0,0,nullptr};
         SecBufferDesc output_buffer_desc;
         bool have_context = false;
         bool have_input_buffer = false;
@@ -592,13 +592,13 @@ public:
             output_buffer.Buffer.init(cbMaxToken);
             status = this->table->InitializeSecurityContext(&this->credentials,
                                                             (have_context) ?
-                                                            &this->context : NULL,
+                                                            &this->context : nullptr,
                                                             (char*)this->ServicePrincipalName.get_data(),
                                                             fContextReq,
                                                             this->hardcodedtests?1:0,
                                                             SECURITY_NATIVE_DREP,
                                                             (have_input_buffer) ?
-                                                            &input_buffer_desc : NULL,
+                                                            &input_buffer_desc : nullptr,
                                                             this->verbose, &this->context,
                                                             &output_buffer_desc,
                                                             &pfContextAttr,
@@ -756,9 +756,9 @@ public:
        unsigned long cbMaxToken = packageInfo.cbMaxToken;
        TimeStamp expiration;
 
-       status = this->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
-                                                      SECPKG_CRED_INBOUND, NULL,
-                                                      NULL, NULL, NULL,
+       status = this->table->AcquireCredentialsHandle(nullptr, NLA_PKG_NAME,
+                                                      SECPKG_CRED_INBOUND, nullptr,
+                                                      nullptr, nullptr, nullptr,
                                                       &this->credentials, &expiration);
 
        if (status != SEC_E_OK) {
@@ -825,7 +825,7 @@ public:
            output_buffer.Buffer.init(cbMaxToken);
 
            status = this->table->AcceptSecurityContext(&this->credentials,
-                                                       have_context? &this->context: NULL,
+                                                       have_context? &this->context: nullptr,
                                                        &input_buffer_desc, fContextReq,
                                                        SECURITY_NATIVE_DREP, &this->context,
                                                        &output_buffer_desc, &pfContextAttr,

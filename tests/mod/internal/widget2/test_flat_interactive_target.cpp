@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, ini.font);
-        NotifyApi * notifier = NULL;
+        NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, ini.font);
-        NotifyApi * notifier = NULL;
+        NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, ini.font);
-        NotifyApi * notifier = NULL;
+        NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, ini.font);
-        NotifyApi * notifier = NULL;
+        NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable, 800, 600, ini.font);
-        NotifyApi * notifier = NULL;
+        NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;

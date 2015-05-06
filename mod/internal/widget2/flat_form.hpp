@@ -81,26 +81,26 @@ enum {
         , field_ticket(TR("ticket", ini))
         , field_duration(TR("duration", ini))
         , warning_buffer()
-        , warning_msg(drawable, 10, 0, *this, NULL, "", true, group_id,
+        , warning_msg(drawable, 10, 0, *this, nullptr, "", true, group_id,
                       theme.global.error_color, theme.global.bgcolor, ini.font)
-        , comment_label(drawable, 0, 10, *this, NULL, TR("comment", ini), true,
+        , comment_label(drawable, 0, 10, *this, nullptr, TR("comment", ini), true,
                         group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
         , comment_edit(drawable, this->comment_label.lx() + 20, 10, 300, *this, this,
-                       0, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                       nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                        theme.edit.focus_color, ini.font, -1, 1, 1)
-        , ticket_label(drawable, 0, 40, *this, NULL, TR("ticket", ini), true,
+        , ticket_label(drawable, 0, 40, *this, nullptr, TR("ticket", ini), true,
                        group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
         , ticket_edit(drawable, this->ticket_label.lx() + 20, 40, 300, *this, this,
-                      0, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                      nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                       theme.edit.focus_color, ini.font, -1, 1, 1)
-        , duration_label(drawable, 0, 70, *this, NULL, TR("duration", ini), true,
+        , duration_label(drawable, 0, 70, *this, nullptr, TR("duration", ini), true,
                          group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
         , duration_edit(drawable, this->duration_label.lx() + 20, 70, 300, *this, this,
-                        0, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                        nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                         theme.edit.focus_color, ini.font, -1, 1, 1)
-        , duration_format(drawable, 0, 100, *this, NULL, TR("note_duration_format", ini),
+        , duration_format(drawable, 0, 100, *this, nullptr, TR("note_duration_format", ini),
                           true, group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
-        , notes(drawable, 0, 120, *this, NULL, TR("note_required", ini), true,
+        , notes(drawable, 0, 120, *this, nullptr, TR("note_required", ini), true,
                 group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
         , confirm(drawable, 0, 0, *this, this, TR("confirm", ini), true, group_id,
                   theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, ini.font,
@@ -201,6 +201,7 @@ enum {
         }
     }
     void set_warning_buffer(const char * field, const char * format) {
+        #pragma GCC diagnostic ignored "-Wformat-nonliteral"
         sprintf(this->warning_buffer, format, field);
         this->warning_msg.set_text(this->warning_buffer);
     }
@@ -210,7 +211,7 @@ enum {
         unsigned long hours = 0;
         unsigned long minutes = 0;
         long d = 0;
-        char * end_p = 0;
+        char * end_p = nullptr;
         try {
             d = strtoul(duration, &end_p, 10);
             if (*end_p == 'h') {

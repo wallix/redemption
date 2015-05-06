@@ -42,8 +42,8 @@ BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
     // status = table.FreeCredentialsHandle(&credentials);
     // BOOST_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
     // If AcquireCredential succeed, do not forget to free credential handle !
-    status = table.AcquireCredentialsHandle(NULL, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, NULL,
-                                            &id, NULL, NULL,
+    status = table.AcquireCredentialsHandle(nullptr, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr,
+                                            &id, nullptr, nullptr,
                                             &credentials, &expiration);
 
 
@@ -79,8 +79,8 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     // BOOST_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
 
     // If AcquireCredential succeed, do not forget to free credential handle !
-    status = table.AcquireCredentialsHandle(NULL, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, NULL,
-                                            &id, NULL, NULL,
+    status = table.AcquireCredentialsHandle(nullptr, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr,
+                                            &id, nullptr, nullptr,
                                             &credentials, &expiration);
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
 
@@ -118,10 +118,10 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
 
     // client first call, no input buffer, no context
     status = table.InitializeSecurityContext(&credentials,
-                                             NULL, // context
-                                             NULL, // TargetName
+                                             nullptr, // context
+                                             nullptr, // TargetName
                                              fContextReq, 0, SECURITY_NATIVE_DREP,
-                                             NULL, // input buffer desc
+                                             nullptr, // input buffer desc
                                              0, &client_context, // context (NTLMContext)
                                              &output_buffer_desc, // output buffer desc
                                              &pfContextAttr, &expiration);
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     CtxtHandle server_context;
     // server first call, no context
     // got input buffer (output of client): Negotiate message
-    status = table.AcceptSecurityContext(&credentials, NULL,
+    status = table.AcceptSecurityContext(&credentials, nullptr,
                                          &output_buffer_desc, fsContextReq,
                                          SECURITY_NATIVE_DREP, &server_context,
                                          &input_buffer_desc, &pfsContextAttr,
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     // got input buffer: challenge message
     status = table.InitializeSecurityContext(&credentials,
                                              &client_context, // context
-                                             NULL, // TargetName
+                                             nullptr, // TargetName
                                              fContextReq, 0, SECURITY_NATIVE_DREP,
                                              &input_buffer_desc, // input buffer desc
                                              0, &client_context, // context (NTLMContext)
@@ -258,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
                         16));
 
     SecPkgContext_Sizes ContextSizes;
-    table.QueryContextAttributes(NULL, SECPKG_ATTR_SIZES, &ContextSizes);
+    table.QueryContextAttributes(nullptr, SECPKG_ATTR_SIZES, &ContextSizes);
     BOOST_CHECK_EQUAL(ContextSizes.cbMaxToken, 2010);
     BOOST_CHECK_EQUAL(ContextSizes.cbMaxSignature, 16);
     BOOST_CHECK_EQUAL(ContextSizes.cbBlockSize, 0);

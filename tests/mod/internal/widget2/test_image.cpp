@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
     // WidgetImage is a image widget of size 256x125 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     WidgetImage wimage(drawable, 10,100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
     // WidgetImage is a image widget of size 256x125 at position -100,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     WidgetImage wimage(drawable, -100,500, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
     // WidgetImage is a image widget of size 256x125 at position 700,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     WidgetImage wimage(drawable, 700,500, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
     // WidgetImage is a image widget of size 256x125 at position -100,-100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     WidgetImage wimage(drawable, -100,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     WidgetImage wimage(drawable, 700,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     WidgetImage wimage(drawable, 700,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
@@ -279,8 +279,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //         NotifyApi::notify_event_t event;
 
 //         WidgetReceiveEvent()
-//         : Widget2(drawable, Rect(), *this, NULL)
-//         , sender(NULL)
+//         : Widget2(drawable, Rect(), *this, nullptr)
+//         , sender(nullptr)
 //         , event(0)
 //         {}
 
@@ -295,7 +295,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //     } widget_for_receive_event;
 
 //     Widget2 & parent = widget_for_receive_event;
-//     NotifyApi * notifier = NULL;
+//     NotifyApi * notifier = nullptr;
 
 //     WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
@@ -320,9 +320,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //     Inifile ini;
 
 //     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-//     WidgetScreen parent(drawable, 800, 600, ini.font, NULL);
+//     WidgetScreen parent(drawable, 800, 600, ini.font, nullptr);
 
-//     NotifyApi * notifier = NULL;
+//     NotifyApi * notifier = nullptr;
 
 //     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 

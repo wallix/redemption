@@ -55,7 +55,7 @@ struct Entry {
     Entry()
     : input_type(INPUT_BOOLEAN)
     , storage_type(STORAGE_BYTE)
-    , storage(NULL) {
+    , storage(nullptr) {
         ::memset(this->key, 0, sizeof(this->key));
     }
 

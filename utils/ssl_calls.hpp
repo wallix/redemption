@@ -226,7 +226,7 @@ class SslHMAC_Md5
     {
         HMAC_CTX_init(&this->hmac);
         int res = 0;
-        res = HMAC_Init_ex(&this->hmac, key, key_size, EVP_md5(), NULL);
+        res = HMAC_Init_ex(&this->hmac, key, key_size, EVP_md5(), nullptr);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
         }
@@ -451,7 +451,7 @@ struct CryptContext
     }
 
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    void sign(const uint8_t * data, size_t data_size, uint8_t * signature, size_t signature_size)
+    void sign(const uint8_t * data, size_t data_size, uint8_t (&signature)[8])
     {
         uint8_t lenhdr[4];
         buf_out_uint32(lenhdr, data_size);

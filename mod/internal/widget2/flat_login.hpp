@@ -68,22 +68,22 @@ public:
         , password_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
                         password, -14, ini.theme.edit.fgcolor,
                         ini.theme.edit.bgcolor, ini.theme.edit.focus_color, ini.font,
-                        -1u, 1, 1, true, (width <= 640) ? label_text_password : NULL)
-        , login_label(drawable, 0, 0, *this, NULL, label_text_login, true, -11,
+                        -1u, 1, 1, true, (width <= 640) ? label_text_password : nullptr)
+        , login_label(drawable, 0, 0, *this, nullptr, label_text_login, true, -11,
                       ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
         , login_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
                      login, -12, ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
                      ini.theme.edit.focus_color, ini.font, -1u, 1, 1, false,
-                     (width <= 640) ? label_text_login : NULL)
-        // , img(drawable, 0, 0, ini.theme.global.logo_path, *this, NULL, -10)
+                     (width <= 640) ? label_text_login : nullptr)
+        // , img(drawable, 0, 0, ini.theme.global.logo_path, *this, nullptr, -10)
         , img(drawable, 0, 0,
               ini.theme.global.logo ? ini.theme.global.logo_path :
-              SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
-        , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13,
+              SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
+        , password_label(drawable, 0, 0, *this, nullptr, label_text_password, true, -13,
                          ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
-        , version_label(drawable, 0, 0, *this, NULL, caption, true, -15,
+        , version_label(drawable, 0, 0, *this, nullptr, caption, true, -15,
                         ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
-        , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16,
+        , helpicon(drawable, 0, 0, *this, nullptr, "?", true, -16,
                    ini.theme.global.fgcolor, ini.theme.global.bgcolor,
                    ini.theme.global.focus_color, ini.font, 6, 2)
         , ini(ini)

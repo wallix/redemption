@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
 
     // WidgetPassword is a password widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword2)
 
     // WidgetPassword is a password widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword3)
 
     // WidgetPassword is a password widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword4)
 
     // WidgetPassword is a password widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword5)
 
     // WidgetPassword is a password widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword6)
 
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip)
 
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
@@ -295,7 +295,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
 
     // WidgetPassword is a password widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
@@ -327,12 +327,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     TestDraw drawable(800, 600);
 
     struct Notify : public NotifyApi {
-        Widget2* sender;
-        notify_event_t event;
-        Notify()
-        : sender(0)
-        , event(0)
-        {}
+        Widget2* sender = nullptr;
+        notify_event_t event = 0;
+        Notify() = default;
         virtual void notify(Widget2* sender, notify_event_t event)
         {
             this->sender = sender;
@@ -380,7 +377,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     BOOST_CHECK(notifier.sender == &wpassword);
     BOOST_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
     notifier.event = 0;
-    notifier.sender = 0;
+    notifier.sender = nullptr;
 
     keymap.event(0, 17, decoded_data, ctrl_alt_delete); // 'z'
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -396,7 +393,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     BOOST_CHECK(notifier.sender == &wpassword);
     BOOST_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
     notifier.event = 0;
-    notifier.sender = 0;
+    notifier.sender = nullptr;
 
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -408,7 +405,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
@@ -459,7 +456,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
 
     keymap.push_kevent(Keymap2::KEVENT_DELETE);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     wpassword.rdp_input_invalidate(wpassword.rect);
@@ -473,7 +470,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
 
     keymap.push_kevent(Keymap2::KEVENT_END);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     wpassword.rdp_input_invalidate(wpassword.rect);
@@ -487,7 +484,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
 
     keymap.push_kevent(Keymap2::KEVENT_HOME);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     wpassword.rdp_input_invalidate(wpassword.rect);
@@ -499,23 +496,21 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     BOOST_CHECK(notifier.sender == &wpassword);
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
-    notifier.sender = 0;
+    notifier.sender = nullptr;
     notifier.event = 0;
 
     struct WidgetReceiveEvent : public Widget2 {
-        Widget2* sender;
-        NotifyApi::notify_event_t event;
+        Widget2* sender = nullptr;
+        NotifyApi::notify_event_t event = 0;
 
         WidgetReceiveEvent(TestDraw& drawable)
-        : Widget2(drawable, Rect(), *this, NULL)
-        , sender(NULL)
-        , event(0)
+        : Widget2(drawable, Rect(), *this, nullptr)
         {}
 
         virtual void draw(const Rect&)
@@ -528,14 +523,14 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
         }
     } widget_for_receive_event(drawable);
 
-    wpassword.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 3, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == 0);
+    wpassword.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 3, nullptr);
+    BOOST_CHECK(widget_for_receive_event.sender == nullptr);
     BOOST_CHECK(widget_for_receive_event.event == 0);
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
-    notifier.sender = 0;
+    notifier.sender = nullptr;
     notifier.event = 0;
-    widget_for_receive_event.sender = 0;
+    widget_for_receive_event.sender = nullptr;
     widget_for_receive_event.event = 0;
 
     wpassword.rdp_input_invalidate(Rect(0, 0, wpassword.cx(), wpassword.cx()));
@@ -556,7 +551,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
 
     // WidgetPassword is a password widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 
@@ -612,12 +607,9 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
     TestDraw drawable(800, 600);
 
     struct Notify : public NotifyApi {
-        Widget2* sender;
-        notify_event_t event;
-        Notify()
-        : sender(0)
-        , event(0)
-        {}
+        Widget2* sender = nullptr;
+        notify_event_t event = 0;
+        Notify() = default;
         virtual void notify(Widget2* sender, notify_event_t event)
         {
             this->sender = sender;
@@ -646,8 +638,8 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
     }
     BOOST_CHECK(notifier.sender == &wpassword);
     BOOST_CHECK(notifier.event == 0);
+    notifier.sender = nullptr;
     notifier.event = 0;
-    notifier.sender = 0;
 
     BOOST_CHECK_EQUAL(std::string("aurélie"), wpassword.get_text());
 
@@ -665,7 +657,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
@@ -678,7 +670,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
@@ -691,7 +683,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
 
@@ -715,12 +707,9 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
     TestDraw drawable(800, 600);
 
     struct Notify : public NotifyApi {
-        Widget2* sender;
-        notify_event_t event;
-        Notify()
-        : sender(0)
-        , event(0)
-        {}
+        Widget2* sender = nullptr;
+        notify_event_t event = 0;
+        Notify() = default;
         virtual void notify(Widget2* sender, notify_event_t event)
         {
             this->sender = sender;
@@ -749,8 +738,8 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
     }
     BOOST_CHECK(notifier.sender == &wpassword);
     BOOST_CHECK(notifier.event == 0);
+    notifier.sender = nullptr;
     notifier.event = 0;
-    notifier.sender = 0;
 
     BOOST_CHECK_EQUAL(std::string("aurélie"), wpassword.get_text());
 
@@ -768,7 +757,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
@@ -781,7 +770,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
@@ -794,7 +783,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
@@ -807,7 +796,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
 
@@ -831,12 +820,9 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     TestDraw drawable(800, 600);
 
     struct Notify : public NotifyApi {
-        Widget2* sender;
-        notify_event_t event;
-        Notify()
-        : sender(0)
-        , event(0)
-        {}
+        Widget2* sender = nullptr;
+        notify_event_t event = 0;
+        Notify() = default;
         virtual void notify(Widget2* sender, notify_event_t event)
         {
             this->sender = sender;
@@ -865,8 +851,8 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     }
     BOOST_CHECK(notifier.sender == &wpassword);
     BOOST_CHECK(notifier.event == 0);
+    notifier.sender = nullptr;
     notifier.event = 0;
-    notifier.sender = 0;
 
     BOOST_CHECK_EQUAL(std::string("aurélie"), wpassword.get_text());
 
@@ -884,7 +870,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
@@ -897,7 +883,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
@@ -910,7 +896,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
@@ -923,7 +909,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
 
@@ -937,7 +923,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
 
@@ -957,8 +943,8 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     }
     BOOST_CHECK(notifier.sender == &wpassword);
     BOOST_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
+    notifier.sender = nullptr;
     notifier.event = 0;
-    notifier.sender = 0;
 
     BOOST_CHECK_EQUAL(std::string("aurézlie"), wpassword.get_text());
 }

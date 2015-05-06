@@ -86,6 +86,6 @@ BOOST_AUTO_TEST_CASE(TestLogon)
     BOOST_CHECK_EQUAL(std::string((char *) infoPacket.WorkingDir), std::string("Directory_Test") );
     BOOST_CHECK_EQUAL(infoPacket.cbWorkingDir, (uint32_t)strlen((char *) infoPacket.WorkingDir));
     BOOST_CHECK_EQUAL(infoPacket.extendedInfoPacket.performanceFlags,
-        (uint32_t)(PERF_DISABLE_WALLPAPER|PERF_DISABLE_FULLWINDOWDRAG|PERF_DISABLE_MENUANIMATIONS));
+        (PERF_DISABLE_WALLPAPER|PERF_DISABLE_FULLWINDOWDRAG|PERF_DISABLE_MENUANIMATIONS));
 
 }

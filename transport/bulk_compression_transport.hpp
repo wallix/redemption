@@ -43,7 +43,7 @@ public:
     BulkCompressionInTransport(Transport & st)
     : Transport()
     , source_transport(st)
-    , uncompressed_data(NULL)
+    , uncompressed_data(nullptr)
     , uncompressed_data_size(0)
     , compressed_buffer_stream(65536)
     , uncompressed_buffer_stream(65536) {}

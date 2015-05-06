@@ -198,7 +198,7 @@ public:
 */
             if (reason == focus_reason_backtabkey) {
                 if (this->item_count) {
-                    if (!this->items[this->current_item_index]->get_previous_focus(NULL, false)) {
+                    if (!this->items[this->current_item_index]->get_previous_focus(nullptr, false)) {
                         this->child_has_focus = false;
                     }
                     else {
@@ -241,7 +241,7 @@ public:
     virtual bool next_focus() {
         if (!this->child_has_focus) {
             if (this->item_count) {
-                if (!this->items[this->current_item_index]->get_next_focus(NULL, false)) {
+                if (!this->items[this->current_item_index]->get_next_focus(nullptr, false)) {
                     return false;
                 }
                 this->child_has_focus = true;

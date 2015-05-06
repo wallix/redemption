@@ -78,24 +78,18 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
     bool decompress_50(uint8_t * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
         //LOG(LOG_INFO, "decompress_50");
 
-        uint8_t  * history_ptr;     /* points to next free slot in bistory_buf    */
-        uint32_t   d32;             /* we process 4 compressed uint8_ts at a time */
-        uint16_t   copy_offset;     /* location to copy data from                 */
-        uint16_t   lom;             /* length of match                            */
-        uint8_t  * src_ptr;         /* used while copying compressed data         */
-        uint8_t  * cptr;            /* points to next uint8_t in cbuf             */
-        uint8_t    cur_uint8_t;     /* last uint8_t fetched from cbuf             */
-        int        bits_left;       /* bits left in d32 for processing            */
-        int        cur_bits_left;   /* bits left in cur_uint8_t for processing    */
+        uint8_t  * history_ptr  = this->history_ptr;    /* points to next free slot in bistory_buf    */
+        uint32_t   d32          = 0;                    /* we process 4 compressed uint8_ts at a time */
+        uint16_t   copy_offset;                         /* location to copy data from                 */
+        uint16_t   lom          = 0;                    /* length of match                            */
+        uint8_t  * src_ptr      = nullptr;              /* used while copying compressed data         */
+        uint8_t  * cptr         = cbuf;                 /* points to next uint8_t in cbuf             */
+        uint8_t    cur_uint8_t  = 0;                    /* last uint8_t fetched from cbuf             */
+        int        bits_left    = 0;                    /* bits left in d32 for processing            */
+        int        cur_bits_left;                       /* bits left in cur_uint8_t for processing    */
         int        tmp;
 
-        src_ptr       = 0;
-        cptr          = cbuf;
-        lom           = 0;
-        bits_left     = 0;
-        d32           = 0;
-        cur_uint8_t   = 0;
-        *rlen         = 0;
+        *rlen = 0;
 
         /* get next free slot in history buffer */
         history_ptr = this->history_ptr;
@@ -615,7 +609,7 @@ private:
 
         this->hash_tab_mgr.clear_undo_history();
 
-        if ((uncompressed_data == NULL) || (uncompressed_data_size <= 0) ||
+        if ((uncompressed_data == nullptr) || (uncompressed_data_size <= 0) ||
             (uncompressed_data_size >= RDP_50_HIST_BUF_LEN - 2))
             return;
 

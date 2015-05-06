@@ -48,7 +48,7 @@ public:
                int group_id, int fgcolor, int bgcolor, int focus_color, Font const & font,
                std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
     : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, group_id)
-    , label(drawable, 0, 0, *this, 0, text, false, 0, fgcolor, bgcolor, font, xtext, ytext)
+    , label(drawable, 0, 0, *this, nullptr, text, false, 0, fgcolor, bgcolor, font, xtext, ytext)
     , w_text(0)
     , h_text(0)
     , cursor_color(0x888888)

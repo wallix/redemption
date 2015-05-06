@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.globals.enable_file_encryption.set(false);
 
         Capture capture(
-            now, scr.cx, scr.cy, 24, 24, "./", "./", "/tmp/", "capture", false, false, NULL, ini
+            now, scr.cx, scr.cy, 24, 24, "./", "./", "/tmp/", "capture", false, false, nullptr, ini
         );
 
         bool ignore_frame_in_timeval = false;
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         ini.video.capture_wrm = false;
         ini.video.capture_png = true;
         ini.globals.enable_file_encryption.set(false);
-        Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, NULL, ini);
+        Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, nullptr, ini);
 
         Pointer pointer1(Pointer::POINTER_EDIT);
         capture.server_set_pointer(pointer1);

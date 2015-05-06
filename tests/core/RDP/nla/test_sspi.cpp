@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TestSecBuffer)
     BOOST_CHECK_EQUAL(buff3->Buffer.size(), 333);
     BOOST_CHECK_EQUAL(buff5->Buffer.size(), 555);
     BOOST_CHECK_EQUAL(buff7->Buffer.size(), 777);
-    BOOST_CHECK(buffunknown == NULL);
+    BOOST_CHECK(buffunknown == nullptr);
 
 
 }
@@ -169,72 +169,72 @@ BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
 {
     SecurityFunctionTable table;
     SEC_STATUS status;
-    //status = table.EnumerateSecurityPackages(NULL, NULL);
+    //status = table.EnumerateSecurityPackages(nullptr, nullptr);
     //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    //status = table.QueryCredentialsAttributes(NULL, 0, NULL);
+    //status = table.QueryCredentialsAttributes(nullptr, 0, nullptr);
     //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.AcquireCredentialsHandle(NULL, NULL, 0, NULL,
-                                            NULL, NULL, NULL, NULL, NULL);
+    status = table.AcquireCredentialsHandle(nullptr, nullptr, 0, nullptr,
+                                            nullptr, nullptr, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.FreeCredentialsHandle(NULL);
+    status = table.FreeCredentialsHandle(nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.InitializeSecurityContext(NULL, NULL, NULL, 0, 0, 0, NULL,
-                                             0, NULL, NULL, NULL, NULL);
+    status = table.InitializeSecurityContext(nullptr, nullptr, nullptr, 0, 0, 0, nullptr,
+                                             0, nullptr, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.AcceptSecurityContext(NULL, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL);
+    status = table.AcceptSecurityContext(nullptr, nullptr, nullptr, 0, 0, nullptr, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.CompleteAuthToken(NULL, NULL);
+    status = table.CompleteAuthToken(nullptr, nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    //status = table.DeleteSecurityContext(NULL);
+    //status = table.DeleteSecurityContext(nullptr);
     //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    //status = table.ApplyControlToken(NULL, NULL);
+    //status = table.ApplyControlToken(nullptr, nullptr);
     //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.QueryContextAttributes(NULL, 0, NULL);
+    status = table.QueryContextAttributes(nullptr, 0, nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.ImpersonateSecurityContext(NULL);
+    status = table.ImpersonateSecurityContext(nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.RevertSecurityContext(NULL);
+    status = table.RevertSecurityContext(nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    //status = table.MakeSignature(NULL, 0, NULL, 0);
+    //status = table.MakeSignature(nullptr, 0, nullptr, 0);
     //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    //status = table.VerifySignature(NULL, NULL, 0, NULL);
+    //status = table.VerifySignature(nullptr, nullptr, 0, nullptr);
     //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.FreeContextBuffer(NULL);
+    status = table.FreeContextBuffer(nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    //status = table.ExportSecurityContext(NULL, 0, NULL, NULL);
+    //status = table.ExportSecurityContext(nullptr, 0, nullptr, nullptr);
     //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.ImportSecurityContext(NULL, NULL, NULL, NULL);
+    status = table.ImportSecurityContext(nullptr, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    //status = table.AddCredentials(NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL);
+    //status = table.AddCredentials(nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
     //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    //status = table.QuerySecurityContextToken(NULL, NULL);
+    //status = table.QuerySecurityContextToken(nullptr, nullptr);
     //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.EncryptMessage(NULL, 0, NULL, 0);
+    status = table.EncryptMessage(nullptr, 0, nullptr, 0);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.DecryptMessage(NULL, NULL, 0, NULL);
+    status = table.DecryptMessage(nullptr, nullptr, 0, nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    //status = table.SetContextAttributes(NULL, 0, NULL, 0);
+    //status = table.SetContextAttributes(nullptr, 0, nullptr, 0);
     //BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     SecPkgInfo packageInfo;

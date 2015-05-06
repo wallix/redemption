@@ -119,7 +119,7 @@ public:
 
     virtual const uint8_t * get_public_key() const
     {
-        return NULL;
+        return nullptr;
     }
 
     virtual size_t get_public_key_length() const
@@ -129,12 +129,12 @@ public:
 
     void recv(char ** pbuffer, size_t len)
     {
-        this->do_recv(reinterpret_cast<char **>(pbuffer), len);
+        this->do_recv(pbuffer, len);
     }
 
     void send(const char * const buffer, size_t len)
     {
-        this->do_send(reinterpret_cast<const char * const>(buffer), len);
+        this->do_send(buffer, len);
     }
 
     void recv(uint8_t ** pbuffer, size_t len)

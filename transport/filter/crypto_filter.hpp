@@ -47,7 +47,7 @@ namespace transfil {
             const int          nrounds = 5;
             unsigned char      key[32];
             const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
-                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, NULL);
+                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
             if (i != 32) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
                 return -1;
@@ -55,8 +55,8 @@ namespace transfil {
 
             ::EVP_CIPHER_CTX_init(ctx);
             if ((is_decrypion
-            ? ::EVP_DecryptInit_ex(ctx, cipher, NULL, key, iv)
-            : ::EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv)) != 1) {
+            ? ::EVP_DecryptInit_ex(ctx, cipher, nullptr, key, iv)
+            : ::EVP_EncryptInit_ex(ctx, cipher, nullptr, key, iv)) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize %scrypion context\n",
                     is_decrypion ? "de":"en", ::getpid());
                 return -1;
@@ -233,7 +233,7 @@ namespace transfil {
             int remaining_size = 0;
 
             /* allows reusing of ectx for multiple encryption cycles */
-            if (EVP_DecryptInit_ex(&this->ectx, NULL, NULL, NULL, NULL) != 1){
+            if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
                 return -1;
             }
@@ -292,11 +292,11 @@ namespace transfil {
 
             ::EVP_MD_CTX_init(&this->hctx);
             ::EVP_MD_CTX_init(&this->hctx4k);
-            if (::EVP_DigestInit_ex(&this->hctx, md, NULL) != 1) {
+            if (::EVP_DigestInit_ex(&this->hctx, md, nullptr) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context!\n", ::getpid());
                 return -1;
             }
-            if (::EVP_DigestInit_ex(&this->hctx4k, md, NULL) != 1) {
+            if (::EVP_DigestInit_ex(&this->hctx4k, md, nullptr) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize 4k MD hash context!\n", ::getpid());
                 return -1;
             }
@@ -305,7 +305,7 @@ namespace transfil {
             const int     blocksize = ::EVP_MD_block_size(md);
             unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
             {
-                if (key_buf == NULL) {
+                if (key_buf == nullptr) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc!\n", ::getpid());
                     return -1;
                 }
@@ -474,12 +474,12 @@ namespace transfil {
 
             if (hash) {
                 unsigned char tmp_hash[HASH_LEN];
-                if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, NULL) != 1) {
+                if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, nullptr) != 1) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
                     result = -1;
                     tmp_hash[0] = '\0';
                 }
-                if (::EVP_DigestFinal_ex(&this->hctx, tmp_hash + MD_HASH_LENGTH, NULL) != 1) {
+                if (::EVP_DigestFinal_ex(&this->hctx, tmp_hash + MD_HASH_LENGTH, nullptr) != 1) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
                     result = -1;
                     tmp_hash[MD_HASH_LENGTH] = '\0';
@@ -492,7 +492,7 @@ namespace transfil {
                 }
                 const int     blocksize = ::EVP_MD_block_size(md);
                 unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
-                if (key_buf == NULL) {
+                if (key_buf == nullptr) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc\n", ::getpid());
                     return -1;
                 }
@@ -515,7 +515,7 @@ namespace transfil {
 
                 EVP_MD_CTX mdctx;
                 ::EVP_MD_CTX_init(&mdctx);
-                if (::EVP_DigestInit_ex(&mdctx, md, NULL) != 1) {
+                if (::EVP_DigestInit_ex(&mdctx, md, nullptr) != 1) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
                     return -1;
                 }
@@ -527,14 +527,14 @@ namespace transfil {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                     return -1;
                 }
-                if (::EVP_DigestFinal_ex(&mdctx, hash, NULL) != 1) {
+                if (::EVP_DigestFinal_ex(&mdctx, hash, nullptr) != 1) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
                     result = -1;
                     hash[0] = '\0';
                 }
                 ::EVP_MD_CTX_cleanup(&mdctx);
                 ::EVP_MD_CTX_init(&mdctx);
-                if (::EVP_DigestInit_ex(&mdctx, md, NULL) != 1) {
+                if (::EVP_DigestInit_ex(&mdctx, md, nullptr) != 1) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
                     return -1;
                 }
@@ -546,7 +546,7 @@ namespace transfil {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                     return -1;
                 }
-                if (::EVP_DigestFinal_ex(&mdctx, hash + MD_HASH_LENGTH, NULL) != 1) {
+                if (::EVP_DigestFinal_ex(&mdctx, hash + MD_HASH_LENGTH, nullptr) != 1) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
                     result = -1;
                     hash[MD_HASH_LENGTH] = '\0';
@@ -575,7 +575,7 @@ namespace transfil {
             int remaining_size = 0;
 
             /* allows reusing of ectx for multiple encryption cycles */
-            if (EVP_EncryptInit_ex(&this->ectx, NULL, NULL, NULL, NULL) != 1){
+            if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
                 return -1;
             }

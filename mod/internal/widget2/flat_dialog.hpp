@@ -65,12 +65,12 @@ public:
         , bg_color(theme.global.bgcolor)
         , img(drawable, 0, 0,
               theme.global.logo ? theme.global.logo_path :
-              SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -8)
-        , title(drawable, 0, 0, *this, NULL, caption, true, -9,
+              SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -8)
+        , title(drawable, 0, 0, *this, nullptr, caption, true, -9,
                 theme.global.fgcolor, theme.global.bgcolor, font, 5)
-        , dialog(drawable, 0, 0, *this, NULL, text, true, -10,
+        , dialog(drawable, 0, 0, *this, nullptr, text, true, -10,
                  theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
-        , challenge(NULL)
+        , challenge(nullptr)
         , ok(drawable, 0, 0, *this, this, ok_text ? ok_text : "Ok", true, -12,
              theme.global.fgcolor, theme.global.bgcolor,
              theme.global.focus_color, font, 6, 2)
@@ -79,7 +79,7 @@ public:
                                                     theme.global.fgcolor,
                                                     theme.global.bgcolor,
                                                     theme.global.focus_color, font,
-                                                    6, 2) : NULL)
+                                                    6, 2) : nullptr)
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
                     theme.global.separator_color)
         , font(font)
@@ -108,14 +108,14 @@ public:
             if (CHALLENGE_ECHO == has_challenge) {
                 this->challenge = new WidgetEdit(this->drawable,
                                                  this->separator.rect.x + 10, y,
-                                                 total_width - 20, *this, this, 0, -13,
+                                                 total_width - 20, *this, this, nullptr, -13,
                                                  theme.edit.fgcolor,
                                                  theme.edit.bgcolor,
                                                  theme.edit.focus_color, font, -1u, 1, 1);
             } else {
                 this->challenge = new WidgetPassword(this->drawable,
                                                      this->separator.rect.x + 10,
-                                                     y, total_width - 20, *this, this, 0,
+                                                     y, total_width - 20, *this, this, nullptr,
                                                      -13, theme.edit.fgcolor,
                                                      theme.edit.bgcolor,
                                                      theme.edit.focus_color,
@@ -153,10 +153,8 @@ public:
     }
 
     virtual ~FlatDialog() {
-        if (this->challenge)
-            delete this->challenge;
-        if (this->cancel)
-            delete this->cancel;
+        delete this->challenge;
+        delete this->cancel;
         this->clear();
     }
 

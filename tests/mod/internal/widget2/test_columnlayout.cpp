@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetColumn)
 
     // WidgetButton is a button widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0;
 
     WidgetColumnLayout wcolumn(drawable, 50, 60, parent, notifier, id);

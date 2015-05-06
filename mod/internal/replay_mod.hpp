@@ -105,7 +105,7 @@ public:
             throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
         }
 
-        this->reader->add_consumer(&this->front, NULL);
+        this->reader->add_consumer(&this->front, nullptr);
         this->front.send_global_palette();
     }
 

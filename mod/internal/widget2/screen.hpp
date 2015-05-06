@@ -44,11 +44,11 @@ public:
     Font const & font;
 
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, Font const & font,
-                 NotifyApi * notifier = NULL, Theme * theme = NULL)
+                 NotifyApi * notifier = nullptr, Theme * theme = nullptr)
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , theme(theme ? *theme : Theme())
-        , tooltip(NULL)
-        , current_over(NULL)
+        , tooltip(nullptr)
+        , current_over(nullptr)
         , normal_pointer(Pointer::POINTER_NORMAL)
         , edit_pointer(Pointer::POINTER_EDIT)
         , font(font)
@@ -62,20 +62,20 @@ public:
     {
         if (this->tooltip) {
             delete this->tooltip;
-            this->tooltip = NULL;
+            this->tooltip = nullptr;
         }
     }
 
     void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
-        if (text == NULL) {
+        if (text == nullptr) {
             if (this->tooltip) {
                 this->remove_widget(this->tooltip);
                 this->refresh(this->tooltip->rect);
                 delete this->tooltip;
-                this->tooltip = NULL;
+                this->tooltip = nullptr;
             }
         }
-        else if (this->tooltip == NULL) {
+        else if (this->tooltip == nullptr) {
             this->tooltip = new WidgetTooltip(this->drawable,
                                               x, y,
                                               *this, widget,
@@ -104,7 +104,7 @@ public:
 
             Widget2 * future_focus_w = this->get_next_focus(this->current_focus, false);
             if (!future_focus_w) {
-                future_focus_w = this->get_next_focus(NULL, false);
+                future_focus_w = this->get_next_focus(nullptr, false);
             }
             REDASSERT(this->current_focus);
             this->set_widget_focus(future_focus_w, focus_reason_tabkey);
@@ -122,7 +122,7 @@ public:
 
             Widget2 * future_focus_w = this->get_previous_focus(this->current_focus, false);
             if (!future_focus_w) {
-                future_focus_w = this->get_previous_focus(NULL, false);
+                future_focus_w = this->get_previous_focus(nullptr, false);
             }
             REDASSERT(this->current_focus);
             this->set_widget_focus(future_focus_w, focus_reason_backtabkey);
@@ -137,7 +137,7 @@ public:
     {
         Widget2 * w = this->last_widget_at_pos(x, y);
         if (this->current_over != w) {
-            if (((w != NULL) ? w->pointer_flag : Pointer::POINTER_NORMAL) == Pointer::POINTER_EDIT) {
+            if (((w != nullptr) ? w->pointer_flag : Pointer::POINTER_NORMAL) == Pointer::POINTER_EDIT) {
                 this->drawable.server_set_pointer(edit_pointer);
             }
             else {

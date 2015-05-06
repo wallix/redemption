@@ -66,10 +66,10 @@ public:
                        ini.context.auth_error_message.c_str(), 0,
                        (ini.context_is_asked(AUTHID_AUTH_USER)
                         || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
-                       NULL : ini.globals.auth_user.get_cstr(),
+                       nullptr : ini.globals.auth_user.get_cstr(),
                        (ini.context_is_asked(AUTHID_TARGET_USER)
                         || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
-                       NULL : temporary_text(ini).text,
+                       nullptr : temporary_text(ini).text,
                        showtimer, ini)
         , timeout(now, ini.globals.close_timeout)
         , showtimer(showtimer)

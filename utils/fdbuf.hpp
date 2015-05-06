@@ -23,6 +23,7 @@
 #define REDEMPTION_PUBLIC_UTILS_FDBUF_HPP
 
 #include "read_and_write.hpp"
+#include "exchange.hpp"
 
 #include <cerrno>
 #include <cstddef>
@@ -54,8 +55,7 @@ public:
 
     fdbuf& operator=(fdbuf && other) noexcept
     {
-        fdbuf tmp(static_cast<fdbuf&&>(other));
-        this->swap(tmp);
+        this->fd = exchange(other.fd, -1);
         return *this;
     }
 

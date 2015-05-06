@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
         //mod_rdp_params.enable_bitmap_update            = false;
         mod_rdp_params.enable_new_pointer              = false;
         //mod_rdp_params.rdp_compression                 = 0;
-        //mod_rdp_params.error_message                   = NULL;
+        //mod_rdp_params.error_message                   = nullptr;
         //mod_rdp_params.disconnect_on_logon_user_change = false;
         //mod_rdp_params.open_session_timeout            = 0;
         //mod_rdp_params.certificate_change_action       = 0;
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
     //        if (count == 20){
     //            front.dump_png("trace_xp_20_");
     //        }
-            mod->draw_event(time(NULL));
+            mod->draw_event(time(nullptr));
         }
     }
     catch (const Error & e) {
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     mod_rdp_params.enable_bitmap_update            = true;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
-    //mod_rdp_params.error_message                   = NULL;
+    //mod_rdp_params.error_message                   = nullptr;
     //mod_rdp_params.disconnect_on_logon_user_change = false;
     //mod_rdp_params.open_session_timeout            = 0;
     //mod_rdp_params.certificate_change_action       = 0;
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     while (res == BACK_EVENT_NONE){
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 38) break;
-        mod->draw_event(time(NULL));
+        mod->draw_event(time(nullptr));
     }
 
 //    front.dump_png("trace_w2008_");
@@ -269,7 +269,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
     //mod_rdp_params.enable_bitmap_update            = false;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
-    //mod_rdp_params.error_message                   = NULL;
+    //mod_rdp_params.error_message                   = nullptr;
     //mod_rdp_params.disconnect_on_logon_user_change = false;
     //mod_rdp_params.open_session_timeout            = 0;
     //mod_rdp_params.certificate_change_action       = 0;
@@ -301,7 +301,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 //        if (count == 20){
 //            front.dump_png("trace_w2003_20_");
 //        }
-        mod->draw_event(time(NULL));
+        mod->draw_event(time(nullptr));
     }
 
 
@@ -360,7 +360,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
     //mod_rdp_params.enable_bitmap_update            = false;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
-    //mod_rdp_params.error_message                   = NULL;
+    //mod_rdp_params.error_message                   = nullptr;
     //mod_rdp_params.disconnect_on_logon_user_change = false;
     //mod_rdp_params.open_session_timeout            = 0;
     //mod_rdp_params.certificate_change_action       = 0;
@@ -392,7 +392,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 //        if (count == 20){
 //            front.dump_png("trace_w2000_20_");
 //        }
-        mod->draw_event(time(NULL));
+        mod->draw_event(time(nullptr));
     }
 
 //    front.dump_png("trace_w2000_");

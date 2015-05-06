@@ -122,7 +122,7 @@ public:
         }
     }
     void hide_tooltip() {
-        this->show_tooltip(this, NULL, 0, 0);
+        this->show_tooltip(this, nullptr, 0, 0);
     }
 
     Widget2 * last_widget_at_pos(int16_t x, int16_t y) {
@@ -182,7 +182,7 @@ public:
     {
         if (this->rect.contains_pt(x, y))
             return this;
-        return 0;
+        return nullptr;
     }
 
     virtual void set_xy(int16_t x, int16_t y)

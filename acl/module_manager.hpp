@@ -107,7 +107,7 @@ public:
     virtual ~MMIni() {}
     virtual void remove_mod() {};
     virtual void new_mod(int target_module, time_t now, auth_api * acl) {
-        LOG(LOG_INFO, "new mod %d at time: %d\n", static_cast<int>(target_module), static_cast<int>(now));
+        LOG(LOG_INFO, "new mod %d at time: %d\n", target_module, static_cast<int>(now));
         switch (target_module) {
         case MODULE_VNC:
         case MODULE_XUP:
@@ -130,7 +130,7 @@ public:
         }
         this->remove_mod();
         if (this->ini.globals.enable_close_box) {
-            this->new_mod(MODULE_INTERNAL_CLOSE, now, NULL);
+            this->new_mod(MODULE_INTERNAL_CLOSE, now, nullptr);
             signal = BACK_EVENT_NONE;
         }
         else {
@@ -575,7 +575,7 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Display Message'");
                 const char * message = this->ini.context.message.get_cstr();
-                const char * button = NULL;
+                const char * button = nullptr;
                 const char * caption = "Information";
                 this->mod = new FlatDialogMod(
                             // new DialogMod(
@@ -594,7 +594,7 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Challenge'");
                 const char * message = this->ini.context.message.get_cstr();
-                const char * button = NULL;
+                const char * button = nullptr;
                 const char * caption = "Challenge";
                 ChallengeOpt challenge = CHALLENGE_HIDE;
                 if (this->ini.context_get_bool(AUTHID_AUTHENTICATION_CHALLENGE)) {
@@ -646,7 +646,7 @@ public:
                 else {
                     strncpy(this->ini.account.username,
                             this->ini.globals.auth_user.get_cstr(),
-                            // this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0),
+                            // this->ini.context_get_value(AUTHID_AUTH_USER, nullptr, 0),
                             sizeof(this->ini.account.username));
                     this->ini.account.username[sizeof(this->ini.account.username) - 1] = 0;
                 }
@@ -851,7 +851,7 @@ public:
 
 
                 int client_sck = ip_connect(this->ini.context.target_host.get_cstr(),
-                                            //this->ini.context_get_value(AUTHID_TARGET_HOST, NULL, 0),
+                                            //this->ini.context_get_value(AUTHID_TARGET_HOST, nullptr, 0),
                                             this->ini.context.target_port.get(),
                                             3, 1000,
                                             this->ini.debug.mod_vnc);

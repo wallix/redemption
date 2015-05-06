@@ -106,8 +106,8 @@ static inline int ip_connect(const char* ip, int port,
     u.s4.sin_addr.s_addr = inet_addr(ip);
 
     if (u.s4.sin_addr.s_addr == INADDR_NONE) {
-        struct addrinfo * addr_info = NULL;
-        int               result    = getaddrinfo(ip, NULL, NULL, &addr_info);
+        struct addrinfo * addr_info = nullptr;
+        int               result    = getaddrinfo(ip, nullptr, nullptr, &addr_info);
 
         if (result) {
             int          _error;
@@ -153,7 +153,7 @@ static inline int ip_connect(const char* ip, int port,
             // exit select on timeout or connect or error
             // connect will catch the actual error if any,
             // no need to care of select result
-            select(sck+1, NULL, &fds, NULL, &timeout);
+            select(sck+1, nullptr, &fds, nullptr, &timeout);
         }
         else {
             // real failure

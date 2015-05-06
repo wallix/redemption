@@ -29,7 +29,7 @@ namespace detail
     struct NoCurrentPath {
         template<class Buf>
         static const char * current_path(Buf &)
-        { return 0; }
+        { return nullptr; }
     };
 
     struct GetCurrentPath {

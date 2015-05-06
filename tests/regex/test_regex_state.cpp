@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestRegexCheck)
         BOOST_CHECK_EQUAL(st.check(consumer.bumpc(), consumer), 3);
         consumer.str("abcd");
         BOOST_CHECK_EQUAL(st.check(consumer.bumpc(), consumer), 3);
-        st.data.sequence.s = 0;
+        st.data.sequence.s = nullptr;
     }
 }
 

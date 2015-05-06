@@ -125,7 +125,7 @@ public:
     virtual ~WidgetRadioList() {
         for (size_t i = 0; i < this->size; ++i) {
             delete this->child_list[i];
-            this->child_list[i] = NULL;
+            this->child_list[i] = nullptr;
         }
     }
 

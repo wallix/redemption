@@ -187,14 +187,14 @@ public:
 
     const char * translate(const char * key) const {
         auto it = std::lower_bound(trans.begin(), trans.end(), key);
-        return it == trans.end() || *it != key ? 0 : it->translation[this->lang];
+        return it == trans.end() || *it != key ? nullptr : it->translation[this->lang];
     }
 };
 
 #define TRANSLATIONCONF Translation::getInstance()
 static inline const char * TR(const char * key, Inifile & ini)
 {
-    const char * res = NULL;
+    const char * res = nullptr;
 
     if (!res || !*res || 0 == strcmp(res, "ASK")) {
         const char * lang = ini.translation.language.get_cstr();

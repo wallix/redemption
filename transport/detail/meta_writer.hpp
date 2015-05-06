@@ -186,7 +186,7 @@ namespace detail
         const char * current_path() const
         {
             if (!this->current_filename_[0] && !this->num_file_) {
-                return 0;
+                return nullptr;
             }
             return this->filegen_.get(this->num_file_ - 1);
         }
@@ -216,7 +216,7 @@ namespace detail
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
                    , this->current_filename_, filename, errno, strerror(errno));
-                return 0;
+                return nullptr;
             }
 
             this->current_filename_[0] = 0;

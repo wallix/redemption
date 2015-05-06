@@ -116,8 +116,8 @@ public:
     virtual void clear() {
         for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
             for (uint16_t row_index = 1; row_index < GRID_NB_ROWS_MAX; row_index++) {
-                this->widgets[column_index][row_index]   = NULL;
-                this->meta_data[column_index][row_index] = NULL;
+                this->widgets[column_index][row_index]   = nullptr;
+                this->meta_data[column_index][row_index] = nullptr;
             }
         }
         this->nb_rows = 0;
@@ -229,7 +229,7 @@ public:
         return this->widgets[column_index][row_index];
     }
     Widget2 * set_widget(uint16_t row_index, uint16_t column_index, Widget2 * w,
-                         void * meta_data = NULL) {
+                         void * meta_data = nullptr) {
         REDASSERT(column_index <= this->nb_columns);
         REDASSERT(row_index <= GRID_NB_ROWS_MAX);
         Widget2 * res = this->widgets[column_index][row_index];
@@ -257,7 +257,7 @@ public:
             }
         }
 
-        return NULL;
+        return nullptr;
     }
 
     void get_selection(uint16_t & row_index, uint16_t & column_index) const {

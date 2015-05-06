@@ -77,7 +77,7 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
     int decompress_40(uint8_t * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
         //LOG(LOG_INFO, "decompress_40");
 
-        uint8_t  * src_ptr       = 0;       /* used while copying compressed data         */
+        uint8_t  * src_ptr       = nullptr; /* used while copying compressed data         */
         uint8_t  * cptr          = cbuf;    /* points to next uint8_t in cbuf             */
         uint16_t   copy_offset   = 0;       /* location to copy data from                 */
         uint16_t   lom           = 0;       /* length of match                            */
@@ -578,7 +578,7 @@ private:
 
         this->hash_tab_mgr.clear_undo_history();
 
-        if ((uncompressed_data == NULL) || (uncompressed_data_size <= 0) ||
+        if ((uncompressed_data == nullptr) || (uncompressed_data_size <= 0) ||
             (uncompressed_data_size >= RDP_40_HIST_BUF_LEN - 2)) {
             return;
         }

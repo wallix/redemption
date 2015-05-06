@@ -344,12 +344,12 @@ static inline int recursive_create_directory(const char *directory, mode_t mode,
     status         = 0;
     copy_directory = strdup(directory);
 
-    if (copy_directory == NULL) {
+    if (copy_directory == nullptr) {
         return -1;
     }
 
     for ( pTemp = copy_directory
-        ; (status == 0) && ((pSearch = strchr(pTemp, '/')) != 0)
+        ; (status == 0) && ((pSearch = strchr(pTemp, '/')) != nullptr)
         ; pTemp = pSearch + 1) {
         if (pSearch == pTemp) {
             continue;

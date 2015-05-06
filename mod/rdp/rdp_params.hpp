@@ -101,7 +101,7 @@ struct ModRDPParams {
         , target_host(target_host)
         , client_address(client_address)
 
-        , client_name(NULL)
+        , client_name(nullptr)
 
         , enable_tls(true)
         , enable_nla(true)
@@ -114,12 +114,12 @@ struct ModRDPParams {
 
         , enable_transparent_mode(false)
         , output_filename("")
-        , persistent_key_list_transport(NULL)
-        , transparent_recorder_transport(NULL)
+        , persistent_key_list_transport(nullptr)
+        , transparent_recorder_transport(nullptr)
 
         , key_flags(key_flags)
 
-        , acl(NULL)
+        , acl(nullptr)
 
         , auth_channel("")
         , alternate_shell("")
@@ -129,7 +129,7 @@ struct ModRDPParams {
 
         , rdp_compression(0)
 
-        , error_message(NULL)
+        , error_message(nullptr)
         , disconnect_on_logon_user_change(false)
         , open_session_timeout(0)
 

@@ -201,7 +201,7 @@ const Keylayout::KeyLayout_t capslock_shiftAltGr = {
     /* x78 - x7F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 };
 
-const Keylayout::dkey_t * const deadkeys = 0;
+const Keylayout::dkey_t * const deadkeys = nullptr;
 
 const static uint8_t nbDeadkeys = 0;
 

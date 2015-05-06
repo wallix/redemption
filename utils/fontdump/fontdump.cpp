@@ -50,7 +50,7 @@ check_messages(void)
     MSG msg;
 
     while (PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE)) {
-        GetMessage(&msg, NULL, 0, 0);
+        GetMessage(&msg, nullptr, 0, 0);
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -78,9 +78,9 @@ show_last_error(void)
     LPVOID lpMsgBuf;
 
     FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                   NULL, GetLastError(),
+                   nullptr, GetLastError(),
                    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                   (LPSTR)&lpMsgBuf, 0, NULL);
+                   (LPSTR)&lpMsgBuf, 0, nullptr);
     msg("GetLastError - %s", lpMsgBuf);
     LocalFree(lpMsgBuf);
     return 0;
@@ -419,8 +419,8 @@ create_window(void)
     top = GetSystemMetrics(SM_CYSCREEN) / 2 - 480 / 2;
     g_wnd = CreateWindow(wc.lpszClassName, _T("fontdump"),
                          style, left, top, 640, 480,
-                         (HWND) NULL, (HMENU) NULL, g_instance,
-                         (LPVOID) NULL);
+                         (HWND) nullptr, (HMENU) nullptr, g_instance,
+                         (LPVOID) nullptr);
     style = WS_CHILD | WS_VISIBLE | WS_BORDER;
     g_lb = CreateWindow(_T("LISTBOX"), _T("LISTBOX1"), style,
                         200, 10, 400, 400, g_wnd, 0, g_instance, 0);
@@ -448,7 +448,7 @@ main_loop(void)
 {
     MSG msg;
 
-    while (GetMessage(&msg, NULL, 0, 0)) {
+    while (GetMessage(&msg, nullptr, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }

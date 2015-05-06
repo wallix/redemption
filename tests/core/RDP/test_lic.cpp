@@ -173,12 +173,12 @@ BOOST_AUTO_TEST_CASE(Test_lic_new_licence)
 
     uint8_t license_key[16] = {};
     LIC::NewLicense_Recv lic(stream, license_key);
-    BOOST_CHECK_EQUAL((uint8_t)LIC::NEW_LICENSE, (uint8_t)lic.wMsgType);
-    BOOST_CHECK_EQUAL((uint8_t)3, (uint8_t)lic.bVersion);
-    BOOST_CHECK_EQUAL((uint16_t)2055, (uint16_t)lic.wMsgSize);
+    BOOST_CHECK_EQUAL(LIC::NEW_LICENSE, lic.wMsgType);
+    BOOST_CHECK_EQUAL(3, lic.bVersion);
+    BOOST_CHECK_EQUAL(2055, lic.wMsgSize);
 
-    BOOST_CHECK_EQUAL((uint16_t)9, lic.licenseInfo.wBlobType);
-    BOOST_CHECK_EQUAL((uint16_t)2031, lic.licenseInfo.wBlobLen);
+    BOOST_CHECK_EQUAL(9, lic.licenseInfo.wBlobType);
+    BOOST_CHECK_EQUAL(2031, lic.licenseInfo.wBlobLen);
 
     BOOST_CHECK_EQUAL((uint32_t)6, (lic.licenseInfo.dwVersion >> 16) & 0xFFFF); // major
     BOOST_CHECK_EQUAL((uint32_t)0, lic.licenseInfo.dwVersion & 0xFFFF);         // minor
@@ -466,9 +466,9 @@ BOOST_AUTO_TEST_CASE(Test_lic_upgrade_licence)
 
     uint8_t license_key[16] = {};
     LIC::NewLicense_Recv lic(stream, license_key);
-    BOOST_CHECK_EQUAL((uint8_t)LIC::UPGRADE_LICENSE, (uint8_t)lic.wMsgType);
-    BOOST_CHECK_EQUAL((uint8_t)3, (uint8_t)lic.bVersion);
-    BOOST_CHECK_EQUAL((uint16_t)2055, (uint16_t)lic.wMsgSize);
+    BOOST_CHECK_EQUAL((uint8_t)LIC::UPGRADE_LICENSE, lic.wMsgType);
+    BOOST_CHECK_EQUAL((uint8_t)3, lic.bVersion);
+    BOOST_CHECK_EQUAL((uint16_t)2055, lic.wMsgSize);
 
     BOOST_CHECK_EQUAL((uint16_t)9, lic.licenseInfo.wBlobType);
     BOOST_CHECK_EQUAL((uint16_t)2031, lic.licenseInfo.wBlobLen);

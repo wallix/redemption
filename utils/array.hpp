@@ -49,7 +49,7 @@ class Array {
 
     public:
     Array(size_t size = AUTOSIZE)
-        : data(NULL)
+        : data(nullptr)
         , capacity(0)
         , autobuffer()
     {

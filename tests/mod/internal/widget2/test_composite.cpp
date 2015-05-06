@@ -40,7 +40,7 @@ public:
     : WidgetComposite(drawable, Rect(0, 0,
                                       drawable.gd.width(),
                                       drawable.gd.height()),
-                      *this, NULL)
+                      *this, nullptr)
     , color(0x27642F)
     {}
 
@@ -57,7 +57,7 @@ public:
 BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
 {
     TestDraw drawable(800, 600);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0;
 
     WidgetCompositeRect wcomposite(drawable);

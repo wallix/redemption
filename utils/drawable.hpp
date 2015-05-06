@@ -390,7 +390,7 @@ public:
             throw Error(ERR_RECORDER_EMPTY_IMAGE);
         }
         uint8_t * data = new (std::nothrow) uint8_t[this->rowsize_ * this->height_] {};
-        if (0 == data) {
+        if (nullptr == data) {
             throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
         }
         return data;

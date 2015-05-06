@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrame)
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     // int         fg_color = RED;
     // int         bg_color = YELLOW;
     int         group_id = 0;
@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarVertical)
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
 
-    NotifyApi * notifier    = NULL;
+    NotifyApi * notifier    = nullptr;
     int         fg_color    = MEDIUM_BLUE;
     int         bg_color    = LIGHT_BLUE;
     int         focus_color = WINBLUE;
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarHorizontal)
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
 
-    NotifyApi * notifier    = NULL;
+    NotifyApi * notifier    = nullptr;
     int         fg_color    = MEDIUM_BLUE;
     int         bg_color    = LIGHT_BLUE;
     int         focus_color = WINBLUE;
@@ -374,7 +374,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarControl)
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
 
-    NotifyApi * notifier    = NULL;
+    NotifyApi * notifier    = nullptr;
     int         fg_color    = MEDIUM_BLUE;
     int         bg_color    = LIGHT_BLUE;
     int         focus_color = WINBLUE;
@@ -414,11 +414,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarControl)
     // move horizontal bar to center
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            hbar.scroll.getCenteredX(), hbar.scroll.getCenteredY(),
-                           NULL);
+                           nullptr);
 
     parent.rdp_input_mouse(MOUSE_FLAG_MOVE,
                            hbar.rect.getCenteredX(), hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
 
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
@@ -435,11 +435,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarControl)
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            (hbar.rect.right() + hbar.scroll.right()) / 2,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
                            (hbar.rect.right() + hbar.scroll.right()) / 2,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
 
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
@@ -456,11 +456,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarControl)
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            (hbar.rect.right() + hbar.scroll.right()) / 2,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
                            (hbar.rect.right() + hbar.scroll.right()) / 2,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
 
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
@@ -477,59 +477,59 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarControl)
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
                            hbar.rect.x + 2 ,
                            hbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
 
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
@@ -606,11 +606,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarControl)
     // move horizontal bar to center
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            vbar.scroll.getCenteredX(), vbar.scroll.getCenteredY(),
-                           NULL);
+                           nullptr);
 
     parent.rdp_input_mouse(MOUSE_FLAG_MOVE,
                            vbar.rect.getCenteredX(), vbar.rect.getCenteredY(),
-                           NULL);
+                           nullptr);
 
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
@@ -627,11 +627,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarControl)
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            vbar.rect.getCenteredX(),
                            (vbar.rect.bottom() + vbar.scroll.bottom()) / 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
                            vbar.rect.getCenteredX(),
                            (vbar.rect.bottom() + vbar.scroll.bottom()) / 2,
-                           NULL);
+                           nullptr);
 
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
@@ -648,11 +648,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarControl)
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            vbar.rect.getCenteredX(),
                            (vbar.rect.bottom() + vbar.scroll.bottom()) / 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1),
                            vbar.rect.getCenteredX(),
                            (vbar.rect.bottom() + vbar.scroll.bottom()) / 2,
-                           NULL);
+                           nullptr);
 
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);
@@ -669,75 +669,75 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarControl)
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                            vbar.rect.getCenteredX(),
                            vbar.rect.y + 2,
-                           NULL);
+                           nullptr);
 
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.rect);

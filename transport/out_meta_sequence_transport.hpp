@@ -46,7 +46,7 @@ RequestCleaningTransport<
         uint16_t width,
         uint16_t height,
         const int groupid,
-        auth_api * authentifier = NULL,
+        auth_api * authentifier = nullptr,
         unsigned verbose = 0,
         FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
     : OutMetaSequenceTransport::TransportType(

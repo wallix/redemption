@@ -39,6 +39,9 @@
 #include "crypto_key_holder.hpp"
 
 /*****************************************************************************/
+#ifndef IN_IDE_PARSER
+[[noreturn]]
+#endif
 void shutdown(int sig)
 {
     LOG(LOG_INFO, "shutting down : signal %d pid=%d\n", sig, getpid());
@@ -90,34 +93,34 @@ void init_signals(void)
     sigaddset(&sa.sa_mask, SIGUSR2);
 
     sa.sa_handler = SIG_IGN;
-    sigaction(SIGSEGV, &sa, NULL);
+    sigaction(SIGSEGV, &sa, nullptr);
 
     sa.sa_handler = SIG_DFL;
-    sigaction(SIGBUS, &sa, NULL);
+    sigaction(SIGBUS, &sa, nullptr);
 
     sa.sa_handler = shutdown;
-    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGTERM, &sa, nullptr);
 
     sa.sa_handler = sighup;
-    sigaction(SIGHUP, &sa, NULL);
+    sigaction(SIGHUP, &sa, nullptr);
 
     sa.sa_handler = shutdown;
-    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGINT, &sa, nullptr);
 
     sa.sa_handler = sigpipe;
-    sigaction(SIGPIPE, &sa, NULL);
+    sigaction(SIGPIPE, &sa, nullptr);
 
     sa.sa_handler = SIG_IGN;
-    sigaction(SIGCHLD, &sa, NULL);
+    sigaction(SIGCHLD, &sa, nullptr);
 
     sa.sa_handler = SIG_DFL;
-    sigaction(SIGALRM, &sa, NULL);
+    sigaction(SIGALRM, &sa, nullptr);
 
     sa.sa_handler = SIG_IGN;
-    sigaction(SIGUSR1, &sa, NULL);
+    sigaction(SIGUSR1, &sa, nullptr);
 
     sa.sa_handler = SIG_IGN;
-    sigaction(SIGUSR2, &sa, NULL);
+    sigaction(SIGUSR2, &sa, nullptr);
 }
 
 //void reset_signals(void)
@@ -139,16 +142,16 @@ void init_signals(void)
 //    sigaddset(&sa.sa_mask, SIGUSR1);
 //    sigaddset(&sa.sa_mask, SIGUSR2);
 //
-//    sigaction(SIGSEGV, &sa, NULL);
-//    sigaction(SIGBUS, &sa, NULL);
-//    sigaction(SIGTERM, &sa, NULL);
-//    sigaction(SIGHUP, &sa, NULL);
-//    sigaction(SIGINT, &sa, NULL);
-//    sigaction(SIGPIPE, &sa, NULL);
-//    sigaction(SIGCHLD, &sa, NULL);
-//    sigaction(SIGALRM, &sa, NULL);
-//    sigaction(SIGUSR1, &sa, NULL);
-//    sigaction(SIGUSR2, &sa, NULL);
+//    sigaction(SIGSEGV, &sa, nullptr);
+//    sigaction(SIGBUS, &sa, nullptr);
+//    sigaction(SIGTERM, &sa, nullptr);
+//    sigaction(SIGHUP, &sa, nullptr);
+//    sigaction(SIGINT, &sa, nullptr);
+//    sigaction(SIGPIPE, &sa, nullptr);
+//    sigaction(SIGCHLD, &sa, nullptr);
+//    sigaction(SIGALRM, &sa, nullptr);
+//    sigaction(SIGUSR1, &sa, nullptr);
+//    sigaction(SIGUSR2, &sa, nullptr);
 //}
 
 void redemption_new_session()

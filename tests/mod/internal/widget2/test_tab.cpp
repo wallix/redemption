@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     WidgetScreen parent(drawable, 800, 600);
 
 
-    NotifyApi * notifier    = NULL;
+    NotifyApi * notifier    = nullptr;
     int         fg_color    = RED;
     int         bg_color    = YELLOW;
     int         focuscolor  = LIGHT_YELLOW;
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     parent.rdp_input_mouse( MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN
                           , mouse_x + 2
                           , mouse_y
-                          , NULL);
+                          , nullptr);
 
     if (!check_sig( drawable.gd.impl(), message,
         "\x88\x12\xe6\x6b\xd3\x8a\x60\x75\x6f\x93\xaf\xa1\xdf\x10\x9d\xce\xaf\x39\xc7\xe9"
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     parent.rdp_input_mouse( MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN
                           , mouse_x + 2
                           , mouse_y
-                          , NULL);
+                          , nullptr);
 
     if (!check_sig( drawable.gd.impl(), message,
         "\x86\x38\xfb\x75\xbc\xd0\xdd\xa1\x77\x2e\x95\xa6\x1b\x9e\x97\x76\x66\xab\xc2\x65"
@@ -310,7 +310,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     parent.rdp_input_mouse( MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN
                           , mouse_x + 2
                           , mouse_y
-                          , NULL);
+                          , nullptr);
 
     if (!check_sig( drawable.gd.impl(), message,
         "\x86\x38\xfb\x75\xbc\xd0\xdd\xa1\x77\x2e\x95\xa6\x1b\x9e\x97\x76\x66\xab\xc2\x65"
@@ -328,7 +328,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     parent.rdp_input_mouse( MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN
                           , mouse_x + 2
                           , mouse_y
-                          , NULL);
+                          , nullptr);
 
     if (!check_sig( drawable.gd.impl(), message,
         "\xd1\x12\xb0\xcb\xfd\x3f\xa0\x94\x96\xb8\xdb\xe0\xdd\xe0\x9c\xf5\x3d\x09\x71\xd4"
@@ -358,7 +358,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     parent.rdp_input_mouse( MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN
                           , mouse_x + 2
                           , mouse_y
-                          , NULL);
+                          , nullptr);
 
     if (!check_sig( drawable.gd.impl(), message,
         "\xe0\xce\xb6\x80\xa1\xd1\xce\xdb\x8c\xe9\x0c\xf7\x33\xf0\xd3\xaf\x30\x32\xc2\xd6"
@@ -376,7 +376,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTab)
     parent.rdp_input_mouse( MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN
                           , mouse_x + 2
                           , mouse_y
-                          , NULL);
+                          , nullptr);
 
     if (!check_sig( drawable.gd.impl(), message,
         "\x34\x76\x85\xdf\xb5\xa8\x96\x87\x04\x64\xa3\xc6\x53\x82\xe8\x58\xe1\x33\xee\xf7"

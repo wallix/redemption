@@ -43,7 +43,7 @@ public:
         : InternalMod(front, width, height, ini.font, &ini)
         , login(*this, width, height, this->screen, this, "Redemption " VERSION,
                 ini.account.username[0] != 0,
-                0, 0, 0, TR("login", ini), TR("password", ini), ini)
+                0, nullptr, nullptr, TR("login", ini), TR("password", ini), ini)
         , ini(ini)
     {
         this->screen.add_widget(&this->login);

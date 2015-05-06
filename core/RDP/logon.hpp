@@ -725,7 +725,7 @@ struct InfoPacket {
               , const char *program
               , const char *directory
               , uint32_t performanceFlags = 0
-              , const char *clientAddr = 0)
+              , const char *clientAddr = nullptr)
     : rdp5_support(use_rdp5)
     , CodePage(0) //........... ANSI code page descriptor
     , flags(0) //               bitmap

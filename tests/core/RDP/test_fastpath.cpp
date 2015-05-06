@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     BStream out_payload(65536);
 
     while (in_su.payload.in_remain()) {
-        FastPath::Update_Recv in_upd(in_su.payload, 0);
+        FastPath::Update_Recv in_upd(in_su.payload, nullptr);
 
         BOOST_CHECK_EQUAL(in_upd.updateCode, updateCodes[i++]);
 
@@ -288,7 +288,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
     uint8_t i = 0;
 
     while (in_su.payload.in_remain()) {
-        FastPath::Update_Recv in_upd(in_su.payload, 0);
+        FastPath::Update_Recv in_upd(in_su.payload, nullptr);
 
         BOOST_CHECK_EQUAL(in_upd.updateCode, updateCodes[i++]);
     }
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
     uint8_t updateCode = FastPath::FASTPATH_UPDATETYPE_CACHED;
 
     if (in_su.payload.in_remain()) {
-        FastPath::Update_Recv in_upd(in_su.payload, 0);
+        FastPath::Update_Recv in_upd(in_su.payload, nullptr);
 
         if (in_upd.updateCode == updateCode) {
             out_s.out_copy_bytes(in_upd.payload.get_data(), in_upd.payload.size());

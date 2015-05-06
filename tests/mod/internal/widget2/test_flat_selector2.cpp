@@ -50,11 +50,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
 
     // WidgetSelectorFlat2 is a selector widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP");
@@ -105,12 +105,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
 
     // WidgetSelectorFlat2 is a selector widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 640, 480, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier,
-                                "1", "1", 0, 0, 0, ini);
+                                "1", "1", nullptr, nullptr, nullptr, ini);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP");
@@ -161,11 +161,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.rect);
@@ -188,11 +188,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     selector.rdp_input_invalidate(Rect(20 + selector.dx(),
@@ -219,11 +219,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
     Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     selector.rdp_input_invalidate(Rect(20 + selector.dx(),
@@ -249,11 +249,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP");
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     selector.selector_lines.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                                             selector.selector_lines.dx() + 20,
                                             selector.selector_lines.dy() + 40,
-                                            NULL);
+                                            nullptr);
 
     selector.rdp_input_invalidate(selector.rect);
 
@@ -368,13 +368,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
 
     // int x = selector.selector_lines.rect.x + 5;
     // int y = selector.selector_lines.rect.y + 3;
-    // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, NULL);
+    // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, nullptr);
     // x += selector.selector_lines.group_w;
-    // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, NULL);
+    // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, nullptr);
     // x += selector.selector_lines.target_w;
-    // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, NULL);
+    // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, nullptr);
     // x += selector.selector_lines.protocol_w;
-    // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, NULL);
+    // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, nullptr);
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
@@ -385,11 +385,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
 
     selector.add_device("reptile", "snake@10.10.14.111",
                         "RDP");
@@ -411,10 +411,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     cury = selector.filter_target_group.centery();
     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                              curx, cury,
-                             NULL);
+                             nullptr);
     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                              curx, cury,
-                             NULL);
+                             nullptr);
 
     selector.rdp_input_invalidate(selector.rect);
 
@@ -565,14 +565,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
 //     WidgetScreen parent(drawable, 800, 600);
-//     NotifyApi * notifier = NULL;
+//     NotifyApi * notifier = nullptr;
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
 
 //     Inifile ini;
 //     // ini.translation.target.set_from_cstr("Target");
 
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
 
 //     selector.add_device("reptile", "snake@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");
@@ -596,10 +596,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     cury = selector.filter_device.centery();
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
 //                              curx, cury,
-//                              NULL);
+//                              nullptr);
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
 //                              curx, cury,
-//                              NULL);
+//                              nullptr);
 
 //     // selector.fit_columns();
 
@@ -709,14 +709,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
 //     WidgetScreen parent(drawable, 640, 480);
-//     NotifyApi * notifier = NULL;
+//     NotifyApi * notifier = nullptr;
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
 
 //     Inifile ini;
 //     // ini.translation.target.set_from_cstr("Target");
 
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
 
 //     selector.add_device("reptile", "snake@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");
@@ -740,10 +740,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     cury = selector.filter_device.centery();
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
 //                              curx, cury,
-//                              NULL);
+//                              nullptr);
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
 //                              curx, cury,
-//                              NULL);
+//                              nullptr);
 
 //     selector.fit_columns();
 
@@ -857,14 +857,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
 //     WidgetScreen parent(drawable, 1280, 1024);
-//     NotifyApi * notifier = NULL;
+//     NotifyApi * notifier = nullptr;
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
 
 //     Inifile ini;
 //     // ini.translation.target.set_from_cstr("Target");
 
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
 
 //     selector.add_device("reptile", "snake@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");
@@ -888,10 +888,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     cury = selector.filter_device.centery();
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
 //                              curx, cury,
-//                              NULL);
+//                              nullptr);
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
 //                              curx, cury,
-//                              NULL);
+//                              nullptr);
 
 //     selector.fit_columns();
 
@@ -1051,7 +1051,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     // selector.selector_lines.set_selection(1);
 
 //     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == NULL);
+//     BOOST_CHECK(notifier.sender == nullptr);
 
 
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
@@ -1114,13 +1114,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     // selector.selector_lines.set_selection(1);
 
 //     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == NULL);
+//     BOOST_CHECK(notifier.sender == nullptr);
 
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
 //     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == NULL);
+//     BOOST_CHECK(notifier.sender == nullptr);
 //     BOOST_CHECK(selector.current_focus == &selector.comment_edit);
 
 
@@ -1128,7 +1128,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
 //     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == NULL);
+//     BOOST_CHECK(notifier.sender == nullptr);
 //     BOOST_CHECK(selector.current_focus == &selector.comment_edit);
 
 //     selector.comment_edit.set_text("I would like to log on please !");
@@ -1191,7 +1191,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 
 //     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == NULL);
+//     BOOST_CHECK(notifier.sender == nullptr);
 
 
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
@@ -1212,7 +1212,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
 //                              selector.connect.centerx(),
 //                              selector.connect.centery(),
-//                              NULL);
+//                              nullptr);
 //     BOOST_CHECK_EQUAL(notifier.event, 0);
 //     BOOST_CHECK(notifier.sender == 0);
 //     BOOST_CHECK(selector.current_focus == &selector.connect);
@@ -1221,7 +1221,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
 //                              selector.connect.centerx(),
 //                              selector.connect.centery(),
-//                              NULL);
+//                              nullptr);
 //     BOOST_CHECK_EQUAL(notifier.event, 0);
 //     BOOST_CHECK(notifier.sender == 0);
 //     BOOST_CHECK(selector.current_focus == &selector.ticket_edit);
@@ -1287,7 +1287,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 
 //     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == NULL);
+//     BOOST_CHECK(notifier.sender == nullptr);
 
 
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);

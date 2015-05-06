@@ -102,7 +102,7 @@ namespace CHANNELS {
         }
 
         const ChannelDef * get_by_name(const char * const name) const {
-            const ChannelDef * channel = NULL;
+            const ChannelDef * channel = nullptr;
             for (size_t index = 0; index < this->size(); index++) {
                 const ChannelDef & item = this->items[index];
                 if (strcmp(name, item.name) == 0) {
@@ -114,7 +114,7 @@ namespace CHANNELS {
         }
 
         //const ChannelDef * get_by_id(int chanid) const {
-        //    const ChannelDef * channel = NULL;
+        //    const ChannelDef * channel = nullptr;
         //    for (size_t index = 0; index < this->size(); index++) {
         //        const ChannelDef & item = this->items[index];
         //        if (item.chanid == chanid) {

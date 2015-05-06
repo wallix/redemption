@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC)
 
 
     /* save starting time */
-    gettimeofday(&start_time, NULL);
+    gettimeofday(&start_time, nullptr);
 
     for (int x = 0; x < 1000 ; x++){
         rdp_mppc_unified_dec rmppc_d;
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC)
     }
 
     /* get end time */
-    gettimeofday(&end_time, NULL);
+    gettimeofday(&end_time, nullptr);
 
     /* print time taken */
     dur = ((end_time.tv_sec - start_time.tv_sec) * 1000000) + (end_time.tv_usec - start_time.tv_usec);
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     LOG(LOG_INFO, "test_mppc_enc: testing with embedded data of %d bytes", data_len);
 
     /* save starting time */
-    gettimeofday(&start_time, NULL);
+    gettimeofday(&start_time, nullptr);
 
     uint8_t  compressionFlags;
     uint16_t datalen;
@@ -98,17 +98,16 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
         rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
     BOOST_CHECK(0 != (compressionFlags & PACKET_COMPRESSED));
-    BOOST_CHECK_EQUAL(true,
-        rmppc.decompress((uint8_t*)enc.outputBuffer, enc.bytes_in_opb, enc.flags, rdata, rlen));
+    BOOST_CHECK_EQUAL(true, rmppc.decompress(enc.outputBuffer, enc.bytes_in_opb, enc.flags, rdata, rlen));
     BOOST_CHECK_EQUAL(data_len, rlen);
     BOOST_CHECK_EQUAL(0, memcmp(decompressed_rd5_data, rdata, rlen));
 
     /* get end time */
-    gettimeofday(&end_time, NULL);
+    gettimeofday(&end_time, nullptr);
 
     /* print time taken */
     long int dur = ((end_time.tv_sec - start_time.tv_sec) * 1000000) + (end_time.tv_usec - start_time.tv_usec);
-    LOG(LOG_INFO, "test_mppc_enc: compressed %d bytes in %f seconds\n", data_len, (float) (dur) / 1000000.0F);
+    LOG(LOG_INFO, "test_mppc_enc: compressed %d bytes in %f seconds\n", data_len, dur / 1000000.0);
 }
 
 BOOST_AUTO_TEST_CASE(TestBitsSerializer)

@@ -33,7 +33,7 @@
 //#include "rdtsc.hpp"
 //long long ustime() {
 //    struct timeval now;
-//    gettimeofday(&now, NULL);
+//    gettimeofday(&now, nullptr);
 //    return (long long)now.tv_sec*1000000LL + (long long)now.tv_usec;
 //}
 

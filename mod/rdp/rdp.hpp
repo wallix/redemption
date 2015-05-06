@@ -315,7 +315,7 @@ public:
         , enable_multiscrblt(false)
         , remote_program(mod_rdp_params.remote_program)
         , server_redirection_support(mod_rdp_params.server_redirection_support)
-        , transparent_recorder(NULL)
+        , transparent_recorder(nullptr)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
         , password_printing_mode(mod_rdp_params.password_printing_mode)
@@ -360,7 +360,7 @@ public:
 
         memset(this->clientAddr, 0, sizeof(this->clientAddr));
         strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
-        this->lic_layer_license_data = 0;
+        this->lic_layer_license_data = nullptr;
         this->lic_layer_license_size = 0;
         memset(this->lic_layer_license_key, 0, 16);
         memset(this->lic_layer_license_sign_key, 0, 16);
@@ -400,9 +400,9 @@ public:
         this->hostname[15] = 0;
 
 
-        const char * domain_pos   = 0;
+        const char * domain_pos   = nullptr;
         size_t       domain_len   = 0;
-        const char * username_pos = 0;
+        const char * username_pos = nullptr;
         size_t       username_len = 0;
         const char * separator = strchr(mod_rdp_params.target_user, '\\');
         if (separator)
@@ -494,7 +494,7 @@ public:
         }
 
         while (UP_AND_RUNNING != this->connection_finalization_state){
-            this->draw_event(time(NULL));
+            this->draw_event(time(nullptr));
             if (this->event.signal != BACK_EVENT_NONE){
                 char statestr[256];
                 switch (this->state) {
@@ -776,7 +776,7 @@ private:
                 }
 
                 this->send_clipboard_pdu_to_front_channel<RDPECLIP::FormatDataResponsePDU>(
-                    false, static_cast<uint8_t *>(NULL), 0);
+                    false, static_cast<uint8_t *>(nullptr), 0);
                 return;
             }
         }
@@ -1159,8 +1159,7 @@ private:
                 this->chunked_virtual_channel_data_stream.mark_end();
                 this->chunked_virtual_channel_data_stream.rewind();
 
-                REDASSERT(this->chunked_virtual_channel_data_stream.size() ==
-                    static_cast<size_t>(length));
+                REDASSERT(this->chunked_virtual_channel_data_stream.size() == length);
 
                 flags |= CHANNELS::CHANNEL_FLAG_FIRST;
 
@@ -1912,7 +1911,7 @@ public:
                                             }
 
                                             EVP_PKEY * epk = X509_get_pubkey(cert);
-                                            if (NULL == epk){
+                                            if (nullptr == epk){
                                                 LOG(LOG_WARNING, "Failed to extract public key from certificate\n");
                                                 throw Error(ERR_SEC);
                                             }
@@ -1922,7 +1921,7 @@ public:
                                             EVP_PKEY_free(epk);
                                             this->server_public_key_len = RSA_size(server_public_key);
 
-                                            if (NULL == server_public_key){
+                                            if (nullptr == server_public_key){
                                                 LOG(LOG_WARNING, "Failed to parse X509 server key");
                                                 throw Error(ERR_SEC);
                                             }
@@ -5305,9 +5304,7 @@ public:
         unsigned dlen  = stream.in_uint16_le(); /* data length */
 
         if ((mlen > sizeof(cursor.mask)) || (dlen > sizeof(cursor.data))) {
-            LOG(LOG_WARNING,
-                "mod_rdp::Bad length for color pointer mask_len=%u data_len=%u",
-                (unsigned)mlen, static_cast<unsigned>(dlen));
+            LOG(LOG_WARNING, "mod_rdp::Bad length for color pointer mask_len=%u data_len=%u", mlen, dlen);
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
         }
         TODO("this is modifiying cursor in place: we should not do that.");
@@ -5841,7 +5838,7 @@ public:
 
         if (this->open_session_timeout) {
             this->open_session_timeout_checker.restart_timeout(
-                time(NULL), this->open_session_timeout);
+                time(nullptr), this->open_session_timeout);
             this->event.set(1000000);
         }
 
@@ -5977,7 +5974,7 @@ public:
                 LOG(LOG_INFO, "mod_rdp::disconnect()");
             }
             // this->send_shutdown_request();
-            // this->draw_event(time(NULL));
+            // this->draw_event(time(nullptr));
             this->send_disconnect_ultimatum();
         }
     }
@@ -6090,7 +6087,7 @@ public:
                 }
 
                 BStream out_s(256);
-                RDPECLIP::FormatDataResponsePDU(false).emit(out_s, static_cast<uint8_t *>(NULL), 0);
+                RDPECLIP::FormatDataResponsePDU(false).emit(out_s, static_cast<uint8_t *>(nullptr), 0);
 
                 this->send_to_channel(
                     cliprdr_channel, out_s, out_s.size(),

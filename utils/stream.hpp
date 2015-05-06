@@ -98,22 +98,22 @@ public:
     // Generic binary Data access methods
     // =========================================================================
 
-    signed char in_sint8(void) {
+    int8_t in_sint8(void) {
         REDASSERT(this->in_check_rem(1));
         return this->p.in_sint8();
     }
 
     // ---------------------------------------------------------------------------
 
-    unsigned char in_uint8(void) {
+    uint8_t in_uint8(void) {
         REDASSERT(this->in_check_rem(1));
         return this->p.in_uint8();
     }
 
     /* Peek a byte from stream without move <p>. */
-    unsigned char peek_uint8(void) {
+    uint8_t peek_uint8(void) {
         REDASSERT(this->in_check_rem(1));
-        return *((unsigned char*)(this->p.p));
+        return *this->p.p;
     }
 
     int16_t in_sint16_be(void) {
@@ -398,12 +398,12 @@ public:
         this->p+=n;
     }
 
-    void out_uint8(unsigned char v) {
+    void out_uint8(uint8_t v) {
         REDASSERT(this->has_room(1));
         *(this->p++) = v;
     }
 
-    void set_out_uint8(unsigned char v, size_t offset) {
+    void set_out_uint8(uint8_t v, size_t offset) {
         (this->get_data())[offset] = v;
     }
 
@@ -766,11 +766,11 @@ public:
     }
 
     virtual size_t tailroom() const {
-        return static_cast<size_t>(this->capacity - this->headroom() - this->get_offset());
+        return this->capacity - this->headroom() - this->get_offset();
     }
 
     virtual size_t endroom() const {
-        return static_cast<size_t>(this->capacity - (this->end - this->data));
+        return this->capacity - (this->end - this->data);
     }
 
     virtual size_t headroom() const {
@@ -778,7 +778,7 @@ public:
     }
 
     virtual size_t get_capacity() const {
-        return static_cast<size_t>(this->capacity - this->headroom());
+        return this->capacity - this->headroom();
     }
 
     virtual uint8_t * get_data() const {
@@ -806,20 +806,20 @@ public:
     // Generic binary Data access methods
     // =========================================================================
 
-    signed char in_sint8(void) {
+    int8_t in_sint8(void) {
         REDASSERT(this->in_check_rem(1));
-        return *((signed char*)(this->p++));
+        return *reinterpret_cast<int8_t*>(this->p++);
     }
 
-    unsigned char in_uint8(void) {
+    uint8_t in_uint8(void) {
         REDASSERT(this->in_check_rem(1));
-        return *((unsigned char*)(this->p++));
+        return *this->p++;
     }
 
     /* Peek a byte from stream without move <p>. */
-    unsigned char peek_uint8(void) {
+    uint8_t peek_uint8(void) const {
         REDASSERT(this->in_check_rem(1));
-        return *((unsigned char*)(this->p));
+        return *this->p;
     }
 
     int16_t in_sint16_be(void) {
@@ -1001,12 +1001,12 @@ public:
         this->p+=n;
     }
 
-    void out_uint8(unsigned char v) {
+    void out_uint8(uint8_t v) {
         REDASSERT(this->has_room(1));
         *(this->p++) = v;
     }
 
-    void set_out_uint8(unsigned char v, size_t offset) {
+    void set_out_uint8(uint8_t v, size_t offset) {
         (this->get_data())[offset] = v;
     }
 
@@ -1459,9 +1459,9 @@ public:
     BStream(size_t size = AUTOSIZE)
         : autobuffer()
     {
-        this->p = NULL;
-        this->end = NULL;
-        this->data = NULL;
+        this->p = nullptr;
+        this->end = nullptr;
+        this->data = nullptr;
         this->capacity = 0;
         this->init(size);
     }

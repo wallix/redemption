@@ -354,7 +354,7 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char ha
             close(system_fd);
         }
 
-        if (cf_struct != NULL) {
+        if (cf_struct != nullptr) {
             BStream opaque_stream(2048);
 
             int opaque_data = 1;

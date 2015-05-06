@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     //mod_rdp_params.enable_bitmap_update            = false;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
-    //mod_rdp_params.error_message                   = NULL;
+    //mod_rdp_params.error_message                   = nullptr;
     //mod_rdp_params.disconnect_on_logon_user_change = false;
     //mod_rdp_params.open_session_timeout            = 0;
     //mod_rdp_params.certificate_change_action       = 0;
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     while (res == BACK_EVENT_NONE) {
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 8) break;
-        mod->draw_event(time(NULL));
+        mod->draw_event(time(nullptr));
     }
 
     char message[1024];

@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
     // WidgetRect is a monochrome rectangular widget of size 800x600 at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0; // unique identifier of widget used par parent, it will be sent back in case of event
     int color = 0xCCF604; /* BGR */
 
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,-100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 

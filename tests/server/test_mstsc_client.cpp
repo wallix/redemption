@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     BOOST_CHECK_EQUAL(1, front.up_and_running);
     TestCardMod mod(front, front.client_info.width, front.client_info.height, ini.font);
-    mod.draw_event(time(NULL));
+    mod.draw_event(time(nullptr));
 
     // Uncomment the code block below to generate testing data.
     //sleep(5);

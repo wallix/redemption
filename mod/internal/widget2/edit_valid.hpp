@@ -41,7 +41,7 @@ public:
                     int group_id, int fgcolor, int bgcolor,
                     int focus_color, Font const & font, std::size_t edit_position = -1,
                     int xtext = 0, int ytext = 0, bool pass = false,
-                    const char * title = NULL)
+                    const char * title = nullptr)
         : Widget2(drawable, Rect(0, 0, cx, 1), parent, notifier, group_id)
         , button(drawable, 0, 0, *this, this, "\xe2\x9e\x9c", true,
                  group_id, bgcolor, focus_color, focus_color, font, 6, 2)
@@ -51,9 +51,9 @@ public:
                   : new WidgetEdit(drawable, 0, 0, cx - this->button.cx(), *this, this,
                                    text, group_id, fgcolor, bgcolor, focus_color, font,
                                    edit_position, 1, 2))
-        , label(title ? new WidgetLabel(drawable, 0, 0, *this, 0, title, true,
+        , label(title ? new WidgetLabel(drawable, 0, 0, *this, nullptr, title, true,
                                         group_id, MEDIUM_GREY, bgcolor, font, 1, 2)
-                : NULL)
+                : nullptr)
     {
         this->button.set_button_x(this->editbox->lx() - 1);
         this->editbox->set_edit_cy(this->button.cy());
@@ -74,11 +74,11 @@ public:
     {
         if (this->editbox) {
             delete this->editbox;
-            this->editbox = NULL;
+            this->editbox = nullptr;
         }
         if (this->label) {
             delete this->label;
-            this->label = NULL;
+            this->label = nullptr;
         }
     }
 

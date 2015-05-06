@@ -42,7 +42,7 @@ public:
     : fd(-1)
     , start_record(begin_capture ? begin_capture : begin_record)
     , stop_record(end_capture ? end_capture : end_record)
-    , processing_start_time(::time(NULL))
+    , processing_start_time(::time(nullptr))
     , last_written_time_percentage(0) {
         this->fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
         if (this->fd != -1) {
@@ -94,7 +94,7 @@ public:
         REDASSERT(time_percentage < 100);
 
         if (time_percentage != this->last_written_time_percentage) {
-            unsigned int elapsed_time = ::time(NULL) - this->processing_start_time;
+            unsigned int elapsed_time = ::time(nullptr) - this->processing_start_time;
 
             char str_time_percentage[64];
 

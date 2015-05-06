@@ -137,7 +137,7 @@ public:
                         };
                     struct timespec wtime_rem = { 0, 0 };
 
-                    while ((nanosleep(&wtime, NULL) == -1) && (errno == EINTR)) {
+                    while ((nanosleep(&wtime, nullptr) == -1) && (errno == EINTR)) {
                         wtime = wtime_rem;
                     }
                 }

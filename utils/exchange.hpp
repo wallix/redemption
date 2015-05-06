@@ -25,6 +25,7 @@
 #include <utility>
 using std::exchange;
 #else
+#include <algorithm>
 /// Assign @p new_val to @p obj and return its previous value.
 template <typename T, typename U = T>
 T exchange(T & obj, U && new_val)

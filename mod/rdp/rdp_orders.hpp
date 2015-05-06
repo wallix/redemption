@@ -114,7 +114,7 @@ public:
     , glyph_index( 0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
                  , reinterpret_cast<const uint8_t *>(""))
     , global_palette(nullptr)
-    , bmp_cache(NULL)
+    , bmp_cache(nullptr)
     , verbose(verbose)
     , recv_bmp_cache_count(0)
     , recv_order_count(0)
@@ -222,7 +222,7 @@ public:
 
             this->save_persistent_disk_bitmap_cache();
             delete this->bmp_cache;
-            this->bmp_cache = NULL;
+            this->bmp_cache = nullptr;
         }
 
         this->bmp_cache = new BmpCache(BmpCache::Mod_rdp, bpp, 3, false,

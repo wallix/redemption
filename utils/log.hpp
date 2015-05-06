@@ -40,7 +40,7 @@
 // -Wnull-dereference and clang++
 namespace aux_ {
     inline void * null_pointer()
-    { return 0; }
+    { return nullptr; }
 }
 #define BOOM (*reinterpret_cast<int*>(aux_::null_pointer())=1)
 
@@ -97,7 +97,7 @@ static inline void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, const char *for
         { "NOTICE"/*, LOG_NOTICE*/ },
         { "INFO"/*, LOG_INFO*/ },
         { "DEBUG"/*, LOG_DEBUG*/ },
-        { NULL/*, -1*/ }
+        { nullptr/*, -1*/ }
     };
     char message[8192];
     va_list vl;
@@ -119,7 +119,7 @@ static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *form
         { "NOTICE"/*, LOG_NOTICE*/ },
         { "INFO"/*, LOG_INFO*/ },
         { "DEBUG"/*, LOG_DEBUG*/ },
-        { NULL/*, -1*/ }
+        { nullptr/*, -1*/ }
     };
     char message[8192];
     va_list vl;

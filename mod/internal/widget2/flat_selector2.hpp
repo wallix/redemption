@@ -107,15 +107,15 @@ public:
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , bg_color(ini.theme.global.bgcolor)
         , less_than_800(this->rect.cx < 800)
-        , device_label(drawable, TEXT_MARGIN, VERTICAL_MARGIN, *this, NULL, device_name,
+        , device_label(drawable, TEXT_MARGIN, VERTICAL_MARGIN, *this, nullptr, device_name,
                        true, -10, ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
-        , target_group_label(drawable, 0, 0, *this, NULL, TR("target_group", ini), true,
+        , target_group_label(drawable, 0, 0, *this, nullptr, TR("target_group", ini), true,
                               -10, ini.theme.selector_label.fgcolor,
                              ini.theme.selector_label.bgcolor, ini.font, 5)
-        , target_label(drawable, 0, 0, *this, NULL, TR("target", ini), true, -10,
+        , target_label(drawable, 0, 0, *this, nullptr, TR("target", ini), true, -10,
                        ini.theme.selector_label.fgcolor,
                        ini.theme.selector_label.bgcolor, ini.font, 5)
-        , protocol_label(drawable, 0, 0, *this, NULL, TR("protocol", ini), true, -10,
+        , protocol_label(drawable, 0, 0, *this, nullptr, TR("protocol", ini), true, -10,
                          ini.theme.selector_label.fgcolor,
                          ini.theme.selector_label.bgcolor, ini.font, 5)
         , selector_lines(drawable, Rect(0, 0, width - (this->less_than_800 ? 0 : 30), 1),
@@ -130,14 +130,14 @@ public:
                          ini.theme.selector_selected.fgcolor,
                          ini.font, 2, -11)
         , filter_target_group(drawable, 0, 0, 120, *this, this,
-                              filter_target_group?filter_target_group:0, -12,
+                              filter_target_group?filter_target_group:nullptr, -12,
                               ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
                               ini.theme.edit.focus_color, ini.font, -1, 1, 1)
-        , filter_target(drawable, 0, 0, 340, *this, this, filter_target?filter_target:0,
+        , filter_target(drawable, 0, 0, 340, *this, this, filter_target?filter_target:nullptr,
                         -12, ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
                         ini.theme.edit.focus_color, ini.font, -1, 1, 1)
         , filter_protocol(drawable, 0, 0, 110, *this, this,
-                          filter_protocol?filter_protocol:0, -12,
+                          filter_protocol?filter_protocol:nullptr, -12,
                           ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
                           ini.theme.edit.focus_color, ini.font, -1, 1, 1)
           //BEGIN WidgetPager
@@ -151,7 +151,7 @@ public:
                        current_page ? current_page : "XXXX", -15,
                        ini.theme.edit.fgcolor, ini.theme.edit.bgcolor,
                        ini.theme.edit.focus_color, ini.font, -1, 1, 1)
-        , number_page(drawable, 0, 0, *this, NULL,
+        , number_page(drawable, 0, 0, *this, nullptr,
                       number_of_page ? temporary_number_of_page(number_of_page).buffer
                       : "/XXX", true, -100, ini.theme.global.fgcolor,
                       ini.theme.global.bgcolor, ini.font)

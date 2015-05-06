@@ -167,9 +167,9 @@ struct NtlmAvPairList {
 
     NtlmAvPairList() {
         for (int i = 0; i < AV_ID_MAX; i++) {
-            this->list[i] = NULL;
+            this->list[i] = nullptr;
         }
-        this->list[MsvAvEOL] = new NtlmAvPair(MsvAvEOL, NULL, 0);
+        this->list[MsvAvEOL] = new NtlmAvPair(MsvAvEOL, nullptr, 0);
     }
 
     virtual ~NtlmAvPairList() {
@@ -189,7 +189,7 @@ struct NtlmAvPairList {
     //    bool res = false;
     //    if (this->list[avId]) {
     //        delete this->list[avId];
-    //        this->list[avId] = NULL;
+    //        this->list[avId] = nullptr;
     //        res = true;
     //    }
     //    return res;
@@ -224,7 +224,7 @@ struct NtlmAvPairList {
                 this->list[i]->emit(stream);
             }
         }
-        // ASSUME this->list[MsvAvEOL] != NULL
+        // ASSUME this->list[MsvAvEOL] != nullptr
         this->list[MsvAvEOL]->emit(stream);
         stream.mark_end();
     }

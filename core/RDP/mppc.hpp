@@ -565,10 +565,10 @@ template<typename T> struct rdp_mppc_enc_hash_table_manager {
     typedef uint16_t hash_type;
 
     rdp_mppc_enc_hash_table_manager(unsigned int length_of_data_to_sign, unsigned int max_undo_element)
-        : hash_table(NULL)
-        , undo_buffer_begin(NULL)
-        , undo_buffer_end(NULL)
-        , undo_buffer_current(NULL)
+        : hash_table(nullptr)
+        , undo_buffer_begin(nullptr)
+        , undo_buffer_end(nullptr)
+        , undo_buffer_current(nullptr)
         , length_of_data_to_sign(length_of_data_to_sign)
         , max_undo_element(max_undo_element)
         , undo_element_size(sizeof(hash_type) + sizeof(T))

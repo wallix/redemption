@@ -382,7 +382,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestSmallImage)
 {
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, NULL, 0x100);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, nullptr, 0x100);
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10, 24);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.impl());
@@ -424,7 +424,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 {
     BOOST_CHECK(1);
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, NULL, 0x100);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, nullptr, 0x100);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.impl());
@@ -527,7 +527,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     }
     ;
 
-    Bitmap bloc64x64(16, 16, NULL, 64, 64, source64x64, sizeof(source64x64), true );
+    Bitmap bloc64x64(16, 16, nullptr, 64, 64, source64x64, sizeof(source64x64), true );
     drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc64x64.cx(), bloc64x64.cy()), 0xCC, 0, 0, 0), scr, bloc64x64);
 
     Bitmap good16(24, bloc64x64);
@@ -536,7 +536,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     BStream stream(8192);
     good16.compress(24, stream);
     stream.mark_end();
-    Bitmap bogus(24, 24, NULL, 64, 64, stream.get_data(), stream.size(), true);
+    Bitmap bogus(24, 24, nullptr, 64, 64, stream.get_data(), stream.size(), true);
     drawable.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx(), bogus.cy()), 0xCC, 0, 0, 0), scr, bogus);
 
 //     FILE * f = fopen("/tmp/test_bmp.png", "wb");
@@ -553,7 +553,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
 {
     BOOST_CHECK(1);
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, NULL, 0x100);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, nullptr, 0x100);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.impl());
@@ -591,7 +591,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     ;
 
     try {
-        Bitmap bloc32x1(16, 16, NULL, 32, 1, source32x1, sizeof(source32x1)-1, true );
+        Bitmap bloc32x1(16, 16, nullptr, 32, 1, source32x1, sizeof(source32x1)-1, true );
         drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc32x1.cx(), bloc32x1.cy()), 0xCC, 0, 0, 0), scr, bloc32x1);
     } catch (Error e) {
         printf("exception caught e=%u\n", e.id);

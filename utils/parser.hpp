@@ -28,7 +28,7 @@
 static inline unsigned ulong_from_cstr(const char * str) noexcept
 {
     if ((*str == '0') && (*(str + 1) == 'x')){
-        return strtol(str + 2, 0, 16);
+        return strtol(str + 2, nullptr, 16);
     }
 
     return atol(str);
@@ -38,7 +38,7 @@ static inline unsigned ulong_from_cstr(const char * str) noexcept
 static inline long long_from_cstr(const char * str) noexcept
 {
     if ((*str == '0') && (*(str + 1) == 'x')){
-        return strtol(str + 2, 0, 16);
+        return strtol(str + 2, nullptr, 16);
     }
 
     return atol(str);

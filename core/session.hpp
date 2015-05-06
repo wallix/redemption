@@ -158,7 +158,7 @@ public:
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
             }
 
-            const time_t start_time = time(NULL);
+            const time_t start_time = time(nullptr);
             if (this->ini.debug.performance & 0x8000) {
                 this->write_performance_log(start_time);
             }
@@ -195,7 +195,7 @@ public:
                 if (has_pending_data)
                     memset(&timeout, 0, sizeof(timeout));
 
-                int num = select(max + 1, &rfds, &wfds, 0, &timeout);
+                int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
 
                 if (num < 0) {
                     if (errno == EINTR) {
@@ -211,7 +211,7 @@ public:
                     continue;
                 }
 
-                time_t now = time(NULL);
+                time_t now = time(nullptr);
                 if (this->ini.debug.performance & 0x8000) {
                     this->write_performance_log(now);
                 }
@@ -337,7 +337,7 @@ public:
                     }
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
-                    time_t now = time(NULL);
+                    time_t now = time(nullptr);
                     mm.invoke_close_box(e.errmsg(), signal, now);
                 };
             }

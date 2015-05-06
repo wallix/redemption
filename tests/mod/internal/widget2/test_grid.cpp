@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     wgrid.set_sizing_strategy(3, 50, 100);
 */
 
-    Widget2  * widgetTable[128] = { 0 };
+    Widget2  * widgetTable[128] = { nullptr };
     uint16_t   widget_count     = 0;
 
     for (uint16_t line_index = 0; line_index < line_number; line_index++) {
@@ -142,8 +142,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     uint16_t mouse_x = wgrid.dx() + 50;
     uint16_t mouse_y = widgetTable[5]->dy();
 
-    wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, mouse_x, mouse_y, 0);
-    wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1, mouse_x, mouse_y, 0);
+    wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, mouse_x, mouse_y, nullptr);
+    wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1, mouse_x, mouse_y, nullptr);
     // ask to widget to redraw at it's current position
     wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
                                     0 + wgrid.dy(),
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
 
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
 
     // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
 
     // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
 
     // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -326,7 +326,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -358,7 +358,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -390,7 +390,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 
     // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -425,8 +425,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
         NotifyApi::notify_event_t event;
 
         WidgetReceiveEvent(TestDraw& drawable)
-        : Widget2(drawable, Rect(), *this, NULL)
-        , sender(NULL)
+        : Widget2(drawable, Rect(), *this, nullptr)
+        , sender(nullptr)
         , event(0)
         {}
 
@@ -441,7 +441,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     } widget_for_receive_event(drawable);
 
     Widget2& parent = widget_for_receive_event;
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     bool auto_resize = false;
     int16_t x = 0;
     int16_t y = 0;
@@ -470,7 +470,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 
     //WidgetLabel is a label widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 

@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 {
     const char* programname;
     char text[256];
-    char* displayname = NULL;
+    char* displayname = nullptr;
     char* outfname;
     const char* sections[5] = {"noshift", "shift", "altgr", "capslock", "shiftcapslock"};
     int states[5] = {0, 1, 0x80, 2, 3};
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
         return 1;
     }
     outf = fopen(outfname, "w");
-    if (outf == NULL) {
+    if (outf == nullptr) {
         fprintf(stderr, "%s:  unable to create file '%s'\n", programname, outfname);
         XCloseDisplay(dpy);
         return 1;
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
         e.state = states[idx];
         for (i = 8; i <= 137; i++) { /* Keycodes */
             e.keycode = i;
-            nbytes = XLookupString(&e, text, 255, &ks, NULL);
+            nbytes = XLookupString(&e, text, 255, &ks, nullptr);
             text[nbytes] = 0;
             char_count = mbstowcs(wtext, text, 255);
             unicode = 0;

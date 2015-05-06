@@ -686,7 +686,7 @@ public:
             LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
             this->authentifier = nullptr;
             delete this->capture;
-            this->capture = 0;
+            this->capture = nullptr;
 
             this->capture_state = CAPTURE_STATE_STOPED;
         }
@@ -1038,7 +1038,7 @@ public:
                 InStream stream(array, 0, 0, end - array.get_data());
 
                 X224::CR_TPDU_Recv x224(stream, this->ini.client.bogus_neg_request);
-                if (x224._header_size != (size_t)stream.size()) {
+                if (x224._header_size != stream.size()) {
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
                                  " %d bytes remains", stream.size() - x224._header_size);
                 }
@@ -3233,7 +3233,7 @@ public:
         if (this->verbose & 8) {
             LOG(LOG_INFO, "Front::process_data(...)");
         }
-        ShareData_Recv sdata_in(stream, 0);
+        ShareData_Recv sdata_in(stream, nullptr);
         if (this->verbose & 8) {
             LOG(LOG_INFO, "sdata_in.pdutype2=%u"
                           " sdata_in.len=%u"

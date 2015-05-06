@@ -42,7 +42,7 @@ public:
     SnappyCompressionInTransport(Transport & st, uint32_t verbose = 0)
     : Transport()
     , source_transport(st)
-    , uncompressed_data(NULL)
+    , uncompressed_data(nullptr)
     , uncompressed_data_length(0)
     , uncompressed_data_buffer() {
         this->verbose = verbose;

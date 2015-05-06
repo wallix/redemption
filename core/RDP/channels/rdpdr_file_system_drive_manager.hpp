@@ -171,12 +171,12 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p> fd=%d",
                                    DIR *& out_dir) -> int {
             if ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY) &&
                  right_to_delete_is_required) {
-                out_dir = NULL;
+                out_dir = nullptr;
                 return EACCES;
             }
 
             out_dir = ::opendir(path);
-            return ((out_dir != NULL) ? 0 : errno);
+            return ((out_dir != nullptr) ? 0 : errno);
         } (full_path.c_str(), (DesiredAccess & smb2::DELETE), drive_access_mode, this->dir);
 
         if (verbose) {
@@ -679,7 +679,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
                 this->full_path.c_str(), this->pattern.c_str());
         }
 
-        struct dirent * ent = NULL;
+        struct dirent * ent = nullptr;
 
         do {
             ent = ::readdir(this->dir);

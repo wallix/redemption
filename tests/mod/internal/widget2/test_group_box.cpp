@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int         fg_color = RED;
     int         bg_color = YELLOW;
     int         group_id = 0;
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
                             wbutton.rect.x + 1, wbutton.rect.y + 1,
-                            NULL);
+                            nullptr);
 
     // ask to widget to redraw at it's current position
     wgroupbox.rdp_input_invalidate(Rect( wgroupbox.dx()

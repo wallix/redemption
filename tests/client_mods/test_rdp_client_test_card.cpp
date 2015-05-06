@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
     TestCardMod mod(front, info.width, info.height, ini.font);
     BOOST_CHECK(true);
     try{
-        mod.draw_event(time(NULL));
+        mod.draw_event(time(nullptr));
     }
     catch (const Error & e){
         // this test is not supposed to be executed

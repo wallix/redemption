@@ -44,12 +44,9 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     TestDraw drawable(800, 600);
 
     struct Notify : public NotifyApi {
-        Widget2* sender;
-        notify_event_t event;
-        Notify()
-        : sender(0)
-        , event(0)
-        {}
+        Widget2* sender = nullptr;
+        notify_event_t event = 0;
+        Notify() = default;
         virtual void notify(Widget2* sender, notify_event_t event)
         {
             this->sender = sender;
@@ -90,7 +87,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     keymap.push('2');

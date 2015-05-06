@@ -51,17 +51,17 @@ public:
                             Theme & theme, const char * label_text_message,
                             const char * label_text_password, Font const & font)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , message_label(drawable, 0, 0, *this, NULL, label_text_message, true, -13,
+        , message_label(drawable, 0, 0, *this, nullptr, label_text_message, true, -13,
                         theme.global.fgcolor, theme.global.bgcolor, font)
-        , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13,
+        , password_label(drawable, 0, 0, *this, nullptr, label_text_password, true, -13,
                          theme.global.fgcolor, theme.global.bgcolor, font)
         , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
                         theme.edit.fgcolor, theme.edit.bgcolor,
                         theme.edit.focus_color, font,  -1u, 1, 1, true)
-        // , img(drawable, 0, 0, theme.global.logo_path, *this, NULL, -10)
+        // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
         , img(drawable, 0, 0,
               theme.global.logo ? theme.global.logo_path :
-              SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
+              SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
         , fgcolor(theme.global.fgcolor)
         , bgcolor(theme.global.bgcolor)
     {

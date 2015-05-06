@@ -404,7 +404,7 @@ void test_re(re::Regex::flag_t flags)
     matches.push_back(range_t(str+4, str+7));
     matches2.clear();
     matches2.push_back(range_t(str, str+3));
-    matches2.push_back(range_t(0,0));
+    matches2.push_back(range_t(nullptr, nullptr));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches2);
 
     str_regex = "u(a?b?c?)d(.*)";
@@ -421,7 +421,7 @@ void test_re(re::Regex::flag_t flags)
     matches.push_back(range_t(str+5, str+8));
     matches2.clear();
     matches2.push_back(range_t(str+1, str+4));
-    matches2.push_back(range_t(0,0));
+    matches2.push_back(range_t(nullptr, nullptr));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches2);
 
     str_regex = "(a?b?c?)d(.*)h";
@@ -509,7 +509,7 @@ void test_re(re::Regex::flag_t flags)
     str = "abvd";
     matches.clear();
     matches.push_back(range_t(str+1, str+3));
-    matches.push_back(range_t(0,0));
+    matches.push_back(range_t(nullptr, nullptr));
     matches.push_back(range_t(str+3, str+4));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
     matches.erase(matches.begin()+1);
@@ -517,7 +517,7 @@ void test_re(re::Regex::flag_t flags)
 
     str = "avd";
     matches.clear();
-    matches.push_back(range_t(0,0));
+    matches.push_back(range_t(nullptr, nullptr));
     matches.push_back(range_t(str, str+2));
     matches.push_back(range_t(str+2, str+3));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);

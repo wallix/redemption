@@ -147,7 +147,7 @@ struct Listen {
             timeout.tv_sec = this->timeout_sec;
             timeout.tv_usec = 0;
 
-            switch (select(this->sck + 1, &rfds, 0, 0, &timeout)){
+            switch (select(this->sck + 1, &rfds, nullptr, nullptr, &timeout)){
             default:
                 if ((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINPROGRESS) || (errno == EINTR)) {
                     continue; /* these are not really errors */

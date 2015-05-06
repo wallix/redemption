@@ -66,36 +66,36 @@ static void rdp_request(SocketTransport & sockettransport)
 
 static X509 *load_cert(const char *file)
 {
-    X509 *x=NULL;
+    X509 *x = nullptr;
     BIO *cert;
 
-    if ((cert=BIO_new(BIO_s_file())) == NULL)
+    if ((cert=BIO_new(BIO_s_file())) == nullptr)
         goto end;
 
-    if (BIO_read_filename(cert,const_cast<char *>(file)) <= 0)
+    if (BIO_read_filename(cert, const_cast<void *>(static_cast<void const *>(file))) <= 0)
         goto end;
 
-    x=PEM_read_bio_X509_AUX(cert,NULL, NULL, NULL);
+    x = PEM_read_bio_X509_AUX(cert, nullptr, nullptr, nullptr);
 end:
-    if (cert != NULL) BIO_free(cert);
+    if (cert != nullptr) BIO_free(cert);
     return(x);
 }
 
 static int check(X509_STORE *ctx, const char *file)
 {
-    X509 *x=NULL;
+    X509 *x=nullptr;
     int i=0,ret=0;
     X509_STORE_CTX *csc;
 
     x = load_cert(file);
-    if (x == NULL)
+    if (x == nullptr)
         goto end;
 
     csc = X509_STORE_CTX_new();
-    if (csc == NULL)
+    if (csc == nullptr)
         goto end;
     X509_STORE_set_flags(ctx, 0);
-    if(!X509_STORE_CTX_init(csc,ctx,x,0))
+    if(!X509_STORE_CTX_init(csc,ctx,x,nullptr))
         goto end;
     i=X509_verify_cert(csc);
     X509_STORE_CTX_free(csc);
@@ -103,7 +103,7 @@ static int check(X509_STORE *ctx, const char *file)
     ret=0;
 end:
     ret = (i > 0);
-    if (x != NULL)
+    if (x != nullptr)
         X509_free(x);
 
     return(ret);
@@ -113,30 +113,30 @@ end:
 int verify(const char* certfile, const char* CAfile)
 {
     int ret=0;
-    X509_STORE *cert_ctx=NULL;
-    X509_LOOKUP *lookup=NULL;
+    X509_STORE *cert_ctx=nullptr;
+    X509_LOOKUP *lookup=nullptr;
 
     cert_ctx=X509_STORE_new();
-    if (cert_ctx == NULL) goto end;
+    if (cert_ctx == nullptr) goto end;
 
     OpenSSL_add_all_algorithms();
 
     lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
-    if (lookup == NULL)
+    if (lookup == nullptr)
         goto end;
 
     if(!X509_LOOKUP_load_file(lookup,CAfile,X509_FILETYPE_PEM))
         goto end;
 
     lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_hash_dir());
-    if (lookup == NULL)
+    if (lookup == nullptr)
         goto end;
 
-    X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
+    X509_LOOKUP_add_dir(lookup,nullptr,X509_FILETYPE_DEFAULT);
 
     ret = check(cert_ctx, certfile);
 end:
-    if (cert_ctx != NULL) X509_STORE_free(cert_ctx);
+    if (cert_ctx != nullptr) X509_STORE_free(cert_ctx);
 
     return ret;
 }
@@ -154,8 +154,8 @@ int tcp_connect(const char *host, int port)
     ucs.s4.sin_family = AF_INET;
     ucs.s4.sin_port = htons(port);
 
-    struct addrinfo * addr_info = NULL;
-    int               result    = getaddrinfo(host, NULL, NULL, &addr_info);
+    struct addrinfo * addr_info = nullptr;
+    int               result    = getaddrinfo(host, nullptr, nullptr, &addr_info);
 
     if (result) {
         int          _error;

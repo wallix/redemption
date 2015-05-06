@@ -86,15 +86,15 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                                                 void * pvGetKeyArgument, PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
 
-        CREDENTIALS* credentials = NULL;
-        SEC_WINNT_AUTH_IDENTITY* identity = NULL;
+        CREDENTIALS* credentials = nullptr;
+        SEC_WINNT_AUTH_IDENTITY* identity = nullptr;
 
         if (fCredentialUse == SECPKG_CRED_OUTBOUND) {
             credentials = new CREDENTIALS;
 
             identity = static_cast<SEC_WINNT_AUTH_IDENTITY*>(pAuthData);
 
-            if (identity != NULL) {
+            if (identity != nullptr) {
                 credentials->identity.CopyAuthIdentity(*identity);
             }
 
@@ -124,7 +124,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
     }
 
     SEC_STATUS FreeCredentialsHandle(PCredHandle phCredential) {
-        CREDENTIALS* credentials = NULL;
+        CREDENTIALS* credentials = nullptr;
 
         if (!phCredential) {
             return SEC_E_INVALID_HANDLE;
@@ -133,7 +133,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         if (credentials) {
             delete credentials;
-            credentials = NULL;
+            credentials = nullptr;
         }
         return SEC_E_OK;
     }
@@ -156,7 +156,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             LOG(LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
         }
 
-        NTLMContext* context = NULL;
+        NTLMContext* context = nullptr;
         if (phContext) {
             context = static_cast<NTLMContext*>(phContext->SecureHandleGetLowerPointer());
         }
@@ -180,7 +180,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             CREDENTIALS* credentials = static_cast<CREDENTIALS*>(phCredential->SecureHandleGetLowerPointer());
 
             // if (context->Workstation.size() < 1)
-            //     context->ntlm_SetContextWorkstation(NULL);
+            //     context->ntlm_SetContextWorkstation(nullptr);
             if (!credentials) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
@@ -273,7 +273,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                                              SecBufferDesc * pOutput,
                                              unsigned long * pfContextAttr,
                                              TimeStamp * ptsTimeStamp) {
-        NTLMContext* context = NULL;
+        NTLMContext* context = nullptr;
         if (phContext) {
             context = static_cast<NTLMContext*>(phContext->SecureHandleGetLowerPointer());
         }
@@ -298,7 +298,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             }
             context->identity.CopyAuthIdentity(credentials->identity);
 
-            context->ntlm_SetContextServicePrincipalName(NULL);
+            context->ntlm_SetContextServicePrincipalName(nullptr);
 
             phNewContext->SecureHandleSetLowerPointer(context);
             phNewContext->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
@@ -392,9 +392,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         uint8_t checksum[8];
         uint8_t* signature;
         uint32_t version = 1;
-        NTLMContext* context = NULL;
-        PSecBuffer data_buffer = NULL;
-        PSecBuffer signature_buffer = NULL;
+        NTLMContext* context = nullptr;
+        PSecBuffer data_buffer = nullptr;
+        PSecBuffer signature_buffer = nullptr;
 
         SeqNo = MessageSeqNo;
         if (phContext) {
@@ -489,15 +489,15 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                                       unsigned long MessageSeqNo, unsigned long * pfQOP) {
         int index = 0;
         int length = 0;
-        uint8_t* data = NULL;
+        uint8_t* data = nullptr;
         uint32_t SeqNo = 0;
         uint8_t digest[16] = {};
         uint8_t checksum[8] = {};
         uint32_t version = 1;
-        NTLMContext* context = NULL;
+        NTLMContext* context = nullptr;
         uint8_t expected_signature[16] = {};
-        PSecBuffer data_buffer = NULL;
-        PSecBuffer signature_buffer = NULL;
+        PSecBuffer data_buffer = nullptr;
+        PSecBuffer signature_buffer = nullptr;
 
         SeqNo = (uint32_t) MessageSeqNo;
         if (phContext) {

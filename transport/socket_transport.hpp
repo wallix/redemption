@@ -43,7 +43,7 @@
 TODO("we should be able to simplify that to just put expected value in a provided buffer")
 static inline char* crypto_print_name(X509_NAME* name)
 {
-    char* buffer = NULL;
+    char* buffer = nullptr;
     BIO* outBIO = BIO_new(BIO_s_mem());
 
     if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
@@ -118,7 +118,7 @@ public:
     SSL * io;
 
     SocketTransport( const char * name, int sck, const char *ip_address, int port
-                   , uint32_t verbose, std::string * error_message = 0)
+                   , uint32_t verbose, std::string * error_message = nullptr)
     : tls(false)
     , sck(sck)
     , sck_closed(0)
@@ -127,9 +127,9 @@ public:
     , port(port)
     , public_key_length(0)
     , error_message(error_message)
-    , allocated_ctx(0)
-    , allocated_ssl(0)
-    , io(0)
+    , allocated_ctx(nullptr)
+    , allocated_ssl(nullptr)
+    , io(nullptr)
     {
         strncpy(this->ip_address, ip_address, sizeof(this->ip_address)-1);
         this->ip_address[127] = 0;
@@ -390,16 +390,16 @@ public:
             exit(0);
         }
 
-        DH *ret=0;
+        DH *ret = nullptr;
         BIO *bio;
 
-        if ((bio=BIO_new_file(CFG_PATH "/" DH_PEM,"r")) == NULL){
+        if ((bio=BIO_new_file(CFG_PATH "/" DH_PEM,"r")) == nullptr){
             BIO_printf(bio_err,"Couldn't open DH file\n");
             ERR_print_errors(bio_err);
             exit(0);
         }
 
-        ret = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+        ret = PEM_read_bio_DHparams(bio, nullptr, nullptr, nullptr);
         BIO_free(bio);
         if(SSL_CTX_set_tmp_dh(ctx, ret)<0)
         {
@@ -415,7 +415,7 @@ public:
         // - verification settings,
         // - timeout settings.
 
-        // return value: NULL: The creation of a new SSL structure failed. Check the error stack
+        // return value: nullptr: The creation of a new SSL structure failed. Check the error stack
         // to find out the reason.
         TODO("add error management");
         BIO * sbio = BIO_new_socket(this->sck, BIO_NOCLOSE);
@@ -652,7 +652,7 @@ public:
         // - verification settings,
         // - timeout settings.
 
-        // return value: NULL: The creation of a new SSL structure failed. Check the error stack
+        // return value: nullptr: The creation of a new SSL structure failed. Check the error stack
         // to find out the reason.
         TODO("add error management");
         SSL * ssl = SSL_new(ctx);
@@ -744,19 +744,19 @@ public:
                 case SSL_ERROR_SYSCALL:
                     LOG(LOG_INFO, "I/O error\n");
                     while ((error = ERR_get_error()) != 0)
-                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
+                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, nullptr));
                     return;
 
                 case SSL_ERROR_SSL:
                     LOG(LOG_INFO, "Failure in SSL library (protocol error?)\n");
                     while ((error = ERR_get_error()) != 0)
-                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
+                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, nullptr));
                     return;
 
                 default:
                     LOG(LOG_INFO, "Unknown error\n");
                     while ((error = ERR_get_error()) != 0){
-                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
+                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, nullptr));
                     }
                     LOG(LOG_INFO, "tls::tls_print_error %s [%u]", strerror(errno), errno);
                     return;
@@ -769,7 +769,7 @@ public:
         // ---------------------------------------------------------------
 
         // SSL_get_peer_certificate() returns a pointer to the X509 certificate
-        // the peer presented. If the peer did not present a certificate, NULL
+        // the peer presented. If the peer did not present a certificate, nullptr
         // is returned.
 
         // Due to the protocol definition, a TLS/SSL server will always send a
@@ -787,7 +787,7 @@ public:
 
         // RETURN VALUES The following return values can occur:
 
-        // NULL : no certificate was presented by the peer or no connection was established.
+        // nullptr : no certificate was presented by the peer or no connection was established.
         // Pointer to an X509 certificate : the return value points to the certificate
         // presented by the peer.
 
@@ -834,7 +834,7 @@ public:
             }
         }
         else {
-            X509 *px509Existing = PEM_read_X509(fp, NULL, NULL, NULL);
+            X509 *px509Existing = PEM_read_X509(fp, nullptr, nullptr, nullptr);
             if (!px509Existing) {
                 // failed to read stored certificate file
                 LOG(LOG_ERR, "Failed to read stored certificate: \"%s\"\n", filename);
@@ -887,12 +887,12 @@ public:
             ::unlink(tmpfilename);
             ::fclose(fp);
 
-            char * issuer               = NULL;
-            char * issuer_existing      = NULL;
-            char * subject              = NULL;
-            char * subject_existing     = NULL;
-            char * fingerprint          = NULL;
-            char * fingerprint_existing = NULL;
+            char * issuer               = nullptr;
+            char * issuer_existing      = nullptr;
+            char * subject              = nullptr;
+            char * subject_existing     = nullptr;
+            char * fingerprint          = nullptr;
+            char * fingerprint_existing = nullptr;
 
             issuer               = crypto_print_name(X509_get_issuer_name(px509));
             issuer_existing      = crypto_print_name(X509_get_issuer_name(px509Existing));
@@ -935,12 +935,12 @@ public:
                 LOG(LOG_INFO, "dumped X509 peer certificate\n");
             }
 
-            if (issuer               != NULL) { free(issuer              ); }
-            if (issuer_existing      != NULL) { free(issuer_existing     ); }
-            if (subject              != NULL) { free(subject             ); }
-            if (subject_existing     != NULL) { free(subject_existing    ); }
-            if (fingerprint          != NULL) { free(fingerprint         ); }
-            if (fingerprint_existing != NULL) { free(fingerprint_existing); }
+            if (issuer               != nullptr) { free(issuer              ); }
+            if (issuer_existing      != nullptr) { free(issuer_existing     ); }
+            if (subject              != nullptr) { free(subject             ); }
+            if (subject_existing     != nullptr) { free(subject_existing    ); }
+            if (fingerprint          != nullptr) { free(fingerprint         ); }
+            if (fingerprint_existing != nullptr) { free(fingerprint_existing); }
 
             X509_free(px509Existing);
         }
@@ -1002,20 +1002,21 @@ public:
         LOG(LOG_INFO, "SocketTransport::i2d_PublicKey()");
 
         // i2d_X509() encodes the structure pointed to by x into DER format.
-        // If out is not NULL is writes the DER encoded data to the buffer at *out,
+        // If out is not nullptr is writes the DER encoded data to the buffer at *out,
         // and increments it to point after the data just written.
         // If the return value is negative an error occurred, otherwise it returns
         // the length of the encoded data.
 
         // export the public key to DER format
-        this->public_key_length = i2d_PublicKey(pkey, NULL);
+        this->public_key_length = i2d_PublicKey(pkey, nullptr);
         this->public_key.reset(new uint8_t[this->public_key_length]);
         LOG(LOG_INFO, "SocketTransport::i2d_PublicKey()");
         // hexdump_c(this->public_key, this->public_key_length);
-        uint8_t * tmp = this->public_key.get();
-        i2d_PublicKey(pkey, &tmp);
 
-        tmp             = 0;
+        {
+            uint8_t * tmp = this->public_key.get();
+            i2d_PublicKey(pkey, &tmp);
+        }
 
         EVP_PKEY_free(pkey);
 
@@ -1043,12 +1044,12 @@ public:
         X509_LOOKUP* lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
         lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
 
-        X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+        X509_LOOKUP_add_dir(lookup, nullptr, X509_FILETYPE_DEFAULT);
         //X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_ASN1);
 
         X509_STORE_CTX* csc = X509_STORE_CTX_new();
         X509_STORE_set_flags(cert_ctx, 0);
-        X509_STORE_CTX_init(csc, cert_ctx, xcert, 0);
+        X509_STORE_CTX_init(csc, cert_ctx, xcert, nullptr);
         X509_verify_cert(csc);
         X509_STORE_CTX_free(csc);
 
@@ -1090,11 +1091,11 @@ public:
         if (this->tls) {
             if (this->allocated_ssl) {
                 SSL_free(this->allocated_ssl);
-                this->allocated_ssl = NULL;
+                this->allocated_ssl = nullptr;
             }
             if (this->allocated_ctx) {
                 SSL_CTX_free(this->allocated_ctx);
-                this->allocated_ctx = NULL;
+                this->allocated_ctx = nullptr;
             }
             this->tls = false;
         }
@@ -1126,7 +1127,7 @@ public:
         if (this->sck > 0) {
             FD_SET(this->sck, &rfds);
             timeval time { 0, 0 };
-            rv = select(this->sck + 1, &rfds, 0, 0, &time); /* don't wait */
+            rv = select(this->sck + 1, &rfds, nullptr, nullptr, &time); /* don't wait */
             if (rv > 0) {
                 int opt;
                 unsigned int opt_len = sizeof(opt);
@@ -1214,7 +1215,7 @@ private:
                         struct timeval time = { 0, 100000 };
                         FD_ZERO(&fds);
                         FD_SET(this->sck, &fds);
-                        ::select(this->sck + 1, &fds, NULL, NULL, &time);
+                        ::select(this->sck + 1, &fds, nullptr, nullptr, &time);
                         continue;
                     }
                     if (len != remaining_len){
@@ -1247,7 +1248,7 @@ private:
                     struct timeval time = { 0, 10000 };
                     FD_ZERO(&wfds);
                     FD_SET(this->sck, &wfds);
-                    select(this->sck + 1, NULL, &wfds, NULL, &time);
+                    select(this->sck + 1, nullptr, &wfds, nullptr, &time);
                     continue;
                 }
                 return -1;
@@ -1262,7 +1263,7 @@ private:
 
     ssize_t privrecv_tls(char * data, size_t len)
     {
-        char * pbuffer = (char*)data;
+        char * pbuffer = data;
         size_t remaining_len = len;
         while (remaining_len > 0) {
             ssize_t rcvd = ::SSL_read(this->io, pbuffer, remaining_len);
@@ -1303,10 +1304,10 @@ private:
                 {
                     uint32_t errcount = 0;
                     errcount++;
-                    LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                    LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));
                     while ((error = ERR_get_error()) != 0){
                         errcount++;
-                        LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                        LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));
                     }
                     TODO("if recv fail with partial read we should return the amount of data received, "
                          "close socket and store some delayed error value that will be sent back next call")
@@ -1349,10 +1350,10 @@ private:
                     LOG(LOG_INFO, "Failure in SSL library");
                     uint32_t errcount = 0;
                     errcount++;
-                    LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                    LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));
                     while ((error = ERR_get_error()) != 0){
                         errcount++;
-                        LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                        LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));
                     }
                     return -1;
                 }

@@ -52,7 +52,7 @@ struct FieldObserver : public ConfigurationHolder {
         BaseField()
             : asked(false)
             , modified(true)
-            , ini(NULL)
+            , ini(nullptr)
             , authid(AUTHID_UNKNOWN)
         {
         }
@@ -66,7 +66,7 @@ struct FieldObserver : public ConfigurationHolder {
          */
         void modify_from_acl() {
             if (this->ini)
-                this->ini->notify_from_acl(this);
+                this->ini->notify_from_acl();
         }
         void modify() {
             this->modified = true;
@@ -163,8 +163,8 @@ struct FieldObserver : public ConfigurationHolder {
                 const char * val         = this->get_value();
                 const char * display_val = val;
                 n = snprintf(buff, size, "%s\n!%s\n", key, val);
-                if ((strncasecmp("password", static_cast<const char*>(key), 8) == 0)
-                    ||(strncasecmp("target_password", static_cast<const char*>(key), 15) == 0)){
+                if ((strncasecmp("password", key, 8) == 0)
+                  ||(strncasecmp("target_password", key, 15) == 0)){
                     display_val = get_printable_password(val, password_printing_mode);
                 }
                 LOG(LOG_INFO, "sending %s=%s", key, display_val);
@@ -442,7 +442,7 @@ public:
         }
     }
 
-    void notify_from_acl(BaseField * field) {
+    void notify_from_acl() {
         this->new_from_acl = true;
     }
     bool check_from_acl() {

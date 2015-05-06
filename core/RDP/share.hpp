@@ -520,7 +520,7 @@ struct ShareData_Recv : private CheckShareData_Recv
     SubStream payload;
 
 
-    ShareData_Recv(Stream & stream, rdp_mppc_dec * dec = 0)
+    ShareData_Recv(Stream & stream, rdp_mppc_dec * dec = nullptr)
     //==============================================================================
     : CheckShareData_Recv(stream)
     , share_id(stream.in_uint32_le())

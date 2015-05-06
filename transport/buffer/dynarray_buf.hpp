@@ -29,16 +29,13 @@ namespace transbuf {
     class dynarray_base
     {
         std::unique_ptr<uint8_t[]> data;
-        std::size_t len;
-        std::size_t current;
+        std::size_t len = 0;
+        std::size_t current = 0;
 
     public:
-        dynarray_base() noexcept
-        : len(0)
-        , current(0)
-        {}
+        dynarray_base() = default;
 
-        int open(size_t len, const char * data = 0)
+        int open(size_t len, const char * data = nullptr)
         {
             this->data.reset(new(std::nothrow) uint8_t[len]);
             if (!this->data) {

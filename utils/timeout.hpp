@@ -68,7 +68,7 @@ public:
 class TimeVal : public timeval {
 public:
     TimeVal() {
-        ::gettimeofday(this, 0);
+        ::gettimeofday(this, nullptr);
     }
 
     TimeVal(uint64_t usec) {

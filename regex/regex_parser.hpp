@@ -96,7 +96,7 @@ namespace re {
 
         State * push(unsigned type,
                      char_int range_left = 0, char_int range_right = 0,
-                     State * out1 = 0, State * out2 = 0)
+                     State * out1 = nullptr, State * out2 = nullptr)
         {
 #ifdef RE_PARSER_POOL_STATE
             if (this->mem->is_full()) {
@@ -115,7 +115,7 @@ namespace re {
         : num_cap(0)
         , sts()
 #ifdef RE_PARSER_POOL_STATE
-        , mem(memory_list_t::allocate(0))
+        , mem(memory_list_t::allocate(nullptr))
 #endif
         {}
 
@@ -128,48 +128,48 @@ namespace re {
         }
 
         State * normal(unsigned type, char_int range_left = 0, char_int range_right = 0,
-                       State * out1 = 0, State * out2 = 0)
+                       State * out1 = nullptr, State * out2 = nullptr)
         {
             return this->push(type, range_left, range_right, out1, out2);
         }
 
-        State * character(char_int c, State * out1 = 0) {
+        State * character(char_int c, State * out1 = nullptr) {
             return this->push(RANGE, c, c, out1);
         }
 
-        State * range(char_int left, char_int right, State * out1 = 0) {
+        State * range(char_int left, char_int right, State * out1 = nullptr) {
             return this->push(RANGE, left, right, out1);
         }
 
-        State * any(State * out1 = 0) {
-            return this->push(RANGE, 0, char_int(-1u), out1);
+        State * any(State * out1 = nullptr) {
+            return this->push(RANGE, 0, ~char_int{}, out1);
         }
 
-        State * split(State * out1 = 0, State * out2 = 0) {
+        State * split(State * out1 = nullptr, State * out2 = nullptr) {
             return this->push(SPLIT, 0, 0, out1, out2);
         }
 
-        State * cap_open(State * out1 = 0) {
+        State * cap_open(State * out1 = nullptr) {
             State * ret = this->push(CAPTURE_OPEN, 0, 0, out1);
             ret->num = this->num_cap++;
             return ret;
         }
 
-        State * cap_close(State * out1 = 0) {
+        State * cap_close(State * out1 = nullptr) {
             State * ret = this->push(CAPTURE_CLOSE, 0, 0, out1);
             ret->num = this->num_cap++;
             return ret;
         }
 
-        State * epsilone(State * out1 = 0) {
+        State * epsilone(State * out1 = nullptr) {
             return this->push(EPSILONE, 0, 0, out1);
         }
 
-        State * finish(State * out1 = 0) {
+        State * finish(State * out1 = nullptr) {
             return this->push(FINISH, 0, 0, out1);
         }
 
-        State * begin(State * out1 = 0) {
+        State * begin(State * out1 = nullptr) {
             return this->push(FIRST, 0, 0, out1);
         }
 
@@ -177,14 +177,14 @@ namespace re {
             return this->push(LAST);
         }
 
-        State * sequence(const char_int * s, size_t len, State * out1 = 0) {
+        State * sequence(const char_int * s, size_t len, State * out1 = nullptr) {
             State * ret = this->push(SEQUENCE, 0, 0, out1);
             ret->data.sequence.s = s;
             ret->data.sequence.len = len;
             return ret;
         }
 
-        State * sequence(const SequenceString & ss, State * out1 = 0) {
+        State * sequence(const SequenceString & ss, State * out1 = nullptr) {
             return this->sequence(ss.s, ss.len, out1);
         }
 
@@ -319,7 +319,7 @@ namespace re {
         bool valid = ('0' <= a && a <= '9' && '0' <= b && b <= '9')
                   || ('a' <= a && a <= 'z' && 'a' <= b && b <= 'z')
                   || ('A' <= a && a <= 'Z' && 'A' <= b && b <= 'Z');
-        return (valid && a <= b) ? 0 : "range out of order in character class";
+        return (valid && a <= b) ? nullptr : "range out of order in character class";
     }
 
     struct VectorRange
@@ -519,7 +519,7 @@ namespace re {
                         }
                         else if (!consumer.valid()) {
                             msg_err = "missing terminating ]";
-                            return 0;
+                            return nullptr;
                         }
                         else if (consumer.getc() == ']') {
                             ranges.push('-');
@@ -531,7 +531,7 @@ namespace re {
                         else {
                             c = consumer.bumpc();
                             if ((msg_err = check_interval(prev_c, c))) {
-                                return 0;
+                                return nullptr;
                             }
                             if (ranges.ranges.size()) {
                                 ranges.ranges.pop_back();
@@ -734,7 +734,7 @@ namespace re {
         State ** pst = &st.out1;
         State ** spst = pst;
         State * bst = &st;
-        State * eps = 0;
+        State * eps = nullptr;
         bool special = true;
 
         char_int c = consumer.bumpc();
@@ -753,7 +753,7 @@ namespace re {
                 do {
                     spst = pst;
                     if (!(pst = st_compilechar(accu, pst, consumer, c, msg_err))) {
-                        return IntermendaryState(0,0);
+                        return IntermendaryState(nullptr, nullptr);
                     }
                     if (is_meta_char(consumer, c = consumer.bumpc())) {
                         break;
@@ -764,7 +764,7 @@ namespace re {
             else {
                 if (special && c != '(' && c != ')' && c != '|') {
                     msg_err = "nothing to repeat";
-                    return IntermendaryState(0,0);
+                    return IntermendaryState(nullptr, nullptr);
                 }
                 switch (c) {
                     case '?': {
@@ -801,7 +801,7 @@ namespace re {
                     case '{': {
                         special = true;
                         /**///std::cout << ("{") << std::endl;
-                        char * end = 0;
+                        char * end = nullptr;
                         unsigned m = strtoul(consumer.str(), &end, 10);
                         /**///std::cout << ("end ") << *end << std::endl;
                         /**///std::cout << "m: " << (m) << std::endl;
@@ -849,13 +849,13 @@ namespace re {
                                 unsigned n = strtoul(end+1, &end, 10);
                                 if (m > n || (0 == m && 0 == n)) {
                                     msg_err = "numbers out of order in {} quantifier";
-                                    return IntermendaryState(0,0);
+                                    return IntermendaryState(nullptr, nullptr);
                                 }
                                 /**///std::cout << "n: " << (n) << std::endl;
                                 n -= m;
                                 if (n > 50) {
                                     msg_err = "numbers too large in {} quantifier";
-                                    return IntermendaryState(0,0);
+                                    return IntermendaryState(nullptr, nullptr);
                                 }
                                 if (0 == m) {
                                     --end;
@@ -935,7 +935,7 @@ namespace re {
                         //{0}
                         else if (0 == m) {
                             msg_err = "numbers is 0 in {}";
-                            return IntermendaryState(0,0);
+                            return IntermendaryState(nullptr, nullptr);
                         }
                         //{m}
                         else {
@@ -965,7 +965,7 @@ namespace re {
                     case ')':
                         if (0 == recusive) {
                             msg_err = "unmatched parentheses";
-                            return IntermendaryState(0,0);
+                            return IntermendaryState(nullptr, nullptr);
                         }
 
                         if (!eps) {
@@ -976,13 +976,13 @@ namespace re {
                         return IntermendaryState(bst == &st ? st.out1 : bst, pst);
                         break;
                     default:
-                        return IntermendaryState(0,0);
+                        return IntermendaryState(nullptr, nullptr);
                     case '(':
                         special = false;
                         if (*consumer.s == '?' && *(consumer.s+1) == ':') {
                             if (!*consumer.s || !(*consumer.s+1) || !(*consumer.s+2)) {
                                 msg_err = "unmatched parentheses";
-                                return IntermendaryState(0,0);
+                                return IntermendaryState(nullptr, nullptr);
                             }
                             consumer.s += 2;
                             State * epsgroup = accu.epsilone();
@@ -993,8 +993,8 @@ namespace re {
                                 spst = pst;
                                 pst = intermendary.second;
                             }
-                            else if (0 == intermendary.second) {
-                                return IntermendaryState(0,0);
+                            else if (nullptr == intermendary.second) {
+                                return IntermendaryState(nullptr, nullptr);
                             }
                             break;
                         }
@@ -1008,8 +1008,8 @@ namespace re {
                             *pst = accu.cap_close();
                             pst = &(*pst)->out1;
                         }
-                        else if (0 == intermendary.second) {
-                            return IntermendaryState(0,0);
+                        else if (nullptr == intermendary.second) {
+                            return IntermendaryState(nullptr, nullptr);
                         }
                         break;
                 }
@@ -1019,7 +1019,7 @@ namespace re {
 
         if (0 != recusive) {
             msg_err = "unmatched parentheses";
-            return IntermendaryState(0,0);
+            return IntermendaryState(nullptr, nullptr);
         }
         return IntermendaryState(bst == &st ? st.out1 : bst, pst);
     }
@@ -1036,17 +1036,17 @@ namespace re {
 #endif
     public:
         StateParser()
-        : m_root(0)
+        : m_root(nullptr)
         , m_accu()
         {
             this->m_accu.sts.reserve(32);
         }
 
-        void compile(const char * s, const char * * msg_err = 0, size_t * pos_err = 0)
+        void compile(const char * s, const char * * msg_err = nullptr, size_t * pos_err = nullptr)
         {
             this->m_accu.clear();
 
-            const char * err = 0;
+            const char * err = nullptr;
             utf8_consumer consumer(s);
             this->m_root = intermendary_st_compile(this->m_accu, consumer, err).first;
             if (msg_err) {
@@ -1104,13 +1104,13 @@ namespace re {
         void clear()
         {
             this->m_accu.clear();
-            this->m_root = 0;
+            this->m_root = nullptr;
         }
 
         void clear_and_shrink()
         {
             this->m_accu.clear_and_shrink();
-            this->m_root = 0;
+            this->m_root = nullptr;
         }
 
     private:

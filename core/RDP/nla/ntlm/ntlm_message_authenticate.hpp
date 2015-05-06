@@ -153,7 +153,7 @@
 // |                    DomainNameBufferOffset                     |
 // +---------------+---------------+---------------+---------------+
 //    DomainNameLen (2 bytes):  A 16-bit unsigned integer that defines the size,
-//     in bytes, of DomainName in Payload, not including a NULL terminator.
+//     in bytes, of DomainName in Payload, not including a nullptr terminator.
 //    DomainNameMaxLen (2 bytes):  A 16-bit unsigned integer that SHOULD be
 //     set to the value of DomainNameLen and MUST be ignored on receipt.
 //    DomainNameBufferOffset (4 bytes):  A 32-bit unsigned integer that defines
@@ -178,7 +178,7 @@
 // |                     UserNameBufferOffset                      |
 // +---------------+---------------+---------------+---------------+
 //    UserNameLen (2 bytes):  A 16-bit unsigned integer that defines the size,
-//     in bytes, of UserName in Payload, not including a NULL terminator.
+//     in bytes, of UserName in Payload, not including a nullptr terminator.
 //    UserNameMaxLen (2 bytes):  A 16-bit unsigned integer that SHOULD be
 //     set to the value of UserNameLen and MUST be ignored on receipt.
 //    UserNameBufferOffset (4 bytes):  A 32-bit unsigned integer that defines
@@ -203,7 +203,7 @@
 // |                    WorkstationBufferOffset                    |
 // +---------------+---------------+---------------+---------------+
 //    WorkstationLen (2 bytes):  A 16-bit unsigned integer that defines the size,
-//     in bytes, of Workstation in Payload, not including a NULL terminator.
+//     in bytes, of Workstation in Payload, not including a nullptr terminator.
 //    WorkstationMaxLen (2 bytes):  A 16-bit unsigned integer that SHOULD be
 //     set to the value of WorkstationLen and MUST be ignored on receipt.
 //    WorkstationBufferOffset (4 bytes):  A 32-bit unsigned integer that defines

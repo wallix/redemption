@@ -58,22 +58,15 @@ using std::size_t;
 namespace aux_ {
     class BmpMemAlloc {
         class Memory {
-            void * mem_first;
-            void * mem_last;
-            char * * first;
-            char * * last;
-            char * * pos;
-            size_t size;
+            void * mem_first = nullptr;
+            void * mem_last = nullptr;
+            char * * first = nullptr;
+            char * * last = nullptr;
+            char * * pos = nullptr;
+            size_t size = 0;
 
         public:
-            Memory()
-            : mem_first(0)
-            , mem_last(0)
-            , first(0)
-            , last(0)
-            , pos(0)
-            , size(0)
-            {}
+            Memory() = default;
 
             void init(char * * beg, char * * end, size_t sz) {
                 this->mem_first = *beg;
@@ -110,12 +103,10 @@ namespace aux_ {
         };
 
         Memory mems[5];
-        void * data;
+        void * data = nullptr;
 
     public:
-        BmpMemAlloc()
-        : data(0)
-        {}
+        BmpMemAlloc() = default;
 
         ~BmpMemAlloc() {
             ::operator delete(this->data);
@@ -209,7 +200,7 @@ class Bitmap
         , line_size_(this->cx_ * nbbytes(this->bpp_))
         , bmp_size_(this->line_size_ * cy)
         , ptr_(ptr)
-        , data_compressed_(0)
+        , data_compressed_(nullptr)
         , size_compressed_(0)
         , sha1_is_init_(false)
         {}
@@ -222,7 +213,7 @@ class Bitmap
         , line_size_(this->cx_ * 3)
         , bmp_size_(this->line_size_ * cy)
         , ptr_(ptr)
-        , data_compressed_(0)
+        , data_compressed_(nullptr)
         , size_compressed_(0)
         , sha1_is_init_(false)
         {}
@@ -417,7 +408,7 @@ public:
             if (this->data_bitmap->count() == 0) {
                 DataBitmap::destruct(this->data_bitmap);
             }
-            this->data_bitmap = 0;
+            this->data_bitmap = nullptr;
         }
     }
 
@@ -550,7 +541,7 @@ public:
 
     TODO("I could use some data provider lambda instead of filename")
     Bitmap(const char* filename)
-    : data_bitmap(0)
+    : data_bitmap(nullptr)
     {
         //LOG(LOG_INFO, "loading bitmap %s", filename);
 
@@ -841,25 +832,25 @@ public:
         this->reset();
 
         png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
-                                                     NULL, NULL, NULL);
+                                                     nullptr, nullptr, nullptr);
         if (!png_ptr) {
             return false;
         }
 
         png_infop info_ptr = png_create_info_struct(png_ptr);
         if (!info_ptr) {
-            png_destroy_read_struct(&png_ptr, NULL, NULL);
+            png_destroy_read_struct(&png_ptr, nullptr, nullptr);
             return false;
         }
         // this handle lib png errors for this call
         if (setjmp(png_ptr->jmpbuf)) {
-            png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+            png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
             return false;
         }
 
         FILE * fd = fopen(filename, "rb");
         if (!fd) {
-            png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+            png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
             return false;
         }
         png_init_io(png_ptr, fd);
@@ -899,7 +890,7 @@ public:
         png_uint_32 rowbytes = png_get_rowbytes(png_ptr, info_ptr);
         if (static_cast<uint16_t>(width) * 3 != rowbytes) {
             LOG(LOG_ERR, "PNG Image has bad type");
-            png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+            png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
             return false;
         }
 
@@ -911,7 +902,7 @@ public:
         }
         png_read_image(png_ptr, row_pointers);
         png_read_end(png_ptr, info_ptr);
-        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+        png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
         fclose(fd);
         delete [] row_pointers;
 
@@ -1416,7 +1407,7 @@ public:
         for (uint8_t * ypos_begin = color_plane + cx, * ypos_end = color_plane + cx * src_cy;
              ypos_begin < ypos_end; ypos_begin += cx) {
             for (uint8_t * xpos_begin = ypos_begin, * xpos_end = xpos_begin + src_cx; xpos_begin < xpos_end; xpos_begin++) {
-                uint8_t delta = *((uint8_t *)xpos_begin);
+                uint8_t delta = *xpos_begin;
 
                 //LOG(LOG_INFO, "delta=%d", delta);
 
@@ -1429,10 +1420,7 @@ public:
                     //LOG(LOG_INFO, "delta(e)=%02x", delta);
                 }
 
-                (*xpos_begin) =
-                      (  *(xpos_begin - cx)
-                       + *(reinterpret_cast<uint8_t *>(&delta))
-                );
+                *xpos_begin = static_cast<uint8_t>(*(xpos_begin - cx) + delta);
 
                 //LOG(LOG_INFO, "delta(1)=%d", (*xpos_begin));
             }
@@ -2088,7 +2076,7 @@ public:
         unsigned flags = 0;
         uint8_t masks[512];
         unsigned copy_count = 0;
-        const uint8_t * pmax = 0;
+        const uint8_t * pmax = nullptr;
 
         uint32_t color = 0;
         uint32_t color2 = 0;

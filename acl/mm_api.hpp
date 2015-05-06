@@ -34,7 +34,7 @@ public:
     bool last_module;
     bool connected;
 
-    MMApi() : mod(NULL)
+    MMApi() : mod(nullptr)
         , last_module(false)
         , connected(false) {}
     virtual ~MMApi() {}

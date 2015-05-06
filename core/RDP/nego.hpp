@@ -97,7 +97,7 @@ struct RdpNego
     , target_host(target_host)
     , test(false)
     , verbose(verbose)
-    , lb_info(NULL)
+    , lb_info(nullptr)
     {
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP

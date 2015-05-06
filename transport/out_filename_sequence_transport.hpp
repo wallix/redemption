@@ -47,7 +47,7 @@ RequestCleaningTransport<
         const char * const filename,
         const char * const extension,
         const int groupid,
-        auth_api * authentifier = NULL,
+        auth_api * authentifier = nullptr,
         unsigned verbose = 0)
     : OutFilenameSequenceTransport::TransportType(
         detail::out_sequence_filename_buf_param<>(format, prefix, filename, extension, groupid))

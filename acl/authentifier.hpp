@@ -232,7 +232,7 @@ public:
             this->ini.context.auth_error_message = this->ini.context.rejected.get();
             LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini.context.rejected.get_cstr());
             this->ini.context.rejected.set_empty();
-            mm.invoke_close_box(NULL, signal, now);
+            mm.invoke_close_box(nullptr, signal, now);
             return true;
         }
 
@@ -285,7 +285,7 @@ public:
 
                 signal = BACK_EVENT_NONE;
                 if (next_state == MODULE_INTERNAL_CLOSE) {
-                    mm.invoke_close_box(NULL, signal, now);
+                    mm.invoke_close_box(nullptr, signal, now);
                     return true;
                 }
                 mm.remove_mod();

@@ -85,12 +85,12 @@ crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoC
     Priv_crypto_file_decrypt * cf_struct = new (std::nothrow) Priv_crypto_file_decrypt(systemfd);
 
     if (!cf_struct) {
-        return NULL;
+        return nullptr;
     }
 
     if (-1 == cf_struct->decrypt.open(cf_struct->file, trace_key)) {
         delete cf_struct;
-        return NULL;
+        return nullptr;
     }
 
     return reinterpret_cast<crypto_file*>(cf_struct);
@@ -101,12 +101,12 @@ crypto_file * crypto_open_write(int systemfd, unsigned char * trace_key, CryptoC
     Priv_crypto_file_encrypt * cf_struct = new (std::nothrow) Priv_crypto_file_encrypt(systemfd);
 
     if (!cf_struct) {
-        return NULL;
+        return nullptr;
     }
 
     if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, cctx, iv)) {
         delete cf_struct;
-        return NULL;
+        return nullptr;
     }
 
     return reinterpret_cast<crypto_file*>(cf_struct);

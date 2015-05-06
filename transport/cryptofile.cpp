@@ -82,7 +82,7 @@ int compute_hmac(unsigned char * hmac, const unsigned char * key, const unsigned
 
     memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
     memcpy(tmp_derivation + DERIVATOR_LENGTH, key, CRYPTO_KEY_LENGTH);
-    if (SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated) == NULL){
+    if (SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated) == nullptr){
         std::printf("[CRYPTO_ERROR][%d]: Could not derivate hash crypto key, SHA256!\n", getpid());
         return -1;
     }
@@ -96,7 +96,7 @@ void get_derivator(const char *const_file, unsigned char * derivator, int deriva
     char * file = strdupa(const_file);
     char * file_basename = basename(file);
     char tmp_derivated[SHA256_DIGEST_LENGTH];
-    if (SHA256((unsigned char *)file_basename, strlen(file_basename), (unsigned char *)tmp_derivated) == (void *) 0){
+    if (SHA256((unsigned char *)file_basename, strlen(file_basename), (unsigned char *)tmp_derivated) == nullptr){
         std::printf("[CRYPTO_ERROR][%d]: Could not derivate trace crypto key, SHA256 from=%s!\n", getpid(), file_basename);
         return;
     }

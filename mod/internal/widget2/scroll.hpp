@@ -36,7 +36,7 @@ public:
     WidgetFrame(DrawApi & drawable, const Rect& rect, Widget2 & parent,
                 NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
-        , wid(NULL)
+        , wid(nullptr)
         , diff_y(0)
         , diff_x(0)
     {
@@ -190,7 +190,7 @@ public:
     WidgetVScrollBar(DrawApi & drawable, Widget2 & parent, NotifyApi * notifier,
                      int fg_color, int bg_color, int focus_color, int group_id = 0)
         : Widget2(drawable, Rect(0, 0, 14, 1), parent, notifier, group_id)
-        , frame(NULL)
+        , frame(nullptr)
         , arrow_height(0)
         , bar_height(0)
         , scroll(Rect(this->rect.x + 1, this->rect.y + 1, 12, 1))
@@ -373,7 +373,7 @@ public:
     WidgetHScrollBar(DrawApi & drawable, Widget2 & parent, NotifyApi * notifier,
                      int fg_color, int bg_color, int focus_color, int group_id = 0)
         : Widget2(drawable, Rect(0, 0, 1, 14), parent, notifier, group_id)
-        , frame(NULL)
+        , frame(nullptr)
         , arrow_width(0)
         , bar_width(0)
         , scroll(Rect(this->rect.x + 1, this->rect.y + 1, 1, 12))

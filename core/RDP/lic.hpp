@@ -2043,7 +2043,7 @@ namespace LIC
     //     LicenseInfo::cbScope (4 bytes): A 32-bit unsigned integer that contains the number of
     // bytes in the string contained in the pbScope field.
 
-    //     LicenseInfo::pbScope (variable): Contains the NULL-terminated ANSI character set string
+    //     LicenseInfo::pbScope (variable): Contains the nullptr-terminated ANSI character set string
     // giving the name of the issuer of this license. For example, for licenses issued
     // by TailSpin Toys, this field contains the string "TailSpin Toys".
 
@@ -2553,7 +2553,7 @@ namespace LIC
             // bytes in the string contained in the pbScope field.
             uint32_t cbScope;
 
-            //     LicenseInfo::pbScope (variable): Contains the NULL-terminated ANSI character set string
+            //     LicenseInfo::pbScope (variable): Contains the nullptr-terminated ANSI character set string
             // giving the name of the issuer of this license. For example, for licenses issued
             // by TailSpin Toys, this field contains the string "TailSpin Toys".
             uint8_t pbScope[128]; // check the actual size is not too large for what we provide
@@ -2751,7 +2751,7 @@ namespace LIC
             // bytes in the string contained in the pbScope field.
             uint32_t cbScope;
 
-            //     LicenseInfo::pbScope (variable): Contains the NULL-terminated ANSI character set string
+            //     LicenseInfo::pbScope (variable): Contains the nullptr-terminated ANSI character set string
             // giving the name of the issuer of this license. For example, for licenses issued
             // by TailSpin Toys, this field contains the string "TailSpin Toys".
             uint8_t pbScope[128]; // check the actual size is not too large for what we provide

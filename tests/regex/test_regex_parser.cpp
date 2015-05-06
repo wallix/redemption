@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         st.data.sequence.s = seq;
         Reg rgx("abcd");
         BOOST_CHECK_EQUAL(st_to_string(&st), rgx.to_string());
-        st.data.sequence.s = 0;
+        st.data.sequence.s = nullptr;
     }
     {
         State st_first(FIRST);
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         st_a3.data.sequence.s = seq;
         Reg rgx("a{2,4}b");
         BOOST_CHECK_EQUAL(st_to_string(&st_a3), rgx.to_string());
-        st_a3.data.sequence.s = 0;
+        st_a3.data.sequence.s = nullptr;
     }
     {
         State st_b(RANGE, 'b', 'b');
@@ -253,7 +253,7 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         st.data.sequence.s = seq;
         Reg rgx("a{2-}");
         BOOST_CHECK_EQUAL(st_to_string(&st), rgx.to_string());
-        st.data.sequence.s = 0;
+        st.data.sequence.s = nullptr;
     }
     {
         State finish(FINISH);
@@ -293,7 +293,7 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         st.data.sequence.s = seq;
         Reg rgx("¥ËaÞ");
         BOOST_CHECK_EQUAL(st_to_string(&st), rgx.to_string());
-        st.data.sequence.s = 0;
+        st.data.sequence.s = nullptr;
     }
 }
 

@@ -32,7 +32,7 @@
 
 typedef uint32_t BGRColor;
 
-static inline BGRColor RGBtoBGR(const BGRColor & c){
+inline BGRColor RGBtoBGR(const BGRColor & c){
     return ((c << 16) & 0xFF0000)|(c & 0x00FF00)|((c>>16) & 0x0000FF);
 }
 
@@ -152,7 +152,7 @@ enum {
 };
 
 
-static inline unsigned color_from_cstr(const char * str) {
+inline unsigned color_from_cstr(const char * str) {
     unsigned res = 0;
 
     if (0 == strcasecmp("BLACK", str))                  { res = BLACK; }
@@ -193,7 +193,7 @@ static inline unsigned color_from_cstr(const char * str) {
     else if (0 == strcasecmp("PALE_ORANGE", str))       { res = PALE_ORANGE; }
     else if (0 == strcasecmp("MEDIUM_RED", str))        { res = MEDIUM_RED; }
     else if ((*str == '0') && (*(str + 1) == 'x')){
-        res = RGBtoBGR(strtol(str + 2, 0, 16));
+        res = RGBtoBGR(strtol(str + 2, nullptr, 16));
     }
     else { res = RGBtoBGR(atol(str)); }
 
@@ -219,7 +219,7 @@ static inline unsigned color_from_cstr(const char * str) {
 // |    24 bpp   |    3 bytes |     RGB color triplet (1 byte per component).  |
 // +-------------+------------+------------------------------------------------+
 
-static inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, const BGRPalette & palette){
+inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, const BGRPalette & palette){
     switch (in_bpp){
     case 1:
     {
@@ -258,7 +258,7 @@ static inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, cons
 }
 
 
-static inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, const BGRPalette & palette){
+inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, const BGRPalette & palette){
     switch (in_bpp){
     case 8:
       return RGBtoBGR(palette[static_cast<uint8_t>(c)]);
@@ -289,7 +289,7 @@ static inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t i
     return 0;
 }
 
-static inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){
+inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){
     switch (out_bpp){
     case 8:
     // rrrgggbb

@@ -64,7 +64,7 @@ struct WidgetLabelGrid : public WidgetGrid {
                 if (this->toDelete[i][j]) {
                     if (this->widgets[i][j]) {
                         delete this->widgets[i][j];
-                        this->widgets[i][j] = NULL;
+                        this->widgets[i][j] = nullptr;
                     }
                 }
             }

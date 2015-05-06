@@ -2446,7 +2446,7 @@ namespace GCC
             , temporary(false)
             {
                 for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
-                    this->x509.cert[i].cert = NULL;
+                    this->x509.cert[i].cert = nullptr;
                 }
             }
 
@@ -2454,7 +2454,7 @@ namespace GCC
                 for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
                     if (this->x509.cert[i].cert){
                         X509_free(this->x509.cert[i].cert);
-                        this->x509.cert[i].cert = NULL;
+                        this->x509.cert[i].cert = nullptr;
                     }
                 }
             }
@@ -2668,7 +2668,7 @@ namespace GCC
                         if (this->x509.cert[i].cert) {
                             X509_free(this->x509.cert[i].cert);
                         }
-                        this->x509.cert[i].cert = d2i_X509(NULL, const_cast<const uint8_t **>(&stream.p), this->x509.cert[i].len);
+                        this->x509.cert[i].cert = d2i_X509(nullptr, const_cast<const uint8_t **>(&stream.p), this->x509.cert[i].len);
                     }
                     stream.in_skip_bytes(16); /* Padding */
                 }

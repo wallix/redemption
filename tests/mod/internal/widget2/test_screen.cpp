@@ -40,13 +40,10 @@
 #include "fake_draw.hpp"
 
 struct Notify : public NotifyApi {
-    Widget2* sender;
-    notify_event_t event;
+    Widget2* sender = nullptr;
+    notify_event_t event = 0;
 
-    Notify()
-    : sender(0)
-    , event(0)
-    {}
+    Notify() = default;
 
     virtual void notify(Widget2* sender, notify_event_t event)
     {
@@ -91,10 +88,10 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     char message[1024];
 
-    BOOST_CHECK(notifier1.sender == 0);
+    BOOST_CHECK(notifier1.sender == nullptr);
     BOOST_CHECK(notifier2.sender == &wbutton2);
-    BOOST_CHECK(notifier3.sender == 0);
-    BOOST_CHECK(notifier4.sender == 0);
+    BOOST_CHECK(notifier3.sender == nullptr);
+    BOOST_CHECK(notifier4.sender == nullptr);
     BOOST_CHECK(notifier2.event == NOTIFY_FOCUS_BEGIN);
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen.png");
     if (!check_sig(drawable.gd.impl(), message,
@@ -109,14 +106,14 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
-    BOOST_CHECK(notifier1.sender == 0);
+    BOOST_CHECK(notifier1.sender == nullptr);
     BOOST_CHECK(notifier2.sender == &wbutton2);
     BOOST_CHECK(notifier3.sender == &wbutton3);
-    BOOST_CHECK(notifier4.sender == 0);
+    BOOST_CHECK(notifier4.sender == nullptr);
     BOOST_CHECK(notifier2.event == NOTIFY_FOCUS_END);
     BOOST_CHECK(notifier3.event == NOTIFY_FOCUS_BEGIN);
-    notifier2.sender = 0;
-    notifier3.sender = 0;
+    notifier2.sender = nullptr;
+    notifier3.sender = nullptr;
     notifier2.event = 0;
     notifier3.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen2.png");
@@ -129,14 +126,14 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
-    BOOST_CHECK(notifier1.sender == 0);
-    BOOST_CHECK(notifier2.sender == 0);
+    BOOST_CHECK(notifier1.sender == nullptr);
+    BOOST_CHECK(notifier2.sender == nullptr);
     BOOST_CHECK(notifier3.sender == &wbutton3);
     BOOST_CHECK(notifier4.sender == &wbutton4);
     BOOST_CHECK(notifier3.event == NOTIFY_FOCUS_END);
     BOOST_CHECK(notifier4.event == NOTIFY_FOCUS_BEGIN);
-    notifier3.sender = 0;
-    notifier4.sender = 0;
+    notifier3.sender = nullptr;
+    notifier4.sender = nullptr;
     notifier3.event = 0;
     notifier4.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen3.png");
@@ -150,13 +147,13 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
     BOOST_CHECK(notifier1.sender == &wbutton1);
-    BOOST_CHECK(notifier2.sender == 0);
-    BOOST_CHECK(notifier3.sender == 0);
+    BOOST_CHECK(notifier2.sender == nullptr);
+    BOOST_CHECK(notifier3.sender == nullptr);
     BOOST_CHECK(notifier4.sender == &wbutton4);
     BOOST_CHECK(notifier1.event == NOTIFY_FOCUS_BEGIN);
     BOOST_CHECK(notifier4.event == NOTIFY_FOCUS_END);
-    notifier1.sender = 0;
-    notifier4.sender = 0;
+    notifier1.sender = nullptr;
+    notifier4.sender = nullptr;
     notifier1.event = 0;
     notifier4.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen4.png");
@@ -170,13 +167,13 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
     BOOST_CHECK(notifier1.sender == &wbutton1);
-    BOOST_CHECK(notifier2.sender == 0);
-    BOOST_CHECK(notifier3.sender == 0);
+    BOOST_CHECK(notifier2.sender == nullptr);
+    BOOST_CHECK(notifier3.sender == nullptr);
     BOOST_CHECK(notifier4.sender == &wbutton4);
     BOOST_CHECK(notifier1.event == NOTIFY_FOCUS_END);
     BOOST_CHECK(notifier4.event == NOTIFY_FOCUS_BEGIN);
-    notifier1.sender = 0;
-    notifier4.sender = 0;
+    notifier1.sender = nullptr;
+    notifier4.sender = nullptr;
     notifier1.event = 0;
     notifier4.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen5.png");
@@ -189,14 +186,14 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
-    BOOST_CHECK(notifier1.sender == 0);
-    BOOST_CHECK(notifier2.sender == 0);
+    BOOST_CHECK(notifier1.sender == nullptr);
+    BOOST_CHECK(notifier2.sender == nullptr);
     BOOST_CHECK(notifier3.sender == &wbutton3);
     BOOST_CHECK(notifier4.sender == &wbutton4);
     BOOST_CHECK(notifier3.event == NOTIFY_FOCUS_BEGIN);
     BOOST_CHECK(notifier4.event == NOTIFY_FOCUS_END);
-    notifier3.sender = 0;
-    notifier4.sender = 0;
+    notifier3.sender = nullptr;
+    notifier4.sender = nullptr;
     notifier3.event = 0;
     notifier4.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen6.png");
@@ -210,13 +207,13 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                             wbutton1.dx(), wbutton1.dy(), &keymap);
     BOOST_CHECK(notifier1.sender == &wbutton1);
-    BOOST_CHECK(notifier2.sender == 0);
+    BOOST_CHECK(notifier2.sender == nullptr);
     BOOST_CHECK(notifier3.sender == &wbutton3);
-    BOOST_CHECK(notifier4.sender == 0);
+    BOOST_CHECK(notifier4.sender == nullptr);
     BOOST_CHECK(notifier1.event == NOTIFY_FOCUS_BEGIN);
     BOOST_CHECK(notifier3.event == NOTIFY_FOCUS_END);
-    notifier1.sender = 0;
-    notifier3.sender = 0;
+    notifier1.sender = nullptr;
+    notifier3.sender = nullptr;
     notifier1.event = 0;
     notifier3.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen7.png");
@@ -228,10 +225,10 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                             wbutton2.dx(), wbutton2.dy(), &keymap);
-    BOOST_CHECK(notifier1.sender == 0);
-    BOOST_CHECK(notifier2.sender == 0);
-    BOOST_CHECK(notifier3.sender == 0);
-    BOOST_CHECK(notifier4.sender == 0);
+    BOOST_CHECK(notifier1.sender == nullptr);
+    BOOST_CHECK(notifier2.sender == nullptr);
+    BOOST_CHECK(notifier3.sender == nullptr);
+    BOOST_CHECK(notifier4.sender == nullptr);
     BOOST_CHECK(notifier1.event == 0);
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen8.png");
     if (!check_sig(drawable.gd.impl(), message,
@@ -244,12 +241,12 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
     BOOST_CHECK(notifier1.sender == &wbutton1);
     BOOST_CHECK(notifier2.sender == &wbutton2);
-    BOOST_CHECK(notifier3.sender == 0);
-    BOOST_CHECK(notifier4.sender == 0);
+    BOOST_CHECK(notifier3.sender == nullptr);
+    BOOST_CHECK(notifier4.sender == nullptr);
     BOOST_CHECK(notifier1.event == NOTIFY_FOCUS_END);
     BOOST_CHECK(notifier2.event == NOTIFY_FOCUS_BEGIN);
-    notifier1.sender = 0;
-    notifier2.sender = 0;
+    notifier1.sender = nullptr;
+    notifier2.sender = nullptr;
     notifier1.event = 0;
     notifier2.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen9.png");
@@ -261,14 +258,14 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                             wbutton4.dx(), wbutton4.dy(), &keymap);
-    BOOST_CHECK(notifier1.sender == 0);
+    BOOST_CHECK(notifier1.sender == nullptr);
     BOOST_CHECK(notifier2.sender == &wbutton2);
-    BOOST_CHECK(notifier3.sender == 0);
+    BOOST_CHECK(notifier3.sender == nullptr);
     BOOST_CHECK(notifier4.sender == &wbutton4);
     BOOST_CHECK(notifier2.event == NOTIFY_FOCUS_END);
     BOOST_CHECK(notifier4.event == NOTIFY_FOCUS_BEGIN);
-    notifier2.sender = 0;
-    notifier4.sender = 0;
+    notifier2.sender = nullptr;
+    notifier4.sender = nullptr;
     notifier2.event = 0;
     notifier4.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen10.png");
@@ -280,9 +277,9 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                             wbutton4.dx(), wbutton4.dy(), &keymap);
-    BOOST_CHECK(notifier1.sender == 0);
-    BOOST_CHECK(notifier2.sender == 0);
-    BOOST_CHECK(notifier3.sender == 0);
+    BOOST_CHECK(notifier1.sender == nullptr);
+    BOOST_CHECK(notifier2.sender == nullptr);
+    BOOST_CHECK(notifier3.sender == nullptr);
     BOOST_CHECK(notifier4.sender == &wbutton4);
     BOOST_CHECK(notifier4.event == NOTIFY_SUBMIT);
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen11.png");
@@ -292,7 +289,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    wscreen.show_tooltip(NULL, "tooltip test", 30, 35);
+    wscreen.show_tooltip(nullptr, "tooltip test", 30, 35);
 
     wscreen.rdp_input_invalidate(wscreen.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen12.png");
@@ -302,7 +299,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    wscreen.show_tooltip(NULL, NULL, 30, 35);
+    wscreen.show_tooltip(nullptr, nullptr, 30, 35);
     wscreen.rdp_input_invalidate(wscreen.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen13.png");
     if (!check_sig(drawable.gd.impl(), message,

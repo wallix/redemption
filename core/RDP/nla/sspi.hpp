@@ -70,7 +70,7 @@ struct SecBufferDesc
     PSecBuffer FindSecBuffer(unsigned long BufferType)
     {
         unsigned long index;
-        PSecBuffer pSecBuffer = NULL;
+        PSecBuffer pSecBuffer = nullptr;
 
         for (index = 0; index < this->cBuffers; index++) {
             if (this->pBuffers[index].BufferType == BufferType) {

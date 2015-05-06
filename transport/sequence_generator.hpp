@@ -58,7 +58,7 @@ struct FilenameGenerator
     : format(format)
     , pid(getpid())
     , groupid(groupid)
-    , last_filename(0)
+    , last_filename(nullptr)
     , last_num(-1u)
     {
         if (strlen(prefix) > sizeof(this->path) - 1

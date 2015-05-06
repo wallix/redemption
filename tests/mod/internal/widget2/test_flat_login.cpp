@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
 
     // FlatLogin is a flat_login widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0;
 
     FlatLogin flat_login(drawable, parent.cx(), parent.cy(), parent, notifier, "test1",
@@ -74,10 +74,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test2",
-                         false, 0, 0, 0, "Login", "Password", ini);
+                         false, 0, nullptr, nullptr, "Login", "Password", ini);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -99,13 +99,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
 {
     TestDraw drawable(800, 600);
     struct Notify : NotifyApi {
-        Widget2* sender;
-        notify_event_t event;
+        Widget2* sender = nullptr;
+        notify_event_t event = 0;
 
-        Notify()
-        : sender(0)
-        , event(0)
-        {}
+        Notify() = default;
 
         virtual void notify(Widget2* sender, notify_event_t event)
         {
@@ -120,11 +117,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
     FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test3",
-                         false, 0, 0, 0, "Login", "Password", ini);
+                         false, 0, nullptr, nullptr, "Login", "Password", ini);
 
     flat_login.set_widget_focus(&flat_login.password_edit, Widget2::focus_reason_tabkey);
 
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -149,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    notifier.sender = 0;
+    notifier.sender = nullptr;
     notifier.event = 0;
     keymap.push_kevent(Keymap2::KEVENT_ESC); // enterto validate
     flat_login.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -166,11 +163,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // FlatLogin is a flat_login widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test4",
-                         false, 0, 0, 0, "Login", "Password", ini);
+                         false, 0, nullptr, nullptr, "Login", "Password", ini);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -188,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     }
 
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
-                               flat_login.helpicon.centerx(), flat_login.helpicon.centery(), NULL);
+                               flat_login.helpicon.centerx(), flat_login.helpicon.centery(), nullptr);
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
@@ -207,10 +204,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
 
     // FlatLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
-                         false, 0, 0, 0, "Login", "Password", ini);
+                         false, 0, nullptr, nullptr, "Login", "Password", ini);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
@@ -236,10 +233,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
-                         false, 0, 0, 0, "Login", "Password", ini);
+                         false, 0, nullptr, nullptr, "Login", "Password", ini);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
@@ -266,13 +263,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
 
     WidgetScreen parent(drawable, 800, 600, ini.font);
     struct Notify : NotifyApi {
-        Widget2* sender;
-        notify_event_t event;
+        Widget2* sender = nullptr;
+        notify_event_t event = 0;
 
-        Notify()
-        : sender(0)
-        , event(0)
-        {}
+        Notify() = default;
 
         virtual void notify(Widget2* sender, notify_event_t event)
         {
@@ -282,8 +276,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     } notifier;
 
     FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test6",
-                         false, 0, 0, 0, "Login", "Password", ini);
+                         false, 0, nullptr, nullptr, "Login", "Password", ini);
 
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 }

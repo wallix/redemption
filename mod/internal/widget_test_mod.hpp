@@ -43,15 +43,15 @@ public:
     , drawing_policy(*this, ini.font)
     , tab(*this, drawing_policy, 30, 30, width - 60, height - 260, this->screen, this, 0,
           ini.theme.global.fgcolor, ini.theme.global.bgcolor)
-    , wedit_on_first_tab(NULL)
-    , wbutton_on_first_tab(NULL) {
+    , wedit_on_first_tab(nullptr)
+    , wbutton_on_first_tab(nullptr) {
         this->screen.add_widget(&this->tab);
 
         const size_t tab_0_index = this->tab.add_item("First tab");
         const size_t tab_1_index = this->tab.add_item("Second tab");
         (void)tab_1_index;
 
-        NotifyApi * notifier = NULL;
+        NotifyApi * notifier = nullptr;
         int         group_id = 0;
         int         fg_color = RED;
         int         bg_color = YELLOW;

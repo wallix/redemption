@@ -111,7 +111,7 @@ static inline void transport_dump_png24(Transport & trans, const uint8_t * data,
 {
     detail::NoExceptTransport no_except_transport = { &trans, 0 };
 
-    png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     png_set_write_fn(ppng, &no_except_transport, &detail::png_write_data, &detail::png_flush_data);
 
     png_info * pinfo = png_create_info_struct(ppng);
@@ -137,7 +137,7 @@ static inline void dump_png24(FILE * fd, const uint8_t * data,
                             const size_t rowsize,
                             const bool bgr)
 {
-    png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     png_info * pinfo = png_create_info_struct(ppng);
 
     // prepare png header
@@ -156,17 +156,17 @@ inline void read_png24(FILE * fd, const uint8_t * data,
                       const size_t height,
                       const size_t rowsize)
 {
-    png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     png_info * pinfo = png_create_info_struct(ppng);
     png_init_io(ppng, fd);
     png_read_info(ppng, pinfo);
 
     for (size_t k = 0 ; k < height ; ++k) {
-        png_read_row(ppng, const_cast<unsigned char*>(data), NULL);
+        png_read_row(ppng, const_cast<unsigned char*>(data), nullptr);
         data += rowsize;
     }
     png_read_end(ppng, pinfo);
-    png_destroy_read_struct(&ppng, &pinfo, NULL);
+    png_destroy_read_struct(&ppng, &pinfo, nullptr);
 }
 
 static inline void png_read_data_fn(png_structp png_ptr, png_bytep data, png_size_t length) {
@@ -180,17 +180,17 @@ inline void transport_read_png24(Transport * trans, const uint8_t * data,
                       const size_t height,
                       const size_t rowsize)
 {
-    png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     png_set_read_fn(ppng, trans, &png_read_data_fn);
     png_info * pinfo = png_create_info_struct(ppng);
     png_read_info(ppng, pinfo);
 
     for (size_t k = 0 ; k < height ; ++k) {
-        png_read_row(ppng, const_cast<unsigned char*>(data), NULL);
+        png_read_row(ppng, const_cast<unsigned char*>(data), nullptr);
         data += rowsize;
     }
     png_read_end(ppng, pinfo);
-    png_destroy_read_struct(&ppng, &pinfo, NULL);
+    png_destroy_read_struct(&ppng, &pinfo, nullptr);
 }
 
 #endif

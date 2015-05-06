@@ -327,12 +327,9 @@ struct RFXGenCaps {
 
 struct RFXSrvrCaps : public RFXGenCaps {
 
-    uint8_t * reserved;
+    uint8_t * reserved = nullptr;
 
-    RFXSrvrCaps()
-    : reserved(0)
-    {
-    }
+    RFXSrvrCaps() = default;
 
     void setReserved(uint16_t len) {
         this->reserved = new uint8_t[len];
@@ -417,7 +414,7 @@ struct RFXClntCaps : public RFXGenCaps {
     : length(0)          // Total length in bytes of that structure fields
     , captureFlags(0)    // flag from enum
     , capsLength(0)        // length in bytes of the next field
-    , capsData(0)
+    , capsData(nullptr)
     {
     }
 };

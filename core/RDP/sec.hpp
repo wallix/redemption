@@ -853,7 +853,7 @@ enum {
             }
             if (flags & SEC_ENCRYPT){
                 uint8_t signature[8] = {};
-                crypt.sign(data.get_data(), data.size(), signature, sizeof(signature));
+                crypt.sign(data.get_data(), data.size(), signature);
                 stream.out_copy_bytes(signature, 8);
                 crypt.decrypt(data.get_data(), data.size());
             }

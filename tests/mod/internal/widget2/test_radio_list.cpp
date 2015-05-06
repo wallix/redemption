@@ -47,13 +47,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
     Inifile ini;
 
 
-    WidgetRadioButton radio0(drawable, 10, 300, parent, NULL,
+    WidgetRadioButton radio0(drawable, 10, 300, parent, nullptr,
                              "Alphabetical", true, 0, WHITE, DARK_BLUE_BIS);
 
-    WidgetRadioButton radio1(drawable, radio0.lx() + 10, 300, parent, NULL,
+    WidgetRadioButton radio1(drawable, radio0.lx() + 10, 300, parent, nullptr,
                             "Most Used First", true, 0, WHITE, DARK_BLUE_BIS);
 
-    WidgetRadioButton radio2(drawable, radio1.lx() + 10, 300, parent, NULL,
+    WidgetRadioButton radio2(drawable, radio1.lx() + 10, 300, parent, nullptr,
                             "Last Used First", true, 0, WHITE, DARK_BLUE_BIS);
     // ask to widget to redraw at it's current position
     parent.add_widget(&radio0);
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     WidgetScreen parent(drawable, 800, 600);
 
 
-    WidgetRadioList radiolist(drawable, 50, 70, parent, NULL, 0, WHITE, DARK_BLUE_BIS);
+    WidgetRadioList radiolist(drawable, 50, 70, parent, nullptr, 0, WHITE, DARK_BLUE_BIS);
 
     parent.add_widget(&radiolist);
 
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
     int y = radiolist.centery();
 
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
-                           x, y, NULL);
+                           x, y, nullptr);
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify2.png");
     if (!check_sig(drawable.gd.impl(), message,
@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
     y = radiolist.centery();
 
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
-                           x, y, NULL);
+                           x, y, nullptr);
     parent.rdp_input_invalidate(parent.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify3.png");
     if (!check_sig(drawable.gd.impl(), message,

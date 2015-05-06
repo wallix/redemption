@@ -31,25 +31,20 @@ namespace re {
     class Regex
     {
         struct Parser {
-            const char * err;
-            size_t pos_err;
+            const char * err = nullptr;
+            size_t pos_err = 0;
             StateParser st_parser;
 
-            Parser()
-            : err(0)
-            , pos_err(0)
-            {}
+            Parser() = default;
 
             explicit Parser(const char * s)
-            : err(0)
-            , pos_err(0)
             {
                 this->st_parser.compile(s, &this->err, &this->pos_err);
             }
 
             void reset(const char * s)
             {
-                this->err = 0;
+                this->err = nullptr;
                 this->pos_err = 0;
                 this->st_parser.clear();
                 this->st_parser.compile(s, &this->err, &this->pos_err);
@@ -69,7 +64,7 @@ namespace re {
 
         explicit Regex(unsigned step_limit = 10000)
         : parser()
-        , sm(state_list_t(), NULL, 0)
+        , sm(state_list_t(), nullptr, 0)
         , pos(0)
         , step_limit(step_limit)
         {}

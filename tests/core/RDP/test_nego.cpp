@@ -127,5 +127,5 @@ BOOST_AUTO_TEST_CASE(TestNego)
 //     TestTransport logtrans("test", client, sizeof(client), server, sizeof(server));
 //     RdpNego nego(true, &logtrans, "test", true, "127.0.0.1", false);
 //     ClientInfo client_info(0, true);
-//     nego.recv_resquest(NULL, client_info, true, true);
+//     nego.recv_resquest(nullptr, client_info, true, true);
 // }

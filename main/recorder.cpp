@@ -43,7 +43,7 @@ int main(int argc, char** argv)
         : capture( now, width, height, order_bpp
                  , ini.video.wrm_color_depth_selection_strategy
                  , path, path, ini.video.hash_path, basename
-                 , false, false, NULL, ini, true)
+                 , false, false, nullptr, ini, true)
         {}
     };
     app_recorder<CaptureMaker>(

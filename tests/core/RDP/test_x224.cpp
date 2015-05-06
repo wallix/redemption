@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
 
     InStream stream(array, 0, 0, end - array.get_data());
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL(tpkt_len, (size_t)fac_x224.length);
+    BOOST_CHECK_EQUAL(tpkt_len, fac_x224.length);
 
     X224::CR_TPDU_Recv x224(stream, false, true);
 
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_RecvFactory_Bad_TPKT)
         X224::RecvFactory fac_x224(t, &end, array.size());
         BOOST_CHECK(false);
     } catch (Error & e) {
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 }
 
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_RecvFactory_Short_TPKT)
         X224::RecvFactory fac_x224(t, &end, array.size());
         BOOST_CHECK(false);
     } catch (Error & e) {
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 }
 
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_RecvFactory_Unknown_TPDU)
         X224::RecvFactory fac_x224(t, &end, array.size());
         BOOST_CHECK(false);
     } catch (Error & e) {
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 }
 
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_overfull_stream)
         BOOST_CHECK(false);
     }
     catch (Error & e) {
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 }
 
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_TPDU_truncated_header)
         BOOST_CHECK(false);
     }
     catch (Error & e) {
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 }
 
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
         BOOST_CHECK(false);
     }
     catch (Error & e) {
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 }
 
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
         BOOST_CHECK(false);
     }
     catch (Error & e) {
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 }
 
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
         BOOST_CHECK(false);
     }
     catch (Error & e) {
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 }
 
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_trailing_data)
         BOOST_CHECK(false);
     }
     catch (Error & e) {
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 }
 
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
     X224::RecvFactory fac_x224(t, &end, array.size());
     InStream stream(array, 0, 0, end - array.get_data());
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
+    BOOST_CHECK_EQUAL((size_t)11, fac_x224.length);
 
     X224::CR_TPDU_Recv x224(stream, false);
 
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     X224::RecvFactory fac_x224(t, &end, array.size());
     InStream stream(array, 0, 0, end - array.get_data());
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL(tpkt_len, (size_t)fac_x224.length);
+    BOOST_CHECK_EQUAL(tpkt_len, fac_x224.length);
 
     try {
         X224::CR_TPDU_Recv x224(stream, false);
@@ -363,7 +363,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
     X224::RecvFactory fac_x224(t, &end, array.size());
     InStream stream(array, 0, 0, end - array.get_data());
     BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
+    BOOST_CHECK_EQUAL((size_t)11, fac_x224.length);
 
     X224::CC_TPDU_Recv x224(stream);
 
@@ -390,7 +390,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_wrong_opcode)
         BOOST_CHECK(false);
     }
     catch(Error & e){
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 
 }
@@ -413,7 +413,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
     X224::RecvFactory fac_x224(t, &end, array.size());
     InStream stream(array, 0, 0, end - array.get_data());
     BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL((size_t)tpkt_len, (size_t)fac_x224.length);
+    BOOST_CHECK_EQUAL(tpkt_len, fac_x224.length);
 
     X224::CC_TPDU_Recv x224(stream);
 
@@ -451,7 +451,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_with_factory)
     X224::RecvFactory fac_x224(t, &end, array.size());
     InStream stream(array, 0, 0, end - array.get_data());
     BOOST_CHECK_EQUAL((uint8_t)X224::DR_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
+    BOOST_CHECK_EQUAL((size_t)11, fac_x224.length);
 
     X224::DR_TPDU_Recv x224(stream);
 
@@ -478,7 +478,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_wrong_opcode)
         BOOST_CHECK(false);
     }
     catch(Error & e){
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 
 }
@@ -501,7 +501,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_with_factory)
     X224::RecvFactory fac_x224(t, &end, array.size());
     InStream stream(array, 0, 0, end - array.get_data());
     BOOST_CHECK_EQUAL((uint8_t)X224::ER_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL((size_t)13, (size_t)fac_x224.length);
+    BOOST_CHECK_EQUAL((size_t)13, fac_x224.length);
 
     X224::ER_TPDU_Recv x224(stream);
 
@@ -541,7 +541,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_wrong_opcode)
         BOOST_CHECK(false);
     }
     catch(Error & e){
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 
 }
@@ -555,7 +555,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
     X224::RecvFactory fac_x224(t, &end, array.size());
     InStream stream(array, 0, 0, end - array.get_data());
     BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL((size_t)12, (size_t)fac_x224.length);
+    BOOST_CHECK_EQUAL((size_t)12, fac_x224.length);
 
     X224::DT_TPDU_Recv x224(stream);
 
@@ -585,7 +585,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_wrong_opcode)
         BOOST_CHECK(false);
     }
     catch(Error & e){
-        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_X224));
     };
 
 }

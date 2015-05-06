@@ -214,11 +214,11 @@ private:
         }
         else {
             MatchCount   = 0;
-            MatchDetails = NULL;
+            MatchDetails = nullptr;
         }
 
         literals_length = compressed_data_stream.in_remain();
-        Literals        = (literals_length ? compressed_data_stream.p : NULL);
+        Literals        = (literals_length ? compressed_data_stream.p : nullptr);
     }
 
 public:
@@ -228,7 +228,7 @@ public:
         //LOG(LOG_INFO, "decompress_61: historyOffset=%d compressed_data_size=%d compressionFlags=0x%X",
         //    this->historyOffset, compressed_data_size, compressionFlags);
 
-        uncompressed_data      = NULL;
+        uncompressed_data      = nullptr;
         uncompressed_data_size = 0;
 
         StaticStream compressed_data_stream(compressed_data, compressed_data_size);
@@ -594,7 +594,7 @@ public:
         , level_1_compr_flags_hold(L1_PACKET_AT_FRONT)
         , Level1ComprFlags(0)
         , Level2ComprFlags(0)
-        , outputBuffer(NULL)
+        , outputBuffer(nullptr)
         , bytes_in_output_buffer(0)
     {}
 
@@ -617,11 +617,11 @@ private:
 
         ::memset(this->level_1_output_buffer, 0, RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE);
         this->level_1_compressed_data_size = 0;
-        this->outputBuffer                 = NULL;
+        this->outputBuffer                 = nullptr;
         this->bytes_in_output_buffer       = 0;
 
 
-        if ((uncompressed_data == NULL) || (uncompressed_data_size == 0) ||
+        if ((uncompressed_data == nullptr) || (uncompressed_data_size == 0) ||
             (uncompressed_data_size > RDP_61_MAX_DATA_BLOCK_SIZE) ||
             (uncompressed_data_size <= 2))   // Level1ComprFlags(1) + Level2ComprFlags(1)
             return;

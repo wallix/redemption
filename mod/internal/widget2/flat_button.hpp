@@ -45,7 +45,7 @@ public:
                      int focuscolor, Font const & font, int xtext = 0, int ytext = 0,
                      bool logo = false /*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
-    , label(drawable, 1, 1, *this, 0, text, auto_resize, 0, fgcolor, bgcolor, font, xtext, ytext)
+    , label(drawable, 1, 1, *this, nullptr, text, auto_resize, 0, fgcolor, bgcolor, font, xtext, ytext)
     , state(0)
     , event(NOTIFY_SUBMIT)
     , fg_color(fgcolor)

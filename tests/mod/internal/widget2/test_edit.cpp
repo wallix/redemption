@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
 
     // WidgetEdit is a edit widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     // WidgetEdit is a edit widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
 
     // WidgetEdit is a edit widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
 
     // WidgetEdit is a edit widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
 
     // WidgetEdit is a edit widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -295,7 +295,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 
     // WidgetEdit is a edit widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
@@ -327,13 +327,11 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     TestDraw drawable(800, 600);
 
     struct WidgetReceiveEvent : public Widget2 {
-        Widget2* sender;
-        NotifyApi::notify_event_t event;
+        Widget2* sender = nullptr;
+        NotifyApi::notify_event_t event = 0;
 
         WidgetReceiveEvent(TestDraw& drawable)
-        : Widget2(drawable, Rect(), *this, NULL)
-        , sender(0)
-        , event(0)
+        : Widget2(drawable, Rect(), *this, nullptr)
         {}
 
         virtual void draw(const Rect&)
@@ -347,12 +345,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     } widget_for_receive_event(drawable);
 
     struct Notify : public NotifyApi {
-        Widget2* sender;
-        notify_event_t event;
-        Notify()
-        : sender(0)
-        , event(0)
-        {}
+        Widget2* sender = nullptr;
+        notify_event_t event = 0;
+        Notify() = default;
         virtual void notify(Widget2* sender, notify_event_t event)
         {
             this->sender = sender;
@@ -400,8 +395,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     }
     BOOST_CHECK(notifier.sender == &wedit);
     BOOST_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
+    notifier.sender = nullptr;
     notifier.event = 0;
-    notifier.sender = 0;
 
     keymap.event(0, 17, decoded_data, ctrl_alt_delete); // 'z'
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -416,8 +411,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     }
     BOOST_CHECK(notifier.sender == &wedit);
     BOOST_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
+    notifier.sender = nullptr;
     notifier.event = 0;
-    notifier.sender = 0;
 
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -429,7 +424,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
@@ -480,7 +475,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 
     keymap.push_kevent(Keymap2::KEVENT_DELETE);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
@@ -494,7 +489,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 
     keymap.push_kevent(Keymap2::KEVENT_END);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
@@ -508,7 +503,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 
     keymap.push_kevent(Keymap2::KEVENT_HOME);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
@@ -520,19 +515,19 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     BOOST_CHECK(notifier.sender == &wedit);
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
-    notifier.sender = 0;
+    notifier.sender = nullptr;
     notifier.event = 0;
 
-    wedit.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x+10, y+3, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == 0);
+    wedit.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x+10, y+3, nullptr);
+    BOOST_CHECK(widget_for_receive_event.sender == nullptr);
     BOOST_CHECK(widget_for_receive_event.event == 0);
-    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
@@ -555,7 +550,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
 
     // WidgetEdit is a edit widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
 
     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 

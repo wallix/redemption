@@ -144,8 +144,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         phCredential->SecureHandleSetLowerPointer(static_cast<void *>(credentials));
         phCredential->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
 
-        SEC_WINNT_AUTH_IDENTITY* identity = NULL;
-        if (pAuthData != NULL) {
+        SEC_WINNT_AUTH_IDENTITY* identity = nullptr;
+        if (pAuthData != nullptr) {
             identity = static_cast<SEC_WINNT_AUTH_IDENTITY*>(pAuthData);
         }
         // set KRB5CCNAME cache name to specific with PID,
@@ -159,7 +159,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         LOG(LOG_INFO, "set KRB5CCNAME to %s", cache);
         if (identity) {
             int ret = credentials->get_credentials(identity->princname,
-                                                   identity->princpass, NULL);
+                                                   identity->princpass, nullptr);
             if (!ret) {
                 return SEC_E_OK;
             }
@@ -176,9 +176,9 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         if (!credentials) {
             return SEC_E_INVALID_HANDLE;
         }
-        credentials->destroy_credentials(NULL);
+        credentials->destroy_credentials(nullptr);
         delete credentials;
-        credentials = NULL;
+        credentials = nullptr;
 
         unsetenv("KRB5CCNAME");
 
@@ -189,7 +189,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         gss_buffer_desc output;
         OM_uint32 major_status, minor_status;
         const char service_name[] = "TERMSRV";
-        gss_OID type = (gss_OID) GSS_C_NT_HOSTBASED_SERVICE;
+        gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
         int size = (strlen(service_name) + 1 + strlen(server) + 1);
 
         output.value = malloc(size);
@@ -225,7 +225,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
-        KERBEROSContext * krb_ctx = NULL;
+        KERBEROSContext * krb_ctx = nullptr;
         if (phContext) {
             krb_ctx = static_cast<KERBEROSContext*>(phContext->SecureHandleGetLowerPointer());
         }
@@ -347,7 +347,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
-        KERBEROSContext * krb_ctx = NULL;
+        KERBEROSContext * krb_ctx = nullptr;
         if (phContext) {
             krb_ctx = static_cast<KERBEROSContext*>(phContext->SecureHandleGetLowerPointer());
         }
@@ -416,7 +416,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                               gss_no_cred,
                                               &input_tok,
                                               GSS_C_NO_CHANNEL_BINDINGS,
-                                              NULL,
+                                              nullptr,
                                               &krb_ctx->actual_mech,
                                               &output_tok,
                                               &krb_ctx->actual_flag,
@@ -476,7 +476,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 	OM_uint32 major_status;
 	OM_uint32 minor_status;
 	int conf_state;
-        KERBEROSContext* context = NULL;
+        KERBEROSContext* context = nullptr;
 
         if (phContext) {
             context = static_cast<KERBEROSContext*>(phContext->SecureHandleGetLowerPointer());
@@ -484,7 +484,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         if (!context) {
             return SEC_E_NO_CONTEXT;
         }
-        PSecBuffer data_buffer = NULL;
+        PSecBuffer data_buffer = nullptr;
 	gss_buffer_desc inbuf, outbuf;
         for (int index = 0; index < (int) pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
@@ -533,7 +533,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 	OM_uint32 minor_status;
 	int conf_state;
         gss_qop_t qop_state;
-        KERBEROSContext* context = NULL;
+        KERBEROSContext* context = nullptr;
 
         if (phContext) {
             context = static_cast<KERBEROSContext*>(phContext->SecureHandleGetLowerPointer());
@@ -541,7 +541,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         if (!context) {
             return SEC_E_NO_CONTEXT;
         }
-        PSecBuffer data_buffer = NULL;
+        PSecBuffer data_buffer = nullptr;
 	gss_buffer_desc inbuf, outbuf;
         for (int index = 0; index < (int) pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {

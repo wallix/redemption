@@ -366,7 +366,7 @@ namespace BER {
             !read_length(s, length) ||
             !s.in_check_rem(1))
             return false;
-        // if (value == NULL) {
+        // if (value == nullptr) {
         //     s.in_skip_bytes(length);
         // }
 

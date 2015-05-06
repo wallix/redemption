@@ -79,8 +79,8 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
     ucs.s4.sin_port = htons(4444);
     ucs.s4.sin_addr.s_addr = inet_addr(ip);
     if (ucs.s4.sin_addr.s_addr == INADDR_NONE) {
-        struct addrinfo * addr_info = NULL;
-        int               result    = getaddrinfo(ip, NULL, NULL, &addr_info);
+        struct addrinfo * addr_info = nullptr;
+        int               result    = getaddrinfo(ip, nullptr, nullptr, &addr_info);
 
         if (result) {
             int          _error;
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
 
     int res = -1;
     int data_sent = 0;
-    SocketTransport * client_trans = NULL;
+    SocketTransport * client_trans = nullptr;
 
     while (run){
         LOG(LOG_INFO, "run loop\n");
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
             FD_SET(recv_sck[i], &rfds);
         }
 
-        if (((client_trans != NULL) && (data_sent == 0))
+        if (((client_trans != nullptr) && (data_sent == 0))
         || (res == -1))
         {
             FD_SET(client_sck, &wfds);
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
             }
         }
 
-        int num = select(max + 1, &rfds, &wfds, 0, &timeout);
+        int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
 
         switch (num) {
         case 0:

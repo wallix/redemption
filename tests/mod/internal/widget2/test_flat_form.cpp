@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
 //     WidgetScreen parent(drawable, 800, 600);
-//     NotifyApi * notifier = NULL;
+//     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
 //     WidgetScreen parent(drawable, 800, 600);
-//     NotifyApi * notifier = NULL;
+//     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
 //     WidgetScreen parent(drawable, 1280, 1024);
-//     NotifyApi * notifier = NULL;
+//     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
 //     WidgetScreen parent(drawable, 640, 480);
-//     NotifyApi * notifier = NULL;
+//     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
@@ -227,7 +227,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
 //     WidgetScreen parent(drawable, 300, 600);
-//     NotifyApi * notifier = NULL;
+//     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
@@ -265,7 +265,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
 //     WidgetScreen parent(drawable, 800, 600);
-//     NotifyApi * notifier = NULL;
+//     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
 //     WidgetScreen parent(drawable, 800, 600);
-//     NotifyApi * notifier = NULL;
+//     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
@@ -378,8 +378,8 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     unsigned x = flat_dialog.ok.rect.x + flat_dialog.ok.rect.cx / 2 ;
 //     unsigned y = flat_dialog.ok.rect.y + flat_dialog.ok.rect.cy / 2 ;
-//     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, NULL);
-//     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
+//     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
+//     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
 // //    BOOST_CHECK(notifier.sender == 0);
 //     BOOST_CHECK(notifier.sender == &flat_dialog);
 //     BOOST_CHECK(notifier.event == 0);
@@ -398,9 +398,9 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 
 
-//     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, NULL);
+//     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
 //     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-//     //                                  flat_dialog.ok.dx(), flat_dialog.ok.dy(), NULL);
+//     //                                  flat_dialog.ok.dx(), flat_dialog.ok.dy(), nullptr);
 //     BOOST_CHECK(notifier.sender == &flat_dialog);
 //     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
 //     notifier.sender = 0;
@@ -420,8 +420,8 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     x = flat_dialog.cancel->rect.x + flat_dialog.cancel->rect.cx / 2 ;
 //     y = flat_dialog.cancel->rect.y + flat_dialog.cancel->rect.cy / 2 ;
-//     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, NULL);
-//     // flat_dialog.cancel->rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
+//     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
+//     // flat_dialog.cancel->rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
 // //    BOOST_CHECK(notifier.sender == 0);
 //     BOOST_CHECK(notifier.sender == &flat_dialog);
 //     BOOST_CHECK(notifier.event == 0);
@@ -440,7 +440,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 //     }
 
 
-//     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, NULL);
+//     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
 //     BOOST_CHECK(notifier.sender == &flat_dialog);
 //     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
 

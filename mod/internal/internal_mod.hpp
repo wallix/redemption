@@ -34,10 +34,10 @@ public:
     WidgetScreen screen;
 
     InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height, Font const & font,
-                Inifile * ini = NULL)
+                Inifile * ini = nullptr)
         : mod_api(front_width, front_height)
         , front(front)
-        , screen(*this, front_width, front_height, font, NULL, ini ? &(ini->theme): NULL)
+        , screen(*this, front_width, front_height, font, nullptr, ini ? &(ini->theme): nullptr)
     {
         this->front.server_resize(front_width, front_height, 24);
     }

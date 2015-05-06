@@ -117,7 +117,7 @@ project redemption
     <cxxflags>-Wcast-align
     <cxxflags>-Wchar-subscripts
 #     <cxxflags>-Wformat
-#     <cxxflags>-Wformat=2
+    <cxxflags>-Wformat=2
     <cxxflags>-Wformat-security
 #     <cxxflags>-Wmissing-format-attribute
     <cxxflags>-Wsequence-point
@@ -134,19 +134,61 @@ project redemption
     <cxxflags>-Wcast-qual
     <cxxflags>-Woverloaded-virtual
     <cxxflags>-Wunused-variable
-    <cxxflags>-fpie
+#     <cxxflags>-Wunused-parameter
+    <cxxflags>-Wmissing-include-dirs
+    <cxxflags>-Wunused
+    <cxxflags>-Wendif-labels
+    <cxxflags>-Wwrite-strings
+#     <cxxflags>-Wpadded
+#     <cxxflags>-Wstrict-overflow=5
+    <cxxflags>-Wc++11-compat
+    <cxxflags>-Wnarrowing
+#     <cxxflags>-Wsign-conversion
+    <cxxflags>-Wfloat-conversion
+#     <cxxflags>-Wlogical-not-parentheses # gcc5
+#     <cxxflags>-Wno-odr # gcc5 #  Requires -flto-odr-type-merging to be enabled
+    <cxxflags>-Wno-invalid-offsetof
+    <cxxflags>-Wvolatile-register-var
+    <cxxflags>-Wdisabled-optimization
+    <cxxflags>-Woverlength-strings
+    <cxxflags>-Warray-bounds
 
-#     <toolset>gcc:<cxxflags>-Wdouble-promotion
-#     <toolset>gcc:<cxxflags>-Wmaybe-uninitialized
 
 #     <toolset>clang:<cxxflags>-Weverything
     <toolset>clang:<cxxflags>-Wno-mismatched-tags
 #    <toolset>clang:<cxxflags>-Wno-overloaded-virtual
     <toolset>clang:<cxxflags>-Wno-char-subscripts
-#     <toolset>clang:<cxxflags>-Wno-array-bounds
     <toolset>clang:<cxxflags>-Wno-unused-variable
 #     <toolset>clang:<cxxflags>-Wno-unused-private-field
     <toolset>clang:<cxxflags>-Wno-dynamic-class-memaccess #memcpy (class 'Capability'; vtable pointer will be overwritten)
+
+#     <toolset>gcc:<cxxflags>-Warray-bounds=2 # gcc5
+#     <toolset>gcc:<cxxflags>-Wbool-compare # gcc5
+    <toolset>gcc:<cxxflags>-Wunused-but-set-parameter
+    <toolset>gcc:<cxxflags>-Wunused-but-set-variable
+#     <toolset>gcc:<cxxflags>-Wparenthese # gcc5
+#     <toolset>gcc:<cxxflags>-Wsequence-points # gcc5
+#     <toolset>gcc:<cxxflags>-Wsuggest-attribute=pure
+#     <toolset>gcc:<cxxflags>-Wsuggest-attribute=const
+    <toolset>gcc:<cxxflags>-Wsuggest-attribute=noreturn
+#     <toolset>gcc:<cxxflags>-Wsuggest-final-types # gcc5
+#     <toolset>gcc:<cxxflags>-Wsuggest-final-methods # gcc5
+#     <toolset>gcc:<cxxflags>-Wsuggest-override # gcc5
+    <toolset>gcc:<cxxflags>-Wconditionally-supported
+    <toolset>gcc:<cxxflags>-Wzero-as-null-pointer-constant
+    <toolset>gcc:<cxxflags>-Wuseless-cast
+    <toolset>gcc:<cxxflags>-Wlogical-op
+#     <toolset>gcc:<cxxflags>-Wno-aggressive-loop-optimizations
+    <toolset>gcc:<cxxflags>-Wnormalized=nfc #disable ?
+#     <toolset>gcc:<cxxflags>-fsized-deallocation # gcc5
+#     <toolset>gcc:<cxxflags>-flto-odr-type-merging # gcc5
+    <toolset>gcc:<cxxflags>-Wvector-operation-performance
+    <toolset>gcc:<cxxflags>-Wopenmp-simd
+    <toolset>gcc:<cxxflags>-Wdouble-promotion
+    <toolset>gcc:<cxxflags>-Wmaybe-uninitialized
+
+    <cxxflags>-fpie
+
 
     <define>_FILE_OFFSET_BITS=64
     <define>_LARGEFILE64_SOURCE

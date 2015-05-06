@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(Testtab)
 
     // WidgetButton is a button widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int id = 0;
 
     WidgetStackLayout stack(drawable, Rect(30, 20, 500, 400), parent, notifier, id);

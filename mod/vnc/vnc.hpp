@@ -201,7 +201,7 @@ public:
     : InternalMod(front, front_width, front_height, ini.font, &ini)
     , challenge(*this, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION,
-                0, 0, ini.theme,
+                0, nullptr, ini.theme,
                 TR("Authentification required", ini),
                 TR("VNC password", ini),
                 ini.font)
@@ -224,11 +224,9 @@ public:
     , ini(ini)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
     , is_socket_transport(is_socket_transport)
-    , server_clipboard_encoding_type([] (const char * server_clipboard_encoding_type) -> ClipboardEncodingType {
-                                         return (strcasecmp(server_clipboard_encoding_type, "latin1") ?
-                                                 mod_vnc::ClipboardEncodingType::UTF8 :
-                                                 mod_vnc::ClipboardEncodingType::Latin1);
-                                     } (server_clipboard_encoding_type))
+    , server_clipboard_encoding_type(strcasecmp(server_clipboard_encoding_type, "latin1") ?
+                                        ClipboardEncodingType::UTF8 :
+                                        ClipboardEncodingType::Latin1)
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -292,10 +290,8 @@ public:
         memcpy(ms_password, this->password, 64);
         uint8_t cp_username[256] = {};
         uint8_t cp_password[64] = {};
-        rfbDesText((unsigned char*)ms_username, (unsigned char*)cp_username,
-                   (unsigned long)sizeof(ms_username), (unsigned char*)keybuffer);
-        rfbDesText((unsigned char*)ms_password, (unsigned char*)cp_password,
-                   (unsigned long)sizeof(ms_password), (unsigned char*)keybuffer);
+        rfbDesText(ms_username, cp_username, sizeof(ms_username), keybuffer);
+        rfbDesText(ms_password, cp_password, sizeof(ms_password), keybuffer);
 
         stream.out_copy_bytes(cp_username, 256);
         stream.out_copy_bytes(cp_password, 64);
@@ -672,14 +668,13 @@ public:
 
                         // taken from vncauth.c
                         {
-                            char key[12];
+                            char key[12] = {};
 
                             // key is simply password padded with nulls
-                            memset(key, 0, sizeof(key));
                             strncpy(key, this->password, 8);
                             rfbDesKey((unsigned char*)key, EN0); // 0, encrypt
-                            rfbDes((unsigned char*)stream.get_data(), (unsigned char*)stream.get_data());
-                            rfbDes((unsigned char*)(stream.get_data() + 8), (unsigned char*)(stream.get_data() + 8));
+                            rfbDes(stream.get_data(), stream.get_data());
+                            rfbDes(stream.get_data() + 8, stream.get_data() + 8);
                         }
                         if (this->verbose) {
                             LOG(LOG_INFO, "Sending Password");
@@ -1138,7 +1133,7 @@ private:
 
         uint8_t    tile_data[16384];    // max size with 16 bpp
 
-        uint8_t  * remaining_data        = NULL;
+        uint8_t  * remaining_data        = nullptr;
         uint16_t   remaining_data_length = 0;
 
         try

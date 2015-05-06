@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600, ini.font);
 
-    NotifyApi * notifier = NULL;
+    NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int border_color = BLACK;
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label.centerx(), label.centery(),
-                    NULL, &parent, &label, "Test tooltip description");
+                    nullptr, &parent, &label, "Test tooltip description");
     parent.rdp_input_invalidate(parent.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen2.png");
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label2.centerx(), label2.centery(),
-                    NULL, &parent, &label2,
+                    nullptr, &parent, &label2,
                     "Test tooltip<br>"
                     "description in<br>"
                     "multilines !");

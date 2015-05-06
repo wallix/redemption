@@ -142,10 +142,10 @@ struct NTLMContext {
         , confidentiality(true)
         , SendRc4Seal()
         , RecvRc4Seal()
-        , SendSigningKey(NULL)
-        , RecvSigningKey(NULL)
-        , SendSealingKey(NULL)
-        , RecvSealingKey(NULL)
+        , SendSigningKey(nullptr)
+        , RecvSigningKey(nullptr)
+        , SendSealingKey(nullptr)
+        , RecvSealingKey(nullptr)
         , NegotiateFlags(0)
         , LmCompatibilityLevel(3)
         , SendWorkstationName(true)
@@ -318,7 +318,7 @@ struct NTLMContext {
         UTF16Upper(userup, user_size / 2);
         hmac_md5.update(userup, user_size);
         delete [] userup;
-        userup = NULL;
+        userup = nullptr;
 
         // hmac_md5.update(user, user_size);
         hmac_md5.update(domain, domain_size);
@@ -354,12 +354,12 @@ struct NTLMContext {
         hmac_md5.update(userup, user_size);
 
         delete [] userup;
-        userup = NULL;
+        userup = nullptr;
         hmac_md5.update(domain, domain_size);
         hmac_md5.final(buff, buff_size);
         if (this->verbose & 0x400) {
             if (!buff) {
-                LOG(LOG_INFO, "NTOWFv2 error: NULL result");
+                LOG(LOG_INFO, "NTOWFv2 error: nullptr result");
             }
         }
     }
@@ -448,7 +448,7 @@ struct NTLMContext {
         }
 
         delete [] temp;
-        temp = NULL;
+        temp = nullptr;
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "Compute response: temp buff successfully deleted");
         }
@@ -707,7 +707,7 @@ struct NTLMContext {
         bool res = !memcmp(NtProofStr, NtProofStr_from_msg, 16);
 
         delete [] temp;
-        temp = NULL;
+        temp = nullptr;
 
         return res;
     }

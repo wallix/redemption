@@ -38,7 +38,7 @@ public:
     virtual ~TimeSystem() {}
     virtual timeval get_time() {
         timeval tv;
-        gettimeofday(&tv, 0);
+        gettimeofday(&tv, nullptr);
         return tv;
     }
 };
@@ -68,7 +68,7 @@ static inline uint64_t ustime(const timeval & now) {
 static inline timeval tvtime()
 {
     timeval tv;
-    gettimeofday(&tv, 0);
+    gettimeofday(&tv, nullptr);
     return tv;
 }
 
