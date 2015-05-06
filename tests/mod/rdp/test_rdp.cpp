@@ -473,7 +473,7 @@ BOOST_AUTO_TEST_CASE(TestRemoveRdpdrFileSystem)
 
     const uint32_t device_count = 4;
 
-    AuthorizationChannels authorization_channels("*", "rdpdr_drive");
+    AuthorizationChannels authorization_channels("*", "rdpdr_drive_read,rdpdr_drive_write");
 
     FileSystemDriveManager file_system_driver_manager;
 

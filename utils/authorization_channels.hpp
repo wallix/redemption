@@ -85,45 +85,43 @@ struct AuthorizationChannels
     }
 
     bool rdpdr_type_is_authorized(uint32_t DeviceType) const noexcept {
-        //LOG(LOG_INFO, "rdpdr_type_is_authorized: DeviceType=%u", DeviceType);
-
-        unsigned type;
-
         switch (DeviceType) {
             case rdpdr::RDPDR_DTYP_SERIAL:
             case rdpdr::RDPDR_DTYP_PARALLEL:
-                type = static_cast<unsigned>(rdpdr::CapabilityType::port);
-                break;
+                return this->rdpdr_restriction_[1];
 
             case rdpdr::RDPDR_DTYP_PRINT:
-                type = static_cast<unsigned>(rdpdr::CapabilityType::printer);
-                break;
+                return this->rdpdr_restriction_[0];
 
             case rdpdr::RDPDR_DTYP_FILESYSTEM:
-                type = static_cast<unsigned>(rdpdr::CapabilityType::drive);
-                break;
+                return (this->rdpdr_restriction_[2] || this->rdpdr_restriction_[3]);
 
             case rdpdr::RDPDR_DTYP_SMARTCARD:
-                type = static_cast<unsigned>(rdpdr::CapabilityType::smartcard);
-                break;
+                return this->rdpdr_restriction_[4];
 
             default:
-                LOG(LOG_ERR, "Unknown DeviceType(%d)", DeviceType);
+                LOG(LOG_ERR, "Unknown RDPDR DeviceType(%d)", DeviceType);
                 throw Error(ERR_RDP_PROTOCOL);
         }
-
-        return type - 1u < this->rdpdr_restriction_.size() && this->rdpdr_restriction_[type - 1];
     }
 
-    bool cliprdr_up_is_authorized() const noexcept {
+    inline bool rdpdr_drive_read_is_authorized() const noexcept {
+        return this->rdpdr_restriction_[2];
+    }
+
+    inline bool rdpdr_drive_write_is_authorized() const noexcept {
+        return this->rdpdr_restriction_[3];
+    }
+
+    inline bool cliprdr_up_is_authorized() const noexcept {
         return this->cliprdr_restriction_[0];
     }
 
-    bool cliprdr_down_is_authorized() const noexcept {
+    inline bool cliprdr_down_is_authorized() const noexcept {
         return this->cliprdr_restriction_[1];
     }
 
-    bool cliprdr_file_is_authorized() const noexcept {
+    inline bool cliprdr_file_is_authorized() const noexcept {
         return this->cliprdr_restriction_[2];
     }
 
@@ -159,7 +157,7 @@ struct AuthorizationChannels
         "cliprdr_up,", "cliprdr_down,", "cliprdr_file,"
     }};
     static constexpr const std::array<const char *, 5> rdpdr_list {{
-        "rdpdr_general,", "rdpdr_printer,", "rdpdr_port,", "rdpdr_drive,", "rdpdr_smartcard,"
+        "rdpdr_printer,", "rdpdr_port,", "rdpdr_drive_read,", "rdpdr_drive_write,", "rdpdr_smartcard,"
     }};
 
 private:
@@ -262,12 +260,28 @@ constexpr decltype(AuthorizationChannels::rdpdr_list) AuthorizationChannels::rdp
 void update_authorized_channels(std::string & allow,
                                 std::string & deny,
                                 const std::string & proxy_opt) {
-    auto remove=[](std::string & str, const char * pattern) {
+    auto remove = [] (std::string & str, const char * pattern) -> bool {
+        bool removed = false;
         size_t pos = 0;
         while ((pos = str.find(pattern, pos)) != std::string::npos) {
             str.erase(pos, strlen(pattern));
+            removed = true;
         }
+
+        return removed;
     };
+
+    std::string expanded_proxy_opt = proxy_opt;
+    while (!expanded_proxy_opt.empty() && expanded_proxy_opt.back() == ',') {
+        expanded_proxy_opt.pop_back();
+    }
+    expanded_proxy_opt += ',';
+    if (remove(expanded_proxy_opt, "RDP_DRIVE,")) {
+        expanded_proxy_opt += "RDP_DRIVE_READ,RDP_DRIVE_WRITE";
+    }
+    if (!expanded_proxy_opt.empty() && expanded_proxy_opt.back() == ',') {
+        expanded_proxy_opt.pop_back();
+    }
 
     allow += ',';
     deny += ',';
@@ -298,23 +312,25 @@ void update_authorized_channels(std::string & allow,
         const char * opt;
         const char * channel;
     } opts_channels[] {
-        {"RDP_CLIPBOARD_UP", ",cliprdr_up"},
-        {"RDP_CLIPBOARD_DOWN", ",cliprdr_down"},
-//         {"RDP_CLIPBOARD_FILE", ",cliprdr_file"},
-        {"RDP_PRINTER", ",rdpdr_printer"},
-        {"RDP_COM_PORT", ",rdpdr_port"},
-        {"RDP_DRIVE", ",rdpdr_drive"},
-        {"RDP_SMARTCARD", ",rdpdr_smartcard"}
+        {"RDP_CLIPBOARD_UP",   ",cliprdr_up"       },
+        {"RDP_CLIPBOARD_DOWN", ",cliprdr_down"     },
+        {"RDP_CLIPBOARD_FILE", ",cliprdr_file"     },
+
+        {"RDP_PRINTER",        ",rdpdr_printer"    },
+        {"RDP_COM_PORT",       ",rdpdr_port"       },
+        {"RDP_DRIVE_READ",     ",rdpdr_drive_read" },
+        {"RDP_DRIVE_WRITE",    ",rdpdr_drive_write"},
+        {"RDP_SMARTCARD",      ",rdpdr_smartcard"  }
     };
 
     static_assert(
-        AuthorizationChannels::rdpdr_list.size() - 1
-      + AuthorizationChannels::cliprde_list.size() - 1
+        AuthorizationChannels::cliprde_list.size()
+      + AuthorizationChannels::rdpdr_list.size()
      == std::extent<decltype(opts_channels)>::value
     , "opts_channels.size() error");
 
     for (auto & x : opts_channels) {
-        ret[(proxy_opt.find(x.opt) != std::string::npos) ? 0 : 1].get() += x.channel;
+        ret[(expanded_proxy_opt.find(x.opt) != std::string::npos) ? 0 : 1].get() += x.channel;
     }
 
     for (std::string & s : ret) {

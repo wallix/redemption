@@ -126,6 +126,8 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsRdpdr)
     BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), true);
     BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), true);
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_drive_read_is_authorized(), true);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_drive_write_is_authorized(), true);
 
     authorization_channels = AuthorizationChannels("rdpdr_port", "rdpdr_printer");
     BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), true);
@@ -135,6 +137,8 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsRdpdr)
     BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr"), true);
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr_port"), false);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_drive_read_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_drive_write_is_authorized(), false);
 
     authorization_channels = AuthorizationChannels("*", "");
     BOOST_CHECK_EQUAL(authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), true);
@@ -146,6 +150,8 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsRdpdr)
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr"), true);
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("cliprdr"), true);
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr_port"), true);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_drive_read_is_authorized(), true);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_drive_write_is_authorized(), true);
 }
 
 BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllAll)
@@ -162,6 +168,8 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllAll)
     BOOST_CHECK_EQUAL(authorization_channels.cliprdr_up_is_authorized(), false);
     BOOST_CHECK_EQUAL(authorization_channels.cliprdr_down_is_authorized(), false);
     BOOST_CHECK_EQUAL(authorization_channels.cliprdr_file_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_drive_read_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_drive_write_is_authorized(), false);
 
     authorization_channels = AuthorizationChannels("*,rdpsnd", "*");
     BOOST_CHECK_EQUAL(authorization_channels.is_authorized("rdpdr"), false);
@@ -175,8 +183,9 @@ BOOST_AUTO_TEST_CASE(TestAuthorizationChannelsAllAll)
     BOOST_CHECK_EQUAL(authorization_channels.cliprdr_up_is_authorized(), false);
     BOOST_CHECK_EQUAL(authorization_channels.cliprdr_down_is_authorized(), false);
     BOOST_CHECK_EQUAL(authorization_channels.cliprdr_file_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_drive_read_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization_channels.rdpdr_drive_write_is_authorized(), false);
 }
-
 
 BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
 {
@@ -187,37 +196,61 @@ BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
     deny = "rdpdr_port";
     update_authorized_channels(allow, deny, "");
     BOOST_CHECK_EQUAL(allow, "drdynvc,echo,rdpsnd,blah");
-    BOOST_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard");
+    BOOST_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard");
 
     allow = "cliprdr,drdynvc,cliprdr_down,rdpsnd";
     deny = "";
     update_authorized_channels(allow, deny, "RDP_DRIVE");
-    BOOST_CHECK_EQUAL(allow, "drdynvc,rdpsnd,rdpdr_drive");
-    BOOST_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,rdpdr_printer,rdpdr_port,rdpdr_smartcard");
+    BOOST_CHECK_EQUAL(allow, "drdynvc,rdpsnd,rdpdr_drive_read,rdpdr_drive_write");
+    BOOST_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_smartcard");
+
+    allow = "cliprdr,drdynvc,cliprdr_down,rdpsnd";
+    deny = "";
+    update_authorized_channels(allow, deny, "RDP_DRIVE_READ");
+    BOOST_CHECK_EQUAL(allow, "drdynvc,rdpsnd,rdpdr_drive_read");
+    BOOST_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_write,rdpdr_smartcard");
+
+    allow = "cliprdr,drdynvc,cliprdr_down,rdpsnd";
+    deny = "";
+    update_authorized_channels(allow, deny, "RDP_DRIVE_READ, RDP_DRIVE");
+    BOOST_CHECK_EQUAL(allow, "drdynvc,rdpsnd,rdpdr_drive_read,rdpdr_drive_write");
+    BOOST_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_smartcard");
 
     allow = "";
     deny = "";
     update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN");
     BOOST_CHECK_EQUAL(allow, "cliprdr_down");
-    BOOST_CHECK_EQUAL(deny, "cliprdr_up,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard");
+    BOOST_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard");
+
+    allow = "";
+    deny = "";
+    update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_UP");
+    BOOST_CHECK_EQUAL(allow, "cliprdr_up,cliprdr_down");
+    BOOST_CHECK_EQUAL(deny, "cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard");
+
+    allow = "";
+    deny = "";
+    update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_UP,RDP_CLIPBOARD_FILE");
+    BOOST_CHECK_EQUAL(allow, "cliprdr_up,cliprdr_down,cliprdr_file");
+    BOOST_CHECK_EQUAL(deny, "rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard");
 
     allow = "*";
     deny = "";
     update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN");
     BOOST_CHECK_EQUAL(allow, "*,cliprdr_down");
-    BOOST_CHECK_EQUAL(deny, "cliprdr_up,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard");
+    BOOST_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard");
 
     allow = "rdpdr_port,tsmf";
     deny = "rdpdr";
     update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN,RDP_COM_PORT");
     BOOST_CHECK_EQUAL(allow, "tsmf,cliprdr_down,rdpdr_port");
-    BOOST_CHECK_EQUAL(deny, "cliprdr_up,rdpdr_printer,rdpdr_drive,rdpdr_smartcard");
+    BOOST_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_file,rdpdr_printer,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard");
 
     allow = "*,rdpdr_port,rdpdr_port,tsmf,tsmf";
     deny = "rdpdr,rdpdr,rdpdr";
     update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_DOWN");
     BOOST_CHECK_EQUAL(allow, "*,tsmf,tsmf,cliprdr_down");
-    BOOST_CHECK_EQUAL(deny, "cliprdr_up,rdpdr_printer,rdpdr_port,rdpdr_drive,rdpdr_smartcard");
+    BOOST_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard");
 
     allow = "*";
     deny = "";
@@ -225,11 +258,13 @@ BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
     AuthorizationChannels authorization(allow, deny);
     BOOST_CHECK_EQUAL(authorization.cliprdr_down_is_authorized(), true);
     BOOST_CHECK_EQUAL(authorization.cliprdr_up_is_authorized(), true);
-    BOOST_CHECK_EQUAL(authorization.cliprdr_file_is_authorized(), true);
+    BOOST_CHECK_EQUAL(authorization.cliprdr_file_is_authorized(), false);
     BOOST_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
     BOOST_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), true);
     BOOST_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), false);
     BOOST_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), false);
     BOOST_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
     BOOST_CHECK_EQUAL(authorization.is_authorized("drdynvc"), true);
+    BOOST_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), true);
+    BOOST_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), true);
 }

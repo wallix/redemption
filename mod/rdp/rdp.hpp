@@ -1354,6 +1354,65 @@ private:
                             case rdpdr::IRP_MJ_CLOSE:
                             break;
 
+                            case rdpdr::IRP_MJ_QUERY_VOLUME_INFORMATION:
+                            {
+                                const uint32_t FsInformationClass = extra_data;
+
+                                switch (extra_data) {
+                                    case rdpdr::FileFsAttributeInformation:
+                                    {
+                                        chunk.in_skip_bytes(4); // Length(4)
+
+                                        fscc::FileFsAttributeInformation
+                                            file_fs_Attribute_information;
+
+                                        file_fs_Attribute_information.receive(chunk);
+                                        if (this->verbose) {
+                                            file_fs_Attribute_information.log(LOG_INFO);
+                                        }
+
+                                        // BStream out_stream(65535);
+
+                                        // sh_r.emit(out_stream);
+                                        // device_io_response.emit(out_stream);
+
+                                        // uint32_t FileSystemAttributes =
+                                        //     file_fs_Attribute_information.FileSystemAttributes();
+
+                                        // FileSystemAttributes |= fscc::FILE_READ_ONLY_VOLUME;
+
+                                        // file_fs_Attribute_information.set_FileSystemAttributes(
+                                        //     FileSystemAttributes);
+                                        // file_fs_Attribute_information.log(LOG_INFO);
+
+                                        // out_stream.out_uint32_le(                   // Length(4)
+                                        //     file_fs_Attribute_information.size());
+
+                                        // file_fs_Attribute_information.emit(out_stream);
+
+                                        // out_stream.mark_end();
+
+                                        // this->send_to_channel( *rdpdr_channel
+                                        //                      , out_stream
+                                        //                      , out_stream.size()
+                                        //                      , flags
+                                        //                      );
+
+                                        // return;
+                                    }
+                                    break;
+
+                                    default:
+                                        LOG(LOG_INFO,
+                                            "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
+                                                "IRP_MJ_QUERY_VOLUME_INFORMATION - "
+                                                "undecoded FsInformationClass(0x%X)",
+                                            FsInformationClass);
+                                    break;
+                                }
+                            }
+                            break;
+
                             case rdpdr::IRP_MJ_QUERY_INFORMATION:
                             {
                                 const uint32_t FsInformationClass = extra_data;
@@ -1372,12 +1431,43 @@ private:
 
                                     default:
                                         LOG(LOG_INFO,
-                                            "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: undecoded FsInformationClass(0x%X)",
+                                            "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
+                                                "IRP_MJ_QUERY_INFORMATION - "
+                                                "undecoded FsInformationClass(0x%X)",
                                             FsInformationClass);
                                     break;
                                 }
                             }
                             break;
+
+/*
+                            case rdpdr::IRP_MJ_DIRECTORY_CONTROL:
+                            {
+                                const uint32_t FsInformationClass = extra_data;
+
+                                switch (extra_data) {
+                                    case rdpdr::FileBasicInformation:
+                                    {
+                                        chunk.in_skip_bytes(4); // Length(4)
+
+                                        fscc::FileBasicInformation file_basic_information;
+
+                                        file_basic_information.receive(chunk);
+                                        file_basic_information.log(LOG_INFO);
+                                    }
+                                    break;
+
+                                    default:
+                                        LOG(LOG_INFO,
+                                            "mod_rdp::send_to_mod_rail_channel: "
+                                                "IRP_MJ_QUERY_INFORMATION - "
+                                                "undecoded FsInformationClass(0x%X)",
+                                            FsInformationClass);
+                                    break;
+                                }
+                            }
+                            break;
+*/
 
                             default:
                                 LOG(LOG_INFO,
@@ -6394,6 +6484,57 @@ public:
                             if (this->verbose) {
                                 device_create_request.log(LOG_INFO);
                             }
+
+                                  bool     access_ok     = true;
+                            const uint32_t DesiredAccess = device_create_request.DesiredAccess();
+
+                            if (!this->authorization_channels.rdpdr_drive_read_is_authorized() &&
+                                smb2::read_access_is_required(DesiredAccess, /*strict_check = */false) &&
+                                !(device_create_request.CreateOptions() & smb2::FILE_DIRECTORY_FILE) &&
+                                ::strcmp(device_create_request.Path(), "/")) {
+                                access_ok = false;
+                            }
+                            if (!this->authorization_channels.rdpdr_drive_write_is_authorized() &&
+                                smb2::write_access_is_required(DesiredAccess)) {
+                                access_ok = false;
+                            }
+
+                            if (!access_ok) {
+                                BStream out_stream(65535);
+
+                                const rdpdr::SharedHeader sh_e(rdpdr::Component::RDPDR_CTYP_CORE,
+                                    rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+
+                                sh_e.emit(out_stream);
+
+                                const rdpdr::DeviceIOResponse device_io_response(
+                                        device_io_request.DeviceId(),
+                                        device_io_request.CompletionId(),
+                                        0xC0000022  // STATUS_ACCESS_DENIED
+                                    );
+
+                                if (this->verbose) {
+                                    device_io_response.log(LOG_INFO);
+                                }
+                                device_io_response.emit(out_stream);
+
+                                const rdpdr::DeviceCreateResponse device_create_response(
+                                    static_cast<uint32_t>(-1), 0);
+                                if (this->verbose) {
+                                    device_create_response.log(LOG_INFO);
+                                }
+                                device_create_response.emit(out_stream);
+
+                                out_stream.mark_end();
+
+                                this->send_to_channel(rdpdr_channel, out_stream,
+                                                      out_stream.size(),
+                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                      | CHANNELS::CHANNEL_FLAG_LAST
+                                    );
+
+                                return;
+                            }
                         }
                         break;
 
@@ -6416,6 +6557,22 @@ public:
                             }
                         break;
 
+                        case rdpdr::IRP_MJ_QUERY_VOLUME_INFORMATION:
+                            if (this->verbose) {
+                                LOG(LOG_INFO,
+                                    "mod_rdp::process_rdpdr_event: Query volume information request");
+
+                                rdpdr::ServerDriveQueryVolumeInformationRequest
+                                    server_drive_query_volume_information_request;
+
+                                server_drive_query_volume_information_request.receive(stream);
+                                server_drive_query_volume_information_request.log(LOG_INFO);
+
+                                extra_data =
+                                    server_drive_query_volume_information_request.FsInformationClass();
+                            }
+                        break;
+
                         case rdpdr::IRP_MJ_QUERY_INFORMATION:
                             if (this->verbose) {
                                 LOG(LOG_INFO,
@@ -6430,6 +6587,26 @@ public:
 
                                 extra_data =
                                     server_drive_query_information_request.FsInformationClass();
+                            }
+                        break;
+
+                        case rdpdr::IRP_MJ_DIRECTORY_CONTROL:
+                            if (device_io_request.MinorFunction() ==
+                                rdpdr::IRP_MN_QUERY_DIRECTORY) {
+                                if (this->verbose) {
+                                    LOG(LOG_INFO,
+                                        "mod_rdp::process_rdpdr_event: "
+                                            "Server Drive Query Directory Request");
+
+                                    rdpdr::ServerDriveQueryDirectoryRequest
+                                        server_drive_query_directory_request;
+
+                                    server_drive_query_directory_request.receive(stream);
+                                    server_drive_query_directory_request.log(LOG_INFO);
+
+                                    extra_data =
+                                        server_drive_query_directory_request.FsInformationClass();
+                                }
                             }
                         break;
 
