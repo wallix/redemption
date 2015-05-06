@@ -1343,6 +1343,10 @@ public:
 
     inline uint32_t CompletionId() const { return this->CompletionId_; }
 
+    inline static size_t size() {
+        return 12;  // DeviceId(4) + CompletionId(4) + IoStatus(4)
+    }
+
 private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,

@@ -923,10 +923,12 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p> fd=%d",
         const int last_error = [] (const char * path,
                                    int open_flags,
                                    bool right_to_delete_is_required,
+                                   bool right_to_change_attributes_is_required,
                                    int drive_access_mode,
                                    int & out_fd) -> int {
             if (((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY) &&
-                 ((open_flags & O_RDWR) || (open_flags & O_WRONLY) || right_to_delete_is_required)) ||
+                 ((open_flags & O_RDWR) || (open_flags & O_WRONLY) ||
+                  right_to_delete_is_required || right_to_change_attributes_is_required)) ||
                 ((drive_access_mode != O_RDWR) && (drive_access_mode != O_RDONLY) &&
                  ((open_flags & O_RDWR) || (open_flags & O_RDONLY)))) {
                 out_fd = -1;
@@ -935,7 +937,8 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p> fd=%d",
 
             out_fd = ::open(path, open_flags, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             return ((out_fd > -1) ? 0 : errno);
-        } (full_path.c_str(), open_flags, (DesiredAccess & smb2::DELETE), drive_access_mode, this->fd);
+        } (full_path.c_str(), open_flags, (DesiredAccess & smb2::DELETE),
+           (DesiredAccess & smb2::FILE_WRITE_ATTRIBUTES), drive_access_mode, this->fd);
 
         if (verbose) {
             LOG(LOG_INFO,
@@ -1037,11 +1040,19 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
 
         ssize_t number_of_bytes_read = -1;
 
-        const uint32_t max_number_of_bytes_to_read = 32 * 1024;
-        const uint32_t Length                      =
-            std::min<uint32_t>(device_read_request.Length(), max_number_of_bytes_to_read);
+        const uint32_t Length = device_read_request.Length();
 
-        uint8_t * const read_data = static_cast<uint8_t *>(::alloca(Length));
+        REDASSERT(out_stream.has_room(
+                rdpdr::DeviceIOResponse::size() +
+                4 +                                 // Length(4)
+                Length
+            ));
+
+        uint8_t * const read_data =
+                out_stream.p +
+                4 +                             // Length(4)
+                rdpdr::DeviceIOResponse::size()
+            ;
 
         const uint64_t Offset = device_read_request.Offset();
 
@@ -1071,7 +1082,9 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
                     static_cast<uint32_t>(number_of_bytes_read));
             }
 
-            out_stream.out_copy_bytes(read_data, static_cast<size_t>(number_of_bytes_read));
+            REDASSERT(out_stream.p == read_data);
+
+            out_stream.out_skip_bytes(number_of_bytes_read);
         }
 
         out_stream.mark_end();
