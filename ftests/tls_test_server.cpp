@@ -99,16 +99,16 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    DH *ret=0;
+    DH *ret=nullptr;
     BIO *bio;
 
-    if ((bio=BIO_new_file("ftests/fixtures/dh1024.pem","r")) == NULL){
+    if ((bio=BIO_new_file("ftests/fixtures/dh1024.pem","r")) == nullptr){
         BIO_printf(bio_err,"Couldn't open DH file\n");
         ERR_print_errors(bio_err);
         exit(0);
     }
 
-    ret=PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+    ret=PEM_read_bio_DHparams(bio, nullptr, nullptr, nullptr);
     BIO_free(bio);
     if(SSL_CTX_set_tmp_dh(ctx, ret)<0)
     {
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
     listen(sock,5);
 
     while(1){
-      int s = accept(sock,0,0);
+      int s = accept(sock,nullptr,nullptr);
       if(s < 0){
         fprintf(stderr,"Problem accepting\n");
         exit(0);

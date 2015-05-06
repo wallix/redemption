@@ -26,7 +26,10 @@
 #ifndef _REDEMPTION_HEADERS_OPENSSL_CRYPTO_HPP_
 #define _REDEMPTION_HEADERS_OPENSSL_CRYPTO_HPP_
 
+#ifdef __cplusplus
 extern "C" {
+#endif
+
 #include <openssl/rc4.h>
 #include <openssl/md4.h>
 #include <openssl/md5.h>
@@ -37,6 +40,9 @@ extern "C" {
 #include <openssl/x509v3.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
+
+#ifdef __cplusplus
 }
+#endif
 
 #endif
