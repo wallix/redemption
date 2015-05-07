@@ -784,7 +784,7 @@ public:
     }
 
 private:
-    virtual void reset() {
+    void reset() {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->ini.client.bitmap_compression ? 1 : 0);
             LOG(LOG_INFO, "Front::reset::use_compact_packets=%u", this->client_info.use_compact_packets);
