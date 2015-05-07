@@ -6150,7 +6150,7 @@ public:
         }
     }
 
-    void process_wab_agent_event(const CHANNELS::ChannelDef & auth_channel,
+    void process_wab_agent_event(const CHANNELS::ChannelDef & wab_agent_channel,
             Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         uint16_t message_length = stream.in_uint16_le();
         REDASSERT(message_length == stream.in_remain());
@@ -6158,6 +6158,29 @@ public:
         std::string wab_agent_channel_message(char_ptr_cast(stream.p), stream.in_remain());
 
         LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
+
+        const char * request_get_startup_application = "Request=Get startup application";
+
+        if (!strcmp(wab_agent_channel_message.c_str(), request_get_startup_application)) {
+            BStream out_s(128);
+
+            const size_t message_length_offset = out_s.get_offset();
+            out_s.out_clear_bytes(sizeof(uint16_t));
+
+            out_s.out_string("StartupApplication=[Windows Explorer]");
+            out_s.out_clear_bytes(1);   // Null character
+
+            out_s.set_out_uint16_le(
+                out_s.get_offset() - message_length_offset - sizeof(uint16_t),
+                message_length_offset);
+
+            out_s.mark_end();
+
+            this->send_to_channel(
+                wab_agent_channel, out_s, out_s.size(),
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+            );
+        }
     }
 
     void process_cliprdr_event(
