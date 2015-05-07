@@ -684,6 +684,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
         struct dirent * ent = nullptr;
 
         do {
+            TODO("Non reentrant function 'readdir' called. For threadsafe applications it is recommended to use the reentrant replacement function 'readdir_r'");
             ent = ::readdir(this->dir);
             if (!ent) { break; }
 
@@ -1435,7 +1436,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
                         "Unknown FsInformationClass(0x%X)",
                     server_drive_query_information_request.FsInformationClass());
                 throw Error(ERR_RDP_PROTOCOL);
-            break;
+            //break;
         }
 
         out_stream.mark_end();
@@ -1938,7 +1939,7 @@ public:
                                 "Unknown Directory control request - MinorFunction=0x%X",
                             device_io_request.MinorFunction());
                         throw Error(ERR_RDP_PROTOCOL);
-                    break;
+                    //break;
                 }
             break;
 

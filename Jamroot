@@ -69,6 +69,7 @@ rule defines ( properties * )
     return $(defs) ;
 }
 variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
+variant strict : : ;
 
 
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
@@ -101,7 +102,7 @@ project redemption
 #    <cxxflags>-Wconversion
     <cxxflags>-Wvla
     <cxxflags>-Wstrict-aliasing=2
-#    <cxxflags>-Wold-style-cast
+    <variant>strict:<cxxflags>-Wold-style-cast
 #    <cxxflags>-Wlong-long
     <cxxflags>-O3
     <variant>debug:<cxxflags>-g
@@ -140,10 +141,11 @@ project redemption
     <cxxflags>-Wendif-labels
     <cxxflags>-Wwrite-strings
 #     <cxxflags>-Wpadded
+    <cxxflags>-Wstrict-overflow=1
 #     <cxxflags>-Wstrict-overflow=5
     <cxxflags>-Wc++11-compat
     <cxxflags>-Wnarrowing
-#     <cxxflags>-Wsign-conversion
+    <variant>strict:<cxxflags>-Wsign-conversion
     <cxxflags>-Wfloat-conversion
 #     <cxxflags>-Wlogical-not-parentheses # gcc5
 #     <cxxflags>-Wno-odr # gcc5 #  Requires -flto-odr-type-merging to be enabled
@@ -155,6 +157,7 @@ project redemption
 
 
 #     <toolset>clang:<cxxflags>-Weverything
+#     <toolset>clang:<cxxflags>-Wno-c++98-compat
     <toolset>clang:<cxxflags>-Wno-mismatched-tags
 #    <toolset>clang:<cxxflags>-Wno-overloaded-virtual
     <toolset>clang:<cxxflags>-Wno-char-subscripts

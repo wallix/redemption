@@ -79,7 +79,6 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
 
         uint8_t  * src_ptr       = nullptr; /* used while copying compressed data         */
         uint8_t  * cptr          = cbuf;    /* points to next uint8_t in cbuf             */
-        uint16_t   copy_offset   = 0;       /* location to copy data from                 */
         uint16_t   lom           = 0;       /* length of match                            */
         int        bits_left     = 0;       /* bits left in d34 for processing            */
         int        cur_bits_left = 0;       /* bits left in cur_uint8_t for processing    */
@@ -154,7 +153,7 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
                be processed, unless we have reached end of cbuf
             */
 
-            copy_offset = 0;
+            uint16_t copy_offset = 0;
 
             if ((d32 & 0x80000000) == 0) {
                 /* got a literal */
@@ -603,13 +602,12 @@ private:
         /* add/append new data to historyBuffer */
         memcpy(this->historyBuffer + this->historyOffset, uncompressed_data, uncompressed_data_size);
 
-        offset_type ctr         = 0;
-        offset_type copy_offset = 0;    /* pattern match starts here... */
-
         /* if we are at start of history buffer, do not attempt to compress    */
         /*  first RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1 bytes, because */
         /*  minimum LoM is RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH           */
         try {
+            offset_type ctr = 0;
+
             if (this->historyOffset == 0) {
                 /* encode first two bytes as literals */
                 ctr = RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
@@ -654,7 +652,7 @@ private:
                     }
 
                     /* encode copy_offset and insert into output buffer */
-                    copy_offset = this->historyOffset + ctr - previous_match;
+                    offset_type copy_offset = this->historyOffset + ctr - previous_match;
                     const int nbbits[3]   = { 10, 12, 16 };
                     const int headers[3]  = { 0x3c0, 0xe00, 0xc000 };
                     const int base[3]     = { 0, 0x40, 0x140 };
@@ -683,7 +681,7 @@ private:
                 ctr++;
             }
         }
-        catch (Error & e) {
+        catch (Error const &) {
             opb_index = uncompressed_data_size;
         }
         if (opb_index >= uncompressed_data_size) {

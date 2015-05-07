@@ -30,7 +30,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <stddef.h>
-#include <unistd.h>
+#include <time.h>
 
 #include <iostream>
 #include <cerrno>
@@ -81,7 +81,12 @@ inline void daemonize(const char * pid_file)
             LOG(LOG_ERR, "Couldn't write pid to %s: %s", pid_file, strerror(errno));
             _exit(1);
         }
-        usleep(1000000);
+
+        {
+            timespec req={0, 1000000000L};
+            nanosleep(&req, nullptr/*req*/);
+        }
+
         open("/dev/null", O_RDONLY, 0); // stdin  0
         open("/dev/null", O_WRONLY, 0); // stdout 1
         open("/dev/null", O_WRONLY, 0); // stderr 2

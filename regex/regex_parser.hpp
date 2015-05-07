@@ -974,7 +974,6 @@ namespace re {
                         *pst = eps;
                         pst = &eps->out1;
                         return IntermendaryState(bst == &st ? st.out1 : bst, pst);
-                        break;
                     default:
                         return IntermendaryState(nullptr, nullptr);
                     case '(':

@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include "log.hpp"
 #include "noncopyable.hpp"
+#include "fdbuf.hpp"
 
 class Random : noncopyable
 {
@@ -98,20 +99,20 @@ class UdevRandom : public Random
 
     virtual void random(void * dest, size_t size)
     {
-        int fd = open("/dev/urandom", O_RDONLY);
-        if (fd == -1) {
-            fd = open("/dev/random", O_RDONLY);
-            if (fd == -1) {
+        io::posix::fdbuf file(open("/dev/urandom", O_RDONLY));
+        if (!file.is_open()) {
+            LOG(LOG_INFO, "using /dev/random as random source");
+            file.open("/dev/random", O_RDONLY);
+            if (!file.is_open()) {
                 LOG(LOG_WARNING, "random source failed to provide random data : couldn't open device\n");
             }
-            LOG(LOG_INFO, "using /dev/random as random source");
         }
         else {
             LOG(LOG_INFO, "using /dev/urandom as random source");
         }
 
-        ssize_t res = read(fd, dest, size);
-        if (res != (ssize_t)size) {
+        ssize_t res = file.read(dest, size);
+        if (res != static_cast<ssize_t>(size)) {
             if (res >= 0){
                 LOG(LOG_ERR, "random source failed to provide enough random data [%u]", res);
             }
@@ -120,7 +121,6 @@ class UdevRandom : public Random
             }
             memset(dest, 0x44, size);
         }
-        close(fd);
     }
 };
 

@@ -26,9 +26,15 @@
 #ifndef _REDEMPTION_HEADERS_OPENSSL_TLS_HPP_
 #define _REDEMPTION_HEADERS_OPENSSL_TLS_HPP_
 
+#ifdef __cplusplus
 extern "C" {
+#endif
+
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+
+#ifdef __cplusplus
 }
+#endif
 
 #endif

@@ -168,8 +168,6 @@ class GZipCompressionOutTransport : public Transport {
     uint8_t compressed_data[GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
     size_t  compressed_data_length;
 
-    uint32_t verbose;
-
 public:
     GZipCompressionOutTransport(Transport & tt, uint32_t verbose = 0)
     : Transport()
@@ -179,8 +177,8 @@ public:
     , uncompressed_data()
     , uncompressed_data_length(0)
     , compressed_data()
-    , compressed_data_length(0)
-    , verbose(verbose) {
+    , compressed_data_length(0) {
+        this->verbose = verbose;
         int ret = ::deflateInit(&this->compression_stream, Z_DEFAULT_COMPRESSION);
 (void)ret;
     }
