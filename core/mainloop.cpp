@@ -55,24 +55,24 @@ void sigpipe(int sig)
 }
 
 /*****************************************************************************/
-void sigsegv(int sig)
-{
-    LOG(LOG_INFO, "Ignoring SIGSEGV : signal %d \n", sig);
-}
+//void sigsegv(int sig)
+//{
+//    LOG(LOG_INFO, "Ignoring SIGSEGV : signal %d \n", sig);
+//}
 
 void sighup(int sig)
 {
     LOG(LOG_INFO, "Ignoring SIGHUP : signal %d \n", sig);
 }
 
-void sigchld(int sig)
-{
-    // triggered when a child close. For now we will just ignore this signal
-    // because there is no child termination management yet.
-    // When there will be child management code, we will have to setup
-    // some communication protocol to discuss with childs.
-    LOG(LOG_INFO, "Ignoring SIGCHLD : signal %d pid %d\n", sig, getpid());
-}
+//void sigchld(int sig)
+//{
+//    // triggered when a child close. For now we will just ignore this signal
+//    // because there is no child termination management yet.
+//    // When there will be child management code, we will have to setup
+//    // some communication protocol to discuss with childs.
+//    LOG(LOG_INFO, "Ignoring SIGCHLD : signal %d pid %d\n", sig, getpid());
+//}
 
 void init_signals(void)
 {

@@ -363,9 +363,9 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char ha
             char header1[1024];
             char header2[1024];
 
-            if (  (read_line<crypto_file *>(cf_struct, crypto_read, opaque_stream, opaque_data, header0, sizeof(header0)) > 0)
-               && (read_line<crypto_file *>(cf_struct, crypto_read, opaque_stream, opaque_data, header1, sizeof(header1)) > 0)
-               && (read_line<crypto_file *>(cf_struct, crypto_read, opaque_stream, opaque_data, header2, sizeof(header2)) > 0)
+            if (  (read_line(cf_struct, crypto_read, opaque_stream, opaque_data, header0, sizeof(header0)) > 0)
+               && (read_line(cf_struct, crypto_read, opaque_stream, opaque_data, header1, sizeof(header1)) > 0)
+               && (read_line(cf_struct, crypto_read, opaque_stream, opaque_data, header2, sizeof(header2)) > 0)
                ) {
                 result = true;
 
@@ -374,11 +374,10 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char ha
                 BStream full_hash(HASH_LEN);
 
                 char line[1024];
-                int  line_len;
-                int  extract_file_info_result;
+                //int  line_len;
 
-                while ((line_len = read_line<crypto_file *>(cf_struct, crypto_read, opaque_stream, opaque_data, line, sizeof(line))) > 0) {
-                    extract_file_info_result = extract_file_info(line, file_name, _4kb_hash, full_hash);
+                while ((/*line_len = */read_line(cf_struct, crypto_read, opaque_stream, opaque_data, line, sizeof(line))) > 0) {
+                    int extract_file_info_result = extract_file_info(line, file_name, _4kb_hash, full_hash);
 
                     if ((extract_file_info_result > 0) &&
                         (check_file_hash( reinterpret_cast<const char *>(file_name.get_data())
@@ -506,25 +505,20 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
 
     bool infile_is_encrypted = false;
 
+    if (auto file = io::posix::fdbuf(open(fullfilename, O_RDONLY)))
     {
-        int      fd_test;
         uint32_t magic_test;
-        int      res_test;
-        fd_test = open(fullfilename, O_RDONLY);
-        if (fd_test != -1) {
-            TODO("No portable code endianess")
-            res_test = read(fd_test, &magic_test, sizeof(magic_test));
-            if ((res_test == sizeof(magic_test)) &&
-                (magic_test == WABCRYPTOFILE_MAGIC)) {
-                infile_is_encrypted = true;
-                std::cout << "Input file is encrypted.\n";
-            }
-            close(fd_test);
+        TODO("No portable code endianess")
+        ssize_t res_test = file.read(&magic_test, sizeof(magic_test));
+        if ((res_test == sizeof(magic_test)) &&
+            (magic_test == WABCRYPTOFILE_MAGIC)) {
+            infile_is_encrypted = true;
+            std::cout << "Input file is encrypted.\n";
         }
-        else {
-            std::cerr << "Input file is absent.\n";
-            exit(-1);
-        }
+    }
+    else {
+        std::cerr << "Input file is absent.\n";
+        exit(-1);
     }
 
     if (!infile_is_encrypted) {
@@ -608,7 +602,7 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
                 std::cerr << "File name mismatch: \"" << file_path << "\"" << endl << endl;
             }
         }
-        catch (Error e) {
+        catch (Error const & e) {
             std::cerr << "Exception code (hash): " << e.id << endl << endl;
         }
         catch (...) {

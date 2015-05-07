@@ -335,7 +335,6 @@ public:
         uint16_t * offset_cache = this->offset_cache;   /* Copy Offset cache                          */
         uint8_t  * history_ptr  = this->history_ptr;    /* points to next free slot in bistory_buf    */
         uint32_t   d32          = 0;                    /* we process 4 compressed uint8_ts at a time */
-        uint16_t   copy_offset;                         /* location to copy data from                 */
         uint16_t   lom;                                 /* length of match                            */
         uint16_t   LUTIndex;                            /* LookUp table Index                         */
         uint8_t  * src_ptr      = nullptr;              /* used while copying compressed data         */
@@ -347,11 +346,7 @@ public:
 
         *rlen = 0;
 
-        /* get start of offset_cache */
-        offset_cache = this->offset_cache;
-
         /* get next free slot in history buffer */
-        history_ptr = this->history_ptr;
         *roff       = history_ptr - this->history_buf;
 
         if (ctype & PACKET_AT_FRONT) {
@@ -410,7 +405,7 @@ public:
         uint32_t i32 = 0;
         while (bits_left >= 8) {
             /* Decode Huffman Code for Literal/EOS/CopyOffset */
-            copy_offset = 0;
+            uint16_t copy_offset = 0;
             for (i = 0x5; i <= 0xd; i++) {
                 if (i == 0xc) {
                     continue;

@@ -115,15 +115,13 @@ class SnappyCompressionOutTransport : public Transport {
     uint8_t uncompressed_data[SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
     size_t  uncompressed_data_length;
 
-    uint32_t verbose;
-
 public:
     SnappyCompressionOutTransport(Transport & tt, uint32_t verbose = 0)
     : Transport()
     , target_transport(tt)
     , uncompressed_data()
-    , uncompressed_data_length(0)
-    , verbose(verbose) {
+    , uncompressed_data_length(0) {
+        this->verbose = verbose;
         REDASSERT(::snappy_max_compressed_length(MAX_UNCOMPRESSED_DATA_LENGTH) <= SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH);
         REDASSERT(MAX_UNCOMPRESSED_DATA_LENGTH <= 0xFFFF); // 0xFFFF (for uint16_t)
     }
