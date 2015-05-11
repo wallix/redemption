@@ -67,6 +67,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), ini.globals.persistent_path.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -320,6 +321,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -579,6 +581,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -746,6 +749,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "enable_close_box=false\n"
                           "enable_osd=false\n"
                           "enable_osd_display_remote_target=false\n"
+                          "enable_wab_agent=true\n"
                           "\n"
                           "[client]\n"
                           "ignore_logon_password=yes\n"
@@ -832,6 +836,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL("/var/tmp/wab/persistent/rdp/",   ini.globals.persistent_path.c_str());
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_wab_agent.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -990,6 +995,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "alternate_shell=\n"
                           "shell_working_directory=\n"
                           "enable_bitmap_update=no\n"
+                          "enable_wab_agent=false\n"
                           "[client]\n"
                           "performance_flags_default=7\n"
                           "performance_flags_force_present=1\n"
@@ -1060,6 +1066,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -1211,6 +1218,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "wrm_path=/var/wab/recorded/rdp\n"
                           "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE\n"
                           "shell_working_directory=\n"
+                          "enable_wab_agent=\n"
                           "[client]\n"
                           "tls_support=yes\n"
                           "performance_flags_default=07\n"
@@ -1263,6 +1271,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -1466,6 +1475,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -1650,6 +1660,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -1827,6 +1838,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -1998,6 +2010,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -2169,6 +2182,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
                                                         ini.globals.persistent_path.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);

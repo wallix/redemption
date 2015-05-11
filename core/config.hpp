@@ -148,6 +148,8 @@ enum authid_t {
 
     AUTHID_RDP_BOGUS_SC_NET_SIZE,
 
+    AUTHID_OPT_WABAGENT,
+
     MAX_AUTHID
 };
 
@@ -245,6 +247,8 @@ enum authid_t {
 #define STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE   "vnc_server_clipboard_encoding_type"
 
 #define STRAUTHID_RDP_BOGUS_SC_NET_SIZE         "rdp_bogus_sc_net_size"
+
+#define STRAUTHID_OPT_WABAGENT                  "wab_agent"
 
 static const char * const authstr[MAX_AUTHID - 1] = {
 
@@ -348,7 +352,9 @@ static const char * const authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE,
 
-    STRAUTHID_RDP_BOGUS_SC_NET_SIZE
+    STRAUTHID_RDP_BOGUS_SC_NET_SIZE,
+
+    STRAUTHID_OPT_WABAGENT
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
@@ -511,17 +517,19 @@ public:
         StaticString<1024> png_path = PNG_PATH;
         StaticString<1024> wrm_path = WRM_PATH;
 
-        StringField alternate_shell;          // STRAUTHID_ALTERNATE_SHELL //
-        StringField shell_working_directory;  // STRAUTHID_SHELL_WORKING_DIRECTORY //
+        StringField alternate_shell;            // STRAUTHID_ALTERNATE_SHELL //
+        StringField shell_working_directory;    // STRAUTHID_SHELL_WORKING_DIRECTORY //
 
-        StringField codec_id;                 // AUTHID_OPT_CODEC_ID //
-        BoolField   movie;                    // AUTHID_OPT_MOVIE //
-        StringField movie_path;               // AUTHID_OPT_MOVIE_PATH //
-        StringField video_quality;            // AUTHID_VIDEO_QUALITY //
+        StringField codec_id;                   // AUTHID_OPT_CODEC_ID //
+        BoolField   movie;                      // AUTHID_OPT_MOVIE //
+        StringField movie_path;                 // AUTHID_OPT_MOVIE_PATH //
+        StringField video_quality;              // AUTHID_VIDEO_QUALITY //
         bool        enable_bitmap_update = true;
         bool        enable_close_box = true;
         bool        enable_osd = true;
         bool        enable_osd_display_remote_target = true;
+
+        BoolField   enable_wab_agent;           // AUTHID_OPT_WABAGENT //
         // END globals
 
         StaticPath<1024> persistent_path = PERSISTENT_PATH;
@@ -913,6 +921,9 @@ public:
         this->globals.movie.set(false);
         TODO("this could be some kind of enumeration");
         this->globals.video_quality.set_from_cstr("medium");
+
+        this->globals.enable_wab_agent.attach_ini(this, AUTHID_OPT_WABAGENT);
+        this->globals.enable_wab_agent.set(false);
         // End Init globals
 
         this->account.username[0] = 0;
@@ -1186,6 +1197,9 @@ public:
             }
             else if (0 == strcmp(key, "max_chunked_virtual_channel_data_length")) {
                 this->globals.max_chunked_virtual_channel_data_length = ulong_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "enable_wab_agent")) {
+                this->globals.enable_wab_agent.set_from_cstr(value);
             }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

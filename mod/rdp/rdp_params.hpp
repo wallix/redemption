@@ -44,6 +44,7 @@ struct ModRDPParams {
     bool enable_bitmap_update;
     bool enable_new_pointer;
     bool enable_glyph_cache;
+    bool enable_wab_agent;
 
     bool         enable_transparent_mode;
     const char * output_filename;
@@ -111,6 +112,7 @@ struct ModRDPParams {
         , enable_bitmap_update(false)
         , enable_new_pointer(true)
         , enable_glyph_cache(false)
+        , enable_wab_agent(false)
 
         , enable_transparent_mode(false)
         , output_filename("")
@@ -186,6 +188,8 @@ struct ModRDPParams {
             "ModRDPParams enable_new_pointer=%s",                  (this->enable_new_pointer ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams enable_glyph_cache=%s",                  (this->enable_glyph_cache ? "yes" : "no"));
+        LOG(LOG_INFO,
+            "ModRDPParams enable_wab_agent=%s",                    (this->enable_wab_agent ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams enable_transparent_mode=%s",             (this->enable_transparent_mode ? "yes" : "no"));

@@ -174,6 +174,7 @@ class mod_rdp : public mod_api {
           bool enable_fastpath_client_input_event; // choice of programmer + capability of server
     const bool enable_fastpath_server_update;      // = choice of programmer
     const bool enable_glyph_cache;
+    const bool enable_wab_agent;
     const bool enable_mem3blt;
     const bool enable_new_pointer;
     const bool enable_transparent_mode;
@@ -181,6 +182,7 @@ class mod_rdp : public mod_api {
     const bool enable_cache_waiting_list;
     const int  rdp_compression;
     const bool persist_bitmap_cache_on_disk;
+
 
     size_t recv_bmp_update;
 
@@ -289,6 +291,7 @@ public:
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
+        , enable_wab_agent(mod_rdp_params.enable_wab_agent)
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
