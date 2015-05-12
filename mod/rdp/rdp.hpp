@@ -152,7 +152,7 @@ class mod_rdp : public mod_api {
 
     int state;
     Pointer cursors[32];
-    //const bool console_session;
+    const bool console_session;
     const uint8_t front_bpp;
     const uint32_t performanceFlags;
     Random & gen;
@@ -277,7 +277,7 @@ public:
         , server_public_key_len(0)
         , connection_finalization_state(EARLY)
         , state(MOD_RDP_NEGO)
-        //, console_session(info.console_session)
+        , console_session(info.console_session)
         , front_bpp(info.bpp)
         , performanceFlags(info.rdp5_performanceflags)
         , gen(gen)
@@ -1774,7 +1774,6 @@ public:
 
                             GCC::UserData::CSCluster cs_cluster;
                             TODO("CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?");
-
                             if (this->server_redirection_support) {
                                 LOG(LOG_INFO, "CS_Cluster: Server Redirection Supported");
                                 if (!this->nego.tls){
@@ -1790,6 +1789,9 @@ public:
                                     LOG(LOG_INFO, "Effective Redirection SessionId=%u",
                                         cs_cluster.redirectedSessionID);
                                 }
+                            }
+                            if (this->console_session) {
+                                cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
                             }
                             // if (!this->nego.tls){
                             //     if (this->console_session){
