@@ -1500,6 +1500,8 @@ class FileSystemDriveManager {
         managed_file_system_object_collection_type;
     managed_file_system_object_collection_type managed_file_system_objects;
 
+    bool wab_agent_drive_enabled = false;
+
 public:
     FileSystemDriveManager() {
 /*
@@ -1510,12 +1512,6 @@ public:
                             O_RDONLY
                             ));
 
-        managed_drives.push_back(
-            std::make_tuple(this->next_managed_drive_id++,
-                            "WABAGT",
-                            DRIVE_REDIRECTION_PATH "/wabagt",
-                            O_RDONLY
-                            ));
 */
     }
 
@@ -1555,6 +1551,19 @@ public:
         }
 
         return announced_drive_count;
+    }
+
+    void EnableWABAgentDrive() {
+        if (!this->wab_agent_drive_enabled) {
+            this->wab_agent_drive_enabled = true;
+
+            managed_drives.push_back(
+                std::make_tuple(this->next_managed_drive_id++,
+                                "WABAGT",
+                                DRIVE_REDIRECTION_PATH "/wabagt",
+                                O_RDONLY
+                               ));
+        }
     }
 
 private:
