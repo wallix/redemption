@@ -248,6 +248,9 @@ class mod_rdp : public mod_api {
 
     const bool bogus_sc_net_size;
 
+    std::string real_alternate_shell;
+    std::string real_working_dir;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -349,6 +352,10 @@ public:
         }
 
         this->chunked_virtual_channel_data_stream.reset();
+
+        if (this->enable_wab_agent) {
+            this->file_system_drive_manager.EnableWABAgentDrive();
+        }
 
         if (mod_rdp_params.transparent_recorder_transport) {
             this->transparent_recorder = new TransparentRecorder(mod_rdp_params.transparent_recorder_transport);
@@ -472,10 +479,27 @@ public:
             }
         }
 
-        strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
-        this->program[sizeof(this->program) - 1] = 0;
-        strncpy(this->directory, mod_rdp_params.shell_working_directory, sizeof(this->directory) - 1);
-        this->directory[sizeof(this->directory) - 1] = 0;
+        if (this->enable_wab_agent) {
+
+            this->real_alternate_shell = std::move(alternate_shell);
+            this->real_working_dir     = mod_rdp_params.shell_working_directory;
+
+            const char * wab_agent_alternate_shell =
+                    "cmd /k"
+                ;
+            const char * wab_agent_working_dir = "%TMP%";
+
+            strncpy(this->program, wab_agent_alternate_shell, sizeof(this->program) - 1);
+            this->program[sizeof(this->program) - 1] = 0;
+            strncpy(this->directory, wab_agent_working_dir, sizeof(this->directory) - 1);
+            this->directory[sizeof(this->directory) - 1] = 0;
+        }
+        else {
+            strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
+            this->program[sizeof(this->program) - 1] = 0;
+            strncpy(this->directory, mod_rdp_params.shell_working_directory, sizeof(this->directory) - 1);
+            this->directory[sizeof(this->directory) - 1] = 0;
+        }
 
         LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
 
@@ -1890,22 +1914,20 @@ public:
                                     this->mod_channel_list.push_back(def);
                                 }
 
-/*
-{
-    const char * wab_agent_channel_name = "wabagt\0\0";
-    memcpy(cs_net.channelDefArray[cs_net.channelCount].name, wab_agent_channel_name, 8);
-    cs_net.channelDefArray[cs_net.channelCount].options =
-          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
-    CHANNELS::ChannelDef def;
-    memcpy(def.name, wab_agent_channel_name, 8);
-    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-    if (this->verbose & 16){
-        def.log(cs_net.channelCount);
-    }
-    this->mod_channel_list.push_back(def);
-    cs_net.channelCount++;
-}
-*/
+                                if (this->enable_wab_agent) {
+                                    const char * wab_agent_channel_name = "wabagt\0\0";
+                                    memcpy(cs_net.channelDefArray[cs_net.channelCount].name, wab_agent_channel_name, 8);
+                                    cs_net.channelDefArray[cs_net.channelCount].options =
+                                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
+                                    CHANNELS::ChannelDef def;
+                                    memcpy(def.name, wab_agent_channel_name, 8);
+                                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                                    if (this->verbose & 16){
+                                        def.log(cs_net.channelCount);
+                                    }
+                                    this->mod_channel_list.push_back(def);
+                                    cs_net.channelCount++;
+                                }
 
                                 if (this->verbose & 1) {
                                     cs_net.log("Sending to server");
@@ -6161,17 +6183,30 @@ public:
         (void)message_length; // disable -Wunused-variable if REDASSERT is disable
         std::string wab_agent_channel_message(char_ptr_cast(stream.p), stream.in_remain());
 
+        while (wab_agent_channel_message.back() == '\0') wab_agent_channel_message.pop_back();
+
         LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
 
         const char * request_get_startup_application = "Request=Get startup application";
 
-        if (!strcmp(wab_agent_channel_message.c_str(), request_get_startup_application)) {
-            BStream out_s(128);
+        if (!wab_agent_channel_message.compare(request_get_startup_application)) {
+            //LOG(LOG_INFO, "<<<Get startup application>>>");
+            BStream out_s(32768);
 
             const size_t message_length_offset = out_s.get_offset();
             out_s.out_clear_bytes(sizeof(uint16_t));
 
-            out_s.out_string("StartupApplication=[Windows Explorer]");
+            out_s.out_string("StartupApplication=");
+            if (this->real_alternate_shell.empty()) {
+                out_s.out_string("[Windows Explorer]");
+            }
+            else {
+                if (!this->real_working_dir.empty()) {
+                    out_s.out_string(this->real_working_dir.c_str());
+                }
+                out_s.out_uint8('|');
+                out_s.out_string(this->real_alternate_shell.c_str());
+            }
             out_s.out_clear_bytes(1);   // Null character
 
             out_s.set_out_uint16_le(
@@ -6179,6 +6214,7 @@ public:
                 message_length_offset);
 
             out_s.mark_end();
+            //hexdump(out_s.get_data(), out_s.size());
 
             this->send_to_channel(
                 wab_agent_channel, out_s, out_s.size(),
