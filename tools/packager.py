@@ -19,7 +19,7 @@ try:
                                 ["help", "update-version=", "build-package",
                                  "no-entry-changelog",
                                  "no-git-commit", "git-tag", "git-push-tag",
-                                 "package-distribution=",
+                                 "package-distribution=", "force-build",
                                  "debug", "force-target="])
 except getopt.GetoptError as err:
   print(str(err))
@@ -40,6 +40,7 @@ class opts(object):
 
   update_version = False
   build_package = False
+  force_build = False
 
   config = {}
   config["%PREFIX%"] = 'usr/local'
@@ -74,6 +75,8 @@ for o,a in options:
     opts.debug = True
   elif o == "--force-target":
     opts.force_target = a
+  elif o == "--force-build":
+    opts.force_build = True
 
 if not (opts.build_package or (opts.update_version and opts.tag)):
   usage()
@@ -360,10 +363,12 @@ status = 0
 remove_diff = False
 try:
 
-  check_uncommited_changes()
-  remove_diff = True
+  update_tag = (opts.update_version and opts.tag)
+  if update_tag or (opts.build_package and not opts.force_build):
+    check_uncommited_changes()
+    remove_diff = True
 
-  if (opts.update_version and opts.tag):
+  if update_tag:
     # check tag does not exist
     check_new_tag_version_with_local_and_remote_tags(opts.tag)
     # update changelog and version (write in main/version.hpp and changelog template)
@@ -387,7 +392,8 @@ try:
 
   if opts.build_package:
     opts.tag = check_matching_version_changelog()
-    check_last_version_commited_match_current_version(opts.tag)
+    if not opts.force_build:
+      check_last_version_commited_match_current_version(opts.tag)
 
     # Set debian (packaging data) directory with distro specific packaging files BEGIN
     # Create temporary directory
