@@ -238,8 +238,8 @@ public:
         if (header.fields & 0x0100) {
             uint32_t offset_cbData = stream.get_offset();
             stream.out_clear_bytes(2);
-
-            uint8_t * zeroBit = stream.out_uint8p((this->nDeltaEntries + 1) / 2);
+            uint8_t * zeroBit = stream.get_current();
+            stream.out_clear_bytes((this->nDeltaEntries + 1) / 2);
             *zeroBit = 0;
 
             for (uint8_t i = 0, m2 = 0; i < this->nDeltaEntries; i++, m2++) {

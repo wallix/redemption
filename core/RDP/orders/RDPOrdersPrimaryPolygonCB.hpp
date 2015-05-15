@@ -333,7 +333,8 @@ public:
             uint32_t offset_cbData = stream.get_offset();
             stream.out_clear_bytes(1);
 
-            uint8_t * zeroBit = stream.out_uint8p((this->NumDeltaEntries + 3) / 4);
+            uint8_t * zeroBit = stream.get_current();
+            stream.out_clear_bytes((this->NumDeltaEntries + 3) / 4);
             *zeroBit = 0;
 
             for (uint8_t i = 0, m4 = 0; i < this->NumDeltaEntries; i++, m4++) {

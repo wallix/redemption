@@ -348,6 +348,10 @@ public:
         return this->begin;
     }
 
+    uint8_t * get_current() const {
+        return this->p;
+    }
+
     // =========================================================================
     // Generic binary Data access methods
     // =========================================================================
@@ -385,12 +389,6 @@ public:
         this->p[6] = (v >> 8) & 0xFF;
         this->p[7] = v & 0xFF;
         this->p+=8;
-    }
-
-    uint8_t * out_uint8p(unsigned int n) {
-        REDASSERT(this->has_room(n));
-        this->p+=n;
-        return this->p - n;
     }
 
     void out_skip_bytes(unsigned int n) {
@@ -742,7 +740,6 @@ public:
     };
 };
 
-
 class Stream {
 public:
     uint8_t* p;
@@ -800,6 +797,10 @@ public:
 
     bool check_end(void) const {
         return this->p == this->end;
+    }
+
+    uint8_t * get_current() const {
+        return this->p;
     }
 
     // =========================================================================
@@ -981,12 +982,6 @@ public:
 
     const uint8_t *in_uint8p(unsigned int n) {
         REDASSERT(this->in_check_rem(n));
-        this->p+=n;
-        return this->p - n;
-    }
-
-    uint8_t * out_uint8p(unsigned int n) {
-        REDASSERT(this->has_room(n));
         this->p+=n;
         return this->p - n;
     }
