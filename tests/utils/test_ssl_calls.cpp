@@ -26,6 +26,7 @@
 
 #define LOGPRINT
 
+#include <stdio.h>
 #include "ssl_calls.hpp"
 
 // uint8_t data[512];
@@ -512,26 +513,21 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA256)
 {
     const uint8_t key[] = "key";
     // const uint8_t key[] = "";
-    BStream stream;
-    stream.out_copy_bytes(key, sizeof(key));
-    stream.p--;
-    stream.mark_end();
-    SslHMAC hmac(stream);
+    SslHMAC_Sha256 hmac(key, sizeof(key)-1);
 
     const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
     // const uint8_t msg[] = "";
-    stream.reset();
-    stream.out_copy_bytes(msg, sizeof(msg));
-    stream.p--;
-    stream.mark_end();
-    hmac.update(stream);
+    hmac.update(msg, sizeof(msg)-1);
 
-    BStream sigstream;
-    hmac.final(sigstream);
-    BOOST_CHECK_EQUAL(memcmp(sigstream.get_data(),
+    uint8_t sig[SHA256_DIGEST_LENGTH];
+    hmac.final(sig, SHA256_DIGEST_LENGTH);
+
+    BOOST_CHECK_EQUAL(SHA256_DIGEST_LENGTH, 32);
+
+    BOOST_CHECK_EQUAL(memcmp(sig,
                              "\xf7\xbc\x83\xf4\x30\x53\x84\x24\xb1\x32\x98\xe6\xaa\x6f\xb1\x43"
                              "\xef\x4d\x59\xa1\x49\x46\x17\x59\x97\x47\x9d\xbc\x2d\x1a\x3c\xd8",
-                             32),
+                             SHA256_DIGEST_LENGTH),
                       0);
     // hexdump96_c(sigstream.get_data(), sigstream.size());
 
