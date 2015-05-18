@@ -31,11 +31,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "error.hpp"
 #include "openssl_crypto.hpp"
-#include "bitfu.hpp"
 
 #include "log.hpp"
-#include "stream.hpp"
 
 enum {
     SEC_RANDOM_SIZE   = 32,
@@ -184,38 +183,6 @@ class SslAES
        AES_cbc_encrypt(indata, outdata, data_size, &(this->d_key), ivec, AES_DECRYPT);
     }
 };
-
-
-
-//class SslHMAC
-//{
-//    HMAC_CTX hmac;
-
-//    public:
-//    SslHMAC(const Stream & key, const EVP_MD *md = EVP_sha256())
-//    {
-//        HMAC_Init(&this->hmac, key.get_data(), key.size(), md);
-//    }
-
-//    ~SslHMAC()
-//    {
-//        HMAC_cleanup(&this->hmac);
-//    }
-
-//    void update(const Stream & stream)
-//    {
-//        HMAC_Update(&this->hmac, stream.get_data(), stream.size());
-//    }
-
-//    void final(Stream & stream)
-//    {
-//        unsigned int len = 0;
-
-//        HMAC_Final(&this->hmac, stream.get_data(), &len);
-
-//        stream.p = stream.end = stream.get_data() + len;
-//    }
-//};
 
 
 class SslHMAC_Sha256
@@ -367,9 +334,23 @@ class ssllib
     {
         uint8_t inr[SEC_MAX_MODULUS_SIZE];
 
-        reverseit(modulus, modulus_size);
-        reverseit(exponent, SEC_EXPONENT_SIZE);
-        rmemcpy(inr, in, len);
+        // in place reverse
+        for (size_t i = 0 ; i < modulus_size / 2; i++){
+            uint8_t tmp = modulus[modulus_size-1-i];
+            modulus[modulus_size-1-i] = modulus[i];
+            modulus[i] = tmp;
+        }
+
+        // in place reverse
+        for (size_t i = 0 ; i < SEC_EXPONENT_SIZE / 2; i++){
+            uint8_t tmp = exponent[SEC_EXPONENT_SIZE-1-i];
+            exponent[SEC_EXPONENT_SIZE-1-i] = exponent[i];
+            exponent[i] = tmp;
+        }
+
+        for (int i = 0; i < len ; i++){
+            inr[len-1-i] = in[i];
+        }
 
         BN_CTX *ctx = BN_CTX_new();
         BIGNUM mod; BN_init(&mod); BN_bin2bn(modulus, modulus_size, &mod);
@@ -378,7 +359,14 @@ class ssllib
         BIGNUM y; BN_init(&y); BN_mod_exp(&y, &x, &exp, &mod, ctx);
 
         int outlen = BN_bn2bin(&y, out);
-        reverseit(out, outlen);
+
+        // in place reverse
+        for (int i = 0 ; i < outlen / 2; i++){
+            uint8_t tmp = out[outlen-1-i];
+            out[outlen-1-i] = out[i];
+            out[i] = tmp;
+        }
+
         if (outlen < static_cast<int>(modulus_size)){
             memset(out + outlen, 0, modulus_size - outlen);
         }
@@ -504,8 +492,12 @@ struct CryptContext
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
     void sign(const uint8_t * data, size_t data_size, uint8_t (&signature)[8])
     {
-        uint8_t lenhdr[4];
-        buf_out_uint32(lenhdr, data_size);
+        uint8_t lenhdr[] = {
+            static_cast<uint8_t>(data_size & 0xff),
+            static_cast<uint8_t>((data_size >> 8) & 0xff),
+            static_cast<uint8_t>((data_size >> 16) & 0xff),
+            static_cast<uint8_t>((data_size >> 24) & 0xff)
+        };
 
         Sign sign(this->sign_key, (this->encryptionMethod==1)?8:16);
         sign.update(lenhdr, sizeof(lenhdr));
