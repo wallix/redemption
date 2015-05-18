@@ -25,6 +25,8 @@
 #define BOOST_TEST_MODULE TestVerifier
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGPRINT
+
 #include <fcntl.h>
 
 #include <iostream>
@@ -158,8 +160,10 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     StaticStream _4kb_hash(hash, HASH_LEN / 2);
     StaticStream full_hash(hash + (HASH_LEN / 2), HASH_LEN / 2);
 
-    BOOST_CHECK_EQUAL(true, check_file_hash(test_file_name, EVP_sha256(), ss_crypto_key, _4kb_hash, full_hash, true));
-    BOOST_CHECK_EQUAL(true, check_file_hash(test_file_name, EVP_sha256(), ss_crypto_key, _4kb_hash, full_hash, false));
+    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, ss_crypto_key, 
+                                   _4kb_hash.get_data(), _4kb_hash.size(), 4096));
+    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, ss_crypto_key, 
+                                    full_hash.get_data(), full_hash.size(), 0));
 
     unlink(test_file_name);
 }   /* BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash) */

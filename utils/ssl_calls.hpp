@@ -187,35 +187,35 @@ class SslAES
 
 
 
-class SslHMAC
-{
-    HMAC_CTX hmac;
+//class SslHMAC
+//{
+//    HMAC_CTX hmac;
 
-    public:
-    SslHMAC(const Stream & key, const EVP_MD *md = EVP_sha256())
-    {
-        HMAC_Init(&this->hmac, key.get_data(), key.size(), md);
-    }
+//    public:
+//    SslHMAC(const Stream & key, const EVP_MD *md = EVP_sha256())
+//    {
+//        HMAC_Init(&this->hmac, key.get_data(), key.size(), md);
+//    }
 
-    ~SslHMAC()
-    {
-        HMAC_cleanup(&this->hmac);
-    }
+//    ~SslHMAC()
+//    {
+//        HMAC_cleanup(&this->hmac);
+//    }
 
-    void update(const Stream & stream)
-    {
-        HMAC_Update(&this->hmac, stream.get_data(), stream.size());
-    }
+//    void update(const Stream & stream)
+//    {
+//        HMAC_Update(&this->hmac, stream.get_data(), stream.size());
+//    }
 
-    void final(Stream & stream)
-    {
-        unsigned int len = 0;
+//    void final(Stream & stream)
+//    {
+//        unsigned int len = 0;
 
-        HMAC_Final(&this->hmac, stream.get_data(), &len);
+//        HMAC_Final(&this->hmac, stream.get_data(), &len);
 
-        stream.p = stream.end = stream.get_data() + len;
-    }
-};
+//        stream.p = stream.end = stream.get_data() + len;
+//    }
+//};
 
 
 class SslHMAC_Sha256

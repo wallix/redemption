@@ -24,59 +24,53 @@
 #define HASH_LEN 64
 #endif
 
-static inline bool check_file_hash( const char * file_path
-                    , const EVP_MD *md
+static inline bool check_file_hash_sha256( const char * file_path
                     , const Stream & crypto_key
-                    , const Stream & _4kb_hash
-                    , const Stream & full_hash
-                    , bool quick_check) {
-    bool result = false;
+                    , uint8_t * hash_buf
+                    , size_t    hash_len
+                    , size_t len_to_check) {
 
-    SslHMAC hmac(crypto_key, md);
+    if (SHA256_DIGEST_LENGTH != hash_len){
+        return false;
+    }
+
+    SslHMAC_Sha256 hmac(crypto_key.get_data(), crypto_key.size());
 
     io::posix::fdbuf file;
     file.open(file_path, O_RDONLY);
-    if (file.is_open()) {
-        char buf[4096];
-        int  number_of_bytes_read;
-
-        while ((number_of_bytes_read = file.read(buf, sizeof(buf))) > 0) {
-            StaticStream ss(buf, number_of_bytes_read);
-
-            hmac.update(ss);
-
-            if (quick_check) {
-                break;
-            }
-        }
-
-        file.close();
-
-        uint8_t         hash[4096];
-        FixedSizeStream res(hash, sizeof(hash));
-
-        hmac.final(res);
-
-        uint8_t * hash_buf;
-        size_t    hash_len;
-
-        if (quick_check) {
-            hash_buf = _4kb_hash.get_data();
-            hash_len = _4kb_hash.size();
-        }
-        else {
-            hash_buf = full_hash.get_data();
-            hash_len = full_hash.size();
-        }
-
-        if (hash_len &&
-            (res.size() == hash_len) &&
-            (memcmp(res.get_data(), hash_buf, hash_len) == 0)) {
-            result = true;
-        }
+    if (!file.is_open()) {
+        TODO("We should log if the file whose signature we check does not exists");
+        return false;
     }
 
-    return result;
+    uint8_t buf[4096];
+    size_t  number_of_bytes_read = 0;
+    int len_read = 0;
+    do {
+        len_read = file.read(buf, 
+                ((len_to_check == 0) ||(number_of_bytes_read + sizeof(buf) < len_to_check))
+                ? sizeof(buf)
+                : len_to_check - number_of_bytes_read);
+        if (len_read <= 0){
+            break;
+        }
+        hmac.update(buf, static_cast<size_t>(len_read));
+        number_of_bytes_read += len_read;
+    } while (number_of_bytes_read < len_to_check || len_to_check == 0);
+
+    if (len_read < 0){
+        return false;
+    }
+
+    file.close();
+    uint8_t         hash[SHA256_DIGEST_LENGTH];
+    hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
+
+    if (len_to_check == 0){
+        len_to_check = number_of_bytes_read;
+    }
+    
+    return (memcmp(hash, hash_buf, hash_len) == 0);
 }
 
 static inline int extract_file_info( const char * space_separated_values
@@ -250,7 +244,12 @@ bool check_file_hash(const char * file_path, const Stream & crypto_key, const ch
     StaticStream _4kb_hash(hash, HASH_LEN / 2);
     StaticStream full_hash(hash + (HASH_LEN / 2), HASH_LEN / 2);
 
-    return check_file_hash(file_path, EVP_sha256(), /*ss_hmac_key*/crypto_key, _4kb_hash, full_hash, quick_check);
+    if (quick_check){
+        return check_file_hash_sha256(file_path, /*ss_hmac_key*/crypto_key, 
+                                      _4kb_hash.get_data(), _4kb_hash.size(), 4096);
+    }
+    return check_file_hash_sha256(file_path, /*ss_hmac_key*/crypto_key, 
+                                      full_hash.get_data(), full_hash.size(), 0);
 }
 
 // opaque_stream should be initialized before the first call to read_line.
@@ -379,13 +378,21 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char ha
                 while ((/*line_len = */read_line(cf_struct, crypto_read, opaque_stream, opaque_data, line, sizeof(line))) > 0) {
                     int extract_file_info_result = extract_file_info(line, file_name, _4kb_hash, full_hash);
 
-                    if ((extract_file_info_result > 0) &&
-                        (check_file_hash( reinterpret_cast<const char *>(file_name.get_data())
-                                        , EVP_sha256()
+                    if ((extract_file_info_result > 0) 
+                        && (((quick_check) 
+                            && (check_file_hash_sha256(reinterpret_cast<const char *>(file_name.get_data())
                                         , ss_hmac_key
-                                        , _4kb_hash
-                                        , full_hash
-                                        , quick_check) == false)) {
+                                        , _4kb_hash.get_data()
+                                        , _4kb_hash.size()
+                                        , 4096) == false)
+                           )
+                          || ((!quick_check) 
+                            && (check_file_hash_sha256(reinterpret_cast<const char *>(file_name.get_data())
+                                        , ss_hmac_key
+                                        , full_hash.get_data()
+                                        , full_hash.size()
+                                        , 0) == false)
+                           ))) {
                         result = false; break;
                     }
                     else if (extract_file_info_result < 0) {
