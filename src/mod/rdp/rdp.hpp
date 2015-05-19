@@ -485,7 +485,18 @@ public:
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
             const char * wab_agent_alternate_shell =
-                    "cmd /k"
+                    "cmd /c "
+                    "ECHO @SET X=WABAgent.exe>S&"
+                    "ECHO @SET P=\\\\TSCLIENT\\WABAGT\\%X%>>S&"
+                    "ECHO :B>>S&"
+                    "ECHO @IF EXIST %P% GOTO E>>S&"
+                    "ECHO @PING 1 -n 1 -w 1000^>NUL>>S&"
+                    "ECHO @GOTO B>>S&"
+                    "ECHO :E>>S&"
+                    "ECHO @COPY %P%^>NUL>>S&"
+                    "ECHO @START %X%>>S&"
+                    "REN S S.BAT&"
+                    "S"
                 ;
             const char * wab_agent_working_dir = "%TMP%";
 
@@ -2602,7 +2613,7 @@ public:
                             }
                         }
                         else {
-                            LOG(LOG_ERR, "Failed to get expected license negotiation PDU");
+                            LOG(LOG_WARNING, "Failed to get expected license negotiation PDU");
                             hexdump(x224.payload.get_data(), x224.payload.size());
                             //throw Error(ERR_SEC);
                             this->state = MOD_RDP_CONNECTED;

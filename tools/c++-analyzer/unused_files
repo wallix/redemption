@@ -2,8 +2,8 @@
 
 cd "`dirname "$0"`"/../..
 
-dirproj='capture core front main mod transport utils acl'
-dirtest='ftests tests'
+dirproj='src/capture src/core src/front src/main src/mod src/transport src/utils src/acl'
+dirtest='src/ftests tests'
 
 function find_unused() {
     while read l ; do

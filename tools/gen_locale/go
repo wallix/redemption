@@ -5,4 +5,4 @@ rm ./keylayout_x*.hpp 2>/dev/null
 
 python -O ./mskcl_parser.py
 
-mv ./keylayout*.hpp ../
+mv ./keylayout*.hpp ../../src/keyboard
