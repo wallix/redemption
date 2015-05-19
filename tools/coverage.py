@@ -72,8 +72,6 @@ class Module:
     def __init__(self, name):
         self.name = name
         self.extension = '.hpp'
-        if '/rio/' in self.name:
-            self.extension = '.h'
         self.functions = {}
 
     def total_functions(self):
@@ -86,8 +84,6 @@ def list_modules():
         if res:
             module, name = res.group(1, 2)
             extension = '.hpp'
-            if '/rio/' in module:
-                extension = '.h'
             yield module, name, extension
         else:
             if line[0] != '\n' and line[0] != '#':
@@ -255,8 +251,6 @@ else:
     if res:
         module, name = res.group(1, 2)
         extension = '.hpp'
-        if '/rio/' in module:
-            extension = '.h'
         cover.cover(module, name, extension)
         for module, name, extension in [(module, name, extension)]:
             cover.compute_coverage(module, name, extension)
