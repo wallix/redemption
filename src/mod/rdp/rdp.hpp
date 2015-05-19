@@ -2602,7 +2602,7 @@ public:
                             }
                         }
                         else {
-                            LOG(LOG_ERR, "Failed to get expected license negotiation PDU");
+                            LOG(LOG_WARNING, "Failed to get expected license negotiation PDU");
                             hexdump(x224.payload.get_data(), x224.payload.size());
                             //throw Error(ERR_SEC);
                             this->state = MOD_RDP_CONNECTED;
