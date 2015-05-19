@@ -3,4 +3,4 @@
 cd "$(dirname "$0")"/../..
 
 exec cppcheck -v --enable=all --std=posix --std=c++11 "$@" \
- `find capture core front main mod transport utils acl -name '*.?pp'`
+ `find src/capture src/core src/front src/main src/mod src/transport src/utils src/acl -name '*.?pp'`
