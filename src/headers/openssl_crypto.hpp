@@ -41,6 +41,15 @@ extern "C" {
 #include <openssl/evp.h>
 #include <openssl/aes.h>
 
+#include <openssl/ec.h>
+#include <openssl/ecdsa.h>
+#include <openssl/blowfish.h>
+#include <openssl/rand.h>
+#include <openssl/des.h>
+//#include <openssl/des_old.h>
+// We remove this macro from des_old because it conflicts with method set_key of some objects
+#undef set_key
+
 #ifdef __cplusplus
 }
 #endif
