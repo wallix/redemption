@@ -485,18 +485,7 @@ public:
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
             const char * wab_agent_alternate_shell =
-                    "cmd /c "
-                    "ECHO @SET X=WABAgent.exe>S&"
-                    "ECHO @SET P=\\\\TSCLIENT\\WABAGT\\%X%>>S&"
-                    "ECHO :B>>S&"
-                    "ECHO @IF EXIST %P% GOTO E>>S&"
-                    "ECHO @PING 1 -n 1 -w 1000^>NUL>>S&"
-                    "ECHO @GOTO B>>S&"
-                    "ECHO :E>>S&"
-                    "ECHO @COPY %P%^>NUL>>S&"
-                    "ECHO @START %X%>>S&"
-                    "REN S S.BAT&"
-                    "S"
+                    "cmd /k"
                 ;
             const char * wab_agent_working_dir = "%TMP%";
 
