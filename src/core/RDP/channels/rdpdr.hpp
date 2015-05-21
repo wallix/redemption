@@ -1223,7 +1223,6 @@ public:
         this->OutputBufferLength = stream.in_uint32_le();
 
         const uint32_t InputBufferLength = stream.in_uint32_le();
-        REDASSERT(!InputBufferLength);
 
         this->IoControlCode_ = stream.in_uint32_le();
 
