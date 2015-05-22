@@ -1405,6 +1405,7 @@ public:
                 Array array(256);
                 uint8_t * end = array.get_data();
                 X224::RecvFactory fx224(this->trans, &end, array.size());
+                REDASSERT(fx224.type == X224::DT_TPDU);
                 InStream x224_data(array, 0, 0, end - array.get_data());
 
                 X224::DT_TPDU_Recv x224(x224_data);
@@ -1417,12 +1418,18 @@ public:
                 Array array(256);
                 uint8_t * end = array.get_data();
                 X224::RecvFactory fx224(this->trans, &end, array.size());
+                REDASSERT(fx224.type == X224::DT_TPDU);
                 InStream x224_data(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
+
+            // To avoid bug in freerdp 0.7.x and Remmina 0.8.x that causes client disconnection
+            //  when unexpected channel id is received.
+            this->userid = 32;
+
             if (this->verbose) {
-                LOG(LOG_INFO, "Front::incoming::Send MCS::AttachUserConfirm", this->userid);
+                LOG(LOG_INFO, "Front::incoming::Send MCS::AttachUserConfirm userid=%u", this->userid);
             }
             {
                 BStream x224_header(256);
@@ -1438,6 +1445,7 @@ public:
                 Array array(256);
                 uint8_t * end = array.get_data();
                 X224::RecvFactory fx224(this->trans, &end, array.size());
+                REDASSERT(fx224.type == X224::DT_TPDU);
                 InStream x224_data(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1459,6 +1467,7 @@ public:
                 Array array(256);
                 uint8_t * end = array.get_data();
                 X224::RecvFactory fx224(this->trans, &end, array.size());
+                REDASSERT(fx224.type == X224::DT_TPDU);
                 InStream x224_data(array, 0, 0, end - array.get_data());
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
