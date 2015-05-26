@@ -78,17 +78,17 @@ lib gcov : : <name>gcov : ;
 
 project redemption
     : requirements
-    <include>utils
-    <include>core
-    <include>mod
-    <include>front
-    <include>acl
-    <include>capture
-    <include>keyboard
-    <include>transport
-    <include>regex
-    <include>headers
-    <include>main
+    <include>src/utils
+    <include>src/core
+    <include>src/mod
+    <include>src/front
+    <include>src/acl
+    <include>src/capture
+    <include>src/keyboard
+    <include>src/transport
+    <include>src/regex
+    <include>src/headers
+    <include>src/main
     <include>/usr/include
     <include>tests
 
@@ -267,10 +267,10 @@ alias png : libpng z ;
 # lib icuuc : : <name>icuuc ;
 
 
-obj mainloop : core/mainloop.cpp ;
-obj d3des : utils/d3des.cpp ;
-obj cryptofile : transport/cryptofile.cpp ;
-obj ccryptofile : transport/ccryptofile.cpp ;
+obj mainloop : src/core/mainloop.cpp ;
+obj d3des : src/utils/d3des.cpp ;
+obj cryptofile : src/transport/cryptofile.cpp ;
+obj ccryptofile : src/transport/ccryptofile.cpp ;
 
 #
 # Redemption
@@ -278,8 +278,8 @@ obj ccryptofile : transport/ccryptofile.cpp ;
 
 exe rdpproxy
     :
-        main/main.cpp
-        utils/program_options.cpp
+        src/main/main.cpp
+        src/utils/program_options.cpp
 
         cryptofile
 
@@ -306,8 +306,8 @@ exe rdpproxy
 
 exe redrec
     :
-        main/recorder.cpp
-        utils/program_options.cpp
+        src/main/recorder.cpp
+        src/utils/program_options.cpp
 
         cryptofile
 
@@ -327,8 +327,8 @@ exe redrec
 
 exe reddec
     :
-        main/decrypter.cpp
-        utils/program_options.cpp
+        src/main/decrypter.cpp
+        src/utils/program_options.cpp
 
         cryptofile
 
@@ -344,8 +344,8 @@ exe reddec
 
 exe redver
     :
-        main/verifier.cpp
-        utils/program_options.cpp
+        src/main/verifier.cpp
+        src/utils/program_options.cpp
 
         cryptofile
         ccryptofile
@@ -362,8 +362,8 @@ exe redver
 
 exe rdptproxy
     :
-        main/transparent.cpp
-        utils/program_options.cpp
+        src/main/transparent.cpp
+        src/utils/program_options.cpp
 
         cryptofile
 
@@ -386,8 +386,8 @@ exe rdptproxy
 
 exe rdptanalyzer
     :
-        main/tanalyzer.cpp
-        utils/program_options.cpp
+        src/main/tanalyzer.cpp
+        src/utils/program_options.cpp
 
         cryptofile
 
@@ -412,13 +412,13 @@ exe rdptanalyzer
 #
 
 exe tls_test_client
-    : ftests/tls_test_client.cpp cryptofile openssl crypto png z dl snappy
+    : src/ftests/tls_test_client.cpp cryptofile openssl crypto png z dl snappy
     : <link>static
     <variant>coverage:<library>gcov
     <variant>coverage:<build>no
  ;
 exe tls_test_server
-    : ftests/tls_test_server.cpp cryptofile openssl crypto png z dl snappy
+    : src/ftests/tls_test_server.cpp cryptofile openssl crypto png z dl snappy
     : <link>static
     <variant>coverage:<library>gcov
     <variant>coverage:<build>no
@@ -748,6 +748,6 @@ unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_
 unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
-unit-test test_program_options : tests/utils/test_program_options.cpp utils/program_options.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_program_options : tests/utils/test_program_options.cpp src/utils/program_options.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_verifier : tests/test_verifier.cpp cryptofile libboost_unit_test openssl crypto ccryptofile snappy dl z : ;

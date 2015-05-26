@@ -25,10 +25,10 @@ core/RDP/capabilities/bitmapcachehostsupport 100 100
 core/RDP/capabilities/bitmapcodecs 100 100
 core/RDP/capabilities/bmpcache2 100 100
 core/RDP/capabilities/cap_bitmap 100 100
-core/RDP/capabilities/cap_bmpcache 100 100
+core/RDP/capabilities/bmpcache 100 100
 core/RDP/capabilities/cap_brushcache 100 100
 core/RDP/capabilities/cap_font 100 100
-core/RDP/capabilities/cap_rail 100 100
+core/RDP/capabilities/rail 100 100
 core/RDP/capabilities/cap_share 100 100
 core/RDP/capabilities/cap_sound 100 100
 core/RDP/capabilities/colcache 100 100
@@ -114,7 +114,7 @@ mod/internal/copy_paste 100 100
 mod/internal/flat_dialog_mod 100 100
 mod/internal/flat_login_mod 100 100
 mod/internal/flat_wab_close_mod 100 100
-mod/internal/interactive_password_mod 100 100
+mod/internal/interactive_target_mod 100 100
 mod/internal/internal_mod 100 100
 mod/internal/replay_mod 100 100
 mod/internal/test_card_mod 100 100
@@ -125,7 +125,7 @@ mod/internal/widget2/edit_valid 100 100
 mod/internal/widget2/flat_button 100 100
 mod/internal/widget2/flat_dialog 100 100
 mod/internal/widget2/flat_form 100 100
-mod/internal/widget2/flat_interactive_password 100 100
+mod/internal/widget2/flat_interactive_target 100 100
 mod/internal/widget2/flat_login 100 100
 mod/internal/widget2/flat_selector2 100 100
 mod/internal/widget2/flat_vnc_authentification 100 100
@@ -185,7 +185,6 @@ utils/region 100 100
 utils/splitter 100 100
 utils/ssl_calls 100 100
 utils/stream 100 100
-utils/string 100 100
 utils/theme 100 100
 utils/translation 100 100
 utils/make_unique 100 100

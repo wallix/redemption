@@ -104,6 +104,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     ini.client.tls_support         = true;
     ini.client.tls_fallback_legacy = false;
+    ini.client.bogus_user_id       = false;
     ini.client.rdp_compression     = 0;
 
     const bool fastpath_support = true;

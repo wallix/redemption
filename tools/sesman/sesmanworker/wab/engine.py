@@ -506,6 +506,8 @@ class Engine(object):
         right = None
         self.get_proxy_rights([u'RDP', u'VNC'], target_device,
                               check_timeframes=False)
+        if target_login == MAGIC_AM:
+            target_login = self.get_username()
         result = self.targets.get((target_login, target_device))
         if result:
             if (not target_service) and (len(result) == 1):
@@ -596,7 +598,7 @@ class Engine(object):
     def update_session(self, physical_target, **kwargs):
         hosttarget = u"%s@%s:%s" % ( self.get_account_login(physical_target)
                                    , physical_target.resource.device.cn
-                                   , physical_target.resource.service.protocol.cn)
+                                   , physical_target.resource.service.cn)
         try:
             if self.session_id:
                 self.wabengine.update_session(self.session_id, hosttarget, **kwargs)

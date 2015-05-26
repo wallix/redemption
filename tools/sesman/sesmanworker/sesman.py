@@ -53,6 +53,10 @@ def mundane(value):
     if value == MAGICASK:
         return u'Unknown'
     return value
+def rvalue(value):
+    if value == MAGICASK:
+        return u''
+    return value
 
 DEBUG = False
 def mdecode(item):
@@ -497,7 +501,7 @@ class Sesman():
                     or not self.engine.password_authenticate(
                         wab_login,
                         self.shared.get(u'ip_client'),
-                        self.shared.get(u'password'),
+                        rvalue(self.shared.get(u'password')),
                         self.shared.get(u'ip_target'))):
                     if self.shared.get(u'password') == MAGICASK:
                         self.engine.challenge = None
@@ -556,8 +560,8 @@ class Sesman():
 
         (target_device,
          self.target_context) = self.engine.resolve_target_host(
-            target_device, target_login, self.target_service_name,
-            self.shared.get(u'real_target_device'), self.target_context,
+            rvalue(target_device), rvalue(target_login), self.target_service_name,
+            rvalue(self.shared.get(u'real_target_device')), self.target_context,
             self.passthrough_mode, [u'RDP', u'VNC'])
 
         while _status is None:

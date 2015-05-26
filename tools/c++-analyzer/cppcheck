@@ -19,15 +19,15 @@ main/*.cpp \
 -DRECORD_TMP_PATH='"/var/rdpproxy/tmp"' \
 -DSHARE_PATH='"/usr/local/share/rdpproxy"' \
 -DWRM_PATH='"/var/rdpproxy/recorded"' \
--I"capture" \
--I"core" \
--I"front" \
--I"headers" \
--I"keyboard" \
--I"main" \
--I"mod" \
--I"regex" \
--I"tests" \
--I"transport" \
--I"utils" \
--I"acl"
+-I"src/capture" \
+-I"src/core" \
+-I"src/front" \
+-I"src/headers" \
+-I"src/keyboard" \
+-I"src/main" \
+-I"src/mod" \
+-I"src/regex" \
+-I"src/tests" \
+-I"src/transport" \
+-I"src/utils" \
+-I"src/acl"

@@ -72,8 +72,6 @@ class Module:
     def __init__(self, name):
         self.name = name
         self.extension = '.hpp'
-        if '/rio/' in self.name:
-            self.extension = '.h'
         self.functions = {}
 
     def total_functions(self):
@@ -86,8 +84,6 @@ def list_modules():
         if res:
             module, name = res.group(1, 2)
             extension = '.hpp'
-            if '/rio/' in module:
-                extension = '.h'
             yield module, name, extension
         else:
             if line[0] != '\n' and line[0] != '#':
@@ -106,7 +102,7 @@ class Cover:
         print "Computing coverage for %s" % module
         cmd1 = ["bjam", "coverage", "test_%s" % name]
         cmd2 = [GCOVVERSION, "--unconditional-branches", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, "%s" % module[:-len(name)] if TESTSSUBDIR else '', name), "bin/%s/coverage/test_%s" % (GCCVERSION, name)]
-        cmd3 = ["etags", "-o", "coverage/%s/%s%s.TAGS" % (module, name, extension), "%s%s" % (module, extension)]
+        cmd3 = ["etags", "-o", "coverage/%s/%s%s.TAGS" % (module, name, extension), "src/%s%s" % (module, extension)]
 
         res = subprocess.Popen(cmd1, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
         res = subprocess.Popen(cmd2, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
@@ -255,8 +251,6 @@ else:
     if res:
         module, name = res.group(1, 2)
         extension = '.hpp'
-        if '/rio/' in module:
-            extension = '.h'
         cover.cover(module, name, extension)
         for module, name, extension in [(module, name, extension)]:
             cover.compute_coverage(module, name, extension)
