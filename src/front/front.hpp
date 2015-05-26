@@ -1424,9 +1424,11 @@ public:
                 MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
 
-            // To avoid bug in freerdp 0.7.x and Remmina 0.8.x that causes client disconnection
-            //  when unexpected channel id is received.
-            this->userid = 32;
+            if (this->ini.client.bogus_user_id) {
+                // To avoid bug in freerdp 0.7.x and Remmina 0.8.x that causes client disconnection
+                //  when unexpected channel id is received.
+                this->userid = 32;
+            }
 
             if (this->verbose) {
                 LOG(LOG_INFO, "Front::incoming::Send MCS::AttachUserConfirm userid=%u", this->userid);

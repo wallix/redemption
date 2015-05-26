@@ -171,6 +171,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0x80,                             ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bogus_neg_request);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -421,6 +423,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0x80,                             ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bogus_neg_request);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -687,6 +691,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0x80,                             ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bogus_neg_request);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -759,6 +765,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "tls_fallback_legacy=yes\n"
                           "tls_support=no\n"
                           "rdp_compression=1\n"
+                          "bogus_neg_request=yes\n"
+                          "bogus_user_id=yes\n"
                           "disable_tsk_switch_shortcuts=yes\n"
                           "max_color_depth=0\n"
                           "persistent_disk_bitmap_cache=yes\n"
@@ -939,6 +947,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bogus_neg_request);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(1,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -1001,6 +1011,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "performance_flags_force_present=1\n"
                           "performance_flags_force_not_present=0\n"
                           "tls_support=yes\n"
+                          "bogus_neg_request=no\n"
+                          "bogus_user_id=no\n"
                           "rdp_compression=0\n"
                           "max_color_depth=8\n"
                           "persistent_disk_bitmap_cache=no\n"
@@ -1167,6 +1179,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bogus_neg_request);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(8,                                ini.client.max_color_depth);
@@ -1367,6 +1381,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bogus_neg_request);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -1422,6 +1438,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
                           "shell_working_directory=\n"
                           "[client]\t\n"
                           "tls_support=yes\n"
+                          "bogus_user_id=yes\n"
                           "performance_flags_default=07\n"
                           "performance_flags_force_present=1\n"
                           "performance_flags_force_not_present=0x\n"
@@ -1571,6 +1588,8 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bogus_neg_request);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -1755,6 +1774,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0x80,                             ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bogus_neg_request);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -1803,6 +1824,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "[client]\n"
                            "bitmap_compression=no\n"
                            "persist_bitmap_cache_on_disk=yes\n"
+                           "bogus_user_id=yes\n"
                            "[mod_rdp]\n"
                            "persist_bitmap_cache_on_disk=yes\n"
                            "[debug]\n"
@@ -1933,6 +1955,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0x80,                             ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bogus_neg_request);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -2105,6 +2129,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0x80,                             ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bogus_neg_request);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
@@ -2277,6 +2303,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0x80,                             ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bogus_neg_request);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);

@@ -553,7 +553,8 @@ public:
 
         bool tls_fallback_legacy = true;
         bool tls_support         = true;
-        bool bogus_neg_request   = false; // needed to connect with jrdp, based on bogus X224 layer code
+        bool bogus_neg_request   = false;   // needed to connect with jrdp, based on bogus X224 layer code
+        bool bogus_user_id       = true;    // needed to connect with Remmina 0.8.3 (Squeeze), based on bogus MCS layer code
 
         BoolField disable_tsk_switch_shortcuts; // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS //
 
@@ -1226,6 +1227,9 @@ public:
             }
             else if (0 == strcmp(key, "bogus_neg_request")) {
                 this->client.bogus_neg_request = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "bogus_user_id")) {
+                this->client.bogus_user_id = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "rdp_compression")) {
                 this->client.rdp_compression = ulong_from_cstr(value);
