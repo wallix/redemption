@@ -789,6 +789,8 @@ public:
                 //mod_rdp_params.enable_new_pointer                  = true;
                 mod_rdp_params.enable_glyph_cache                  = this->ini.globals.glyph_cache;
                 mod_rdp_params.enable_wab_agent                    = this->ini.globals.enable_wab_agent.get();
+                mod_rdp_params.wab_agent_launch_timeout            = this->ini.globals.wab_agent_launch_timeout.get();
+                mod_rdp_params.wab_agent_keepalive_timeout         = this->ini.globals.wab_agent_keepalive_timeout.get();
                 mod_rdp_params.acl                                 = acl;
                 mod_rdp_params.auth_channel                        = this->ini.globals.auth_channel;
                 mod_rdp_params.alternate_shell                     = this->ini.globals.alternate_shell.get_cstr();

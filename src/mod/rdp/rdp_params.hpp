@@ -46,6 +46,9 @@ struct ModRDPParams {
     bool enable_glyph_cache;
     bool enable_wab_agent;
 
+    unsigned wab_agent_launch_timeout;
+    unsigned wab_agent_keepalive_timeout;
+
     bool         enable_transparent_mode;
     const char * output_filename;
     Transport  * persistent_key_list_transport;
@@ -113,6 +116,9 @@ struct ModRDPParams {
         , enable_new_pointer(true)
         , enable_glyph_cache(false)
         , enable_wab_agent(false)
+
+        , wab_agent_launch_timeout(0)
+        , wab_agent_keepalive_timeout(0)
 
         , enable_transparent_mode(false)
         , output_filename("")
@@ -190,6 +196,11 @@ struct ModRDPParams {
             "ModRDPParams enable_glyph_cache=%s",                  (this->enable_glyph_cache ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams enable_wab_agent=%s",                    (this->enable_wab_agent ? "yes" : "no"));
+
+        LOG(LOG_INFO,
+            "ModRDPParams wab_agent_launch_timeout=%u",            this->wab_agent_launch_timeout);
+        LOG(LOG_INFO,
+            "ModRDPParams wab_agent_keepalive_timeout=%u",         this->wab_agent_keepalive_timeout);
 
         LOG(LOG_INFO,
             "ModRDPParams enable_transparent_mode=%s",             (this->enable_transparent_mode ? "yes" : "no"));

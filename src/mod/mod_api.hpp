@@ -63,6 +63,8 @@ public:
 
     virtual wait_obj& get_event() { return this->event; }
 
+    virtual wait_obj * get_secondary_event() { return NULL; }
+
     uint16_t get_front_width() const { return this->front_width; }
     uint16_t get_front_height() const { return this->front_height; }
 

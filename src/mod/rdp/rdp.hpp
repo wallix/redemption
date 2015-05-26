@@ -183,6 +183,8 @@ class mod_rdp : public mod_api {
     const int  rdp_compression;
     const bool persist_bitmap_cache_on_disk;
 
+    const unsigned wab_agent_launch_timeout;
+    const unsigned wab_agent_keepalive_timeout;
 
     size_t recv_bmp_update;
 
@@ -251,6 +253,10 @@ class mod_rdp : public mod_api {
     std::string real_alternate_shell;
     std::string real_working_dir;
 
+    wait_obj wab_agent_event;
+    bool     wab_agent_is_ready            = false;
+    bool     wab_agent_keep_alive_received = true;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -302,6 +308,8 @@ public:
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , rdp_compression(mod_rdp_params.rdp_compression)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
+        , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
+        , wab_agent_keepalive_timeout(mod_rdp_params.wab_agent_keepalive_timeout)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -485,7 +493,7 @@ public:
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
             const char * wab_agent_alternate_shell =
-                    "cmd /k"
+                    "cmd /k "
                 ;
             const char * wab_agent_working_dir = "%TMP%";
 
@@ -548,6 +556,22 @@ public:
                 statestr[255] = 0;
                 LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state", statestr);
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
+            }
+        }
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO,
+                "enable_wab_agent=%s wab_agent_launch_timeout=%u",
+                (this->enable_wab_agent ? "yes" : "no"), this->wab_agent_launch_timeout);
+        }
+        if (this->enable_wab_agent) {
+            this->wab_agent_event.object_and_time = true;
+
+            if (this->wab_agent_launch_timeout > 0) {
+                if (this->verbose & 1) {
+                    LOG(LOG_INFO, "Enable agent launch timer");
+                }
+                this->wab_agent_event.set(this->wab_agent_launch_timeout * 1000);
             }
         }
 
@@ -1705,7 +1729,8 @@ public:
     }
 
     virtual void draw_event(time_t now) {
-        if (!this->event.waked_up_by_time) {
+        if (!this->event.waked_up_by_time &&
+            (!this->enable_wab_agent || !this->wab_agent_event.set_state || !this->wab_agent_event.waked_up_by_time)) {
             try{
                 char * hostname = this->hostname;
 
@@ -3115,7 +3140,7 @@ public:
                                                     " change client resolution to match server resolution");
                                                 throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
                                             }
-    //                                        this->orders.reset();
+//                                            this->orders.reset();
                                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
 
                                             this->deactivation_reactivation_in_progress = false;
@@ -3262,7 +3287,62 @@ public:
                 break;
             }
         }
+
+        if (this->wab_agent_event.set_state && this->wab_agent_event.waked_up_by_time) {
+            REDASSERT(this->enable_wab_agent);
+
+            this->wab_agent_event.reset();
+
+            if (this->wab_agent_launch_timeout && !this->wab_agent_is_ready) {
+                LOG(LOG_ERR, "Agent is not ready yet!");
+
+                this->event.signal = BACK_EVENT_NEXT;
+                this->event.set();
+            }
+
+            if (this->wab_agent_keepalive_timeout) {
+                if (!this->wab_agent_keep_alive_received) {
+                    LOG(LOG_ERR, "No keep alive received from Agent!");
+
+                    this->event.signal = BACK_EVENT_NEXT;
+                    this->event.set();
+                }
+                else {
+                    this->wab_agent_keep_alive_received = false;
+
+
+                    BStream out_s(1024);
+
+                    const size_t message_length_offset = out_s.get_offset();
+                    out_s.out_clear_bytes(sizeof(uint16_t));
+
+                    out_s.out_string("Request=Keep-Alive");
+                    out_s.out_clear_bytes(1);   // Null character
+
+                    out_s.set_out_uint16_le(
+                        out_s.get_offset() - message_length_offset - sizeof(uint16_t),
+                        message_length_offset);
+
+                    out_s.mark_end();
+
+                    this->send_to_mod_channel(
+                        "wabagt", out_s, out_s.size(),
+                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                    );
+
+                    this->wab_agent_event.set(this->wab_agent_keepalive_timeout * 1000);
+                }
+            }
+        }
     }   // draw_event
+
+    virtual wait_obj * get_secondary_event() {
+        if (this->wab_agent_event.set_state) {
+            return &this->wab_agent_event;
+        }
+
+        return nullptr;
+    }
 
     // 1.3.1.3 Deactivation-Reactivation Sequence
     // ==========================================
@@ -5953,6 +6033,10 @@ public:
             infoPacket.flags |= ((this->rdp_compression - 1) << 9);
         }
 
+        if (this->enable_wab_agent) {
+            infoPacket.flags &= ~INFO_MAXIMIZESHELL;
+        }
+
         if (this->remote_program) {
             infoPacket.flags |= INFO_RAIL;
         }
@@ -6185,41 +6269,80 @@ public:
 
         while (wab_agent_channel_message.back() == '\0') wab_agent_channel_message.pop_back();
 
-        LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
+        //LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
 
-        const char * request_get_startup_application = "Request=Get startup application";
-
-        if (!wab_agent_channel_message.compare(request_get_startup_application)) {
+        if (!wab_agent_channel_message.compare("Request=Get startup application")) {
             //LOG(LOG_INFO, "<<<Get startup application>>>");
-            BStream out_s(32768);
 
-            const size_t message_length_offset = out_s.get_offset();
-            out_s.out_clear_bytes(sizeof(uint16_t));
-
-            out_s.out_string("StartupApplication=");
-            if (this->real_alternate_shell.empty()) {
-                out_s.out_string("[Windows Explorer]");
+            if (this->verbose & 1) {
+                LOG(LOG_ERR, "Agent is ready.");
             }
-            else {
-                if (!this->real_working_dir.empty()) {
-                    out_s.out_string(this->real_working_dir.c_str());
+
+            this->wab_agent_is_ready = true;
+
+            {
+                BStream out_s(32768);
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_clear_bytes(sizeof(uint16_t));
+
+                out_s.out_string("StartupApplication=");
+                if (this->real_alternate_shell.empty()) {
+                    out_s.out_string("[Windows Explorer]");
                 }
-                out_s.out_uint8('|');
-                out_s.out_string(this->real_alternate_shell.c_str());
+                else {
+                    if (!this->real_working_dir.empty()) {
+                        out_s.out_string(this->real_working_dir.c_str());
+                    }
+                    out_s.out_uint8('|');
+                    out_s.out_string(this->real_alternate_shell.c_str());
+                }
+                out_s.out_clear_bytes(1);   // Null character
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset - sizeof(uint16_t),
+                    message_length_offset);
+
+                out_s.mark_end();
+                //hexdump(out_s.get_data(), out_s.size());
+
+                this->send_to_channel(
+                    wab_agent_channel, out_s, out_s.size(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                );
             }
-            out_s.out_clear_bytes(1);   // Null character
 
-            out_s.set_out_uint16_le(
-                out_s.get_offset() - message_length_offset - sizeof(uint16_t),
-                message_length_offset);
 
-            out_s.mark_end();
-            //hexdump(out_s.get_data(), out_s.size());
+            this->wab_agent_event.reset();
 
-            this->send_to_channel(
-                wab_agent_channel, out_s, out_s.size(),
-                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
-            );
+            if (this->wab_agent_keepalive_timeout > 0) {
+                {
+                    BStream out_s(1024);
+
+                    const size_t message_length_offset = out_s.get_offset();
+                    out_s.out_clear_bytes(sizeof(uint16_t));
+
+                    out_s.out_string("Request=Keep-Alive");
+                    out_s.out_clear_bytes(1);   // Null character
+
+                    out_s.set_out_uint16_le(
+                        out_s.get_offset() - message_length_offset - sizeof(uint16_t),
+                        message_length_offset);
+
+                    out_s.mark_end();
+
+                    this->send_to_channel(
+                        wab_agent_channel, out_s, out_s.size(),
+                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                    );
+                }
+
+                this->wab_agent_event.set(this->wab_agent_keepalive_timeout * 1000);
+            }
+        }
+        else if (!wab_agent_channel_message.compare("KeepAlive=OK")) {
+            //LOG(LOG_INFO, "Recevied Keep-Alive from Agent.");
+            this->wab_agent_keep_alive_received = true;
         }
     }
 

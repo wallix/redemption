@@ -149,6 +149,8 @@ enum authid_t {
     AUTHID_RDP_BOGUS_SC_NET_SIZE,
 
     AUTHID_OPT_WABAGENT,
+    AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT,
+    AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT,
 
     MAX_AUTHID
 };
@@ -248,7 +250,9 @@ enum authid_t {
 
 #define STRAUTHID_RDP_BOGUS_SC_NET_SIZE         "rdp_bogus_sc_net_size"
 
-#define STRAUTHID_OPT_WABAGENT                  "wab_agent"
+#define STRAUTHID_OPT_WABAGENT                      "wab_agent"
+#define STRAUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT       "wab_agent_launch_timeout"
+#define STRAUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT    "wab_agent_keepalive_timeout"
 
 static const char * const authstr[MAX_AUTHID - 1] = {
 
@@ -354,7 +358,9 @@ static const char * const authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_RDP_BOGUS_SC_NET_SIZE,
 
-    STRAUTHID_OPT_WABAGENT
+    STRAUTHID_OPT_WABAGENT,
+    STRAUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT,
+    STRAUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
@@ -529,7 +535,9 @@ public:
         bool        enable_osd = true;
         bool        enable_osd_display_remote_target = true;
 
-        BoolField   enable_wab_agent;           // AUTHID_OPT_WABAGENT //
+        BoolField       enable_wab_agent;               // AUTHID_OPT_WABAGENT //
+        UnsignedField   wab_agent_launch_timeout;       // AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT //
+        UnsignedField   wab_agent_keepalive_timeout;    // AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT //
         // END globals
 
         StaticPath<1024> persistent_path = PERSISTENT_PATH;
@@ -925,6 +933,12 @@ public:
 
         this->globals.enable_wab_agent.attach_ini(this, AUTHID_OPT_WABAGENT);
         this->globals.enable_wab_agent.set(false);
+
+        this->globals.wab_agent_launch_timeout.attach_ini(this, AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT);
+        this->globals.wab_agent_launch_timeout.set(0);
+
+        this->globals.wab_agent_keepalive_timeout.attach_ini(this, AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT);
+        this->globals.wab_agent_keepalive_timeout.set(0);
         // End Init globals
 
         this->account.username[0] = 0;
@@ -1201,6 +1215,12 @@ public:
             }
             else if (0 == strcmp(key, "enable_wab_agent")) {
                 this->globals.enable_wab_agent.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "wab_agent_launch_timeout")) {
+                this->globals.wab_agent_launch_timeout.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "wab_agent_keepalive_timeout")) {
+                this->globals.wab_agent_keepalive_timeout.set_from_cstr(value);
             }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

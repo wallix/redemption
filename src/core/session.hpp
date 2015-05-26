@@ -190,6 +190,10 @@ public:
                     this->client->add_to_fd_set(rfds, max, timeout);
                 }
                 add_to_fd_set(mm.mod->get_event(), mm.mod_transport, rfds, max, timeout);
+                wait_obj * secondary_event = mm.mod->get_secondary_event();
+                if (secondary_event) {
+                    add_to_fd_set(*secondary_event, nullptr, rfds, max, timeout);
+                }
 
                 const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.allocated_ssl));
                 if (has_pending_data)
@@ -246,10 +250,16 @@ public:
                             mm.check_module();
                         }
                         // Process incoming module trafic
-                        if (is_set(mm.mod->get_event(), mm.mod_transport, rfds)) {
+                             secondary_event        = mm.mod->get_secondary_event();
+                        bool secondary_event_is_set = (secondary_event &&
+                                                             is_set(*secondary_event, nullptr, rfds));
+                        if (is_set(mm.mod->get_event(), mm.mod_transport, rfds) ||
+                            secondary_event_is_set) {
                             mm.mod->draw_event(now);
 
                             if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
+                                this->ini.context_ask(AUTHID_KEEPALIVE);
+
                                 signal = mm.mod->get_event().signal;
                                 mm.mod->get_event().reset();
                             }
