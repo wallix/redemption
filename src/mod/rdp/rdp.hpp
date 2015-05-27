@@ -186,6 +186,8 @@ class mod_rdp : public mod_api {
     const unsigned wab_agent_launch_timeout;
     const unsigned wab_agent_keepalive_timeout;
 
+    const unsigned disable_clipboard_log;
+
     size_t recv_bmp_update;
 
     rdp_mppc_unified_dec mppc_dec;
@@ -257,6 +259,8 @@ class mod_rdp : public mod_api {
     bool     wab_agent_is_ready            = false;
     bool     wab_agent_keep_alive_received = true;
 
+    uint32_t clipboard_requested_format_id = 0;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -310,6 +314,7 @@ public:
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
         , wab_agent_keepalive_timeout(mod_rdp_params.wab_agent_keepalive_timeout)
+        , disable_clipboard_log(mod_rdp_params.disable_clipboard_log)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -799,7 +804,7 @@ private:
             LOG(LOG_INFO, "mod_rdp client clipboard PDU");
         }
 
-        if (!chunk.in_check_rem(2)) {
+        if (!chunk.in_check_rem(2 /* msgType(2) */)) {
             LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: truncated msgType, need=2 remains=%u",
                 chunk.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
@@ -830,6 +835,19 @@ private:
                     false, static_cast<uint8_t *>(nullptr), 0);
                 return;
             }
+
+            if (!chunk.in_check_rem(10 /* msgFlags(2) + dataLen(4) + requestedFormatId(4) */)) {
+                LOG(LOG_INFO,
+                    "mod_rdp::send_to_mod_cliprdr_channel: CB_FORMAT_DATA_REQUEST truncated msgType, need=10 remains=%u",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
+
+            this->clipboard_requested_format_id = chunk.in_uint32_le();
+
+            chunk.p -= 10;  // msgFlags(2) + dataLen(4) + requestedFormatId(4)
         }
         else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
             if (!this->authorization_channels.cliprdr_file_is_authorized()) {
@@ -841,10 +859,58 @@ private:
                 return;
             }
         }
+        else if ((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) &&
+                 (flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
+                 (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
+            if (!chunk.in_check_rem(6 /* msgFlags(2) + dataLen(4) */)) {
+                LOG(LOG_INFO,
+                    "mod_rdp::send_to_mod_cliprdr_channel: CB_FORMAT_DATA_RESPONSE truncated msgType, need=6 remains=%u",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2 /*msgFlags(2)*/);
+
+            const uint32_t dataLen = chunk.in_uint32_le();
+
+            LOG(LOG_INFO, "Sending %s(%u) clipboard data to server (%u) bytes%s",
+                RDPECLIP::get_Format_name(this->clipboard_requested_format_id),
+                this->clipboard_requested_format_id, dataLen,
+                (((this->clipboard_requested_format_id == RDPECLIP::CF_TEXT) ||
+                  (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT)) ? ":" : "."));
+
+            const size_t max_length_of_data_to_dump = 256;
+
+            if (this->clipboard_requested_format_id == RDPECLIP::CF_TEXT) {
+                const size_t length_of_data_to_dump = std::min(chunk.in_remain(), max_length_of_data_to_dump);
+                const std::string data_to_dump(::char_ptr_cast(chunk.p), length_of_data_to_dump);
+                LOG(LOG_INFO, data_to_dump.c_str());
+            }
+            else if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
+                REDASSERT(!(chunk.in_remain() & 1));
+
+                const size_t length_of_data_to_dump = std::min(chunk.in_remain(), max_length_of_data_to_dump * 2);
+
+                const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+                const size_t size_of_utf8_string =
+                    length_of_data_to_dump / 2 * maximum_length_of_utf8_character_in_bytes;
+
+                uint8_t * const utf8_string = static_cast<uint8_t *>(
+                    ::alloca(size_of_utf8_string));
+                const size_t length_of_utf8_string = ::UTF16toUTF8(
+                    chunk.p, length_of_data_to_dump / 2, utf8_string, size_of_utf8_string);
+                const std::string data_to_dump(::char_ptr_cast(utf8_string),
+                    length_of_utf8_string);
+                LOG(LOG_INFO, data_to_dump.c_str());
+            }
+
+            chunk.p -= 6;   // msgFlags(2) + dataLen(4)
+        }
 
         this->update_total_clipboard_data(msgType, length);
 
-        chunk.p -= 2;
+        chunk.p -= 2;   // msgType(2)
 
         this->send_to_channel(*cliprdr_channel, chunk, length, flags);
     }
@@ -6269,9 +6335,9 @@ public:
 
         while (wab_agent_channel_message.back() == '\0') wab_agent_channel_message.pop_back();
 
-        //LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
-
         if (!wab_agent_channel_message.compare("Request=Get startup application")) {
+            LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
+
             //LOG(LOG_INFO, "<<<Get startup application>>>");
 
             if (this->verbose & 1) {
@@ -6344,6 +6410,9 @@ public:
             //LOG(LOG_INFO, "Recevied Keep-Alive from Agent.");
             this->wab_agent_keep_alive_received = true;
         }
+        else {
+            LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
+        }
     }
 
     void process_cliprdr_event(
@@ -6397,6 +6466,13 @@ public:
 
                 cencel_pdu = true;
             }
+            else {
+                stream.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
+
+                this->clipboard_requested_format_id = stream.in_uint32_le();
+
+                stream.p -= 10; // msgFlags(2) + dataLen(4) + requestedFormatId(4)
+            }
         }
         else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
             if (!this->authorization_channels.cliprdr_file_is_authorized()) {
@@ -6418,6 +6494,49 @@ public:
         }
 
         if (!cencel_pdu) {
+            if ((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) &&
+                (flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
+                (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
+
+                stream.in_skip_bytes(2 /*msgFlags(2)*/);
+
+                const uint32_t dataLen = stream.in_uint32_le();
+
+                LOG(LOG_INFO, "Sending %s(%u) clipboard data to client (%u) bytes%s",
+                    RDPECLIP::get_Format_name(this->clipboard_requested_format_id),
+                    this->clipboard_requested_format_id, dataLen,
+                    (((this->clipboard_requested_format_id == RDPECLIP::CF_TEXT) ||
+                      (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT)) ? ":" : "."));
+
+                const size_t max_length_of_data_to_dump = 256;
+
+                if (this->clipboard_requested_format_id == RDPECLIP::CF_TEXT) {
+                    const size_t length_of_data_to_dump = std::min(stream.in_remain(), max_length_of_data_to_dump);
+                    const std::string data_to_dump(::char_ptr_cast(stream.p), length_of_data_to_dump);
+                    LOG(LOG_INFO, data_to_dump.c_str());
+                }
+                else if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
+                    REDASSERT(!(stream.in_remain() & 1));
+
+                    const size_t length_of_data_to_dump = std::min(stream.in_remain(), max_length_of_data_to_dump * 2);
+
+                    const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+                    const size_t size_of_utf8_string =
+                        length_of_data_to_dump / 2 * maximum_length_of_utf8_character_in_bytes;
+
+                    uint8_t * const utf8_string = static_cast<uint8_t *>(
+                        ::alloca(size_of_utf8_string));
+                    const size_t length_of_utf8_string = ::UTF16toUTF8(
+                        stream.p, length_of_data_to_dump / 2, utf8_string, size_of_utf8_string);
+                    const std::string data_to_dump(::char_ptr_cast(utf8_string),
+                        length_of_utf8_string);
+                    LOG(LOG_INFO, data_to_dump.c_str());
+                }
+
+                stream.p -= 6;   // msgFlags(2) + dataLen(4)
+            }
+
             this->update_total_clipboard_data(msgType, length);
             stream.p -= 2;  // msgType(2)
             this->send_to_front_channel(

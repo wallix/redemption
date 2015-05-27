@@ -141,6 +141,7 @@ enum authid_t {
     AUTHID_PROXY_OPT,
 
     AUTHID_DISABLE_KEYBOARD_LOG,
+    AUTHID_DISABLE_CLIPBOARD_LOG,
 
     AUTHID_RT_DISPLAY,
 
@@ -244,6 +245,8 @@ enum authid_t {
 #define STRAUTHID_PROXY_OPT                     "proxy_opt"
 
 #define STRAUTHID_DISABLE_KEYBOARD_LOG          "disable_keyboard_log"
+#define STRAUTHID_DISABLE_CLIPBOARD_LOG         "disable_clipboard_log"
+
 #define STRAUTHID_RT_DISPLAY                    "rt_display"
 
 #define STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE   "vnc_server_clipboard_encoding_type"
@@ -352,6 +355,8 @@ static const char * const authstr[MAX_AUTHID - 1] = {
     STRAUTHID_PROXY_OPT,
 
     STRAUTHID_DISABLE_KEYBOARD_LOG,
+    STRAUTHID_DISABLE_CLIPBOARD_LOG,
+
     STRAUTHID_RT_DISPLAY,
 
     STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE,
@@ -711,8 +716,13 @@ public:
         bool disable_keyboard_log_syslog = false;
         bool disable_keyboard_log_wrm    = false;
         bool disable_keyboard_log_ocr    = false;
-        UnsignedField     rt_display;           // AUTHID_RT_DISPLAY
-                                                // 0: disable, 1: enable
+
+        // 1 - Disable clipboard event logging in syslog
+        UnsignedField disable_clipboard_log;    // AUTHID_DISABLE_CLIPBOARD_LOG
+        bool disable_clipboard_log_syslog = false;
+
+        UnsignedField rt_display;   // AUTHID_RT_DISPLAY
+                                    // 0: disable, 1: enable
 
         unsigned wrm_color_depth_selection_strategy = 0; // 0: 24-bit, 1: 16-bit
 
@@ -969,9 +979,13 @@ public:
         // Begin section video
         this->video.disable_keyboard_log.attach_ini(this, AUTHID_DISABLE_KEYBOARD_LOG);
         this->video.disable_keyboard_log.set(0);
+        this->to_send_set.insert(AUTHID_DISABLE_KEYBOARD_LOG);
+
+        this->video.disable_clipboard_log.attach_ini(this, AUTHID_DISABLE_CLIPBOARD_LOG);
+        this->video.disable_clipboard_log.set(0);
+
         this->video.rt_display.attach_ini(this, AUTHID_RT_DISPLAY);
         this->video.rt_display.set(0);
-        this->to_send_set.insert(AUTHID_DISABLE_KEYBOARD_LOG);
         // End section "video"
 
         // Begin Section "translation"
@@ -1471,6 +1485,10 @@ public:
                 this->video.disable_keyboard_log_syslog = 0 != (this->video.disable_keyboard_log.get() & 1);
                 this->video.disable_keyboard_log_wrm    = 0 != (this->video.disable_keyboard_log.get() & 2);
                 this->video.disable_keyboard_log_ocr    = 0 != (this->video.disable_keyboard_log.get() & 4);
+            }
+            else if (0 == strcmp(key, "disable_clipboard_log")) {
+                this->video.disable_clipboard_log.set_from_cstr(value);
+                this->video.disable_clipboard_log_syslog = 0 != (this->video.disable_clipboard_log.get() & 1);
             }
             else if (0 == strcmp(key, "rt_display")) {
                 this->video.rt_display.set_from_cstr(value);

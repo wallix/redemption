@@ -55,6 +55,39 @@ enum {
     , CF_GDIOBJLAST      = 1023
 };
 
+inline static const char * get_Format_name(uint32_t FormatId) {
+    switch (FormatId) {
+        case CF_TEXT:            return "CF_TEXT";
+        case CF_BITMAP:          return "CF_BITMAP";
+        case CF_METAFILEPICT:    return "CF_METAFILEPICT";
+        case CF_SYLK:            return "CF_SYLK";
+        case CF_DIF:             return "CF_DIF";
+        case CF_TIFF:            return "CF_TIFF";
+        case CF_OEMTEXT:         return "CF_OEMTEXT";
+        case CF_DIB:             return "CF_DIB";
+        case CF_PALETTE:         return "CF_PALETTE";
+        case CF_PENDATA:         return "CF_PENDATA";
+        case CF_RIFF:            return "CF_RIFF";
+        case CF_WAVE:            return "CF_WAVE";
+        case CF_UNICODETEXT:     return "CF_UNICODETEXT";
+        case CF_ENHMETAFILE:     return "CF_ENHMETAFILE";
+        case CF_HDROP:           return "CF_HDROP";
+        case CF_LOCALE:          return "CF_LOCALE";
+        case CF_DIBV5:           return "CF_DIBV5";
+        case CF_OWNERDISPLAY:    return "CF_OWNERDISPLAY";
+        case CF_DSPTEXT:         return "CF_DSPTEXT";
+        case CF_DSPBITMAP:       return "CF_DSPBITMAP";
+        case CF_DSPMETAFILEPICT: return "CF_DSPMETAFILEPICT";
+        case CF_DSPENHMETAFILE:  return "CF_DSPENHMETAFILE";
+        case CF_PRIVATEFIRST:    return "CF_PRIVATEFIRST";
+        case CF_PRIVATELAST:     return "CF_PRIVATELAST";
+        case CF_GDIOBJFIRST:     return "CF_GDIOBJFIRST";
+        case CF_GDIOBJLAST:      return "CF_GDIOBJLAST";
+    }
+
+    return "<unknown>";
+}
+
 // [MS-RDPECLIP] 2.2.1 Clipboard PDU Header (CLIPRDR_HEADER)
 // =========================================================
 
@@ -113,6 +146,24 @@ enum {
     , CB_LOCK_CLIPDATA         = 0x000A
     , CB_UNLOCK_CLIPDATA       = 0x000B
 };
+
+inline static const char * get_msgType_name(uint16_t msgType) {
+    switch (msgType) {
+        case CB_MONITOR_READY:         return "CB_MONITOR_READY";
+        case CB_FORMAT_LIST:           return "CB_FORMAT_LIST";
+        case CB_FORMAT_LIST_RESPONSE:  return "CB_FORMAT_LIST_RESPONSE";
+        case CB_FORMAT_DATA_REQUEST:   return "CB_FORMAT_DATA_REQUEST";
+        case CB_FORMAT_DATA_RESPONSE:  return "CB_FORMAT_DATA_RESPONSE";
+        case CB_TEMP_DIRECTORY:        return "CB_TEMP_DIRECTORY";
+        case CB_CLIP_CAPS:             return "CB_CLIP_CAPS";
+        case CB_FILECONTENTS_REQUEST:  return "CB_FILECONTENTS_REQUEST";
+        case CB_FILECONTENTS_RESPONSE: return "CB_FILECONTENTS_RESPONSE";
+        case CB_LOCK_CLIPDATA:         return "CB_LOCK_CLIPDATA";
+        case CB_UNLOCK_CLIPDATA:       return "CB_UNLOCK_CLIPDATA";
+    }
+
+    return "<unknown>";
+}
 
 #define CB_CHUNKED_FORMAT_DATA_RESPONSE 0xFFFF
 

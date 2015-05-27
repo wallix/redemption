@@ -110,6 +110,9 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
@@ -366,6 +369,12 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
                                                         ini.video.record_tmp_path.c_str());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
     BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -634,6 +643,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
@@ -810,6 +822,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "ocr_on_title_bar_only=yes\n"
                           "ocr_max_unrecog_char_rate=50\n"
                           "disable_keyboard_log=1\n"
+                          "disable_clipboard_log=0\n"
                           "\n"
                           "[crypto]\n"
                           "key0=00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF\n"
@@ -893,6 +906,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -1051,6 +1067,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "record_path=/mnt/wab/recorded/rdp/\n"
                           "record_tmp_path=/mnt/tmp/wab/recorded/rdp/\n"
                           "disable_keyboard_log=2\n"
+                          "disable_clipboard_log=1\n"
                           "\n"
                           "[mod_vnc]\n"
                           "server_clipboard_encoding_type=utf-8\n"
@@ -1129,6 +1146,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+
+    BOOST_CHECK_EQUAL(1,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(true,                             ini.video.disable_clipboard_log_syslog);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -1344,6 +1364,9 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
 
@@ -1474,6 +1497,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
                           "disable_keyboard_log=4\n"
                           "wrm_color_depth_selection_strategy=1\n"
                           "wrm_compression_algorithm=1\n"
+                          "disable_clipboard_log=0\n"
                           "\n"
                           );
 
@@ -1554,6 +1578,9 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_ocr);
+
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
@@ -1745,6 +1772,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
@@ -1930,6 +1960,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
@@ -2106,6 +2139,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
@@ -2281,6 +2317,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);

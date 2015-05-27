@@ -27,6 +27,8 @@
 char * in_place_windows_to_linux_newline_convert(char * s) {
     char * src, * dest;
 
+    REDASSERT(s);
+
     src = dest = s;
 
     char * p;
