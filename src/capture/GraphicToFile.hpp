@@ -773,6 +773,25 @@ protected:
         payload.mark_end();
         this->trans.send(payload);
     }
+
+public:
+    virtual void session_update(const timeval & now, const char * message) override {
+        uint16_t message_length = ::strlen(message) + 1;    // Null-terminator is included.
+
+        BStream payload(16);
+        payload.out_timeval_to_uint64le_usec(now);
+        payload.out_uint16_le(message_length);
+
+        payload.mark_end();
+
+        BStream header(8);
+        WRMChunk_Send chunk(header, SESSION_UPDATE, payload.size() + message_length, 1);
+        this->trans.send(header);
+        this->trans.send(payload);
+        this->trans.send(message, message_length);
+
+        this->last_sent_timer = this->timer;
+    }
 };  // struct GraphicToFile
 
 #endif

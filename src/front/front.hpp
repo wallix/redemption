@@ -2476,8 +2476,17 @@ public:
         return true;
     }
 
-    virtual void set_keylayout(int LCID) {
+    virtual void set_keylayout(int LCID) override {
         this->keymap.init_layout(LCID);
+    }
+
+    virtual void session_update(const char * message) override {
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            struct timeval now = tvtime();
+
+            this->capture->session_update(now, message);
+        }
     }
 
     /*****************************************************************************/

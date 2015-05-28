@@ -1163,6 +1163,61 @@ public:
 
                 this->trans = this->trans_source;
             break;
+            case SESSION_UPDATE:
+                this->stream.in_timeval_from_uint64le_usec(this->record_now);
+
+                for (size_t i = 0; i < this->nbconsumers; i++){
+                    if (this->consumers[i].capture_device) {
+                        this->consumers[i].capture_device->external_time(this->record_now);
+                    }
+                }
+
+                {
+                    uint16_t message_length = this->stream.in_uint16_le();
+
+                    const char * message =  ::char_ptr_cast(this->stream.p); // Null-terminator is included.
+
+                    this->stream.in_skip_bytes(message_length);
+
+                    for (size_t i = 0; i < this->nbconsumers; i++){
+                        if (this->consumers[i].capture_device) {
+                            this->consumers[i].capture_device->session_update(this->record_now, message);
+                        }
+                    }
+                }
+
+                if (!this->timestamp_ok) {
+                   if (this->real_time) {
+                        this->start_record_now   = this->record_now;
+                        this->start_synctime_now = tvtime();
+                    }
+                    this->timestamp_ok = true;
+                }
+                else {
+                   if (this->real_time) {
+                        for (size_t i = 0; i < this->nbconsumers; i++) {
+                            this->consumers[i].graphic_device->flush();
+                        }
+
+                        struct timeval now     = tvtime();
+                        uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
+
+                        uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
+
+                        if (elapsed < movie_elapsed) {
+                            struct timespec wtime     = {
+                                  static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
+                                , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
+                                };
+                            struct timespec wtime_rem = { 0, 0 };
+
+                            while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
+                                wtime = wtime_rem;
+                            }
+                        }
+                    }
+                }
+            break;
             default:
                 LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
                 throw Error(ERR_WRM);

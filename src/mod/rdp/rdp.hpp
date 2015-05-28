@@ -6338,6 +6338,8 @@ public:
 
         while (wab_agent_channel_message.back() == '\0') wab_agent_channel_message.pop_back();
 
+        bool dont_send_to_front = false;
+
         if (!wab_agent_channel_message.compare("Request=Get startup application")) {
             LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
 
@@ -6412,6 +6414,8 @@ public:
         else if (!wab_agent_channel_message.compare("KeepAlive=OK")) {
             //LOG(LOG_INFO, "Recevied Keep-Alive from Agent.");
             this->wab_agent_keep_alive_received = true;
+
+            dont_send_to_front = true;
         }
         else {
             const char * message   = wab_agent_channel_message.c_str();
@@ -6437,6 +6441,10 @@ public:
                     "mod_rdp::process_wab_agent_event: Invalid message format. WAB agent channel data=\"%s\"",
                     message);
             }
+        }
+
+        if (!dont_send_to_front) {
+            this->front.session_update(wab_agent_channel_message.c_str());
         }
     }
 

@@ -70,6 +70,8 @@ class FrontAPI : public DrawApi {
     virtual bool retrieve_client_capability_set(Capability & caps) { return true; }
 
     virtual void set_keylayout(int LCID) {}
+
+    virtual void session_update(const char * message) {}
 };
 
 #endif
