@@ -2096,6 +2096,8 @@ public:
 
                             this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data, tsk_switch_shortcuts);
                             decoded_data.mark_end();
+                            //LOG(LOG_INFO, "Decoded keyboard input data:");
+                            //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
                             if (  this->capture
                                && (this->capture_state == CAPTURE_STATE_STARTED)
@@ -2472,6 +2474,10 @@ public:
     #pragma GCC diagnostic pop
 # endif
         return true;
+    }
+
+    virtual void set_keylayout(int LCID) {
+        this->keymap.init_layout(LCID);
     }
 
     /*****************************************************************************/
@@ -3369,6 +3375,8 @@ public:
 
                             this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data, tsk_switch_shortcuts);
                             decoded_data.mark_end();
+                            //LOG(LOG_INFO, "Decoded keyboard input data:");
+                            //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
                             if (  this->capture
                                && (this->capture_state == CAPTURE_STATE_STARTED)

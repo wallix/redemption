@@ -6414,7 +6414,29 @@ public:
             this->wab_agent_keep_alive_received = true;
         }
         else {
-            LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
+            const char * message   = wab_agent_channel_message.c_str();
+            const char * separator = ::strchr(message, '=');
+
+            if (separator) {
+                std::string order(message, separator - message);
+                std::string parameters(separator + 1);
+
+                LOG(LOG_INFO,
+                    "mod_rdp::process_wab_agent_event: order=\"%s\" parameters=\"%s\"",
+                    order.c_str(), parameters.c_str());
+
+                if (!order.compare("InputLanguage")) {
+                    this->front.set_keylayout(::strtol(parameters.c_str(), nullptr, 16));
+                }
+                else {
+                    LOG(LOG_WARNING, "mod_rdp::process_wab_agent_event: Unexpected order.");
+                }
+            }
+            else {
+                LOG(LOG_WARNING,
+                    "mod_rdp::process_wab_agent_event: Invalid message format. WAB agent channel data=\"%s\"",
+                    message);
+            }
         }
     }
 
