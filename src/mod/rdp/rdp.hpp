@@ -202,6 +202,7 @@ class mod_rdp : public mod_api {
     const uint64_t          client_device_list_announce_timeout         = 1000000;  // Timeout in microseconds.
           bool              client_device_list_announce_timer_enabled   = false;
           TimeoutT<TimeVal> client_device_list_announce_timeout_checker;
+          bool              server_user_logged_on_processed             = false;
 
     std::string output_filename;
 
@@ -811,7 +812,9 @@ private:
         }
         const uint16_t msgType = chunk.in_uint16_le();
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: client clipboard PDU: msgType=%d", msgType);
+            LOG(LOG_INFO,
+                "mod_rdp::send_to_mod_cliprdr_channel: client clipboard PDU: msgType=%s(%d)",
+                RDPECLIP::get_msgType_name(msgType), msgType);
         }
 
         if ((msgType == RDPECLIP::CB_FORMAT_LIST)) {
@@ -6424,7 +6427,8 @@ public:
 
         const uint16_t msgType = stream.in_uint16_le();
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%d", msgType);
+            LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%s(%d)",
+                RDPECLIP::get_msgType_name(msgType), msgType);
         }
 
         bool cencel_pdu = false;
@@ -6538,6 +6542,7 @@ public:
             }
 
             this->update_total_clipboard_data(msgType, length);
+
             stream.p -= 2;  // msgType(2)
             this->send_to_front_channel(
                 cliprdr_channel.name, stream.p, length, chunk_size, flags
@@ -6984,17 +6989,21 @@ public:
                         "mod_rdp::process_rdpdr_event: Server User Logged On");
                 }
 
-                this->client_device_list_announce_timeout_checker.restart_timeout(
-                    TimeVal(), this->client_device_list_announce_timeout);
-                REDASSERT(!this->client_device_list_announce_timer_enabled);
-                this->client_device_list_announce_timer_enabled = true;
-                if (this->verbose) {
-                    LOG(LOG_INFO,
-                        "mod_rdp::process_rdpdr_event: Client Device List Announce timer is enabled.");
-                }
+                if (!this->server_user_logged_on_processed) {
+                    this->server_user_logged_on_processed = true;
 
-                this->event.object_and_time = true;
-                this->event.set(this->client_device_list_announce_timeout);
+                    this->client_device_list_announce_timeout_checker.restart_timeout(
+                        TimeVal(), this->client_device_list_announce_timeout);
+                    REDASSERT(!this->client_device_list_announce_timer_enabled);
+                    this->client_device_list_announce_timer_enabled = true;
+                    if (this->verbose) {
+                        LOG(LOG_INFO,
+                            "mod_rdp::process_rdpdr_event: Client Device List Announce timer is enabled.");
+                    }
+
+                    this->event.object_and_time = true;
+                    this->event.set(this->client_device_list_announce_timeout);
+                }
             break;
 
             case rdpdr::PacketId::PAKID_PRN_USING_XPS:

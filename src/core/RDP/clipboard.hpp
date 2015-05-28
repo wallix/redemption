@@ -147,6 +147,10 @@ enum {
     , CB_UNLOCK_CLIPDATA       = 0x000B
 };
 
+enum {
+      CB_CHUNKED_FORMAT_DATA_RESPONSE = 0xFFFF
+};
+
 inline static const char * get_msgType_name(uint16_t msgType) {
     switch (msgType) {
         case CB_MONITOR_READY:         return "CB_MONITOR_READY";
@@ -160,12 +164,12 @@ inline static const char * get_msgType_name(uint16_t msgType) {
         case CB_FILECONTENTS_RESPONSE: return "CB_FILECONTENTS_RESPONSE";
         case CB_LOCK_CLIPDATA:         return "CB_LOCK_CLIPDATA";
         case CB_UNLOCK_CLIPDATA:       return "CB_UNLOCK_CLIPDATA";
+
+        case CB_CHUNKED_FORMAT_DATA_RESPONSE: return "CB_CHUNKED_FORMAT_DATA_RESPONSE";
     }
 
     return "<unknown>";
 }
-
-#define CB_CHUNKED_FORMAT_DATA_RESPONSE 0xFFFF
 
 // msgFlags (2 bytes): An unsigned, 16-bit integer that indicates message
 //  flags.
