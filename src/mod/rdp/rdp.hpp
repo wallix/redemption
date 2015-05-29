@@ -6432,6 +6432,12 @@ public:
                 if (!order.compare("InputLanguage")) {
                     this->front.set_keylayout(::strtol(parameters.c_str(), nullptr, 16));
                 }
+                else if (!order.compare("WindowText")) {
+                }
+                else if (!order.compare("ProcessName")) {
+                }
+                else if (!order.compare("NewProcess")) {
+                }
                 else {
                     LOG(LOG_WARNING, "mod_rdp::process_wab_agent_event: Unexpected order.");
                 }
