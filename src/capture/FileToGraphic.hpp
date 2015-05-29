@@ -56,6 +56,7 @@
 #include "chunked_image_transport.hpp"
 #include "CaptureDevice.hpp"
 #include "wrm_label.hpp"
+#include "cast.hpp"
 #include "png.hpp"
 
 struct FileToGraphic
