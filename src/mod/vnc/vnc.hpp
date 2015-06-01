@@ -1069,10 +1069,14 @@ public:
                         RDPECLIP::CB_FORMAT_DATA_REQUEST);
                 }
 
-                // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_TEXT)
-                // 04 00 00 00 04 00 00 00 01 00 00 00
+                // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_TEXT or CF_UNICODETEXT)
+                // 04 00 00 00 04 00 00 00 0? 00 00 00
                 // 00 00 00 00
-                RDPECLIP::FormatDataRequestPDU format_data_request_pdu(RDPECLIP::CF_TEXT);
+                RDPECLIP::FormatDataRequestPDU format_data_request_pdu(
+                        (this->server_clipboard_encoding_type == ClipboardEncodingType::Latin1) ?
+                        RDPECLIP::CF_TEXT :
+                        RDPECLIP::CF_UNICODETEXT
+                    );
                 BStream                        out_s(256);
 
                 format_data_request_pdu.emit(out_s);
