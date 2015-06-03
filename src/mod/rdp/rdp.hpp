@@ -262,6 +262,33 @@ class mod_rdp : public mod_api {
 
     uint32_t clipboard_requested_format_id = 0;
 
+    class RdpdrToServerSender : public ToServerSender {
+        Transport    & transport;
+        CryptContext & encrypt;
+        int            encryption_level;
+        uint16_t       user_id;
+        uint16_t       channel_id;
+
+    public:
+        RdpdrToServerSender( Transport & transport
+                           , CryptContext & encrypt
+                           , int encryption_level
+                           , uint16_t user_id
+                           , uint16_t channel_id)
+        : transport(transport)
+        , encrypt(encrypt)
+        , encryption_level(encryption_level)
+        , user_id(user_id)
+        , channel_id(channel_id) {}
+
+        virtual void operator() (size_t total_length, uint32_t flags, const uint8_t * chunk_data, size_t chunk_data_length) {
+            CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+
+            virtual_channel_pdu.send_to_server(this->transport, this->encrypt, this->encryption_level,
+                this->user_id, this->channel_id, total_length, flags, chunk_data, chunk_data_length);
+        }
+    };
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -6977,6 +7004,7 @@ public:
                     }
                 }
                 else {
+/*
                     if (device_io_request.MajorFunction() == rdpdr::IRP_MJ_READ) {
                         const auto saved_mj_read_stream_p = stream.p;
 
@@ -6989,16 +7017,25 @@ public:
                                 20 +                            // DeviceIoReply(16) + Length(4)
                                 device_read_request.Length()
                             );
+LOG(LOG_INFO, "read_length=%u", device_read_request.Length());
                     }
 
                     this->chunked_virtual_channel_data_stream.reset();
 
                     uint32_t out_flags = 0;
+*/
+
+                    RdpdrToServerSender sender(this->nego.trans,
+                                               this->encrypt,
+                                               this->encryptionLevel,
+                                               this->userid,
+                                               rdpdr_channel.chanid);
 
                     this->file_system_drive_manager.ProcessDeviceIORequest(
-                        device_io_request, stream, this->chunked_virtual_channel_data_stream,
-                        out_flags, this->verbose);
+                        device_io_request, stream, sender, this->verbose);
+/*
                     if (this->chunked_virtual_channel_data_stream.size()) {
+REDASSERT(false);
                         this->send_to_channel(rdpdr_channel,
                                               this->chunked_virtual_channel_data_stream,
                                               this->chunked_virtual_channel_data_stream.size(),
@@ -7006,6 +7043,7 @@ public:
                     }
 
                     this->chunked_virtual_channel_data_stream.reset();
+*/
 
                     return;
                 }
