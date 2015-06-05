@@ -24,9 +24,12 @@
 #include "asynchronous_task_manager.hpp"
 #include "RDP/channels/rdpdr_file_system_drive_manager.hpp"
 #include "transport.hpp"
+#include "wait_obj.hpp"
 
 class RdpdrDriveReadTask : public AsynchronousTask {
     std::unique_ptr<Transport> transport;
+
+    const int file_descriptor;
 
     ToServerSender & to_server_sender;
 
@@ -42,12 +45,15 @@ class RdpdrDriveReadTask : public AsynchronousTask {
 
 public:
     RdpdrDriveReadTask(std::unique_ptr<Transport> transport,
+                       int file_descriptor,
                        ToServerSender & to_server_sender,
                        uint32_t DeviceId,
                        uint32_t CompletionId,
                        uint32_t number_of_bytes_to_read,
                        uint32_t verbose = 0)
-    : transport(std::move(transport))
+    : AsynchronousTask()
+    , transport(std::move(transport))
+    , file_descriptor(file_descriptor)
     , to_server_sender(to_server_sender)
     , DeviceId(DeviceId)
     , CompletionId(CompletionId)
@@ -55,10 +61,23 @@ public:
     , remaining_number_of_bytes_to_read(number_of_bytes_to_read)
     , verbose(verbose) {}
 
-    virtual void configure_wait_object(wait_obj & wait_object) override {
+    virtual void configure_wait_object(wait_obj & wait_object) const override {
+        REDASSERT(!wait_object.waked_up_by_time);
+
+        wait_object.object_and_time = true;
+
+        wait_object.set(1000000);
     }
 
-    virtual bool run() override {
+    virtual int get_file_descriptor() const override { return this->file_descriptor; }
+
+    virtual bool run(const wait_obj & wait_object) override {
+        if (wait_object.waked_up_by_time) {
+            LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
+                this->file_descriptor);
+            return true;
+        }
+
         BStream out_stream(CHANNELS::CHANNEL_CHUNK_LENGTH);
 
         uint32_t out_flags = 0;

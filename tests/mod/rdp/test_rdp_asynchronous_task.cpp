@@ -64,6 +64,47 @@ public:
     }
 };
 
+
+inline
+void add_to_fd_set(wait_obj & w, int fd, fd_set & rfds, unsigned & max, timeval & timeout)
+{
+    if (fd > -1) {
+        FD_SET(fd, &rfds);
+        max = ((unsigned)fd > max) ? fd : max;
+    }
+    if (((fd <= -1) || w.object_and_time) && w.set_state) {
+        struct timeval now;
+        now = tvtime();
+        timeval remain = how_long_to_wait(w.trigger_time, now);
+        if (lessthantimeval(remain, timeout)) {
+            timeout = remain;
+        }
+    }
+}
+
+inline
+bool is_set(wait_obj & w, int fd, fd_set & rfds)
+{
+    w.waked_up_by_time = false;
+
+    if (fd > -1) {
+        bool res = FD_ISSET(fd, &rfds);
+
+        if (res || !w.object_and_time) {
+            return res;
+        }
+    }
+
+    if (w.set_state) {
+        if (tvtime() >= w.trigger_time) {
+            w.waked_up_by_time = true;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 {
     uint32_t verbose = 1;
@@ -73,19 +114,58 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     auto transport = std::make_unique<InFileTransport>(fd_wrapper.fd);
 
-    //CheckTransport check_transport("0123456789", 10, verbose);
-    LogTransport log_transport;
+    transport->seek(1024 * 32, SEEK_SET);
 
-//    TestToServerSender test_to_server_sender(check_transport);
-    TestToServerSender test_to_server_sender(log_transport);
+    //LogTransport log_transport;
+    //TestToServerSender test_to_server_sender(log_transport);
+
+    #include "fixtures/test_rdp_asynchronous_task.hpp"
+    CheckTransport check_transport(outdata, sizeof(outdata), verbose);
+    TestToServerSender test_to_server_sender(check_transport);
 
     const uint32_t DeviceId = 0;
     const uint32_t CompletionId = 8;
 
     const uint32_t number_of_bytes_to_read = 2 * 1024;
 
-    RdpdrDriveReadTask rdpdr_drive_read_task(std::move(transport), test_to_server_sender,
-        DeviceId, CompletionId, number_of_bytes_to_read, verbose);
+    RdpdrDriveReadTask rdpdr_drive_read_task(std::move(transport), fd_wrapper.fd,
+        test_to_server_sender, DeviceId, CompletionId, number_of_bytes_to_read,
+        verbose);
 
-    while (rdpdr_drive_read_task.run());
+    bool run_task = true;
+
+    do
+    {
+        wait_obj event;
+
+        rdpdr_drive_read_task.configure_wait_object(event);
+
+        unsigned max = 0;
+        fd_set rfds;
+
+        FD_ZERO(&rfds);
+
+        timeval timeout = { 3, 0 };
+
+        add_to_fd_set(event, rdpdr_drive_read_task.get_file_descriptor(), rfds, max, timeout);
+
+        int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
+
+        if (num < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+
+            LOG(LOG_ERR, "Task loop raised error %u : %s", errno, strerror(errno));
+            run_task = false;
+        }
+        else {
+            if (is_set(event, rdpdr_drive_read_task.get_file_descriptor(), rfds)) {
+                if (!rdpdr_drive_read_task.run(event)) {
+                    run_task = false;
+                }
+            }
+        }
+    }
+    while (run_task);
 }

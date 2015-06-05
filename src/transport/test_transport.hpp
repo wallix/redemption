@@ -148,7 +148,9 @@ class LogTransport
 : public Transport
 {
     void do_send(const char * const buffer, size_t len) {
+        LOG(LOG_INFO, "Sending on target (-1) %u bytes", len);
         hexdump_c(buffer, len);
+        LOG(LOG_INFO, "Sent dumped on target (-1) %u bytes", len);
     }
 };
 
