@@ -560,6 +560,7 @@ unit-test test_draw_api : tests/mod/test_draw_api.cpp libboost_unit_test : <vari
 unit-test test_null : tests/mod/null/test_null.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_rdp_asynchronous_task : tests/mod/rdp/test_rdp_asynchronous_task.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_vnc : tests/mod/vnc/test_vnc.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_xup : tests/mod/xup/test_xup.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
