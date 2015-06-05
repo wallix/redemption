@@ -108,13 +108,21 @@ public:
         }
         else if (NOTIFY_SUBMIT == event) {
             if (widget == &this->selector.connect) {
-                char buffer[1024];
+                char buffer[1024] = {};
                 uint16_t row_index = 0;
                 uint16_t column_index = 0;
                 this->selector.selector_lines.get_selection(row_index, column_index);
                 const char * target = this->selector.selector_lines.get_cell_text(row_index, WidgetSelectorFlat2::IDX_TARGET);
-                snprintf(buffer, sizeof(buffer), "%s:%s",
-                         target, this->ini.globals.auth_user.get_cstr());
+                const char * groups = this->selector.selector_lines.get_cell_text(row_index, WidgetSelectorFlat2::IDX_TARGETGROUP);
+                int pos = 0;
+                while (groups[pos] && (groups[pos] != ';')) {
+                    pos++;
+                }
+                char group_buffer[512] = {};
+                snprintf(group_buffer, sizeof(group_buffer), "%s", groups);
+                group_buffer[pos] = 0;
+                snprintf(buffer, sizeof(buffer), "%s:%s:%s",
+                         target, group_buffer, this->ini.globals.auth_user.get_cstr());
                 this->ini.parse_username(buffer);
 
 
