@@ -36,6 +36,10 @@
 #include <memory>
 #include <string>
 
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET -1
+#endif  // #ifndef INVALID_SOCKET
+
 // X509_NAME_print_ex() prints a human readable version of nm to BIO out.
 // Each line (for multiline formats) is indented by indent spaces.
 // The output format can be extensively customised by use of the flags parameter.

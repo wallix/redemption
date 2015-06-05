@@ -27,15 +27,15 @@
 inline
 void add_to_fd_set(wait_obj & w, SocketTransport * t, fd_set & rfds, unsigned & max, timeval & timeout)
 {
-    if (t && t->sck > 0){
+    if (t && (t->sck > INVALID_SOCKET)) {
         FD_SET(t->sck, &rfds);
-        max = ((unsigned)t->sck > max)?t->sck:max;
+        max = ((unsigned)t->sck > max) ? t->sck : max;
     }
-    if ((!t || t->sck <= 0 || w.object_and_time) && w.set_state) {
+    if ((!t || (t->sck <= INVALID_SOCKET) || w.object_and_time) && w.set_state) {
         struct timeval now;
         now = tvtime();
         timeval remain = how_long_to_wait(w.trigger_time, now);
-        if (lessthantimeval(remain, timeout)){
+        if (lessthantimeval(remain, timeout)) {
             timeout = remain;
         }
     }
@@ -46,7 +46,7 @@ bool is_set(wait_obj & w, SocketTransport * t, fd_set & rfds)
 {
     w.waked_up_by_time = false;
 
-    if (t && t->sck > 0) {
+    if (t && (t->sck > INVALID_SOCKET)) {
         bool res = FD_ISSET(t->sck, &rfds);
 
         if (res || !w.object_and_time) {
