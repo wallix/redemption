@@ -23,16 +23,15 @@
 #ifndef REDEMPTION_TRANSPORT_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_TRANSPORT_HPP
 
+#include <sys/time.h>
+#include <stdint.h>
+#include <cstddef>
+
 #include "log.hpp"
 #include "error.hpp"
 #include "stream.hpp"
 #include "auth_api.hpp"
 #include "noncopyable.hpp"
-
-#include <sys/time.h>
-#include <stdint.h>
-#include <cstddef>
-
 
 using std::size_t;
 

@@ -21,11 +21,16 @@
 #ifndef REDEMPTION_CORE_RDP_CHANNELS_RDPDRFILESYSTEMDRIVEMANAGER_HPP
 #define REDEMPTION_CORE_RDP_CHANNELS_RDPDRFILESYSTEMDRIVEMANAGER_HPP
 
+#include <dirent.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
 
+#include "channel_list.hpp"
 #include "rdpdr.hpp"
 #include "defines.hpp"
 #include "FSCC/FileInformation.hpp"
+#include "make_unique.hpp"
 #include "SMB2/MessageSyntax.hpp"
 #include "winpr/pattern.hpp"
 
