@@ -22,16 +22,16 @@
 #define _REDEMPTION_MOD_RDP_RDP_ASYNCHRONOUS_TASK_HPP_
 
 #include "asynchronous_task_manager.hpp"
-#include "RDP/channels/rdpdr_file_system_drive_manager.hpp"
+#include "channel_list.hpp"
+#include "to_server_sender.hpp"
+#include "RDP/channels/rdpdr.hpp"
 #include "transport.hpp"
 #include "wait_obj.hpp"
 
 class RdpdrDriveReadTask : public AsynchronousTask {
-    std::unique_ptr<Transport> transport;
+    Transport * transport;
 
     const int file_descriptor;
-
-    ToServerSender & to_server_sender;
 
     const uint32_t DeviceId;
     const uint32_t CompletionId;
@@ -41,24 +41,26 @@ class RdpdrDriveReadTask : public AsynchronousTask {
 
     uint32_t length = 0;
 
+    ToServerSender & to_server_sender;
+
     const uint32_t verbose;
 
 public:
-    RdpdrDriveReadTask(std::unique_ptr<Transport> transport,
+    RdpdrDriveReadTask(Transport * transport,
                        int file_descriptor,
-                       ToServerSender & to_server_sender,
                        uint32_t DeviceId,
                        uint32_t CompletionId,
                        uint32_t number_of_bytes_to_read,
+                       ToServerSender & to_server_sender,
                        uint32_t verbose = 0)
     : AsynchronousTask()
-    , transport(std::move(transport))
+    , transport(transport)
     , file_descriptor(file_descriptor)
-    , to_server_sender(to_server_sender)
     , DeviceId(DeviceId)
     , CompletionId(CompletionId)
     , total_number_of_bytes_to_read(number_of_bytes_to_read)
     , remaining_number_of_bytes_to_read(number_of_bytes_to_read)
+    , to_server_sender(to_server_sender)
     , verbose(verbose) {}
 
     virtual void configure_wait_object(wait_obj & wait_object) const override {
@@ -100,10 +102,10 @@ public:
 
             out_stream.out_uint32_le(this->total_number_of_bytes_to_read);  // length(4)
 
-            if (this->verbose) {
-                LOG(LOG_INFO, "RdpdrDriveReadTask::run: Length=%u",
-                    remaining_number_of_bytes_to_read);
-            }
+            //if (this->verbose) {
+            //    LOG(LOG_INFO, "RdpdrDriveReadTask::run: Length=%u",
+            //        this->remaining_number_of_bytes_to_read);
+            //}
 
             out_stream.mark_end();
 
@@ -111,21 +113,21 @@ public:
 
             REDASSERT(!this->length);
 
-            this->length = out_stream.size() + total_number_of_bytes_to_read;
+            this->length = out_stream.size() + this->total_number_of_bytes_to_read;
         }
 
         const uint8_t * const saved_out_stream_p = out_stream.p;
 
-        transport->recv(&out_stream.p,
+        this->transport->recv(&out_stream.p,
             std::min<uint32_t>(out_stream.tailroom(), this->remaining_number_of_bytes_to_read));
         out_stream.mark_end();
 
         const uint32_t number_of_bytes_read = out_stream.p - saved_out_stream_p;
 
-        if (this->verbose) {
-            LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%u",
-                number_of_bytes_read);
-        }
+        //if (this->verbose) {
+        //    LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%u",
+        //        number_of_bytes_read);
+        //}
 
         this->remaining_number_of_bytes_to_read -= number_of_bytes_read;
         if (!this->remaining_number_of_bytes_to_read) {
@@ -134,9 +136,78 @@ public:
 
         REDASSERT(this->length);
 
-        to_server_sender(this->length, out_flags, out_stream.get_data(), out_stream.size());
+        this->to_server_sender(this->length, out_flags, out_stream.get_data(), out_stream.size());
 
         return (this->remaining_number_of_bytes_to_read != 0);
+    }
+};  // RdpdrDriveReadTask
+
+class RdpdrSendDriveIOResponseTask : public AsynchronousTask {
+    const uint32_t flags;
+    std::unique_ptr<uint8_t[]> data;
+    const size_t data_length;
+
+    size_t remaining_number_of_bytes_to_send;
+
+    ToServerSender & to_server_sender;
+
+    const uint32_t verbose;
+
+public:
+    RdpdrSendDriveIOResponseTask(uint32_t flags,
+                                 uint8_t * data,
+                                 size_t data_length,
+                                 ToServerSender & to_server_sender,
+                                 uint32_t verbose = 0)
+    : flags(flags)
+    , data(std::make_unique<uint8_t[]>(data_length))
+    , data_length(data_length)
+    , remaining_number_of_bytes_to_send(data_length)
+    , to_server_sender(to_server_sender)
+    , verbose(verbose) {
+        ::memcpy(this->data.get(), data, data_length);
+    }
+
+    virtual void configure_wait_object(wait_obj & wait_object) const override {
+        REDASSERT(!wait_object.waked_up_by_time);
+
+        wait_object.object_and_time = true;
+
+        wait_object.set(1000);  // 1 ms
+    }
+
+    virtual bool run(const wait_obj & wait_object) override {
+        if (this->data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
+            this->to_server_sender(this->data_length, this->flags, this->data.get(), this->data_length);
+
+            this->remaining_number_of_bytes_to_send = 0;
+
+            return false;
+        }
+
+        REDASSERT(this->remaining_number_of_bytes_to_send);
+
+        uint32_t out_flags = this->flags;
+
+        if (this->remaining_number_of_bytes_to_send != this->data_length) {
+            out_flags &= ~CHANNELS::CHANNEL_FLAG_FIRST;
+        }
+
+        uint32_t number_of_bytes_sent = this->data_length - this->remaining_number_of_bytes_to_send;
+        uint32_t number_of_bytes_to_send =
+            std::min<uint32_t>(this->remaining_number_of_bytes_to_send, CHANNELS::CHANNEL_CHUNK_LENGTH);
+
+        if (number_of_bytes_to_send != this->remaining_number_of_bytes_to_send) {
+            out_flags &= ~CHANNELS::CHANNEL_FLAG_LAST;
+        }
+
+        this->to_server_sender(this->data_length, out_flags,
+            this->data.get() + number_of_bytes_sent,
+            number_of_bytes_to_send);
+
+        this->remaining_number_of_bytes_to_send -= number_of_bytes_to_send;
+
+        return (this->remaining_number_of_bytes_to_send != 0);
     }
 };
 

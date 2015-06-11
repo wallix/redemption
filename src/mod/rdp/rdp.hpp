@@ -25,6 +25,8 @@
 #ifndef _REDEMPTION_MOD_RDP_RDP_HPP_
 #define _REDEMPTION_MOD_RDP_RDP_HPP_
 
+#include <queue>
+
 #include "rdp/rdp_orders.hpp"
 
 /* include "ther h files */
@@ -72,6 +74,7 @@
 #include "RDP/channels/rdpdr.hpp"
 #include "RDP/channels/rdpdr_file_system_drive_manager.hpp"
 #include "RDP/remote_programs.hpp"
+#include "rdp_asynchronous_task.hpp"
 #include "rdp_params.hpp"
 #include "transparentrecorder.hpp"
 #include "FSCC/FileInformation.hpp"
@@ -262,6 +265,9 @@ class mod_rdp : public mod_api {
 
     uint32_t clipboard_requested_format_id = 0;
 
+    std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
+    wait_obj                          asynchronous_task_event;
+
     class RdpdrToServerSender : public ToServerSender {
         Transport    & transport;
         CryptContext & encrypt;
@@ -288,6 +294,8 @@ class mod_rdp : public mod_api {
                 this->user_id, this->channel_id, total_length, flags, chunk_data, chunk_data_length);
         }
     };
+
+    std::unique_ptr<ToServerSender> to_server_sender;
 
 public:
     mod_rdp( Transport & trans
@@ -793,6 +801,30 @@ private:
     }
 
 public:
+    virtual wait_obj * get_asynchronous_task_event(int & out_fd) override {
+        if (this->asynchronous_tasks.empty()) {
+            out_fd = -1;
+            return nullptr;
+        }
+
+        out_fd = this->asynchronous_tasks.front()->get_file_descriptor();
+
+        return &this->asynchronous_task_event;
+    }
+
+    virtual void process_asynchronous_task() override {
+        if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
+            this->asynchronous_tasks.pop_front();
+        }
+
+        this->asynchronous_task_event.~wait_obj();
+        new (&this->asynchronous_task_event) wait_obj();
+
+        if (!this->asynchronous_tasks.empty()) {
+            this->asynchronous_tasks.front()->configure_wait_object(this->asynchronous_task_event);
+        }
+    }
+
     virtual void send_to_mod_channel( const char * const front_channel_name
                                     , Stream & chunk
                                     , size_t length
@@ -3388,6 +3420,7 @@ public:
             REDASSERT(this->enable_wab_agent);
 
             this->wab_agent_event.reset();
+            this->wab_agent_event.waked_up_by_time = false;
 
             if (this->wab_agent_launch_timeout && !this->wab_agent_is_ready) {
                 LOG(LOG_ERR, "Agent is not ready yet!");
@@ -3404,8 +3437,8 @@ public:
                     this->event.set();
                 }
                 else {
+                    LOG(LOG_INFO, "Agent keep alive requested");
                     this->wab_agent_keep_alive_received = false;
-
 
                     BStream out_s(1024);
 
@@ -6402,7 +6435,6 @@ public:
                     message_length_offset);
 
                 out_s.mark_end();
-                //hexdump(out_s.get_data(), out_s.size());
 
                 this->send_to_channel(
                     wab_agent_channel, out_s, out_s.size(),
@@ -7004,46 +7036,33 @@ public:
                     }
                 }
                 else {
-/*
-                    if (device_io_request.MajorFunction() == rdpdr::IRP_MJ_READ) {
-                        const auto saved_mj_read_stream_p = stream.p;
-
-                        rdpdr::DeviceReadRequest device_read_request;
-                        device_read_request.receive(stream);
-
-                        stream.p = saved_mj_read_stream_p;
-
-                        this->adjust_chunked_virtual_channel_data_stream_size(
-                                20 +                            // DeviceIoReply(16) + Length(4)
-                                device_read_request.Length()
+                    if (!this->to_server_sender) {
+                        this->to_server_sender = std::make_unique<RdpdrToServerSender>(
+                                this->nego.trans,
+                                this->encrypt,
+                                this->encryptionLevel,
+                                this->userid,
+                                rdpdr_channel.chanid
                             );
-LOG(LOG_INFO, "read_length=%u", device_read_request.Length());
+
                     }
 
-                    this->chunked_virtual_channel_data_stream.reset();
-
-                    uint32_t out_flags = 0;
-*/
-
-                    RdpdrToServerSender sender(this->nego.trans,
-                                               this->encrypt,
-                                               this->encryptionLevel,
-                                               this->userid,
-                                               rdpdr_channel.chanid);
+                    std::unique_ptr<AsynchronousTask> returned_asynchronous_task;
 
                     this->file_system_drive_manager.ProcessDeviceIORequest(
-                        device_io_request, stream, sender, this->verbose);
-/*
-                    if (this->chunked_virtual_channel_data_stream.size()) {
-REDASSERT(false);
-                        this->send_to_channel(rdpdr_channel,
-                                              this->chunked_virtual_channel_data_stream,
-                                              this->chunked_virtual_channel_data_stream.size(),
-                                              out_flags);
-                    }
+                        device_io_request, stream, *(this->to_server_sender.get()), returned_asynchronous_task,
+                        this->verbose);
 
-                    this->chunked_virtual_channel_data_stream.reset();
-*/
+                    if (returned_asynchronous_task) {
+                        if (this->asynchronous_tasks.empty()) {
+                            this->asynchronous_task_event.~wait_obj();
+                            new (&this->asynchronous_task_event) wait_obj();
+
+                            returned_asynchronous_task->configure_wait_object(this->asynchronous_task_event);
+                        }
+
+                        this->asynchronous_tasks.push_back(std::move(returned_asynchronous_task));
+                    }
 
                     return;
                 }

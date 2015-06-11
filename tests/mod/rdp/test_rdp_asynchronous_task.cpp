@@ -27,10 +27,12 @@
 #define LOGNULL
 //#define LOGPRINT
 
+#include "fdbuf.hpp"
 #include "in_file_transport.hpp"
 #include "log.hpp"
 #include "make_unique.hpp"
 #include "rdp/rdp_asynchronous_task.hpp"
+#include "socket_transport_utility.hpp"
 #include "test_transport.hpp"
 
 class TestToServerSender : public ToServerSender {
@@ -41,6 +43,9 @@ public:
 
     virtual void operator() (size_t total_length, uint32_t flags,
         const uint8_t * chunk_data, size_t chunk_data_length) override {
+        LOG(LOG_INFO, "total_length=%u flags=0x%X chunk_data=<%p> chunk_data_length=%u",
+            static_cast<uint32_t>(total_length), flags,
+            chunk_data, static_cast<uint32_t>(chunk_data_length));
         BStream stream(128);
         stream.out_uint32_le(total_length);
         stream.out_uint32_le(flags);
@@ -51,75 +56,25 @@ public:
     }
 };
 
-class FdWrapper {
-public:
-    int fd = -1;
-
-    explicit FdWrapper(int fd) : fd(fd) {}
-
-    ~FdWrapper() {
-        if (this->fd != -1) {
-            ::close(this->fd);
-        }
-    }
-};
-
-
-inline
-void add_to_fd_set(wait_obj & w, int fd, fd_set & rfds, unsigned & max, timeval & timeout)
-{
-    if (fd > -1) {
-        FD_SET(fd, &rfds);
-        max = ((unsigned)fd > max) ? fd : max;
-    }
-    if (((fd <= -1) || w.object_and_time) && w.set_state) {
-        struct timeval now;
-        now = tvtime();
-        timeval remain = how_long_to_wait(w.trigger_time, now);
-        if (lessthantimeval(remain, timeout)) {
-            timeout = remain;
-        }
-    }
-}
-
-inline
-bool is_set(wait_obj & w, int fd, fd_set & rfds)
-{
-    w.waked_up_by_time = false;
-
-    if (fd > -1) {
-        bool res = FD_ISSET(fd, &rfds);
-
-        if (res || !w.object_and_time) {
-            return res;
-        }
-    }
-
-    if (w.set_state) {
-        if (tvtime() >= w.trigger_time) {
-            w.waked_up_by_time = true;
-            return true;
-        }
-    }
-
-    return false;
-}
-
 BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 {
     uint32_t verbose = 1;
 
-    FdWrapper fd_wrapper(::open("tests/fixtures/rfc959.txt", O_RDONLY));
-    if (fd_wrapper.fd == -1) { throw Error(ERR_TRANSPORT_OPEN_FAILED); }
+    int fd = ::open("tests/fixtures/rfc959.txt", O_RDONLY);
+    if (fd == -1) { throw Error(ERR_TRANSPORT_OPEN_FAILED); }
 
-    auto transport = std::make_unique<InFileTransport>(fd_wrapper.fd);
+    io::posix::fdbuf fd_wrapper(fd);
+
+    std::unique_ptr<InFileTransport> transport = std::make_unique<InFileTransport>(fd);
+
+    fd_wrapper.release();
 
     transport->seek(1024 * 32, SEEK_SET);
 
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
 
-    #include "fixtures/test_rdp_asynchronous_task.hpp"
+    #include "fixtures/test_rdpdr_drive_read_task.hpp"
     CheckTransport check_transport(outdata, sizeof(outdata), verbose);
     TestToServerSender test_to_server_sender(check_transport);
 
@@ -128,8 +83,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     const uint32_t number_of_bytes_to_read = 2 * 1024;
 
-    RdpdrDriveReadTask rdpdr_drive_read_task(std::move(transport), fd_wrapper.fd,
-        test_to_server_sender, DeviceId, CompletionId, number_of_bytes_to_read,
+    RdpdrDriveReadTask rdpdr_drive_read_task(transport.get(), fd,
+        DeviceId, CompletionId, number_of_bytes_to_read, test_to_server_sender,
         verbose);
 
     bool run_task = true;
@@ -162,6 +117,86 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
         else {
             if (is_set(event, rdpdr_drive_read_task.get_file_descriptor(), rfds)) {
                 if (!rdpdr_drive_read_task.run(event)) {
+                    run_task = false;
+                }
+            }
+        }
+    }
+    while (run_task);
+}
+
+BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
+{
+    uint32_t verbose = 1;
+
+    int fd = ::open("tests/fixtures/sample.bmp", O_RDONLY);
+    if (fd == -1) { throw Error(ERR_TRANSPORT_OPEN_FAILED); }
+
+    io::posix::fdbuf fd_wrapper(fd);
+
+    std::unique_ptr<InFileTransport> transport = std::make_unique<InFileTransport>(fd);
+
+    fd_wrapper.release();
+
+    BStream stream(65536);
+
+    try {
+        transport->recv(&stream.p, CHANNELS::CHANNEL_CHUNK_LENGTH + 1024);
+    }
+    catch (Error & e) {
+        if(e.id != 1501) {
+            LOG(LOG_ERR, "Error = %d", e.id);
+
+            throw;
+        }
+    }
+
+    stream.mark_end();
+
+    //LogTransport log_transport;
+    //TestToServerSender test_to_server_sender(log_transport);
+
+    #include "fixtures/test_rdpdr_send_drive_io_response_task.hpp"
+    CheckTransport check_transport(outdata, sizeof(outdata), verbose);
+    TestToServerSender test_to_server_sender(check_transport);
+
+    RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
+        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+        stream.get_data(),
+        stream.size(),
+        test_to_server_sender,
+        verbose);
+
+    bool run_task = true;
+
+    do
+    {
+        wait_obj event;
+
+        rdpdr_send_drive_io_response_task.configure_wait_object(event);
+
+        unsigned max = 0;
+        fd_set rfds;
+
+        FD_ZERO(&rfds);
+
+        timeval timeout = { 3, 0 };
+
+        add_to_fd_set(event, rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds, max, timeout);
+
+        int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
+
+        if (num < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+
+            LOG(LOG_ERR, "Task loop raised error %u : %s", errno, strerror(errno));
+            run_task = false;
+        }
+        else {
+            if (is_set(event, rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds)) {
+                if (!rdpdr_send_drive_io_response_task.run(event)) {
                     run_task = false;
                 }
             }

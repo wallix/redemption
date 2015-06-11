@@ -64,4 +64,44 @@ bool is_set(wait_obj & w, SocketTransport * t, fd_set & rfds)
     return false;
 }
 
+inline
+void add_to_fd_set(wait_obj & w, int fd, fd_set & rfds, unsigned & max, timeval & timeout)
+{
+    if (fd > -1) {
+        FD_SET(fd, &rfds);
+        max = ((unsigned)fd > max) ? fd : max;
+    }
+    if (((fd <= -1) || w.object_and_time) && w.set_state) {
+        struct timeval now;
+        now = tvtime();
+        timeval remain = how_long_to_wait(w.trigger_time, now);
+        if (lessthantimeval(remain, timeout)) {
+            timeout = remain;
+        }
+    }
+}
+
+inline
+bool is_set(wait_obj & w, int fd, fd_set & rfds)
+{
+    w.waked_up_by_time = false;
+
+    if (fd > -1) {
+        bool res = FD_ISSET(fd, &rfds);
+
+        if (res || !w.object_and_time) {
+            return res;
+        }
+    }
+
+    if (w.set_state) {
+        if (tvtime() >= w.trigger_time) {
+            w.waked_up_by_time = true;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 #endif
