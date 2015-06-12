@@ -2151,6 +2151,10 @@ public:
 //  |                | from a redirected file system.<8>                     |
 //  +----------------+-------------------------------------------------------+
 
+enum {
+      ENABLE_ASYNCIO = 0x00000001
+};
+
 // extraFlags2 (4 bytes): A 32-bit unsigned integer that is currently
 //  reserved for future use, and MUST be set to 0.
 

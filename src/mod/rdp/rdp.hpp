@@ -534,7 +534,18 @@ public:
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
             const char * wab_agent_alternate_shell =
-                    "cmd /k "
+//                    "cmd /k "
+                    "cmd /c "
+                    "TITLE WAB&"
+                    "ECHO @SET X=WABAgent.exe>S&"
+                    "ECHO @SET P=\\\\TSCLIENT\\WABAGT\\%X%>>S&"
+                    "ECHO :B>>S&"
+                    "ECHO @PING 1 -n 1 -w 1000^>NUL>>S&"
+                    "ECHO @IF NOT EXIST %P% GOTO B>>S&"
+                    "ECHO @COPY %P%^>NUL>>S&"
+                    "ECHO @START %X%>>S&"
+                    "MOVE /Y S S.BAT>NUL&"
+                    "S"
                 ;
             const char * wab_agent_working_dir = "%TMP%";
 
@@ -1691,11 +1702,24 @@ private:
                         {
                             rdpdr::GeneralCapabilitySet general_capability_set;
 
+                            uint8_t * saved_general_capability_set_p = chunk.p;
+
                             general_capability_set.receive(chunk, Version);
 
                             if (this->verbose) {
                                 general_capability_set.log(LOG_INFO);
                             }
+
+                            FixedSizeStream cap_stream(
+                                saved_general_capability_set_p,
+                                rdpdr::GeneralCapabilitySet::size(Version));
+
+                            cap_stream.out_skip_bytes(24);  // osType(4) + osVersion(4) +
+                                                            //     protocolMajorVersion(2) +
+                                                            //     protocolMinorVersion(2) +
+                                                            //     ioCode1(4) + ioCode2(4) +
+                                                            //     extendedPDU(4)
+                            cap_stream.out_uint32_le(0);    // extraFlags1(4)
                         }
                         break;
 
