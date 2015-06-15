@@ -41,6 +41,8 @@ class RdpdrDriveReadTask : public AsynchronousTask {
 
     uint32_t length = 0;
 
+    off64_t Offset;
+
     ToServerSender & to_server_sender;
 
     const uint32_t verbose;
@@ -51,6 +53,7 @@ public:
                        uint32_t DeviceId,
                        uint32_t CompletionId,
                        uint32_t number_of_bytes_to_read,
+                       off64_t Offset,
                        ToServerSender & to_server_sender,
                        uint32_t verbose = 0)
     : AsynchronousTask()
@@ -60,6 +63,7 @@ public:
     , CompletionId(CompletionId)
     , total_number_of_bytes_to_read(number_of_bytes_to_read)
     , remaining_number_of_bytes_to_read(number_of_bytes_to_read)
+    , Offset(Offset)
     , to_server_sender(to_server_sender)
     , verbose(verbose) {}
 
@@ -102,10 +106,10 @@ public:
 
             out_stream.out_uint32_le(this->total_number_of_bytes_to_read);  // length(4)
 
-            //if (this->verbose) {
-            //    LOG(LOG_INFO, "RdpdrDriveReadTask::run: Length=%u",
-            //        this->remaining_number_of_bytes_to_read);
-            //}
+            if (this->verbose) {
+                LOG(LOG_INFO, "RdpdrDriveReadTask::run: Length=%u",
+                    this->remaining_number_of_bytes_to_read);
+            }
 
             out_stream.mark_end();
 
@@ -118,16 +122,40 @@ public:
 
         const uint8_t * const saved_out_stream_p = out_stream.p;
 
-        this->transport->recv(&out_stream.p,
-            std::min<uint32_t>(out_stream.tailroom(), this->remaining_number_of_bytes_to_read));
+        const uint32_t number_of_bytes_to_read =
+            std::min<uint32_t>(out_stream.tailroom(), this->remaining_number_of_bytes_to_read);
+
+        if (this->verbose) {
+            LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesToRead=%u",
+                number_of_bytes_to_read);
+        }
+
+        this->transport->seek(this->Offset, SEEK_SET);
+
+        try {
+            this->transport->recv(&out_stream.p, number_of_bytes_to_read);
+        }
+        catch (const Error & e) {
+            if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
+                LOG(LOG_INFO, "RdpdrDriveReadTask::run: Exception=%d",
+                    e.id);
+                throw;
+            }
+            else {
+                LOG(LOG_WARNING, "RdpdrDriveReadTask::run: ERR_TRANSPORT_NO_MORE_DATA(%d)",
+                    e.id);
+            }
+        }
         out_stream.mark_end();
 
         const uint32_t number_of_bytes_read = out_stream.p - saved_out_stream_p;
 
-        //if (this->verbose) {
-        //    LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%u",
-        //        number_of_bytes_read);
-        //}
+        if (this->verbose) {
+            LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%u",
+                number_of_bytes_read);
+        }
+
+        this->Offset += number_of_bytes_read;
 
         this->remaining_number_of_bytes_to_read -= number_of_bytes_read;
         if (!this->remaining_number_of_bytes_to_read) {

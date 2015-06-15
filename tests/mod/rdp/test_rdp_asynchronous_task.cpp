@@ -69,8 +69,6 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     fd_wrapper.release();
 
-    transport->seek(1024 * 32, SEEK_SET);
-
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
 
@@ -84,8 +82,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     const uint32_t number_of_bytes_to_read = 2 * 1024;
 
     RdpdrDriveReadTask rdpdr_drive_read_task(transport.get(), fd,
-        DeviceId, CompletionId, number_of_bytes_to_read, test_to_server_sender,
-        verbose);
+        DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
+        test_to_server_sender, verbose);
 
     bool run_task = true;
 

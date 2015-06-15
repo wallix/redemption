@@ -1183,23 +1183,12 @@ public:
 
         const uint64_t Offset = device_read_request.Offset();
 
-        const off64_t seek_result = ::lseek64(this->fd, Offset, SEEK_SET);
-        if (seek_result != static_cast<off64_t>(Offset)) {
-            LOG(LOG_ERR,
-                "ManagedFile::ProcessServerDriveReadRequest(): "
-                    "Failed to reposition 64-bit read file offset! "
-                    "offset=%" PRId64 ", SeekResult=%" PRId64 ".",
-                Offset, seek_result);
-
-            throw Error(ERR_RDPDR_READ_REQUEST);
-        }
-
-        off64_t remaining_number_of_bytes_to_read = std::min<off64_t>(this->size - seek_result, Length);
+        off64_t remaining_number_of_bytes_to_read = std::min<off64_t>(this->size - Offset, Length);
 
 
         out_asynchronous_task = std::make_unique<RdpdrDriveReadTask>(this->in_file_transport.get(),
             this->fd, device_io_request.DeviceId(), device_io_request.CompletionId(),
-            static_cast<uint32_t>(remaining_number_of_bytes_to_read), to_server_sender,
+            static_cast<uint32_t>(remaining_number_of_bytes_to_read), Offset, to_server_sender,
             verbose);
     }
 
