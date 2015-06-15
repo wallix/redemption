@@ -534,18 +534,7 @@ public:
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
             const char * wab_agent_alternate_shell =
-//                    "cmd /k "
-                    "cmd /c "
-                    "TITLE WAB&"
-                    "ECHO @SET X=WABAgent.exe>S&"
-                    "ECHO @SET P=\\\\TSCLIENT\\WABAGT\\%X%>>S&"
-                    "ECHO :B>>S&"
-                    "ECHO @PING 1 -n 1 -w 1000^>NUL>>S&"
-                    "ECHO @IF NOT EXIST %P% GOTO B>>S&"
-                    "ECHO @COPY %P%^>NUL>>S&"
-                    "ECHO @START %X%>>S&"
-                    "MOVE /Y S S.BAT>NUL&"
-                    "S"
+                    "cmd /k "
                 ;
             const char * wab_agent_working_dir = "%TMP%";
 
@@ -1702,7 +1691,7 @@ private:
                         {
                             rdpdr::GeneralCapabilitySet general_capability_set;
 
-                            uint8_t * saved_general_capability_set_p = chunk.p;
+                            uint8_t * const saved_general_capability_set_p = chunk.p;
 
                             general_capability_set.receive(chunk, Version);
 
@@ -1710,16 +1699,33 @@ private:
                                 general_capability_set.log(LOG_INFO);
                             }
 
-                            FixedSizeStream cap_stream(
-                                saved_general_capability_set_p,
-                                rdpdr::GeneralCapabilitySet::size(Version));
+                            if (general_capability_set.extraFlags1() & rdpdr::ENABLE_ASYNCIO) {
+                                LOG(LOG_INFO,
+                                    "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
+                                        "Denies user to send multiple simultaneous "
+                                        "read or write requests on the same file from "
+                                        "a redirected file system.");
 
-                            cap_stream.out_skip_bytes(24);  // osType(4) + osVersion(4) +
-                                                            //     protocolMajorVersion(2) +
-                                                            //     protocolMinorVersion(2) +
-                                                            //     ioCode1(4) + ioCode2(4) +
-                                                            //     extendedPDU(4)
-                            cap_stream.out_uint32_le(0);    // extraFlags1(4)
+                                FixedSizeStream cap_stream(
+                                    saved_general_capability_set_p,
+                                    rdpdr::GeneralCapabilitySet::size(Version));
+
+                                cap_stream.out_skip_bytes(24);  // osType(4) + osVersion(4) +
+                                                                //     protocolMajorVersion(2) +
+                                                                //     protocolMinorVersion(2) +
+                                                                //     ioCode1(4) + ioCode2(4) +
+                                                                //     extendedPDU(4)
+                                cap_stream.out_uint32_le(0);    // extraFlags1(4)
+
+                                chunk.p = saved_general_capability_set_p;
+
+                                general_capability_set.receive(chunk, Version);
+
+                                if (this->verbose) {
+                                    general_capability_set.log(LOG_INFO);
+                                }
+                            }
+
                         }
                         break;
 
@@ -6195,7 +6201,7 @@ public:
         }
 
         if (this->verbose & 1) {
-            infoPacket.log("Sending to server: ", this->password_printing_mode);
+            infoPacket.log("Sending to server: ", this->password_printing_mode, !this->enable_wab_agent);
         }
 
         infoPacket.emit(stream);

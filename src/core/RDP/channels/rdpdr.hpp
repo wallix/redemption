@@ -2171,7 +2171,7 @@ class GeneralCapabilitySet {
     uint32_t ioCode1              = 0;
     uint32_t ioCode2              = 0;
     uint32_t extendedPDU          = 0;
-    uint32_t extraFlags1          = 0;
+    uint32_t extraFlags1_         = 0;
     uint32_t extraFlags2          = 0;
     uint32_t SpecialTypeDeviceCap = 0;
 
@@ -2189,7 +2189,7 @@ public:
     , ioCode1(ioCode1)
     , ioCode2(ioCode2)
     , extendedPDU(extendedPDU)
-    , extraFlags1(extraFlags1)
+    , extraFlags1_(extraFlags1)
     , extraFlags2(extraFlags2)
     , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
 
@@ -2201,7 +2201,7 @@ public:
         stream.out_uint32_le(this->ioCode1);
         stream.out_uint32_le(this->ioCode2);
         stream.out_uint32_le(this->extendedPDU);
-        stream.out_uint32_le(this->extraFlags1);
+        stream.out_uint32_le(this->extraFlags1_);
         stream.out_uint32_le(this->extraFlags2);
         if (version == GENERAL_CAPABILITY_VERSION_02) {
             stream.out_uint32_le(this->SpecialTypeDeviceCap);
@@ -2230,12 +2230,14 @@ public:
         this->ioCode1              = stream.in_uint32_le();
         this->ioCode2              = stream.in_uint32_le();
         this->extendedPDU          = stream.in_uint32_le();
-        this->extraFlags1          = stream.in_uint32_le();
+        this->extraFlags1_         = stream.in_uint32_le();
         this->extraFlags2          = stream.in_uint32_le();
         if (version == GENERAL_CAPABILITY_VERSION_02) {
             this->SpecialTypeDeviceCap = stream.in_uint32_le();
         }
     }
+
+    inline uint32_t extraFlags1() const { return this->extraFlags1_; }
 
     inline static size_t size(uint32_t version) {
         return 32 + // osType(4) + osVersion(4) + protocolMajorVersion(2) +
@@ -2253,7 +2255,7 @@ private:
                 "extraFlags2=0x%X SpecialTypeDeviceCap=%u",
             this->osType, this->osVersion, this->protocolMajorVersion,
             this->protocolMinorVersion, this->ioCode1, this->ioCode2,
-            this->extendedPDU, this->extraFlags1, this->extraFlags2,
+            this->extendedPDU, this->extraFlags1_, this->extraFlags2,
             this->SpecialTypeDeviceCap);
         return ((length < size) ? length : size - 1);
     }
