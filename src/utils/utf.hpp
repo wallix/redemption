@@ -26,7 +26,9 @@
 #define _REDEMPTION_UTILS_UTF_HPP_
 
 #include <stdint.h>
+#include <stdlib.h>
 // #include <wctype.h>
+
 #include "log.hpp"
 
 // bool UTF32isValid(uint32_t c):
@@ -719,6 +721,95 @@ static inline bool is_utf8_string(uint8_t const * s, int length = -1) {
     }
 
     return (stat == Stat::ASCII);
+}
+
+static inline size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_len, uint8_t * latin1_target, size_t latin1_len) {
+    const uint16_t * utf16_source = reinterpret_cast<const uint16_t *>(utf16_source_);
+
+    utf16_len &= ~1;
+
+    auto converter = [](uint16_t src, uint8_t * dst) -> bool {
+        if ((src < 0x0080) || ((src > 0x9F) && (src < 0x100))) {
+            *dst = src;
+            return true;
+        }
+
+        static struct UTF16ToLatin1Pair {
+            uint16_t utf16;
+            uint8_t  latin1;
+        } UTF16ToLatin1LUT[] = {
+            { 0x0081, 0x81 }, { 0x008D, 0x8D }, { 0x008F, 0x8F }, { 0x0090, 0x90 },
+            { 0x009D, 0x9D }, { 0x0152, 0x8C }, { 0x0153, 0x9C }, { 0x0160, 0x8A },
+            { 0x0161, 0x9A }, { 0x0178, 0x9F }, { 0x017D, 0x8E }, { 0x017E, 0x9E },
+            { 0x0192, 0x83 }, { 0x02C6, 0x88 }, { 0x02DC, 0x98 }, { 0x2013, 0x96 },
+            { 0x2014, 0x97 }, { 0x2018, 0x91 }, { 0x2019, 0x92 }, { 0x201A, 0x82 },
+            { 0x201C, 0x93 }, { 0x201D, 0x94 }, { 0x201E, 0x84 }, { 0x2020, 0x86 },
+            { 0x2021, 0x87 }, { 0x2022, 0x95 }, { 0x2026, 0x85 }, { 0x2030, 0x89 },
+            { 0x2039, 0x8B }, { 0x203A, 0x9B }, { 0x20AC, 0x80 }, { 0x2122, 0x99 }
+        };
+
+        if (src > UTF16ToLatin1LUT[sizeof(UTF16ToLatin1LUT) / sizeof(UTF16ToLatin1LUT[0]) - 1].utf16) {
+            return false;
+        }
+
+        for (unsigned int i = 0; i < sizeof(UTF16ToLatin1LUT) / sizeof(UTF16ToLatin1LUT[0]); i++) {
+            if (UTF16ToLatin1LUT[i].utf16 == src) {
+                *dst = UTF16ToLatin1LUT[i].latin1;
+                return true;
+            }
+            else if (UTF16ToLatin1LUT[i].utf16 > src) {
+                break;
+            }
+        }
+
+        return false;
+    };
+
+    const uint16_t * current_utf16_source  = utf16_source;
+          uint8_t  * current_latin1_target = latin1_target;
+    for (size_t remaining_utf16_len = utf16_len / 2, remaining_latin1_len = latin1_len;
+         remaining_utf16_len && remaining_latin1_len; current_utf16_source++, remaining_utf16_len--) {
+        if (converter(*current_utf16_source, current_latin1_target)) {
+            current_latin1_target++;
+            remaining_latin1_len--;
+        }
+    }
+
+    return current_latin1_target - latin1_target;
+}
+
+static inline size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_len, uint8_t * utf16_target_, size_t utf16_len) {
+    uint16_t * utf16_target = reinterpret_cast<uint16_t *>(utf16_target_);
+
+    auto converter = [](uint8_t src, uint16_t * dst) {
+        if ((src < 0x80) || (src > 0x9F)) {
+            *dst = src;
+            return;
+        }
+
+        uint16_t Latin1ToUTF16LUT[] = {
+            0x20AC, 0x0081, 0x201A, 0x0192,
+            0x201E, 0x2026, 0x2020, 0x2021,
+            0x02C6, 0x2030, 0x0160, 0x2039,
+            0x0152, 0x008D, 0x017D, 0x008F,
+            0x0090, 0x2018, 0x2019, 0x201C,
+            0x201D, 0x2022, 0x2013, 0x2014,
+            0x02DC, 0x2122, 0x0161, 0x203A,
+            0x0153, 0x009D, 0x017E, 0x0178
+        };
+
+        *dst = Latin1ToUTF16LUT[src - 0x80];
+    };
+
+    const uint8_t  * current_latin1_source = latin1_source;
+          uint16_t * current_utf16_target  = utf16_target;
+    for (size_t remaining_latin1_len = latin1_len, remaining_utf16_len = utf16_len / 2;
+         remaining_latin1_len && remaining_utf16_len;
+         current_latin1_source++, remaining_latin1_len--, current_utf16_target++, remaining_utf16_len--) {
+        converter(*current_latin1_source, current_utf16_target);
+    }
+
+    return (current_utf16_target - utf16_target) * 2;
 }
 
 #endif
