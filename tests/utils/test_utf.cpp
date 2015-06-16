@@ -27,8 +27,8 @@
 #define BOOST_TEST_MODULE TestLul
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 
 #include <stdio.h>
 
@@ -704,9 +704,13 @@ BOOST_AUTO_TEST_CASE(TestUTF16ToLatin1) {
                                 "\xe9\x00\x7a\x00\x6f\x00\xef\x00"
                                 "\x64\x00\x61\x00\x6c\x00\x00\x00";
 
+    const size_t number_of_characters = sizeof(utf16_src) / 2;
+
     uint8_t latin1_dst[32];
 
-    BOOST_CHECK_EQUAL(UTF16toLatin1(utf16_src, sizeof(utf16_src), latin1_dst, sizeof(latin1_dst)), 12);
+    BOOST_CHECK_EQUAL(
+        UTF16toLatin1(utf16_src, number_of_characters * 2, latin1_dst, sizeof(latin1_dst)),
+        number_of_characters);
 
     BOOST_CHECK_EQUAL(std::string(char_ptr_cast(latin1_dst)), "trap\xe9zo\xef" "dal");
 }
@@ -715,9 +719,13 @@ BOOST_AUTO_TEST_CASE(TestUTF16ToLatin1_1) {
     const uint8_t utf16_src[] = "\x31\x00\x30\x00\x30\x00\x20\x00"  // "100 €"
                                 "\xac\x20\x00\x00";
 
+    const size_t number_of_characters = sizeof(utf16_src) / 2;
+
     uint8_t latin1_dst[32];
 
-    BOOST_CHECK_EQUAL(UTF16toLatin1(utf16_src, sizeof(utf16_src), latin1_dst, sizeof(latin1_dst)), 6);
+    BOOST_CHECK_EQUAL(
+        UTF16toLatin1(utf16_src, number_of_characters * 2, latin1_dst, sizeof(latin1_dst)),
+        number_of_characters);
 
     BOOST_CHECK_EQUAL(std::string(char_ptr_cast(latin1_dst)), "100 \x80");
 }
@@ -725,13 +733,50 @@ BOOST_AUTO_TEST_CASE(TestUTF16ToLatin1_1) {
 BOOST_AUTO_TEST_CASE(TestLatin1ToUTF16) {
     const uint8_t latin1_src[] = "trap\xe9zo\xef" "dal";
 
+    const size_t number_of_characters = strlen(char_ptr_cast(latin1_src)) + 1;
+
     const uint8_t utf16_expected[] = "\x74\x00\x72\x00\x61\x00\x70\x00"  // "trapézoïdal"
                                      "\xe9\x00\x7a\x00\x6f\x00\xef\x00"
                                      "\x64\x00\x61\x00\x6c\x00\x00\x00";
 
     uint8_t utf16_dst[32];
 
-    BOOST_CHECK_EQUAL(Latin1toUTF16(latin1_src, strlen(char_ptr_cast(latin1_src)) + 1, utf16_dst, sizeof(utf16_dst)), 12 * 2);
+    BOOST_CHECK_EQUAL(
+        Latin1toUTF16(latin1_src, number_of_characters, utf16_dst, sizeof(utf16_dst)),
+        number_of_characters * 2);
 
-    BOOST_CHECK_EQUAL(memcmp(utf16_dst, utf16_expected, 12 * 2), 0);
+    BOOST_CHECK_EQUAL(memcmp(utf16_dst, utf16_expected, number_of_characters * 2), 0);
+
+    uint8_t utf8_dst[16];
+
+    BOOST_CHECK_EQUAL(
+        UTF16toUTF8(utf16_dst, number_of_characters * 2, utf8_dst, sizeof(utf8_dst)),
+        number_of_characters + 2 /* 'é' => 0xC3 0xA9, 'ï' => 0xC3 0xAF */ );
+
+    BOOST_CHECK_EQUAL(std::string(char_ptr_cast(utf8_dst)), "trapézoïdal");
+}
+
+BOOST_AUTO_TEST_CASE(TestLatin1ToUTF16_1) {
+    const uint8_t latin1_src[] = "100 \x80";
+
+    const size_t number_of_characters = strlen(char_ptr_cast(latin1_src)) + 1;
+
+    const uint8_t utf16_expected[] = "\x31\x00\x30\x00\x30\x00\x20\x00"  // "100 €"
+                                     "\xac\x20\x00\x00";
+
+    uint8_t utf16_dst[32];
+
+    BOOST_CHECK_EQUAL(
+        Latin1toUTF16(latin1_src, number_of_characters, utf16_dst, sizeof(utf16_dst)),
+        number_of_characters * 2);
+
+    BOOST_CHECK_EQUAL(memcmp(utf16_dst, utf16_expected, number_of_characters * 2), 0);
+
+    uint8_t utf8_dst[16];
+
+    BOOST_CHECK_EQUAL(
+        UTF16toUTF8(utf16_dst, number_of_characters * 2, utf8_dst, sizeof(utf8_dst)),
+        number_of_characters + 2 /* '€' => 0xE2 0x82 0xAC */ );
+
+    BOOST_CHECK_EQUAL(std::string(char_ptr_cast(utf8_dst)), "100 €");
 }
