@@ -248,6 +248,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     Inifile ini;
 
+    const bool bogus_clipboard_infinite_loop = false;
+
     mod_vnc mod(
           t
         , ini
@@ -264,6 +266,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , false         /* allow authentification retries */
         , is_socket_transport
         , "utf-8"
+        , bogus_clipboard_infinite_loop
         , verbose);
     mod.get_event().set();
 
