@@ -147,6 +147,8 @@ enum authid_t {
 
     AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE,
 
+    AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP,
+
     AUTHID_RDP_BOGUS_SC_NET_SIZE,
 
     AUTHID_OPT_WABAGENT,
@@ -249,7 +251,9 @@ enum authid_t {
 
 #define STRAUTHID_RT_DISPLAY                    "rt_display"
 
-#define STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE   "vnc_server_clipboard_encoding_type"
+#define STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE    "vnc_server_clipboard_encoding_type"
+
+#define STRAUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP     "vnc_bogus_clipboard_infinite_loop"
 
 #define STRAUTHID_RDP_BOGUS_SC_NET_SIZE         "rdp_bogus_sc_net_size"
 
@@ -360,6 +364,8 @@ static const char * const authstr[MAX_AUTHID - 1] = {
     STRAUTHID_RT_DISPLAY,
 
     STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE,
+
+    STRAUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP,
 
     STRAUTHID_RDP_BOGUS_SC_NET_SIZE,
 
@@ -645,9 +651,11 @@ public:
 
         bool allow_authentification_retries = false;
 
-        Inifile_mod_vnc() = default;
+        StringField server_clipboard_encoding_type;     // AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE //
 
-        StringField server_clipboard_encoding_type;    // AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE //
+        BoolField bogus_clipboard_infinite_loop;    // AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP //
+
+        Inifile_mod_vnc() = default;
     } mod_vnc;
 
     struct Inifile_mod_replay {
@@ -974,6 +982,9 @@ public:
 
         this->mod_vnc.server_clipboard_encoding_type.attach_ini(this, AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE);
         this->mod_vnc.server_clipboard_encoding_type.set_from_cstr("latin1");
+
+        this->mod_vnc.bogus_clipboard_infinite_loop.attach_ini(this, AUTHID_RDP_BOGUS_SC_NET_SIZE);
+        this->mod_vnc.bogus_clipboard_infinite_loop.set(false);
         // End Section "mod_vnc"
 
         // Begin section video
@@ -1372,6 +1383,9 @@ public:
             }
             else if (0 == strcmp(key, "server_clipboard_encoding_type")) {
                 this->mod_vnc.server_clipboard_encoding_type.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "bogus_clipboard_infinite_loop")) {
+                this->mod_vnc.bogus_clipboard_infinite_loop.set_from_cstr(value);
             }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
