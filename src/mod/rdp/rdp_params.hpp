@@ -88,7 +88,7 @@ struct ModRDPParams {
     bool remote_program;
     bool server_redirection_support;
 
-    uint32_t max_chunked_virtual_channel_data_length;
+    uint32_t chunked_virtual_channel_data_max_length;
 
     bool bogus_sc_net_size;
 
@@ -161,7 +161,7 @@ struct ModRDPParams {
         , remote_program(false)
         , server_redirection_support(false)
 
-        , max_chunked_virtual_channel_data_length(0)
+        , chunked_virtual_channel_data_max_length(0)
 
         , bogus_sc_net_size(true)
 
@@ -273,8 +273,8 @@ struct ModRDPParams {
             "ModRDPParams server_redirection_support=%s",          (this->server_redirection_support ? "yes" : "no"));
 
         LOG(LOG_INFO,
-            "ModRDPParams max_chunked_virtual_channel_data_length=%u",
-                                                                   this->max_chunked_virtual_channel_data_length);
+            "ModRDPParams chunked_virtual_channel_data_max_length=%u",
+                                                                   this->chunked_virtual_channel_data_max_length);
 
         LOG(LOG_INFO,
             "ModRDPParams bogus_sc_net_size=%s",                   (this->bogus_sc_net_size ? "yes" : "no"));

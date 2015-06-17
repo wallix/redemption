@@ -247,12 +247,11 @@ class mod_rdp : public mod_api {
 
     RedirectionInfo & redir_info;
 
-    const uint32_t max_chunked_virtual_channel_data_length;
+    const uint32_t chunked_virtual_channel_data_max_length;
+    const uint32_t chunked_virtual_channel_data_default_length = 1024 * 64;
 
     std::unique_ptr<uint8_t[]> chunked_virtual_channel_data_byte;
     FixedSizeStream            chunked_virtual_channel_data_stream;
-
-    static const uint32_t default_chunked_virtual_channel_data_length = 1024 * 64;
 
     const bool bogus_sc_net_size;
 
@@ -266,7 +265,7 @@ class mod_rdp : public mod_api {
     uint32_t clipboard_requested_format_id = 0;
 
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
-    wait_obj                          asynchronous_task_event;
+    wait_obj                                      asynchronous_task_event;
 
     class RdpdrToServerSender : public ToServerSender {
         Transport    & transport;
@@ -376,10 +375,10 @@ public:
         , password_printing_mode(mod_rdp_params.password_printing_mode)
         , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
-        , max_chunked_virtual_channel_data_length(std::min(mod_rdp_params.max_chunked_virtual_channel_data_length,
+        , chunked_virtual_channel_data_max_length(std::min(mod_rdp_params.chunked_virtual_channel_data_max_length,
             CHANNELS::PROXY_CHUNKED_VIRTUAL_CHANNEL_DATA_LENGTH_LIMIT))
-        , chunked_virtual_channel_data_byte(std::make_unique<uint8_t[]>(mod_rdp::default_chunked_virtual_channel_data_length))
-        , chunked_virtual_channel_data_stream(chunked_virtual_channel_data_byte.get(), mod_rdp::default_chunked_virtual_channel_data_length)
+        , chunked_virtual_channel_data_byte(std::make_unique<uint8_t[]>(mod_rdp::chunked_virtual_channel_data_default_length))
+        , chunked_virtual_channel_data_stream(chunked_virtual_channel_data_byte.get(), mod_rdp::chunked_virtual_channel_data_default_length)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
     {
         if (this->verbose & 1) {
@@ -1289,8 +1288,8 @@ private:
         if (this->chunked_virtual_channel_data_stream.get_capacity() < desired_size) {
             size_t rounded_length = this->chunked_virtual_channel_data_stream.get_capacity();
             for (; rounded_length < desired_size; rounded_length *= 2);
-            if (rounded_length > this->max_chunked_virtual_channel_data_length) {
-                rounded_length = this->max_chunked_virtual_channel_data_length;
+            if (rounded_length > this->chunked_virtual_channel_data_max_length) {
+                rounded_length = this->chunked_virtual_channel_data_max_length;
             }
             this->chunked_virtual_channel_data_byte = std::make_unique<uint8_t[]>(rounded_length);
             this->chunked_virtual_channel_data_stream.~FixedSizeStream();

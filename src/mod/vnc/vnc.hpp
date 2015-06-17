@@ -173,11 +173,11 @@ private:
 
     const bool is_socket_transport;
 
-    bool     requesting_for_clipboard_data_is_delayed = false;
-    uint64_t last_client_clipboard_data_timestamp     = 0;
+    bool     clipboard_requesting_for_data_is_delayed = false;
+    uint64_t clipboard_last_client_data_timestamp     = 0;
     int      clipboard_requested_format_id            = 0;
 
-    ClipboardEncodingType server_clipboard_encoding_type = ClipboardEncodingType::UTF8;
+    ClipboardEncodingType clipboard_server_encoding_type = ClipboardEncodingType::UTF8;
 
 public:
     //==============================================================================================================
@@ -195,7 +195,7 @@ public:
            , const char * encodings
            , bool allow_authentification_retries
            , bool is_socket_transport
-           , const char * server_clipboard_encoding_type
+           , const char * clipboard_server_encoding_type
            , uint32_t verbose
            )
     //==============================================================================================================
@@ -225,7 +225,7 @@ public:
     , ini(ini)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
     , is_socket_transport(is_socket_transport)
-    , server_clipboard_encoding_type(strcasecmp(server_clipboard_encoding_type, "latin1") ?
+    , clipboard_server_encoding_type(strcasecmp(clipboard_server_encoding_type, "latin1") ?
                                         ClipboardEncodingType::UTF8 :
                                         ClipboardEncodingType::Latin1)
     {
@@ -464,7 +464,7 @@ protected:
 
         if (this->state == UP_AND_RUNNING) {
             if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
-                if (this->server_clipboard_encoding_type == ClipboardEncodingType::UTF8) {
+                if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
                     LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> UTF-8");
 
                     const size_t utf8_data_length =
@@ -487,7 +487,7 @@ protected:
                 }
             }
             else {
-                if (this->server_clipboard_encoding_type == ClipboardEncodingType::UTF8) {
+                if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
                     LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> UTF-8");
 
                     const size_t utf16_data_length = data_length * sizeof(uint16_t);
@@ -511,7 +511,7 @@ protected:
             }
         }
 
-        this->last_client_clipboard_data_timestamp = ustime();
+        this->clipboard_last_client_data_timestamp = ustime();
     }
 
 public:
@@ -1134,12 +1134,12 @@ public:
         if (this->event.waked_up_by_time) {
             this->event.reset();
 
-            if (this->requesting_for_clipboard_data_is_delayed) {
+            if (this->clipboard_requesting_for_data_is_delayed) {
                 //const uint64_t usnow = ustime();
-                //const uint64_t timeval_diff = usnow - this->last_client_clipboard_data_timestamp;
+                //const uint64_t timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
                 //LOG(LOG_INFO,
-                //    "usnow=%llu last_client_clipboard_data_timestamp=%llu timeval_diff=%llu",
-                //    usnow, this->last_client_clipboard_data_timestamp, timeval_diff);
+                //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
+                //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
                 if (this->verbose) {
                     LOG(LOG_INFO,
                         "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%d) (time)",
@@ -1157,7 +1157,7 @@ public:
                 size_t length     = out_s.size();
                 size_t chunk_size = length;
 
-                this->requesting_for_clipboard_data_is_delayed = false;
+                this->clipboard_requesting_for_data_is_delayed = false;
 
                 this->send_to_front_channel( channel_names::cliprdr
                                            , out_s.get_data()
@@ -2036,7 +2036,7 @@ private:
                                        );
 
             // Can stop RDP to VNC clipboard infinite loop.
-            this->requesting_for_clipboard_data_is_delayed = false;
+            this->clipboard_requesting_for_data_is_delayed = false;
         }
         else {
             LOG(LOG_INFO, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
@@ -2167,10 +2167,10 @@ private:
                 const uint64_t MINIMUM_TIMEVAL = 250000LL;
 
                 if (this->enable_clipboard_up &&
-//                    ((format_list_pdu.contians_data_in_text_format && (this->server_clipboard_encoding_type == ClipboardEncodingType::Latin1)) ||
-//                     (format_list_pdu.contians_data_in_unicodetext_format && (this->server_clipboard_encoding_type == ClipboardEncodingType::UTF8)))) {
+//                    ((format_list_pdu.contians_data_in_text_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::Latin1)) ||
+//                     (format_list_pdu.contians_data_in_unicodetext_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8)))) {
                     (format_list_pdu.contians_data_in_text_format || format_list_pdu.contians_data_in_unicodetext_format)) {
-                    if (this->server_clipboard_encoding_type == ClipboardEncodingType::UTF8) {
+                    if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
                         this->clipboard_requested_format_id =
                             (format_list_pdu.contians_data_in_unicodetext_format ?
                              RDPECLIP::CF_UNICODETEXT : RDPECLIP::CF_TEXT);
@@ -2182,10 +2182,10 @@ private:
                     }
 
                     const uint64_t usnow = ustime();
-                    const uint64_t timeval_diff = usnow - this->last_client_clipboard_data_timestamp;
+                    const uint64_t timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
                     //LOG(LOG_INFO,
-                    //    "usnow=%llu last_client_clipboard_data_timestamp=%llu timeval_diff=%llu",
-                    //    usnow, this->last_client_clipboard_data_timestamp, timeval_diff);
+                    //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
+                    //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
                     if (timeval_diff > MINIMUM_TIMEVAL) {
                         if (this->verbose) {
                             LOG(LOG_INFO,
@@ -2204,7 +2204,7 @@ private:
                         length     = out_s.size();
                         chunk_size = length;
 
-                        this->requesting_for_clipboard_data_is_delayed = false;
+                        this->clipboard_requesting_for_data_is_delayed = false;
 
                         this->send_to_front_channel( channel_names::cliprdr
                                                    , out_s.get_data()
@@ -2223,7 +2223,7 @@ private:
                         this->event.object_and_time = true;
                         this->event.set(MINIMUM_TIMEVAL - timeval_diff);
 
-                        this->requesting_for_clipboard_data_is_delayed = true;
+                        this->clipboard_requesting_for_data_is_delayed = true;
                     }
                 }
             }
