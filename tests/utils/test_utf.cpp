@@ -27,8 +27,8 @@
 #define BOOST_TEST_MODULE TestLul
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #include <stdio.h>
 
@@ -751,7 +751,7 @@ BOOST_AUTO_TEST_CASE(TestLatin1ToUTF16) {
 
     BOOST_CHECK_EQUAL(
         UTF16toUTF8(utf16_dst, number_of_characters * 2, utf8_dst, sizeof(utf8_dst)),
-        number_of_characters + 2 /* 'é' => 0xC3 0xA9, 'ï' => 0xC3 0xAF */ );
+        number_of_characters + 2 /* 'é' => 0xC3 0xA9, 'ï' => 0xC3 0xAF */);
 
     BOOST_CHECK_EQUAL(std::string(char_ptr_cast(utf8_dst)), "trapézoïdal");
 }
@@ -779,4 +779,41 @@ BOOST_AUTO_TEST_CASE(TestLatin1ToUTF16_1) {
         number_of_characters + 2 /* '€' => 0xE2 0x82 0xAC */ );
 
     BOOST_CHECK_EQUAL(std::string(char_ptr_cast(utf8_dst)), "100 €");
+}
+
+BOOST_AUTO_TEST_CASE(TestLatin1ToUTF16_2) {
+    const uint8_t latin1_src[] = "100 \x80"
+                                 "\x0a"
+                                 "trap\xe9zo\xef" "dal";
+
+    const size_t number_of_characters = strlen(char_ptr_cast(latin1_src)) + 1;
+
+    const uint8_t utf16_expected[] = "\x31\x00\x30\x00\x30\x00\x20\x00"  // "100 €"
+                                     "\xac\x20"
+                                     "\x0d\x00\x0a\x00"                  // "\r\n"
+                                     "\x74\x00\x72\x00\x61\x00\x70\x00"  // "trapézoïdal"
+                                     "\xe9\x00\x7a\x00\x6f\x00\xef\x00"
+                                     "\x64\x00\x61\x00\x6c\x00\x00\x00";
+
+    uint8_t utf16_dst[64];
+
+    const bool LfToCrLf = true;
+
+    BOOST_CHECK_EQUAL(
+        Latin1toUTF16(latin1_src, number_of_characters, utf16_dst, sizeof(utf16_dst), LfToCrLf),
+        number_of_characters * 2 + 2 /* '\n' -> 0x0D 0x00 0x0A 0x00 */);
+
+    BOOST_CHECK_EQUAL(memcmp(utf16_dst, utf16_expected,
+                             number_of_characters * 2 + 2   // '\n' -> 0x0D 0x00 0x0A 0x00
+                            ), 0);
+
+    uint8_t utf8_dst[32];
+
+    BOOST_CHECK_EQUAL(
+        UTF16toUTF8(utf16_dst, number_of_characters * 2, utf8_dst, sizeof(utf8_dst)),
+        number_of_characters + 2 /* '€'  => 0xE2 0x82 0xAC */
+                             + 1 /* '\n' => 0x0D 0x0A */
+                             + 2 /* 'é'  => 0xC3 0xA9, 'ï' => 0xC3 0xAF */);
+
+    BOOST_CHECK_EQUAL(std::string(char_ptr_cast(utf8_dst)), "100 €\r\ntrapézoïdal");
 }

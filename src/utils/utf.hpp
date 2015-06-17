@@ -31,6 +31,10 @@
 
 #include "log.hpp"
 
+enum {
+      maximum_length_of_utf8_character_in_bytes = 4
+};
+
 // bool UTF32isValid(uint32_t c):
 // abstract: Check if some code point is a valid char or not (some UNICODE ranges are forbiden)
 // input: c = 32 bits Unicode codepoint
@@ -778,13 +782,25 @@ static inline size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_l
     return current_latin1_target - latin1_target;
 }
 
-static inline size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_len, uint8_t * utf16_target_, size_t utf16_len) {
+static inline size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_len,
+        uint8_t * utf16_target_, size_t utf16_len, bool LfToCrLf = false) {
     uint16_t * utf16_target = reinterpret_cast<uint16_t *>(utf16_target_);
 
-    auto converter = [](uint8_t src, uint16_t * dst) {
+    auto converter = [](uint8_t src, uint16_t *& dst, size_t & remaining_dst_len) -> bool {
         if ((src < 0x80) || (src > 0x9F)) {
-            *dst = src;
-            return;
+            if (src == 0x0A) {
+                if (remaining_dst_len > 1) {
+                    *dst++ = 0x0D;
+                    remaining_dst_len--;
+                }
+                else {
+                    return false;
+                }
+            }
+
+            *dst++ = src;
+            remaining_dst_len--;
+            return true;
         }
 
         uint16_t Latin1ToUTF16LUT[] = {
@@ -798,15 +814,20 @@ static inline size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_
             0x0153, 0x009D, 0x017E, 0x0178
         };
 
-        *dst = Latin1ToUTF16LUT[src - 0x80];
+        *dst++ = Latin1ToUTF16LUT[src - 0x80];
+        remaining_dst_len--;
+
+        return true;
     };
 
     const uint8_t  * current_latin1_source = latin1_source;
           uint16_t * current_utf16_target  = utf16_target;
     for (size_t remaining_latin1_len = latin1_len, remaining_utf16_len = utf16_len / 2;
          remaining_latin1_len && remaining_utf16_len;
-         current_latin1_source++, remaining_latin1_len--, current_utf16_target++, remaining_utf16_len--) {
-        converter(*current_latin1_source, current_utf16_target);
+         current_latin1_source++, remaining_latin1_len--) {
+        if (!converter(*current_latin1_source, current_utf16_target, remaining_utf16_len)) {
+            break;
+        }
     }
 
     return (current_utf16_target - utf16_target) * 2;

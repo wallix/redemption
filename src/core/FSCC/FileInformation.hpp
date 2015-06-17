@@ -717,8 +717,6 @@ public:
 
         stream.in_copy_bytes(ShortName, sizeof(ShortName));
 
-        const size_t maximum_length_of_utf8_character_in_bytes = 4;
-
         const size_t size_of_ShortName_utf8_string =
             ShortNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
         uint8_t * const ShortName_utf8_string = static_cast<uint8_t *>(
@@ -1044,8 +1042,6 @@ public:
 
         stream.in_copy_bytes(FileName_unicode_data, FileNameLength);
 
-        const size_t maximum_length_of_utf8_character_in_bytes = 4;
-
         const size_t size_of_FileName_utf8_string =
             FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
         uint8_t * const FileName_utf8_string = static_cast<uint8_t *>(
@@ -1236,8 +1232,6 @@ public:
         uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
 
         stream.in_copy_bytes(FileName_unicode_data, FileNameLength);
-
-        const size_t maximum_length_of_utf8_character_in_bytes = 4;
 
         const size_t size_of_FileName_utf8_string =
             FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
@@ -1658,8 +1652,6 @@ public:
         uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(FileSystemNameLength));
 
         stream.in_copy_bytes(unicode_data, FileSystemNameLength);
-
-        const size_t maximum_length_of_utf8_character_in_bytes = 4;
 
         const size_t size_of_utf8_string =
             FileSystemNameLength / 2 * maximum_length_of_utf8_character_in_bytes;
@@ -2127,8 +2119,6 @@ public:
         uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(VolumeLabelLength));
 
         stream.in_copy_bytes(unicode_data, VolumeLabelLength);
-
-        const size_t maximum_length_of_utf8_character_in_bytes = 4;
 
         const size_t size_of_utf8_string =
             VolumeLabelLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;

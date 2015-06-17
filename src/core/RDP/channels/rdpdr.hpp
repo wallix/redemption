@@ -26,6 +26,7 @@
 #include "cast.hpp"
 #include "noncopyable.hpp"
 #include "stream.hpp"
+#include "utf.hpp"
 
 namespace rdpdr {
 
@@ -891,8 +892,6 @@ public:
             uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
 
             stream.in_copy_bytes(unicode_data, PathLength);
-
-            const size_t maximum_length_of_utf8_character_in_bytes = 4;
 
             const size_t size_of_utf8_string =
                 PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
@@ -1958,8 +1957,6 @@ public:
                 uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
 
                 stream.in_copy_bytes(unicode_data, ComputerNameLen);
-
-                const size_t maximum_length_of_utf8_character_in_bytes = 4;
 
                 const size_t size_of_utf8_string =
                             ComputerNameLen / 2 * maximum_length_of_utf8_character_in_bytes + 1;
@@ -3077,8 +3074,6 @@ public:
             uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
 
             stream.in_copy_bytes(unicode_data, PathLength);
-
-            const size_t maximum_length_of_utf8_character_in_bytes = 4;
 
             const size_t size_of_utf8_string =
                         PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;

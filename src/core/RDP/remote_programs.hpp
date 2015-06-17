@@ -451,8 +451,6 @@ public:
                 stream.in_copy_bytes(utf16_data,
                     length_of_utf16_data_in_bytes);
 
-                const size_t maximum_length_of_utf8_character_in_bytes = 4;
-
                 const size_t size_of_utf8_string =
                     length_of_utf16_data_in_bytes / 2 *
                     maximum_length_of_utf8_character_in_bytes + 1;
@@ -761,8 +759,6 @@ public:
         uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(CbString));
 
         stream.in_copy_bytes(unicode_data, CbString);
-
-        const size_t maximum_length_of_utf8_character_in_bytes = 4;
 
         const size_t size_of_utf8_string =
                     CbString / 2 * maximum_length_of_utf8_character_in_bytes + 1;
