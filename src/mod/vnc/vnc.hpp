@@ -645,6 +645,60 @@ public:
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "VNC screen cleaning ok\n");
                 }
+
+                RDPECLIP::GeneralCapabilitySet general_caps;
+
+                RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(
+                        1,
+                        RDPECLIP::GeneralCapabilitySet::size()
+                    );
+
+                BStream out_s(1024);
+
+                clip_cap_pdu.emit(out_s);
+                general_caps.emit(out_s);
+
+                size_t length     = out_s.size();
+                size_t chunk_size = length;
+
+                if (this->verbose) {
+                    LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
+                        RDPECLIP::get_msgType_name(clip_cap_pdu.msgType()),
+                        clip_cap_pdu.msgType()
+                        );
+                }
+
+                this->send_to_front_channel( channel_names::cliprdr
+                                           , out_s.get_data()
+                                           , length
+                                           , chunk_size
+                                           ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                             | CHANNELS::CHANNEL_FLAG_LAST
+                                           );
+
+                RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
+
+                out_s.reset();
+
+                server_monitor_ready_pdu.emit(out_s);
+
+                length     = out_s.size();
+                chunk_size = length;
+
+                if (this->verbose) {
+                    LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
+                        RDPECLIP::get_msgType_name(server_monitor_ready_pdu.msgType()),
+                        server_monitor_ready_pdu.msgType()
+                        );
+                }
+
+                this->send_to_front_channel( channel_names::cliprdr
+                                           , out_s.get_data()
+                                           , length
+                                           , chunk_size
+                                           ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                             | CHANNELS::CHANNEL_FLAG_LAST
+                                           );
             }
             break;
         case RETRY_CONNECTION:
@@ -2563,6 +2617,26 @@ private:
                     this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_data(),
                         this->to_vnc_clipboard_data.size());
                 }
+            break;
+
+            case RDPECLIP::CB_CLIP_CAPS:
+            {
+                RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu;
+
+                clipboard_caps_pdu.recv(stream, recv_factory);
+
+                RDPECLIP::CapabilitySetRecvFactory caps_recv_factory(stream);
+
+                if (caps_recv_factory.capabilitySetType == RDPECLIP::CB_CAPSTYPE_GENERAL) {
+                    RDPECLIP::GeneralCapabilitySet general_caps;
+
+                    general_caps.recv(stream, caps_recv_factory);
+
+                    if (this->verbose) {
+                        general_caps.log(LOG_INFO);
+                    }
+                }
+            }
             break;
         }
         if (this->verbose) {
