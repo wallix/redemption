@@ -653,7 +653,7 @@ public:
 
         StringField server_clipboard_encoding_type;     // AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE //
 
-        BoolField bogus_clipboard_infinite_loop;    // AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP //
+        UnsignedField bogus_clipboard_infinite_loop;    // AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP //
 
         Inifile_mod_vnc() = default;
     } mod_vnc;
@@ -984,7 +984,7 @@ public:
         this->mod_vnc.server_clipboard_encoding_type.set_from_cstr("latin1");
 
         this->mod_vnc.bogus_clipboard_infinite_loop.attach_ini(this, AUTHID_RDP_BOGUS_SC_NET_SIZE);
-        this->mod_vnc.bogus_clipboard_infinite_loop.set(false);
+        this->mod_vnc.bogus_clipboard_infinite_loop.set(0);
         // End Section "mod_vnc"
 
         // Begin section video

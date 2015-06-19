@@ -181,7 +181,9 @@ private:
 
     bool clipboard_owned_by_client = true;
 
-    bool bogus_clipboard_infinite_loop = false;
+    uint32_t bogus_clipboard_infinite_loop = 0;
+
+    uint32_t clipboard_general_capability_flags = 0;
 
 public:
     //==============================================================================================================
@@ -200,7 +202,7 @@ public:
            , bool allow_authentification_retries
            , bool is_socket_transport
            , const char * clipboard_server_encoding_type
-           , bool bogus_clipboard_infinite_loop
+           , uint32_t bogus_clipboard_infinite_loop
            , uint32_t verbose
            )
     //==============================================================================================================
@@ -1188,6 +1190,9 @@ public:
                 }
             }
             break;
+        case WAIT_CLIENT_UP_AND_RUNNING:
+                LOG(LOG_WARNING, "Waiting for client be come up and running");
+            break;
         default:
             LOG(LOG_ERR, "Unknown state=%d", this->state);
             throw Error(ERR_VNC);
@@ -2133,7 +2138,7 @@ private:
     void clipboard_send_to_vnc(Stream & chunk, size_t length, uint32_t flags)
     {
         if (this->verbose) {
-            LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc length=%u chunk_size=%u flags=0x%08X"
+            LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc: length=%u chunk_size=%u flags=0x%08X"
                , (unsigned)length, (unsigned)chunk.size(), flags);
         }
 
@@ -2290,6 +2295,15 @@ private:
 
                             this->clipboard_requesting_for_data_is_delayed = true;
                         }
+                        else if ((this->bogus_clipboard_infinite_loop != 1) &&
+                                 (this->clipboard_general_capability_flags & RDPECLIP::CB_ALL_GENERAL_CAPABILITY_FLAGS)) {
+                            if (this->verbose) {
+                                LOG( LOG_INFO
+                                   , "mod_vnc::clipboard_send_to_vnc: "
+                                     "duplicated clipboard update event form Windows client is ignored"
+                                   );
+                            }
+                        }
                         else {
                             if (this->verbose) {
                                 LOG(LOG_INFO,
@@ -2324,7 +2338,7 @@ private:
                 const unsigned expected = 10; /* msgFlags(2) + datalen(4) + requestedFormatId(4) */
                 if (!stream.in_check_rem(expected)) {
                     LOG( LOG_ERR
-                       , "mod_vnc::clipboard_send_to_vnc truncated CB_FORMAT_DATA_REQUEST(%d) data, need=%u remains=%u"
+                       , "mod_vnc::clipboard_send_to_vnc: truncated CB_FORMAT_DATA_REQUEST(%d) data, need=%u remains=%u"
                        , RDPECLIP::CB_FORMAT_DATA_REQUEST, expected, stream.in_remain());
                     throw Error(ERR_VNC);
                 }
@@ -2513,7 +2527,7 @@ private:
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
                         if (!stream.in_check_rem(format_data_response_pdu.dataLen())) {
                             LOG( LOG_ERR
-                               , "mod_vnc::clipboard_send_to_vnc truncated CB_FORMAT_DATA_RESPONSE(%d), need=%u remains=%u"
+                               , "mod_vnc::clipboard_send_to_vnc: truncated CB_FORMAT_DATA_RESPONSE(%d), need=%u remains=%u"
                                , RDPECLIP::CB_FORMAT_DATA_RESPONSE
                                , format_data_response_pdu.dataLen(), stream.in_remain());
                             throw Error(ERR_VNC);
@@ -2531,7 +2545,7 @@ private:
                         // Virtual channel data span in multiple Virtual Channel PDUs.
 
                         if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) == 0) {
-                            LOG(LOG_ERR, "mod_vnc::clipboard_send_to_vnc flag CHANNEL_FLAG_FIRST expected");
+                            LOG(LOG_ERR, "mod_vnc::clipboard_send_to_vnc: flag CHANNEL_FLAG_FIRST expected");
                             throw Error(ERR_VNC);
                         }
 
@@ -2540,7 +2554,7 @@ private:
 
                         if (this->verbose) {
                             LOG( LOG_INFO
-                               , "mod_vnc::clipboard_send_to_vnc Virtual channel data span in multiple Virtual Channel PDUs: total=%u"
+                               , "mod_vnc::clipboard_send_to_vnc: virtual channel data span in multiple Virtual Channel PDUs: total=%u"
                                , this->to_vnc_clipboard_data_size);
                         }
 
@@ -2584,16 +2598,16 @@ private:
 
                 // Virtual channel data span in multiple Virtual Channel PDUs.
                 if (this->verbose) {
-                    LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc an other trunk");
+                    LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc: an other trunk");
                 }
 
                 if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) != 0) {
-                    LOG(LOG_ERR, "mod_vnc::clipboard_send_to_vnc flag CHANNEL_FLAG_FIRST unexpected");
+                    LOG(LOG_ERR, "mod_vnc::clipboard_send_to_vnc: flag CHANNEL_FLAG_FIRST unexpected");
                     throw Error(ERR_VNC);
                 }
 
                 // if (this->verbose) {
-                //     LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc trunk size=%u, capacity=%u"
+                //     LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc: trunk size=%u, capacity=%u"
                 //        , stream.in_remain(), static_cast<unsigned>(this->to_vnc_clipboard_data.tailroom()));
                 // }
 
@@ -2632,6 +2646,8 @@ private:
 
                     general_caps.recv(stream, caps_recv_factory);
 
+                    this->clipboard_general_capability_flags = general_caps.generalFlags();
+
                     if (this->verbose) {
                         general_caps.log(LOG_INFO);
                     }
@@ -2640,7 +2656,7 @@ private:
             break;
         }
         if (this->verbose) {
-            LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc done");
+            LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc: done");
         }
     } // clipboard_send_to_vnc
 

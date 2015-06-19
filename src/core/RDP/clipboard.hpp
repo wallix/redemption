@@ -486,6 +486,19 @@ enum {
 //  |                            | Clipboard Data PDU.                        |
 //  +----------------------------+--------------------------------------------+
 
+enum {
+    CB_USE_LONG_FORMAT_NAMES   = 0x00000002,
+    CB_STREAM_FILECLIP_ENABLED = 0x00000004,
+    CB_FILECLIP_NO_FILE_PATHS  = 0x00000008,
+    CB_CAN_LOCK_CLIPDATA       = 0x00000010,
+
+    CB_ALL_GENERAL_CAPABILITY_FLAGS = (CB_USE_LONG_FORMAT_NAMES |
+                                       CB_STREAM_FILECLIP_ENABLED |
+                                       CB_FILECLIP_NO_FILE_PATHS |
+                                       CB_CAN_LOCK_CLIPDATA
+                                      )
+};
+
 // If the General Capability Set is not present in the Clipboard Capabilities
 //  PDU, then the default set of general capabilities MUST be assumed. By
 //  definition the default set does not specify any flags in the generalFlags
@@ -495,14 +508,14 @@ class GeneralCapabilitySet {
     uint16_t capabilitySetType = CB_CAPSTYPE_GENERAL;
     uint16_t lengthCapability  = size();
     uint32_t version           = CB_CAPS_VERSION_1;
-    uint32_t generalFlags      = 0;
+    uint32_t generalFlags_     = 0;
 
 public:
     void emit(Stream & stream) {
         stream.out_uint16_le(this->capabilitySetType);
         stream.out_uint16_le(this->lengthCapability);
         stream.out_uint32_le(this->version);
-        stream.out_uint32_le(this->generalFlags);
+        stream.out_uint32_le(this->generalFlags_);
 
         stream.mark_end();
     }
@@ -524,9 +537,11 @@ public:
 
         REDASSERT(this->lengthCapability == size());
 
-        this->version           = stream.in_uint32_le();
-        this->generalFlags      = stream.in_uint32_le();
+        this->version       = stream.in_uint32_le();
+        this->generalFlags_ = stream.in_uint32_le();
     }
+
+    uint32_t generalFlags() const { return this->generalFlags_; }
 
     inline static size_t size() {
         return 12;  // capabilitySetType(2) + lengthCapability(2) + version(4) +
@@ -552,7 +567,7 @@ private:
             this->lengthCapability,
             this->get_version_name(this->version),
             this->version,
-            this->generalFlags);
+            this->generalFlags_);
         return ((length < size) ? length : size - 1);
     }
 
