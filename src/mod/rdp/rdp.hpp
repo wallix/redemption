@@ -5194,6 +5194,12 @@ public:
                 }
                 break;
             default:
+                if (this->verbose) {
+                    LOG(LOG_WARNING,
+                        "Unprocessed Capability Set is encountered. capabilitySetType=%s(%u)",
+                        ::get_capabilitySetType_name(capset_type),
+                        capset_type);
+                }
                 break;
             }
             stream.p = next;

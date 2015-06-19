@@ -2298,6 +2298,42 @@ public:
 //  There is no alignment padding between individual DEVICE_ANNOUNCE
 //  structures. They are ordered sequentially within this packet.
 
+// [MS-RDPEFS] - 2.2.3.2 Client Drive Device List Remove
+//  (DR_DEVICELIST_REMOVE)
+// =====================================================
+
+// The client removes a list of already-announced devices from the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +---------------------------------------------------------------+
+// |                          DeviceCount                          |
+// +---------------------------------------------------------------+
+// |                      DeviceIds (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set
+//  to RDPDR_CTYP_CORE, and the PacketId field MUST be set to
+//  PAKID_CORE_DEVICELIST_REMOVE.
+
+// DeviceCount (4 bytes): A 32-bit unsigned integer that specifies the number
+//  of entries in the DeviceIds field.
+
+// DeviceIds (variable): A variable-length array of 32-bit unsigned integers
+//  that specifies device IDs. The IDs specified in this array match the IDs
+//  specified in the Client Device List Announce (section 2.2.3.1) packet.
+
+//  Note The client can send the DR_DEVICELIST_REMOVE message for devices
+//   that are removed after a session is connected. The server can accept the
+//   DR_DEVICE_REMOVE message for any removed device, including file system
+//   and port devices. The server can also accept reused DeviceIds of devices
+//   that have been removed, providing the implementation uses the
+//   DR_DEVICE_REMOVE message to do so.
 
 // [MS-RDPEFS] - 2.2.3.3.1 Server Create Drive Request (DR_DRIVE_CREATE_REQ)
 // =========================================================================

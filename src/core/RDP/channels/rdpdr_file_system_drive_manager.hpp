@@ -1617,6 +1617,8 @@ public:
 class FileSystemDriveManager {
     const uint32_t FIRST_MANAGED_DRIVE_ID = 32767;
 
+    const uint32_t INVALID_MANAGED_DRIVE_ID = 0xFFFFFFFF;
+
 #ifdef __clang__
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-private-field"
@@ -1637,7 +1639,7 @@ class FileSystemDriveManager {
         managed_file_system_object_collection_type;
     managed_file_system_object_collection_type managed_file_system_objects;
 
-    bool wab_agent_drive_enabled = false;
+    uint32_t wab_agent_drive_id = INVALID_MANAGED_DRIVE_ID;
 
 public:
     FileSystemDriveManager() {
@@ -1691,8 +1693,8 @@ public:
     }
 
     void EnableWABAgentDrive() {
-        if (!this->wab_agent_drive_enabled) {
-            this->wab_agent_drive_enabled = true;
+        if (this->wab_agent_drive_id == INVALID_MANAGED_DRIVE_ID) {
+            this->wab_agent_drive_id = this->next_managed_drive_id;
 
             managed_drives.push_back(
                 std::make_tuple(this->next_managed_drive_id++,
@@ -2132,6 +2134,45 @@ public:
                     verbose);
             break;
         }
+    }
+
+    void EnableWABAgentDrive(ToServerSender & to_server_sender) {
+        if (this->wab_agent_drive_id == INVALID_MANAGED_DRIVE_ID) {
+            return;
+        }
+
+        const uint32_t old_wab_agent_drive_id = this->wab_agent_drive_id;
+
+        this->wab_agent_drive_id = INVALID_MANAGED_DRIVE_ID;
+
+        managed_drive_collection_type::iterator iter;
+        for (iter = this->managed_drives.begin();
+             iter != this->managed_drives.end(); ++iter) {
+            if (old_wab_agent_drive_id == std::get<0>(*iter)) {
+                this->managed_drives.erase(iter);
+
+                break;
+            }
+        }
+        REDASSERT(iter == this->managed_drives.end());
+
+        BStream out_stream(1024);
+
+        const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
+                                       rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE);
+        sh_s.emit(out_stream);
+
+        out_stream.out_uint32_le(1);                        // DeviceCount(4)
+        out_stream.out_uint32_le(old_wab_agent_drive_id);   // DeviceIds(variable)
+
+        out_stream.mark_end();
+
+        to_server_sender(
+                out_stream.size(),
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                out_stream.get_data(),
+                out_stream.size()
+            );
     }
 };  // FileSystemDriveManager
 
