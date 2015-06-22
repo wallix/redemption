@@ -653,12 +653,13 @@ public:
 
     // Section "video"
     struct Inifile_video {
-        unsigned capture_flags  = 3; // 1 png, 2 wrm, 4 flv, 8 ocr
+        unsigned capture_flags  = 3; // 1 png, 2 wrm, 4 flv, 8 ocr, 16 ppocr
         // video opt from capture_flags
         bool     capture_png    = true;
         bool     capture_wrm    = true;
         bool     capture_flv    = false;
         bool     capture_ocr    = false;
+        bool     capture_ppocr  = false;
 
         std::string ocr_locale;
         unsigned ocr_interval               = 100; // 1 every second
@@ -1378,6 +1379,7 @@ public:
                 this->video.capture_wrm = 0 != (this->video.capture_flags & 2);
                 this->video.capture_flv = 0 != (this->video.capture_flags & 4);
                 this->video.capture_ocr = 0 != (this->video.capture_flags & 8);
+                this->video.capture_ppocr = 0 != (this->video.capture_flags & 16);
             }
             else if (0 == strcmp(key, "ocr_locale")) {
                 this->video.ocr_locale = value;
