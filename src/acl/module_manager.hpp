@@ -791,6 +791,7 @@ public:
                 mod_rdp_params.enable_wab_agent                    = this->ini.globals.enable_wab_agent.get();
                 mod_rdp_params.wab_agent_launch_timeout            = this->ini.globals.wab_agent_launch_timeout.get();
                 mod_rdp_params.wab_agent_keepalive_timeout         = this->ini.globals.wab_agent_keepalive_timeout.get();
+                mod_rdp_params.disable_clipboard_log               = this->ini.video.disable_clipboard_log.get();
                 mod_rdp_params.acl                                 = acl;
                 mod_rdp_params.auth_channel                        = this->ini.globals.auth_channel;
                 mod_rdp_params.alternate_shell                     = this->ini.globals.alternate_shell.get_cstr();
@@ -816,10 +817,12 @@ public:
                 mod_rdp_params.remote_program                      = this->front.client_info.remote_program;
                 mod_rdp_params.server_redirection_support          = this->ini.mod_rdp.server_redirection_support;
 
-                mod_rdp_params.max_chunked_virtual_channel_data_length =
+                mod_rdp_params.chunked_virtual_channel_data_max_length =
                                                                      this->ini.globals.max_chunked_virtual_channel_data_length;
 
                 mod_rdp_params.bogus_sc_net_size                   = this->ini.mod_rdp.bogus_sc_net_size.get();
+
+                mod_rdp_params.client_device_announce_timeout      = this->ini.mod_rdp.client_device_announce_timeout.get();
 
                 UdevRandom gen;
 
@@ -886,6 +889,7 @@ public:
                                                       , this->ini.mod_vnc.allow_authentification_retries
                                                       , true
                                                       , this->ini.mod_vnc.server_clipboard_encoding_type.get_cstr()
+                                                      , this->ini.mod_vnc.bogus_clipboard_infinite_loop.get()
                                                       , this->ini.debug.mod_vnc
                 );
 

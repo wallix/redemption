@@ -129,6 +129,14 @@ public:
         this->fd = other.fd;
         other.fd = fd;
     }
+
+    int release() noexcept {
+        int old_fd = this->fd;
+
+        this->fd = -1;
+
+        return old_fd;
+    }
 };
 
 inline void swap(fdbuf & a, fdbuf & b) noexcept

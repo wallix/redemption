@@ -243,6 +243,10 @@ public:
         this->recorder.flush();
         this->recorder.timestamp(now);
     }
+
+    virtual void session_update(const timeval & now, const char * message) override {
+        this->recorder.session_update(now, message);
+    }
 };
 
 #endif

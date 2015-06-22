@@ -55,6 +55,39 @@ enum {
     , CF_GDIOBJLAST      = 1023
 };
 
+inline static const char * get_Format_name(uint32_t FormatId) {
+    switch (FormatId) {
+        case CF_TEXT:            return "CF_TEXT";
+        case CF_BITMAP:          return "CF_BITMAP";
+        case CF_METAFILEPICT:    return "CF_METAFILEPICT";
+        case CF_SYLK:            return "CF_SYLK";
+        case CF_DIF:             return "CF_DIF";
+        case CF_TIFF:            return "CF_TIFF";
+        case CF_OEMTEXT:         return "CF_OEMTEXT";
+        case CF_DIB:             return "CF_DIB";
+        case CF_PALETTE:         return "CF_PALETTE";
+        case CF_PENDATA:         return "CF_PENDATA";
+        case CF_RIFF:            return "CF_RIFF";
+        case CF_WAVE:            return "CF_WAVE";
+        case CF_UNICODETEXT:     return "CF_UNICODETEXT";
+        case CF_ENHMETAFILE:     return "CF_ENHMETAFILE";
+        case CF_HDROP:           return "CF_HDROP";
+        case CF_LOCALE:          return "CF_LOCALE";
+        case CF_DIBV5:           return "CF_DIBV5";
+        case CF_OWNERDISPLAY:    return "CF_OWNERDISPLAY";
+        case CF_DSPTEXT:         return "CF_DSPTEXT";
+        case CF_DSPBITMAP:       return "CF_DSPBITMAP";
+        case CF_DSPMETAFILEPICT: return "CF_DSPMETAFILEPICT";
+        case CF_DSPENHMETAFILE:  return "CF_DSPENHMETAFILE";
+        case CF_PRIVATEFIRST:    return "CF_PRIVATEFIRST";
+        case CF_PRIVATELAST:     return "CF_PRIVATELAST";
+        case CF_GDIOBJFIRST:     return "CF_GDIOBJFIRST";
+        case CF_GDIOBJLAST:      return "CF_GDIOBJLAST";
+    }
+
+    return "<unknown>";
+}
+
 // [MS-RDPECLIP] 2.2.1 Clipboard PDU Header (CLIPRDR_HEADER)
 // =========================================================
 
@@ -114,7 +147,29 @@ enum {
     , CB_UNLOCK_CLIPDATA       = 0x000B
 };
 
-#define CB_CHUNKED_FORMAT_DATA_RESPONSE 0xFFFF
+enum {
+      CB_CHUNKED_FORMAT_DATA_RESPONSE = 0xFFFF
+};
+
+inline static const char * get_msgType_name(uint16_t msgType) {
+    switch (msgType) {
+        case CB_MONITOR_READY:         return "CB_MONITOR_READY";
+        case CB_FORMAT_LIST:           return "CB_FORMAT_LIST";
+        case CB_FORMAT_LIST_RESPONSE:  return "CB_FORMAT_LIST_RESPONSE";
+        case CB_FORMAT_DATA_REQUEST:   return "CB_FORMAT_DATA_REQUEST";
+        case CB_FORMAT_DATA_RESPONSE:  return "CB_FORMAT_DATA_RESPONSE";
+        case CB_TEMP_DIRECTORY:        return "CB_TEMP_DIRECTORY";
+        case CB_CLIP_CAPS:             return "CB_CLIP_CAPS";
+        case CB_FILECONTENTS_REQUEST:  return "CB_FILECONTENTS_REQUEST";
+        case CB_FILECONTENTS_RESPONSE: return "CB_FILECONTENTS_RESPONSE";
+        case CB_LOCK_CLIPDATA:         return "CB_LOCK_CLIPDATA";
+        case CB_UNLOCK_CLIPDATA:       return "CB_UNLOCK_CLIPDATA";
+
+        case CB_CHUNKED_FORMAT_DATA_RESPONSE: return "CB_CHUNKED_FORMAT_DATA_RESPONSE";
+    }
+
+    return "<unknown>";
+}
 
 // msgFlags (2 bytes): An unsigned, 16-bit integer that indicates message
 //  flags.
@@ -210,6 +265,320 @@ private:
     CliprdrHeader(CliprdrHeader const &);
     CliprdrHeader& operator=(CliprdrHeader const &);
 };  // struct CliprdrHeader
+
+// [MS-RDPECLIP] - 2.2.2.1 Clipboard Capabilities PDU (CLIPRDR_CAPS)
+// =================================================================
+
+// The Clipboard Capabilities PDU is an optional PDU used to exchange
+//  capability information. It is first sent from the server to the client.
+//  Upon receipt of the Monitor Ready PDU, the client sends the Clipboard
+//  Capabilities PDU to the server.
+
+// If this PDU is not sent by a Remote Desktop Protocol: Clipboard Virtual
+//  Channel Extension endpoint, it is assumed that the endpoint is using the
+//  default values for each capability field.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           clipHeader                          |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +-------------------------------+-------------------------------+
+// |       cCapabilitiesSets       |              pad1             |
+// +-------------------------------+-------------------------------+
+// |                   capabilitySets (variable)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
+//  Clipboard PDU Header MUST be set to CB_CLIP_CAPS (0x0007), while the
+//  msgFlags field MUST be set to 0x0000.
+
+// cCapabilitiesSets (2 bytes): An unsigned, 16-bit integer that specifies
+//  the number of CLIPRDR_CAPS_SETs, present in the capabilitySets field.
+
+// pad1 (2 bytes): An unsigned, 16-bit integer used for padding. Values in
+//  this field are ignored.
+
+// capabilitySets (variable): A variable-sized array of capability sets, each
+//  conforming in structure to the CLIPRDR_CAPS_SET.
+
+struct ClipboardCapabilitiesPDU : public CliprdrHeader {
+private:
+    uint16_t cCapabilitiesSets = 0;
+
+public:
+    ClipboardCapabilitiesPDU() = default;
+
+    ClipboardCapabilitiesPDU(uint16_t cCapabilitiesSets, uint32_t length_capabilities) :
+        CliprdrHeader(CB_CLIP_CAPS,
+                      0,
+                      4 +   // cCapabilitiesSets(2) + pad1(2)
+                          length_capabilities
+                     ),
+        cCapabilitiesSets(cCapabilitiesSets)
+    {}
+
+    void emit(Stream & stream) {
+        CliprdrHeader::emit(stream);
+
+        stream.out_uint16_le(cCapabilitiesSets);
+        stream.out_clear_bytes(2);  // pad1(2)
+        stream.mark_end();
+    }   // void emit(Stream & stream)
+
+    void recv(Stream & stream, const RecvFactory & recv_factory) {
+        CliprdrHeader::recv(stream, recv_factory);
+
+        const unsigned expected = 4;    // cCapabilitiesSets(2) + pad1(2)
+        if (!stream.in_check_rem(expected)) {
+            LOG( LOG_INFO,
+                "RDPECLIP::ClipboardCapabilitiesPDU:recv(): recv truncated data, need=%u remains=%u"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        this->cCapabilitiesSets = stream.in_uint16_le();
+
+        stream.in_skip_bytes(2);    // pad1(2)
+    }
+};  // struct ClipboardCapabilitiesPDU
+
+// [MS-RDPECLIP] - 2.2.2.1.1 Capability Set (CLIPRDR_CAPS_SET)
+// ===========================================================
+
+// The CLIPRDR_CAPS_SET structure is used to wrap capability set data and to
+//  specify the type and size of this data exchanged between the client and
+//  the server. All capability sets conform to this basic structure.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |       capabilitySetType       |        lengthCapability       |
+// +-------------------------------+-------------------------------+
+// |                   capabilityData (variable)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// capabilitySetType (2 bytes): An unsigned, 16-bit integer used as a type
+//  identifier of the capability set.
+
+//  +---------------------+------------------------+
+//  | Value               | Meaning                |
+//  +---------------------+------------------------+
+//  | CB_CAPSTYPE_GENERAL | General Capability Set |
+//  | 0x0001              |                        |
+//  +---------------------+------------------------+
+
+enum {
+    CB_CAPSTYPE_GENERAL = 0x0001
+};
+
+// lengthCapability (2 bytes): An unsigned, 16-bit integer that specifies the
+//  combined length, in bytes, of the capabilitySetType, capabilityData and
+//  lengthCapability fields.
+
+// capabilityData (variable): Capability set data specified by the type given
+//  in the capabilitySetType field. This field is a variable number of bytes.
+
+struct CapabilitySetRecvFactory {
+    uint16_t capabilitySetType;
+
+    CapabilitySetRecvFactory(Stream & stream) {
+        const unsigned expected = 2;    /* capabilitySetType(2) */
+        if (!stream.in_check_rem(expected)) {
+            LOG( LOG_INFO
+               , "RDPECLIP::CapabilitySetRecvFactory truncated capabilitySetType, need=%u remains=%u"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        this->capabilitySetType = stream.in_uint16_le();
+    }   // CapabilitySetRecvFactory(Stream & stream)
+
+    inline static const char * get_capabilitySetType_name(uint16_t capabilitySetType) {
+        switch (capabilitySetType) {
+            case CB_CAPSTYPE_GENERAL:  return "CB_CAPSTYPE_GENERAL";
+        }
+
+        return "<unknown>";
+    }
+};
+
+// [MS-RDPECLIP] - 2.2.2.1.1.1 General Capability Set
+//  (CLIPRDR_GENERAL_CAPABILITY)
+// ==================================================
+
+// The CLIPRDR_GENERAL_CAPABILITY structure is used to advertise general
+//  clipboard settings.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |       capabilitySetType       |        lengthCapability       |
+// +-------------------------------+-------------------------------+
+// |                            version                            |
+// +---------------------------------------------------------------+
+// |                          generalFlags                         |
+// +---------------------------------------------------------------+
+
+// capabilitySetType (2 bytes): An unsigned 16-bit integer that specifies the
+//  type of the capability set. This field MUST be set to CB_CAPSTYPE_GENERAL
+//  (0x0001).
+
+// lengthCapability (2 bytes): An unsigned, 16-bit integer that specifies the
+//  length, in bytes, of the capabilitySetType, capability data and
+//  lengthCapability fields.
+
+// version (4 bytes): An unsigned, 32-bit integer that specifies the Remote
+//  Desktop Protocol: Clipboard Virtual Channel Extension version number.
+//  This field is for informational purposes and MUST NOT be used to make
+//  protocol capability decisions. The actual features supported are
+//  specified in the generalFlags field.
+
+//  +-------------------+-----------+
+//  | Value             | Meaning   |
+//  +-------------------+-----------+
+//  | CB_CAPS_VERSION_1 | Version 1 |
+//  | 0x00000001        |           |
+//  +-------------------+-----------+
+//  | CB_CAPS_VERSION_2 | Version 2 |
+//  | 0x00000002        |           |
+//  +-------------------+-----------+
+
+enum {
+    CB_CAPS_VERSION_1 = 0x00000001,
+    CB_CAPS_VERSION_2 = 0x00000002
+};
+
+// generalFlags (4 bytes): An unsigned, 32-bit integer that specifies the
+//  general capability flags.
+
+//  +----------------------------+--------------------------------------------+
+//  | Value                      | Meaning                                    |
+//  +----------------------------+--------------------------------------------+
+//  | CB_USE_LONG_FORMAT_NAMES   | The Long Format Name variant of the Format |
+//  | 0x00000002                 | List PDU is supported for exchanging       |
+//  |                            | updated format names. If this flag is not  |
+//  |                            | set, the Short Format Name variant MUST be |
+//  |                            | used. If this flag is set by both protocol |
+//  |                            | endpoints, then the Long Format Name       |
+//  |                            | variant MUST be used.                      |
+//  +----------------------------+--------------------------------------------+
+//  | CB_STREAM_FILECLIP_ENABLED | File copy and paste using stream-based     |
+//  | 0x00000004                 | operations are supported using the File    |
+//  |                            | Contents Request PDU and File Contents     |
+//  |                            | Response PDU.                              |
+//  +----------------------------+--------------------------------------------+
+//  | CB_FILECLIP_NO_FILE_PATHS  | Indicates that any description of files to |
+//  | 0x00000008                 | copy and paste MUST NOT include the source |
+//  |                            | path of the files.                         |
+//  +----------------------------+--------------------------------------------+
+//  | CB_CAN_LOCK_CLIPDATA       | Locking and unlocking of File Stream data  |
+//  | 0x00000010                 | on the clipboard is supported using the    |
+//  |                            | Lock Clipboard Data PDU and Unlock         |
+//  |                            | Clipboard Data PDU.                        |
+//  +----------------------------+--------------------------------------------+
+
+enum {
+    CB_USE_LONG_FORMAT_NAMES   = 0x00000002,
+    CB_STREAM_FILECLIP_ENABLED = 0x00000004,
+    CB_FILECLIP_NO_FILE_PATHS  = 0x00000008,
+    CB_CAN_LOCK_CLIPDATA       = 0x00000010,
+
+    CB_ALL_GENERAL_CAPABILITY_FLAGS = (CB_USE_LONG_FORMAT_NAMES |
+                                       CB_STREAM_FILECLIP_ENABLED |
+                                       CB_FILECLIP_NO_FILE_PATHS |
+                                       CB_CAN_LOCK_CLIPDATA
+                                      )
+};
+
+// If the General Capability Set is not present in the Clipboard Capabilities
+//  PDU, then the default set of general capabilities MUST be assumed. By
+//  definition the default set does not specify any flags in the generalFlags
+//  field, that is the generalFlags field is set to 0x00000000.
+
+class GeneralCapabilitySet {
+    uint16_t capabilitySetType = CB_CAPSTYPE_GENERAL;
+    uint16_t lengthCapability  = size();
+    uint32_t version           = CB_CAPS_VERSION_1;
+    uint32_t generalFlags_     = 0;
+
+public:
+    void emit(Stream & stream) {
+        stream.out_uint16_le(this->capabilitySetType);
+        stream.out_uint16_le(this->lengthCapability);
+        stream.out_uint32_le(this->version);
+        stream.out_uint32_le(this->generalFlags_);
+
+        stream.mark_end();
+    }
+
+    void recv(Stream & stream, const CapabilitySetRecvFactory & recv_factory) {
+        REDASSERT(recv_factory.capabilitySetType == CB_CAPSTYPE_GENERAL);
+
+        const unsigned expected = 10;   // lengthCapability(2) + version(4) +
+                                        //     generalFlags(4)
+        if (!stream.in_check_rem(expected)) {
+            LOG( LOG_INFO
+               , "RDPECLIP::GeneralCapabilitySet::recv truncated data, need=%u remains=%u"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        this->capabilitySetType = recv_factory.capabilitySetType;
+        this->lengthCapability  = stream.in_uint16_le();
+
+        REDASSERT(this->lengthCapability == size());
+
+        this->version       = stream.in_uint32_le();
+        this->generalFlags_ = stream.in_uint32_le();
+    }
+
+    uint32_t generalFlags() const { return this->generalFlags_; }
+
+    inline static size_t size() {
+        return 12;  // capabilitySetType(2) + lengthCapability(2) + version(4) +
+                    //     generalFlags(4)
+    }
+
+private:
+    inline static const char * get_version_name(uint32_t version) {
+        switch (version) {
+            case CB_CAPS_VERSION_1: return "CB_CAPS_VERSION_1";
+            case CB_CAPS_VERSION_2: return "CB_CAPS_VERSION_2";
+        }
+
+        return "<unknown>";
+    }
+
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "RDPECLIP::GeneralCapabilitySet: "
+                "capabilitySetType=%s(%d) lengthCapability=%u version=%s(0x%08X) generalFlags=0x%08X",
+            CapabilitySetRecvFactory::get_capabilitySetType_name(this->capabilitySetType),
+            this->capabilitySetType,
+            this->lengthCapability,
+            this->get_version_name(this->version),
+            this->version,
+            this->generalFlags_);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};  // GeneralCapabilitySet
 
 // [MS-RDPECLIP] 2.2.2.2 Server Monitor Ready PDU (CLIPRDR_MONITOR_READY)
 // ======================================================================

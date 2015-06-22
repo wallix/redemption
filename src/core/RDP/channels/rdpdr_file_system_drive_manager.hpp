@@ -21,12 +21,19 @@
 #ifndef REDEMPTION_CORE_RDP_CHANNELS_RDPDRFILESYSTEMDRIVEMANAGER_HPP
 #define REDEMPTION_CORE_RDP_CHANNELS_RDPDRFILESYSTEMDRIVEMANAGER_HPP
 
+#include <dirent.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
 
+#include "channel_list.hpp"
+#include "rdp/rdp_asynchronous_task.hpp"
 #include "rdpdr.hpp"
 #include "defines.hpp"
 #include "FSCC/FileInformation.hpp"
+#include "make_unique.hpp"
 #include "SMB2/MessageSyntax.hpp"
+#include "to_server_sender.hpp"
 #include "winpr/pattern.hpp"
 
 #define EPOCH_DIFF 11644473600LL
@@ -35,6 +42,7 @@
     (((uint64_t)(_t) + EPOCH_DIFF) * 10000000LL)
 #define FILE_TIME_RDP_TO_SYSTEM(_t) \
     (((_t) == 0LL || (_t) == (uint64_t)(-1LL)) ? 0 : (time_t)((_t) / 10000000LL - EPOCH_DIFF))
+
 
 class ManagedFileSystemObject {
 public:
@@ -46,57 +54,79 @@ public:
         rdpdr::DeviceIORequest const & device_io_request,
         rdpdr::DeviceCreateRequest const & device_create_request,
         int drive_access_mode, const char * path, Stream & in_stream,
-        Stream & out_stream, uint32_t & out_flags, bool & out_drive_created,
+        bool & out_drive_created,
+        ToServerSender & to_server_sender,
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
         uint32_t verbose) = 0;
 
     virtual void ProcessServerCloseDriveRequest(
         rdpdr::DeviceIORequest const & device_io_request, const char * path,
-        Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
+        Stream & in_stream,
+        ToServerSender & to_server_sender,
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
         uint32_t verbose) = 0;
 
     virtual void ProcessServerDriveReadRequest(
         rdpdr::DeviceIORequest const & device_io_request,
         rdpdr::DeviceReadRequest const & device_read_request,
-        const char * path, Stream & in_stream, Stream & out_stream,
-        uint32_t & out_flags, uint32_t verbose) = 0;
+        const char * path, Stream & in_stream,
+        ToServerSender & to_server_sender,
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+        uint32_t verbose) = 0;
 
     virtual void ProcessServerDriveControlRequest(
         rdpdr::DeviceIORequest const & device_io_request,
         rdpdr::DeviceControlRequest const & device_control_request,
-        const char * path, Stream & in_stream, Stream & out_stream,
-        uint32_t & out_flags, uint32_t verbose) = 0;
+        const char * path, Stream & in_stream,
+        ToServerSender & to_server_sender,
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+        uint32_t verbose) = 0;
 
     virtual void ProcessServerDriveQueryVolumeInformationRequest(
         rdpdr::DeviceIORequest const & device_io_request,
         rdpdr::ServerDriveQueryVolumeInformationRequest const &
             server_drive_query_volume_information_request,
-        const char * path, Stream & in_stream, Stream & out_stream,
-        uint32_t & out_flags, uint32_t verbose) = 0;
+        const char * path, Stream & in_stream,
+        ToServerSender & to_server_sender,
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+        uint32_t verbose) = 0;
 
     virtual void ProcessServerDriveQueryInformationRequest(
         rdpdr::DeviceIORequest const & device_io_request,
         rdpdr::ServerDriveQueryInformationRequest const & server_drive_query_information_request,
-        const char * path, Stream & in_stream, Stream & out_stream,
-        uint32_t & out_flags, uint32_t verbose) = 0;
+        const char * path, Stream & in_stream,
+        ToServerSender & to_server_sender,
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+        uint32_t verbose) = 0;
 
 /*
     virtual void ProcessServerDriveSetInformationRequest(
         rdpdr::DeviceIORequest const & device_io_request,
         rdpdr::ServerDriveSetInformationRequest const & server_drive_set_information_request,
-        const char * path, Stream & in_stream, Stream & out_stream,
-        uint32_t & out_flags, uint32_t verbose) = 0;
+        const char * path, Stream & in_stream,
+        ToServerSender & to_server_sender,
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+        uint32_t verbose) = 0;
 */
 
     virtual void ProcessServerDriveQueryDirectoryRequest(
         rdpdr::DeviceIORequest const & device_io_request,
         rdpdr::ServerDriveQueryDirectoryRequest const & server_drive_query_directory_request,
-        const char * path, Stream & in_stream, Stream & out_stream,
-        uint32_t & out_flags, uint32_t verbose) = 0;
+        const char * path, Stream & in_stream,
+        ToServerSender & to_server_sender,
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+        uint32_t verbose) = 0;
 
     static void MakeClientDriveIoUnsuccessfulResponse(
             rdpdr::DeviceIORequest const & device_io_request,
-            Stream & out_stream, uint32_t & out_flags, const char * message,
+            const char * message,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
+        LOG(LOG_INFO, "+ + + + + + + + + + ManagedFileSystemObject::MakeClientDriveIoUnsuccessfulResponse() Using ToServerSender + + + + + + + + + +");
+
+        BStream out_stream(65536);
+
         const rdpdr::SharedHeader shared_header(rdpdr::Component::RDPDR_CTYP_CORE,
                                                 rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION
                                                );
@@ -114,9 +144,11 @@ public:
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        to_server_sender(out_stream.size(), out_flags, out_stream.get_data(), out_stream.size());
     }
-};
+};  // ManagedFileSystemObject
 
 class ManagedDirectory : public ManagedFileSystemObject {
     DIR * dir = nullptr;
@@ -127,12 +159,12 @@ class ManagedDirectory : public ManagedFileSystemObject {
 
 public:
     ManagedDirectory() {
-LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ManagedDirectory() : <%p>", this);
+        //LOG(LOG_INFO, "ManagedDirectory::ManagedDirectory() : <%p>", this);
     }
 
     virtual ~ManagedDirectory() {
-LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p> fd=%d",
-    this, (this->dir ? ::dirfd(this->dir) : -1));
+        //LOG(LOG_INFO, "ManagedDirectory::~ManagedDirectory(): <%p> fd=%d",
+        //    this, (this->dir ? ::dirfd(this->dir) : -1));
 
         if (this->dir) {
             ::closedir(this->dir);
@@ -148,8 +180,11 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p> fd=%d",
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceCreateRequest const & device_create_request,
             int drive_access_mode, const char * path, Stream & in_stream,
-            Stream & out_stream, uint32_t & out_flags,
-            bool & out_drive_created, uint32_t verbose) override {
+            bool & out_drive_created,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) override {
+        //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerCreateDriveRequest() Using ToServerSender + + + + + + + + + +");
         REDASSERT(!this->dir);
 
         out_drive_created = false;
@@ -201,6 +236,8 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p> fd=%d",
             return 0xC0000001;  // STATUS_UNSUCCESSFUL
         } (this->dir, last_error);
 
+        BStream out_stream(65536);
+
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
         sh_s.emit(out_stream);
@@ -225,26 +262,36 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::~ManagedDirectory(): <%p> fd=%d",
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
-if (this->dir) {
-    LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCreateDriveRequest(): <%p> fd=%d",
-        this, ::dirfd(this->dir));
-}
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
+
+        //if (this->dir) {
+        //    LOG(LOG_INFO, "ManagedDirectory::ProcessServerCreateDriveRequest(): <%p> fd=%d",
+        //        this, ::dirfd(this->dir));
+        //}
+
         out_drive_created = (this->dir != nullptr);
     }
 
     virtual void ProcessServerCloseDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
+            Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) override {
+        //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerCloseDriveRequest() Using ToServerSender + + + + + + + + + +");
         REDASSERT(this->dir);
-LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%p> fd=%d",
-    this, ::dirfd(this->dir));
+        //LOG(LOG_INFO, "ManagedDirectory::ProcessServerCloseDriveRequest(): <%p> fd=%d",
+        //    this, ::dirfd(this->dir));
 
         ::closedir(this->dir);
 
         this->dir = nullptr;
+
+        BStream out_stream(65536);
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
@@ -263,7 +310,11 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
 
         REDASSERT(!this->dir);
     }
@@ -271,9 +322,14 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
     virtual void ProcessServerDriveReadRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceReadRequest const & device_read_request,
-            const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) {
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) {
+        //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveReadRequest() Using ToServerSender + + + + + + + + + +");
         REDASSERT(this->dir);
+
+        BStream out_stream(65536);
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
@@ -294,16 +350,24 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
     }
 
     virtual void ProcessServerDriveQueryVolumeInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryVolumeInformationRequest const &
                 server_drive_query_volume_information_request,
-            const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) override {
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) override {
         REDASSERT(this->dir);
+
+        BStream out_stream(65536);
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
@@ -312,6 +376,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
         switch (server_drive_query_volume_information_request.FsInformationClass()) {
             case rdpdr::FileFsVolumeInformation:
             {
+                //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest() - FileFsVolumeInformation - Using ToServerSender + + + + + + + + + +");
                 struct statvfs svfsb;
                 ::statvfs(path, &svfsb);
                 struct stat64 sb;
@@ -344,6 +409,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
             case rdpdr::FileFsSizeInformation:
             {
+                //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest() - FileFsSizeInformation - Using ToServerSender + + + + + + + + + +");
                 struct statvfs svfsb;
                 ::statvfs(path, &svfsb);
 
@@ -379,6 +445,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
             case rdpdr::FileFsAttributeInformation:
             {
+                //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest() - FileFsAttributeInformation - Using ToServerSender + + + + + + + + + +");
                 struct statvfs svfsb;
                 ::statvfs(path, &svfsb);
                 struct stat64 sb;
@@ -418,6 +485,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
             case rdpdr::FileFsFullSizeInformation:
             {
+                //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest() - FileFsFullSizeInformation - Using ToServerSender + + + + + + + + + +");
                 struct statvfs svfsb;
                 ::statvfs(path, &svfsb);
 
@@ -454,6 +522,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
             case rdpdr::FileFsDeviceInformation:
             {
+                LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest() - FileFsDeviceInformation - Using ToServerSender + + + + + + + + + +");
                 const rdpdr::DeviceIOResponse device_io_response(
                         device_io_request.DeviceId(),
                         device_io_request.CompletionId(),
@@ -501,15 +570,24 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
     }
 
     virtual void ProcessServerDriveControlRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceControlRequest const & device_control_request,
-            const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) override {
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) override {
+        //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveControlRequest() Using ToServerSender + + + + + + + + + +");
         REDASSERT(this->dir);
+
+        BStream out_stream(65536);
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
@@ -535,15 +613,23 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
     }
 
     virtual void ProcessServerDriveQueryInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryInformationRequest const & server_drive_query_information_request,
-            const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) override {
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) override {
         REDASSERT(this->dir);
+
+        BStream out_stream;
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
@@ -552,6 +638,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
         switch (server_drive_query_information_request.FsInformationClass()) {
             case rdpdr::FileBasicInformation:
             {
+                //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryInformationRequest() - FileBasicInformation - Using ToServerSender + + + + + + + + + +");
                 struct stat64 sb;
                 ::fstat64(::dirfd(this->dir), &sb);
 
@@ -585,6 +672,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
             case rdpdr::FileStandardInformation:
             {
+                //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryInformationRequest() - FileStandardInformation - Using ToServerSender + + + + + + + + + +");
                 struct stat64 sb;
                 ::fstat64(::dirfd(this->dir), &sb);
 
@@ -641,18 +729,23 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
     }
 
 /*
     virtual void ProcessServerDriveSetInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveSetInformationRequest const & server_drive_set_information_request,
-            const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) {
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) {
+        LOG(LOG_INFO, "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ManagedDirectory::ProcessServerDriveSetInformationRequest() Using ToServerSender ~ ~ ~ ~ ~ ~ ~ ~ ~ ~");
         MakeClientDriveIoUnsuccessfulResponse(device_io_request,
-                                              out_stream,
-                                              out_flags,
                                               "ManagedDirectory::ProcessServerDriveSetInformationRequest",
                                               verbose);
 
@@ -664,8 +757,10 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
     virtual void ProcessServerDriveQueryDirectoryRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryDirectoryRequest const & server_drive_query_directory_request,
-            const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) override {
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) override {
         if (server_drive_query_directory_request.InitialQuery()) {
             ::rewinddir(this->dir);
 
@@ -693,11 +788,14 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
         }
         while (ent);
 
+        BStream out_stream(65536);
+
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
         sh_s.emit(out_stream);
 
         if (!ent) {
+            //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryDirectoryRequest() - STATUS_NO_MORE_FILES - Using ToServerSender + + + + + + + + + +");
             const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
                 device_io_request.CompletionId(), 0x80000006 /* STATUS_NO_MORE_FILES */);
             if (verbose) {
@@ -729,6 +827,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
             switch (server_drive_query_directory_request.FsInformationClass()) {
                 case rdpdr::FileFullDirectoryInformation:
                 {
+                    //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryDirectoryRequest() - FileFullDirectoryInformation - Using ToServerSender + + + + + + + + + +");
                     const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
                         device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
                     if (verbose) {
@@ -761,6 +860,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
                 case rdpdr::FileBothDirectoryInformation:
                 {
+                    //LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryDirectoryRequest() - FileBothDirectoryInformation - Using ToServerSender + + + + + + + + + +");
                     const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
                         device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
                     if (verbose) {
@@ -793,6 +893,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
                 case rdpdr::FileNamesInformation:
                 {
+                    LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryDirectoryRequest() - FileNamesInformation - Using ToServerSender + + + + + + + + + +");
                     const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
                         device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
                     if (verbose) {
@@ -840,26 +941,33 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedDirectory::ProcessServerCloseDriveRequest(): <%
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-        //hexdump_d(out_stream.get_data(), out_stream.size());
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
     }
 };  // ManagedDirectory
 
 class ManagedFile : public ManagedFileSystemObject {
     int fd = -1;
 
+    std::unique_ptr<InFileTransport> in_file_transport; // For read operations only.
+
+    off64_t size = 0;
+
 public:
     ManagedFile() {
-LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ManagedFile(): <%p>", this);
+        //LOG(LOG_INFO, "ManagedFile::ManagedFile(): <%p>", this);
     }
 
     virtual ~ManagedFile() {
-LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p> fd=%d",
-    this, this->fd);
+        //LOG(LOG_INFO, "ManagedFile::~ManagedFile(): <%p> fd=%d",
+        //    this, this->fd);
 
-        if (this->fd != -1) {
-            ::close(this->fd);
-        }
+        // File descriptor will be closed when in_file_transport is destroyed.
+
+        REDASSERT((this->fd <= -1) || in_file_transport);
     }
 
     virtual uint32_t FileId() const override {
@@ -871,8 +979,11 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p> fd=%d",
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceCreateRequest const & device_create_request,
             int drive_access_mode, const char * path, Stream & in_stream,
-            Stream & out_stream, uint32_t & out_flags,
-            bool & out_drive_created, uint32_t verbose) override {
+            bool & out_drive_created,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) override {
+        //LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerCreateDriveRequest() Using ToServerSender + + + + + + + + + +");
         REDASSERT(this->fd == -1);
 
         out_drive_created = false;
@@ -928,7 +1039,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p> fd=%d",
                                    int open_flags,
                                    uint32_t DesiredAccess,
                                    int drive_access_mode,
-                                   int & out_fd) -> int {
+                                   int & out_fd, off64_t & out_size) -> int {
             if (((drive_access_mode != O_RDWR) && (drive_access_mode != O_RDONLY) &&
                  smb2::read_access_is_required(DesiredAccess, /*strict_check = */false)) ||
                 ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY) &&
@@ -938,8 +1049,22 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p> fd=%d",
             }
 
             out_fd = ::open(path, open_flags, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            if (out_fd > -1) {
+                struct stat64 st;
+                if (fstat64(out_fd, &st)) {
+                    ::close(out_fd);
+                    out_fd = -1;
+                }
+                else {
+                    out_size = st.st_size;
+                }
+            }
             return ((out_fd > -1) ? 0 : errno);
-        } (full_path.c_str(), open_flags, DesiredAccess, drive_access_mode, this->fd);
+        } (full_path.c_str(), open_flags, DesiredAccess, drive_access_mode, this->fd, this->size);
+
+        if (this->fd > -1) {
+            this->in_file_transport = std::make_unique<InFileTransport>(this->fd);
+        }
 
         if (verbose) {
             LOG(LOG_INFO,
@@ -960,6 +1085,8 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p> fd=%d",
 
             return 0xC0000001;  // STATUS_UNSUCCESSFUL
         } (this->fd, last_error);
+
+        BStream out_stream(65536);
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
@@ -985,26 +1112,36 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::~ManagedFile(): <%p> fd=%d",
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
-if (this->fd > -1) {
-    LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCreateDriveRequest(): <%p> fd=%d",
-        this, this->fd);
-}
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
+
+        //if (this->fd > -1) {
+        //    LOG(LOG_INFO, "ManagedFile::ProcessServerCreateDriveRequest(): <%p> fd=%d",
+        //        this, this->fd);
+        //}
+
         out_drive_created = (this->fd != -1);
     }   // ProcessServerCreateDriveRequest
 
     virtual void ProcessServerCloseDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
+            Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
+        //LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerCloseDriveRequest() Using ToServerSender + + + + + + + + + +");
         REDASSERT(this->fd > -1);
-LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd=%d",
-    this, this->fd);
+        //LOG(LOG_INFO, "ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd=%d",
+        //    this, this->fd);
 
         ::close(this->fd);
 
         this->fd = -1;
+
+        BStream out_stream(65536);
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
@@ -1023,7 +1160,11 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
 
         REDASSERT(this->fd == -1);
     }
@@ -1031,74 +1172,37 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
     virtual void ProcessServerDriveReadRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceReadRequest const & device_read_request,
-            const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) {
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) {
+        //LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveReadRequest() Using ToServerSender + + + + + + + + + +");
         REDASSERT(this->fd > -1);
-
-        const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
-                                       rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
-        sh_s.emit(out_stream);
-
-        ssize_t number_of_bytes_read = -1;
 
         const uint32_t Length = device_read_request.Length();
 
-        REDASSERT(out_stream.has_room(
-                rdpdr::DeviceIOResponse::size() +
-                4 +                                 // Length(4)
-                Length
-            ));
-
-        uint8_t * const read_data =
-                out_stream.p +
-                4 +                             // Length(4)
-                rdpdr::DeviceIOResponse::size()
-            ;
-
         const uint64_t Offset = device_read_request.Offset();
 
-        if (::lseek64(this->fd, Offset, SEEK_SET) == static_cast<off64_t>(Offset)) {
-            number_of_bytes_read = ::read(this->fd, read_data, Length);
-        }
+        off64_t remaining_number_of_bytes_to_read = std::min<off64_t>(this->size - Offset, Length);
 
-        const rdpdr::DeviceIOResponse device_io_response(
-                device_io_request.DeviceId(),
-                device_io_request.CompletionId(),
-                ((number_of_bytes_read > -1) ?
-                 0x00000000 /* STATUS_SUCCESS */ :
-                 0xC0000001 /* STATUS_UNSUCCESSFUL */
-                )
-            );
-        if (verbose) {
-            LOG(LOG_INFO, "ManagedFile::ProcessServerDriveReadRequest");
-            device_io_response.log(LOG_INFO);
-        }
-        device_io_response.emit(out_stream);
 
-        if (number_of_bytes_read > -1) {
-            out_stream.out_uint32_le(
-                static_cast<uint32_t>(number_of_bytes_read));  // Length(4)
-            if (verbose) {
-                LOG(LOG_INFO, "ManagedFile::ProcessServerDriveReadRequest: %u byte(s) read.",
-                    static_cast<uint32_t>(number_of_bytes_read));
-            }
-
-            REDASSERT(out_stream.p == read_data);
-
-            out_stream.out_skip_bytes(number_of_bytes_read);
-        }
-
-        out_stream.mark_end();
-
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        out_asynchronous_task = std::make_unique<RdpdrDriveReadTask>(this->in_file_transport.get(),
+            this->fd, device_io_request.DeviceId(), device_io_request.CompletionId(),
+            static_cast<uint32_t>(remaining_number_of_bytes_to_read), Offset, to_server_sender,
+            verbose);
     }
 
     virtual void ProcessServerDriveControlRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceControlRequest const & device_control_request,
-            const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) override {
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) override {
+        //LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveControlRequest() Using ToServerSender + + + + + + + + + +");
         REDASSERT(this->fd > -1);
+
+        BStream out_stream(65536);
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
@@ -1124,16 +1228,24 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
     }
 
     virtual void ProcessServerDriveQueryVolumeInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryVolumeInformationRequest const &
                 server_drive_query_volume_information_request,
-            const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) override {
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) override {
         REDASSERT(this->fd > -1);
+
+        BStream out_stream(65536);
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
@@ -1142,6 +1254,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
         switch (server_drive_query_volume_information_request.FsInformationClass()) {
             case rdpdr::FileFsVolumeInformation:
             {
+                //LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryVolumeInformationRequest() - FileFsVolumeInformation - Using ToServerSender + + + + + + + + + +");
                 struct statvfs svfsb;
                 ::statvfs(path, &svfsb);
                 struct stat64 sb;
@@ -1174,6 +1287,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
 
             case rdpdr::FileFsSizeInformation:
             {
+                LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryVolumeInformationRequest() - FileFsSizeInformation - Using ToServerSender + + + + + + + + + +");
                 struct statvfs svfsb;
                 ::statvfs(path, &svfsb);
 
@@ -1206,8 +1320,10 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
                 file_fs_size_information.emit(out_stream);
             }
             break;
+
             case rdpdr::FileFsAttributeInformation:
             {
+                //LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryVolumeInformationRequest() - FileFsAttributeInformation - Using ToServerSender + + + + + + + + + +");
                 struct statvfs svfsb;
                 ::statvfs(path, &svfsb);
                 struct stat64 sb;
@@ -1247,6 +1363,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
 
             case rdpdr::FileFsFullSizeInformation:
             {
+                LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryVolumeInformationRequest() - FileFsFullSizeInformation - Using ToServerSender + + + + + + + + + +");
                 struct statvfs svfsb;
                 ::statvfs(path, &svfsb);
 
@@ -1283,6 +1400,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
 
             case rdpdr::FileFsDeviceInformation:
             {
+                LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryVolumeInformationRequest() - FileFsDeviceInformation - Using ToServerSender + + + + + + + + + +");
                 const rdpdr::DeviceIOResponse device_io_response(
                         device_io_request.DeviceId(),
                         device_io_request.CompletionId(),
@@ -1330,15 +1448,23 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
     }
 
     virtual void ProcessServerDriveQueryInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryInformationRequest const & server_drive_query_information_request,
-            const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) override {
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) override {
         REDASSERT(this->fd > -1);
+
+        BStream out_stream(65536);
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
@@ -1350,6 +1476,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
         switch (server_drive_query_information_request.FsInformationClass()) {
             case rdpdr::FileBasicInformation:
             {
+                //LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryInformationRequest() - FileBasicInformation - Using ToServerSender + + + + + + + + + +");
                 const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
                     device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
                 if (verbose) {
@@ -1378,6 +1505,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
 
             case rdpdr::FileStandardInformation:
             {
+                //LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryInformationRequest() - FileStandardInformation - Using ToServerSender + + + + + + + + + +");
                 const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
                     device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
                 if (verbose) {
@@ -1406,6 +1534,7 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
 
             case rdpdr::FileAttributeTagInformation:
             {
+                //LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryInformationRequest() - FileAttributeTagInformation - Using ToServerSender + + + + + + + + + +");
                 const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
                     device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
                 if (verbose) {
@@ -1441,18 +1570,23 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
 
         out_stream.mark_end();
 
-        out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
     }
 
 /*
     virtual void ProcessServerDriveSetInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveSetInformationRequest const & server_drive_set_information_request,
-            const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) {
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) {
+        LOG(LOG_INFO, "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ManagedFile::ProcessServerDriveSetInformationRequest() Using ToServerSender ~ ~ ~ ~ ~ ~ ~ ~ ~ ~");
         MakeClientDriveIoUnsuccessfulResponse(device_io_request,
-                                              out_stream,
-                                              out_flags,
                                               "ManagedFile::ProcessServerDriveSetInformationRequest",
                                               verbose);
 
@@ -1464,12 +1598,15 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
     virtual void ProcessServerDriveQueryDirectoryRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryDirectoryRequest const & server_drive_query_directory_request,
-            const char * path, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) override {
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) override {
+        LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryDirectoryRequest() Using ToServerSender + + + + + + + + + +");
         MakeClientDriveIoUnsuccessfulResponse(device_io_request,
-                                              out_stream,
-                                              out_flags,
                                               "ManagedFile::ProcessServerDriveQueryDirectoryRequest",
+                                              to_server_sender,
+                                              out_asynchronous_task,
                                               verbose);
 
         // Unsupported.
@@ -1479,6 +1616,8 @@ LOG(LOG_INFO, ">>>>>>>>>> ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd
 
 class FileSystemDriveManager {
     const uint32_t FIRST_MANAGED_DRIVE_ID = 32767;
+
+    const uint32_t INVALID_MANAGED_DRIVE_ID = 0xFFFFFFFF;
 
 #ifdef __clang__
     #pragma GCC diagnostic push
@@ -1500,7 +1639,7 @@ class FileSystemDriveManager {
         managed_file_system_object_collection_type;
     managed_file_system_object_collection_type managed_file_system_objects;
 
-    bool wab_agent_drive_enabled = false;
+    uint32_t wab_agent_drive_id = INVALID_MANAGED_DRIVE_ID;
 
 public:
     FileSystemDriveManager() {
@@ -1553,9 +1692,14 @@ public:
         return announced_drive_count;
     }
 
-    void EnableWABAgentDrive() {
-        if (!this->wab_agent_drive_enabled) {
-            this->wab_agent_drive_enabled = true;
+    void EnableWABAgentDrive(uint32_t verbose) {
+        if (this->wab_agent_drive_id == INVALID_MANAGED_DRIVE_ID) {
+            this->wab_agent_drive_id = this->next_managed_drive_id;
+
+            if (verbose) {
+                LOG(LOG_INFO,
+                    "FileSystemDriveManager::EnableWABAgentDrive:");
+            }
 
             managed_drives.push_back(
                 std::make_tuple(this->next_managed_drive_id++,
@@ -1602,8 +1746,10 @@ public:
 private:
     void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            int drive_access_mode, Stream & in_stream, Stream & out_stream,
-            uint32_t & out_flags, uint32_t verbose) {
+            int drive_access_mode, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) {
         rdpdr::DeviceCreateRequest device_create_request;
 
         device_create_request.receive(in_stream);
@@ -1644,7 +1790,8 @@ private:
         bool drive_created = false;
         managed_file_system_object->ProcessServerCreateDriveRequest(
                 device_io_request, device_create_request, drive_access_mode,
-                path, in_stream, out_stream, out_flags, drive_created, verbose);
+                path, in_stream, drive_created, to_server_sender,
+                out_asynchronous_task, verbose);
         if (drive_created) {
             this->managed_file_system_objects.push_back(std::make_tuple(
                 managed_file_system_object->FileId(),
@@ -1655,14 +1802,16 @@ private:
 
     void ProcessServerCloseDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
+            Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
         for (managed_file_system_object_collection_type::iterator iter = this->managed_file_system_objects.begin();
              iter != this->managed_file_system_objects.end(); ++iter) {
             if (device_io_request.FileId() == std::get<0>(*iter)) {
                 std::get<1>(*iter)->ProcessServerCloseDriveRequest(
-                    device_io_request, path, in_stream, out_stream, out_flags,
-                    verbose);
+                    device_io_request, path, in_stream,
+                    to_server_sender, out_asynchronous_task, verbose);
                 this->managed_file_system_objects.erase(iter);
                 break;
             }
@@ -1671,7 +1820,9 @@ private:
 
     void ProcessServerDriveReadRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
+            Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
         rdpdr::DeviceReadRequest device_read_request;
 
@@ -1684,8 +1835,8 @@ private:
              iter != this->managed_file_system_objects.end(); ++iter) {
             if (device_io_request.FileId() == std::get<0>(*iter)) {
                 std::get<1>(*iter)->ProcessServerDriveReadRequest(
-                    device_io_request, device_read_request, path, in_stream, out_stream, out_flags,
-                    verbose);
+                    device_io_request, device_read_request, path, in_stream,
+                    to_server_sender, out_asynchronous_task, verbose);
                 break;
             }
         }
@@ -1693,7 +1844,9 @@ private:
 
     void ProcessServerDriveControlRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
+            Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
         rdpdr::DeviceControlRequest device_control_request;
 
@@ -1706,8 +1859,8 @@ private:
              iter != this->managed_file_system_objects.end(); ++iter) {
             if (device_io_request.FileId() == std::get<0>(*iter)) {
                 std::get<1>(*iter)->ProcessServerDriveControlRequest(
-                    device_io_request, device_control_request, path, in_stream, out_stream, out_flags,
-                    verbose);
+                    device_io_request, device_control_request, path, in_stream,
+                    to_server_sender, out_asynchronous_task, verbose);
                 break;
             }
         }
@@ -1715,7 +1868,9 @@ private:
 
     void ProcessServerDriveQueryVolumeInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
+            Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
         rdpdr::ServerDriveQueryVolumeInformationRequest
             server_drive_query_volume_information_request;
@@ -1730,7 +1885,7 @@ private:
             if (device_io_request.FileId() == std::get<0>(*iter)) {
                 std::get<1>(*iter)->ProcessServerDriveQueryVolumeInformationRequest(
                     device_io_request, server_drive_query_volume_information_request, path,
-                    in_stream, out_stream, out_flags, verbose);
+                    in_stream, to_server_sender, out_asynchronous_task, verbose);
                 break;
             }
         }
@@ -1738,7 +1893,9 @@ private:
 
     void ProcessServerDriveQueryInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
+            Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
         rdpdr::ServerDriveQueryInformationRequest
             server_drive_query_information_request;
@@ -1753,7 +1910,7 @@ private:
             if (device_io_request.FileId() == std::get<0>(*iter)) {
                 std::get<1>(*iter)->ProcessServerDriveQueryInformationRequest(
                     device_io_request, server_drive_query_information_request, path,
-                    in_stream, out_stream, out_flags, verbose);
+                    in_stream, to_server_sender, out_asynchronous_task, verbose);
                 break;
             }
         }
@@ -1762,7 +1919,9 @@ private:
 /*
     void ProcessServerDriveSetInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
+            Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
         rdpdr::ServerDriveSetInformationRequest
             server_drive_set_information_request;
@@ -1777,7 +1936,7 @@ private:
             if (device_io_request.FileId() == std::get<0>(*iter)) {
                 std::get<1>(*iter)->ProcessServerDriveSetInformationRequest(
                     device_io_request, server_drive_set_information_request, path,
-                    in_stream, out_stream, out_flags, verbose);
+                    in_stream, to_server_sender, out_asynchronous_task, verbose);
                 break;
             }
         }
@@ -1786,7 +1945,9 @@ private:
 
     void ProcessServerDriveQueryDirectoryRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream, Stream & out_stream, uint32_t & out_flags,
+            Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
         rdpdr::ServerDriveQueryDirectoryRequest
             server_drive_query_directory_request;
@@ -1801,7 +1962,7 @@ private:
             if (device_io_request.FileId() == std::get<0>(*iter)) {
                 std::get<1>(*iter)->ProcessServerDriveQueryDirectoryRequest(
                     device_io_request, server_drive_query_directory_request, path,
-                    in_stream, out_stream, out_flags, verbose);
+                    in_stream, to_server_sender, out_asynchronous_task, verbose);
                 break;
             }
         }
@@ -1810,7 +1971,9 @@ private:
 public:
     void ProcessDeviceIORequest(
             rdpdr::DeviceIORequest const & device_io_request, Stream & in_stream,
-            Stream & out_stream, uint32_t & out_flags, uint32_t verbose) {
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) {
         uint32_t DeviceId = device_io_request.DeviceId();
         if (DeviceId < FIRST_MANAGED_DRIVE_ID) {
             return;
@@ -1836,7 +1999,8 @@ public:
                 }
 
                 this->ProcessServerCreateDriveRequest(device_io_request,
-                    path.c_str(), drive_access_mode, in_stream, out_stream, out_flags, verbose);
+                    path.c_str(), drive_access_mode, in_stream,
+                    to_server_sender, out_asynchronous_task, verbose);
             break;
 
             case rdpdr::IRP_MJ_CLOSE:
@@ -1847,7 +2011,8 @@ public:
                 }
 
                 this->ProcessServerCloseDriveRequest(device_io_request,
-                    path.c_str(), in_stream, out_stream, out_flags, verbose);
+                    path.c_str(), in_stream,
+                    to_server_sender, out_asynchronous_task, verbose);
             break;
 
             case rdpdr::IRP_MJ_READ:
@@ -1858,7 +2023,8 @@ public:
                 }
 
                 this->ProcessServerDriveReadRequest(device_io_request,
-                    path.c_str(), in_stream, out_stream, out_flags, verbose);
+                    path.c_str(), in_stream, to_server_sender,
+                    out_asynchronous_task, verbose);
             break;
 
 /*
@@ -1870,7 +2036,8 @@ public:
                 }
 
                 this->ProcessServerDriveWriteRequest(device_io_request,
-                    path.c_str(), in_stream, out_stream, out_flags, verbose);
+                    path.c_str(), in_stream,
+                    to_server_sender, out_asynchronous_task, verbose);
             break;
 */
 
@@ -1882,7 +2049,8 @@ public:
                 }
 
                 this->ProcessServerDriveControlRequest(device_io_request,
-                    path.c_str(), in_stream, out_stream, out_flags, verbose);
+                    path.c_str(), in_stream,
+                    to_server_sender, out_asynchronous_task, verbose);
             break;
 
             case rdpdr::IRP_MJ_QUERY_VOLUME_INFORMATION:
@@ -1893,7 +2061,8 @@ public:
                 }
 
                 this->ProcessServerDriveQueryVolumeInformationRequest(device_io_request,
-                    path.c_str(), in_stream, out_stream, out_flags, verbose);
+                    path.c_str(), in_stream,
+                    to_server_sender, out_asynchronous_task, verbose);
             break;
 
             case rdpdr::IRP_MJ_QUERY_INFORMATION:
@@ -1904,7 +2073,8 @@ public:
                 }
 
                 this->ProcessServerDriveQueryInformationRequest(device_io_request,
-                    path.c_str(), in_stream, out_stream, out_flags, verbose);
+                    path.c_str(), in_stream,
+                    to_server_sender, out_asynchronous_task, verbose);
             break;
 
 /*
@@ -1915,7 +2085,8 @@ public:
                             "Server Drive Set Information Request");
                 }
                 this->ProcessServerDriveSetInformationRequest(device_io_request,
-                    path.c_str(), in_stream, out_stream, out_flags, verbose);
+                    path.c_str(), in_stream,
+                    to_server_sender, out_asynchronous_task, verbose);
             break;
 */
 
@@ -1929,7 +2100,8 @@ public:
                         }
 
                         this->ProcessServerDriveQueryDirectoryRequest(device_io_request,
-                            path.c_str(), in_stream, out_stream, out_flags, verbose);
+                            path.c_str(), in_stream,
+                            to_server_sender, out_asynchronous_task, verbose);
                     break;
 
                     case rdpdr::IRP_MN_NOTIFY_CHANGE_DIRECTORY:
@@ -1961,12 +2133,56 @@ public:
 
                 ManagedFileSystemObject::MakeClientDriveIoUnsuccessfulResponse(
                     device_io_request,
-                    out_stream,
-                    out_flags,
                     "FileSystemDriveManager::ProcessDeviceIORequest",
+                    to_server_sender,
+                    out_asynchronous_task,
                     verbose);
             break;
         }
+    }
+
+    void DisableWABAgentDrive(ToServerSender & to_server_sender, uint32_t verbose = 0) {
+        if (this->wab_agent_drive_id == INVALID_MANAGED_DRIVE_ID) {
+            return;
+        }
+
+        const uint32_t old_wab_agent_drive_id = this->wab_agent_drive_id;
+
+        this->wab_agent_drive_id = INVALID_MANAGED_DRIVE_ID;
+
+        managed_drive_collection_type::iterator iter;
+        for (iter = this->managed_drives.begin();
+             iter != this->managed_drives.end(); ++iter) {
+            if (old_wab_agent_drive_id == std::get<0>(*iter)) {
+                this->managed_drives.erase(iter);
+
+                break;
+            }
+        }
+        REDASSERT(iter == this->managed_drives.end());
+
+        BStream out_stream(1024);
+
+        const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
+                                       rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE);
+        sh_s.emit(out_stream);
+
+        out_stream.out_uint32_le(1);                        // DeviceCount(4)
+        out_stream.out_uint32_le(old_wab_agent_drive_id);   // DeviceIds(variable)
+
+        out_stream.mark_end();
+
+        if (verbose) {
+            LOG(LOG_INFO,
+                "FileSystemDriveManager::DisableWABAgentDrive:");
+        }
+
+        to_server_sender(
+                out_stream.size(),
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                out_stream.get_data(),
+                out_stream.size()
+            );
     }
 };  // FileSystemDriveManager
 

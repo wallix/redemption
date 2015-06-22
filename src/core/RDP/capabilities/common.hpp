@@ -207,6 +207,41 @@ enum {
 };
 */
 
+inline static const char * get_capabilitySetType_name(uint16_t capabilitySetType) {
+    switch (capabilitySetType) {
+        case CAPSTYPE_GENERAL:                 return "General Capability Set";
+        case CAPSTYPE_BITMAP:                  return "Bitmap Capability Set";
+        case CAPSTYPE_ORDER:                   return "Order Capability Set";
+        case CAPSTYPE_BITMAPCACHE:             return "Revision 1 Bitmap Cache Capability Set";
+        case CAPSTYPE_CONTROL:                 return "Control Capability Set";
+        case CAPSTYPE_ACTIVATION:              return "Window Activation Capability Set";
+        case CAPSTYPE_POINTER:                 return "Pointer Capability Set";
+        case CAPSTYPE_SHARE:                   return "Share Capability Set";
+        case CAPSTYPE_COLORCACHE:              return "Color Table Cache Capability Set";
+        case CAPSTYPE_SOUND:                   return "Sound Capability Set";
+        case CAPSTYPE_INPUT:                   return "Input Capability Set";
+        case CAPSTYPE_FONT:                    return "Font Capability Set";
+        case CAPSTYPE_BRUSH:                   return "Brush Capability Set";
+        case CAPSTYPE_GLYPHCACHE:              return "Glyph Cache Capability Set";
+        case CAPSTYPE_OFFSCREENCACHE:          return "Offscreen Bitmap Cache Capability Set";
+        case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT: return "Bitmap Cache Host Support Capability Set";
+        case CAPSTYPE_BITMAPCACHE_REV2:        return "Revision 2 Bitmap Cache Capability Set";
+        case CAPSTYPE_VIRTUALCHANNEL:          return "Virtual Channel Capability Set";
+        case CAPSTYPE_DRAWNINEGRIDCACHE:       return "DrawNineGrid Cache Capability Set";
+        case CAPSTYPE_DRAWGDIPLUS:             return "Draw GDI+ Cache Capability Set";
+        case CAPSTYPE_RAIL:                    return "Remote Programs Capability Set";
+        case CAPSTYPE_WINDOW:                  return "Window List Capability Set";
+        case CAPSETTYPE_COMPDESK:              return "Desktop Composition Extension Capability Set";
+        case CAPSETTYPE_MULTIFRAGMENTUPDATE:   return "Multifragment Update Capability Set";
+        case CAPSETTYPE_LARGE_POINTER:         return "Large Pointer Capability Set";
+        case CAPSETTYPE_SURFACE_COMMANDS:      return "Surface Commands Capability Set";
+        case CAPSETTYPE_BITMAP_CODECS:         return "Bitmap Codecs Capability Set";
+        case CAPSETTYPE_FRAME_ACKNOWLEDGE:     return "Frame Acknowledge Capability Set";
+    }
+
+    return "<unknown>";
+}
+
 struct Capability {
     uint16_t capabilityType;
     uint16_t len;

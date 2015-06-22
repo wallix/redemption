@@ -26,6 +26,7 @@
 #include "cast.hpp"
 #include "noncopyable.hpp"
 #include "stream.hpp"
+#include "utf.hpp"
 
 namespace rdpdr {
 
@@ -891,8 +892,6 @@ public:
             uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
 
             stream.in_copy_bytes(unicode_data, PathLength);
-
-            const size_t maximum_length_of_utf8_character_in_bytes = 4;
 
             const size_t size_of_utf8_string =
                 PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
@@ -1959,8 +1958,6 @@ public:
 
                 stream.in_copy_bytes(unicode_data, ComputerNameLen);
 
-                const size_t maximum_length_of_utf8_character_in_bytes = 4;
-
                 const size_t size_of_utf8_string =
                             ComputerNameLen / 2 * maximum_length_of_utf8_character_in_bytes + 1;
                 uint8_t * const utf8_string = static_cast<uint8_t *>(
@@ -2151,6 +2148,10 @@ public:
 //  |                | from a redirected file system.<8>                     |
 //  +----------------+-------------------------------------------------------+
 
+enum {
+      ENABLE_ASYNCIO = 0x00000001
+};
+
 // extraFlags2 (4 bytes): A 32-bit unsigned integer that is currently
 //  reserved for future use, and MUST be set to 0.
 
@@ -2167,7 +2168,7 @@ class GeneralCapabilitySet {
     uint32_t ioCode1              = 0;
     uint32_t ioCode2              = 0;
     uint32_t extendedPDU          = 0;
-    uint32_t extraFlags1          = 0;
+    uint32_t extraFlags1_         = 0;
     uint32_t extraFlags2          = 0;
     uint32_t SpecialTypeDeviceCap = 0;
 
@@ -2185,7 +2186,7 @@ public:
     , ioCode1(ioCode1)
     , ioCode2(ioCode2)
     , extendedPDU(extendedPDU)
-    , extraFlags1(extraFlags1)
+    , extraFlags1_(extraFlags1)
     , extraFlags2(extraFlags2)
     , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
 
@@ -2197,7 +2198,7 @@ public:
         stream.out_uint32_le(this->ioCode1);
         stream.out_uint32_le(this->ioCode2);
         stream.out_uint32_le(this->extendedPDU);
-        stream.out_uint32_le(this->extraFlags1);
+        stream.out_uint32_le(this->extraFlags1_);
         stream.out_uint32_le(this->extraFlags2);
         if (version == GENERAL_CAPABILITY_VERSION_02) {
             stream.out_uint32_le(this->SpecialTypeDeviceCap);
@@ -2226,12 +2227,14 @@ public:
         this->ioCode1              = stream.in_uint32_le();
         this->ioCode2              = stream.in_uint32_le();
         this->extendedPDU          = stream.in_uint32_le();
-        this->extraFlags1          = stream.in_uint32_le();
+        this->extraFlags1_         = stream.in_uint32_le();
         this->extraFlags2          = stream.in_uint32_le();
         if (version == GENERAL_CAPABILITY_VERSION_02) {
             this->SpecialTypeDeviceCap = stream.in_uint32_le();
         }
     }
+
+    inline uint32_t extraFlags1() const { return this->extraFlags1_; }
 
     inline static size_t size(uint32_t version) {
         return 32 + // osType(4) + osVersion(4) + protocolMajorVersion(2) +
@@ -2249,7 +2252,7 @@ private:
                 "extraFlags2=0x%X SpecialTypeDeviceCap=%u",
             this->osType, this->osVersion, this->protocolMajorVersion,
             this->protocolMinorVersion, this->ioCode1, this->ioCode2,
-            this->extendedPDU, this->extraFlags1, this->extraFlags2,
+            this->extendedPDU, this->extraFlags1_, this->extraFlags2,
             this->SpecialTypeDeviceCap);
         return ((length < size) ? length : size - 1);
     }
@@ -2295,6 +2298,42 @@ public:
 //  There is no alignment padding between individual DEVICE_ANNOUNCE
 //  structures. They are ordered sequentially within this packet.
 
+// [MS-RDPEFS] - 2.2.3.2 Client Drive Device List Remove
+//  (DR_DEVICELIST_REMOVE)
+// =====================================================
+
+// The client removes a list of already-announced devices from the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +---------------------------------------------------------------+
+// |                          DeviceCount                          |
+// +---------------------------------------------------------------+
+// |                      DeviceIds (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set
+//  to RDPDR_CTYP_CORE, and the PacketId field MUST be set to
+//  PAKID_CORE_DEVICELIST_REMOVE.
+
+// DeviceCount (4 bytes): A 32-bit unsigned integer that specifies the number
+//  of entries in the DeviceIds field.
+
+// DeviceIds (variable): A variable-length array of 32-bit unsigned integers
+//  that specifies device IDs. The IDs specified in this array match the IDs
+//  specified in the Client Device List Announce (section 2.2.3.1) packet.
+
+//  Note The client can send the DR_DEVICELIST_REMOVE message for devices
+//   that are removed after a session is connected. The server can accept the
+//   DR_DEVICE_REMOVE message for any removed device, including file system
+//   and port devices. The server can also accept reused DeviceIds of devices
+//   that have been removed, providing the implementation uses the
+//   DR_DEVICE_REMOVE message to do so.
 
 // [MS-RDPEFS] - 2.2.3.3.1 Server Create Drive Request (DR_DRIVE_CREATE_REQ)
 // =========================================================================
@@ -3071,8 +3110,6 @@ public:
             uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
 
             stream.in_copy_bytes(unicode_data, PathLength);
-
-            const size_t maximum_length_of_utf8_character_in_bytes = 4;
 
             const size_t size_of_utf8_string =
                         PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;

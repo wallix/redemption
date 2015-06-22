@@ -1009,7 +1009,7 @@ struct InfoPacket {
          }
     } // END FUNCT : recv()
 
-    void log(const char * msg, uint32_t password_printing_mode){
+    void log(const char * msg, uint32_t password_printing_mode, bool show_alternate_shell = true){
         LOG(LOG_INFO, "%s InfoPacket", msg);
         LOG(LOG_INFO, "InfoPacket::CodePage %u", this->CodePage);
         LOG(LOG_INFO, "InfoPacket::flags %#x", this->flags);

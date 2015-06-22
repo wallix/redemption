@@ -1079,8 +1079,6 @@ public:
 
             stream.in_copy_bytes(unicode_data, CbString);
 
-            const size_t maximum_length_of_utf8_character_in_bytes = 4;
-
             const size_t size_of_utf8_string =
                         CbString / 2 * maximum_length_of_utf8_character_in_bytes + 1;
             uint8_t * const utf8_string = static_cast<uint8_t *>(

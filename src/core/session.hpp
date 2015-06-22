@@ -192,12 +192,19 @@ public:
                 add_to_fd_set(mm.mod->get_event(), mm.mod_transport, rfds, max, timeout);
                 wait_obj * secondary_event = mm.mod->get_secondary_event();
                 if (secondary_event) {
-                    add_to_fd_set(*secondary_event, nullptr, rfds, max, timeout);
+                    add_to_fd_set(*secondary_event, -1, rfds, max, timeout);
+                }
+
+                int        asynchronous_task_fd    = -1;
+                wait_obj * asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
+                if (asynchronous_task_event) {
+                    add_to_fd_set(*asynchronous_task_event, asynchronous_task_fd, rfds, max, timeout);
                 }
 
                 const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.allocated_ssl));
                 if (has_pending_data)
                     memset(&timeout, 0, sizeof(timeout));
+
 
                 int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
 
@@ -249,9 +256,20 @@ public:
                             this->front->update_config(this->ini);
                             mm.check_module();
                         }
+
+                                   asynchronous_task_fd    = -1;
+                                   asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
+                        const bool asynchronous_task_event_is_set = (asynchronous_task_event &&
+                                                                     is_set(*asynchronous_task_event,
+                                                                            asynchronous_task_fd,
+                                                                            rfds));
+                        if (asynchronous_task_event_is_set) {
+                            mm.mod->process_asynchronous_task();
+                        }
+
                         // Process incoming module trafic
-                             secondary_event        = mm.mod->get_secondary_event();
-                        bool secondary_event_is_set = (secondary_event &&
+                                   secondary_event        = mm.mod->get_secondary_event();
+                        const bool secondary_event_is_set = (secondary_event &&
                                                              is_set(*secondary_event, nullptr, rfds));
                         if (is_set(mm.mod->get_event(), mm.mod_transport, rfds) ||
                             secondary_event_is_set) {

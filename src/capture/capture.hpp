@@ -640,6 +640,12 @@ public:
             this->pnc->external_time(now);
         }
     }
+
+    virtual void session_update(const timeval & now, const char * message) override {
+        if (this->capture_wrm) {
+            this->pnc->session_update(now, message);
+        }
+    }
 };
 
 #endif

@@ -110,6 +110,9 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
@@ -197,12 +200,14 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
+    BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
@@ -366,6 +371,12 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
                                                         ini.video.record_tmp_path.c_str());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
     BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -451,12 +462,14 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
+    BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL("",                               ini.context.movie.c_str());
 
@@ -634,6 +647,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
@@ -721,12 +737,14 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
+    BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
@@ -795,12 +813,14 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "allow_channels=audin\n"
                           "deny_channels=*\n"
                           "fast_path=no\n"
+                          "client_device_announce_timeout=1000\n"
                           "\n"
                           "[mod_vnc]\n"
                           "clipboard_up=yes\n"
                           "encodings=16,2,0,1,-239\n"
                           "allow_authentification_retries=yes\n"
                           "server_clipboard_encoding_type=latin1\n"
+                          "bogus_clipboard_infinite_loop=0\n"
                           "\n"
                           "[video]\n"
                           "hash_path=/mnt/wab/hash\n"
@@ -810,6 +830,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "ocr_on_title_bar_only=yes\n"
                           "ocr_max_unrecog_char_rate=50\n"
                           "disable_keyboard_log=1\n"
+                          "disable_clipboard_log=0\n"
                           "\n"
                           "[crypto]\n"
                           "key0=00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF\n"
@@ -893,6 +914,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -981,12 +1005,14 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
+    BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
 
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("16,2,0,1,-239",                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
@@ -1044,6 +1070,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "persist_bitmap_cache_on_disk=no\n"
                           "fast_path=yes\n"
                           "bogus_sc_net_size=no\n"
+                          "client_device_announce_timeout=1500\n"
                           "[mod_replay]\n"
                           "on_end_of_data=1\n"
                           "[video]\n"
@@ -1051,9 +1078,11 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "record_path=/mnt/wab/recorded/rdp/\n"
                           "record_tmp_path=/mnt/tmp/wab/recorded/rdp/\n"
                           "disable_keyboard_log=2\n"
+                          "disable_clipboard_log=1\n"
                           "\n"
                           "[mod_vnc]\n"
                           "server_clipboard_encoding_type=utf-8\n"
+                          "bogus_clipboard_infinite_loop=1\n"
                           "[crypto]\n"
                           "key0=00112233445566778899AABBCCDDEEFF\n"
                           "key1=FFEEDDCCBBAA99887766554433221100\n"
@@ -1129,6 +1158,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+
+    BOOST_CHECK_EQUAL(1,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(true,                             ini.video.disable_clipboard_log_syslog);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -1215,10 +1247,12 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.bogus_sc_net_size.get());
+    BOOST_CHECK_EQUAL(1500,                             ini.mod_rdp.client_device_announce_timeout.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL("utf-8",                          ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(1,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(1,                                ini.mod_replay.on_end_of_data);
 
@@ -1344,6 +1378,9 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
 
@@ -1421,10 +1458,12 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
+    BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
@@ -1468,12 +1507,16 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
                           "\t[mod_rdp]\n"
                           "rdp_compression=0\n"
                           "bogus_sc_net_size=no\n"
+                          "client_device_announce_timeout=1500\n"
                           "[mod_replay]\n"
                           "on_end_of_data=0\n"
+                          "[mod_vnc]\n"
+                          "bogus_clipboard_infinite_loop=2\n"
                           "[video]\n"
                           "disable_keyboard_log=4\n"
                           "wrm_color_depth_selection_strategy=1\n"
                           "wrm_compression_algorithm=1\n"
+                          "disable_clipboard_log=0\n"
                           "\n"
                           );
 
@@ -1555,6 +1598,9 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
 
@@ -1632,10 +1678,12 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.bogus_sc_net_size.get());
+    BOOST_CHECK_EQUAL(1500,                             ini.mod_rdp.client_device_announce_timeout.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(2,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
@@ -1745,6 +1793,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
@@ -1821,10 +1872,12 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
+    BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
@@ -1852,6 +1905,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "bogus_user_id=yes\n"
                            "[mod_rdp]\n"
                            "persist_bitmap_cache_on_disk=yes\n"
+                           "[mod_vnc]\n"
+                           "bogus_clipboard_infinite_loop=0\n"
                            "[debug]\n"
                            "password=3\n"
                            "compression=0x3\n"
@@ -1930,6 +1985,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
@@ -2006,10 +2064,12 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
+    BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
@@ -2106,6 +2166,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
@@ -2182,10 +2245,12 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
+    BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 
@@ -2282,6 +2347,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
 
@@ -2358,10 +2426,12 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.mod_rdp.deny_channels);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
+    BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
 

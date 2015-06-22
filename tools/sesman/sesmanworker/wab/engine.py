@@ -73,6 +73,42 @@ def read_config_file(modulename="sesman",
                      specdir=DEFAULT_SPEC_DIR):
     return Config(modulename=modulename, confdir=confdir, specdir=specdir)
 
+def parse_auth(username):
+    """
+    Extract actual username and target if provided
+    from authentication identity
+
+    string format is <secondaryuser>@<target>:<service>:<group>:<primaryuser>
+    always return primaryuser and either secondary target or None
+
+    Note: primary user can be a path instead when this function
+    is called to parse scp or sftp arguments.
+
+    Because of compatibility issues with some ssh command line tools
+    '+' can be used instead of ':'
+
+    fields can be missing (typically service and group if there is no ambiguity)
+
+    """
+    user_at_dev_service_group, sep, primary = username.rpartition(':')
+    if not sep:
+        user_at_dev_service_group, sep, primary = username.rpartition('+')
+    if sep:
+        user_at_dev_service, sep, group = user_at_dev_service_group.rpartition(sep)
+        if not sep:
+            # service and group not provided
+            user_at_dev, service, group = user_at_dev_service_group, '', ''
+        else:
+            user_at_dev, sep, service = user_at_dev_service.rpartition(sep)
+            if not sep:
+                # group not provided
+                user_at_dev, service, group = user_at_dev_service, group, ''
+        user, sep, dev = user_at_dev.rpartition('@')
+        if sep:
+            return primary, (user, dev, service, group)
+    return username, None
+
+
 class Engine(object):
     def __init__(self):
         self.wabengine = None
@@ -245,7 +281,7 @@ class Engine(object):
         return False
 
     def resolve_target_host(self, target_device, target_login, target_service,
-                            real_target_device, target_context,
+                            target_group, real_target_device, target_context,
                             passthrough_mode, protocols):
         """ Resolve the right target host to use
         target_context.host will contains the target host.
@@ -270,12 +306,14 @@ class Engine(object):
             if not valid:
                 # target_device might be a hostname
                 try:
-                    login_filter, service_filter = None, None
+                    login_filter, service_filter, group_filter = None, None, None
                     dnsname = None
                     if (target_login and not passthrough_mode):
                         login_filter = target_login
                     if (target_service and not passthrough_mode):
                         service_filter = target_service
+                    if (target_group and not passthrough_mode):
+                        group_filter = target_group
                     host_ip = socket.getaddrinfo(target_device, None)[0][4][0]
                     Logger().info("Resolve DNS Hostname %s -> %s" % (target_device,
                                                                      host_ip))
@@ -287,6 +325,7 @@ class Engine(object):
                                                    dnsname=dnsname,
                                                    login=login_filter,
                                                    service=service_filter,
+                                                   group=group_filter,
                                                    show=target_device)
                     target_device = None
                 except Exception, e:
@@ -450,13 +489,13 @@ class Engine(object):
             return
         self.proxy_rights = self.wabengine.get_proxy_rights(protocols, target_device,
                                                             check_timeframes=check_timeframes)
-
         self.rights = self.proxy_rights.rights
         self.targets = {}
         self.displaytargets = []
         for right in self.rights:
             if right.resource and right.account:
                 target_login = self.get_account_login(right)
+                target_groups = [x.cn for x in right.group_targets]
                 if right.resource.application:
                     target_name = right.resource.application.cn
                     service_name = u"APP"
@@ -482,38 +521,53 @@ class Engine(object):
                     if (target_context.service and
                         service_name != target_context.service):
                         continue
+                    if (target_context.group and
+                        not (target_context.group in target_groups)):
+                        continue
                 tuple_index = (target_login, target_name)
                 if not self.targets.get(tuple_index):
-                    self.targets[tuple_index] = {}
-                self.targets[tuple_index][service_name] = right
+                    self.targets[tuple_index] = []
+                self.targets[tuple_index].append((service_name, target_groups, right))
                 if alias:
                     alias_index = (target_login, alias)
                     if not self.targets.get(alias_index):
-                        self.targets[alias_index] = {}
-                    self.targets[alias_index][service_name] = right
+                        self.targets[alias_index] = []
+                    self.targets[alias_index].append((service_name, target_groups, right))
                 self.displaytargets.append(DisplayInfo(target_login,
                                                        target_name,
                                                        service_name,
                                                        protocol,
-                                                       [x.cn for x in right.group_targets],
+                                                       target_groups,
                                                        right.subprotocols,
                                                        host))
 
-    def get_selected_target(self, target_login, target_device, target_service):
-        # Logger().info("%s@%s:%s" % (target_device, target_login, target_service))
-        if target_service == '':
-            target_service = None
+    def get_selected_target(self, target_login, target_device, target_service,
+                            target_group):
+        # Logger().info(">>==GET_SELECTED_TARGET %s@%s:%s:%s" % (target_device, target_login, target_service, target_group))
         right = None
         self.get_proxy_rights([u'RDP', u'VNC'], target_device,
                               check_timeframes=False)
         if target_login == MAGIC_AM:
             target_login = self.get_username()
-        result = self.targets.get((target_login, target_device))
-        if result:
-            if (not target_service) and (len(result) == 1):
-                right = result.values()[0]
-            if target_service and result.get(target_service):
-                right = result[target_service]
+        results = self.targets.get((target_login, target_device))
+        right = None
+        filtered = []
+        for (r_service, r_groups, r) in results:
+            if target_service and not (r_service == target_service):
+                continue
+            if target_group and not (target_group in r_groups):
+                continue
+            filtered.append((r_service, r))
+        if filtered:
+            filtered_service, right = filtered[0]
+            # if ambiguity in group but not in service,
+            # get the right without approval
+            for (r_service, r) in filtered[1:]:
+                if filtered_service != r_service:
+                    right = None
+                    break
+                if r.authorization.hasApproval is False:
+                    right = r
         if right:
             self.init_timeframe(right)
             self.target_right = right
@@ -596,9 +650,15 @@ class Engine(object):
         return self.session_id
 
     def update_session(self, physical_target, **kwargs):
-        hosttarget = u"%s@%s:%s" % ( self.get_account_login(physical_target)
-                                   , physical_target.resource.device.cn
-                                   , physical_target.resource.service.cn)
+        """Update current session with target name.
+
+        :param target physical_target: selected target
+        :return: None
+        """
+        hosttarget = u"%s@%s:%s" % (
+            self.get_account_login(physical_target),
+            physical_target.resource.device.cn,
+            physical_target.resource.service.cn)
         try:
             if self.session_id:
                 self.wabengine.update_session(self.session_id, hosttarget, **kwargs)
@@ -752,11 +812,13 @@ class Engine(object):
 
 # Information Structs
 class TargetContext(object):
-    def __init__(self, host=None, dnsname=None, login=None, service=None, show=None):
+    def __init__(self, host=None, dnsname=None, login=None, service=None,
+                 group=None, show=None):
         self.host = host
         self.dnsname = dnsname
         self.login = login
         self.service = service
+        self.group = group
         self.show = show
     def showname(self):
         return self.show or self.dnsname or self.host

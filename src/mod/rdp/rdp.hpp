@@ -25,6 +25,8 @@
 #ifndef _REDEMPTION_MOD_RDP_RDP_HPP_
 #define _REDEMPTION_MOD_RDP_RDP_HPP_
 
+#include <queue>
+
 #include "rdp/rdp_orders.hpp"
 
 /* include "ther h files */
@@ -72,6 +74,7 @@
 #include "RDP/channels/rdpdr.hpp"
 #include "RDP/channels/rdpdr_file_system_drive_manager.hpp"
 #include "RDP/remote_programs.hpp"
+#include "rdp_asynchronous_task.hpp"
 #include "rdp_params.hpp"
 #include "transparentrecorder.hpp"
 #include "FSCC/FileInformation.hpp"
@@ -186,6 +189,8 @@ class mod_rdp : public mod_api {
     const unsigned wab_agent_launch_timeout;
     const unsigned wab_agent_keepalive_timeout;
 
+    const unsigned disable_clipboard_log;
+
     size_t recv_bmp_update;
 
     rdp_mppc_unified_dec mppc_dec;
@@ -197,9 +202,10 @@ class mod_rdp : public mod_api {
 
     TimeoutT<time_t> open_session_timeout_checker;
 
-    const uint64_t          client_device_list_announce_timeout         = 1000000;  // Timeout in microseconds.
-          bool              client_device_list_announce_timer_enabled   = false;
-          TimeoutT<TimeVal> client_device_list_announce_timeout_checker;
+    const uint64_t          client_device_announce_timeout;                 // Timeout in microseconds.
+          bool              client_device_announce_timer_enabled   = false;
+          TimeoutT<TimeVal> client_device_announce_timeout_checker;
+          bool              server_user_logged_on_processed        = false;
 
     std::string output_filename;
 
@@ -241,12 +247,11 @@ class mod_rdp : public mod_api {
 
     RedirectionInfo & redir_info;
 
-    const uint32_t max_chunked_virtual_channel_data_length;
+    const uint32_t chunked_virtual_channel_data_max_length;
+    const uint32_t chunked_virtual_channel_data_default_length = 1024 * 64;
 
     std::unique_ptr<uint8_t[]> chunked_virtual_channel_data_byte;
     FixedSizeStream            chunked_virtual_channel_data_stream;
-
-    static const uint32_t default_chunked_virtual_channel_data_length = 1024 * 64;
 
     const bool bogus_sc_net_size;
 
@@ -256,6 +261,40 @@ class mod_rdp : public mod_api {
     wait_obj wab_agent_event;
     bool     wab_agent_is_ready            = false;
     bool     wab_agent_keep_alive_received = true;
+
+    uint32_t clipboard_requested_format_id = 0;
+
+    std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
+    wait_obj                                      asynchronous_task_event;
+
+    class RdpdrToServerSender : public ToServerSender {
+        Transport    & transport;
+        CryptContext & encrypt;
+        int            encryption_level;
+        uint16_t       user_id;
+        uint16_t       channel_id;
+
+    public:
+        RdpdrToServerSender( Transport & transport
+                           , CryptContext & encrypt
+                           , int encryption_level
+                           , uint16_t user_id
+                           , uint16_t channel_id)
+        : transport(transport)
+        , encrypt(encrypt)
+        , encryption_level(encryption_level)
+        , user_id(user_id)
+        , channel_id(channel_id) {}
+
+        virtual void operator() (size_t total_length, uint32_t flags, const uint8_t * chunk_data, size_t chunk_data_length) {
+            CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+
+            virtual_channel_pdu.send_to_server(this->transport, this->encrypt, this->encryption_level,
+                this->user_id, this->channel_id, total_length, flags, chunk_data, chunk_data_length);
+        }
+    };
+
+    std::unique_ptr<ToServerSender> to_server_sender;
 
 public:
     mod_rdp( Transport & trans
@@ -310,12 +349,14 @@ public:
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
         , wab_agent_keepalive_timeout(mod_rdp_params.wab_agent_keepalive_timeout)
+        , disable_clipboard_log(mod_rdp_params.disable_clipboard_log)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , open_session_timeout(mod_rdp_params.open_session_timeout)
         , open_session_timeout_checker(0)
-        , client_device_list_announce_timeout_checker(0)
+        , client_device_announce_timeout(mod_rdp_params.client_device_announce_timeout)
+        , client_device_announce_timeout_checker(0)
         , output_filename(mod_rdp_params.output_filename)
         , certificate_change_action(mod_rdp_params.certificate_change_action)
         , enable_polygonsc(false)
@@ -335,10 +376,10 @@ public:
         , password_printing_mode(mod_rdp_params.password_printing_mode)
         , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
-        , max_chunked_virtual_channel_data_length(std::min(mod_rdp_params.max_chunked_virtual_channel_data_length,
+        , chunked_virtual_channel_data_max_length(std::min(mod_rdp_params.chunked_virtual_channel_data_max_length,
             CHANNELS::PROXY_CHUNKED_VIRTUAL_CHANNEL_DATA_LENGTH_LIMIT))
-        , chunked_virtual_channel_data_byte(std::make_unique<uint8_t[]>(mod_rdp::default_chunked_virtual_channel_data_length))
-        , chunked_virtual_channel_data_stream(chunked_virtual_channel_data_byte.get(), mod_rdp::default_chunked_virtual_channel_data_length)
+        , chunked_virtual_channel_data_byte(std::make_unique<uint8_t[]>(mod_rdp::chunked_virtual_channel_data_default_length))
+        , chunked_virtual_channel_data_stream(chunked_virtual_channel_data_byte.get(), mod_rdp::chunked_virtual_channel_data_default_length)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
     {
         if (this->verbose & 1) {
@@ -362,7 +403,7 @@ public:
         this->chunked_virtual_channel_data_stream.reset();
 
         if (this->enable_wab_agent) {
-            this->file_system_drive_manager.EnableWABAgentDrive();
+            this->file_system_drive_manager.EnableWABAgentDrive(this->verbose);
         }
 
         if (mod_rdp_params.transparent_recorder_transport) {
@@ -760,6 +801,30 @@ private:
     }
 
 public:
+    virtual wait_obj * get_asynchronous_task_event(int & out_fd) override {
+        if (this->asynchronous_tasks.empty()) {
+            out_fd = -1;
+            return nullptr;
+        }
+
+        out_fd = this->asynchronous_tasks.front()->get_file_descriptor();
+
+        return &this->asynchronous_task_event;
+    }
+
+    virtual void process_asynchronous_task() override {
+        if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
+            this->asynchronous_tasks.pop_front();
+        }
+
+        this->asynchronous_task_event.~wait_obj();
+        new (&this->asynchronous_task_event) wait_obj();
+
+        if (!this->asynchronous_tasks.empty()) {
+            this->asynchronous_tasks.front()->configure_wait_object(this->asynchronous_task_event);
+        }
+    }
+
     virtual void send_to_mod_channel( const char * const front_channel_name
                                     , Stream & chunk
                                     , size_t length
@@ -799,14 +864,16 @@ private:
             LOG(LOG_INFO, "mod_rdp client clipboard PDU");
         }
 
-        if (!chunk.in_check_rem(2)) {
+        if (!chunk.in_check_rem(2 /* msgType(2) */)) {
             LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: truncated msgType, need=2 remains=%u",
                 chunk.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
         const uint16_t msgType = chunk.in_uint16_le();
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: client clipboard PDU: msgType=%d", msgType);
+            LOG(LOG_INFO,
+                "mod_rdp::send_to_mod_cliprdr_channel: client clipboard PDU: msgType=%s(%d)",
+                RDPECLIP::get_msgType_name(msgType), msgType);
         }
 
         if ((msgType == RDPECLIP::CB_FORMAT_LIST)) {
@@ -830,6 +897,19 @@ private:
                     false, static_cast<uint8_t *>(nullptr), 0);
                 return;
             }
+
+            if (!chunk.in_check_rem(10 /* msgFlags(2) + dataLen(4) + requestedFormatId(4) */)) {
+                LOG(LOG_INFO,
+                    "mod_rdp::send_to_mod_cliprdr_channel: CB_FORMAT_DATA_REQUEST truncated msgType, need=10 remains=%u",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
+
+            this->clipboard_requested_format_id = chunk.in_uint32_le();
+
+            chunk.p -= 10;  // msgFlags(2) + dataLen(4) + requestedFormatId(4)
         }
         else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
             if (!this->authorization_channels.cliprdr_file_is_authorized()) {
@@ -841,10 +921,58 @@ private:
                 return;
             }
         }
+        else if ((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) &&
+                 (flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
+                 (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
+            if (!chunk.in_check_rem(6 /* msgFlags(2) + dataLen(4) */)) {
+                LOG(LOG_INFO,
+                    "mod_rdp::send_to_mod_cliprdr_channel: CB_FORMAT_DATA_RESPONSE truncated msgType, need=6 remains=%u",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2 /*msgFlags(2)*/);
+
+            const uint32_t dataLen = chunk.in_uint32_le();
+
+            LOG(LOG_INFO, "Sending %s(%u) clipboard data to server (%u) bytes%s",
+                RDPECLIP::get_Format_name(this->clipboard_requested_format_id),
+                this->clipboard_requested_format_id, dataLen,
+                (((this->clipboard_requested_format_id == RDPECLIP::CF_TEXT) ||
+                  (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT)) ? ":" : "."));
+
+            const size_t max_length_of_data_to_dump = 256;
+
+            if (this->clipboard_requested_format_id == RDPECLIP::CF_TEXT) {
+                const size_t length_of_data_to_dump = std::min(chunk.in_remain(), max_length_of_data_to_dump);
+                const std::string data_to_dump(::char_ptr_cast(chunk.p), length_of_data_to_dump);
+                LOG(LOG_INFO, data_to_dump.c_str());
+            }
+            else if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
+                REDASSERT(!(chunk.in_remain() & 1));
+
+                const size_t length_of_data_to_dump = std::min(chunk.in_remain(), max_length_of_data_to_dump * 2);
+
+                const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+                const size_t size_of_utf8_string =
+                    length_of_data_to_dump / 2 * maximum_length_of_utf8_character_in_bytes;
+
+                uint8_t * const utf8_string = static_cast<uint8_t *>(
+                    ::alloca(size_of_utf8_string));
+                const size_t length_of_utf8_string = ::UTF16toUTF8(
+                    chunk.p, length_of_data_to_dump / 2, utf8_string, size_of_utf8_string);
+                const std::string data_to_dump(::char_ptr_cast(utf8_string),
+                    length_of_utf8_string);
+                LOG(LOG_INFO, data_to_dump.c_str());
+            }
+
+            chunk.p -= 6;   // msgFlags(2) + dataLen(4)
+        }
 
         this->update_total_clipboard_data(msgType, length);
 
-        chunk.p -= 2;
+        chunk.p -= 2;   // msgType(2)
 
         this->send_to_channel(*cliprdr_channel, chunk, length, flags);
     }
@@ -1161,8 +1289,8 @@ private:
         if (this->chunked_virtual_channel_data_stream.get_capacity() < desired_size) {
             size_t rounded_length = this->chunked_virtual_channel_data_stream.get_capacity();
             for (; rounded_length < desired_size; rounded_length *= 2);
-            if (rounded_length > this->max_chunked_virtual_channel_data_length) {
-                rounded_length = this->max_chunked_virtual_channel_data_length;
+            if (rounded_length > this->chunked_virtual_channel_data_max_length) {
+                rounded_length = this->chunked_virtual_channel_data_max_length;
             }
             this->chunked_virtual_channel_data_byte = std::make_unique<uint8_t[]>(rounded_length);
             this->chunked_virtual_channel_data_stream.~FixedSizeStream();
@@ -1277,8 +1405,8 @@ private:
                         "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
                             "Client Device List Announce timer is disabled.");
                 }
-                this->client_device_list_announce_timer_enabled = false;
-                this->client_device_list_announce_timeout_checker.cancel_timeout();
+                this->client_device_announce_timer_enabled = false;
+                this->client_device_announce_timeout_checker.cancel_timeout();
 
                 const uint32_t DeviceCount = chunk.in_uint32_le();
 
@@ -1563,11 +1691,41 @@ private:
                         {
                             rdpdr::GeneralCapabilitySet general_capability_set;
 
+                            uint8_t * const saved_general_capability_set_p = chunk.p;
+
                             general_capability_set.receive(chunk, Version);
 
                             if (this->verbose) {
                                 general_capability_set.log(LOG_INFO);
                             }
+
+                            if (general_capability_set.extraFlags1() & rdpdr::ENABLE_ASYNCIO) {
+                                LOG(LOG_INFO,
+                                    "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
+                                        "Denies user to send multiple simultaneous "
+                                        "read or write requests on the same file from "
+                                        "a redirected file system.");
+
+                                FixedSizeStream cap_stream(
+                                    saved_general_capability_set_p,
+                                    rdpdr::GeneralCapabilitySet::size(Version));
+
+                                cap_stream.out_skip_bytes(24);  // osType(4) + osVersion(4) +
+                                                                //     protocolMajorVersion(2) +
+                                                                //     protocolMinorVersion(2) +
+                                                                //     ioCode1(4) + ioCode2(4) +
+                                                                //     extendedPDU(4)
+                                cap_stream.out_uint32_le(0);    // extraFlags1(4)
+
+                                chunk.p = saved_general_capability_set_p;
+
+                                general_capability_set.receive(chunk, Version);
+
+                                if (this->verbose) {
+                                    general_capability_set.log(LOG_INFO);
+                                }
+                            }
+
                         }
                         break;
 
@@ -3243,15 +3401,15 @@ public:
             }
         }
 
-        if (this->client_device_list_announce_timer_enabled) {
+        if (this->client_device_announce_timer_enabled) {
             TimeVal tv_now;
-            switch (this->client_device_list_announce_timeout_checker.check(tv_now)) {
+            switch (this->client_device_announce_timeout_checker.check(tv_now)) {
                 case TimeoutT<TimeVal>::TIMEOUT_REACHED:
                 {
                     LOG(LOG_INFO,
                         "mod_rdp::draw_event: Client Device List announce timer expired.");
                     this->event.reset();
-                    this->client_device_list_announce_timer_enabled = false;
+                    this->client_device_announce_timer_enabled = false;
 
 
                     {
@@ -3277,7 +3435,7 @@ public:
 
                 case TimeoutT<TimeVal>::TIMEOUT_NOT_REACHED:
                 {
-                    TimeVal timeleft = this->client_device_list_announce_timeout_checker.timeleft(tv_now);
+                    TimeVal timeleft = this->client_device_announce_timeout_checker.timeleft(tv_now);
 
                     this->event.set(timeleft.tv_sec * 1000000LL + timeleft.tv_usec);
                 }
@@ -3292,6 +3450,7 @@ public:
             REDASSERT(this->enable_wab_agent);
 
             this->wab_agent_event.reset();
+            this->wab_agent_event.waked_up_by_time = false;
 
             if (this->wab_agent_launch_timeout && !this->wab_agent_is_ready) {
                 LOG(LOG_ERR, "Agent is not ready yet!");
@@ -3308,8 +3467,8 @@ public:
                     this->event.set();
                 }
                 else {
+                    LOG(LOG_INFO, "Agent keep alive requested");
                     this->wab_agent_keep_alive_received = false;
-
 
                     BStream out_s(1024);
 
@@ -5036,6 +5195,12 @@ public:
                 }
                 break;
             default:
+                if (this->verbose) {
+                    LOG(LOG_WARNING,
+                        "Unprocessed Capability Set is encountered. capabilitySetType=%s(%u)",
+                        ::get_capabilitySetType_name(capset_type),
+                        capset_type);
+                }
                 break;
             }
             stream.p = next;
@@ -6042,7 +6207,7 @@ public:
         }
 
         if (this->verbose & 1) {
-            infoPacket.log("Sending to server: ", this->password_printing_mode);
+            infoPacket.log("Sending to server: ", this->password_printing_mode, !this->enable_wab_agent);
         }
 
         infoPacket.emit(stream);
@@ -6269,9 +6434,11 @@ public:
 
         while (wab_agent_channel_message.back() == '\0') wab_agent_channel_message.pop_back();
 
-        //LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
+        bool dont_send_to_front = false;
 
         if (!wab_agent_channel_message.compare("Request=Get startup application")) {
+            LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
+
             //LOG(LOG_INFO, "<<<Get startup application>>>");
 
             if (this->verbose & 1) {
@@ -6279,6 +6446,11 @@ public:
             }
 
             this->wab_agent_is_ready = true;
+
+            if (this->to_server_sender) {
+                this->file_system_drive_manager.DisableWABAgentDrive(*this->to_server_sender,
+                    this->verbose);
+            }
 
             {
                 BStream out_s(32768);
@@ -6304,7 +6476,6 @@ public:
                     message_length_offset);
 
                 out_s.mark_end();
-                //hexdump(out_s.get_data(), out_s.size());
 
                 this->send_to_channel(
                     wab_agent_channel, out_s, out_s.size(),
@@ -6343,6 +6514,43 @@ public:
         else if (!wab_agent_channel_message.compare("KeepAlive=OK")) {
             //LOG(LOG_INFO, "Recevied Keep-Alive from Agent.");
             this->wab_agent_keep_alive_received = true;
+
+            dont_send_to_front = true;
+        }
+        else {
+            const char * message   = wab_agent_channel_message.c_str();
+            const char * separator = ::strchr(message, '=');
+
+            if (separator) {
+                std::string order(message, separator - message);
+                std::string parameters(separator + 1);
+
+                LOG(LOG_INFO,
+                    "mod_rdp::process_wab_agent_event: order=\"%s\" parameters=\"%s\"",
+                    order.c_str(), parameters.c_str());
+
+                if (!order.compare("InputLanguage")) {
+                    this->front.set_keylayout(::strtol(parameters.c_str(), nullptr, 16));
+                }
+                else if (!order.compare("WindowText")) {
+                }
+                else if (!order.compare("ProcessName")) {
+                }
+                else if (!order.compare("NewProcess")) {
+                }
+                else {
+                    LOG(LOG_WARNING, "mod_rdp::process_wab_agent_event: Unexpected order.");
+                }
+            }
+            else {
+                LOG(LOG_WARNING,
+                    "mod_rdp::process_wab_agent_event: Invalid message format. WAB agent channel data=\"%s\"",
+                    message);
+            }
+        }
+
+        if (!dont_send_to_front) {
+            this->front.session_update(wab_agent_channel_message.c_str());
         }
     }
 
@@ -6355,7 +6563,8 @@ public:
 
         const uint16_t msgType = stream.in_uint16_le();
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%d", msgType);
+            LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%s(%d)",
+                RDPECLIP::get_msgType_name(msgType), msgType);
         }
 
         bool cencel_pdu = false;
@@ -6397,6 +6606,13 @@ public:
 
                 cencel_pdu = true;
             }
+            else {
+                stream.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
+
+                this->clipboard_requested_format_id = stream.in_uint32_le();
+
+                stream.p -= 10; // msgFlags(2) + dataLen(4) + requestedFormatId(4)
+            }
         }
         else if (msgType == RDPECLIP::CB_FILECONTENTS_REQUEST) {
             if (!this->authorization_channels.cliprdr_file_is_authorized()) {
@@ -6418,7 +6634,51 @@ public:
         }
 
         if (!cencel_pdu) {
+            if ((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) &&
+                (flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
+                (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
+
+                stream.in_skip_bytes(2 /*msgFlags(2)*/);
+
+                const uint32_t dataLen = stream.in_uint32_le();
+
+                LOG(LOG_INFO, "Sending %s(%u) clipboard data to client (%u) bytes%s",
+                    RDPECLIP::get_Format_name(this->clipboard_requested_format_id),
+                    this->clipboard_requested_format_id, dataLen,
+                    (((this->clipboard_requested_format_id == RDPECLIP::CF_TEXT) ||
+                      (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT)) ? ":" : "."));
+
+                const size_t max_length_of_data_to_dump = 256;
+
+                if (this->clipboard_requested_format_id == RDPECLIP::CF_TEXT) {
+                    const size_t length_of_data_to_dump = std::min(stream.in_remain(), max_length_of_data_to_dump);
+                    const std::string data_to_dump(::char_ptr_cast(stream.p), length_of_data_to_dump);
+                    LOG(LOG_INFO, data_to_dump.c_str());
+                }
+                else if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
+                    REDASSERT(!(stream.in_remain() & 1));
+
+                    const size_t length_of_data_to_dump = std::min(stream.in_remain(), max_length_of_data_to_dump * 2);
+
+                    const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+                    const size_t size_of_utf8_string =
+                        length_of_data_to_dump / 2 * maximum_length_of_utf8_character_in_bytes;
+
+                    uint8_t * const utf8_string = static_cast<uint8_t *>(
+                        ::alloca(size_of_utf8_string));
+                    const size_t length_of_utf8_string = ::UTF16toUTF8(
+                        stream.p, length_of_data_to_dump / 2, utf8_string, size_of_utf8_string);
+                    const std::string data_to_dump(::char_ptr_cast(utf8_string),
+                        length_of_utf8_string);
+                    LOG(LOG_INFO, data_to_dump.c_str());
+                }
+
+                stream.p -= 6;   // msgFlags(2) + dataLen(4)
+            }
+
             this->update_total_clipboard_data(msgType, length);
+
             stream.p -= 2;  // msgType(2)
             this->send_to_front_channel(
                 cliprdr_channel.name, stream.p, length, chunk_size, flags
@@ -6817,35 +7077,33 @@ public:
                     }
                 }
                 else {
-                    if (device_io_request.MajorFunction() == rdpdr::IRP_MJ_READ) {
-                        const auto saved_mj_read_stream_p = stream.p;
-
-                        rdpdr::DeviceReadRequest device_read_request;
-                        device_read_request.receive(stream);
-
-                        stream.p = saved_mj_read_stream_p;
-
-                        this->adjust_chunked_virtual_channel_data_stream_size(
-                                20 +                            // DeviceIoReply(16) + Length(4)
-                                device_read_request.Length()
+                    if (!this->to_server_sender) {
+                        this->to_server_sender = std::make_unique<RdpdrToServerSender>(
+                                this->nego.trans,
+                                this->encrypt,
+                                this->encryptionLevel,
+                                this->userid,
+                                rdpdr_channel.chanid
                             );
+
                     }
 
-                    this->chunked_virtual_channel_data_stream.reset();
-
-                    uint32_t out_flags = 0;
+                    std::unique_ptr<AsynchronousTask> returned_asynchronous_task;
 
                     this->file_system_drive_manager.ProcessDeviceIORequest(
-                        device_io_request, stream, this->chunked_virtual_channel_data_stream,
-                        out_flags, this->verbose);
-                    if (this->chunked_virtual_channel_data_stream.size()) {
-                        this->send_to_channel(rdpdr_channel,
-                                              this->chunked_virtual_channel_data_stream,
-                                              this->chunked_virtual_channel_data_stream.size(),
-                                              out_flags);
-                    }
+                        device_io_request, stream, *(this->to_server_sender.get()), returned_asynchronous_task,
+                        this->verbose);
 
-                    this->chunked_virtual_channel_data_stream.reset();
+                    if (returned_asynchronous_task) {
+                        if (this->asynchronous_tasks.empty()) {
+                            this->asynchronous_task_event.~wait_obj();
+                            new (&this->asynchronous_task_event) wait_obj();
+
+                            returned_asynchronous_task->configure_wait_object(this->asynchronous_task_event);
+                        }
+
+                        this->asynchronous_tasks.push_back(std::move(returned_asynchronous_task));
+                    }
 
                     return;
                 }
@@ -6865,17 +7123,21 @@ public:
                         "mod_rdp::process_rdpdr_event: Server User Logged On");
                 }
 
-                this->client_device_list_announce_timeout_checker.restart_timeout(
-                    TimeVal(), this->client_device_list_announce_timeout);
-                REDASSERT(!this->client_device_list_announce_timer_enabled);
-                this->client_device_list_announce_timer_enabled = true;
-                if (this->verbose) {
-                    LOG(LOG_INFO,
-                        "mod_rdp::process_rdpdr_event: Client Device List Announce timer is enabled.");
-                }
+                if (!this->server_user_logged_on_processed) {
+                    this->server_user_logged_on_processed = true;
 
-                this->event.object_and_time = true;
-                this->event.set(this->client_device_list_announce_timeout);
+                    this->client_device_announce_timeout_checker.restart_timeout(
+                        TimeVal(), this->client_device_announce_timeout * 1000);
+                    REDASSERT(!this->client_device_announce_timer_enabled);
+                    this->client_device_announce_timer_enabled = true;
+                    if (this->verbose) {
+                        LOG(LOG_INFO,
+                            "mod_rdp::process_rdpdr_event: Client Device List Announce timer is enabled.");
+                    }
+
+                    this->event.object_and_time = true;
+                    this->event.set(this->client_device_announce_timeout * 1000);
+                }
             break;
 
             case rdpdr::PacketId::PAKID_PRN_USING_XPS:

@@ -30,6 +30,7 @@ enum {
     PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
     SAVE_STATE          = 0x1002,   // 4098
     RESET_CHUNK         = 0x1003,   // 4099
+    SESSION_UPDATE      = 0x1004,
 
     INVALID_CHUNK       = 0x8000
 };

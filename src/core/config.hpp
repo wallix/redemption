@@ -141,16 +141,21 @@ enum authid_t {
     AUTHID_PROXY_OPT,
 
     AUTHID_DISABLE_KEYBOARD_LOG,
+    AUTHID_DISABLE_CLIPBOARD_LOG,
 
     AUTHID_RT_DISPLAY,
 
     AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE,
+
+    AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP,
 
     AUTHID_RDP_BOGUS_SC_NET_SIZE,
 
     AUTHID_OPT_WABAGENT,
     AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT,
     AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT,
+
+    AUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT,
 
     MAX_AUTHID
 };
@@ -244,15 +249,21 @@ enum authid_t {
 #define STRAUTHID_PROXY_OPT                     "proxy_opt"
 
 #define STRAUTHID_DISABLE_KEYBOARD_LOG          "disable_keyboard_log"
+#define STRAUTHID_DISABLE_CLIPBOARD_LOG         "disable_clipboard_log"
+
 #define STRAUTHID_RT_DISPLAY                    "rt_display"
 
-#define STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE   "vnc_server_clipboard_encoding_type"
+#define STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE    "vnc_server_clipboard_encoding_type"
+
+#define STRAUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP     "vnc_bogus_clipboard_infinite_loop"
 
 #define STRAUTHID_RDP_BOGUS_SC_NET_SIZE         "rdp_bogus_sc_net_size"
 
 #define STRAUTHID_OPT_WABAGENT                      "wab_agent"
 #define STRAUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT       "wab_agent_launch_timeout"
 #define STRAUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT    "wab_agent_keepalive_timeout"
+
+#define STRAUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT    "client_device_announce_timeout"
 
 static const char * const authstr[MAX_AUTHID - 1] = {
 
@@ -352,15 +363,21 @@ static const char * const authstr[MAX_AUTHID - 1] = {
     STRAUTHID_PROXY_OPT,
 
     STRAUTHID_DISABLE_KEYBOARD_LOG,
+    STRAUTHID_DISABLE_CLIPBOARD_LOG,
+
     STRAUTHID_RT_DISPLAY,
 
     STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE,
+
+    STRAUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP,
 
     STRAUTHID_RDP_BOGUS_SC_NET_SIZE,
 
     STRAUTHID_OPT_WABAGENT,
     STRAUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT,
-    STRAUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT
+    STRAUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT,
+
+    STRAUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
@@ -629,6 +646,8 @@ public:
         // needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block
         BoolField bogus_sc_net_size;    // AUTHID_RDP_BOGUS_SC_NET_SIZE //
 
+        UnsignedField client_device_announce_timeout;   // AUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT //
+
         Inifile_mod_rdp() = default;
     } mod_rdp;
 
@@ -640,9 +659,11 @@ public:
 
         bool allow_authentification_retries = false;
 
-        Inifile_mod_vnc() = default;
+        StringField server_clipboard_encoding_type;     // AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE //
 
-        StringField server_clipboard_encoding_type;    // AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE //
+        UnsignedField bogus_clipboard_infinite_loop;    // AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP //
+
+        Inifile_mod_vnc() = default;
     } mod_vnc;
 
     struct Inifile_mod_replay {
@@ -712,8 +733,13 @@ public:
         bool disable_keyboard_log_syslog = false;
         bool disable_keyboard_log_wrm    = false;
         bool disable_keyboard_log_ocr    = false;
-        UnsignedField     rt_display;           // AUTHID_RT_DISPLAY
-                                                // 0: disable, 1: enable
+
+        // 1 - Disable clipboard event logging in syslog
+        UnsignedField disable_clipboard_log;    // AUTHID_DISABLE_CLIPBOARD_LOG
+        bool disable_clipboard_log_syslog = false;
+
+        UnsignedField rt_display;   // AUTHID_RT_DISPLAY
+                                    // 0: disable, 1: enable
 
         unsigned wrm_color_depth_selection_strategy = 0; // 0: 24-bit, 1: 16-bit
 
@@ -957,6 +983,9 @@ public:
         // Begin section "mod_rdp"
         this->mod_rdp.bogus_sc_net_size.attach_ini(this, AUTHID_RDP_BOGUS_SC_NET_SIZE);
         this->mod_rdp.bogus_sc_net_size.set(true);
+
+        this->mod_rdp.client_device_announce_timeout.attach_ini(this, AUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT);
+        this->mod_rdp.client_device_announce_timeout.set(1000);
         // End Section "mod_rdp"
 
         // Begin section "mod_vnc"
@@ -965,14 +994,21 @@ public:
 
         this->mod_vnc.server_clipboard_encoding_type.attach_ini(this, AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE);
         this->mod_vnc.server_clipboard_encoding_type.set_from_cstr("latin1");
+
+        this->mod_vnc.bogus_clipboard_infinite_loop.attach_ini(this, AUTHID_RDP_BOGUS_SC_NET_SIZE);
+        this->mod_vnc.bogus_clipboard_infinite_loop.set(0);
         // End Section "mod_vnc"
 
         // Begin section video
         this->video.disable_keyboard_log.attach_ini(this, AUTHID_DISABLE_KEYBOARD_LOG);
         this->video.disable_keyboard_log.set(0);
+        this->to_send_set.insert(AUTHID_DISABLE_KEYBOARD_LOG);
+
+        this->video.disable_clipboard_log.attach_ini(this, AUTHID_DISABLE_CLIPBOARD_LOG);
+        this->video.disable_clipboard_log.set(0);
+
         this->video.rt_display.attach_ini(this, AUTHID_RT_DISPLAY);
         this->video.rt_display.set(0);
-        this->to_send_set.insert(AUTHID_DISABLE_KEYBOARD_LOG);
         // End section "video"
 
         // Begin Section "translation"
@@ -1340,6 +1376,9 @@ public:
             else if (0 == strcmp(key, "bogus_sc_net_size")) {
                 this->mod_rdp.bogus_sc_net_size.set_from_cstr(value);
             }
+            else if (0 == strcmp(key, "client_device_announce_timeout")) {
+                this->mod_rdp.client_device_announce_timeout.set_from_cstr(value);
+            }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1359,6 +1398,9 @@ public:
             }
             else if (0 == strcmp(key, "server_clipboard_encoding_type")) {
                 this->mod_vnc.server_clipboard_encoding_type.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "bogus_clipboard_infinite_loop")) {
+                this->mod_vnc.bogus_clipboard_infinite_loop.set_from_cstr(value);
             }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -1473,6 +1515,10 @@ public:
                 this->video.disable_keyboard_log_syslog = 0 != (this->video.disable_keyboard_log.get() & 1);
                 this->video.disable_keyboard_log_wrm    = 0 != (this->video.disable_keyboard_log.get() & 2);
                 this->video.disable_keyboard_log_ocr    = 0 != (this->video.disable_keyboard_log.get() & 4);
+            }
+            else if (0 == strcmp(key, "disable_clipboard_log")) {
+                this->video.disable_clipboard_log.set_from_cstr(value);
+                this->video.disable_clipboard_log_syslog = 0 != (this->video.disable_clipboard_log.get() & 1);
             }
             else if (0 == strcmp(key, "rt_display")) {
                 this->video.rt_display.set_from_cstr(value);

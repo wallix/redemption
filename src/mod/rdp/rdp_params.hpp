@@ -49,6 +49,8 @@ struct ModRDPParams {
     unsigned wab_agent_launch_timeout;
     unsigned wab_agent_keepalive_timeout;
 
+    unsigned disable_clipboard_log;
+
     bool         enable_transparent_mode;
     const char * output_filename;
     Transport  * persistent_key_list_transport;
@@ -86,9 +88,11 @@ struct ModRDPParams {
     bool remote_program;
     bool server_redirection_support;
 
-    uint32_t max_chunked_virtual_channel_data_length;
+    uint32_t chunked_virtual_channel_data_max_length;
 
     bool bogus_sc_net_size;
+
+    unsigned client_device_announce_timeout;
 
     uint32_t verbose;
     uint32_t cache_verbose;
@@ -119,6 +123,8 @@ struct ModRDPParams {
 
         , wab_agent_launch_timeout(0)
         , wab_agent_keepalive_timeout(0)
+
+        , disable_clipboard_log(0)
 
         , enable_transparent_mode(false)
         , output_filename("")
@@ -157,9 +163,11 @@ struct ModRDPParams {
         , remote_program(false)
         , server_redirection_support(false)
 
-        , max_chunked_virtual_channel_data_length(0)
+        , chunked_virtual_channel_data_max_length(0)
 
         , bogus_sc_net_size(true)
+
+        , client_device_announce_timeout(1000)
 
         , verbose(verbose)
         , cache_verbose(0)
@@ -201,6 +209,9 @@ struct ModRDPParams {
             "ModRDPParams wab_agent_launch_timeout=%u",            this->wab_agent_launch_timeout);
         LOG(LOG_INFO,
             "ModRDPParams wab_agent_keepalive_timeout=%u",         this->wab_agent_keepalive_timeout);
+
+        LOG(LOG_INFO,
+            "ModRDPParams dsiable_clipboard_log=0x%X",             this->disable_clipboard_log);
 
         LOG(LOG_INFO,
             "ModRDPParams enable_transparent_mode=%s",             (this->enable_transparent_mode ? "yes" : "no"));
@@ -266,11 +277,14 @@ struct ModRDPParams {
             "ModRDPParams server_redirection_support=%s",          (this->server_redirection_support ? "yes" : "no"));
 
         LOG(LOG_INFO,
-            "ModRDPParams max_chunked_virtual_channel_data_length=%u",
-                                                                   this->max_chunked_virtual_channel_data_length);
+            "ModRDPParams chunked_virtual_channel_data_max_length=%u",
+                                                                   this->chunked_virtual_channel_data_max_length);
 
         LOG(LOG_INFO,
             "ModRDPParams bogus_sc_net_size=%s",                   (this->bogus_sc_net_size ? "yes" : "no"));
+
+        LOG(LOG_INFO,
+            "ModRDPParams client_device_announce_timeout=%u",      this->client_device_announce_timeout);
 
         LOG(LOG_INFO,
             "ModRDPParams verbose=0x%08X",                         this->verbose);
