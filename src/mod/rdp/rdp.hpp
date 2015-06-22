@@ -7127,7 +7127,7 @@ public:
                     this->server_user_logged_on_processed = true;
 
                     this->client_device_announce_timeout_checker.restart_timeout(
-                        TimeVal(), this->client_device_announce_timeout);
+                        TimeVal(), this->client_device_announce_timeout * 1000);
                     REDASSERT(!this->client_device_announce_timer_enabled);
                     this->client_device_announce_timer_enabled = true;
                     if (this->verbose) {
@@ -7136,7 +7136,7 @@ public:
                     }
 
                     this->event.object_and_time = true;
-                    this->event.set(this->client_device_announce_timeout);
+                    this->event.set(this->client_device_announce_timeout * 1000);
                 }
             break;
 
