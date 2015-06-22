@@ -1692,9 +1692,14 @@ public:
         return announced_drive_count;
     }
 
-    void EnableWABAgentDrive() {
+    void EnableWABAgentDrive(uint32_t verbose) {
         if (this->wab_agent_drive_id == INVALID_MANAGED_DRIVE_ID) {
             this->wab_agent_drive_id = this->next_managed_drive_id;
+
+            if (verbose) {
+                LOG(LOG_INFO,
+                    "FileSystemDriveManager::EnableWABAgentDrive:");
+            }
 
             managed_drives.push_back(
                 std::make_tuple(this->next_managed_drive_id++,
@@ -2136,7 +2141,7 @@ public:
         }
     }
 
-    void EnableWABAgentDrive(ToServerSender & to_server_sender) {
+    void DisableWABAgentDrive(ToServerSender & to_server_sender, uint32_t verbose = 0) {
         if (this->wab_agent_drive_id == INVALID_MANAGED_DRIVE_ID) {
             return;
         }
@@ -2166,6 +2171,11 @@ public:
         out_stream.out_uint32_le(old_wab_agent_drive_id);   // DeviceIds(variable)
 
         out_stream.mark_end();
+
+        if (verbose) {
+            LOG(LOG_INFO,
+                "FileSystemDriveManager::DisableWABAgentDrive:");
+        }
 
         to_server_sender(
                 out_stream.size(),

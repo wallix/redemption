@@ -402,7 +402,7 @@ public:
         this->chunked_virtual_channel_data_stream.reset();
 
         if (this->enable_wab_agent) {
-            this->file_system_drive_manager.EnableWABAgentDrive();
+            this->file_system_drive_manager.EnableWABAgentDrive(this->verbose);
         }
 
         if (mod_rdp_params.transparent_recorder_transport) {
@@ -6445,6 +6445,11 @@ public:
             }
 
             this->wab_agent_is_ready = true;
+
+            if (this->to_server_sender) {
+                this->file_system_drive_manager.DisableWABAgentDrive(*this->to_server_sender,
+                    this->verbose);
+            }
 
             {
                 BStream out_s(32768);
