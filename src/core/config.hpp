@@ -155,6 +155,8 @@ enum authid_t {
     AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT,
     AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT,
 
+    AUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT,
+
     MAX_AUTHID
 };
 
@@ -260,6 +262,8 @@ enum authid_t {
 #define STRAUTHID_OPT_WABAGENT                      "wab_agent"
 #define STRAUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT       "wab_agent_launch_timeout"
 #define STRAUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT    "wab_agent_keepalive_timeout"
+
+#define STRAUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT    "client_device_announce_timeout"
 
 static const char * const authstr[MAX_AUTHID - 1] = {
 
@@ -371,7 +375,9 @@ static const char * const authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_OPT_WABAGENT,
     STRAUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT,
-    STRAUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT
+    STRAUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT,
+
+    STRAUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
@@ -639,6 +645,8 @@ public:
 
         // needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block
         BoolField bogus_sc_net_size;    // AUTHID_RDP_BOGUS_SC_NET_SIZE //
+
+        UnsignedField client_device_announce_timeout;   // AUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT //
 
         Inifile_mod_rdp() = default;
     } mod_rdp;
@@ -974,6 +982,9 @@ public:
         // Begin section "mod_rdp"
         this->mod_rdp.bogus_sc_net_size.attach_ini(this, AUTHID_RDP_BOGUS_SC_NET_SIZE);
         this->mod_rdp.bogus_sc_net_size.set(true);
+
+        this->mod_rdp.client_device_announce_timeout.attach_ini(this, AUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT);
+        this->mod_rdp.client_device_announce_timeout.set(1000);
         // End Section "mod_rdp"
 
         // Begin section "mod_vnc"
@@ -1363,6 +1374,9 @@ public:
             }
             else if (0 == strcmp(key, "bogus_sc_net_size")) {
                 this->mod_rdp.bogus_sc_net_size.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "client_device_announce_timeout")) {
+                this->mod_rdp.client_device_announce_timeout.set_from_cstr(value);
             }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

@@ -822,6 +822,8 @@ public:
 
                 mod_rdp_params.bogus_sc_net_size                   = this->ini.mod_rdp.bogus_sc_net_size.get();
 
+                mod_rdp_params.client_device_announce_timeout      = this->ini.mod_rdp.client_device_announce_timeout.get();
+
                 UdevRandom gen;
 
                 TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")

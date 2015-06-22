@@ -92,6 +92,8 @@ struct ModRDPParams {
 
     bool bogus_sc_net_size;
 
+    unsigned client_device_announce_timeout;
+
     uint32_t verbose;
     uint32_t cache_verbose;
 
@@ -164,6 +166,8 @@ struct ModRDPParams {
         , chunked_virtual_channel_data_max_length(0)
 
         , bogus_sc_net_size(true)
+
+        , client_device_announce_timeout(1000)
 
         , verbose(verbose)
         , cache_verbose(0)
@@ -278,6 +282,9 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams bogus_sc_net_size=%s",                   (this->bogus_sc_net_size ? "yes" : "no"));
+
+        LOG(LOG_INFO,
+            "ModRDPParams client_device_announce_timeout=%u",      this->client_device_announce_timeout);
 
         LOG(LOG_INFO,
             "ModRDPParams verbose=0x%08X",                         this->verbose);

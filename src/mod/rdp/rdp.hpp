@@ -202,10 +202,10 @@ class mod_rdp : public mod_api {
 
     TimeoutT<time_t> open_session_timeout_checker;
 
-    const uint64_t          client_device_list_announce_timeout         = 1000000;  // Timeout in microseconds.
-          bool              client_device_list_announce_timer_enabled   = false;
-          TimeoutT<TimeVal> client_device_list_announce_timeout_checker;
-          bool              server_user_logged_on_processed             = false;
+    const uint64_t          client_device_announce_timeout;                 // Timeout in microseconds.
+          bool              client_device_announce_timer_enabled   = false;
+          TimeoutT<TimeVal> client_device_announce_timeout_checker;
+          bool              server_user_logged_on_processed        = false;
 
     std::string output_filename;
 
@@ -355,7 +355,8 @@ public:
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , open_session_timeout(mod_rdp_params.open_session_timeout)
         , open_session_timeout_checker(0)
-        , client_device_list_announce_timeout_checker(0)
+        , client_device_announce_timeout(mod_rdp_params.client_device_announce_timeout)
+        , client_device_announce_timeout_checker(0)
         , output_filename(mod_rdp_params.output_filename)
         , certificate_change_action(mod_rdp_params.certificate_change_action)
         , enable_polygonsc(false)
@@ -1404,8 +1405,8 @@ private:
                         "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
                             "Client Device List Announce timer is disabled.");
                 }
-                this->client_device_list_announce_timer_enabled = false;
-                this->client_device_list_announce_timeout_checker.cancel_timeout();
+                this->client_device_announce_timer_enabled = false;
+                this->client_device_announce_timeout_checker.cancel_timeout();
 
                 const uint32_t DeviceCount = chunk.in_uint32_le();
 
@@ -3400,15 +3401,15 @@ public:
             }
         }
 
-        if (this->client_device_list_announce_timer_enabled) {
+        if (this->client_device_announce_timer_enabled) {
             TimeVal tv_now;
-            switch (this->client_device_list_announce_timeout_checker.check(tv_now)) {
+            switch (this->client_device_announce_timeout_checker.check(tv_now)) {
                 case TimeoutT<TimeVal>::TIMEOUT_REACHED:
                 {
                     LOG(LOG_INFO,
                         "mod_rdp::draw_event: Client Device List announce timer expired.");
                     this->event.reset();
-                    this->client_device_list_announce_timer_enabled = false;
+                    this->client_device_announce_timer_enabled = false;
 
 
                     {
@@ -3434,7 +3435,7 @@ public:
 
                 case TimeoutT<TimeVal>::TIMEOUT_NOT_REACHED:
                 {
-                    TimeVal timeleft = this->client_device_list_announce_timeout_checker.timeleft(tv_now);
+                    TimeVal timeleft = this->client_device_announce_timeout_checker.timeleft(tv_now);
 
                     this->event.set(timeleft.tv_sec * 1000000LL + timeleft.tv_usec);
                 }
@@ -7125,17 +7126,17 @@ public:
                 if (!this->server_user_logged_on_processed) {
                     this->server_user_logged_on_processed = true;
 
-                    this->client_device_list_announce_timeout_checker.restart_timeout(
-                        TimeVal(), this->client_device_list_announce_timeout);
-                    REDASSERT(!this->client_device_list_announce_timer_enabled);
-                    this->client_device_list_announce_timer_enabled = true;
+                    this->client_device_announce_timeout_checker.restart_timeout(
+                        TimeVal(), this->client_device_announce_timeout);
+                    REDASSERT(!this->client_device_announce_timer_enabled);
+                    this->client_device_announce_timer_enabled = true;
                     if (this->verbose) {
                         LOG(LOG_INFO,
                             "mod_rdp::process_rdpdr_event: Client Device List Announce timer is enabled.");
                     }
 
                     this->event.object_and_time = true;
-                    this->event.set(this->client_device_list_announce_timeout);
+                    this->event.set(this->client_device_announce_timeout);
                 }
             break;
 
