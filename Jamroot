@@ -107,6 +107,8 @@ project redemption
     <cxxflags>-O3
     <variant>debug:<cxxflags>-g
 #     <variant>release:<cxxflags>-march=native
+#     <variant>release:<linkflags>-flto
+
     <cxxflags>-Wuninitialized
     <cxxflags>-Wnon-virtual-dtor
     <cxxflags>-Wall
@@ -148,8 +150,6 @@ project redemption
     <variant>strict:<cxxflags>-Wsign-conversion
     <cxxflags>-Wfloat-conversion
 #     <cxxflags>-Wlogical-not-parentheses # gcc5
-#     <cxxflags>-Wno-odr # gcc5 #  Requires -flto-odr-type-merging to be enabled
-    <cxxflags>-Wno-invalid-offsetof
     <cxxflags>-Wvolatile-register-var
     <cxxflags>-Wdisabled-optimization
     <cxxflags>-Woverlength-strings
@@ -184,10 +184,13 @@ project redemption
     <toolset>gcc:<cxxflags>-Wnormalized=nfc #disable ?
 #     <toolset>gcc:<cxxflags>-fsized-deallocation # gcc5
 #     <toolset>gcc:<cxxflags>-flto-odr-type-merging # gcc5
+#     <toolset>gcc:<cxxflags>-Wno-odr # gcc5 #  Requires -flto-odr-type-merging to be enabled
     <toolset>gcc:<cxxflags>-Wvector-operation-performance
     <toolset>gcc:<cxxflags>-Wopenmp-simd
     <toolset>gcc:<cxxflags>-Wdouble-promotion
     <toolset>gcc:<cxxflags>-Wmaybe-uninitialized
+    <toolset>gcc:<cxxflags>-Wtrampolines
+
 
     <cxxflags>-fpie
 
