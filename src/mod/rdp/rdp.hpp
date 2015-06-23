@@ -186,8 +186,9 @@ class mod_rdp : public mod_api {
     const int  rdp_compression;
     const bool persist_bitmap_cache_on_disk;
 
-    const unsigned wab_agent_launch_timeout;
-    const unsigned wab_agent_keepalive_timeout;
+    const unsigned    wab_agent_launch_timeout;
+    const unsigned    wab_agent_keepalive_timeout;
+    const std::string wab_agent_alternate_shell;
 
     const unsigned disable_clipboard_log;
 
@@ -258,9 +259,9 @@ class mod_rdp : public mod_api {
     std::string real_alternate_shell;
     std::string real_working_dir;
 
-    wait_obj wab_agent_event;
-    bool     wab_agent_is_ready            = false;
-    bool     wab_agent_keep_alive_received = true;
+    wait_obj    wab_agent_event;
+    bool        wab_agent_is_ready            = false;
+    bool        wab_agent_keep_alive_received = true;
 
     uint32_t clipboard_requested_format_id = 0;
 
@@ -349,6 +350,7 @@ public:
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
         , wab_agent_keepalive_timeout(mod_rdp_params.wab_agent_keepalive_timeout)
+        , wab_agent_alternate_shell(mod_rdp_params.wab_agent_alternate_shell)
         , disable_clipboard_log(mod_rdp_params.disable_clipboard_log)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
@@ -533,12 +535,9 @@ public:
             this->real_alternate_shell = std::move(alternate_shell);
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
-            const char * wab_agent_alternate_shell =
-                    "cmd /k "
-                ;
             const char * wab_agent_working_dir = "%TMP%";
 
-            strncpy(this->program, wab_agent_alternate_shell, sizeof(this->program) - 1);
+            strncpy(this->program, this->wab_agent_alternate_shell.c_str(), sizeof(this->program) - 1);
             this->program[sizeof(this->program) - 1] = 0;
             strncpy(this->directory, wab_agent_working_dir, sizeof(this->directory) - 1);
             this->directory[sizeof(this->directory) - 1] = 0;

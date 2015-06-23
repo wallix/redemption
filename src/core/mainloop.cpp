@@ -36,7 +36,7 @@
 #include "parse_ip_conntrack.hpp"
 
 #include "config.hpp"
-#include "crypto_key_holder.hpp"
+#include "parameters_holder.hpp"
 
 /*****************************************************************************/
 #ifndef IN_IDE_PARSER
@@ -235,11 +235,11 @@ void redemption_new_session()
 
 }
 
-void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, crypto_key_holder & cryptoKeyHldr)
+void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, parameters_holder & parametersHldr)
 {
     init_signals();
 
-    SessionServer ss(uid, gid, cryptoKeyHldr, ini.debug.config == Inifile::ENABLE_DEBUG_CONFIG);
+    SessionServer ss(uid, gid, parametersHldr, ini.debug.config == Inifile::ENABLE_DEBUG_CONFIG);
     //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.globals.listen_address);
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }

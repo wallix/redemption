@@ -24,7 +24,7 @@
 #include "config.hpp"
 #include "server.hpp"
 #include "session.hpp"
-#include "crypto_key_holder.hpp"
+#include "parameters_holder.hpp"
 #include "parse_ip_conntrack.hpp"
 
 class SessionServer : public Server
@@ -34,14 +34,14 @@ class SessionServer : public Server
     unsigned gid;
     bool debug_config;
 
-    crypto_key_holder & cryptoKeyHldr;
+    parameters_holder & parametersHldr;
 
 public:
-    SessionServer(unsigned uid, unsigned gid, crypto_key_holder & cryptoKeyHldr, bool debug_config = true)
+    SessionServer(unsigned uid, unsigned gid, parameters_holder & parametersHldr, bool debug_config = true)
         : uid(uid)
         , gid(gid)
         , debug_config(debug_config)
-        , cryptoKeyHldr(cryptoKeyHldr) {
+        , parametersHldr(parametersHldr) {
     }
 
     virtual Server_status start(int incoming_sck)
@@ -76,8 +76,10 @@ public:
                 ini.debug.config = this->debug_config;
                 ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
-                ini.crypto.key0.setmem(this->cryptoKeyHldr.get_key_0());
-                ini.crypto.key1.setmem(this->cryptoKeyHldr.get_key_1());
+                ini.globals.wab_agent_alternate_shell = this->parametersHldr.get_agent_alternate_shell();
+
+                ini.crypto.key0.setmem(this->parametersHldr.get_crypto_key_0());
+                ini.crypto.key1.setmem(this->parametersHldr.get_crypto_key_1());
 
                 if (ini.debug.session){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);

@@ -25,7 +25,7 @@
 #include "version.hpp"
 
 #include "log.hpp"
-#include "crypto_key_holder.hpp"
+#include "parameters_holder.hpp"
 
 #include "apps/app_proxy.hpp"
 
@@ -35,7 +35,7 @@ namespace po = program_options;
 
 int main(int argc, char** argv)
 {
-    return app_proxy<crypto_key_holder>(
+    return app_proxy<parameters_holder>(
         argc, argv
       , "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
         "Copyright (C) Wallix 2010-2015.\n"

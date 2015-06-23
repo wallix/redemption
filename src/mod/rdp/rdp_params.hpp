@@ -46,8 +46,9 @@ struct ModRDPParams {
     bool enable_glyph_cache;
     bool enable_wab_agent;
 
-    unsigned wab_agent_launch_timeout;
-    unsigned wab_agent_keepalive_timeout;
+    unsigned     wab_agent_launch_timeout;
+    unsigned     wab_agent_keepalive_timeout;
+    const char * wab_agent_alternate_shell;
 
     unsigned disable_clipboard_log;
 
@@ -123,6 +124,7 @@ struct ModRDPParams {
 
         , wab_agent_launch_timeout(0)
         , wab_agent_keepalive_timeout(0)
+        , wab_agent_alternate_shell("")
 
         , disable_clipboard_log(0)
 

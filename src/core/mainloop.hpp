@@ -25,10 +25,10 @@
 #define _REDEMPTION_CORE_MAINLOOP_HPP_
 
 class Inifile;
-class crypto_key_holder;
+class parameters_holder;
 
 int g_is_term(void);
-void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, crypto_key_holder & cryptoKeyHldr);
+void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, parameters_holder & parametersHldr);
 void redemption_new_session();
 
 #endif

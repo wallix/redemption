@@ -555,6 +555,8 @@ public:
         BoolField       enable_wab_agent;               // AUTHID_OPT_WABAGENT //
         UnsignedField   wab_agent_launch_timeout;       // AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT //
         UnsignedField   wab_agent_keepalive_timeout;    // AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT //
+
+        StaticString<512> wab_agent_alternate_shell = "";
         // END globals
 
         StaticPath<1024> persistent_path = PERSISTENT_PATH;

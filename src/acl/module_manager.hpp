@@ -791,6 +791,7 @@ public:
                 mod_rdp_params.enable_wab_agent                    = this->ini.globals.enable_wab_agent.get();
                 mod_rdp_params.wab_agent_launch_timeout            = this->ini.globals.wab_agent_launch_timeout.get();
                 mod_rdp_params.wab_agent_keepalive_timeout         = this->ini.globals.wab_agent_keepalive_timeout.get();
+                mod_rdp_params.wab_agent_alternate_shell           = this->ini.globals.wab_agent_alternate_shell;
                 mod_rdp_params.disable_clipboard_log               = this->ini.video.disable_clipboard_log.get();
                 mod_rdp_params.acl                                 = acl;
                 mod_rdp_params.auth_channel                        = this->ini.globals.auth_channel;

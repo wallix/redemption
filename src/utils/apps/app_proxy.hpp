@@ -196,7 +196,7 @@ using extra_option_list = std::initializer_list<extra_option>;
 // ExtraOption = extra_option container
 // ExtracOptionChecker = int(po::variables_map &,  bool * quit)
 // EnableTransparent = int(unsigned gid, unsigned uid)
-template<class CryptoKeyHldr, class ExtraOption, class ExtracOptionChecker>
+template<class ParametersHldr, class ExtraOption, class ExtracOptionChecker>
 int app_proxy(
     int argc, char** argv, const char * copyright_notice
   , ExtraOption const & extrax_options, ExtracOptionChecker extrac_options_checker
@@ -378,10 +378,10 @@ int app_proxy(
         }
     }
 
-    CryptoKeyHldr cryptoKeyHldr;
+    ParametersHldr parametersHldr;
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
-    redemption_main_loop(ini, euid, egid, cryptoKeyHldr);
+    redemption_main_loop(ini, euid, egid, parametersHldr);
 
     /* delete the .pid file if it exists */
     /* don't care about errors. */
