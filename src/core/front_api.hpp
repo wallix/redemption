@@ -69,8 +69,11 @@ class FrontAPI : public DrawApi {
     virtual void send_fastpath_data(InStream & data) {}
     virtual bool retrieve_client_capability_set(Capability & caps) { return true; }
 
-    virtual void set_keylayout(int LCID) {}
+    ////////////////////////////////
+    // Agent.
 
+    virtual void set_keylayout(int LCID) {}
+    virtual void focus_changed(bool on_password_textbox) {}
     virtual void session_update(const char * message) {}
 };
 

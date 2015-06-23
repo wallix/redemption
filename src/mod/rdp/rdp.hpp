@@ -3467,7 +3467,9 @@ public:
                     this->event.set();
                 }
                 else {
-                    LOG(LOG_INFO, "Agent keep alive requested");
+                    if (this->verbose & 0x10000) {
+                        LOG(LOG_INFO, "Agent keep alive requested");
+                    }
                     this->wab_agent_keep_alive_received = false;
 
                     BStream out_s(1024);
@@ -6512,7 +6514,9 @@ public:
             }
         }
         else if (!wab_agent_channel_message.compare("KeepAlive=OK")) {
-            //LOG(LOG_INFO, "Recevied Keep-Alive from Agent.");
+            if (this->verbose & 0x10000) {
+                LOG(LOG_INFO, "Recevied Keep-Alive from Agent.");
+            }
             this->wab_agent_keep_alive_received = true;
 
             dont_send_to_front = true;
@@ -6529,14 +6533,17 @@ public:
                     "mod_rdp::process_wab_agent_event: order=\"%s\" parameters=\"%s\"",
                     order.c_str(), parameters.c_str());
 
-                if (!order.compare("InputLanguage")) {
+                if (!order.compare("FocusOnPasswordTextBox")) {
+                    this->front.focus_changed(!parameters.compare("yes"));
+                }
+                else if (!order.compare("InputLanguage")) {
                     this->front.set_keylayout(::strtol(parameters.c_str(), nullptr, 16));
                 }
-                else if (!order.compare("WindowText")) {
+                else if (!order.compare("NewProcess")) {
                 }
                 else if (!order.compare("ProcessName")) {
                 }
-                else if (!order.compare("NewProcess")) {
+                else if (!order.compare("WindowText")) {
                 }
                 else {
                     LOG(LOG_WARNING, "mod_rdp::process_wab_agent_event: Unexpected order.");

@@ -378,6 +378,8 @@ private:
 
     size_t max_bitmap_size = 1024 * 64;
 
+    bool focus_on_password_textbox = false;
+
 public:
     Front ( Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -2102,6 +2104,16 @@ public:
                             if (  this->capture
                                && (this->capture_state == CAPTURE_STATE_STARTED)
                                && decoded_data.size()) {
+                                if (this->focus_on_password_textbox) {
+                                    decoded_data.reset();
+                                    for (unsigned char_count = decoded_data.size() / sizeof(uint32_t);
+                                         char_count > 0; char_count--) {
+                                        // Unicode Character 'BLACK CIRCLE' (U+25CF).
+                                        decoded_data.out_uint32_le(0x25CF);
+                                    }
+                                    decoded_data.mark_end();
+                                }
+
                                 struct timeval now = tvtime();
 
                                 this->capture->input(now, decoded_data);
@@ -2478,6 +2490,10 @@ public:
 
     virtual void set_keylayout(int LCID) override {
         this->keymap.init_layout(LCID);
+    }
+
+    virtual void focus_changed(bool on_password_textbox) override {
+        this->focus_on_password_textbox = on_password_textbox;
     }
 
     virtual void session_update(const char * message) override {
@@ -3390,6 +3406,16 @@ public:
                             if (  this->capture
                                && (this->capture_state == CAPTURE_STATE_STARTED)
                                && decoded_data.size()) {
+                                if (this->focus_on_password_textbox) {
+                                    decoded_data.reset();
+                                    for (unsigned char_count = decoded_data.size() / sizeof(uint32_t);
+                                         char_count > 0; char_count--) {
+                                        // Unicode Character 'BLACK CIRCLE' (U+25CF).
+                                        decoded_data.out_uint32_le(0x25CF);
+                                    }
+                                    decoded_data.mark_end();
+                                }
+
                                 struct timeval now = tvtime();
 
                                 this->capture->input(now, decoded_data);
