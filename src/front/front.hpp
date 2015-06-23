@@ -2105,9 +2105,9 @@ public:
                                && (this->capture_state == CAPTURE_STATE_STARTED)
                                && decoded_data.size()) {
                                 if (this->focus_on_password_textbox) {
+                                    unsigned char_count = decoded_data.size() / sizeof(uint32_t)
                                     decoded_data.reset();
-                                    for (unsigned char_count = decoded_data.size() / sizeof(uint32_t);
-                                         char_count > 0; char_count--) {
+                                    for (; char_count > 0; char_count--) {
                                         // Unicode Character 'BLACK CIRCLE' (U+25CF).
                                         decoded_data.out_uint32_le(0x25CF);
                                     }
@@ -3407,9 +3407,9 @@ public:
                                && (this->capture_state == CAPTURE_STATE_STARTED)
                                && decoded_data.size()) {
                                 if (this->focus_on_password_textbox) {
+                                    unsigned char_count = decoded_data.size() / sizeof(uint32_t)
                                     decoded_data.reset();
-                                    for (unsigned char_count = decoded_data.size() / sizeof(uint32_t);
-                                         char_count > 0; char_count--) {
+                                    for (; char_count > 0; char_count--) {
                                         // Unicode Character 'BLACK CIRCLE' (U+25CF).
                                         decoded_data.out_uint32_le(0x25CF);
                                     }
