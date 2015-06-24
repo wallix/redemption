@@ -1642,18 +1642,6 @@ class FileSystemDriveManager {
     uint32_t wab_agent_drive_id = INVALID_MANAGED_DRIVE_ID;
 
 public:
-    FileSystemDriveManager() {
-/*
-        managed_drives.push_back(
-            std::make_tuple(this->next_managed_drive_id++,
-                            "WABLNCH",
-                            DRIVE_REDIRECTION_PATH "/wablnch",
-                            O_RDONLY
-                            ));
-
-*/
-    }
-
     uint32_t AnnounceDrivePartially(Stream & client_device_list_announce,
             bool device_capability_version_02_supported, uint32_t verbose) {
         uint32_t announced_drive_count = 0;
@@ -1692,45 +1680,110 @@ public:
         return announced_drive_count;
     }
 
-    bool EnableWABAgentDrive(uint32_t verbose) {
-        bool result = false;
+private:
+    uint32_t EnableDrive(const char * drive_name, const char * relative_directory_path,
+                         bool read_only, uint32_t verbose) {
+        uint32_t drive_id = INVALID_MANAGED_DRIVE_ID;
+
+        std::string absolute_directory_path = DRIVE_REDIRECTION_PATH "/";
+        absolute_directory_path += relative_directory_path;
 
         struct stat sb;
 
-        const char * wab_agent_directory_path = DRIVE_REDIRECTION_PATH "/wabagt";
-
-        if (this->wab_agent_drive_id == INVALID_MANAGED_DRIVE_ID) {
-            if ((::stat(wab_agent_directory_path, &sb) == 0) &&
-                S_ISDIR(sb.st_mode)) {
-                this->wab_agent_drive_id = this->next_managed_drive_id;
-
-                if (verbose) {
-                    LOG(LOG_INFO,
-                        "FileSystemDriveManager::EnableWABAgentDrive:");
-                }
-
-                managed_drives.push_back(
-                    std::make_tuple(this->next_managed_drive_id++,
-                                    "WABAGT",
-                                    wab_agent_directory_path,
-                                    O_RDONLY
-                                   ));
-
-                result = true;
+        if ((::stat(absolute_directory_path.c_str(), &sb) == 0) &&
+            S_ISDIR(sb.st_mode)) {
+            if (verbose) {
+                LOG(LOG_INFO,
+                    "FileSystemDriveManager::EnableDrive: "
+                        "drive_name=\"%s\" directory_path=\"%s\"",
+                    drive_name, absolute_directory_path.c_str());
             }
-            else {
-                LOG(LOG_WARNING,
-                    "FileSystemDriveManager::EnableWABAgentDrive: "
-                        "Agent's directory (%s) is not accessible!",
-                    wab_agent_directory_path);
+
+            drive_id = this->next_managed_drive_id++;
+
+            managed_drives.push_back(
+                    std::make_tuple(drive_id,
+                                    drive_name,
+                                    absolute_directory_path.c_str(),
+                                    (read_only ? O_RDONLY : O_RDWR)
+                                   )
+                );
+        }
+        else {
+            LOG(LOG_WARNING,
+                "FileSystemDriveManager::EnableDrive: "
+                    "Directory path \"%s\" is not accessible!",
+                absolute_directory_path.c_str());
+        }
+
+        return drive_id;
+    }
+
+public:
+    bool EnableDrive(const char * relative_directory_path, uint32_t verbose) {
+        bool read_only = false;
+        if (*relative_directory_path == '*') {
+            read_only = true;
+            relative_directory_path++;
+        }
+
+        const unsigned   relative_directory_path_length =
+            ::strlen(relative_directory_path);
+        char           * drive_name                     =
+            reinterpret_cast<char *>(::alloca(relative_directory_path_length + 1));
+
+        ::strcpy(drive_name, relative_directory_path);
+        for (unsigned i = 0; i < relative_directory_path_length; i++) {
+            if ((drive_name[i] >= 0x61) && (drive_name[i] <= 0x7A)) {
+                drive_name[i] -= 0x20;
             }
         }
 
-        return result;
+        if (!::strcmp(drive_name, "WABAGT") ||
+            !::strcmp(drive_name, "WABLNCH")) {
+                LOG(LOG_WARNING,
+                    "FileSystemDriveManager::EnableDrive: "
+                        "Drive name \"%s\" is reserved!",
+                    drive_name);
+
+            return false;
+        }
+
+        if (!::strcmp(relative_directory_path, "wabagt") ||
+            !::strcmp(relative_directory_path, "wablnch")) {
+                LOG(LOG_WARNING,
+                    "FileSystemDriveManager::EnableDrive: "
+                        "Directory path \"%s\" is reserved!",
+                    relative_directory_path);
+
+            return false;
+        }
+
+        return (this->EnableDrive(
+                    drive_name,
+                    relative_directory_path,
+                    read_only,      // read-only
+                    verbose
+                ) != INVALID_MANAGED_DRIVE_ID);
     }
 
-private:
+    bool EnableWABAgentDrive(uint32_t verbose) {
+        if (this->wab_agent_drive_id == INVALID_MANAGED_DRIVE_ID) {
+            this->wab_agent_drive_id = this->EnableDrive(
+                    "WABAGT",
+                    "wabagt",
+                    true,   // read-only
+                    verbose
+                );
+        }
+
+        return (this->wab_agent_drive_id != INVALID_MANAGED_DRIVE_ID);
+    }
+
+    // "WABLNCH", "/wablnch"
+
 /*
+private:
     const char * get_drive_directory_path_by_id(uint32_t DeviceId) const {
         for (managed_drive_collection_type::const_iterator iter = this->managed_drives.begin();
              iter != this->managed_drives.end(); ++iter) {
@@ -2178,7 +2231,6 @@ public:
                 break;
             }
         }
-        REDASSERT(iter == this->managed_drives.end());
 
         BStream out_stream(1024);
 
@@ -2193,7 +2245,7 @@ public:
 
         if (verbose) {
             LOG(LOG_INFO,
-                "FileSystemDriveManager::DisableWABAgentDrive:");
+                "FileSystemDriveManager::DisableWABAgentDrive");
         }
 
         to_server_sender(

@@ -408,6 +408,10 @@ public:
             this->file_system_drive_manager.EnableWABAgentDrive(this->verbose);
         }
 
+        if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
+            this->configure_proxy_managed_drives(mod_rdp_params.proxy_managed_drives);
+        }
+
         if (mod_rdp_params.transparent_recorder_transport) {
             this->transparent_recorder = new TransparentRecorder(mod_rdp_params.transparent_recorder_transport);
         }
@@ -651,7 +655,7 @@ public:
             LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);
         }
 
-        apply_for_delim(extra_orders, ',', [this](const char *order) {
+        apply_for_delim(extra_orders, ',', [this](const char * order) {
             int const order_number = long_from_cstr(order);
             if (verbose) {
                 LOG(LOG_INFO, "RDP Extra orders number=%d", order_number);
@@ -719,6 +723,25 @@ public:
             }
         }, [](char c) { return c == ' ' || c == '\t' || c == ','; });
     }   // configure_extra_orders
+
+    void configure_proxy_managed_drives(const char * proxy_managed_drives) {
+        if (verbose) {
+            LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
+        }
+
+        const bool complete_item_extraction = true;
+        apply_for_delim(proxy_managed_drives,
+                        ',',
+                        [this](const char * drive) {
+                                if (verbose) {
+                                    LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
+                                }
+                                this->file_system_drive_manager.EnableDrive(drive, this->verbose);
+                            },
+                        is_blanck_fn(),
+                        complete_item_extraction
+                       );
+    }   // configure_proxy_managed_drives
 
     virtual void rdp_input_scancode( long param1, long param2, long device_flags, long time
                                      , Keymap2 * keymap) {
@@ -6207,23 +6230,16 @@ public:
             infoPacket.flags |= INFO_RAIL;
         }
 
-        if (this->verbose & 1) {
-            infoPacket.log("Sending to server: ", this->password_printing_mode, !this->enable_wab_agent);
-        }
-
         infoPacket.emit(stream);
         stream.mark_end();
 
-        if (this->verbose & 1) {
-            infoPacket.log("Preparing sec header ", this->password_printing_mode);
-        }
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel);
         stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
         if (this->verbose & 1) {
-            infoPacket.log("Send data request", this->password_printing_mode);
+            infoPacket.log("Send data request", this->password_printing_mode, !this->enable_wab_agent);
         }
         this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, stream);
 

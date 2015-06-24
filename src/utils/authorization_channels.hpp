@@ -42,7 +42,7 @@ struct AuthorizationChannels
     , deny_(std::move(deny))
     {
         apply_for_delim(this->allow_.c_str(), ',', [this](char const * & s) {
-            if (this->read_star(s)) {
+            if (*s == '*') {
                 this->all_allow_ = true;
                 this->rdpdr_restriction_.fill(true);
                 this->cliprdr_restriction_.fill(true);
@@ -51,7 +51,7 @@ struct AuthorizationChannels
         });
 
         apply_for_delim(this->deny_.c_str(), ',', [this](char const * & s) {
-            if (this->read_star(s)) {
+            if (*s == '*') {
                 this->all_deny_ = true;
                 if (this->all_allow_) {
                     this->rdpdr_restriction_.fill(false);
@@ -161,19 +161,6 @@ struct AuthorizationChannels
     }};
 
 private:
-    static bool read_star(char const * & s)
-    {
-        if (*s != '*') {
-            return false;
-        }
-
-        while (is_blanck_fn()(*s)) {
-            ++s;
-        }
-
-        return (*s == ',' || *s == '*' || !*s);
-    }
-
     template<class Cont>
     static bool contains_true(Cont const & cont) {
         for (bool x : cont) {

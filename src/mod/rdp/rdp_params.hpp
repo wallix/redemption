@@ -95,6 +95,8 @@ struct ModRDPParams {
 
     unsigned client_device_announce_timeout;
 
+    const char * proxy_managed_drives;
+
     uint32_t verbose;
     uint32_t cache_verbose;
 
@@ -170,6 +172,8 @@ struct ModRDPParams {
         , bogus_sc_net_size(true)
 
         , client_device_announce_timeout(1000)
+
+        , proxy_managed_drives("")
 
         , verbose(verbose)
         , cache_verbose(0)
@@ -254,8 +258,7 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams certificate_change_action=%d",           this->certificate_change_action);
 
-        LOG(LOG_INFO,
-            "ModRDPParams extra_orders=%s",                        (this->extra_orders ? this->extra_orders : "<none>"));
+        LOG(LOG_INFO, "ModRDPParams extra_orders=%s",              (this->extra_orders ? this->extra_orders : "<none>"));
 
         LOG(LOG_INFO,
             "ModRDPParams enable_persistent_disk_bitmap_cache=%s", (this->enable_persistent_disk_bitmap_cache ? "yes" : "no"));
@@ -287,6 +290,8 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams client_device_announce_timeout=%u",      this->client_device_announce_timeout);
+
+        LOG(LOG_INFO, "ModRDPParams proxy_managed_drives=%s",      (this->proxy_managed_drives ? this->proxy_managed_drives : "<none>"));
 
         LOG(LOG_INFO,
             "ModRDPParams verbose=0x%08X",                         this->verbose);

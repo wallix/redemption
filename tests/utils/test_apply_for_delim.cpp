@@ -24,6 +24,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
+//#define LOGPRINT
 
 #include "apply_for_delim.hpp"
 #include "genrandom.hpp"
@@ -66,4 +67,20 @@ BOOST_AUTO_TEST_CASE(TestApplyForDelimToLong)
     });
 
     BOOST_CHECK(numbers == vector_long({16, 2, 0, 1, -239}));
+}
+
+BOOST_AUTO_TEST_CASE(TestApplyForDelimComplete)
+{
+    using vector_string = std::vector<std::string>;
+    vector_string strings;
+    apply_for_delim("\taaa, \tbbb  ,ccc \t,, ddd, eee , ,-239 ",
+                    ',',
+                    [&](const char * cs) {
+                            strings.push_back(cs);
+                        },
+                    is_blanck_fn(),
+                    true
+                   );
+
+    BOOST_CHECK(strings == vector_string({"aaa", "bbb", "ccc", "ddd", "eee", "-239"}));
 }

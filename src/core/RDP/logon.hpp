@@ -25,6 +25,8 @@
 #define _REDEMPTION_CORE_RDP_LOGON_HPP_
 
 #include <stdint.h>
+
+#include "cast.hpp"
 #include "log.hpp"
 #include "stream.hpp"
 #include "get_printable_password.hpp"
@@ -1041,7 +1043,13 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::UserName %s", this->UserName);
         LOG(LOG_INFO, "InfoPacket::Password %s", ::get_printable_password(reinterpret_cast<char *>(this->Password), password_printing_mode));
 
-        LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);
+        if (show_alternate_shell) {
+            LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);
+        }
+        else {
+            LOG(LOG_INFO, "InfoPacket::AlternateShell (%u bytes)",
+                (this->AlternateShell ? ::strlen(::char_ptr_cast(this->AlternateShell)) : 0));
+        }
         LOG(LOG_INFO, "InfoPacket::WorkingDir %s", this->WorkingDir);
         if (!this->rdp5_support){ return; }
 

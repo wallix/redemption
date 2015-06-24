@@ -201,6 +201,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
     BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.proxy_managed_drives.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
@@ -463,6 +464,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
     BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.proxy_managed_drives.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -738,6 +740,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
     BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.proxy_managed_drives.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
@@ -814,6 +817,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "deny_channels=*\n"
                           "fast_path=no\n"
                           "client_device_announce_timeout=1000\n"
+                          "proxy_managed_drives=\n"
                           "\n"
                           "[mod_vnc]\n"
                           "clipboard_up=yes\n"
@@ -1006,6 +1010,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
     BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.proxy_managed_drives.get());
 
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
@@ -1071,6 +1076,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "fast_path=yes\n"
                           "bogus_sc_net_size=no\n"
                           "client_device_announce_timeout=1500\n"
+                          "proxy_managed_drives=*docs\n"
                           "[mod_replay]\n"
                           "on_end_of_data=1\n"
                           "[video]\n"
@@ -1248,6 +1254,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.bogus_sc_net_size.get());
     BOOST_CHECK_EQUAL(1500,                             ini.mod_rdp.client_device_announce_timeout.get());
+    BOOST_CHECK_EQUAL("*docs",                          ini.mod_rdp.proxy_managed_drives.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1294,6 +1301,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "[mod_rdp]\n"
                           "rdp_compression=0\n"
                           "bogus_sc_net_size=yes\n"
+                          "proxy_managed_drives=*\n"
                           "[mod_replay]\n"
                           "on_end_of_data=0\n"
                           "[video]\n"
@@ -1459,6 +1467,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
     BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
+    BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.proxy_managed_drives.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1679,6 +1688,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.bogus_sc_net_size.get());
     BOOST_CHECK_EQUAL(1500,                             ini.mod_rdp.client_device_announce_timeout.get());
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.proxy_managed_drives.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1873,6 +1883,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
     BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.proxy_managed_drives.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1905,6 +1916,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "bogus_user_id=yes\n"
                            "[mod_rdp]\n"
                            "persist_bitmap_cache_on_disk=yes\n"
+                           "proxy_managed_drives=docs,apps\n"
                            "[mod_vnc]\n"
                            "bogus_clipboard_infinite_loop=0\n"
                            "[debug]\n"
@@ -2065,6 +2077,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
     BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
+    BOOST_CHECK_EQUAL("docs,apps",                      ini.mod_rdp.proxy_managed_drives.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -2246,6 +2259,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
     BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.proxy_managed_drives.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -2427,6 +2441,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.fast_path);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.bogus_sc_net_size.get());
     BOOST_CHECK_EQUAL(1000,                             ini.mod_rdp.client_device_announce_timeout.get());
+    BOOST_CHECK_EQUAL("",                               ini.mod_rdp.proxy_managed_drives.get());
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);

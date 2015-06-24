@@ -825,6 +825,8 @@ public:
 
                 mod_rdp_params.client_device_announce_timeout      = this->ini.mod_rdp.client_device_announce_timeout.get();
 
+                mod_rdp_params.proxy_managed_drives                = this->ini.mod_rdp.proxy_managed_drives.get_cstr();
+
                 UdevRandom gen;
 
                 TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")

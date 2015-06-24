@@ -21,6 +21,8 @@
 #ifndef REDEMPTION_UTILS_APPLY_FOR_DELIM_HPP
 #define REDEMPTION_UTILS_APPLY_FOR_DELIM_HPP
 
+//#include "log.hpp"
+
 struct is_blanck_fn
 {
     bool operator()(char c) const noexcept
@@ -28,14 +30,46 @@ struct is_blanck_fn
 };
 
 template<class Fn, class IgnoreFn = is_blanck_fn>
-void apply_for_delim(const char * cstr, char delim, Fn fn, IgnoreFn ignore = IgnoreFn())
+void apply_for_delim(const char * cstr, char delim, Fn fn, IgnoreFn ignore = IgnoreFn(),
+                     bool complete_item_extraction = false)
 {
     while (ignore(*cstr)) {
         ++cstr;
     }
 
+    auto delim_plus = [](const char * cstr, char delim, Fn fn, IgnoreFn ignore) {
+        const char * delim_pos = ::strchr(cstr, delim);
+        if (!delim_pos) {
+            delim_pos = cstr + ::strlen(cstr) - 1;
+        }
+        else {
+            if (delim_pos == cstr) {
+                return;
+            }
+
+            --delim_pos;
+        }
+        while (ignore(*delim_pos)) {
+            --delim_pos;
+        }
+
+        uint32_t data_length = delim_pos - cstr + 1;
+
+        char * cstr_tmp = reinterpret_cast<char *>(::alloca(data_length + 1));
+        memcpy(cstr_tmp, cstr, data_length);
+        cstr_tmp[data_length] = '\0';
+
+        const char * ccstr_tmp = cstr_tmp;
+        fn(ccstr_tmp);
+    };
+
     if (*cstr) {
-        fn(cstr);
+        if (complete_item_extraction) {
+            delim_plus(cstr, delim, fn, ignore);
+        }
+        else {
+            fn(cstr);
+        }
 
         while (*cstr) {
             while (*cstr && *cstr != delim) {
@@ -47,7 +81,14 @@ void apply_for_delim(const char * cstr, char delim, Fn fn, IgnoreFn ignore = Ign
                     ++cstr;
                 }
 
-                fn(cstr);
+                if (complete_item_extraction) {
+                    if (*cstr) {
+                        delim_plus(cstr, delim, fn, ignore);
+                    }
+                }
+                else {
+                    fn(cstr);
+                }
             }
         }
     }
