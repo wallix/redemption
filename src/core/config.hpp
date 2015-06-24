@@ -443,12 +443,16 @@ class Inifile : public FieldObserver
             return this->str;
         }
 
+        bool empty() const {
+            return (this->str[0] == '\0');
+        }
+
         constexpr operator const char * () const noexcept {
             return this->str;
         }
 
         constexpr std::size_t max_size() const noexcept {
-            return N-1;
+            return N - 1;
         }
 
         char * data() noexcept {
@@ -1260,6 +1264,9 @@ public:
             }
             else if (0 == strcmp(key, "wab_agent_keepalive_timeout")) {
                 this->globals.wab_agent_keepalive_timeout.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "wab_agent_alternate_shell")) {
+                this->globals.wab_agent_alternate_shell = value;
             }
             else if (this->debug.config) {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

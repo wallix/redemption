@@ -51,9 +51,9 @@ struct ConfigurationLoader {
     }
 
     void cparse(ConfigurationHolder & configuration_holder, std::istream & ifs) {
-        const size_t maxlen = 256;
+        const size_t maxlen = 1024;
         char line[maxlen];
-        char context[128] = { 0 };
+        char context[512] = { 0 };
         bool truncated = false;
         while (ifs.good()) {
             ifs.getline(line, maxlen);
@@ -107,8 +107,8 @@ struct ConfigurationLoader {
         const char * endkey = strchr(startkey, '=');
         if (endkey && endkey != startkey) {
             const char * sep = endkey;
-            char key[128];
-            char value[128];
+            char key[512];
+            char value[512];
             for (--endkey; endkey >= startkey ; endkey--) {
                 if (!isspace(*endkey)) {
                     TODO("RZ: Possible buffer overflow if length of key is larger than 128 bytes");

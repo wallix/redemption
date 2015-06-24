@@ -76,7 +76,10 @@ public:
                 ini.debug.config = this->debug_config;
                 ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
-                ini.globals.wab_agent_alternate_shell = this->parametersHldr.get_agent_alternate_shell();
+                if (ini.globals.wab_agent_alternate_shell.empty()) {
+                    ini.globals.wab_agent_alternate_shell =
+                        this->parametersHldr.get_agent_alternate_shell();
+                }
 
                 ini.crypto.key0.setmem(this->parametersHldr.get_crypto_key_0());
                 ini.crypto.key1.setmem(this->parametersHldr.get_crypto_key_1());
