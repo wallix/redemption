@@ -1692,22 +1692,41 @@ public:
         return announced_drive_count;
     }
 
-    void EnableWABAgentDrive(uint32_t verbose) {
+    bool EnableWABAgentDrive(uint32_t verbose) {
+        bool result = false;
+
+        struct stat sb;
+
+        const char * wab_agent_directory_path = DRIVE_REDIRECTION_PATH "/wabagt";
+
         if (this->wab_agent_drive_id == INVALID_MANAGED_DRIVE_ID) {
-            this->wab_agent_drive_id = this->next_managed_drive_id;
+            if ((::stat(wab_agent_directory_path, &sb) == 0) &&
+                S_ISDIR(sb.st_mode)) {
+                this->wab_agent_drive_id = this->next_managed_drive_id;
 
-            if (verbose) {
-                LOG(LOG_INFO,
-                    "FileSystemDriveManager::EnableWABAgentDrive:");
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "FileSystemDriveManager::EnableWABAgentDrive:");
+                }
+
+                managed_drives.push_back(
+                    std::make_tuple(this->next_managed_drive_id++,
+                                    "WABAGT",
+                                    wab_agent_directory_path,
+                                    O_RDONLY
+                                   ));
+
+                result = true;
             }
-
-            managed_drives.push_back(
-                std::make_tuple(this->next_managed_drive_id++,
-                                "WABAGT",
-                                DRIVE_REDIRECTION_PATH "/wabagt",
-                                O_RDONLY
-                               ));
+            else {
+                LOG(LOG_WARNING,
+                    "FileSystemDriveManager::EnableWABAgentDrive: "
+                        "Agent's directory (%s) is not accessible!",
+                    wab_agent_directory_path);
+            }
         }
+
+        return result;
     }
 
 private:

@@ -6438,7 +6438,7 @@ public:
         bool dont_send_to_front = false;
 
         if (!wab_agent_channel_message.compare("Request=Get startup application")) {
-            LOG(LOG_INFO, "WAB agent channel data=\"%s\"", wab_agent_channel_message.c_str());
+            LOG(LOG_INFO, "Agent channel data=\"%s\"", wab_agent_channel_message.c_str());
 
             //LOG(LOG_INFO, "<<<Get startup application>>>");
 
@@ -6550,7 +6550,7 @@ public:
             }
             else {
                 LOG(LOG_WARNING,
-                    "mod_rdp::process_wab_agent_event: Invalid message format. WAB agent channel data=\"%s\"",
+                    "mod_rdp::process_wab_agent_event: Invalid message format. Agent channel data=\"%s\"",
                     message);
             }
         }
