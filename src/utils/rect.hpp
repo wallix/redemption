@@ -205,7 +205,8 @@ struct Rect {
         }
     }
 
-    friend inline std::ostream & operator<<(std::ostream& os, const Rect &r) {
+    template<class Ch, class Tr>
+    friend inline std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & os, const Rect &r) {
         return os << "(" << r.x << ", " << r.y << ", " << r.cx << ", " << r.cy << ")";
     }
 
