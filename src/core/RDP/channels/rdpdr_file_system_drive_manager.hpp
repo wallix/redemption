@@ -1727,6 +1727,16 @@ public:
             relative_directory_path++;
         }
 
+        if (!::strcasecmp(relative_directory_path, "wabagt") ||
+            !::strcasecmp(relative_directory_path, "wablnch")) {
+                LOG(LOG_WARNING,
+                    "FileSystemDriveManager::EnableDrive: "
+                        "Directory path \"%s\" is reserved!",
+                    relative_directory_path);
+
+            return false;
+        }
+
         const unsigned   relative_directory_path_length =
             ::strlen(relative_directory_path);
         char           * drive_name                     =
@@ -1737,26 +1747,6 @@ public:
             if ((drive_name[i] >= 0x61) && (drive_name[i] <= 0x7A)) {
                 drive_name[i] -= 0x20;
             }
-        }
-
-        if (!::strcmp(drive_name, "WABAGT") ||
-            !::strcmp(drive_name, "WABLNCH")) {
-                LOG(LOG_WARNING,
-                    "FileSystemDriveManager::EnableDrive: "
-                        "Drive name \"%s\" is reserved!",
-                    drive_name);
-
-            return false;
-        }
-
-        if (!::strcmp(relative_directory_path, "wabagt") ||
-            !::strcmp(relative_directory_path, "wablnch")) {
-                LOG(LOG_WARNING,
-                    "FileSystemDriveManager::EnableDrive: "
-                        "Directory path \"%s\" is reserved!",
-                    relative_directory_path);
-
-            return false;
         }
 
         return (this->EnableDrive(
