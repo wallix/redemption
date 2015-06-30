@@ -1048,7 +1048,7 @@ struct InfoPacket {
         }
         else {
             LOG(LOG_INFO, "InfoPacket::AlternateShell (%u bytes)",
-                (this->AlternateShell ? ::strlen(::char_ptr_cast(this->AlternateShell)) : 0));
+                ::strlen(::char_ptr_cast(this->AlternateShell)));
         }
         LOG(LOG_INFO, "InfoPacket::WorkingDir %s", this->WorkingDir);
         if (!this->rdp5_support){ return; }
