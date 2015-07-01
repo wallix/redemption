@@ -6963,7 +6963,7 @@ public:
                                 access_ok = false;
                             }
                             if (!this->authorization_channels.rdpdr_drive_write_is_authorized() &&
-                                smb2::write_access_is_required(DesiredAccess)) {
+                                smb2::write_access_is_required(DesiredAccess, /*strict_check = */false)) {
                                 access_ok = false;
                             }
 

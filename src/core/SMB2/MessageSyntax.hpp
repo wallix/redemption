@@ -594,20 +594,23 @@ bool read_access_is_required(uint32_t DesiredAccess, bool strict_check) {
 }
 
 static inline
-bool write_access_is_required(uint32_t DesiredAccess) {
+bool write_access_is_required(uint32_t DesiredAccess, bool strict_check) {
+    uint32_t values_of_strict_checking = (FILE_WRITE_EA |
+                                          FILE_WRITE_ATTRIBUTES |
+                                          WRITE_DAC |
+                                          WRITE_OWNER |
+                                          ACCESS_SYSTEM_SECURITY |
+                                          MAXIMUM_ALLOWED
+                                         );
+
     return (DesiredAccess &
             (FILE_WRITE_DATA |
              FILE_APPEND_DATA |
-             FILE_WRITE_EA |
              FILE_DELETE_CHILD |
-             FILE_WRITE_ATTRIBUTES |
              DELETE |
-             WRITE_DAC |
-             WRITE_OWNER |
-             ACCESS_SYSTEM_SECURITY |
-             MAXIMUM_ALLOWED |
              GENERIC_ALL |
-             GENERIC_WRITE
+             GENERIC_WRITE |
+             (strict_check ? values_of_strict_checking : 0)
             )
            );
 }
