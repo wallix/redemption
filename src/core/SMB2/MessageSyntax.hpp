@@ -573,6 +573,7 @@ enum {
     , GENERIC_READ           = 0x80000000
 };
 
+static inline
 bool read_access_is_required(uint32_t DesiredAccess, bool strict_check) {
     uint32_t values_of_strict_checking = (FILE_READ_EA |
                                           FILE_READ_ATTRIBUTES |
@@ -592,6 +593,7 @@ bool read_access_is_required(uint32_t DesiredAccess, bool strict_check) {
            );
 }
 
+static inline
 bool write_access_is_required(uint32_t DesiredAccess) {
     return (DesiredAccess &
             (FILE_WRITE_DATA |

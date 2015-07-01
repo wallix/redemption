@@ -997,55 +997,66 @@ public:
                 this, full_path.c_str());
         }
 
-        int open_flags = O_LARGEFILE;
-
-        const uint32_t DesiredAccess = device_create_request.DesiredAccess();
-
-        const bool strict_check = true;
-
-        if (smb2::read_access_is_required(DesiredAccess, strict_check) &&
-            smb2::write_access_is_required(DesiredAccess)) {
-            open_flags |= O_RDWR;
-        }
-        else if (smb2::write_access_is_required(DesiredAccess)) {
-            open_flags |= O_WRONLY;
-        }
-        else/* if (smb2::read_access_is_required(DesiredAccess, strict_check))*/ {
-            open_flags |= O_RDONLY;
-        }
-
-        if (DesiredAccess & smb2::FILE_APPEND_DATA) {
-            open_flags |= O_APPEND;
-        }
-
+        const uint32_t DesiredAccess     = device_create_request.DesiredAccess();
         const uint32_t CreateDisposition = device_create_request.CreateDisposition();
-        if (CreateDisposition == smb2::FILE_SUPERSEDE) {
-            open_flags |= (O_TRUNC | O_CREAT);
-        }
-        else if (CreateDisposition == smb2::FILE_CREATE) {
-            open_flags |= (O_CREAT | O_EXCL);
-        }
-        else if (CreateDisposition == smb2::FILE_OPEN_IF) {
-            open_flags |= O_CREAT;
-        }
-        else if (CreateDisposition == smb2::FILE_OVERWRITE) {
-            open_flags |= O_TRUNC;
-        }
-        else if (CreateDisposition == smb2::FILE_OVERWRITE_IF) {
-            open_flags |= (O_TRUNC | O_CREAT);
-        }
 
         const int last_error = [] (const char * path,
-                                   int open_flags,
                                    uint32_t DesiredAccess,
+                                   uint32_t CreateDisposition,
                                    int drive_access_mode,
-                                   int & out_fd, off64_t & out_size) -> int {
+                                   void * log_this,
+                                   uint32_t verbose,
+                                   int & out_fd,
+                                   off64_t & out_size) -> int {
+            out_fd = -1;
+            out_size = 0;
+
             if (((drive_access_mode != O_RDWR) && (drive_access_mode != O_RDONLY) &&
                  smb2::read_access_is_required(DesiredAccess, /*strict_check = */false)) ||
                 ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY) &&
                  smb2::write_access_is_required(DesiredAccess))) {
-                out_fd = -1;
                 return EACCES;
+            }
+
+            int open_flags = O_LARGEFILE;
+
+            const bool strict_check = true;
+
+            if (smb2::read_access_is_required(DesiredAccess, strict_check) &&
+                smb2::write_access_is_required(DesiredAccess)) {
+                open_flags |= O_RDWR;
+            }
+            else if (smb2::write_access_is_required(DesiredAccess)) {
+                open_flags |= O_WRONLY;
+            }
+            else/* if (smb2::read_access_is_required(DesiredAccess, strict_check))*/ {
+                open_flags |= O_RDONLY;
+            }
+
+            if (DesiredAccess & smb2::FILE_APPEND_DATA) {
+                open_flags |= O_APPEND;
+            }
+
+            if (CreateDisposition == smb2::FILE_SUPERSEDE) {
+                open_flags |= (O_TRUNC | O_CREAT);
+            }
+            else if (CreateDisposition == smb2::FILE_CREATE) {
+                open_flags |= (O_CREAT | O_EXCL);
+            }
+            else if (CreateDisposition == smb2::FILE_OPEN_IF) {
+                open_flags |= O_CREAT;
+            }
+            else if (CreateDisposition == smb2::FILE_OVERWRITE) {
+                open_flags |= O_TRUNC;
+            }
+            else if (CreateDisposition == smb2::FILE_OVERWRITE_IF) {
+                open_flags |= (O_TRUNC | O_CREAT);
+            }
+
+            if (verbose) {
+                LOG(LOG_INFO,
+                    "ManagedFile::ProcessServerCreateDriveRequest: <%p> open_flags=0x%X",
+                    log_this, open_flags);
             }
 
             out_fd = ::open(path, open_flags, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -1060,7 +1071,8 @@ public:
                 }
             }
             return ((out_fd > -1) ? 0 : errno);
-        } (full_path.c_str(), open_flags, DesiredAccess, drive_access_mode, this->fd, this->size);
+        } (full_path.c_str(), DesiredAccess, CreateDisposition, drive_access_mode,
+           this, verbose, this->fd, this->size);
 
         if (this->fd > -1) {
             this->in_file_transport = std::make_unique<InFileTransport>(this->fd);
@@ -1068,8 +1080,8 @@ public:
 
         if (verbose) {
             LOG(LOG_INFO,
-                "ManagedFile::ProcessServerCreateDriveRequest: <%p> open_flags=0x%X FileId=%d errno=%d",
-                this, open_flags, this->fd, ((this->fd == -1) ? last_error : 0));
+                "ManagedFile::ProcessServerCreateDriveRequest: <%p> FileId=%d errno=%d",
+                this, this->fd, ((this->fd == -1) ? last_error : 0));
         }
 
         const uint32_t IoStatus = [] (int fd, int last_error) -> uint32_t {
