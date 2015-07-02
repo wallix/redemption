@@ -354,11 +354,11 @@ public:
 //  +-----------------------------+--------------------------------------------+
 
 class FileBasicInformation {
-    uint64_t CreationTime   = 0;
-    uint64_t LastAccessTime = 0;
-    uint64_t LastWriteTime  = 0;
-    uint64_t ChangeTime     = 0;
-    uint32_t FileAttributes = 0;
+    uint64_t CreationTime    = 0;
+    uint64_t LastAccessTime_ = 0;
+    uint64_t LastWriteTime_  = 0;
+    uint64_t ChangeTime      = 0;
+    uint32_t FileAttributes_ = 0;
 
 public:
     FileBasicInformation() = default;
@@ -367,18 +367,18 @@ public:
                          uint64_t LastWriteTime, uint64_t ChangeTime,
                          uint32_t FileAttributes)
     : CreationTime(CreationTime)
-    , LastAccessTime(LastAccessTime)
-    , LastWriteTime(LastWriteTime)
+    , LastAccessTime_(LastAccessTime)
+    , LastWriteTime_(LastWriteTime)
     , ChangeTime(ChangeTime)
-    , FileAttributes(FileAttributes) {}
+    , FileAttributes_(FileAttributes) {}
 
     inline void emit(Stream & stream) const {
         stream.out_uint64_le(this->CreationTime);
-        stream.out_uint64_le(this->LastAccessTime);
-        stream.out_uint64_le(this->LastWriteTime);
+        stream.out_uint64_le(this->LastAccessTime_);
+        stream.out_uint64_le(this->LastWriteTime_);
         stream.out_uint64_le(this->ChangeTime);
 
-        stream.out_uint32_le(this->FileAttributes);
+        stream.out_uint32_le(this->FileAttributes_);
 
         // Reserved(4), MUST NOT be transmitted.
     }
@@ -397,15 +397,21 @@ public:
             }
         }
 
-        this->CreationTime   = stream.in_uint64_le();
-        this->LastAccessTime = stream.in_uint64_le();
-        this->LastWriteTime  = stream.in_uint64_le();
-        this->ChangeTime     = stream.in_uint64_le();
+        this->CreationTime    = stream.in_uint64_le();
+        this->LastAccessTime_ = stream.in_uint64_le();
+        this->LastWriteTime_  = stream.in_uint64_le();
+        this->ChangeTime      = stream.in_uint64_le();
 
-        this->FileAttributes = stream.in_uint32_le();
+        this->FileAttributes_ = stream.in_uint32_le();
 
         // Reserved(4), MUST NOT be transmitted.
     }
+
+    inline uint64_t FileAttributes() const { return this->FileAttributes_; }
+
+    inline uint64_t LastAccessTime() const { return this->LastAccessTime_; }
+
+    inline uint64_t LastWriteTime() const { return this->LastWriteTime_; }
 
     inline static size_t size() {
         return 36;  /* CreationTime(8) + LastAccessTime(8) + LastWriteTime(8) + ChangeTime(8) + FileAttributes(4) */
@@ -416,8 +422,8 @@ private:
         size_t length = ::snprintf(buffer, size,
             "FileBasicInformation: CreationTime=%" PRIu64 " LastAccessTime=%" PRIu64
                 " LastWriteTime=%" PRIu64 " ChangeTime=%" PRIu64 " FileAttributes=0x%X",
-            this->CreationTime, this->LastAccessTime, this->LastWriteTime,
-            this->ChangeTime, this->FileAttributes);
+            this->CreationTime, this->LastAccessTime_, this->LastWriteTime_,
+            this->ChangeTime, this->FileAttributes_);
         return ((length < size) ? length : size - 1);
     }
 
@@ -1279,6 +1285,50 @@ public:
         LOG(level, buffer);
     }
 };
+
+// [MS-FSCC] - 2.4.34 FileRenameInformation
+// ========================================
+
+// This information class is used to rename a file. The data element provided
+//  by the client takes one of two forms, depending on whether it is embedded
+//  within SMB or SMB2. The structure definitions are as follows:
+
+// ▪ FILE_RENAME_INFORMATION_TYPE_1 for the SMB protocol (section 2.4.34.1).
+
+// ▪ FILE_RENAME_INFORMATION_TYPE_2 for the SMB2 protocol (section 2.4.34.2).
+
+// This operation returns a status code, as specified in [MS-ERREF] section
+//  2.3. The status code returned directly by the function that processes
+//  this file information class MUST be STATUS_SUCCESS or one of the
+//  following.
+
+//  +------------------------------+-------------------------------------------+
+//  | Error code                   | Meaning                                   |
+//  +------------------------------+-------------------------------------------+
+//  | STATUS_INVALID_PARAMETER     | An invalid parameter was passed for       |
+//  | 0xC000000D                   | FileName or FileNameLength, or the target |
+//  |                              | file was open, or the RootDirectory field |
+//  |                              | value was nonzero for a network           |
+//  |                              | operation.                                |
+//  +------------------------------+-------------------------------------------+
+//  | STATUS_ACCESS_DENIED         | The handle was not opened with delete     |
+//  | 0xC0000022                   | access.                                   |
+//  +------------------------------+-------------------------------------------+
+//  | STATUS_NOT_SAME_DEVICE       | The destination file of a rename request  |
+//  | 0xC00000D4                   | is located on a different device than the |
+//  |                              | source of the rename request.             |
+//  +------------------------------+-------------------------------------------+
+//  | STATUS_OBJECT_NAME_INVALID   | The object name is invalid for the target |
+//  | 0xC0000033                   | file system.                              |
+//  +------------------------------+-------------------------------------------+
+//  | STATUS_OBJECT_NAME_COLLISION | The specified name already exists and     |
+//  | 0xC0000035                   | ReplaceIfExists is zero.                  |
+//  +------------------------------+-------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH  | The specified information record length   |
+//  | 0xC0000004                   | does not match the length that is         |
+//  |                              | required for the specified information    |
+//  |                              | class.                                    |
+//  +------------------------------+-------------------------------------------+
 
 // [MS-FSCC] - 2.4.38 FileStandardInformation
 // ==========================================

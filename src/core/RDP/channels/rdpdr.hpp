@@ -2911,7 +2911,7 @@ public:
 
     inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-    inline uint8_t  Length() const { return this->Length_; }
+    inline uint32_t Length() const { return this->Length_; }
 
 private:
     inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
@@ -3203,6 +3203,45 @@ public:
 //  list of these structures, refer to [MS-FSCC] section 2.4. The "File
 //  information class" table defines all the possible values for the
 //  FsInformationClass field.
+
+// [MS-RDPEFS] - 2.2.3.4.9 Client Drive Set Information Response
+//  (DR_DRIVE_SET_INFORMATION_RSP)
+// =============================================================
+
+// This message is sent by the client as a response to the Server Drive Set
+//  Information Request (section 2.2.3.3.9).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         DeviceIoReply                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------+-----------------------------------------------+
+// |    Padding    |
+// |   (optional)  |
+// +---------------+
+
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION (section 2.2.1.5)
+//  header. The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST
+//  match a Device I/O Request (section 2.2.1.4) that has the MajorFunction
+//  field set to IRP_MJ_SET_INFORMATION.
+
+// Length (4 bytes): A 32-bit unsigned integer. This field MUST be equal to
+//  the Length field in the Server Drive Set Information Request (section
+//  2.2.3.3.9).
+
+// Padding (1 byte): An optional, 8-bit unsigned integer that is intended to
+//  allow the client minor flexibility in determining the overall packet
+//  length. This field is unused, and can be set to any value. If present,
+//  this field MUST be ignored on receipt.
 
 }   // namespace rdpdr
 
