@@ -192,7 +192,6 @@ public:
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::SessionManager");
         }
-        this->ini.to_send_set.insert(AUTHID_KEEPALIVE);
     }
 
     virtual ~SessionManager() {

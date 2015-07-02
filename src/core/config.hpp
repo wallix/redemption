@@ -41,6 +41,12 @@ using namespace std;
 struct IniAccounts {
     char username[255]; // should use string
     char password[255]; // should use string
+
+    IniAccounts()
+    {
+        this->username[0] = 0;
+        this->password[0] = 0;
+    }
 };
 
 enum authid_t {
@@ -518,7 +524,7 @@ public:
 
 
     struct Inifile_globals {
-        BoolField capture_chunk;
+        bool capture_chunk;
 
         StringField auth_user;                      // AUTHID_AUTH_USER
         StringField host;                           // client_ip AUTHID_HOST
@@ -1084,9 +1090,6 @@ public:
 
         this->context.pattern_notify.attach_ini(this, AUTHID_PATTERN_NOTIFY);
 
-        this->context.accept_message.set_empty();
-        this->context.display_message.set_empty();
-
         this->context.rejected.attach_ini(this, AUTHID_REJECTED);
 
         this->context.authenticated.set(false);
@@ -1174,6 +1177,8 @@ public:
         this->context.authchannel_target.attach_ini(this,AUTHID_AUTHCHANNEL_TARGET);
         this->context.authchannel_result.attach_ini(this,AUTHID_AUTHCHANNEL_RESULT);
         this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
+
+        this->to_send_set.insert(AUTHID_KEEPALIVE);
     }
 
 public:
