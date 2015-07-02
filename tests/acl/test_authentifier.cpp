@@ -26,8 +26,8 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #include "authentifier.hpp"
 #include "module_manager.hpp"
