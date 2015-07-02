@@ -193,13 +193,16 @@ struct extra_option {
 };
 using extra_option_list = std::initializer_list<extra_option>;
 
+struct EmptyPreLoopFn { void operator()(Inifile &) const {} };
+
 // ExtraOption = extra_option container
 // ExtracOptionChecker = int(po::variables_map &,  bool * quit)
-// EnableTransparent = int(unsigned gid, unsigned uid)
-template<class ParametersHldr, class ExtraOption, class ExtracOptionChecker>
+// PreLoopFn = void(Inifile &)
+template<class ParametersHldr, class ExtraOption, class ExtracOptionChecker, class PreLoopFn = EmptyPreLoopFn>
 int app_proxy(
     int argc, char** argv, const char * copyright_notice
   , ExtraOption const & extrax_options, ExtracOptionChecker extrac_options_checker
+  , PreLoopFn pre_loop_fn = PreLoopFn()
 ) {
     setlocale(LC_CTYPE, "C");
 
@@ -377,6 +380,8 @@ int app_proxy(
             return 1;
         }
     }
+
+    pre_loop_fn(ini);
 
     ParametersHldr parametersHldr;
 
