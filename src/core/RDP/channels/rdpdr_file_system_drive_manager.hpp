@@ -28,6 +28,7 @@
 #include <sys/statvfs.h>
 
 #include "channel_list.hpp"
+#include "fileutils.hpp"
 #include "rdp/rdp_asynchronous_task.hpp"
 #include "rdpdr.hpp"
 #include "defines.hpp"
@@ -71,6 +72,8 @@ public:
 
         return this->fd;
     }
+
+    virtual bool IsDirectory() const = 0;
 
     virtual void ProcessServerCreateDriveRequest(
         rdpdr::DeviceIORequest const & device_io_request,
@@ -236,7 +239,10 @@ public:
                     if (!rdp_file_rename_information.replace_if_exists()) {
                         MakeClientDriveIoResponse(device_io_request,
                                                   "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
-                                                  0xC0000035,   // STATUS_OBJECT_NAME_COLLISION
+                                                  (this->IsDirectory() ?
+                                                   0xC0000033 :  // STATUS_OBJECT_NAME_INVALID
+                                                   0xC0000035    // STATUS_OBJECT_NAME_COLLISION
+                                                  ),
                                                   to_server_sender,
                                                   out_asynchronous_task,
                                                   verbose
@@ -419,9 +425,11 @@ public:
         // Not yet supported.
 //REDASSERT(!this->delete_pending);
         if (this->delete_pending) {
-            rmdir(this->full_path.c_str());
+            ::recursive_delete_directory(this->full_path.c_str());
         }
     }
+
+    virtual bool IsDirectory() const override { return true; }
 
     virtual void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,
@@ -1436,6 +1444,8 @@ public:
             ::unlink(this->full_path.c_str());
         }
     }
+
+    virtual bool IsDirectory() const override { return false; }
 
     virtual void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,
