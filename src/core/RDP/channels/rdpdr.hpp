@@ -2913,7 +2913,6 @@ public:
 
     inline uint32_t Length() const { return this->Length_; }
 
-private:
     inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {
             case FileBasicInformation:       return "FileBasicInformation";
@@ -2926,12 +2925,149 @@ private:
         return "<unknown>";
     }
 
+private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDriveSetInformationRequest: FsInformationClass=%s(0x%X) "
                 "Length=%u",
             this->get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, this->Length_);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
+// [MS-RDPEFS] - 2.2.3.3.9.1 RDP_FILE_RENAME_INFORMATION
+// =====================================================
+
+// RDP_FILE_RENAME_INFORMATION is a structure representing
+//  FileRenameInformation as a possible value of the FsInformationClass
+//  field. All fields have the same meaning as in FILE_RENAME_INFORMATION in
+//  [MS-FSCC] section 2.4.34. The differences are only in the layout of the
+//  fields.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |   ReplaceIf   | RootDirectory |         FileNameLength        |
+// |     Exists    |               |                               |
+// +---------------+---------------+-------------------------------+
+// |              ...              |      FileName (variable)      |
+// +-------------------------------+-------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// ReplaceIfExists (1 byte): See [MS-FSCC] section 2.4.34 for a description
+//  of this field.
+
+// RootDirectory (1 byte): See [MS-FSCC] section 2.4.34 for a description of
+//  this field. For network operations, the value of the RootDirectory field
+//  in this structure MUST always be zero.
+
+// FileNameLength (4 bytes): See [MS-FSCC] section 2.4.34 for a description
+//  of this field.
+
+// FileName (variable): See [MS-FSCC] section 2.4.34 for a description of
+//  this field.
+
+class RDPFileRenameInformation {
+    bool     replace_if_exists_ = false;
+    uint8_t  RootDirectory_     = 0;
+    uint16_t FileNameLength     = 0;
+
+    std::string file_name;
+
+public:
+    inline void emit(Stream & stream) const {
+        stream.out_uint8(this->replace_if_exists_ ? ((uint8_t)-1) : 0);
+        stream.out_uint8(this->RootDirectory_);
+
+        const size_t maximum_length_of_FileName_in_bytes =
+            (this->file_name.length() + 1) * 2;
+
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
+            maximum_length_of_FileName_in_bytes));
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            unicode_data, maximum_length_of_FileName_in_bytes);
+        // Writes null terminator.
+        unicode_data[size_of_unicode_data    ] =
+        unicode_data[size_of_unicode_data + 1] = 0;
+        size_of_unicode_data += 2;
+
+        stream.out_uint32_le(size_of_unicode_data); // FileNameLength(4)
+
+        stream.out_copy_bytes(unicode_data, size_of_unicode_data);  // FileName(variable)
+    }
+
+    void receive(Stream & stream) {
+        {
+            const unsigned expected = 6;  // ReplaceIfExists(1) + RootDirectory(1) +
+                                           //     FileNameLength(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated RDP_FILE_RENAME_INFORMATION (0): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->replace_if_exists_ = (stream.in_uint8() != 0);
+        this->RootDirectory_     = stream.in_uint8();
+
+        const uint32_t FileNameLength = stream.in_uint32_le();
+
+        if (FileNameLength) {
+            {
+                const unsigned expected = FileNameLength;  // FileName(variable)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated RDP_FILE_RENAME_INFORMATION (1): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RDPDR_PDU_TRUNCATED);
+                }
+            }
+
+            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
+
+            stream.in_copy_bytes(unicode_data, FileNameLength);
+
+            const size_t size_of_utf8_string =
+                FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+            uint8_t * const utf8_string = static_cast<uint8_t *>(
+                ::alloca(size_of_utf8_string));
+            ::UTF16toUTF8(unicode_data, FileNameLength / 2, utf8_string, size_of_utf8_string);
+            // The null-terminator is included.
+            this->file_name = ::char_ptr_cast(utf8_string);
+            std::replace(this->file_name.begin(), this->file_name.end(), '\\', '/');
+        }
+        else {
+            this->file_name.clear();
+        }
+    }
+
+    inline bool replace_if_exists() const { return this->replace_if_exists_; }
+
+    inline uint8_t RootDirectory() const { return this->RootDirectory_; }
+
+    inline const char * FileName() const { return this->file_name.c_str(); }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "RDP_FILE_RENAME_INFORMATION: ReplaceIfExists=%s RootDirectory=%u FileName=\"%s\"",
+            (this->replace_if_exists_ ? "yes" : "no"),
+            this->RootDirectory_, this->file_name.c_str());
         return ((length < size) ? length : size - 1);
     }
 

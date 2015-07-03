@@ -115,9 +115,10 @@ public:
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
         uint32_t verbose) = 0;
 
-    static void MakeClientDriveIoUnsuccessfulResponse(
+    static void MakeClientDriveIoResponse(
             rdpdr::DeviceIORequest const & device_io_request,
             const char * message,
+            uint32_t IoStatus,
             ToServerSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
@@ -130,7 +131,7 @@ public:
 
         const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
                                                          device_io_request.CompletionId(),
-                                                         0xC0000001 // STATUS_UNSUCCESSFUL
+                                                         IoStatus
                                                         );
         if (verbose) {
             LOG(LOG_INFO, message);
@@ -145,6 +146,20 @@ public:
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
             out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
             verbose);
+    }
+
+    static void MakeClientDriveIoUnsuccessfulResponse(
+            rdpdr::DeviceIORequest const & device_io_request,
+            const char * message,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) {
+        MakeClientDriveIoResponse(device_io_request,
+                                  message,
+                                  0xC0000001, // STATUS_UNSUCCESSFUL
+                                  to_server_sender,
+                                  out_asynchronous_task,
+                                  verbose);
     }
 
     static inline const char * get_open_flag_name(int flag) {
@@ -165,6 +180,8 @@ class ManagedDirectory : public ManagedFileSystemObject {
 
     std::string pattern;
 
+    bool delete_pending = false;
+
 public:
     ManagedDirectory() {
         //LOG(LOG_INFO, "ManagedDirectory::ManagedDirectory() : <%p>", this);
@@ -177,6 +194,9 @@ public:
         if (this->dir) {
             ::closedir(this->dir);
         }
+
+        // Not yet supported.
+        REDASSERT(!this->delete_pending);
     }
 
     virtual uint32_t FileId() const override {
@@ -637,12 +657,12 @@ public:
                                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
         sh_s.emit(out_stream);
 
+        struct stat64 sb;
+        ::fstat64(::dirfd(this->dir), &sb);
+
         switch (server_drive_query_information_request.FsInformationClass()) {
             case rdpdr::FileBasicInformation:
             {
-                struct stat64 sb;
-                ::fstat64(::dirfd(this->dir), &sb);
-
                 const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
                     device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
                 if (verbose) {
@@ -673,9 +693,6 @@ public:
 
             case rdpdr::FileStandardInformation:
             {
-                struct stat64 sb;
-                ::fstat64(::dirfd(this->dir), &sb);
-
                 const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
                     device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
                 if (verbose) {
@@ -701,6 +718,32 @@ public:
                     file_standard_information.log(LOG_INFO);
                 }
                 file_standard_information.emit(out_stream);
+            }
+            break;
+
+            case rdpdr::FileAttributeTagInformation:
+            {
+                const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+                    device_io_request.CompletionId(), 0x00000000 /* STATUS_SUCCESS */);
+                if (verbose) {
+                    LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveQueryInformationRequest");
+                    device_io_response.log(LOG_INFO);
+                }
+                device_io_response.emit(out_stream);
+
+                out_stream.out_uint32_le(fscc::FileAttributeTagInformation::size());    // Length(4)
+
+                fscc::FileAttributeTagInformation file_attribute_tag_information(
+                        fscc::FILE_ATTRIBUTE_DIRECTORY |                                    // FileAttributes
+                            (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
+                        0                                                                   // ReparseTag
+                    );
+
+                if (verbose) {
+                    LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveQueryInformationRequest");
+                    file_attribute_tag_information.log(LOG_INFO);
+                }
+                file_attribute_tag_information.emit(out_stream);
             }
             break;
 
@@ -743,41 +786,216 @@ public:
             ToServerSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
+        REDASSERT(this->dir);
+
         if ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY)) {
-            BStream out_stream(65536);
+            MakeClientDriveIoResponse(device_io_request,
+                                      "ManagedDirectory::ProcessServerDriveSetInformationRequest",
+                                      0xC000000D,   // STATUS_INVALID_PARAMETER
+                                      to_server_sender,
+                                      out_asynchronous_task,
+                                      verbose
+                                     );
 
-            const rdpdr::SharedHeader shared_header(rdpdr::Component::RDPDR_CTYP_CORE,
-                                                    rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION
-                                                   );
-            shared_header.emit(out_stream);
-
-            const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
-                                                             device_io_request.CompletionId(),
-                                                             0xC000000D // STATUS_INVALID_PARAMETER
-                                                            );
-            if (verbose) {
-                LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveSetInformationRequest");
-                device_io_response.log(LOG_INFO);
-            }
-            device_io_response.emit(out_stream);
-
-            out_stream.mark_end();
-
-            uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-
-            out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-                out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
-                verbose);
+            return;
         }
-        else {
-            MakeClientDriveIoUnsuccessfulResponse(device_io_request,
+
+        switch (server_drive_set_information_request.FsInformationClass())
+        {
+            case rdpdr::FileBasicInformation:
+            {
+                fscc::FileBasicInformation file_basic_information;
+
+                file_basic_information.receive(in_stream);
+
+                if (verbose) {
+                    LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveSetInformationRequest");
+                    file_basic_information.log(LOG_INFO);
+                }
+
+                struct timeval times[2] = { { 0, 0 }, { 0, 0 } };
+
+                auto file_time_rdp_to_system_timeval = [](uint64_t rdp_time, timeval & out_system_tiem) {
+                    if ((rdp_time == 0LL) || (rdp_time == ((uint64_t)-1LL))) {
+                        out_system_tiem.tv_sec  = 0;
+                        out_system_tiem.tv_usec = 0;
+                    }
+                    else {
+                        out_system_tiem.tv_sec  = (time_t)(rdp_time / 10000000LL - EPOCH_DIFF);
+                        out_system_tiem.tv_usec = rdp_time % 10000000LL;
+                    }
+                };
+
+                file_time_rdp_to_system_timeval(file_basic_information.LastAccessTime(), times[0]);
+                file_time_rdp_to_system_timeval(file_basic_information.LastWriteTime(),  times[1]);
+
+                ::futimes(::dirfd(this->dir), times);
+
+                struct stat64 sb;
+                ::fstat64(::dirfd(this->dir), &sb);
+
+                const mode_t mode =
+                    ((file_basic_information.FileAttributes() & fscc::FILE_ATTRIBUTE_READONLY) ?
+                     (sb.st_mode & (~S_IWUSR)) :
+                     (sb.st_mode | S_IWUSR)
+                    );
+                ::chmod(this->full_path.c_str(), mode);
+
+                {
+                    BStream out_stream(65536);
+
+                    const rdpdr::SharedHeader shared_header(rdpdr::Component::RDPDR_CTYP_CORE,
+                                                            rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION
+                                                           );
+                    shared_header.emit(out_stream);
+
+                    const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+                                                                     device_io_request.CompletionId(),
+                                                                     0x00000000 // STATUS_SUCCESS
+                                                                    );
+                    if (verbose) {
+                        LOG(LOG_INFO, "ManagedFile::ProcessServerDriveSetInformationRequest");
+                        device_io_response.log(LOG_INFO);
+                    }
+                    device_io_response.emit(out_stream);
+
+                    out_stream.out_uint32_le(server_drive_set_information_request.Length());    // Length(4)
+
+                    // Padding(1), optional
+
+                    out_stream.mark_end();
+
+                    uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+                    out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+                        out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+                        verbose);
+                }
+            }
+            break;
+
+            case rdpdr::FileRenameInformation:
+            {
+                rdpdr::RDPFileRenameInformation rdp_file_rename_information;
+
+                rdp_file_rename_information.receive(in_stream);
+
+                if (verbose) {
+                    LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveSetInformationRequest");
+                    rdp_file_rename_information.log(LOG_INFO);
+                }
+
+                REDASSERT(!rdp_file_rename_information.RootDirectory());
+
+                std::string new_full_path(path);
+                new_full_path += rdp_file_rename_information.FileName();
+
+                if (!::access(new_full_path.c_str(), F_OK)) {
+                    if (!rdp_file_rename_information.replace_if_exists()) {
+                        MakeClientDriveIoResponse(device_io_request,
                                                   "ManagedDirectory::ProcessServerDriveSetInformationRequest",
+                                                  0xC0000035,   // STATUS_OBJECT_NAME_COLLISION
                                                   to_server_sender,
                                                   out_asynchronous_task,
-                                                  verbose);
+                                                  verbose
+                                                 );
 
-            // Unsupported.
-            REDASSERT(false);
+                        return;
+                    }
+                }
+
+                ::rename(this->full_path.c_str(), new_full_path.c_str());
+
+                {
+                    BStream out_stream(65536);
+
+                    const rdpdr::SharedHeader shared_header(rdpdr::Component::RDPDR_CTYP_CORE,
+                                                            rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION
+                                                           );
+                    shared_header.emit(out_stream);
+
+                    const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+                                                                     device_io_request.CompletionId(),
+                                                                     0x00000000 // STATUS_SUCCESS
+                                                                    );
+                    if (verbose) {
+                        LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveSetInformationRequest");
+                        device_io_response.log(LOG_INFO);
+                    }
+                    device_io_response.emit(out_stream);
+
+                    out_stream.out_uint32_le(server_drive_set_information_request.Length());    // Length(4)
+
+                    // Padding(1), optional
+
+                    out_stream.mark_end();
+
+                    uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+                    out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+                        out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+                        verbose);
+                }
+            }
+            break;
+
+            case rdpdr::FileDispositionInformation:
+            {
+                const uint8_t DeletePending = in_stream.in_uint8();
+
+                this->delete_pending = (DeletePending != 0);
+
+                {
+                    BStream out_stream(65536);
+
+                    const rdpdr::SharedHeader shared_header(rdpdr::Component::RDPDR_CTYP_CORE,
+                                                            rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION
+                                                           );
+                    shared_header.emit(out_stream);
+
+                    const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+                                                                     device_io_request.CompletionId(),
+                                                                     0x00000000 // STATUS_SUCCESS
+                                                                    );
+                    if (verbose) {
+                        LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveSetInformationRequest");
+                        device_io_response.log(LOG_INFO);
+                    }
+                    device_io_response.emit(out_stream);
+
+                    out_stream.out_uint32_le(server_drive_set_information_request.Length());    // Length(4)
+
+                    // Padding(1), optional
+
+                    out_stream.mark_end();
+
+                    uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+                    out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+                        out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+                        verbose);
+                }
+            }
+            break;
+
+            default:
+                LOG(LOG_ERR,
+                    "ManagedDirectory::ProcessServerDriveSetInformationRequest: "
+                        "Unknown FsInformationClass - %s(0x%X)",
+                    server_drive_set_information_request.get_FsInformationClass_name(
+                        server_drive_set_information_request.FsInformationClass()),
+                    server_drive_set_information_request.FsInformationClass());
+                REDASSERT(false);
+
+                MakeClientDriveIoUnsuccessfulResponse(device_io_request,
+                                                      "ManagedDirectory::ProcessServerDriveSetInformationRequest",
+                                                      to_server_sender,
+                                                      out_asynchronous_task,
+                                                      verbose);
+
+                // Unsupported.
+                REDASSERT(false);
+            break;
         }
     }
 
@@ -1618,30 +1836,13 @@ public:
         REDASSERT(this->fd > -1);
 
         if ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY)) {
-            BStream out_stream(65536);
-
-            const rdpdr::SharedHeader shared_header(rdpdr::Component::RDPDR_CTYP_CORE,
-                                                    rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION
-                                                   );
-            shared_header.emit(out_stream);
-
-            const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
-                                                             device_io_request.CompletionId(),
-                                                             0xC000000D // STATUS_INVALID_PARAMETER
-                                                            );
-            if (verbose) {
-                LOG(LOG_INFO, "ManagedFile::ProcessServerDriveSetInformationRequest");
-                device_io_response.log(LOG_INFO);
-            }
-            device_io_response.emit(out_stream);
-
-            out_stream.mark_end();
-
-            uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-
-            out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-                out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
-                verbose);
+            MakeClientDriveIoResponse(device_io_request,
+                                      "ManagedFile::ProcessServerDriveSetInformationRequest",
+                                      0xC000000D,   // STATUS_INVALID_PARAMETER
+                                      to_server_sender,
+                                      out_asynchronous_task,
+                                      verbose
+                                     );
 
             return;
         }
@@ -1675,17 +1876,82 @@ public:
                 file_time_rdp_to_system_timeval(file_basic_information.LastAccessTime(), times[0]);
                 file_time_rdp_to_system_timeval(file_basic_information.LastWriteTime(),  times[1]);
 
-                futimes(this->fd, times);
+                ::futimes(this->fd, times);
 
                 struct stat64 sb;
-                stat64(this->full_path.c_str(), &sb);
+                ::stat64(this->full_path.c_str(), &sb);
 
                 const mode_t mode =
                     ((file_basic_information.FileAttributes() & fscc::FILE_ATTRIBUTE_READONLY) ?
                      (sb.st_mode & (~S_IWUSR)) :
                      (sb.st_mode | S_IWUSR)
                     );
-                chmod(this->full_path.c_str(), mode);
+                ::chmod(this->full_path.c_str(), mode);
+
+                {
+                    BStream out_stream(65536);
+
+                    const rdpdr::SharedHeader shared_header(rdpdr::Component::RDPDR_CTYP_CORE,
+                                                            rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION
+                                                           );
+                    shared_header.emit(out_stream);
+
+                    const rdpdr::DeviceIOResponse device_io_response(device_io_request.DeviceId(),
+                                                                     device_io_request.CompletionId(),
+                                                                     0x00000000 // STATUS_SUCCESS
+                                                                    );
+                    if (verbose) {
+                        LOG(LOG_INFO, "ManagedFile::ProcessServerDriveSetInformationRequest");
+                        device_io_response.log(LOG_INFO);
+                    }
+                    device_io_response.emit(out_stream);
+
+                    out_stream.out_uint32_le(server_drive_set_information_request.Length());    // Length(4)
+
+                    // Padding(1), optional
+
+                    out_stream.mark_end();
+
+                    uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+                    out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+                        out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+                        verbose);
+                }
+            }
+            break;
+
+            case rdpdr::FileRenameInformation:
+            {
+                rdpdr::RDPFileRenameInformation rdp_file_rename_information;
+
+                rdp_file_rename_information.receive(in_stream);
+
+                if (verbose) {
+                    LOG(LOG_INFO, "ManagedFile::ProcessServerDriveSetInformationRequest");
+                    rdp_file_rename_information.log(LOG_INFO);
+                }
+
+                REDASSERT(!rdp_file_rename_information.RootDirectory());
+
+                std::string new_full_path(path);
+                new_full_path += rdp_file_rename_information.FileName();
+
+                if (!::access(new_full_path.c_str(), F_OK)) {
+                    if (!rdp_file_rename_information.replace_if_exists()) {
+                        MakeClientDriveIoResponse(device_io_request,
+                                                  "ManagedFile::ProcessServerDriveSetInformationRequest",
+                                                  0xC0000035,   // STATUS_OBJECT_NAME_COLLISION
+                                                  to_server_sender,
+                                                  out_asynchronous_task,
+                                                  verbose
+                                                 );
+
+                        return;
+                    }
+                }
+
+                ::rename(this->full_path.c_str(), new_full_path.c_str());
 
                 {
                     BStream out_stream(65536);
@@ -1721,6 +1987,14 @@ public:
             break;
 
             default:
+                LOG(LOG_ERR,
+                    "ManagedFile::ProcessServerDriveSetInformationRequest: "
+                        "Unknown FsInformationClass - %s(0x%X)",
+                    server_drive_set_information_request.get_FsInformationClass_name(
+                        server_drive_set_information_request.FsInformationClass()),
+                    server_drive_set_information_request.FsInformationClass());
+                REDASSERT(false);
+
                 // Set file attributes is not yet supported.
                 MakeClientDriveIoUnsuccessfulResponse(
                     device_io_request,
