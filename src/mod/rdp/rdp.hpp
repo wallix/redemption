@@ -1255,6 +1255,7 @@ public:
     static uint32_t filter_unsupported_device(AuthorizationChannels const & authorization_channels,
             Stream & chunk, uint32_t device_count, Stream & result,
             FileSystemDriveManager & file_system_drive_manager,
+            bool & proxy_managed_drives_announced,
             bool device_capability_version_02_supported, uint32_t verbose = 0) {
         //LOG(LOG_INFO, "filter_unsupported_device: device_count=%u", device_count);
         result.out_uint16_le(static_cast<uint16_t>(rdpdr::Component::RDPDR_CTYP_CORE));
@@ -1293,11 +1294,11 @@ public:
         }
 
         // Add proxy managed File System Drives.
-        if (!this->proxy_managed_drives_announced) {
+        if (!proxy_managed_drives_announced) {
             real_device_count += file_system_drive_manager.AnnounceDrivePartially(result,
                 device_capability_version_02_supported, verbose);
 
-            this->proxy_managed_drives_announced = true;
+            proxy_managed_drives_announced = true;
         }
 
         result.set_out_uint32_le(real_device_count, device_count_offset);
@@ -1453,6 +1454,7 @@ private:
                                                         chunk, DeviceCount,
                                                         result,
                                                         this->file_system_drive_manager,
+                                                        this->proxy_managed_drives_announced,
                                                         this->device_capability_version_02_supported,
                                                         this->verbose)) {
                         if (this->verbose) {
@@ -3450,6 +3452,7 @@ public:
                                                                 0,
                                                                 result,
                                                                 this->file_system_drive_manager,
+                                                                this->proxy_managed_drives_announced,
                                                                 this->device_capability_version_02_supported,
                                                                 this->verbose)) {
                                 this->send_to_channel(*rdpdr_channel, result, result.size(),

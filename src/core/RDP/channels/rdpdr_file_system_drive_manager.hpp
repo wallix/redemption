@@ -2362,7 +2362,7 @@ public:
         }
 
         // Write request is not yet supported.
-//read_only = true;
+read_only = true;
 
         if (!::strcasecmp(relative_directory_path, "wabagt") ||
             !::strcasecmp(relative_directory_path, "wablnch")) {
