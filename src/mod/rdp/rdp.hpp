@@ -207,6 +207,7 @@ class mod_rdp : public mod_api {
           bool              client_device_announce_timer_enabled   = false;
           TimeoutT<TimeVal> client_device_announce_timeout_checker;
           bool              server_user_logged_on_processed        = false;
+          bool              proxy_managed_drives_announced         = false;
 
     std::string output_filename;
 
@@ -1292,8 +1293,12 @@ public:
         }
 
         // Add proxy managed File System Drives.
-        real_device_count += file_system_drive_manager.AnnounceDrivePartially(result,
-            device_capability_version_02_supported, verbose);
+        if (!this->proxy_managed_drives_announced) {
+            real_device_count += file_system_drive_manager.AnnounceDrivePartially(result,
+                device_capability_version_02_supported, verbose);
+
+            this->proxy_managed_drives_announced = true;
+        }
 
         result.set_out_uint32_le(real_device_count, device_count_offset);
 
