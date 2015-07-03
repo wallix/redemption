@@ -23,6 +23,8 @@
 
 #include "get_printable_password.hpp"
 #include "cfgloader.hpp"
+#include "config_types/authid.hpp"
+#include "config_types/authid_str.hpp"
 // BASE64 TRY
 // #include "base64.hpp"
 
@@ -40,6 +42,8 @@ struct FieldObserver : public ConfigurationHolder {
      ******************************************************
      */
 
+    using authid_t = config_types::authid_t;
+
     class BaseField {
         BaseField(const BaseField &) = delete;
         BaseField & operator = (const BaseField &) = delete;
@@ -53,7 +57,7 @@ struct FieldObserver : public ConfigurationHolder {
             : asked(false)
             , modified(true)
             , ini(nullptr)
-            , authid(AUTHID_UNKNOWN)
+            , authid(config_types::AUTHID_UNKNOWN)
         {
         }
         virtual ~BaseField(){
@@ -87,9 +91,9 @@ struct FieldObserver : public ConfigurationHolder {
          * link this field to an Inifile
          *******************************
          */
-        void attach_ini(FieldObserver * p_ini, authid_t authid = AUTHID_UNKNOWN) {
+        void attach_ini(FieldObserver * p_ini, authid_t authid = config_types::AUTHID_UNKNOWN) {
             this->ini = p_ini;
-            if (authid != AUTHID_UNKNOWN
+            if (authid != config_types::AUTHID_UNKNOWN
                 && this->ini) {
                 this->authid = authid;
                 this->ini->attach_field(this,authid);
@@ -153,7 +157,7 @@ struct FieldObserver : public ConfigurationHolder {
         virtual const char* get_value() = 0;
 
         const char* get_serialized(char * buff, size_t size, uint32_t password_printing_mode) {
-            const char * key = string_from_authid(this->authid);
+            const char * key = config_types::string_from_authid(this->authid);
             int n;
             if (this->is_asked()) {
                 n = snprintf(buff, size, "%s\nASK\n",key);

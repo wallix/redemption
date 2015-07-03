@@ -46,12 +46,16 @@ struct ConfigCppWriter {
     unsigned depth = 0;
     std::ostringstream out_member_;
     std::ostringstream out_body_ctor_;
+    std::ostringstream out_body_parser_;
     std::ostream * out_;
 
-    std::map<std::string, std::string> sections;
-    std::string body_ctor;
+    std::map<std::string, std::string> sections_member;
+    std::map<std::string, std::string> sections_parser;
+    std::map<std::string, std::string> authids;
 
-    std::ostream & out() { return *this->out_; }
+    std::ostream & out() {
+        return *this->out_;
+    }
 
     void tab() {
         this->out() << std::setw(this->depth*4+4) << " ";
@@ -69,10 +73,10 @@ struct ConfigCppWriter {
         if (!this->section_name.empty()) {
             --this->depth;
         }
-        this->sections[std::move(this->section_name)] += this->out_member_.str();
-        this->body_ctor += this->out_body_ctor_.str();
+        this->sections_member[this->section_name] += this->out_member_.str();
+        this->sections_parser[std::move(this->section_name)] += this->out_body_parser_.str();
         this->out_member_.str("");
-        this->out_body_ctor_.str("");
+        this->out_body_parser_.str("");
     }
 
     void sep() {
@@ -95,7 +99,7 @@ struct ConfigCppWriter {
             {}
         } pack{args...};
 
-        std::string varname = static_cast<char const *>(pack);
+        std::string varname = get_name(pack);
 
         this->out_ = &this->out_member_;
 
@@ -108,13 +112,59 @@ struct ConfigCppWriter {
         void(std::initializer_list<int>{
             (this->write_assignable_default(pack, args), 1)...
         });
-        this->out() << ";\n";
+        this->out() << ";";
+        if (std::is_convertible<Pack, attach>::value) {
+            this->out() << "  // AUTHID_";
+            for (auto & c : this->get_def_authid(pack, varname)) {
+                this->out() << char(std::toupper(c));
+            }
+        }
+        this->out() << "\n";
 
         this->out_ = &this->out_body_ctor_;
 
         void(std::initializer_list<int>{
-            (this->write_body_constructor(pack, varname, args), 1)...
+            (this->write_body_constructor(pack, pack, varname, args), 1)...
         });
+
+        this->out_ = &this->out_body_parser_;
+
+        this->write_parser(this->get_attribute(pack), pack, varname);
+    }
+
+
+    void write_parser(Attribute a, const char * name, std::string const & varname)
+    {
+        if (bool(a)) {
+            this->out() << "        else if (0 == strcmp(key, \"" << name << "\")) {\n"
+            "            config_detail::parse(ini." << this->section_name << "." << varname << ", value);\n"
+            "        }\n";
+        }
+    }
+
+
+    template<class Pack>
+    std::string get_name(Pack const & pack)
+    {
+        struct RealName { static std::string impl(real_name x) { return x.name; } };
+        struct Name { static std::string impl(Pack const & pack) { return static_cast<char const *>(pack); } };
+        return std::conditional<
+            std::is_convertible<Pack, real_name>::value,
+            RealName,
+            Name
+        >::type::impl(pack);
+    }
+
+    template<class Pack>
+    Attribute get_attribute(Pack const & pack)
+    {
+        struct ToAttribute { static Attribute impl(Attribute a) { return a; } };
+        struct NoAttribute { static constexpr Attribute impl(...) { return Attribute::none; } };
+        return std::conditional<
+            std::is_convertible<Pack, ref<Attribute>>::value,
+            ToAttribute,
+            NoAttribute
+        >::type::impl(pack);
     }
 
 
@@ -148,52 +198,68 @@ struct ConfigCppWriter {
     template<class T>
     using enable_if_basefield = typename std::enable_if<std::is_base_of<BaseField, T>::value>::type;
 
-    template<class T, class U>
+    template<class T, class Pack, class U>
     enable_if_basefield<T>
-    write_body_constructor(ref<type_<T>>, std::string const & varname, default_<U> const & d)
+    write_body_constructor(ref<type_<T>>, Pack &, std::string const & varname, default_<U> const & d)
     {
         this->out() << "        this->" << this->section_name << "." << varname << ".set(";
         this->write(d.value);
         this->out() << ");\n";
     }
 
-    void write_upper(std::string const & s)
+    void write_authid(std::string authid, std::string s_authid)
     {
-        for (auto c : s) {
-            this->out() << char(std::toupper(c));
+        for (auto & c : authid) {
+            c = char(std::toupper(c));
         }
+        this->out() << authid;
+        this->authids.emplace(std::move(authid), std::move(s_authid));
     }
 
+    std::string get_def_authid(ref<def_authid> r, std::string const & varname)
+    { return r.x.name; }
+
     template<class T>
+    std::string const & get_def_authid(ref<type_<T>>, std::string const & varname)
+    { return varname; }
+
+    const char * get_str_authid(ref<str_authid> r, std::string const & varname)
+    { return r.x.name; }
+
+    template<class T>
+    std::string const & get_str_authid(ref<type_<T>>, std::string const & varname)
+    { return varname; }
+
+    template<class T, class Pack>
     enable_if_basefield<T>
-    write_body_constructor(ref<type_<T>>, std::string const & varname, link const & d)
+    write_body_constructor(ref<type_<T>>, Pack & pack, std::string const & varname, link const & d)
     {
         this->out() << "        this->to_send_set.insert(AUTHID_";
-        this->write_upper(varname);
+        this->write_authid(this->get_def_authid(pack, varname), this->get_str_authid(pack, varname));
         this->out() << ");\n";
     }
 
-    template<class T>
+    template<class T, class Pack>
     enable_if_basefield<T>
-    write_body_constructor(ref<type_<T>>, std::string const & varname, attach const & d)
+    write_body_constructor(ref<type_<T>>, Pack & pack, std::string const & varname, attach const & d)
     {
         this->out() << "        this->" << this->section_name << "." << varname << ".attach_ini(this, AUTHID_";
-        this->write_upper(varname);
+        this->write_authid(this->get_def_authid(pack, varname), this->get_str_authid(pack, varname));
         this->out() << ");\n";
     }
 
-    template<class T>
+    template<class T, class Pack>
     enable_if_basefield<T>
-    write_body_constructor(ref<type_<T>>, std::string const & varname, ask const & d)
+    write_body_constructor(ref<type_<T>>, Pack &, std::string const & varname, ask const & d)
     { this->out() << "        this->" << this->section_name << "." << varname << ".ask();\n"; }
 
-    template<class T>
+    template<class T, class Pack>
     enable_if_basefield<T>
-    write_body_constructor(ref<type_<T>>, std::string const & varname, use const & d)
+    write_body_constructor(ref<type_<T>>, Pack &, std::string const & varname, use const & d)
     { this->out() << "        this->" << this->section_name << "." << varname << ".use();\n"; }
 
-    template<class T, class U>
-    void write_body_constructor(ref<type_<T>>, std::string const &, U const &)
+    template<class T, class Pack, class U>
+    void write_body_constructor(ref<type_<T>>, Pack &, std::string const &, U const &)
     { }
 
 
@@ -217,39 +283,48 @@ struct ConfigCppWriter {
     { }
 
 
-    void write_type(type_<bool_>) { this->out() << "bool"; }
-    void write_type(type_<int_>) { this->out() << "int"; }
+#define WRITE_TYPE(T) void write_type(type_<T>) { this->out() << #T; }
+    WRITE_TYPE(bool)
+    WRITE_TYPE(int)
+    WRITE_TYPE(unsigned)
+    WRITE_TYPE(std::string)
+    WRITE_TYPE(BoolField)
+    WRITE_TYPE(UnsignedField)
+    WRITE_TYPE(SignedField)
+    WRITE_TYPE(StringField)
+    WRITE_TYPE(RedirectionInfo)
+    WRITE_TYPE(Theme)
+    WRITE_TYPE(Font)
+    WRITE_TYPE(IniAccounts)
+    WRITE_TYPE(StaticIpString)
+    WRITE_TYPE(Level)
+    WRITE_TYPE(LevelField)
+    WRITE_TYPE(LanguageField)
+    WRITE_TYPE(CaptureFlags)
+    WRITE_TYPE(ColorDepth)
+    WRITE_TYPE(KeyboardLogFlagsField)
+#undef WRITE_TYPE
+
+#define WRITE_STATIC_STRING(T)        \
+    template<std::size_t N>           \
+    void write_type(ref<type_<T<N>>>) \
+    { this->out() << #T "<" << N << ">"; }
+
+    WRITE_STATIC_STRING(StaticString)
+    WRITE_STATIC_STRING(StaticNilString)
+    WRITE_STATIC_STRING(StaticKeyString)
+    WRITE_STATIC_STRING(StaticPath)
+#undef WRITE_STATIC_STRING
+
     void write_type(type_<uint32_>) { this->out() << "uint32_t"; }
     void write_type(type_<uint64_>) { this->out() << "uint64_t"; }
-    void write_type(type_<uint_>) { this->out() << "unsigned"; }
-    void write_type(type_<std::string>) { this->out() << "std::string"; }
-    void write_type(type_<StringField>) { this->out() << "StringField"; }
-    void write_type(type_<UnsignedField>) { this->out() << "UnsignedField"; }
-    void write_type(type_<SignedField>) { this->out() << "SignedField"; }
-    void write_type(type_<BoolField>) { this->out() << "BoolField"; }
-    void write_type(type_<SetField>) { this->out() << "SetField"; }
-    void write_type(type_<RedirectionInfo>) { this->out() << "RedirectionInfo"; }
-    void write_type(type_<Theme>) { this->out() << "Theme"; }
-    void write_type(type_<Font>) { this->out() << "Font"; }
-    void write_type(type_<IniAccount>) { this->out() << "IniAccount"; }
-    void write_type(type_<Level>) { this->out() << "Level"; }
-    void write_type(type_<StaticIpString>) { this->out() << "StaticIpString"; }
 
-    template<std::size_t N>
-    void write_type(ref<type_<StaticString<N>>>)
-    { this->out() << "StaticString<" << N << ">"; }
-
-    template<std::size_t N>
-    void write_type(ref<type_<StaticNilString<N>>>)
-    { this->out() << "StaticNilString<" << N << ">"; }
-
-    template<std::size_t N>
-    void write_type(ref<type_<StaticKeyString<N>>>)
-    { this->out() << "StaticKeyString<" << N << ">"; }
-
-    template<std::size_t N>
-    void write_type(ref<type_<StaticPath<N>>>)
-    { this->out() << "StaticPath<" << N << ">"; }
+    template<class T, T Min, T Max, T Default>
+    void write_type(ref<type_<Range<T, Min, Max, Default>>>) {
+        this->out() << "Range<";
+        this->write_type(type_<T>{});
+        this->out() << ", " << Min << ", " << Max << ", " << Default << ">";
+    }
 };
 
 }
@@ -258,7 +333,26 @@ BOOST_AUTO_TEST_CASE(TestConfigSpec)
 {
     config_writer::ConfigCppWriter writer;
     config_spec::writer_config_spec(writer);
-    for (auto & body : writer.sections) {
+    std::cout <<
+      "enum authid_t {\n"
+      "    AUTHID_UNKNOWN = 0,\n"
+    ;
+    for (auto & body : writer.authids) {
+        std::cout <<
+          "    AUTHID_" << body.first << ",\n"
+          "#define STRAUTHID_" << body.first << " \"" << body.second << "\"\n"
+        ;
+    }
+    std::cout <<
+      "    MAX_AUTHID\n"
+      "};\n"
+      "constexpr char * const authstr[] = {\n"
+    ;
+    for (auto & body : writer.authids) {
+        std::cout << "    STRAUTHID_" << body.first << ", // AUTHID_" << body.first << "\n";
+    }
+    std::cout << "};\n\n";
+    for (auto & body : writer.sections_member) {
         if (body.first.empty()) {
             std::cout << body.second << "\n";
         }
@@ -270,6 +364,29 @@ BOOST_AUTO_TEST_CASE(TestConfigSpec)
             ;
         }
     }
-    std::cout << "\n";
-    std::cout << writer.body_ctor;
+    std::cout <<
+      "\n" <<
+      writer.out_body_ctor_.str() <<
+      "void set_value(const char * context, const char * key, const char * value) {\n"
+      "    if (0) {}\n"
+    ;
+    for (auto & body : writer.sections_parser) {
+        if (body.second.empty()) {
+            continue;
+        }
+        std::cout <<
+            "    else if (0 == strcmp(context, \"" << body.first << "\")) {\n"
+            "        if (0) {}\n" << body.second << "\n"
+            "        else if (ini.debug.config) {\n"
+            "            LOG(LOG_ERR, \"unknown parameter %s in section [%s]\", key, context);\n"
+            "        }\n"
+            "    }\n"
+        ;
+    }
+    std::cout <<
+        "    else if (ini.debug.config) {\n"
+        "        LOG(LOG_ERR, \"unknown section [%s]\", context);\n"
+        "    }\n"
+        "}"
+    ;
 }
