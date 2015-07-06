@@ -455,9 +455,11 @@ public:
         }
 
         const uint32_t DesiredAccess = device_create_request.DesiredAccess();
+        const uint32_t CreateDisposition = device_create_request.CreateDisposition();
 
         const int last_error = [] (const char * path,
                                    uint32_t DesiredAccess,
+                                   uint32_t CreateDisposition,
                                    int drive_access_mode,
                                    DIR *& out_dir) -> int {
             if (((drive_access_mode != O_RDWR) && (drive_access_mode != O_RDONLY) &&
@@ -468,9 +470,19 @@ public:
                 return EACCES;
             }
 
+            if ((::access(path, F_OK) != 0) &&
+                (CreateDisposition == smb2::FILE_CREATE)) {
+                if ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY)) {
+                    out_dir = nullptr;
+                    return EACCES;
+                }
+
+                ::mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP);
+            }
+
             out_dir = ::opendir(path);
             return ((out_dir != nullptr) ? 0 : errno);
-        } (full_path.c_str(), DesiredAccess, drive_access_mode, this->dir);
+        } (full_path.c_str(), DesiredAccess, CreateDisposition, drive_access_mode, this->dir);
 
         if (verbose) {
             LOG(LOG_INFO,
@@ -1532,7 +1544,7 @@ public:
                     log_this, open_flags);
             }
 
-            out_fd = ::open(path, open_flags, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            out_fd = ::open(path, open_flags, S_IRUSR | S_IWUSR | S_IRGRP);
             if (out_fd > -1) {
                 struct stat64 st;
                 if (fstat64(out_fd, &st)) {
