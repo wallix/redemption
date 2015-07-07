@@ -82,8 +82,8 @@ public:
     Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
            , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini, bool externally_generated_breakpoint = false)
-    : capture_wrm(ini.video.capture_wrm)
-    , capture_drawable(ini.video.capture_wrm||(ini.video.png_limit > 0))
+    : capture_wrm(bool(ini.video.capture_flags & CaptureFlags::wrm))
+    , capture_drawable(this->capture_wrm || (ini.video.png_limit > 0))
     , capture_png(ini.video.png_limit > 0)
     , enable_file_encryption(ini.globals.enable_file_encryption.get())
     , png_trans(nullptr)

@@ -133,7 +133,7 @@ struct ConfigCppWriter {
     {
         if (bool(a)) {
             this->out() << "        else if (0 == strcmp(key, \"" << name << "\")) {\n"
-            "            parse(this->" << this->section_name << "." << varname << ", value);\n"
+            "            ::configs::parse(this->" << this->section_name << "." << varname << ", value);\n"
             "        }\n";
         }
     }
@@ -174,10 +174,11 @@ struct ConfigCppWriter {
     void write(E x)   \
     { this->out() << "static_cast<" #E ">(" << underlying_cast(x) << ")"; }
     WRITE_ENUM(Level)
+    WRITE_ENUM(Language)
     WRITE_ENUM(ColorDepth)
     WRITE_ENUM(CaptureFlags)
     WRITE_ENUM(KeyboardLogFlags)
-    WRITE_ENUM(DisableClipboardLogFlags)
+    WRITE_ENUM(ClipboardLogFlags)
 #undef WRITE_ENUM
 
     void write(todo x) { this->tab(); this->out() << "TODO(\"" << x.value << "\")\n"; }
@@ -240,7 +241,7 @@ struct ConfigCppWriter {
     enable_if_basefield<T>
     write_body_constructor(ref<type_<T>>, Pack & pack, std::string const & varname, link const & d)
     {
-        this->out() << "        this->to_send_set.insert(AUTHID_";
+        this->out() << "    this->to_send_set.insert(AUTHID_";
         this->write_authid(this->get_def_authid(pack, varname), this->get_str_authid(pack, varname));
         this->out() << ");\n";
     }
@@ -249,7 +250,7 @@ struct ConfigCppWriter {
     enable_if_basefield<T>
     write_body_constructor(ref<type_<T>>, Pack & pack, std::string const & varname, attach const & d)
     {
-        this->out() << "        this->" << this->section_name << "." << varname << ".attach_ini(this, AUTHID_";
+        this->out() << "    this->" << this->section_name << "." << varname << ".attach_ini(this, AUTHID_";
         this->write_authid(this->get_def_authid(pack, varname), this->get_str_authid(pack, varname));
         this->out() << ");\n";
     }
@@ -257,12 +258,12 @@ struct ConfigCppWriter {
     template<class T, class Pack>
     enable_if_basefield<T>
     write_body_constructor(ref<type_<T>>, Pack &, std::string const & varname, ask const & d)
-    { this->out() << "        this->" << this->section_name << "." << varname << ".ask();\n"; }
+    { this->out() << "    this->" << this->section_name << "." << varname << ".ask();\n"; }
 
     template<class T, class Pack>
     enable_if_basefield<T>
     write_body_constructor(ref<type_<T>>, Pack &, std::string const & varname, use const & d)
-    { this->out() << "        this->" << this->section_name << "." << varname << ".use();\n"; }
+    { this->out() << "    this->" << this->section_name << "." << varname << ".use();\n"; }
 
     template<class T, class Pack, class U>
     void write_body_constructor(ref<type_<T>>, Pack &, std::string const &, U const &)
@@ -314,7 +315,7 @@ struct ConfigCppWriter {
     WRITE_TYPE(ColorDepth)
     WRITE_TYPE(KeyboardLogFlagsField)
     WRITE_TYPE(ReadOnlyStringField)
-    WRITE_TYPE(DisableClipboardLogFlagsField)
+    WRITE_TYPE(ClipboardLogFlagsField)
 #undef WRITE_TYPE
 
 #define WRITE_STATIC_STRING(T)        \
@@ -366,6 +367,10 @@ void write_authid_hpp(std::ostream & out_authid, config_writer::ConfigCppWriter 
 
 void write_variable_configuration(std::ostream & out_varconf, config_writer::ConfigCppWriter & writer) {
     out_varconf <<
+        "#include \"font.hpp\"\n"
+        "#include \"configs/types.hpp\"\n"
+        "#include \"configs/includes.hpp\"\n\n"
+        "namespace configs {\n\n"
         "struct VariablesConfiguration {\n"
         "    VariablesConfiguration(char const * default_font_name)\n"
         "    : font(default_font_name)\n"
@@ -385,12 +390,13 @@ void write_variable_configuration(std::ostream & out_varconf, config_writer::Con
             ;
         }
     }
-    out_varconf << "};\n";
+    out_varconf << "};\n\n}\n";
 }
 
 void config_initialize(std::ostream & out_body, config_writer::ConfigCppWriter & writer) {
     out_body <<
-        "void Inifile::initialize() {\n" <<
+        "void Inifile::initialize() {\n"
+        "    using namespace configs;\n\n" <<
         writer.out_body_ctor_.str() <<
         "}\n"
     ;
@@ -399,6 +405,7 @@ void config_initialize(std::ostream & out_body, config_writer::ConfigCppWriter &
 void write_config_set_value(std::ostream & out_set_value, config_writer::ConfigCppWriter & writer) {
     out_set_value <<
         "void Inifile::set_value(const char * context, const char * key, const char * value) {\n"
+        "    using namespace configs;\n\n"
         "    if (0) {}\n"
     ;
     for (auto & body : writer.sections_parser) {

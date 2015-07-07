@@ -34,17 +34,13 @@
 #include "font.hpp"
 #include "defines.hpp"
 
-#include "configs/types.hpp"
-#include "configs/parse.hpp"
-#include "configs/includes.hpp"
 #include "authid.hpp"
-#include "parser.hpp"
 
-namespace configs {
-
+#include "configs/parse.hpp"
 #include "configs/variables_configuration.hpp"
 
-struct Inifile : FieldObserver, VariablesConfiguration
+
+struct Inifile : FieldObserver, configs::VariablesConfiguration
 {
     Inifile(const char * default_font_name = SHARE_PATH "/" DEFAULT_FONT_NAME)
     : VariablesConfiguration(default_font_name)
@@ -55,6 +51,8 @@ struct Inifile : FieldObserver, VariablesConfiguration
     virtual void set_value(const char * context, const char * key, const char * value) override;
 
     using authid_t = ::authid_t;
+
+    static const uint32_t ENABLE_DEBUG_CONFIG = 1;
 
 private:
     void initialize();
@@ -227,11 +225,9 @@ public:
     }
 };
 
+inline
 #include "configs/config_initialize.tcc"
+inline
 #include "configs/config_set_value.tcc"
-
-}
-
-using configs::Inifile;
 
 #endif

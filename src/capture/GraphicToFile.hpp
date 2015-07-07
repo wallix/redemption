@@ -203,7 +203,7 @@ public:
     virtual bool input(const timeval & now, Stream & input_data_32) override {
         uint32_t count  = input_data_32.size() / sizeof(uint32_t);
 
-        size_t c = min<size_t>(count, keyboard_buffer_32.tailroom() / sizeof(uint32_t));
+        size_t c = std::min<size_t>(count, keyboard_buffer_32.tailroom() / sizeof(uint32_t));
         keyboard_buffer_32.out_copy_bytes(input_data_32.get_data(), c * sizeof(uint32_t));
 
         return true;

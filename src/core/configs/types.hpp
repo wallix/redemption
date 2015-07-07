@@ -283,15 +283,23 @@ public:
     }
 
 
-#define MK_ENUM_FLAG_FN(E)                                                          \
-    MK_ENUM_IO(E)                                                                   \
-                                                                                    \
-    inline E operator | (E x, E y) {                                                \
-        return static_cast<E>(static_cast<unsigned>(x) | static_cast<unsigned>(y)); \
-    }                                                                               \
-                                                                                    \
-    inline E operator & (E x, E y) {                                                \
-        return static_cast<E>(static_cast<unsigned>(x) & static_cast<unsigned>(y)); \
+#define MK_ENUM_FLAG_FN(E)                                                     \
+    MK_ENUM_IO(E)                                                              \
+                                                                               \
+    inline E operator | (E x, E y) {                                           \
+        return static_cast<E>(underlying_cast(x) | underlying_cast(y));        \
+    }                                                                          \
+                                                                               \
+    inline E operator & (E x, E y) {                                           \
+        return static_cast<E>(underlying_cast(x) & underlying_cast(y));        \
+    }                                                                          \
+                                                                               \
+    inline E & operator |= (E & x, E y) {                                      \
+        return reinterpret_cast<E&>(underlying_cast(x) |= underlying_cast(y)); \
+    }                                                                          \
+                                                                               \
+    inline E & operator &= (E & x, E y) {                                      \
+        return reinterpret_cast<E&>(underlying_cast(x) &= underlying_cast(y)); \
     }
 
 
@@ -370,17 +378,24 @@ MK_ENUM_FLAG_FN(KeyboardLogFlags)
 using KeyboardLogFlagsField = FlagsField<KeyboardLogFlags>;
 
 
-enum class DisableClipboardLogFlags : unsigned {
+enum class ClipboardLogFlags : unsigned {
     none,
     syslog = 1 << 0,
     FULL = ((1 << 1) - 1)
 };
-MK_ENUM_FLAG_FN(DisableClipboardLogFlags)
+MK_ENUM_FLAG_FN(ClipboardLogFlags)
 
-using DisableClipboardLogFlagsField = FlagsField<DisableClipboardLogFlags>;
+using ClipboardLogFlagsField = FlagsField<ClipboardLogFlags>;
 
 
-enum class ColorDepth : unsigned { depth8, depth15, depth16, depth24/*, depth32*/, NB };
+enum class ColorDepth : unsigned {
+    unspecified,
+    depth8 = 8,
+    depth15 = 15,
+    depth16 = 16,
+    depth24 = 24,
+    //depth32,
+};
 
 MK_ENUM_IO(ColorDepth)
 
@@ -452,7 +467,7 @@ using configs::Language;
 using configs::ColorDepth;
 using configs::CaptureFlags;
 using configs::KeyboardLogFlags;
-using configs::DisableClipboardLogFlags;
+using configs::ClipboardLogFlags;
 
 using configs::level_from_cstr;
 

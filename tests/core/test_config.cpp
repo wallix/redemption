@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
                                                         ini.video.record_tmp_path.c_str());
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -254,12 +254,12 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL("",                               ini.context.password.get_cstr());
 
-    BOOST_CHECK_EQUAL(false,                            ini.context.authchannel_target.is_asked());
-    BOOST_CHECK_EQUAL(false,                            ini.context.authchannel_result.is_asked());
+    BOOST_CHECK_EQUAL(false,                            ini.context.auth_channel_target.is_asked());
+    BOOST_CHECK_EQUAL(false,                            ini.context.auth_channel_result.is_asked());
 
-    BOOST_CHECK_EQUAL("",                               ini.context.authchannel_answer.get_cstr());
-    BOOST_CHECK_EQUAL("",                               ini.context.authchannel_result.get_cstr());
-    BOOST_CHECK_EQUAL("",                               ini.context.authchannel_target.get_cstr());
+    BOOST_CHECK_EQUAL("",                               ini.context.auth_channel_answer.get_cstr());
+    BOOST_CHECK_EQUAL("",                               ini.context.auth_channel_result.get_cstr());
+    BOOST_CHECK_EQUAL("",                               ini.context.auth_channel_target.get_cstr());
 
     BOOST_CHECK_EQUAL(false,                            ini.context.accept_message.is_asked());
     BOOST_CHECK_EQUAL(false,                            ini.context.display_message.is_asked());
@@ -363,7 +363,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -513,12 +513,12 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL("",                               ini.context_get_value(AUTHID_AUTH_USER));
     BOOST_CHECK_EQUAL("",                               ini.context_get_value(AUTHID_PASSWORD));
 
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_AUTHCHANNEL_TARGET));
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_AUTHCHANNEL_RESULT));
+    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_AUTH_CHANNEL_TARGET));
+    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_AUTH_CHANNEL_RESULT));
 
-    BOOST_CHECK_EQUAL("",                               ini.context_get_value(AUTHID_AUTHCHANNEL_ANSWER));
-    BOOST_CHECK_EQUAL("",                               ini.context_get_value(AUTHID_AUTHCHANNEL_RESULT));
-    BOOST_CHECK_EQUAL("",                               ini.context_get_value(AUTHID_AUTHCHANNEL_TARGET));
+    BOOST_CHECK_EQUAL("",                               ini.context_get_value(AUTHID_AUTH_CHANNEL_ANSWER));
+    BOOST_CHECK_EQUAL("",                               ini.context_get_value(AUTHID_AUTH_CHANNEL_RESULT));
+    BOOST_CHECK_EQUAL("",                               ini.context_get_value(AUTHID_AUTH_CHANNEL_TARGET));
 
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_ACCEPT_MESSAGE));
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_DISPLAY_MESSAGE));
@@ -629,7 +629,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -892,7 +892,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::syslog,         ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -1131,7 +1131,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.video.record_tmp_path.c_str());
     BOOST_CHECK_EQUAL(KeyboardLogFlags::wrm,            ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::syslog, ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::syslog,        ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -1346,7 +1346,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::ocr,            ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
@@ -1560,7 +1560,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::ocr,            ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
@@ -1749,7 +1749,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -1937,7 +1937,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -2112,7 +2112,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -2287,7 +2287,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -2591,39 +2591,39 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // answer
-    ini.context_set_value(AUTHID_AUTHCHANNEL_ANSWER,    "answer");
+    ini.context_set_value(AUTHID_AUTH_CHANNEL_ANSWER,    "answer");
 
-    BOOST_CHECK_EQUAL("answer",                         ini.context.authchannel_answer.get_cstr());
+    BOOST_CHECK_EQUAL("answer",                         ini.context.auth_channel_answer.get_cstr());
 
-    BOOST_CHECK_EQUAL("answer",                         ini.context_get_value(AUTHID_AUTHCHANNEL_ANSWER));
+    BOOST_CHECK_EQUAL("answer",                         ini.context_get_value(AUTHID_AUTH_CHANNEL_ANSWER));
 
 
     // authchannel_target
-    ini.context_ask(AUTHID_AUTHCHANNEL_TARGET);
+    ini.context_ask(AUTHID_AUTH_CHANNEL_TARGET);
 
-    BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_AUTHCHANNEL_TARGET));
+    BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_AUTH_CHANNEL_TARGET));
 
-    ini.context_set_value(AUTHID_AUTHCHANNEL_TARGET,    "target");
+    ini.context_set_value(AUTHID_AUTH_CHANNEL_TARGET,    "target");
 
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_AUTHCHANNEL_TARGET));
+    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_AUTH_CHANNEL_TARGET));
 
-    BOOST_CHECK_EQUAL("target",                         ini.context.authchannel_target.get_cstr());
+    BOOST_CHECK_EQUAL("target",                         ini.context.auth_channel_target.get_cstr());
 
-    BOOST_CHECK_EQUAL("target",                         ini.context_get_value(AUTHID_AUTHCHANNEL_TARGET));
+    BOOST_CHECK_EQUAL("target",                         ini.context_get_value(AUTHID_AUTH_CHANNEL_TARGET));
 
 
     // authchannel_result
-    ini.context_ask(AUTHID_AUTHCHANNEL_RESULT);
+    ini.context_ask(AUTHID_AUTH_CHANNEL_RESULT);
 
-    BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_AUTHCHANNEL_RESULT));
+    BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_AUTH_CHANNEL_RESULT));
 
-    ini.context_set_value(AUTHID_AUTHCHANNEL_RESULT,    "result");
+    ini.context_set_value(AUTHID_AUTH_CHANNEL_RESULT,    "result");
 
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_AUTHCHANNEL_RESULT));
+    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_AUTH_CHANNEL_RESULT));
 
-    BOOST_CHECK_EQUAL("result",                         ini.context.authchannel_result.get_cstr());
+    BOOST_CHECK_EQUAL("result",                         ini.context.auth_channel_result.get_cstr());
 
-    BOOST_CHECK_EQUAL("result",                         ini.context_get_value(AUTHID_AUTHCHANNEL_RESULT));
+    BOOST_CHECK_EQUAL("result",                         ini.context_get_value(AUTHID_AUTH_CHANNEL_RESULT));
 
     // regex
     ini.context_set_value(AUTHID_PATTERN_KILL,          "Explorer");
@@ -2867,9 +2867,9 @@ BOOST_AUTO_TEST_CASE(TestConfigFieldAuthid)
     BOOST_CHECK_EQUAL("login\n!someuser\n",
                      (ini.serialized(tmp, sz, ini.globals.auth_user, ini.debug.password), tmp));
 
-    ini.context.authchannel_target.set_from_cstr("TEST_TARGET");
-    BOOST_CHECK_EQUAL("authchannel_target\n!TEST_TARGET\n",
-                     (ini.serialized(tmp, sz, ini.context.authchannel_target, ini.debug.password), tmp));
+    ini.context.auth_channel_target.set_from_cstr("TEST_TARGET");
+    BOOST_CHECK_EQUAL("auth_channel_target\n!TEST_TARGET\n",
+                     (ini.serialized(tmp, sz, ini.context.auth_channel_target, ini.debug.password), tmp));
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigFieldGetValue)

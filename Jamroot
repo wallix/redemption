@@ -815,5 +815,3 @@ unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_u
 unit-test test_program_options : tests/utils/test_program_options.cpp src/utils/program_options.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_verifier : tests/test_verifier.cpp cryptofile libboost_unit_test openssl crypto ccryptofile snappy dl z : ;
-
-unit-test test_config_spec : tests/utils/test_config_spec.cpp libboost_unit_test : ;

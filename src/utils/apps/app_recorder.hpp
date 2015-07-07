@@ -176,19 +176,19 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     auto options = program_options::parse_command_line(argc, argv, desc);
 
     if (options.count("help") > 0) {
-        cout << copyright_notice;
-        cout << "\n\nUsage: redrec [options]\n\n";
-        cout << desc << endl << endl;
+        std::cout << copyright_notice;
+        std::cout << "\n\nUsage: redrec [options]\n\n";
+        std::cout << desc << "\n\n";
         return 0;
     }
 
     if (options.count("version") > 0) {
-        cout << copyright_notice << std::endl << std::endl;
+        std::cout << copyright_notice << std::endl << std::endl;
         return 0;
     }
 
     if (input_filename.empty()) {
-        cerr << "Missing input filename : use -i filename\n\n";
+        std::cerr << "Missing input filename : use -i filename\n\n";
         return -1;
     }
 
@@ -198,12 +198,12 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     remove_input_file  = (options.count("remove-input-file") > 0);
 
     if (!show_file_metadata && !show_statistics && !auto_output_file && output_filename.empty()) {
-        cerr << "Missing output filename : use -o filename\n\n";
+        std::cerr << "Missing output filename : use -o filename\n\n";
         return -1;
     }
 
     if (!output_filename.empty() && auto_output_file) {
-        cerr << "Conflicting options : --output-file and --auto-output-file\n\n";
+        std::cerr << "Conflicting options : --output-file and --auto-output-file\n\n";
         return -1;
     }
 
@@ -255,14 +255,19 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     ini.video.png_interval   = png_interval;
     ini.video.frame_interval = wrm_frame_interval;
     ini.video.break_interval = wrm_break_interval;
-    ini.video.capture_wrm    = (options.count("wrm") > 0);
-    ini.video.capture_png    = (options.count("png") > 0);
+    ini.video.capture_flags  = CaptureFlags::none;
+    if (options.count("wrm") > 0) {
+        ini.video.capture_flags |= CaptureFlags::wrm;
+    }
+    if (options.count("png") > 0) {
+        ini.video.capture_flags |= CaptureFlags::png;
+    }
 
     if (int status = parse_format(ini, options, output_filename)) {
         return status;
     }
 
-    ini.video.rt_display.set(ini.video.capture_png ? 1 : 0);
+    ini.video.rt_display.set(bool(ini.video.capture_flags & CaptureFlags::png));
 
 /*
     {
@@ -318,7 +323,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
             ini.globals.enable_file_encryption.set(infile_is_encrypted);
         }
         else {
-            std::cerr << "Unknown wrm encryption parameter" << endl << endl;
+            std::cerr << "Unknown wrm encryption parameter\n\n";
             return -1;
         }
     }
@@ -356,7 +361,7 @@ int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
         if ((res_test == sizeof(magic_test)) &&
             (magic_test == WABCRYPTOFILE_MAGIC)) {
             infile_is_encrypted = true;
-            cout << "Input file is encrypted." << endl;
+            std::cout << "Input file is encrypted.\n";
         }
         close(fd_test);
 
@@ -465,7 +470,7 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
         try {
             result = (
                 force_record
-             || ini.video.capture_png
+             || bool(ini.video.capture_flags & CaptureFlags::png)
              || ini.video.wrm_color_depth_selection_strategy != USE_ORIGINAL_COLOR_DEPTH
              || show_file_metadata
              || show_statistics
@@ -577,10 +582,10 @@ void remove_file( InWrmTrans & in_wrm_trans, const char * hash_path, const char 
         }
     };
 
-    std::cout << endl;
+    std::cout << std::endl;
     for (auto & s : iter(files.rbegin(), files.rend())) {
         unlink(s.c_str());
-        std::cout << "Removed : " << s << endl;
+        std::cout << "Removed : " << s << std::endl;
     }
 }
 
@@ -816,7 +821,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
         if (verbose) {
 //            std::cout << "Output file path: " << outfile_path << outfile_basename << '-' << outfile_pid << outfile_extension <<
             std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension <<
-                '\n' << endl;
+                '\n' << std::endl;
         }
 
         if (clear == 1) {

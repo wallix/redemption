@@ -1,3 +1,9 @@
+#include "font.hpp"
+#include "configs/types.hpp"
+#include "configs/includes.hpp"
+
+namespace configs {
+
 struct VariablesConfiguration {
     VariablesConfiguration(char const * default_font_name)
     : font(default_font_name)
@@ -42,7 +48,7 @@ struct VariablesConfiguration {
         //   15: 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)
         //   16: 16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)
         //   24: 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)
-        ColorDepth max_color_depth = {static_cast<ColorDepth>(3)};
+        ColorDepth max_color_depth = {static_cast<ColorDepth>(24)};
 
         // Persistent Disk Bitmap Cache on the front side.
         bool persistent_disk_bitmap_cache = {0};
@@ -92,9 +98,9 @@ struct VariablesConfiguration {
 
         StringField reporting;  // AUTHID_REPORTING
 
-        StringField authchannel_answer;  // AUTHID_AUTHCHANNEL_ANSWER
-        StringField authchannel_result;  // AUTHID_AUTHCHANNEL_RESULT
-        StringField authchannel_target;  // AUTHID_AUTHCHANNEL_TARGET
+        StringField auth_channel_answer;  // AUTHID_AUTH_CHANNEL_ANSWER
+        StringField auth_channel_result;  // AUTHID_AUTH_CHANNEL_RESULT
+        StringField auth_channel_target;  // AUTHID_AUTH_CHANNEL_TARGET
 
         StringField message;  // AUTHID_MESSAGE
         StringField pattern_kill;  // AUTHID_PATTERN_KILL
@@ -436,7 +442,7 @@ struct VariablesConfiguration {
 
         // Disable clipboard log:
         //   1: disable clipboard log in syslog
-        DisableClipboardLogFlagsField disable_clipboard_log;  // AUTHID_DISABLE_CLIPBOARD_LOG
+        ClipboardLogFlagsField disable_clipboard_log;  // AUTHID_DISABLE_CLIPBOARD_LOG
 
         UnsignedField rt_display;  // AUTHID_RT_DISPLAY
 
@@ -453,3 +459,5 @@ struct VariablesConfiguration {
     } video;
 
 };
+
+}
