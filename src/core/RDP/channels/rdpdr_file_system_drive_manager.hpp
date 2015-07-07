@@ -158,14 +158,13 @@ public:
                     file_basic_information.log(LOG_INFO);
                 }
 
-                struct timeval times[2] = { { 0, 0 }, { 0, 0 } };
+                struct stat64 sb;
+                ::fstat64(this->fd, &sb);
+
+                struct timeval times[2] = { { sb.st_atime, 0 }, { sb.st_mtime, 0 } };
 
                 auto file_time_rdp_to_system_timeval = [](uint64_t rdp_time, timeval & out_system_tiem) {
-                    if ((rdp_time == 0LL) || (rdp_time == ((uint64_t)-1LL))) {
-                        out_system_tiem.tv_sec  = 0;
-                        out_system_tiem.tv_usec = 0;
-                    }
-                    else {
+                    if ((rdp_time != 0LL) && (rdp_time != ((uint64_t)-1LL))) {
                         out_system_tiem.tv_sec  = (time_t)(rdp_time / 10000000LL - EPOCH_DIFF);
                         out_system_tiem.tv_usec = rdp_time % 10000000LL;
                     }
@@ -175,9 +174,6 @@ public:
                 file_time_rdp_to_system_timeval(file_basic_information.LastWriteTime(),  times[1]);
 
                 ::futimes(this->fd, times);
-
-                struct stat64 sb;
-                ::fstat64(this->fd, &sb);
 
                 const mode_t mode =
                     ((file_basic_information.FileAttributes() & fscc::FILE_ATTRIBUTE_READONLY) ?
