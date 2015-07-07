@@ -1117,6 +1117,66 @@ public:
     }
 };
 
+// [MS-RDPEFS] - 2.2.1.4.4 Device Write Request (DR_WRITE_REQ)
+// ===========================================================
+
+// This header initiates a write request. This message can have different
+//  purposes depending on the device for which it is issued. The device type
+//  is determined by the DeviceId field in the DR_DEVICE_IOREQUEST header.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        DeviceIoRequest                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                             Offset                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                      WriteData (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST header. The
+//  MajorFunction field in this header MUST be set to IRP_MJ_WRITE.
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of
+//  bytes in the WriteData field.
+
+// Offset (8 bytes): A 64-bit unsigned integer. This field specifies the file
+//  offset at which the data is written.
+
+// Padding (20 bytes): An array of 20 bytes. Reserved. This field can be set
+//  to any value, and MUST be ignored on receipt.
+
+// WriteData (variable): A variable-length array of bytes, where the length
+//  is specified by the Length field in this packet. This array contains data
+//  to be written on the target device.
+
 // [MS-RDPEFS] - 2.2.1.4.5 Device Control Request (DR_CONTROL_REQ)
 // ===============================================================
 
@@ -1565,6 +1625,43 @@ public:
 // ReadData (variable): A variable-length array of bytes that specifies the
 //  output data from the read request. The length of ReadData is specified by
 //  the Length field in this packet.
+
+// [MS-RDPEFS] - 2.2.1.5.4 Device Write Response (DR_WRITE_RSP)
+// ============================================================
+
+// A message with this header describes a response to a Device Write Request
+//  (section 2.2.1.4.4).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         DeviceIoReply                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------+-----------------------------------------------+
+// |    Padding    |
+// |   (optional)  |
+// +---------------+
+
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION header. The
+//  CompletionId field of this header MUST match a Device I/O Request
+//  (section 2.2.1.4) message that had the MajorFunction field set to
+//  IRP_MJ_WRITE.
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of
+//  bytes written in response to the write request.
+
+// Padding (1 byte): An 8-bit unsigned integer intended to allow the client
+//  minor flexibility in determining the overall packet length. This field is
+//  unused and can be set to any value. If present, this field MUST be
+//  ignored on receipt.
 
 // [MS-RDPEFS] - 2.2.2.1 Server Device Announce Response
 //  (DR_CORE_DEVICE_ANNOUNCE_RSP)
@@ -2356,6 +2453,25 @@ public:
 //  associated with a drive letter when the device is announced in the
 //  DR_DEVICELIST_ANNOUNCE (section 2.2.3.1) message. The drive letter is
 //  contained in the PreferredDosName field.
+
+// [MS-RDPEFS] - 2.2.3.3.4 Server Drive Write Request (DR_DRIVE_WRITE_REQ)
+// =======================================================================
+
+// The server writes to a file on a redirected file system device.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                 DeviceWriteRequest (variable)                 |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceWriteRequest (variable): A DR_WRITE_REQ header. The Length field
+//  contains the number of bytes to be written to the number of bytes to be
+//  written to the file. The Offset field specifies the offset within the
+//  file at which the write operation starts.
 
 // [MS-RDPEFS] - 2.2.3.3.8 Server Drive Query Information Request
 //  (DR_DRIVE_QUERY_INFORMATION_REQ)
@@ -3296,6 +3412,28 @@ public:
         LOG(level, buffer);
     }
 };  // ServerDriveQueryDirectoryRequest
+
+// [MS-RDPEFS] - 2.2.3.4.4 Client Drive Write Response (DR_DRIVE_WRITE_RSP)
+// ========================================================================
+
+// This message is sent by the client as a response to the Server Drive Write
+//  Request (section 2.2.3.3.4).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                 DeviceWriteResponse (variable)                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceWriteResponse (variable): Returns the result of DR_DRIVE_WRITE_REQ;
+//  it is the same as the common Device Write Response (section 2.2.1.5.4).
+//  If successful (that is, if the IoStatus field is equal to
+//  STATUS_SUCCESS), then the number of bytes written is specified by the
+//  Length field of the Server Drive Write Request (section 2.2.3.3.4)
+//  message.
 
 // [MS-RDPEFS] - 2.2.3.4.8 Client Drive Query Information Response
 //  (DR_DRIVE_QUERY_INFORMATION_RSP)

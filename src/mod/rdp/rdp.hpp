@@ -6747,11 +6747,13 @@ public:
 
         const auto saved_stream_p = stream.p;
 
-        rdpdr::SharedHeader sh_r;
+        static rdpdr::SharedHeader sh_r;
 
-        sh_r.receive(stream);
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            sh_r.receive(stream);
 
-        this->update_total_rdpdr_data(sh_r.packet_id, length);
+            this->update_total_rdpdr_data(sh_r.packet_id, length);
+        }
 
         switch (sh_r.packet_id) {
             case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
@@ -6934,15 +6936,21 @@ public:
                         "mod_rdp::process_rdpdr_event: Device I/O Request");
                 }
 
-                rdpdr::DeviceIORequest device_io_request;
+                static rdpdr::DeviceIORequest device_io_request;
 
-                device_io_request.receive(stream);
-                if (this->verbose) {
-                    device_io_request.log(LOG_INFO);
+                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                    device_io_request.receive(stream);
+                    if (this->verbose) {
+                        device_io_request.log(LOG_INFO);
+                    }
                 }
 
                 if (!this->file_system_drive_manager.IsManagedDrive(
                         device_io_request.DeviceId())) {
+                    if (!(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+                        break;
+                    }
+
                     uint32_t extra_data = 0;
 
                     switch (device_io_request.MajorFunction()) {
@@ -7115,13 +7123,14 @@ public:
                                 this->userid,
                                 rdpdr_channel.chanid
                             );
-
                     }
 
                     std::unique_ptr<AsynchronousTask> returned_asynchronous_task;
 
                     this->file_system_drive_manager.ProcessDeviceIORequest(
-                        device_io_request, stream, *(this->to_server_sender.get()), returned_asynchronous_task,
+                        device_io_request,
+                        (flags & CHANNELS::CHANNEL_FLAG_FIRST),
+                        stream, *(this->to_server_sender.get()), returned_asynchronous_task,
                         this->verbose);
 
                     if (returned_asynchronous_task) {

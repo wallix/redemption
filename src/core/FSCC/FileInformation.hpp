@@ -203,6 +203,55 @@ enum {
     , FSCTL_WRITE_USN_CLOSE_RECORD            = 0x900ef
 };
 
+// [MS-FSCC] - 2.4.4 FileAllocationInformation
+// ===========================================
+
+// This information class is used to set but not to query the allocation size
+//  for a file. The file system is passed a 64-bit signed integer containing
+//  the file allocation size, in bytes. The file system rounds the requested
+//  allocation size up to an integer multiple of the cluster size for
+//  nonresident files, or an implementation-defined multiple for resident
+//  files.<86><87> All unused allocation (beyond EOF) is freed on the last
+//  handle close.
+
+// A FILE_ALLOCATION_INFORMATION data element, defined as follows, is
+//  provided by the client.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         AllocationSize                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// AllocationSize (8 bytes): A 64-bit signed integer that contains the
+//  desired allocation to be used by the given file.
+
+// This operation returns a status code, as specified in [MS-ERREF] section
+//  2.3. The status code returned directly by the function that processes
+//  this file information class MUST be STATUS_SUCCESS or one of the
+//  following.
+
+//  +-----------------------------+--------------------------------------------+
+//  | Error code                  | Meaning                                    |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INVALID_PARAMETER    | The handle is for a directory and not a    |
+//  | 0xC000000D                  | file, or the allocation is greater than    |
+//  |                             | the maximum file size allowed.             |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_ACCESS_DENIED        | The handle was not opened to write file    |
+//  | 0xC0000022                  | data or file attributes.                   |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_DISK_FULL            | The disk is full.                          |
+//  | 0xC000007F                  |                                            |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
+//  | 0xC0000004                  | does not match the length that is required |
+//  |                             | for the specified information class.       |
+//  +-----------------------------+--------------------------------------------+
+
 // [MS-FSCC] - 2.4.6 FileAttributeTagInformation
 // =============================================
 
@@ -871,6 +920,53 @@ public:
 //  +-----------------------------+--------------------------------------------+
 //  | STATUS_ACCESS_DENIED        | The handle was not opened with delete      |
 //  | 0xC0000022                  | access.                                    |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
+//  | 0xC0000004                  | does not match the length that is required |
+//  |                             | for the specified information class.       |
+//  +-----------------------------+--------------------------------------------+
+
+// [MS-FSCC] - 2.4.13 FileEndOfFileInformation
+// ===========================================
+
+// This information class is used to set end-of-file information for a file.
+
+// A FILE_END_OF_FILE_INFORMATION data element, defined as follows, is
+//  provided by the client.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           EndOfFile                           |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// EndOfFile (8 bytes): A 64-bit signed integer that contains the absolute
+//  new end of file position as a byte offset from the start of the file.
+//  EndOfFile specifies the offset from the beginning of the file of the byte
+//  following the last byte in the file. That is, it is the offset from the
+//  beginning of the file at which new bytes appended to the file will be
+//  written. The value of this field MUST be greater than or equal to 0.
+
+// This operation returns a status code, as specified in [MS-ERREF] section
+//  2.3. The status code returned directly by the function that processes
+//  this file information class MUST be STATUS_SUCCESS or one of the
+//  following.
+
+//  +-----------------------------+--------------------------------------------+
+//  | Error code                  | Meaning                                    |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INVALID_PARAMETER    | The handle was for a directory and not a   |
+//  | 0xC000000D                  | file, or the allocation is greater than    |
+//  |                             | the maximum file size allowed.             |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_ACCESS_DENIED        | The handle was not opened to read file     |
+//  | 0xC0000022                  | data or file attributes.                   |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_DISK_FULL            | The disk is full.                          |
+//  | 0xC000007F                  |                                            |
 //  +-----------------------------+--------------------------------------------+
 //  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
 //  | 0xC0000004                  | does not match the length that is required |
