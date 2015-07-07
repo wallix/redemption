@@ -23,8 +23,6 @@
 
 #include "get_printable_password.hpp"
 #include "cfgloader.hpp"
-#include "config_types/authid.hpp"
-#include "config_types/authid_str.hpp"
 // BASE64 TRY
 // #include "base64.hpp"
 
@@ -42,7 +40,8 @@ struct FieldObserver : public ConfigurationHolder {
      ******************************************************
      */
 
-    using authid_t = config_types::authid_t;
+    using authid_t = unsigned;
+    static constexpr authid_t AUTHID_UNKNOWN = 0;
 
     class BaseField {
         BaseField(const BaseField &) = delete;
@@ -57,7 +56,7 @@ struct FieldObserver : public ConfigurationHolder {
             : asked(false)
             , modified(true)
             , ini(nullptr)
-            , authid(config_types::AUTHID_UNKNOWN)
+            , authid(AUTHID_UNKNOWN)
         {
         }
         virtual ~BaseField(){
@@ -91,9 +90,9 @@ struct FieldObserver : public ConfigurationHolder {
          * link this field to an Inifile
          *******************************
          */
-        void attach_ini(FieldObserver * p_ini, authid_t authid = config_types::AUTHID_UNKNOWN) {
+        void attach_ini(FieldObserver * p_ini, authid_t authid = AUTHID_UNKNOWN) {
             this->ini = p_ini;
-            if (authid != config_types::AUTHID_UNKNOWN
+            if (authid != AUTHID_UNKNOWN
                 && this->ini) {
                 this->authid = authid;
                 this->ini->attach_field(this,authid);
@@ -155,31 +154,6 @@ struct FieldObserver : public ConfigurationHolder {
         virtual void set_from_acl(const char * cstr) = 0;
 
         virtual const char* get_value() = 0;
-
-        const char* get_serialized(char * buff, size_t size, uint32_t password_printing_mode) {
-            const char * key = config_types::string_from_authid(this->authid);
-            int n;
-            if (this->is_asked()) {
-                n = snprintf(buff, size, "%s\nASK\n",key);
-                LOG(LOG_INFO, "sending %s=ASK", key);
-            }
-            else {
-                const char * val         = this->get_value();
-                const char * display_val = val;
-                n = snprintf(buff, size, "%s\n!%s\n", key, val);
-                if ((strncasecmp("password", key, 8) == 0)
-                  ||(strncasecmp("target_password", key, 15) == 0)){
-                    display_val = get_printable_password(val, password_printing_mode);
-                }
-                LOG(LOG_INFO, "sending %s=%s", key, display_val);
-            }
-            if (n < 0 || static_cast<size_t>(n) >= size ) {
-                LOG(LOG_ERR, "Sending Data to ACL Error: Buffer overflow,"
-                    " should have write %u bytes but buffer size is %u bytes", n, size);
-                throw Error(ERR_ACL_MESSAGE_TOO_BIG);
-            }
-            return buff;
-        }
     };
     /*************************************
      * Field which contains a String type
@@ -261,10 +235,6 @@ struct FieldObserver : public ConfigurationHolder {
         }
         virtual void set_from_cstr(const char * cstr) {
             this->set(ulong_from_cstr(cstr));
-        }
-
-        void set_from_level_cstr(const char * cstr) {
-            this->set(level_from_cstr(cstr));
         }
 
         uint32_t get() const {

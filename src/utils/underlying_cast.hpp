@@ -18,30 +18,17 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_SRC_UTILS_CONFIG_TYPES_AUTHID_STR_HPP
-#define REDEMPTION_SRC_UTILS_CONFIG_TYPES_AUTHID_STR_HPP
+#ifndef REDEMPTION_SRC_UTILS_UNDERLYING_CAST_HPP
+#define REDEMPTION_SRC_UTILS_UNDERLYING_CAST_HPP
 
-#include "config_types/authid.hpp"
+#include <type_traits>
 
-namespace config_types {
+template<class E>
+typename std::underlying_type<E>::type & underlying_cast(E & e)
+{ return reinterpret_cast<typename std::underlying_type<E>::type &>(e); }
 
-static inline authid_t authid_from_string(const char * strauthid) {
-    authid_t res = AUTHID_UNKNOWN;
-    for (int i = 0; i < MAX_AUTHID - 1 ; i++) {
-        if (0 == strcmp(authstr[i], strauthid)) {
-            res = static_cast<authid_t>(i + 1);
-            break;
-        }
-    }
-    return res;
-}
-
-static inline const char * string_from_authid(authid_t authid) {
-    if ((authid == AUTHID_UNKNOWN) || (authid >= MAX_AUTHID))
-        return "";
-    return authstr[static_cast<unsigned>(authid) - 1];
-}
-
-}
+template<class E>
+typename std::underlying_type<E>::type underlying_cast(E const & e)
+{ return static_cast<typename std::underlying_type<E>::type>(e); }
 
 #endif

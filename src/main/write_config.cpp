@@ -14,25 +14,21 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2014
+*   Copyright (C) Wallix 2010-2015
 *   Author(s): Jonathan Poelen
 */
-
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBase64
-#include <boost/test/auto_unit_test.hpp>
-
-#define LOGNULL
-//#define LOGPRINT
 
 #include "config_spec.hpp"
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <iomanip>
 #include <locale>
 #include <map>
+
+#include <cerrno>
+#include <cstring>
 
 
 namespace config_writer {
@@ -137,7 +133,7 @@ struct ConfigCppWriter {
     {
         if (bool(a)) {
             this->out() << "        else if (0 == strcmp(key, \"" << name << "\")) {\n"
-            "            config_detail::parse(ini." << this->section_name << "." << varname << ", value);\n"
+            "            parse(this->" << this->section_name << "." << varname << ", value);\n"
             "        }\n";
         }
     }
@@ -174,6 +170,16 @@ struct ConfigCppWriter {
     void write(expr x) { this->out() << x.value; }
     void write(null_fill x) { this->out() << "null_fill()"; }
 
+#define WRITE_ENUM(E) \
+    void write(E x)   \
+    { this->out() << "static_cast<" #E ">(" << underlying_cast(x) << ")"; }
+    WRITE_ENUM(Level)
+    WRITE_ENUM(ColorDepth)
+    WRITE_ENUM(CaptureFlags)
+    WRITE_ENUM(KeyboardLogFlags)
+    WRITE_ENUM(DisableClipboardLogFlags)
+#undef WRITE_ENUM
+
     void write(todo x) { this->tab(); this->out() << "TODO(\"" << x.value << "\")\n"; }
     void write(info x) { this->write(desc{x.value}); }
     void write(desc x) {
@@ -202,7 +208,7 @@ struct ConfigCppWriter {
     enable_if_basefield<T>
     write_body_constructor(ref<type_<T>>, Pack &, std::string const & varname, default_<U> const & d)
     {
-        this->out() << "        this->" << this->section_name << "." << varname << ".set(";
+        this->out() << "    this->" << this->section_name << "." << varname << ".set(";
         this->write(d.value);
         this->out() << ");\n";
     }
@@ -266,7 +272,11 @@ struct ConfigCppWriter {
     template<class T, class U>
     typename std::enable_if<!std::is_base_of<BaseField, T>::value>::type
     write_assignable_default(ref<type_<T>>, default_<U> const & d)
-    { this->out() << " = "; this->write(d.value); }
+    {
+        this->out() << " = {";
+        this->write(d.value);
+        this->out() << "}";
+    }
 
     template<class T, class U>
     void write_assignable_default(ref<type_<T>>, U const &)
@@ -303,6 +313,8 @@ struct ConfigCppWriter {
     WRITE_TYPE(CaptureFlags)
     WRITE_TYPE(ColorDepth)
     WRITE_TYPE(KeyboardLogFlagsField)
+    WRITE_TYPE(ReadOnlyStringField)
+    WRITE_TYPE(DisableClipboardLogFlagsField)
 #undef WRITE_TYPE
 
 #define WRITE_STATIC_STRING(T)        \
@@ -329,64 +341,141 @@ struct ConfigCppWriter {
 
 }
 
-BOOST_AUTO_TEST_CASE(TestConfigSpec)
-{
-    config_writer::ConfigCppWriter writer;
-    config_spec::writer_config_spec(writer);
-    std::cout <<
+
+void write_authid_hpp(std::ostream & out_authid, config_writer::ConfigCppWriter & writer) {
+    out_authid <<
       "enum authid_t {\n"
       "    AUTHID_UNKNOWN = 0,\n"
     ;
     for (auto & body : writer.authids) {
-        std::cout <<
+        out_authid <<
           "    AUTHID_" << body.first << ",\n"
           "#define STRAUTHID_" << body.first << " \"" << body.second << "\"\n"
         ;
     }
-    std::cout <<
+    out_authid <<
       "    MAX_AUTHID\n"
       "};\n"
-      "constexpr char * const authstr[] = {\n"
+      "constexpr char const * const authstr[] = {\n"
     ;
     for (auto & body : writer.authids) {
-        std::cout << "    STRAUTHID_" << body.first << ", // AUTHID_" << body.first << "\n";
+        out_authid << "    STRAUTHID_" << body.first << ", // AUTHID_" << body.first << "\n";
     }
-    std::cout << "};\n\n";
+    out_authid << "};\n\n";
+}
+
+void write_variable_configuration(std::ostream & out_varconf, config_writer::ConfigCppWriter & writer) {
+    out_varconf <<
+        "struct VariablesConfiguration {\n"
+        "    VariablesConfiguration(char const * default_font_name)\n"
+        "    : font(default_font_name)\n"
+        "    {}\n\n"
+    ;
+
     for (auto & body : writer.sections_member) {
         if (body.first.empty()) {
-            std::cout << body.second << "\n";
+            out_varconf << body.second << "\n";
         }
         else {
-            std::cout
-                << "    struct Inifile_" << body.first << " {\n"
-                <<          body.second
-                << "    } " << body.first << ";\n\n"
+            out_varconf <<
+                "    struct Inifile_" << body.first << " {\n" <<
+                         body.second <<
+                "        Inifile_" << body.first << "() = default;\n"
+                "    } " << body.first << ";\n\n"
             ;
         }
     }
-    std::cout <<
-      "\n" <<
-      writer.out_body_ctor_.str() <<
-      "void set_value(Inifile & ini, const char * context, const char * key, const char * value) {\n"
-      "    if (0) {}\n"
+    out_varconf << "};\n";
+}
+
+void config_initialize(std::ostream & out_body, config_writer::ConfigCppWriter & writer) {
+    out_body <<
+        "void Inifile::initialize() {\n" <<
+        writer.out_body_ctor_.str() <<
+        "}\n"
+    ;
+}
+
+void write_config_set_value(std::ostream & out_set_value, config_writer::ConfigCppWriter & writer) {
+    out_set_value <<
+        "void Inifile::set_value(const char * context, const char * key, const char * value) {\n"
+        "    if (0) {}\n"
     ;
     for (auto & body : writer.sections_parser) {
         if (body.second.empty()) {
             continue;
         }
-        std::cout <<
+        out_set_value <<
             "    else if (0 == strcmp(context, \"" << body.first << "\")) {\n"
             "        if (0) {}\n" << body.second << "\n"
-            "        else if (ini.debug.config) {\n"
+            "        else if (this->debug.config) {\n"
             "            LOG(LOG_ERR, \"unknown parameter %s in section [%s]\", key, context);\n"
             "        }\n"
             "    }\n"
         ;
     }
-    std::cout <<
-        "    else if (ini.debug.config) {\n"
+    out_set_value <<
+        "    else if (this->debug.config) {\n"
         "        LOG(LOG_ERR, \"unknown section [%s]\", context);\n"
         "    }\n"
-        "}"
+        "}\n"
     ;
+}
+
+struct SuitableWrite {
+    SuitableWrite(config_writer::ConfigCppWriter & writer, int errnum = 1)
+    : writer(writer)
+    , errnum(errnum)
+    {}
+
+    template<class Fn>
+    SuitableWrite & then(const char * new_filename, Fn fn) {
+        if (!err) {
+            const char * filename = this->filename;
+            if (new_filename && *new_filename && strcmp(this->filename, new_filename)) {
+                this->of.close();
+                this->of.open(new_filename);
+                filename = new_filename;
+            }
+
+            fn(this->of, this->writer);
+            this->err = !bool(this->of);
+            this->filename = filename;
+            ++this->errnum;
+        }
+        return *this;
+    }
+
+    char const * filename = "";
+    config_writer::ConfigCppWriter & writer;
+    std::ofstream of;
+    int errnum;
+    int err = 0;
+};
+
+int main(int ac, char ** av)
+{
+    if (ac < 5) {
+        std::cerr << av[0] << " out-authid.h out-variables_configuration.h out-config_initialize.cpp out-config_set_value.cpp";
+        return 1;
+    }
+
+    config_writer::ConfigCppWriter writer;
+    config_spec::writer_config_spec(writer);
+
+    const char * filename = av[1];
+    std::ofstream out_authid(filename);
+    write_authid_hpp(out_authid, writer);
+
+    SuitableWrite sw(writer);
+    sw.then(av[1], &write_authid_hpp)
+      .then(av[2], &write_variable_configuration)
+      .then(av[3], &config_initialize)
+      .then(av[4], &write_config_set_value)
+    ;
+    if (sw.err) {
+        std::cerr << av[0] << ": " << sw.filename << ": " << strerror(errno) << "\n";
+        return sw.errnum;
+    }
+    return 0;
 }
