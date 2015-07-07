@@ -42,15 +42,11 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     ConfigurationLoader cfg_loader(ini, "/rdpproxy.ini");
     char                temp_path[1024];
 
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
     BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL("medium",                         ini.globals.video_quality.get_cstr());
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -61,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL(Level::low,                       ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
@@ -71,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
-    BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
@@ -105,13 +101,9 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
                                                         ini.video.record_path.c_str());
     BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
                                                         ini.video.record_tmp_path.c_str());
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -180,7 +172,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
-    BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
@@ -226,7 +218,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(600,                              ini.context.opt_height.get());
     BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp.get());
 
-    BOOST_CHECK_EQUAL("",                               ini.context.auth_error_message.c_str());
+    BOOST_CHECK_EQUAL("",                               ini.context.auth_error_message.get_cstr());
 
     BOOST_CHECK_EQUAL(false,                            ini.context.selector.is_asked());
     BOOST_CHECK_EQUAL(false,                            ini.context.selector_current_page.is_asked());
@@ -305,15 +297,11 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     ConfigurationLoader cfg_loader(ini);
     char                temp_path[1024];
 
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
     BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL("medium",                         ini.globals.video_quality.get_cstr());
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -324,7 +312,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL(Level::low,                       ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
@@ -335,7 +323,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
-    BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
@@ -371,13 +359,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
                                                         ini.video.record_tmp_path.c_str());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -443,7 +427,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
-    BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
@@ -578,15 +562,11 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     ConfigurationLoader cfg_loader(ini, oss);
     char                temp_path[1024];
 
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
     BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL("medium",                         ini.globals.video_quality.get_cstr());
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -597,7 +577,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL(Level::low,                       ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
@@ -608,7 +588,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
-    BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
@@ -644,13 +624,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
                                                         ini.video.record_tmp_path.c_str());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -719,7 +695,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
-    BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
@@ -852,15 +828,11 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     Inifile             ini;
     ConfigurationLoader cfg_loader(ini, oss);
 
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(true,                             ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
     BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL("medium",                         ini.globals.video_quality.get_cstr());
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -871,7 +843,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3390,                             ini.globals.port);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL(Level::low,                       ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
@@ -881,7 +853,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
-    BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
@@ -914,13 +886,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.video.record_path.c_str());
     BOOST_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.video.record_tmp_path.c_str());
 
-    BOOST_CHECK_EQUAL(1,                                ini.video.disable_keyboard_log.get());
-    BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_syslog);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::syslog,         ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -989,7 +957,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(1,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.client.disable_tsk_switch_shortcuts.get());
-    BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(true,                             ini.client.persist_bitmap_cache_on_disk);
@@ -1099,15 +1067,11 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     ConfigurationLoader cfg_loader(ini, oss);
     char                temp_path[1024];
 
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
     BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL("medium",                         ini.globals.video_quality.get_cstr());
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -1118,7 +1082,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
@@ -1129,7 +1093,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(3000,                             ini.globals.wab_agent_launch_timeout.get());
     BOOST_CHECK_EQUAL(6000,                             ini.globals.wab_agent_keepalive_timeout.get());
 
-    BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
@@ -1160,13 +1124,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL("/mnt/wab/hash/",                 ini.video.hash_path.c_str());
     BOOST_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.video.record_path.c_str());
     BOOST_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.video.record_tmp_path.c_str());
-    BOOST_CHECK_EQUAL(2,                                ini.video.disable_keyboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
-    BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::wrm,            ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(1,                                ini.video.disable_clipboard_log.get());
-    BOOST_CHECK_EQUAL(true,                             ini.video.disable_clipboard_log_syslog);
+    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::syslog, ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -1235,7 +1195,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
-    BOOST_CHECK_EQUAL(8,                                ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(ColorDepth::depth8,               ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
@@ -1315,15 +1275,11 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     ConfigurationLoader cfg_loader(ini, oss);
     char                temp_path[1024];
 
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
     BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL("medium",                         ini.globals.video_quality.get_cstr());
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -1334,7 +1290,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
-    BOOST_CHECK_EQUAL(2,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL(Level::high,                      ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
@@ -1345,7 +1301,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
-    BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
@@ -1381,13 +1337,9 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
                                                         ini.video.record_tmp_path.c_str());
 
-    BOOST_CHECK_EQUAL(4,                                ini.video.disable_keyboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::ocr,            ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
@@ -1446,7 +1398,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
-    BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
@@ -1536,15 +1488,11 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     ConfigurationLoader cfg_loader(ini, oss);
     char                temp_path[1024];
 
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
     BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL("medium",                         ini.globals.video_quality.get_cstr());
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -1555,7 +1503,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
-    BOOST_CHECK_EQUAL(2,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL(Level::high,                      ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
@@ -1566,7 +1514,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(6000,                             ini.globals.wab_agent_launch_timeout.get());
     BOOST_CHECK_EQUAL(3000,                             ini.globals.wab_agent_keepalive_timeout.get());
 
-    BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
@@ -1602,13 +1550,9 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
                                                         ini.video.record_tmp_path.c_str());
 
-    BOOST_CHECK_EQUAL(4,                                ini.video.disable_keyboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::ocr,            ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
@@ -1667,7 +1611,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
-    BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
@@ -1732,15 +1676,11 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     ConfigurationLoader cfg_loader(ini, oss);
     char                temp_path[1024];
 
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
     BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL("medium",                         ini.globals.video_quality.get_cstr());
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -1751,7 +1691,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3390,                             ini.globals.port);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL(Level::low,                       ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
@@ -1762,7 +1702,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
-    BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
@@ -1798,13 +1738,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
                                                         ini.video.record_tmp_path.c_str());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -1862,7 +1798,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
-    BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
@@ -1926,15 +1862,11 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            );
     cfg_loader.cparse(ini, oss2);
 
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
     BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL("medium",                         ini.globals.video_quality.get_cstr());
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -1945,7 +1877,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3390,                             ini.globals.port);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL(Level::low,                       ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
@@ -1956,7 +1888,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(4000,                             ini.globals.wab_agent_launch_timeout.get());
     BOOST_CHECK_EQUAL(7000,                             ini.globals.wab_agent_keepalive_timeout.get());
 
-    BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
@@ -1992,13 +1924,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
                                                         ini.video.record_tmp_path.c_str());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -2056,7 +1984,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
-    BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(true,                             ini.client.persist_bitmap_cache_on_disk);
@@ -2105,10 +2033,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     ConfigurationLoader cfg_loader(ini);
     char                temp_path[1024];
 
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
 
@@ -2116,7 +2040,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     TODO("video related values should go to [video] section")
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
     BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL("medium",                         ini.globals.video_quality.get_cstr());
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -2127,7 +2051,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL(Level::low,                       ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
@@ -2138,7 +2062,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
-    BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
@@ -2174,13 +2098,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
                                                         ini.video.record_tmp_path.c_str());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -2238,7 +2158,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
-    BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
@@ -2290,15 +2210,11 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     cfg_loader.cparse(ini, ifs2);
 
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
     BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL("medium",                         ini.globals.video_quality.get_cstr());
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -2309,7 +2225,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.globals.glyph_cache);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL(Level::low,                       ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.globals.authip.c_str());
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
@@ -2320,7 +2236,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
-    BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
@@ -2356,13 +2272,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
                                                         ini.video.record_tmp_path.c_str());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
+    BOOST_CHECK_EQUAL(DisableClipboardLogFlags::none,   ini.video.disable_clipboard_log.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
     BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
@@ -2420,7 +2332,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.bogus_user_id);
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
-    BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
@@ -2479,9 +2391,9 @@ BOOST_AUTO_TEST_CASE(TestConfigTools)
     BOOST_CHECK_EQUAL(0,        ulong_from_cstr("0x0000000I"));
     BOOST_CHECK_EQUAL(0,        ulong_from_cstr("I"));
 
-    BOOST_CHECK_EQUAL(0,        level_from_cstr("LoW"));
-    BOOST_CHECK_EQUAL(1,        level_from_cstr("mEdIuM"));
-    BOOST_CHECK_EQUAL(2,        level_from_cstr("High"));
+    BOOST_CHECK_EQUAL(Level::low,    level_from_cstr("LoW"));
+    BOOST_CHECK_EQUAL(Level::medium, level_from_cstr("mEdIuM"));
+    BOOST_CHECK_EQUAL(Level::high,   level_from_cstr("High"));
 
     BOOST_CHECK_EQUAL(3600,     _long_from_cstr("3600"));
     BOOST_CHECK_EQUAL(0,        _long_from_cstr("0"));
@@ -2536,7 +2448,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     ini.context_set_value(AUTHID_AUTH_ERROR_MESSAGE,    "Message d'erreur.");
 
-    BOOST_CHECK_EQUAL("Message d'erreur.", ini.context.auth_error_message.c_str());
+    BOOST_CHECK_EQUAL("Message d'erreur.", ini.context.auth_error_message.get_cstr());
 
     BOOST_CHECK_EQUAL("Message d'erreur.", ini.context_get_value(AUTHID_AUTH_ERROR_MESSAGE));
 
@@ -2933,14 +2845,18 @@ BOOST_AUTO_TEST_CASE(TestConfigFieldAuthid)
     ConfigurationLoader cfg_loader(ini);
     // Test get_serialized()
     char tmp[256];
+    std::size_t sz = sizeof(tmp);
+
     BOOST_CHECK_EQUAL(AUTHID_SELECTOR,          ini.get_field_list().at(AUTHID_SELECTOR)->get_authid());
-    BOOST_CHECK_EQUAL("login\nASK\n",           ini.globals.auth_user.get_serialized(tmp, sizeof(tmp), ini.debug.password));
+    BOOST_CHECK_EQUAL("login\nASK\n",
+                     (ini.serialized(tmp, sz, ini.globals.auth_user, ini.debug.password), tmp));
     ini.globals.auth_user.set_from_cstr("someuser");
-    BOOST_CHECK_EQUAL("login\n!someuser\n",     ini.globals.auth_user.get_serialized(tmp, sizeof(tmp), ini.debug.password));
+    BOOST_CHECK_EQUAL("login\n!someuser\n",
+                     (ini.serialized(tmp, sz, ini.globals.auth_user, ini.debug.password), tmp));
 
     ini.context.authchannel_target.set_from_cstr("TEST_TARGET");
-    BOOST_CHECK_EQUAL("auth_channel_target\n!TEST_TARGET\n",
-                      ini.context.authchannel_target.get_serialized(tmp, sizeof(tmp), ini.debug.password));
+    BOOST_CHECK_EQUAL("authchannel_target\n!TEST_TARGET\n",
+                     (ini.serialized(tmp, sz, ini.context.authchannel_target, ini.debug.password), tmp));
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigFieldGetValue)

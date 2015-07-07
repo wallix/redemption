@@ -29,6 +29,7 @@
 
 #include "stream.hpp"
 #include "config.hpp"
+#include "authid.hpp"
 #include "transport.hpp"
 #include "translation.hpp"
 #include "get_printable_password.hpp"
@@ -159,10 +160,10 @@ public:
 
     void out_item_new(Stream & stream, Inifile::BaseField * bfield)
     {
-        char tmp[65536];
-        const char * serialized = bfield->get_serialized(tmp, sizeof(tmp), this->ini->debug.password);
+        char buff[65536];
+        int const n = this->ini->serialized(buff, sizeof(buff), *bfield, this->ini->debug.password);
         bfield->use();
-        stream.out_copy_bytes(serialized,strlen(serialized));
+        stream.out_copy_bytes(buff, n);
     }
 
     //void send_new(std::set<Inifile::BaseField *>& list)

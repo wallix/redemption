@@ -31,6 +31,8 @@
 #include <cstddef>
 #include <cerrno>
 
+#include <string>
+
 #include "log.hpp"
 #include "error.hpp"
 

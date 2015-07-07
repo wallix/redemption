@@ -24,21 +24,15 @@
 #include <iosfwd>
 #include <vector>
 
-#include "config_types/types.hpp"
+#include "configs/types.hpp"
 
 #include "theme.hpp"
 #include "font.hpp"
 #include "redirection_info.hpp"
 
-// namespace config_detail {
-//     void parse(CaptureFlags & f, const char * value) {
-//         f = static_cast<CaptureFlags>(strtol(value, nullptr, 0) & static_cast<unsigned>(CaptureFlags::FULL));
-//     }
-// }
-
 namespace config_spec {
 
-using namespace config_types;
+using namespace configs;
 
 struct real_name { char const * name; };
 struct str_authid { char const * name; };
@@ -127,7 +121,7 @@ void writer_config_spec(Writer && w)
 
     w.start_section("globals");
     {
-        w.field(type_<bool>(), "capture_chunk");
+        w.field(type_<BoolField>(), "capture_chunk");
         w.sep();
         w.field(type_<StringField>(), "auth_user", linked, attached, asked, str_authid{"login"});
         w.field(type_<StringField>(), "host", linked, attached, str_authid{"ip_client"});
@@ -143,7 +137,7 @@ void writer_config_spec(Writer && w)
         w.field(A, type_<unsigned>(), "port", set(3389));
         w.field(A, type_<bool>(), "nomouse", set(false));
         w.field(A, type_<bool>(), "notimestamp", set(false));
-        w.field(A, type_<Level>(), "encryptionLevel", rdp_level_desc, set(0));
+        w.field(A, type_<Level>(), "encryptionLevel", rdp_level_desc, set(Level::low));
         w.field(A, type_<StaticIpString>(), "authip", set("127.0.0.1"));
         w.field(A, type_<unsigned>(), "authport", set(3350));
         w.sep();
@@ -166,12 +160,12 @@ void writer_config_spec(Writer && w)
         w.field(A, type_<StringField>(), "codec_id", attached, set("flv"), def_authid{"opt_codec_id"});
         w.field(H, type_<BoolField>(), "movie", attached, set(false), def_authid{"opt_movie"}, str_authid{"is_rec"});
         w.field(A, type_<StringField>(), "movie_path", attached, def_authid{"opt_movie_path"}, str_authid{"rec_patch"});
-        w.field(A, type_<LevelField>(), "video_quality", rdp_level_desc, todo{"this could be some kind of enumeration"}, attached, set("medium"));
+        w.field(A, type_<LevelField>(), "video_quality", rdp_level_desc, todo{"this could be some kind of enumeration"}, attached, set(Level::medium));
         w.field(A, type_<bool>(), "enable_bitmap_update", desc{"Support of Bitmap Update."}, set(true));
         w.sep();
         w.field(V, type_<bool>(), "enable_close_box", desc{"Show close screen."}, set(true));
         w.field(A, type_<bool>(), "enable_osd", set(true));
-        w.field(type_<bool>(), "enable_osd_display_remote_target", set(true));
+        w.field(V, type_<bool>(), "enable_osd_display_remote_target", set(true));
         w.sep();
         w.field(A, type_<BoolField>(), "enable_wab_agent", attached, set(false), def_authid{"opt_wabagent"}, str_authid{"wab_agent"});
         w.field(A, type_<UnsignedField>(), "wab_agent_launch_timeout", attached, set(0), def_authid{"opt_wabagent_launch_timeout"});
@@ -210,7 +204,7 @@ void writer_config_spec(Writer && w)
             "  15: 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)\n"
             "  16: 16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)\n"
             "  24: 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)"
-        }, set(24));
+        }, set(ColorDepth::depth24));
         w.sep();
         w.field(A, type_<bool>(), "persistent_disk_bitmap_cache", desc{"Persistent Disk Bitmap Cache on the front side."}, set(false));
         w.field(A, type_<bool>(), "cache_waiting_list", desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(true));
@@ -267,7 +261,7 @@ void writer_config_spec(Writer && w)
         w.sep();
         w.field(A, type_<UnsignedField>(), "client_device_announce_timeout", attached, set(1000), def_authid{"opt_client_device_announce_timeout"});
         w.sep();
-        w.field(type_<StringField>(), "proxy_managed_drives", attached, def_authid{"opt_proxy_managed_drives"});
+        w.field(V, type_<StringField>(), "proxy_managed_drives", attached, def_authid{"opt_proxy_managed_drives"});
     }
     w.stop_section();
 
@@ -313,7 +307,7 @@ void writer_config_spec(Writer && w)
             "  4: FLV\n"
             "  8: OCR\n"
             " 16: OCR2"
-        }, set(3));
+        }, set(CaptureFlags::png | CaptureFlags::wrm));
         w.sep();
         w.sep();
         w.field(A, type_<std::string>(), "ocr_locale", desc{"latin (default) or cyrillic"});
@@ -359,18 +353,17 @@ void writer_config_spec(Writer && w)
         w.field(type_<bool>(), "inactivity_pause", set(false));
         w.field(type_<unsigned>(), "inactivity_timeout", set(300));
         w.sep();
-        w.field(type_<KeyboardLogFlagsField>{}, "disable_keyboard_log", desc{
+        w.field(V, type_<KeyboardLogFlagsField>{}, "disable_keyboard_log", desc{
             "Disable keyboard log:\n"
             "  1: disable keyboard log in syslog\n"
             "  2: disable keyboard log in recorded sessions\n"
             "  4: disable keyboard log in META files"
-        }, attached, set(0), linked);
+        }, attached, linked);
         w.sep();
-        w.field(type_<UnsignedField>(), "disable_clipboard_log", desc{
+        w.field(V, type_<DisableClipboardLogFlagsField>(), "disable_clipboard_log", desc{
             "Disable clipboard log:\n"
             "  1: disable clipboard log in syslog"
-        }, attached, set(0));
-        w.field(type_<bool>(), "disable_clipboard_log_syslog", set(false));
+        }, attached);
         w.sep();
         w.field(H, type_<UnsignedField>(), "rt_display", attached, set(0));
         w.sep();
@@ -437,7 +430,7 @@ void writer_config_spec(Writer && w)
 
     w.start_section("translation");
     {
-        w.field(A, type_<LanguageField>{}, "language", set("en"), attached);
+        w.field(A, type_<LanguageField>{}, "language", set(Language::en), attached);
     }
     w.stop_section();
 
@@ -459,11 +452,11 @@ void writer_config_spec(Writer && w)
         w.field(type_<UnsignedField>(), "opt_height", linked, set(600), attached, str_authid{"height"});
         w.field(type_<UnsignedField>(), "opt_width", linked, set(800), attached, str_authid{"width"});
         w.sep();
-        w.field(type_<std::string>(), "auth_error_message", info{
+        w.field(type_<ReadOnlyStringField>(), "auth_error_message", info{
             "auth_error_message is left as std::string type\n"
             "because SocketTransport and ReplayMod take it as argument on\n"
             "constructor and modify it as a std::string"
-        });
+        }, attached, used);
         w.sep();
         w.field(type_<BoolField>(), "selector", linked, set(false), attached);
         w.field(type_<UnsignedField>(), "selector_current_page", linked, set(1), attached);
@@ -482,9 +475,9 @@ void writer_config_spec(Writer && w)
         w.sep();
         w.field(type_<StringField>(), "reporting", linked, attached);
         w.sep();
-        w.field(type_<StringField>(), "auth_channel_answer", attached);
-        w.field(type_<StringField>(), "auth_channel_result", linked, attached);
-        w.field(type_<StringField>(), "auth_channel_target", linked, attached);
+        w.field(type_<StringField>(), "authchannel_answer", attached);
+        w.field(type_<StringField>(), "authchannel_result", linked, attached);
+        w.field(type_<StringField>(), "authchannel_target", linked, attached);
         w.sep();
         w.field(type_<StringField>(), "message", attached);
         w.field(type_<StringField>(), "pattern_kill", attached);

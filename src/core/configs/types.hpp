@@ -24,12 +24,14 @@
 #include "parser.hpp"
 #include "fileutils.hpp"
 #include "basefield.hpp"
-#include "config_types/authid.hpp"
+#include "underlying_cast.hpp"
 
-#include <cstddef>
+#include <iosfwd>
 #include <type_traits>
 
-namespace config_types {
+#include <cstddef>
+
+namespace configs {
 
 using BaseField = FieldObserver::BaseField;
 using StringField = FieldObserver::StringField;
@@ -181,17 +183,19 @@ private:
     T x_;
 };
 
-enum class Level : unsigned { low, medium, high, NB };
 
-/// Field which contains an Level type
-class LevelField : public BaseField {
-    Level data;
+
+template<class Enum>
+class FlagsField : public BaseField
+{
+    Enum data;
     char buff[20];
+
 public:
-    LevelField() : data(Level::low) {
+    FlagsField() : data(Enum::none) {
     }
 
-    void set(Level that) {
+    void set(Enum that) {
         if (this->data != that || this->asked) {
             this->modify();
             this->data = that;
@@ -201,153 +205,14 @@ public:
 
     virtual void set_from_acl(const char * cstr) {
         this->modify_from_acl();
-        this->data = static_cast<Level>(ulong_from_cstr(cstr));
+        this->data = static_cast<Enum>(ulong_from_cstr(cstr)) & Enum::FULL;
         this->asked = false;
     }
     virtual void set_from_cstr(const char * cstr) {
-        this->set(static_cast<Level>(ulong_from_cstr(cstr)));
+        this->set(static_cast<Enum>(ulong_from_cstr(cstr)) & Enum::FULL);
     }
 
-    Level get() const {
-        return this->data;
-    }
-
-    virtual const char * get_value() {
-        if (this->is_asked()) {
-            return "ASK";
-        }
-        snprintf(buff, sizeof(buff), "%u", this->data);
-        return buff;
-    }
-};
-
-enum class Language : unsigned { en, fr, NB };
-
-/// Field which contains a Language type
-class LanguageField : public BaseField {
-protected:
-    Language data;
-public:
-    LanguageField() : data(Language::NB) {
-    }
-
-    void set(Language lang) {
-        if (static_cast<unsigned>(lang) < static_cast<unsigned>(Language::NB)) {
-            return ;
-        }
-        if (this->asked || this->data != lang) {
-            this->modify();
-            this->data = lang;
-        }
-        this->asked = false;
-    }
-
-    virtual void set_from_acl(const char * cstr) {
-        Language lang = this->to_language(cstr);
-        if (lang == Language::NB) {
-            return ;
-        }
-        this->modify_from_acl();
-        this->data = lang;
-        this->asked = false;
-    }
-    virtual void set_from_cstr(const char * cstr) {
-        Language lang = this->to_language(cstr);
-        if (lang == Language::NB) {
-            return ;
-        }
-        if (this->asked || this->data != lang) {
-            this->modify();
-            this->data = lang;
-        }
-        this->asked = false;
-    }
-
-    Language get() const {
-        return static_cast<unsigned>(this->data) < static_cast<unsigned>(Language::NB)
-            ? this->data
-            : Language::en;
-    }
-
-    virtual const char * get_value() {
-        if (this->is_asked()) {
-            return "ASK";
-        }
-        return Language::fr == this->data ? "fr" : "en";
-    }
-
-private:
-    Language to_language(char const * cstr) const {
-        if (0 == strcmp(cstr, "en")) {
-            return Language::en;
-        }
-        if (0 == strcmp(cstr, "fr")) {
-            return Language::fr;
-        }
-        Language::NB;
-    }
-};
-
-enum class CaptureFlags : unsigned {
-    none,
-    png = 1 << 1,
-    wrm = 1 << 2,
-    flv = 1 << 3,
-    ocr = 1 << 4,
-    ocr2 = 1 << 5,
-    FULL = ((1 << 6) - 1)
-};
-
-CaptureFlags operator | (CaptureFlags x, CaptureFlags y) {
-    return static_cast<CaptureFlags>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
-}
-
-CaptureFlags operator & (CaptureFlags x, CaptureFlags y) {
-    return static_cast<CaptureFlags>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
-}
-
-enum class KeyboardLogFlags : unsigned {
-    none,
-    syslog = 1 << 1,
-    wrm = 1 << 2,
-    ocr = 1 << 3,
-    FULL = ((1 << 4) - 1)
-};
-
-KeyboardLogFlags operator | (KeyboardLogFlags x, KeyboardLogFlags y) {
-    return static_cast<KeyboardLogFlags>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
-}
-
-KeyboardLogFlags operator & (KeyboardLogFlags x, KeyboardLogFlags y) {
-    return static_cast<KeyboardLogFlags>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
-}
-
-/// Field which contains an KeyboardLogFlags type
-class KeyboardLogFlagsField : public BaseField {
-    KeyboardLogFlags data;
-    char buff[20];
-public:
-    KeyboardLogFlagsField() : data(KeyboardLogFlags::none) {
-    }
-
-    void set(KeyboardLogFlags that) {
-        if (this->data != that || this->asked) {
-            this->modify();
-            this->data = that;
-        }
-        this->asked = false;
-    }
-
-    virtual void set_from_acl(const char * cstr) {
-        this->modify_from_acl();
-        this->data = static_cast<KeyboardLogFlags>(ulong_from_cstr(cstr)) & KeyboardLogFlags::FULL;
-        this->asked = false;
-    }
-    virtual void set_from_cstr(const char * cstr) {
-        this->set(static_cast<KeyboardLogFlags>(ulong_from_cstr(cstr)) & KeyboardLogFlags::FULL);
-    }
-
-    KeyboardLogFlags get() const {
+    Enum get() const {
         return this->data;
     }
 
@@ -360,8 +225,235 @@ public:
     }
 };
 
-enum class ColorDepth { depth8, depth15, depth16, depth24/*, depth32*/, NB };
+
+template<class Enum, class Traits>
+class EnumField : public BaseField
+{
+protected:
+    Enum data;
+
+public:
+    EnumField() : data(Traits::get_default()) {
+    }
+
+    void set(Enum lang) {
+        if (!Traits::valid(lang)) {
+            return ;
+        }
+        if (this->asked || this->data != lang) {
+            this->modify();
+            this->data = lang;
+        }
+        this->asked = false;
+    }
+    void set(const char * cstr) {
+        this->set(Traits::cstr_to_enum(cstr));
+    }
+
+    virtual void set_from_acl(const char * cstr) {
+        Enum lang = Traits::cstr_to_enum(cstr);
+        if (!Traits::valid(lang)) {
+            return ;
+        }
+        this->modify_from_acl();
+        this->data = lang;
+        this->asked = false;
+    }
+    virtual void set_from_cstr(const char * cstr) {
+        this->set(Traits::cstr_to_enum(cstr));
+    }
+
+    Enum get() const {
+        return Traits::valid(this->data) ? this->data : Traits::get_default();
+    }
+
+    virtual const char * get_value() {
+        if (this->is_asked()) {
+            return "ASK";
+        }
+        return Traits::to_string(this->data);
+    }
+};
+
+
+#define MK_ENUM_IO(E)                                                                 \
+    template<class Ch, class Tr>                                                      \
+    std::basic_ostream<Ch, Tr> & operator << (std::basic_ostream<Ch, Tr> & os, E e) { \
+        return os << underlying_cast(e);                                              \
+    }
+
+
+#define MK_ENUM_FLAG_FN(E)                                                          \
+    MK_ENUM_IO(E)                                                                   \
+                                                                                    \
+    inline E operator | (E x, E y) {                                                \
+        return static_cast<E>(static_cast<unsigned>(x) | static_cast<unsigned>(y)); \
+    }                                                                               \
+                                                                                    \
+    inline E operator & (E x, E y) {                                                \
+        return static_cast<E>(static_cast<unsigned>(x) & static_cast<unsigned>(y)); \
+    }
+
+
+
+enum class Level : unsigned { low, medium, high, NB };
+
+MK_ENUM_IO(Level)
+
+inline Level level_from_cstr(char const * value) {
+    return
+        0 == strcasecmp("medium", value) ? Level::medium
+      : 0 == strcasecmp("high",value) ? Level::high
+      : Level::low
+    ;
+}
+
+struct LevelFieldTraits {
+    static Level get_default() { return Level::low; }
+    static bool valid(Level) { return true; }
+    static Level cstr_to_enum(char const * cstr) { return level_from_cstr(cstr); }
+    static char const * to_string(Level e) {
+        switch (e) {
+            case Level::medium: return "1";
+            case Level::high: return "2";
+            default: return "0";
+        }
+    }
+};
+
+using LevelField = EnumField<Level, LevelFieldTraits>;
+
+
+enum class Language : unsigned { en, fr, NB };
+
+MK_ENUM_IO(Language)
+
+struct LanguageFieldTraits {
+    static Language get_default() { return Language::NB; }
+    static bool valid(Language lang) { return underlying_cast(lang) < underlying_cast(Language::NB); }
+    static Language cstr_to_enum(char const * cstr) {
+        if (0 == strcmp(cstr, "en")) {
+            return Language::en;
+        }
+        if (0 == strcmp(cstr, "fr")) {
+            return Language::fr;
+        }
+        return Language::NB;
+    }
+    static char const * to_string(Language lang) { return Language::fr == lang ? "fr" : "en"; }
+};
+
+using LanguageField = EnumField<Language, LanguageFieldTraits>;
+
+
+enum class CaptureFlags : unsigned {
+    none,
+    png = 1 << 0,
+    wrm = 1 << 1,
+    flv = 1 << 2,
+    ocr = 1 << 3,
+    ocr2 = 1 << 4,
+    FULL = ((1 << 5) - 1)
+};
+MK_ENUM_FLAG_FN(CaptureFlags)
+
+
+enum class KeyboardLogFlags : unsigned {
+    none,
+    syslog = 1 << 0,
+    wrm = 1 << 1,
+    ocr = 1 << 2,
+    FULL = ((1 << 3) - 1)
+};
+MK_ENUM_FLAG_FN(KeyboardLogFlags)
+
+using KeyboardLogFlagsField = FlagsField<KeyboardLogFlags>;
+
+
+enum class DisableClipboardLogFlags : unsigned {
+    none,
+    syslog = 1 << 0,
+    FULL = ((1 << 1) - 1)
+};
+MK_ENUM_FLAG_FN(DisableClipboardLogFlags)
+
+using DisableClipboardLogFlagsField = FlagsField<DisableClipboardLogFlags>;
+
+
+enum class ColorDepth : unsigned { depth8, depth15, depth16, depth24/*, depth32*/, NB };
+
+MK_ENUM_IO(ColorDepth)
+
+inline ColorDepth color_depth_from_cstr(char const * value) {
+    switch (ulong_from_cstr(value)) {
+        case 8: return ColorDepth::depth8;
+        case 15: return ColorDepth::depth15;
+        case 16: return ColorDepth::depth16;
+        default:
+        case 24: return ColorDepth::depth24;
+        //case 32: x = ColorDepth::depth32;
+    }
+}
+
+
+#undef MK_ENUM_IO
+#undef MK_ENUM_FLAG_FN
+
+
+class ReadOnlyStringField : public BaseField {
+protected:
+    std::string data;
+public:
+    ReadOnlyStringField() = default;
+
+    void set(std::string const & string) {
+        this->set_from_cstr(string.c_str());
+    }
+    void set_empty() {
+        if (!this->data.empty()){
+            this->modify();
+            this->data.clear();
+        }
+    }
+    virtual void set_from_acl(const char * cstr) {
+        this->modify_from_acl();
+        this->data = cstr;
+        this->asked = false;
+    }
+    virtual void set_from_cstr(const char * cstr) {
+        this->data = cstr;
+    }
+    bool is_empty(){
+        return this->data.empty();
+    }
+    const std::string & get() const {
+        return this->data;
+    }
+    std::string & get() {
+        return this->data;
+    }
+
+    const char * get_cstr() const {
+        return this->get().c_str();
+    }
+
+    virtual const char * get_value() {
+        if (this->is_asked()) {
+            return "ASK";
+        }
+        return this->get().c_str();
+    }
+};
 
 }
+
+using configs::Level;
+using configs::Language;
+using configs::ColorDepth;
+using configs::CaptureFlags;
+using configs::KeyboardLogFlags;
+using configs::DisableClipboardLogFlags;
+
+using configs::level_from_cstr;
 
 #endif
