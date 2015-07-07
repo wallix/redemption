@@ -79,15 +79,13 @@ public:
         rdpdr::DeviceIORequest const & device_io_request,
         rdpdr::DeviceCreateRequest const & device_create_request,
         int drive_access_mode, const char * path, Stream & in_stream,
-        bool & out_drive_created,
-        ToServerSender & to_server_sender,
+        bool & out_drive_created, ToServerSender & to_server_sender,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
         uint32_t verbose) = 0;
 
     virtual void ProcessServerCloseDriveRequest(
         rdpdr::DeviceIORequest const & device_io_request, const char * path,
-        Stream & in_stream,
-        ToServerSender & to_server_sender,
+        Stream & in_stream, ToServerSender & to_server_sender,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
         uint32_t verbose) = 0;
 
@@ -1974,22 +1972,6 @@ public:
         return (this->wab_agent_drive_id != INVALID_MANAGED_DRIVE_ID);
     }
 
-    // "WABLNCH", "/wablnch"
-
-/*
-private:
-    const char * get_drive_directory_path_by_id(uint32_t DeviceId) const {
-        for (managed_drive_collection_type::const_iterator iter = this->managed_drives.begin();
-             iter != this->managed_drives.end(); ++iter) {
-            if (DeviceId == std::get<0>(*iter)) {
-                return std::get<2>(*iter).c_str();
-            }
-        }
-
-        throw Error(ERR_RDP_PROTOCOL);
-    }
-*/
-
 public:
     bool HasManagedDrive() const {
         return (this->managed_drives.size() > 0);
@@ -2008,11 +1990,10 @@ public:
         return false;
     }
 
-
 private:
     void ProcessServerCreateDriveRequest(
-            rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            int drive_access_mode, Stream & in_stream,
+            rdpdr::DeviceIORequest const & device_io_request,
+            const char * path, int drive_access_mode, Stream & in_stream,
             ToServerSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
@@ -2045,7 +2026,9 @@ private:
             is_directory = ((sb.st_mode & S_IFMT) == S_IFDIR);
         }
         else {
-            is_directory = (device_create_request.CreateOptions() & smb2::FILE_DIRECTORY_FILE);
+            is_directory =
+                (device_create_request.CreateOptions() &
+                 smb2::FILE_DIRECTORY_FILE);
         }
 
         std::unique_ptr<ManagedFileSystemObject> managed_file_system_object;
@@ -2062,194 +2045,9 @@ private:
                 out_asynchronous_task, verbose);
         if (drive_created) {
             this->managed_file_system_objects.push_back(std::make_tuple(
-                static_cast<uint32_t>(managed_file_system_object->FileDescriptor()),
-                std::move(managed_file_system_object)
+                    static_cast<uint32_t>(managed_file_system_object->FileDescriptor()),
+                    std::move(managed_file_system_object)
                 ));
-        }
-    }
-
-    void ProcessServerCloseDriveRequest(
-            rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream,
-            ToServerSender & to_server_sender,
-            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
-        for (managed_file_system_object_collection_type::iterator iter = this->managed_file_system_objects.begin();
-             iter != this->managed_file_system_objects.end(); ++iter) {
-            if (device_io_request.FileId() == std::get<0>(*iter)) {
-                std::get<1>(*iter)->ProcessServerCloseDriveRequest(
-                    device_io_request, path, in_stream,
-                    to_server_sender, out_asynchronous_task, verbose);
-                this->managed_file_system_objects.erase(iter);
-                break;
-            }
-        }
-    }
-
-    void ProcessServerDriveReadRequest(
-            rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream,
-            ToServerSender & to_server_sender,
-            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
-        rdpdr::DeviceReadRequest device_read_request;
-
-        device_read_request.receive(in_stream);
-        if (verbose) {
-            device_read_request.log(LOG_INFO);
-        }
-
-        for (managed_file_system_object_collection_type::iterator iter = this->managed_file_system_objects.begin();
-             iter != this->managed_file_system_objects.end(); ++iter) {
-            if (device_io_request.FileId() == std::get<0>(*iter)) {
-                std::get<1>(*iter)->ProcessServerDriveReadRequest(
-                    device_io_request, device_read_request, path, in_stream,
-                    to_server_sender, out_asynchronous_task, verbose);
-                break;
-            }
-        }
-    }
-
-    void ProcessServerDriveControlRequest(
-            rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream,
-            ToServerSender & to_server_sender,
-            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
-        rdpdr::DeviceControlRequest device_control_request;
-
-        device_control_request.receive(in_stream);
-        if (verbose) {
-            device_control_request.log(LOG_INFO);
-        }
-
-        for (managed_file_system_object_collection_type::iterator iter = this->managed_file_system_objects.begin();
-             iter != this->managed_file_system_objects.end(); ++iter) {
-            if (device_io_request.FileId() == std::get<0>(*iter)) {
-                std::get<1>(*iter)->ProcessServerDriveControlRequest(
-                    device_io_request, device_control_request, path, in_stream,
-                    to_server_sender, out_asynchronous_task, verbose);
-                break;
-            }
-        }
-    }
-
-    void ProcessServerDriveQueryVolumeInformationRequest(
-            rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream,
-            ToServerSender & to_server_sender,
-            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
-        rdpdr::ServerDriveQueryVolumeInformationRequest
-            server_drive_query_volume_information_request;
-
-        server_drive_query_volume_information_request.receive(in_stream);
-        if (verbose) {
-            server_drive_query_volume_information_request.log(LOG_INFO);
-        }
-
-        for (managed_file_system_object_collection_type::iterator iter = this->managed_file_system_objects.begin();
-             iter != this->managed_file_system_objects.end(); ++iter) {
-            if (device_io_request.FileId() == std::get<0>(*iter)) {
-                std::get<1>(*iter)->ProcessServerDriveQueryVolumeInformationRequest(
-                    device_io_request, server_drive_query_volume_information_request, path,
-                    in_stream, to_server_sender, out_asynchronous_task, verbose);
-                break;
-            }
-        }
-    }
-
-    void ProcessServerDriveQueryInformationRequest(
-            rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream,
-            ToServerSender & to_server_sender,
-            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
-        rdpdr::ServerDriveQueryInformationRequest
-            server_drive_query_information_request;
-
-        server_drive_query_information_request.receive(in_stream);
-        if (verbose) {
-            server_drive_query_information_request.log(LOG_INFO);
-        }
-
-        for (managed_file_system_object_collection_type::iterator iter = this->managed_file_system_objects.begin();
-             iter != this->managed_file_system_objects.end(); ++iter) {
-            if (device_io_request.FileId() == std::get<0>(*iter)) {
-                std::get<1>(*iter)->ProcessServerDriveQueryInformationRequest(
-                    device_io_request, server_drive_query_information_request, path,
-                    in_stream, to_server_sender, out_asynchronous_task, verbose);
-                break;
-            }
-        }
-    }
-
-    void ProcessServerDriveWriteRequest(
-            rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            int drive_access_mode, bool first_chunk, Stream & in_stream,
-            ToServerSender & to_server_sender,
-            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
-        for (managed_file_system_object_collection_type::iterator iter = this->managed_file_system_objects.begin();
-             iter != this->managed_file_system_objects.end(); ++iter) {
-            if (device_io_request.FileId() == std::get<0>(*iter)) {
-                std::get<1>(*iter)->ProcessServerDriveWriteRequest(
-                    device_io_request, path,
-                    drive_access_mode, first_chunk, in_stream, to_server_sender,
-                    out_asynchronous_task, verbose);
-                break;
-            }
-        }
-    }
-
-    void ProcessServerDriveSetInformationRequest(
-            rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            int drive_access_mode, Stream & in_stream,
-            ToServerSender & to_server_sender,
-            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
-        rdpdr::ServerDriveSetInformationRequest
-            server_drive_set_information_request;
-
-        server_drive_set_information_request.receive(in_stream);
-        if (verbose) {
-            server_drive_set_information_request.log(LOG_INFO);
-        }
-
-        for (managed_file_system_object_collection_type::iterator iter = this->managed_file_system_objects.begin();
-             iter != this->managed_file_system_objects.end(); ++iter) {
-            if (device_io_request.FileId() == std::get<0>(*iter)) {
-                std::get<1>(*iter)->ProcessServerDriveSetInformationRequest(
-                    device_io_request, server_drive_set_information_request, path,
-                    drive_access_mode, in_stream, to_server_sender,
-                    out_asynchronous_task, verbose);
-                break;
-            }
-        }
-    }
-
-    void ProcessServerDriveQueryDirectoryRequest(
-            rdpdr::DeviceIORequest const & device_io_request, const char * path,
-            Stream & in_stream,
-            ToServerSender & to_server_sender,
-            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
-        rdpdr::ServerDriveQueryDirectoryRequest
-            server_drive_query_directory_request;
-
-        server_drive_query_directory_request.receive(in_stream);
-        if (verbose) {
-            server_drive_query_directory_request.log(LOG_INFO);
-        }
-
-        for (managed_file_system_object_collection_type::iterator iter = this->managed_file_system_objects.begin();
-             iter != this->managed_file_system_objects.end(); ++iter) {
-            if (device_io_request.FileId() == std::get<0>(*iter)) {
-                std::get<1>(*iter)->ProcessServerDriveQueryDirectoryRequest(
-                    device_io_request, server_drive_query_directory_request, path,
-                    in_stream, to_server_sender, out_asynchronous_task, verbose);
-                break;
-            }
         }
     }
 
@@ -2265,17 +2063,36 @@ public:
         if (DeviceId < FIRST_MANAGED_DRIVE_ID) {
             return;
         }
-        managed_drive_collection_type::iterator iter;
-        for (iter = this->managed_drives.begin();
-             iter != this->managed_drives.end(); ++iter) {
-            if (DeviceId == std::get<0>(*iter)) {
-                break;
+        managed_drive_collection_type::iterator drive_iter;
+        for (drive_iter = this->managed_drives.begin();
+             (drive_iter != this->managed_drives.end()) &&
+                 (DeviceId != std::get<0>(*drive_iter));
+             ++drive_iter);
+        if (drive_iter == this->managed_drives.end()) {
+            LOG(LOG_WARNING,
+                "FileSystemDriveManager::ProcessDeviceIORequest: "
+                    "Unknown device. DeviceId=%u",
+                DeviceId);
+            return;
+        }
+
+        const std::string path              = std::get<2>(*drive_iter);
+        const int         drive_access_mode = std::get<3>(*drive_iter);
+
+        managed_file_system_object_collection_type::iterator file_iter;
+        if (device_io_request.MajorFunction() != rdpdr::IRP_MJ_CREATE) {
+            for (file_iter = this->managed_file_system_objects.begin();
+                 (file_iter != this->managed_file_system_objects.end()) &&
+                     (device_io_request.FileId() != std::get<0>(*file_iter));
+                 ++file_iter);
+            if (file_iter == this->managed_file_system_objects.end()) {
+                LOG(LOG_WARNING,
+                    "FileSystemDriveManager::ProcessDeviceIORequest: "
+                        "Unknown file. FileId=%u",
+                    device_io_request.FileId());
+                return;
             }
         }
-        if (iter == this->managed_drives.end()) { return; }
-
-        const std::string path              = std::get<2>(*iter);
-        const int         drive_access_mode = std::get<3>(*iter);
 
         switch (device_io_request.MajorFunction()) {
             case rdpdr::IRP_MJ_CREATE:
@@ -2297,9 +2114,10 @@ public:
                             "Server Close Drive Request");
                 }
 
-                this->ProcessServerCloseDriveRequest(device_io_request,
-                    path.c_str(), in_stream,
+                std::get<1>(*file_iter)->ProcessServerCloseDriveRequest(
+                    device_io_request, path.c_str(), in_stream,
                     to_server_sender, out_asynchronous_task, verbose);
+                this->managed_file_system_objects.erase(file_iter);
             break;
 
             case rdpdr::IRP_MJ_READ:
@@ -2309,9 +2127,19 @@ public:
                             "Server Drive Read Request");
                 }
 
-                this->ProcessServerDriveReadRequest(device_io_request,
-                    path.c_str(), in_stream, to_server_sender,
-                    out_asynchronous_task, verbose);
+                {
+                    rdpdr::DeviceReadRequest device_read_request;
+
+                    device_read_request.receive(in_stream);
+                    if (verbose) {
+                        device_read_request.log(LOG_INFO);
+                    }
+
+                    std::get<1>(*file_iter)->ProcessServerDriveReadRequest(
+                        device_io_request, device_read_request, path.c_str(),
+                        in_stream, to_server_sender, out_asynchronous_task,
+                        verbose);
+                }
             break;
 
             case rdpdr::IRP_MJ_WRITE:
@@ -2321,9 +2149,10 @@ public:
                             "Server Drive Write Request");
                 }
 
-                this->ProcessServerDriveWriteRequest(device_io_request,
-                    path.c_str(), drive_access_mode, first_chunk, in_stream,
-                    to_server_sender, out_asynchronous_task, verbose);
+                std::get<1>(*file_iter)->ProcessServerDriveWriteRequest(
+                    device_io_request, path.c_str(), drive_access_mode,
+                    first_chunk, in_stream, to_server_sender,
+                    out_asynchronous_task, verbose);
             break;
 
             case rdpdr::IRP_MJ_DEVICE_CONTROL:
@@ -2333,9 +2162,19 @@ public:
                             "Server Drive Control Request");
                 }
 
-                this->ProcessServerDriveControlRequest(device_io_request,
-                    path.c_str(), in_stream,
-                    to_server_sender, out_asynchronous_task, verbose);
+                {
+                    rdpdr::DeviceControlRequest device_control_request;
+
+                    device_control_request.receive(in_stream);
+                    if (verbose) {
+                        device_control_request.log(LOG_INFO);
+                    }
+
+                    std::get<1>(*file_iter)->ProcessServerDriveControlRequest(
+                        device_io_request, device_control_request,
+                        path.c_str(), in_stream, to_server_sender,
+                        out_asynchronous_task, verbose);
+                }
             break;
 
             case rdpdr::IRP_MJ_QUERY_VOLUME_INFORMATION:
@@ -2345,9 +2184,23 @@ public:
                             "Server Drive Query Volume Information Request");
                 }
 
-                this->ProcessServerDriveQueryVolumeInformationRequest(device_io_request,
-                    path.c_str(), in_stream,
-                    to_server_sender, out_asynchronous_task, verbose);
+                {
+                    rdpdr::ServerDriveQueryVolumeInformationRequest
+                        server_drive_query_volume_information_request;
+
+                    server_drive_query_volume_information_request.receive(
+                        in_stream);
+                    if (verbose) {
+                        server_drive_query_volume_information_request.log(
+                            LOG_INFO);
+                    }
+
+                    std::get<1>(*file_iter)->ProcessServerDriveQueryVolumeInformationRequest(
+                        device_io_request,
+                        server_drive_query_volume_information_request,
+                        path.c_str(), in_stream, to_server_sender,
+                        out_asynchronous_task, verbose);
+                }
             break;
 
             case rdpdr::IRP_MJ_QUERY_INFORMATION:
@@ -2357,9 +2210,21 @@ public:
                             "Server Drive Query Information Request");
                 }
 
-                this->ProcessServerDriveQueryInformationRequest(device_io_request,
-                    path.c_str(), in_stream,
-                    to_server_sender, out_asynchronous_task, verbose);
+                {
+                    rdpdr::ServerDriveQueryInformationRequest
+                        server_drive_query_information_request;
+
+                    server_drive_query_information_request.receive(in_stream);
+                    if (verbose) {
+                        server_drive_query_information_request.log(LOG_INFO);
+                    }
+
+                    std::get<1>(*file_iter)->ProcessServerDriveQueryInformationRequest(
+                        device_io_request,
+                        server_drive_query_information_request, path.c_str(),
+                        in_stream, to_server_sender, out_asynchronous_task,
+                        verbose);
+                }
             break;
 
             case rdpdr::IRP_MJ_SET_INFORMATION:
@@ -2368,9 +2233,22 @@ public:
                         "FileSystemDriveManager::ProcessDeviceIORequest: "
                             "Server Drive Set Information Request");
                 }
-                this->ProcessServerDriveSetInformationRequest(device_io_request,
-                    path.c_str(), drive_access_mode, in_stream,
-                    to_server_sender, out_asynchronous_task, verbose);
+
+                {
+                    rdpdr::ServerDriveSetInformationRequest
+                        server_drive_set_information_request;
+
+                    server_drive_set_information_request.receive(in_stream);
+                    if (verbose) {
+                        server_drive_set_information_request.log(LOG_INFO);
+                    }
+
+                    std::get<1>(*file_iter)->ProcessServerDriveSetInformationRequest(
+                        device_io_request,
+                        server_drive_set_information_request, path.c_str(),
+                        drive_access_mode, in_stream, to_server_sender,
+                        out_asynchronous_task, verbose);
+                }
             break;
 
             case rdpdr::IRP_MJ_DIRECTORY_CONTROL:
@@ -2379,19 +2257,35 @@ public:
                         if (verbose) {
                             LOG(LOG_INFO,
                                 "FileSystemDriveManager::ProcessDeviceIORequest: "
-                                    "Directory control request - Query directory request");
+                                    "Directory control request - "
+                                    "Query directory request");
                         }
 
-                        this->ProcessServerDriveQueryDirectoryRequest(device_io_request,
-                            path.c_str(), in_stream,
-                            to_server_sender, out_asynchronous_task, verbose);
+                        {
+                            rdpdr::ServerDriveQueryDirectoryRequest
+                                server_drive_query_directory_request;
+
+                            server_drive_query_directory_request.receive(
+                                in_stream);
+                            if (verbose) {
+                                server_drive_query_directory_request.log(
+                                    LOG_INFO);
+                            }
+
+                            std::get<1>(*file_iter)->ProcessServerDriveQueryDirectoryRequest(
+                                device_io_request,
+                                server_drive_query_directory_request,
+                                path.c_str(), in_stream, to_server_sender,
+                                out_asynchronous_task, verbose);
+                        }
                     break;
 
                     case rdpdr::IRP_MN_NOTIFY_CHANGE_DIRECTORY:
                         if (verbose) {
                             LOG(LOG_INFO,
                                 "FileSystemDriveManager::ProcessDeviceIORequest: "
-                                    "Directory control request - Notify change directory request");
+                                    "Directory control request - "
+                                    "Notify change directory request");
                         }
 
                         // Not yet supported!
@@ -2400,7 +2294,8 @@ public:
                     default:
                         LOG(LOG_ERR,
                             "FileSystemDriveManager::ProcessDeviceIORequest: "
-                                "Unknown Directory control request - MinorFunction=0x%X",
+                                "Unknown Directory control request - "
+                                "MinorFunction=0x%X",
                             device_io_request.MinorFunction());
                         throw Error(ERR_RDP_PROTOCOL);
                     //break;
